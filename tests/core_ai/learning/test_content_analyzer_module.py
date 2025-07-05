@@ -488,3 +488,56 @@ if __name__ == '__main__':
 # Need to create tests/core_ai/learning/__init__.py if it doesn't exist
 # Need to create tests/core_ai/__init__.py if it doesn't exist
 # Need to create tests/__init__.py if it doesn't exist
+
+
+    def test_13_matcher_person_is_ceo_of_org(self):
+        """Test 'PERSON is CEO of ORG' using Matcher."""
+        text = "Satya Nadella is CEO of Microsoft."
+        kg_data, nx_graph = self.analyzer.analyze_content(text)
+
+        self.assertEntityInGraph("Satya Nadella", "PERSON", kg_data)
+        self.assertEntityInGraph("Microsoft", "ORG", kg_data)
+
+        # Expected relationship: Microsoft (ORG) --has_ceo--> Satya Nadella (PERSON)
+        self.assertRelationshipInGraph(kg_data, nx_graph,
+                                         expected_src_label="Microsoft", src_type="ORG",
+                                         expected_tgt_label="Satya Nadella", tgt_type="PERSON",
+                                         expected_rel_type="has_ceo") # title lemma is 'ceo'
+
+        # Verify pattern attribute
+        found_rel_details = None
+        for rel in kg_data["relationships"]:
+            src_label = kg_data["entities"].get(rel["source_id"], {}).get("label")
+            tgt_label = kg_data["entities"].get(rel["target_id"], {}).get("label")
+            if src_label == "Microsoft" and tgt_label == "Satya Nadella" and rel["type"] == "has_ceo":
+                found_rel_details = rel
+                break
+        self.assertIsNotNone(found_rel_details, "has_ceo relationship details not found in TypedDict.")
+        self.assertEqual(found_rel_details["attributes"]["pattern"], "PERSON_IS_TITLE_OF_ORG",
+                         "Pattern attribute for has_ceo is incorrect.")
+
+    def test_14_matcher_person_is_founder_of_org(self):
+        """Test 'PERSON is Founder of ORG' using Matcher."""
+        text = "Jane Doe is Founder of ExampleCorp."
+        kg_data, nx_graph = self.analyzer.analyze_content(text)
+
+        self.assertEntityInGraph("Jane Doe", "PERSON", kg_data)
+        self.assertEntityInGraph("ExampleCorp", "ORG", kg_data) # Assuming ExampleCorp is tagged as ORG
+
+        # Expected relationship: ExampleCorp (ORG) --has_founder--> Jane Doe (PERSON)
+        self.assertRelationshipInGraph(kg_data, nx_graph,
+                                         expected_src_label="ExampleCorp", src_type="ORG",
+                                         expected_tgt_label="Jane Doe", tgt_type="PERSON",
+                                         expected_rel_type="has_founder")
+
+        # Verify pattern attribute
+        found_rel_details = None
+        for rel in kg_data["relationships"]:
+            src_label = kg_data["entities"].get(rel["source_id"], {}).get("label")
+            tgt_label = kg_data["entities"].get(rel["target_id"], {}).get("label")
+            if src_label == "ExampleCorp" and tgt_label == "Jane Doe" and rel["type"] == "has_founder":
+                found_rel_details = rel
+                break
+        self.assertIsNotNone(found_rel_details, "has_founder relationship details not found in TypedDict.")
+        self.assertEqual(found_rel_details["attributes"]["pattern"], "PERSON_IS_TITLE_OF_ORG",
+                         "Pattern attribute for has_founder is incorrect.")

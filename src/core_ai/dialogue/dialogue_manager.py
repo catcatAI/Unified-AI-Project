@@ -5,9 +5,10 @@
 import asyncio
 import json
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple # Added Tuple
 import uuid # For test session IDs in __main__
 import os # Added for os.path.exists and os.remove in __main__
+import re # Added for regex in _is_kg_query
 
 from core_ai.personality.personality_manager import PersonalityManager
 from core_ai.memory.ham_memory_manager import HAMMemoryManager
@@ -45,7 +46,9 @@ class DialogueManager:
         self.personality_manager = personality_manager if personality_manager else PersonalityManager()
         self.memory_manager = memory_manager if memory_manager else HAMMemoryManager(core_storage_filename="dialogue_context_memory.json")
 
-        self.llm_interface = llm_interface if llm_interface else LLMInterface(operational_config=op_configs_from_main)
+        # LLMInterface expects the full config dict that conforms to LLMInterfaceConfig,
+        # which can internally contain an 'operational_configs' key.
+        self.llm_interface = llm_interface if llm_interface else LLMInterface(config=self.config)
 
         self.formula_engine = formula_engine if formula_engine else FormulaEngine()
         self.tool_dispatcher = tool_dispatcher if tool_dispatcher else ToolDispatcher(llm_interface=self.llm_interface)
@@ -72,6 +75,112 @@ class DialogueManager:
         self.active_sessions: Dict[str, List[Dict[str, str]]] = {}
         self.session_knowledge_graphs: Dict[str, nx.DiGraph] = {} # Added
         self.max_history_per_session: int = self.config.get("max_dialogue_history", 6)
+
+    def _find_entity_node_id_in_kg(self, graph: nx.DiGraph, entity_label_query: str) -> Optional[str]:
+        """
+        Finds the first node ID in the graph whose 'label' attribute matches
+        the entity_label_query (case-insensitive).
+        """
+        if not graph:
+            return None
+        for node_id, data in graph.nodes(data=True):
+            node_label = data.get("label")
+            if node_label and isinstance(node_label, str) and \
+               node_label.lower() == entity_label_query.lower():
+                return node_id
+        return None
+
+    def _query_session_kg(self, session_id: str, entity_label: str, relationship_query: str) -> Optional[str]:
+        """
+        Queries the session's knowledge graph for a specific relationship
+        from a source entity.
+        """
+        graph = self.session_knowledge_graphs.get(session_id)
+        if not graph:
+            return None
+
+        source_node_id = self._find_entity_node_id_in_kg(graph, entity_label)
+        if not source_node_id:
+            print(f"DialogueManager KGQuery: Source entity '{entity_label}' not found in session KG '{session_id}'.")
+            return None
+
+        # Assuming relationship_query is the 'type' of the edge we're looking for
+        # And we are looking for outgoing relationships from the source_node_id
+        for target_node_id in graph.successors(source_node_id):
+            edge_data = graph.get_edge_data(source_node_id, target_node_id)
+            if edge_data and edge_data.get("type") == relationship_query:
+                target_node_data = graph.nodes.get(target_node_id, {})
+                target_label = target_node_data.get("label", target_node_id) # Fallback to ID if no label
+                print(f"DialogueManager KGQuery: Found target '{target_label}' for {entity_label} --[{relationship_query}]-->.")
+                return target_label
+
+        print(f"DialogueManager KGQuery: No target found for {entity_label} --[{relationship_query}]--> in session KG '{session_id}'.")
+        return None
+
+    def _is_kg_query(self, user_input: str) -> Optional[Tuple[str, str]]:
+        """
+        Identifies if the user input matches a KG query pattern and extracts relevant parts.
+        Returns a tuple (entity_label, relationship_keyword) or None.
+        """
+        user_input_lower = user_input.lower()
+
+        # Pattern 1-3: "who is [the/a] <title> of <Entity>?"
+        # Titles like ceo, president, founder, manager, director, cto, coo, cfo, cio, cmo, vp, chairman
+        # Relationship keyword will be "has_<title>"
+        title_patterns = [
+            r"who is (?:the |a )?(ceo|president|founder|manager|director|cto|coo|cfo|cio|cmo|vp|chairman|chairwoman|chairperson) of (.+)\??",
+        ]
+        for pattern_str in title_patterns:
+            match = re.match(pattern_str, user_input_lower)
+            if match:
+                title = match.group(1).strip()
+                entity = match.group(2).strip().rstrip('?') # Remove trailing question mark if any
+                # Normalize entity by removing possessive 's if it's like "Google's CEO" query style
+                if entity.endswith("'s"):
+                    entity = entity[:-2].strip()
+                elif entity.endswith("s'"): # for plural possessives like "companies'"
+                    entity = entity[:-1].strip()
+
+                print(f"DialogueManager _is_kg_query: Matched title pattern. Title: '{title}', Entity: '{entity}'")
+                return entity, f"has_{title}"
+
+        # Pattern 4: "where is <Entity> located?" or "where is <Entity> based?"
+        location_patterns = [
+            r"where is (.+) located\??",
+            r"where is (.+) based\??",
+        ]
+        for pattern_str in location_patterns:
+            match = re.match(pattern_str, user_input_lower)
+            if match:
+                entity = match.group(1).strip().rstrip('?')
+                if entity.endswith("'s"): # "where is Google's headquarters located?" -> entity "Google's headquarters"
+                    entity = entity[:-2].strip()
+                elif entity.endswith("s'"):
+                    entity = entity[:-1].strip()
+                print(f"DialogueManager _is_kg_query: Matched location pattern. Entity: '{entity}'")
+                return entity, "located_in"
+
+        # Pattern 5: "what company did <Entity> acquire?" or "what did <Entity> acquire?"
+        # This anticipates an "acquire" relationship type.
+        # ContentAnalyzerModule currently might extract this as "ORG --develop--> ORG" or similar SVO.
+        # This pattern is speculative on the KG content for "acquire".
+        acquire_patterns = [
+            r"what (?:company|organization|entity|firm|startup) did (.+) acquire\??",
+            r"what did (.+) acquire\??",
+        ]
+        for pattern_str in acquire_patterns:
+            match = re.match(pattern_str, user_input_lower)
+            if match:
+                entity = match.group(1).strip().rstrip('?')
+                if entity.endswith("'s"):
+                    entity = entity[:-2].strip()
+                elif entity.endswith("s'"):
+                    entity = entity[:-1].strip()
+                print(f"DialogueManager _is_kg_query: Matched acquire pattern. Entity: '{entity}'")
+                return entity, "acquire" # Assumes 'acquire' is the relationship type in KG
+
+        return None
+
 
         self.turn_timeout_seconds = self.config.get("operational_configs", {}).get("timeouts", {}).get("dialogue_manager_turn", 120)
         self.min_critique_score_to_store = self.config.get("operational_configs", {}).get("learning_thresholds", {}).get("min_critique_score_to_store", 0.0)
@@ -135,9 +244,64 @@ class DialogueManager:
             if session_id:
                 text_to_analyze = user_input[len(analysis_command):]
                 await self._analyze_and_store_text_context(text_to_analyze, session_id)
-                return f"{ai_name}: Context analysis triggered for session '{session_id}'. Knowledge graph updated."
+                # Formulate response and store it like other AI responses
+                response_text = f"{ai_name}: Context analysis triggered for session '{session_id}'. Knowledge graph updated."
+
+                # Store AI response for analysis command
+                ai_metadata_analyze: Dict[str, Any] = {"speaker": "ai", "timestamp": datetime.now().isoformat(), "user_id": user_id, "session_id": session_id, "source": "command_analyze"}
+                if self.memory_manager and user_mem_id :
+                    ai_metadata_analyze["user_input_ref"] = user_mem_id
+                    self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata_analyze)
+
+                if session_id: # Also update active_sessions
+                    # User input for !analyze is already stored at the beginning of get_simple_response
+                    # if user_mem_id was created. Or should be added if it wasn't (e.g. crisis during learning)
+                    # For simplicity here, assume user input part of history is handled, just add AI response.
+                    # However, the user input for !analyze command itself should be in history.
+                    # Let's ensure it is if not already added due to learning skip.
+                    if not any(turn['text'] == user_input and turn['speaker'] == 'user' for turn in self.active_sessions.get(session_id, [])):
+                         self.active_sessions.setdefault(session_id, []).append({"speaker": "user", "text": user_input})
+
+                    self.active_sessions.setdefault(session_id, []).append({"speaker": "ai", "text": response_text})
+                    if len(self.active_sessions[session_id]) > self.max_history_per_session:
+                       self.active_sessions[session_id] = self.active_sessions[session_id][-self.max_history_per_session:]
+                return response_text
             else:
-                return f"{ai_name}: Cannot analyze context without a session_id."
+                # This case should also store AI response
+                response_text = f"{ai_name}: Cannot analyze context without a session_id."
+                # (Skipping full storage for this simpler error path for now, but ideally it should be consistent)
+                return response_text
+
+        # --- Attempt to answer from Knowledge Graph ---
+        if session_id and session_id in self.session_knowledge_graphs and not crisis_level > 0 : # Don't query KG in crisis
+            kg_query_parts = self._is_kg_query(user_input)
+            if kg_query_parts:
+                entity_label, rel_query_keyword = kg_query_parts
+                answer_from_kg = self._query_session_kg(session_id, entity_label, rel_query_keyword)
+                if answer_from_kg:
+                    # Formulate a descriptive response
+                    if rel_query_keyword.startswith("has_"):
+                        title_part = rel_query_keyword.split("has_")[1].replace("_", " ")
+                        response_text = f"{ai_name}: From the analyzed context, the {title_part} of {entity_label.capitalize()} is {answer_from_kg}."
+                    elif rel_query_keyword == "located_in":
+                        response_text = f"{ai_name}: From the analyzed context, {entity_label.capitalize()} is located in {answer_from_kg}."
+                    elif rel_query_keyword == "acquire":
+                        response_text = f"{ai_name}: From the analyzed context, {entity_label.capitalize()} acquired {answer_from_kg}."
+                    else: # Generic fallback response
+                        response_text = f"{ai_name}: From the analyzed context regarding {entity_label.capitalize()}: {answer_from_kg}."
+
+                    print(f"DialogueManager: Answered from KG: '{response_text}'")
+                    # Standard response finalization (store AI response, update active_sessions, etc.)
+                    ai_metadata_kg: Dict[str, Any] = {"speaker": "ai", "timestamp": datetime.now().isoformat(), "user_id": user_id, "session_id": session_id, "source": "knowledge_graph"}
+                    if self.memory_manager and user_mem_id:
+                        ai_metadata_kg["user_input_ref"] = user_mem_id
+                        self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata_kg)
+
+                    self.active_sessions.setdefault(session_id, []).append({"speaker": "user", "text": user_input})
+                    self.active_sessions[session_id].append({"speaker": "ai", "text": response_text})
+                    if len(self.active_sessions[session_id]) > self.max_history_per_session:
+                        self.active_sessions[session_id] = self.active_sessions[session_id][-self.max_history_per_session:]
+                    return response_text # Early exit
 
         if crisis_level > 0:
             response_text = self.config.get("crisis_response_text",

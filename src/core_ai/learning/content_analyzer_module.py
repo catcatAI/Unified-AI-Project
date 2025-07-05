@@ -80,6 +80,22 @@ class ContentAnalyzerModule:
         ]
         self.matcher.add("WORKS_FOR", [pattern_works_for])
 
+        # Pattern for "PERSON is TITLE of ORG"
+        # Example: "Satya Nadella is CEO of Microsoft."
+        titles = [
+            "ceo", "president", "founder", "manager", "director", "cto", "coo",
+            "cfo", "cio", "cmo", "vp", "chairman", "chairwoman", "chairperson"
+        ]
+        pattern_person_is_title_of_org = [
+            {"ENT_TYPE": "PERSON"},
+            {"LEMMA": "be"},
+            {"LOWER": {"IN": ["the", "a"]}, "OP": "?"}, # Optional: "the" or "a"
+            {"LOWER": {"IN": titles}}, # The title
+            {"LOWER": "of"},
+            {"ENT_TYPE": "ORG"}
+        ]
+        self.matcher.add("PERSON_IS_TITLE_OF_ORG", [pattern_person_is_title_of_org])
+
 
     def _extract_entities(self, doc: Doc) -> Dict[str, KGEntity]:
         """
@@ -507,6 +523,43 @@ class ContentAnalyzerModule:
                     target_entity_id = get_entity_id_for_token_in_match(org_token)
                     rel_type = "works_for"
                     weight = 0.75
+
+            elif rule_id_str == "PERSON_IS_TITLE_OF_ORG":
+                # Pattern: PERSON - be - TITLE - of - ORG
+                person_token, title_token_text, org_token = None, None, None
+
+                # Pattern: PERSON - be - (the|a)? - TITLE - of - ORG
+                # Indices:   0      1        2         3      4      5   (if determiner present)
+                #            0      1                  2      3      4   (if determiner absent)
+
+                person_token = span[0] # Should always be PERSON if rule matched
+
+                title_idx = 2
+                org_idx = 4
+                if span[2].lower_ in ["the", "a"]: # Determiner is present
+                    title_idx = 3
+                    org_idx = 5
+
+                # Check if span is long enough for the determined indices
+                if org_idx < len(span): # Ensure all expected tokens are within the span
+                    title_token_text = span[title_idx].lemma_.lower()
+                    org_token = span[org_idx]
+
+                    # Additional check for entity types (matcher might match tokens, but we need entities)
+                    if person_token.ent_type_ != "PERSON" or org_token.ent_type_ != "ORG":
+                        # This case should ideally not happen if the pattern is specific enough with ENT_TYPE,
+                        # but good for robustness if tokens matched but weren't correctly ID'd as entities by NER prior to matcher.
+                        # Or if matcher itself is less strict on ENT_TYPE for some reason.
+                        # For now, we rely on the pattern's ENT_TYPE constraints.
+                        pass # Consider logging a warning if this happens.
+
+                if person_token and title_token_text and org_token and person_token.ent_type_ == "PERSON" and org_token.ent_type_ == "ORG":
+                    # Relationship: ORG --has_<title>--> PERSON
+                    source_entity_id = get_entity_id_for_token_in_match(org_token) # ORG is source
+                    target_entity_id = get_entity_id_for_token_in_match(person_token) # PERSON is target
+                    rel_type = f"has_{title_token_text}"
+                    weight = 0.8 # High confidence for this specific pattern
+
 
             if source_entity_id and target_entity_id and rel_type and source_entity_id != target_entity_id:
                 found_relationships.append({
