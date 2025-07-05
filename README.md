@@ -196,3 +196,27 @@ Contributions are welcome and greatly appreciated! Here are some guidelines to h
 ### Questions or Issues
 
 If you have questions, find a bug, or want to suggest an enhancement, please consider documenting them or discussing with your team as appropriate for your project management style.
+
+## Architectural Notes & Known Issues
+
+This section highlights some current observations, known issues from testing, and architectural considerations for ongoing development.
+
+### Current Test Status & Observations
+
+*   **Known Failing Tests:** As of the last full test run, a few tests consistently fail. These are being investigated, with current hypotheses pointing towards:
+    *   Limitations in mock LLM responses for deeply nested module calls (e.g., `TestCLI` where sub-modules like `FactExtractorModule` expect specific JSON from mocks).
+    *   Subtle data handling or string manipulation issues (e.g., text truncation in `TestFragmentaOrchestrator`, or dictionary lookup anomalies in `TestTranslationModelComponents`).
+*   **Asynchronous Code Warnings:** Tests have surfaced `RuntimeWarning: coroutine ... was never awaited` for some `async def` test methods. Developers should be mindful of correctly implementing and testing asynchronous code using appropriate `async/await` patterns and async-aware testing libraries if needed.
+
+### Inter-Module Data Flow and Synchronization
+
+*   **Data Integrity:** When designing interactions where one module (Module A) produces data or state that another module (Module B) consumes, it's crucial to ensure that Module B accesses this data only when it is complete, consistent, and in the expected format.
+*   **Future Concurrency:** For any parts of the system that might involve concurrent processing (e.g., multiple API requests handled simultaneously, background learning tasks), shared mutable data structures (e.g., global caches, shared knowledge graphs, stateful managers) **must be protected with explicit synchronization mechanisms** (e.g., `threading.Lock` in Python, or equivalent). This is vital to prevent race conditions and ensure data integrity.
+
+### Mocking Strategy for Tests
+
+*   **Context-Aware Mocks:** When testing modules that interact with services like the `LLMInterface`, ensure that mocks are configured to return data in the precise format expected by the *direct client* of that service. For instance, if `FactExtractorModule` calls `LLMInterface` and expects a JSON string, the mock for `LLMInterface` should provide that, even if the higher-level test is asserting a final user-facing string.
+*   **Complexity:** As the system grows, mock setups may need to become more sophisticated to accurately simulate different scenarios and responses, especially for integration-style tests.
+
+### Environment and Setup
+*   **PYTHONPATH:** Ensure `PYTHONPATH` is set up correctly (as mentioned in "Getting Started") to avoid import errors, especially when running scripts or tests from subdirectories or with certain IDE configurations.
