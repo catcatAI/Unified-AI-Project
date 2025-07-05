@@ -9,6 +9,7 @@ from typing import Optional, Dict, Any, List, Tuple # Added Tuple
 import uuid # For test session IDs in __main__
 import os # Added for os.path.exists and os.remove in __main__
 import re # Added for regex in _is_kg_query
+import json # Added for parsing LLM response for I/O details
 
 from core_ai.personality.personality_manager import PersonalityManager
 from core_ai.memory.ham_memory_manager import HAMMemoryManager
@@ -430,7 +431,23 @@ class DialogueManager:
                         response_text = f"{ai_name}: {tool_result}" if tool_result is not None else f"{ai_name}: I tried to use a tool, but it didn't work as expected."
                     else:
                         response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' tried to dispatch a tool, but tool_name or tool_query was missing/invalid."
-                else: # Not a dispatch_tool action
+                elif action_name == "initiate_tool_draft":
+                    tool_name_draft = action_params.get("tool_name")
+                    desc_for_llm_draft = action_params.get("description_for_llm")
+                    if tool_name_draft and desc_for_llm_draft:
+                        print(f"DialogueManager: Formula '{matched_formula.get('name')}' initiating tool draft for '{tool_name_draft}'.")
+                        response_text = await self.handle_draft_tool_request(
+                            tool_name=tool_name_draft,
+                            purpose_and_io_desc=desc_for_llm_draft,
+                            session_id=session_id
+                        )
+                    else:
+                        missing_params = []
+                        if not tool_name_draft: missing_params.append("tool_name")
+                        if not desc_for_llm_draft: missing_params.append("description_for_llm")
+                        response_text = f"{ai_name}: I understood you want to draft a tool, but I couldn't extract the necessary details ({', '.join(missing_params)})."
+
+                else: # Other non-dispatch_tool actions
                     response_template = matched_formula.get("response_template")
                     if response_template:
                         try:
@@ -438,11 +455,11 @@ class DialogueManager:
                             response_text = response_template.format(**format_kwargs)
                         except KeyError as e:
                             response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' triggered action '{action_name}' (template error: {e})."
-                        except Exception as e:
+                        except Exception as e: # General exception for other template errors
                             response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' triggered action '{action_name}' (general template error)."
-                    elif action_name:
-                        response_text = f"{ai_name}: Action '{action_name}' triggered."
-                    else:
+                    elif action_name: # Action exists but no template
+                        response_text = f"{ai_name}: Action '{action_name}' triggered by formula '{matched_formula.get('name')}'."
+                    else: # Fallback if action_name is somehow missing but formula matched
                         response_text = f"{ai_name}: I recognized pattern: '{matched_formula.get('name')}'."
             else: # No formula matched, proceed to LLM
                 full_prompt_for_llm = f"{prompt_context_for_llm}{user_input}"
@@ -495,6 +512,251 @@ class DialogueManager:
         elif time_segment == "evening": time_specific_greeting_prefix = "Good evening!"
         elif time_segment == "night": time_specific_greeting_prefix = "Hello,"
         return f"{time_specific_greeting_prefix} {base_prompt}" if time_specific_greeting_prefix else base_prompt
+
+    async def handle_draft_tool_request(self, tool_name: str, purpose_and_io_desc: str, session_id: Optional[str] = None) -> str:
+        """
+        Handles a request to draft a Python tool skeleton using an LLM.
+        The AI does not save or integrate this code; it only drafts it.
+        """
+        ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
+        print(f"DialogueManager: Received tool drafting request. Tool name: '{tool_name}', Raw Description: '{purpose_and_io_desc}'")
+
+        # Step 1: Use LLM to parse purpose_and_io_desc into structured I/O details
+        io_parsing_prompt = self._construct_io_parsing_prompt(purpose_and_io_desc)
+
+        print(f"DialogueManager: Sending I/O parsing prompt to LLM for tool '{tool_name}'.")
+        raw_io_details_str = self.llm_interface.generate_response(
+            prompt=io_parsing_prompt,
+            model_name=None, # Use default or a specific model for parsing
+            params={"temperature": 0.1} # Low temp for structured output
+        )
+
+        parsed_io_details: Optional[Dict[str, Any]] = None
+        try:
+            # LLMs can sometimes add text before/after JSON, try to extract JSON block
+            json_match = re.search(r"```json\s*([\s\S]*?)\s*```|([\s\S]*)", raw_io_details_str, re.DOTALL)
+            if json_match:
+                json_str_candidate = json_match.group(1) or json_match.group(2) # group(1) for ```json ... ```, group(2) for raw string
+                if json_str_candidate:
+                    parsed_io_details = json.loads(json_str_candidate.strip())
+                    print(f"DialogueManager: Successfully parsed I/O details from LLM: {parsed_io_details}")
+                else:
+                    raise ValueError("Empty JSON string candidate found.")
+            else: # Should not happen with the updated regex, but as a fallback
+                raise ValueError("No JSON block or content found in LLM response for I/O parsing.")
+
+        except json.JSONDecodeError as e:
+            print(f"DialogueManager: Error decoding JSON from I/O parsing LLM response: {e}. Raw response: '{raw_io_details_str}'")
+            # Fallback: Use the raw purpose_and_io_desc for the code generation prompt with less structure
+            # Or, alternatively, inform the user of the parsing error. For now, let's try a simpler fallback.
+            # This part could be a simple message to the user asking them to be more specific or try again.
+            # For this iteration, we'll proceed with a more generic code gen prompt if parsing fails.
+            # Let's construct a failure message for now.
+            return f"{ai_name}: I had trouble understanding the specific parameters and return types from your description for '{tool_name}'. Could you try describing the inputs and outputs more clearly, perhaps like 'takes parameter X of type Y, returns type Z'?"
+        except ValueError as e: # Catch other value errors from parsing logic
+            print(f"DialogueManager: Error processing LLM response for I/O parsing: {e}. Raw response: '{raw_io_details_str}'")
+            return f"{ai_name}: I encountered an issue trying to structure the details for '{tool_name}'. Please try rephrasing your request."
+
+
+        if not parsed_io_details: # Should be caught by exceptions above, but as a safeguard
+             return f"{ai_name}: I couldn't structure the I/O details for '{tool_name}'. Please rephrase."
+
+        # Step 2: Construct the code generation prompt using structured I/O details
+        code_gen_prompt = self._construct_code_generation_prompt(
+            tool_name,
+            parsed_io_details.get("class_docstring_hint", purpose_and_io_desc), # Fallback for class docstring
+            parsed_io_details.get("suggested_method_name", "execute"),
+            parsed_io_details.get("method_docstring_hint", f"Executes the main logic for {tool_name}."),
+            parsed_io_details.get("parameters", []), # Expects list of dicts
+            parsed_io_details.get("return_type", "Any") # Default to Any if not parsed
+        )
+
+        print(f"DialogueManager: Sending code generation prompt to LLM for tool '{tool_name}'.")
+        generated_code_text = self.llm_interface.generate_response(
+            prompt=code_gen_prompt,
+            model_name=None, # Use default or a specific model for code generation
+            params={"temperature": 0.3} # Lower temp for code
+        )
+
+        response_to_user = f"{ai_name}: Okay, I've drafted a Python skeleton for a tool named `{tool_name}` based on your description:\n\n```python\n{generated_code_text.strip()}\n```\n\nPlease review this code carefully. It's a starting point and will need to be manually saved, tested, and integrated if you wish to use it."
+
+        return response_to_user
+
+    def _construct_io_parsing_prompt(self, purpose_and_io_desc: str) -> str:
+        # Using the prompt designed in the previous step
+        # (Ensuring the placeholder is correctly substituted)
+        # This prompt is quite long, so it's defined here for clarity.
+        prompt = f"""
+You are an expert Python code analyst. Your task is to parse a natural language description of a tool's desired functionality and extract structured information about its primary execution method, parameters, and return value. Output this information as a valid JSON object.
+
+Guidelines for extraction:
+1.  `suggested_method_name`: Suggest a concise, Pythonic method name (e.g., "execute", "run", or a verb phrase like "process_data", "calculate_sum") based on the tool's purpose. Use snake_case.
+2.  `class_docstring_hint`: Provide a brief summary suitable for a class docstring, based on the overall tool purpose.
+3.  `method_docstring_hint`: Provide a brief summary suitable for the primary method's docstring.
+4.  `parameters`: This should be a list of JSON objects. Each object represents a parameter and should have:
+    *   `"name"`: The parameter name (snake_case).
+    *   `"type"`: The inferred Python type hint as a string (e.g., "str", "int", "float", "bool", "List[str]", "Dict[str, Any]", "Optional[int]"). Use `typing` module types where appropriate (e.g., `Optional`, `List`, `Dict`, `Any`). If a parameter is described as optional and no default is given, its type should be `Optional[...]`.
+    *   `"default"`: (Optional field) If a default value is mentioned, include it. Represent numbers as numbers, booleans as booleans, and strings as strings in the JSON. For `None` default with `Optional` type, you can omit the default field or set it to `null`.
+    *   `"description"`: A brief description of the parameter.
+5.  `return_type`: The inferred Python type hint for the return value as a string. If no specific return is mentioned or it's complex, use "Any" or "str" as a sensible default.
+6.  `return_description`: A brief description of what the method returns.
+
+If the description is too vague to extract some details, use your best judgment to provide sensible placeholders or omit optional fields (like "default"). Strive for valid Python type hint syntax for "type" fields.
+
+Here are a few examples of input descriptions and their desired JSON output:
+
+---
+Input Description 1:
+"reverses a given input string named 'text_to_reverse' and returns the reversed string."
+
+Desired JSON Output 1:
+```json
+{{
+  "suggested_method_name": "reverse_string",
+  "class_docstring_hint": "A tool to reverse strings.",
+  "method_docstring_hint": "Reverses the provided input string.",
+  "parameters": [
+    {{"name": "text_to_reverse", "type": "str", "description": "The string to be reversed."}}
+  ],
+  "return_type": "str",
+  "return_description": "The reversed string."
+}}
+```
+---
+Input Description 2:
+"calculates the sum of a list of numbers. The list is called 'numbers_list'. It should also take an optional boolean flag 'as_float' which defaults to false, to return a float. The result is the sum."
+
+Desired JSON Output 2:
+```json
+{{
+  "suggested_method_name": "calculate_sum",
+  "class_docstring_hint": "A tool to calculate the sum of a list of numbers.",
+  "method_docstring_hint": "Calculates the sum of a list of numbers, optionally returning the sum as a float.",
+  "parameters": [
+    {{"name": "numbers_list", "type": "List[Union[int, float]]", "description": "A list of numbers to sum."}},
+    {{"name": "as_float", "type": "bool", "default": false, "description": "If true, returns the sum as a float, otherwise as int/float based on input."}}
+  ],
+  "return_type": "Union[int, float]",
+  "return_description": "The sum of the numbers in the list."
+}}
+```
+---
+Input Description 3:
+"a tool that takes a user's name and their age. The name is a string, age is an integer. It just prints them."
+
+Desired JSON Output 3:
+```json
+{{
+  "suggested_method_name": "display_user_info",
+  "class_docstring_hint": "A tool to display user information.",
+  "method_docstring_hint": "Takes a user's name and age and prepares them for display.",
+  "parameters": [
+    {{"name": "name", "type": "str", "description": "The user's name."}},
+    {{"name": "age", "type": "int", "description": "The user's age."}}
+  ],
+  "return_type": "str",
+  "return_description": "A string confirming the action or the formatted info."
+}}
+```
+---
+
+Now, parse the following tool description:
+
+Input Description:
+"{purpose_and_io_desc}"
+
+Desired JSON Output:
+"""
+        return prompt.replace("{{", "{").replace("}}", "}") # Unescape curlies for f-string if needed, but direct is fine
+
+    def _construct_code_generation_prompt(self, tool_name: str, class_docstring: str,
+                                        method_name: str, method_docstring: str,
+                                        parameters: List[Dict[str, Any]], return_type: str) -> str:
+        # Using the example structure from the previous version of handle_draft_tool_request
+        example_tool_structure = """
+Example of a simple Python tool class structure:
+
+```python
+from typing import Optional, List, Dict, Any # Common imports
+
+class ExampleTool:
+    \"\"\"Provides a brief description of what the tool does.\"\"\"
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        \"\"\"Initializes the tool, optionally with configuration.\"\"\"
+        self.config = config or {}
+        print(f"{self.__class__.__name__} initialized.")
+
+    def execute(self, parameter_one: str, parameter_two: int = 0) -> Dict[str, Any]:
+        \"\"\"
+        Describes what this main method does.
+
+        Args:
+            parameter_one (str): Description of first parameter.
+            parameter_two (int, optional): Description of second parameter. Defaults to 0.
+
+        Returns:
+            Dict[str, Any]: Description of the output, often a dictionary.
+        \"\"\"
+        print(f"Executing {self.__class__.__name__} with {parameter_one=}, {parameter_two=}")
+        # TODO: Implement actual tool logic here
+        # Replace 'pass' with your logic or raise NotImplementedError
+        raise NotImplementedError("Tool logic not implemented yet.")
+        # Example return:
+        # return {"status": "success", "result": f"Processed {parameter_one} and {parameter_two}"}
+```
+"""
+        # Format parameters for the prompt
+        param_str_list = []
+        for p_info in parameters:
+            p_name = p_info.get("name", "param")
+            p_type = p_info.get("type", "Any")
+            param_str = f"{p_name}: {p_type}"
+            if "default" in p_info:
+                # Ensure strings in default are quoted for Python syntax
+                default_val = p_info["default"]
+                if isinstance(default_val, str):
+                    param_str += f" = \"{default_val}\"" # Could also use repr()
+                else:
+                    param_str += f" = {default_val}"
+            param_str_list.append(param_str)
+
+        method_signature_params = ", ".join(param_str_list)
+        if not method_signature_params.startswith("self") and not method_name == "__init__":
+             method_signature_params = "self" + (f", {method_signature_params}" if method_signature_params else "")
+
+
+        prompt = f"""
+You are an expert Python programmer assisting in drafting tool skeletons for an AI framework.
+Your task is to generate a Python class for a new tool based on the provided specifications.
+
+Tool Specifications:
+- Tool Class Name: {tool_name}
+- Class Docstring: {class_docstring}
+
+- Method Name: {method_name}
+- Method Docstring: {method_docstring}
+- Method Parameters (for signature): {method_signature_params}
+- Method Return Type: {return_type}
+
+Instructions for the generated code:
+1. The tool should be a single Python class named '{tool_name}'.
+2. The class docstring should be: \"\"\"{class_docstring}\"\"\"
+3. The primary execution method should be named '{method_name}'.
+4. The method signature should be: `def {method_name}({method_signature_params}) -> {return_type}:`
+5. The method docstring should be: \"\"\"{method_docstring}\"\"\"
+   (Ensure Args and Returns sections are appropriate if parameter details were rich enough).
+6. The body of this primary method should be `raise NotImplementedError("Tool logic not implemented yet.")`.
+7. Include an `__init__` method: `def __init__(self, config: Optional[Dict[str, Any]] = None):`. Its docstring should be "Initializes the tool, optionally with configuration.". It should store the config and print an initialization message.
+8. Include necessary imports from `typing` (e.g., `Optional`, `List`, `Dict`, `Any`) if used in type hints.
+
+{example_tool_structure}
+
+Based on these structured specifications, please generate *only* the complete Python code for the class.
+Start with any necessary imports, then the class definition. Do not include any explanatory text before or after the Python code block.
+"""
+        return prompt
+
 
 if __name__ == '__main__':
     import asyncio
