@@ -56,5 +56,19 @@
         "enabled": true,
         "version": "1.0",
         "response_template": null
+    },
+    {
+        "name": "list_tools_formula",
+        "conditions": ["list tools", "what tools do you have", "show available tools", "tool list"],
+        "action": "dispatch_tool",
+        "description": "Lists the available Python tools the AI can describe or use.",
+        "parameters": {
+            "tool_name": "inspect_code",
+            "tool_query": "list_tools"
+        },
+        "priority": 20,
+        "enabled": true,
+        "version": "1.0",
+        "response_template": null
     }
 ]

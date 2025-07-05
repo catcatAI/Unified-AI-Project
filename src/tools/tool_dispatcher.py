@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional
 from tools.math_tool import calculate as math_calculate
 from tools.logic_tool import evaluate_expression as logic_evaluate
 from tools.translation_tool import translate as translate_text
+from tools.code_understanding_tool import CodeUnderstandingTool # Added
 from core_ai.language_models.daily_language_model import DailyLanguageModel
 from services.llm_interface import LLMInterface # Added Optional import for type hint consistency
 
@@ -13,18 +14,47 @@ class ToolDispatcher:
         # If DLM needs a non-default LLMInterface, it should be passed here
         # For now, DLM will create its own default LLMInterface if none is provided to it.
         self.dlm = DailyLanguageModel(llm_interface=llm_interface) # LLMInterface is correctly found by DLM due to its own imports
+        self.code_understanding_tool_instance = CodeUnderstandingTool() # Added instance
+
         self.tools = {
             "calculate": self._execute_math_calculation,
             "evaluate_logic": self._execute_logic_evaluation,
-            "translate_text": self._execute_translation, # Ensure this method exists
+            "translate_text": self._execute_translation, # Corrected from self.execute_translation
+            "inspect_code": self._execute_code_inspection, # Added tool
         }
         self.tool_descriptions = {
             "calculate": "Performs arithmetic calculations. Example: 'calculate 10 + 5', or 'what is 20 / 4?'",
             "evaluate_logic": "Evaluates simple logical expressions (AND, OR, NOT, true, false, parentheses). Example: 'evaluate true AND (false OR NOT true)'",
-            "translate_text": "Translates text between Chinese and English. Example: 'translate 你好 to English'", # Matches the key "translate_text"
+            "translate_text": "Translates text between Chinese and English. Example: 'translate 你好 to English'",
+            "inspect_code": "Describes the structure of available tools. Query examples: 'list_tools', or 'describe_tool math_tool'", # Added description
         }
         print("ToolDispatcher initialized.")
         print(f"Available tools: {list(self.tools.keys())}")
+
+    def _execute_code_inspection(self, query: str, **kwargs) -> str:
+        """
+        Wrapper for the CodeUnderstandingTool.
+        Parses action and tool_name from query if not provided in kwargs.
+        """
+        action = kwargs.get("action")
+        tool_name_param = kwargs.get("tool_name")
+
+        if not action: # Try to parse from query
+            parts = query.strip().split(maxsplit=1)
+            action = parts[0].lower() if parts else None # Ensure action is lowercase for consistent matching
+            if len(parts) > 1:
+                tool_name_param = parts[1]
+
+        if not action:
+            return "Error: No action specified for code inspection. Use 'list_tools' or 'describe_tool <tool_name>'."
+
+        try:
+            return self.code_understanding_tool_instance.execute(action=action, tool_name=tool_name_param)
+        except Exception as e:
+            print(f"Error executing code inspection tool: {e}")
+            # It's good practice to log the full exception, e.g., import traceback; traceback.print_exc()
+            return f"Sorry, I encountered an error trying to inspect code: {str(e)[:100]}" # Truncate error for brevity in response
+
 
     def _execute_math_calculation(self, query: str, **kwargs) -> str:
         """
