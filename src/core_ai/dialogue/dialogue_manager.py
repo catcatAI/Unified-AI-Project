@@ -23,10 +23,13 @@ from tools.tool_dispatcher import ToolDispatcher
 from core_ai.learning.self_critique_module import SelfCritiqueModule
 from core_ai.learning.fact_extractor_module import FactExtractorModule
 from core_ai.learning.learning_manager import LearningManager
-from core_ai.learning.content_analyzer_module import ContentAnalyzerModule # Added
-from services.sandbox_executor import SandboxExecutor # Added
-import networkx as nx # Added
+from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule # Import ServiceDiscoveryModule
+from services.sandbox_executor import SandboxExecutor
+import networkx as nx
 from shared.types.common_types import FormulaConfigEntry, CritiqueResult, OperationalConfig
+from hsp.connector import HSPConnector # Import HSPConnector
+from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload # Import necessary HSP types
 
 
 class DialogueManager:
@@ -40,12 +43,21 @@ class DialogueManager:
                  tool_dispatcher: Optional[ToolDispatcher] = None,
                  self_critique_module: Optional[SelfCritiqueModule] = None,
                  learning_manager: Optional[LearningManager] = None,
-                 content_analyzer: Optional[ContentAnalyzerModule] = None, # Added
-                 sandbox_executor: Optional[SandboxExecutor] = None, # Added
+                 content_analyzer: Optional[ContentAnalyzerModule] = None,
+                 sandbox_executor: Optional[SandboxExecutor] = None,
+                 # HSP related components for Sub-step 2.3.4
+                 ai_id: Optional[str] = None, # ID of this AI instance
+                 service_discovery_module: Optional[ServiceDiscoveryModule] = None,
+                 hsp_connector: Optional[HSPConnector] = None,
                  config: Optional[Dict[str, Any]] = None):
 
         self.config = config or {}
-        op_configs_from_main = self.config.get("operational_configs")
+        self.ai_id = ai_id if ai_id else f"dm_instance_{uuid.uuid4().hex[:6]}" # Default AI ID if not provided
+        op_configs_from_main = self.config.get("operational_configs", {}) # Ensure op_configs_from_main is a dict
+
+        self.service_discovery_module: Optional[ServiceDiscoveryModule] = service_discovery_module
+        self.hsp_connector: Optional[HSPConnector] = hsp_connector
+        self.pending_hsp_task_requests: Dict[str, Dict[str, Any]] = {} # correlation_id -> {user_session_id, original_query, callback_for_result, etc.}
 
         self.personality_manager = personality_manager if personality_manager else PersonalityManager()
         self.memory_manager = memory_manager if memory_manager else HAMMemoryManager(core_storage_filename="dialogue_context_memory.json")
@@ -78,8 +90,191 @@ class DialogueManager:
         self.time_system = time_system if time_system else TimeSystem(config=self.config) # Pass full config
 
         self.active_sessions: Dict[str, List[Dict[str, str]]] = {}
-        self.session_knowledge_graphs: Dict[str, nx.DiGraph] = {} # Added
+        self.session_knowledge_graphs: Dict[str, nx.DiGraph] = {}
         self.max_history_per_session: int = self.config.get("max_dialogue_history", 6)
+
+        # Register HSP task result handler with connector if available
+        if self.hsp_connector:
+            self.hsp_connector.register_on_task_result_callback(self._handle_incoming_hsp_task_result)
+
+    def _handle_incoming_hsp_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope) -> None:
+        """
+        Callback for processing incoming HSPTaskResult messages.
+        """
+        correlation_id = full_envelope.get("correlation_id")
+        print(f"DialogueManager (AI ID: {self.ai_id}): Received HSP TaskResult from '{sender_ai_id}' for correlation ID '{correlation_id}'.")
+
+        if not correlation_id or correlation_id not in self.pending_hsp_task_requests:
+            print(f"DialogueManager: Received unsolicited or unknown TaskResult (correlation_id: {correlation_id}). Discarding.")
+            return
+
+        pending_request_info = self.pending_hsp_task_requests.pop(correlation_id)
+        original_user_id = pending_request_info.get("user_id")
+        original_session_id = pending_request_info.get("session_id")
+        original_query_text = pending_request_info.get("original_query_text")
+
+        status = result_payload.get("status")
+        if status == "success":
+            service_payload = result_payload.get("payload", {})
+            print(f"DialogueManager: Task SUCCESS for '{original_query_text}'. Result payload: {service_payload}")
+            # TODO: How to deliver this back to the user?
+            # For CLI, we might just print. For a real-time app, this would involve sending a message to the user's session.
+            # This could involve re-engaging the dialogue with this new information.
+            # For now, let's craft a simple message and potentially store it or log it.
+            ai_name = self.personality_manager.get_current_personality_trait("display_name", self.ai_id)
+            result_message_to_user = f"{ai_name}: Regarding your request about '{original_query_text}', the specialist AI ({sender_ai_id}) responded with: {json.dumps(service_payload)}"
+            print(f"--- HSP Task Result for User (Session: {original_session_id}, User: {original_user_id}) ---")
+            print(result_message_to_user)
+            print(f"------------------------------------------------------------------------------------")
+
+            # Store this asynchronous AI response in HAM
+            if self.memory_manager:
+                ai_metadata_hsp_result: Dict[str, Any] = {
+                    "speaker": "ai",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "user_id": original_user_id,
+                    "session_id": original_session_id,
+                    "source": "hsp_task_result_success",
+                    "hsp_correlation_id": correlation_id,
+                    "hsp_result_sender_ai_id": sender_ai_id,
+                    "original_user_query_text": original_query_text # Storing original query for context
+                }
+                if self.memory_manager: # Ensure memory_manager exists
+                    self.memory_manager.store_experience(result_message_to_user, "ai_dialogue_text_hsp_result", ai_metadata_hsp_result)
+
+                # Now, try to pass to ContentAnalyzer if applicable
+                if self.content_analyzer and isinstance(service_payload, dict):
+                    description_text = None
+                    if isinstance(service_payload.get("description"), str):
+                        description_text = service_payload.get("description")
+                    elif isinstance(service_payload.get("summary"), str):
+                        description_text = service_payload.get("summary")
+
+                    if description_text:
+                        print(f"DialogueManager: Found description in HSP task result. Passing to ContentAnalyzer.")
+                        hsp_context_for_ca = {
+                            "source_ai_id": sender_ai_id,
+                            "original_task_request_id": result_payload.get("request_id"),
+                            "hsp_correlation_id": correlation_id,
+                            "capability_id": pending_request_info.get("capability_id", "unknown_capability")
+                        }
+                        try:
+                            # Assuming ContentAnalyzer will have a method like this.
+                            # This method needs to be created in ContentAnalyzerModule.
+                            # self.content_analyzer.integrate_textual_description_from_hsp(description_text, hsp_context_for_ca)
+                            # For now, let's call the existing process_hsp_fact_content with a synthetic fact
+                            # This is a temporary measure until a more direct method is on ContentAnalyzer
+                            synthetic_fact_payload_for_ca = HSPFactPayload(
+                                id=f"hsp_res_fact_{result_payload.get('result_id', uuid.uuid4().hex[:6])}",
+                                statement_type="natural_language",
+                                statement_nl=description_text,
+                                source_ai_id=sender_ai_id, # The AI that generated the description
+                                timestamp_created=result_payload.get("timestamp_completed", datetime.now(timezone.utc).isoformat()),
+                                confidence_score=0.85, # Assign a default confidence for analyzed descriptions
+                                tags=["hsp_task_result_derived"]
+                            )
+                            print(f"DialogueManager: Calling ContentAnalyzer with synthetic fact from task result description.")
+                            self.content_analyzer.process_hsp_fact_content(synthetic_fact_payload_for_ca, sender_ai_id) # type: ignore
+
+                        except Exception as e:
+                            print(f"DialogueManager: Error calling ContentAnalyzer for HSP task result description: {e}")
+
+        else: # Task failed or was rejected
+            ai_name = self.personality_manager.get_current_personality_trait("display_name", self.ai_id)
+            error_details = result_payload.get("error_details", {})
+            error_msg_from_peer = error_details.get('error_message', 'an unknown issue')
+            result_message_to_user = f"{ai_name}: Regarding your request about '{original_query_text}', the specialist AI ({sender_ai_id}) could not complete it. Status: {status}, Details: {error_msg_from_peer}"
+            print(f"--- HSP Task Error for User (Session: {original_session_id}, User: {original_user_id}) ---")
+            print(result_message_to_user)
+            print(f"----------------------------------------------------------------------------------")
+
+            if self.memory_manager:
+                ai_metadata_hsp_error: Dict[str, Any] = {
+                    "speaker": "ai",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "user_id": original_user_id,
+                    "session_id": original_session_id,
+                    "source": "hsp_task_result_error",
+                    "hsp_correlation_id": correlation_id,
+                    "hsp_result_sender_ai_id": sender_ai_id,
+                    "error_details": error_details,
+                    "original_user_query_text": original_query_text
+                }
+                self.memory_manager.store_experience(result_message_to_user, "ai_dialogue_text_hsp_error", ai_metadata_hsp_error)
+
+
+    async def _dispatch_hsp_task_request(
+        self,
+        capability_advertisement: HSPCapabilityAdvertisementPayload,
+        request_parameters: Dict[str, Any],
+        original_user_query: str, # For context when result comes back
+        user_id: Optional[str],
+        session_id: Optional[str]
+    ) -> Optional[str]: # Returns an interim message to the user
+        """
+        Dispatches a task request to an external AI via HSP.
+        """
+        if not self.hsp_connector or not self.service_discovery_module:
+            print("DialogueManager: HSPConnector or ServiceDiscoveryModule not available for dispatching HSP task.")
+            return "I can't connect to my specialist network right now."
+
+        target_ai_id = capability_advertisement.get("ai_id")
+        capability_id = capability_advertisement.get("capability_id")
+
+        if not target_ai_id or not capability_id:
+            return "I found a specialist, but some details are missing to contact them."
+
+        request_id = f"taskreq_{uuid.uuid4().hex}"
+
+        # Define a callback topic for the result (unique per request for simplicity)
+        # In a real scenario, the AI might have one or a few persistent reply topics.
+        # For MQTT, the target AI would publish the result to this topic.
+        # The sender_ai_id (our AI ID) is part of the topic to make it specific.
+        callback_topic = f"hsp/results/{self.ai_id}/{request_id}"
+        # Our HSPConnector needs to be subscribed to this topic pattern, e.g., "hsp/results/{self.ai_id}/#"
+
+        hsp_task_payload = HSPTaskRequestPayload(
+            request_id=request_id,
+            requester_ai_id=self.ai_id,
+            target_ai_id=target_ai_id, # Can be used by a broker, or the target AI for verification
+            capability_id_filter=capability_id,
+            parameters=request_parameters,
+            callback_address=callback_topic
+        )
+
+        # The MQTT topic to send the request to. Could be a general topic for the target AI's requests.
+        # For PoC, let's assume target_ai_id can also be a topic name if it's a well-known service,
+        # or a topic like f"hsp/requests/{target_ai_id}"
+        mqtt_request_topic = f"hsp/requests/{target_ai_id}"
+        # Ensure the target mock AI is subscribed to this (e.g. "hsp/requests/did:hsp:mock_peer_XYZ/#")
+
+        print(f"DialogueManager: Attempting to send HSP TaskRequest '{request_id}' to '{target_ai_id}' (MQTT topic: {mqtt_request_topic}) for capability '{capability_id}'.")
+
+        correlation_id = self.hsp_connector.send_task_request(
+            payload=hsp_task_payload,
+            target_ai_id_or_topic=mqtt_request_topic
+        )
+
+        if correlation_id:
+            self.pending_hsp_task_requests[correlation_id] = {
+                "user_id": user_id,
+                "session_id": session_id,
+                "original_query_text": original_user_query,
+                "request_timestamp": datetime.now(timezone.utc).isoformat(),
+                "capability_id": capability_id,
+                "target_ai_id": target_ai_id,
+                "expected_callback_topic": callback_topic # Store for potential verification or direct subscription if needed
+            }
+            # Our main HSPConnector (for this AI instance) needs to be subscribed to its own result topics.
+            # This subscription should ideally happen once at init.
+            # self.hsp_connector.subscribe(f"hsp/results/{self.ai_id}/#") -> This should be done in main init.
+
+            print(f"DialogueManager: HSP TaskRequest '{request_id}' (corr_id: {correlation_id}) sent. Awaiting result on topic pattern like '{callback_topic}'.")
+            return f"I've sent your request for '{capability_advertisement.get('name', capability_id)}' to a specialist AI ({target_ai_id}). I'll let you know when I hear back."
+        else:
+            print(f"DialogueManager: Failed to send HSP TaskRequest for capability '{capability_id}'.")
+            return "I tried to consult a specialist, but I couldn't send the request."
+
 
     def _find_entity_node_id_in_kg(self, graph: nx.DiGraph, entity_label_query: str) -> Optional[str]:
         """
@@ -278,10 +473,101 @@ class DialogueManager:
                 return response_text
 
         # --- Attempt to answer from Knowledge Graph ---
-        if session_id and session_id in self.session_knowledge_graphs and not crisis_level > 0 : # Don't query KG in crisis
+        if session_id and session_id in self.session_knowledge_graphs and not crisis_level > 0 :
             kg_query_parts = self._is_kg_query(user_input)
             if kg_query_parts:
                 entity_label, rel_query_keyword = kg_query_parts
+                # ... (KG query logic remains here) ...
+                # If answer_from_kg is found, it returns early.
+
+        # --- HSP Task Dispatch Trigger (PoC) ---
+        hsp_task_trigger = "hsp_task: "
+        if user_input.lower().startswith(hsp_task_trigger) and self.service_discovery_module and self.hsp_connector:
+            command_part = user_input[len(hsp_task_trigger):]
+            # Example command: "capability_name_query with params {\"param1\":\"value1\"}"
+            parts = command_part.split(" with params ", 1)
+            if len(parts) == 2:
+                capability_name_query = parts[0].strip()
+                params_json_str = parts[1].strip()
+                try:
+                    request_params = json.loads(params_json_str)
+                    print(f"DialogueManager: HSP Task Triggered. Capability query: '{capability_name_query}', Params: {request_params}")
+
+                    # Find capability
+                    # For PoC, let's assume capability_name_query is the exact capability name or a tag.
+                    # We'll search by name first, then by tag.
+                    found_caps = self.service_discovery_module.find_capabilities(capability_name_filter=capability_name_query)
+                    if not found_caps:
+                        found_caps = self.service_discovery_module.find_capabilities(tags_filter=[capability_name_query])
+
+                    if found_caps:
+                        selected_cap = found_caps[0] # Select the first one for PoC
+                        print(f"DialogueManager: Found capability '{selected_cap.get('capability_id')}' from AI '{selected_cap.get('ai_id')}' for HSP task.")
+
+                        # Dispatch the task
+                        interim_response = await self._dispatch_hsp_task_request(
+                            capability_advertisement=selected_cap,
+                            request_parameters=request_params,
+                            original_user_query=user_input, # Pass the full user query for context
+                            user_id=user_id,
+                            session_id=session_id
+                        )
+                        # For this PoC, the interim response is the final response for this turn.
+                        # The actual result will come asynchronously and be handled by _handle_incoming_hsp_task_result (which currently just prints).
+                        response_text = f"{ai_name}: {interim_response}"
+                        # Standard response finalization for this interim message
+                        ai_metadata_hsp_dispatch: Dict[str, Any] = {"speaker": "ai", "timestamp": datetime.now().isoformat(), "user_id": user_id, "session_id": session_id, "source": "hsp_task_dispatch"}
+                        if self.memory_manager and user_mem_id:
+                            ai_metadata_hsp_dispatch["user_input_ref"] = user_mem_id
+                            self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata_hsp_dispatch)
+
+                        if session_id: # Also update active_sessions
+                            self.active_sessions.setdefault(session_id, []).append({"speaker": "user", "text": user_input})
+                            self.active_sessions[session_id].append({"speaker": "ai", "text": response_text})
+                            if len(self.active_sessions[session_id]) > self.max_history_per_session:
+                               self.active_sessions[session_id] = self.active_sessions[session_id][-self.max_history_per_session:]
+                        return response_text # Return the interim response
+
+                    else:
+                        response_text = f"{ai_name}: I couldn't find a specialist AI with the capability '{capability_name_query}'."
+                except json.JSONDecodeError:
+                    response_text = f"{ai_name}: The parameters for the HSP task were not in valid JSON format."
+                except Exception as e:
+                    response_text = f"{ai_name}: An error occurred while trying to dispatch the HSP task: {e}"
+
+                # If any error in HSP dispatch, handle like a normal failed response (store, etc.)
+                # This part is simplified for now, just returning the error text.
+                # Proper storage and history update should happen here too.
+                # For simplicity, let's just return this error message if it reaches here.
+                # This means the normal flow below for crisis/formula/LLM will be skipped.
+                # This might not be ideal; we might want to fall back to LLM.
+                # For this PoC, if "hsp_task:" is used, it either dispatches or gives a specific error.
+                # Let's ensure we store this error response properly.
+                ai_metadata_hsp_error: Dict[str, Any] = {"speaker": "ai", "timestamp": datetime.now().isoformat(), "user_id": user_id, "session_id": session_id, "source": "hsp_task_error"}
+                if self.memory_manager and user_mem_id:
+                    ai_metadata_hsp_error["user_input_ref"] = user_mem_id
+                    self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata_hsp_error)
+                if session_id:
+                    self.active_sessions.setdefault(session_id, []).append({"speaker": "user", "text": user_input})
+                    self.active_sessions[session_id].append({"speaker": "ai", "text": response_text})
+                return response_text # Return the error message about HSP task
+
+            else: # Malformed hsp_task command
+                response_text = f"{ai_name}: To use an HSP task, please use the format 'hsp_task: <capability_name> with params {{<json_params>}}'."
+                # Similar to above, ensure this response is stored.
+                ai_metadata_hsp_format_error: Dict[str, Any] = {"speaker": "ai", "timestamp": datetime.now().isoformat(), "user_id": user_id, "session_id": session_id, "source": "hsp_format_error"}
+                if self.memory_manager and user_mem_id:
+                    ai_metadata_hsp_format_error["user_input_ref"] = user_mem_id
+                    self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata_hsp_format_error)
+                if session_id:
+                    self.active_sessions.setdefault(session_id, []).append({"speaker": "user", "text": user_input})
+                    self.active_sessions[session_id].append({"speaker": "ai", "text": response_text})
+                return response_text
+
+
+        if crisis_level > 0:
+            response_text = self.config.get("crisis_response_text",
+                                           f"{ai_name}: I sense this is a sensitive situation. If you need help, please reach out to appropriate support channels.")
                 answer_from_kg = self._query_session_kg(session_id, entity_label, rel_query_keyword)
                 if answer_from_kg:
                     # Formulate a descriptive response

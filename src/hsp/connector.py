@@ -7,8 +7,11 @@ import paho.mqtt.client as mqtt # type: ignore # Using type: ignore as paho-mqtt
 
 from .types import HSPMessageEnvelope, HSPFactPayload # Using .types for relative import
 
+from .types import HSPMessageEnvelope, HSPFactPayload, \
+    HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload # Added new types
+
 # Placeholder for other payload types to be defined in src/hsp/types.py
-# e.g., HSPTaskRequestPayload, HSPTaskResultPayload etc.
+# e.g., HSPBeliefPayload, HSPEnvironmentalStatePayload etc.
 
 
 class HSPConnector:
@@ -31,8 +34,11 @@ class HSPConnector:
         self.mqtt_client.on_message = self._on_mqtt_message
 
         # Callbacks for different types of HSP messages
-        self._on_generic_message_callback = None # For any HSP message
-        self._on_fact_received_callback = None   # Specifically for HSP Fact payloads
+        self._on_generic_message_callback: Optional[Callable[[HSPMessageEnvelope, str], None]] = None
+        self._on_fact_received_callback: Optional[Callable[[HSPFactPayload, str, HSPMessageEnvelope], None]] = None
+        self._on_capability_advertisement_callback: Optional[Callable[[HSPCapabilityAdvertisementPayload, str, HSPMessageEnvelope], None]] = None
+        self._on_task_request_callback: Optional[Callable[[HSPTaskRequestPayload, str, HSPMessageEnvelope], None]] = None
+        self._on_task_result_callback: Optional[Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]] = None
         # ... other specific payload callbacks can be added
 
         self.default_qos: int = 1 # MQTT QoS level for publishing
@@ -224,13 +230,33 @@ class HSPConnector:
             message_type = envelope.get("message_type")
 
             if message_type and payload is not None: # Ensure payload is not None
+                    # Dispatch to specific handlers first
                 if message_type.startswith("HSP::Fact") and self._on_fact_received_callback:
                     try:
-                        # Pass payload, sender, and full envelope for context
-                        self._on_fact_received_callback(payload, envelope["sender_ai_id"], envelope)
+                            self._on_fact_received_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
                     except Exception as e:
-                        print(f"HSPConnector ({self.ai_id}): Error in fact received callback: {e}")
-                # TODO: Add more specific handlers here for other message types (TaskRequest, etc.)
+                            print(f"HSPConnector ({self.ai_id}): Error in Fact callback: {e}")
+                    elif message_type.startswith("HSP::CapabilityAdvertisement") and self._on_capability_advertisement_callback:
+                        try:
+                            self._on_capability_advertisement_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
+                        except Exception as e:
+                            print(f"HSPConnector ({self.ai_id}): Error in CapabilityAdvertisement callback: {e}")
+                    elif message_type.startswith("HSP::TaskRequest") and self._on_task_request_callback:
+                        try:
+                            self._on_task_request_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
+                        except Exception as e:
+                            print(f"HSPConnector ({self.ai_id}): Error in TaskRequest callback: {e}")
+                    elif message_type.startswith("HSP::TaskResult") and self._on_task_result_callback:
+                        try:
+                            self._on_task_result_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
+                        except Exception as e:
+                            print(f"HSPConnector ({self.ai_id}): Error in TaskResult callback: {e}")
+                    # Add elif for other specific message types (Belief, EnvironmentalState, Ack, Nack etc.) here
+
+                    # The generic callback is called AFTER specific ones (if any matched), or if no specific one matched.
+                    # However, the current generic callback is called before this block.
+                    # Decision: Generic callback should be for *all* messages. Specific ones are for convenience.
+                    # The current structure calls generic first, then tries specific. This is acceptable.
 
             # TODO: Implement logic for sending ACKs if the received message's qos_parameters.requires_ack is true.
             # This would involve crafting an HSP::Acknowledgement_v0.1 message and sending it back,
@@ -259,6 +285,59 @@ from typing import Callable, Dict, Any, Optional, Literal # Ensure Literal is im
         Callback signature: func(fact_payload: HSPFactPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope) -> None
         """
         self._on_fact_received_callback = callback
+
+    # --- New callback registrations for Tasking and Capabilities ---
+    def register_on_capability_advertisement_callback(self, callback: Callable[[HSPCapabilityAdvertisementPayload, str, HSPMessageEnvelope], None]):
+        """Registers a callback for HSP CapabilityAdvertisement messages."""
+        self._on_capability_advertisement_callback = callback # Needs self._on_capability_advertisement_callback defined in __init__
+
+    def register_on_task_request_callback(self, callback: Callable[[HSPTaskRequestPayload, str, HSPMessageEnvelope], None]):
+        """Registers a callback for HSP TaskRequest messages."""
+        self._on_task_request_callback = callback # Needs self._on_task_request_callback defined in __init__
+
+    def register_on_task_result_callback(self, callback: Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]):
+        """Registers a callback for HSP TaskResult messages."""
+        self._on_task_result_callback = callback # Needs self._on_task_result_callback defined in __init__
+
+    # --- New methods for publishing/sending Tasking and Capabilities ---
+    def publish_capability_advertisement(self, payload: HSPCapabilityAdvertisementPayload, topic: str, version: str = "0.1") -> bool:
+        """Publishes a CapabilityAdvertisement payload."""
+        message_type = f"HSP::CapabilityAdvertisement_v{version}"
+        envelope = self._build_hsp_envelope(
+            payload=dict(payload), # Ensure it's a dict
+            message_type=message_type,
+            recipient_ai_id_or_topic=topic,
+            communication_pattern="publish"
+        )
+        return self._send_hsp_message(envelope, mqtt_topic=topic)
+
+    def send_task_request(self, payload: HSPTaskRequestPayload, target_ai_id_or_topic: str, version: str = "0.1") -> Optional[str]:
+        """Sends a TaskRequest payload and returns the correlation_id used."""
+        message_type = f"HSP::TaskRequest_v{version}"
+        # Task requests should have a unique correlation_id for tracking responses.
+        # _build_hsp_envelope generates one if not provided; let's use that.
+        envelope = self._build_hsp_envelope(
+            payload=dict(payload), # Ensure it's a dict
+            message_type=message_type,
+            recipient_ai_id_or_topic=target_ai_id_or_topic,
+            communication_pattern="request"
+            # correlation_id will be auto-generated by _build_hsp_envelope
+        )
+        if self._send_hsp_message(envelope, mqtt_topic=target_ai_id_or_topic): # Topic could be specific to target AI or a general task request topic
+            return envelope.get("correlation_id")
+        return None
+
+    def send_task_result(self, payload: HSPTaskResultPayload, reply_to_address: str, correlation_id: str, version: str = "0.1") -> bool:
+        """Sends a TaskResult payload in response to a TaskRequest."""
+        message_type = f"HSP::TaskResult_v{version}"
+        envelope = self._build_hsp_envelope(
+            payload=dict(payload), # Ensure it's a dict
+            message_type=message_type,
+            recipient_ai_id_or_topic=reply_to_address, # Send to the callback address or original requester's topic
+            communication_pattern="response",
+            correlation_id=correlation_id # Crucial to link to the request
+        )
+        return self._send_hsp_message(envelope, mqtt_topic=reply_to_address)
 
     def set_default_mqtt_qos(self, qos: int):
         """Sets the default MQTT QoS level for publishing messages (0, 1, or 2)."""
