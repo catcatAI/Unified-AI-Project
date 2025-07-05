@@ -1,0 +1,461 @@
+import json
+import zlib
+import base64
+import os
+from datetime import datetime
+from collections import Counter
+from cryptography.fernet import Fernet, InvalidToken
+import hashlib
+import asyncio # Added for asyncio.to_thread
+
+# Placeholder for actual stopword list and NLP tools if not available
+try:
+    # A very basic list, consider a more comprehensive one for real use
+    STOPWORDS = set(["a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
+                     "have", "has", "had", "do", "does", "did", "will", "would", "should",
+                     "can", "could", "may", "might", "must", "of", "to", "in", "on", "at",
+                     "for", "with", "about", "against", "between", "into", "through",
+                     "during", "before", "after", "above", "below", "from", "up", "down",
+                     "out", "off", "over", "under", "again", "further", "then", "once",
+                     "here", "there", "when", "where", "why", "how", "all", "any", "both",
+                     "each", "few", "more", "most", "other", "some", "such", "no", "nor",
+                     "not", "only", "own", "same", "so", "than", "too", "very", "s", "t",
+                     "just", "don", "should've", "now", "i", "me", "my", "myself", "we",
+                     "our", "ours", "ourselves", "you", "your", "yours", "yourself",
+                     "yourselves", "he", "him", "his", "himself", "she", "her", "hers",
+                     "herself", "it", "its", "itself", "they", "them", "their", "theirs",
+                     "themselves", "what", "which", "who", "whom", "this", "that", "these",
+                     "those", "am"])
+except ImportError:
+    STOPWORDS = set()
+
+
+class HAMMemoryManager:
+    """
+    Hierarchical Abstractive Memory Manager v0.2.
+    Handles storage and retrieval of experiences, incorporating abstraction,
+    compression, Fernet encryption, and SHA256 checksums for data integrity.
+
+    Encryption relies on the MIKO_HAM_KEY environment variable for the Fernet key.
+    If not set, a temporary key is generated for the session (data not persistent).
+    """
+    def __init__(self, core_storage_filename="ham_core_memory.json"):
+        """
+        Initializes the HAMMemoryManager.
+
+        Args:
+            core_storage_filename (str): Filename for the persistent core memory store.
+        """
+        self.core_memory_store = {}  # In-memory store: {memory_id: data_package}
+        self.next_memory_id = 1
+
+        # Determine base path for data storage within the project structure
+        # Assuming this script is in src/core_ai/memory/
+        # PROJECT_ROOT/data/processed_data/
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
+        self.storage_dir = os.path.join(project_root, "data", "processed_data")
+        os.makedirs(self.storage_dir, exist_ok=True)
+
+        self.core_storage_filepath = os.path.join(self.storage_dir, core_storage_filename)
+
+        # Initialize Fernet for encryption
+        key_str = os.environ.get("MIKO_HAM_KEY")
+        if key_str:
+            # Assuming the key in env is already a valid URL-safe base64 encoded Fernet key
+            self.fernet_key = key_str.encode()
+        else:
+            print("CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.")
+            print("Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
+            print("DO NOT use this for any real data you want to keep, as it will be lost.")
+            self.fernet_key = Fernet.generate_key()
+            print(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
+
+        try:
+            self.fernet = Fernet(self.fernet_key)
+        except Exception as e:
+            print(f"CRITICAL: Failed to initialize Fernet. Provided MIKO_HAM_KEY might be invalid. Error: {e}")
+            print("Encryption will be DISABLED for this session.")
+            self.fernet = None
+
+        self._load_core_memory_from_file()
+        print(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
+
+    def _generate_memory_id(self) -> str:
+        mem_id = f"mem_{self.next_memory_id:06d}"
+        self.next_memory_id += 1
+        return mem_id
+
+    # --- Encryption/Decryption ---
+    def _encrypt(self, data: bytes) -> bytes:
+        """Encrypts data using Fernet if available, otherwise returns raw data."""
+        if self.fernet:
+            return self.fernet.encrypt(data)
+        # Fallback: If Fernet is not initialized, return data unencrypted (with a warning)
+        print("Warning: Fernet not initialized, data NOT encrypted.")
+        return data
+
+    def _decrypt(self, data: bytes) -> bytes:
+        """Decrypts data using Fernet if available, otherwise returns raw data."""
+        if self.fernet:
+            try:
+                return self.fernet.decrypt(data)
+            except InvalidToken:
+                print("Error: Invalid token during Fernet decryption. Data might be corrupted or wrong key.")
+                return b''
+            except Exception as e:
+                print(f"Error during Fernet decryption: {e}")
+                return b''
+        # Fallback: If Fernet is not initialized, return data as is (with a warning)
+        print("Warning: Fernet not initialized, data NOT decrypted.")
+        return data
+
+    # --- Compression/Decompression ---
+    def _compress(self, data: bytes) -> bytes:
+        return zlib.compress(data)
+
+    def _decompress(self, data: bytes) -> bytes:
+        try:
+            return zlib.decompress(data)
+        except zlib.error as e:
+            print(f"Error during decompression: {e}")
+            return b'' # Return empty bytes on error
+
+    # --- Abstraction/Rehydration (Text specific for v0.1, with v0.2 placeholders) ---
+    def _abstract_text(self, text: str) -> dict:
+        """
+        Abstracts raw text into a structured "gist" dictionary.
+        Includes basic summarization, keyword extraction, and placeholders for
+        advanced features like Chinese radical extraction and English POS tagging.
+        """
+        words = [word.lower().strip(".,!?;:'\"()") for word in text.split()]
+        # Basic keyword extraction (top N frequent words, excluding stopwords)
+        filtered_words = [word for word in words if word and word not in STOPWORDS]
+        if not filtered_words: # Handle case where all words are stopwords or empty
+            keywords = []
+        else:
+            word_counts = Counter(filtered_words)
+            keywords = [word for word, count in word_counts.most_common(5)]
+
+        # Basic summarization (first sentence)
+        sentences = text.split('.')
+        summary = sentences[0].strip() + "." if sentences else text
+
+        # Placeholder for advanced features based on language (conceptual for v0.2)
+        # Language detection would ideally happen before this or be passed in metadata.
+        # For now, a very simple check.
+        radicals_placeholder = []
+        pos_tags_placeholder = []
+
+        # Rudimentary language detection for placeholder
+        is_likely_chinese = any('\u4e00' <= char <= '\u9fff' for char in text)
+
+        if is_likely_chinese:
+            # Conceptual: In a real system, call a radical extraction library/function
+            # For example, if text = "你好世界"
+            # radicals_placeholder = extract_radicals(text) # -> e.g., ['女', '子', '口', '丿', 'Ｌ', '田'] (highly dependent on lib)
+            radicals_placeholder = ["RadicalPlaceholder1", "RadicalPlaceholder2"] # Dummy
+            print(f"HAM: Placeholder: Detected Chinese-like text, conceptual radicals would be extracted.")
+        else: # Assume English-like or other Latin script
+            # Conceptual: In a real system, call POS tagging
+            # For example, if text = "Hello world"
+            # pos_tags_placeholder = extract_pos_tags(filtered_words) # -> e.g., [('hello', 'UH'), ('world', 'NN')]
+            if keywords: # Only add if there are keywords, to simulate some processing
+                pos_tags_placeholder = [{kw: "NOUN_placeholder"} for kw in keywords[:2]] # Dummy POS for first 2 keywords
+            print(f"HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.")
+
+
+        return {
+            "summary": summary,
+            "keywords": keywords,
+            "original_length": len(text),
+            "radicals_placeholder": radicals_placeholder if is_likely_chinese else None,
+            "pos_tags_placeholder": pos_tags_placeholder if not is_likely_chinese and keywords else None
+        }
+
+    def _rehydrate_text_gist(self, gist: dict) -> str:
+        """
+        Rehydrates an abstracted text gist into a human-readable string format.
+        Includes summary, keywords, and any placeholder advanced features.
+        """
+        # For v0.2, could include placeholder info
+        base_rehydration = f"Summary: {gist.get('summary', 'N/A')}\nKeywords: {', '.join(gist.get('keywords', []))}"
+        if gist.get("radicals_placeholder"):
+            base_rehydration += f"\nRadicals (Placeholder): {gist.get('radicals_placeholder')}"
+        if gist.get("pos_tags_placeholder"):
+            base_rehydration += f"\nPOS Tags (Placeholder): {gist.get('pos_tags_placeholder')}"
+        return base_rehydration
+
+    # --- Core Layer File Operations ---
+    def _save_core_memory_to_file(self):
+        try:
+            with open(self.core_storage_filepath, 'w', encoding='utf-8') as f:
+                # Need to handle bytes from encryption for JSON serialization
+                # Store base64 encoded strings in JSON
+                serializable_store = {}
+                for mem_id, data_pkg in self.core_memory_store.items():
+                    serializable_store[mem_id] = {
+                        "timestamp": data_pkg["timestamp"],
+                        "data_type": data_pkg["data_type"],
+                        "encrypted_package_b64": data_pkg["encrypted_package"].decode('latin-1'), # latin-1 for bytes
+                        "metadata": data_pkg.get("metadata", {})
+                    }
+                json.dump({"next_memory_id": self.next_memory_id, "store": serializable_store}, f, indent=2)
+        except Exception as e:
+            print(f"Error saving core memory to file: {e}")
+
+    def _load_core_memory_from_file(self):
+        if not os.path.exists(self.core_storage_filepath):
+            print("Core memory file not found. Initializing an empty store and saving.")
+            self.core_memory_store = {}
+            self.next_memory_id = 1
+            self._save_core_memory_to_file() # Create the file with an empty store
+            return
+
+        try:
+            with open(self.core_storage_filepath, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                self.next_memory_id = data.get("next_memory_id", 1)
+                serializable_store = data.get("store", {})
+                self.core_memory_store = {}
+                for mem_id, data_pkg_b64 in serializable_store.items():
+                    self.core_memory_store[mem_id] = {
+                        "timestamp": data_pkg_b64["timestamp"],
+                        "data_type": data_pkg_b64["data_type"],
+                        "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('latin-1'),
+                        "metadata": data_pkg_b64.get("metadata", {})
+                    }
+            print(f"Core memory loaded from {self.core_storage_filepath}. Next ID: {self.next_memory_id}")
+        except Exception as e:
+            print(f"Error loading core memory from file: {e}. Starting with an empty store.")
+            self.core_memory_store = {}
+            self.next_memory_id = 1
+
+    # --- Public API Methods ---
+    def store_experience(self, raw_data: any, data_type: str, metadata: dict = None) -> str | None:
+        """
+        Stores a new experience into the HAM.
+        The raw_data is processed (abstracted, checksummed, compressed, encrypted)
+        and then stored.
+
+        Args:
+            raw_data: The raw data of the experience (e.g., text string, dict).
+            data_type (str): Type of the data (e.g., "dialogue_text", "sensor_reading").
+                             If "dialogue_text" (or contains it), text abstraction is applied.
+            metadata (dict, optional): Additional metadata for the experience.
+                                       A 'sha256_checksum' will be added to this.
+
+        Returns:
+            str | None: The generated memory ID if successful, otherwise None.
+        """
+        print(f"HAM: Storing experience of type '{data_type}'")
+        if metadata is None:
+            metadata = {}
+
+        if "dialogue_text" in data_type: # More inclusive check for user_dialogue_text, ai_dialogue_text
+            if not isinstance(raw_data, str):
+                print(f"Error: raw_data for {data_type} must be a string.")
+                return None
+            abstracted_gist = self._abstract_text(raw_data)
+            # Gist itself should be serializable (dict of strings/lists)
+            data_to_process = json.dumps(abstracted_gist).encode('utf-8')
+        else:
+            # For other data types, placeholder: just try to convert to string and encode
+            # This part needs to be properly implemented for each data type
+            try:
+                data_to_process = str(raw_data).encode('utf-8')
+            except Exception as e:
+                print(f"Error encoding raw_data for type {data_type}: {e}")
+                return None
+
+        # Add checksum to metadata BEFORE compression/encryption
+        sha256_checksum = hashlib.sha256(data_to_process).hexdigest()
+        metadata['sha256_checksum'] = sha256_checksum
+
+        try:
+            compressed_data = self._compress(data_to_process)
+            encrypted_data = self._encrypt(compressed_data)
+        except Exception as e:
+            print(f"Error during SL processing (compress/encrypt/checksum): {e}")
+            return None
+
+        memory_id = self._generate_memory_id()
+        data_package = {
+            "timestamp": datetime.now().isoformat(),
+            "data_type": data_type,
+            "encrypted_package": encrypted_data, # This is bytes
+            "metadata": metadata
+        }
+        self.core_memory_store[memory_id] = data_package
+        self._save_core_memory_to_file() # Persist after each store
+        print(f"HAM: Stored experience {memory_id}")
+        return memory_id
+
+    def recall_gist(self, memory_id: str) -> dict | str | None:
+        """
+        Recalls an abstracted gist of an experience by its memory ID.
+        The data is retrieved, decrypted, decompressed, and checksum verified.
+        The abstracted gist is then rehydrated (for text) or returned as is.
+
+        Args:
+            memory_id (str): The ID of the memory to recall.
+
+        Returns:
+            dict | str | None: A dictionary containing the rehydrated gist and metadata
+                              if successful and data_type is "dialogue_text",
+                              or the raw (but decompressed/decrypted) string for other types.
+                              Returns an error string or None if recall fails at any stage.
+        """
+        print(f"HAM: Recalling gist for memory_id '{memory_id}'")
+        data_package = self.core_memory_store.get(memory_id)
+        if not data_package:
+            print(f"Error: Memory ID {memory_id} not found.")
+            return None
+
+        try:
+            decrypted_data = self._decrypt(data_package["encrypted_package"])
+            if not decrypted_data: return "Error: Decryption failed."
+
+            decompressed_data_bytes = self._decompress(decrypted_data)
+            if not decompressed_data_bytes: return "Error: Decompression failed."
+
+            # Verify checksum AFTER decryption and decompression
+            stored_checksum = data_package.get("metadata", {}).get('sha256_checksum')
+            if stored_checksum:
+                current_checksum = hashlib.sha256(decompressed_data_bytes).hexdigest()
+                if current_checksum != stored_checksum:
+                    print(f"CRITICAL WARNING: Checksum mismatch for memory ID {memory_id}! Data may be corrupted.")
+                    # Optionally, could return a specific error or flag instead of proceeding
+                    # For now, we'll proceed but the warning is logged.
+            else:
+                print(f"Warning: No checksum found in metadata for memory ID {memory_id}.")
+
+
+            decompressed_data_str = decompressed_data_bytes.decode('utf-8')
+
+        except Exception as e:
+            print(f"Error during SL retrieval (decrypt/decompress/checksum): {e}")
+            return f"Error processing memory {memory_id}."
+
+        if "dialogue_text" in data_package["data_type"]: # Match more inclusive check
+            try:
+                abstracted_gist = json.loads(decompressed_data_str)
+                rehydrated_info = self._rehydrate_text_gist(abstracted_gist)
+                return {
+                    "id": memory_id,
+                    "timestamp": data_package["timestamp"],
+                    "data_type": data_package["data_type"],
+                    "rehydrated_gist": rehydrated_info,
+                    "metadata": data_package.get("metadata", {})
+                }
+            except json.JSONDecodeError:
+                return "Error: Could not decode abstracted gist. Data might be corrupted or not text."
+            except Exception as e:
+                 return f"Error rehydrating text gist: {e}"
+        else:
+            # For other data types, just return the decompressed string for now
+            return {
+                "id": memory_id,
+                "timestamp": data_package["timestamp"],
+                "data_type": data_package["data_type"],
+                "rehydrated_gist": decompressed_data_str, # Raw string for non-text
+                "metadata": data_package.get("metadata", {}) # Return full metadata
+            }
+
+    def query_core_memory(self,
+                          keywords: list = None,
+                          date_range: tuple = None,
+                          data_type_filter: str = None,
+                          user_id_for_facts: str = None, # New parameter
+                          limit: int = 5,
+                          sort_by_confidence: bool = False # New parameter for sorting facts
+                          ) -> list[dict]:
+        """
+        Enhanced query function.
+        Searches metadata, filters by data_type, user_id (for facts), and date_range.
+        Does NOT search encrypted content for keywords in this version.
+        """
+        print(f"HAM: Querying core memory (keywords: {keywords}, date_range: {date_range}, type: {data_type_filter})")
+        results = []
+        # Iterate in reverse chronological order of storage (approx) by sorting keys if needed
+        # For dicts, items are usually ordered by insertion in Python 3.7+
+
+        sorted_memory_ids = sorted(self.core_memory_store.keys(), reverse=True)
+
+        for mem_id in sorted_memory_ids:
+            if len(results) >= limit:
+                break
+
+            item = self.core_memory_store[mem_id]
+            match = True
+
+            if data_type_filter and item.get("data_type") != data_type_filter:
+                match = False
+
+            if date_range and match:
+                item_dt = datetime.fromisoformat(item["timestamp"])
+                start_date, end_date = date_range
+                if not (start_date <= item_dt <= end_date):
+                    match = False
+
+            if keywords and match:
+                # Basic keyword search in metadata (tags, description, etc.)
+                # This is a placeholder for more advanced metadata indexing.
+                metadata_str = str(item.get("metadata", {})).lower()
+                if not all(keyword.lower() in metadata_str for keyword in keywords):
+                    match = False
+
+            if match:
+                recalled_item = self.recall_gist(mem_id) # This rehydrates
+                if recalled_item and not isinstance(recalled_item, str): # Check if not an error string
+                    results.append(recalled_item)
+
+        print(f"HAM: Query returned {len(results)} results.")
+        return results
+
+if __name__ == '__main__':
+    print("--- HAMMemoryManager Test ---")
+    # Ensure a clean state for testing if file exists from previous run
+    test_file_name = "ham_test_memory.json"
+    if os.path.exists(os.path.join(HAMMemoryManager().storage_dir, test_file_name)):
+        os.remove(os.path.join(HAMMemoryManager().storage_dir, test_file_name))
+
+    ham = HAMMemoryManager(core_storage_filename=test_file_name)
+
+    # Test storing experiences
+    print("\n--- Storing Experiences ---")
+    exp1_id = ham.store_experience("Hello Miko! This is a test dialogue.", "dialogue_text", {"user": "test_user", "session": "s1"})
+    exp2_id = ham.store_experience("Miko learned about HAM today.", "dialogue_text", {"source": "developer_log"})
+    exp3_id = ham.store_experience({"value": 42, "unit": "answer"}, "generic_data", {"type": "puzzle_solution"})
+
+    print(f"Stored IDs: {exp1_id}, {exp2_id}, {exp3_id}")
+
+    # Test recalling gists
+    print("\n--- Recalling Gists ---")
+    if exp1_id: print(f"Recalled exp1: {ham.recall_gist(exp1_id)}")
+    if exp3_id: print(f"Recalled exp3: {ham.recall_gist(exp3_id)}")
+    print(f"Recalled non-existent: {ham.recall_gist('mem_000999')}")
+
+    # Test querying memory
+    print("\n--- Querying Memory (keywords in metadata) ---")
+    query_results_kw = ham.query_core_memory(keywords=["test_user"])
+    for res in query_results_kw:
+        print(res)
+
+    print("\n--- Querying Memory (data_type) ---")
+    query_results_type = ham.query_core_memory(data_type_filter="generic_data")
+    for res in query_results_type:
+        print(res)
+
+    # Test persistence by reloading
+    print("\n--- Testing Persistence ---")
+    del ham # Delete current instance
+    ham_reloaded = HAMMemoryManager(core_storage_filename=test_file_name) # Reload from file
+
+    print(f"Recalling exp1 after reload: {ham_reloaded.recall_gist(exp1_id if exp1_id else 'mem_000001')}")
+
+    # Clean up test file
+    if os.path.exists(ham_reloaded.core_storage_filepath):
+        os.remove(ham_reloaded.core_storage_filepath)
+    print(f"\nCleaned up {ham_reloaded.core_storage_filepath}")
+    print("--- Test Complete ---")

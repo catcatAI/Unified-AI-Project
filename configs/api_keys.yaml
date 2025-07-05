@@ -1,0 +1,36 @@
+# This file defines the structure of API keys and sensitive credentials
+# that the Unified-AI-Project expects to be available.
+# Actual values should be provided via environment variables (e.g., in a .env file).
+
+# Google Gemini API
+gemini:
+  api_key: "GEMINI_API_KEY_PLACEHOLDER" # Environment variable: GEMINI_API_KEY
+
+# OpenAI API
+openai:
+  api_key: "OPENAI_API_KEY_PLACEHOLDER" # Environment variable: OPENAI_API_KEY
+
+# Firebase
+firebase:
+  # Path to the Firebase Admin SDK JSON credentials file
+  # This path can be relative to the project root or an absolute path.
+  # The actual path should be set in the environment variable.
+  credentials_path: "FIREBASE_CREDENTIALS_PATH_PLACEHOLDER" # Environment variable: FIREBASE_CREDENTIALS_PATH
+
+# Other general configurations that might be sensitive or environment-specific
+general:
+  base_url: "BASE_URL_PLACEHOLDER" # Environment variable: BASE_URL
+  # Add other general API keys or sensitive parameters here
+  # another_service_api_key: "ANOTHER_SERVICE_API_KEY_PLACEHOLDER" # Environment variable: ANOTHER_SERVICE_API_KEY
+
+# Example for a service that might have multiple credentials
+# some_complex_service:
+#   client_id: "SOME_COMPLEX_SERVICE_CLIENT_ID_PLACEHOLDER"
+#   client_secret: "SOME_COMPLEX_SERVICE_CLIENT_SECRET_PLACEHOLDER"
+#   region: "SOME_COMPLEX_SERVICE_REGION_PLACEHOLDER"
+
+# Note: The configuration manager (e.g., src/shared/config/config_manager.js)
+# should be responsible for loading these values from environment variables
+# based on the keys defined here (e.g., GEMINI_API_KEY, OPENAI_API_KEY).
+# The "PLACEHOLDER" values in this file are for documentation and structural reference only.
+# The system should expect the actual values to be supplied via the environment.

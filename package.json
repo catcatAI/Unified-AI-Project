@@ -1,0 +1,20 @@
+{
+  "name": "unified-ai-project",
+  "version": "0.1.0",
+  "description": "A unified AI project consolidating MikoAI, Fragmenta, and other CatAI initiatives.",
+  "scripts": {
+    "test": "echo \"Error: no test specified for root project\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "mikoai",
+    "fragmenta",
+    "nlp",
+    "machine-learning"
+  ],
+  "author": "Unified AI Team",
+  "license": "MIT",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}

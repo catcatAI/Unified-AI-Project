@@ -1,0 +1,68 @@
+system:
+  log_path: logs # To be placed under Unified-AI-Project/data/logs/ eventually
+  log_level: INFO
+
+ai_name: Miko # Or a new unified name, TBD
+
+# Settings from MikoAI's config.yaml
+memory_manager:
+  short_term_memory_limit: 10 # Short-term memory limit in conversation turns
+
+tool_dispatcher:
+  default_location: "Taipei" # Default location for tools like weather lookup
+
+# Core systems, largely from MikoAI, paths will need updates
+core_systems:
+  # memory_system will likely be redefined as part of src/core_ai/memory/
+  # personality_file will point to configs/personality_profiles/
+  local_storage:
+    path: "data/local_storage" # To be under Unified-AI-Project/data/
+  ollama: # Example, might be moved to a dedicated LLM service config
+    base_url: "http://localhost:11434"
+    model_name: "llama2"
+  # safety_system:
+  #   api_key: ${API_KEY} # API keys should be managed via .env
+
+# Settings from Fragmenta's config.yaml
+fragmenta_settings:
+  modules: # Controls for Fragmenta-specific modules
+    echoShell: true
+    sillScan: true
+    toneFragment: true
+    tailStitch: true
+    # Note: Original Fragmenta config had duplicate keys with different casing.
+    # Kept the camelCase versions as they are more common in JS.
+    # EchoShell: false # Example of duplicated key
+    # SillScan: false
+    # ToneFragment: false
+    # TailStitch: false
+  tone_vector: # Specific to Fragmenta's tone processing
+    V1: 0.03
+    V2: 0.5
+    V3: 0.4
+  # persona_chain from Fragmenta's config.yaml will be considered during
+  # the migration of personality_profiles in step 3.
+  # persona_chain:
+  #   - neutral
+  #   - reflective
+
+# Placeholder for future global settings
+# global_settings:
+#   feature_flags:
+#     new_dialogue_engine: true
+#     advanced_tool_discovery: false
+#   default_language: "en-US"
+
+# Note: Personality settings from MikoAI's config.yaml (description, core_values, etc.)
+# are planned to be part of configs/personality_profiles/miko_base.json
+# and will be handled in step 3.
+
+operational_configs:
+  timeouts:
+    llm_general_request: 60      # Default timeout for general LLM requests in seconds
+    llm_critique_request: 45     # Timeout for LLM requests by SelfCritiqueModule
+    llm_fact_extraction_request: 45 # Timeout for LLM requests by FactExtractorModule
+    dialogue_manager_turn: 120 # Overall timeout for processing a single turn in DialogueManager
+  learning_thresholds:
+    min_fact_confidence_to_store: 0.70 # Minimum confidence from FactExtractor to store a fact
+    min_critique_score_to_store: 0.3  # Minimum critique score to bother storing the critique object

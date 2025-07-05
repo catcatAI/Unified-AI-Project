@@ -1,0 +1,26 @@
+{
+  "name": "unified-ai-electron-app",
+  "version": "0.1.0",
+  "description": "Electron app interface for the Unified-AI-Project.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "echo \"Build script placeholder for Electron app\"",
+    "package": "electron-packager . --overwrite --platform=linux --arch=x64 --out=out --prune=true",
+    "test": "echo \"Error: no test specified for electron_app yet\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "electron",
+    "desktop",
+    "interface"
+  ],
+  "author": "Unified AI Team",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^28.0.0"
+  },
+  "devDependencies": {
+    "electron-packager": "^17.0.0"
+  }
+}

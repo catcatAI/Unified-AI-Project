@@ -1,0 +1,154 @@
+import unittest
+import os
+import json
+import sys
+import shutil
+
+# Add src directory to sys.path
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
+SRC_DIR = os.path.join(PROJECT_ROOT, "src")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
+from tools import translation_tool # Imports the module to allow monkeypatching/reloading if needed
+from tools.translation_tool import translate, _detect_language, _load_dictionary, request_model_upgrade
+from tools.tool_dispatcher import ToolDispatcher
+
+# Define a consistent test output directory for this test suite
+TEST_DATA_DIR = os.path.join(PROJECT_ROOT, "tests", "test_output_data", "translation_model_data")
+# Path for the dummy dictionary for testing
+DUMMY_DICTIONARY_PATH = os.path.join(TEST_DATA_DIR, "test_translation_dictionary.json")
+
+
+class TestTranslationModelComponents(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        os.makedirs(TEST_DATA_DIR, exist_ok=True)
+
+        # Create a dummy dictionary for testing purposes
+        cls.dummy_dict_content = {
+            "zh_to_en": {"你好": "Hello", "世界": "World", "猫": "Cat"},
+            "en_to_zh": {"Hello": "你好", "World": "世界", "Dog": "狗"}
+        }
+        with open(DUMMY_DICTIONARY_PATH, 'w', encoding='utf-8') as f:
+            json.dump(cls.dummy_dict_content, f, indent=2)
+
+        # Override the original dictionary path for testing
+        cls.original_dictionary_path = translation_tool.DICTIONARY_PATH
+        translation_tool.DICTIONARY_PATH = DUMMY_DICTIONARY_PATH
+
+        # Reset the global dictionary in the module to force reload with dummy
+        translation_tool._translation_dictionary = None
+
+
+    @classmethod
+    def tearDownClass(cls):
+        # Restore original dictionary path
+        translation_tool.DICTIONARY_PATH = cls.original_dictionary_path
+        translation_tool._translation_dictionary = None # Clear loaded dict
+
+        # Clean up test directory and files
+        if os.path.exists(TEST_DATA_DIR):
+            shutil.rmtree(TEST_DATA_DIR)
+
+    def setUp(self):
+        # Ensure dictionary is reloaded for each test with the dummy one
+        translation_tool._translation_dictionary = None
+        _load_dictionary() # This will now load DUMMY_DICTIONARY_PATH
+
+    def test_01_load_dictionary(self):
+        print("\nRunning test_01_load_dictionary...")
+        dictionary = _load_dictionary() # Should use the dummy dictionary
+        self.assertIsNotNone(dictionary)
+        self.assertIn("zh_to_en", dictionary)
+        self.assertIn("你好", dictionary["zh_to_en"])
+        self.assertEqual(dictionary["zh_to_en"]["你好"], "Hello")
+        print("test_01_load_dictionary PASSED")
+
+    def test_02_detect_language(self):
+        print("\nRunning test_02_detect_language...")
+        self.assertEqual(_detect_language("你好世界"), "zh")
+        self.assertEqual(_detect_language("Hello World"), "en")
+        self.assertEqual(_detect_language("你好 World"), "zh") # Contains Chinese chars
+        self.assertEqual(_detect_language("123 !@#"), None) # No clear language
+        self.assertEqual(_detect_language(""), None)
+        print("test_02_detect_language PASSED")
+
+    def test_03_translate_function(self):
+        print("\nRunning test_03_translate_function...")
+        # Test with dummy dictionary
+        self.assertEqual(translate("你好", "en"), "Hello")
+        self.assertEqual(translate("Hello", "zh"), "你好")
+        self.assertEqual(translate("猫", "en", source_language="zh"), "Cat")
+        self.assertEqual(translate("Dog", "zh", source_language="en"), "狗")
+
+        # Case insensitivity for English source
+        self.assertEqual(translate("hello", "zh"), "你好")
+
+        # Unknown word
+        self.assertIn("not available", translate("未知", "en"))
+        self.assertIn("not available", translate("Unknown", "zh"))
+
+        # Unsupported language
+        self.assertIn("not supported", translate("你好", "es"))
+
+        # Same source/target
+        self.assertEqual(translate("你好", "zh"), "你好")
+        print("test_03_translate_function PASSED")
+
+    def test_04_request_model_upgrade_hook(self):
+        print("\nRunning test_04_request_model_upgrade_hook...")
+        # This test just ensures the function can be called without error
+        try:
+            request_model_upgrade("Test details for upgrade request.")
+            # If we want to check print output, we'd need to redirect stdout
+            print("test_04_request_model_upgrade_hook PASSED (callability check)")
+        except Exception as e:
+            self.fail(f"request_model_upgrade raised an exception: {e}")
+
+    def test_05_tool_dispatcher_translation_routing(self):
+        print("\nRunning test_05_tool_dispatcher_translation_routing...")
+        dispatcher = ToolDispatcher() # Will use the dummy dictionary due to setUpClass patch
+
+        # Test inference
+        self.assertEqual(dispatcher.dispatch("translate '你好' to English"), "Hello")
+        self.assertEqual(dispatcher.dispatch("translate 'Hello' to Chinese"), "你好")
+        self.assertEqual(dispatcher.dispatch("'Dog' in Chinese"), "狗")
+        self.assertIn("not available", dispatcher.dispatch("translate '未知词' to English"))
+
+        # Test explicit call
+        self.assertEqual(dispatcher.dispatch("你好", explicit_tool_name="translate_text", target_language="en"), "Hello")
+
+        # Test unsupported
+        self.assertIn("not supported", dispatcher.dispatch("translate '你好' to Spanish"))
+        print("test_05_tool_dispatcher_translation_routing PASSED")
+
+    def test_06_dictionary_load_failure(self):
+        print("\nRunning test_06_dictionary_load_failure...")
+        original_path = translation_tool.DICTIONARY_PATH
+        translation_tool.DICTIONARY_PATH = "non_existent_dictionary.json"
+        translation_tool._translation_dictionary = None # Force reload
+
+        dictionary = _load_dictionary()
+        self.assertIsNotNone(dictionary) # Should return empty dicts on failure
+        self.assertEqual(dictionary["zh_to_en"], {})
+        self.assertEqual(dictionary["en_to_zh"], {})
+
+        # Test translate function with empty dictionary
+        self.assertIn("not available", translate("你好", "en"))
+
+        translation_tool.DICTIONARY_PATH = original_path # Restore
+        translation_tool._translation_dictionary = None # Force reload of original for other tests if any
+        print("test_06_dictionary_load_failure PASSED")
+
+
+if __name__ == '__main__':
+    # This setup is primarily if running this test file directly.
+    # unittest.main() will use the setUpClass/tearDownClass for managing paths.
+    print(f"Translation Model Test: Current working directory: {os.getcwd()}")
+    print(f"Translation Model Test: Sys.path: {sys.path}")
+    print(f"Translation Model Test: Test data output directory: {TEST_DATA_DIR}")
+
+    unittest.main(verbosity=2)

@@ -1,0 +1,60 @@
+[
+    {
+        "name": "greeting_formula",
+        "conditions": ["hello", "hi", "你好"],
+        "action": "greet_user",
+        "description": "Responds to common user greetings.",
+        "parameters": {},
+        "priority": 10,
+        "enabled": true,
+        "version": "1.0",
+        "response_template": "Hello! I am {ai_name}. How can I help you today?"
+    },
+    {
+        "name": "weather_formula",
+        "conditions": ["weather", "天氣", "forecast"],
+        "action": "get_weather_forecast",
+        "description": "Provides weather forecast based on user query or default location.",
+        "parameters": {
+            "location_required": false,
+            "default_timeframe": "today"
+        },
+        "priority": 20,
+        "enabled": true,
+        "version": "1.0"
+    },
+    {
+        "name": "time_query_formula",
+        "conditions": ["time", "時間", "current time"],
+        "action": "get_current_time",
+        "description": "Provides the current time.",
+        "parameters": {},
+        "priority": 15,
+        "enabled": true,
+        "version": "1.0"
+    },
+    {
+        "name": "help_formula",
+        "conditions": ["help", "幫助", "what can you do"],
+        "action": "provide_help_summary",
+        "description": "Offers a summary of capabilities or available commands.",
+        "parameters": {},
+        "priority": 5,
+        "enabled": true,
+        "version": "1.0"
+    },
+    {
+        "name": "formula_trigger_calculation",
+        "conditions": ["calculate for me", "compute the result of"],
+        "action": "dispatch_tool",
+        "description": "Triggers the calculator tool with a predefined query or one extracted from context.",
+        "parameters": {
+            "tool_name": "calculate",
+            "tool_query": "25 * 4"
+        },
+        "priority": 25,
+        "enabled": true,
+        "version": "1.0",
+        "response_template": null
+    }
+]
