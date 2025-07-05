@@ -130,28 +130,17 @@ You can interact with the Unified-AI-Project in several ways:
 
 ## Contributing
 
-Contributions are welcome and greatly appreciated! Here are some guidelines to help you get started.
-
-### Getting Code
-
-1.  Fork the repository on GitHub.
-2.  Clone your fork locally:
-    ```bash
-    git clone https://github.com/YOUR_USERNAME/Unified-AI-Project.git
-    cd Unified-AI-Project
-    ```
-3.  Add the upstream remote:
-    ```bash
-    git remote add upstream https://github.com/ORIGINAL_OWNER/Unified-AI-Project.git
-    ```
+Contributions are welcome and greatly appreciated! Here are some guidelines to help you get started with local development.
 
 ### Development Workflow
 
 1.  **Create a branch:**
-    Create a new branch for your feature or bug fix from an up-to-date `master` (or `main`) branch:
+    It's good practice to work on new features or bug fixes in separate branches.
     ```bash
-    git checkout master
-    git pull upstream master
+    # Ensure you are on your main development branch (e.g., master)
+    # git checkout master
+    # git pull # If you are collaborating and need to update
+
     git checkout -b feat/your-feature-name  # Example: feat/new-dialogue-intent
     # or
     git checkout -b fix/issue-description   # Example: fix/incorrect-api-response
@@ -193,17 +182,10 @@ Contributions are welcome and greatly appreciated! Here are some guidelines to h
     *   `style: Format code with Black`
     *   `refactor: Simplify dialogue state management`
     *   `test: Add unit tests for new calculation tool`
-
-6.  **Push to your fork:**
     ```bash
-    git push origin feat/your-feature-name
+    git add .
+    git commit -m "feat: Describe your change"
     ```
-
-7.  **Create a Pull Request (PR):**
-    Go to the original repository on GitHub and create a Pull Request from your forked branch to the `master` (or `main`) branch of the upstream repository.
-    *   Provide a clear title and description for your PR.
-    *   Link any relevant issues.
-    *   Ensure all automated checks (CI/CD, if configured) pass.
 
 ### Code Style
 
@@ -213,4 +195,4 @@ Contributions are welcome and greatly appreciated! Here are some guidelines to h
 
 ### Questions or Issues
 
-If you have questions, find a bug, or want to suggest an enhancement, please open an issue on GitHub.
+If you have questions, find a bug, or want to suggest an enhancement, please consider documenting them or discussing with your team as appropriate for your project management style.
