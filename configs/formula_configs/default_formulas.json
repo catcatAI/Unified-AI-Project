@@ -70,5 +70,20 @@
         "enabled": true,
         "version": "1.0",
         "response_template": null
+    },
+    {
+        "name": "draft_tool_formula",
+        "conditions": [
+            "draft(?: a)?(?: python)? tool (?:called |named )?(?P<tool_name>[a-zA-Z_][a-zA-Z0-9_]*) that (?P<description_for_llm>.+)",
+            "create(?: a)?(?: python)? tool (?:called |named )?(?P<tool_name>[a-zA-Z_][a-zA-Z0-9_]*) to (?P<description_for_llm>.+)",
+            "make a tool (?:called |named )?(?P<tool_name>[a-zA-Z_][a-zA-Z0-9_]*) which (?P<description_for_llm>.+)"
+        ],
+        "action": "initiate_tool_draft",
+        "description": "Initiates the drafting of a new Python tool skeleton based on user description.",
+        "parameters": {},
+        "priority": 30,
+        "enabled": true,
+        "version": "1.0",
+        "response_template": null
     }
 ]

@@ -430,7 +430,23 @@ class DialogueManager:
                         response_text = f"{ai_name}: {tool_result}" if tool_result is not None else f"{ai_name}: I tried to use a tool, but it didn't work as expected."
                     else:
                         response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' tried to dispatch a tool, but tool_name or tool_query was missing/invalid."
-                else: # Not a dispatch_tool action
+                    elif action_name == "initiate_tool_draft":
+                        tool_name_draft = action_params.get("tool_name")
+                        desc_for_llm_draft = action_params.get("description_for_llm")
+                        if tool_name_draft and desc_for_llm_draft:
+                            print(f"DialogueManager: Formula '{matched_formula.get('name')}' initiating tool draft for '{tool_name_draft}'.")
+                            response_text = await self.handle_draft_tool_request(
+                                tool_name=tool_name_draft,
+                                purpose_and_io_desc=desc_for_llm_draft,
+                                session_id=session_id
+                            )
+                        else:
+                            missing_params = []
+                            if not tool_name_draft: missing_params.append("tool_name")
+                            if not desc_for_llm_draft: missing_params.append("description_for_llm")
+                            response_text = f"{ai_name}: I understood you want to draft a tool, but I couldn't extract the necessary details ({', '.join(missing_params)})."
+
+                    else: # Other non-dispatch_tool actions
                     response_template = matched_formula.get("response_template")
                     if response_template:
                         try:
@@ -438,11 +454,11 @@ class DialogueManager:
                             response_text = response_template.format(**format_kwargs)
                         except KeyError as e:
                             response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' triggered action '{action_name}' (template error: {e})."
-                        except Exception as e:
+                            except Exception as e: # General exception for other template errors
                             response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' triggered action '{action_name}' (general template error)."
-                    elif action_name:
-                        response_text = f"{ai_name}: Action '{action_name}' triggered."
-                    else:
+                        elif action_name: # Action exists but no template
+                            response_text = f"{ai_name}: Action '{action_name}' triggered by formula '{matched_formula.get('name')}'."
+                        else: # Fallback if action_name is somehow missing but formula matched
                         response_text = f"{ai_name}: I recognized pattern: '{matched_formula.get('name')}'."
             else: # No formula matched, proceed to LLM
                 full_prompt_for_llm = f"{prompt_context_for_llm}{user_input}"
@@ -495,6 +511,96 @@ class DialogueManager:
         elif time_segment == "evening": time_specific_greeting_prefix = "Good evening!"
         elif time_segment == "night": time_specific_greeting_prefix = "Hello,"
         return f"{time_specific_greeting_prefix} {base_prompt}" if time_specific_greeting_prefix else base_prompt
+
+    async def handle_draft_tool_request(self, tool_name: str, purpose_and_io_desc: str, session_id: Optional[str] = None) -> str:
+        """
+        Handles a request to draft a Python tool skeleton using an LLM.
+        The AI does not save or integrate this code; it only drafts it.
+        """
+        ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
+        print(f"DialogueManager: Received tool drafting request. Tool name: '{tool_name}', Description: '{purpose_and_io_desc}'")
+
+        # Example of a simple tool structure for few-shot prompting
+        example_tool_structure = """
+Example of a simple Python tool class structure:
+
+```python
+from typing import Optional, List, Dict, Any # Common imports
+
+class ExampleTool:
+    \"\"\"Provides a brief description of what the tool does.\"\"\"
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        \"\"\"Initializes the tool, optionally with configuration.\"\"\"
+        self.config = config or {}
+        print(f"{self.__class__.__name__} initialized.")
+
+    def execute(self, parameter_one: str, parameter_two: int = 0) -> Dict[str, Any]:
+        \"\"\"
+        Describes what this main method does.
+
+        Args:
+            parameter_one (str): Description of first parameter.
+            parameter_two (int, optional): Description of second parameter. Defaults to 0.
+
+        Returns:
+            Dict[str, Any]: Description of the output, often a dictionary.
+        \"\"\"
+        print(f"Executing {self.__class__.__name__} with {parameter_one=}, {parameter_two=}")
+        # TODO: Implement actual tool logic here
+        # Replace 'pass' with your logic or raise NotImplementedError
+        raise NotImplementedError("Tool logic not implemented yet.")
+        # Example return:
+        # return {"status": "success", "result": f"Processed {parameter_one} and {parameter_two}"}
+```
+"""
+
+        prompt = f"""
+You are an expert Python programmer assisting in drafting tool skeletons for an AI framework.
+Your task is to generate a Python class for a new tool based on the provided specifications.
+
+Tool Specifications:
+- Tool Class Name: {tool_name}
+- Tool Purpose and I/O Description: {purpose_and_io_desc}
+
+Instructions for the generated code:
+1. The tool should be a single Python class.
+2. The class should have a clear docstring based on the provided purpose.
+3. Infer a primary execution method name (e.g., `execute`, `run`, or one based on the purpose). If the description implies multiple actions, focus on the main one.
+4. This primary method should have a clear docstring explaining its purpose, arguments, and what it returns.
+5. Infer parameter names, Python type hints, and default values (if any seem appropriate from the description) for this method from the "Tool Purpose and I/O Description".
+6. Infer a Python type hint for the return value of this method.
+7. The body of this primary method should be a placeholder like `raise NotImplementedError("Tool logic not implemented yet.")` or `pass`.
+8. Include an `__init__` method that can accept an optional `config: Optional[Dict[str, Any]] = None` parameter and stores it. Include a basic print statement in `__init__` indicating the tool has been initialized.
+9. Ensure necessary imports like `typing.Optional`, `typing.List`, `typing.Dict`, `typing.Any` are included if complex types are hinted.
+
+{example_tool_structure}
+
+Based on the specifications for "{tool_name}", please generate *only* the complete Python code for the class.
+Start with any necessary imports, then the class definition. Do not include any explanatory text before or after the Python code block.
+The primary execution method should be clearly identifiable.
+"""
+
+        print(f"DialogueManager: Sending tool drafting prompt to LLM for tool '{tool_name}'.")
+        # We don't want the AI's typical conversational prefix for code generation
+        # So, we call generate_raw_response or ensure generate_response can skip it.
+        # For now, assuming llm_interface.generate_response is for conversational text.
+        # Let's assume there's a way to get a more direct model completion or we post-process.
+        # For this POC, we'll use generate_response and see. It might add "AI:".
+
+        # Using a potentially different model or parameters for code generation might be ideal.
+        # For now, using default.
+        generated_code_text = self.llm_interface.generate_response(prompt=prompt, model_name=None, params={"temperature": 0.3}) # Lower temp for code
+
+        response_to_user = f"{ai_name}: Okay, I've drafted a Python skeleton for a tool named `{tool_name}` based on your description:\n\n```python\n{generated_code_text.strip()}\n```\n\nPlease review this code carefully. It's a starting point and will need to be manually saved, tested, and integrated if you wish to use it."
+
+        # Store this interaction (user request for draft, AI provides draft)
+        # User input for drafting was handled by the formula that called this method.
+        # This method only generates the AI's part of that turn.
+        # The calling context (e.g. a formula handler in get_simple_response) should manage history.
+
+        return response_to_user
+
 
 if __name__ == '__main__':
     import asyncio
