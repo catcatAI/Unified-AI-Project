@@ -43,8 +43,9 @@ class ContentAnalyzerModule:
 
         self.nlp = nlp
         self.matcher = Matcher(self.nlp.vocab)
+        self.graph: nx.DiGraph = nx.DiGraph() # Persistent graph for the module instance
         self._initialize_matchers()
-        print(f"ContentAnalyzerModule initialized with spaCy model: {self.nlp.meta['name']}")
+        print(f"ContentAnalyzerModule initialized with spaCy model: {self.nlp.meta['name']}. Internal graph created.")
 
     def _initialize_matchers(self):
         """Initializes spaCy Matcher patterns."""
@@ -615,6 +616,110 @@ class ContentAnalyzerModule:
 
         print(f"NetworkX graph constructed: {nx_graph.number_of_nodes()} nodes, {nx_graph.number_of_edges()} edges.")
         return knowledge_graph_data, nx_graph
+
+
+    def process_hsp_fact_content(self, hsp_fact_payload: Dict[str, Any], source_ai_id: str) -> bool:
+        """
+        Processes the content of an HSPFactPayload and integrates it into the module's knowledge graph.
+        For v1, if statement_nl exists, it re-analyzes it.
+        If statement_structured (as semantic triple) exists, it tries to add directly.
+        Updates self.graph directly.
+
+        Args:
+            hsp_fact_payload (Dict[str, Any]): The payload of the HSP fact. Expected to conform to HSPFactPayload structure.
+            source_ai_id (str): The ID of the AI that sent/originated this fact via HSP.
+
+        Returns:
+            bool: True if processing led to graph updates, False otherwise.
+        """
+        print(f"ContentAnalyzerModule: Processing HSP Fact ID '{hsp_fact_payload.get('id')}' from '{source_ai_id}'")
+
+        updated_graph = False
+        confidence = hsp_fact_payload.get('confidence_score', 0.7) # Default confidence for HSP facts
+        hsp_fact_id = hsp_fact_payload.get('id', f"hsp_fact_{uuid.uuid4().hex[:6]}")
+
+        # Option 1: Process natural language statement if available
+        statement_nl = hsp_fact_payload.get('statement_nl')
+        if statement_nl:
+            print(f"ContentAnalyzerModule: Analyzing NL statement from HSP fact: \"{statement_nl[:100]}...\"")
+            # analyze_content returns a new graph; we need to merge it.
+            kg_data_from_nl, nx_graph_from_nl = self.analyze_content(statement_nl)
+
+            if nx_graph_from_nl.number_of_nodes() > 0:
+                # Merge nodes and edges from nx_graph_from_nl into self.graph
+                # For simplicity, this is a basic union. More sophisticated merging would handle conflicts,
+                # update existing node attributes based on confidence/source, etc.
+                for node, data in nx_graph_from_nl.nodes(data=True):
+                    if node not in self.graph:
+                        self.graph.add_node(node, **data)
+                        # Add HSP source info to new nodes from this fact
+                        self.graph.nodes[node]['hsp_source_info'] = {'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence}
+                        updated_graph = True
+                    else:
+                        # Node exists, maybe update confidence or add as another source? For now, just log.
+                        print(f"ContentAnalyzerModule: Node '{node}' from HSP fact NL already exists. Not overwriting attributes.")
+
+                for u, v, data in nx_graph_from_nl.edges(data=True):
+                    if not self.graph.has_edge(u,v) or self.graph.edges[u,v].get('type') != data.get('type'):
+                        self.graph.add_edge(u, v, **data)
+                        # Add HSP source info to new edges
+                        self.graph.edges[u,v]['hsp_source_info'] = {'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence}
+                        updated_graph = True
+                    else:
+                        # Edge exists, maybe update weight/confidence? For now, just log.
+                        print(f"ContentAnalyzerModule: Edge '{u}'->'{v}' (type {data.get('type')}) from HSP fact NL already exists.")
+
+                if updated_graph:
+                    print(f"ContentAnalyzerModule: Merged {nx_graph_from_nl.number_of_nodes()} nodes and {nx_graph_from_nl.number_of_edges()} edges from NL analysis of HSP fact into main graph.")
+
+        # Option 2: Process structured statement (e.g., semantic triple)
+        # This part is more conceptual for now and needs careful implementation of "deep mapping".
+        statement_structured = hsp_fact_payload.get('statement_structured')
+        statement_type = hsp_fact_payload.get('statement_type')
+
+        if statement_type == "semantic_triple" and isinstance(statement_structured, dict):
+            subj_uri = statement_structured.get('subject_uri')
+            pred_uri = statement_structured.get('predicate_uri')
+            obj_data = statement_structured.get('object_literal') or statement_structured.get('object_uri')
+            obj_is_uri = bool(statement_structured.get('object_uri'))
+
+            if subj_uri and pred_uri and obj_data:
+                print(f"ContentAnalyzerModule: Processing semantic triple from HSP fact: {subj_uri} - {pred_uri} - {obj_data}")
+
+                # For PoC, treat URIs directly as node IDs or labels.
+                # A real system would have URI resolution and ontology mapping.
+                s_id = subj_uri # In future, map_uri_to_node_id(subj_uri)
+                o_id = obj_data if obj_is_uri else f"literal_{str(obj_data).lower().replace(' ','_')[:30]}"
+
+                # Add/update subject node
+                if not self.graph.has_node(s_id):
+                    self.graph.add_node(s_id, label=subj_uri, type="HSP_URI_Entity", hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence})
+                    updated_graph = True
+
+                # Add/update object node (if URI or if it's a new literal concept)
+                if obj_is_uri:
+                    if not self.graph.has_node(o_id):
+                        self.graph.add_node(o_id, label=obj_data, type="HSP_URI_Entity", hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence})
+                        updated_graph = True
+                elif not self.graph.has_node(o_id): # Object is a literal, create a node for it if it doesn't exist as such
+                     self.graph.add_node(o_id, label=str(obj_data), type="LITERAL_VALUE", hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence})
+                     updated_graph = True
+
+                # Add relationship
+                # Extract predicate name from URI for simplicity for rel_type
+                rel_type = pred_uri.split('/')[-1].split('#')[-1] if '#' in pred_uri else pred_uri.split('/')[-1]
+
+                if not self.graph.has_edge(s_id, o_id) or self.graph.edges[s_id, o_id].get('type') != rel_type:
+                    self.graph.add_edge(s_id, o_id, type=rel_type, weight=confidence, hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id})
+                    updated_graph = True
+                    print(f"ContentAnalyzerModule: Added/updated edge from semantic triple: {s_id} -[{rel_type}]-> {o_id}")
+                else:
+                     print(f"ContentAnalyzerModule: Edge from triple {s_id} -[{rel_type}]-> {o_id} already exists.")
+
+        if updated_graph:
+            print(f"ContentAnalyzerModule: Main graph now has {self.graph.number_of_nodes()} nodes, {self.graph.number_of_edges()} edges after processing HSP fact.")
+
+        return updated_graph
 
 # Example usage:
 if __name__ == '__main__':

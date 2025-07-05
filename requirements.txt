@@ -29,3 +29,6 @@ spacy
 
 # For graph creation and manipulation
 networkx
+
+# For HSPConnector MQTT transport
+paho-mqtt
