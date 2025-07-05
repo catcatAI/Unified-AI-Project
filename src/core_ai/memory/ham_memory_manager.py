@@ -363,54 +363,83 @@ class HAMMemoryManager:
             }
 
     def query_core_memory(self,
-                          keywords: list = None,
-                          date_range: tuple = None,
-                          data_type_filter: str = None,
-                          user_id_for_facts: str = None, # New parameter
+                          keywords: Optional[List[str]] = None,
+                          date_range: Optional[Tuple[datetime, datetime]] = None,
+                          data_type_filter: Optional[str] = None,
+                          metadata_filters: Optional[Dict[str, Any]] = None, # New precise metadata filter
+                          user_id_for_facts: Optional[str] = None,
                           limit: int = 5,
-                          sort_by_confidence: bool = False # New parameter for sorting facts
-                          ) -> list[dict]:
+                          sort_by_confidence: bool = False
+                          ) -> List[Dict[str, Any]]:
         """
         Enhanced query function.
-        Searches metadata, filters by data_type, user_id (for facts), and date_range.
+        Filters by data_type, metadata_filters (exact matches), user_id (for facts), and date_range.
+        Optional keyword search on metadata string.
         Does NOT search encrypted content for keywords in this version.
         """
-        print(f"HAM: Querying core memory (keywords: {keywords}, date_range: {date_range}, type: {data_type_filter})")
-        results = []
-        # Iterate in reverse chronological order of storage (approx) by sorting keys if needed
-        # For dicts, items are usually ordered by insertion in Python 3.7+
+        print(f"HAM: Querying core memory (type: {data_type_filter}, meta_filters: {metadata_filters}, keywords: {keywords})")
 
+        # Candidate selection: Iterate through all memories. Could be optimized with indexing.
+        # For now, iterate and then filter.
+
+        candidate_items_with_id = []
+        # Sort by memory_id (which implies rough chronological order, newest first)
+        # This helps if limit is applied before full sorting by confidence, to get recent items.
         sorted_memory_ids = sorted(self.core_memory_store.keys(), reverse=True)
 
         for mem_id in sorted_memory_ids:
-            if len(results) >= limit:
-                break
-
             item = self.core_memory_store[mem_id]
+            item_metadata = item.get("metadata", {})
             match = True
 
-            if data_type_filter and item.get("data_type") != data_type_filter:
-                match = False
-
-            if date_range and match:
-                item_dt = datetime.fromisoformat(item["timestamp"])
-                start_date, end_date = date_range
-                if not (start_date <= item_dt <= end_date):
+            if data_type_filter:
+                # Allow partial match for data_type_filter (e.g., "learned_fact_" matches all learned facts)
+                if not item.get("data_type", "").startswith(data_type_filter):
                     match = False
 
-            if keywords and match:
-                # Basic keyword search in metadata (tags, description, etc.)
-                # This is a placeholder for more advanced metadata indexing.
-                metadata_str = str(item.get("metadata", {})).lower()
+            if match and date_range:
+                try:
+                    item_dt = datetime.fromisoformat(item["timestamp"])
+                    start_date, end_date = date_range
+                    if not (start_date <= item_dt <= end_date):
+                        match = False
+                except ValueError: # If timestamp is not valid ISO format
+                    match = False # Or log error and continue
+
+            if match and metadata_filters:
+                for key, value in metadata_filters.items():
+                    # Support nested keys like "original_source_info.type" if needed, but simple for now
+                    if item_metadata.get(key) != value:
+                        match = False
+                        break
+
+            if match and user_id_for_facts and data_type_filter and data_type_filter.startswith("learned_fact"):
+                if item_metadata.get("user_id") != user_id_for_facts:
+                    match = False
+
+            if match and keywords:
+                metadata_str = str(item_metadata).lower()
                 if not all(keyword.lower() in metadata_str for keyword in keywords):
                     match = False
 
             if match:
-                recalled_item = self.recall_gist(mem_id) # This rehydrates
-                if recalled_item and not isinstance(recalled_item, str): # Check if not an error string
-                    results.append(recalled_item)
+                # Recall gist only for matching items to save decryption/decompression
+                recalled_item_dict = self.recall_gist(mem_id) # This is a dict or None/str error
+                if recalled_item_dict and isinstance(recalled_item_dict, dict):
+                    # Ensure metadata is part of the recalled item for sorting/further use
+                    if "metadata" not in recalled_item_dict: # recall_gist might not include it if it's just gist
+                         recalled_item_dict["metadata"] = item_metadata
+                    candidate_items_with_id.append(recalled_item_dict)
 
-        print(f"HAM: Query returned {len(results)} results.")
+        # Sort by confidence if requested (primarily for facts)
+        if sort_by_confidence and data_type_filter and data_type_filter.startswith("learned_fact"):
+            # Sorts in-place, highest confidence first
+            candidate_items_with_id.sort(key=lambda x: x.get("metadata", {}).get("confidence", 0.0), reverse=True)
+
+        # Apply limit
+        results = candidate_items_with_id[:limit]
+
+        print(f"HAM: Query returned {len(results)} results (limit was {limit}).")
         return results
 
 if __name__ == '__main__':

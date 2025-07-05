@@ -43,9 +43,34 @@ class ContentAnalyzerModule:
 
         self.nlp = nlp
         self.matcher = Matcher(self.nlp.vocab)
-        self.graph: nx.DiGraph = nx.DiGraph() # Persistent graph for the module instance
+        self.graph: nx.DiGraph = nx.DiGraph()
+
+        # --- Ontology Mapping for Semantic Interoperability (PoC) ---
+        self.internal_uri_prefixes = {
+            "entity_type": "cai_type:", # CoreAI internal type
+            "property": "cai_prop:",    # CoreAI internal property
+            "entity_instance": "cai_instance:" # For specific instances if not using external URIs directly
+        }
+        self.ontology_mapping: Dict[str, str] = {
+            # External Class URIs to Internal Types
+            "http://example.com/ontology#Person": f"{self.internal_uri_prefixes['entity_type']}Person",
+            "http://example.com/ontology#City": f"{self.internal_uri_prefixes['entity_type']}City",
+            "http://schema.org/Person": f"{self.internal_uri_prefixes['entity_type']}Person", # Example mapping schema.org
+            "http://schema.org/City": f"{self.internal_uri_prefixes['entity_type']}City",
+
+            # External Property URIs to Internal Properties
+            "http://example.com/ontology#locatedIn": f"{self.internal_uri_prefixes['property']}locatedIn",
+            "http://example.com/ontology#hasName": f"{self.internal_uri_prefixes['property']}name",
+            "http://xmlns.com/foaf/0.1/name": f"{self.internal_uri_prefixes['property']}name", # FOAF name
+            "http://schema.org/name": f"{self.internal_uri_prefixes['property']}name",
+            "http://schema.org/location": f"{self.internal_uri_prefixes['property']}location", # Could map to locatedIn or a generic location
+        }
+        # We can also have mappings for specific entity instance URIs if needed,
+        # e.g., "http://dbpedia.org/resource/London": "cai_instance:London_UK"
+        # --- End Ontology Mapping ---
+
         self._initialize_matchers()
-        print(f"ContentAnalyzerModule initialized with spaCy model: {self.nlp.meta['name']}. Internal graph created.")
+        print(f"ContentAnalyzerModule initialized with spaCy model: {self.nlp.meta['name']}. Internal graph created. Ontology mappings: {len(self.ontology_mapping)} entries.")
 
     def _initialize_matchers(self):
         """Initializes spaCy Matcher patterns."""
@@ -686,33 +711,56 @@ class ContentAnalyzerModule:
             if subj_uri and pred_uri and obj_data:
                 print(f"ContentAnalyzerModule: Processing semantic triple from HSP fact: {subj_uri} - {pred_uri} - {obj_data}")
 
-                # For PoC, treat URIs directly as node IDs or labels.
-                # A real system would have URI resolution and ontology mapping.
-                s_id = subj_uri # In future, map_uri_to_node_id(subj_uri)
-                o_id = obj_data if obj_is_uri else f"literal_{str(obj_data).lower().replace(' ','_')[:30]}"
+                # Attempt to map URIs to internal representations
+                s_original_uri = subj_uri
+                p_original_uri = pred_uri
+                o_original_uri = obj_data if obj_is_uri else None
+
+                s_id = self.ontology_mapping.get(s_original_uri, s_original_uri)
+                p_type = self.ontology_mapping.get(p_original_uri, p_original_uri.split('/')[-1].split('#')[-1]) # Mapped or derived
+
+                o_id: str
+                o_label: str
+                o_type: str
+
+                if obj_is_uri and o_original_uri:
+                    o_id = self.ontology_mapping.get(o_original_uri, o_original_uri)
+                    o_label = o_original_uri.split('/')[-1].split('#')[-1] # Use fragment for label initially
+                    o_type = "HSP_URI_Entity" # Default, could be refined if o_id is a mapped type like cai_type:City
+                    if o_id.startswith(self.internal_uri_prefixes["entity_type"]):
+                        o_type = o_id # e.g. cai_type:City
+                else: # Literal object
+                    o_literal_val_str = str(obj_data)
+                    o_id = f"literal_{o_literal_val_str.lower().replace(' ','_')[:30]}_{uuid.uuid4().hex[:4]}" # Make literal IDs more unique
+                    o_label = o_literal_val_str
+                    o_type = statement_structured.get('object_datatype', "LITERAL_VALUE") # Use datatype if provided
+
+                s_label = s_original_uri.split('/')[-1].split('#')[-1]
+                s_type = "HSP_URI_Entity"
+                if s_id.startswith(self.internal_uri_prefixes["entity_type"]):
+                    s_type = s_id
 
                 # Add/update subject node
                 if not self.graph.has_node(s_id):
-                    self.graph.add_node(s_id, label=subj_uri, type="HSP_URI_Entity", hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence})
+                    self.graph.add_node(s_id, label=s_label, type=s_type, original_uri=s_original_uri,
+                                        hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence})
                     updated_graph = True
 
-                # Add/update object node (if URI or if it's a new literal concept)
-                if obj_is_uri:
-                    if not self.graph.has_node(o_id):
-                        self.graph.add_node(o_id, label=obj_data, type="HSP_URI_Entity", hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence})
-                        updated_graph = True
-                elif not self.graph.has_node(o_id): # Object is a literal, create a node for it if it doesn't exist as such
-                     self.graph.add_node(o_id, label=str(obj_data), type="LITERAL_VALUE", hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence})
-                     updated_graph = True
-
-                # Add relationship
-                # Extract predicate name from URI for simplicity for rel_type
-                rel_type = pred_uri.split('/')[-1].split('#')[-1] if '#' in pred_uri else pred_uri.split('/')[-1]
-
-                if not self.graph.has_edge(s_id, o_id) or self.graph.edges[s_id, o_id].get('type') != rel_type:
-                    self.graph.add_edge(s_id, o_id, type=rel_type, weight=confidence, hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id})
+                # Add/update object node
+                if not self.graph.has_node(o_id):
+                    node_attrs = {"label": o_label, "type": o_type,
+                                  "hsp_source_info": {'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence}}
+                    if o_original_uri: # Store original URI if it was a URI
+                        node_attrs["original_uri"] = o_original_uri
+                    self.graph.add_node(o_id, **node_attrs)
                     updated_graph = True
-                    print(f"ContentAnalyzerModule: Added/updated edge from semantic triple: {s_id} -[{rel_type}]-> {o_id}")
+
+                # Add relationship using mapped predicate type
+                if not self.graph.has_edge(s_id, o_id) or self.graph.edges[s_id, o_id].get('type') != p_type:
+                    self.graph.add_edge(s_id, o_id, type=p_type, original_predicate_uri=p_original_uri,
+                                        weight=confidence, hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id})
+                    updated_graph = True
+                    print(f"ContentAnalyzerModule: Added/updated edge from mapped semantic triple: {s_id} -[{p_type}]-> {o_id}")
                 else:
                      print(f"ContentAnalyzerModule: Edge from triple {s_id} -[{rel_type}]-> {o_id} already exists.")
 

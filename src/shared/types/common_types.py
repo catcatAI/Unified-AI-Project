@@ -290,6 +290,17 @@ class KnowledgeGraph(TypedDict):
     metadata: Dict[str, Any]  # Metadata about the graph (e.g., source, creation date)
 # --- End Knowledge Graph Data Structures ---
 
+# --- Tool Dispatcher Structured Response ---
+class ToolDispatcherResponse(TypedDict):
+    status: Literal["success", "failure_tool_error", "unhandled_by_local_tool", "error_dispatcher_issue"]
+    payload: Optional[Any] # Actual result from tool if success
+    tool_name_attempted: Optional[str]
+    original_query_for_tool: Optional[str] # The query that was passed to the tool
+    error_message: Optional[str] # Error message if status is failure or error
+    # Add new status: "failed_needs_hsp_retry" - for tools that specifically suggest HSP
+    # status: Literal["success", "failure_tool_error", "unhandled_by_local_tool", "error_dispatcher_issue", "failed_suggest_hsp"]
+
+
 print("common_types.py placeholder loaded.")
 
 if __name__ == '__main__':
