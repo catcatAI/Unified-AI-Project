@@ -314,3 +314,152 @@ class TestDialogueManagerKGIntegration(unittest.TestCase):
 #     asyncio.run(run_tests())
 # This direct run part might need adjustment based on how unittest discovers/runs async tests.
 # Standard `python -m unittest discover` or `python -m unittest path.to.test_module` should work.
+
+
+class TestDialogueManagerToolDrafting(unittest.TestCase):
+    def setUp(self):
+        self.mock_personality_manager = MagicMock()
+        self.mock_personality_manager.get_current_personality_trait.return_value = "TestDraftAI"
+
+        self.mock_llm_interface = MagicMock()
+
+        # Minimal config needed for DialogueManager if not all parts are mocked away
+        self.test_config = {
+            "operational_configs": {
+                "timeouts": {"dialogue_manager_turn": 120},
+                "learning_thresholds": {"min_critique_score_to_store": 0.0}
+            }
+        }
+
+        # Patch all other dependencies of DialogueManager to avoid side effects
+        # or needing their full setup for these specific tests.
+        patchers = {
+            'PersonalityManager': patch('core_ai.dialogue.dialogue_manager.PersonalityManager', return_value=self.mock_personality_manager),
+            'HAMMemoryManager': patch('core_ai.dialogue.dialogue_manager.HAMMemoryManager'),
+            'EmotionSystem': patch('core_ai.dialogue.dialogue_manager.EmotionSystem'),
+            'CrisisSystem': patch('core_ai.dialogue.dialogue_manager.CrisisSystem'),
+            'TimeSystem': patch('core_ai.dialogue.dialogue_manager.TimeSystem'),
+            'FormulaEngine': patch('core_ai.dialogue.dialogue_manager.FormulaEngine'),
+            'ToolDispatcher': patch('core_ai.dialogue.dialogue_manager.ToolDispatcher'),
+            'SelfCritiqueModule': patch('core_ai.dialogue.dialogue_manager.SelfCritiqueModule'),
+            'FactExtractorModule': patch('core_ai.dialogue.dialogue_manager.FactExtractorModule'),
+            'LearningManager': patch('core_ai.dialogue.dialogue_manager.LearningManager'),
+            'ContentAnalyzerModule': patch('core_ai.dialogue.dialogue_manager.ContentAnalyzerModule')
+        }
+        self.mocks = {name: patcher.start() for name, patcher in patchers.items()}
+        for patcher in patchers.values():
+            self.addCleanup(patcher.stop)
+
+        self.dm = DialogueManager(
+            llm_interface=self.mock_llm_interface,
+            personality_manager=self.mock_personality_manager, # Use the one already configured
+            config=self.test_config
+        )
+        # Ensure the DM instance uses our specific mock for personality for ai_name
+        self.dm.personality_manager = self.mock_personality_manager
+
+
+    async def test_handle_draft_tool_request_success_flow(self):
+        tool_name = "EchoTool"
+        purpose_and_io_desc = "A simple tool that takes a string message and returns it."
+
+        # Mock LLM response for I/O parsing step
+        mock_io_details_json_str = json.dumps({
+            "suggested_method_name": "echo",
+            "class_docstring_hint": "An echo tool.",
+            "method_docstring_hint": "Echoes the input message.",
+            "parameters": [{"name": "message", "type": "str", "description": "The message to echo."}],
+            "return_type": "str",
+            "return_description": "The echoed message."
+        })
+
+        # Mock LLM response for code generation step
+        mock_generated_code = "class EchoTool:\n    pass # Dummy generated code"
+
+        self.mock_llm_interface.generate_response.side_effect = [
+            mock_io_details_json_str, # First call (I/O parsing)
+            mock_generated_code       # Second call (code generation)
+        ]
+
+        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+
+        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
+
+        # Assert properties of the first call (I/O parsing prompt)
+        io_parsing_call_args = self.mock_llm_interface.generate_response.call_args_list[0]
+        io_parsing_prompt_arg = io_parsing_call_args[1]['prompt'] # Accessing kwargs['prompt']
+        self.assertIn("You are an expert Python code analyst.", io_parsing_prompt_arg)
+        self.assertIn(purpose_and_io_desc, io_parsing_prompt_arg)
+        self.assertEqual(io_parsing_call_args[1]['params'], {"temperature": 0.1})
+
+
+        # Assert properties of the second call (code generation prompt)
+        code_gen_call_args = self.mock_llm_interface.generate_response.call_args_list[1]
+        code_gen_prompt_arg = code_gen_call_args[1]['prompt']
+        self.assertIn(f"Tool Class Name: {tool_name}", code_gen_prompt_arg)
+        self.assertIn("class_docstring_hint\": \"An echo tool.\"", mock_io_details_json_str) # Check parsed data was used
+        self.assertIn("Method Name: echo", code_gen_prompt_arg) # From parsed I/O
+        self.assertIn("message: str", code_gen_prompt_arg) # Parameter formatting
+        self.assertIn("Return Type: str", code_gen_prompt_arg)
+        self.assertEqual(code_gen_call_args[1]['params'], {"temperature": 0.3})
+
+
+        self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
+        self.assertIn(mock_generated_code, result_response)
+
+    async def test_handle_draft_tool_request_io_parsing_json_error(self):
+        tool_name = "BadJsonTool"
+        purpose_and_io_desc = "This will cause a JSON error."
+
+        self.mock_llm_interface.generate_response.return_value = "This is not valid JSON {oops"
+
+        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+
+        self.mock_llm_interface.generate_response.assert_called_once() # Only I/O parsing call
+        self.assertIn(f"I had trouble understanding the specific parameters and return types from your description for '{tool_name}'.", result_response)
+
+    async def test_handle_draft_tool_request_io_parsing_value_error(self):
+        tool_name = "ValueErrorTool"
+        purpose_and_io_desc = "This will cause a value error if JSON is empty after extraction."
+
+        # Simulate LLM returning ```json ``` (empty content)
+        self.mock_llm_interface.generate_response.return_value = "```json\n\n```"
+
+        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+
+        self.mock_llm_interface.generate_response.assert_called_once()
+        self.assertIn(f"I encountered an issue trying to structure the details for '{tool_name}'. Please try rephrasing your request.", result_response)
+
+    async def test_handle_draft_tool_request_io_details_missing_keys_fallback(self):
+        tool_name = "PartialTool"
+        purpose_and_io_desc = "A tool with partial details."
+
+        # Mock LLM response for I/O parsing step - missing some keys
+        mock_io_details_json_str = json.dumps({
+            "suggested_method_name": "do_partial_stuff",
+            # "class_docstring_hint": "Missing class doc", # Missing
+            "parameters": [{"name": "data", "type": "Any", "description": "Some data."}],
+            # "return_type": "bool" # Missing
+        })
+
+        mock_generated_code = "class PartialTool:\n    pass # Dummy generated code"
+
+        self.mock_llm_interface.generate_response.side_effect = [
+            mock_io_details_json_str,
+            mock_generated_code
+        ]
+
+        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
+
+        # Check that the code gen prompt used fallbacks
+        code_gen_call_args = self.mock_llm_interface.generate_response.call_args_list[1]
+        code_gen_prompt_arg = code_gen_call_args[1]['prompt']
+        self.assertIn(f"Class Docstring: {purpose_and_io_desc}", code_gen_prompt_arg) # Fallback for class docstring
+        self.assertIn("Method Name: do_partial_stuff", code_gen_prompt_arg)
+        self.assertIn("Return Type: Any", code_gen_prompt_arg) # Fallback for return type
+
+        self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
+
+# Need to import json for the test class
+import json
