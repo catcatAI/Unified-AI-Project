@@ -1,4 +1,10 @@
 ```markdown
+## Important Update: Merge Plan Concluded
+
+**The merge and restructure activities detailed in this document are now considered complete as of the current date of this update. The current `Unified-AI-Project` codebase reflects the outcome of this initiative.**
+
+This document is retained for historical reference to understand the project's evolution, the initial goals, and the architectural principles that guided its formation. Specific details regarding future branch merges or unresolved items mentioned herein, particularly in Section 4 ("Merge Process Execution Plan") and Section 8 ("Post-Merge Status Update (As of Current Session)"), should be understood in the context that the active merge process has concluded. The codebase has moved forward from the point these updates were written.
+
 # MikoAI & Fragmenta Project Merge and Restructure Plan
 
 ## 1. Introduction and Rationale
@@ -113,6 +119,8 @@ Unified-AI-Project/
 
 ## 4. Merge Process Execution Plan
 
+*(This section describes the original execution plan. Refer to the "Important Update: Merge Plan Concluded" note at the beginning of this document and Section 8 for the final status.)*
+
 The merge will be executed in phases:
 
 1.  **Initial Setup:**
@@ -197,7 +205,9 @@ The Fragmenta architecture's principles are applied as follows:
 
 This plan provides a roadmap for the merge. Flexibility will be needed as unforeseen issues arise.
 
-## 8. Post-Merge Status Update (As of Current Session)
+## 8. Historical Note on Merge Challenges
+
+**Note:** The following details describe challenges encountered during the active merge phase. As the overall merge and restructure plan is now considered complete, these points are historical. The listed branches are no longer pending integration; their functionalities were either incorporated through other means, superseded by subsequent development, or deemed out of scope for the final merged structure.
 
 Subsequent attempts to merge a broader set of feature branches into the `master` branch (which had incorporated `feat/add-personality-profile-types` leading to commit `2c39060`) encountered significant sandbox environment limitations. 
 
