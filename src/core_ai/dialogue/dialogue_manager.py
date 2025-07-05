@@ -111,21 +111,47 @@ class DialogueManager:
         pending_request_info = self.pending_hsp_task_requests.pop(correlation_id)
         original_user_id = pending_request_info.get("user_id")
         original_session_id = pending_request_info.get("session_id")
-        original_query_text = pending_request_info.get("original_query_text")
+        original_query_text = pending_request_info.get("original_query_text") # This is original user query for tasks, or "Proactive fact query for: <user_query>" for fact queries
+        request_type = pending_request_info.get("request_type", "generic_task") # Assume we'll add this when storing pending requests
 
         status = result_payload.get("status")
+        service_payload = result_payload.get("payload", {})
+
         if status == "success":
-            service_payload = result_payload.get("payload", {})
-            print(f"DialogueManager: Task SUCCESS for '{original_query_text}'. Result payload: {service_payload}")
-            # TODO: How to deliver this back to the user?
-            # For CLI, we might just print. For a real-time app, this would involve sending a message to the user's session.
-            # This could involve re-engaging the dialogue with this new information.
-            # For now, let's craft a simple message and potentially store it or log it.
+            print(f"DialogueManager: Task/Query SUCCESS for correlation ID '{correlation_id}'. Original context: '{original_query_text}'. Result payload: {service_payload}")
             ai_name = self.personality_manager.get_current_personality_trait("display_name", self.ai_id)
-            result_message_to_user = f"{ai_name}: Regarding your request about '{original_query_text}', the specialist AI ({sender_ai_id}) responded with: {json.dumps(service_payload)}"
-            print(f"--- HSP Task Result for User (Session: {original_session_id}, User: {original_user_id}) ---")
-            print(result_message_to_user)
-            print(f"------------------------------------------------------------------------------------")
+
+            if request_type == "proactive_fact_query" and self.learning_manager:
+                facts_found = service_payload.get("facts_found", [])
+                if isinstance(facts_found, list) and len(facts_found) > 0:
+                    print(f"DialogueManager: Received {len(facts_found)} facts from proactive HSP query.")
+                    for fact_idx, fact_data in enumerate(facts_found):
+                        if isinstance(fact_data, dict): # Ensure it's a dict (HSPFactPayload)
+                            print(f"  Fact {fact_idx + 1}: {fact_data.get('statement_nl', fact_data.get('id'))}")
+                            # Pass the full envelope of the *original TaskResult message* for context if needed by LM
+                            # However, process_and_store_hsp_fact expects the fact's own envelope if it were a direct fact publish.
+                            # For now, create a minimal context envelope for each fact.
+                            # Or, LM should be adapted to take a list of facts.
+                            # For simplicity, process one by one.
+                            # The hsp_envelope here is the TaskResult envelope, not the fact's original one.
+                            # LearningManager.process_and_store_hsp_fact expects the fact's payload and sender + envelope of the message that *brought the fact*.
+                            # In this case, sender_ai_id is the one who fulfilled the fact query.
+                            # The fact_data itself contains its original source_ai_id.
+                            self.learning_manager.process_and_store_hsp_fact(fact_data, sender_ai_id, full_envelope) # Pass the TaskResult envelope
+                    # TODO: Optionally, use these facts to synthesize a follow-up message to the user for their original query.
+                    # This is complex as the original turn already completed.
+                    # For now, just learning them is the PoC.
+                    result_message_to_user = f"{ai_name}: I've found some additional information related to '{original_query_text.replace('Proactive fact query for: ', '')}' from my network."
+                    print(f"--- Proactive HSP Facts Received (User: {original_user_id}) ---\n{result_message_to_user}\n---")
+                    # No direct user response for this async info yet in CLI.
+                else:
+                    print(f"DialogueManager: Proactive HSP fact query for '{original_query_text}' returned no usable facts.")
+
+            elif request_type == "generic_task": # Existing logic for generic tasks
+                result_message_to_user = f"{ai_name}: Regarding your request about '{original_query_text}', the specialist AI ({sender_ai_id}) responded with: {json.dumps(service_payload)}"
+                print(f"--- HSP Task Result for User (Session: {original_session_id}, User: {original_user_id}) ---")
+                print(result_message_to_user)
+                print(f"------------------------------------------------------------------------------------")
 
             # Store this asynchronous AI response in HAM
             if self.memory_manager:
@@ -179,6 +205,11 @@ class DialogueManager:
                         except Exception as e:
                             print(f"DialogueManager: Error calling ContentAnalyzer for HSP task result description: {e}")
 
+                # Rudimentary trust update: Positive adjustment for successful task
+                if hasattr(self, 'trust_manager') and self.trust_manager: # Check if DM itself has TrustManager
+                    self.trust_manager.update_trust_score(sender_ai_id, adjustment=0.05) # Small positive adjustment
+
+
         else: # Task failed or was rejected
             ai_name = self.personality_manager.get_current_personality_trait("display_name", self.ai_id)
             error_details = result_payload.get("error_details", {})
@@ -202,30 +233,47 @@ class DialogueManager:
                 }
                 self.memory_manager.store_experience(result_message_to_user, "ai_dialogue_text_hsp_error", ai_metadata_hsp_error)
 
+            # Rudimentary trust update: Negative adjustment for failed/rejected task
+            if self.service_discovery_module and hasattr(self.service_discovery_module, 'trust_manager') and self.service_discovery_module.trust_manager: # Check if DM has SDM and SDM has TM
+                # This is a bit indirect. Ideally DM would have direct access to TrustManager if it's responsible for this.
+                # For now, assuming TrustManager might be accessed via SDM if wired up that way, or DM needs its own TM instance.
+                # Let's assume DM has self.trust_manager for now.
+                pass # Placeholder for direct self.trust_manager access
+
+            if hasattr(self, 'trust_manager') and self.trust_manager: # Check if DM itself has TrustManager
+                adjustment = -0.1 if status == "failure" else -0.05 # Smaller penalty for rejection
+                self.trust_manager.update_trust_score(sender_ai_id, adjustment=adjustment)
+
 
     async def _dispatch_hsp_task_request(
         self,
         capability_advertisement: HSPCapabilityAdvertisementPayload,
         request_parameters: Dict[str, Any],
-        original_user_query: str, # For context when result comes back
+        original_user_query: str,
         user_id: Optional[str],
-        session_id: Optional[str]
-    ) -> Optional[str]: # Returns an interim message to the user
+        session_id: Optional[str],
+        request_type: str = "generic_task"
+    ) -> Tuple[Optional[str], Optional[str]]: # Returns (user_message, correlation_id)
         """
         Dispatches a task request to an external AI via HSP.
+        Returns a tuple: (interim_user_message, correlation_id_if_successful_else_None)
         """
         if not self.hsp_connector or not self.service_discovery_module:
             print("DialogueManager: HSPConnector or ServiceDiscoveryModule not available for dispatching HSP task.")
-            return "I can't connect to my specialist network right now."
+            return "I can't connect to my specialist network right now.", None
 
         target_ai_id = capability_advertisement.get("ai_id")
         capability_id = capability_advertisement.get("capability_id")
 
         if not target_ai_id or not capability_id:
-            return "I found a specialist, but some details are missing to contact them."
+            return "I found a specialist, but some details are missing to contact them.", None
 
         request_id = f"taskreq_{uuid.uuid4().hex}"
-
+        # The correlation_id for the HSP message will be generated by _build_hsp_envelope if not provided.
+        # We need this correlation_id to store in pending_hsp_task_requests and return to API.
+        # Let's ensure _build_hsp_envelope returns it or we fetch it after.
+        # For now, _build_hsp_envelope auto-generates correlation_id if None.
+        # We will use the one generated by _build_hsp_envelope.
         # Define a callback topic for the result (unique per request for simplicity)
         # In a real scenario, the AI might have one or a few persistent reply topics.
         # For MQTT, the target AI would publish the result to this topic.
@@ -263,17 +311,20 @@ class DialogueManager:
                 "request_timestamp": datetime.now(timezone.utc).isoformat(),
                 "capability_id": capability_id,
                 "target_ai_id": target_ai_id,
-                "expected_callback_topic": callback_topic # Store for potential verification or direct subscription if needed
+                "expected_callback_topic": callback_topic,
+                "request_type": request_type # Store the request type
             }
             # Our main HSPConnector (for this AI instance) needs to be subscribed to its own result topics.
             # This subscription should ideally happen once at init.
-            # self.hsp_connector.subscribe(f"hsp/results/{self.ai_id}/#") -> This should be done in main init.
+            # self.hsp_connector.subscribe(f"hsp/results/{self.ai_id}/#") -> This is done in DialogueManager.__init__ via core_services or direct init.
 
             print(f"DialogueManager: HSP TaskRequest '{request_id}' (corr_id: {correlation_id}) sent. Awaiting result on topic pattern like '{callback_topic}'.")
-            return f"I've sent your request for '{capability_advertisement.get('name', capability_id)}' to a specialist AI ({target_ai_id}). I'll let you know when I hear back."
+            user_message = f"I've sent your request for '{capability_advertisement.get('name', capability_id)}' to a specialist AI ({target_ai_id}). I'll process their response once I get it."
+            return user_message, correlation_id
         else:
             print(f"DialogueManager: Failed to send HSP TaskRequest for capability '{capability_id}'.")
-            return "I tried to consult a specialist, but I couldn't send the request."
+            user_message = "I tried to consult a specialist, but I couldn't send the request."
+            return user_message, None
 
 
     def _find_entity_node_id_in_kg(self, graph: nx.DiGraph, entity_label_query: str) -> Optional[str]:
@@ -493,17 +544,33 @@ class DialogueManager:
                     request_params = json.loads(params_json_str)
                     print(f"DialogueManager: HSP Task Triggered. Capability query: '{capability_name_query}', Params: {request_params}")
 
-                    # Find capability
-                    # For PoC, let's assume capability_name_query is the exact capability name or a tag.
-                    # We'll search by name first, then by tag.
-                    found_caps = self.service_discovery_module.find_capabilities(capability_name_filter=capability_name_query)
-                    if not found_caps:
-                        found_caps = self.service_discovery_module.find_capabilities(tags_filter=[capability_name_query])
+                    # Find capability, now requesting sorting by trust
+                    print(f"DialogueManager: Searching for HSP capability matching '{capability_name_query}' with trust sorting.")
+                    found_caps_by_name = self.service_discovery_module.find_capabilities(
+                        capability_name_filter=capability_name_query,
+                        sort_by_trust=True # Request sorting
+                    )
+                    found_caps_by_tag = []
+                    if not found_caps_by_name: # Only search by tag if not found by name
+                        found_caps_by_tag = self.service_discovery_module.find_capabilities(
+                            tags_filter=[capability_name_query], # Assuming query could be a tag
+                            sort_by_trust=True
+                        )
 
-                    if found_caps:
-                        selected_cap = found_caps[0] # Select the first one for PoC
-                        print(f"DialogueManager: Found capability '{selected_cap.get('capability_id')}' from AI '{selected_cap.get('ai_id')}' for HSP task.")
+                    # Combine and prefer (though sort_by_trust should already handle this if lists are combined and re-sorted)
+                    # For simplicity, if name matches, use that list. Otherwise, use tag list.
+                    # The find_capabilities already sorts by trust if sort_by_trust=True.
+                    # The first element will be the highest trust if any are found.
 
+                    selected_cap: Optional[HSPCapabilityAdvertisementPayload] = None
+                    if found_caps_by_name:
+                        selected_cap = found_caps_by_name[0]
+                        print(f"DialogueManager: Selected capability by name: '{selected_cap.get('capability_id')}' from AI '{selected_cap.get('ai_id')}' (Trust: {selected_cap.get('_trust_score', 'N/A')}).")
+                    elif found_caps_by_tag:
+                        selected_cap = found_caps_by_tag[0]
+                        print(f"DialogueManager: Selected capability by tag: '{selected_cap.get('capability_id')}' from AI '{selected_cap.get('ai_id')}' (Trust: {selected_cap.get('_trust_score', 'N/A')}).")
+
+                    if selected_cap:
                         # Dispatch the task
                         interim_response = await self._dispatch_hsp_task_request(
                             capability_advertisement=selected_cap,
@@ -513,10 +580,15 @@ class DialogueManager:
                             session_id=session_id
                         )
                         # For this PoC, the interim response is the final response for this turn.
-                        # The actual result will come asynchronously and be handled by _handle_incoming_hsp_task_result (which currently just prints).
-                        response_text = f"{ai_name}: {interim_response}"
+                        # The actual result will come asynchronously.
+                        user_facing_interim_message, _ = interim_response # correlation_id is handled by _dispatch_hsp_task_request storing it
+                        if user_facing_interim_message:
+                            response_text = f"{ai_name}: {user_facing_interim_message}"
+                        else: # Should not happen if dispatch was attempted and selected_cap was valid
+                            response_text = f"{ai_name}: I tried to send the request to a specialist, but something went wrong during dispatch."
+
                         # Standard response finalization for this interim message
-                        ai_metadata_hsp_dispatch: Dict[str, Any] = {"speaker": "ai", "timestamp": datetime.now().isoformat(), "user_id": user_id, "session_id": session_id, "source": "hsp_task_dispatch"}
+                        ai_metadata_hsp_dispatch: Dict[str, Any] = {"speaker": "ai", "timestamp": datetime.now().isoformat(), "user_id": user_id, "session_id": session_id, "source": "hsp_task_dispatch_interim"}
                         if self.memory_manager and user_mem_id:
                             ai_metadata_hsp_dispatch["user_input_ref"] = user_mem_id
                             self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata_hsp_dispatch)
@@ -698,29 +770,46 @@ class DialogueManager:
             self.emotion_system.update_emotion_based_on_input({"text": user_input})
             matched_formula = self.formula_engine.match_input(user_input)
 
-            if matched_formula:
+            if matched_formula: # Process formula first
                 formula_execution_result = self.formula_engine.execute_formula(matched_formula)
                 action_name = formula_execution_result.get("action_name", "unknown_action")
                 action_params = formula_execution_result.get("action_params", {})
 
+                attempt_hsp_fallback = False
+                hsp_capability_query_from_formula: Optional[str] = None
+                hsp_params_from_formula: Dict[str, Any] = {}
+
                 if action_name == "dispatch_tool":
                     tool_name = action_params.get("tool_name")
-                    tool_query = action_params.get("tool_query") # This might be a template
+                    tool_query_template = action_params.get("tool_query")
 
-                    # Basic template filling for tool_query using action_params for now
-                    # A more robust solution would involve regex capture groups from formula conditions.
-                    if isinstance(tool_query, str):
+                    tool_query = str(tool_query_template) # Default to template as is
+                    if isinstance(tool_query_template, str):
                         try:
-                            tool_query = tool_query.format(**action_params) # Fill if template
+                            tool_query = tool_query_template.format(**action_params)
                         except KeyError:
                             print(f"DialogueManager: Warning - could not format tool_query template for formula {matched_formula.get('name')}")
 
                     if tool_name and tool_query:
-                        print(f"DialogueManager: Formula '{matched_formula.get('name')}' dispatching to tool '{tool_name}' with query '{tool_query}'")
-                        tool_result = self.tool_dispatcher.dispatch(query=str(tool_query), explicit_tool_name=tool_name)
-                        response_text = f"{ai_name}: {tool_result}" if tool_result is not None else f"{ai_name}: I tried to use a tool, but it didn't work as expected."
+                        print(f"DialogueManager: Formula '{matched_formula.get('name')}' attempting local dispatch to tool '{tool_name}' with query '{tool_query}'")
+                        tool_dispatch_result = self.tool_dispatcher.dispatch(query=tool_query, explicit_tool_name=tool_name, **action_params)
+
+                        if tool_dispatch_result["status"] == "success":
+                            response_text = f"{ai_name}: {tool_dispatch_result['payload']}"
+                        elif tool_dispatch_result["status"] in ["unhandled_by_local_tool", "failure_tool_error"]:
+                            print(f"DialogueManager: Local tool '{tool_name}' could not handle or failed for query '{tool_query}'. Status: {tool_dispatch_result['status']}. Attempting HSP fallback.")
+                            attempt_hsp_fallback = True
+                            hsp_capability_query_from_formula = tool_name # Use tool name as capability query
+                            # Try to pass original tool_query or structured params if available from formula for HSP
+                            hsp_params_from_formula = {"query": tool_query, **action_params}
+                            # Remove tool_name and tool_query if they are in action_params to avoid redundancy
+                            hsp_params_from_formula.pop("tool_name", None)
+                            hsp_params_from_formula.pop("tool_query", None)
+                        else: # error_dispatcher_issue
+                            response_text = f"{ai_name}: There was an issue trying to use the '{tool_name}' tool ({tool_dispatch_result.get('error_message', 'unknown dispatcher error')})."
                     else:
                         response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' tried to dispatch a tool, but tool_name or tool_query was missing/invalid."
+
                 elif action_name == "initiate_tool_draft":
                     tool_name_draft = action_params.get("tool_name")
                     desc_for_llm_draft = action_params.get("description_for_llm")
@@ -751,12 +840,122 @@ class DialogueManager:
                         response_text = f"{ai_name}: Action '{action_name}' triggered by formula '{matched_formula.get('name')}'."
                     else: # Fallback if action_name is somehow missing but formula matched
                         response_text = f"{ai_name}: I recognized pattern: '{matched_formula.get('name')}'."
-            else: # No formula matched, proceed to LLM
-                full_prompt_for_llm = f"{prompt_context_for_llm}{user_input}"
-                llm_response_text = self.llm_interface.generate_response(prompt=full_prompt_for_llm) # Removed await
-                base_response = f"{ai_name}: {llm_response_text}"
-                response_text = base_response
+                # If response_text is set by a formula (and not an HSP fallback trigger), we might return early or skip HSP/LLM.
+                # For now, if attempt_hsp_fallback is False AND response_text is set, we'll use it.
 
+            # --- HSP Fallback Logic ---
+            # Trigger if:
+            #   1. attempt_hsp_fallback is True (local tool dispatch failed/unhandled for a formula)
+            #   2. No formula matched at all (and response_text is still empty)
+            if not response_text and not attempt_hsp_fallback and not matched_formula: # Condition for no formula match at all
+                print("DialogueManager: No local formula matched. Considering HSP fallback based on user input.")
+                attempt_hsp_fallback = True
+                # TODO: For this case, hsp_capability_query_from_formula and hsp_params_from_formula
+                # would need to be derived from user_input (e.g., keyword extraction for capability_name_filter,
+                # and trying to pass user_input as a general 'query' parameter).
+                # This is a more complex NLP task. For PoC, this path might not find specific capabilities
+                # unless user_input itself is a capability name or tag.
+                hsp_capability_query_from_formula = user_input # Simplistic: try user input as query
+                hsp_params_from_formula = {"query": user_input}
+
+
+            if attempt_hsp_fallback and self.service_discovery_module and self.hsp_connector:
+                print(f"DialogueManager: Attempting HSP fallback for capability query: '{hsp_capability_query_from_formula}'")
+                # Search by name first, then tags if name yields nothing
+                found_caps = self.service_discovery_module.find_capabilities(
+                    capability_name_filter=hsp_capability_query_from_formula,
+                    sort_by_trust=True
+                )
+                if not found_caps and hsp_capability_query_from_formula: # Check if query is not None
+                    # Try query as a tag if name search failed
+                    found_caps = self.service_discovery_module.find_capabilities(
+                        tags_filter=[hsp_capability_query_from_formula],
+                        sort_by_trust=True
+                    )
+
+                if found_caps:
+                    selected_cap = found_caps[0] # Highest trust first
+                    print(f"DialogueManager: Found HSP capability '{selected_cap.get('capability_id')}' from AI '{selected_cap.get('ai_id')}' (Trust: {selected_cap.get('_trust_score', 'N/A')}).")
+
+                    # Parameters for HSP task: use hsp_params_from_formula if set (from a failed formula tool dispatch)
+                    # Otherwise, create a generic one from user_input.
+                    request_parameters_for_hsp = hsp_params_from_formula if hsp_params_from_formula else {"query": user_input}
+
+                    interim_response = await self._dispatch_hsp_task_request(
+                        capability_advertisement=selected_cap,
+                        request_parameters=request_parameters_for_hsp,
+                        original_user_query=user_input,
+                        user_id=user_id,
+                        session_id=session_id
+                    )
+                    if interim_response: # If dispatch was successful (even if it's just an ack message)
+                        response_text = f"{ai_name}: {interim_response}"
+                    # If interim_response is None (e.g. connector issue), response_text remains empty, will fall to LLM or error.
+                else:
+                    print(f"DialogueManager: No suitable HSP capability found for query '{hsp_capability_query_from_formula}'.")
+                    # response_text remains empty, will fall through to LLM if no prior formula response.
+
+            # --- LLM Fallback ---
+            # If response_text is still not set after formula and HSP attempts
+            if not response_text:
+                print("DialogueManager: No formula match or successful HSP dispatch. Proceeding to initial LLM call.")
+                full_prompt_for_llm = f"{prompt_context_for_llm}{user_input}"
+                initial_llm_response_text = self.llm_interface.generate_response(prompt=full_prompt_for_llm)
+                response_text = f"{ai_name}: {initial_llm_response_text}" # Tentative response
+
+                # --- Proactive HSP Fact Query Condition (PoC) ---
+                # Condition: LLM response is short, generic, or indicates uncertainty.
+                # This is a very basic heuristic.
+                unsatisfactory_llm_keywords = ["not sure", "don't know", "no information", "difficult to say"]
+                is_short_response = len(initial_llm_response_text) < 50
+                is_generic_response = any(kw in initial_llm_response_text.lower() for kw in unsatisfactory_llm_keywords)
+
+                if (is_short_response or is_generic_response) and self.service_discovery_module and self.hsp_connector:
+                    print(f"DialogueManager: Initial LLM response ('{initial_llm_response_text[:50]}...') seems unsatisfactory. Attempting proactive HSP fact query.")
+                    fact_query_capability_name = "Mock Fact Query Service" # Name advertised by MockHSPPeer
+
+                    found_fact_query_services = self.service_discovery_module.find_capabilities(
+                        capability_name_filter=fact_query_capability_name,
+                        sort_by_trust=True
+                    )
+                    if found_fact_query_services:
+                        selected_fact_service_cap = found_fact_query_services[0]
+                        print(f"DialogueManager: Found HSP fact query service: '{selected_fact_service_cap.get('capability_id')}' from AI '{selected_fact_service_cap.get('ai_id')}'")
+
+                        # Use original user_input for the fact query
+                        hsp_fact_request_params = {"query_text": user_input, "max_results": 2}
+
+                        # Dispatch the fact query task. This is fire-and-forget for this turn's response.
+                        # The result will be handled by _handle_incoming_hsp_task_result asynchronously.
+                        # That handler will then call LearningManager, which calls ContentAnalyzer.
+                        # The user's current turn will respond with the initial LLM response,
+                        # but a follow-up message could be sent if facts are found, or subsequent queries benefit.
+                        interim_fact_query_response = await self._dispatch_hsp_task_request(
+                            capability_advertisement=selected_fact_service_cap,
+                            request_parameters=hsp_fact_request_params,
+                            original_user_query=f"Proactive fact query for: {user_input}",
+                            user_id=user_id,
+                            session_id=session_id,
+                            request_type="proactive_fact_query"
+                        )
+                        # interim_fact_query_response is now a tuple (user_message, correlation_id)
+                        # The user_message from this dispatch is an ack like "I've sent your request..."
+                        # We don't want to return *this* message to the user for a *proactive* query.
+                        # The user gets the initial_llm_response_text. This proactive query is background.
+                        dispatched_proactive_message, proactive_corr_id = interim_fact_query_response
+                        if proactive_corr_id: # Check if dispatch was successful by getting a correlation_id
+                             print(f"DialogueManager: Proactive HSP fact query dispatched (CorrID: {proactive_corr_id}). User received initial LLM response. Follow-up may occur if facts found.")
+                        else:
+                            print(f"DialogueManager: Failed to dispatch proactive HSP fact query (Error: {dispatched_proactive_message}).")
+                        # response_text (the initial LLM response) remains unchanged for this turn.
+                             # The _handle_incoming_hsp_task_result needs to be smart about how it uses these facts
+                             # (e.g., just learn them, or if it can link to an active user session, maybe send a proactive update - complex).
+                        else:
+                            print(f"DialogueManager: Failed to dispatch proactive HSP fact query.")
+                    else:
+                        print(f"DialogueManager: No suitable HSP fact query service found.")
+
+            # --- Final Response Processing (Emotion, Critique) ---
             emotion_expression = self.emotion_system.get_current_emotion_expression()
             emotion_suffix = emotion_expression.get("text_ending", "")
             response_text = f"{response_text}{emotion_suffix}" if emotion_suffix else response_text
