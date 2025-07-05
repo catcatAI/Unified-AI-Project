@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional, List
 
 import json
 import requests # Added for Ollama integration
+import re # For more robust mock matching
 from typing import Dict, Any, Optional, List
 
 # Attempt to import LLMInterfaceConfig, handle if module run directly or types not generated yet
@@ -76,13 +77,44 @@ class LLMInterface:
 
     def _get_mock_response(self, prompt: str, model_name: Optional[str]) -> str:
         """Generates a predefined mock response."""
-        print(f"LLMInterface (Mock): Generating response for prompt='{prompt[:50]}...' using model='{model_name}'")
-        if "hello" in prompt.lower():
-            return f"Mock model {model_name or 'default_mock'} says: Hello there! How can I help you today?"
-        elif "capital of france" in prompt.lower():
-            return f"Mock model {model_name or 'default_mock'} says: Paris, of course!"
-        elif "weather" in prompt.lower():
-            return f"Mock model {model_name or 'default_mock'} says: The weather is mockingly perfect!"
+        # print(f"LLMInterface (Mock): ENTERING _get_mock_response. Prompt starts with: '{prompt[:150].replace('\n', '\\n')}' for model='{model_name}'")
+
+        is_tool_prompt_check_available = "Available tools:" in prompt
+        is_tool_prompt_check_query = "User Query:" in prompt
+        # print(f"LLMInterface (Mock): Check 'Available tools:': {is_tool_prompt_check_available}") # DEBUG
+        # print(f"LLMInterface (Mock): Check 'User Query:': {is_tool_prompt_check_query}") # DEBUG
+
+        if is_tool_prompt_check_available and is_tool_prompt_check_query:
+            # print(f"LLMInterface (Mock): Tool prompt condition MET.") # DEBUG
+            query_match = re.search(r"User Query: \"(.*?)\"", prompt, re.S)
+            actual_query_in_prompt = query_match.group(1).strip() if query_match else ""
+            # print(f"LLMInterface (Mock): Extracted query for tool prompt: '{actual_query_in_prompt}'") # DEBUG
+
+            if actual_query_in_prompt == "calculate 2 + 2":
+                # print("LLMInterface Mock: Matched 'calculate 2 + 2'") # DEBUG
+                return json.dumps({"tool_name": "calculate", "parameters": {"query": "2 + 2", "original_query": "calculate 2 + 2"}})
+            elif actual_query_in_prompt == "evaluate true AND false":
+                # print("LLMInterface Mock: Matched 'evaluate true AND false'") # DEBUG
+                return json.dumps({"tool_name": "evaluate_logic", "parameters": {"query": "true AND false", "original_query": "evaluate true AND false"}})
+            elif actual_query_in_prompt == "NOT (true OR false)":
+                # print("LLMInterface Mock: Matched 'NOT (true OR false)'") # DEBUG
+                return json.dumps({"tool_name": "evaluate_logic", "parameters": {"query": "NOT (true OR false)", "original_query": "NOT (true OR false)"}})
+            elif actual_query_in_prompt == "translate '你好' to English":
+                # print("LLMInterface Mock: Matched 'translate '你好' to English'") # DEBUG
+                return json.dumps({"tool_name": "translate_text", "parameters": {"text_to_translate": "你好", "target_language": "English", "original_query": "translate '你好' to English"}})
+
+            # print(f"LLMInterface Mock: Tool selection prompt for query '{actual_query_in_prompt}' was detected but NOT MATCHED by specific tool rules. Returning NO_TOOL.") # DEBUG
+            return json.dumps({"tool_name": "NO_TOOL", "parameters": {}})
+        else:
+            # print(f"LLMInterface (Mock): Tool prompt condition NOT MET (is_tool_prompt_check_available={is_tool_prompt_check_available}, is_tool_prompt_check_query={is_tool_prompt_check_query}). Falling back to other mock responses or generic.") # DEBUG
+            if "hello" in prompt.lower():
+                return f"Mock model {model_name or 'default_mock'} says: Hello there! How can I help you today?"
+            elif "capital of france" in prompt.lower():
+                return f"Mock model {model_name or 'default_mock'} says: Paris, of course!"
+            elif "weather" in prompt.lower():
+                return f"Mock model {model_name or 'default_mock'} says: The weather is mockingly perfect!"
+
+        # print(f"LLMInterface (Mock): No specific mock rule matched in _get_mock_response. Returning generic response for prompt: {prompt[:50]}...") # DEBUG
         return f"This is a generic mock response from {model_name or 'default_mock'} to the prompt: \"{prompt}\""
 
     def generate_response(self, prompt: str, model_name: Optional[str] = None, params: Optional[Dict[str, Any]] = None) -> str:

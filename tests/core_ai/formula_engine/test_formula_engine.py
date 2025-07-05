@@ -23,7 +23,7 @@ class TestFormulaEngine(unittest.TestCase):
                 "action": "greet_user_warmly",
                 "description": "A warm greeting.",
                 "parameters": {"warmth": "high"},
-                "priority": 20,
+                "priority": 5, # Numerically lower = higher actual priority
                 "enabled": True,
                 "version": "1.0",
                 "response_template": "Greetings, {user_name}! It's a pleasure to see you."
@@ -80,7 +80,8 @@ class TestFormulaEngine(unittest.TestCase):
 
     def test_load_formulas_valid_file(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
-        self.assertEqual(len(engine.formulas), len(self.valid_formulas_data))
+        expected_active_formulas_count = sum(1 for f in self.valid_formulas_data if f.get("enabled", True))
+        self.assertEqual(len(engine.formulas), expected_active_formulas_count)
         self.assertEqual(engine.formulas[0]["name"], "greeting_high") # Check priority sorting
         self.assertIn("response_template", engine.formulas[0]) # Check new field loaded
         self.assertEqual(engine.formulas[0]["response_template"], "Greetings, {user_name}! It's a pleasure to see you.")

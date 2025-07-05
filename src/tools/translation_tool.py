@@ -47,48 +47,79 @@ def _detect_language(text: str) -> str | None:
         return 'en'
     return None # Cannot determine or mixed
 
-def translate(text: str, target_language: str, source_language: str = None) -> str:
+def translate(text: str, target_language: str, source_language: str = None, **kwargs) -> str:
     """
     Translates text using a dictionary-based approach.
     Args:
-        text (str): The text to translate.
-        target_language (str): The target language code (e.g., 'en', 'zh').
-        source_language (str, optional): The source language code. If None, attempts to detect.
+        text (str): The text to translate (often the full query if not overridden by kwargs).
+        target_language (str): The target language name or code (e.g., 'en', 'zh', 'english').
+        source_language (str, optional): The source language name or code. If None, attempts to detect.
+        **kwargs: Can include 'text_to_translate' to specify the exact text.
     Returns:
         str: The translated text, or an error message/original text if translation fails.
     """
     dictionary = _load_dictionary()
 
+    text_to_actually_translate = kwargs.get('text_to_translate', text)
+
     if source_language is None:
-        source_language = _detect_language(text)
+        source_language = _detect_language(text_to_actually_translate)
         if source_language is None:
-            request_model_upgrade(f"Language detection failed for input: {text[:50]}...")
-            return f"Could not determine source language for '{text}'. Translation unavailable."
-        print(f"Detected source language: {source_language}")
+            request_model_upgrade(f"Language detection failed for input: {text_to_actually_translate[:50]}...")
+            return f"Could not determine source language for '{text_to_actually_translate}'. Translation unavailable."
+        # print(f"Detected source language: {source_language}") # Keep commented
 
-    source_language = source_language.lower()
-    target_language = target_language.lower()
+    # Normalize to lower case first
+    norm_source_language = source_language.lower()
+    norm_target_language = target_language.lower()
 
-    if source_language == target_language:
-        return text # No translation needed
+    # Map common names to codes
+    lang_code_map = {
+        "english": "en", "chinese": "zh", "spanish": "es", "french": "fr",
+        "german": "de", "japanese": "ja", "korean": "ko"
+        # Add more as needed
+    }
+    source_lang_code = lang_code_map.get(norm_source_language, norm_source_language)
+    target_lang_code = lang_code_map.get(norm_target_language, norm_target_language)
 
-    translation_map_key = f"{source_language}_to_{target_language}" # e.g., "zh_to_en"
+    if source_lang_code == target_lang_code:
+        return text
 
-    if translation_map_key in dictionary:
-        translation = dictionary[translation_map_key].get(text)
+    translation_map_key = str(f"{source_lang_code}_to_{target_lang_code}")
+
+    # Sanitized key check
+    current_map_key_for_debug_check = str(translation_map_key).encode('utf-8').decode('utf-8') # for debug comparison
+    key_present = False
+    dict_keys_for_debug = []
+    if dictionary:
+        dict_keys_for_debug = [str(k) for k in dictionary.keys()]
+        for k_loop in dictionary.keys(): # Iterate over original keys
+            sanitized_k_loop = str(k_loop).encode('utf-8').decode('utf-8')
+            if sanitized_k_loop == current_map_key_for_debug_check:
+                key_present = True
+                break # Found the key
+
+    print(f"TranslationTool SANITIZED DEBUG: Checking key. Wanted key='{repr(translation_map_key)}', Available keys='{dict_keys_for_debug}', Key present? {key_present}")
+
+    if key_present:
+        # Use the correctly formed translation_map_key for dictionary access
+        # and use text_to_actually_translate for the lookup.
+        sanitized_lookup_text = str(text_to_actually_translate).encode('utf-8').decode('utf-8')
+        translation = dictionary[translation_map_key].get(sanitized_lookup_text)
+
         if translation:
             return translation
         else:
             # Try case-insensitive match for English source
-            if source_language == 'en':
+            if source_lang_code == 'en': # Use the code for comparison
                 for k, v in dictionary[translation_map_key].items():
-                    if k.lower() == text.lower():
+                    if str(k).lower().encode('utf-8').decode('utf-8') == sanitized_lookup_text.lower():
                         return v
-            request_model_upgrade(f"No translation found for '{text}' from {source_language} to {target_language}.")
-            return f"Translation not available for '{text}' from {source_language} to {target_language}."
+            request_model_upgrade(f"No translation found for '{text_to_actually_translate}' from {source_lang_code} to {target_lang_code}.")
+            return f"Translation not available for '{text_to_actually_translate}' from {source_lang_code} to {target_lang_code}."
     else:
-        request_model_upgrade(f"Unsupported translation direction: {source_language} to {target_language}.")
-        return f"Translation from {source_language} to {target_language} is not supported."
+        request_model_upgrade(f"Unsupported translation direction: {source_lang_code} to {target_lang_code}.")
+        return f"Translation from {source_lang_code} to {target_lang_code} is not supported."
 
 def request_model_upgrade(details: str):
     """

@@ -344,7 +344,8 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
             'SelfCritiqueModule': patch('core_ai.dialogue.dialogue_manager.SelfCritiqueModule'),
             'FactExtractorModule': patch('core_ai.dialogue.dialogue_manager.FactExtractorModule'),
             'LearningManager': patch('core_ai.dialogue.dialogue_manager.LearningManager'),
-            'ContentAnalyzerModule': patch('core_ai.dialogue.dialogue_manager.ContentAnalyzerModule')
+            'ContentAnalyzerModule': patch('core_ai.dialogue.dialogue_manager.ContentAnalyzerModule'),
+            'SandboxExecutor': patch('core_ai.dialogue.dialogue_manager.SandboxExecutor') # Added SandboxExecutor mock
         }
         self.mocks = {name: patcher.start() for name, patcher in patchers.items()}
         for patcher in patchers.values():
@@ -408,23 +409,22 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
         self.assertIn(mock_generated_code, result_response)
         self.assertIn("Info: The drafted code is syntactically valid Python.", result_response)
 
+        # Assert SandboxExecutor was called and its (mocked) output is in the response
+        self.mocks['SandboxExecutor'].return_value.run.assert_called_once()
+        # Example: Check call args if specific placeholder params are important
+        # call_args = self.mocks['SandboxExecutor'].return_value.run.call_args
+        # self.assertEqual(call_args[1]['class_name'], tool_name) # Using kwargs access
+        # self.assertEqual(call_args[1]['method_name'], "echo")
+        self.assertIn("---Sandbox Test Run---", result_response)
+        self.assertIn("Execution Result: Mocked sandbox success", result_response)
+
 
     async def test_handle_draft_tool_request_code_syntax_error(self):
         tool_name = "SyntaxErrorTool"
         purpose_and_io_desc = "A tool that will have a syntax error."
 
-        # Mock LLM response for I/O parsing step (successful)
-        mock_io_details_json_str = json.dumps({
-            "suggested_method_name": "broken_method",
-            "class_docstring_hint": "Tool with syntax error.",
-            "method_docstring_hint": "This method is broken.",
-            "parameters": [],
-            "return_type": "None",
-            "return_description": "Nothing useful."
-        })
-
-        # Mock LLM response for code generation step (with syntax error)
-        mock_generated_code_with_error = "class SyntaxErrorTool:\n def broken_method(self):\n  print 'oops'" # Missing parentheses for print
+        mock_io_details_json_str = json.dumps({ "suggested_method_name": "broken" }) # Minimal valid JSON
+        mock_generated_code_with_error = "class SyntaxErrorTool:\n def broken(self):\n  print 'oops'"
 
         self.mock_llm_interface.generate_response.side_effect = [
             mock_io_details_json_str,
@@ -437,7 +437,40 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
         self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
         self.assertIn(mock_generated_code_with_error, result_response)
         self.assertIn("Warning: The drafted code has a syntax error", result_response)
-        self.assertIn("line 3", result_response) # ast.parse should give line number for print error
+        self.assertIn("line 3", result_response)
+
+        # Ensure sandbox executor was NOT called due to syntax error
+        self.mocks['SandboxExecutor'].return_value.run.assert_not_called()
+
+
+    async def test_handle_draft_tool_request_sandbox_execution_error(self):
+        tool_name = "SandboxErrorTool"
+        purpose_and_io_desc = "A tool that is valid but will error in sandbox."
+
+        mock_io_details_json_str = json.dumps({
+            "suggested_method_name": "error_method",
+            "class_docstring_hint": "Tool designed to error in sandbox.",
+            "method_docstring_hint": "This method will raise an error.",
+            "parameters": [], "return_type": "None", "return_description": "Error."
+        })
+        mock_valid_code = "class SandboxErrorTool:\n  def __init__(self, config=None): pass\n  def error_method(self):\n    raise ValueError('Sandbox test error')"
+
+        self.mock_llm_interface.generate_response.side_effect = [
+            mock_io_details_json_str,
+            mock_valid_code
+        ]
+
+        # Mock SandboxExecutor.run to return an error
+        self.mocks['SandboxExecutor'].return_value.run.return_value = (None, "ValueError: Sandbox test error")
+
+        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+
+        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
+        self.mocks['SandboxExecutor'].return_value.run.assert_called_once()
+        self.assertIn("Info: The drafted code is syntactically valid Python.", result_response)
+        self.assertIn("---Sandbox Test Run---", result_response)
+        self.assertIn("Execution Error: ValueError: Sandbox test error", result_response)
+
 
     async def test_handle_draft_tool_request_io_parsing_json_error(self):
         tool_name = "BadJsonTool"
