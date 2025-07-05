@@ -1,118 +1,239 @@
-# Placeholder for Lightweight Code Model (LCM)
-# Intended for basic code-related tasks like syntax checks and boilerplate generation.
+import ast
+import os
+import glob
+from typing import List, Dict, Any, Optional, Union
 
-import ast # For Python syntax checking
+# Placeholder for a lightweight model to understand code structure,
+# dependencies, and potentially generate simple code or configurations.
 
 class LightweightCodeModel:
-    def __init__(self, config: dict = None):
-        self.config = config or {}
-        # In a real model, this might load language-specific parsers or templates.
-        print("LightweightCodeModel: Placeholder initialized.")
+    """
+    A model to perform lightweight static analysis of Python code,
+    focusing on understanding the structure of tools.
+    """
 
-    def check_syntax(self, code_string: str, language: str) -> dict:
+    def __init__(self, tools_directory: str = "src/tools/"):
         """
-        Performs a basic syntax check on the given code string for the specified language.
+        Initializes the LightweightCodeModel.
 
         Args:
-            code_string (str): The code to check.
-            language (str): The programming language (e.g., "python", "javascript").
+            tools_directory (str): The root directory where tool files are located.
+        """
+        self.tools_directory = tools_directory
+        if not os.path.isdir(tools_directory):
+            # This is a configuration issue, but for now, we'll just print a warning.
+            # In a real scenario, this might raise an error or have better handling.
+            print(f"Warning: Tools directory '{tools_directory}' does not exist or is not a directory.")
+            # Fallback to a path relative to this file's location if a common structure is assumed
+            # For now, we'll assume the provided path is correct relative to project root.
+
+    def list_tool_files(self) -> List[str]:
+        """
+        Lists potential Python tool files in the specified tools directory.
+        Excludes __init__.py and tool_dispatcher.py.
+        """
+        if not os.path.isdir(self.tools_directory):
+            return []
+
+        # Search for .py files recursively in the tools_directory
+        pattern = os.path.join(self.tools_directory, "**", "*.py")
+        py_files = glob.glob(pattern, recursive=True)
+
+        excluded_files = ["__init__.py", "tool_dispatcher.py"] # Basenames to exclude
+
+        tool_files = []
+        for f_path in py_files:
+            if os.path.basename(f_path) not in excluded_files:
+                tool_files.append(f_path)
+
+        return tool_files
+
+    def _extract_method_parameters(self, method_node: ast.FunctionDef) -> List[Dict[str, Any]]:
+        """
+        Helper to extract parameter details from an ast.FunctionDef node.
+        """
+        params_details = []
+        args = method_node.args
+
+        # Positional and keyword-only arguments
+        all_args = args.posonlyargs + args.args + args.kwonlyargs
+        all_defaults = args.defaults + args.kw_defaults
+
+        # Defaults for positional/keyword arguments are at the end of args.defaults
+        # For kwonlyargs, kw_defaults is a list of values, some can be None if no default
+
+        num_pos_args = len(args.posonlyargs) + len(args.args)
+        pos_defaults_start_idx = num_pos_args - len(args.defaults)
+
+        for i, arg_node in enumerate(all_args):
+            param_info = {"name": arg_node.arg, "annotation": None, "default": None}
+            if arg_node.annotation:
+                param_info["annotation"] = ast.unparse(arg_node.annotation) if hasattr(ast, 'unparse') else "TypeHint"
+
+            # Determine default value
+            if i >= pos_defaults_start_idx and i < num_pos_args: # Positional/regular arg with default
+                default_val_node = args.defaults[i - pos_defaults_start_idx]
+                if default_val_node: # Can be None if there's a default of None literally
+                     param_info["default"] = ast.unparse(default_val_node) if hasattr(ast, 'unparse') else "DefaultValue"
+            elif arg_node in args.kwonlyargs:
+                # For kwonlyargs, kw_defaults is a list of default values, matching kwonlyargs by position.
+                # Some values in kw_defaults can be None (for args without defaults).
+                try:
+                    kwonly_idx = args.kwonlyargs.index(arg_node)
+                    if kwonly_idx < len(args.kw_defaults) and args.kw_defaults[kwonly_idx] is not None:
+                        default_val_node = args.kw_defaults[kwonly_idx]
+                        param_info["default"] = ast.unparse(default_val_node) if hasattr(ast, 'unparse') else "DefaultValue" # type: ignore
+                except ValueError:
+                    pass # Should not happen if arg_node is from args.kwonlyargs
+
+            params_details.append(param_info)
+
+        if args.vararg:
+            vararg_info = {"name": f"*{args.vararg.arg}", "annotation": None, "default": None}
+            if args.vararg.annotation:
+                vararg_info["annotation"] = ast.unparse(args.vararg.annotation) if hasattr(ast, 'unparse') else "TypeHint"
+            params_details.append(vararg_info)
+
+        if args.kwarg:
+            kwarg_info = {"name": f"**{args.kwarg.arg}", "annotation": None, "default": None}
+            if args.kwarg.annotation:
+                kwarg_info["annotation"] = ast.unparse(args.kwarg.annotation) if hasattr(ast, 'unparse') else "TypeHint"
+            params_details.append(kwarg_info)
+
+        return params_details
+
+    def analyze_tool_file(self, filepath: str) -> Optional[Dict[str, Any]]:
+        """
+        Analyzes a single Python tool file to extract its structure.
+        (Placeholder - to be implemented)
+
+        Args:
+            filepath (str): The absolute or relative path to the Python tool file.
 
         Returns:
-            dict: A dictionary with "status" ("valid" or "invalid") and "errors"
-                  (a list of error messages/details if invalid).
+            Optional[Dict[str, Any]]: A dictionary containing structural information
+                                      (classes, methods, docstrings, params, returns)
+                                      or None if the file cannot be parsed or analyzed.
         """
-        language = language.lower()
-        print(f"LCM: Checking syntax for language '{language}'. Code: '{code_string[:50]}...'")
+        if not os.path.isfile(filepath):
+            print(f"Error: File not found at '{filepath}'")
+            return None
 
-        if language == "python":
-            try:
-                ast.parse(code_string)
-                return {"status": "valid", "errors": []}
-            except SyntaxError as e:
-                return {
-                    "status": "invalid",
-                    "errors": [{
-                        "line": e.lineno,
-                        "offset": e.offset,
-                        "message": e.msg,
-                        "text": e.text.strip('\n') if e.text else "N/A"
-                    }]
+        try:
+            with open(filepath, "r", encoding="utf-8") as source_file:
+                source_code = source_file.read()
+            tree = ast.parse(source_code, filename=filepath)
+        except Exception as e:
+            print(f"Error parsing file '{filepath}': {e}")
+            return None
+
+        file_structure: Dict[str, Any] = {
+            "filepath": filepath,
+            "classes": [],
+            "functions": [] # For module-level functions
+        }
+
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef):
+                class_info = {
+                    "name": node.name,
+                    "docstring": ast.get_docstring(node),
+                    "methods": []
                 }
-            except Exception as e_generic: # Catch other potential parsing errors
-                 return {"status": "invalid", "errors": [{"message": str(e_generic)}]}
+                for item in node.body:
+                    if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        method_info = {
+                            "name": item.name,
+                            "docstring": ast.get_docstring(item),
+                            "parameters": self._extract_method_parameters(item), # Placeholder call
+                            "returns": None # Placeholder for return type
+                        }
+                        # Basic return type hint (refined in next step)
+                        if item.returns:
+                            method_info["returns"] = ast.unparse(item.returns) if hasattr(ast, 'unparse') else "TypeHint (unparse unavailable)"
+                        class_info["methods"].append(method_info)
+                file_structure["classes"].append(class_info)
 
-        elif language == "javascript":
-            # Placeholder for JS: very simple check for common unbalanced brackets/parens
-            # A real JS syntax check would require a proper parser (e.g., esprima, acorn).
-            if code_string.count('{') != code_string.count('}') or \
-               code_string.count('(') != code_string.count(')') or \
-               code_string.count('[') != code_string.count(']'):
-                return {"status": "invalid", "errors": [{"message": "Unbalanced brackets/parentheses (placeholder check)."}]}
-            # Extremely naive check for common JS keywords to guess if it's JS-like
-            if any(kw in code_string for kw in ["function", "var", "let", "const", "=>", "document."]):
-                 return {"status": "valid", "errors": [], "note": "Placeholder JS check passed (very basic)."}
-            return {"status": "valid", "errors": [], "note": "Placeholder JS check (very basic, might be incorrect)."}
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)): # Module-level functions
+                func_info = {
+                    "name": node.name,
+                    "docstring": ast.get_docstring(node),
+                    "parameters": self._extract_method_parameters(node), # Placeholder call
+                    "returns": None # Placeholder for return type
+                }
+                if node.returns:
+                     func_info["returns"] = ast.unparse(node.returns) if hasattr(ast, 'unparse') else "TypeHint (unparse unavailable)"
+                file_structure["functions"].append(func_info)
 
+        return file_structure
 
-        else:
-            print(f"LCM: Syntax check for language '{language}' not implemented yet. Returning placeholder valid.")
-            return {"status": "valid", "errors": [], "note": f"Syntax check for '{language}' is a placeholder."}
-
-    def generate_boilerplate(self, template_type: str, language: str) -> str:
+    def get_tool_structure(self, tool_name_or_filepath: str) -> Optional[Dict[str, Any]]:
         """
-        Generates boilerplate code for a given template type and language.
-
-        Args:
-            template_type (str): The type of boilerplate (e.g., "python_class", "js_function", "html_basic").
-            language (str): The programming language.
-
-        Returns:
-            str: The generated boilerplate code string, or an error message.
+        Main interface method to get the structure of a specific tool.
+        It can accept a tool name (which it tries to resolve to a filepath)
+        or a direct filepath.
+        (Placeholder - to be implemented)
         """
-        language = language.lower()
-        template_type = template_type.lower()
-        print(f"LCM: Generating boilerplate for template '{template_type}' in language '{language}'.")
-
-        if language == "python":
-            if template_type == "class":
-                return "class NewClass:\n    def __init__(self):\n        pass\n\n    def example_method(self):\n        return None"
-            elif template_type == "function":
-                return "def new_function(arg1, arg2):\n    # TODO: Implement\n    pass"
-            else:
-                return f"# Boilerplate for Python '{template_type}' not defined."
-
-        elif language == "javascript":
-            if template_type == "function":
-                return "function newFunction(arg1, arg2) {\n  // TODO: Implement\n  console.log(arg1, arg2);\n}"
-            elif template_type == "class": # ES6 class
-                return "class NewClass {\n  constructor() {\n\n  }\n\n  exampleMethod() {\n    return null;\n  }\n}"
-            else:
-                return f"// Boilerplate for JavaScript '{template_type}' not defined."
-
-        elif language == "html" and template_type == "basic_page":
-            return "<!DOCTYPE html>\n<html>\n<head>\n  <title>New Page</title>\n</head>\n<body>\n  <h1>Hello, World!</h1>\n</body>\n</html>"
-
+        # TODO: Add logic to resolve tool_name to filepath if not already a path.
+        # For now, assume tool_name_or_filepath is a direct path.
+        if os.path.isfile(tool_name_or_filepath):
+            return self.analyze_tool_file(tool_name_or_filepath)
         else:
-            return f"// Boilerplate for language '{language}', template '{template_type}' not available."
+            # Try to find it in self.tools_directory
+            # This part needs more robust path joining and searching
+            potential_path = os.path.join(self.tools_directory, tool_name_or_filepath)
+            if not potential_path.endswith(".py"):
+                potential_path += ".py"
+
+            if os.path.isfile(potential_path):
+                return self.analyze_tool_file(potential_path)
+            else:
+                print(f"Warning: Could not find tool file for '{tool_name_or_filepath}' at '{potential_path}' or as direct path.")
+                return None
 
 if __name__ == '__main__':
-    lcm = LightweightCodeModel()
+    # Example Usage (for testing during development)
+    # Ensure this runs from the project root or PYTHONPATH is set for src.
+    # Assuming this file is in src/core_ai/code_understanding/
 
-    print("\n--- Syntax Checking ---")
-    py_valid = "def hello():\n  print('world')"
-    py_invalid = "def hello(\n  print('world')"
-    js_code = "function greet() { console.log('hi'); }"
-    other_lang_code = "int main() { return 0; }"
+    # Construct path to 'src/tools/' relative to this file's location for standalone testing
+    # This is a bit fragile and depends on script location vs. project structure.
+    # For proper usage, the module should be imported and used from a context aware of the project root.
 
-    print(f"Python (valid): {lcm.check_syntax(py_valid, 'python')}")
-    print(f"Python (invalid): {lcm.check_syntax(py_invalid, 'python')}")
-    print(f"JavaScript (placeholder): {lcm.check_syntax(js_code, 'javascript')}")
-    print(f"C++ (placeholder): {lcm.check_syntax(other_lang_code, 'c++')}")
+    # current_dir = os.path.dirname(os.path.abspath(__file__))
+    # project_root_guess = os.path.abspath(os.path.join(current_dir, "..", "..", "..")) # Up three levels from src/core_ai/code_understanding
+    # tools_dir_test = os.path.join(project_root_guess, "src", "tools")
 
-    print("\n--- Boilerplate Generation ---")
-    print(f"Python Class:\n{lcm.generate_boilerplate('class', 'python')}\n")
-    print(f"JS Function:\n{lcm.generate_boilerplate('function', 'javascript')}\n")
-    print(f"HTML Basic Page:\n{lcm.generate_boilerplate('basic_page', 'html')}\n")
-    print(f"Unknown:\n{lcm.generate_boilerplate('unknown_template', 'python')}\n")
+    # print(f"Attempting to use tools directory: {tools_dir_test}")
+    # model = LightweightCodeModel(tools_directory=tools_dir_test)
 
-    print("LightweightCodeModel placeholder script finished.")
+    # A more direct way if running script from project root:
+    model = LightweightCodeModel() # Uses default "src/tools/"
+
+    print("LightweightCodeModel initialized (placeholder).")
+    print(f"Looking for tools in: {model.tools_directory}")
+
+    # The following will print warnings or return None as methods are placeholders.
+    # tool_files = model.list_tool_files()
+    # print(f"Found tool files (placeholder): {tool_files}")
+
+    # math_tool_path_rel = "src/tools/math_tool.py" # Relative to project root
+    # if os.path.exists(math_tool_path_rel):
+    #     print(f"\nAnalyzing (placeholder): {math_tool_path_rel}")
+    #     structure = model.get_tool_structure(math_tool_path_rel)
+    #     if structure:
+    #         print(json.dumps(structure, indent=2))
+    #     else:
+    #         print("Could not analyze tool structure (placeholder).")
+    # else:
+    #     print(f"Test math_tool.py not found at {math_tool_path_rel} from current working directory.")
+
+    # # Example for a non-existent tool
+    # print("\nAnalyzing non-existent tool (placeholder):")
+    # non_existent_structure = model.get_tool_structure("non_existent_tool.py")
+    # if not non_existent_structure:
+    #     print("Correctly returned None for non-existent tool (placeholder).")
+
+    # Note: The __main__ block is primarily for very basic smoke testing of the class structure.
+    # Proper testing will be done with unittest.
+    pass # Placeholder to avoid syntax error on empty __main__

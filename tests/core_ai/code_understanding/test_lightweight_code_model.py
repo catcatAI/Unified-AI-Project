@@ -1,95 +1,201 @@
 import unittest
+from unittest.mock import patch, mock_open
 import os
-import sys
+import glob
+import ast # Ensure ast is imported for any direct ast comparisons if needed, though unparse is main
 
-# Add src directory to sys.path
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", "..")) # Unified-AI-Project/
-SRC_DIR = os.path.join(PROJECT_ROOT, "src")
-if SRC_DIR not in sys.path:
-    sys.path.insert(0, SRC_DIR)
-
+# Assuming src is in PYTHONPATH for test execution
 from core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
 
 class TestLightweightCodeModel(unittest.TestCase):
 
     def setUp(self):
-        self.lcm = LightweightCodeModel()
+        self.mock_tools_dir = "src/tools/"
+        self.model = LightweightCodeModel(tools_directory=self.mock_tools_dir)
 
-    def test_01_initialization(self):
-        self.assertIsNotNone(self.lcm)
-        print("TestLightweightCodeModel.test_01_initialization PASSED")
+    @patch('glob.glob')
+    @patch('os.path.isdir')
+    @patch('os.path.basename') # Mock basename as it's used by list_tool_files
+    def test_list_tool_files(self, mock_os_path_basename, mock_os_path_isdir, mock_glob_glob):
+        mock_os_path_isdir.return_value = True
+        # Simulate glob finding these files
+        glob_paths = [
+            os.path.join(self.mock_tools_dir, "tool_one.py"),
+            os.path.join(self.mock_tools_dir, "__init__.py"),
+            os.path.join(self.mock_tools_dir, "tool_two.py"),
+            os.path.join(self.mock_tools_dir, "tool_dispatcher.py"),
+            os.path.join(self.mock_tools_dir, "subdir", "tool_three.py") # Test subdirectory case
+        ]
+        mock_glob_glob.return_value = glob_paths
 
-    def test_02_check_syntax_python(self):
-        valid_py_code = "def foo():\n  return 'bar'"
-        result_valid = self.lcm.check_syntax(valid_py_code, "python")
-        self.assertEqual(result_valid["status"], "valid")
-        self.assertEqual(len(result_valid["errors"]), 0)
+        # Configure side_effect for os.path.basename
+        mock_os_path_basename.side_effect = [
+            "tool_one.py",
+            "__init__.py",
+            "tool_two.py",
+            "tool_dispatcher.py",
+            "tool_three.py"
+        ]
 
-        invalid_py_code = "def foo():\n  return bar" # bar not defined, but syntax is fine for ast.parse
-                                                 # ast.parse checks syntax, not semantics like undefined vars.
-                                                 # Let's use a clearer syntax error.
-        invalid_py_code_syntax = "def foo()\n  print 'hello'" # Missing colon, Python 2 print
-        result_invalid_syntax = self.lcm.check_syntax(invalid_py_code_syntax, "python")
-        self.assertEqual(result_invalid_syntax["status"], "invalid")
-        self.assertGreater(len(result_invalid_syntax["errors"]), 0)
-        if result_invalid_syntax["errors"]: # Check error details if list is not empty
-            self.assertIn("message", result_invalid_syntax["errors"][0])
-            # self.assertIn("line", result_invalid_syntax["errors"][0]) # ast.SyntaxError has lineno
+        expected_files = [
+            os.path.join(self.mock_tools_dir, "tool_one.py"),
+            os.path.join(self.mock_tools_dir, "tool_two.py"),
+            os.path.join(self.mock_tools_dir, "subdir", "tool_three.py")
+        ]
 
-        # Test with an empty string - ast.parse considers this valid (empty module)
-        empty_code = ""
-        result_empty = self.lcm.check_syntax(empty_code, "python")
-        self.assertEqual(result_empty["status"], "valid")
-        self.assertEqual(len(result_empty["errors"]), 0)
+        tool_files = self.model.list_tool_files()
+        self.assertCountEqual(tool_files, expected_files, "Should list correct tool files, excluding __init__ and dispatcher.")
+        mock_glob_glob.assert_called_once_with(os.path.join(self.mock_tools_dir, "**", "*.py"), recursive=True)
 
-        print("TestLightweightCodeModel.test_02_check_syntax_python PASSED")
 
-    def test_03_check_syntax_javascript_placeholder(self):
-        # Test JS placeholder logic
-        valid_js_like = "function foo() { return 'bar'; }"
-        result_valid_js = self.lcm.check_syntax(valid_js_like, "javascript")
-        self.assertEqual(result_valid_js["status"], "valid")
-        self.assertIn("note", result_valid_js) # Placeholder often adds a note
+    @patch('os.path.isdir')
+    def test_list_tool_files_non_existent_dir(self, mock_isdir):
+        mock_isdir.return_value = False
+        model = LightweightCodeModel(tools_directory="non_existent_dir/")
+        tool_files = model.list_tool_files()
+        self.assertEqual(tool_files, [])
 
-        unbalanced_js = "function foo() { return 'bar';" # Missing closing }
-        result_unbalanced_js = self.lcm.check_syntax(unbalanced_js, "javascript")
-        self.assertEqual(result_unbalanced_js["status"], "invalid")
-        self.assertTrue(any("Unbalanced" in err.get("message","") for err in result_unbalanced_js["errors"]))
-        print("TestLightweightCodeModel.test_03_check_syntax_javascript_placeholder PASSED")
+    def test_analyze_tool_file_simple_class_and_function(self):
+        sample_code = """
+import typing
+from typing import List, Optional
 
-    def test_04_check_syntax_other_language_placeholder(self):
-        other_code = "int main() { return 0; }"
-        result_other = self.lcm.check_syntax(other_code, "c++")
-        self.assertEqual(result_other["status"], "valid") # Placeholder returns valid
-        self.assertIn("note", result_other)
-        self.assertTrue("placeholder" in result_other["note"].lower())
-        print("TestLightweightCodeModel.test_04_check_syntax_other_language_placeholder PASSED")
+class SimpleTool:
+    \"\"\"A simple tool class docstring.\"\"\"
+    def __init__(self, name: str = "Tool"):
+        \"\"\"Initializer docstring.\"\"\"
+        self.name = name
 
-    def test_05_generate_boilerplate(self):
-        # Python class
-        py_class = self.lcm.generate_boilerplate("class", "python")
-        self.assertIn("class NewClass:", py_class)
-        self.assertIn("def __init__(self):", py_class)
+    async def execute(self, value: int, details: Optional[dict] = None) -> str:
+        \"\"\"Execute method docstring.
 
-        # JS function
-        js_func = self.lcm.generate_boilerplate("function", "javascript")
-        self.assertIn("function newFunction(arg1, arg2)", js_func)
-        self.assertIn("// TODO: Implement", js_func)
+        Args:
+            value (int): The value to process.
+            details (Optional[dict]): Optional details.
 
-        # HTML basic page
-        html_page = self.lcm.generate_boilerplate("basic_page", "html")
-        self.assertIn("<!DOCTYPE html>", html_page)
-        self.assertIn("<h1>Hello, World!</h1>", html_page)
+        Returns:
+            str: The processed value as a string.
+        \"\"\"
+        return f"{self.name} processed {value} with {details}"
 
-        # Unknown template
-        unknown_py = self.lcm.generate_boilerplate("struct", "python")
-        self.assertIn("not defined", unknown_py)
+def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]:
+    \"\"\"Module level function docstring.\"\"\"
+    return [x * y] + list(args)
+"""
+        m = mock_open(read_data=sample_code)
+        with patch('builtins.open', m), \
+             patch('os.path.isfile', return_value=True):
+            analysis_result = self.model.analyze_tool_file("dummy_path/simple_tool.py")
 
-        # Unknown language
-        unknown_lang = self.lcm.generate_boilerplate("class", "ruby")
-        self.assertIn("not available", unknown_lang)
-        print("TestLightweightCodeModel.test_05_generate_boilerplate PASSED")
+        self.assertIsNotNone(analysis_result)
+        self.assertEqual(analysis_result["filepath"], "dummy_path/simple_tool.py")
+
+        # Class assertions
+        self.assertEqual(len(analysis_result["classes"]), 1)
+        simple_tool_class = analysis_result["classes"][0]
+        self.assertEqual(simple_tool_class["name"], "SimpleTool")
+        self.assertEqual(simple_tool_class["docstring"], "A simple tool class docstring.")
+        self.assertEqual(len(simple_tool_class["methods"]), 2)
+
+        # __init__ method
+        init_method = next(mthd for mthd in simple_tool_class["methods"] if mthd["name"] == "__init__")
+        self.assertEqual(init_method["docstring"], "Initializer docstring.")
+        expected_init_params = [
+            {"name": "self", "annotation": None, "default": None},
+            {"name": "name", "annotation": "str", "default": "'Tool'"} # Changed to single quotes based on ast.unparse behavior
+        ]
+        self.assertListEqual(init_method["parameters"], expected_init_params)
+        self.assertIsNone(init_method["returns"])
+
+        # execute method (async)
+        execute_method = next(mthd for mthd in simple_tool_class["methods"] if mthd["name"] == "execute")
+        self.assertTrue("Execute method docstring." in execute_method["docstring"])
+        expected_execute_params = [
+            {"name": "self", "annotation": None, "default": None},
+            {"name": "value", "annotation": "int", "default": None},
+            {"name": "details", "annotation": "Optional[dict]", "default": "None"}
+        ]
+        self.assertListEqual(execute_method["parameters"], expected_execute_params)
+        self.assertEqual(execute_method["returns"], "str")
+
+        # Module-level function assertions
+        self.assertEqual(len(analysis_result["functions"]), 1)
+        module_func = analysis_result["functions"][0]
+        self.assertEqual(module_func["name"], "module_level_func")
+        self.assertEqual(module_func["docstring"], "Module level function docstring.")
+        expected_module_params = [
+            {"name": "x", "annotation": "float", "default": None},
+            {"name": "y", "annotation": "float", "default": "3.14"}, # kwonlyarg
+            {"name": "*args", "annotation": None, "default": None},
+            {"name": "**kwargs", "annotation": None, "default": None}
+        ]
+        # Order of *args, **kwargs might vary based on extraction method, so check presence and details.
+        # For now, assuming current order from _extract_method_parameters (pos, kwonly, vararg, kwarg)
+        # Let's sort by name for comparison for args, vararg, kwarg
+        param_names_from_result = sorted([p["name"] for p in module_func["parameters"]])
+        expected_param_names = sorted([p["name"] for p in expected_module_params])
+        self.assertListEqual(param_names_from_result, expected_param_names)
+
+        for p_expected in expected_module_params:
+            p_actual = next(p for p in module_func["parameters"] if p["name"] == p_expected["name"])
+            self.assertEqual(p_actual["annotation"], p_expected["annotation"])
+            self.assertEqual(p_actual["default"], p_expected["default"])
+
+        self.assertEqual(module_func["returns"], "List[float]")
+
+
+    def test_analyze_tool_file_no_classes_or_functions(self):
+        sample_code = "# Just comments and variables\nPI = 3.14"
+        m = mock_open(read_data=sample_code)
+        with patch('builtins.open', m), \
+             patch('os.path.isfile', return_value=True):
+            analysis_result = self.model.analyze_tool_file("dummy_path/empty_tool.py")
+
+        self.assertIsNotNone(analysis_result)
+        self.assertEqual(len(analysis_result["classes"]), 0)
+        self.assertEqual(len(analysis_result["functions"]), 0)
+
+    def test_analyze_tool_file_parsing_error(self):
+        sample_code = "def func(a: int -> str:" # Syntax error
+        m = mock_open(read_data=sample_code)
+        with patch('builtins.open', m), \
+             patch('os.path.isfile', return_value=True):
+            analysis_result = self.model.analyze_tool_file("dummy_path/error_tool.py")
+        self.assertIsNone(analysis_result, "Should return None on parsing error.")
+
+    def test_analyze_tool_file_not_found(self):
+        with patch('os.path.isfile', return_value=False):
+            analysis_result = self.model.analyze_tool_file("non_existent_file.py")
+        self.assertIsNone(analysis_result)
+
+    @patch('os.path.isfile')
+    def test_get_tool_structure_direct_path(self, mock_isfile):
+        mock_isfile.return_value = True
+        with patch.object(self.model, 'analyze_tool_file', return_value={"mocked": "analysis"}) as mock_analyze:
+            result = self.model.get_tool_structure("src/tools/some_tool.py")
+            mock_analyze.assert_called_once_with("src/tools/some_tool.py")
+            self.assertEqual(result, {"mocked": "analysis"})
+
+    @patch('os.path.join')
+    @patch('os.path.isfile')
+    def test_get_tool_structure_tool_name_resolution(self, mock_isfile, mock_join):
+        mock_isfile.side_effect = [False, True]
+        resolved_path = os.path.join(self.mock_tools_dir, "my_tool.py")
+        mock_join.return_value = resolved_path
+
+        with patch.object(self.model, 'analyze_tool_file', return_value={"resolved": "analysis"}) as mock_analyze:
+            result = self.model.get_tool_structure("my_tool")
+            # Check if the specific call we care about was made, among potentially others
+            self.assertIn(unittest.mock.call(self.mock_tools_dir, "my_tool"), mock_join.call_args_list)
+            mock_analyze.assert_called_once_with(resolved_path)
+            self.assertEqual(result, {"resolved": "analysis"})
+
+    @patch('os.path.isfile', return_value=False)
+    def test_get_tool_structure_tool_not_found(self, mock_isfile):
+        with patch.object(self.model, 'analyze_tool_file') as mock_analyze:
+            result = self.model.get_tool_structure("non_existent_tool")
+            mock_analyze.assert_not_called()
+            self.assertIsNone(result)
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()
