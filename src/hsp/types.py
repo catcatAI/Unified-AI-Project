@@ -99,6 +99,8 @@ class HSPCapabilityAdvertisementPayload(TypedDict, total=False):
     input_schema_example: Optional[Dict[str, Any]]
     output_schema_uri: Optional[str]
     output_schema_example: Optional[Dict[str, Any]]
+    data_format_preferences: Optional[List[str]] # e.g., ["application/json", "image/jpeg", "text/plain"]
+    hsp_protocol_requirements: Optional[Dict[str, Any]] # e.g., {"requires_streaming_input": True}
     cost_estimate_template: Optional[Dict[str, Any]]
     availability_status: Required[Literal["online", "offline", "degraded", "maintenance"]]
     access_policy_id: Optional[str]
@@ -111,6 +113,7 @@ class HSPTaskRequestPayload(TypedDict, total=False):
     capability_id_filter: Optional[str]
     capability_name_filter: Optional[str] # Alternative to id_filter
     parameters: Required[Dict[str, Any]] # Input parameters for the capability
+    requested_output_data_format: Optional[str] # Requester can hint preferred output format
     priority: Optional[int] # e.g., 1-10
     deadline_timestamp: Optional[str] # ISO 8601 UTC
     callback_address: Optional[str] # URI/topic where TaskResult should be sent
@@ -126,6 +129,7 @@ class HSPTaskResultPayload(TypedDict, total=False):
     executing_ai_id: str # Required, DID or URI
     status: Required[Literal["success", "failure", "in_progress", "queued", "rejected"]]
     payload: Optional[Dict[str, Any]] # The actual result data if status is "success"
+    output_data_format: Optional[str] # Confirms the format of the payload, e.g., "application/json", "image/png"
     error_details: Optional[HSPErrorDetails] # If status is "failure" or "rejected"
     timestamp_completed: Optional[str] # ISO 8601 UTC
     execution_metadata: Optional[Dict[str, Any]] # e.g., {"time_taken_ms": 150}
