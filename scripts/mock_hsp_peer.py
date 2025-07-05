@@ -29,7 +29,52 @@ class MockHSPPeer:
         )
         self.connector.register_on_generic_message_callback(self.handle_generic_hsp_message)
         self.connector.register_on_fact_callback(self.handle_fact_message)
-        # self.connector.register_on_task_request_callback(self.handle_task_request_message) # Example for future
+        self.connector.register_on_task_request_callback(self.handle_task_request) # Register new handler
+
+        self.mock_capabilities: Dict[str, HSPCapabilityAdvertisementPayload] = {}
+        self._define_mock_capabilities()
+
+
+    def _define_mock_capabilities(self):
+        cap_echo = HSPCapabilityAdvertisementPayload(
+            capability_id=f"{self.ai_id}_echo_v1.0",
+            ai_id=self.ai_id,
+            name="Mock Echo Service",
+            description="Echoes back the parameters it receives.",
+            version="1.0",
+            input_schema_example={"data_to_echo": "any"},
+            output_schema_example={"echoed_data": "any"},
+            availability_status="online",
+            tags=["mock", "echo", "testing"]
+        )
+        self.mock_capabilities[cap_echo['capability_id']] = cap_echo
+
+        cap_math = HSPCapabilityAdvertisementPayload(
+            capability_id=f"{self.ai_id}_simple_math_v1.0",
+            ai_id=self.ai_id,
+            name="Simple Math Service (Mock)",
+            description="Performs basic addition on two numbers.",
+            version="1.0",
+            input_schema_example={"operand1": 0, "operand2": 0, "operation": "add"},
+            output_schema_example={"result": 0},
+            availability_status="online",
+            tags=["mock", "math", "calculation"]
+        )
+        self.mock_capabilities[cap_math['capability_id']] = cap_math
+
+        cap_describe = HSPCapabilityAdvertisementPayload( #type: ignore
+            capability_id=f"{self.ai_id}_describe_entity_v1.0",
+            ai_id=self.ai_id,
+            name="Mock Entity Description Service",
+            description="Provides a mock textual description for a given entity name.",
+            version="1.0",
+            input_schema_example={"entity_name": "string"},
+            output_schema_example={"description": "string", "entity_type_guess": "string"},
+            availability_status="online",
+            tags=["mock", "description", "entity"]
+        )
+        self.mock_capabilities[cap_describe['capability_id']] = cap_describe
+
 
     def handle_generic_hsp_message(self, envelope: HSPMessageEnvelope, topic: str) -> None:
         print(f"\n[MockPeer-{self.ai_id}] Received generic HSP message on MQTT topic '{topic}':")
@@ -49,25 +94,90 @@ class MockHSPPeer:
         print(f"  Statement  : {statement_to_print}")
         print(f"  Confidence : {fact_payload.get('confidence_score')}")
 
-    # Example for handling task requests - would require HSPConnector to have a specific callback registration for this
-    # def handle_task_request_message(self, task_payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope):
-    #     print(f"\n[MockPeer-{self.ai_id}] Received TASK REQUEST from {sender_id}")
-    #     capability_requested = task_payload.get('capability_id_filter') or task_payload.get('capability_name_filter')
-    #     print(f"  Capability: {capability_requested}")
-    #     print(f"  Parameters: {task_payload.get('parameters')}")
-    #     # Mock sending a result
-    #     if capability_requested == "mock_echo_v1" and envelope.get('correlation_id'):
-    #         result_payload = HSPTaskResultPayload(
-    #             result_id=f"taskres_{uuid.uuid4().hex}",
-    #             request_id=task_payload['request_id'], # type: ignore # request_id is required
-    #             executing_ai_id=self.ai_id,
-    #             status="success",
-    #             payload={"echoed_data": task_payload.get('parameters')},
-    #             timestamp_completed=datetime.now(timezone.utc).isoformat()
-    #         )
-    #         # The connector would need a method like send_response or send_task_result
-    #         # self.connector.send_hsp_response(result_payload, "HSP::TaskResult_v0.1", envelope['sender_ai_id'], envelope['correlation_id'])
-    #         print(f"  MockPeer: Would send TaskResult for request {task_payload.get('request_id')}")
+    def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope):
+        print(f"\n[MockPeer-{self.ai_id}] Received TASK REQUEST from '{sender_ai_id}' for capability '{task_payload.get('capability_id_filter')}'. CorrID: {full_envelope.get('correlation_id')}")
+
+        requested_cap_id = task_payload.get('capability_id_filter')
+        params = task_payload.get('parameters', {})
+        correlation_id = full_envelope.get('correlation_id') # This is crucial
+        reply_to_address = task_payload.get('callback_address') # Address to send the result
+
+        if not requested_cap_id or not correlation_id or not reply_to_address:
+            print(f"  MockPeer: Invalid TaskRequest - missing capability_id, correlation_id, or callback_address.")
+            # Optionally send a failure TaskResult
+            return
+
+        response_payload: Optional[HSPTaskResultPayload] = None
+
+        if requested_cap_id == f"{self.ai_id}_echo_v1.0":
+            response_payload = HSPTaskResultPayload( # type: ignore
+                result_id=f"taskres_echo_{uuid.uuid4().hex[:6]}",
+                request_id=task_payload['request_id'],
+                executing_ai_id=self.ai_id,
+                status="success",
+                payload={"echoed_data": params, "message": f"Echo from {self.ai_id}"},
+                timestamp_completed=datetime.now(timezone.utc).isoformat()
+            )
+        elif requested_cap_id == f"{self.ai_id}_simple_math_v1.0":
+            op1 = params.get('operand1')
+            op2 = params.get('operand2')
+            operation = params.get('operation', 'add')
+            if isinstance(op1, (int, float)) and isinstance(op2, (int, float)):
+                result_val = None
+                if operation == 'add': result_val = op1 + op2
+                # Add more operations if needed for testing (subtract, etc.)
+                else: result_val = "unknown_operation"
+
+                response_payload = HSPTaskResultPayload( # type: ignore
+                    result_id=f"taskres_math_{uuid.uuid4().hex[:6]}",
+                    request_id=task_payload['request_id'],
+                    executing_ai_id=self.ai_id,
+                    status="success",
+                    payload={"result": result_val, "operation_performed": operation},
+                    timestamp_completed=datetime.now(timezone.utc).isoformat()
+                )
+            else:
+                response_payload = HSPTaskResultPayload( # type: ignore
+                    result_id=f"taskres_math_err_{uuid.uuid4().hex[:6]}",
+                    request_id=task_payload['request_id'],
+                    executing_ai_id=self.ai_id,
+                    status="failure",
+                    error_details={ # type: ignore
+                        "error_code": "INVALID_PARAMETERS",
+                        "error_message": "Operands for math must be numbers."
+                    },
+                    timestamp_completed=datetime.now(timezone.utc).isoformat()
+                )
+        elif requested_cap_id == f"{self.ai_id}_describe_entity_v1.0":
+            entity_name = params.get('entity_name', 'Unknown Entity')
+            response_payload = HSPTaskResultPayload( # type: ignore
+                result_id=f"taskres_desc_{uuid.uuid4().hex[:6]}",
+                request_id=task_payload['request_id'],
+                executing_ai_id=self.ai_id,
+                status="success",
+                payload={
+                    "description": f"The entity '{entity_name}' is a conceptual element often discussed in test scenarios. It represents things that need describing by mock AIs like {self.ai_id}.",
+                    "entity_type_guess": "conceptual_test_entity"
+                },
+                timestamp_completed=datetime.now(timezone.utc).isoformat()
+            )
+        else:
+            print(f"  MockPeer: Received request for unknown/unsupported capability_id '{requested_cap_id}'.")
+            response_payload = HSPTaskResultPayload( # type: ignore
+                result_id=f"taskres_unknown_cap_{uuid.uuid4().hex[:6]}",
+                request_id=task_payload['request_id'],
+                executing_ai_id=self.ai_id,
+                status="rejected",
+                error_details={ # type: ignore
+                    "error_code": "CAPABILITY_NOT_FOUND",
+                    "error_message": f"Capability '{requested_cap_id}' not supported by {self.ai_id}."
+                },
+                timestamp_completed=datetime.now(timezone.utc).isoformat()
+            )
+
+        if response_payload:
+            print(f"  MockPeer: Sending TaskResult (status: {response_payload.get('status')}) to '{reply_to_address}' for CorrID '{correlation_id}'.")
+            self.connector.send_task_result(response_payload, reply_to_address, correlation_id)
 
 
     async def run_loop(self):
@@ -156,21 +266,31 @@ class MockHSPPeer:
     async def start(self):
         print(f"[MockPeer-{self.ai_id}] Attempting to connect...")
         if self.connector.connect(): # This starts the MQTT client's own network loop thread
-            # Wait briefly for the on_connect callback to fire and set self.connector.is_connected
-            await asyncio.sleep(1)
+            await asyncio.sleep(1) # Wait for connection callback
 
             if self.connector.is_connected:
                 print(f"[MockPeer-{self.ai_id}] Successfully connected to MQTT broker.")
-                # Subscribe to topics of interest
-                self.connector.subscribe("hsp/knowledge/facts/#") # All facts
-                self.connector.subscribe(f"hsp/requests/{self.ai_id}/#") # Task requests for this mock AI (example)
-                self.connector.subscribe("hsp/knowledge/facts/user_statements") # From LearningManager
-                self.connector.subscribe("hsp/knowledge/facts/user_preferences") # From LearningManager
-                self.connector.subscribe("hsp/knowledge/facts/general") # From LearningManager default
 
-                print(f"[MockPeer-{self.ai_id}] Subscribed to relevant topics. Listening...")
+                # 1. Publish capabilities
+                cap_topic = "hsp/capabilities/advertisements/general" # A common topic for all advertisements
+                print(f"[MockPeer-{self.ai_id}] Publishing capabilities to '{cap_topic}'...")
+                for cap_id, cap_payload in self.mock_capabilities.items():
+                    self.connector.publish_capability_advertisement(cap_payload, topic=cap_topic)
+                    print(f"  MockPeer: Advertised capability '{cap_id}'.")
 
-                # Start a task for periodic publishing
+                # 2. Subscribe to relevant topics
+                topics_to_subscribe = [
+                    "hsp/knowledge/facts/#", # All facts
+                    f"hsp/requests/{self.ai_id}/#", # Task requests specifically for this mock AI
+                    # Add other general topics if needed, e.g. specific fact topics it might react to
+                ]
+                print(f"[MockPeer-{self.ai_id}] Subscribing to topics: {topics_to_subscribe}")
+                for topic in topics_to_subscribe:
+                    self.connector.subscribe(topic)
+
+                print(f"[MockPeer-{self.ai_id}] Subscriptions complete. Listening...")
+
+                # Start a task for periodic publishing (facts, heartbeats, etc.)
                 asyncio.create_task(self.run_loop())
 
                 # Keep the main start task alive to listen (or until KeyboardInterrupt)

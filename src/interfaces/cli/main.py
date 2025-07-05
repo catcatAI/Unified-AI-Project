@@ -10,15 +10,22 @@ import asyncio
 import uuid
 from typing import Dict, Any, Optional, List # Added List for MockHAM
 
+import argparse
+import sys
+import asyncio
+import uuid
+from typing import Dict, Any, Optional, List # Added List for MockHAM
+
 # Assuming src is in PYTHONPATH or this script is run from project root level
 from core_ai.dialogue.dialogue_manager import DialogueManager
 from core_ai.learning.learning_manager import LearningManager
 from core_ai.learning.fact_extractor_module import FactExtractorModule
-from core_ai.learning.content_analyzer_module import ContentAnalyzerModule # Import ContentAnalyzerModule
+from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule # Import ServiceDiscoveryModule
 from core_ai.memory.ham_memory_manager import HAMMemoryManager
 from services.llm_interface import LLMInterface, LLMInterfaceConfig
 from hsp.connector import HSPConnector
-from hsp.types import HSPFactPayload, HSPMessageEnvelope
+from hsp.types import HSPFactPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload # Added HSPCapabilityAdvertisementPayload
 
 
 # --- Global instances for simplicity in this CLI PoC ---
@@ -65,26 +72,35 @@ ham_manager = MockHAM() # Using MockHAM for CLI
 
 hsp_connector: Optional[HSPConnector] = None
 learning_manager: Optional[LearningManager] = None
-dialogue_manager: Optional[DialogueManager] = None # Will be initialized in main
+dialogue_manager: Optional[DialogueManager] = None
+service_discovery_module: Optional[ServiceDiscoveryModule] = None # Add global for ServiceDiscoveryModule
 
-# --- HSP Callback ---
+# --- HSP Callbacks ---
 def handle_incoming_hsp_fact(fact_payload: HSPFactPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope):
+    global learning_manager # Ensure global learning_manager is accessible
     print(f"\n[CLI App] HSP Fact Received from '{sender_ai_id}':")
     print(f"  Fact ID: {fact_payload.get('id')}, Statement: {fact_payload.get('statement_nl') or fact_payload.get('statement_structured')}")
     if learning_manager:
         print(f"  Forwarding to LearningManager for processing...")
-        # This is a conceptual call. LearningManager would need a method like this.
-        # For now, we'll just print. The actual processing logic will be added to LearningManager.
-        # learning_manager.process_received_hsp_fact(fact_payload, sender_ai_id, full_envelope)
-        learning_manager.process_and_store_hsp_fact(fact_payload, sender_ai_id, full_envelope) # Assuming this method will be added
+        learning_manager.process_and_store_hsp_fact(fact_payload, sender_ai_id, full_envelope)
     else:
         print("  LearningManager not initialized, cannot process HSP fact.")
 
+def handle_incoming_capability_advertisement(cap_payload: HSPCapabilityAdvertisementPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope):
+    global service_discovery_module # Ensure global service_discovery_module is accessible
+    print(f"\n[CLI App] HSP Capability Advertisement Received from '{sender_ai_id}':")
+    print(f"  Capability ID: {cap_payload.get('capability_id')}, Name: {cap_payload.get('name')}")
+    if service_discovery_module:
+        service_discovery_module.process_capability_advertisement(cap_payload, sender_ai_id, full_envelope)
+    else:
+        print("  ServiceDiscoveryModule not initialized, cannot process capability advertisement.")
+
 
 def init_global_services():
-    global hsp_connector, learning_manager, dialogue_manager, fact_extractor # Add fact_extractor if not already global and used by ContentAnalyzer
+    global hsp_connector, learning_manager, dialogue_manager, fact_extractor, service_discovery_module
 
-    content_analyzer = ContentAnalyzerModule() # Initialize ContentAnalyzerModule
+    content_analyzer = ContentAnalyzerModule()
+    service_discovery_module = ServiceDiscoveryModule() # Instantiate ServiceDiscoveryModule
 
     hsp_connector = HSPConnector(
         ai_id=cli_ai_id,
@@ -109,19 +125,26 @@ def init_global_services():
         operational_config=learning_manager_config
     )
 
-    # Register the callback with HSPConnector
+    # Register callbacks with HSPConnector
     hsp_connector.register_on_fact_callback(handle_incoming_hsp_fact)
+    hsp_connector.register_on_capability_advertisement_callback(handle_incoming_capability_advertisement)
+    # TODO: Register callbacks for TaskRequest and TaskResult when DialogueManager/ToolDispatcher is ready to handle them.
 
     if hsp_connector.connect(): # Starts MQTT loop in background thread
-        print(f"CLI App: HSPConnector connected for AI ID {cli_ai_id}. Subscribing to general facts...")
+        print(f"CLI App: HSPConnector connected for AI ID {cli_ai_id}. Subscribing to topics...")
         hsp_connector.subscribe("hsp/knowledge/facts/#") # Listen to all facts for PoC
+        hsp_connector.subscribe("hsp/capabilities/advertisements/#") # Listen to all capability advertisements
     else:
         print(f"CLI App: FAILED to connect HSPConnector for AI ID {cli_ai_id}.")
 
-    # Initialize DialogueManager (can use the global learning_manager)
-    # This assumes DialogueManager can accept a LearningManager or similar components.
-    # For this PoC, DialogueManager is simplified.
-    dialogue_manager = DialogueManager(learning_manager=learning_manager) # Assuming DM can take LM
+    # Initialize DialogueManager
+    # Pass ServiceDiscoveryModule to DialogueManager if it's going to use it directly for finding capabilities.
+    # For now, DialogueManager is not directly using it in this CLI PoC.
+    dialogue_manager = DialogueManager(
+        learning_manager=learning_manager,
+        # service_discovery=service_discovery_module # Example if DM needs it
+        # llm_interface=llm_interface # DM already creates its own LLMInterface
+    )
     print("CLI App: DialogueManager initialized.")
 
 
