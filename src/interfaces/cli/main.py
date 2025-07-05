@@ -1,74 +1,227 @@
-# Placeholder for Command Line Interface (CLI) main.py
+import argparse
+import sys
+import asyncio
+import uuid
+from typing import Dict, Any, Optional
 
 import argparse
 import sys
-import asyncio # Added for running async functions
+import asyncio
+import uuid
+from typing import Dict, Any, Optional, List # Added List for MockHAM
 
-# Example: Accessing other parts of the project
 # Assuming src is in PYTHONPATH or this script is run from project root level
 from core_ai.dialogue.dialogue_manager import DialogueManager
-# from core_ai.personality.personality_manager import PersonalityManager
-# from services.llm_interface import LLMInterface
+from core_ai.learning.learning_manager import LearningManager
+from core_ai.learning.fact_extractor_module import FactExtractorModule
+from core_ai.learning.content_analyzer_module import ContentAnalyzerModule # Import ContentAnalyzerModule
+from core_ai.memory.ham_memory_manager import HAMMemoryManager
+from services.llm_interface import LLMInterface, LLMInterfaceConfig
+from hsp.connector import HSPConnector
+from hsp.types import HSPFactPayload, HSPMessageEnvelope
+
+
+# --- Global instances for simplicity in this CLI PoC ---
+# In a real app, these would be managed by a proper application context or dependency injection.
+cli_ai_id = f"did:hsp:cli_ai_instance_{uuid.uuid4().hex[:6]}"
+llm_config: LLMInterfaceConfig = { #type: ignore
+    "default_provider": "mock", "default_model": "cli-mock-v1",
+    "providers": {}, "default_generation_params": {}
+}
+llm_interface = LLMInterface(config=llm_config) # Use mock LLM for CLI stability
+fact_extractor = FactExtractorModule(llm_interface=llm_interface)
+
+# Mock HAM for CLI PoC to avoid file I/O and encryption complexities here
+class MockHAM(HAMMemoryManager):
+    def __init__(self):
+        super().__init__(encryption_key="mock_key_for_cli_ham_ignore", db_path=None, auto_load=False) # type: ignore
+        self.memory_store: Dict[str, Dict[str, Any]] = {}
+        self.next_id = 1
+        print("CLI_PoC: Using MockHAMMemoryManager.")
+
+    def store_experience(self, raw_data: Any, data_type: str, metadata: Optional[Dict[str, Any]] = None) -> Optional[str]:
+        mem_id = f"mock_ham_{self.next_id}"
+        self.next_id += 1
+        self.memory_store[mem_id] = {"raw_data": raw_data, "data_type": data_type, "metadata": metadata or {}}
+        print(f"MockHAM: Stored '{data_type}' with ID {mem_id}. Meta: {metadata}")
+        return mem_id
+
+    def recall_experience(self, memory_id: str) -> Optional[Dict[str, Any]]:
+        return self.memory_store.get(memory_id)
+
+    def search_memories(self, search_query: str, search_type: str, filters: Optional[Dict[str, Any]] = None, limit: int = 10) -> List[Dict[str, Any]]: # type: ignore
+        # Simplified search
+        results = []
+        for mem_id, entry in self.memory_store.items():
+            if search_query.lower() in str(entry.get('raw_data', '')).lower() or \
+               search_query.lower() in str(entry.get('metadata', {})).lower():
+                results.append({"memory_id": mem_id, "data": entry['raw_data'], "metadata": entry['metadata'], "score": 1.0})
+                if len(results) >= limit:
+                    break
+        return results
+
+
+ham_manager = MockHAM() # Using MockHAM for CLI
+
+hsp_connector: Optional[HSPConnector] = None
+learning_manager: Optional[LearningManager] = None
+dialogue_manager: Optional[DialogueManager] = None # Will be initialized in main
+
+# --- HSP Callback ---
+def handle_incoming_hsp_fact(fact_payload: HSPFactPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope):
+    print(f"\n[CLI App] HSP Fact Received from '{sender_ai_id}':")
+    print(f"  Fact ID: {fact_payload.get('id')}, Statement: {fact_payload.get('statement_nl') or fact_payload.get('statement_structured')}")
+    if learning_manager:
+        print(f"  Forwarding to LearningManager for processing...")
+        # This is a conceptual call. LearningManager would need a method like this.
+        # For now, we'll just print. The actual processing logic will be added to LearningManager.
+        # learning_manager.process_received_hsp_fact(fact_payload, sender_ai_id, full_envelope)
+        learning_manager.process_and_store_hsp_fact(fact_payload, sender_ai_id, full_envelope) # Assuming this method will be added
+    else:
+        print("  LearningManager not initialized, cannot process HSP fact.")
+
+
+def init_global_services():
+    global hsp_connector, learning_manager, dialogue_manager, fact_extractor # Add fact_extractor if not already global and used by ContentAnalyzer
+
+    content_analyzer = ContentAnalyzerModule() # Initialize ContentAnalyzerModule
+
+    hsp_connector = HSPConnector(
+        ai_id=cli_ai_id,
+        broker_address="localhost", # Ensure MQTT broker is running here
+        broker_port=1883
+    )
+
+    learning_manager_config = {
+        "learning_thresholds": {
+            "min_fact_confidence_to_store": 0.6,
+            "min_fact_confidence_to_share_via_hsp": 0.75,
+            "min_hsp_fact_confidence_to_store": 0.5 # Threshold for storing facts from HSP
+        },
+        "default_hsp_fact_topic": "hsp/knowledge/facts/cli_general"
+    }
+    learning_manager = LearningManager(
+        ai_id=cli_ai_id,
+        ham_memory_manager=ham_manager,
+        fact_extractor=fact_extractor, # fact_extractor is already global
+        content_analyzer=content_analyzer, # Pass content_analyzer
+        hsp_connector=hsp_connector,
+        operational_config=learning_manager_config
+    )
+
+    # Register the callback with HSPConnector
+    hsp_connector.register_on_fact_callback(handle_incoming_hsp_fact)
+
+    if hsp_connector.connect(): # Starts MQTT loop in background thread
+        print(f"CLI App: HSPConnector connected for AI ID {cli_ai_id}. Subscribing to general facts...")
+        hsp_connector.subscribe("hsp/knowledge/facts/#") # Listen to all facts for PoC
+    else:
+        print(f"CLI App: FAILED to connect HSPConnector for AI ID {cli_ai_id}.")
+
+    # Initialize DialogueManager (can use the global learning_manager)
+    # This assumes DialogueManager can accept a LearningManager or similar components.
+    # For this PoC, DialogueManager is simplified.
+    dialogue_manager = DialogueManager(learning_manager=learning_manager) # Assuming DM can take LM
+    print("CLI App: DialogueManager initialized.")
+
 
 def handle_query(args):
-    """Handles a query via CLI by interacting with the DialogueManager."""
-    print(f"CLI: Received query: '{args.query_text}'")
+    global dialogue_manager
+    if not dialogue_manager:
+        print("CLI Error: DialogueManager not initialized. Run init first or there was an issue.")
+        return
 
-    # Initialize DialogueManager (in a real app, this might be a singleton or configured differently)
-    dialogue_mgr = DialogueManager()
+    print(f"CLI: Sending query to DialogueManager: '{args.query_text}'")
 
-    # get_simple_response is async, so we need to run it in an event loop
-    response = asyncio.run(dialogue_mgr.get_simple_response(args.query_text))
-    print(f"AI: {response}")
+    # DialogueManager.get_simple_response is async
+    # It also internally calls LearningManager.process_and_store_learnables
+    # which now also uses HSPConnector.publish_fact (which is synchronous)
+    response_text = asyncio.run(dialogue_manager.get_simple_response(
+        text_input=args.query_text,
+        user_id="cli_user",
+        session_id="cli_session_1"
+        # Assuming get_simple_response is updated or calls a method that uses these
+    ))
+    print(f"AI: {response_text}")
 
-def handle_config(args):
-    """Placeholder for managing configuration via CLI."""
-    print(f"CLI: Managing configuration. Action: {args.action}, Key: {args.key}, Value: {args.value} (Placeholder)")
-    # Example:
-    # config_manager = SomeConfigManager()
-    # if args.action == "get":
-    #     print(config_manager.get(args.key))
-    # elif args.action == "set":
-    #     config_manager.set(args.key, args.value)
-    #     print(f"Config '{args.key}' set.")
 
-def main():
-    parser = argparse.ArgumentParser(description="Unified-AI-Project Command Line Interface (Placeholder)")
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+def handle_publish_fact(args):
+    global learning_manager
+    if not learning_manager or not learning_manager.hsp_connector or not learning_manager.hsp_connector.is_connected:
+        print("CLI Error: LearningManager or HSPConnector not ready for publishing.")
+        return
+
+    print(f"CLI: Publishing a manual fact via HSP: '{args.fact_statement}'")
+    fact_id = f"manual_fact_{uuid.uuid4().hex[:6]}"
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    hsp_payload = HSPFactPayload(
+        id=fact_id,
+        statement_type="natural_language",
+        statement_nl=args.fact_statement,
+        source_ai_id=cli_ai_id,
+        timestamp_created=timestamp,
+        confidence_score=args.confidence, # Get from args
+        weight=1.0,
+        tags=["manual_cli_fact"]
+    )
+    topic = args.topic or learning_manager.default_hsp_fact_topic
+    success = learning_manager.hsp_connector.publish_fact(hsp_payload, topic)
+    if success:
+        print(f"CLI: Manual fact '{fact_id}' published to topic '{topic}'.")
+    else:
+        print(f"CLI: Failed to publish manual fact to topic '{topic}'.")
+
+
+def main_cli_logic():
+    global hsp_connector # To access for shutdown
+
+    parser = argparse.ArgumentParser(description="Unified-AI-Project Command Line Interface")
+    subparsers = parser.add_subparsers(dest="command", help="Available commands", required=True)
 
     # Query sub-command
     query_parser = subparsers.add_parser("query", help="Send a query to the AI")
     query_parser.add_argument("query_text", type=str, help="The query text to send to the AI")
     query_parser.set_defaults(func=handle_query)
 
-    # Config sub-command (example)
-    config_parser = subparsers.add_parser("config", help="Manage system configuration")
-    config_parser.add_argument("action", choices=["get", "set"], help="Action to perform (get or set)")
-    config_parser.add_argument("key", type=str, help="Configuration key")
-    config_parser.add_argument("value", type=str, nargs="?", help="Value to set (for 'set' action)")
-    config_parser.set_defaults(func=handle_config)
+    # Publish Fact sub-command (for testing HSP)
+    publish_parser = subparsers.add_parser("publish_fact", help="Manually publish a fact via HSP")
+    publish_parser.add_argument("fact_statement", type=str, help="The statement of the fact")
+    publish_parser.add_argument("--confidence", type=float, default=0.9, help="Confidence score (0.0-1.0)")
+    publish_parser.add_argument("--topic", type=str, help="HSP topic to publish to")
+    publish_parser.set_defaults(func=handle_publish_fact)
 
-    print("Unified-AI-Project CLI (Placeholder)")
+    # Config sub-command (placeholder, not functional for HSP yet)
+    # config_parser = subparsers.add_parser("config", help="Manage system configuration")
+    # ... (config args) ...
 
-    if len(sys.argv) == 1: # If no command is given, print help and default message
-        parser.print_help(sys.stderr)
-        print("\nCLI: No command provided. Try 'query \"Your question\"' or 'config get some_key'.", file=sys.stderr)
-        sys.exit(1)
+    print(f"--- Unified-AI-Project CLI (AI ID: {cli_ai_id}) ---")
 
-    args = parser.parse_args()
+    try:
+        init_global_services() # Initialize services including HSPConnector
 
-    if hasattr(args, 'func'):
-        args.func(args)
-    else:
-        # This case should ideally be caught by the check above if no command given,
-        # but as a fallback if a command is given that somehow doesn't have a func.
-        parser.print_help(sys.stderr)
-        print("\nCLI: Invalid command or no function associated.")
+        if len(sys.argv) <= 1 : # No actual command given, just script name
+             parser.print_help(sys.stderr)
+             sys.exit(1)
+
+        args = parser.parse_args()
+        args.func(args) # Call the appropriate handler
+
+        # Keep alive briefly if not querying, to allow HSP messages to arrive if testing subscriptions
+        if args.command != "query":
+            print("\nCLI: Task complete. Listening for HSP messages for a few seconds (Ctrl+C to exit)...")
+            asyncio.run(asyncio.sleep(10)) # Keep alive to receive messages if any test is ongoing
+
+    except KeyboardInterrupt:
+        print("\nCLI: Keyboard interrupt received. Shutting down...")
+    except Exception as e:
+        print(f"\nCLI Error: An unexpected error occurred: {e}")
+    finally:
+        if hsp_connector and hsp_connector.is_connected:
+            print("CLI: Disconnecting HSPConnector...")
+            hsp_connector.disconnect()
+        print("CLI: Exiting.")
 
 
 if __name__ == '__main__':
-    # To run this placeholder:
-    # python Unified-AI-Project/src/interfaces/cli/main.py query "Hello AI"
-    # python Unified-AI-Project/src/interfaces/cli/main.py config get some.setting
-    main()
-    print("\nCLI placeholder script finished.")
+    main_cli_logic()
