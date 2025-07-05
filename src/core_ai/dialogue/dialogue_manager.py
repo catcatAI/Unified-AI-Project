@@ -24,6 +24,7 @@ from core_ai.learning.self_critique_module import SelfCritiqueModule
 from core_ai.learning.fact_extractor_module import FactExtractorModule
 from core_ai.learning.learning_manager import LearningManager
 from core_ai.learning.content_analyzer_module import ContentAnalyzerModule # Added
+from services.sandbox_executor import SandboxExecutor # Added
 import networkx as nx # Added
 from shared.types.common_types import FormulaConfigEntry, CritiqueResult, OperationalConfig
 
@@ -40,6 +41,7 @@ class DialogueManager:
                  self_critique_module: Optional[SelfCritiqueModule] = None,
                  learning_manager: Optional[LearningManager] = None,
                  content_analyzer: Optional[ContentAnalyzerModule] = None, # Added
+                 sandbox_executor: Optional[SandboxExecutor] = None, # Added
                  config: Optional[Dict[str, Any]] = None):
 
         self.config = config or {}
@@ -68,6 +70,7 @@ class DialogueManager:
             operational_config=op_configs_from_main
         )
         self.content_analyzer = content_analyzer if content_analyzer else ContentAnalyzerModule() # Added
+        self.sandbox_executor = sandbox_executor if sandbox_executor else SandboxExecutor() # Added
 
         current_pers_profile = self.personality_manager.current_personality
         self.emotion_system = emotion_system if emotion_system else EmotionSystem(personality_profile=current_pers_profile)
@@ -580,16 +583,61 @@ class DialogueManager:
         )
 
         validation_message = ""
+        is_syntactically_valid = False
         try:
             ast.parse(generated_code_text.strip())
             validation_message = "\n\n---Validation Note---\nInfo: The drafted code is syntactically valid Python."
+            is_syntactically_valid = True
         except SyntaxError as e:
             validation_message = f"\n\n---Validation Note---\nWarning: The drafted code has a syntax error and will likely not run without corrections. (Error: {e.msg} on line {e.lineno})"
         except Exception as e: # Catch other potential AST parsing issues
             validation_message = f"\n\n---Validation Note---\nWarning: Could not fully validate the drafted code's syntax. (Error: {str(e)[:100]})"
 
+        sandbox_output_message = ""
+        if is_syntactically_valid and self.sandbox_executor:
+            # Attempt to run in sandbox
+            # For POC, use suggested method name and simplistic param guessing or empty params
+            # Class name is tool_name
+            # Method name from parsed_io_details or default to "execute"
+            # Params from parsed_io_details - try to create placeholders
 
-        response_to_user = f"{ai_name}: Okay, I've drafted a Python skeleton for a tool named `{tool_name}` based on your description:\n\n```python\n{generated_code_text.strip()}\n```\n{validation_message}\n\nPlease review this code carefully. It's a starting point and will need to be manually saved, tested, and integrated if you wish to use it."
+            extracted_method_name = parsed_io_details.get("suggested_method_name", "execute")
+            extracted_params_info = parsed_io_details.get("parameters", [])
+
+            placeholder_params: Dict[str, Any] = {}
+            if isinstance(extracted_params_info, list):
+                for p_info in extracted_params_info:
+                    if isinstance(p_info, dict) and "name" in p_info:
+                        p_name = p_info["name"]
+                        # Skip 'self', 'cls' if they are somehow listed
+                        if p_name in ["self", "cls"]:
+                            continue
+                        if "default" in p_info:
+                            placeholder_params[p_name] = p_info["default"]
+                        else: # Generate very basic placeholders based on type hint
+                            p_type = str(p_info.get("type", "")).lower()
+                            if "str" in p_type: placeholder_params[p_name] = "test_string"
+                            elif "int" in p_type: placeholder_params[p_name] = 0
+                            elif "float" in p_type: placeholder_params[p_name] = 0.0
+                            elif "bool" in p_type: placeholder_params[p_name] = False
+                            elif "list" in p_type: placeholder_params[p_name] = []
+                            elif "dict" in p_type: placeholder_params[p_name] = {}
+                            else: placeholder_params[p_name] = None # Or skip if type is unknown/complex for POC
+
+            print(f"DialogueManager: Attempting sandbox run for {tool_name}.{extracted_method_name} with params: {placeholder_params}")
+            sandbox_result, sandbox_error = self.sandbox_executor.run(
+                code_string=generated_code_text.strip(),
+                class_name=tool_name, # Assuming class name is tool_name for simplicity
+                method_name=extracted_method_name,
+                method_params=placeholder_params
+            )
+            sandbox_output_message = "\n\n---Sandbox Test Run---"
+            if sandbox_error:
+                sandbox_output_message += f"\nExecution Error: {sandbox_error[:1000]}" # Limit error length
+            else:
+                sandbox_output_message += f"\nExecution Result: {str(sandbox_result)[:1000]}" # Limit result length
+
+        response_to_user = f"{ai_name}: Okay, I've drafted a Python skeleton for a tool named `{tool_name}` based on your description:\n\n```python\n{generated_code_text.strip()}\n```\n{validation_message}{sandbox_output_message}\n\nPlease review this code and test output carefully. It's a starting point and will need to be manually saved, tested, and integrated if you wish to use it."
 
         return response_to_user
 

@@ -65,7 +65,8 @@ class FragmentaOrchestrator:
 
         # 3. Chunk data if needed by strategy
         if strategy.get("requires_chunking"):
-            chunks = self._chunk_data(input_data, strategy.get("chunking_params"))
+            chunks = self._chunk_data(input_data, strategy.get("chunking_params")) # Original
+            # chunks = self._chunk_data_wrapper(input_data, strategy.get("chunking_params")) # Using wrapper for debug
             print(f"Fragmenta: Data chunked into {len(chunks)} chunks.")
         else:
             chunks = [input_data] # Treat as a single chunk
@@ -172,16 +173,22 @@ class FragmentaOrchestrator:
         # print(f"Debug CHUNK_DATA: Input data='{data}', len(data)={len(data)}, chunk_size={chunk_size}, overlap={overlap}") # DEBUG REMOVED
         while start < len(data):
             end = min(start + chunk_size, len(data))
-            # Debug before slicing
-            # if isinstance(data, str) and start < len(data): # DEBUG REMOVED
-                 # print(f"Debug CHUNK_DATA: Slicing: start={start}, data[start]='{data[start]}', end={end}") # DEBUG REMOVED
+            # if chunk_index_for_debug == 1: # Assuming this is how we identify the second chunk for debugging
+            #      print(f"FragmentaOrchestrator DEBUG _chunk_data (2nd chunk): len(data)={len(data)}, start={start}, end={end}, chunk_size={chunk_size}, overlap={overlap}")
             chunk_to_add = data[start:end]
             chunks.append(chunk_to_add)
             if end == len(data):
                 break
             start += (chunk_size - overlap)
+            # chunk_index_for_debug +=1 # Increment for next iteration debug
         return chunks if chunks else [data]
 
+    # Helper to pass chunk_index for debugging _chunk_data
+    # def _chunk_data_wrapper(self, data: any, chunking_params: dict = None) -> list:
+    #     # This wrapper is just to initialize chunk_index_for_debug for the main _chunk_data logic
+    #     global chunk_index_for_debug
+    #     chunk_index_for_debug = 0
+    #     return self._chunk_data(data, chunking_params)
 
     def _dispatch_chunk_to_processing(self, chunk: any, strategy_step: dict, task_id: str, chunk_index: int, total_chunks: int) -> any:
         """

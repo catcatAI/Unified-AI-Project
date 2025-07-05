@@ -60,17 +60,25 @@ class FormulaEngine:
                     self.formulas = []
                     return
 
-                valid_formulas = []
+                active_formulas = []
                 for entry in loaded_data:
-                    # Basic structural check, TypedDict handles more detailed validation at assignment/use time
-                    if isinstance(entry, dict) and 'name' in entry and 'conditions' in entry and 'action' in entry:
-                        valid_formulas.append(entry) # type: ignore
+                    # Basic structural check
+                    if isinstance(entry, dict) and \
+                       'name' in entry and \
+                       'conditions' in entry and \
+                       'action' in entry:
+                        # Only add if enabled (defaults to True if 'enabled' key is missing)
+                        if entry.get("enabled", True): # Default to enabled if key missing
+                            active_formulas.append(entry) # type: ignore
+                        else:
+                            print(f"FormulaEngine: Skipping disabled formula entry: {entry.get('name')}")
                     else:
-                        print(f"FormulaEngine: Warning - Skipping invalid formula entry: {entry}")
+                        print(f"FormulaEngine: Warning - Skipping invalid/incomplete formula entry: {entry}")
 
-                self.formulas = valid_formulas
-                # Sort by priority (higher first). Defaults to 0 if 'priority' is missing.
-                self.formulas.sort(key=lambda f: f.get("priority", 0), reverse=True)
+                self.formulas = active_formulas
+                # Sort by priority (lower number means higher priority).
+                # Defaults to a high number (e.g. 999) if 'priority' is missing, to make them lowest priority.
+                self.formulas.sort(key=lambda f: f.get("priority", 999))
 
         except json.JSONDecodeError as e:
             print(f"FormulaEngine: Error decoding JSON from {self.formulas_file_path}: {e}")
@@ -106,8 +114,13 @@ class FormulaEngine:
             for condition in conditions:
                 if not isinstance(condition, str):
                     continue
-                if condition.lower() in normalized_input:
-                    print(f"FormulaEngine: Matched formula '{formula.get('name')}' on condition '{condition}'")
+
+                cond_lower = str(condition.lower())
+                current_normalized_input = str(normalized_input)
+
+                match_found = cond_lower in current_normalized_input
+
+                if match_found:
                     return formula # type: ignore
         return None
 

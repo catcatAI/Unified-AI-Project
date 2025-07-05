@@ -97,8 +97,12 @@ class ToolDispatcher:
             else:
                 expression_to_evaluate = query # Assume the query is the expression
 
+            print(f"ToolDispatcher DEBUG (_execute_logic_evaluation): expression_to_evaluate='{expression_to_evaluate}', method='{method}'")
             result = logic_evaluate(expression_to_evaluate, method=method)
-            return f"Result: {result}" # Wrap boolean in a string for consistent tool output type
+            print(f"ToolDispatcher DEBUG (_execute_logic_evaluation): logic_evaluate result='{result}' (type: {type(result)})")
+            final_response = f"Result: {result}"
+            print(f"ToolDispatcher DEBUG (_execute_logic_evaluation): final_response='{final_response}'")
+            return final_response
         except Exception as e:
             print(f"Error executing logic evaluation tool: {e}")
             return "Sorry, I encountered an error trying to evaluate that logical expression."
@@ -204,7 +208,7 @@ class ToolDispatcher:
                 return f"Sorry, I don't know the tool named '{explicit_tool_name}'."
 
         # Use DLM for intent recognition
-        intent = self.dlm.recognize_intent(query)
+        intent = self.dlm.recognize_intent(query, available_tools=self.get_available_tools())
 
         if intent and intent.get("tool_name") in self.tools:
             tool_name_from_dlm = intent["tool_name"]
