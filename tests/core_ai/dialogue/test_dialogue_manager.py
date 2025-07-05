@@ -406,6 +406,38 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
 
         self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
         self.assertIn(mock_generated_code, result_response)
+        self.assertIn("Info: The drafted code is syntactically valid Python.", result_response)
+
+
+    async def test_handle_draft_tool_request_code_syntax_error(self):
+        tool_name = "SyntaxErrorTool"
+        purpose_and_io_desc = "A tool that will have a syntax error."
+
+        # Mock LLM response for I/O parsing step (successful)
+        mock_io_details_json_str = json.dumps({
+            "suggested_method_name": "broken_method",
+            "class_docstring_hint": "Tool with syntax error.",
+            "method_docstring_hint": "This method is broken.",
+            "parameters": [],
+            "return_type": "None",
+            "return_description": "Nothing useful."
+        })
+
+        # Mock LLM response for code generation step (with syntax error)
+        mock_generated_code_with_error = "class SyntaxErrorTool:\n def broken_method(self):\n  print 'oops'" # Missing parentheses for print
+
+        self.mock_llm_interface.generate_response.side_effect = [
+            mock_io_details_json_str,
+            mock_generated_code_with_error
+        ]
+
+        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+
+        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
+        self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
+        self.assertIn(mock_generated_code_with_error, result_response)
+        self.assertIn("Warning: The drafted code has a syntax error", result_response)
+        self.assertIn("line 3", result_response) # ast.parse should give line number for print error
 
     async def test_handle_draft_tool_request_io_parsing_json_error(self):
         tool_name = "BadJsonTool"

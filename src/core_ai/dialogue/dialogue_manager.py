@@ -10,6 +10,7 @@ import uuid # For test session IDs in __main__
 import os # Added for os.path.exists and os.remove in __main__
 import re # Added for regex in _is_kg_query
 import json # Added for parsing LLM response for I/O details
+import ast # Added for syntax validation of generated code
 
 from core_ai.personality.personality_manager import PersonalityManager
 from core_ai.memory.ham_memory_manager import HAMMemoryManager
@@ -578,7 +579,17 @@ class DialogueManager:
             params={"temperature": 0.3} # Lower temp for code
         )
 
-        response_to_user = f"{ai_name}: Okay, I've drafted a Python skeleton for a tool named `{tool_name}` based on your description:\n\n```python\n{generated_code_text.strip()}\n```\n\nPlease review this code carefully. It's a starting point and will need to be manually saved, tested, and integrated if you wish to use it."
+        validation_message = ""
+        try:
+            ast.parse(generated_code_text.strip())
+            validation_message = "\n\n---Validation Note---\nInfo: The drafted code is syntactically valid Python."
+        except SyntaxError as e:
+            validation_message = f"\n\n---Validation Note---\nWarning: The drafted code has a syntax error and will likely not run without corrections. (Error: {e.msg} on line {e.lineno})"
+        except Exception as e: # Catch other potential AST parsing issues
+            validation_message = f"\n\n---Validation Note---\nWarning: Could not fully validate the drafted code's syntax. (Error: {str(e)[:100]})"
+
+
+        response_to_user = f"{ai_name}: Okay, I've drafted a Python skeleton for a tool named `{tool_name}` based on your description:\n\n```python\n{generated_code_text.strip()}\n```\n{validation_message}\n\nPlease review this code carefully. It's a starting point and will need to be manually saved, tested, and integrated if you wish to use it."
 
         return response_to_user
 
