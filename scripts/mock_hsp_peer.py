@@ -75,6 +75,27 @@ class MockHSPPeer:
         )
         self.mock_capabilities[cap_describe['capability_id']] = cap_describe
 
+        cap_fact_query = HSPCapabilityAdvertisementPayload( #type: ignore
+            capability_id=f"{self.ai_id}_fact_query_service_v1.0",
+            ai_id=self.ai_id,
+            name="Mock Fact Query Service",
+            description="Searches a small internal knowledge base for facts matching a query string.",
+            version="1.0",
+            input_schema_example={"query_text": "topic to search", "max_results": 3},
+            output_schema_example={"facts_found": [{"id": "fact_123", "statement_nl": "...", "...": "..."}]},
+            availability_status="online",
+            tags=["mock", "knowledge_query", "facts"]
+        )
+        self.mock_capabilities[cap_fact_query['capability_id']] = cap_fact_query
+
+        self.internal_mock_kb = [
+            {"id": "kb_fact_001", "keywords": ["weather", "london", "sunny"], "statement_nl": "The weather in London is expected to be sunny today.", "confidence": 0.9, "type": "forecast"},
+            {"id": "kb_fact_002", "keywords": ["hsp", "protocol", "robust"], "statement_nl": "HSP aims to be a robust protocol for AI interaction.", "confidence": 0.95, "type": "definition"},
+            {"id": "kb_fact_003", "keywords": ["python", "programming", "versatile"], "statement_nl": "Python is a versatile programming language.", "confidence": 0.98, "type": "general_knowledge"},
+            {"id": "kb_fact_004", "keywords": ["london", "population"], "statement_nl": "London has a population of approximately 9 million.", "confidence": 0.85, "type": "demographics"},
+        ]
+        self.published_conflicting_fact_ids: Dict[str, HSPFactPayload] = {} # To store facts we might send updates for
+
 
     def handle_generic_hsp_message(self, envelope: HSPMessageEnvelope, topic: str) -> None:
         print(f"\n[MockPeer-{self.ai_id}] Received generic HSP message on MQTT topic '{topic}':")
@@ -161,6 +182,37 @@ class MockHSPPeer:
                 },
                 timestamp_completed=datetime.now(timezone.utc).isoformat()
             )
+        elif requested_cap_id == f"{self.ai_id}_fact_query_service_v1.0":
+            query_text = params.get('query_text', '').lower()
+            max_results = params.get('max_results', 3)
+            found_facts_for_hsp: List[HSPFactPayload] = []
+
+            if query_text: # Only search if query_text is provided
+                for mock_fact in self.internal_mock_kb:
+                    if any(keyword in query_text for keyword in mock_fact.get("keywords", [])) or \
+                       query_text in mock_fact.get("statement_nl", "").lower():
+
+                        hsp_fact = HSPFactPayload( #type: ignore
+                            id=f"hsp_mqf_{mock_fact['id']}_{uuid.uuid4().hex[:4]}", # Make ID unique for HSP context
+                            statement_type="natural_language",
+                            statement_nl=mock_fact["statement_nl"],
+                            source_ai_id=self.ai_id, # This mock peer is the source for these facts
+                            timestamp_created=datetime.now(timezone.utc).isoformat(),
+                            confidence_score=mock_fact.get("confidence", 0.75),
+                            tags=["mock_kb_derived", mock_fact.get("type", "general")]
+                        )
+                        found_facts_for_hsp.append(hsp_fact)
+                        if len(found_facts_for_hsp) >= max_results:
+                            break
+
+            response_payload = HSPTaskResultPayload( #type: ignore
+                result_id=f"taskres_fq_{uuid.uuid4().hex[:6]}",
+                request_id=task_payload['request_id'],
+                executing_ai_id=self.ai_id,
+                status="success",
+                payload={"facts_found": found_facts_for_hsp, "query_echo": query_text},
+                timestamp_completed=datetime.now(timezone.utc).isoformat()
+            )
         else:
             print(f"  MockPeer: Received request for unknown/unsupported capability_id '{requested_cap_id}'.")
             response_payload = HSPTaskResultPayload( # type: ignore
@@ -202,38 +254,80 @@ class MockHSPPeer:
         if not self.connector.is_connected:
             return
 
-        fact_id = f"mock_fact_{self.ai_id.replace(':', '_')}_{counter}_{uuid.uuid4().hex[:4]}"
         timestamp = datetime.now(timezone.utc).isoformat()
         topic = "hsp/knowledge/facts/general"
 
-        if counter % 2 == 0: # Publish a structured fact (semantic triple)
+        # For conflict testing: every 3rd fact publication (after the first one)
+        # will be an attempt to update/conflict with a previously sent fact.
+        # We'll use a specific ID for these conflicting facts.
+        conflict_test_fact_original_id = "conflict_target_fact_id_001"
+
+        if counter == 2: # First time, publish the original fact for conflict test
             fact_payload = HSPFactPayload(
-                id=fact_id,
-                statement_type="semantic_triple",
-                statement_structured={ # type: ignore
-                    "subject_uri": f"hsp:entity:mock_subject_{counter}",
-                    "predicate_uri": "hsp:property:has_status",
-                    "object_literal": f"active_state_{counter}",
-                    "object_datatype": "xsd:string"
-                },
-                statement_nl=f"Mock subject {counter} has status active_state_{counter}.", # Optional NL representation
-                source_ai_id=self.ai_id,
-                timestamp_created=timestamp,
-                confidence_score=0.98,
-                tags=["sample_mock_fact", "structured_triple"]
-            )
-            print(f"[MockPeer-{self.ai_id}] Publishing STRUCTURED sample fact to '{topic}' (ID: {fact_payload['id']})")
-        else: # Publish a natural language fact
-            fact_payload = HSPFactPayload(
-                id=fact_id,
+                id=conflict_test_fact_original_id, # This ID is from the perspective of this peer as originator
                 statement_type="natural_language",
-                statement_nl=f"This is sample natural language fact number {counter} from {self.ai_id} about a random event.",
-                source_ai_id=self.ai_id,
+                statement_nl=f"Initial statement for {conflict_test_fact_original_id} from {self.ai_id}.",
+                source_ai_id=self.ai_id, # This peer is the originator
                 timestamp_created=timestamp,
-                confidence_score=0.92,
-                tags=["sample_mock_fact", "natural_language"]
+                confidence_score=0.7, # Initial moderate confidence
+                tags=["sample_mock_fact", "conflict_test_original"] #type: ignore
             )
-            print(f"[MockPeer-{self.ai_id}] Publishing NL sample fact to '{topic}' (ID: {fact_payload['id']})")
+            self.published_conflicting_fact_ids[conflict_test_fact_original_id] = fact_payload
+            print(f"[MockPeer-{self.ai_id}] Publishing ORIGINAL conflicting fact to '{topic}' (ID: {fact_payload['id']})")
+
+        elif counter == 4 and conflict_test_fact_original_id in self.published_conflicting_fact_ids: # Update with higher confidence
+            fact_payload = HSPFactPayload(
+                id=conflict_test_fact_original_id, # Same original ID
+                statement_type="natural_language",
+                statement_nl=f"UPDATED (more confident) statement for {conflict_test_fact_original_id} from {self.ai_id}.",
+                source_ai_id=self.ai_id, # Same originator
+                timestamp_created=datetime.now(timezone.utc).isoformat(), # New timestamp
+                confidence_score=0.9, # Higher confidence
+                tags=["sample_mock_fact", "conflict_test_update_higher_conf"] #type: ignore
+            )
+            print(f"[MockPeer-{self.ai_id}] Publishing CONFLICTING (higher_conf) fact to '{topic}' (ID: {fact_payload['id']})")
+
+        elif counter == 6 and conflict_test_fact_original_id in self.published_conflicting_fact_ids: # Update with lower confidence
+            fact_payload = HSPFactPayload(
+                id=conflict_test_fact_original_id, # Same original ID
+                statement_type="natural_language",
+                statement_nl=f"Final (less confident) statement for {conflict_test_fact_original_id} from {self.ai_id}.",
+                source_ai_id=self.ai_id, # Same originator
+                timestamp_created=datetime.now(timezone.utc).isoformat(), # New timestamp
+                confidence_score=0.5, # Lower confidence than original
+                tags=["sample_mock_fact", "conflict_test_update_lower_conf"] #type: ignore
+            )
+            print(f"[MockPeer-{self.ai_id}] Publishing CONFLICTING (lower_conf) fact to '{topic}' (ID: {fact_payload['id']})")
+
+        else: # Regular sample fact (NL or structured)
+            fact_id = f"mock_fact_{self.ai_id.replace(':', '_')}_{counter}_{uuid.uuid4().hex[:4]}"
+            if counter % 2 != 0: # Odd counters for structured, to not overlap with conflict test counters easily
+                # Use some mappable external URIs for structured facts
+                subject_ext_uri = f"http://example.com/ontology#Person/mock_person_{counter}"
+                predicate_ext_uri = "http://xmlns.com/foaf/0.1/name" # Mapped to cai_prop:name
+                object_lit = f"Mock Person {counter} Name"
+
+                fact_payload = HSPFactPayload(
+                    id=fact_id, statement_type="semantic_triple",
+                    statement_structured={
+                        "subject_uri": subject_ext_uri,
+                        "predicate_uri": predicate_ext_uri,
+                        "object_literal": object_lit,
+                        "object_datatype": "xsd:string"
+                    }, #type: ignore
+                    statement_nl=f"{subject_ext_uri} has foaf:name '{object_lit}'.", # NL representation
+                    source_ai_id=self.ai_id, timestamp_created=timestamp, confidence_score=0.98,
+                    tags=["sample_mock_fact", "structured_mapped_triple"] #type: ignore
+                )
+                print(f"[MockPeer-{self.ai_id}] Publishing STRUCTURED (mappable) sample fact to '{topic}' (ID: {fact_payload['id']})")
+            else: # Even counters (but not 2,4,6 used by conflict test) for NL
+                fact_payload = HSPFactPayload(
+                    id=fact_id, statement_type="natural_language",
+                    statement_nl=f"This is sample NL fact number {counter} from {self.ai_id} about a random event.",
+                    source_ai_id=self.ai_id, timestamp_created=timestamp, confidence_score=0.92,
+                    tags=["sample_mock_fact", "natural_language"] #type: ignore
+                )
+                print(f"[MockPeer-{self.ai_id}] Publishing NL sample fact to '{topic}' (ID: {fact_payload['id']})")
 
         self.connector.publish_fact(fact_payload, topic=topic)
 

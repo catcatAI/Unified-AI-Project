@@ -1,28 +1,27 @@
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 
+import uuid # For example in __main__
 # Assuming src is in PYTHONPATH for these imports
 from hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
-# HSPConnector needed if this module subscribes directly, or it gets data from a higher level orchestrator
-# from hsp.connector import HSPConnector
+from core_ai.trust_manager.trust_manager_module import TrustManager # Import TrustManager
 
 
 class ServiceDiscoveryModule:
     """
     Manages the discovery and registry of capabilities advertised by other AIs on the HSP network.
     """
-    def __init__(self):
-        # Stores capabilities by their unique capability_id
-        # The value could be the full HSPCapabilityAdvertisementPayload
+    def __init__(self, trust_manager: Optional[TrustManager] = None):
         self.known_capabilities: Dict[str, HSPCapabilityAdvertisementPayload] = {}
-        self.last_seen: Dict[str, datetime] = {} # Tracks when a capability was last advertised/refreshed
-        print("ServiceDiscoveryModule initialized.")
+        self.last_seen: Dict[str, datetime] = {}
+        self.trust_manager = trust_manager
+        print(f"ServiceDiscoveryModule initialized {'with' if trust_manager else 'without'} TrustManager.")
 
     def process_capability_advertisement(
         self,
         payload: HSPCapabilityAdvertisementPayload,
-        source_ai_id: str, # The AI ID that advertised this capability
-        hsp_envelope: HSPMessageEnvelope # Full envelope for context if needed
+        source_ai_id: str,
+        hsp_envelope: Optional[HSPMessageEnvelope] = None # Envelope is optional context
     ) -> None:
         """
         Processes an incoming capability advertisement.
@@ -47,11 +46,23 @@ class ServiceDiscoveryModule:
                   f"differs from HSP sender_ai_id '{source_ai_id}'. Using payload's ai_id for storage key if matches capability_id structure.")
 
         # Use capability_id as the primary key
-        self.known_capabilities[capability_id] = payload
+        # Store a copy of the payload to avoid modifying the original dict if we add internal fields
+        stored_payload = payload.copy()
+
+        # Get and store trust score if TrustManager is available
+        advertising_ai_id = payload.get("ai_id", source_ai_id) # Prefer ai_id from payload, fallback to envelope sender
+        if self.trust_manager:
+            trust_score = self.trust_manager.get_trust_score(advertising_ai_id)
+            stored_payload["_trust_score"] = trust_score # Internal field, not part of HSP spec
+            print(f"ServiceDiscoveryModule: Associated trust score {trust_score:.2f} with capability '{capability_id}' from AI '{advertising_ai_id}'.")
+        else:
+            stored_payload["_trust_score"] = TrustManager.DEFAULT_TRUST_SCORE # Default if no trust manager
+
+        self.known_capabilities[capability_id] = stored_payload # type: ignore # because of _trust_score
         self.last_seen[capability_id] = datetime.now(timezone.utc)
 
-        print(f"ServiceDiscoveryModule: Capability '{capability_id}' (Name: '{payload.get('name')}') from AI '{payload.get('ai_id')}' "
-              f"added/updated. Total known capabilities: {len(self.known_capabilities)}")
+        print(f"ServiceDiscoveryModule: Capability '{capability_id}' (Name: '{payload.get('name')}') from AI '{advertising_ai_id}' "
+              f"added/updated. Trust: {stored_payload['_trust_score']:.2f}. Total: {len(self.known_capabilities)}")
 
     def find_capabilities(
         self,
@@ -59,7 +70,9 @@ class ServiceDiscoveryModule:
         capability_id_filter: Optional[str] = None,
         ai_id_filter: Optional[str] = None,
         tags_filter: Optional[List[str]] = None,
-        min_availability: Optional[List[str]] = None # e.g., ["online", "degraded"]
+        min_availability: Optional[List[str]] = None, # e.g., ["online", "degraded"]
+        min_trust_score: Optional[float] = None, # New filter
+        sort_by_trust: bool = False # New sorting option
     ) -> List[HSPCapabilityAdvertisementPayload]:
         """
         Finds capabilities based on various filter criteria.
@@ -69,19 +82,22 @@ class ServiceDiscoveryModule:
             capability_id_filter (str, optional): Filter by exact capability ID.
             ai_id_filter (str, optional): Filter by the AI ID offering the capability.
             tags_filter (List[str], optional): Filter by capabilities that have ALL specified tags.
-            min_availability (List[str], optional): Filter by minimum availability status (e.g. if "online" is passed, only online capabilities are returned)
-                                                    More sophisticated logic could handle ordered availability. For now, exact match in list.
+            min_availability (List[str], optional): Filter by acceptable availability statuses.
+            min_trust_score (float, optional): Filter by minimum trust score of the advertising AI.
+            sort_by_trust (bool, optional): If True, sort results by trust score in descending order.
 
         Returns:
             List[HSPCapabilityAdvertisementPayload]: A list of matching capability advertisements.
         """
         if min_availability is None:
-            min_availability = ["online"] # Default to only finding 'online' capabilities
+            min_availability = ["online"]
 
-        results: List[HSPCapabilityAdvertisementPayload] = []
+        results_with_scores: List[Tuple[float, HSPCapabilityAdvertisementPayload]] = []
+
         for cap_id, cap_payload in self.known_capabilities.items():
-            match = True # Assume it matches until a filter disqualifies it
+            match = True
 
+            # Apply existing filters
             if capability_id_filter and cap_id != capability_id_filter:
                 match = False
 
@@ -93,19 +109,31 @@ class ServiceDiscoveryModule:
 
             if match and tags_filter:
                 cap_tags = cap_payload.get("tags", [])
-                if not all(tag.lower() in [t.lower() for t in cap_tags] for tag in tags_filter):
+                if not all(tag.lower() in [t.lower() for t in cap_tags] for tag in tags_filter): # type: ignore
                     match = False
 
             if match and min_availability:
                 current_status = cap_payload.get("availability_status", "offline")
-                if current_status not in min_availability: # Check if current status is in the list of acceptable statuses
+                if current_status not in min_availability:
                     match = False
 
-            if match:
-                results.append(cap_payload)
+            # Apply trust score filter
+            current_trust_score = cap_payload.get("_trust_score", TrustManager.DEFAULT_TRUST_SCORE) # Get stored or default
+            if match and min_trust_score is not None and current_trust_score < min_trust_score:
+                match = False
 
-        print(f"ServiceDiscoveryModule: Found {len(results)} capabilities matching filters.")
-        return results
+            if match:
+                results_with_scores.append((current_trust_score, cap_payload))
+
+        # Sort by trust score if requested
+        if sort_by_trust:
+            results_with_scores.sort(key=lambda item: item[0], reverse=True) # Sort by score, descending
+
+        # Extract just the payloads for the final result
+        final_results = [payload for score, payload in results_with_scores]
+
+        print(f"ServiceDiscoveryModule: Found {len(final_results)} capabilities matching filters (sorted by trust: {sort_by_trust}).")
+        return final_results
 
     def get_capability_by_id(self, capability_id: str) -> Optional[HSPCapabilityAdvertisementPayload]:
         """

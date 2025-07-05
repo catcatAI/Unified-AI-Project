@@ -7,56 +7,73 @@ from tools.logic_tool import evaluate_expression as logic_evaluate
 from tools.translation_tool import translate as translate_text
 from tools.code_understanding_tool import CodeUnderstandingTool # Added
 from core_ai.language_models.daily_language_model import DailyLanguageModel
-from services.llm_interface import LLMInterface # Added Optional import for type hint consistency
+from services.llm_interface import LLMInterface
+from shared.types.common_types import ToolDispatcherResponse # Import new response type
+from typing import Literal # For literal status types
 
 class ToolDispatcher:
-    def __init__(self, llm_interface: Optional[LLMInterface] = None): # Allow passing LLMInterface
-        # If DLM needs a non-default LLMInterface, it should be passed here
-        # For now, DLM will create its own default LLMInterface if none is provided to it.
-        self.dlm = DailyLanguageModel(llm_interface=llm_interface) # LLMInterface is correctly found by DLM due to its own imports
-        self.code_understanding_tool_instance = CodeUnderstandingTool() # Added instance
+    def __init__(self, llm_interface: Optional[LLMInterface] = None):
+        self.dlm = DailyLanguageModel(llm_interface=llm_interface)
+        self.code_understanding_tool_instance = CodeUnderstandingTool()
 
-        self.tools = {
+        self.tools: Dict[str, Callable[..., ToolDispatcherResponse]] = { # type: ignore
             "calculate": self._execute_math_calculation,
             "evaluate_logic": self._execute_logic_evaluation,
-            "translate_text": self._execute_translation, # Corrected from self.execute_translation
-            "inspect_code": self._execute_code_inspection, # Added tool
+            "translate_text": self._execute_translation,
+            "inspect_code": self._execute_code_inspection,
         }
         self.tool_descriptions = {
             "calculate": "Performs arithmetic calculations. Example: 'calculate 10 + 5', or 'what is 20 / 4?'",
             "evaluate_logic": "Evaluates simple logical expressions (AND, OR, NOT, true, false, parentheses). Example: 'evaluate true AND (false OR NOT true)'",
             "translate_text": "Translates text between Chinese and English. Example: 'translate 你好 to English'",
-            "inspect_code": "Describes the structure of available tools. Query examples: 'list_tools', or 'describe_tool math_tool'", # Added description
+            "inspect_code": "Describes the structure of available tools. Query examples: 'list_tools', or 'describe_tool math_tool'",
         }
         print("ToolDispatcher initialized.")
         print(f"Available tools: {list(self.tools.keys())}")
 
-    def _execute_code_inspection(self, query: str, **kwargs) -> str:
+    def _execute_code_inspection(self, query: str, **kwargs) -> ToolDispatcherResponse:
         """
         Wrapper for the CodeUnderstandingTool.
-        Parses action and tool_name from query if not provided in kwargs.
+        Returns ToolDispatcherResponse.
         """
         action = kwargs.get("action")
         tool_name_param = kwargs.get("tool_name")
 
-        if not action: # Try to parse from query
+        if not action:
             parts = query.strip().split(maxsplit=1)
-            action = parts[0].lower() if parts else None # Ensure action is lowercase for consistent matching
+            action = parts[0].lower() if parts else None
             if len(parts) > 1:
                 tool_name_param = parts[1]
 
         if not action:
-            return "Error: No action specified for code inspection. Use 'list_tools' or 'describe_tool <tool_name>'."
+            return ToolDispatcherResponse(
+                status="error_dispatcher_issue",
+                payload=None,
+                tool_name_attempted="inspect_code",
+                original_query_for_tool=query,
+                error_message="No action specified for code inspection. Use 'list_tools' or 'describe_tool <tool_name>'."
+            )
 
         try:
-            return self.code_understanding_tool_instance.execute(action=action, tool_name=tool_name_param)
+            result_payload = self.code_understanding_tool_instance.execute(action=action, tool_name=tool_name_param)
+            return ToolDispatcherResponse(
+                status="success",
+                payload=result_payload,
+                tool_name_attempted="inspect_code",
+                original_query_for_tool=query
+            )
         except Exception as e:
-            print(f"Error executing code inspection tool: {e}")
-            # It's good practice to log the full exception, e.g., import traceback; traceback.print_exc()
-            return f"Sorry, I encountered an error trying to inspect code: {str(e)[:100]}" # Truncate error for brevity in response
+            error_msg = f"Error executing code inspection: {str(e)[:100]}"
+            print(f"ToolDispatcher: {error_msg}")
+            return ToolDispatcherResponse(
+                status="failure_tool_error",
+                payload=None,
+                tool_name_attempted="inspect_code",
+                original_query_for_tool=query,
+                error_message=error_msg
+            )
 
-
-    def _execute_math_calculation(self, query: str, **kwargs) -> str:
+    def _execute_math_calculation(self, query: str, **kwargs) -> ToolDispatcherResponse:
         """
         Wrapper for the math_tool.calculate function.
         'query' is expected to be the direct arithmetic expression.
@@ -68,15 +85,25 @@ class ToolDispatcher:
         # it should work. If DLM provides the original text, `math_calculate` will parse.
         print(f"ToolDispatcher._execute_math_calculation: query='{query}', kwargs={kwargs}")
         try:
-            # If DLM is good, 'query' is the expression. math_tool.calculate can handle direct expressions too.
-            # If math_tool.calculate is enhanced to take only clean expressions, this is fine.
-            # Current math_tool.calculate also tries to extract from natural language.
-            return math_calculate(query)
+            result_payload = math_calculate(query)
+            return ToolDispatcherResponse(
+                status="success",
+                payload=result_payload, # math_calculate already returns a string like "Result: X"
+                tool_name_attempted="calculate",
+                original_query_for_tool=query
+            )
         except Exception as e:
-            print(f"Error executing math calculation tool: {e}")
-            return "Sorry, I encountered an error trying to calculate that."
+            error_msg = f"Error in math calculation: {str(e)[:100]}"
+            print(f"ToolDispatcher: {error_msg}")
+            return ToolDispatcherResponse(
+                status="failure_tool_error",
+                payload=None,
+                tool_name_attempted="calculate",
+                original_query_for_tool=query,
+                error_message=error_msg
+            )
 
-    def _execute_logic_evaluation(self, query: str, method: str = 'parser') -> str:
+    def _execute_logic_evaluation(self, query: str, method: str = 'parser') -> ToolDispatcherResponse:
         """
         Wrapper for the logic_tool.evaluate_expression function.
         The query should be the logical expression string itself.
@@ -99,15 +126,25 @@ class ToolDispatcher:
 
             print(f"ToolDispatcher DEBUG (_execute_logic_evaluation): expression_to_evaluate='{expression_to_evaluate}', method='{method}'")
             result = logic_evaluate(expression_to_evaluate, method=method)
-            print(f"ToolDispatcher DEBUG (_execute_logic_evaluation): logic_evaluate result='{result}' (type: {type(result)})")
-            final_response = f"Result: {result}"
-            print(f"ToolDispatcher DEBUG (_execute_logic_evaluation): final_response='{final_response}'")
-            return final_response
+            # The logic_evaluate tool already returns a string like "Result: True"
+            return ToolDispatcherResponse(
+                status="success",
+                payload=result,
+                tool_name_attempted="evaluate_logic",
+                original_query_for_tool=query # Or expression_to_evaluate, depending on desired granularity
+            )
         except Exception as e:
-            print(f"Error executing logic evaluation tool: {e}")
-            return "Sorry, I encountered an error trying to evaluate that logical expression."
+            error_msg = f"Error in logic evaluation: {str(e)[:100]}"
+            print(f"ToolDispatcher: {error_msg}")
+            return ToolDispatcherResponse(
+                status="failure_tool_error",
+                payload=None,
+                tool_name_attempted="evaluate_logic",
+                original_query_for_tool=query,
+                error_message=error_msg
+            )
 
-    def _execute_translation(self, query: str, **kwargs) -> str:
+    def _execute_translation(self, query: str, **kwargs) -> ToolDispatcherResponse:
         """
         Wrapper for the translation_tool.translate function.
         Extracts text and target language from query.
@@ -177,23 +214,35 @@ class ToolDispatcher:
                  return "Sorry, no text to translate was found."
 
             # Use source_lang_from_kwarg if provided, otherwise it's None (for auto-detect)
-            # print(f"Debug TRANSLATE: Before calling translate_text: text='{text_to_translate}', resolved_target_lang='{resolved_target_lang}', source_language='{source_lang_from_kwarg}'") # REMOVED DEBUG
-            return translate_text(text_to_translate, resolved_target_lang, source_language=source_lang_from_kwarg)
-
+            result_payload = translate_text(text_to_translate, resolved_target_lang, source_language=source_lang_from_kwarg)
+            # translate_text already returns a string like "Translation: ..." or error message
+            # We need to check if it's an error message from the tool itself.
+            if "Translation not available" in result_payload or "error" in result_payload.lower(): # Simple check
+                 return ToolDispatcherResponse(
+                    status="failure_tool_error", # Or a more specific status if tool provides it
+                    payload=None,
+                    tool_name_attempted="translate_text",
+                    original_query_for_tool=query,
+                    error_message=result_payload
+                )
+            return ToolDispatcherResponse(
+                status="success",
+                payload=result_payload,
+                tool_name_attempted="translate_text",
+                original_query_for_tool=query
+            )
         except Exception as e:
-            print(f"Error executing translation tool: {e}")
-            return "Sorry, I encountered an error trying to translate that."
+            error_msg = f"Error in translation tool: {str(e)[:100]}"
+            print(f"ToolDispatcher: {error_msg}")
+            return ToolDispatcherResponse(
+                status="failure_tool_error",
+                payload=None,
+                tool_name_attempted="translate_text",
+                original_query_for_tool=query,
+                error_message=error_msg
+            )
 
-
-    # def _execute_another_tool(self, query: str, **kwargs) -> str:
-    #     try:
-    #         # Example: return run_another_tool(query)
-    #         pass
-    #     except Exception as e:
-    #         print(f"Error executing another_tool: {e}")
-    #         return "Error with another_tool."
-
-    def dispatch(self, query: str, explicit_tool_name: str = None, **kwargs) -> str | None:
+    def dispatch(self, query: str, explicit_tool_name: Optional[str] = None, **kwargs) -> ToolDispatcherResponse:
         """
         Dispatches a query to the appropriate tool.
         If explicit_tool_name is provided, it uses that tool.
@@ -202,10 +251,17 @@ class ToolDispatcher:
         if explicit_tool_name:
             if explicit_tool_name in self.tools:
                 print(f"Dispatching to explicitly named tool: {explicit_tool_name}")
-                # print(f"Debug DISPATCH: kwargs before tool call = {kwargs}") # REMOVED DEBUG
-                return self.tools[explicit_tool_name](query, **kwargs)
+                # Pass along original query in kwargs for consistent ToolDispatcherResponse population
+                kwargs_with_orig_query = {"original_query": query, **kwargs}
+                return self.tools[explicit_tool_name](query, **kwargs_with_orig_query)
             else:
-                return f"Sorry, I don't know the tool named '{explicit_tool_name}'."
+                return ToolDispatcherResponse(
+                    status="error_dispatcher_issue",
+                    payload=None,
+                    tool_name_attempted=explicit_tool_name,
+                    original_query_for_tool=query,
+                    error_message=f"Tool '{explicit_tool_name}' not found."
+                )
 
         # Use DLM for intent recognition
         intent = self.dlm.recognize_intent(query, available_tools=self.get_available_tools())
@@ -213,31 +269,27 @@ class ToolDispatcher:
         if intent and intent.get("tool_name") in self.tools:
             tool_name_from_dlm = intent["tool_name"]
             tool_params = intent.get("parameters", {})
-            # The query for the tool methods might be different from the original user query.
-            # DLM extracts a "query" parameter if it can isolate it.
-            # Default to original user query if specific "query" param not extracted by DLM.
-            tool_specific_query = tool_params.get("query", query)
+            tool_specific_query = tool_params.get("query", query) # Query for the tool itself
 
-            print(f"Dispatching to '{tool_name_from_dlm}' tool based on DLM intent. Effective query: '{tool_specific_query}'")
+            print(f"Dispatching to '{tool_name_from_dlm}' tool based on DLM intent. Effective query for tool: '{tool_specific_query}'")
 
-            # Special handling for logic tool's 'method' parameter if needed,
-            # or assume DLM can provide it in tool_params.
-            # For now, _execute_logic_evaluation default to 'parser'.
-            # If DLM provides 'method' in params, it could be passed via **tool_params.
-            if tool_name_from_dlm == "evaluate_logic":
-                 return self.tools[tool_name_from_dlm](tool_specific_query, method=tool_params.get("method", "parser"))
-            elif tool_name_from_dlm == "translate_text":
-                # _execute_translation expects the full query string as its first positional argument 'query'.
-                # Other extracted parameters by DLM (like 'target_language_hint', 'text_to_translate_hint')
-                # can be passed as kwargs. We must avoid passing 'query' or 'original_query' also via **tool_params
-                # if tool_specific_query is already the original query.
-                kwargs_for_tool = {k: v for k, v in tool_params.items() if k not in ["query", "original_query"]}
-                return self.tools[tool_name_from_dlm](tool_specific_query, **kwargs_for_tool)
-            else: # For 'calculate' and other future tools that just take the query string
-                return self.tools[tool_name_from_dlm](tool_specific_query)
+            # Ensure original_query (the user's full input) is part of kwargs for the tool execution methods
+            # if they need it for context or for populating ToolDispatcherResponse.
+            # The tool_params from DLM might already contain it, or we add it.
+            if "original_query" not in tool_params:
+                tool_params["original_query"] = query
 
-        print(f"No specific tool inferred by DLM for query: '{query}'")
-        return None
+            # Call the tool execution method. It will return a ToolDispatcherResponse.
+            # Specific kwargs for tools like 'method' for 'evaluate_logic' are handled by tool_params from DLM.
+            return self.tools[tool_name_from_dlm](tool_specific_query, **tool_params)
+
+        print(f"No specific local tool inferred by DLM for query: '{query}'")
+        return ToolDispatcherResponse(
+            status="unhandled_by_local_tool",
+            payload=None,
+            original_query_for_tool=query,
+            tool_name_attempted=None # No specific tool was attempted by DLM
+        )
 
     def get_available_tools(self):
         """Returns a dictionary of available tools and their descriptions."""
