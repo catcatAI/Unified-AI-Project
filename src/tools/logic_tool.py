@@ -75,12 +75,13 @@ def evaluate_expression(expression_string: str, method: str = 'parser') -> bool 
     Evaluates a logical expression string using the specified method ('parser' or 'nn').
     Returns boolean result, an error string, or None for severe errors.
     """
-    print(f"LogicTool: Evaluating '{expression_string}' using '{method}' method.")
+    normalized_expression = expression_string.lower() # Normalize to lowercase
+    print(f"LogicTool: Evaluating '{normalized_expression}' (original: '{expression_string}') using '{method}' method.")
 
     if method == 'parser':
         parser = _get_parser_evaluator()
         if parser:
-            result = parser.evaluate(expression_string)
+            result = parser.evaluate(normalized_expression) # Use normalized
             if result is None:
                 return "Error: Invalid expression for parser."
             return result
@@ -93,9 +94,9 @@ def evaluate_expression(expression_string: str, method: str = 'parser') -> bool 
             try:
                 # The predict method in LogicNNModel expects the raw string
                 # and handles tokenization internally.
-                return nn_model.predict(expression_string, char_map)
+                return nn_model.predict(normalized_expression, char_map) # Use normalized
             except Exception as e:
-                print(f"Error during NN prediction for '{expression_string}': {e}")
+                print(f"Error during NN prediction for '{normalized_expression}': {e}") # Use normalized
                 return "Error: NN model prediction failed."
         else:
             return "Error: NN model not available or char_map missing. Please train the NN model."
@@ -106,19 +107,52 @@ def evaluate_expression(expression_string: str, method: str = 'parser') -> bool 
 if __name__ == '__main__':
     print("--- Logic Tool Example Usage ---")
 
-    test_expressions = [
-        "true AND false",
-        "NOT (true OR false)",
-        "false OR (true AND true)",
-        "true",
-        "invalid expression",
-        "(false AND true" # Missing paren
+    # Define test cases with expected outcomes for the parser
+    # Using a list of tuples: (expression_string, expected_result)
+    # expected_result can be boolean or the specific error string for invalid inputs.
+    parser_test_cases = [
+        # Valid expressions
+        ("true AND false", False),
+        ("NOT (true OR false)", False), # NOT (True) -> False
+        ("false OR (true AND true)", True), # False OR True -> True
+        ("true", True),
+        ("false", False),
+        ("not false", True),
+        ("(true)", True),
+        (" ( false ) ", False), # Whitespace test
+        # Case variations
+        ("TRUE anD FaLsE", False),
+        ("NoT FalSe", True),
+        # More complex
+        ("NOT (true AND (false OR NOT true))", True), # NOT(T AND (F OR F)) -> NOT(T AND F) -> NOT(F) -> True
+        ("true or false and false or true", True), # true or (false and false) or true -> T or F or T -> True
+        # Invalid expressions - expecting specific error string or None if parser returns that
+        ("invalid expression", "Error: Invalid expression for parser."),
+        ("(false AND true", "Error: Invalid expression for parser."), # Missing paren
+        ("", "Error: Invalid expression for parser."), # Empty string
+        ("true OR AND false", "Error: Invalid expression for parser."), # Operator misuse
+        ("true true", "Error: Invalid expression for parser."), # Operand misuse
+        ("AND false", "Error: Invalid expression for parser."), # Leading operator
+        ("true OR", "Error: Invalid expression for parser.") # Trailing operator
     ]
 
     print("\n--- Testing with Parser (default) ---")
-    for expr in test_expressions:
-        result = evaluate_expression(expr)
-        print(f"Expression: \"{expr}\" -> Parser Result: {result}")
+    parser_tests_passed = 0
+    parser_tests_failed = 0
+    for i, (expr, expected) in enumerate(parser_test_cases):
+        result = evaluate_expression(expr) # Default method is 'parser'
+        print(f"Test {i+1}: \"{expr}\"")
+        print(f"  -> Expected: {expected}, Got: {result}")
+        try:
+            assert result == expected
+            print("  -> PASS")
+            parser_tests_passed += 1
+        except AssertionError:
+            print(f"  -> FAIL: Expected {expected}, but got {result}")
+            parser_tests_failed += 1
+
+    print(f"\nParser Test Summary: {parser_tests_passed} passed, {parser_tests_failed} failed.")
+
 
     print("\n--- Testing with NN Model ---")
     print("(Note: NN model needs to be trained for meaningful results. This will likely show errors or random output if model files don't exist or model is untrained.)")
@@ -138,7 +172,7 @@ if __name__ == '__main__':
     # So, NN evaluation will likely show the "model not found" or "NN model not available" error.
     # This is acceptable for this standalone script test.
 
-    for expr in test_expressions:
+    for expr, _ in parser_test_cases: # Use expressions from parser_test_cases
         # Only attempt NN if we are sure the model path exists (even if it's a dummy/untrained one)
         # For now, we'll let it try and print the error if files are missing.
         result_nn = evaluate_expression(expr, method='nn')
