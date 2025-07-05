@@ -1,1 +1,1 @@
-# Tests for code understanding models and utilities.
+# This directory is a package.

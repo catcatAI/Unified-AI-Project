@@ -1,1 +1,1 @@
-# Tests for the Fragmenta orchestration system.
+# This directory is a package.

@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+import asyncio # Added for running async functions
 
 # Example: Accessing other parts of the project
 # Assuming src is in PYTHONPATH or this script is run from project root level
@@ -16,7 +17,8 @@ def handle_query(args):
     # Initialize DialogueManager (in a real app, this might be a singleton or configured differently)
     dialogue_mgr = DialogueManager()
 
-    response = dialogue_mgr.get_simple_response(args.query_text)
+    # get_simple_response is async, so we need to run it in an event loop
+    response = asyncio.run(dialogue_mgr.get_simple_response(args.query_text))
     print(f"AI: {response}")
 
 def handle_config(args):

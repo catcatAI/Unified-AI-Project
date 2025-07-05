@@ -82,12 +82,14 @@ class TestFragmentaOrchestrator(unittest.TestCase):
         long_text = "This is a sentence that is quite long and should be chunked." # len 58
 
         chunk1_text = long_text[0:50]  # "This is a sentence that is quite long and should "
-        chunk2_text = long_text[45:58] # "ould be chunked."
+        chunk2_text = long_text[45:58] # "ould be chunked." Correct original definition
 
         expected_prompt_chunk1 = f"Summarize this text chunk (1/2) for task {task_desc['task_id']}: {chunk1_text}"
+        # Expect the correct, full chunk text in the prompt
         expected_prompt_chunk2 = f"Summarize this text chunk (2/2) for task {task_desc['task_id']}: {chunk2_text}"
 
         mock_response_chunk1 = f"Summary C1: {chunk1_text[:10]}"
+        # Use the correct chunk2_text for the mock response as well
         mock_response_chunk2 = f"Summary C2: {chunk2_text[:10]}"
 
         self.mock_llm_interface.generate_response.reset_mock(); self.mock_llm_interface.generate_response.side_effect = [mock_response_chunk1, mock_response_chunk2]
