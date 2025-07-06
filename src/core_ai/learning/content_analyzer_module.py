@@ -41,36 +41,82 @@ class ContentAnalyzerModule:
                     elif nlp is None:
                          raise RuntimeError(f"Could not load any spaCy model. Last error: {e}")
 
+import yaml # For loading config
+import os   # For path construction
+
+# ... (other imports)
+
+class ContentAnalyzerModule:
+    def __init__(self, spacy_model_name: str = "en_core_web_sm", ontology_mapping_filepath: Optional[str] = None):
+        """
+        Initializes the ContentAnalyzerModule.
+        Tries to load the specified spaCy model, ontology mappings, and initializes Matcher.
+        """
+        global nlp
+        if spacy_model_name != "en_core_web_sm" or not nlp:
+            try:
+                nlp = spacy.load(spacy_model_name)
+                print(f"Successfully loaded spaCy model: {spacy_model_name}")
+            except OSError:
+                print(f"spaCy model '{spacy_model_name}' not found. Attempting to download...")
+                try:
+                    spacy.cli.download(spacy_model_name) # type: ignore
+                    nlp = spacy.load(spacy_model_name)
+                    print(f"Successfully downloaded and loaded spaCy model: {spacy_model_name}")
+                except Exception as e:
+                    print(f"Failed to download/load {spacy_model_name}. Using en_core_web_sm as fallback if available, else raising error.")
+                    if nlp is None and spacy_model_name != "en_core_web_sm":
+                        nlp = spacy.load("en_core_web_sm")
+                    elif nlp is None:
+                         raise RuntimeError(f"Could not load any spaCy model. Last error: {e}")
+
         self.nlp = nlp
         self.matcher = Matcher(self.nlp.vocab)
         self.graph: nx.DiGraph = nx.DiGraph()
 
-        # --- Ontology Mapping for Semantic Interoperability (PoC) ---
-        self.internal_uri_prefixes = {
-            "entity_type": "cai_type:", # CoreAI internal type
-            "property": "cai_prop:",    # CoreAI internal property
-            "entity_instance": "cai_instance:" # For specific instances if not using external URIs directly
-        }
-        self.ontology_mapping: Dict[str, str] = {
-            # External Class URIs to Internal Types
-            "http://example.com/ontology#Person": f"{self.internal_uri_prefixes['entity_type']}Person",
-            "http://example.com/ontology#City": f"{self.internal_uri_prefixes['entity_type']}City",
-            "http://schema.org/Person": f"{self.internal_uri_prefixes['entity_type']}Person", # Example mapping schema.org
-            "http://schema.org/City": f"{self.internal_uri_prefixes['entity_type']}City",
-
-            # External Property URIs to Internal Properties
-            "http://example.com/ontology#locatedIn": f"{self.internal_uri_prefixes['property']}locatedIn",
-            "http://example.com/ontology#hasName": f"{self.internal_uri_prefixes['property']}name",
-            "http://xmlns.com/foaf/0.1/name": f"{self.internal_uri_prefixes['property']}name", # FOAF name
-            "http://schema.org/name": f"{self.internal_uri_prefixes['property']}name",
-            "http://schema.org/location": f"{self.internal_uri_prefixes['property']}location", # Could map to locatedIn or a generic location
-        }
-        # We can also have mappings for specific entity instance URIs if needed,
-        # e.g., "http://dbpedia.org/resource/London": "cai_instance:London_UK"
-        # --- End Ontology Mapping ---
+        self.internal_uri_prefixes: Dict[str, str] = {}
+        self.ontology_mapping: Dict[str, str] = {}
+        self._load_ontology_mappings(ontology_mapping_filepath)
 
         self._initialize_matchers()
-        print(f"ContentAnalyzerModule initialized with spaCy model: {self.nlp.meta['name']}. Internal graph created. Ontology mappings: {len(self.ontology_mapping)} entries.")
+        print(f"ContentAnalyzerModule initialized with spaCy model: {self.nlp.meta['name']}. Internal graph created. Ontology mappings loaded: {len(self.ontology_mapping)} entries.")
+
+    def _load_ontology_mappings(self, filepath: Optional[str]):
+        if filepath is None:
+            # Construct default path: <project_root>/configs/ontology_mappings.yaml
+            current_script_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.abspath(os.path.join(current_script_dir, "..", "..", ".."))
+            filepath = os.path.join(project_root, "configs", "ontology_mappings.yaml")
+
+        if not os.path.exists(filepath):
+            print(f"ContentAnalyzerModule: Ontology mapping file not found at '{filepath}'. Using empty mappings.")
+            self.internal_uri_prefixes = {"entity_type": "cai_type:", "property": "cai_prop:", "entity_instance": "cai_instance:"} # Default prefixes
+            self.ontology_mapping = {}
+            return
+
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                mappings_config = yaml.safe_load(f)
+
+            self.internal_uri_prefixes = mappings_config.get("internal_uri_prefixes",
+                {"entity_type": "cai_type:", "property": "cai_prop:", "entity_instance": "cai_instance:"}) # Default if missing
+
+            # Combine class_mappings and property_mappings into a single ontology_mapping dict
+            self.ontology_mapping = {}
+            self.ontology_mapping.update(mappings_config.get("class_mappings", {}))
+            self.ontology_mapping.update(mappings_config.get("property_mappings", {}))
+            self.ontology_mapping.update(mappings_config.get("instance_mappings", {})) # If we add instance mappings
+
+            print(f"ContentAnalyzerModule: Loaded {len(self.ontology_mapping)} ontology mappings and "
+                  f"{len(self.internal_uri_prefixes)} prefix definitions from '{filepath}'.")
+
+        except yaml.YAMLError as ye:
+            print(f"ContentAnalyzerModule: Error parsing YAML from ontology mapping file '{filepath}': {ye}")
+            self.ontology_mapping = {} # Fallback to empty
+        except Exception as e:
+            print(f"ContentAnalyzerModule: Error loading ontology mapping file '{filepath}': {e}")
+            self.ontology_mapping = {} # Fallback to empty
+
 
     def _initialize_matchers(self):
         """Initializes spaCy Matcher patterns."""
@@ -643,7 +689,7 @@ class ContentAnalyzerModule:
         return knowledge_graph_data, nx_graph
 
 
-    def process_hsp_fact_content(self, hsp_fact_payload: Dict[str, Any], source_ai_id: str) -> bool:
+    def process_hsp_fact_content(self, hsp_fact_payload: Dict[str, Any], source_ai_id: str) -> Dict[str, Any]:
         """
         Processes the content of an HSPFactPayload and integrates it into the module's knowledge graph.
         For v1, if statement_nl exists, it re-analyzes it.
@@ -655,11 +701,13 @@ class ContentAnalyzerModule:
             source_ai_id (str): The ID of the AI that sent/originated this fact via HSP.
 
         Returns:
-            bool: True if processing led to graph updates, False otherwise.
+            Dict[str, Any]: A dictionary containing:
+                            - "updated_graph": bool (True if processing led to graph updates)
+                            - "processed_triple": Optional[Dict] (Details of the processed triple if statement_type was semantic_triple)
         """
         print(f"ContentAnalyzerModule: Processing HSP Fact ID '{hsp_fact_payload.get('id')}' from '{source_ai_id}'")
 
-        updated_graph = False
+        result: Dict[str, Any] = {"updated_graph": False}
         confidence = hsp_fact_payload.get('confidence_score', 0.7) # Default confidence for HSP facts
         hsp_fact_id = hsp_fact_payload.get('id', f"hsp_fact_{uuid.uuid4().hex[:6]}")
 
@@ -679,7 +727,7 @@ class ContentAnalyzerModule:
                         self.graph.add_node(node, **data)
                         # Add HSP source info to new nodes from this fact
                         self.graph.nodes[node]['hsp_source_info'] = {'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence}
-                        updated_graph = True
+                        result["updated_graph"] = True
                     else:
                         # Node exists, maybe update confidence or add as another source? For now, just log.
                         print(f"ContentAnalyzerModule: Node '{node}' from HSP fact NL already exists. Not overwriting attributes.")
@@ -689,12 +737,12 @@ class ContentAnalyzerModule:
                         self.graph.add_edge(u, v, **data)
                         # Add HSP source info to new edges
                         self.graph.edges[u,v]['hsp_source_info'] = {'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence}
-                        updated_graph = True
+                        result["updated_graph"] = True
                     else:
                         # Edge exists, maybe update weight/confidence? For now, just log.
                         print(f"ContentAnalyzerModule: Edge '{u}'->'{v}' (type {data.get('type')}) from HSP fact NL already exists.")
 
-                if updated_graph:
+                if result["updated_graph"]:
                     print(f"ContentAnalyzerModule: Merged {nx_graph_from_nl.number_of_nodes()} nodes and {nx_graph_from_nl.number_of_edges()} edges from NL analysis of HSP fact into main graph.")
 
         # Option 2: Process structured statement (e.g., semantic triple)
@@ -740,11 +788,13 @@ class ContentAnalyzerModule:
                 if s_id.startswith(self.internal_uri_prefixes["entity_type"]):
                     s_type = s_id
 
+                initial_node_count = self.graph.number_of_nodes()
+                initial_edge_count = self.graph.number_of_edges()
+
                 # Add/update subject node
                 if not self.graph.has_node(s_id):
                     self.graph.add_node(s_id, label=s_label, type=s_type, original_uri=s_original_uri,
                                         hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence})
-                    updated_graph = True
 
                 # Add/update object node
                 if not self.graph.has_node(o_id):
@@ -753,21 +803,45 @@ class ContentAnalyzerModule:
                     if o_original_uri: # Store original URI if it was a URI
                         node_attrs["original_uri"] = o_original_uri
                     self.graph.add_node(o_id, **node_attrs)
-                    updated_graph = True
 
                 # Add relationship using mapped predicate type
+                edge_added_or_updated = False
                 if not self.graph.has_edge(s_id, o_id) or self.graph.edges[s_id, o_id].get('type') != p_type:
                     self.graph.add_edge(s_id, o_id, type=p_type, original_predicate_uri=p_original_uri,
                                         weight=confidence, hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id})
-                    updated_graph = True
+                    edge_added_or_updated = True
                     print(f"ContentAnalyzerModule: Added/updated edge from mapped semantic triple: {s_id} -[{p_type}]-> {o_id}")
                 else:
-                     print(f"ContentAnalyzerModule: Edge from triple {s_id} -[{rel_type}]-> {o_id} already exists.")
+                     # Check if predicate URI is different, even if mapped p_type is same. This is less likely with current mapping.
+                     # Or if confidence is higher, update edge attributes.
+                     existing_edge_data = self.graph.edges[s_id, o_id]
+                     if existing_edge_data.get('weight', 0) < confidence:
+                         existing_edge_data['weight'] = confidence
+                         existing_edge_data['hsp_source_info'] = {'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id}
+                         existing_edge_data['original_predicate_uri'] = p_original_uri # Update if new predicate led to same mapped type
+                         edge_added_or_updated = True
+                         print(f"ContentAnalyzerModule: Updated existing edge {s_id} -[{p_type}]-> {o_id} with higher confidence/new source.")
+                     else:
+                        print(f"ContentAnalyzerModule: Edge from triple {s_id} -[{p_type}]-> {o_id} already exists with similar/higher confidence.")
 
-        if updated_graph:
+                if self.graph.number_of_nodes() > initial_node_count or edge_added_or_updated:
+                    result["updated_graph"] = True
+
+                if result["updated_graph"]:
+                    result["processed_triple"] = {
+                        "subject_id": s_id,
+                        "predicate_type": p_type,
+                        "object_id": o_id,
+                        "original_subject_uri": s_original_uri,
+                        "original_predicate_uri": p_original_uri,
+                        "original_object_uri_or_literal": o_original_uri if obj_is_uri else obj_data,
+                        "object_is_uri": obj_is_uri
+                    }
+
+        if result["updated_graph"]:
             print(f"ContentAnalyzerModule: Main graph now has {self.graph.number_of_nodes()} nodes, {self.graph.number_of_edges()} edges after processing HSP fact.")
 
-        return updated_graph
+        return result
 
 # Example usage:
 if __name__ == '__main__':

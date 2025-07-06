@@ -179,4 +179,94 @@ class TestHSPEndpoints:
         assert response_data.get("correlation_id") is None
         assert response_data.get("error") == "Capability not discovered."
 
+    def test_get_hsp_task_status_pending(self, client: TestClient):
+        services = get_services()
+        dialogue_manager = services.get("dialogue_manager")
+        assert dialogue_manager is not None
+
+        mock_corr_id = "pending_corr_id_123"
+        dialogue_manager.pending_hsp_task_requests[mock_corr_id] = { #type: ignore
+            "capability_id": "test_cap_pending", "target_ai_id": "test_target_pending"
+        }
+
+        response = client.get(f"/api/v1/hsp/tasks/{mock_corr_id}")
+        assert response.status_code == 200
+        status_data = response.json()
+        assert status_data["correlation_id"] == mock_corr_id
+        assert status_data["status"] == "pending"
+        assert "pending" in status_data["message"].lower() #type: ignore
+
+        del dialogue_manager.pending_hsp_task_requests[mock_corr_id] # Clean up
+
+    def test_get_hsp_task_status_completed_from_ham(self, client: TestClient):
+        services = get_services()
+        ham_manager = services.get("ham_manager")
+        assert ham_manager is not None
+
+        mock_corr_id = "completed_corr_id_456"
+        expected_result_payload = {"data": "task was successful"}
+        # Simulate storing a success result in HAM by DialogueManager's _handle_incoming_hsp_task_result
+        # This metadata structure needs to align with what _handle_incoming_hsp_task_result actually stores.
+        # Crucially, it needs "hsp_correlation_id" and the actual result payload.
+        # The current DM stores the user-facing message in raw_data.
+        # The API endpoint currently returns a generic success message if type is success.
+        # DM's _handle_incoming_hsp_task_result now stores "hsp_task_service_payload" in metadata.
+
+        ham_manager.store_experience(
+            raw_data="User-facing success message including " + str(expected_result_payload), # Raw data is the user message
+            data_type="ai_dialogue_text_hsp_result_success",
+            metadata={
+                "hsp_correlation_id": mock_corr_id,
+                "source": "hsp_task_result_success",
+                "hsp_task_service_payload": expected_result_payload # Simulate DM storing this
+            } #type: ignore
+        )
+
+        response = client.get(f"/api/v1/hsp/tasks/{mock_corr_id}")
+        assert response.status_code == 200
+        status_data = response.json()
+        assert status_data["correlation_id"] == mock_corr_id
+        assert status_data["status"] == "completed"
+        assert status_data["result_payload"] == expected_result_payload # Now API should return this
+        assert status_data["message"] == "Task completed successfully."
+
+        if hasattr(ham_manager, "memory_store"):
+             ham_manager.memory_store = {k:v for k,v in ham_manager.memory_store.items() if v['metadata'].get('hsp_correlation_id') != mock_corr_id}
+
+
+    def test_get_hsp_task_status_failed_from_ham(self, client: TestClient):
+        services = get_services()
+        ham_manager = services.get("ham_manager")
+        assert ham_manager is not None
+
+        mock_corr_id = "failed_corr_id_789"
+        expected_error_details = {"error_code": "TEST_FAIL", "error_message": "Task failed for test"}
+
+        ham_manager.store_experience( #type: ignore
+            raw_data="User-facing failure message",
+            data_type="ai_dialogue_text_hsp_error", # Matches what DM stores
+            metadata={
+                "hsp_correlation_id": mock_corr_id,
+                "source": "hsp_task_result_error",
+                "error_details": expected_error_details
+            }
+        )
+        response = client.get(f"/api/v1/hsp/tasks/{mock_corr_id}")
+        assert response.status_code == 200
+        status_data = response.json()
+        assert status_data["correlation_id"] == mock_corr_id
+        assert status_data["status"] == "failed"
+        assert status_data["error_details"] == expected_error_details
+        if hasattr(ham_manager, "memory_store"):
+             ham_manager.memory_store = {k:v for k,v in ham_manager.memory_store.items() if v['metadata'].get('hsp_correlation_id') != mock_corr_id}
+
+
+    def test_get_hsp_task_status_unknown(self, client: TestClient):
+        mock_corr_id = "unknown_corr_id_000"
+        response = client.get(f"/api/v1/hsp/tasks/{mock_corr_id}")
+        assert response.status_code == 200
+        status_data = response.json()
+        assert status_data["correlation_id"] == mock_corr_id
+        assert status_data["status"] == "unknown_or_expired"
+
 ```
