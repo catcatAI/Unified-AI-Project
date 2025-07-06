@@ -73,3 +73,7 @@ The primary mechanism for defining structured data objects for internal exchange
 *   **HSP:** The Heterogeneous Synchronization Protocol (`src/hsp/types.py` and `docs/HSP_SPECIFICATION.md`) defines data structures and protocols for communication *between separate AI instances* over a network. While some HSP payload structures might inform or be used internally, their primary definition is for inter-AI interoperability. Internal representations may sometimes be simpler or more tailored to the AI's internal logic.
 
 By adhering to these standards, we aim to create a more robust, understandable, and maintainable codebase.
+
+## 9. Ongoing Diligence
+
+These standards should be applied to all new Python code involving structured data exchange between modules. Existing code should be refactored to adhere to these standards opportunistically or during planned refactoring efforts for specific components. Regular review of `src/shared/types/common_types.py` for consolidation and clarity is also encouraged.
