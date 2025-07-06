@@ -1,9 +1,11 @@
+import uuid # For hsp_fact_id default in process_hsp_fact_content
 import spacy
 from spacy.tokens import Doc
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, TypedDict # Added TypedDict
 import networkx as nx
 
 from shared.types.common_types import KGEntity, KGRelationship, KnowledgeGraph
+from hsp.types import HSPFactPayload # Import HSPFactPayload
 
 from spacy.matcher import Matcher # Added Matcher
 
@@ -688,28 +690,46 @@ class ContentAnalyzerModule:
         print(f"NetworkX graph constructed: {nx_graph.number_of_nodes()} nodes, {nx_graph.number_of_edges()} edges.")
         return knowledge_graph_data, nx_graph
 
+# --- Types for process_hsp_fact_content return value ---
+class ProcessedTripleInfo(TypedDict):
+    """Detailed information about a semantic triple processed by ContentAnalyzerModule."""
+    subject_id: str
+    predicate_type: str
+    object_id: str
+    original_subject_uri: str
+    original_predicate_uri: str
+    original_object_uri_or_literal: Any
+    object_is_uri: bool
 
-    def process_hsp_fact_content(self, hsp_fact_payload: Dict[str, Any], source_ai_id: str) -> Dict[str, Any]:
+class CAHSPFactProcessingResult(TypedDict):
+    """Result structure from ContentAnalyzerModule's processing of an HSP fact."""
+    updated_graph: bool
+    processed_triple: Optional[ProcessedTripleInfo]
+# --- End Types ---
+
+    def process_hsp_fact_content(self, hsp_fact_payload: HSPFactPayload, source_ai_id: str) -> CAHSPFactProcessingResult:
         """
         Processes the content of an HSPFactPayload and integrates it into the module's knowledge graph.
-        For v1, if statement_nl exists, it re-analyzes it.
-        If statement_structured (as semantic triple) exists, it tries to add directly.
-        Updates self.graph directly.
+        If `statement_nl` exists, it re-analyzes it.
+        If `statement_structured` (as semantic triple) exists, it tries to add it directly to the graph,
+        applying ontology mappings if configured.
+        Updates `self.graph` directly.
 
         Args:
-            hsp_fact_payload (Dict[str, Any]): The payload of the HSP fact. Expected to conform to HSPFactPayload structure.
-            source_ai_id (str): The ID of the AI that sent/originated this fact via HSP.
+            hsp_fact_payload: The HSPFactPayload object.
+            source_ai_id: The ID of the AI that sent/originated this fact via HSP.
 
         Returns:
-            Dict[str, Any]: A dictionary containing:
-                            - "updated_graph": bool (True if processing led to graph updates)
-                            - "processed_triple": Optional[Dict] (Details of the processed triple if statement_type was semantic_triple)
+            CAHSPFactProcessingResult: A dictionary indicating if the graph was updated and
+                                       details of any processed semantic triple.
         """
-        print(f"ContentAnalyzerModule: Processing HSP Fact ID '{hsp_fact_payload.get('id')}' from '{source_ai_id}'")
+        fact_id_str = hsp_fact_payload.get('id', "unknown_hsp_fact_id")
+        print(f"ContentAnalyzerModule: Processing HSP Fact ID '{fact_id_str}' from '{source_ai_id}'")
 
-        result: Dict[str, Any] = {"updated_graph": False}
-        confidence = hsp_fact_payload.get('confidence_score', 0.7) # Default confidence for HSP facts
-        hsp_fact_id = hsp_fact_payload.get('id', f"hsp_fact_{uuid.uuid4().hex[:6]}")
+        result: CAHSPFactProcessingResult = {"updated_graph": False, "processed_triple": None}
+        confidence = hsp_fact_payload.get('confidence_score', 0.7)
+        # Use the provided fact ID or generate one if missing (though HSPFactPayload 'id' is typed as required)
+        hsp_fact_internal_ref_id = fact_id_str if fact_id_str != "unknown_hsp_fact_id" else f"hsp_fact_gen_{uuid.uuid4().hex[:6]}"
 
         # Option 1: Process natural language statement if available
         statement_nl = hsp_fact_payload.get('statement_nl')
@@ -726,17 +746,17 @@ class ContentAnalyzerModule:
                     if node not in self.graph:
                         self.graph.add_node(node, **data)
                         # Add HSP source info to new nodes from this fact
-                        self.graph.nodes[node]['hsp_source_info'] = {'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence}
+                        self.graph.nodes[node]['hsp_source_info'] = {'origin_fact_id': hsp_fact_internal_ref_id, 'source_ai': source_ai_id, 'confidence': confidence}
                         result["updated_graph"] = True
                     else:
                         # Node exists, maybe update confidence or add as another source? For now, just log.
                         print(f"ContentAnalyzerModule: Node '{node}' from HSP fact NL already exists. Not overwriting attributes.")
 
                 for u, v, data in nx_graph_from_nl.edges(data=True):
-                    if not self.graph.has_edge(u,v) or self.graph.edges[u,v].get('type') != data.get('type'):
+                    if not self.graph.has_edge(u,v) or self.graph.edges[u,v].get('type') != data.get('type'): # type: ignore
                         self.graph.add_edge(u, v, **data)
                         # Add HSP source info to new edges
-                        self.graph.edges[u,v]['hsp_source_info'] = {'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence}
+                        self.graph.edges[u,v]['hsp_source_info'] = {'origin_fact_id': hsp_fact_internal_ref_id, 'source_ai': source_ai_id, 'confidence': confidence} # type: ignore
                         result["updated_graph"] = True
                     else:
                         # Edge exists, maybe update weight/confidence? For now, just log.
@@ -794,49 +814,49 @@ class ContentAnalyzerModule:
                 # Add/update subject node
                 if not self.graph.has_node(s_id):
                     self.graph.add_node(s_id, label=s_label, type=s_type, original_uri=s_original_uri,
-                                        hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence})
+                                        hsp_source_info={'origin_fact_id': hsp_fact_internal_ref_id, 'source_ai': source_ai_id, 'confidence': confidence})
 
                 # Add/update object node
                 if not self.graph.has_node(o_id):
-                    node_attrs = {"label": o_label, "type": o_type,
-                                  "hsp_source_info": {'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id, 'confidence': confidence}}
+                    node_attrs: Dict[str, Any] = {"label": o_label, "type": o_type,
+                                  "hsp_source_info": {'origin_fact_id': hsp_fact_internal_ref_id, 'source_ai': source_ai_id, 'confidence': confidence}}
                     if o_original_uri: # Store original URI if it was a URI
                         node_attrs["original_uri"] = o_original_uri
                     self.graph.add_node(o_id, **node_attrs)
 
                 # Add relationship using mapped predicate type
                 edge_added_or_updated = False
-                if not self.graph.has_edge(s_id, o_id) or self.graph.edges[s_id, o_id].get('type') != p_type:
+                if not self.graph.has_edge(s_id, o_id) or self.graph.edges[s_id, o_id].get('type') != p_type: # type: ignore
                     self.graph.add_edge(s_id, o_id, type=p_type, original_predicate_uri=p_original_uri,
-                                        weight=confidence, hsp_source_info={'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id})
+                                        weight=confidence, hsp_source_info={'origin_fact_id': hsp_fact_internal_ref_id, 'source_ai': source_ai_id})
                     edge_added_or_updated = True
                     print(f"ContentAnalyzerModule: Added/updated edge from mapped semantic triple: {s_id} -[{p_type}]-> {o_id}")
                 else:
                      # Check if predicate URI is different, even if mapped p_type is same. This is less likely with current mapping.
                      # Or if confidence is higher, update edge attributes.
-                     existing_edge_data = self.graph.edges[s_id, o_id]
-                     if existing_edge_data.get('weight', 0) < confidence:
-                         existing_edge_data['weight'] = confidence
-                         existing_edge_data['hsp_source_info'] = {'origin_fact_id': hsp_fact_id, 'source_ai': source_ai_id}
-                         existing_edge_data['original_predicate_uri'] = p_original_uri # Update if new predicate led to same mapped type
+                     existing_edge_data = self.graph.edges[s_id, o_id] # type: ignore
+                     if existing_edge_data.get('weight', 0) < confidence: # type: ignore
+                         existing_edge_data['weight'] = confidence # type: ignore
+                         existing_edge_data['hsp_source_info'] = {'origin_fact_id': hsp_fact_internal_ref_id, 'source_ai': source_ai_id} # type: ignore
+                         existing_edge_data['original_predicate_uri'] = p_original_uri # Update if new predicate led to same mapped type # type: ignore
                          edge_added_or_updated = True
                          print(f"ContentAnalyzerModule: Updated existing edge {s_id} -[{p_type}]-> {o_id} with higher confidence/new source.")
                      else:
-                        print(f"ContentAnalyzerModule: Edge from triple {s_id} -[{p_type}]-> {o_id} already exists with similar/higher confidence.")
+                        print(f"ContentAnalyzerModule: Edge from triple {s_id} -[{p_type}]-> {o_id} already exists with similar/higher confidence.") # type: ignore
 
                 if self.graph.number_of_nodes() > initial_node_count or edge_added_or_updated:
                     result["updated_graph"] = True
 
-                if result["updated_graph"]:
-                    result["processed_triple"] = {
-                        "subject_id": s_id,
-                        "predicate_type": p_type,
-                        "object_id": o_id,
-                        "original_subject_uri": s_original_uri,
-                        "original_predicate_uri": p_original_uri,
-                        "original_object_uri_or_literal": o_original_uri if obj_is_uri else obj_data,
-                        "object_is_uri": obj_is_uri
-                    }
+                if result["updated_graph"]: # This means either a node was added or edge was added/updated
+                    result["processed_triple"] = ProcessedTripleInfo(
+                        subject_id=s_id,
+                        predicate_type=p_type,
+                        object_id=o_id,
+                        original_subject_uri=s_original_uri,
+                        original_predicate_uri=p_original_uri,
+                        original_object_uri_or_literal=o_original_uri if obj_is_uri else obj_data,
+                        object_is_uri=obj_is_uri
+                    )
 
         if result["updated_graph"]:
             print(f"ContentAnalyzerModule: Main graph now has {self.graph.number_of_nodes()} nodes, {self.graph.number_of_edges()} edges after processing HSP fact.")
