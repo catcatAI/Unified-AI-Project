@@ -383,22 +383,22 @@ async def example_hsp_usage():
             await asyncio.sleep(1) # Allow subscriptions to complete
 
             print("\nPublishing a sample fact...")
-            sample_fact_payload: FactPayload = {
-              "id": f"fact_weather_{uuid.uuid4()}",
+            sample_fact_payload: HSPFactPayload = { # Changed FactPayload to HSPFactPayload
+              "id": f"fact_weather_{uuid.uuid4().hex[:6]}", # Use hex for shorter UUID part
               "statement_type": "natural_language",
               "statement_nl": "The forecast for tomorrow is partly cloudy.",
-              # source_ai_id is added by _build_hsp_envelope using self.ai_id
+              "source_ai_id": my_ai_id, # Explicitly set for clarity, though _build_hsp_envelope uses self.ai_id
               "timestamp_created": datetime.now(timezone.utc).isoformat(),
               "confidence_score": 0.80,
-              "context": {"location_generic": "local_area"}
-            }
+              "tags": ["weather", "forecast"] # Added tags
+            } # type: ignore # Added type: ignore for potentially missing optional fields if HSPFactPayload is strict
             connector.publish_fact(sample_fact_payload, topic=general_facts_topic)
 
             print("\nPublishing another sample fact to a specific weather subtopic...")
-            specific_weather_fact: FactPayload = {
-              "id": f"fact_temp_{uuid.uuid4()}",
+            specific_weather_fact: HSPFactPayload = { # Changed FactPayload to HSPFactPayload
+              "id": f"fact_temp_{uuid.uuid4().hex[:6]}",  # Use hex for shorter UUID part
               "statement_type": "semantic_triple",
-              "statement_structured": {"subject_uri": "hsp:env:city_A_temp", "predicate_uri": "hsp:property:hasValueCelsius", "object_literal": 25},
+              "statement_structured": {"subject_uri": "hsp:env:city_A_temp", "predicate_uri": "hsp:property:hasValueCelsius", "object_literal": 25}, # type: ignore
               "timestamp_created": datetime.now(timezone.utc).isoformat(),
               "confidence_score": 0.99,
             }

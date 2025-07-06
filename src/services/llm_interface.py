@@ -3,11 +3,14 @@ from typing import Dict, Any, Optional, List
 import json
 import requests # Added for Ollama integration
 import re # For more robust mock matching
-from typing import Dict, Any, Optional, List
+# from typing import Dict, Any, Optional, List # Redundant with line 1
 
 # Attempt to import LLMInterfaceConfig, handle if module run directly or types not generated yet
 # Assuming 'src' is in PYTHONPATH, making 'shared' a top-level package
-from shared.types.common_types import LLMInterfaceConfig, LLMProviderOllamaConfig, LLMProviderOpenAIConfig, OperationalConfig
+from shared.types.common_types import (
+    LLMInterfaceConfig, LLMProviderOllamaConfig,
+    LLMProviderOpenAIConfig, OperationalConfig, LLMModelInfo # Added LLMModelInfo
+)
 
 
 class LLMInterface:
@@ -165,16 +168,17 @@ class LLMInterface:
         print(f"LLMInterface: No active LLM client for provider '{self.active_provider_name}'. Returning generic placeholder.")
         return f"Generic placeholder response (no active client) for model {effective_model_name} to: {prompt}"
 
-    def list_available_models(self) -> List[Dict[str, str]]:
+    def list_available_models(self) -> List[LLMModelInfo]:
         """
-        Lists available models. For mock, returns predefined list.
+        Lists available models from the configured provider.
+        Returns a list of LLMModelInfo objects.
         """
         if self.active_llm_client == "mock" or self.active_provider_name == "mock":
             print("LLMInterface (Mock): Listing available mock models.")
             return [
-                {"id": "mock-generic-v1", "provider": "mock"},
-                {"id": "mock-creative-v1", "provider": "mock"},
-                {"id": "mock-code-v1", "provider": "mock"},
+                LLMModelInfo(id="mock-generic-v1", provider="mock"),
+                LLMModelInfo(id="mock-creative-v1", provider="mock"),
+                LLMModelInfo(id="mock-code-v1", provider="mock"),
             ]
         elif self.active_provider_name == "ollama":
             if isinstance(self.active_llm_client, dict) and "base_url" in self.active_llm_client:
@@ -182,31 +186,45 @@ class LLMInterface:
                 api_url = f"{base_url.rstrip('/')}/api/tags"
                 try:
                     print(f"LLMInterface (Ollama): Fetching available models from {api_url}")
-                    response = requests.get(api_url, timeout=self.config.get("operational_configs", {}).get("timeouts", {}).get("llm_ollama_list_models_request", 10))
+                    # Safely access operational_configs and timeouts
+                    op_configs = self.config.get("operational_configs", {})
+                    timeouts = op_configs.get("timeouts", {}) if isinstance(op_configs, dict) else {}
+                    timeout_duration = timeouts.get("llm_ollama_list_models_request", 10)
+
+                    response = requests.get(api_url, timeout=timeout_duration)
                     response.raise_for_status()
                     models_data = response.json()
-                    # Ollama returns a list of models with details, extract 'name'
-                    # Example: {"models": [{"name": "llama2:7b", "modified_at": "...", "size": ...}]}
+
+                    ollama_models: List[LLMModelInfo] = []
                     if "models" in models_data and isinstance(models_data["models"], list):
-                        return [{"id": model.get("name"), "provider": "ollama"} for model in models_data["models"] if model.get("name")]
+                        for model_info in models_data["models"]:
+                            if isinstance(model_info, dict) and model_info.get("name"):
+                                ollama_models.append(LLMModelInfo(
+                                    id=model_info["name"], # Ollama's 'name' is the ID
+                                    provider="ollama",
+                                    name=model_info.get("name"), # Can include name separately too
+                                    modified_at=model_info.get("modified_at"),
+                                    size_bytes=model_info.get("size") # Ollama uses 'size' for bytes
+                                ))
+                        return ollama_models
                     else:
                         print("LLMInterface (Ollama): Unexpected format for /api/tags response.")
-                        return [{"id": "ollama-error-parsing-models", "provider": "ollama"}]
+                        return [LLMModelInfo(id="ollama-error-parsing-models", provider="ollama")]
                 except requests.exceptions.Timeout:
                     print(f"LLMInterface (Ollama): Request timed out fetching models from {api_url}.")
-                    return [{"id": "ollama-timeout-listing-models", "provider": "ollama"}]
+                    return [LLMModelInfo(id="ollama-timeout-listing-models", provider="ollama")]
                 except requests.exceptions.RequestException as e:
                     print(f"LLMInterface (Ollama): Failed to fetch models: {e}")
-                    return [{"id": "ollama-error-listing-models", "provider": "ollama"}]
+                    return [LLMModelInfo(id="ollama-error-listing-models", provider="ollama")]
                 except json.JSONDecodeError:
                     print(f"LLMInterface (Ollama): Failed to decode JSON when fetching models from {api_url}.")
-                    return [{"id": "ollama-json-decode-error-listing-models", "provider": "ollama"}]
+                    return [LLMModelInfo(id="ollama-json-decode-error-listing-models", provider="ollama")]
             else:
                 print("LLMInterface (Ollama): Ollama client not properly configured for listing models.")
-                return [{"id": "ollama-misconfigured-listing-models", "provider": "ollama"}]
+                return [LLMModelInfo(id="ollama-misconfigured-listing-models", provider="ollama")]
 
         print(f"LLMInterface: list_available_models not implemented for provider '{self.active_provider_name}'.")
-        return [{"id": "unknown-model", "provider": str(self.active_provider_name)}]
+        return [LLMModelInfo(id="unknown-model", provider=str(self.active_provider_name))]
 
 if __name__ == '__main__':
     print("--- LLMInterface Test ---")
