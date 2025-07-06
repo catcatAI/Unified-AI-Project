@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Callable, Dict, Any, Optional, Literal # Added Optional, Literal, Dict, Any, Callable
 import paho.mqtt.client as mqtt # type: ignore # Using type: ignore as paho-mqtt might not have perfect type hints
 
-from .types import HSPMessageEnvelope, HSPFactPayload # Using .types for relative import
+from .types import HSPMessageEnvelope, HSPFactPayload, HSPQoSParameters # Using .types for relative import, added HSPQoSParameters
 
 from .types import HSPMessageEnvelope, HSPFactPayload, \
     HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload # Added new types
@@ -111,11 +111,10 @@ class HSPConnector:
         """Builds a standard HSP message envelope."""
         effective_correlation_id = correlation_id if correlation_id else str(uuid.uuid4())
 
-        # Type casting to satisfy MyPy, though TypedDicts are structurally typed.
-        # This helps ensure all required fields are considered by the developer here.
-        envelope = HSPMessageEnvelope(
-            hsp_envelope_version="0.1",
-            message_id=str(uuid.uuid4()),
+        # Constructing a dictionary that conforms to the HSPMessageEnvelope TypedDict
+        envelope: HSPMessageEnvelope = {
+            "hsp_envelope_version": "0.1",
+            "message_id": str(uuid.uuid4()),
             "correlation_id": effective_correlation_id,
             "sender_ai_id": self.ai_id,
             "recipient_ai_id": recipient_ai_id_or_topic, # Topic for publish, specific AI ID for request/response
@@ -128,7 +127,7 @@ class HSPConnector:
             "routing_info": {},
             "payload_schema_uri": None, # TODO: Add schema URIs when defined
             "payload": payload
-        )
+        }
         return envelope
 
     def _send_hsp_message(self, envelope: HSPMessageEnvelope, mqtt_topic: str, mqtt_qos: Optional[int] = None) -> bool:
@@ -158,7 +157,7 @@ class HSPConnector:
         message_type = f"HSP::Fact_v{fact_payload_version}"
         # TypedDict is structurally compatible with Dict[str, Any] for the payload argument
         envelope = self._build_h_sp_envelope(
-            payload=fact_payload,
+            payload=dict(fact_payload), # Ensure payload is a dict if fact_payload is a TypedDict
             message_type=message_type,
             recipient_ai_id_or_topic=topic, # For Pub/Sub, recipient_ai_id in envelope is the topic
             communication_pattern="publish"
@@ -230,32 +229,32 @@ class HSPConnector:
             message_type = envelope.get("message_type")
 
             if message_type and payload is not None: # Ensure payload is not None
-                    # Dispatch to specific handlers first
+                # Dispatch to specific handlers first
                 if message_type.startswith("HSP::Fact") and self._on_fact_received_callback:
                     try:
-                            self._on_fact_received_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
+                        self._on_fact_received_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
                     except Exception as e:
-                            print(f"HSPConnector ({self.ai_id}): Error in Fact callback: {e}")
-                    elif message_type.startswith("HSP::CapabilityAdvertisement") and self._on_capability_advertisement_callback:
-                        try:
-                            self._on_capability_advertisement_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
-                        except Exception as e:
-                            print(f"HSPConnector ({self.ai_id}): Error in CapabilityAdvertisement callback: {e}")
-                    elif message_type.startswith("HSP::TaskRequest") and self._on_task_request_callback:
-                        try:
-                            self._on_task_request_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
-                        except Exception as e:
-                            print(f"HSPConnector ({self.ai_id}): Error in TaskRequest callback: {e}")
-                    elif message_type.startswith("HSP::TaskResult") and self._on_task_result_callback:
-                        try:
-                            self._on_task_result_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
-                        except Exception as e:
-                            print(f"HSPConnector ({self.ai_id}): Error in TaskResult callback: {e}")
-                    # Add elif for other specific message types (Belief, EnvironmentalState, Ack, Nack etc.) here
+                        print(f"HSPConnector ({self.ai_id}): Error in Fact callback: {e}")
+                elif message_type.startswith("HSP::CapabilityAdvertisement") and self._on_capability_advertisement_callback:
+                    try:
+                        self._on_capability_advertisement_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
+                    except Exception as e:
+                        print(f"HSPConnector ({self.ai_id}): Error in CapabilityAdvertisement callback: {e}")
+                elif message_type.startswith("HSP::TaskRequest") and self._on_task_request_callback:
+                    try:
+                        self._on_task_request_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
+                    except Exception as e:
+                        print(f"HSPConnector ({self.ai_id}): Error in TaskRequest callback: {e}")
+                elif message_type.startswith("HSP::TaskResult") and self._on_task_result_callback:
+                    try:
+                        self._on_task_result_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
+                    except Exception as e:
+                        print(f"HSPConnector ({self.ai_id}): Error in TaskResult callback: {e}")
+                # Add elif for other specific message types (Belief, EnvironmentalState, Ack, Nack etc.) here
 
-                    # The generic callback is called AFTER specific ones (if any matched), or if no specific one matched.
-                    # However, the current generic callback is called before this block.
-                    # Decision: Generic callback should be for *all* messages. Specific ones are for convenience.
+                # The generic callback is called AFTER specific ones (if any matched), or if no specific one matched.
+                # However, the current generic callback is called before this block.
+                # Decision: Generic callback should be for *all* messages. Specific ones are for convenience.
                     # The current structure calls generic first, then tries specific. This is acceptable.
 
             # TODO: Implement logic for sending ACKs if the received message's qos_parameters.requires_ack is true.
@@ -266,12 +265,6 @@ class HSPConnector:
             print(f"HSPConnector ({self.ai_id}): Received invalid JSON on topic '{received_on_topic}': {message_str[:200]}...") # Log snippet
         except Exception as e:
             print(f"HSPConnector ({self.ai_id}): Unhandled error processing HSP message from topic '{received_on_topic}': {e}")
-
-from typing import Callable, Dict, Any, Optional, Literal # Ensure Literal is imported if not already
-
-# ... (rest of imports) ...
-
-# ... (class definition) ...
 
     # Registration methods for callbacks
     def register_on_generic_message_callback(self, callback: Callable[[HSPMessageEnvelope, str], None]):
@@ -286,18 +279,17 @@ from typing import Callable, Dict, Any, Optional, Literal # Ensure Literal is im
         """
         self._on_fact_received_callback = callback
 
-    # --- New callback registrations for Tasking and Capabilities ---
     def register_on_capability_advertisement_callback(self, callback: Callable[[HSPCapabilityAdvertisementPayload, str, HSPMessageEnvelope], None]):
         """Registers a callback for HSP CapabilityAdvertisement messages."""
-        self._on_capability_advertisement_callback = callback # Needs self._on_capability_advertisement_callback defined in __init__
+        self._on_capability_advertisement_callback = callback
 
     def register_on_task_request_callback(self, callback: Callable[[HSPTaskRequestPayload, str, HSPMessageEnvelope], None]):
         """Registers a callback for HSP TaskRequest messages."""
-        self._on_task_request_callback = callback # Needs self._on_task_request_callback defined in __init__
+        self._on_task_request_callback = callback
 
     def register_on_task_result_callback(self, callback: Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]):
         """Registers a callback for HSP TaskResult messages."""
-        self._on_task_result_callback = callback # Needs self._on_task_result_callback defined in __init__
+        self._on_task_result_callback = callback
 
     # --- New methods for publishing/sending Tasking and Capabilities ---
     def publish_capability_advertisement(self, payload: HSPCapabilityAdvertisementPayload, topic: str, version: str = "0.1") -> bool:

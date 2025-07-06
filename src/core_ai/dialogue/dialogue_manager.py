@@ -163,10 +163,11 @@ class DialogueManager:
                     "source": "hsp_task_result_success",
                     "hsp_correlation_id": correlation_id,
                     "hsp_result_sender_ai_id": sender_ai_id,
-                    "original_user_query_text": original_query_text # Storing original query for context
+                    "original_user_query_text": original_query_text,
+                    "hsp_task_service_payload": service_payload # Store the actual service payload
                 }
-                if self.memory_manager: # Ensure memory_manager exists
-                    self.memory_manager.store_experience(result_message_to_user, "ai_dialogue_text_hsp_result", ai_metadata_hsp_result)
+                if self.memory_manager:
+                    self.memory_manager.store_experience(result_message_to_user, "ai_dialogue_text_hsp_result_success", ai_metadata_hsp_result) # Ensure data_type is distinct
 
                 # Now, try to pass to ContentAnalyzer if applicable
                 if self.content_analyzer and isinstance(service_payload, dict):

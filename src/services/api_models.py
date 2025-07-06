@@ -34,6 +34,13 @@ class HSPTaskRequestInput(BaseModel):
 
 class HSPTaskRequestOutput(BaseModel):
     status_message: str # e.g., "Request sent" or "Error: Capability not found"
-    correlation_id: Optional[str] = None # Returned if request successfully dispatched
+    correlation_id: Optional[str] = None
     target_capability_id: str
     error: Optional[str] = None
+
+class HSPTaskStatusOutput(BaseModel):
+    correlation_id: str
+    status: Literal["pending", "completed", "failed", "unknown_or_expired"]
+    result_payload: Optional[Dict[str, Any]] = None # Actual payload if status is "completed"
+    error_details: Optional[Dict[str, Any]] = None  # Error details if status is "failed"
+    message: Optional[str] = None # Optional message, e.g. for unknown status

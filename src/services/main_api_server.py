@@ -232,6 +232,101 @@ async def request_hsp_task(task_input: HSPTaskRequestInput):
             error=user_message or "Unknown error during dispatch."
         )
 
+@app.get("/api/v1/hsp/tasks/{correlation_id}", response_model=HSPTaskStatusOutput, tags=["HSP"])
+async def get_hsp_task_status(correlation_id: str):
+    """
+    Polls for the status and result of an HSP task initiated via /api/v1/hsp/tasks.
+    """
+    services = get_services()
+    dialogue_manager = services.get("dialogue_manager")
+    ham_manager = services.get("ham_manager")
+
+    if not dialogue_manager or not ham_manager:
+        # This case should ideally be prevented by lifespan ensuring services are up.
+        # If they are None here, it's a server-side issue.
+        return HSPTaskStatusOutput(
+            correlation_id=correlation_id,
+            status="unknown_or_expired",
+            message="Core services for task status checking are unavailable."
+        )
+
+    # 1. Check if the task is still pending in DialogueManager
+    if correlation_id in dialogue_manager.pending_hsp_task_requests:
+        pending_info = dialogue_manager.pending_hsp_task_requests[correlation_id]
+        return HSPTaskStatusOutput(
+            correlation_id=correlation_id,
+            status="pending",
+            message=f"Task for capability '{pending_info.get('capability_id')}' sent to '{pending_info.get('target_ai_id')}' is still pending."
+        )
+
+    # 2. If not pending, check HAM for a stored result (success or error)
+    # We stored results with metadata containing hsp_correlation_id
+    # Data types were "ai_dialogue_text_hsp_result" or "ai_dialogue_text_hsp_error"
+    # The actual service payload or error details are within the stored 'raw_data' (which is the result_message_to_user)
+    # or more directly in metadata for errors.
+
+    # Query HAM for success
+    # The 'raw_data' stored for success was a string: f"{ai_name}: Regarding your request about '{original_query_text}', the specialist AI ({sender_ai_id}) responded with: {json.dumps(service_payload)}"
+    # The actual service_payload is what we want to return. It was part of ai_metadata_hsp_result.
+    # Let's refine HAM storage or query to get the actual payload.
+    # For now, LearningManager stores the full result message to user in HAM.
+    # The DM's _handle_incoming_hsp_task_result stores metadata including 'hsp_correlation_id'.
+    # And for errors, 'error_details' is in metadata. For success, 'service_payload' is not directly in metadata.
+
+    # Let's adjust what _handle_incoming_hsp_task_result stores in HAM metadata.
+    # It currently stores the *user-facing message* as raw_data.
+    # For success, it has 'hsp_result_sender_ai_id'. It should also store 'service_payload'.
+    # For failure, it has 'error_details'.
+
+    # Query for success records first
+    # This HAM query needs to be precise. Let's assume HAM can filter by a specific metadata field.
+    # We need to search for metadata.hsp_correlation_id == correlation_id
+
+    # Simplified HAM query for PoC: Iterate and check metadata.
+    # This is inefficient but will work for a few records.
+    # A proper HAM query by metadata field is needed for production.
+
+    found_record = None
+    for mem_id, record_pkg in ham_manager.core_memory_store.items(): # type: ignore # Accessing internal store for PoC
+        metadata = record_pkg.get("metadata", {})
+        if metadata.get("hsp_correlation_id") == correlation_id:
+            found_record = record_pkg
+            break # Found the relevant record
+
+    if found_record:
+        metadata = found_record.get("metadata", {})
+        data_type = found_record.get("data_type", "")
+
+        if "hsp_task_result_success" in data_type:
+            service_payload = metadata.get("hsp_task_service_payload")
+            if service_payload is not None:
+                return HSPTaskStatusOutput(
+                    correlation_id=correlation_id,
+                    status="completed",
+                    result_payload=service_payload,
+                    message="Task completed successfully."
+                )
+            else:
+                # This case means DM stored the success record but somehow missed the service_payload in metadata
+                return HSPTaskStatusOutput(
+                    correlation_id=correlation_id,
+                    status="completed",
+                    message="Task completed, but full result payload was not found in stored metadata."
+                )
+        elif "hsp_task_result_error" in data_type:
+            return HSPTaskStatusOutput(
+                correlation_id=correlation_id,
+                status="failed",
+                error_details=metadata.get("error_details", {"error_code": "UNKNOWN_HSP_ERROR", "error_message": "Error details not fully stored."}),
+                message="Task failed. See error_details."
+            )
+
+    # 3. If not found in pending or HAM
+    return HSPTaskStatusOutput(
+        correlation_id=correlation_id,
+        status="unknown_or_expired",
+        message="Task status unknown, or result has expired from immediate cache."
+    )
 
 # Placeholder for other API routes - to be added in next steps
 

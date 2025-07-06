@@ -452,6 +452,350 @@ class TestHSPTaskBrokering: # ... (all existing tests in this class remain the s
         dialogue_manager_fixture.formula_engine=FormulaEngine()
 
 
+# --- Helper for Conflict Resolution Tests ---
+def _create_hsp_fact_for_conflict_test(
+    fact_id: str,
+    source_ai_id: str,
+    statement_nl: Optional[str] = None,
+    statement_structured: Optional[HSPFactStatementStructured] = None, #type: ignore
+    statement_type: str = "natural_language", # or "semantic_triple"
+    confidence: float = 0.8,
+    timestamp: Optional[str] = None,
+    tags: Optional[List[str]] = None
+) -> HSPFactPayload:
+    return HSPFactPayload( #type: ignore
+        id=fact_id,
+        source_ai_id=source_ai_id,
+        statement_nl=statement_nl,
+        statement_structured=statement_structured, #type: ignore
+        statement_type=statement_type,
+        confidence_score=confidence,
+        timestamp_created=timestamp or datetime.now(timezone.utc).isoformat(),
+        tags=tags or ["conflict_test"]
+    )
+
+def _create_hsp_envelope_for_conflict_test(
+    payload: HSPFactPayload,
+    sender_ai_id: str, # This is the direct sender, could be different from payload's source_ai_id
+    recipient_ai_id: str = TEST_AI_ID_MAIN,
+    message_type: str = "HSP::Fact_v0.1",
+    communication_pattern: str = "publish"
+) -> HSPMessageEnvelope:
+    return HSPMessageEnvelope( #type: ignore
+        message_id=f"msg_{uuid.uuid4().hex[:8]}",
+        sender_ai_id=sender_ai_id,
+        recipient_ai_id=recipient_ai_id,
+        timestamp_sent=datetime.now(timezone.utc).isoformat(),
+        message_type=message_type,
+        protocol_version="0.1", # Replace with actual version
+        communication_pattern=communication_pattern,
+        payload=payload #type: ignore
+    )
+
+
+# --- Test Class for New Conflict Resolution Logic ---
+class TestHSPConflictResolution:
+
+    @pytest.fixture(autouse=True)
+    def clear_ham_and_ca_graph(self, ham_manager_fixture: MockHAM, content_analyzer_module_fixture: ContentAnalyzerModule):
+        ham_manager_fixture.memory_store.clear()
+        content_analyzer_module_fixture.graph.clear()
+        # Reset next_id for MockHAM to make HAM IDs predictable if needed, though not strictly necessary for these tests
+        ham_manager_fixture.next_id = 1
+
+    # --- Type 1 Conflict Tests (Same HSP Fact ID & Originator) ---
+    def test_type1_ignore_new_fact_much_lower_confidence(
+        self, configured_learning_manager: LearningManager, ham_manager_fixture: MockHAM, trust_manager_fixture: TrustManager
+    ):
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=1.0) # Max trust for sender
+
+        fact_id_orig = "type1_low_conf_orig"
+        # Store initial fact
+        initial_fact_payload = _create_hsp_fact_for_conflict_test(fact_id_orig, TEST_AI_ID_PEER_A, "Initial high value", confidence=0.9)
+        initial_envelope = _create_hsp_envelope_for_conflict_test(initial_fact_payload, TEST_AI_ID_PEER_A)
+        ham_id_initial = configured_learning_manager.process_and_store_hsp_fact(initial_fact_payload, TEST_AI_ID_PEER_A, initial_envelope)
+        assert ham_id_initial is not None
+        assert ham_manager_fixture.memory_store[ham_id_initial]['metadata']['confidence'] == 0.9 # Effective = 0.9 * 1.0
+
+        # Incoming conflicting fact - much lower confidence
+        conflict_fact_payload = _create_hsp_fact_for_conflict_test(fact_id_orig, TEST_AI_ID_PEER_A, "Attempted update low value", confidence=0.5)
+        conflict_envelope = _create_hsp_envelope_for_conflict_test(conflict_fact_payload, TEST_AI_ID_PEER_A)
+        ham_id_conflict = configured_learning_manager.process_and_store_hsp_fact(conflict_fact_payload, TEST_AI_ID_PEER_A, conflict_envelope)
+
+        assert ham_id_conflict is None, "Fact with much lower confidence should be ignored"
+        assert len(ham_manager_fixture.memory_store) == 1 # Only initial fact should be present
+        assert ham_manager_fixture.memory_store[ham_id_initial]['metadata']['source_text'] == "Initial high value" # Ensure original not changed
+
+    def test_type1_ignore_new_fact_similar_confidence_identical_value(
+        self, configured_learning_manager: LearningManager, ham_manager_fixture: MockHAM, trust_manager_fixture: TrustManager
+    ):
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=1.0)
+        fact_id_orig = "type1_same_val_orig"
+        statement = "Identical statement for redundancy test"
+
+        initial_fact_payload = _create_hsp_fact_for_conflict_test(fact_id_orig, TEST_AI_ID_PEER_A, statement, confidence=0.8)
+        initial_envelope = _create_hsp_envelope_for_conflict_test(initial_fact_payload, TEST_AI_ID_PEER_A)
+        ham_id_initial = configured_learning_manager.process_and_store_hsp_fact(initial_fact_payload, TEST_AI_ID_PEER_A, initial_envelope)
+        assert ham_id_initial
+
+        # Incoming conflicting fact - similar confidence, identical value
+        conflict_fact_payload = _create_hsp_fact_for_conflict_test(fact_id_orig, TEST_AI_ID_PEER_A, statement, confidence=0.82) # within delta
+        conflict_envelope = _create_hsp_envelope_for_conflict_test(conflict_fact_payload, TEST_AI_ID_PEER_A)
+        ham_id_conflict = configured_learning_manager.process_and_store_hsp_fact(conflict_fact_payload, TEST_AI_ID_PEER_A, conflict_envelope)
+
+        assert ham_id_conflict is None, "Fact with similar confidence and identical value should be ignored as redundant"
+        assert len(ham_manager_fixture.memory_store) == 1
+
+    def test_type1_supersede_existing_fact_much_higher_confidence(
+        self, configured_learning_manager: LearningManager, ham_manager_fixture: MockHAM, trust_manager_fixture: TrustManager
+    ):
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=1.0)
+        fact_id_orig = "type1_supersede_orig"
+
+        initial_fact_payload = _create_hsp_fact_for_conflict_test(fact_id_orig, TEST_AI_ID_PEER_A, "Old statement value", confidence=0.6)
+        initial_envelope = _create_hsp_envelope_for_conflict_test(initial_fact_payload, TEST_AI_ID_PEER_A)
+        ham_id_initial = configured_learning_manager.process_and_store_hsp_fact(initial_fact_payload, TEST_AI_ID_PEER_A, initial_envelope)
+        assert ham_id_initial
+
+        # Incoming conflicting fact - much higher confidence
+        new_statement = "New statement, much more confident"
+        conflict_fact_payload = _create_hsp_fact_for_conflict_test(fact_id_orig, TEST_AI_ID_PEER_A, new_statement, confidence=0.95) # delta is 0.1, 0.95 > 0.6 + 0.1
+        conflict_envelope = _create_hsp_envelope_for_conflict_test(conflict_fact_payload, TEST_AI_ID_PEER_A)
+        ham_id_new = configured_learning_manager.process_and_store_hsp_fact(conflict_fact_payload, TEST_AI_ID_PEER_A, conflict_envelope)
+
+        assert ham_id_new is not None, "New fact with higher confidence should be stored"
+        assert len(ham_manager_fixture.memory_store) == 2 # Both stored, new one notes superseding
+
+        new_fact_meta = ham_manager_fixture.memory_store[ham_id_new]['metadata']
+        assert new_fact_meta['source_text'] == new_statement
+        assert new_fact_meta['resolution_strategy'] == "confidence_supersede_type1"
+        assert new_fact_meta['supersedes_ham_records'] == [ham_id_initial]
+
+    def test_type1_log_contradiction_similar_confidence_different_value(
+        self, configured_learning_manager: LearningManager, ham_manager_fixture: MockHAM, trust_manager_fixture: TrustManager
+    ):
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=1.0)
+        fact_id_orig = "type1_log_contradict_orig"
+
+        initial_statement = "Initial statement for logging contradiction"
+        initial_fact_payload = _create_hsp_fact_for_conflict_test(fact_id_orig, TEST_AI_ID_PEER_A, initial_statement, confidence=0.7)
+        initial_envelope = _create_hsp_envelope_for_conflict_test(initial_fact_payload, TEST_AI_ID_PEER_A)
+        ham_id_initial = configured_learning_manager.process_and_store_hsp_fact(initial_fact_payload, TEST_AI_ID_PEER_A, initial_envelope)
+        assert ham_id_initial
+
+        # Incoming conflicting fact - similar confidence, different value
+        conflicting_statement = "Contradictory statement, similar confidence"
+        # 0.7 vs 0.75, delta is 0.1. abs(0.7-0.75) = 0.05 <= 0.1
+        conflict_fact_payload = _create_hsp_fact_for_conflict_test(fact_id_orig, TEST_AI_ID_PEER_A, conflicting_statement, confidence=0.75)
+        conflict_envelope = _create_hsp_envelope_for_conflict_test(conflict_fact_payload, TEST_AI_ID_PEER_A)
+        ham_id_new = configured_learning_manager.process_and_store_hsp_fact(conflict_fact_payload, TEST_AI_ID_PEER_A, conflict_envelope)
+
+        assert ham_id_new is not None, "New conflicting fact (similar conf, diff value) should be stored"
+        assert len(ham_manager_fixture.memory_store) == 2
+
+        new_fact_meta = ham_manager_fixture.memory_store[ham_id_new]['metadata']
+        assert new_fact_meta['source_text'] == conflicting_statement
+        assert new_fact_meta['resolution_strategy'] == "log_contradiction_type1"
+        assert new_fact_meta['conflicts_with_ham_records'] == [ham_id_initial]
+        assert initial_statement[:100] in new_fact_meta['conflicting_values'][0]
+        assert conflicting_statement[:100] in new_fact_meta['conflicting_values'][1]
+
+    # --- Type 2 Semantic Conflict Tests (Same S/P, Different O) ---
+    def test_type2_supersede_by_confidence_semantic(
+        self, configured_learning_manager: LearningManager, ham_manager_fixture: MockHAM, trust_manager_fixture: TrustManager, content_analyzer_module_fixture: ContentAnalyzerModule
+    ):
+        # Ensure CA is used
+        configured_learning_manager.content_analyzer = content_analyzer_module_fixture
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=1.0) # Sender of initial fact
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_B, new_absolute_score=1.0) # Sender of new fact (high trust too)
+
+        subj = "http://example.org/entity/E_SemSup"; pred = "http://example.org/prop/P_SemSup"
+
+        # Initial fact (lower confidence)
+        initial_fact_payload = _create_hsp_fact_for_conflict_test(
+            fact_id="sem_sup_initial_1", source_ai_id=TEST_AI_ID_PEER_A, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal="old_semantic_value"), #type: ignore
+            confidence=0.6, statement_nl="S P old_semantic_value"
+        )
+        initial_envelope = _create_hsp_envelope_for_conflict_test(initial_fact_payload, TEST_AI_ID_PEER_A)
+        ham_id_initial = configured_learning_manager.process_and_store_hsp_fact(initial_fact_payload, TEST_AI_ID_PEER_A, initial_envelope)
+        assert ham_id_initial
+        assert ham_manager_fixture.memory_store[ham_id_initial]['metadata']['hsp_semantic_object'] == "old_semantic_value"
+
+        # New fact (higher confidence, different object, different original fact ID)
+        new_fact_payload = _create_hsp_fact_for_conflict_test(
+            fact_id="sem_sup_new_2", source_ai_id=TEST_AI_ID_PEER_B, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal="new_superseding_value"), #type: ignore
+            confidence=0.95, statement_nl="S P new_superseding_value" # 0.95 > 0.6 + 0.1
+        )
+        new_envelope = _create_hsp_envelope_for_conflict_test(new_fact_payload, TEST_AI_ID_PEER_B)
+        ham_id_new = configured_learning_manager.process_and_store_hsp_fact(new_fact_payload, TEST_AI_ID_PEER_B, new_envelope)
+
+        assert ham_id_new is not None, "New semantically conflicting fact (higher conf) should be stored"
+        assert len(ham_manager_fixture.memory_store) == 2
+        new_fact_meta = ham_manager_fixture.memory_store[ham_id_new]['metadata']
+        assert new_fact_meta['hsp_semantic_object'] == "new_superseding_value"
+        assert new_fact_meta['resolution_strategy'] == "confidence_supersede_type2"
+        assert new_fact_meta['supersedes_ham_records'] == [ham_id_initial]
+
+    def test_type2_ignore_by_confidence_semantic(
+        self, configured_learning_manager: LearningManager, ham_manager_fixture: MockHAM, trust_manager_fixture: TrustManager, content_analyzer_module_fixture: ContentAnalyzerModule
+    ):
+        configured_learning_manager.content_analyzer = content_analyzer_module_fixture
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=1.0)
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_B, new_absolute_score=1.0)
+
+        subj = "http://example.org/entity/E_SemIgn"; pred = "http://example.org/prop/P_SemIgn"
+        initial_fact_payload = _create_hsp_fact_for_conflict_test(
+            fact_id="sem_ign_initial_1", source_ai_id=TEST_AI_ID_PEER_A, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal="high_conf_sem_value"), #type: ignore
+            confidence=0.9, statement_nl="S P high_conf_sem_value"
+        )
+        initial_envelope = _create_hsp_envelope_for_conflict_test(initial_fact_payload, TEST_AI_ID_PEER_A)
+        ham_id_initial = configured_learning_manager.process_and_store_hsp_fact(initial_fact_payload, TEST_AI_ID_PEER_A, initial_envelope)
+        assert ham_id_initial
+
+        new_fact_payload = _create_hsp_fact_for_conflict_test(
+            fact_id="sem_ign_new_2", source_ai_id=TEST_AI_ID_PEER_B, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal="low_conf_attempt_value"), #type: ignore
+            confidence=0.5, statement_nl="S P low_conf_attempt_value" # 0.5 < 0.9 - 0.1
+        )
+        new_envelope = _create_hsp_envelope_for_conflict_test(new_fact_payload, TEST_AI_ID_PEER_B)
+        ham_id_new = configured_learning_manager.process_and_store_hsp_fact(new_fact_payload, TEST_AI_ID_PEER_B, new_envelope)
+
+        assert ham_id_new is None, "New semantically conflicting fact (lower conf) should be ignored"
+        assert len(ham_manager_fixture.memory_store) == 1
+        assert ham_manager_fixture.memory_store[ham_id_initial]['metadata']['hsp_semantic_object'] == "high_conf_sem_value"
+
+    def test_type2_tie_break_by_trust_then_recency_semantic(
+        self, configured_learning_manager: LearningManager, ham_manager_fixture: MockHAM, trust_manager_fixture: TrustManager, content_analyzer_module_fixture: ContentAnalyzerModule
+    ):
+        configured_learning_manager.content_analyzer = content_analyzer_module_fixture
+        subj = "http://example.org/entity/E_SemTie"; pred = "http://example.org/prop/P_SemTie"
+
+        # Scenario: New fact preferred by TRUST
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=0.6) # Lower trust for initial sender
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_B, new_absolute_score=0.9) # Higher trust for new sender
+
+        ts1 = datetime(2023, 1, 1, 10, 0, 0, tzinfo=timezone.utc).isoformat()
+        ts2 = datetime(2023, 1, 1, 10, 5, 0, tzinfo=timezone.utc).isoformat() # Newer, but trust should dominate
+
+        initial_fact_trust = _create_hsp_fact_for_conflict_test( "sem_tie_trust_1", TEST_AI_ID_PEER_A, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal="value_from_low_trust"), confidence=0.8, timestamp=ts1) #type: ignore
+        env_initial_trust = _create_hsp_envelope_for_conflict_test(initial_fact_trust, TEST_AI_ID_PEER_A)
+        id_initial_trust = configured_learning_manager.process_and_store_hsp_fact(initial_fact_trust, TEST_AI_ID_PEER_A, env_initial_trust)
+        assert id_initial_trust; ham_manager_fixture.memory_store.clear(); content_analyzer_module_fixture.graph.clear() # Clear for next sub-test
+        # Re-store initial for actual test run
+        id_initial_trust = configured_learning_manager.process_and_store_hsp_fact(initial_fact_trust, TEST_AI_ID_PEER_A, env_initial_trust)
+
+
+        new_fact_trust = _create_hsp_fact_for_conflict_test( "sem_tie_trust_2", TEST_AI_ID_PEER_B, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal="value_from_high_trust"), confidence=0.81, timestamp=ts2) #type: ignore
+        env_new_trust = _create_hsp_envelope_for_conflict_test(new_fact_trust, TEST_AI_ID_PEER_B)
+        id_new_trust = configured_learning_manager.process_and_store_hsp_fact(new_fact_trust, TEST_AI_ID_PEER_B, env_new_trust)
+
+        assert id_new_trust is not None, "New fact (higher trust source) should be stored"
+        meta_new_trust = ham_manager_fixture.memory_store[id_new_trust]['metadata']
+        assert meta_new_trust['resolution_strategy'] == "tie_break_trust_recency_type2"
+        assert meta_new_trust['supersedes_ham_records'] == [id_initial_trust]
+        assert meta_new_trust['hsp_semantic_object'] == "value_from_high_trust"
+        ham_manager_fixture.memory_store.clear(); content_analyzer_module_fixture.graph.clear()
+
+        # Scenario: New fact preferred by RECENCY (trust is similar)
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=0.8)
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_B, new_absolute_score=0.82) # Similar trust
+
+        ts_old = datetime(2023, 1, 2, 10, 0, 0, tzinfo=timezone.utc).isoformat()
+        ts_new = datetime(2023, 1, 2, 11, 0, 0, tzinfo=timezone.utc).isoformat() # Clearly newer
+
+        initial_fact_recency = _create_hsp_fact_for_conflict_test( "sem_tie_rec_1", TEST_AI_ID_PEER_A, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal="value_older"), confidence=0.7, timestamp=ts_old) #type: ignore
+        env_initial_recency = _create_hsp_envelope_for_conflict_test(initial_fact_recency, TEST_AI_ID_PEER_A)
+        id_initial_recency = configured_learning_manager.process_and_store_hsp_fact(initial_fact_recency, TEST_AI_ID_PEER_A, env_initial_recency)
+        assert id_initial_recency
+
+        new_fact_recency = _create_hsp_fact_for_conflict_test( "sem_tie_rec_2", TEST_AI_ID_PEER_B, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal="value_newer"), confidence=0.71, timestamp=ts_new) #type: ignore
+        env_new_recency = _create_hsp_envelope_for_conflict_test(new_fact_recency, TEST_AI_ID_PEER_B)
+        id_new_recency = configured_learning_manager.process_and_store_hsp_fact(new_fact_recency, TEST_AI_ID_PEER_B, env_new_recency)
+
+        assert id_new_recency is not None, "New fact (more recent) should be stored"
+        meta_new_recency = ham_manager_fixture.memory_store[id_new_recency]['metadata']
+        assert meta_new_recency['resolution_strategy'] == "tie_break_trust_recency_type2"
+        assert meta_new_recency['supersedes_ham_records'] == [id_initial_recency]
+        assert meta_new_recency['hsp_semantic_object'] == "value_newer"
+
+    def test_type2_numerical_merge_semantic(
+        self, configured_learning_manager: LearningManager, ham_manager_fixture: MockHAM, trust_manager_fixture: TrustManager, content_analyzer_module_fixture: ContentAnalyzerModule
+    ):
+        configured_learning_manager.content_analyzer = content_analyzer_module_fixture
+        subj = "http://example.org/entity/E_NumMerge"; pred = "http://example.org/prop/P_NumMerge"
+
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=0.8) # For initial fact
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_B, new_absolute_score=0.7) # For new fact (lower trust)
+
+        initial_val, initial_conf_orig = 100.0, 0.9 # Effective initial_conf = 0.9 * 0.8 = 0.72
+        initial_fact = _create_hsp_fact_for_conflict_test( "num_merge_1", TEST_AI_ID_PEER_A, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal=str(initial_val)), confidence=initial_conf_orig) #type: ignore
+        env_initial = _create_hsp_envelope_for_conflict_test(initial_fact, TEST_AI_ID_PEER_A)
+        ham_id_initial = configured_learning_manager.process_and_store_hsp_fact(initial_fact, TEST_AI_ID_PEER_A, env_initial)
+        assert ham_id_initial
+
+        new_val, new_conf_orig = 120.0, 0.95 # Effective new_conf = 0.95 * 0.7 = 0.665
+        # Confidences 0.72 and 0.665 are within delta 0.1.
+        new_fact = _create_hsp_fact_for_conflict_test( "num_merge_2", TEST_AI_ID_PEER_B, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal=str(new_val)), confidence=new_conf_orig) #type: ignore
+        env_new = _create_hsp_envelope_for_conflict_test(new_fact, TEST_AI_ID_PEER_B)
+        ham_id_merged = configured_learning_manager.process_and_store_hsp_fact(new_fact, TEST_AI_ID_PEER_B, env_new)
+
+        assert ham_id_merged is not None, "Numerically merged fact should be stored"
+        merged_meta = ham_manager_fixture.memory_store[ham_id_merged]['metadata']
+
+        assert merged_meta['resolution_strategy'] == "numerical_merge_type2"
+        assert merged_meta['merged_from_ham_records'] == [ham_id_initial]
+
+        eff_initial_conf = initial_conf_orig * trust_manager_fixture.get_trust_score(TEST_AI_ID_PEER_A)
+        eff_new_conf = new_conf_orig * trust_manager_fixture.get_trust_score(TEST_AI_ID_PEER_B)
+        expected_merged_val = (initial_val * eff_initial_conf + new_val * eff_new_conf) / (eff_initial_conf + eff_new_conf)
+        expected_merged_conf = (eff_initial_conf + eff_new_conf) / 2
+
+        assert abs(float(merged_meta['hsp_semantic_object']) - expected_merged_val) < 0.01
+        assert abs(merged_meta['confidence'] - expected_merged_conf) < 0.01
+        assert f"Numerically merged value for S='{subj}', P='{pred}' is '{expected_merged_val:.2f}" in merged_meta['source_text'] # Check precision in string
+
+    def test_type2_log_contradiction_semantic_default(
+        self, configured_learning_manager: LearningManager, ham_manager_fixture: MockHAM, trust_manager_fixture: TrustManager, content_analyzer_module_fixture: ContentAnalyzerModule
+    ):
+        configured_learning_manager.content_analyzer = content_analyzer_module_fixture
+        subj = "http://example.org/entity/E_SemLog"; pred = "http://example.org/prop/P_SemLog"
+
+        # Similar trust, similar confidence, non-numerical, different values
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=0.8)
+        trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_B, new_absolute_score=0.8)
+
+        ts1 = datetime(2023, 1, 3, 10, 0, 0, tzinfo=timezone.utc).isoformat()
+        ts2 = datetime(2023, 1, 3, 9, 0, 0, tzinfo=timezone.utc).isoformat() # New one is OLDER, so recency won't supersede
+
+        initial_fact = _create_hsp_fact_for_conflict_test( "sem_log_1", TEST_AI_ID_PEER_A, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal="original_text_value"), confidence=0.7, timestamp=ts1) #type: ignore
+        env_initial = _create_hsp_envelope_for_conflict_test(initial_fact, TEST_AI_ID_PEER_A)
+        id_initial = configured_learning_manager.process_and_store_hsp_fact(initial_fact, TEST_AI_ID_PEER_A, env_initial)
+        assert id_initial
+
+        new_fact = _create_hsp_fact_for_conflict_test( "sem_log_2", TEST_AI_ID_PEER_B, statement_type="semantic_triple",
+            statement_structured=HSPFactStatementStructured(subject_uri=subj, predicate_uri=pred, object_literal="conflicting_text_value"), confidence=0.72, timestamp=ts2) #type: ignore
+        env_new = _create_hsp_envelope_for_conflict_test(new_fact, TEST_AI_ID_PEER_B)
+        id_new = configured_learning_manager.process_and_store_hsp_fact(new_fact, TEST_AI_ID_PEER_B, env_new)
+
+        assert id_new is not None, "New semantically conflicting fact (default to log) should be stored"
+        meta_new = ham_manager_fixture.memory_store[id_new]['metadata']
+        assert meta_new['resolution_strategy'] == "log_contradiction_type2"
+        assert meta_new['conflicts_with_ham_records'] == [id_initial]
+        assert meta_new['hsp_semantic_object'] == "conflicting_text_value"
+        assert "original_text_value" in meta_new['conflicting_values'][0]
+        assert "conflicting_text_value" in meta_new['conflicting_values'][1]
+
+
 # To run these tests:
 # 1. Ensure an MQTT broker is running on localhost:1883 (e.g. docker run -it -p 1883:1883 eclipse-mosquitto)
 # 2. From the project root: pytest tests/hsp/test_hsp_integration.py

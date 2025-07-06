@@ -7,6 +7,7 @@ from collections import Counter
 from cryptography.fernet import Fernet, InvalidToken
 import hashlib
 import asyncio # Added for asyncio.to_thread
+from typing import Optional, List, Dict, Any, Tuple # Added missing imports
 
 # Placeholder for actual stopword list and NLP tools if not available
 try:

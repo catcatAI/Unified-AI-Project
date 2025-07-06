@@ -23,13 +23,45 @@
     </style>
 </head>
 <body>
-    <h1>Unified AI Chat</h1>
-    <div id="chatDisplay">
-        <!-- Chat messages will appear here -->
+    <div id="nav">
+        <button id="chatViewButton">Chat</button>
+        <button id="hspViewButton">HSP Services</button>
     </div>
-    <div id="inputContainer">
-        <input type="text" id="userInput" placeholder="Type your message...">
-        <button id="sendButton">Send</button>
+
+    <div id="mainContent">
+        <div id="chatView">
+            <h1>Unified AI Chat</h1>
+            <div id="chatDisplay">
+                <!-- Chat messages will appear here -->
+            </div>
+            <div id="inputContainer">
+                <input type="text" id="userInput" placeholder="Type your message...">
+                <button id="sendButton">Send</button>
+            </div>
+        </div>
+
+        <div id="hspServicesView" style="display:none;">
+            <h1>HSP Network Services</h1>
+            <button id="refreshHspServicesButton">Refresh Discovered Services</button>
+            <div id="hspServiceList">
+                <p>Click "Refresh" to load services...</p>
+                <!-- Discovered services will be listed here -->
+            </div>
+            <hr>
+            <h3>Request HSP Task</h3>
+            <div>
+                <label for="hspTaskCapId">Target Capability ID:</label>
+                <input type="text" id="hspTaskCapId" style="width: 300px;" placeholder="e.g., did:hsp:peer_X_echo_v1.0">
+            </div>
+            <div>
+                <label for="hspTaskParams">Parameters (JSON):</label>
+                <textarea id="hspTaskParams" rows="3" style="width: 90%;" placeholder='{ "data_to_echo": "hello from Electron" }'></textarea>
+            </div>
+            <button id="sendHspTaskButton">Send HSP Task Request</button>
+            <div id="hspTaskResponseDisplay" style="margin-top: 10px; padding: 5px; border: 1px solid #eee;">
+                <p>Task request responses will appear here...</p>
+            </div>
+        </div>
     </div>
 
     <script src="./renderer.js"></script>

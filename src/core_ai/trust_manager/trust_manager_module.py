@@ -142,4 +142,3 @@ if __name__ == '__main__':
 
     print(f"\nFinal scores: {trust_manager.get_all_trust_scores()}")
     print("\nTrustManager standalone test finished.")
-```

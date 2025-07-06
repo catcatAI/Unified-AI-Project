@@ -1,7 +1,7 @@
 # Placeholder for Common Python Type Definitions
 # Used across different modules in the Unified-AI-Project.
 
-from typing import TypedDict, List, Optional, Any, Dict
+from typing import TypedDict, List, Optional, Any, Dict, Literal
 
 # Example TypedDict for a user profile snippet
 class UserProfileSnippet(TypedDict):
