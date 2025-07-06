@@ -7,7 +7,8 @@ from collections import Counter
 from cryptography.fernet import Fernet, InvalidToken
 import hashlib
 import asyncio # Added for asyncio.to_thread
-from typing import Optional, List, Dict, Any, Tuple # Added missing imports
+from typing import Optional, List, Dict, Any, Tuple, Union # Added Union for recall_gist return
+from shared.types.common_types import DialogueMemoryEntryMetadata, HAMDataPackageInternal, HAMRecallResult # Import new types
 
 # Placeholder for actual stopword list and NLP tools if not available
 try:
@@ -47,7 +48,7 @@ class HAMMemoryManager:
         Args:
             core_storage_filename (str): Filename for the persistent core memory store.
         """
-        self.core_memory_store = {}  # In-memory store: {memory_id: data_package}
+        self.core_memory_store: Dict[str, HAMDataPackageInternal] = {}
         self.next_memory_id = 1
 
         # Determine base path for data storage within the project structure
@@ -233,7 +234,7 @@ class HAMMemoryManager:
             self.next_memory_id = 1
 
     # --- Public API Methods ---
-    def store_experience(self, raw_data: any, data_type: str, metadata: dict = None) -> str | None:
+    def store_experience(self, raw_data: Any, data_type: str, metadata: Optional[DialogueMemoryEntryMetadata] = None) -> Optional[str]:
         """
         Stores a new experience into the HAM.
         The raw_data is processed (abstracted, checksummed, compressed, encrypted)
@@ -243,15 +244,19 @@ class HAMMemoryManager:
             raw_data: The raw data of the experience (e.g., text string, dict).
             data_type (str): Type of the data (e.g., "dialogue_text", "sensor_reading").
                              If "dialogue_text" (or contains it), text abstraction is applied.
-            metadata (dict, optional): Additional metadata for the experience.
-                                       A 'sha256_checksum' will be added to this.
+            metadata (Optional[DialogueMemoryEntryMetadata]): Additional metadata for the experience.
+                Should conform to DialogueMemoryEntryMetadata. A 'sha256_checksum' will be added.
 
         Returns:
-            str | None: The generated memory ID if successful, otherwise None.
+            Optional[str]: The generated memory ID if successful, otherwise None.
         """
         print(f"HAM: Storing experience of type '{data_type}'")
-        if metadata is None:
-            metadata = {}
+
+        # Ensure metadata is a dict for internal processing, even if None is passed.
+        # The type hint guides towards DialogueMemoryEntryMetadata, but internally it's handled as Dict[str, Any]
+        # for flexibility if direct dicts are passed (though discouraged by type hint).
+        current_metadata: Dict[str, Any] = dict(metadata) if metadata else {}
+
 
         if "dialogue_text" in data_type: # More inclusive check for user_dialogue_text, ai_dialogue_text
             if not isinstance(raw_data, str):
@@ -271,7 +276,7 @@ class HAMMemoryManager:
 
         # Add checksum to metadata BEFORE compression/encryption
         sha256_checksum = hashlib.sha256(data_to_process).hexdigest()
-        metadata['sha256_checksum'] = sha256_checksum
+        current_metadata['sha256_checksum'] = sha256_checksum
 
         try:
             compressed_data = self._compress(data_to_process)
@@ -281,18 +286,18 @@ class HAMMemoryManager:
             return None
 
         memory_id = self._generate_memory_id()
-        data_package = {
+        data_package: HAMDataPackageInternal = {
             "timestamp": datetime.now().isoformat(),
             "data_type": data_type,
             "encrypted_package": encrypted_data, # This is bytes
-            "metadata": metadata
+            "metadata": current_metadata # Use the processed current_metadata
         }
         self.core_memory_store[memory_id] = data_package
         self._save_core_memory_to_file() # Persist after each store
         print(f"HAM: Stored experience {memory_id}")
         return memory_id
 
-    def recall_gist(self, memory_id: str) -> dict | str | None:
+    def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
         """
         Recalls an abstracted gist of an experience by its memory ID.
         The data is retrieved, decrypted, decompressed, and checksum verified.
@@ -302,10 +307,8 @@ class HAMMemoryManager:
             memory_id (str): The ID of the memory to recall.
 
         Returns:
-            dict | str | None: A dictionary containing the rehydrated gist and metadata
-                              if successful and data_type is "dialogue_text",
-                              or the raw (but decompressed/decrypted) string for other types.
-                              Returns an error string or None if recall fails at any stage.
+            Optional[HAMRecallResult]: A HAMRecallResult object if successful,
+                                       None if recall fails at any stage.
         """
         print(f"HAM: Recalling gist for memory_id '{memory_id}'")
         data_package = self.core_memory_store.get(memory_id)
@@ -315,13 +318,17 @@ class HAMMemoryManager:
 
         try:
             decrypted_data = self._decrypt(data_package["encrypted_package"])
-            if not decrypted_data: return "Error: Decryption failed."
+            if not decrypted_data:
+                print("Error: Decryption failed.")
+                return None
 
             decompressed_data_bytes = self._decompress(decrypted_data)
-            if not decompressed_data_bytes: return "Error: Decompression failed."
+            if not decompressed_data_bytes:
+                print("Error: Decompression failed.")
+                return None
 
             # Verify checksum AFTER decryption and decompression
-            stored_checksum = data_package.get("metadata", {}).get('sha256_checksum')
+            stored_checksum = data_package.get("metadata", {}).get('sha256_checksum') # type: ignore
             if stored_checksum:
                 current_checksum = hashlib.sha256(decompressed_data_bytes).hexdigest()
                 if current_checksum != stored_checksum:
@@ -336,42 +343,41 @@ class HAMMemoryManager:
 
         except Exception as e:
             print(f"Error during SL retrieval (decrypt/decompress/checksum): {e}")
-            return f"Error processing memory {memory_id}."
+            # return f"Error processing memory {memory_id}." -> Changed to return None
+            return None
 
+        rehydrated_content: Any
         if "dialogue_text" in data_package["data_type"]: # Match more inclusive check
             try:
                 abstracted_gist = json.loads(decompressed_data_str)
-                rehydrated_info = self._rehydrate_text_gist(abstracted_gist)
-                return {
-                    "id": memory_id,
-                    "timestamp": data_package["timestamp"],
-                    "data_type": data_package["data_type"],
-                    "rehydrated_gist": rehydrated_info,
-                    "metadata": data_package.get("metadata", {})
-                }
+                rehydrated_content = self._rehydrate_text_gist(abstracted_gist)
             except json.JSONDecodeError:
-                return "Error: Could not decode abstracted gist. Data might be corrupted or not text."
+                print("Error: Could not decode abstracted gist. Data might be corrupted or not text.")
+                return None
             except Exception as e:
-                 return f"Error rehydrating text gist: {e}"
+                print(f"Error rehydrating text gist: {e}")
+                return None
         else:
             # For other data types, just return the decompressed string for now
-            return {
-                "id": memory_id,
-                "timestamp": data_package["timestamp"],
-                "data_type": data_package["data_type"],
-                "rehydrated_gist": decompressed_data_str, # Raw string for non-text
-                "metadata": data_package.get("metadata", {}) # Return full metadata
-            }
+            rehydrated_content = decompressed_data_str
+
+        return HAMRecallResult(
+            id=memory_id,
+            timestamp=data_package["timestamp"],
+            data_type=data_package["data_type"],
+            rehydrated_gist=rehydrated_content,
+            metadata=data_package.get("metadata", {}) # type: ignore
+        )
 
     def query_core_memory(self,
                           keywords: Optional[List[str]] = None,
                           date_range: Optional[Tuple[datetime, datetime]] = None,
                           data_type_filter: Optional[str] = None,
-                          metadata_filters: Optional[Dict[str, Any]] = None, # New precise metadata filter
+                          metadata_filters: Optional[Dict[str, Any]] = None,
                           user_id_for_facts: Optional[str] = None,
                           limit: int = 5,
                           sort_by_confidence: bool = False
-                          ) -> List[Dict[str, Any]]:
+                          ) -> List[HAMRecallResult]:
         """
         Enhanced query function.
         Filters by data_type, metadata_filters (exact matches), user_id (for facts), and date_range.
@@ -424,21 +430,17 @@ class HAMMemoryManager:
                     match = False
 
             if match:
-                # Recall gist only for matching items to save decryption/decompression
-                recalled_item_dict = self.recall_gist(mem_id) # This is a dict or None/str error
-                if recalled_item_dict and isinstance(recalled_item_dict, dict):
-                    # Ensure metadata is part of the recalled item for sorting/further use
-                    if "metadata" not in recalled_item_dict: # recall_gist might not include it if it's just gist
-                         recalled_item_dict["metadata"] = item_metadata
-                    candidate_items_with_id.append(recalled_item_dict)
+                recalled_item = self.recall_gist(mem_id)
+                if recalled_item: # recall_gist now returns Optional[HAMRecallResult]
+                    # recalled_item already includes metadata if successful
+                    candidate_items_with_id.append(recalled_item)
 
         # Sort by confidence if requested (primarily for facts)
         if sort_by_confidence and data_type_filter and data_type_filter.startswith("learned_fact"):
-            # Sorts in-place, highest confidence first
-            candidate_items_with_id.sort(key=lambda x: x.get("metadata", {}).get("confidence", 0.0), reverse=True)
+            candidate_items_with_id.sort(key=lambda x: x["metadata"].get("confidence", 0.0), reverse=True)
 
         # Apply limit
-        results = candidate_items_with_id[:limit]
+        results: List[HAMRecallResult] = candidate_items_with_id[:limit]
 
         print(f"HAM: Query returned {len(results)} results (limit was {limit}).")
         return results
@@ -454,28 +456,41 @@ if __name__ == '__main__':
 
     # Test storing experiences
     print("\n--- Storing Experiences ---")
-    exp1_id = ham.store_experience("Hello Miko! This is a test dialogue.", "dialogue_text", {"user": "test_user", "session": "s1"})
-    exp2_id = ham.store_experience("Miko learned about HAM today.", "dialogue_text", {"source": "developer_log"})
-    exp3_id = ham.store_experience({"value": 42, "unit": "answer"}, "generic_data", {"type": "puzzle_solution"})
+    ts_now = datetime.now(timezone.utc).isoformat() # Added timezone
+    # Provide metadata that aligns better with DialogueMemoryEntryMetadata
+    exp1_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": ts_now, "user_id": "test_user", "session_id": "s1"} # type: ignore
+    exp1_id = ham.store_experience("Hello Miko! This is a test dialogue.", "dialogue_text", exp1_metadata)
+
+    exp2_metadata: DialogueMemoryEntryMetadata = {"speaker": "system", "timestamp": ts_now, "source": "developer_log"} # type: ignore
+    exp2_id = ham.store_experience("Miko learned about HAM today.", "dialogue_text", exp2_metadata)
+
+    exp3_metadata: Dict[str, Any] = {"type": "puzzle_solution"} # Generic metadata
+    exp3_id = ham.store_experience({"value": 42, "unit": "answer"}, "generic_data", exp3_metadata) # type: ignore
 
     print(f"Stored IDs: {exp1_id}, {exp2_id}, {exp3_id}")
 
     # Test recalling gists
     print("\n--- Recalling Gists ---")
-    if exp1_id: print(f"Recalled exp1: {ham.recall_gist(exp1_id)}")
-    if exp3_id: print(f"Recalled exp3: {ham.recall_gist(exp3_id)}")
-    print(f"Recalled non-existent: {ham.recall_gist('mem_000999')}")
+    if exp1_id:
+        recalled_exp1 = ham.recall_gist(exp1_id)
+        print(f"Recalled exp1: {json.dumps(recalled_exp1, indent=2) if recalled_exp1 else 'None'}")
+    if exp3_id:
+        recalled_exp3 = ham.recall_gist(exp3_id)
+        print(f"Recalled exp3: {json.dumps(recalled_exp3, indent=2) if recalled_exp3 else 'None'}")
+
+    recalled_non_existent = ham.recall_gist('mem_000999')
+    print(f"Recalled non-existent: {recalled_non_existent}")
 
     # Test querying memory
     print("\n--- Querying Memory (keywords in metadata) ---")
-    query_results_kw = ham.query_core_memory(keywords=["test_user"])
-    for res in query_results_kw:
-        print(res)
+    query_results_kw: List[HAMRecallResult] = ham.query_core_memory(keywords=["test_user"])
+    for res_item in query_results_kw:
+        print(json.dumps(res_item, indent=2))
 
     print("\n--- Querying Memory (data_type) ---")
-    query_results_type = ham.query_core_memory(data_type_filter="generic_data")
-    for res in query_results_type:
-        print(res)
+    query_results_type: List[HAMRecallResult] = ham.query_core_memory(data_type_filter="generic_data")
+    for res_item in query_results_type:
+        print(json.dumps(res_item, indent=2))
 
     # Test persistence by reloading
     print("\n--- Testing Persistence ---")

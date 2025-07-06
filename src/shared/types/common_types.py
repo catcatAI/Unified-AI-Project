@@ -1,10 +1,19 @@
-# Placeholder for Common Python Type Definitions
-# Used across different modules in the Unified-AI-Project.
+# src/shared/types/common_types.py
+"""
+This module defines common Python `TypedDict` structures used for data exchange
+between various internal modules of the Unified-AI-Project. These types help ensure
+clarity, maintainability, and enable static type checking.
 
-from typing import TypedDict, List, Optional, Any, Dict, Literal
+For guidelines on creating and using these types, refer to:
+`docs/INTERNAL_DATA_STANDARDS.md`
+"""
 
-# Example TypedDict for a user profile snippet
+from typing import TypedDict, List, Optional, Any, Dict, Literal, Union # Re-add Union if it was there
+from typing_extensions import Required # Added for new types
+
+# --- User and Session Related Types ---
 class UserProfileSnippet(TypedDict):
+    """A brief summary of a user's profile."""
     user_id: str
     display_name: Optional[str]
     preferences: Dict[str, Any]
@@ -18,17 +27,58 @@ class AIResponse(TypedDict):
     emotion_cue: Optional[str] # e.g., "happy", "neutral"
     metadata: Dict[str, Any]
 
-# Example for a memory node or experience
-class MemoryRecord(TypedDict):
-    memory_id: str
-    timestamp: str # ISO format
-    data_type: str # e.g., "dialogue_text", "sensor_reading", "user_preference"
-    content_gist: Any # Could be a summary string, a dict of keywords, etc.
-    raw_data_reference: Optional[str] # Pointer to more complete raw data if needed
-    metadata: Dict[str, Any] # Source, user_id, session_id, tags, etc.
 
-# Example for a tool call structure
+# --- Memory System Types ---
+class CritiqueResult(TypedDict):
+    """Represents the result of an AI's self-critique or external critique."""
+    score: float  # e.g., 0.0 (bad) to 1.0 (good)
+    reason: Optional[str]
+    suggested_alternative: Optional[str]
+
+class DialogueMemoryEntryMetadata(TypedDict):
+    """
+    Metadata associated with a dialogue entry stored in memory (e.g., HAM).
+    This is the consolidated and extended version.
+    """
+    speaker: str # Who spoke (e.g., "user", "ai_agent_name")
+    timestamp: str # ISO format datetime string of when the entry was recorded
+    user_input_ref: Optional[str] # If an AI response, refers to the mem_id of the user input it's responding to
+    sha256_checksum: Optional[str] # Checksum of the raw data associated with this entry
+    # Fields from Learning and Feedback
+    critique: Optional[CritiqueResult] # Results of self-critique or external critique
+    user_feedback_explicit: Optional[str] # Explicit feedback from user (e.g., "thumbs_up", "correction: new text")
+    learning_weight: Optional[float] # Weight assigned for learning purposes, derived from critique/feedback
+
+class MemoryRecord(TypedDict):
+    """
+    Generic structure for a record stored in the Hierarchical Associative Memory (HAM).
+    """
+    memory_id: str # Unique identifier for this memory record within HAM
+    timestamp: str # ISO format datetime string of when the memory was recorded/created
+    data_type: str # Describes the nature of the data (e.g., "dialogue_text", "learned_fact", "sensor_reading")
+    content_gist: Any # An abstracted or summarized version of the raw data. Format depends on data_type.
+    raw_data_reference: Optional[str] # Optional pointer or key to retrieve the full raw data if stored separately
+    metadata: DialogueMemoryEntryMetadata # Using the consolidated metadata type, or a more generic Dict[str, Any] if varied
+
+class DialogueMemoryEntry(TypedDict):
+    """
+    Represents a single entry in a dialogue history, typically stored in HAM.
+    This structure is often what's serialized/deserialized from files like dialogue_context_memory.json.
+    """
+    timestamp: str # ISO format datetime of the dialogue turn or event
+    data_type: str # e.g., "user_dialogue_text", "ai_dialogue_text"
+    encrypted_package_b64: str # Base64 encoded string of the encrypted and compressed dialogue content
+    metadata: DialogueMemoryEntryMetadata # Metadata about this dialogue entry
+
+class DialogueContextMemory(TypedDict):
+    """Structure for the entire dialogue context memory store, typically mapping to a JSON file."""
+    next_memory_id: int # Counter for the next available memory ID
+    store: Dict[str, DialogueMemoryEntry] # Key is memory_id (e.g., "mem_000001")
+
+
+# --- Tooling Related Types ---
 class ToolCallRequest(TypedDict):
+    """Represents a request to call a tool."""
     tool_name: str
     parameters: Dict[str, Any]
 
@@ -46,15 +96,21 @@ class CommunicationStyle(TypedDict):
     response_length_preference: str
 
 class FragmentaIntegrations(TypedDict):
+    """Defines integration points with Fragmenta-like processing chains."""
     persona_chain_default: List[str]
     persona_chain_options: Dict[str, Dict[str, Any]] # Inner dict can be empty or have varied content
     default_tone_vector_profile: str
 
 class CustomizationOptions(TypedDict):
+    """Options for how the AI's personality can be customized or learn."""
     allow_user_trait_adjustment: bool
     learn_from_interaction: bool
 
 class PersonalityProfile(TypedDict):
+    """
+    Defines the complete profile for an AI personality, influencing its behavior,
+    communication style, and operational parameters. Based on miko_base.json.
+    """
     profile_name: str
     display_name: str
     description: str
@@ -99,8 +155,10 @@ class FormulaConfigEntry(TypedDict):
     version: str
     response_template: Optional[str] # Used if action is not "dispatch_tool" or as fallback
 
-# System Config Types (from configs/system_config.yaml)
+
+# --- System Configuration Types (derived from configs/system_config.yaml) ---
 class SystemSubConfig(TypedDict):
+    """General system settings like logging."""
     log_path: str
     log_level: str
 
@@ -122,21 +180,27 @@ class CoreSystemsConfig(TypedDict):
     ollama: Optional[OllamaConfig] # Making ollama config optional as it's an example
 
 class FragmentaModulesConfig(TypedDict):
+    """Configuration for enabling/disabling specific Fragmenta modules."""
+    # Field names are camelCase matching the typical JS/JSON config source.
     echoShell: bool
     sillScan: bool
     toneFragment: bool
     tailStitch: bool
 
 class FragmentaToneVectorConfig(TypedDict):
+    """Defines parameters for a Fragmenta tone vector."""
+    # Field names are V1,V2,V3 matching typical config source.
     V1: float
     V2: float
     V3: float
 
 class FragmentaSettingsConfig(TypedDict):
+    """Overall settings for Fragmenta integration."""
     modules: FragmentaModulesConfig
     tone_vector: FragmentaToneVectorConfig
 
 class SystemConfig(TypedDict):
+    """Root structure for the system_config.yaml file."""
     system: SystemSubConfig
     ai_name: str
     memory_manager: MemoryManagerConfig
@@ -146,14 +210,18 @@ class SystemConfig(TypedDict):
 
 # Chat History Types (from data/chat_histories/ollama_chat_histories.json)
 class OllamaChatHistoryEntry(TypedDict, total=False): # total=False due to varying fields
-    userId: str
-    userPrompt: str # sometimes 'prompt'
-    prompt: str # alias for userPrompt in some entries
-    catResponse: str # sometimes 'response', can be JSON string
-    response: str # alias for catResponse, can be JSON string
+    # Field names like userId, userPrompt, catResponse are often from external data sources (e.g., Ollama logs)
+    # and are kept as is for easier mapping, though internal project convention is snake_case.
+    # A comment highlighting this discrepancy is useful.
+    # TODO: Consider a transformation step if strict snake_case is required internally for these.
+    userId: str # Note: camelCase from source
+    userPrompt: str # Note: camelCase from source; sometimes 'prompt' in source
+    prompt: Optional[str] # Alias for userPrompt in some entries
+    catResponse: str # Note: camelCase from source; sometimes 'response', can be JSON string
+    response: Optional[str] # Alias for catResponse, can be JSON string
     referenceResponse: Optional[str]
     ollamaReferenceResponse: Optional[str]
-    similarity: Optional[str] # Can be "N/A" or float string
+    similarity: Optional[str] # Can be "N/A" or float string, consider parsing to float if used numerically
     learningAction: Optional[str]
     timestamp: str
     model: Optional[str]
@@ -166,25 +234,15 @@ class EmotionEffects(TypedDict):
     voice: str
     text_ending: str
 
+
 # Dialogue Context Memory Types (from data/processed_data/dialogue_context_memory.json)
-class DialogueMemoryEntryMetadata(TypedDict):
-    speaker: str
-    timestamp: str # ISO format
-    user_input_ref: Optional[str] # Optional, only for AI responses
-    sha256_checksum: Optional[str] # Optional
+# The DialogueMemoryEntryMetadata, DialogueMemoryEntry, and DialogueContextMemory types
+# were consolidated and moved to the "Memory System Types" section earlier.
 
-class DialogueMemoryEntry(TypedDict):
-    timestamp: str # ISO format
-    data_type: str
-    encrypted_package_b64: str
-    metadata: DialogueMemoryEntryMetadata
-
-class DialogueContextMemory(TypedDict):
-    next_memory_id: int
-    store: Dict[str, DialogueMemoryEntry] # Keys are "mem_XXXXXX"
 
 # Ollama Formula Log Types (from data/raw_datasets/ollama_cat_formulas_log.json)
 class OllamaFormulaLogEntry(TypedDict):
+    """Represents an entry from logs related to formula execution with Ollama."""
     prompt: str
     response: str # Can be simple string or multi-line JSON string
     reference: Optional[str]
@@ -218,22 +276,14 @@ class LLMInterfaceConfig(TypedDict):
     default_generation_params: Optional[Dict[str, Any]]
 
 
-# Learning and Feedback Types
-class CritiqueResult(TypedDict):
-    score: float  # e.g., 0.0 (bad) to 1.0 (good)
-    reason: Optional[str]
-    suggested_alternative: Optional[str]
-
-class DialogueMemoryEntryMetadata(TypedDict): # Original definition, now extended
-    speaker: str
-    timestamp: str # ISO format
-    user_input_ref: Optional[str]
-    sha256_checksum: Optional[str]
-    critique: Optional[CritiqueResult] # Added for AI's self-critique
-    user_feedback_explicit: Optional[str] # e.g., "positive", "negative", "correction: new text"
-    learning_weight: Optional[float] # Derived from critique/feedback
+# --- Learning and Feedback Related Types ---
+# CritiqueResult was moved to "Memory System Types" as it's part of DialogueMemoryEntryMetadata.
+# The extended DialogueMemoryEntryMetadata is now the canonical one in "Memory System Types".
 
 class LearnedFactRecord(TypedDict):
+    """
+    Represents a structured fact learned by the AI, typically stored in HAM.
+    """
     record_id: str # UUID
     timestamp: str # ISO format datetime
     user_id: Optional[str]
@@ -253,12 +303,20 @@ class TimeoutConfig(TypedDict):
     dialogue_manager_turn: int # Overall time for a single get_simple_response turn
 
 class LearningThresholdConfig(TypedDict):
-    min_fact_confidence_to_store: float # 0.0 - 1.0
-    min_critique_score_to_store: float   # 0.0 - 1.0
+    """Thresholds related to learning and knowledge acquisition."""
+    min_fact_confidence_to_store: float # 0.0 - 1.0, for facts from user input
+    min_critique_score_to_store: float   # 0.0 - 1.0, for storing critique results
+    min_hsp_fact_confidence_to_store: Optional[float] # For facts from HSP, can differ from user facts
+    hsp_fact_conflict_confidence_delta: Optional[float] # Delta for comparing confidence in conflict resolution
 
 class OperationalConfig(TypedDict, total=False): # Make sections optional
-    timeouts: TimeoutConfig
-    learning_thresholds: LearningThresholdConfig
+    """
+    Configuration for operational aspects like timeouts and learning thresholds.
+    Typically loaded from system_config.yaml.
+    """
+    timeouts: Optional[TimeoutConfig]
+    learning_thresholds: Optional[LearningThresholdConfig]
+    default_hsp_fact_topic: Optional[str] # Default topic for publishing facts via HSP
     # Future: resource_limits (e.g., max_cpu_for_task), concurrency_limits (e.g., max_background_threads)
 
 
@@ -270,8 +328,10 @@ class OperationalConfig(TypedDict, total=False): # Make sections optional
 #     REGISTERED = "registered"
 #     ADMIN = "admin"
 
+
 # --- Knowledge Graph Data Structures ---
 class KGEntity(TypedDict):
+    """Represents an entity in the knowledge graph."""
     id: str  # Unique identifier for the entity
     label: str  # Textual representation of the entity
     type: str  # Entity type (e.g., "PERSON", "FOOD", "CONCEPT")
@@ -285,13 +345,15 @@ class KGRelationship(TypedDict):
     attributes: Dict[str, Any]  # Additional properties of the relationship
 
 class KnowledgeGraph(TypedDict):
+    """Represents the overall structure of the knowledge graph data."""
     entities: Dict[str, KGEntity]  # Mapping entity ID to KGEntity object
     relationships: List[KGRelationship]  # List of all relationships
     metadata: Dict[str, Any]  # Metadata about the graph (e.g., source, creation date)
-# --- End Knowledge Graph Data Structures ---
+
 
 # --- Tool Dispatcher Structured Response ---
 class ToolDispatcherResponse(TypedDict):
+    """Standardized response format from the ToolDispatcher."""
     status: Literal["success", "failure_tool_error", "unhandled_by_local_tool", "error_dispatcher_issue"]
     payload: Optional[Any] # Actual result from tool if success
     tool_name_attempted: Optional[str]
@@ -299,6 +361,58 @@ class ToolDispatcherResponse(TypedDict):
     error_message: Optional[str] # Error message if status is failure or error
     # Add new status: "failed_needs_hsp_retry" - for tools that specifically suggest HSP
     # status: Literal["success", "failure_tool_error", "unhandled_by_local_tool", "error_dispatcher_issue", "failed_suggest_hsp"]
+
+
+# --- Dialogue Manager Specific Internal Types ---
+class DialogueTurn(TypedDict):
+    """Represents a single turn in a dialogue session history."""
+    speaker: str  # Typically "user" or the AI's name/role
+    text: str     # The text content of the turn
+
+class PendingHSPTaskInfo(TypedDict):
+    """Information stored by DialogueManager about a pending HSP task request."""
+    user_id: Optional[str]
+    session_id: Optional[str]
+    original_query_text: str
+    request_timestamp: str  # ISO datetime string
+    capability_id: str
+    target_ai_id: str
+    expected_callback_topic: str
+    request_type: str  # e.g., "generic_task", "proactive_fact_query"
+
+class ToolParameterDetail(TypedDict, total=False):
+    """Details of a parameter for a tool, typically parsed by an LLM for tool drafting."""
+    name: Required[str]
+    type: Required[str]  # Python type hint as a string
+    default: Any        # Default value, if any
+    description: Required[str]
+
+class ParsedToolIODetails(TypedDict, total=False):
+    """Structured Input/Output details for a tool, parsed by an LLM for tool drafting."""
+    suggested_method_name: Required[str]
+    class_docstring_hint: Required[str]
+    method_docstring_hint: Required[str]
+    parameters: Required[List[ToolParameterDetail]]
+    return_type: Required[str] # Python type hint as a string
+    return_description: Required[str]
+# --- End Dialogue Manager Specific Internal Types ---
+
+# --- HAMMemoryManager Specific Internal Types ---
+class HAMDataPackageInternal(TypedDict):
+    """Internal structure for how data is held in HAM's core_memory_store (before file serialization)."""
+    timestamp: str
+    data_type: str
+    encrypted_package: bytes # Encrypted and compressed data
+    metadata: Dict[str, Any] # Should ideally conform to DialogueMemoryEntryMetadata or a more generic version
+
+class HAMRecallResult(TypedDict):
+    """Standardized structure for results from HAMMemoryManager.recall_gist and query_core_memory."""
+    id: str # The memory_id (mem_XXXXXX)
+    timestamp: str # ISO format datetime string of when the memory was recorded
+    data_type: str # The data_type of the stored experience
+    rehydrated_gist: Any # The processed/rehydrated content. For text, it's a string summary. For other data, it might be the decoded string of the content.
+    metadata: Dict[str, Any] # The metadata associated with the memory record. Should conform to DialogueMemoryEntryMetadata where applicable.
+# --- End HAMMemoryManager Specific Internal Types ---
 
 
 print("common_types.py placeholder loaded.")
