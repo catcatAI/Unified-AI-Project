@@ -33,7 +33,8 @@ class MockHSPPeer:
 
         self.mock_capabilities: Dict[str, HSPCapabilityAdvertisementPayload] = {}
         self._define_mock_capabilities()
-
+        self.alt_ai_id_1 = f"did:hsp:mock_peer_alt1_{uuid.uuid4().hex[:4]}"
+        self.alt_ai_id_2 = f"did:hsp:mock_peer_alt2_{uuid.uuid4().hex[:4]}"
 
     def _define_mock_capabilities(self):
         cap_echo = HSPCapabilityAdvertisementPayload(
@@ -244,10 +245,12 @@ class MockHSPPeer:
                 fact_counter += 1
                 print(f"\n[MockPeer-{self.ai_id}] Periodic action: Publishing sample fact {fact_counter}...")
                 self.publish_sample_fact(fact_counter)
-            else:
+            elif env_counter < fact_counter : # Publish env state if fewer env states have been sent
                 env_counter += 1
                 print(f"\n[MockPeer-{self.ai_id}] Periodic action: Publishing sample environment state {env_counter}...")
                 self.publish_sample_environmental_state(env_counter)
+            # else: # Could add another type of periodic message or just wait for next cycle
+            #    pass
 
 
     def publish_sample_fact(self, counter: int):
@@ -256,80 +259,131 @@ class MockHSPPeer:
 
         timestamp = datetime.now(timezone.utc).isoformat()
         topic = "hsp/knowledge/facts/general"
+        fact_payload: Optional[HSPFactPayload] = None
 
-        # For conflict testing: every 3rd fact publication (after the first one)
-        # will be an attempt to update/conflict with a previously sent fact.
-        # We'll use a specific ID for these conflicting facts.
-        conflict_test_fact_original_id = "conflict_target_fact_id_001"
-
-        if counter == 2: # First time, publish the original fact for conflict test
+        # --- Type 1 Conflict Test Facts (ID-based) ---
+        conflict_test_fact_original_id = "type1_conflict_target_id_001"
+        if counter == 2: # Publish the original fact for Type 1 conflict test
             fact_payload = HSPFactPayload(
-                id=conflict_test_fact_original_id, # This ID is from the perspective of this peer as originator
+                id=conflict_test_fact_original_id,
                 statement_type="natural_language",
-                statement_nl=f"Initial statement for {conflict_test_fact_original_id} from {self.ai_id}.",
-                source_ai_id=self.ai_id, # This peer is the originator
-                timestamp_created=timestamp,
-                confidence_score=0.7, # Initial moderate confidence
-                tags=["sample_mock_fact", "conflict_test_original"] #type: ignore
+                statement_nl=f"Initial: {conflict_test_fact_original_id} from {self.ai_id}.",
+                source_ai_id=self.ai_id, timestamp_created=timestamp, confidence_score=0.7,
+                tags=["type1_conflict", "original"] #type: ignore
             )
             self.published_conflicting_fact_ids[conflict_test_fact_original_id] = fact_payload
-            print(f"[MockPeer-{self.ai_id}] Publishing ORIGINAL conflicting fact to '{topic}' (ID: {fact_payload['id']})")
-
+            print(f"  Publishing Type 1 ORIGINAL: ID '{fact_payload['id']}', Conf: {fact_payload['confidence_score']}")
         elif counter == 4 and conflict_test_fact_original_id in self.published_conflicting_fact_ids: # Update with higher confidence
             fact_payload = HSPFactPayload(
-                id=conflict_test_fact_original_id, # Same original ID
-                statement_type="natural_language",
-                statement_nl=f"UPDATED (more confident) statement for {conflict_test_fact_original_id} from {self.ai_id}.",
-                source_ai_id=self.ai_id, # Same originator
-                timestamp_created=datetime.now(timezone.utc).isoformat(), # New timestamp
-                confidence_score=0.9, # Higher confidence
-                tags=["sample_mock_fact", "conflict_test_update_higher_conf"] #type: ignore
+                id=conflict_test_fact_original_id, statement_type="natural_language",
+                statement_nl=f"Update (HighConf): {conflict_test_fact_original_id} from {self.ai_id}.",
+                source_ai_id=self.ai_id, timestamp_created=datetime.now(timezone.utc).isoformat(), confidence_score=0.9,
+                tags=["type1_conflict", "update_high_conf"] #type: ignore
             )
-            print(f"[MockPeer-{self.ai_id}] Publishing CONFLICTING (higher_conf) fact to '{topic}' (ID: {fact_payload['id']})")
-
-        elif counter == 6 and conflict_test_fact_original_id in self.published_conflicting_fact_ids: # Update with lower confidence
+            print(f"  Publishing Type 1 UPDATE (HighConf): ID '{fact_payload['id']}', Conf: {fact_payload['confidence_score']}")
+        elif counter == 6 and conflict_test_fact_original_id in self.published_conflicting_fact_ids: # Update with different value, similar confidence
             fact_payload = HSPFactPayload(
-                id=conflict_test_fact_original_id, # Same original ID
-                statement_type="natural_language",
-                statement_nl=f"Final (less confident) statement for {conflict_test_fact_original_id} from {self.ai_id}.",
-                source_ai_id=self.ai_id, # Same originator
-                timestamp_created=datetime.now(timezone.utc).isoformat(), # New timestamp
-                confidence_score=0.5, # Lower confidence than original
-                tags=["sample_mock_fact", "conflict_test_update_lower_conf"] #type: ignore
+                id=conflict_test_fact_original_id, statement_type="natural_language",
+                statement_nl=f"Update (DiffValue): {conflict_test_fact_original_id} from {self.ai_id} - new info.",
+                source_ai_id=self.ai_id, timestamp_created=datetime.now(timezone.utc).isoformat(), confidence_score=0.72, # Similar to original 0.7
+                tags=["type1_conflict", "update_diff_value_similar_conf"] #type: ignore
             )
-            print(f"[MockPeer-{self.ai_id}] Publishing CONFLICTING (lower_conf) fact to '{topic}' (ID: {fact_payload['id']})")
+            print(f"  Publishing Type 1 UPDATE (DiffValue): ID '{fact_payload['id']}', Conf: {fact_payload['confidence_score']}")
 
-        else: # Regular sample fact (NL or structured)
-            fact_id = f"mock_fact_{self.ai_id.replace(':', '_')}_{counter}_{uuid.uuid4().hex[:4]}"
-            if counter % 2 != 0: # Odd counters for structured, to not overlap with conflict test counters easily
-                # Use some mappable external URIs for structured facts
-                subject_ext_uri = f"http://example.com/ontology#Person/mock_person_{counter}"
-                predicate_ext_uri = "http://xmlns.com/foaf/0.1/name" # Mapped to cai_prop:name
-                object_lit = f"Mock Person {counter} Name"
+        # --- Type 2 Semantic Conflict Test Facts (S/P based) & Numerical Merge ---
+        # Scenario 1: Semantic conflict, new one more confident
+        # S: http://example.org/entity/ProductX, P: http://example.org/prop/price
+        sem_conflict_s = "http://example.org/entity/ProductX"
+        sem_conflict_p = "http://example.org/prop/price" # Not in default ontology_mappings.yaml, so will be used as is.
 
+        if counter == 8: # First semantic fact (lower confidence, from alt_ai_id_1)
+            fact_payload = HSPFactPayload(
+                id=f"sem_fact_1_{uuid.uuid4().hex[:4]}", statement_type="semantic_triple",
+                statement_structured={"subject_uri": sem_conflict_s, "predicate_uri": sem_conflict_p, "object_literal": "100.00"}, #type: ignore
+                statement_nl=f"{sem_conflict_s} has price 100.00 (from {self.alt_ai_id_1})",
+                source_ai_id=self.alt_ai_id_1, timestamp_created=timestamp, confidence_score=0.6,
+                tags=["type2_conflict", "semantic_initial_low_conf"] #type: ignore
+            )
+            print(f"  Publishing Type 2 SEMANTIC (Initial LowConf): ID '{fact_payload['id']}' for S/P '{sem_conflict_s}/{sem_conflict_p}', O='100.00', Conf: 0.6, Source: {self.alt_ai_id_1}")
+        elif counter == 10: # Second semantic fact, same S/P, different O, higher confidence (from self.ai_id)
+            fact_payload = HSPFactPayload(
+                id=f"sem_fact_2_{uuid.uuid4().hex[:4]}", statement_type="semantic_triple",
+                statement_structured={"subject_uri": sem_conflict_s, "predicate_uri": sem_conflict_p, "object_literal": "120.00"}, #type: ignore
+                statement_nl=f"{sem_conflict_s} has price 120.00 (from {self.ai_id}, more confident)",
+                source_ai_id=self.ai_id, timestamp_created=datetime.now(timezone.utc).isoformat(), confidence_score=0.9,
+                tags=["type2_conflict", "semantic_update_high_conf"] #type: ignore
+            )
+            print(f"  Publishing Type 2 SEMANTIC (Update HighConf): ID '{fact_payload['id']}' for S/P '{sem_conflict_s}/{sem_conflict_p}', O='120.00', Conf: 0.9, Source: {self.ai_id}")
+
+        # Scenario 2: Numerical Merge. Assume previous fact (O=120.00, C=0.9 from self.ai_id) is in HAM.
+        # New fact from alt_ai_id_2 with O=130.00, C=0.85 (similar confidence to 0.9)
+        elif counter == 12:
+            fact_payload = HSPFactPayload(
+                id=f"sem_fact_3_num_merge_{uuid.uuid4().hex[:4]}", statement_type="semantic_triple",
+                statement_structured={"subject_uri": sem_conflict_s, "predicate_uri": sem_conflict_p, "object_literal": "130.00"}, #type: ignore
+                statement_nl=f"{sem_conflict_s} has price 130.00 (from {self.alt_ai_id_2}, for num_merge test)",
+                source_ai_id=self.alt_ai_id_2, timestamp_created=datetime.now(timezone.utc).isoformat(), confidence_score=0.85,
+                tags=["type2_conflict", "numerical_merge_candidate"] #type: ignore
+            )
+            print(f"  Publishing Type 2 NUMERICAL MERGE CANDIDATE: ID '{fact_payload['id']}' for S/P '{sem_conflict_s}/{sem_conflict_p}', O='130.00', Conf: 0.85, Source: {self.alt_ai_id_2}")
+
+        # Scenario 3: Trust/Recency Tie-Breaking
+        # S: http://example.org/entity/ServiceY, P: http://example.org/prop/status
+        tie_break_s = "http://example.org/entity/ServiceY"
+        tie_break_p = "http://example.org/prop/status"
+
+        if counter == 14: # Fact 1 for tie-break (from alt_ai_id_1, older, slightly lower confidence)
+            fact_payload = HSPFactPayload(
+                id=f"tie_break_fact_1_{uuid.uuid4().hex[:4]}", statement_type="semantic_triple",
+                statement_structured={"subject_uri": tie_break_s, "predicate_uri": tie_break_p, "object_literal": "active"}, #type: ignore
+                statement_nl=f"{tie_break_s} status is active (from {self.alt_ai_id_1}, older).",
+                source_ai_id=self.alt_ai_id_1, timestamp_created=timestamp, confidence_score=0.75,
+                tags=["type2_conflict", "tie_break_older"] #type: ignore
+            )
+            print(f"  Publishing Type 2 TIE-BREAK (Older): ID '{fact_payload['id']}' S/P '{tie_break_s}/{tie_break_p}', O='active', Conf: 0.75, Source: {self.alt_ai_id_1}")
+        elif counter == 16: # Fact 2 for tie-break (from alt_ai_id_2, newer, slightly higher confidence but still "similar")
+                           # Assume alt_ai_id_2 has higher trust than alt_ai_id_1 in the target LM's TrustManager for this test.
+            await asyncio.sleep(0.1) # Ensure slightly newer timestamp for recency part of test
+            fact_payload = HSPFactPayload(
+                id=f"tie_break_fact_2_{uuid.uuid4().hex[:4]}", statement_type="semantic_triple",
+                statement_structured={"subject_uri": tie_break_s, "predicate_uri": tie_break_p, "object_literal": "inactive"}, #type: ignore
+                statement_nl=f"{tie_break_s} status is inactive (from {self.alt_ai_id_2}, newer).",
+                source_ai_id=self.alt_ai_id_2, timestamp_created=datetime.now(timezone.utc).isoformat(), confidence_score=0.78,
+                tags=["type2_conflict", "tie_break_newer_higher_trust_source"] #type: ignore
+            )
+            print(f"  Publishing Type 2 TIE-BREAK (Newer/HigherTrustSource): ID '{fact_payload['id']}' S/P '{tie_break_s}/{tie_break_p}', O='inactive', Conf: 0.78, Source: {self.alt_ai_id_2}")
+
+        # Fallback to regular sample facts if no specific test case for the counter
+        if not fact_payload and counter not in [2,4,6,8,10,12,14,16]:
+            fact_id_reg = f"mock_fact_reg_{self.ai_id.replace(':', '_')}_{counter}_{uuid.uuid4().hex[:4]}"
+            if counter % 3 == 0 : # Mix in some structured facts not for conflict
+                subject_ext_uri_reg = f"http://example.com/ontology#Item/mock_item_{counter}"
+                predicate_ext_uri_reg = "http://purl.org/dc/elements/1.1/creator" # Mapped to cai_prop:creator in ontology_mappings
+                object_lit_reg = f"Mock Item Creator {counter}"
                 fact_payload = HSPFactPayload(
-                    id=fact_id, statement_type="semantic_triple",
-                    statement_structured={
-                        "subject_uri": subject_ext_uri,
-                        "predicate_uri": predicate_ext_uri,
-                        "object_literal": object_lit,
-                        "object_datatype": "xsd:string"
-                    }, #type: ignore
-                    statement_nl=f"{subject_ext_uri} has foaf:name '{object_lit}'.", # NL representation
+                    id=fact_id_reg, statement_type="semantic_triple",
+                    statement_structured={ "subject_uri": subject_ext_uri_reg, "predicate_uri": predicate_ext_uri_reg, "object_literal": object_lit_reg, "object_datatype": "xsd:string" }, #type: ignore
+                    statement_nl=f"{subject_ext_uri_reg} was created by '{object_lit_reg}'.",
                     source_ai_id=self.ai_id, timestamp_created=timestamp, confidence_score=0.98,
-                    tags=["sample_mock_fact", "structured_mapped_triple"] #type: ignore
+                    tags=["sample_fact", "structured_mappable"] #type: ignore
                 )
-                print(f"[MockPeer-{self.ai_id}] Publishing STRUCTURED (mappable) sample fact to '{topic}' (ID: {fact_payload['id']})")
-            else: # Even counters (but not 2,4,6 used by conflict test) for NL
+                print(f"  Publishing REGULAR STRUCTURED (mappable) fact: ID '{fact_payload['id']}'")
+            else: # Regular NL fact
                 fact_payload = HSPFactPayload(
-                    id=fact_id, statement_type="natural_language",
-                    statement_nl=f"This is sample NL fact number {counter} from {self.ai_id} about a random event.",
+                    id=fact_id_reg, statement_type="natural_language",
+                    statement_nl=f"This is regular NL fact number {counter} from {self.ai_id} about a general topic.",
                     source_ai_id=self.ai_id, timestamp_created=timestamp, confidence_score=0.92,
-                    tags=["sample_mock_fact", "natural_language"] #type: ignore
+                    tags=["sample_fact", "natural_language"] #type: ignore
                 )
-                print(f"[MockPeer-{self.ai_id}] Publishing NL sample fact to '{topic}' (ID: {fact_payload['id']})")
+                print(f"  Publishing REGULAR NL fact: ID '{fact_payload['id']}'")
 
-        self.connector.publish_fact(fact_payload, topic=topic)
+        if fact_payload:
+            self.connector.publish_fact(fact_payload, topic=topic)
+        else:
+            # This condition means the counter matched a conflict test arm that might have already published
+            # or it's an even counter where we previously didn't publish structured if it was a conflict test counter.
+            # The logic has been changed to use 'if/elif' for specific counters, so this 'else' is for counters not handled.
+            print(f"  No specific fact to publish for counter {counter} in this cycle, or already handled by conflict sequence.")
 
 
     def publish_sample_environmental_state(self, counter: int):

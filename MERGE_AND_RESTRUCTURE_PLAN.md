@@ -197,6 +197,33 @@ The Fragmenta architecture's principles are applied as follows:
 
 This plan provides a roadmap for the merge. Flexibility will be needed as unforeseen issues arise.
 
+## Phase 2 Development Highlights (Post-Initial Merge)
+
+Following the initial structural merge, Phase 2 focused on significant feature development, primarily around inter-AI communication and knowledge management:
+
+*   **Heterogeneous Synchronization Protocol (HSP) Implementation:**
+    *   Designed and implemented core HSP functionalities (`src/hsp/`), including message envelopes and payloads for Facts, Capability Advertisements, Task Requests/Results.
+    *   Integrated `paho-mqtt` for MQTT transport via the `HSPConnector` service.
+    *   Enabled `LearningManager` to publish facts and process incoming facts via HSP.
+    *   Developed `ServiceDiscoveryModule` and integrated task brokering capabilities into `DialogueManager` for HSP-based task offloading.
+    *   Implemented basic `TrustManager` to influence fact processing and capability selection.
+    *   Exposed HSP functionalities (service listing, task initiation/polling) via the FastAPI server and integrated basic UI elements in the Electron app.
+
+*   **Advanced Conflict Resolution for HSP Facts:**
+    *   Enhanced `LearningManager` to handle conflicting facts received via HSP.
+    *   Implemented Type 1 (same fact ID) and Type 2 (semantic: same subject/predicate, different value) conflict detection.
+    *   Developed resolution strategies including:
+        *   Superseding based on confidence.
+        *   Trust/recency-based tie-breaking.
+        *   Numerical value merging (PoC).
+        *   Logging of unresolved contradictions.
+    *   `ContentAnalyzerModule` was updated to provide semantic identifiers used in Type 2 conflict detection.
+
+*   **Semantic Processing and Knowledge Graph:**
+    *   `ContentAnalyzerModule` further developed to process structured HSP facts (semantic triples) and integrate them into its internal knowledge graph, including basic ontology mapping from `configs/ontology_mappings.yaml`.
+
+These Phase 2 developments significantly expand the AI's ability to interact with peers and manage knowledge more intelligently.
+
 ## 8. Post-Merge Status Update (As of Current Session)
 
 Subsequent attempts to merge a broader set of feature branches into the `master` branch (which had incorporated `feat/add-personality-profile-types` leading to commit `2c39060`) encountered significant sandbox environment limitations. 

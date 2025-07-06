@@ -34,6 +34,13 @@ This project integrates and is developing several core AI components:
 
 *   **Configuration System (`configs/`):** Centralized YAML and JSON files for system behavior, personality profiles, API keys, formulas, etc.
 
+*   **Heterogeneous Synchronization Protocol (HSP) (`src/hsp/`):**
+    *   **Purpose:** Enables different AI instances (peers) to communicate, share knowledge, and collaborate on tasks.
+    *   **Functionality:** Defines message types (Facts, Capability Advertisements, Task Requests/Results, etc.) and communication patterns (Publish/Subscribe, Request/Reply) for inter-AI interaction.
+    *   **Transport:** Currently uses MQTT for message transport.
+    *   **Key Features:** Includes mechanisms for service discovery, basic trust management between peers, and strategies for handling conflicting information received from different AIs.
+    *   **Specification:** See `docs/HSP_SPECIFICATION.md` for more details.
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.

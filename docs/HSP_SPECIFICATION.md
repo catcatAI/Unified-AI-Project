@@ -268,34 +268,36 @@ All HSP messages are wrapped in the following envelope:
 ```json
 {
   "hsp_envelope_version": "0.1",
-  "message_id": "<UUID_for_this_message>",
-  "correlation_id": "<UUID_linking_req_to_rep_or_message_sequence_optional>",
-  "sender_ai_id": "<DID_or_URI_of_sending_AI>",
-  "recipient_ai_id": "<DID_or_URI_of_target_AI_or_topic_URI>",
-  "timestamp_sent": "<ISO_8601_timestamp_UTC>",
-  "message_type": "<String_identifying_payload_type_e.g.,_HSP::Fact_v0.1>",
-  "protocol_version": "0.1", // HSP specification version
-  "communication_pattern": "<String_enum_publish|request|response|stream_data|stream_ack>",
-  "security_parameters": {
-    "signature_algorithm": "<String_e.g.,_ES256K_optional_for_v0.1_early_dev>",
-    "signature": "<String_digital_signature_optional_for_v0.1_early_dev>",
-    "encryption_details": null // Placeholder for future use
+  "message_id": "msg_uuid_example_789",
+  "sender_ai_id": "did:hsp:ai_alpha",
+  "recipient_ai_id": "hsp/knowledge/facts/general", // Can be a topic or specific AI ID
+  "timestamp_sent": "2024-07-05T14:00:00Z",
+  "message_type": "HSP::Fact_v0.1",
+  "protocol_version": "0.1",
+  "communication_pattern": "publish",
+  // Optional fields below: correlation_id, security_parameters, qos_parameters, routing_info, payload_schema_uri
+  "correlation_id": null, // Or absent if not applicable
+  "security_parameters": null, // Or absent if not used
+  "qos_parameters": { // Example: qos_parameters itself is optional, but if present, its fields are also optional/defaulted
+    "priority": "medium",
+    "requires_ack": false
   },
-  "qos_parameters": {
-    "priority": "<String_enum_low|medium|high_optional>",
-    "requires_ack": "<boolean_default_false>",
-    "time_to_live_sec": "<integer_optional>"
-  },
-  "routing_info": { // Optional
-      "hops": ["<array_of_ai_ids_optional>"],
-      "final_destination_ai_id": "<DID_or_URI_optional>"
-  },
-  "payload_schema_uri": "<URI_to_JSON_schema_for_payload_optional>",
+  "routing_info": null, // Or absent
+  "payload_schema_uri": null, // Or absent
   "payload": {
-    // One of the data structures from Section 3
+    "id": "fact_uuid_envelope_example",
+    "statement_type": "natural_language",
+    "statement_nl": "This is an example fact within an envelope.",
+    "source_ai_id": "did:hsp:ai_alpha",
+    "timestamp_created": "2024-07-05T13:59:00Z",
+    "confidence_score": 0.90
   }
 }
 ```
+**Note on Envelope Fields:**
+*   **Required:** `hsp_envelope_version`, `message_id`, `sender_ai_id`, `recipient_ai_id`, `timestamp_sent`, `message_type`, `protocol_version`, `communication_pattern`, `payload`.
+*   **Optional:** `correlation_id`, `security_parameters`, `qos_parameters`, `routing_info`, `payload_schema_uri`.
+    *   If `security_parameters`, `qos_parameters`, or `routing_info` are present, their internal fields also have their own optionality as defined in their respective `TypedDict` structures (typically `total=False`, meaning fields within them are optional unless specified as `Required`).
 
 ### 4.3. Message Acknowledgements (ACKs/NACKs)
 *   If `qos_parameters.requires_ack` is true, the recipient should send an ACK.
@@ -329,6 +331,23 @@ Hierarchical, e.g.: `hsp/{domain}/{subdomain}/{specific_focus}`
 *   HSP transports `Fact`s/`Belief`s with `source_ai_id`, `timestamp_created`, `confidence_score`.
 *   AIs are responsible for their own conflict resolution logic (e.g., preferring newer data, higher confidence, more trusted sources).
 *   HSP could support a `KnowledgePollRequest`/`KnowledgePollResponse` message type in the future for explicit consensus-seeking.
+
+#### 5.4.1. Recommended Practices for Handling Conflicting Information (Receiver-Side)
+While HSP provides the basic data fields, the consuming AI is responsible for robust conflict resolution. When storing or processing facts received via HSP, especially from multiple peers, AIs may benefit from maintaining additional local metadata associated with the ingested information. This metadata is not part of the HSP payload itself but aids the AI's internal knowledge management.
+
+Recommended local metadata fields for a receiver to consider storing:
+*   `internal_storage_id`: The unique ID of the fact/belief within the AI's own memory system.
+*   `hsp_sender_ai_id`: The `sender_ai_id` from the HSP envelope (the direct peer who sent the message). This is crucial for applying trust scores.
+*   `effective_confidence`: A score calculated by the receiver, often combining the fact's `confidence_score` with the trust score of the `hsp_sender_ai_id` (e.g., `original_confidence * trust_in_sender`).
+*   `processing_timestamp`: When this HSP message was processed by the receiver.
+*   `resolution_strategy_applied`: A string indicating how any conflict involving this piece of information was resolved (e.g., "NEWEST_WINS", "HIGHEST_CONFIDENCE_SUPERSEDE", "TRUST_WEIGHTED_MERGE", "LOGGED_CONTRADICTION", "USER_VERIFIED").
+*   `superseded_internal_ids`: A list of `internal_storage_id`s of other facts/beliefs in the AI's memory that this information has superseded.
+*   `conflicts_with_internal_ids`: A list of `internal_storage_id`s of other facts/beliefs that this information directly contradicts but has not superseded (e.g., due to similar confidence and no clear tie-breaker).
+*   `merged_from_internal_ids`: If this information is the result of a merge (e.g., numerical averaging), a list of `internal_storage_id`s of the source facts.
+*   `merged_value_details`: If applicable, details about the merged value (e.g., the calculated average).
+*   `extracted_semantic_subject_uri`, `extracted_semantic_predicate_uri`, `extracted_semantic_object_representation`: Standardized URIs or representations of the fact's core semantic components, extracted by the receiver's content analysis/mapping modules. These are vital for detecting Type 2 (semantic) conflicts where different fact IDs make claims about the same entity-attribute pair.
+
+By maintaining such metadata, an AI can build a more nuanced understanding of its knowledge base, track provenance, and make more informed decisions when faced with conflicting data from the HSP network. The specific conflict resolution algorithms (e.g., how to perform a numerical merge, how to weigh trust vs. recency) remain internal to each AI.
 
 ### 5.5. Data Synchronization Strategies
 *   **Pub/Sub for updates:** `Fact`s, `EnvironmentalState`s are published as they occur.

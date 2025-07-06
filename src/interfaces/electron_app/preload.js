@@ -33,7 +33,12 @@ contextBridge.exposeInMainWorld(
     },
     // Example: Invoke a handler in the main process and get a response
     invoke: async (channel, ...args) => {
-        const validChannels = ['handle-action'];
+        const validChannels = [
+            'handle-action',
+            'hsp:get-discovered-services',
+            'hsp:request-task',
+            'hsp:get-task-status' // Added for polling task status
+        ];
         if (validChannels.includes(channel)) {
             console.log(`Preload: Invoking main process handler on channel '${channel}' with args:`, args);
             return await ipcRenderer.invoke(channel, ...args);
