@@ -9,6 +9,23 @@ from hsp.types import HSPFactPayload # Import HSPFactPayload
 
 from spacy.matcher import Matcher # Added Matcher
 
+# --- Types for process_hsp_fact_content return value ---
+class ProcessedTripleInfo(TypedDict):
+    """Detailed information about a semantic triple processed by ContentAnalyzerModule."""
+    subject_id: str
+    predicate_type: str
+    object_id: str
+    original_subject_uri: str
+    original_predicate_uri: str
+    original_object_uri_or_literal: Any
+    object_is_uri: bool
+
+class CAHSPFactProcessingResult(TypedDict):
+    """Result structure from ContentAnalyzerModule's processing of an HSP fact."""
+    updated_graph: bool
+    processed_triple: Optional[ProcessedTripleInfo]
+# --- End Types ---
+
 # Attempt to load a spaCy model
 # For a real application, model management (downloading, versioning) would be more robust.
 try:
@@ -689,23 +706,6 @@ class ContentAnalyzerModule:
 
         print(f"NetworkX graph constructed: {nx_graph.number_of_nodes()} nodes, {nx_graph.number_of_edges()} edges.")
         return knowledge_graph_data, nx_graph
-
-# --- Types for process_hsp_fact_content return value ---
-class ProcessedTripleInfo(TypedDict):
-    """Detailed information about a semantic triple processed by ContentAnalyzerModule."""
-    subject_id: str
-    predicate_type: str
-    object_id: str
-    original_subject_uri: str
-    original_predicate_uri: str
-    original_object_uri_or_literal: Any
-    object_is_uri: bool
-
-class CAHSPFactProcessingResult(TypedDict):
-    """Result structure from ContentAnalyzerModule's processing of an HSP fact."""
-    updated_graph: bool
-    processed_triple: Optional[ProcessedTripleInfo]
-# --- End Types ---
 
     def process_hsp_fact_content(self, hsp_fact_payload: HSPFactPayload, source_ai_id: str) -> CAHSPFactProcessingResult:
         """
