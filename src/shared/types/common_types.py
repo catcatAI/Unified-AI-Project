@@ -414,6 +414,42 @@ class HAMRecallResult(TypedDict):
     metadata: Dict[str, Any] # The metadata associated with the memory record. Should conform to DialogueMemoryEntryMetadata where applicable.
 # --- End HAMMemoryManager Specific Internal Types ---
 
+# --- Fact Extractor Module Specific Types ---
+class ExtractedFactContentPreference(TypedDict, total=False):
+    """Content structure for a 'user_preference' fact."""
+    category: Required[str]
+    preference: Required[str]
+    liked: Optional[bool] # True for like, False for dislike, None if not specified
+
+class ExtractedFactContentStatement(TypedDict, total=False):
+    """Content structure for a 'user_statement' fact (e.g., about self)."""
+    attribute: Required[str]
+    value: Required[Any] # Value can be string, number, boolean etc.
+
+# Union for the 'content' field of an ExtractedFact
+ExtractedFactContent = Union[ExtractedFactContentPreference, ExtractedFactContentStatement, Dict[str, Any]]
+
+class ExtractedFact(TypedDict):
+    """
+    Represents a single fact extracted by the FactExtractorModule from user text.
+    This is the structure LearningManager receives.
+    """
+    fact_type: Required[str]  # e.g., "user_preference", "user_statement"
+    content: Required[ExtractedFactContent] # The structured content of the fact
+    confidence: Required[float] # LLM's confidence in this extraction (0.0-1.0)
+# --- End Fact Extractor Module Specific Types ---
+
+# --- LLM Interface Specific Types ---
+class LLMModelInfo(TypedDict, total=False):
+    """Information about an available LLM model."""
+    id: Required[str] # Model ID or name (e.g., "nous-hermes2:latest", "gpt-3.5-turbo")
+    provider: Required[str]  # e.g., "ollama", "openai", "mock"
+    name: Optional[str] # Often same as id, but can be more descriptive
+    family: Optional[str] # e.g., "llama", "gpt"
+    size_bytes: Optional[int]
+    modified_at: Optional[str] # ISO datetime string
+# --- End LLM Interface Specific Types ---
+
 
 print("common_types.py placeholder loaded.")
 

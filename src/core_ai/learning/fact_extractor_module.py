@@ -3,6 +3,7 @@ from typing import List, Dict, Optional, Any
 
 # Assuming 'src' is in PYTHONPATH, making 'services' a top-level package
 from services.llm_interface import LLMInterface, LLMInterfaceConfig
+from shared.types.common_types import ExtractedFact # Import the new type
 # LearnedFactRecord content is what this module aims to extract, but the full record is assembled by LearningManager
 
 
@@ -29,10 +30,10 @@ class FactExtractorModule:
         prompt += "Focus only on information explicitly stated by the user about themselves or their direct preferences.\n"
         return prompt
 
-    def extract_facts(self, text: str, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def extract_facts(self, text: str, user_id: Optional[str] = None) -> List[ExtractedFact]:
         """
         Uses an LLM to extract a list of facts/preferences from the user's text.
-        Each item in the list is a dictionary expected to contain 'fact_type', 'content', and 'confidence'.
+        Returns a list of ExtractedFact objects.
         """
         if not self.llm_interface:
             print("FactExtractorModule: LLMInterface not available. Cannot extract facts.")
@@ -53,23 +54,33 @@ class FactExtractorModule:
 
         try:
             # The LLM is expected to return a string that is a JSON list of fact objects
-            extracted_data_list = json.loads(llm_response_str)
+            extracted_data_list_raw = json.loads(llm_response_str)
 
-            if not isinstance(extracted_data_list, list):
+            if not isinstance(extracted_data_list_raw, list):
                 print(f"FactExtractorModule: Error - LLM response is not a list. Response: {llm_response_str}")
                 return []
 
-            valid_facts = []
-            for item in extracted_data_list:
-                if isinstance(item, dict) and \
-                   "fact_type" in item and \
-                   "content" in item and isinstance(item["content"], dict) and \
-                   "confidence" in item and isinstance(item["confidence"], (float, int)):
+            valid_facts: List[ExtractedFact] = []
+            for item_raw in extracted_data_list_raw:
+                if isinstance(item_raw, dict) and \
+                   "fact_type" in item_raw and isinstance(item_raw["fact_type"], str) and \
+                   "content" in item_raw and isinstance(item_raw["content"], dict) and \
+                   "confidence" in item_raw and isinstance(item_raw["confidence"], (float, int)):
+
                     # Normalize confidence
-                    item["confidence"] = max(0.0, min(1.0, float(item["confidence"])))
-                    valid_facts.append(item)
+                    confidence_val = max(0.0, min(1.0, float(item_raw["confidence"])))
+
+                    # Create an ExtractedFact TypedDict.
+                    # The 'content' field's specific type (Preference or Statement) isn't strictly validated here beyond being a dict.
+                    # The consumer (LearningManager) would handle it based on fact_type.
+                    fact_item: ExtractedFact = { # type: ignore # content can be more specific
+                        "fact_type": item_raw["fact_type"],
+                        "content": item_raw["content"], # This is ExtractedFactContent union
+                        "confidence": confidence_val
+                    }
+                    valid_facts.append(fact_item)
                 else:
-                    print(f"FactExtractorModule: Warning - Skipping invalid fact item from LLM: {item}")
+                    print(f"FactExtractorModule: Warning - Skipping invalid fact item from LLM: {item_raw}")
 
             print(f"FactExtractorModule: Parsed facts: {valid_facts}")
             return valid_facts
