@@ -2,9 +2,40 @@ import unittest
 from unittest.mock import MagicMock, patch
 import networkx as nx
 from typing import Optional, Dict, Any, List, Tuple
+import uuid # For test session IDs in __main__
+import os # Added for os.path.exists and os.remove in __main__
+import re # Added for regex in _is_kg_query
+import json
+import ast
 
 # Assuming src is in PYTHONPATH for test execution
 from core_ai.dialogue.dialogue_manager import DialogueManager
+from shared.types.common_types import (
+    OperationalConfig, DialogueTurn, PendingHSPTaskInfo,
+    ParsedToolIODetails, CritiqueResult, ToolDispatcherResponse, # Added for completeness if DM uses them directly
+    FormulaConfigEntry, DialogueMemoryEntryMetadata
+)
+from hsp.types import (
+    HSPTaskRequestPayload, HSPTaskResultPayload,
+    HSPCapabilityAdvertisementPayload, HSPMessageEnvelope, HSPFactPayload
+)
+# Mock other direct dependencies if their actual classes are not needed for type hinting in test setups
+# from core_ai.personality.personality_manager import PersonalityManager
+# from core_ai.memory.ham_memory_manager import HAMMemoryManager
+# from services.llm_interface import LLMInterface
+# from core_ai.emotion_system import EmotionSystem
+# from core_ai.crisis_system import CrisisSystem
+# from core_ai.time_system import TimeSystem
+# from core_ai.formula_engine import FormulaEngine
+# from tools.tool_dispatcher import ToolDispatcher
+# from core_ai.learning.self_critique_module import SelfCritiqueModule
+# from core_ai.learning.fact_extractor_module import FactExtractorModule
+# from core_ai.learning.learning_manager import LearningManager
+# from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+# from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+# from services.sandbox_executor import SandboxExecutor
+# from hsp.connector import HSPConnector
+
 
 class TestDialogueManagerHelperMethods(unittest.TestCase):
 
@@ -12,7 +43,8 @@ class TestDialogueManagerHelperMethods(unittest.TestCase):
         # Basic DM for testing helper methods. Dependencies can be mocked if they were used by these helpers.
         # For these specific helpers, direct interaction with complex dependencies is minimal.
         # Provide minimal config. Ensure 'operational_configs' key exists if DialogueManager constructor accesses it.
-        self.dm = DialogueManager(config={"operational_configs": {}})
+        # OperationalConfig is total=False, so an empty dict is valid.
+        self.dm = DialogueManager(config={}) # type: ignore
 
 
         # Create a sample graph for testing _find_entity_node_id_in_kg and _query_session_kg
@@ -168,7 +200,7 @@ class TestDialogueManagerKGIntegration(unittest.TestCase):
         self.mock_content_analyzer = MagicMock()
 
         # Config for DialogueManager
-        self.test_config = {
+        self.test_config: OperationalConfig = { # type: ignore
             "max_dialogue_history": 6,
             "operational_configs": {
                 "timeouts": {"dialogue_manager_turn": 120},
@@ -188,9 +220,8 @@ class TestDialogueManagerKGIntegration(unittest.TestCase):
             config=self.test_config
         )
         # Ensure self_critique_module and learning_manager are also mocked if their methods are called
-        # For these tests, they might not be, but good practice if get_simple_response calls them.
         self.dm.self_critique_module = MagicMock()
-        self.dm.self_critique_module.critique_interaction.return_value = {"score": 0.9, "reason": "Looks good."}
+        self.dm.self_critique_module.critique_interaction.return_value = CritiqueResult(score=0.9, reason="Looks good.", suggested_alternative=None)
         self.dm.learning_manager = MagicMock()
 
 
@@ -213,7 +244,6 @@ class TestDialogueManagerKGIntegration(unittest.TestCase):
 
         # 2. Analyze text
         analyze_cmd = "!analyze: Innovate Corp is a tech company. Jane Doe is its CEO. It is in Silicon Valley and bought AlphaTech."
-        # Need to run async methods with await if they are async
         analyze_response = await self.dm.get_simple_response(analyze_cmd, session_id, user_id)
         self.assertIn("Context analysis triggered", analyze_response)
         self.assertIn(session_id, self.dm.session_knowledge_graphs)
@@ -298,23 +328,6 @@ class TestDialogueManagerKGIntegration(unittest.TestCase):
         expected_r1_fallback = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: {self.mock_llm_interface.generate_response.return_value}"
         self.assertEqual(r1, expected_r1_fallback)
 
-# To run these async tests:
-# Ensure your test runner can handle async tests (e.g., if running directly, use asyncio.run)
-# If using `python -m unittest`, it should handle async test methods in modern Python versions.
-# Example for running directly:
-# async def run_tests():
-#     suite = unittest.TestSuite()
-#     suite.addTest(unittest.makeSuite(TestDialogueManagerHelperMethods))
-#     suite.addTest(unittest.makeSuite(TestDialogueManagerKGIntegration))
-#     runner = unittest.TextTestRunner()
-#     runner.run(suite)
-
-# if __name__ == '__main__':
-#     import asyncio
-#     asyncio.run(run_tests())
-# This direct run part might need adjustment based on how unittest discovers/runs async tests.
-# Standard `python -m unittest discover` or `python -m unittest path.to.test_module` should work.
-
 
 class TestDialogueManagerToolDrafting(unittest.TestCase):
     def setUp(self):
@@ -323,16 +336,13 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
 
         self.mock_llm_interface = MagicMock()
 
-        # Minimal config needed for DialogueManager if not all parts are mocked away
-        self.test_config = {
+        self.test_config: OperationalConfig = { # type: ignore
             "operational_configs": {
                 "timeouts": {"dialogue_manager_turn": 120},
                 "learning_thresholds": {"min_critique_score_to_store": 0.0}
             }
         }
 
-        # Patch all other dependencies of DialogueManager to avoid side effects
-        # or needing their full setup for these specific tests.
         patchers = {
             'PersonalityManager': patch('core_ai.dialogue.dialogue_manager.PersonalityManager', return_value=self.mock_personality_manager),
             'HAMMemoryManager': patch('core_ai.dialogue.dialogue_manager.HAMMemoryManager'),
@@ -345,7 +355,7 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
             'FactExtractorModule': patch('core_ai.dialogue.dialogue_manager.FactExtractorModule'),
             'LearningManager': patch('core_ai.dialogue.dialogue_manager.LearningManager'),
             'ContentAnalyzerModule': patch('core_ai.dialogue.dialogue_manager.ContentAnalyzerModule'),
-            'SandboxExecutor': patch('core_ai.dialogue.dialogue_manager.SandboxExecutor') # Added SandboxExecutor mock
+            'SandboxExecutor': patch('core_ai.dialogue.dialogue_manager.SandboxExecutor')
         }
         self.mocks = {name: patcher.start() for name, patcher in patchers.items()}
         for patcher in patchers.values():
@@ -353,10 +363,9 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
 
         self.dm = DialogueManager(
             llm_interface=self.mock_llm_interface,
-            personality_manager=self.mock_personality_manager, # Use the one already configured
+            personality_manager=self.mock_personality_manager,
             config=self.test_config
         )
-        # Ensure the DM instance uses our specific mock for personality for ai_name
         self.dm.personality_manager = self.mock_personality_manager
 
 
@@ -364,57 +373,48 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
         tool_name = "EchoTool"
         purpose_and_io_desc = "A simple tool that takes a string message and returns it."
 
-        # Mock LLM response for I/O parsing step
-        mock_io_details_json_str = json.dumps({
+        mock_io_details: ParsedToolIODetails = { # type: ignore
             "suggested_method_name": "echo",
             "class_docstring_hint": "An echo tool.",
             "method_docstring_hint": "Echoes the input message.",
             "parameters": [{"name": "message", "type": "str", "description": "The message to echo."}],
             "return_type": "str",
             "return_description": "The echoed message."
-        })
-
-        # Mock LLM response for code generation step
+        }
+        mock_io_details_json_str = json.dumps(mock_io_details)
         mock_generated_code = "class EchoTool:\n    pass # Dummy generated code"
+        self.mocks['SandboxExecutor'].return_value.run.return_value = ("Mocked sandbox success", None)
+
 
         self.mock_llm_interface.generate_response.side_effect = [
-            mock_io_details_json_str, # First call (I/O parsing)
-            mock_generated_code       # Second call (code generation)
+            mock_io_details_json_str,
+            mock_generated_code
         ]
 
         result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
 
         self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
 
-        # Assert properties of the first call (I/O parsing prompt)
         io_parsing_call_args = self.mock_llm_interface.generate_response.call_args_list[0]
-        io_parsing_prompt_arg = io_parsing_call_args[1]['prompt'] # Accessing kwargs['prompt']
+        io_parsing_prompt_arg = io_parsing_call_args[1]['prompt']
         self.assertIn("You are an expert Python code analyst.", io_parsing_prompt_arg)
         self.assertIn(purpose_and_io_desc, io_parsing_prompt_arg)
         self.assertEqual(io_parsing_call_args[1]['params'], {"temperature": 0.1})
 
-
-        # Assert properties of the second call (code generation prompt)
         code_gen_call_args = self.mock_llm_interface.generate_response.call_args_list[1]
         code_gen_prompt_arg = code_gen_call_args[1]['prompt']
         self.assertIn(f"Tool Class Name: {tool_name}", code_gen_prompt_arg)
-        self.assertIn("class_docstring_hint\": \"An echo tool.\"", mock_io_details_json_str) # Check parsed data was used
-        self.assertIn("Method Name: echo", code_gen_prompt_arg) # From parsed I/O
-        self.assertIn("message: str", code_gen_prompt_arg) # Parameter formatting
+        self.assertIn("class_docstring_hint\": \"An echo tool.\"", mock_io_details_json_str)
+        self.assertIn("Method Name: echo", code_gen_prompt_arg)
+        self.assertIn("message: str", code_gen_prompt_arg)
         self.assertIn("Return Type: str", code_gen_prompt_arg)
         self.assertEqual(code_gen_call_args[1]['params'], {"temperature": 0.3})
-
 
         self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
         self.assertIn(mock_generated_code, result_response)
         self.assertIn("Info: The drafted code is syntactically valid Python.", result_response)
 
-        # Assert SandboxExecutor was called and its (mocked) output is in the response
         self.mocks['SandboxExecutor'].return_value.run.assert_called_once()
-        # Example: Check call args if specific placeholder params are important
-        # call_args = self.mocks['SandboxExecutor'].return_value.run.call_args
-        # self.assertEqual(call_args[1]['class_name'], tool_name) # Using kwargs access
-        # self.assertEqual(call_args[1]['method_name'], "echo")
         self.assertIn("---Sandbox Test Run---", result_response)
         self.assertIn("Execution Result: Mocked sandbox success", result_response)
 
@@ -423,7 +423,8 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
         tool_name = "SyntaxErrorTool"
         purpose_and_io_desc = "A tool that will have a syntax error."
 
-        mock_io_details_json_str = json.dumps({ "suggested_method_name": "broken" }) # Minimal valid JSON
+        mock_io_details: ParsedToolIODetails = {"suggested_method_name": "broken", "class_docstring_hint":"d","method_docstring_hint":"d","parameters":[],"return_type":"Any","return_description":"d"} # type: ignore
+        mock_io_details_json_str = json.dumps(mock_io_details)
         mock_generated_code_with_error = "class SyntaxErrorTool:\n def broken(self):\n  print 'oops'"
 
         self.mock_llm_interface.generate_response.side_effect = [
@@ -437,9 +438,8 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
         self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
         self.assertIn(mock_generated_code_with_error, result_response)
         self.assertIn("Warning: The drafted code has a syntax error", result_response)
-        self.assertIn("line 3", result_response)
+        self.assertIn("line 3", result_response) # Updated to match ast.SyntaxError format
 
-        # Ensure sandbox executor was NOT called due to syntax error
         self.mocks['SandboxExecutor'].return_value.run.assert_not_called()
 
 
@@ -447,12 +447,13 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
         tool_name = "SandboxErrorTool"
         purpose_and_io_desc = "A tool that is valid but will error in sandbox."
 
-        mock_io_details_json_str = json.dumps({
+        mock_io_details: ParsedToolIODetails = { # type: ignore
             "suggested_method_name": "error_method",
             "class_docstring_hint": "Tool designed to error in sandbox.",
             "method_docstring_hint": "This method will raise an error.",
             "parameters": [], "return_type": "None", "return_description": "Error."
-        })
+        }
+        mock_io_details_json_str = json.dumps(mock_io_details)
         mock_valid_code = "class SandboxErrorTool:\n  def __init__(self, config=None): pass\n  def error_method(self):\n    raise ValueError('Sandbox test error')"
 
         self.mock_llm_interface.generate_response.side_effect = [
@@ -460,7 +461,6 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
             mock_valid_code
         ]
 
-        # Mock SandboxExecutor.run to return an error
         self.mocks['SandboxExecutor'].return_value.run.return_value = (None, "ValueError: Sandbox test error")
 
         result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
@@ -480,14 +480,13 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
 
         result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
 
-        self.mock_llm_interface.generate_response.assert_called_once() # Only I/O parsing call
+        self.mock_llm_interface.generate_response.assert_called_once()
         self.assertIn(f"I had trouble understanding the specific parameters and return types from your description for '{tool_name}'.", result_response)
 
     async def test_handle_draft_tool_request_io_parsing_value_error(self):
         tool_name = "ValueErrorTool"
         purpose_and_io_desc = "This will cause a value error if JSON is empty after extraction."
 
-        # Simulate LLM returning ```json ``` (empty content)
         self.mock_llm_interface.generate_response.return_value = "```json\n\n```"
 
         result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
@@ -499,32 +498,33 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
         tool_name = "PartialTool"
         purpose_and_io_desc = "A tool with partial details."
 
-        # Mock LLM response for I/O parsing step - missing some keys
-        mock_io_details_json_str = json.dumps({
+        mock_io_details_partial_json_str = json.dumps({ # type: ignore
             "suggested_method_name": "do_partial_stuff",
             # "class_docstring_hint": "Missing class doc", # Missing
             "parameters": [{"name": "data", "type": "Any", "description": "Some data."}],
             # "return_type": "bool" # Missing
+            # "return_description" is also missing
         })
 
         mock_generated_code = "class PartialTool:\n    pass # Dummy generated code"
+        self.mocks['SandboxExecutor'].return_value.run.return_value = ("Partial sandbox success", None)
+
 
         self.mock_llm_interface.generate_response.side_effect = [
-            mock_io_details_json_str,
+            mock_io_details_partial_json_str,
             mock_generated_code
         ]
 
         result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
         self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
 
-        # Check that the code gen prompt used fallbacks
         code_gen_call_args = self.mock_llm_interface.generate_response.call_args_list[1]
         code_gen_prompt_arg = code_gen_call_args[1]['prompt']
-        self.assertIn(f"Class Docstring: {purpose_and_io_desc}", code_gen_prompt_arg) # Fallback for class docstring
+        self.assertIn(f"Class Docstring: {purpose_and_io_desc}", code_gen_prompt_arg)
         self.assertIn("Method Name: do_partial_stuff", code_gen_prompt_arg)
-        self.assertIn("Return Type: Any", code_gen_prompt_arg) # Fallback for return type
+        self.assertIn("Return Type: Any", code_gen_prompt_arg)
 
         self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
 
 # Need to import json for the test class
-import json
+# import json # Already imported at the top
