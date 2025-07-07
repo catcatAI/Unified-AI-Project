@@ -16,19 +16,50 @@ from .types import HSPMessageEnvelope, HSPFactPayload, \
 
 class HSPConnector:
     """
-    Manages communication with the HSP network.
-    Handles message serialization/deserialization and transport interactions.
-    Initial version uses MQTT as the transport.
+    Manages communication with the HSP network using MQTT as the transport.
+    Handles message serialization/deserialization, topic subscription, and publishing.
+
+    Features:
+    - Automatic reconnection: Utilizes Paho MQTT's built-in mechanism with
+      configurable exponential backoff (min/max delays) to automatically
+      re-establish connection if the broker becomes unavailable.
+    - Automatic re-subscription: Upon successful reconnection, previously active
+      subscriptions are automatically restored.
+    - Callback system: Allows registration of handlers for generic HSP messages
+      and specific message types (Fact, CapabilityAdvertisement, etc.).
     """
-    def __init__(self, ai_id: str, broker_address: str, broker_port: int = 1883, client_id_suffix: str = "hsp_connector"):
+    def __init__(self, ai_id: str, broker_address: str, broker_port: int = 1883,
+                 client_id_suffix: str = "hsp_connector",
+                 reconnect_min_delay: int = 1,
+                 reconnect_max_delay: int = 60):
+        """
+        Initializes the HSPConnector.
+
+        Args:
+            ai_id (str): The unique identifier for this AI instance.
+            broker_address (str): The address of the MQTT broker.
+            broker_port (int): The port of the MQTT broker.
+            client_id_suffix (str): A suffix to append to the AI ID for a unique MQTT client ID.
+            reconnect_min_delay (int): Minimum delay (seconds) before the first reconnect attempt.
+            reconnect_max_delay (int): Maximum delay (seconds) between reconnect attempts.
+                                       Paho uses exponential backoff up to this limit.
+        """
         self.ai_id: str = ai_id
         self.broker_address: str = broker_address
         self.broker_port: int = broker_port
+        self.reconnect_min_delay = reconnect_min_delay
+        self.reconnect_max_delay = reconnect_max_delay
+
         # Ensure client_id is unique if multiple instances run for the same AI, though typically one per AI.
-        self.mqtt_client_id: str = f"{self.ai_id}-{client_id_suffix}-{uuid.uuid4()}" # Unique client ID for MQTT
+        self.mqtt_client_id: str = f"{self.ai_id}-{client_id_suffix}-{uuid.uuid4().hex[:8]}" # Shorter UUID hex
 
         self.is_connected: bool = False
         self.mqtt_client: mqtt.Client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=self.mqtt_client_id)
+
+        # Configure Paho MQTT's automatic reconnection
+        self.mqtt_client.reconnect_delay_set(min_delay=self.reconnect_min_delay, max_delay=self.reconnect_max_delay)
+        print(f"HSPConnector ({self.ai_id}): MQTT auto-reconnect configured with min_delay={self.reconnect_min_delay}s, max_delay={self.reconnect_max_delay}s.")
+
         self.mqtt_client.on_connect = self._on_mqtt_connect
         self.mqtt_client.on_disconnect = self._on_mqtt_disconnect
         self.mqtt_client.on_message = self._on_mqtt_message
@@ -59,8 +90,14 @@ class HSPConnector:
 
     def _on_mqtt_disconnect(self, client, userdata, reason_code, properties):
         self.is_connected = False
-        print(f"HSPConnector ({self.ai_id}): Disconnected from MQTT Broker, reason code {reason_code}")
-        # TODO: Implement reconnection strategy
+        if reason_code == 0:
+            # MQTT_ERR_SUCCESS (0) usually means a clean disconnect initiated by client.disconnect()
+            print(f"HSPConnector ({self.ai_id}): Cleanly disconnected from MQTT Broker (reason code {reason_code}).")
+        else:
+            # Other reason codes indicate an unexpected disconnect (network issue, broker down, etc.)
+            print(f"HSPConnector ({self.ai_id}): Unexpectedly disconnected from MQTT Broker (reason code {reason_code}).")
+            print(f"HSPConnector ({self.ai_id}): Paho client will attempt to reconnect automatically (min_delay={self.reconnect_min_delay}s, max_delay={self.reconnect_max_delay}s).")
+        # The # TODO: Implement reconnection strategy is now handled by Paho's reconnect_delay_set
 
     def _on_mqtt_message(self, client, userdata, msg):
         """Handles incoming MQTT messages and forwards them to HSP message handler."""
