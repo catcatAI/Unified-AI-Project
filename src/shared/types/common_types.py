@@ -595,3 +595,83 @@ if __name__ == '__main__':
         }
     }
     print(f"Example LLMInterfaceConfig: {example_llm_interface_config}")
+
+
+# --- LIS (Linguistic Immune System) Specific Types ---
+
+# Represents the specific type of anomaly detected by LIS components.
+LIS_AnomalyType = Literal[
+    "RHYTHM_BREAK",                 # Anomaly in semantic/linguistic rhythm.
+    "UNEXPECTED_TONE_SHIFT",        # Sudden or contextually inappropriate tone shift.
+    "NARRATIVE_DIVERGENCE",         # Output deviates from established goals or logical narrative.
+    "INTERNAL_STATE_MISMATCH",      # Linguistic expression contradicts AI's internal state.
+    "SELF_REPETITION",              # Excessive self-repetition in output.
+    "EXTERNAL_ECHO_DOMINANCE",      # Undue influence from specific HSP echoes leading to repetition.
+    "LOW_DIVERSITY",                # General low linguistic diversity in output.
+    "ANTI_PATTERN_DETECTED",        # Use of known problematic grammatical structures.
+    "COHERENCE_FAILURE",            # Local semantic incoherence (e.g., "word salad").
+    "COMPLEXITY_ANOMALY",           # Sudden, unexplained change in syntactic complexity.
+    "CASCADE_ERROR_SUSPECTED",      # Minor fix leading to a cascade of new errors.
+    "FACTUAL_INCONSISTENCY_INTERNAL", # AI's statement contradicts its own knowledge base (HAM).
+    "FACTUAL_INCONSISTENCY_EXTERNAL"  # AI's statement contradicts verified external fact (advanced).
+]
+
+# Type alias for LIS severity scores, typically a float between 0.0 (minor) and 1.0 (critical).
+LIS_SeverityScore = float
+
+# Represents the outcome of an LIS intervention.
+LIS_InterventionOutcome = Literal[
+    "SUCCESS",                      # Intervention successfully resolved/mitigated the anomaly.
+    "PARTIAL_SUCCESS",              # Intervention partially addressed the anomaly.
+    "FAILURE",                      # Intervention did not resolve the anomaly.
+    "NEEDS_REVIEW",                 # Anomaly or intervention requires human review.
+    "NO_ACTION_TAKEN",              # Anomaly detected, but no intervention was performed.
+    "ESCALATED"                     # Anomaly escalated to another system or human.
+]
+
+class LIS_SemanticAnomalyDetectedEvent(TypedDict, total=False):
+    """
+    Represents a structured event payload generated when an LIS component
+    (e.g., ERR-INTROSPECTOR) detects a semantic or linguistic anomaly.
+    """
+    anomaly_id: Required[str]  # Unique identifier for this specific anomaly event (e.g., UUID).
+    timestamp: Required[str]   # ISO 8601 UTC timestamp of detection.
+    anomaly_type: Required[LIS_AnomalyType] # The type of anomaly detected.
+    severity_score: Required[LIS_SeverityScore] # Score from 0.0 (minor) to 1.0 (critical).
+    problematic_output_segment: Required[str] # The specific segment of AI output or processed text that is anomalous.
+    current_context_snapshot: Dict[str, Any] # Snapshot of relevant context (e.g., dialogue history, task state, AI emotion state).
+    expected_pattern_description: Optional[str] # Description of what was expected if the anomaly is a deviation.
+    triggering_data: Optional[Dict[str, Any]] # Optional data that triggered the anomaly (e.g., specific HSP pulse, user input segment).
+    detector_component: Optional[str] # Name of the LIS component or sub-module that detected this anomaly.
+
+class LIS_InterventionReport(TypedDict, total=False):
+    """
+    Represents a structured report detailing an intervention attempt by an LIS
+    component (e.g., TONAL_REPAIR_ENGINE) in response to a detected anomaly.
+    """
+    report_id: Required[str]  # Unique identifier for this intervention report (e.g., UUID).
+    incident_id_ref: Required[str] # Reference to the anomaly_id from LIS_SemanticAnomalyDetectedEvent.
+    timestamp: Required[str]    # ISO 8601 UTC timestamp of when the intervention was performed/logged.
+    action_taken: Required[str] # Description of the intervention action (e.g., "Rephrased segment", "Adjusted tone", "Applied Antibody_XYZ", "No action - logged only").
+    parameters_used: Optional[Dict[str, Any]] # Parameters used for the intervention (e.g., specific antibody ID, LLM prompt used for rephrasing).
+    outcome: Required[LIS_InterventionOutcome] # The outcome of the intervention.
+    reasoning: Optional[str]    # Brief reasoning for the chosen action or outcome, if applicable.
+    repaired_output_segment: Optional[str] # The new segment of AI output if a repair was made.
+
+class LIS_IncidentRecord(TypedDict, total=False):
+    """
+    Represents a comprehensive record of a linguistic/semantic incident handled
+    or logged by the LIS. This is the primary data structure for the
+    IMMUNO-NARRATIVE CACHE.
+    """
+    incident_id: Required[str] # Unique identifier for this incident record (can be same as anomaly_id if 1:1).
+    timestamp_logged: Required[str] # ISO 8601 UTC timestamp when this record was created/logged in the cache.
+    anomaly_event: Required[LIS_SemanticAnomalyDetectedEvent] # The detected anomaly event.
+    intervention_reports: Optional[List[LIS_InterventionReport]] # Optional: A list of intervention attempts and their reports. Could be multiple if retried.
+    error_bloom_ref: Optional[str] # Optional reference to an ErrorBloom event ID if related.
+    learned_antibody_ref: Optional[str] # Optional reference to a NarrativeAntibody ID if one was applied or learned from this.
+    status: Optional[Literal["OPEN", "CLOSED_RESOLVED", "CLOSED_UNRESOLVED", "MONITORING", "ESCALATED_MANUAL"]] # Current status of this incident.
+    tags: Optional[List[str]] # Tags for categorization or querying.
+    notes: Optional[str] # Any additional notes or human annotations.
+
+# --- End LIS Specific Types ---
