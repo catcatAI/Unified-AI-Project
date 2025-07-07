@@ -674,4 +674,48 @@ class LIS_IncidentRecord(TypedDict, total=False):
     tags: Optional[List[str]] # Tags for categorization or querying.
     notes: Optional[str] # Any additional notes or human annotations.
 
+# Defines the type/category of corrective action an antibody represents.
+LIS_AntibodyStrategyType = Literal[
+    "REPHRASE_LLM",             # Use an LLM to rephrase or generate alternative text.
+    "APPLY_TEMPLATE",           # Apply a predefined response template.
+    "SUGGEST_CLARIFICATION",    # Formulate a question to the user for clarification.
+    "MODIFY_CONTEXT_FLAG",      # Adjust an internal context flag or state.
+    "LOG_ONLY_ENHANCED",        # Perform enhanced logging, no direct output modification.
+    "ALERT_HUMAN_REVIEW",       # Flag the incident for human review.
+    "CUSTOM_INTERNAL_ACTION"    # Trigger a custom, specific internal function or process.
+]
+
+class NarrativeAntibodyObject(TypedDict, total=False):
+    """
+    Represents a "narrative antibody" - a learned or defined pattern or strategy
+    for responding to specific types of semantic anomalies. These are stored and
+    retrieved by the LISCacheInterface.
+    """
+    antibody_id: Required[str]  # Unique identifier for this antibody (e.g., UUID).
+    description: Optional[str]  # Human-readable description of the antibody.
+    target_anomaly_types: Required[List[LIS_AnomalyType]] # LIS_AnomalyType(s) this antibody addresses.
+
+    # Structured representation of conditions that trigger this antibody.
+    # Flexible to allow for various pattern matching techniques (keywords, semantic features, etc.)
+    # Example: {"keywords_in_segment": ["repeat", "stuck"], "context_has_flag": "user_confused"}
+    trigger_conditions: Required[Dict[str, Any]]
+
+    response_strategy_type: Required[LIS_AntibodyStrategyType] # Category of corrective action.
+
+    # Details specific to the response_strategy_type.
+    # Example for REPHRASE_LLM: {"llm_prompt_template": "Rephrase: {segment}", "model_params": {"temp": 0.6}}
+    # Example for APPLY_TEMPLATE: {"template_id": "empathy_tpl_001", "vars": ["username"]}
+    response_strategy_details: Required[Dict[str, Any]]
+
+    effectiveness_score: Optional[float]    # Historical effectiveness (0.0-1.0), updated over time.
+    usage_count: Optional[int]              # Number of times successfully applied.
+    confidence_in_applicability: Optional[float] # Dynamic score (0.0-1.0) for current situation match.
+
+    timestamp_created: Required[str]        # ISO 8601 UTC when defined/learned.
+    timestamp_last_updated: Optional[str]   # ISO 8601 UTC when last modified or effectiveness updated.
+    version: Optional[int]                  # Version number for the antibody definition.
+
+    source_incident_ids: Optional[List[str]] # LIS_IncidentRecord.incident_id(s) that led to this antibody.
+    metadata: Optional[Dict[str, Any]]       # Other relevant metadata (e.g., creator, model versions).
+
 # --- End LIS Specific Types ---
