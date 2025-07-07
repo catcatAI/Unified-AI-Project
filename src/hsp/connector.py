@@ -27,6 +27,10 @@ class HSPConnector:
       subscriptions are automatically restored.
     - Callback system: Allows registration of handlers for generic HSP messages
       and specific message types (Fact, CapabilityAdvertisement, etc.).
+    - Acknowledgement (ACK) Sending: Automatically sends an HSP "received"
+      acknowledgement if an incoming message's QoS parameters indicate
+      `requires_ack: true`. ACKs are sent to a conventional topic
+      (e.g., `hsp/acks/{sender_ai_id}`).
     """
     def __init__(self, ai_id: str, broker_address: str, broker_port: int = 1883,
                  client_id_suffix: str = "hsp_connector",
@@ -294,14 +298,47 @@ class HSPConnector:
                 # Decision: Generic callback should be for *all* messages. Specific ones are for convenience.
                     # The current structure calls generic first, then tries specific. This is acceptable.
 
-            # TODO: Implement logic for sending ACKs if the received message's qos_parameters.requires_ack is true.
-            # This would involve crafting an HSP::Acknowledgement_v0.1 message and sending it back,
-            # likely to a reply-to topic or a direct topic for the sender_ai_id.
+            # Check if an ACK is required
+            qos_params = envelope.get("qos_parameters", {})
+            if isinstance(qos_params, dict) and qos_params.get("requires_ack"):
+                self._send_acknowledgement(
+                    target_ai_id=envelope["sender_ai_id"], # ACK goes back to the original sender
+                    acknowledged_message_id=envelope["message_id"],
+                    status="received", # Mark as received
+                    # Determine reply topic for ACK - this is a simplification.
+                    # A robust system might use a dedicated reply-to field from the original message
+                    # or a pre-agreed ACK topic structure.
+                    # For now, publish to a general "acks" sub-topic for the sender.
+                    ack_topic=f"hsp/acks/{envelope['sender_ai_id']}"
+                )
 
         except json.JSONDecodeError:
             print(f"HSPConnector ({self.ai_id}): Received invalid JSON on topic '{received_on_topic}': {message_str[:200]}...") # Log snippet
+            # Consider sending NACK if possible and appropriate for JSON errors, though NACK for unparseable message is tricky.
         except Exception as e:
             print(f"HSPConnector ({self.ai_id}): Unhandled error processing HSP message from topic '{received_on_topic}': {e}")
+            # Consider sending NACK if the message was parsed but processing failed.
+
+    def _send_acknowledgement(self, target_ai_id: str, acknowledged_message_id: str, status: Literal["received", "processed"], ack_topic: str, version: str = "0.1"):
+        """Helper method to construct and send an HSP Acknowledgement message."""
+        ack_payload = HSPAcknowledgementPayload(
+            status=status,
+            ack_timestamp=datetime.now(timezone.utc).isoformat(),
+            target_message_id=acknowledged_message_id
+        )
+        ack_message_type = f"HSP::Acknowledgement_v{version}"
+
+        envelope = self._build_hsp_envelope(
+            payload=dict(ack_payload),
+            message_type=ack_message_type,
+            recipient_ai_id_or_topic=ack_topic, # The topic where the target AI listens for ACKs or its direct inbox
+            communication_pattern="acknowledgement",
+            correlation_id=acknowledged_message_id # Correlate ACK to the original message
+        )
+        print(f"HSPConnector ({self.ai_id}): Sending ACK for message '{acknowledged_message_id}' to '{target_ai_id}' on topic '{ack_topic}'. Status: {status}")
+        if not self._send_hsp_message(envelope, mqtt_topic=ack_topic):
+            print(f"HSPConnector ({self.ai_id}): Failed to send ACK for message '{acknowledged_message_id}'.")
+
 
     # Registration methods for callbacks
     def register_on_generic_message_callback(self, callback: Callable[[HSPMessageEnvelope, str], None]):
