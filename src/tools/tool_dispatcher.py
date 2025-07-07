@@ -1,14 +1,15 @@
 import re
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Callable # Added Callable
 
 # Assuming 'src' is in PYTHONPATH, making 'tools', 'core_ai', 'services' top-level packages
-from tools.math_tool import calculate as math_calculate
-from tools.logic_tool import evaluate_expression as logic_evaluate
-from tools.translation_tool import translate as translate_text
-from tools.code_understanding_tool import CodeUnderstandingTool # Added
-from core_ai.language_models.daily_language_model import DailyLanguageModel
-from services.llm_interface import LLMInterface
-from shared.types.common_types import ToolDispatcherResponse # Import new response type
+# Correcting imports to be absolute from project root (assuming /app is project root)
+from src.tools.math_tool import calculate as math_calculate
+from src.tools.logic_tool import evaluate_expression as logic_evaluate
+from src.tools.translation_tool import translate as translate_text
+from src.tools.code_understanding_tool import CodeUnderstandingTool
+from src.core_ai.language_models.daily_language_model import DailyLanguageModel
+from src.services.llm_interface import LLMInterface
+from src.shared.types.common_types import ToolDispatcherResponse # Import new response type
 from typing import Literal # For literal status types
 
 class ToolDispatcher:
@@ -208,10 +209,22 @@ class ToolDispatcher:
                                 text_to_translate = text_to_translate[:-(len(f" to {to_lang_match_general.group(1).lower()}"))].strip()
 
                         else: # Cannot determine text to translate from query string if not using kwargs
-                             return "Sorry, I couldn't understand what text to translate from the query."
+                            return ToolDispatcherResponse(
+                                status="error_dispatcher_issue",
+                                payload=None,
+                                tool_name_attempted="translate_text",
+                                original_query_for_tool=query,
+                                error_message="Sorry, I couldn't understand what text to translate from the query."
+                            )
 
             if not text_to_translate: # Ensure text is not empty
-                 return "Sorry, no text to translate was found."
+                return ToolDispatcherResponse(
+                    status="error_dispatcher_issue",
+                    payload=None,
+                    tool_name_attempted="translate_text",
+                    original_query_for_tool=query,
+                    error_message="Sorry, no text to translate was found."
+                )
 
             # Use source_lang_from_kwarg if provided, otherwise it's None (for auto-detect)
             result_payload = translate_text(text_to_translate, resolved_target_lang, source_language=source_lang_from_kwarg)

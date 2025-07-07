@@ -7,7 +7,7 @@ import re # For more robust mock matching
 
 # Attempt to import LLMInterfaceConfig, handle if module run directly or types not generated yet
 # Assuming 'src' is in PYTHONPATH, making 'shared' a top-level package
-from shared.types.common_types import (
+from src.shared.types.common_types import ( # Added src.
     LLMInterfaceConfig, LLMProviderOllamaConfig,
     LLMProviderOpenAIConfig, OperationalConfig, LLMModelInfo # Added LLMModelInfo
 )
