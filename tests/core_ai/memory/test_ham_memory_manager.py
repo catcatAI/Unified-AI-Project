@@ -10,10 +10,15 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src')))
 
 from core_ai.memory.ham_memory_manager import HAMMemoryManager
-from shared.types.common_types import DialogueMemoryEntryMetadata, HAMRecallResult # Import new types
+from shared.types.common_types import (
+    DialogueMemoryEntryMetadata, HAMRecallResult,
+    SimulatedDiskConfig, SimulatedHardwareProfile, SimulatedCPUConfig, SimulatedRAMConfig
+)
+from services.resource_awareness_service import ResourceAwarenessService # New import
 from cryptography.fernet import Fernet, InvalidToken # For testing invalid token
 import hashlib # For testing checksums
-from unittest.mock import patch # For mocking
+from unittest.mock import patch, MagicMock # For mocking
+import time # For testing lag
 
 # Define a consistent test output directory (relative to project root)
 PROJECT_ROOT_FOR_TEST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -24,10 +29,33 @@ class TestHAMMemoryManager(unittest.TestCase):
 
     def setUp(self):
         self.test_filename = "test_ham_core_memory.json"
-        self.ham_manager = HAMMemoryManager(core_storage_filename=self.test_filename)
-        if os.path.exists(self.ham_manager.core_storage_filepath):
-            os.remove(self.ham_manager.core_storage_filepath)
-        self.ham_manager = HAMMemoryManager(core_storage_filename=self.test_filename)
+        # Ensure the TEST_STORAGE_DIR exists for HAM to place its file.
+        os.makedirs(TEST_STORAGE_DIR, exist_ok=True)
+
+        # Standard HAM manager without resource awareness for most tests
+        self.ham_manager_no_res = HAMMemoryManager(core_storage_filename=self.test_filename)
+        if os.path.exists(self.ham_manager_no_res.core_storage_filepath):
+            os.remove(self.ham_manager_no_res.core_storage_filepath)
+        # Re-initialize to ensure it creates a new file if it was removed
+        self.ham_manager_no_res = HAMMemoryManager(core_storage_filename=self.test_filename)
+
+        # For resource awareness tests, we'll set up a specific HAM manager with a mock service
+        self.mock_resource_service = MagicMock(spec=ResourceAwarenessService)
+        self.ham_manager_with_res = HAMMemoryManager(
+            core_storage_filename="test_ham_res_aware_memory.json",
+            resource_awareness_service=self.mock_resource_service
+        )
+        if os.path.exists(self.ham_manager_with_res.core_storage_filepath):
+            os.remove(self.ham_manager_with_res.core_storage_filepath)
+        # Re-initialize this one too
+        self.ham_manager_with_res = HAMMemoryManager(
+            core_storage_filename="test_ham_res_aware_memory.json",
+            resource_awareness_service=self.mock_resource_service
+        )
+
+        # Use self.ham_manager for existing tests to avoid breaking them immediately.
+        # Tests for resource awareness will use self.ham_manager_with_res.
+        self.ham_manager = self.ham_manager_no_res
 
 
     def tearDown(self):
@@ -264,6 +292,107 @@ class TestHAMMemoryManager(unittest.TestCase):
         self.assertIn("Radicals (Placeholder):", recalled_chn["rehydrated_gist"])
         self.assertNotIn("POS Tags (Placeholder):", recalled_chn["rehydrated_gist"])
         print("test_12_advanced_text_abstraction_placeholders PASSED")
+
+    # --- Tests for Resource Awareness ---
+    def test_13_store_experience_simulated_disk_full(self):
+        print("\nRunning test_13_store_experience_simulated_disk_full...")
+        # Configure mock resource service to report disk as full
+        disk_config_full: SimulatedDiskConfig = { # type: ignore
+            "space_gb": 1.0, # Simulated total space
+            "warning_threshold_percent": 80,
+            "critical_threshold_percent": 95,
+            "lag_factor_warning": 1.0,
+            "lag_factor_critical": 1.0
+        }
+        self.mock_resource_service.get_simulated_disk_config.return_value = disk_config_full
+
+        # Mock _get_current_disk_usage_gb to report usage AT or EXCEEDING the limit
+        # The save operation itself might add a few bytes, so check against total.
+        with patch.object(self.ham_manager_with_res, '_get_current_disk_usage_gb', return_value=1.0) as mock_get_usage:
+            # Try to store an experience
+            exp_id = self.ham_manager_with_res.store_experience("Data that won't fit", "test_data_disk_full")
+
+            self.assertIsNone(exp_id, "store_experience should return None when simulated disk is full.")
+            mock_get_usage.assert_called() # Should be called by _simulate_disk_lag_and_check_limit
+
+            # Verify that the in-memory store also did not grow (or was reverted)
+            self.assertEqual(len(self.ham_manager_with_res.core_memory_store), 0,
+                             "In-memory store should not contain the item if save failed due to disk full.")
+        print("test_13_store_experience_simulated_disk_full PASSED")
+
+
+    @patch('time.sleep', return_value=None) # Mock time.sleep to avoid actual delays
+    def test_14_store_experience_simulated_lag_warning(self, mock_sleep: MagicMock):
+        print("\nRunning test_14_store_experience_simulated_lag_warning...")
+        disk_config_warning: SimulatedDiskConfig = { # type: ignore
+            "space_gb": 10.0,
+            "warning_threshold_percent": 70, # Warning at 7GB
+            "critical_threshold_percent": 95, # Critical at 9.5GB
+            "lag_factor_warning": 2.0,
+            "lag_factor_critical": 5.0
+        }
+        self.mock_resource_service.get_simulated_disk_config.return_value = disk_config_warning
+
+        # Simulate disk usage at 8GB (80% of 10GB), which is above warning (70%) but below critical (95%)
+        with patch.object(self.ham_manager_with_res, '_get_current_disk_usage_gb', return_value=8.0):
+            with patch('builtins.print') as mock_print: # To check log messages
+                exp_id = self.ham_manager_with_res.store_experience("Lag test data - warning", "lag_test_warning")
+                self.assertIsNotNone(exp_id, "Experience should still be stored in warning state.")
+
+                mock_sleep.assert_called_once()
+                expected_lag = self.ham_manager_with_res.BASE_SAVE_DELAY_SECONDS * disk_config_warning["lag_factor_warning"]
+                self.assertAlmostEqual(mock_sleep.call_args[0][0], expected_lag, places=5)
+
+                printed_texts = "".join(str(call_arg[0][0]) for call_arg in mock_print.call_args_list if call_arg[0])
+                self.assertIn("INFO - Simulated disk usage", printed_texts)
+                self.assertIn("is at WARNING level", printed_texts)
+        print("test_14_store_experience_simulated_lag_warning PASSED")
+
+    @patch('time.sleep', return_value=None) # Mock time.sleep
+    def test_15_store_experience_simulated_lag_critical(self, mock_sleep: MagicMock):
+        print("\nRunning test_15_store_experience_simulated_lag_critical...")
+        disk_config_critical: SimulatedDiskConfig = { # type: ignore
+            "space_gb": 10.0,
+            "warning_threshold_percent": 80, # Warning at 8GB
+            "critical_threshold_percent": 90, # Critical at 9GB
+            "lag_factor_warning": 1.5,
+            "lag_factor_critical": 4.0
+        }
+        self.mock_resource_service.get_simulated_disk_config.return_value = disk_config_critical
+
+        # Simulate disk usage at 9.5GB (95% of 10GB), which is above critical (90%)
+        with patch.object(self.ham_manager_with_res, '_get_current_disk_usage_gb', return_value=9.5):
+             with patch('builtins.print') as mock_print:
+                exp_id = self.ham_manager_with_res.store_experience("Lag test data - critical", "lag_test_critical")
+                self.assertIsNotNone(exp_id, "Experience should still be stored in critical state (if not full).")
+
+                mock_sleep.assert_called_once()
+                expected_lag = self.ham_manager_with_res.BASE_SAVE_DELAY_SECONDS * disk_config_critical["lag_factor_critical"]
+                self.assertAlmostEqual(mock_sleep.call_args[0][0], expected_lag, places=5)
+
+                printed_texts = "".join(str(call_arg[0][0]) for call_arg in mock_print.call_args_list if call_arg[0])
+                self.assertIn("WARNING - Simulated disk usage", printed_texts)
+                self.assertIn("is at CRITICAL level", printed_texts)
+        print("test_15_store_experience_simulated_lag_critical PASSED")
+
+    def test_16_get_current_disk_usage_gb(self):
+        print("\nRunning test_16_get_current_disk_usage_gb...")
+        # Test when file doesn't exist (using ham_manager_with_res as its file is cleaned up and not auto-created by default HAM init)
+        # Ensure its specific file is gone for this part of the test
+        if os.path.exists(self.ham_manager_with_res.core_storage_filepath):
+            os.remove(self.ham_manager_with_res.core_storage_filepath)
+        self.assertAlmostEqual(self.ham_manager_with_res._get_current_disk_usage_gb(), 0.0, "Disk usage should be 0 if file does not exist.")
+
+        # Test with an actual file (small) - use the ham_manager_no_res instance that does create its file
+        self.ham_manager_no_res.store_experience("some data to create file", "test_file_size")
+        file_path = self.ham_manager_no_res.core_storage_filepath
+        self.assertTrue(os.path.exists(file_path))
+
+        actual_size_bytes = os.path.getsize(file_path)
+        expected_gb = actual_size_bytes / (1024**3)
+
+        self.assertAlmostEqual(self.ham_manager_no_res._get_current_disk_usage_gb(), expected_gb, places=9)
+        print("test_16_get_current_disk_usage_gb PASSED")
 
 if __name__ == '__main__':
     os.makedirs(TEST_STORAGE_DIR, exist_ok=True)

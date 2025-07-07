@@ -17,13 +17,14 @@ from src.shared.types.common_types import (
     VirtualMouseCommand,
     VirtualKeyboardCommand,
     VirtualMouseEventType,
-    VirtualKeyboardActionType
-    # VirtualInputElementDescription will be used by the AI agent, not directly by service input for now
+    VirtualKeyboardActionType,
+    VirtualInputElementDescription # Added this import
 )
 
 # Further imports will be added as the class is implemented.
 # For example, datetime for logging timestamps.
 from datetime import datetime, timezone
+import copy # For deepcopy
 
 class AIVirtualInputService:
     """
@@ -48,8 +49,53 @@ class AIVirtualInputService:
         self.virtual_focused_element_id: Optional[str] = None
         self.action_log: List[Dict[str, Any]] = [] # Stores a log of commands processed
 
+        # Holds the current state of the virtual UI elements
+        self.virtual_ui_elements: List[VirtualInputElementDescription] = []
+
         print(f"AIVirtualInputService initialized in '{self.mode}' mode.")
         print(f"  Initial virtual cursor: {self.virtual_cursor_position}")
+
+    def load_virtual_ui(self, elements: List[VirtualInputElementDescription]) -> None:
+        """
+        Loads or replaces the current virtual UI with a new set of elements.
+        Args:
+            elements: A list of VirtualInputElementDescription representing the new UI state.
+        """
+        self.virtual_ui_elements = copy.deepcopy(elements) # Store a copy
+        print(f"AVIS: Virtual UI loaded with {len(self.virtual_ui_elements)} top-level elements.")
+
+    def get_current_virtual_ui(self) -> List[VirtualInputElementDescription]:
+        """
+        Returns a deep copy of the current virtual UI element structure.
+        This serves as the AI's way to "see" the simulated screen/window.
+        """
+        return copy.deepcopy(self.virtual_ui_elements)
+
+    def _find_element_by_id(self, element_id: str, search_list: Optional[List[VirtualInputElementDescription]] = None) -> Optional[VirtualInputElementDescription]:
+        """
+        Recursively searches for an element by its ID within a list of elements
+        (and their children).
+
+        Args:
+            element_id (str): The ID of the element to find.
+            search_list (Optional[List[VirtualInputElementDescription]]): The list of elements
+                to search within. If None, searches self.virtual_ui_elements.
+
+        Returns:
+            Optional[VirtualInputElementDescription]: The found element, or None.
+        """
+        if search_list is None:
+            search_list = self.virtual_ui_elements
+
+        for element in search_list:
+            if element.get("element_id") == element_id:
+                return element
+            children = element.get("children")
+            if children: # If it's a list and not None
+                found_in_children = self._find_element_by_id(element_id, children)
+                if found_in_children:
+                    return found_in_children
+        return None
 
     def _log_action(self, command_type: str, command_details: Dict[str, Any], outcome: Dict[str, Any]) -> None:
         log_entry = {
@@ -172,10 +218,35 @@ class AIVirtualInputService:
             # In simulation, we just log that text would be typed, presumably into focused element.
             type_details = {
                 "text_typed": text_to_type,
-                "target_element_id": self.virtual_focused_element_id
+                "target_element_id": self.virtual_focused_element_id,
+                "value_updated": False
             }
+
+            element_to_type_in = None
+            if self.virtual_focused_element_id: # Prefer typing into already focused element if no new target
+                element_to_type_in = self._find_element_by_id(self.virtual_focused_element_id)
+
+            if target_element: # If a specific target is given, override focus for this action
+                self.virtual_focused_element_id = target_element
+                element_to_type_in = self._find_element_by_id(target_element)
+                print(f"  AVIS Sim: Focused element set to '{target_element}' for typing.")
+
+            if element_to_type_in:
+                # Check if element can receive text, e.g. "text_field", "textarea"
+                # For now, we'll assume if it has a 'value' attribute, it can be typed into.
+                if "value" in element_to_type_in: # Check if element has 'value' attribute
+                    # Decide on append vs overwrite logic if needed in future. For now, overwrite.
+                    element_to_type_in["value"] = text_to_type
+                    type_details["value_updated"] = True
+                    type_details["updated_element_id"] = element_to_type_in.get("element_id")
+                    print(f"  AVIS Sim: Element '{element_to_type_in.get('element_id')}' value updated to '{text_to_type}'.")
+                else:
+                    print(f"  AVIS Sim: Element '{element_to_type_in.get('element_id')}' not a text input type (no 'value' attribute). Typing simulated by log only.")
+            else:
+                print(f"  AVIS Sim: No target element found or focused for typing. Typing simulated by log only.")
+
             outcome = {"status": "simulated", "action": "type_string", "details": type_details}
-            print(f"  AVIS Sim: Typing logged: '{text_to_type}' into focused '{self.virtual_focused_element_id or 'unknown'}'.")
+            print(f"  AVIS Sim: Typing action processed. Text: '{text_to_type}', Target: '{self.virtual_focused_element_id or 'none'}', Value Updated: {type_details['value_updated']}.")
 
         elif action_type == "press_keys":
             keys_pressed = command.get("keys", [])

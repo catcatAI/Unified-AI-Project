@@ -12,27 +12,28 @@ import re # Added for regex in _is_kg_query
 # Removed redundant json import: import json # Added for parsing LLM response for I/O details
 import ast # Added for syntax validation of generated code
 
-from core_ai.personality.personality_manager import PersonalityManager
-from core_ai.memory.ham_memory_manager import HAMMemoryManager
-from services.llm_interface import LLMInterface, LLMInterfaceConfig
-from core_ai.emotion_system import EmotionSystem
-from core_ai.crisis_system import CrisisSystem
-from core_ai.time_system import TimeSystem
-from core_ai.formula_engine import FormulaEngine
-from tools.tool_dispatcher import ToolDispatcher
-from core_ai.learning.self_critique_module import SelfCritiqueModule
-from core_ai.learning.fact_extractor_module import FactExtractorModule
-from core_ai.learning.learning_manager import LearningManager
-from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from services.sandbox_executor import SandboxExecutor
+from src.core_ai.personality.personality_manager import PersonalityManager
+from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from src.services.llm_interface import LLMInterface, LLMInterfaceConfig
+from src.core_ai.emotion_system import EmotionSystem
+from src.core_ai.crisis_system import CrisisSystem
+from src.core_ai.time_system import TimeSystem
+from src.core_ai.formula_engine import FormulaEngine
+from src.tools.tool_dispatcher import ToolDispatcher
+from src.core_ai.learning.self_critique_module import SelfCritiqueModule
+from src.core_ai.learning.fact_extractor_module import FactExtractorModule
+from src.core_ai.learning.learning_manager import LearningManager
+from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+from src.services.sandbox_executor import SandboxExecutor
+from src.services.resource_awareness_service import ResourceAwarenessService # Added import
 import networkx as nx
-from shared.types.common_types import (
+from src.shared.types.common_types import ( # Added src.
     FormulaConfigEntry, CritiqueResult, OperationalConfig, DialogueTurn,
     PendingHSPTaskInfo, ParsedToolIODetails, DialogueMemoryEntryMetadata # Added missing DialogueMemoryEntryMetadata
 )
-from hsp.connector import HSPConnector
-from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPCapabilityAdvertisementPayload, HSPFactPayload
+from src.hsp.connector import HSPConnector # Added src.
+from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPCapabilityAdvertisementPayload, HSPFactPayload, HSPMessageEnvelope # Added src. and HSPMessageEnvelope
 
 
 class DialogueManager:
@@ -67,7 +68,14 @@ class DialogueManager:
         self.pending_hsp_task_requests: Dict[str, PendingHSPTaskInfo] = {}
 
         self.personality_manager = personality_manager if personality_manager else PersonalityManager()
-        self.memory_manager = memory_manager if memory_manager else HAMMemoryManager(core_storage_filename="dialogue_context_memory.json")
+
+        # Initialize ResourceAwarenessService first if HAM is to be default-instantiated
+        self.resource_awareness_service = ResourceAwarenessService() # Uses default config path
+
+        self.memory_manager = memory_manager if memory_manager else HAMMemoryManager(
+            core_storage_filename="dialogue_context_memory.json",
+            resource_awareness_service=self.resource_awareness_service # Pass it here
+        )
 
         # LLMInterface expects a config that might contain OperationalConfig, not OperationalConfig directly.
         # If self.config is OperationalConfig, we might need to wrap it or LLMInterface needs adjustment.
@@ -759,5 +767,4 @@ if __name__ == '__main__':
             except Exception as e: print(f"Error cleaning up test HAM file: {e}")
 
     asyncio.run(main_dm_test())
-
-[end of src/core_ai/dialogue/dialogue_manager.py]
+# Removed [end of src/core_ai/dialogue/dialogue_manager.py] marker

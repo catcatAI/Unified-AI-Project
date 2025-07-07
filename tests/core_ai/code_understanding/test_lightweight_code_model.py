@@ -5,7 +5,7 @@ import glob
 import ast # Ensure ast is imported for any direct ast comparisons if needed, though unparse is main
 
 # Assuming src is in PYTHONPATH for test execution
-from core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
+from src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
 
 class TestLightweightCodeModel(unittest.TestCase):
 
