@@ -9,8 +9,8 @@ import json
 import ast
 
 # Assuming src is in PYTHONPATH for test execution
-from core_ai.dialogue.dialogue_manager import DialogueManager
-from shared.types.common_types import (
+from src.core_ai.dialogue.dialogue_manager import DialogueManager # Changed
+from src.shared.types.common_types import ( # Changed
     OperationalConfig, DialogueTurn, PendingHSPTaskInfo,
     ParsedToolIODetails, CritiqueResult, ToolDispatcherResponse, # Added for completeness if DM uses them directly
     FormulaConfigEntry, DialogueMemoryEntryMetadata
@@ -344,18 +344,18 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
         }
 
         patchers = {
-            'PersonalityManager': patch('core_ai.dialogue.dialogue_manager.PersonalityManager', return_value=self.mock_personality_manager),
-            'HAMMemoryManager': patch('core_ai.dialogue.dialogue_manager.HAMMemoryManager'),
-            'EmotionSystem': patch('core_ai.dialogue.dialogue_manager.EmotionSystem'),
-            'CrisisSystem': patch('core_ai.dialogue.dialogue_manager.CrisisSystem'),
-            'TimeSystem': patch('core_ai.dialogue.dialogue_manager.TimeSystem'),
-            'FormulaEngine': patch('core_ai.dialogue.dialogue_manager.FormulaEngine'),
-            'ToolDispatcher': patch('core_ai.dialogue.dialogue_manager.ToolDispatcher'),
-            'SelfCritiqueModule': patch('core_ai.dialogue.dialogue_manager.SelfCritiqueModule'),
-            'FactExtractorModule': patch('core_ai.dialogue.dialogue_manager.FactExtractorModule'),
-            'LearningManager': patch('core_ai.dialogue.dialogue_manager.LearningManager'),
-            'ContentAnalyzerModule': patch('core_ai.dialogue.dialogue_manager.ContentAnalyzerModule'),
-            'SandboxExecutor': patch('core_ai.dialogue.dialogue_manager.SandboxExecutor')
+            'PersonalityManager': patch('src.core_ai.dialogue.dialogue_manager.PersonalityManager', return_value=self.mock_personality_manager),
+            'HAMMemoryManager': patch('src.core_ai.dialogue.dialogue_manager.HAMMemoryManager'),
+            'EmotionSystem': patch('src.core_ai.dialogue.dialogue_manager.EmotionSystem'),
+            'CrisisSystem': patch('src.core_ai.dialogue.dialogue_manager.CrisisSystem'),
+            'TimeSystem': patch('src.core_ai.dialogue.dialogue_manager.TimeSystem'),
+            'FormulaEngine': patch('src.core_ai.dialogue.dialogue_manager.FormulaEngine'),
+            'ToolDispatcher': patch('src.core_ai.dialogue.dialogue_manager.ToolDispatcher'),
+            'SelfCritiqueModule': patch('src.core_ai.dialogue.dialogue_manager.SelfCritiqueModule'),
+            'FactExtractorModule': patch('src.core_ai.dialogue.dialogue_manager.FactExtractorModule'),
+            'LearningManager': patch('src.core_ai.dialogue.dialogue_manager.LearningManager'),
+            'ContentAnalyzerModule': patch('src.core_ai.dialogue.dialogue_manager.ContentAnalyzerModule'),
+            'SandboxExecutor': patch('src.core_ai.dialogue.dialogue_manager.SandboxExecutor')
         }
         self.mocks = {name: patcher.start() for name, patcher in patchers.items()}
         for patcher in patchers.values():
