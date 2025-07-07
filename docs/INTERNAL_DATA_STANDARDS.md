@@ -66,6 +66,7 @@ The primary mechanism for defining structured data objects for internal exchange
 
 *   **Pydantic:** For scenarios requiring runtime data validation, coercion, serialization/deserialization features, or more complex data model definitions (e.g., with custom validators, computed fields), Pydantic is a strong candidate.
 *   **Current Standard:** While Pydantic offers more features, `TypedDict` is the current standard for its lightweight nature, static analysis benefits, and sufficiency for many internal data exchange needs. A transition to Pydantic can be considered on a case-by-case basis if the benefits outweigh the added dependency and complexity for a specific component.
+*   **Pydantic for API Models:** It is noted that Pydantic is used in `src/services/api_models.py` for defining data structures for external API request/response validation. This is a common and appropriate use of Pydantic for data validation and serialization at API boundaries, and is distinct from the `TypedDict` standard for internal data exchange between Python modules.
 
 ## 8. Scope and Distinction from HSP
 
