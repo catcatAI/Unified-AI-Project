@@ -1,4 +1,4 @@
-# AI Virtual Input System - Design Specification v0.1
+# AI Virtual Input System - Design Specification v0.2
 
 ## 1. Introduction
 
@@ -34,17 +34,22 @@ The AI will primarily interact with GUI elements symbolically rather than throug
 
 ### 3.3. Feedback Mechanism (AI Perception of UI)
 For the AI to make informed decisions and use element IDs or relative coordinates effectively, it needs to "perceive" the UI.
-*   **Initial Simulation Model:** The AVIS will provide a mocked or simplified representation of the UI to the AI. This will likely be a structured data format (e.g., a list of `VirtualInputElementDescription` objects) returned in response to a query like `get_screen_elements()`. This structure will describe available elements, their types, labels, relative bounds, and other relevant properties.
-*   **Future (for Actual Control):** Integration with OS-level accessibility APIs, screen scraping with OCR, or specialized computer vision models would be necessary to parse real application UIs. This is a significant research and development area.
+*   **Initial Simulation Model (v0.1-v0.2 AVIS Implementation):**
+    *   The AVIS service can now maintain an internal state representing a simple, single virtual window/UI (`self.virtual_ui_elements`).
+    *   This state is a list of `VirtualInputElementDescription` objects, which can be loaded via a method like `avis.load_virtual_ui([...])`.
+    *   The AI can "perceive" this current virtual UI by calling a method like `avis.get_current_virtual_ui() -> List[VirtualInputElementDescription]`. This method effectively serves the role of the originally conceptualized `get_screen_elements()` for the simulated environment.
+    *   This allows the AI to receive a structured description of available elements, their types, labels, values, states, and conceptual relative bounds.
+*   **Stateful Simulation:** Crucially, AI actions like typing into a field (`action_type="type_string"` on a `VirtualKeyboardCommand`) now modify the `value` attribute of the corresponding `VirtualInputElementDescription` within AVIS's internal `virtual_ui_elements` state. Similarly, a click can update the `virtual_focused_element_id`. This means the AI can observe the results of its actions in subsequent calls to `get_current_virtual_ui()`.
+*   **Future (for Actual Control & Advanced Simulation):** As previously noted, integration with OS-level accessibility APIs, screen scraping with OCR, or specialized computer vision models would be necessary to parse real application UIs or more complex simulated environments. The "Advanced Feedback Mechanisms" in Section 8 further detail this.
 
-## 4. Supported Virtual Actions
+## 4. Supported Virtual Actions (and their effects on simulated state)
 
-The AVIS will support a range of mouse and keyboard actions. These actions will be represented by commands sent to the AVIS.
+The AVIS will support a range of mouse and keyboard actions. These actions are represented by commands sent to the AVIS. In simulation mode, these primarily result in logging and updates to the AVIS's internal virtual state.
 
 ### 4.1. Mouse Actions
-*   `get_screen_elements()`: AI requests a description of currently "visible" UI elements within the current context (e.g., active window or full screen for simulation).
-*   `focus_element(element_id: str)`: Sets the virtual input focus to the specified UI element.
-*   `click_element(element_id: str, click_type: Literal['left', 'right', 'double'], relative_x: Optional[float], relative_y: Optional[float])`: Simulates a click on a specified element. `relative_x` and `relative_y` (0.0-1.0) are offsets within the element's bounds, defaulting to its center (0.5, 0.5).
+*   `get_current_virtual_ui()`: (Replaces conceptual `get_screen_elements()`) AI requests a description of currently "visible" UI elements within the AVIS's managed virtual window.
+*   `focus_element(element_id: str)`: (Conceptual AVIS command, or handled by `click`) Sets the virtual input focus (`virtual_focused_element_id` in AVIS) to the specified UI element. A `click` action also updates this focus.
+*   `click_element(element_id: str, click_type: Literal['left', 'right', 'double'], relative_x: Optional[float], relative_y: Optional[float])`: Simulates a click. **Effect on State:** Updates `virtual_focused_element_id`. Future enhancements could allow clicks to modify attributes of the clicked element or other elements in the `virtual_ui_elements` based on predefined rules for simulated interactive elements (e.g., toggling a checkbox's 'value' or 'is_checked' attribute).
 *   `hover_element(element_id: str, relative_x: Optional[float], relative_y: Optional[float])`: Simulates moving the virtual mouse pointer over a specified element, potentially at a relative position within it.
 *   `drag_element_to_position(source_element_id: str, target_window_relative_x: float, target_window_relative_y: float)`: Simulates clicking and dragging an element to a specified relative position within the current window/screen.
 *   `drag_element_to_element(source_element_id: str, target_element_id: str)`: Simulates clicking and dragging an element onto another target element.
@@ -52,9 +57,9 @@ The AVIS will support a range of mouse and keyboard actions. These actions will 
 *   `move_mouse_relative(delta_x_ratio: float, delta_y_ratio: float)`: Moves the virtual mouse pointer by a ratio of the current screen/window dimensions from its current position.
 
 ### 4.2. Keyboard Actions
-*   `type_string(text: str, target_element_id: Optional[str])`: Simulates typing a string of characters. If `target_element_id` is provided, AVIS first attempts to focus that element. Otherwise, it types into the currently virtually focused element.
-*   `press_keys(keys: List[str], target_element_id: Optional[str])`: Simulates pressing one or more keys simultaneously or in sequence. This can include modifier keys (e.g., `['ctrl', 'alt', 't']` for Ctrl+Alt+T, or `['shift', 'a']` for 'A') and regular keys. For simple keys, press-and-release is implied. For modifiers, a more advanced implementation might require separate `hold_key` and `release_key` actions if sustained presses are needed, but for v0.1, `press_keys` will simulate the combined effect.
-*   `special_key(key_name: Literal['enter', 'tab', 'esc', ...], target_element_id: Optional[str])`: Simulates pressing a special non-character key.
+*   `type_string(text: str, target_element_id: Optional[str])`: Simulates typing a string of characters. If `target_element_id` is provided, AVIS first attempts to find and (virtually) focus that element. If successful and the element is typable (e.g., has a `value` attribute), its `value` in the `virtual_ui_elements` state is updated. Otherwise, it types into the currently virtually focused element if it's typable.
+*   `press_keys(keys: List[str], target_element_id: Optional[str])`: Simulates pressing one or more keys. If `target_element_id` is provided, `virtual_focused_element_id` is updated. **Effect on State:** Primarily updates focus; direct modification of element values by key presses (other than `type_string`) is not deeply simulated yet (e.g., 'Enter' submitting a form).
+*   `special_key(key_name: Literal['enter', 'tab', 'esc', ...], target_element_id: Optional[str])`: Simulates pressing a special non-character key. If `target_element_id` is provided, `virtual_focused_element_id` is updated. **Effect on State:** Similar to `press_keys`; specific behaviors of special keys on UI elements (e.g., 'Tab' changing focus, 'Enter' activating a button) are not deeply simulated in v0.1 but are logged.
 
 ## 5. API and Data Structures (TypedDicts)
 
@@ -108,13 +113,17 @@ A simple, two-tier permissions model will be implemented initially:
 
 ## 7. Simulation Environment & Feedback Loop
 
-*   **Initial Virtual Environment:** For simulation, the "screen" and its "elements" will be represented by data structures (e.g., a JSON object describing a window, its buttons, text fields, etc., using `VirtualInputElementDescription`). This can be predefined for specific scenarios or dynamically generated by a test harness.
-*   **AI Interaction Loop (Simulated):**
-    1.  AI (via a tool or agent logic) queries the AVIS for the current UI state: `get_screen_elements()`.
-    2.  AVIS returns the list of `VirtualInputElementDescription`s for the current (simulated) view.
-    3.  AI analyzes this information and decides on an action (e.g., click a button with a specific `element_id`).
-    4.  AI sends a `VirtualMouseCommand` or `VirtualKeyboardCommand` to AVIS.
-    5.  AVIS (in simulation mode) logs the command, potentially updates its internal model of the virtual UI (e.g., a button click might "open" a new virtual dialog, which would be reflected in the next `get_screen_elements()` call), and returns a success/failure status for the virtual action.
+*   **Virtual Environment State:** The AVIS service now maintains an internal list of `VirtualInputElementDescription` objects (`virtual_ui_elements`) representing the current state of the simulated window. This state can be loaded using `avis.load_virtual_ui()`.
+*   **AI Interaction Loop (Simulated v0.2):**
+    1.  **(Setup)** An external process or test harness loads an initial UI state into AVIS using `avis.load_virtual_ui(initial_elements)`.
+    2.  AI (via a tool or agent logic) queries AVIS for the current UI state: `current_elements = avis.get_current_virtual_ui()`.
+    3.  AI analyzes `current_elements` to identify target elements and decide on an action.
+    4.  AI sends a `VirtualMouseCommand` or `VirtualKeyboardCommand` to `avis.process_mouse_command()` or `avis.process_keyboard_command()`.
+    5.  AVIS (in simulation mode):
+        *   Logs the command.
+        *   Updates its internal `virtual_ui_elements` state if the action has a defined effect (e.g., typing into a text field updates its `value`; clicking an element updates `virtual_focused_element_id`).
+        *   Returns a status indicating the outcome of the simulated action (e.g., whether a field's value was updated).
+    6.  The AI can then call `get_current_virtual_ui()` again to perceive the results of its action on the virtual UI.
 
 ## 8. Open Questions and Future Considerations
 
