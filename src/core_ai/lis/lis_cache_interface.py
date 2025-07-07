@@ -11,17 +11,39 @@ adaptive capabilities.
 
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
+import json # Added for HAMLISCache conceptual serialization
 
 # Assuming types will be imported from shared.types
-from shared.types.common_types import (
+from src.shared.types.common_types import (
     LIS_IncidentRecord,
     LIS_SemanticAnomalyDetectedEvent,
     LIS_AnomalyType,
-    LIS_InterventionReport # Added LIS_InterventionReport
+    LIS_InterventionReport
+    # Constants like HAM_META_LIS_OBJECT_ID are defined below in this file
+    # and thus should not be imported from common_types here.
 )
+# Import HAMMemoryManager for type hinting in the concrete implementation.
+from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+
+
+# --- Constants for HAMLISCache ---
+# These constants are defined here as they are specific to the HAMLISCache implementation details
+# and its interaction with HAM metadata.
+LIS_INCIDENT_DATA_TYPE_PREFIX = "lis_incident_v0.1_"
+LIS_ANTIBODY_DATA_TYPE_PREFIX = "lis_antibody_v0.1_"
+
+# Metadata field names for HAM records storing LIS objects
+HAM_META_LIS_OBJECT_ID = "lis_object_id"
+HAM_META_LIS_ANOMALY_TYPE = "lis_anomaly_type"
+HAM_META_LIS_STATUS = "lis_status"
+HAM_META_LIS_TAGS = "lis_tags"
+HAM_META_TIMESTAMP_LOGGED = "timestamp_logged"
+HAM_META_ANTIBODY_FOR_ANOMALY = "lis_antibody_for_anomaly"
+HAM_META_ANTIBODY_EFFECTIVENESS = "lis_antibody_effectiveness"
+# --- End Constants ---
+
 
 # Placeholder for Antibody type, will be refined later
-# Using a more specific name for clarity if it's intended to be an object/dict
 NarrativeAntibodyObject = Dict[str, Any]
 
 
@@ -62,7 +84,7 @@ class LISCacheInterface(ABC):
     def query_incidents(self,
                         anomaly_type: Optional[LIS_AnomalyType] = None,
                         min_severity: Optional[float] = None,
-                        status: Optional[str] = None, # Should use a Literal type for status later (e.g., LIS_IncidentStatus)
+                        status: Optional[str] = None, # Should use a Literal type for status later (e.g., LIS_IncidentStatus from common_types)
                         tags: Optional[List[str]] = None,
                         time_window_hours: Optional[int] = None,
                         limit: int = 10,
@@ -75,9 +97,9 @@ class LISCacheInterface(ABC):
             anomaly_type (Optional[LIS_AnomalyType]): Filter by type of anomaly.
             min_severity (Optional[float]): Filter by minimum severity score (0.0-1.0).
             status (Optional[str]): Filter by incident status (e.g., "OPEN", "CLOSED_RESOLVED").
-                                    Consider defining an LIS_IncidentStatus Literal type.
+                                    Corresponds to LIS_IncidentRecord.status.
             tags (Optional[List[str]]): Filter by associated tags.
-            time_window_hours (Optional[int]): Look back N hours from now.
+            time_window_hours (Optional[int]): Look back N hours from now (filters on timestamp_logged).
             limit (int): Maximum number of records to return.
             sort_by_timestamp_desc (bool): Whether to sort results by timestamp descending (most recent first).
 
@@ -139,7 +161,7 @@ class LISCacheInterface(ABC):
 
         Args:
             incident_id (str): The ID of the incident to update.
-            new_status (str): The new status for the incident.
+            new_status (str): The new status for the incident (from LIS_IncidentRecord.status Literal).
             notes (Optional[str]): Additional notes to append or set.
             intervention_report (Optional[LIS_InterventionReport]): An intervention report to add to the incident's list.
 
@@ -164,13 +186,6 @@ class LISCacheInterface(ABC):
 
 # --- Concrete Implementation (Conceptual Outline & Design Notes) ---
 
-# Import HAMMemoryManager for type hinting in the concrete implementation.
-# This assumes HAMMemoryManager is accessible, e.g., from core_ai.memory.ham_memory_manager
-# from core_ai.memory.ham_memory_manager import HAMMemoryManager
-# For now, using Any to avoid import error if HAMMemoryManager is not directly visible without full project context.
-from core_ai.memory.ham_memory_manager import HAMMemoryManager # Assuming this path is correct relative to project structure
-
-
 class HAMLISCache(LISCacheInterface):
     """
     A concrete implementation of the LISCacheInterface that uses the
@@ -179,12 +194,12 @@ class HAMLISCache(LISCacheInterface):
     Design Considerations:
     - Each LIS_IncidentRecord and NarrativeAntibodyObject will be stored as a
       distinct entry in HAM.
-    - A specific `data_type` prefix (e.g., "lis_incident_v01_", "lis_antibody_v01_")
+    - A specific `data_type` prefix (e.g., LIS_INCIDENT_DATA_TYPE_PREFIX, LIS_ANTIBODY_DATA_TYPE_PREFIX)
       will be used for these HAM entries to allow for targeted querying.
     - Key queryable fields from these objects (e.g., anomaly_type, status, tags for incidents;
       anomaly_type, effectiveness for antibodies) will be duplicated or extracted
       into the HAM metadata of the corresponding entry to leverage HAM's
-      metadata-based querying capabilities.
+      metadata-based querying capabilities using predefined HAM_META_* constants.
     - The full LIS_IncidentRecord or NarrativeAntibodyObject will be stored as the
       main content (e.g., serialized to JSON if HAM stores strings, or as dict if HAM handles complex objects)
       of the HAM entry.
@@ -194,7 +209,7 @@ class HAMLISCache(LISCacheInterface):
       a new version and an application-level mechanism to point to the latest version
       (or HAM itself might support versioning/superseding).
       A simpler approach for HAM if it supports metadata updates on existing records
-      would be to update metadata fields like 'lis_status' or append to a 'lis_notes_log' field.
+      would be to update metadata fields like HAM_META_LIS_STATUS or append to a 'lis_notes_log' field.
       Adding an intervention report to an existing incident might require fetching, updating the list, and re-storing.
     - Semantic similarity for `find_related_incidents` is complex. It would likely require
       storing embeddings or feature vectors (derived from `LIS_SemanticAnomalyDetectedEvent` details)
@@ -209,69 +224,149 @@ class HAMLISCache(LISCacheInterface):
             ham_manager (HAMMemoryManager): The HAM instance to use for storage.
         """
         self.ham_manager = ham_manager
-        self.incident_data_type_prefix = "lis_incident_v01_" # versioned prefix
-        self.antibody_data_type_prefix = "lis_antibody_v01_"
+        # Constants are defined at the module level now.
+        # self.incident_data_type_prefix = LIS_INCIDENT_DATA_TYPE_PREFIX
+        # self.antibody_data_type_prefix = LIS_ANTIBODY_DATA_TYPE_PREFIX
         print(f"HAMLISCache initialized, using HAM instance: {type(ham_manager).__name__}")
 
     def store_incident(self, incident_record: LIS_IncidentRecord) -> bool:
         """
         Stores LIS_IncidentRecord in HAM.
-        Key queryable fields are stored in HAM metadata.
+        Key fields are stored in HAM metadata.
         The LIS_IncidentRecord itself is stored as raw_data (likely serialized to JSON string).
         """
         # Example data_type construction:
         # anomaly_event_type = incident_record.get('anomaly_event', {}).get('anomaly_type', 'UNKNOWN_ANOMALY')
-        # data_type = f"{self.incident_data_type_prefix}{anomaly_event_type}"
+        # data_type = f"{LIS_INCIDENT_DATA_TYPE_PREFIX}{anomaly_event_type}"
 
         # Example metadata extraction for HAM:
         # ham_metadata = {
-        #     "lis_incident_id": incident_record.get("incident_id"), # Primary key for LIS
-        #     "lis_anomaly_type": anomaly_event_type,
-        #     "lis_severity": incident_record.get("anomaly_event", {}).get("severity_score"),
-        #     "lis_status": incident_record.get("status"),
-        #     "lis_tags": incident_record.get("tags", []),
-        #     "timestamp_logged": incident_record.get("timestamp_logged") # For HAM's own sorting/querying
+        #     HAM_META_LIS_OBJECT_ID: incident_record.get("incident_id"), # Primary key for LIS
+        #     HAM_META_LIS_ANOMALY_TYPE: anomaly_event_type,
+        #     "lis_severity": incident_record.get("anomaly_event", {}).get("severity_score"), # Direct field name if not using constant
+        #     HAM_META_LIS_STATUS: incident_record.get("status"),
+        #     HAM_META_LIS_TAGS: incident_record.get("tags", []),
+        #     HAM_META_TIMESTAMP_LOGGED: incident_record.get("timestamp_logged")
         # }
 
-        # # Serialize the incident_record for storage if HAM expects string/bytes.
         # try:
         #     serialized_record = json.dumps(incident_record)
         # except TypeError as e:
-        #     print(f"Error serializing incident_record: {e}")
+        #     print(f"Error serializing incident_record for HAM: {e}")
         #     return False
 
         # mem_id = self.ham_manager.store_experience(
-        #     raw_data=serialized_record, # Store serialized record
+        #     raw_data=serialized_record,
         #     data_type=data_type,
         #     metadata=ham_metadata
         # )
         # return bool(mem_id)
         print(f"Conceptual: HAMLISCache.store_incident called for {incident_record.get('incident_id')}")
         # Placeholder: Full implementation requires HAMMemoryManager integration.
-        return False # Placeholder
+
+        anomaly_event = incident_record.get('anomaly_event')
+        if not anomaly_event:
+            print("Error: LIS_IncidentRecord is missing 'anomaly_event'. Cannot store.")
+            return False
+
+        anomaly_event_type = anomaly_event.get('anomaly_type', 'UNKNOWN_ANOMALY')
+        data_type = f"{LIS_INCIDENT_DATA_TYPE_PREFIX}{anomaly_event_type}"
+
+        ham_metadata = {
+            HAM_META_LIS_OBJECT_ID: incident_record.get("incident_id"),
+            HAM_META_LIS_ANOMALY_TYPE: anomaly_event_type,
+            "lis_severity": anomaly_event.get("severity_score"), # Using direct field name for now
+            HAM_META_LIS_STATUS: incident_record.get("status"),
+            HAM_META_LIS_TAGS: incident_record.get("tags", []),
+            HAM_META_TIMESTAMP_LOGGED: incident_record.get("timestamp_logged")
+        }
+
+        # Remove None values from metadata to keep it clean for HAM
+        ham_metadata = {k: v for k, v in ham_metadata.items() if v is not None}
+
+        try:
+            # HAMMemoryManager.store_experience expects raw_data: Any.
+            # We will store the entire LIS_IncidentRecord dictionary.
+            # If HAM internally serializes dicts to JSON, that's fine.
+            # If HAM expects a string, we should json.dumps(incident_record).
+            # Based on HAM's design (recall_gist often returning dicts for structured data),
+            # storing the dict directly might be intended.
+            # For robustness with various HAM backends, serializing to JSON string is safer.
+            serialized_record = json.dumps(incident_record)
+        except TypeError as e:
+            print(f"Error serializing incident_record for HAM: {e}")
+            return False
+
+        mem_id = self.ham_manager.store_experience(
+            raw_data=serialized_record,
+            data_type=data_type,
+            metadata=ham_metadata
+        )
+
+        if mem_id:
+            print(f"HAMLISCache: Stored incident '{incident_record.get('incident_id')}' with HAM ID '{mem_id}' and data_type '{data_type}'.")
+            return True
+        else:
+            print(f"HAMLISCache: Failed to store incident '{incident_record.get('incident_id')}' in HAM.")
+            return False
 
     def get_incident_by_id(self, incident_id: str) -> Optional[LIS_IncidentRecord]:
         """
-        Retrieves an LIS_IncidentRecord from HAM by its 'lis_incident_id' metadata field.
+        Retrieves an LIS_IncidentRecord from HAM by its 'lis_object_id' (custom ID) metadata field.
         """
         # ham_records_results = self.ham_manager.query_core_memory(
-        #     metadata_filters={"lis_incident_id": incident_id},
-        #     data_type_filter=self.incident_data_type_prefix, # Query across all LIS incident types
+        #     metadata_filters={HAM_META_LIS_OBJECT_ID: incident_id},
+        #     data_type_filter=LIS_INCIDENT_DATA_TYPE_PREFIX,
         #     limit=1
         # )
         # if ham_records_results:
         #     recalled_ham_entry = ham_records_results[0]
-        #     # HAMRecallResult has 'rehydrated_gist'. This should be the serialized LIS_IncidentRecord.
-        #     serialized_record = recalled_ham_entry.get("rehydrated_gist")
+        #     serialized_record = recalled_ham_entry.get("rehydrated_gist") # Assuming HAM returns serialized string in gist
         #     if isinstance(serialized_record, str):
         #         try:
         #             incident_data = json.loads(serialized_record)
-        #             return incident_data # type: ignore # Assuming structure matches LIS_IncidentRecord
+        #             return incident_data # type: ignore
         #         except json.JSONDecodeError as e:
         #             print(f"Error deserializing LIS incident record {incident_id} from HAM: {e}")
         #             return None
         print(f"Conceptual: HAMLISCache.get_incident_by_id called for {incident_id}")
-        # Placeholder
+
+        ham_records_results = self.ham_manager.query_core_memory(
+            metadata_filters={HAM_META_LIS_OBJECT_ID: incident_id},
+            data_type_filter=LIS_INCIDENT_DATA_TYPE_PREFIX,
+            limit=1
+        )
+
+        if ham_records_results:
+            recalled_ham_entry = ham_records_results[0]
+            # HAMRecallResult has 'rehydrated_gist'. This should be the serialized LIS_IncidentRecord.
+            # The HAMRecallResult.rehydrated_gist is 'Any'. We assume it's the string we stored.
+            serialized_record = recalled_ham_entry.get("rehydrated_gist")
+
+            if isinstance(serialized_record, str):
+                try:
+                    # Attempt to deserialize the string back into an LIS_IncidentRecord TypedDict
+                    incident_data: LIS_IncidentRecord = json.loads(serialized_record) # type: ignore
+                    # Add runtime check for key fields if necessary, though TypedDict helps at static analysis
+                    if "incident_id" in incident_data and "anomaly_event" in incident_data:
+                         print(f"HAMLISCache: Retrieved and deserialized incident '{incident_id}'.")
+                         return incident_data
+                    else:
+                        print(f"Error: Deserialized data for incident '{incident_id}' is not a valid LIS_IncidentRecord.")
+                        return None
+                except json.JSONDecodeError as e:
+                    print(f"Error deserializing LIS incident record '{incident_id}' from HAM: {e}. Data: '{str(serialized_record)[:200]}'")
+                    return None
+            elif isinstance(serialized_record, dict):
+                # If HAM directly returns a dict (e.g., if it auto-deserialized JSON or stored dicts)
+                # This path assumes the dict structure matches LIS_IncidentRecord
+                print(f"HAMLISCache: Retrieved incident '{incident_id}' as dict from HAM.")
+                return serialized_record # type: ignore
+            else:
+                print(f"Error: Retrieved data for incident '{incident_id}' is not a string or dict. Type: {type(serialized_record)}")
+                return None
+
+        print(f"HAMLISCache: Incident '{incident_id}' not found.")
         return None
 
     def query_incidents(self,
@@ -289,18 +384,18 @@ class HAMLISCache(LISCacheInterface):
         Post-filtering may be needed for severity and time_window if not directly supported by HAM query.
         """
         # metadata_filters = {}
-        # if anomaly_type: metadata_filters["lis_anomaly_type"] = anomaly_type
-        # if status: metadata_filters["lis_status"] = status
-        # if tags: metadata_filters["lis_tags"] = tags # HAM needs to support list containment or exact match
+        # if anomaly_type: metadata_filters[HAM_META_LIS_ANOMALY_TYPE] = anomaly_type
+        # if status: metadata_filters[HAM_META_LIS_STATUS] = status
+        # if tags: metadata_filters[HAM_META_LIS_TAGS] = tags
 
-        # # HAM query for timestamp range for time_window_hours.
-        # # HAM query for severity >= min_severity.
+        # # For min_severity and time_window_hours (filtering on HAM_META_TIMESTAMP_LOGGED),
+        # # HAM's query_core_memory would ideally support range queries.
+        # # If not, retrieve more records and post-filter.
 
         # ham_results = self.ham_manager.query_core_memory(
         #     metadata_filters=metadata_filters,
-        #     data_type_filter=self.incident_data_type_prefix,
-        #     limit=limit * 2, # Fetch more for potential post-filtering
-        #     # sort_by_timestamp_desc needs to be supported by HAM or done in post-processing
+        #     data_type_filter=LIS_INCIDENT_DATA_TYPE_PREFIX,
+        #     limit=limit * 2,
         # )
         #
         # incidents = []
@@ -309,10 +404,10 @@ class HAMLISCache(LISCacheInterface):
         #     if isinstance(serialized_record, str):
         #         try:
         #             record = json.loads(serialized_record)
-        #             # TODO: Add post-filtering for min_severity, time_window_hours if not done by HAM
+        #             # TODO: Post-filter for min_severity, time_window_hours if not done by HAM query
         #             incidents.append(record) # type: ignore
         #         except json.JSONDecodeError:
-        #             continue # Skip malformed records
+        #             continue
         #
         # # TODO: if not sorted by HAM, sort `incidents` by timestamp_logged (desc if sort_by_timestamp_desc)
         # return incidents[:limit]
@@ -324,12 +419,6 @@ class HAMLISCache(LISCacheInterface):
                                event_details: LIS_SemanticAnomalyDetectedEvent,
                                top_n: int = 3
                                ) -> List[LIS_IncidentRecord]:
-        """
-        Conceptual:
-        - Extract features/embeddings from event_details.problematic_output_segment or context.
-        - Query HAM for incidents with similar features/embeddings.
-        - This is an advanced function requiring significant HAM enhancements for similarity search.
-        """
         print(f"Conceptual: HAMLISCache.find_related_incidents for event {event_details.get('anomaly_id')}")
         # Placeholder
         return []
@@ -340,15 +429,15 @@ class HAMLISCache(LISCacheInterface):
                                limit: int = 5
                                ) -> List[NarrativeAntibodyObject]:
         """
-        Queries HAM for NarrativeAntibodyObjects using the antibody_data_type_prefix.
+        Queries HAM for NarrativeAntibodyObjects using the LIS_ANTIBODY_DATA_TYPE_PREFIX.
         """
         # metadata_filters = {}
-        # if for_anomaly_type: metadata_filters["antibody_applies_to_anomaly"] = for_anomaly_type
-        # # min_effectiveness might require post-filtering if HAM doesn't support range query on this field
+        # if for_anomaly_type: metadata_filters[HAM_META_ANTIBODY_FOR_ANOMALY] = for_anomaly_type
+        # # min_effectiveness might require post-filtering.
         #
         # ham_results = self.ham_manager.query_core_memory(
         #     metadata_filters=metadata_filters,
-        #     data_type_filter=self.antibody_data_type_prefix,
+        #     data_type_filter=LIS_ANTIBODY_DATA_TYPE_PREFIX,
         #     limit=limit * 2
         # )
         # antibodies = []
@@ -372,49 +461,6 @@ class HAMLISCache(LISCacheInterface):
                                notes: Optional[str] = None,
                                intervention_report: Optional[LIS_InterventionReport] = None
                                ) -> bool:
-        """
-        Updates an existing LIS_IncidentRecord in HAM.
-        Requires HAM to support fetching by a custom metadata ID ('lis_incident_id') and
-        then updating the record (either by replacing or by specific metadata update methods).
-        """
-        # 1. Fetch the HAM entry/entries matching `lis_incident_id`.
-        #    (HAM's query_core_memory returns a list; assume only one for a unique ID).
-        #    ham_entries = self.ham_manager.query_core_memory(metadata_filters={"lis_incident_id": incident_id}, limit=1, data_type_filter=self.incident_data_type_prefix)
-        #    if not ham_entries: return False
-        #    ham_record_id_to_update = ham_entries[0].get("id") # This is HAM's internal mem_id
-        #    serialized_record = ham_entries[0].get("rehydrated_gist")
-        #
-        #    if not isinstance(serialized_record, str): return False
-        #    try:
-        #        record_content: LIS_IncidentRecord = json.loads(serialized_record) # type: ignore
-        #    except json.JSONDecodeError:
-        #        return False
-        #
-        # 2. Modify the record_content:
-        #    record_content["status"] = new_status
-        #    if notes:
-        #        record_content["notes"] = f"{record_content.get('notes', '')}\n[{datetime.now().isoformat()}] {notes}".strip()
-        #    if intervention_report:
-        #        if "intervention_reports" not in record_content or record_content["intervention_reports"] is None:
-        #            record_content["intervention_reports"] = []
-        #        record_content["intervention_reports"].append(intervention_report)
-        #    record_content["timestamp_logged"] = datetime.now().isoformat() # Update last modified time
-        #
-        # 3. Re-store/Update in HAM:
-        #    # Option A: If HAM supports updating metadata of an existing record by its ham_record_id
-        #    # updated_metadata = {"lis_status": new_status, "timestamp_logged": record_content["timestamp_logged"]}
-        #    # success_meta = self.ham_manager.update_metadata(ham_record_id_to_update, updated_metadata)
-        #    # To update full content, HAM would need update_experience(ham_id, new_content_dict)
-        #    # success_content = self.ham_manager.update_experience_content(ham_record_id_to_update, record_content)
-        #    # return success_meta and success_content (or however HAM handles it)
-        #
-        #    # Option B: If HAM is append-only or updates by replacing (store new, mark old superseded)
-        #    # This is simpler if HAM doesn't have fine-grained updates.
-        #    # New incident_id for the updated record IS NOT GOOD. We need to update the original.
-        #    # This implies HAM needs a way to update a record by a custom key like "lis_incident_id"
-        #    # or by its internal mem_id. For now, let's assume a conceptual update.
-        #    # For true update, store_incident would need an `update_if_exists` flag or similar.
-        #    # This is a placeholder for a more robust HAM update mechanism.
         print(f"Conceptual: HAMLISCache.update_incident_status for {incident_id} to {new_status}")
         # Placeholder
         return False
@@ -423,18 +469,19 @@ class HAMLISCache(LISCacheInterface):
         """
         Stores a NarrativeAntibodyObject in HAM.
         """
-        # antibody_id = antibody.get("antibody_id", str(uuid.uuid4()))
-        # data_type = f"{self.antibody_data_type_prefix}{antibody.get('for_anomaly_type','GENERIC_ANTIBODY')}"
+        # antibody_id = antibody.get("antibody_id", str(uuid.uuid4())) # Ensure antibody has an ID
+        # data_type = f"{LIS_ANTIBODY_DATA_TYPE_PREFIX}{antibody.get('for_anomaly_type','GENERIC_ANTIBODY')}"
         # ham_metadata = {
-        #     "lis_antibody_id": antibody_id,
-        #     "lis_antibody_for_anomaly_type": antibody.get("for_anomaly_type"),
-        #     "lis_antibody_effectiveness": antibody.get("effectiveness_score"),
-        #     "timestamp_created": antibody.get("timestamp_created", datetime.now().isoformat())
+        #     HAM_META_LIS_OBJECT_ID: antibody_id,
+        #     HAM_META_ANTIBODY_FOR_ANOMALY: antibody.get("for_anomaly_type"),
+        #     HAM_META_ANTIBODY_EFFECTIVENESS: antibody.get("effectiveness_score"),
+        #     # Using HAM_META_TIMESTAMP_LOGGED for creation time of antibody for consistency
+        #     HAM_META_TIMESTAMP_LOGGED: antibody.get("timestamp_created", datetime.now().isoformat())
         # }
         # try:
         #     serialized_antibody = json.dumps(antibody)
         # except TypeError as e:
-        #     print(f"Error serializing antibody: {e}")
+        #     print(f"Error serializing antibody for HAM: {e}")
         #     return False
         #
         # mem_id = self.ham_manager.store_experience(
