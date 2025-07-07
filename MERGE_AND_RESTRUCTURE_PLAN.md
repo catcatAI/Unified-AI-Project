@@ -1,4 +1,3 @@
-```markdown
 # MikoAI & Fragmenta Project Merge and Restructure Plan
 
 ## 1. Introduction and Rationale
