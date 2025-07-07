@@ -1,15 +1,16 @@
+# src/core_ai/learning/learning_manager.py
 import uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 import json
 
-from core_ai.memory.ham_memory_manager import HAMMemoryManager
-from core_ai.learning.fact_extractor_module import FactExtractorModule
-from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-from core_ai.trust_manager.trust_manager_module import TrustManager
-from shared.types.common_types import LearnedFactRecord
-from hsp.connector import HSPConnector
-from hsp.types import HSPFactPayload, HSPMessageEnvelope
+from src.core_ai.memory.ham_memory_manager import HAMMemoryManager # Corrected
+from src.core_ai.learning.fact_extractor_module import FactExtractorModule # Corrected
+from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule # Corrected
+from src.core_ai.trust_manager.trust_manager_module import TrustManager # Corrected
+from src.shared.types.common_types import LearnedFactRecord # Corrected
+from src.hsp.connector import HSPConnector # Corrected
+from src.hsp.types import HSPFactPayload, HSPMessageEnvelope # Corrected
 
 
 class LearningManager:

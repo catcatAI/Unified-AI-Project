@@ -1,257 +1,328 @@
-from typing import Dict, List, Optional, Any, Tuple # Added Tuple
-from datetime import datetime, timezone
-from typing import TypedDict # For local StoredCapabilityInfo
+# src/core_ai/service_discovery/service_discovery_module.py
 
-import uuid # For example in __main__
-# Assuming src is in PYTHONPATH for these imports
-from hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
-from core_ai.trust_manager.trust_manager_module import TrustManager # Import TrustManager
+import json
+import time
+import threading
+from typing import Dict, Any, Optional, Callable, List, Tuple
+from enum import Enum
+import uuid
+import random # For jitter
 
-# Internal type for storing capability info along with local metadata
-class StoredCapabilityInfo(HSPCapabilityAdvertisementPayload, total=False):
-    """
-    Internal representation of a capability, extending HSPCapabilityAdvertisementPayload
-    with additional metadata like trust score, specific to this module's storage.
-    """
-    _trust_score: float # Trust score of the AI advertising this capability
-    # _last_seen_timestamp: str # Could be added here instead of a separate dict if preferred
+# Assuming common_types.py is in a reachable path like 'shared.types'
+# from shared.types.common_types import ServiceStatus, ServiceAdvertisement, ServiceQuery, ServiceInstanceHealth
+# For now, using placeholder definitions if not found, to allow isolated development.
+try:
+    from src.shared.types.common_types import ServiceStatus, ServiceAdvertisement, ServiceQuery, ServiceInstanceHealth, ServiceType
+except ImportError:
+    from typing import TypedDict # Import TypedDict here for the fallback definitions
+    print("ServiceDiscoveryModule: common_types not found, using placeholders.")
+    class ServiceStatus(Enum):
+        UNKNOWN = 0
+        STARTING = 1
+        HEALTHY = 2
+        UNHEALTHY = 3
+        STOPPING = 4
+        STOPPED = 5
+        DEGRADED = 6
+
+    class ServiceType(Enum):
+        UNKNOWN = "unknown"
+        CORE_AI_COMPONENT = "core_ai_component"
+        EXTERNAL_API = "external_api"
+        DATA_STORE = "data_store"
+        INTERNAL_TOOL = "internal_tool"
+        # Add more as needed
+
+    class ServiceAdvertisement(TypedDict): # Changed to TypedDict for consistency
+        service_id: str
+        service_name: str
+        service_type: ServiceType # Using enum
+        service_version: str
+        endpoint_url: Optional[str] # e.g., http://localhost:8000/api
+        metadata: Dict[str, Any] # Custom metadata (capabilities, load, etc.)
+        status: ServiceStatus # Current status
+        last_seen_timestamp: float # Unix timestamp
+        ttl: int # Time-to-live in seconds for this advertisement
+
+    class ServiceQuery(TypedDict, total=False): # Changed to TypedDict for consistency
+        service_type: Optional[ServiceType] # Using enum
+        service_name: Optional[str]
+        min_version: Optional[str]
+        required_capabilities: Optional[List[str]] # e.g., ["text_to_speech", "sentiment_analysis"]
+        status_filter: Optional[List[ServiceStatus]] # e.g., [ServiceStatus.HEALTHY, ServiceStatus.DEGRADED]
+
+    class ServiceInstanceHealth(TypedDict): # Changed to TypedDict for consistency
+        service_id: str
+        instance_id: str # If multiple instances of a service exist
+        status: ServiceStatus
+        last_heartbeat: float
+        metrics: Optional[Dict[str, Any]] # e.g., CPU load, memory usage, qps
+
 
 class ServiceDiscoveryModule:
     """
-    Manages the discovery and registry of capabilities advertised by other AIs on the HSP network.
-    It enriches capability data with local trust assessments.
+    Manages service registration, discovery, and basic health checking (via TTL).
+    This is a conceptual, in-memory implementation. A real-world scenario might use
+    Consul, etcd, Zookeeper, or a cloud provider's service discovery mechanism.
     """
-    def __init__(self, trust_manager: Optional[TrustManager] = None):
-        self.known_capabilities: Dict[str, StoredCapabilityInfo] = {}
-        self.last_seen: Dict[str, datetime] = {}
-        self.trust_manager = trust_manager
-        print(f"ServiceDiscoveryModule initialized {'with' if trust_manager else 'without'} TrustManager.")
 
-    def process_capability_advertisement(
-        self,
-        payload: HSPCapabilityAdvertisementPayload,
-        source_ai_id: str,
-        hsp_envelope: Optional[HSPMessageEnvelope] = None # Envelope is optional context
-    ) -> None:
+    def __init__(self, ai_id: str, operational_config: Optional[Dict[str, Any]] = None):
+        self.ai_id = ai_id
+        self.config = operational_config or {}
+        self.registry: Dict[str, ServiceAdvertisement] = {} # service_id -> ServiceAdvertisement
+        self.lock = threading.RLock() # Reentrant lock for registry access
+
+        # Configuration for health checks and cleanup
+        self.default_ttl = self.config.get("service_discovery_default_ttl_seconds", 300) # 5 minutes
+        self.cleanup_interval = self.config.get("service_discovery_cleanup_interval_seconds", 60) # 1 minute
+        self.health_check_jitter_max = self.config.get("service_discovery_health_check_jitter_max_seconds", 5)
+
+        self._stop_event = threading.Event()
+        self._cleanup_thread = threading.Thread(target=self._periodic_cleanup, daemon=True)
+        self._cleanup_thread.start()
+        print(f"ServiceDiscoveryModule initialized for AI ID '{self.ai_id}'. Cleanup interval: {self.cleanup_interval}s, Default TTL: {self.default_ttl}s.")
+
+
+    def register_service(self,
+                         service_name: str,
+                         service_type: ServiceType,
+                         service_version: str,
+                         endpoint_url: Optional[str] = None,
+                         metadata: Optional[Dict[str, Any]] = None,
+                         initial_status: ServiceStatus = ServiceStatus.STARTING,
+                         ttl_seconds: Optional[int] = None,
+                         service_id_override: Optional[str] = None
+                        ) -> str:
         """
-        Processes an incoming capability advertisement.
-        Stores or updates the capability in the local registry.
+        Registers a new service or updates an existing one.
+        A unique service_id is generated if not provided.
         """
-        capability_id = payload.get("capability_id")
-        if not capability_id:
-            print("ServiceDiscoveryModule: Received capability advertisement without a capability_id. Skipping.")
-            return
+        with self.lock:
+            service_id = service_id_override if service_id_override else f"{service_name}_{uuid.uuid4().hex[:8]}"
 
-        # Ensure required fields are present for a valid advertisement (basic check)
-        if not all(key in payload for key in ["ai_id", "name", "description", "version", "availability_status"]):
-            print(f"ServiceDiscoveryModule: Received capability advertisement '{capability_id}' with missing required fields. Skipping.")
-            return
+            if service_id in self.registry:
+                print(f"ServiceDiscovery: Updating existing service '{service_id}' ({service_name}).")
+            else:
+                print(f"ServiceDiscovery: Registering new service '{service_id}' ({service_name}).")
 
-        print(f"ServiceDiscoveryModule: Processing capability advertisement '{capability_id}' from AI '{source_ai_id}'.")
+            advertisement = ServiceAdvertisement(
+                service_id=service_id,
+                service_name=service_name,
+                service_type=service_type,
+                service_version=service_version,
+                endpoint_url=endpoint_url,
+                metadata=metadata or {},
+                status=initial_status,
+                last_seen_timestamp=time.time(),
+                ttl=ttl_seconds if ttl_seconds is not None else self.default_ttl
+            )
+            self.registry[service_id] = advertisement
+            print(f"  Service '{service_id}' registered/updated. Type: {service_type.value}, Status: {initial_status.name}, Endpoint: {endpoint_url}, TTL: {advertisement['ttl']}s")
+            return service_id
 
-        # Store or update the capability
-        # We might want to check versioning or if it's from the same source_ai_id as payload['ai_id']
-        if payload.get("ai_id") != source_ai_id:
-            print(f"ServiceDiscoveryModule: Warning - Capability '{capability_id}' ai_id '{payload.get('ai_id')}' "
-                  f"differs from HSP sender_ai_id '{source_ai_id}'. Using payload's ai_id for storage key if matches capability_id structure.")
+    def deregister_service(self, service_id: str) -> bool:
+        """Removes a service from the registry."""
+        with self.lock:
+            if service_id in self.registry:
+                del self.registry[service_id]
+                print(f"ServiceDiscovery: Service '{service_id}' deregistered.")
+                return True
+            print(f"ServiceDiscovery: Service '{service_id}' not found for deregistration.")
+            return False
 
-        # Use capability_id as the primary key
+    def update_service_status(self, service_id: str, new_status: ServiceStatus, metadata_update: Optional[Dict[str, Any]] = None) -> bool:
+        """Updates the status and optionally metadata of a registered service, refreshing its TTL."""
+        with self.lock:
+            if service_id in self.registry:
+                advertisement = self.registry[service_id]
+                advertisement['status'] = new_status
+                advertisement['last_seen_timestamp'] = time.time() # Refresh timestamp (heartbeat)
+                if metadata_update:
+                    advertisement['metadata'].update(metadata_update)
 
-        advertising_ai_id = payload.get("ai_id", source_ai_id) # Prefer ai_id from payload
+                # No need to re-assign self.registry[service_id] = advertisement if TypedDict is mutable
+                print(f"ServiceDiscovery: Updated status for service '{service_id}' to {new_status.name}. Metadata updated: {bool(metadata_update)}.")
+                return True
+            print(f"ServiceDiscovery: Service '{service_id}' not found for status update.")
+            return False
 
-        trust_score_value: float
-        if self.trust_manager:
-            trust_score_value = self.trust_manager.get_trust_score(advertising_ai_id)
-            print(f"ServiceDiscoveryModule: Associated trust score {trust_score_value:.2f} with capability '{capability_id}' from AI '{advertising_ai_id}'.")
-        else:
-            trust_score_value = TrustManager.DEFAULT_TRUST_SCORE # Default if no trust manager
-            print(f"ServiceDiscoveryModule: No TrustManager. Using default trust {trust_score_value:.2f} for capability '{capability_id}'.")
+    def heartbeat_service(self, service_id: str) -> bool:
+        """Refreshes the last_seen_timestamp for a service, keeping it alive."""
+        return self.update_service_status(service_id, self.registry[service_id]['status'] if service_id in self.registry else ServiceStatus.UNKNOWN)
 
-        # Create/update StoredCapabilityInfo
-        # All keys from payload are copied, then _trust_score is added/updated.
-        # Using type: ignore because we are dynamically adding _trust_score to a TypedDict based structure.
-        # StoredCapabilityInfo explicitly defines _trust_score, so this should align.
-        stored_capability: StoredCapabilityInfo = {**payload, "_trust_score": trust_score_value} # type: ignore
 
-        self.known_capabilities[capability_id] = stored_capability
-        self.last_seen[capability_id] = datetime.now(timezone.utc)
-
-        print(f"ServiceDiscoveryModule: Capability '{capability_id}' (Name: '{payload.get('name')}') from AI '{advertising_ai_id}' "
-              f"added/updated. Trust: {stored_capability['_trust_score']:.2f}. Total: {len(self.known_capabilities)}")
-
-    def find_capabilities(
-        self,
-        capability_name_filter: Optional[str] = None,
-        capability_id_filter: Optional[str] = None,
-        ai_id_filter: Optional[str] = None,
-        tags_filter: Optional[List[str]] = None,
-        min_availability: Optional[List[str]] = None,
-        min_trust_score: Optional[float] = None,
-        sort_by_trust: bool = False
-    ) -> List[StoredCapabilityInfo]:
+    def discover_services(self, query: ServiceQuery) -> List[ServiceAdvertisement]:
         """
-        Finds capabilities based on various filter criteria.
-
-        Args:
-            capability_name_filter (str, optional): Filter by capability name (exact match, case-insensitive).
-            capability_id_filter (str, optional): Filter by exact capability ID.
-            ai_id_filter (str, optional): Filter by the AI ID offering the capability.
-            tags_filter (List[str], optional): Filter by capabilities that have ALL specified tags.
-            min_availability (List[str], optional): Filter by acceptable availability statuses.
-            min_trust_score (float, optional): Filter by minimum trust score of the advertising AI.
-            sort_by_trust (bool, optional): If True, sort results by trust score in descending order.
-
-        Returns:
-            List[StoredCapabilityInfo]: A list of matching capability advertisements, enriched with trust scores.
+        Finds services based on a query.
+        Considers service status (e.g., only HEALTHY or DEGRADED) and TTL.
         """
-        if min_availability is None:
-            min_availability = ["online"] # Default to only searching for online services
+        with self.lock:
+            current_time = time.time()
+            results: List[ServiceAdvertisement] = []
 
-        # Results will be StoredCapabilityInfo which includes _trust_score
-        # We sort based on this _trust_score if requested.
-        candidate_capabilities: List[StoredCapabilityInfo] = []
+            for ad in list(self.registry.values()): # Iterate over a copy in case of modification during cleanup
+                if current_time > (ad['last_seen_timestamp'] + ad['ttl']):
+                    continue
 
-        for cap_id, cap_payload in self.known_capabilities.items(): # cap_payload is StoredCapabilityInfo
-            match = True
-
-            # Apply existing filters
-            if capability_id_filter and cap_id != capability_id_filter:
-                match = False
-
-            if match and capability_name_filter and cap_payload.get("name", "").lower() != capability_name_filter.lower():
-                match = False
-
-            if match and ai_id_filter and cap_payload.get("ai_id") != ai_id_filter:
-                match = False
-
-            if match and tags_filter:
-                cap_tags = cap_payload.get("tags", [])
-                if not all(tag.lower() in [t.lower() for t in cap_tags] for tag in tags_filter): # type: ignore
+                match = True
+                if query.get('service_type') and ad['service_type'] != query['service_type']:
+                    match = False
+                if query.get('service_name') and ad['service_name'] != query['service_name']:
                     match = False
 
-            if match and min_availability:
-                current_status = cap_payload.get("availability_status", "offline")
-                if current_status not in min_availability:
+                if query.get('min_version') and ad['service_version'] < query['min_version']:
                     match = False
 
-            # Apply trust score filter
-            # Access _trust_score directly as cap_payload is StoredCapabilityInfo
-            current_trust_score = cap_payload["_trust_score"]
-            if match and min_trust_score is not None and current_trust_score < min_trust_score:
-                match = False
+                if query.get('required_capabilities'):
+                    service_caps = ad['metadata'].get("capabilities", [])
+                    if not all(cap in service_caps for cap in query['required_capabilities']):
+                        match = False
 
-            if match:
-                candidate_capabilities.append(cap_payload)
+                if query.get('status_filter') and ad['status'] not in query['status_filter']:
+                    match = False
 
-        # Sort by trust score if requested
-        if sort_by_trust:
-            # Sort by the _trust_score field within StoredCapabilityInfo
-            candidate_capabilities.sort(key=lambda cap: cap["_trust_score"], reverse=True)
+                if match:
+                    results.append(ad)
 
-        print(f"ServiceDiscoveryModule: Found {len(candidate_capabilities)} capabilities matching filters (sorted by trust: {sort_by_trust}).")
-        return candidate_capabilities
+            print(f"ServiceDiscovery: Discovery query found {len(results)} matching service(s).")
+            return results
 
-    def get_capability_by_id(self, capability_id: str) -> Optional[StoredCapabilityInfo]:
-        """
-        Retrieves a specific capability by its ID, including its locally assessed trust score.
-        """
-        return self.known_capabilities.get(capability_id)
+    def get_service_details(self, service_id: str) -> Optional[ServiceAdvertisement]:
+        """Retrieves the details of a specific service if it's alive."""
+        with self.lock:
+            ad = self.registry.get(service_id)
+            if ad:
+                current_time = time.time()
+                if current_time <= (ad['last_seen_timestamp'] + ad['ttl']):
+                    return ad
+                else:
+                    print(f"ServiceDiscovery: Service '{service_id}' found but TTL expired. Considered unavailable.")
+            return None
 
-    def remove_capability(self, capability_id: str) -> bool:
-        """
-        Removes a capability from the registry (e.g., if it becomes stale or explicitly unregistered).
-        """
-        if capability_id in self.known_capabilities:
-            del self.known_capabilities[capability_id]
-            if capability_id in self.last_seen:
-                del self.last_seen[capability_id]
-            print(f"ServiceDiscoveryModule: Capability '{capability_id}' removed.")
-            return True
-        print(f"ServiceDiscoveryModule: Capability '{capability_id}' not found for removal.")
-        return False
+    def _remove_expired_services(self):
+        """Internal method to remove services whose TTL has expired."""
+        with self.lock:
+            current_time = time.time()
+            expired_ids = [
+                sid for sid, ad in self.registry.items()
+                if current_time > (ad['last_seen_timestamp'] + ad['ttl'])
+            ]
+            for sid in expired_ids:
+                print(f"ServiceDiscovery: TTL expired for service '{self.registry[sid]['service_name']}' (ID: {sid}). Removing from registry.")
+                del self.registry[sid]
+            if expired_ids:
+                 print(f"ServiceDiscovery: Removed {len(expired_ids)} expired service(s).")
 
-    def get_all_capabilities(self) -> List[StoredCapabilityInfo]:
-        """Returns all known capabilities, enriched with their trust scores."""
-        return list(self.known_capabilities.values())
 
-    # TODO: Add logic for staleness/expiration of capabilities based on self.last_seen
+    def _periodic_cleanup(self):
+        """Runs periodically to remove expired services."""
+        print("ServiceDiscovery: Periodic cleanup thread started.")
+        while not self._stop_event.is_set():
+            try:
+                jitter = random.uniform(0, self.health_check_jitter_max)
+                actual_interval = self.cleanup_interval + jitter
 
-if __name__ == '__main__':
-    print("--- ServiceDiscoveryModule Standalone Test ---")
-    discovery_module = ServiceDiscoveryModule()
+                wait_chunk = 1.0
+                waited_time = 0.0
+                while waited_time < actual_interval and not self._stop_event.is_set():
+                    remaining_wait = min(wait_chunk, actual_interval - waited_time)
+                    self._stop_event.wait(timeout=remaining_wait)
+                    waited_time += remaining_wait
 
-    # Mock HSP Envelope and Payload for testing process_capability_advertisement
-    mock_sender_ai_id = "did:hsp:ai_advertiser_001"
-    mock_capability_payload_1 = HSPCapabilityAdvertisementPayload(
-        capability_id="translator_en_fr_v1.0",
-        ai_id=mock_sender_ai_id, # Should match sender or be consistent
-        name="English to French Translator",
-        description="Translates text from English to French using advanced NMT.",
-        version="1.0",
-        input_schema_uri="hsp://schemas/text_input_v1",
-        output_schema_uri="hsp://schemas/text_output_v1",
-        availability_status="online",
-        tags=["nlp", "translation", "french"]
+                if self._stop_event.is_set():
+                    break
+                self._remove_expired_services()
+
+            except Exception as e:
+                print(f"ServiceDiscovery: Error in periodic cleanup thread: {e}")
+                self._stop_event.wait(timeout=self.cleanup_interval * 2)
+
+        print("ServiceDiscovery: Periodic cleanup thread stopped.")
+
+    def stop(self):
+        """Stops the periodic cleanup thread."""
+        print("ServiceDiscovery: Stopping periodic cleanup thread...")
+        self._stop_event.set()
+        if self._cleanup_thread.is_alive():
+            self._cleanup_thread.join(timeout=self.cleanup_interval + 5)
+        if self._cleanup_thread.is_alive():
+            print("ServiceDiscovery: Cleanup thread did not terminate cleanly.")
+
+
+if __name__ == "__main__":
+    print("--- ServiceDiscoveryModule Example ---")
+    # Need to import TypedDict for this example if not globally available
+    from typing import TypedDict
+
+    discovery_module = ServiceDiscoveryModule(ai_id="test_ai_host_for_sdm")
+
+    tts_service_id = discovery_module.register_service(
+        service_name="TextToSpeechService",
+        service_type=ServiceType.CORE_AI_COMPONENT,
+        service_version="1.2.0",
+        endpoint_url="http://localhost:8080/tts",
+        metadata={"language_support": ["en-US", "es-ES"], "voice_quality": "high"},
+        initial_status=ServiceStatus.HEALTHY,
+        ttl_seconds=60
     )
-    mock_envelope_1 = HSPMessageEnvelope( # type: ignore # Some fields are optional
-        message_id=str(uuid.uuid4()),
-        sender_ai_id=mock_sender_ai_id,
-        recipient_ai_id="hsp/capabilities/advertisements/all", # Example topic
-        timestamp_sent=datetime.now(timezone.utc).isoformat(),
-        message_type="HSP::CapabilityAdvertisement_v0.1",
-        protocol_version="0.1",
-        communication_pattern="publish",
-        payload=mock_capability_payload_1
+    print(f"Registered TTS Service ID: {tts_service_id}")
+
+    ner_service_id = discovery_module.register_service(
+        service_name="NamedEntityRecognition",
+        service_type=ServiceType.CORE_AI_COMPONENT,
+        service_version="0.9.5",
+        endpoint_url="grpc://ner-service:50051",
+        metadata={"model_type": "transformer_large", "entity_types": ["PER", "ORG", "LOC", "DATE"]},
+        initial_status=ServiceStatus.HEALTHY,
+        ttl_seconds=120
+    )
+    print(f"Registered NER Service ID: {ner_service_id}")
+
+    db_service_id = discovery_module.register_service(
+        service_name="KnowledgeGraphDB",
+        service_type=ServiceType.DATA_STORE,
+        service_version="2.0.1",
+        initial_status=ServiceStatus.STARTING,
+        metadata={"storage_type": "graph"}
     )
 
-    discovery_module.process_capability_advertisement(mock_capability_payload_1, mock_sender_ai_id, mock_envelope_1)
+    print("\n--- Discovering AI Modules ---")
+    ai_module_query = ServiceQuery(service_type=ServiceType.CORE_AI_COMPONENT, status_filter=[ServiceStatus.HEALTHY])
+    healthy_ai_modules = discovery_module.discover_services(ai_module_query)
+    for ad in healthy_ai_modules:
+        print(f"  Found Healthy AI Module: {ad['service_name']} (ID: {ad['service_id']}) at {ad['endpoint_url']}")
+        print(f"    Metadata: {ad['metadata']}")
 
-    mock_capability_payload_2 = HSPCapabilityAdvertisementPayload(
-        capability_id="image_classifier_resnet_v0.9",
-        ai_id="did:hsp:ai_image_processor_002",
-        name="Image Classifier (ResNet)",
-        description="Classifies images using a ResNet50 model.",
-        version="0.9",
-        input_schema_uri="hsp://schemas/image_input_v1", # Expects image URL or base64
-        output_schema_uri="hsp://schemas/classification_output_v1", # Returns top N classes
-        availability_status="online",
-        tags=["cv", "image_classification", "resnet"]
-    )
-    discovery_module.process_capability_advertisement(mock_capability_payload_2, "did:hsp:ai_image_processor_002", None) # type: ignore
+    print("\n--- Discovering specific service by name ---")
+    tts_query = ServiceQuery(service_name="TextToSpeechService")
+    tts_services = discovery_module.discover_services(tts_query)
+    if tts_services:
+        print(f"  TTS Service Details: {tts_services[0]}")
+    else:
+        print("  TTS Service not found (or not healthy if status filter was applied).")
 
-    print("\nFinding 'translator':")
-    results = discovery_module.find_capabilities(capability_name_filter="English to French Translator")
-    assert len(results) == 1
-    assert results[0]["capability_id"] == "translator_en_fr_v1.0"
-    for res in results: print(f"  - {res.get('name')} by {res.get('ai_id')}")
+    print(f"\n--- Updating status for {db_service_id} to HEALTHY ---")
+    discovery_module.update_service_status(db_service_id, ServiceStatus.HEALTHY, {"message": "Database fully initialized."})
+    db_details = discovery_module.get_service_details(db_service_id)
+    if db_details:
+        print(f"  DB Service now: Status={db_details['status'].name}, Meta={db_details['metadata']}")
 
-    print("\nFinding capabilities with tag 'cv':")
-    results_cv = discovery_module.find_capabilities(tags_filter=["cv"])
-    assert len(results_cv) == 1
-    assert results_cv[0]["capability_id"] == "image_classifier_resnet_v0.9"
-    for res in results_cv: print(f"  - {res.get('name')} (Tags: {res.get('tags')})")
+    print(f"\n--- Simulating time passing (e.g., {tts_services[0]['ttl'] + 10 if tts_services else 70} seconds) for TTS service '{tts_service_id}' to expire ---")
 
-    print("\nFinding capabilities with tag 'nlp' AND 'french':")
-    results_nlp_french = discovery_module.find_capabilities(tags_filter=["nlp", "french"])
-    assert len(results_nlp_french) == 1
-    assert results_nlp_french[0]["capability_id"] == "translator_en_fr_v1.0"
-    for res in results_nlp_french: print(f"  - {res.get('name')}")
+    print("Manually triggering cleanup for demo purposes...")
+    if tts_services:
+        with discovery_module.lock:
+            if tts_service_id in discovery_module.registry:
+                 discovery_module.registry[tts_service_id]['last_seen_timestamp'] = time.time() - (discovery_module.registry[tts_service_id]['ttl'] + 10)
+        discovery_module._remove_expired_services()
 
-    print("\nFinding non-existent capability:")
-    results_none = discovery_module.find_capabilities(capability_name_filter="NonExistent")
-    assert len(results_none) == 0
-    print("  - No results, as expected.")
+    print("\n--- Discovering TTS service again (should be expired if TTL was short and cleanup ran) ---")
+    tts_services_after_expiry = discovery_module.discover_services(tts_query)
+    if tts_services_after_expiry:
+        print(f"  TTS Service still found (unexpected for short TTL test): {tts_services_after_expiry[0]['service_name']}")
+    else:
+        print("  TTS Service not found (as expected after TTL expiry and cleanup).")
 
-    print("\nGetting by ID:")
-    cap_by_id = discovery_module.get_capability_by_id("translator_en_fr_v1.0")
-    assert cap_by_id is not None
-    assert cap_by_id.get("name") == "English to French Translator"
-    print(f"  Got: {cap_by_id.get('name')}")
-
-    print("\nAll capabilities:")
-    all_caps = discovery_module.get_all_capabilities()
-    assert len(all_caps) == 2
-    for cap in all_caps: print(f"  - {cap.get('name')} (ID: {cap.get('capability_id')})")
-
-    print("\nServiceDiscoveryModule standalone test finished.")
-```
+    discovery_module.stop()
+    print("\n--- ServiceDiscoveryModule Example Finished ---")
+# ``` # This was the offending line, now removed.

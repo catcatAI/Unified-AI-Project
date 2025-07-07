@@ -1,6 +1,6 @@
 import os
 import re
-from tools.math_model.model import ArithmeticSeq2Seq
+from src.tools.math_model.model import ArithmeticSeq2Seq # Corrected import
 
 # --- Configuration ---
 # Determine paths relative to this file or a known project root.
