@@ -126,5 +126,8 @@ A simple, two-tier permissions model will be implemented initially:
 *   **Window Management:** Virtual actions related to windows themselves (focus window, close window, resize - likely out of scope for v0.1).
 *   **Security and Safety for Actual Control:** Defining robust mechanisms to prevent misuse or unintended actions if/when actual control is implemented. This includes rate limiting, interrupt mechanisms, and context validation.
 *   **Integration with AI's Planning/Task Execution:** How will an AI agent use AVIS as part of a larger plan to achieve a goal?
+*   **Advanced Feedback Mechanisms (Deep Mapping & Adaptive Capture):**
+    *   **Dynamic Screen Analysis:** Future versions should explore dynamic screen capture and analysis (e.g., using computer vision, OCR, or accessibility APIs) to transform real-time screen output into a structured understanding of UI elements, their properties, and their relationships ("Guanxi," e.g., for folder structures or UI layouts). This "deep mapping" would provide a much richer and more accurate environmental model for the AI.
+    *   **Performance-Adaptive Capture:** The screen analysis process can be resource-intensive. The system should ideally adjust the frequency, detail, or scope of screen capture and processing based on available computer performance (CPU, GPU, memory). This requires hardware identification and load monitoring capabilities, which may be a prerequisite foundational service (potentially related to `Fragmenta_design_spec.md`'s hardware awareness concepts).
 
-This v0.1 specification provides a foundational design for the AI Virtual Input System, prioritizing element-based interaction and a simulation-first approach.
+This v0.1 specification provides a foundational design for the AI Virtual Input System, prioritizing element-based interaction and a simulation-first approach, while acknowledging pathways for more advanced perceptual capabilities.
