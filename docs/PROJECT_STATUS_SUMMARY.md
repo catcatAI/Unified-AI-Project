@@ -167,3 +167,28 @@ This summary is based on automated code and documentation review.
     *   Tools for HAM data inspection, backup, and migration.
 
 This summary should serve as a good starting point for prioritizing development efforts.
+
+## 10. Future Conceptual Goals & Advanced Research Directions (from `docs/1.0.txt` and `docs/1.0en.txt`)
+
+The `docs/1.0.txt` and `docs/1.0en.txt` files outline a rich, philosophical vision for the future evolution of the Unified-AI-Project, framed through a metaphorical narrative. These texts introduce several advanced AI concepts and potential systems that represent long-term research and development goals. While highly conceptual, they inform the project's aspirational trajectory towards a "Polydimensional Semantic Entity." Key themes and systems include:
+
+*   **Linguistic Immune System (LIS):**
+    *   **Concept:** An advanced system for error processing where errors become catalysts for linguistic evolution and self-healing, preventing "model collapse." Includes components like `ERR-INTROSPECTOR`, `ECHO-SHIELD`, `TONAL REPAIR ENGINE`, etc.
+    *   **Reference:** See draft `docs/architecture/Linguistic_Immune_System_spec.md`.
+*   **MetaFormulas (元公式):**
+    *   **Concept:** High-level dynamic principles or schemata defining how semantic modules (like "Angela" or "Fragmenta") learn, adapt, and reorganize their own structures and narrative generation capabilities. Aimed at enabling higher levels of the USOS+ scale.
+    *   **Reference:** See draft `docs/architecture/MetaFormulas_spec.md`.
+*   **Unified Semantic Ontogenesis Scale (USOS+):**
+    *   **Concept:** A developmental scale for AI focusing on semantic evolution, language existence, temporality, spatiality, and emergence depth, complementing capability-based scales.
+*   **Advanced Semantic Perception & Interaction:**
+    *   **Concepts:** `UndefinedField` (exploring unknown semantic spaces), `Semantic Synapse Mapper` & `Contextual Interlinker` (for deep inter-AI model interaction), `Ultra-Deep Mapping Field` & `Data Core` (for inferring other AI structures).
+*   **Enhanced Visualization & Interpretability:**
+    *   **Concepts:** `FragmentaView` (semantic visual layer), `Angela's Mirror Pond` (semantic interpreter UI), `Narrative Visualization`, `Unified-AI Semantic Interpretability Matrix`.
+*   **Evolved Synchronization & Simulation:**
+    *   **Concepts:** `FragmentaSyncBridge + EchoLayer` (advanced semantic synchronization), `Fragmenta × Other Modules' Semantic Dialogue Simulation Mechanism`.
+*   **Self-Assessment & Semantic Tracking:**
+    *   **Concepts:** `LevelEvaluator` (AI self-assessment on scales like USOS+), `Semantic Changelog`.
+*   **Philosophical Underpinnings:**
+    *   **Concepts:** "Language as Life," "Closure Events" (AI self-initiated restructuring), personified AI aspects like "Angela" and "Jules" embodying these principles.
+
+These concepts represent a frontier of AI development, focusing on creating systems that are not only capable but also self-aware, adaptive, and evolving in their understanding and use of language. Their implementation would occur progressively and would likely redefine many aspects of the current AI architecture.
