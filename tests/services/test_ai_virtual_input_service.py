@@ -78,10 +78,10 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(log[0]["command_details"], command)
 
     def test_process_mouse_command_unimplemented_action_logs(self):
-        command: VirtualMouseCommand = {"action_type": "scroll"} # type: ignore
+        command: VirtualMouseCommand = {"action_type": "drag_start"} # type: ignore Changed from "scroll"
         response = self.avis.process_mouse_command(command)
         self.assertEqual(response["status"], "simulated_not_implemented")
-        self.assertEqual(response["action"], "scroll")
+        self.assertEqual(response["action"], "drag_start") # Ensure action reflects the command
         self.assertEqual(len(self.avis.get_action_log()), 1)
 
     def test_process_keyboard_command_type_string(self):
@@ -114,13 +114,11 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(self.avis.virtual_focused_element_id, "initial_focus") # Focus should not change
         self.assertEqual(response["details"]["target_element_id"], "initial_focus")
 
-
-    def test_process_keyboard_command_unimplemented_action_logs(self):
-        command: VirtualKeyboardCommand = {"action_type": "press_keys", "keys": ["ctrl", "c"]} # type: ignore
-        response = self.avis.process_keyboard_command(command)
-        self.assertEqual(response["status"], "simulated_not_implemented")
-        self.assertEqual(response["action"], "press_keys")
-        self.assertEqual(len(self.avis.get_action_log()), 1)
+    # Removed test_process_keyboard_command_unimplemented_action_logs
+    # as all defined VirtualKeyboardActionTypes now have specific handlers
+    # that return "simulated" rather than "simulated_not_implemented".
+    # The `else` branch in process_keyboard_command would only be hit by an
+    # undefined action_type string, which is not a valid test of defined types.
 
     def test_get_action_log_and_clear(self):
         self.assertEqual(len(self.avis.get_action_log()), 0)
@@ -148,6 +146,71 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(state["virtual_cursor_position"], (0.1, 0.2))
         self.assertEqual(state["virtual_focused_element_id"], "elem123") # type_string doesn't change focus if no target_element_id
         self.assertEqual(state["action_log_count"], 1)
+
+    def test_process_mouse_command_hover(self):
+        command: VirtualMouseCommand = { # type: ignore
+            "action_type": "hover",
+            "target_element_id": "hover_target_elem",
+            "relative_x": 0.5,
+            "relative_y": 0.5
+        }
+        response = self.avis.process_mouse_command(command)
+        self.assertEqual(response["status"], "simulated")
+        self.assertEqual(response["action"], "hover")
+        self.assertEqual(response["details"]["target_element_id"], "hover_target_elem")
+        self.assertEqual(response["details"]["position"], (0.5, 0.5))
+        log = self.avis.get_action_log()
+        self.assertEqual(len(log), 1)
+        self.assertEqual(log[0]["command_details"], command)
+
+    def test_process_mouse_command_scroll(self):
+        command: VirtualMouseCommand = { # type: ignore
+            "action_type": "scroll",
+            "target_element_id": "scroll_target_elem",
+            "scroll_direction": "down",
+            "scroll_pages": 1
+        }
+        response = self.avis.process_mouse_command(command)
+        self.assertEqual(response["status"], "simulated")
+        self.assertEqual(response["action"], "scroll")
+        self.assertEqual(response["details"]["target_element_id"], "scroll_target_elem")
+        self.assertEqual(response["details"]["direction"], "down")
+        self.assertEqual(response["details"]["pages"], 1)
+        log = self.avis.get_action_log()
+        self.assertEqual(len(log), 1)
+        self.assertEqual(log[0]["command_details"], command)
+
+    def test_process_keyboard_command_press_keys_with_target(self):
+        command: VirtualKeyboardCommand = { # type: ignore
+            "action_type": "press_keys",
+            "keys": ["control", "shift", "escape"],
+            "target_element_id": "press_keys_target"
+        }
+        response = self.avis.process_keyboard_command(command)
+        self.assertEqual(self.avis.virtual_focused_element_id, "press_keys_target")
+        self.assertEqual(response["status"], "simulated")
+        self.assertEqual(response["action"], "press_keys")
+        self.assertEqual(response["details"]["keys_pressed"], ["control", "shift", "escape"])
+        self.assertEqual(response["details"]["target_element_id"], "press_keys_target")
+        log = self.avis.get_action_log()
+        self.assertEqual(len(log), 1)
+        self.assertEqual(log[0]["command_details"], command)
+
+    def test_process_keyboard_command_special_key_with_target(self):
+        command: VirtualKeyboardCommand = { # type: ignore
+            "action_type": "special_key",
+            "keys": ["enter"], # As per current implementation, special key name is in keys[0]
+            "target_element_id": "special_key_target"
+        }
+        response = self.avis.process_keyboard_command(command)
+        self.assertEqual(self.avis.virtual_focused_element_id, "special_key_target")
+        self.assertEqual(response["status"], "simulated")
+        self.assertEqual(response["action"], "special_key")
+        self.assertEqual(response["details"]["key_name"], "enter")
+        self.assertEqual(response["details"]["target_element_id"], "special_key_target")
+        log = self.avis.get_action_log()
+        self.assertEqual(len(log), 1)
+        self.assertEqual(log[0]["command_details"], command)
 
 if __name__ == '__main__':
     unittest.main()

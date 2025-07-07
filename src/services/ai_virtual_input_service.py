@@ -112,6 +112,34 @@ class AIVirtualInputService:
                 self.virtual_focused_element_id = target_element
                 print(f"  AVIS Sim: Focused element set to '{target_element}' due to click.")
 
+        elif action_type == "hover":
+            target_element = command.get("target_element_id")
+            pos_x = command.get("relative_x")
+            pos_y = command.get("relative_y")
+            # In a real simulation with element bounds, virtual_cursor_position might update
+            # to the element's center or the relative x/y within it.
+            # For now, just log the intent.
+            hover_details = {
+                "target_element_id": target_element,
+                "position": (pos_x, pos_y) if pos_x is not None and pos_y is not None else self.virtual_cursor_position
+            }
+            outcome = {"status": "simulated", "action": "hover", "details": hover_details}
+            print(f"  AVIS Sim: Hover logged: {hover_details}")
+
+        elif action_type == "scroll":
+            target_element = command.get("target_element_id") # Optional, could be window scroll
+            direction = command.get("scroll_direction")
+            amount_ratio = command.get("scroll_amount_ratio")
+            pages = command.get("scroll_pages")
+
+            scroll_details = {
+                "target_element_id": target_element,
+                "direction": direction,
+                "amount_ratio": amount_ratio,
+                "pages": pages
+            }
+            outcome = {"status": "simulated", "action": "scroll", "details": scroll_details}
+            print(f"  AVIS Sim: Scroll logged: {scroll_details}")
 
         # For other mouse actions, just log as simulated_not_implemented for now
         else:
@@ -148,6 +176,37 @@ class AIVirtualInputService:
             }
             outcome = {"status": "simulated", "action": "type_string", "details": type_details}
             print(f"  AVIS Sim: Typing logged: '{text_to_type}' into focused '{self.virtual_focused_element_id or 'unknown'}'.")
+
+        elif action_type == "press_keys":
+            keys_pressed = command.get("keys", [])
+            target_element = command.get("target_element_id")
+
+            if target_element:
+                self.virtual_focused_element_id = target_element
+                print(f"  AVIS Sim: Focused element set to '{target_element}' for key press.")
+
+            press_details = {
+                "keys_pressed": keys_pressed,
+                "target_element_id": self.virtual_focused_element_id
+            }
+            outcome = {"status": "simulated", "action": "press_keys", "details": press_details}
+            print(f"  AVIS Sim: Key press logged: {keys_pressed} on focused '{self.virtual_focused_element_id or 'unknown'}'.")
+
+        elif action_type == "special_key":
+            special_keys = command.get("keys", []) # Expecting a list, e.g., ["enter"]
+            key_name = special_keys[0] if special_keys else "unknown_special_key"
+            target_element = command.get("target_element_id")
+
+            if target_element:
+                self.virtual_focused_element_id = target_element
+                print(f"  AVIS Sim: Focused element set to '{target_element}' for special key press.")
+
+            special_key_details = {
+                "key_name": key_name,
+                "target_element_id": self.virtual_focused_element_id
+            }
+            outcome = {"status": "simulated", "action": "special_key", "details": special_key_details}
+            print(f"  AVIS Sim: Special key '{key_name}' press logged on focused '{self.virtual_focused_element_id or 'unknown'}'.")
 
         # For other keyboard actions, just log as simulated_not_implemented for now
         else:
