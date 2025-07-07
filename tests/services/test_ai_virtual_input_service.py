@@ -72,6 +72,8 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(response["details"]["target_element_id"], "button1")
         self.assertEqual(response["details"]["click_type"], "left")
         self.assertEqual(response["details"]["position"], (0.1, 0.2))
+        # Verify focus update through get_virtual_state as well
+        self.assertEqual(self.avis.get_virtual_state()["virtual_focused_element_id"], "button1")
 
         log = self.avis.get_action_log()
         self.assertEqual(len(log), 1)
@@ -102,8 +104,36 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(len(log), 1)
         self.assertEqual(log[0]["command_details"], command)
 
+        # Additionally, test UI state update
+        mock_ui_structure: List[VirtualInputElementDescription] = [
+            {"element_id": "input_field_1", "element_type": "text_field", "value": ""} # type: ignore
+        ]
+        self.avis.load_virtual_ui(mock_ui_structure)
+
+        # Retest with UI loaded
+        self.avis.clear_action_log() # Clear log from load_virtual_ui if any (though it doesn't log)
+        self.avis.virtual_focused_element_id = None # Reset focus
+
+        response_with_ui = self.avis.process_keyboard_command(command)
+        self.assertEqual(self.avis.virtual_focused_element_id, "input_field_1")
+        self.assertTrue(response_with_ui["details"]["value_updated"])
+        self.assertEqual(response_with_ui["details"]["updated_element_id"], "input_field_1")
+
+        updated_ui = self.avis.get_current_virtual_ui()
+        # print("Updated UI for typing:", updated_ui) # Debug
+        typed_element = self.avis._find_element_by_id("input_field_1", updated_ui)
+        self.assertIsNotNone(typed_element)
+        self.assertEqual(typed_element.get("value"), "hello world")
+
+
     def test_process_keyboard_command_type_string_no_target(self):
+        # Setup: Load a UI with a focusable element and focus it
+        mock_ui_structure: List[VirtualInputElementDescription] = [
+            {"element_id": "initial_focus", "element_type": "text_field", "value": "initial"} # type: ignore
+        ]
+        self.avis.load_virtual_ui(mock_ui_structure)
         self.avis.virtual_focused_element_id = "initial_focus"
+
         command: VirtualKeyboardCommand = { # type: ignore
             "action_type": "type_string",
             "text_to_type": "test"
@@ -146,6 +176,55 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(state["virtual_cursor_position"], (0.1, 0.2))
         self.assertEqual(state["virtual_focused_element_id"], "elem123") # type_string doesn't change focus if no target_element_id
         self.assertEqual(state["action_log_count"], 1)
+
+    def test_load_and_get_virtual_ui(self):
+        self.assertEqual(len(self.avis.get_current_virtual_ui()), 0, "Initial virtual UI should be empty.")
+
+        mock_ui_element: VirtualInputElementDescription = { # type: ignore
+            "element_id": "window1",
+            "element_type": "window",
+            "children": [
+                {"element_id": "button1", "element_type": "button", "label_text": "OK"} # type: ignore
+            ]
+        }
+        mock_ui_structure = [mock_ui_element]
+
+        self.avis.load_virtual_ui(mock_ui_structure)
+
+        retrieved_ui = self.avis.get_current_virtual_ui()
+        self.assertEqual(len(retrieved_ui), 1)
+        self.assertEqual(retrieved_ui[0]["element_id"], "window1")
+        self.assertIsNot(retrieved_ui, self.avis.virtual_ui_elements, "get_current_virtual_ui should return a deep copy.")
+        self.assertEqual(retrieved_ui[0].get("children", [])[0]["label_text"], "OK")
+
+        # Test that modifying retrieved UI doesn't affect internal state
+        if retrieved_ui and retrieved_ui[0].get("children"):
+            retrieved_ui[0]["children"][0]["label_text"] = "Cancel" # type: ignore
+
+        original_internal_label = self.avis.virtual_ui_elements[0].get("children", [])[0].get("label_text")
+        self.assertEqual(original_internal_label, "OK", "Modifying copy from get_current_virtual_ui should not alter internal state.")
+
+    def test_find_element_by_id(self):
+        child_button: VirtualInputElementDescription = {"element_id": "btn_child", "element_type": "button"} # type: ignore
+        parent_panel: VirtualInputElementDescription = {"element_id": "panel_parent", "element_type": "panel", "children": [child_button]} # type: ignore
+        top_window: VirtualInputElementDescription = {"element_id": "win_top", "element_type": "window", "children": [parent_panel]} # type: ignore
+
+        self.avis.load_virtual_ui([top_window])
+
+        found_top = self.avis._find_element_by_id("win_top")
+        self.assertIsNotNone(found_top)
+        self.assertEqual(found_top.get("element_id"), "win_top")
+
+        found_child = self.avis._find_element_by_id("btn_child")
+        self.assertIsNotNone(found_child)
+        self.assertEqual(found_child.get("element_id"), "btn_child")
+
+        found_panel = self.avis._find_element_by_id("panel_parent")
+        self.assertIsNotNone(found_panel)
+        self.assertEqual(found_panel.get("element_id"), "panel_parent")
+
+        not_found = self.avis._find_element_by_id("non_existent_id")
+        self.assertIsNone(not_found)
 
     def test_process_mouse_command_hover(self):
         command: VirtualMouseCommand = { # type: ignore
