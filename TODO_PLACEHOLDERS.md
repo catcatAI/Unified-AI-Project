@@ -1,0 +1,83 @@
+# Project Placeholders and TODOs Summary
+
+This document outlines the placeholders and TODO items found within the Unified-AI-Project codebase.
+
+## 1. Configuration Placeholders
+
+These are values intended to be replaced by actual secrets or configurations, typically via environment variables. They are generally structural and not code to be written.
+
+*   **File:** `configs/api_keys.yaml`
+    *   `GEMINI_API_KEY_PLACEHOLDER` (L7): Placeholder for Google Gemini API Key.
+    *   `OPENAI_API_KEY_PLACEHOLDER` (L11): Placeholder for OpenAI API Key.
+    *   `FIREBASE_CREDENTIALS_PATH_PLACEHOLDER` (L18): Placeholder for Firebase Admin SDK JSON credentials file path.
+    *   `BASE_URL_PLACEHOLDER` (L22): Placeholder for a general base URL.
+    *   `ANOTHER_SERVICE_API_KEY_PLACEHOLDER` (L24, commented out): Example placeholder.
+    *   `SOME_COMPLEX_SERVICE_CLIENT_ID_PLACEHOLDER` (L28, commented out): Example placeholder.
+    *   `SOME_COMPLEX_SERVICE_CLIENT_SECRET_PLACEHOLDER` (L29, commented out): Example placeholder.
+    *   `SOME_COMPLEX_SERVICE_REGION_PLACEHOLDER` (L30, commented out): Example placeholder.
+    *   **Note:** The file itself states these are for documentation and structural reference.
+
+## 2. Missing Feature/Logic Implementation (TODOs)
+
+These are comments indicating planned work or missing functionality that requires code implementation.
+
+*   **File:** `src/core_ai/code_understanding/lightweight_code_model.py`
+    *   **Line:** ~177
+    *   **Placeholder:** `# TODO: Add logic to resolve tool_name to filepath if not already a path.`
+    *   **Context:** In the `get_tool_structure` method.
+    *   **Required Functionality:** Implement logic to find a tool's Python file using its name by searching within the `tools_directory`, if a direct file path is not provided as input.
+
+*   **File:** `src/core_ai/service_discovery/service_discovery_module.py`
+    *   **Line:** ~177
+    *   **Placeholder:** `# TODO: Add logic for staleness/expiration of capabilities based on self.last_seen`
+    *   **Context:** End of the class definition.
+    *   **Required Functionality:** Implement a mechanism to automatically mark or remove advertised HSP capabilities if they haven't been re-advertised or "seen" for a defined period, to avoid using stale service information.
+
+*   **File:** `src/hsp/connector.py`
+    *   **Line:** ~63
+    *   **Placeholder:** `# TODO: Implement reconnection strategy`
+    *   **Context:** In the `_on_mqtt_disconnect` method.
+    *   **Required Functionality:** Add logic for the HSP connector to automatically attempt to reconnect to the MQTT broker after a disconnection event.
+    *   **Line:** ~128
+    *   **Placeholder:** `"payload_schema_uri": None, # TODO: Add schema URIs when defined`
+    *   **Context:** Within the `_build_hsp_envelope` method.
+    *   **Required Functionality:** Update this to populate the `payload_schema_uri` field with appropriate URIs once the HSP message payload schemas are formally defined and published.
+    *   **Line:** ~260
+    *   **Placeholder:** `# TODO: Implement logic for sending ACKs if the received message's qos_parameters.requires_ack is true.`
+    *   **Context:** In the `_handle_hsp_message_str` method.
+    *   **Required Functionality:** Implement the part of the HSP protocol responsible for sending acknowledgement (ACK) messages back to the sender if an incoming message indicates it requires an ACK (based on its `qos_parameters`).
+
+*   **File:** `src/interfaces/electron_app/renderer.js`
+    *   **Line:** ~137
+    *   **Placeholder:** `// TODO: Add button here to trigger this service (for Sub-step 2.14.2)`
+    *   **Context:** Inside the `loadHspServices` function, where discovered HSP services are listed in the UI.
+    *   **Required Functionality:** Add a UI button next to each displayed HSP service. Clicking this button should allow the user to trigger or make a request to that specific service (likely by pre-filling parts of the "HSP Task Request" form).
+
+## 3. Code/Data Comments & Clarifications
+
+These are comments that were picked up by the search but are not actionable code placeholders requiring new implementation. They are either logic that handles TODOs, commented-out debug lines, TODOs within example data, or general clarifications.
+
+*   **File:** `scripts/data_processing/process_copilot_logs.py`
+    *   Line ~46: `if prompt.startswith("# TODO:") or prompt.startswith("// TODO:")` (Logic for filtering input data)
+    *   Line ~47: `# print(f"Skipping row {row_num+2}: Prompt is a TODO comment ('{prompt}').")` (Commented-out debug code)
+    *   Line ~96: `2024-05-20T10:10:00Z,"# TODO: Add more comprehensive error handling here",...` (Example TODO within a dummy CSV string in the script)
+
+*   **File:** `src/core_ai/dialogue/dialogue_manager.py`
+    *   Line ~618 (approx): `raise NotImplementedError("Tool logic not implemented yet.")` and `# TODO: Implement actual tool logic here`. These are found within a multi-line string that serves as an example/template for an LLM to generate tool code. They are part of the *template's content*, not direct TODOs for the Dialogue Manager itself.
+
+*   **File:** `src/shared/types/common_types.py`
+    *   Line ~216: `# TODO: Consider a transformation step if strict snake_case is required internally for these.` (Comment suggesting a potential future refactor for field naming in `OllamaChatHistoryEntry`)
+    *   Line ~410: `id: str # The memory_id (mem_XXXXXX)` (A clarifying comment for a field, not a placeholder to be filled.)
+
+## 4. Data Placeholders (Non-code)
+
+These are placeholders found within data files, not code.
+
+*   **File:** `data/processed_data/dialogue_context_memory.json`
+    *   **Lines:** Multiple instances (e.g., L699, L1035, L1613, L1823 based on grep results)
+    *   **Placeholder:** `"XXX"` found within `encrypted_package_b64` string values.
+    *   **Context:** These appear as segments within base64 encoded encrypted data strings.
+    *   **Summary:** This suggests that some encrypted data packages are incomplete, truncated, or are using "XXX" as a placeholder for actual encrypted content. This could be a data integrity issue.
+    *   **Further Context & Hypothesis:** An alternative interpretation is that "XXX" (or similar markers) may represent a form of "Deep Mapping" – a resource-saving transformation or encoding of data managed by the Hierarchical Associative Memory (HAM). For a detailed explanation of this hypothesis and its relation to personality simulation, see [`docs/architecture/DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`](docs/architecture/DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md). Investigation into HAM's storage and retrieval mechanisms would be needed to confirm this.
+
+This summary provides a clear overview of outstanding tasks and points of interest related to placeholders and TODOs in the project.
