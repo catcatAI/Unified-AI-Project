@@ -2,7 +2,7 @@
 import unittest
 import json
 from typing import Dict, Any, Optional, List, cast
-from datetime import datetime
+from datetime import datetime, timezone # Added timezone
 
 # Adjust imports based on actual project structure
 # Assuming 'src' is effectively a top-level package for test execution context
@@ -177,7 +177,7 @@ class TestHAMLISCache(unittest.TestCase):
             HAM_META_LIS_ANOMALY_TYPE: "RHYTHM_BREAK",
             "lis_severity": sample_record["anomaly_event"]["severity_score"],
             HAM_META_LIS_STATUS: "OPEN",
-            HAM_META_LIS_TAGS: ["test_tag", "rhythm_break"],
+            HAM_META_LIS_TAGS: ["default_query_tag", "rhythm_break"], # Align with helper's default
             HAM_META_TIMESTAMP_LOGGED: sample_record["timestamp_logged"]
         }
         self.assertEqual(stored_ham_entry["metadata"], expected_metadata)
@@ -246,6 +246,135 @@ class TestHAMLISCache(unittest.TestCase):
         self.assertFalse(success, "store_incident should return False if anomaly_event is missing.")
         self.assertEqual(len(self.mock_ham_manager.core_memory_store), 0, "No record should be stored if anomaly_event is missing.")
 
+    def _populate_mock_ham_for_query_tests(self):
+        # Helper to populate mock HAM with diverse incidents
+        # Timestamps are crucial for time window and sorting tests
+        # Make them offset-aware (UTC) for consistency
+        from datetime import timezone, timedelta
+
+        now = datetime.now(timezone.utc)
+        self.incidents_data = [
+            self._create_sample_incident_record("q_id1", "RHYTHM_BREAK", "OPEN", 0.8, ["tagA", "common"], (now - timedelta(hours=1)).isoformat()),
+            self._create_sample_incident_record("q_id2", "LOW_DIVERSITY", "CLOSED_RESOLVED", 0.4, ["tagB"], (now - timedelta(hours=5)).isoformat()),
+            self._create_sample_incident_record("q_id3", "RHYTHM_BREAK", "OPEN", 0.6, ["tagA", "tagC"], (now - timedelta(hours=10)).isoformat()),
+            self._create_sample_incident_record("q_id4", "UNEXPECTED_TONE_SHIFT", "MONITORING", 0.9, ["common"], (now - timedelta(days=1)).isoformat()),
+            self._create_sample_incident_record("q_id5", "LOW_DIVERSITY", "OPEN", 0.3, ["tagB", "tagC"], (now - timedelta(days=2)).isoformat()),
+        ]
+        for record in self.incidents_data:
+            self.lis_cache.store_incident(record) # Use the actual store_incident for consistent data prep
+
+    # Override _create_sample_incident_record to accept severity, tags, and timestamp
+    def _create_sample_incident_record(self,
+                                     incident_id: str,
+                                     anomaly_type: LIS_AnomalyType = "RHYTHM_BREAK",
+                                     status: str = "OPEN", # Replace with LIS_IncidentStatus Literal later
+                                     severity: float = 0.7,
+                                     tags: Optional[List[str]] = None,
+                                     timestamp_logged: Optional[str] = None
+                                     ) -> LIS_IncidentRecord:
+        timestamp_now = timestamp_logged if timestamp_logged else datetime.now(timezone.utc).isoformat()
+        event: LIS_SemanticAnomalyDetectedEvent = { # type: ignore
+            "anomaly_id": f"anomaly_{incident_id}",
+            "timestamp": timestamp_now, # Assuming event timestamp is same as logged for simplicity here
+            "anomaly_type": anomaly_type,
+            "severity_score": severity,
+            "problematic_output_segment": f"Segment for {incident_id}.",
+            "current_context_snapshot": {"info": f"context_{incident_id}"},
+            "detector_component": "TestQueryDetector"
+        }
+        record: LIS_IncidentRecord = { # type: ignore
+            "incident_id": incident_id,
+            "timestamp_logged": timestamp_now,
+            "anomaly_event": event,
+            "status": status,
+            "tags": tags if tags is not None else ["default_query_tag", anomaly_type.lower()]
+        }
+        return record
+
+    def test_query_incidents_no_filters(self):
+        self._populate_mock_ham_for_query_tests()
+        results = self.lis_cache.query_incidents(limit=10)
+        self.assertEqual(len(results), 5)
+        # Default sort is by timestamp_logged desc
+        self.assertEqual(results[0]["incident_id"], "q_id1")
+        self.assertEqual(results[4]["incident_id"], "q_id5")
+
+    def test_query_incidents_by_anomaly_type(self):
+        self._populate_mock_ham_for_query_tests()
+        results = self.lis_cache.query_incidents(anomaly_type="RHYTHM_BREAK", limit=10)
+        self.assertEqual(len(results), 2)
+        self.assertTrue(all(r["anomaly_event"]["anomaly_type"] == "RHYTHM_BREAK" for r in results))
+        self.assertEqual(results[0]["incident_id"], "q_id1") # q_id1 is newer
+
+    def test_query_incidents_by_status(self):
+        self._populate_mock_ham_for_query_tests()
+        results = self.lis_cache.query_incidents(status="OPEN", limit=10)
+        self.assertEqual(len(results), 3)
+        self.assertTrue(all(r["status"] == "OPEN" for r in results))
+
+    def test_query_incidents_by_tags_single(self):
+        self._populate_mock_ham_for_query_tests()
+        results = self.lis_cache.query_incidents(tags=["tagA"], limit=10)
+        self.assertEqual(len(results), 2) # q_id1, q_id3
+        self.assertTrue(any(r["incident_id"] == "q_id1" for r in results))
+        self.assertTrue(any(r["incident_id"] == "q_id3" for r in results))
+
+    def test_query_incidents_by_tags_multiple_all_must_match(self):
+        self._populate_mock_ham_for_query_tests()
+        results = self.lis_cache.query_incidents(tags=["tagA", "tagC"], limit=10)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["incident_id"], "q_id3")
+
+    def test_query_incidents_by_min_severity(self):
+        self._populate_mock_ham_for_query_tests()
+        results = self.lis_cache.query_incidents(min_severity=0.7, limit=10) # q_id1 (0.8), q_id4 (0.9)
+        self.assertEqual(len(results), 2)
+        self.assertTrue(all(r["anomaly_event"]["severity_score"] >= 0.7 for r in results))
+
+    def test_query_incidents_by_time_window(self):
+        self._populate_mock_ham_for_query_tests()
+        # q_id1 (1hr ago), q_id2 (5hrs ago) should match a 6-hour window
+        results = self.lis_cache.query_incidents(time_window_hours=6, limit=10)
+        self.assertEqual(len(results), 2)
+        self.assertTrue(any(r["incident_id"] == "q_id1" for r in results))
+        self.assertTrue(any(r["incident_id"] == "q_id2" for r in results))
+
+        # Only q_id1 should match a 3-hour window
+        results_3hr = self.lis_cache.query_incidents(time_window_hours=3, limit=10)
+        self.assertEqual(len(results_3hr), 1)
+        self.assertEqual(results_3hr[0]["incident_id"], "q_id1")
+
+    def test_query_incidents_combined_filters(self):
+        self._populate_mock_ham_for_query_tests()
+        # RHYTHM_BREAK, OPEN, severity >= 0.5
+        # q_id1 (RB, OPEN, 0.8) - Match
+        # q_id3 (RB, OPEN, 0.6) - Match
+        results = self.lis_cache.query_incidents(
+            anomaly_type="RHYTHM_BREAK",
+            status="OPEN",
+            min_severity=0.5,
+            limit=10
+        )
+        self.assertEqual(len(results), 2)
+        self.assertTrue(any(r["incident_id"] == "q_id1" for r in results))
+        self.assertTrue(any(r["incident_id"] == "q_id3" for r in results))
+
+    def test_query_incidents_limit_and_sorting(self):
+        self._populate_mock_ham_for_query_tests()
+        results_limit2_desc = self.lis_cache.query_incidents(limit=2, sort_by_timestamp_desc=True)
+        self.assertEqual(len(results_limit2_desc), 2)
+        self.assertEqual(results_limit2_desc[0]["incident_id"], "q_id1")
+        self.assertEqual(results_limit2_desc[1]["incident_id"], "q_id2")
+
+        results_limit2_asc = self.lis_cache.query_incidents(limit=2, sort_by_timestamp_desc=False)
+        self.assertEqual(len(results_limit2_asc), 2)
+        self.assertEqual(results_limit2_asc[0]["incident_id"], "q_id5")
+        self.assertEqual(results_limit2_asc[1]["incident_id"], "q_id4")
+
+    def test_query_incidents_empty_result(self):
+        self._populate_mock_ham_for_query_tests()
+        results = self.lis_cache.query_incidents(anomaly_type="COMPLEXITY_ANOMALY", limit=10) # This type is not in mock data
+        self.assertEqual(len(results), 0)
 
 if __name__ == '__main__':
     unittest.main()

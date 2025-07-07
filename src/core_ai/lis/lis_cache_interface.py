@@ -412,8 +412,106 @@ class HAMLISCache(LISCacheInterface):
         # # TODO: if not sorted by HAM, sort `incidents` by timestamp_logged (desc if sort_by_timestamp_desc)
         # return incidents[:limit]
         print(f"Conceptual: HAMLISCache.query_incidents called.")
-        # Placeholder
-        return []
+
+        metadata_filters: Dict[str, Any] = {}
+        if anomaly_type:
+            metadata_filters[HAM_META_LIS_ANOMALY_TYPE] = anomaly_type
+        if status:
+            metadata_filters[HAM_META_LIS_STATUS] = status
+        # Tags will be handled by post-filtering for this initial implementation,
+        # as HAM's metadata_filters might not support list containment directly.
+
+        # Fetch more records than limit initially to account for post-filtering
+        # A factor of 2 or 3, or a fixed larger buffer, could be used.
+        # For simplicity, let's fetch limit * 3 or limit + some buffer.
+        fetch_limit = limit * 3 if limit < 100 else limit + 50 # Basic heuristic
+
+        ham_recall_results = self.ham_manager.query_core_memory(
+            metadata_filters=metadata_filters,
+            data_type_filter=LIS_INCIDENT_DATA_TYPE_PREFIX,
+            limit=fetch_limit,
+            sort_by_timestamp_desc=sort_by_timestamp_desc # Pass sorting preference to HAM if it supports it
+                                                          # Otherwise, we sort after retrieval.
+        )
+
+        incidents: List[LIS_IncidentRecord] = []
+        for ham_result in ham_recall_results:
+            serialized_record = ham_result.get("rehydrated_gist")
+            if isinstance(serialized_record, str):
+                try:
+                    record: LIS_IncidentRecord = json.loads(serialized_record) # type: ignore
+
+                    # Post-filter: min_severity
+                    if min_severity is not None:
+                        anomaly_event = record.get("anomaly_event")
+                        if not anomaly_event or anomaly_event.get("severity_score", 0.0) < min_severity:
+                            continue
+
+                    # Post-filter: tags (all provided tags must be present in record's tags)
+                    if tags:
+                        record_tags = record.get("tags")
+                        if not record_tags or not all(tag in record_tags for tag in tags):
+                            continue
+
+                    # Post-filter: time_window_hours
+                    if time_window_hours is not None:
+                        record_timestamp_str = record.get("timestamp_logged")
+                        if record_timestamp_str:
+                            try:
+                                from datetime import datetime, timedelta, timezone # Local import for safety
+                                record_dt = datetime.fromisoformat(record_timestamp_str)
+                                # Ensure record_dt is offset-aware for comparison with offset-aware now()
+                                if record_dt.tzinfo is None:
+                                     record_dt = record_dt.replace(tzinfo=timezone.utc) # Assume UTC if naive
+
+                                window_start_dt = datetime.now(timezone.utc) - timedelta(hours=time_window_hours)
+                                if record_dt < window_start_dt:
+                                    continue
+                            except ValueError:
+                                print(f"Warning: Could not parse timestamp_logged '{record_timestamp_str}' for time window filter.")
+                                continue # Skip record if timestamp is unparseable
+                        else:
+                            continue # Skip if no timestamp for time window filter
+
+                    incidents.append(record)
+                except json.JSONDecodeError:
+                    print(f"Warning: Skipping malformed LIS incident record from HAM (ID: {ham_result.get('id')})")
+                    continue
+            elif isinstance(serialized_record, dict): # If HAM already deserialized
+                # Apply same post-filtering logic
+                record = cast(LIS_IncidentRecord, serialized_record) # Use cast
+                if min_severity is not None:
+                    anomaly_event = record.get("anomaly_event")
+                    if not anomaly_event or anomaly_event.get("severity_score", 0.0) < min_severity:
+                        continue
+                if tags:
+                    record_tags = record.get("tags")
+                    if not record_tags or not all(tag in record_tags for tag in tags):
+                        continue
+                if time_window_hours is not None:
+                    # ... (duplicate time window logic as above for dict case)
+                    record_timestamp_str = record.get("timestamp_logged")
+                    if record_timestamp_str:
+                        try:
+                            from datetime import datetime, timedelta, timezone # Local import
+                            record_dt = datetime.fromisoformat(record_timestamp_str)
+                            if record_dt.tzinfo is None: record_dt = record_dt.replace(tzinfo=timezone.utc)
+                            window_start_dt = datetime.now(timezone.utc) - timedelta(hours=time_window_hours)
+                            if record_dt < window_start_dt: continue
+                        except ValueError: continue
+                    else: continue
+                incidents.append(record)
+
+
+        # If HAM didn't sort, or if we need to re-sort after filtering (though HAM sort should be preferred)
+        # The current MockHAMMemoryManager doesn't implement sorting by timestamp in query_core_memory,
+        # so we must sort here. A real HAM might do it.
+        if sort_by_timestamp_desc:
+            incidents.sort(key=lambda r: r.get("timestamp_logged", ""), reverse=True)
+        else:
+            incidents.sort(key=lambda r: r.get("timestamp_logged", ""))
+
+        return incidents[:limit]
 
     def find_related_incidents(self,
                                event_details: LIS_SemanticAnomalyDetectedEvent,
