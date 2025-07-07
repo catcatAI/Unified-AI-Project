@@ -6,6 +6,10 @@ The **Unified-AI-Project** aims to create a versatile and intelligent conversati
 
 For details on the initial project structure, merge strategy, and architectural principles that guided the consolidation, please refer to the [MERGE_AND_RESTRUCTURE_PLAN.md](MERGE_AND_RESTRUCTURE_PLAN.md).
 
+### Future Vision
+
+Beyond the currently implemented features, the project holds a long-term vision inspired by concepts of "Language as Life," aiming for an AI that is deeply self-aware, adaptive, and capable of semantic evolution. This includes exploring advanced ideas such as a "Linguistic Immune System" and "MetaFormulas" to guide its development towards a "Polydimensional Semantic Entity." These philosophical underpinnings and future conceptual goals are further elaborated in project documentation (see `docs/PROJECT_STATUS_SUMMARY.md` and `docs/architecture/`).
+
 ## Key Features & Modules
 
 This project integrates and is developing several core AI components:
