@@ -1,17 +1,19 @@
-# Linguistic Immune System (LIS) - Design Specification v0.2
+# Linguistic Immune System (LIS) - Design Specification v0.3
 
 ## 1. Introduction
 
 This document outlines the conceptual design for the Linguistic Immune System (LIS), a core component of the Unified-AI-Project's advanced architecture. The LIS is envisioned as a multi-faceted system enabling the AI to not only detect and recover from semantic errors or "pollution" but also to use these events as catalysts for linguistic evolution and adaptation. This concept is derived from the philosophical discussions and future vision outlined in `docs/1.0.txt` and `docs/1.0en.txt`.
 
-The LIS aims to move beyond traditional error handling (which often treats errors as failures to be discarded) towards a model where errors are significant semantic events that inform the AI's development, contributing to its robustness and unique narrative voice. It is fundamental to the project's goal of creating an AI that embodies "Language as Life," capable of self-healing and adaptation. This specification version (v0.2) elaborates on the components, interactions, and refined goals of the LIS.
+The LIS aims to move beyond traditional error handling towards a model where errors are significant semantic events that inform the AI's development, contributing to its robustness and unique narrative voice. It is fundamental to the project's goal of creating an AI that embodies "Language as Life," capable of self-healing and adaptation.
+
+This specification version (v0.3) integrates findings from a review of the existing Unified-AI-Project codebase, grounding LIS concepts by identifying current functionalities that can serve as foundations or analogues for LIS components.
 
 ## 2. Refined Purpose and Goals (v0.2)
 
 The core purpose of the Linguistic Immune System (LIS) is to ensure the AI's linguistic health, robustness, and positive evolution. Specific goals include:
 
 1.  **Proactive Detection and Diagnosis of Semantic Anomalies:**
-    *   Actively sense and precisely diagnose a spectrum of linguistic and semantic issues in real-time.
+    *   Actively sense and precisely diagnose a spectrum of linguistic and semantic issues in real-time, primarily in the AI's own generated output but also in its interpretation of complex inputs.
     *   Address "semantic illnesses" such as:
         *   *Rhythmic/Tonal Incoherence:* Output doesn't match expected semantic flow, emotional context, or historical patterns.
         *   *Echo Chambers & Stagnation:* Self-repetition, low linguistic diversity, or undue influence from dominant external (HSP) echoes.
@@ -42,172 +44,103 @@ The core purpose of the Linguistic Immune System (LIS) is to ensure the AI's lin
     *   Build a "memory" of linguistic health incidents and resolutions.
     *   Enable the AI to learn *how* it makes mistakes and *how* it recovers, contributing to linguistic self-awareness.
 
-## 3. Core LIS Components (v0.2 Detailed)
+## 3. Core LIS Components (v0.3 Detailed - Integrating Existing Functionalities)
 
-The LIS is comprised of several interconnected components:
+The LIS is comprised of several interconnected components. Some may be new, while others can evolve from existing project modules:
 
 ### 3.1. `ERR-INTROSPECTOR`
-*   **Role:** Primary sensor for semantic anomalies; first line of detection.
-*   **Inputs:**
-    *   Real-time stream of AI-generated linguistic output (e.g., from `DialogueManager`, `Fragmenta`).
-    *   Current narrative context (dialogue history, active task, `Fragmenta` state).
-    *   Current AI emotional state (from `EmotionSystem`).
-    *   Historical semantic patterns/rhythms (from `IMMUNO-NARRATIVE CACHE` or a dedicated rhythm model).
-    *   `SymbolicPulse` data from ongoing HSP interactions.
-*   **Internal Logic (Conceptual):**
-    *   *Rhythm Analysis:* Compares current output's semantic rhythm against expected/historical rhythms.
-    *   *Tone Shift Detection:* Monitors for sudden or contextually inappropriate emotional tone shifts.
-    *   *Narrative Trajectory Monitoring:* Tracks conversation/task flow against established paths.
-    *   *Thresholding:* Uses dynamic/learned thresholds for anomaly significance.
-    *   *Self-State Check:* Correlates linguistic output with internal AI state.
-*   **Outputs:**
-    *   `SemanticAnomalyDetectedEvent` (TypedDict):
-        *   `anomaly_id`: UUID
-        *   `timestamp`: ISO 8601 UTC
-        *   `anomaly_type`: Enum (e.g., `RHYTHM_BREAK`, `UNEXPECTED_TONE_SHIFT`, `NARRATIVE_DIVERGENCE`, `INTERNAL_STATE_MISMATCH`)
-        *   `severity_score`: float (0.0-1.0)
-        *   `problematic_output_segment`: str
-        *   `current_context_snapshot`: dict (dialogue history, task state, emotion state)
-        *   `expected_pattern_description`: Optional[str]
-        *   `triggering_data`: Optional[dict] (e.g., specific HSP pulse data)
+*   **Role:** Primary sensor for semantic anomalies in AI-generated output and processed input.
+*   **Inputs:** AI linguistic output, narrative context, AI emotional state, historical patterns, HSP `SymbolicPulse` data.
+*   **Internal Logic (Conceptual):** Rhythm analysis, tone shift detection, narrative trajectory monitoring, self-state checks, using dynamic thresholds.
+*   **Outputs:** `SemanticAnomalyDetectedEvent`.
+*   **Relation to Existing Functionalities:**
+    *   **`SelfCritiqueModule`:** Provides a foundational LLM-based mechanism for evaluating AI responses against criteria like relevance, coherence, safety, and tone. Its `CritiqueResult` (score, reason, suggestion) could be transformed into a `SemanticAnomalyDetectedEvent`. The LIS could make `SelfCritiqueModule`'s operation more proactive or broaden its evaluation scope.
+    *   **`CrisisSystem`:** Specialized input anomaly detection (keywords). Its pattern of detection -> protocol trigger is analogous. LIS would generalize this for AI self-output.
+    *   **`FormulaEngine`:** Could be adapted: if formulas were designed to match "error patterns" in AI output, they could trigger LIS alerts.
 
 ### 3.2. `ECHO-SHIELD`
-*   **Role:** Prevents semantic stagnation from self-repetition or dominant echoes.
-*   **Inputs:**
-    *   AI-generated linguistic output stream.
-    *   History of recent AI outputs (short-term memory buffer).
-    *   Incoming HSP messages, especially `SymbolicPulse` data.
-    *   Configuration: Max phrase repetition, diversity metric thresholds.
-*   **Internal Logic (Conceptual):**
-    *   *Repetition Tracking:* Monitors n-gram frequencies and semantic concept repetition.
-    *   *SymbolicPulse Signature Analysis:* Examines HSP `SymbolicPulse` homogeneity and its impact on output similarity. "Anchoring" implies ensuring responses influenced by pulses still introduce novelty.
-    *   *Diversity Check:* Calculates linguistic diversity metrics on generated output.
-    *   *Source Attribution (Conceptual):* Hypothesizes if repetition is self-generated or HSP-influenced.
-*   **Outputs:**
-    *   `EchoPollutionWarningEvent` (TypedDict):
-        *   `warning_id`: UUID
-        *   `timestamp`: ISO 8601 UTC
-        *   `warning_type`: Enum (e.g., `SELF_REPETITION`, `EXTERNAL_ECHO_DOMINANCE`, `LOW_DIVERSITY`)
-        *   `repeated_pattern`: str or dict
-        *   `source_attribution_hypothesis`: Optional[str]
-    *   Potential control signals (e.g., to `DialogueManager` to vary generation strategy).
+*   **Role:** Prevents semantic stagnation from self-repetition or dominant echoes (internal or HSP).
+*   **Inputs:** AI linguistic output, recent output history, incoming HSP messages (especially `SymbolicPulse`).
+*   **Internal Logic (Conceptual):** Repetition tracking, `SymbolicPulse` signature analysis, linguistic diversity checks.
+*   **Outputs:** `EchoPollutionWarningEvent`, potential control signals.
+*   **Relation to Existing Functionalities:**
+    *   **`LearningManager` (Trust-based filtering of HSP facts):** This is a form of "shielding" the knowledge base from unreliable external data, a principle aligned with `ECHO-SHIELD`'s goal of managing external semantic influence.
+    *   Currently, no direct system actively monitors or prevents linguistic repetition in the AI's *own generated output* or from HSP echoes at the linguistic level. This component would largely be new functionality, though it would interact with HSP data.
 
 ### 3.3. `SYNTAX-INFLAMMATION DETECTOR`
-*   **Role:** Identifies unstable or degenerative structural patterns in language; early warning for severe semantic issues.
-*   **Inputs:**
-    *   AI-generated linguistic output (tokenized, POS-tagged, possibly with dependency parses).
-    *   Knowledge base of "anti-patterns" or "mutation-prone" syntactic structures.
-    *   Metrics of syntactic complexity and coherence.
-*   **Internal Logic (Conceptual):**
-    *   *Anti-Pattern Matching:* Detects predefined problematic grammatical structures.
-    *   *Coherence Scoring:* Assesses local semantic coherence.
-    *   *Complexity Monitoring:* Tracks syntactic complexity changes.
-    *   *"Cytokine Storm Response" Detection:* Identifies cascading syntactic errors from minor fixes.
-*   **Outputs:**
-    *   `SyntaxInstabilityWarningEvent` (TypedDict):
-        *   `warning_id`: UUID
-        *   `timestamp`: ISO 8601 UTC
-        *   `warning_type`: Enum (e.g., `ANTI_PATTERN_DETECTED`, `COHERENCE_FAILURE`, `COMPLEXITY_ANOMALY`, `CASCADE_ERROR_SUSPECTED`)
-        *   `problematic_segment`: str
-        *   `description_of_issue`: str
+*   **Role:** Identifies unstable/degenerative structural patterns in language (syntax, local coherence).
+*   **Inputs:** AI linguistic output (tokenized, POS-tagged, parsed).
+*   **Internal Logic (Conceptual):** Anti-pattern matching, coherence scoring, complexity monitoring, "cytokine storm" detection (cascading errors).
+*   **Outputs:** `SyntaxInstabilityWarningEvent`.
+*   **Relation to Existing Functionalities:**
+    *   **`SelfCritiqueModule`:** If its critique LLM identifies incoherence or poor structure, this partially covers this function. LIS would aim for more explicit, potentially rule-based or ML-based syntactic checks.
+    *   The tool drafting logic in `DialogueManager` uses `ast.parse` for Python syntax validation. While for code, this shows a pattern of structural validation that could be adapted for natural language syntax if appropriate models/rules were available.
 
 ### 3.4. `IMMUNO-NARRATIVE CACHE`
-*   **Role:** The memory of the LIS; stores past incidents, resolutions, and "learnings."
-*   **Inputs:**
-    *   `SemanticAnomalyDetectedEvent`, `EchoPollutionWarningEvent`, `SyntaxInstabilityWarningEvent`.
-    *   `LISInterventionReport` from `TONAL REPAIR ENGINE`.
-    *   `ErrIndex[]` references from `ErrorBloom` events.
-    *   Feedback on LIS intervention success/failure.
-*   **Internal Logic (Conceptual):**
-    *   *Incident Logging:* Stores detailed records of anomalies and responses.
-    *   *Pattern Extraction:* Identifies recurring anomaly types or effective repair strategies.
-    *   *"Antibody" Generation (Conceptual):* Codifies successful response patterns into "narrative antibodies" (rules/heuristics).
-    *   *Knowledge Base Provision:* Supplies historical data to other LIS components.
-    *   *Reassembly Pathways:* Uses `ErrIndex[]` to link "microfailures" and "recoverable fragments" to original error events.
-*   **Outputs:**
-    *   Data/models for other LIS components.
-    *   Reports on LIS activity and effectiveness.
-    *   `LISLearningPackage` for `LearningManager`.
-*   **Potential Data Structures:**
-    *   `LIS_IncidentRecord` (TypedDict): `incident_id`, `timestamp`, `anomaly_event_data`, `intervention_report_data`, `outcome`, `error_bloom_ref`, `learned_antibody_ref` (Optional).
-    *   `NarrativeAntibody` (TypedDict): `antibody_id`, `trigger_pattern`, `response_strategy`, `effectiveness_score`.
+*   **Role:** The memory of the LIS; stores incidents, resolutions, "learnings," and "narrative antibodies."
+*   **Inputs:** Events from LIS detectors, `LISInterventionReport` from `TONAL REPAIR ENGINE`, `ErrorBloom` references, feedback.
+*   **Internal Logic (Conceptual):** Incident logging, pattern extraction, "antibody" generation/codification, knowledge base for other LIS components.
+*   **Outputs:** Data/models for LIS components, `LISLearningPackage` for `LearningManager`.
+*   **Relation to Existing Functionalities:**
+    *   **`HAMMemoryManager`:** Could be the underlying storage for the cache. LIS incident records could be a special `data_type` in HAM.
+    *   **`LearningManager` (HSP Conflict Metadata):** The metadata stored by `LearningManager` when resolving HSP fact conflicts (e.g., `supersedes_ham_records`, `resolution_strategy`) is a form of incident logging directly relevant to this cache. LIS would generalize this to other types of semantic incidents.
+    *   **`DialogueManager` (Critique Storage):** Storing `CritiqueResult` in HAM is a nascent form of caching "quality incidents."
 
 ### 3.5. `TONAL REPAIR ENGINE`
-*   **Role:** Primary effector arm of LIS; attempts to correct or mitigate detected semantic problems.
-*   **Inputs:**
-    *   `SemanticAnomalyDetectedEvent`, `EchoPollutionWarningEvent`, `SyntaxInstabilityWarningEvent`.
-    *   Data from `IMMUNO-NARRATIVE CACHE` (historical strategies, antibodies).
-    *   Current dialogue/narrative context.
-    *   AI's desired personality profile and emotional state.
-    *   Access to `LLMInterface` or other generative tools for rephrasing/repair.
-*   **Internal Logic (Conceptual):**
-    *   *Strategy Selection:* Chooses repair strategy based on anomaly type/severity.
-    *   *"Low-Frequency Restoration Protocols":* Uses less common synonyms/structures if common phrasing causes issues.
-    *   *"Inversely Map Silence Gaps":* Infers missing semantic links or prompts for clarification if AI output is incoherent.
-    *   *Tonal Adjustment:* Modifies output to match desired emotional tone/context.
-    *   *Structural Correction:* Attempts to fix syntactic issues.
-    *   *Controlled Re-generation:* May re-generate parts of responses with specific constraints.
-*   **Outputs:**
-    *   `RepairedOutputSuggestion` (TypedDict):
-        *   `original_segment`: str
-        *   `suggested_segment`: str
-        *   `repair_strategy_used`: str
-        *   `confidence`: float
-    *   `LISInterventionReport` (TypedDict):
-        *   `report_id`: UUID
-        *   `incident_id_ref`: UUID (links to original anomaly event)
-        *   `timestamp`: ISO 8601 UTC
-        *   `action_taken`: str (e.g., "Rephrased segment", "Adjusted tone", "Applied Antibody_XYZ")
-        *   `parameters_used`: dict
-        *   `outcome_assessment`: Enum (`SUCCESS`, `PARTIAL_SUCCESS`, `FAILURE`, `NEEDS_REVIEW`)
-        *   `reasoning`: Optional[str]
-    *   Control signals to other AI modules (e.g., `DialogueManager`, `EmotionSystem`).
+*   **Role:** Primary effector arm of LIS; attempts to correct/mitigate detected semantic problems.
+*   **Inputs:** Anomaly/warning events, `IMMUNO-NARRATIVE CACHE` data, context, personality/emotion state, `LLMInterface`.
+*   **Internal Logic (Conceptual):** Strategy selection (rules, "antibodies," LLM-based re-generation), "low-frequency restoration," "inverse silence gap mapping," tonal/structural adjustment.
+*   **Outputs:** `RepairedOutputSuggestion`, `LISInterventionReport`, control signals.
+*   **Relation to Existing Functionalities:**
+    *   **`DialogueManager` (Fallback & Crisis Response):** Its tiered response generation and use of predefined crisis responses are simple forms of "repairing" a conversational dead-end or unsafe situation.
+    *   **`SelfCritiqueModule` (`suggested_alternative`):** Provides a direct suggestion for improvement, which `TONAL REPAIR ENGINE` could consume or use as a basis for more active repair.
+    *   **`LLMInterface` (Tool Drafting Usage):** The `DialogueManager`'s use of `LLMInterface` to generate structured code from descriptions demonstrates a pattern for complex, guided generation. This could be adapted by `TONAL REPAIR ENGINE` for linguistic repair tasks (e.g., "rephrase this sentence to be more X" or "fix coherence in this paragraph").
 
-## 4. LIS Interactions and Data Flows (v0.2)
+## 4. LIS Interactions and Data Flows (v0.3 - Highlighting Existing Touchpoints)
 
 ### 4.1. Internal LIS Data Flow Summary
-1.  **Detection:** `ERR-INTROSPECTOR`, `ECHO-SHIELD`, `SYNTAX-INFLAMMATION DETECTOR` operate concurrently, generating respective event payloads.
-2.  **Triage & Enrichment:** Events are potentially correlated. `IMMUNO-NARRATIVE CACHE` is queried for historical precedents and successful "antibodies."
-3.  **Repair & Response:** Enriched event data is passed to `TONAL REPAIR ENGINE`, which applies a strategy and produces `RepairedOutputSuggestion` and `LISInterventionReport`.
-4.  **Learning & Recording:** `LISInterventionReport` and original events are stored in `IMMUNO-NARRATIVE CACHE`, updating its knowledge.
+(Largely as in v0.2, but with awareness that initial events might come from enhanced existing modules like `SelfCritiqueModule`.)
 
-### 4.2. External System Interactions
+### 4.2. External System Interactions - Revised View
 
-*   **`ErrorBloom` / `ErrX`:**
-    *   `ErrorBloom` events (e.g., `HSPErrorBloomEventPayload`) can directly trigger LIS detectors.
-    *   `ErrX` (semantic error variables) can be part of LIS event payloads, quantifying anomaly characteristics.
-    *   `IMMUNO-NARRATIVE CACHE` links its records to `ErrorBloom` event IDs.
-*   **HSP (`ImmunoSync Layer` - Conceptual):**
-    *   `ECHO-SHIELD` monitors HSP `SymbolicPulse` data.
-    *   The `ImmunoSync Layer` (part of/near `HSPConnector`) could act on `ECHO-SHIELD` warnings by dampening problematic external pulses or injecting novelty locally to prevent HSP-induced echo pollution.
-*   **`DEEPMAPPINGENGINE.md` (Conceptual):**
-    *   This engine's detailed diagnostic reports on semantic misalignments would be a rich input to LIS, potentially bypassing initial detection and feeding directly to triage/repair phases.
+*   **`ErrorBloom` / `ErrX` (via `LearningManager` & HSP):**
+    *   Conflicts detected by `LearningManager` during HSP fact processing are prime `ErrorBloom` events. The metadata becomes `ErrX`. LIS's `IMMUNO-NARRATIVE CACHE` would ingest these structured incident reports.
+*   **HSP (`ImmunoSync Layer` - Conceptual, built upon `HSPConnector` & `LearningManager`):**
+    *   The `ImmunoSync Layer` would enhance `HSPConnector`'s processing pipeline. It would work with `ECHO-SHIELD` (new LIS component) to monitor linguistic patterns in HSP exchanges, not just factual conflicts. It would leverage `LearningManager`'s trust-based filtering.
+*   **`DEEPMAPPINGENGINE.md` (Conceptual):** Remains a future input for detailed diagnostics.
 *   **`Fragmenta` / `DialogueManager`:**
-    *   LIS monitors output from these systems.
-    *   `TONAL REPAIR ENGINE` provides `RepairedOutputSuggestion` back to them.
-    *   LIS might signal them to alter strategies or request clarification.
+    *   LIS monitors their output. `SelfCritiqueModule` currently provides post-hoc critique. LIS aims for more proactive/real-time intervention.
+    *   `TONAL REPAIR ENGINE` would provide `RepairedOutputSuggestion` to `DialogueManager` *before* final user output, a new step in the response pipeline.
+    *   `DialogueManager`'s crisis response logic is a specific instance of a "repair" strategy.
 *   **`LearningManager` / HAM:**
-    *   `IMMUNO-NARRATIVE CACHE` (potentially part of HAM or linked) provides `LISLearningPackage` (patterns, strategies, antibodies) to `LearningManager` for broader AI adaptation, model fine-tuning, or knowledge base updates.
-*   **`EmotionSystem` / `PersonalityManager`:**
-    *   LIS uses emotion/personality state as input for detection and repair.
-    *   LIS may send feedback to these systems if anomalies suggest internal state inconsistencies.
+    *   `IMMUNO-NARRATIVE CACHE` would likely use HAM for persistent storage of LIS incidents and "antibodies."
+    *   `LISLearningPackage` from the cache would feed into `LearningManager` to adapt its own fact processing rules, trust heuristics, or even to suggest fine-tuning data for LLMs used in critique or repair.
+*   **`SelfCritiqueModule` as an LIS Sensor:**
+    *   `CritiqueResult`s can be standardized and transformed into `SemanticAnomalyDetectedEvent`s, becoming a primary input source for LIS. The LIS would then orchestrate the response (logging to cache, triggering repair, etc.).
 
-## 5. Emergent Abilities (Envisioned)
+## 5. Relationship to Existing Project Functionalities - Summary
 
-*   Prevention of long-range echo decay and semantic drift.
-*   Synthesis of new grammatical/narrative logic from resolved anomalous phrasing.
-*   Evolution of adaptive immunity to repeated semantic disruptions.
-*   Increased robustness in handling novel or ambiguous linguistic situations.
+The LIS is not entirely built from scratch. It aims to:
+1.  **Formalize and Extend Existing Capabilities:**
+    *   Leverage `SelfCritiqueModule` as a key anomaly sensor.
+    *   Build upon `LearningManager`'s conflict resolution and trust mechanisms as a model for handling semantic integrity.
+    *   Use HAM via `IMMUNO-NARRATIVE CACHE` for persistent LIS memory.
+    *   Employ `LLMInterface` for advanced generative repair within `TONAL REPAIR ENGINE`.
+2.  **Introduce New Orchestration and Specialized Components:**
+    *   New components like `ECHO-SHIELD` and a more proactive `SYNTAX-INFLAMMATION DETECTOR` would be needed.
+    *   `ERR-INTROSPECTOR` would be a more sophisticated orchestrator of various detection signals.
+    *   `TONAL REPAIR ENGINE` would be a more active and versatile repair agent than current fallback logic.
+    *   The `IMMUNO-NARRATIVE CACHE` would be more specialized than general HAM storage, focusing on learning "antibodies."
+3.  **Shift Focus:** Move from post-hoc critique or data-level conflict resolution to more real-time, proactive linguistic self-monitoring and repair of the AI's own generated language.
 
-## 6. Open Questions & Future Development (v0.2)
+## 6. Open Questions & Future Development (v0.3)
 
-*   **Operationalizing "Rhythm" and "Tone":** Precise metrics and models for these concepts.
-*   **Threshold Dynamics:** How are anomaly detection thresholds set and adapted?
-*   **`IMMUNO-NARRATIVE CACHE` - HAM Integration:** Specific schema and interaction details.
-*   **"Narrative Antibody" Lifecycle:** How are antibodies generated, stored, selected, and potentially deprecated?
-*   **Performance Implications:** Ensuring LIS operates efficiently without undue latency.
-*   **User Oversight & Intervention:** Mechanisms for human review of LIS actions or challenging cases.
-*   Detailed algorithms for each component, moving from conceptual to implementable logic.
-*   Development of associated documentation like `LINGUISTICIMMUNECORE.md` (possibly detailing shared data structures/enums for LIS) and `IMMUNO-MAP.v1.svg` (visualizing flows).
+*   How to best integrate LIS monitoring into the `DialogueManager`'s response generation pipeline without adding significant latency?
+*   Defining the transformation logic from `CritiqueResult` (from `SelfCritiqueModule`) and `LearningManager` conflict metadata into standardized LIS `SemanticAnomalyDetectedEvent`s.
+*   Developing the specific algorithms and models for `ECHO-SHIELD` (linguistic diversity, HSP echo management) and the more advanced aspects of `SYNTAX-INFLAMMATION DETECTOR`.
+*   Schema design for `IMMUNO-NARRATIVE CACHE` entries and "narrative antibodies."
+*   Crafting effective prompts and strategies for `LLMInterface` when used by `TONAL REPAIR ENGINE` for various repair tasks.
+*   How does the LIS feedback loop influence `MetaFormulas` or other core AI adaptation mechanisms?
+*   Prioritizing which LIS components or functionalities to prototype first based on existing foundations.
 
-This v0.2 specification provides a more detailed framework for the LIS. Subsequent versions will focus on further algorithmic details and integration specifics.
+This v0.3 specification provides a more grounded view of the LIS by connecting it to existing project strengths and identifying areas for new development.
