@@ -2,7 +2,7 @@
 import unittest
 import json
 from typing import Dict, Any, Optional, List, cast
-from datetime import datetime, timezone # Added timezone
+from datetime import datetime, timezone, timedelta # Added timedelta
 
 # Adjust imports based on actual project structure
 # Assuming 'src' is effectively a top-level package for test execution context
@@ -14,7 +14,11 @@ from src.core_ai.lis.lis_cache_interface import (
     HAM_META_LIS_STATUS,
     HAM_META_LIS_TAGS,
     HAM_META_TIMESTAMP_LOGGED,
-    LIS_INCIDENT_DATA_TYPE_PREFIX
+    LIS_INCIDENT_DATA_TYPE_PREFIX,
+    # Constants for antibodies
+    LIS_ANTIBODY_DATA_TYPE_PREFIX,
+    HAM_META_ANTIBODY_FOR_ANOMALY,
+    HAM_META_ANTIBODY_EFFECTIVENESS
 )
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager, HAMRecallResult
 from src.shared.types.common_types import (
@@ -22,8 +26,9 @@ from src.shared.types.common_types import (
     LIS_SemanticAnomalyDetectedEvent,
     LIS_AnomalyType,
     LIS_InterventionReport,
-    LIS_InterventionOutcome
-    # Constants are now imported from lis_cache_interface directly
+    LIS_InterventionOutcome,
+    NarrativeAntibodyObject # Import the new type
+    # LIS_AntibodyStrategyType could be imported if used for strict typing in test helper
 )
 
 class MockHAMMemoryManager(HAMMemoryManager):
@@ -375,6 +380,115 @@ class TestHAMLISCache(unittest.TestCase):
         self._populate_mock_ham_for_query_tests()
         results = self.lis_cache.query_incidents(anomaly_type="COMPLEXITY_ANOMALY", limit=10) # This type is not in mock data
         self.assertEqual(len(results), 0)
+
+    def _create_sample_antibody(self,
+                                antibody_id: str,
+                                target_types: List[LIS_AnomalyType],
+                                strategy_type: str = "REPHRASE_LLM", # Should be LIS_AntibodyStrategyType
+                                effectiveness: Optional[float] = 0.8,
+                                timestamp_created: Optional[str] = None
+                                ) -> NarrativeAntibodyObject:
+        ts = timestamp_created if timestamp_created else datetime.now(timezone.utc).isoformat()
+        # Ensure strategy_type is valid if LIS_AntibodyStrategyType is available
+        # For now, assume input string is valid or use a default from the Literal if imported.
+
+        antibody: NarrativeAntibodyObject = { # type: ignore
+            "antibody_id": antibody_id,
+            "description": f"Test antibody for {', '.join(target_types)}",
+            "target_anomaly_types": target_types,
+            "trigger_conditions": {"keyword_in_segment": ["test_trigger"]},
+            "response_strategy_type": strategy_type, # Cast to LIS_AntibodyStrategyType if imported
+            "response_strategy_details": {"prompt_template": "Test prompt for {segment}"},
+            "effectiveness_score": effectiveness,
+            "usage_count": 5,
+            "timestamp_created": ts,
+            "version": 1
+        }
+        return antibody
+
+    def test_add_antibody_success(self):
+        antibody_id = "antibody_add_001"
+        sample_antibody = self._create_sample_antibody(antibody_id, ["RHYTHM_BREAK"], effectiveness=0.9)
+
+        success = self.lis_cache.add_antibody(sample_antibody)
+        self.assertTrue(success, "add_antibody should return True on success.")
+
+        self.assertEqual(len(self.mock_ham_manager.core_memory_store), 1)
+        stored_key = list(self.mock_ham_manager.core_memory_store.keys())[0]
+        stored_entry = self.mock_ham_manager.core_memory_store[stored_key]
+
+        expected_data_type = f"{LIS_ANTIBODY_DATA_TYPE_PREFIX}RHYTHM_BREAK"
+        self.assertEqual(stored_entry["data_type"], expected_data_type)
+
+        expected_metadata = {
+            HAM_META_LIS_OBJECT_ID: antibody_id,
+            HAM_META_ANTIBODY_FOR_ANOMALY: "RHYTHM_BREAK", # Primary type stored
+            HAM_META_ANTIBODY_EFFECTIVENESS: 0.9,
+            HAM_META_TIMESTAMP_LOGGED: sample_antibody["timestamp_created"],
+            "lis_antibody_version": 1
+        }
+        # Filter out None values from expected_metadata if any field could be None and not in sample
+        expected_metadata_clean = {k:v for k,v in expected_metadata.items() if v is not None}
+        self.assertEqual(stored_entry["metadata"], expected_metadata_clean)
+
+        deserialized_raw_data = json.loads(stored_entry["raw_data"])
+        self.assertEqual(deserialized_raw_data, sample_antibody)
+
+    def test_get_learned_antibodies_no_filters(self):
+        ab1 = self._create_sample_antibody("ab1", ["RHYTHM_BREAK"], effectiveness=0.9, timestamp_created=(datetime.now(timezone.utc) - timedelta(hours=1)).isoformat())
+        ab2 = self._create_sample_antibody("ab2", ["LOW_DIVERSITY"], effectiveness=0.7, timestamp_created=(datetime.now(timezone.utc) - timedelta(hours=2)).isoformat())
+        self.lis_cache.add_antibody(ab1)
+        self.lis_cache.add_antibody(ab2)
+
+        results = self.lis_cache.get_learned_antibodies(limit=5)
+        self.assertEqual(len(results), 2)
+        # Default sort is effectiveness desc, then timestamp_created desc
+        self.assertEqual(results[0]["antibody_id"], "ab1")
+        self.assertEqual(results[1]["antibody_id"], "ab2")
+
+    def test_get_learned_antibodies_filter_by_anomaly_type(self):
+        ab1 = self._create_sample_antibody("ab1", ["RHYTHM_BREAK"], effectiveness=0.9)
+        ab2 = self._create_sample_antibody("ab2", ["LOW_DIVERSITY"], effectiveness=0.7)
+        ab3 = self._create_sample_antibody("ab3", ["RHYTHM_BREAK"], effectiveness=0.6)
+        self.lis_cache.add_antibody(ab1)
+        self.lis_cache.add_antibody(ab2)
+        self.lis_cache.add_antibody(ab3)
+
+        results = self.lis_cache.get_learned_antibodies(for_anomaly_type="RHYTHM_BREAK")
+        self.assertEqual(len(results), 2)
+        self.assertTrue(all("RHYTHM_BREAK" in r["target_anomaly_types"] for r in results))
+        self.assertEqual(results[0]["antibody_id"], "ab1") # Higher effectiveness
+        self.assertEqual(results[1]["antibody_id"], "ab3")
+
+    def test_get_learned_antibodies_filter_by_effectiveness(self):
+        ab1 = self._create_sample_antibody("ab1", ["RHYTHM_BREAK"], effectiveness=0.9)
+        ab2 = self._create_sample_antibody("ab2", ["LOW_DIVERSITY"], effectiveness=0.7)
+        ab3 = self._create_sample_antibody("ab3", ["RHYTHM_BREAK"], effectiveness=0.6)
+        self.lis_cache.add_antibody(ab1)
+        self.lis_cache.add_antibody(ab2)
+        self.lis_cache.add_antibody(ab3)
+
+        results = self.lis_cache.get_learned_antibodies(min_effectiveness=0.75)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["antibody_id"], "ab1")
+
+        results_lower_eff = self.lis_cache.get_learned_antibodies(min_effectiveness=0.5)
+        self.assertEqual(len(results_lower_eff), 3)
+
+
+    def test_add_and_get_antibody_roundtrip(self):
+        antibody_id = "antibody_rt_001"
+        original_antibody = self._create_sample_antibody(antibody_id, ["UNEXPECTED_TONE_SHIFT"], effectiveness=0.85)
+
+        self.lis_cache.add_antibody(original_antibody)
+
+        # For get_learned_antibodies, we'd typically query by type or other filters.
+        # To test roundtrip simply, let's get all and find it.
+        all_antibodies = self.lis_cache.get_learned_antibodies(limit=10)
+        retrieved_antibody = next((ab for ab in all_antibodies if ab["antibody_id"] == antibody_id), None)
+
+        self.assertIsNotNone(retrieved_antibody)
+        self.assertEqual(retrieved_antibody, original_antibody)
 
 if __name__ == '__main__':
     unittest.main()

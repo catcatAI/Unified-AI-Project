@@ -1,4 +1,4 @@
-# Linguistic Immune System (LIS) - Design Specification v0.3
+# Linguistic Immune System (LIS) - Design Specification v0.4
 
 ## 1. Introduction
 
@@ -124,23 +124,25 @@ The LIS is not entirely built from scratch. It aims to:
 1.  **Formalize and Extend Existing Capabilities:**
     *   Leverage `SelfCritiqueModule` as a key anomaly sensor.
     *   Build upon `LearningManager`'s conflict resolution and trust mechanisms as a model for handling semantic integrity.
-    *   Use HAM via `IMMUNO-NARRATIVE CACHE` for persistent LIS memory.
+    *   Use HAM via `IMMUNO-NARRATIVE CACHE` (with implemented basic storage/retrieval for incidents and antibodies via `HAMLISCache`) for persistent LIS memory.
     *   Employ `LLMInterface` for advanced generative repair within `TONAL REPAIR ENGINE`.
 2.  **Introduce New Orchestration and Specialized Components:**
     *   New components like `ECHO-SHIELD` and a more proactive `SYNTAX-INFLAMMATION DETECTOR` would be needed.
     *   `ERR-INTROSPECTOR` would be a more sophisticated orchestrator of various detection signals.
     *   `TONAL REPAIR ENGINE` would be a more active and versatile repair agent than current fallback logic.
-    *   The `IMMUNO-NARRATIVE CACHE` would be more specialized than general HAM storage, focusing on learning "antibodies."
-3.  **Shift Focus:** Move from post-hoc critique or data-level conflict resolution to more real-time, proactive linguistic self-monitoring and repair of the AI's own generated language.
+    *   The `IMMUNO-NARRATIVE CACHE`, with its defined `LISCacheInterface` and initial `HAMLISCache` implementation for incidents and antibodies, is now more concrete. Its capabilities for storing/retrieving "narrative antibodies" (defined in `NarrativeAntibodyObject`) are established at an interface and basic implementation level.
+3.  **Shift Focus:** Move from post-hoc critique or data-level conflict resolution to more real-time, proactive linguistic self-monitoring and repair of the AI's own generated language, leveraging the increasingly functional cache.
 
-## 6. Open Questions & Future Development (v0.3)
+## 6. Open Questions & Future Development (v0.4)
 
 *   How to best integrate LIS monitoring into the `DialogueManager`'s response generation pipeline without adding significant latency?
 *   Defining the transformation logic from `CritiqueResult` (from `SelfCritiqueModule`) and `LearningManager` conflict metadata into standardized LIS `SemanticAnomalyDetectedEvent`s.
 *   Developing the specific algorithms and models for `ECHO-SHIELD` (linguistic diversity, HSP echo management) and the more advanced aspects of `SYNTAX-INFLAMMATION DETECTOR`.
-*   Schema design for `IMMUNO-NARRATIVE CACHE` entries and "narrative antibodies."
+*   Full implementation and testing of all `HAMLISCache` methods (e.g., `update_incident_status`, `find_related_incidents`, complex queries).
+*   Defining the concrete structure and storage/retrieval mechanisms for "narrative antibodies" beyond the `NarrativeAntibodyObject` TypedDict (e.g., how `trigger_conditions` are matched).
 *   Crafting effective prompts and strategies for `LLMInterface` when used by `TONAL REPAIR ENGINE` for various repair tasks.
 *   How does the LIS feedback loop influence `MetaFormulas` or other core AI adaptation mechanisms?
-*   Prioritizing which LIS components or functionalities to prototype first based on existing foundations.
+*   Prioritizing which LIS detector components or `TONAL REPAIR ENGINE` strategies to prototype first, now that a basic cache is forming.
+*   Integrating the `LISCacheInterface` (specifically `HAMLISCache`) with modules like `SelfCritiqueModule` and `LearningManager` to start populating it with `LIS_IncidentRecord`s.
 
-This v0.3 specification provides a more grounded view of the LIS by connecting it to existing project strengths and identifying areas for new development.
+This v0.4 specification reflects the initial implementation of the LIS cache's core functionalities for incidents and antibodies, providing a more concrete foundation for developing the LIS's detection, repair, and learning capabilities.
