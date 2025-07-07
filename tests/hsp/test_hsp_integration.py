@@ -345,7 +345,8 @@ class TestHSPTaskBrokering: # ... (all existing tests in this class remain the s
         self, dialogue_manager_fixture: DialogueManager, service_discovery_module_fixture: ServiceDiscoveryModule,
         peer_a_hsp_connector: HSPConnector, mock_llm_fixture: MockLLMInterface, main_ai_hsp_connector: HSPConnector ):
         peer_id=TEST_AI_ID_PEER_A; cap_id=f"{peer_id}_special_hsp_op_v1"; search_term="special_fallback_op"
-        reqs:List[Any]=[]; def handler(p,s,e): reqs.append(p); r_p=HSPTaskResultPayload(result_id="r_fb",request_id=p['request_id'],executing_ai_id=peer_id,status="success",payload={"data":"fallback_done"},timestamp_completed=datetime.now(timezone.utc).isoformat()); peer_a_hsp_connector.send_task_result(r_p,p['callback_address'],e['correlation_id']) #type: ignore
+        reqs:List[Any]=[]
+        def handler(p,s,e): reqs.append(p); r_p=HSPTaskResultPayload(result_id="r_fb",request_id=p['request_id'],executing_ai_id=peer_id,status="success",payload={"data":"fallback_done"},timestamp_completed=datetime.now(timezone.utc).isoformat()); peer_a_hsp_connector.send_task_result(r_p,p['callback_address'],e['correlation_id']) #type: ignore
         peer_a_hsp_connector.register_on_task_request_callback(handler); peer_a_hsp_connector.subscribe(f"hsp/requests/{peer_id}/#")
         adv=HSPCapabilityAdvertisementPayload(capability_id=cap_id,ai_id=peer_id,name="FallbackOp",description="Handles fallback.",version="1.0",availability_status="online",tags=[search_term]); assert peer_a_hsp_connector.publish_capability_advertisement(adv,CAP_ADVERTISEMENT_TOPIC); await asyncio.sleep(0.5) #type: ignore
         assert len(service_discovery_module_fixture.find_capabilities(capability_id_filter=cap_id))==1

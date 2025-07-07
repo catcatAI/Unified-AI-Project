@@ -40,14 +40,21 @@ class HAMMemoryManager:
 
     Encryption relies on the MIKO_HAM_KEY environment variable for the Fernet key.
     If not set, a temporary key is generated for the session (data not persistent).
+    Can be made aware of simulated disk resource limits via ResourceAwarenessService.
     """
-    def __init__(self, core_storage_filename="ham_core_memory.json"):
+    BASE_SAVE_DELAY_SECONDS = 0.05 # Base delay for conceptual lag simulation
+
+    def __init__(self,
+                 core_storage_filename="ham_core_memory.json",
+                 resource_awareness_service: Optional[Any] = None): # Optional['ResourceAwarenessService']
         """
         Initializes the HAMMemoryManager.
 
         Args:
             core_storage_filename (str): Filename for the persistent core memory store.
+            resource_awareness_service (Optional[ResourceAwarenessService]): Service to get simulated resource limits.
         """
+        self.resource_awareness_service = resource_awareness_service
         self.core_memory_store: Dict[str, HAMDataPackageInternal] = {}
         self.next_memory_id = 1
 
@@ -189,8 +196,78 @@ class HAMMemoryManager:
         return base_rehydration
 
     # --- Core Layer File Operations ---
-    def _save_core_memory_to_file(self):
+    def _get_current_disk_usage_gb(self) -> float:
+        """Returns the current size of the core_storage_filepath in GB."""
         try:
+            if os.path.exists(self.core_storage_filepath):
+                file_size_bytes = os.path.getsize(self.core_storage_filepath)
+                return file_size_bytes / (1024**3) # Bytes to GB
+        except OSError as e:
+            print(f"HAM: Error getting file size for {self.core_storage_filepath}: {e}")
+        return 0.0 # Default to 0 if file doesn't exist or error
+
+    def _simulate_disk_lag_and_check_limit(self) -> bool:
+        """
+        Checks simulated disk usage against limits and simulates lag if thresholds are met.
+        Returns True if it's okay to save, False if disk full limit is hit.
+        """
+        if not self.resource_awareness_service:
+            return True # No service, no simulated limits to check
+
+        disk_config = self.resource_awareness_service.get_simulated_disk_config()
+        if not disk_config:
+            return True # No disk config in service, no limits to check
+
+        current_usage_gb = self._get_current_disk_usage_gb()
+        total_simulated_disk_gb = disk_config.get('space_gb', float('inf'))
+
+        # Hard Limit Check:
+        # A more accurate check would estimate the size of the data *about to be written*.
+        # For now, we check if current usage already exceeds or is very close to the total.
+        # If self.core_memory_store is large and not yet saved, current_usage_gb might be small.
+        # This check is primarily for when the file already exists and is large.
+        if current_usage_gb >= total_simulated_disk_gb:
+            print(f"HAM: CRITICAL - Simulated disk full! Usage: {current_usage_gb:.2f}GB, Limit: {total_simulated_disk_gb:.2f}GB. Save operation aborted.")
+            return False # Prevent save
+
+        # Lag Simulation:
+        warning_thresh_gb = total_simulated_disk_gb * (disk_config.get('warning_threshold_percent', 80) / 100.0)
+        critical_thresh_gb = total_simulated_disk_gb * (disk_config.get('critical_threshold_percent', 95) / 100.0)
+
+        lag_to_apply_seconds = 0.0
+        base_delay = self.BASE_SAVE_DELAY_SECONDS # A small base delay for I/O simulation
+
+        if current_usage_gb >= critical_thresh_gb:
+            lag_factor = disk_config.get('lag_factor_critical', 1.0)
+            lag_to_apply_seconds = base_delay * lag_factor
+            print(f"HAM: WARNING - Simulated disk usage ({current_usage_gb:.2f}GB) is at CRITICAL level (>{critical_thresh_gb:.2f}GB). Simulating {lag_to_apply_seconds:.2f}s lag.")
+        elif current_usage_gb >= warning_thresh_gb:
+            lag_factor = disk_config.get('lag_factor_warning', 1.0)
+            lag_to_apply_seconds = base_delay * lag_factor
+            print(f"HAM: INFO - Simulated disk usage ({current_usage_gb:.2f}GB) is at WARNING level (>{warning_thresh_gb:.2f}GB). Simulating {lag_to_apply_seconds:.2f}s lag.")
+
+        if lag_to_apply_seconds > 0:
+            import time # Import time locally for this function
+            time.sleep(lag_to_apply_seconds)
+
+        return True # OK to save
+
+    def _save_core_memory_to_file(self) -> bool: # Added return type bool
+        """Saves the core memory store to a JSON file, respecting simulated disk limits."""
+
+        if not self._simulate_disk_lag_and_check_limit():
+            # If _simulate_disk_lag_and_check_limit returns False, it means disk is full.
+            # store_experience should handle this by returning None.
+            return False # Indicate save was prevented
+
+        try:
+            # Estimate size of current core_memory_store if serialized (very rough)
+            # This is needed for a more proactive "disk full" check BEFORE writing.
+            # For now, the check in _simulate_disk_lag_and_check_limit is mostly reactive based on existing file size.
+            # A proper pre-emptive check would serialize self.core_memory_store to a string
+            # and check its length + current_usage_gb against total_simulated_disk_gb.
+            # This is complex and might be slow for large stores.
+
             with open(self.core_storage_filepath, 'w', encoding='utf-8') as f:
                 # Need to handle bytes from encryption for JSON serialization
                 # Store base64 encoded strings in JSON
@@ -203,8 +280,10 @@ class HAMMemoryManager:
                         "metadata": data_pkg.get("metadata", {})
                     }
                 json.dump({"next_memory_id": self.next_memory_id, "store": serializable_store}, f, indent=2)
+            return True # Save successful
         except Exception as e:
             print(f"Error saving core memory to file: {e}")
+            return False # Save failed
 
     def _load_core_memory_from_file(self):
         if not os.path.exists(self.core_storage_filepath):
@@ -293,9 +372,22 @@ class HAMMemoryManager:
             "metadata": current_metadata # Use the processed current_metadata
         }
         self.core_memory_store[memory_id] = data_package
-        self._save_core_memory_to_file() # Persist after each store
-        print(f"HAM: Stored experience {memory_id}")
-        return memory_id
+
+        save_successful = self._save_core_memory_to_file() # Persist after each store
+
+        if save_successful:
+            print(f"HAM: Stored experience {memory_id}")
+            return memory_id
+        else:
+            # If save failed (e.g., simulated disk full), revert adding to in-memory store
+            # and potentially log that the experience was not truly stored due to simulated limit.
+            print(f"HAM: Failed to save core memory to file for experience {memory_id}. Reverting in-memory store for this item.")
+            if memory_id in self.core_memory_store:
+                del self.core_memory_store[memory_id]
+            # Note: self.next_memory_id was already incremented. This could lead to skipped IDs
+            # if not handled, but for simulation, it might be acceptable or reset on reload.
+            # Alternatively, decrement self.next_memory_id here if strict ID sequence is vital.
+            return None
 
     def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
         """
