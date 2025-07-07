@@ -13,6 +13,7 @@ requests
 # google-generativeai
 python-dotenv
 PyYAML
+typing-extensions # For Required, NotRequired, etc.
 # openai
 # langchain
 
