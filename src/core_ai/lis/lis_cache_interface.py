@@ -18,7 +18,8 @@ from src.shared.types.common_types import (
     LIS_IncidentRecord,
     LIS_SemanticAnomalyDetectedEvent,
     LIS_AnomalyType,
-    LIS_InterventionReport
+    LIS_InterventionReport,
+    NarrativeAntibodyObject # Import the new TypedDict
     # Constants like HAM_META_LIS_OBJECT_ID are defined below in this file
     # and thus should not be imported from common_types here.
 )
@@ -44,7 +45,7 @@ HAM_META_ANTIBODY_EFFECTIVENESS = "lis_antibody_effectiveness"
 
 
 # Placeholder for Antibody type, will be refined later
-NarrativeAntibodyObject = Dict[str, Any]
+# NarrativeAntibodyObject = Dict[str, Any] # This is now imported from common_types
 
 
 class LISCacheInterface(ABC):
