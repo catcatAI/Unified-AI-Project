@@ -719,3 +719,81 @@ class NarrativeAntibodyObject(TypedDict, total=False):
     metadata: Optional[Dict[str, Any]]       # Other relevant metadata (e.g., creator, model versions).
 
 # --- End LIS Specific Types ---
+
+
+# --- AI Virtual Input System Types ---
+
+VirtualMouseEventType = Literal[
+    "move_relative_to_element", # Move mouse to a relative x,y within a target_element_id
+    "move_relative_to_window",  # Move mouse by delta_x_ratio, delta_y_ratio of current window
+    "click",                    # Perform a click (left, right, double)
+    "scroll",                   # Scroll (up, down, left, right)
+    "drag_start",               # Start a drag operation (implicitly at current mouse pos or on an element)
+    "drag_end",                 # End a drag operation (potentially to a new position or element)
+    "hover"                     # Hover over an element or position
+]
+
+VirtualKeyboardActionType = Literal[
+    "type_string",              # Types a sequence of characters.
+    "press_keys",               # Simulates pressing one or more keys, including modifiers (e.g., ['ctrl', 'alt', 't'], ['enter']).
+    "special_key"               # Press a special key like 'enter', 'tab', 'esc', 'delete', 'backspace', arrow keys.
+    # 'hold_key', 'release_key' could be added for more fine-grained control if needed.
+]
+
+VirtualInputPermissionLevel = Literal[
+    "simulation_only",          # Commands are logged/simulated, no real OS events. (Default)
+    "allow_actual_input_restricted", # Actual input allowed, but perhaps restricted to specific app/window (Future).
+    "allow_actual_input_full"        # Full actual input allowed (Requires extreme caution and explicit grant).
+]
+
+class VirtualInputElementDescription(TypedDict, total=False):
+    """
+    Describes a UI element as perceived by the AI's virtual environment.
+    This structure can be recursive for nested elements.
+    """
+    element_id: Required[str]  # Unique identifier for this element within the current context/screen.
+    element_type: Required[str] # Type of the element (e.g., "button", "text_field", "checkbox", "label", "window", "file_icon", "list_item").
+    label_text: Optional[str]   # Visible text label or content of the element.
+    value: Optional[Any]        # Current value (e.g., text in a field, checked state of a box).
+    is_enabled: Optional[bool]  # Whether the element is interactive.
+    is_focused: Optional[bool]  # Whether the element currently has virtual focus.
+    is_visible: Optional[bool]  # Whether the element is currently considered visible.
+    # Relative bounds [x_ratio, y_ratio, width_ratio, height_ratio] within its parent or the screen/window.
+    # Ratios are 0.0 to 1.0. (e.g., x_ratio=0.5 means horizontal center).
+    bounds_relative: Optional[List[float]] # Typically List[float] of 4 elements. Using List for TypedDict compatibility.
+    children: Optional[List['VirtualInputElementDescription']] # Recursive definition for child elements.
+    attributes: Optional[Dict[str, Any]] # Other specific attributes (e.g., 'is_scrollable', 'options' for a dropdown).
+
+class VirtualMouseCommand(TypedDict, total=False):
+    """Command for the virtual mouse."""
+    action_type: Required[VirtualMouseEventType]
+    target_element_id: Optional[str] # ID of the element to interact with.
+    # Relative coordinates (0.0-1.0).
+    # For 'move_relative_to_element', relative to target_element_id's bounds.
+    # For 'move_relative_to_window', these are deltas from current position or absolute if specified.
+    relative_x: Optional[float]
+    relative_y: Optional[float]
+
+    # Specific to click
+    click_type: Optional[Literal['left', 'right', 'double']] # Defaults to 'left' if 'click' action.
+
+    # Specific to scroll
+    scroll_direction: Optional[Literal['up', 'down', 'left', 'right']]
+    scroll_amount_ratio: Optional[float] # Ratio of scrollable area, e.g., 0.1 for 10%.
+    scroll_pages: Optional[int]          # Number of "pages" to scroll.
+
+    # Specific to drag_end
+    drag_to_element_id: Optional[str]
+    drag_to_relative_x: Optional[float]
+    drag_to_relative_y: Optional[float]
+
+
+class VirtualKeyboardCommand(TypedDict, total=False):
+    """Command for the virtual keyboard."""
+    action_type: Required[VirtualKeyboardActionType]
+    target_element_id: Optional[str] # Element to focus before typing, if applicable.
+    text_to_type: Optional[str]      # For 'type_string'.
+    keys: Optional[List[str]]        # For 'press_keys' (e.g., ["ctrl", "c"], ["shift", "a"], ["enter"]).
+                                     # For 'special_key', a single key string like "enter", "tab".
+
+# --- End AI Virtual Input System Types ---
