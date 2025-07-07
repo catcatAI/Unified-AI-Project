@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This document provides an organized overview of the Unified-AI-Project's content, categorizing key directories and files to aid in understanding the project's structure and the purpose of its various components. This is based on the file structure available as of October 2023.
+This document provides an organized overview of the Unified-AI-Project's content, categorizing key directories and files to aid in understanding the project's structure and the purpose of its various components. This is based on the file structure available as of July 8, 2024.
 
 ## 1. Root Directory Files
 
@@ -24,7 +24,7 @@ Contains the core Python source code for the AI and its services.
 Houses the central intelligence and decision-making components of the AI.
 
 *   **`dialogue/`**:
-    *   `dialogue_manager.py`: Orchestrates conversation flow, integrates various AI components, and generates responses.
+*   `dialogue/dialogue_manager.py`: Orchestrates conversation flow, integrates various AI components, and generates responses.
 *   **`memory/`**:
     *   `ham_memory_manager.py`: Implements the Hierarchical Associative Memory for storing and retrieving experiences, learned facts, and dialogue context.
 *   **`learning/`**:
@@ -106,12 +106,13 @@ Contains project documentation, design specifications, and architectural notes.
 *   `PROJECT_STATUS_SUMMARY.md`: This document, summarizing implemented vs. pending features.
 *   `PROJECT_CONTENT_ORGANIZATION.md`: This document, providing an overview of file organization.
 *   **`architecture/`**: Subdirectory for more detailed architectural documents:
-    *   `DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`: Discussion on advanced data mapping and personality concepts (includes clarification on "XXX" misinterpretation).
+    *   `DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`: Discussion on advanced data mapping and personality concepts. Contains an important clarification regarding a previous misinterpretation of "XXX" substrings in HAM data.
     *   `ENHANCED_DECOUPLING_STRATEGIES.md`: Identifies areas and strategies for improving module decoupling.
     *   `Fragmenta_design_spec.md`: Design specification for the Fragmenta meta-orchestration system.
     *   `HAM_design_spec.md`: Design specification for the Hierarchical Associative Memory.
-    *   `Heterogeneous_Protocol_spec.md`: Likely an older or alternative name/version for HSP specification.
-    *   `MEMORY_SYSTEM.md`: Overview or design notes for the memory system.
+    *   `Heterogeneous_Protocol_spec.md`: Conceptual design for the "AI Heterogeneous Architecture Protocol (AHAP)" (v0.1), distinct from HSP, aimed at transferring AI characteristics (personality, roles) between MikoAI and external AI systems. Its implementation status is conceptual.
+    *   `MEMORY_SYSTEM.md`: Brief overview of the HAM memory system, pointing to the detailed `HAM_design_spec.md`.
+*   `1.0.txt`, `1.0en.txt`: Stylized, narrative/philosophical texts discussing AI evolution concepts, internal project metaphors (e.g., "Angela", "Fragmenta" as entities), and potential future ideas. Their content is more conceptual and brainstorming-oriented than formal technical specification.
 
 ## 4. Configuration Files (`configs/`)
 

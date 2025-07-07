@@ -10,7 +10,7 @@ For details on the initial project structure, merge strategy, and architectural 
 
 This project integrates and is developing several core AI components:
 
-*   **Dialogue Management (`src/core_ai/dialogue_manager.py`):** Orchestrates conversation flow, integrates with other AI components, and generates responses. It leverages personality profiles, memory systems, and formula-based logic.
+*   **Dialogue Management (`src/core_ai/dialogue/dialogue_manager.py`):** Orchestrates conversation flow, integrates with other AI components, and generates responses. It leverages personality profiles, memory systems, and formula-based logic.
 
 *   **Personality Management (`src/core_ai/personality/personality_manager.py`):** Manages different AI personalities, influencing tone, response style, and core values. Profiles are configurable (see `configs/personality_profiles/`).
 
@@ -20,11 +20,11 @@ This project integrates and is developing several core AI components:
     *   **Fact Extractor Module:** Extracts structured facts from dialogue.
     *   **Self-Critique Module:** Evaluates AI responses for quality and coherence.
     *   **Learning Manager:** Coordinates the learning process and storage of new knowledge into HAM.
-    *   **Content Analyzer Module (New - In Development):**
-        *   **Purpose:** Aims to achieve deep context understanding by analyzing text content (e.g., from documents, user inputs) to create a structured knowledge graph.
-        *   **Functionality:** Extracts named entities and identifies relationships between them.
-        *   **Technologies:** Utilizes `spaCy` for Natural Language Processing tasks (NER, dependency parsing) and `NetworkX` for constructing and representing the knowledge graph.
-        *   **Status:** A prototype (Phase 2) is complete, capable of generating a NetworkX knowledge graph with initial entity and rule-based relationship extraction. Further development will focus on refining extraction techniques and integrating this graph into the `DialogueManager` for richer contextual awareness.
+    *   **Content Analyzer Module:**
+        *   **Purpose:** Achieves deeper context understanding by analyzing text content (e.g., from documents, user inputs, HSP facts) to create and maintain a structured knowledge graph.
+        *   **Functionality:** Extracts named entities, identifies relationships (including from semantic triples), and integrates this information into a NetworkX knowledge graph. Supports basic ontology mapping.
+        *   **Technologies:** Utilizes `spaCy` for Natural Language Processing tasks (NER, dependency parsing) and `NetworkX`.
+        *   **Status:** A functional prototype (Phase 2) is integrated, capable of generating and updating a knowledge graph with entity and rule-based relationship extraction, including processing structured HSP facts. Ongoing work focuses on refining extraction, enhancing ontology use, and deepening its integration with the `DialogueManager` for richer contextual awareness.
 
 *   **Formula Engine (`src/core_ai/formula_engine/`):** Implements a rule-based system where predefined "formulas" (see `configs/formula_configs/`) can trigger specific actions or responses based on input conditions. This allows for deterministic behaviors and tool dispatch.
 
