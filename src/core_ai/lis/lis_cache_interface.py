@@ -10,15 +10,17 @@ adaptive capabilities.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, cast # Added cast
 import json # Added for HAMLISCache conceptual serialization
+from datetime import datetime, timezone # Added for timestamping in add_antibody
 
 # Assuming types will be imported from shared.types
 from src.shared.types.common_types import (
     LIS_IncidentRecord,
     LIS_SemanticAnomalyDetectedEvent,
     LIS_AnomalyType,
-    LIS_InterventionReport
+    LIS_InterventionReport,
+    NarrativeAntibodyObject # Import the new TypedDict
     # Constants like HAM_META_LIS_OBJECT_ID are defined below in this file
     # and thus should not be imported from common_types here.
 )
@@ -44,7 +46,7 @@ HAM_META_ANTIBODY_EFFECTIVENESS = "lis_antibody_effectiveness"
 
 
 # Placeholder for Antibody type, will be refined later
-NarrativeAntibodyObject = Dict[str, Any]
+# NarrativeAntibodyObject = Dict[str, Any] # This is now imported from common_types
 
 
 class LISCacheInterface(ABC):
@@ -518,8 +520,58 @@ class HAMLISCache(LISCacheInterface):
                                top_n: int = 3
                                ) -> List[LIS_IncidentRecord]:
         print(f"Conceptual: HAMLISCache.find_related_incidents for event {event_details.get('anomaly_id')}")
-        # Placeholder
-        return []
+
+        metadata_filters: Dict[str, Any] = {}
+        if for_anomaly_type:
+            metadata_filters[HAM_META_ANTIBODY_FOR_ANOMALY] = for_anomaly_type
+
+        fetch_limit = limit * 3 if limit < 100 else limit + 50
+
+        ham_recall_results = self.ham_manager.query_core_memory(
+            metadata_filters=metadata_filters,
+            data_type_filter=LIS_ANTIBODY_DATA_TYPE_PREFIX,
+            limit=fetch_limit,
+            sort_by_timestamp_desc=False
+        )
+
+        antibodies: List[NarrativeAntibodyObject] = []
+        for ham_result in ham_recall_results:
+            serialized_antibody = ham_result.get("rehydrated_gist")
+            processed_antibody: Optional[NarrativeAntibodyObject] = None
+
+            if isinstance(serialized_antibody, str):
+                try:
+                    processed_antibody = json.loads(serialized_antibody) # type: ignore
+                except json.JSONDecodeError:
+                    print(f"Warning: Skipping malformed LIS antibody record (str) from HAM (ID: {ham_result.get('id')})")
+                    continue
+            elif isinstance(serialized_antibody, dict): # If HAM already deserialized
+                processed_antibody = cast(NarrativeAntibodyObject, serialized_antibody)
+            else:
+                print(f"Warning: Skipping antibody record with unexpected data type in gist (ID: {ham_result.get('id')})")
+                continue
+
+            if not processed_antibody: # Should not happen if above logic is correct
+                continue
+
+            # Post-filter: min_effectiveness
+            if min_effectiveness is not None:
+                effectiveness = processed_antibody.get("effectiveness_score")
+                if effectiveness is None or effectiveness < min_effectiveness:
+                    continue
+
+            # Post-filter: for_anomaly_type (if antibody targets multiple types and only primary was in HAM metadata)
+            if for_anomaly_type:
+                target_types = processed_antibody.get("target_anomaly_types", [])
+                if not isinstance(target_types, list) or for_anomaly_type not in target_types:
+                    continue # This antibody, despite matching primary type in HAM, doesn't list this specific type.
+
+            antibodies.append(processed_antibody)
+
+        # Sort by effectiveness (descending), then by creation timestamp (descending) as a tie-breaker
+        antibodies.sort(key=lambda ab: (ab.get("effectiveness_score", 0.0), ab.get("timestamp_created", "")), reverse=True)
+
+        return antibodies[:limit]
 
     def get_learned_antibodies(self,
                                for_anomaly_type: Optional[LIS_AnomalyType] = None,
@@ -550,8 +602,69 @@ class HAMLISCache(LISCacheInterface):
         #             continue
         # return antibodies[:limit]
         print(f"Conceptual: HAMLISCache.get_learned_antibodies called.")
-        # Placeholder
-        return []
+
+        metadata_filters: Dict[str, Any] = {}
+        if for_anomaly_type:
+            # This assumes HAM_META_ANTIBODY_FOR_ANOMALY stores a single primary type,
+            # or that HAM's metadata_filters can handle "value IN list_of_values" if
+            # target_anomaly_types (a list) were stored directly or serialized in metadata.
+            # For now, assumes it matches against the primary_target_type stored during add_antibody.
+            metadata_filters[HAM_META_ANTIBODY_FOR_ANOMALY] = for_anomaly_type
+
+        # Fetch more to allow for post-filtering by effectiveness
+        fetch_limit = limit * 3 if limit < 100 else limit + 50
+
+        ham_recall_results = self.ham_manager.query_core_memory(
+            metadata_filters=metadata_filters,
+            data_type_filter=LIS_ANTIBODY_DATA_TYPE_PREFIX,
+            limit=fetch_limit,
+            sort_by_timestamp_desc=False # Default sort by effectiveness might be better, or by creation time
+        )
+
+        antibodies: List[NarrativeAntibodyObject] = []
+        for ham_result in ham_recall_results:
+            serialized_antibody = ham_result.get("rehydrated_gist")
+            if isinstance(serialized_antibody, str):
+                try:
+                    antibody: NarrativeAntibodyObject = json.loads(serialized_antibody) # type: ignore
+
+                    # Post-filter: min_effectiveness
+                    if min_effectiveness is not None:
+                        effectiveness = antibody.get("effectiveness_score")
+                        if effectiveness is None or effectiveness < min_effectiveness:
+                            continue
+
+                    # Post-filter: for_anomaly_type (if antibody can target multiple types and only primary was in metadata)
+                    # This check is more robust if an antibody can truly target multiple types.
+                    if for_anomaly_type:
+                        target_types = antibody.get("target_anomaly_types", [])
+                        if not isinstance(target_types, list) or for_anomaly_type not in target_types:
+                            # If HAM_META_ANTIBODY_FOR_ANOMALY stored only primary, this check ensures true multi-target match
+                            # If HAM_META_ANTIBODY_FOR_ANOMALY stored the exact 'for_anomaly_type', this check is redundant for that part
+                            # but good if an antibody object itself lists multiple targets.
+                            # For now, add_antibody stores primary_target_type in HAM_META_ANTIBODY_FOR_ANOMALY.
+                            # So, if for_anomaly_type was used in initial HAM query, this re-check might be for multi-target antibodies.
+                            # Let's assume the initial HAM filter is sufficient for primary target type.
+                            pass # No further filtering needed if initial query used for_anomaly_type correctly.
+
+
+                    antibodies.append(antibody)
+                except json.JSONDecodeError:
+                    print(f"Warning: Skipping malformed LIS antibody record from HAM (ID: {ham_result.get('id')})")
+                    continue
+            elif isinstance(serialized_antibody, dict): # If HAM already deserialized
+                antibody = cast(NarrativeAntibodyObject, serialized_antibody)
+                if min_effectiveness is not None:
+                    effectiveness = antibody.get("effectiveness_score")
+                    if effectiveness is None or effectiveness < min_effectiveness:
+                        continue
+                # (Similar post-filtering for for_anomaly_type if needed for dict case)
+                antibodies.append(antibody)
+
+        # Sort by effectiveness (descending), then by creation timestamp (descending) as a tie-breaker
+        antibodies.sort(key=lambda ab: (ab.get("effectiveness_score", 0.0), ab.get("timestamp_created", "")), reverse=True)
+
+        return antibodies[:limit]
 
     def update_incident_status(self,
                                incident_id: str,
@@ -560,8 +673,52 @@ class HAMLISCache(LISCacheInterface):
                                intervention_report: Optional[LIS_InterventionReport] = None
                                ) -> bool:
         print(f"Conceptual: HAMLISCache.update_incident_status for {incident_id} to {new_status}")
-        # Placeholder
-        return False
+
+        antibody_id = antibody.get("antibody_id")
+        if not antibody_id:
+            print("Error: NarrativeAntibodyObject is missing 'antibody_id'. Cannot store.")
+            return False
+
+        # Construct data_type, potentially using the first target_anomaly_type if available
+        target_anomalies = antibody.get("target_anomaly_types", [])
+        primary_target_type = target_anomalies[0] if target_anomalies else "GENERIC_ANTIBODY"
+        data_type = f"{LIS_ANTIBODY_DATA_TYPE_PREFIX}{primary_target_type}"
+
+        ham_metadata = {
+            HAM_META_LIS_OBJECT_ID: antibody_id,
+            # Storing a list in HAM metadata might be tricky for querying depending on HAM impl.
+            # For now, let's store the primary target type or a join of types.
+            # A more robust solution might involve separate indexed entries or specific HAM query capabilities.
+            HAM_META_ANTIBODY_FOR_ANOMALY: primary_target_type, # Or json.dumps(target_anomalies)
+            HAM_META_ANTIBODY_EFFECTIVENESS: antibody.get("effectiveness_score"),
+            HAM_META_TIMESTAMP_LOGGED: antibody.get("timestamp_created", datetime.now(timezone.utc).isoformat()) # Use common_types timestamp
+        }
+
+        # Add other queryable fields from antibody to metadata if needed, e.g., version
+        if antibody.get("version") is not None:
+            ham_metadata["lis_antibody_version"] = antibody.get("version")
+
+        # Remove None values from metadata
+        ham_metadata = {k: v for k, v in ham_metadata.items() if v is not None}
+
+        try:
+            serialized_antibody = json.dumps(antibody)
+        except TypeError as e:
+            print(f"Error serializing NarrativeAntibodyObject for HAM: {e}")
+            return False
+
+        mem_id = self.ham_manager.store_experience(
+            raw_data=serialized_antibody,
+            data_type=data_type,
+            metadata=ham_metadata
+        )
+
+        if mem_id:
+            print(f"HAMLISCache: Stored antibody '{antibody_id}' with HAM ID '{mem_id}' and data_type '{data_type}'.")
+            return True
+        else:
+            print(f"HAMLISCache: Failed to store antibody '{antibody_id}' in HAM.")
+            return False
 
     def add_antibody(self, antibody: NarrativeAntibodyObject) -> bool:
         """
@@ -589,5 +746,43 @@ class HAMLISCache(LISCacheInterface):
         # )
         # return bool(mem_id)
         print(f"Conceptual: HAMLISCache.add_antibody called.")
-        # Placeholder
-        return False
+
+        antibody_id = antibody.get("antibody_id")
+        if not antibody_id:
+            print("Error: NarrativeAntibodyObject is missing 'antibody_id'. Cannot store.")
+            return False
+
+        target_anomalies = antibody.get("target_anomaly_types", [])
+        primary_target_type = target_anomalies[0] if target_anomalies else "GENERIC_ANTIBODY"
+        data_type = f"{LIS_ANTIBODY_DATA_TYPE_PREFIX}{primary_target_type}"
+
+        ham_metadata = {
+            HAM_META_LIS_OBJECT_ID: antibody_id,
+            HAM_META_ANTIBODY_FOR_ANOMALY: primary_target_type,
+            HAM_META_ANTIBODY_EFFECTIVENESS: antibody.get("effectiveness_score"),
+            HAM_META_TIMESTAMP_LOGGED: antibody.get("timestamp_created", datetime.now(timezone.utc).isoformat())
+        }
+
+        if antibody.get("version") is not None:
+            ham_metadata["lis_antibody_version"] = antibody.get("version")
+
+        ham_metadata = {k: v for k, v in ham_metadata.items() if v is not None}
+
+        try:
+            serialized_antibody = json.dumps(antibody)
+        except TypeError as e:
+            print(f"Error serializing NarrativeAntibodyObject for HAM: {e}")
+            return False
+
+        mem_id = self.ham_manager.store_experience(
+            raw_data=serialized_antibody,
+            data_type=data_type,
+            metadata=ham_metadata
+        )
+
+        if mem_id:
+            print(f"HAMLISCache: Stored antibody '{antibody_id}' with HAM ID '{mem_id}' and data_type '{data_type}'.")
+            return True
+        else:
+            print(f"HAMLISCache: Failed to store antibody '{antibody_id}' in HAM.")
+            return False
