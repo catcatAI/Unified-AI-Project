@@ -75,7 +75,7 @@ class TestCLI(unittest.TestCase):
                     cli_main.main_cli_logic() # Changed to main_cli_logic
 
                 output = captured_output.getvalue()
-                self.assertIn(f"CLI: Received query: '{test_query}'", output) # This can stay as is, checks overall output
+                self.assertIn(f"CLI: Sending query to DialogueManager: '{test_query}'", output) # Adjusted assertion
                 self.assertIn(expected_full_ai_output.strip(), output.strip()) # Ensure both are stripped for comparison
         print("TestCLI.test_02_cli_query_with_emotion PASSED")
 
@@ -121,7 +121,7 @@ class TestCLI(unittest.TestCase):
                 cli_main.main_cli_logic() # Changed to main_cli_logic
 
             output = captured_output.getvalue()
-            self.assertIn(f"CLI: Received query: '{test_query_crisis}'", output)
+            self.assertIn(f"CLI: Sending query to DialogueManager: '{test_query_crisis}'", output) # Adjusted assertion
             self.assertIn(expected_crisis_output, output)
             # Also check that the normal LLM response part is NOT there
             self.assertNotIn("Placeholder response from", output)

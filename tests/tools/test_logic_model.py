@@ -162,10 +162,12 @@ class TestLogicModelComponents(unittest.TestCase):
 
         # Test parser routing
         result_parser = dispatcher.dispatch("evaluate true AND false")
-        self.assertEqual(result_parser, "Result: False")
+        self.assertEqual(result_parser["status"], "success")
+        self.assertEqual(result_parser["payload"], False) # logic_evaluate returns a boolean
 
         result_parser_implicit = dispatcher.dispatch("NOT (true OR false)")
-        self.assertEqual(result_parser_implicit, "Result: False")
+        self.assertEqual(result_parser_implicit["status"], "success")
+        self.assertEqual(result_parser_implicit["payload"], False) # logic_evaluate returns a boolean
 
         # Test NN routing (will also likely hit "NN model not available")
         # Ensure char_map file is available for _get_nn_model_evaluator in logic_tool
@@ -176,8 +178,10 @@ class TestLogicModelComponents(unittest.TestCase):
 
         result_nn = dispatcher.dispatch("evaluate true OR false using nn")
         # Based on current LLMInterface mock, "evaluate true OR false using nn"
-        # will result in NO_TOOL from DLM, so dispatcher returns None.
-        self.assertIsNone(result_nn, "Expected dispatcher to return None for 'evaluate...using nn' due to current LLM mock")
+        # will result in NO_TOOL from DLM. ToolDispatcher returns a specific response for this.
+        self.assertEqual(result_nn["status"], "unhandled_by_local_tool")
+        self.assertIsNone(result_nn["payload"])
+        self.assertEqual(result_nn["original_query_for_tool"], "evaluate true OR false using nn")
 
         logic_tool.CHAR_MAP_LOAD_PATH = original_lt_char_map_path # Restore
         print("test_05_tool_dispatcher_logic_routing PASSED")

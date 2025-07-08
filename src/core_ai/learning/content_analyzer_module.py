@@ -4,9 +4,8 @@ from spacy.tokens import Doc
 from typing import List, Dict, Any, Optional, Tuple, TypedDict # Added TypedDict
 import networkx as nx
 
-from shared.types.common_types import KGEntity, KGRelationship, KnowledgeGraph
-from hsp.types import HSPFactPayload # Import HSPFactPayload
-
+from src.shared.types.common_types import KGEntity, KGRelationship, KnowledgeGraph # Changed to src.shared
+from src.hsp.types import HSPFactPayload # Changed to src.hsp
 from spacy.matcher import Matcher # Added Matcher
 
 # --- Types for process_hsp_fact_content return value ---
