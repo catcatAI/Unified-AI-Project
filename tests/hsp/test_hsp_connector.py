@@ -2,6 +2,10 @@ import pytest
 from unittest.mock import MagicMock, patch
 import paho.mqtt.client as mqtt # Import for type hinting if needed, but we'll mock it.
 import logging # Import logging for caplog.set_level
+import json
+import uuid
+from datetime import datetime, timezone
+from typing import Literal # For type hint in test_ack_payload_and_envelope_construction
 
 # Ensure src is in path for imports if running tests directly
 import sys
@@ -9,6 +13,9 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from src.hsp.connector import HSPConnector
+# Assuming HSPMessageEnvelope and other types are accessible or not strictly needed for these mocks
+# If type checking sent_envelope against HSPMessageEnvelope is desired, it should be imported
+from src.hsp.types import HSPMessageEnvelope
 
 TEST_AI_ID = "test_ai_connector_001"
 TEST_BROKER_ADDRESS = "localhost"
@@ -174,3 +181,110 @@ class TestHSPConnectorConnectionLogic:
 #     pass
 # async def test_integration_reconnection_network_glitch(self):
 #     pass
+
+
+class TestHSPConnectorACKLogic:
+
+    def test_ack_sent_if_required(self, connector_with_mock_client: HSPConnector, caplog):
+        connector = connector_with_mock_client
+        caplog.set_level(logging.INFO, logger="src.hsp.connector")
+
+        original_sender_ai_id = "did:hsp:original_sender_ack_test_001"
+        original_message_id = f"msg_{uuid.uuid4().hex}"
+
+        incoming_envelope_dict = {
+            "hsp_envelope_version": "0.1",
+            "message_id": original_message_id,
+            "sender_ai_id": original_sender_ai_id,
+            "recipient_ai_id": connector.ai_id,
+            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "message_type": "HSP::Fact_v0.1",
+            "protocol_version": "0.1",
+            "communication_pattern": "publish",
+            "qos_parameters": {"requires_ack": True, "priority": "medium"},
+            "payload": {"id": "fact1", "statement_nl": "Test fact requiring ACK"}
+        }
+        message_str = json.dumps(incoming_envelope_dict)
+
+        # Mock the _send_acknowledgement method to check if it's called
+        with patch.object(connector, '_send_acknowledgement', autospec=True) as mock_send_ack:
+            connector._handle_hsp_message_str(message_str, "test/topic/ack_required")
+            mock_send_ack.assert_called_once_with(
+                target_ai_id=original_sender_ai_id,
+                acknowledged_message_id=original_message_id,
+                status="received",
+                ack_topic=f"hsp/acks/{original_sender_ai_id}"
+            )
+
+    @pytest.mark.parametrize("qos_params", [
+        None, # qos_parameters field missing entirely
+        {},   # qos_parameters is an empty dict
+        {"requires_ack": False},
+        {"priority": "high"} # requires_ack is missing
+    ])
+    def test_ack_not_sent_if_not_required_or_missing(self, connector_with_mock_client: HSPConnector, qos_params, caplog):
+        connector = connector_with_mock_client
+        caplog.set_level(logging.INFO, logger="src.hsp.connector")
+
+        original_sender_ai_id = "did:hsp:original_sender_no_ack_002"
+        original_message_id = f"msg_{uuid.uuid4().hex}"
+
+        incoming_envelope_dict = {
+            "hsp_envelope_version": "0.1",
+            "message_id": original_message_id,
+            "sender_ai_id": original_sender_ai_id,
+            "recipient_ai_id": connector.ai_id,
+            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "message_type": "HSP::Fact_v0.1",
+            "protocol_version": "0.1",
+            "communication_pattern": "publish",
+            "payload": {"id": "fact2", "statement_nl": "Test fact not requiring ACK"}
+        }
+        if qos_params is not None: # Only add qos_parameters if it's not the test case for it missing
+            incoming_envelope_dict["qos_parameters"] = qos_params
+
+        message_str = json.dumps(incoming_envelope_dict)
+
+        with patch.object(connector, '_send_acknowledgement', autospec=True) as mock_send_ack:
+            connector._handle_hsp_message_str(message_str, "test/topic/no_ack_required")
+            mock_send_ack.assert_not_called()
+
+    def test_ack_payload_and_envelope_construction(self, connector_with_mock_client: HSPConnector):
+        connector = connector_with_mock_client
+
+        target_ai_id = "did:hsp:receiver_of_ack_003"
+        acknowledged_message_id = f"msg_{uuid.uuid4().hex}"
+        status_to_send: Literal["received", "processed"] = "received"
+        ack_topic_to_use = f"hsp/acks/{target_ai_id}"
+
+        # Mock _send_hsp_message to inspect the envelope it receives
+        with patch.object(connector, '_send_hsp_message', autospec=True) as mock_internal_send:
+            connector._send_acknowledgement(
+                target_ai_id=target_ai_id,
+                acknowledged_message_id=acknowledged_message_id,
+                status=status_to_send,
+                ack_topic=ack_topic_to_use
+            )
+
+            mock_internal_send.assert_called_once()
+            call_args = mock_internal_send.call_args
+            sent_envelope: HSPMessageEnvelope = call_args.args[0] # First positional arg is the envelope
+            sent_mqtt_topic: str = call_args.kwargs['mqtt_topic'] # mqtt_topic is a keyword arg
+
+            assert sent_mqtt_topic == ack_topic_to_use
+
+            assert sent_envelope['message_type'] == "HSP::Acknowledgement_v0.1"
+            assert sent_envelope['communication_pattern'] == "acknowledgement"
+            assert sent_envelope['sender_ai_id'] == connector.ai_id # The connector itself is sending the ACK
+            assert sent_envelope['recipient_ai_id'] == ack_topic_to_use # Envelope recipient is the ACK topic
+            assert sent_envelope['correlation_id'] == acknowledged_message_id
+
+            payload = sent_envelope['payload']
+            assert payload['status'] == status_to_send
+            assert payload['target_message_id'] == acknowledged_message_id
+
+            # Check timestamp is a valid ISO 8601 UTC timestamp
+            timestamp_str = payload.get('ack_timestamp')
+            assert isinstance(timestamp_str, str)
+            parsed_timestamp = datetime.fromisoformat(timestamp_str)
+            assert parsed_timestamp.tzinfo == timezone.utc

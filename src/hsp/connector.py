@@ -313,9 +313,7 @@ class HSPConnector:
 
     def _send_acknowledgement(self, target_ai_id: str, acknowledged_message_id: str, status: Literal["received", "processed"], ack_topic: str, version: str = "0.1"):
         """Helper method to construct and send an HSP Acknowledgement message."""
-        # Ensure HSPAcknowledgementPayload is defined or imported from .types
-        # For now, assuming it's a dict-like structure if not strictly typed yet
-        ack_payload: Dict[str, Any] = { # HSPAcknowledgementPayload
+        ack_payload: HSPAcknowledgementPayload = {
             "status": status,
             "ack_timestamp": datetime.now(timezone.utc).isoformat(),
             "target_message_id": acknowledged_message_id
@@ -323,7 +321,7 @@ class HSPConnector:
         ack_message_type = f"HSP::Acknowledgement_v{version}"
 
         envelope = self._build_hsp_envelope(
-            payload=ack_payload, # payload=dict(ack_payload) if strictly TypedDict
+            payload=ack_payload, # TypedDict is compatible with Dict[str, Any]
             message_type=ack_message_type,
             recipient_ai_id_or_topic=ack_topic,
             communication_pattern="acknowledgement",
