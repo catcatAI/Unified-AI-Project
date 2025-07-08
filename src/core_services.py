@@ -17,6 +17,7 @@ from core_ai.crisis_system import CrisisSystem
 from core_ai.time_system import TimeSystem
 from core_ai.formula_engine import FormulaEngine
 from tools.tool_dispatcher import ToolDispatcher
+from fragmenta.fragmenta_orchestrator import FragmentaOrchestrator # Added import
 
 # Services
 from services.llm_interface import LLMInterface, LLMInterfaceConfig
@@ -45,6 +46,7 @@ time_system_instance: Optional[TimeSystem] = None
 formula_engine_instance: Optional[FormulaEngine] = None
 tool_dispatcher_instance: Optional[ToolDispatcher] = None
 dialogue_manager_instance: Optional[DialogueManager] = None
+fragmenta_orchestrator_instance: Optional[FragmentaOrchestrator] = None # Added instance
 
 
 # Configuration (can be loaded from file or passed)
@@ -90,7 +92,7 @@ def initialize_services(
     global trust_manager_instance, hsp_connector_instance, service_discovery_module_instance
     global fact_extractor_instance, content_analyzer_instance, learning_manager_instance
     global emotion_system_instance, crisis_system_instance, time_system_instance
-    global formula_engine_instance, tool_dispatcher_instance, dialogue_manager_instance
+    global formula_engine_instance, tool_dispatcher_instance, dialogue_manager_instance, fragmenta_orchestrator_instance # Added to global
 
     print(f"Core Services: Initializing for AI ID: {ai_id}")
 
@@ -177,6 +179,7 @@ def initialize_services(
         if hsp_connector_instance: # Register LM's fact callback
             hsp_connector_instance.register_on_fact_callback(learning_manager_instance.process_and_store_hsp_fact)
 
+    # Initialize Emotion, Crisis, Time systems as they might be dependencies for Fragmenta or DM
     if not emotion_system_instance:
         emotion_system_instance = EmotionSystem(personality_profile=personality_manager_instance.current_personality)
 
@@ -186,11 +189,44 @@ def initialize_services(
     if not time_system_instance:
         time_system_instance = TimeSystem(config=main_config_dict)
 
-    if not formula_engine_instance:
+    if not formula_engine_instance: # Initialize before tool_dispatcher if it's a dependency (not currently)
         formula_engine_instance = FormulaEngine() # Uses default formulas path
 
-    if not tool_dispatcher_instance:
+    if not tool_dispatcher_instance: # Initialize before Fragmenta and DialogueManager
         tool_dispatcher_instance = ToolDispatcher(llm_interface=llm_interface_instance)
+
+    # --- 4. Fragmenta Orchestrator (after its own dependencies are up) ---
+    if not fragmenta_orchestrator_instance:
+        fragmenta_orchestrator_instance = FragmentaOrchestrator(
+            ham_manager=ham_manager_instance,
+            tool_dispatcher=tool_dispatcher_instance,
+            llm_interface=llm_interface_instance,
+            service_discovery=service_discovery_module_instance,
+            hsp_connector=hsp_connector_instance,
+            personality_manager=personality_manager_instance,
+            emotion_system=emotion_system_instance,
+            crisis_system=crisis_system_instance,
+            config=main_config_dict
+        )
+        if hsp_connector_instance and fragmenta_orchestrator_instance:
+            # Register Fragmenta's handler for HSP task results
+            # Note: HSPConnector currently supports one callback for each type.
+            # If DialogueManager also needs task results, a dispatching mechanism or
+            # allowing multiple callbacks in HSPConnector would be needed.
+            # For now, this will overwrite DM's if DM also registers for generic task results.
+            # Assuming distinct callbacks or a dispatcher will be handled if needed.
+            # For now, let's check if DM registered one, and if so, warn.
+            if hasattr(hsp_connector_instance, '_on_task_result_callback') and \
+               hsp_connector_instance._on_task_result_callback is not None and \
+               hsp_connector_instance._on_task_result_callback != fragmenta_orchestrator_instance._handle_hsp_sub_task_result:
+                print("Core Services: WARNING - HSPConnector already has a task result callback registered. Overwriting with Fragmenta's. Consider a dispatcher if multiple modules need task results.")
+
+            hsp_connector_instance.register_on_task_result_callback(
+                fragmenta_orchestrator_instance._handle_hsp_sub_task_result
+            )
+            print("Core Services: FragmentaOrchestrator initialized and HSP task result callback registered.")
+        else:
+            print("Core Services: FragmentaOrchestrator initialized but HSP task result callback NOT registered (HSPConnector or Fragmenta instance missing).")
 
     if not dialogue_manager_instance:
         dialogue_manager_instance = DialogueManager(
@@ -234,6 +270,7 @@ def get_services() -> Dict[str, Any]:
         "formula_engine": formula_engine_instance,
         "tool_dispatcher": tool_dispatcher_instance,
         "dialogue_manager": dialogue_manager_instance,
+        "fragmenta_orchestrator": fragmenta_orchestrator_instance, # Added Fragmenta
     }
 
 def shutdown_services():
