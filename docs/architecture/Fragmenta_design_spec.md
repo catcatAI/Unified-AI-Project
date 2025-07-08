@@ -23,10 +23,11 @@ Fragmenta will be responsible for:
         *   `LLMInterface` for generative tasks, summarization, analysis of chunks.
         *   Future models (Code Model, Daily Language Model).
         *   Other `core_ai` components.
-    *   Managing dependencies and execution flow between sub-tasks.
-    *   Conceptual support for parallel processing of independent chunks.
+    *   **HSP Capabilities (New):** Dispatching sub-tasks to external AIs via HSP if a suitable capability is discovered using the `ServiceDiscoveryModule`.
+    *   Managing dependencies and execution flow between sub-tasks (including asynchronous HSP tasks).
+    *   Conceptual support for parallel processing of independent chunks and tasks.
 5.  **Result Synthesis & Post-processing:**
-    *   **Merging:** Combining results from processed chunks into a coherent final output. This might involve summarization of summaries, structured data aggregation, etc.
+    *   **Merging:** Combining results from processed local chunks and/or HSP sub-tasks into a coherent final output. This might involve summarization of summaries, structured data aggregation, etc.
     *   **Formatting:** Ensuring the final output is in the desired format for the user or calling system.
 6.  **Self-Evaluation & Learning (Future - Phase 4 Hooks):**
     *   Receiving feedback on task outcomes.
@@ -52,6 +53,11 @@ Fragmenta will interact with:
     *   To inform strategy selection or to provide context for sub-tasks (e.g., tailoring chunk processing based on overall emotional context).
 *   **Specialized Models (Future):**
     *   Code Model, Daily Language Model, Contextual LSTM Model.
+*   **ServiceDiscoveryModule (`service_discovery_module.py` - New Interaction):**
+    *   To query for available HSP capabilities from peer AIs that might fulfill a sub-task.
+*   **HSPConnector (`hsp_connector.py` - New Interaction):**
+    *   To send `HSPTaskRequestPayload` messages to peer AIs.
+    *   To receive `HSPTaskResultPayload` messages (via registered callbacks).
 
 ## 4. Core Data Handling for Large Inputs/Outputs (v0.1 Conceptual Design)
 
