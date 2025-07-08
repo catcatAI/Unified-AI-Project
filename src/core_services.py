@@ -211,9 +211,6 @@ def initialize_services(
         )
         if hsp_connector_instance and fragmenta_orchestrator_instance:
             # Register Fragmenta's handler for HSP task results
-            # Note: HSPConnector currently supports one callback for each type.
-            # If DialogueManager also needs task results, a dispatching mechanism or
-            # allowing multiple callbacks in HSPConnector would be needed.
             # (This is now addressed by HSPConnector supporting multiple task result callbacks)
             hsp_connector_instance.register_on_task_result_callback(
                 fragmenta_orchestrator_instance._handle_hsp_sub_task_result
@@ -238,7 +235,7 @@ def initialize_services(
             content_analyzer=content_analyzer_instance,
             service_discovery_module=service_discovery_module_instance,
             hsp_connector=hsp_connector_instance,
-            trust_manager=trust_manager_instance,
+            # trust_manager=trust_manager_instance, # Removed, not an expected arg for DialogueManager
             config=main_config_dict # Pass the main config dict
         )
         # DM's __init__ now registers its own task result callback with hsp_connector_instance
@@ -301,4 +298,3 @@ if __name__ == '__main__':
 
     shutdown_services()
     print("--- Core Services Initialization Test Finished ---")
-```

@@ -113,16 +113,31 @@ class TestTranslationModelComponents(unittest.TestCase):
         dispatcher = ToolDispatcher() # Will use the dummy dictionary due to setUpClass patch
 
         # Test inference
-        self.assertEqual(dispatcher.dispatch("translate '你好' to English"), "Hello")
-        self.assertEqual(dispatcher.dispatch("translate 'Hello' to Chinese"), "你好")
-        self.assertEqual(dispatcher.dispatch("'Dog' in Chinese"), "狗")
-        self.assertIn("not available", dispatcher.dispatch("translate '未知词' to English"))
+        response1 = dispatcher.dispatch("translate '你好' to English")
+        self.assertEqual(response1["status"], "success")
+        self.assertEqual(response1["payload"], "Hello")
+
+        response2 = dispatcher.dispatch("translate 'Hello' to Chinese")
+        self.assertEqual(response2["status"], "success")
+        self.assertEqual(response2["payload"], "你好")
+
+        response3 = dispatcher.dispatch("'Dog' in Chinese")
+        self.assertEqual(response3["status"], "success")
+        self.assertEqual(response3["payload"], "狗")
+
+        response4 = dispatcher.dispatch("translate '未知词' to English")
+        self.assertEqual(response4["status"], "success") # Tool ran, but payload contains the error message
+        self.assertIn("not available", response4["payload"])
 
         # Test explicit call
-        self.assertEqual(dispatcher.dispatch("你好", explicit_tool_name="translate_text", target_language="en"), "Hello")
+        response5 = dispatcher.dispatch("你好", explicit_tool_name="translate_text", target_language="en")
+        self.assertEqual(response5["status"], "success")
+        self.assertEqual(response5["payload"], "Hello")
 
         # Test unsupported
-        self.assertIn("not supported", dispatcher.dispatch("translate '你好' to Spanish"))
+        response6 = dispatcher.dispatch("translate '你好' to Spanish")
+        self.assertEqual(response6["status"], "success") # Tool ran, payload has error
+        self.assertIn("not supported", response6["payload"])
         print("test_05_tool_dispatcher_translation_routing PASSED")
 
     def test_06_dictionary_load_failure(self):

@@ -322,5 +322,96 @@ class LLMModelInfo(TypedDict, total=False):
     context_length: Optional[int]
     # Add other metadata like creator, type (chat, completion), etc.
 
+# --- Formula Engine Types ---
+class FormulaConfigEntry(TypedDict):
+    name: str
+    conditions: List[str]
+    action: str
+    description: str
+    parameters: Dict[str, Any]
+    priority: int
+    enabled: bool
+    version: str
+    response_template: Optional[str]
+
+# --- Knowledge Graph Types (for ContentAnalyzerModule) ---
+class KGEntity(TypedDict):
+    id: str
+    label: str
+    type: str
+    attributes: Dict[str, Any]
+
+class KGRelationship(TypedDict):
+    source_id: str
+    target_id: str
+    type: str
+    weight: Optional[float]
+    attributes: Dict[str, Any]
+
+class KnowledgeGraph(TypedDict):
+    entities: Dict[str, KGEntity]
+    relationships: List[KGRelationship]
+    metadata: Dict[str, Any]
+
+# --- Fact Extractor Types ---
+class UserPreferenceContent(TypedDict, total=False):
+    category: Required[str]
+    preference: Required[str]
+    liked: Optional[bool]
+
+class UserStatementContent(TypedDict):
+    attribute: str
+    value: str
+
+# A fallback for less structured content, though specific types are preferred.
+ExtractedFactContent = Union[UserPreferenceContent, UserStatementContent, Dict[str, Any]]
+
+class ExtractedFact(TypedDict):
+    fact_type: str # e.g., "user_preference", "user_statement"
+    content: ExtractedFactContent
+    confidence: float
+
+# --- Learning Manager Types ---
+class LearnedFactRecord(TypedDict, total=False):
+    """
+    Represents the metadata associated with a fact learned and stored by the LearningManager.
+    This structure is typically stored as the 'metadata' part of a HAM entry for learned facts.
+    """
+    record_id: Required[str] # Unique ID for this learning record instance
+    timestamp: Required[str] # ISO timestamp of when this record was created/processed by LearningManager
+    fact_type: Required[str] # Type of fact (e.g., "user_preference", "hsp_derived_statement")
+    confidence: Required[float] # Confidence score of this fact
+    source_text: Required[str] # Original text or representation from which fact was derived
+
+    # Optional fields depending on source and context
+    user_id: Optional[str]
+    session_id: Optional[str]
+    source_interaction_ref: Optional[str] # e.g., a message ID, HSP envelope ID
+
+    # HSP-specific fields (if the fact originated from or was processed via HSP)
+    hsp_originator_ai_id: Optional[str] # The AI that originally asserted the fact
+    hsp_sender_ai_id: Optional[str]     # The AI that directly sent this fact to us via HSP
+    hsp_fact_id: Optional[str]          # The original ID of the fact from the HSP network
+    hsp_fact_timestamp_created: Optional[str] # Original creation timestamp from HSP payload
+
+    # Fields for conflict resolution metadata
+    supersedes_ham_records: Optional[List[str]] # List of HAM record IDs this fact supersedes
+    resolution_strategy: Optional[str]          # Strategy used for conflict resolution (e.g., "confidence_supersede_type1")
+    superseded_reason: Optional[str]            # Brief reason for superseding
+    conflicts_with_ham_records: Optional[List[str]] # List of HAM record IDs this fact contradicts
+    conflicting_values: Optional[List[str]]         # Snippets of conflicting values
+    merged_from_ham_records: Optional[List[str]]    # List of HAM record IDs this fact was merged from
+    original_values: Optional[List[Any]]            # Original values before a merge
+    merged_value: Optional[Any]                     # The result of a merge (e.g., numerical average)
+    merged_confidence: Optional[float]              # Confidence of the merged fact
+
+    # Semantic identifiers (often from ContentAnalyzerModule processing of HSP facts)
+    hsp_semantic_subject: Optional[str]
+    hsp_semantic_predicate: Optional[str]
+    hsp_semantic_object: Optional[Any] # Can be URI or literal
+    ca_subject_id: Optional[str]       # ContentAnalyzer's internal ID for the subject
+    ca_predicate_type: Optional[str]   # ContentAnalyzer's internal type for the predicate
+    ca_object_id: Optional[str]        # ContentAnalyzer's internal ID for the object
+
 
 print("common_types.py (debug version) finished definitions.")
