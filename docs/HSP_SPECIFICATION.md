@@ -1,4 +1,4 @@
-# Heterogeneous Synchronization Protocol (HSP) Specification - Version 0.1
+# Heterogeneous Synchronization Protocol (HSP) Specification - Version 0.1.1
 
 ## 1. Introduction
 
@@ -12,9 +12,9 @@ The Heterogeneous Synchronization Protocol (HSP) is designed to enable communica
 *   **Collaboration:** Enable AIs to work together on complex tasks that may be beyond the capability of a single AI.
 *   **Extensibility:** Design the protocol to be adaptable to future advancements in AI and communication technologies.
 
-### 1.3. Scope (Version 0.1)
-This version (0.1) focuses on establishing the foundational elements of the HSP, including:
-*   Core information types for knowledge sharing and tasking.
+### 1.3. Scope (Version 0.1.1)
+This version (0.1.1) focuses on establishing the foundational elements of the HSP, including:
+*   Core information types for knowledge sharing and tasking, with clarification on required fields.
 *   Basic communication patterns (Publish/Subscribe, Request/Response).
 *   A standardized message envelope.
 *   Initial concepts for AI discovery, capability advertisement, and trust.
@@ -52,28 +52,30 @@ The specific network topology is an implementation choice, but HSP messages are 
 ## 3. Information Types & Data Payloads
 
 This section details the structure of the primary data objects exchanged via HSP.
-*Default data format for payloads in v0.1 is JSON. JSON Schema should be used for validation where possible.*
+*Default data format for payloads in v0.1.1 is JSON. JSON Schema should be used for validation where possible.*
+*For payload fields, "Required" means the field must be present for a valid v0.1.1 message of this type.*
 
 ### 3.1. `Fact` / `Assertion`
 *   **Purpose:** Represents a statement about the world, an entity, or a relationship, believed to be true by the originating AI to some degree.
-*   **Fields:**
-    *   `id` (string, UUID): Unique identifier for this fact instance.
-    *   `statement_type` (string, enum: "natural_language", "semantic_triple", "json_ld"): Specifies the representation of the core assertion.
-    *   `statement_nl` (string, optional): The assertion in natural language (if `statement_type` is "natural_language").
-    *   `statement_structured` (object, optional): Structured representation (e.g., subject, predicate, object URIs if "semantic_triple"; JSON-LD object if "json_ld").
-    *   `source_ai_id` (string, DID/URI): ID of the AI originating or asserting this fact.
-    *   `original_source_info` (object, optional): Information about the ultimate source if learned externally.
+*   **Key Fields (v0.1.1):**
+    *   `id` (string, UUID): **Required.** Unique identifier for this fact instance.
+    *   `statement_type` (string, enum: "natural_language", "semantic_triple", "json_ld"): **Required.** Specifies the representation of the core assertion.
+    *   `statement_nl` (string, optional if `statement_structured` present): The assertion in natural language.
+    *   `statement_structured` (object, optional if `statement_nl` present): Structured representation.
+    *   `source_ai_id` (string, DID/URI): **Required.** ID of the AI originating or asserting this fact.
+    *   `timestamp_created` (string, ISO 8601 UTC): **Required.** When this fact was asserted/created by `source_ai_id`.
+    *   `confidence_score` (float, 0.0-1.0): **Required.** The AI's confidence in the truth of this fact.
+*   **Optional Fields:**
+    *   `original_source_info` (object): Information about the ultimate source if learned externally.
         *   `type` (string, e.g., "url", "document_id", "user_id", "sensor_id").
         *   `identifier` (string).
-    *   `timestamp_created` (string, ISO 8601 UTC): When this fact was asserted/created by `source_ai_id`.
-    *   `timestamp_observed` (string, ISO 8601 UTC, optional): If the fact describes an event, when that event was observed or occurred.
-    *   `confidence_score` (float, 0.0-1.0): The AI's confidence in the truth of this fact.
+    *   `timestamp_observed` (string, ISO 8601 UTC): If the fact describes an event, when that event was observed or occurred.
     *   `weight` (float, default: 1.0): General-purpose weight (relevance, importance, priority).
-    *   `valid_from` (string, ISO 8601 UTC, optional): Timestamp from which the fact is considered valid.
-    *   `valid_until` (string, ISO 8601 UTC, optional): Timestamp until which the fact is considered valid (for temporal facts).
-    *   `context` (object, optional): Key-value pairs describing the context in which this fact is true (e.g., `{"location": "New York", "condition": "sunny"}`).
-    *   `tags` (array of strings, optional): Keywords or categories.
-    *   `access_policy_id` (string, optional): Identifier for a policy governing sharing/use.
+    *   `valid_from` (string, ISO 8601 UTC): Timestamp from which the fact is considered valid.
+    *   `valid_until` (string, ISO 8601 UTC): Timestamp until which the fact is considered valid.
+    *   `context` (object): Key-value pairs describing the context in which this fact is true.
+    *   `tags` (array of strings): Keywords or categories.
+    *   `access_policy_id` (string): Identifier for a policy governing sharing/use.
 *   **Example (JSON, with `statement_type: "semantic_triple"`):**
     ```json
     {
@@ -94,11 +96,11 @@ This section details the structure of the primary data objects exchanged via HSP
 
 ### 3.2. `Belief`
 *   **Purpose:** Similar to `Fact`, but for statements with higher subjectivity, uncertainty, or representing hypotheses.
-*   **Fields:** Inherits most fields from `Fact`. Additional/modified fields:
-    *   `belief_holder_ai_id` (string, DID/URI): The AI holding this belief (defaults to `source_ai_id`).
-    *   `justification_type` (string, enum: "text", "inference_chain_id", "evidence_ids_list", optional).
-    *   `justification` (string or array, optional): Reasoning, link to an inference chain, or list of supporting fact/belief IDs.
-    *   `confidence_score` (float, 0.0-1.0): Represents subjective belief strength or probability.
+*   **Key Fields (v0.1.1):** Inherits required fields from `Fact` (`id`, `statement_type`, `source_ai_id`, `timestamp_created`, `confidence_score`). Additionally:
+    *   `belief_holder_ai_id` (string, DID/URI): **Required.** The AI holding this belief (defaults to `source_ai_id` if not explicitly provided by sender).
+*   **Optional Fields:** Inherits optional fields from `Fact`. Additional/modified optional fields:
+    *   `justification_type` (string, enum: "text", "inference_chain_id", "evidence_ids_list").
+    *   `justification` (string or array): Reasoning, link to an inference chain, or list of supporting fact/belief IDs.
 *   **Example (JSON):**
     ```json
     {
@@ -116,22 +118,14 @@ This section details the structure of the primary data objects exchanged via HSP
 
 ### 3.3. `CapabilityAdvertisement`
 *   **Purpose:** An AI advertises a skill, service, or tool it can offer.
-*   **Fields:**
-    *   `capability_id` (string, unique): Unique ID for this capability offering (e.g., `ai_gamma_translate_v1.2`).
-    *   `ai_id` (string, DID/URI): ID of the AI offering the capability.
-    *   `name` (string): Human-readable name (e.g., "Text Translation Service").
-    *   `description` (string): Detailed description.
-    *   `version` (string, e.g., "1.2.0").
-    *   `input_schema_uri` (string, optional): URI to a schema (e.g., JSON Schema) defining the input parameters object.
-    *   `input_schema_example` (object, optional): An example of the input parameters object.
-    *   `output_schema_uri` (string, optional): URI to a schema for the output data.
-    *   `output_schema_example` (object, optional): An example of the output data object.
-    *   `data_format_preferences` (array of strings, optional): Preferred or supported data formats for input/output (e.g., `["application/json", "image/jpeg"]`).
-    *   `hsp_protocol_requirements` (object, optional): Specific HSP features required by this capability (e.g., `{"requires_streaming_input": true}`).
-    *   `cost_estimate_template` (object, optional): Template describing potential costs (e.g., `{"metric": "compute_units", "value_per_call": 10}`).
-    *   `availability_status` (string, enum: "online", "offline", "degraded", "maintenance").
-    *   `access_policy_id` (string, optional): Who can use this capability.
-    *   `tags` (array of strings, optional): Keywords for discovery.
+*   **Key Fields (v0.1.1):**
+    *   `capability_id` (string, unique): **Required.**
+    *   `ai_id` (string, DID/URI): **Required.**
+    *   `name` (string): **Required.** Human-readable name.
+    *   `description` (string): **Required.** Detailed description.
+    *   `version` (string, e.g., "1.2.0"): **Required.**
+    *   `availability_status` (string, enum: "online", "offline", "degraded", "maintenance"): **Required.**
+*   **Optional Fields:** `input_schema_uri`, `input_schema_example`, `output_schema_uri`, `output_schema_example`, `data_format_preferences`, `hsp_protocol_requirements`, `cost_estimate_template`, `access_policy_id`, `tags`.
 *   **Example (JSON):**
     ```json
     {
@@ -140,8 +134,6 @@ This section details the structure of the primary data objects exchanged via HSP
       "name": "Text Translation Service",
       "description": "Translates text between English and French.",
       "version": "1.2.0",
-      "input_schema_uri": "hsp:schemas:translation_input_v1",
-      "output_schema_uri": "hsp:schemas:translation_output_v1",
       "availability_status": "online",
       "tags": ["nlp", "translation", "text"]
     }
@@ -149,17 +141,11 @@ This section details the structure of the primary data objects exchanged via HSP
 
 ### 3.4. `TaskRequest`
 *   **Purpose:** An AI requests another AI to perform a task using an advertised capability.
-*   **Fields:**
-    *   `request_id` (string, UUID): Unique ID for this task request.
-    *   `requester_ai_id` (string, DID/URI): ID of the AI making the request.
-    *   `target_ai_id` (string, DID/URI, optional): Specific AI to perform the task. If null/absent, any capable AI can pick it up (requires discovery/brokering).
-    *   `capability_id_filter` (string, optional): The ID of the capability being requested (e.g., "ai_gamma_translate_v1.2").
-    *   `capability_name_filter` (string, optional): Alternative to `capability_id_filter`, can be used for discovery if specific ID unknown.
-    *   `parameters` (object): Input parameters conforming to the capability's input schema.
-    *   `requested_output_data_format` (string, optional): Requester can specify a preferred output format if the capability supports multiple (from its `data_format_preferences`).
-    *   `priority` (integer, e.g., 1-10, optional): Task priority.
-    *   `deadline_timestamp` (string, ISO 8601 UTC, optional): When the task should be completed by.
-    *   `callback_address` (string, URI/topic, optional): Where to send the `TaskResult`.
+*   **Key Fields (v0.1.1):**
+    *   `request_id` (string, UUID): **Required.**
+    *   `requester_ai_id` (string, DID/URI): **Required.**
+    *   `parameters` (object): **Required.** Input parameters.
+*   **Optional Fields:** `target_ai_id`, `capability_id_filter`, `capability_name_filter`, `requested_output_data_format`, `priority`, `deadline_timestamp`, `callback_address`.
 *   **Example (JSON):**
     ```json
     {
@@ -178,19 +164,12 @@ This section details the structure of the primary data objects exchanged via HSP
 
 ### 3.5. `TaskResult`
 *   **Purpose:** The outcome of a `TaskRequest`.
-*   **Fields:**
-    *   `result_id` (string, UUID): Unique ID for this result.
-    *   `request_id` (string, UUID): ID of the `TaskRequest` this is a result for.
-    *   `executing_ai_id` (string, DID/URI): ID of the AI that performed the task.
-    *   `status` (string, enum: "success", "failure", "in_progress", "queued", "rejected").
-    *   `payload` (object, optional): The actual result data (if status is "success"), conforming to the capability's output schema.
-    *   `output_data_format` (string, optional): Confirms the format of the `payload` (e.g., "application/json", "image/png", "text/plain").
-    *   `error_details` (object, optional): If status is "failure" or "rejected".
-        *   `error_code` (string).
-        *   `error_message` (string).
-        *   `error_context` (object, optional).
-    *   `timestamp_completed` (string, ISO 8601 UTC, optional): When the task was completed or final status determined.
-    *   `execution_metadata` (object, optional): Metrics (e.g., `{"time_taken_ms": 150}`).
+*   **Key Fields (v0.1.1):**
+    *   `result_id` (string, UUID): **Required.**
+    *   `request_id` (string, UUID): **Required.** ID of the `TaskRequest`.
+    *   `executing_ai_id` (string, DID/URI): **Required.**
+    *   `status` (string, enum: "success", "failure", "in_progress", "queued", "rejected"): **Required.**
+*   **Optional Fields:** `payload` (if status is "success"), `output_data_format`, `error_details` (if status is "failure"/"rejected"), `timestamp_completed`, `execution_metadata`.
 *   **Example (JSON):**
     ```json
     {
@@ -208,15 +187,13 @@ This section details the structure of the primary data objects exchanged via HSP
 
 ### 3.6. `EnvironmentalState` / `ContextUpdate`
 *   **Purpose:** Information about the shared environment or a relevant contextual shift.
-*   **Fields:**
-    *   `update_id` (string, UUID): Unique ID for this update.
-    *   `source_ai_id` (string, DID/URI): AI reporting the update.
-    *   `phenomenon_type` (string, URI/namespaced string): Type of phenomenon observed (e.g., `hsp:event:UserMoodShift`, `hsp:state:SystemLoad`).
-    *   `parameters` (object): Specifics of the state/context (e.g., `{"user_id": "user_X", "new_mood": "anxious", "confidence": 0.7}`).
-    *   `timestamp_observed` (string, ISO 8601 UTC): When this state was observed/became true.
-    *   `scope_type` (string, enum: "global", "session", "project", "custom_group", optional).
-    *   `scope_id` (string, optional): Identifier for the scope (e.g., session ID, project ID).
-    *   `relevance_decay_rate` (float, optional): How quickly this information loses relevance.
+*   **Key Fields (v0.1.1):**
+    *   `update_id` (string, UUID): **Required.**
+    *   `source_ai_id` (string, DID/URI): **Required.**
+    *   `phenomenon_type` (string, URI/namespaced string): **Required.**
+    *   `parameters` (object): **Required.** Specifics of the state/context.
+    *   `timestamp_observed` (string, ISO 8601 UTC): **Required.**
+*   **Optional Fields:** `scope_type`, `scope_id`, `relevance_decay_rate`.
 *   **Example (JSON):**
     ```json
     {
@@ -247,7 +224,7 @@ This section details the structure of the primary data objects exchanged via HSP
     *   The HSP network may eventually support a "Mapping Broker" service where AIs can register and query for semantic mappings between different ontologies or terms. For v0.1, mapping is largely the responsibility of the communicating AIs.
 
 ### 3.9. Payload Data Format
-*   Default for v0.1: JSON.
+*   Default for v0.1.1: JSON.
 *   It is highly recommended that publishers of data also publish or link to a JSON Schema defining the structure of their payloads (e.g., in `CapabilityAdvertisement` or a schema registry).
 
 ## 4. Communication Patterns & Message Envelope
@@ -273,17 +250,18 @@ All HSP messages are wrapped in the following envelope:
   "recipient_ai_id": "hsp/knowledge/facts/general", // Can be a topic or specific AI ID
   "timestamp_sent": "2024-07-05T14:00:00Z",
   "message_type": "HSP::Fact_v0.1",
-  "protocol_version": "0.1",
+  "protocol_version": "0.1", // Refers to the HSP Specification version, e.g., "0.1.1"
   "communication_pattern": "publish",
   // Optional fields below: correlation_id, security_parameters, qos_parameters, routing_info, payload_schema_uri
   "correlation_id": null, // Or absent if not applicable
   "security_parameters": null, // Or absent if not used
-  "qos_parameters": { // Example: qos_parameters itself is optional, but if present, its fields are also optional/defaulted
-    "priority": "medium",
-    "requires_ack": false
+  "qos_parameters": {
+    "priority": "medium", // "low", "medium", "high"
+    "requires_ack": false,
+    "time_to_live_sec": null // Or an integer if set
   },
-  "routing_info": null, // Or absent
-  "payload_schema_uri": null, // Or absent
+  "routing_info": null, // Or absent, or {"hops": [], "final_destination_ai_id": "..."}
+  "payload_schema_uri": null, // Or absent, or "hsp:schema:payload/Fact/0.1"
   "payload": {
     "id": "fact_uuid_envelope_example",
     "statement_type": "natural_language",
@@ -297,12 +275,12 @@ All HSP messages are wrapped in the following envelope:
 **Note on Envelope Fields:**
 *   **Required:** `hsp_envelope_version`, `message_id`, `sender_ai_id`, `recipient_ai_id`, `timestamp_sent`, `message_type`, `protocol_version`, `communication_pattern`, `payload`.
 *   **Optional:** `correlation_id`, `security_parameters`, `qos_parameters`, `routing_info`, `payload_schema_uri`.
-    *   If `security_parameters`, `qos_parameters`, or `routing_info` are present, their internal fields also have their own optionality as defined in their respective `TypedDict` structures (typically `total=False`, meaning fields within them are optional unless specified as `Required`).
+    *   If `security_parameters`, `qos_parameters`, or `routing_info` are present, their internal fields also have their own optionality as defined in their respective `TypedDict` structures. For `qos_parameters`, `priority` and `requires_ack` typically have defaults if the object is present, while `time_to_live_sec` is optional.
 
 ### 4.3. Message Acknowledgements (ACKs/NACKs)
 *   If `qos_parameters.requires_ack` is true, the recipient should send an ACK.
-*   **ACK Message:** `message_type: "HSP::Acknowledgement_v0.1"`, `correlation_id` (of message being ACKed), `payload: {"status": "received", "ack_timestamp": "..."}`.
-*   **NACK Message:** `message_type: "HSP::NegativeAcknowledgement_v0.1"`, `correlation_id`, `payload: {"status": "error", "error_code": "...", "error_message": "...", "nack_timestamp": "..."}`.
+*   **ACK Message:** `message_type: "HSP::Acknowledgement_v0.1"`, `correlation_id` (of message being ACKed), `payload: {"status": "received" or "processed", "ack_timestamp": "...", "target_message_id": "original_message_id"}`.
+*   **NACK Message:** `message_type: "HSP::NegativeAcknowledgement_v0.1"`, `correlation_id`, `payload: {"status": "error", "error_code": "...", "error_message": "...", "nack_timestamp": "...", "target_message_id": "original_message_id"}`.
 
 ### 4.4. Topic Naming Conventions (for Pub/Sub)
 Hierarchical, e.g.: `hsp/{domain}/{subdomain}/{specific_focus}`
@@ -358,18 +336,18 @@ By maintaining such metadata, an AI can build a more nuanced understanding of it
 *   HSP is designed to be usable by AIs that employ internal rule-based systems (meta-formulas) to govern their network interactions, policy enforcement, and dynamic responses to HSP messages. HSP itself does not define these meta-formulas but provides the structured messages and clear protocol states that such engines can act upon.
 
 ## 6. Network & Transport Considerations
-*   HSP v0.1 is transport-agnostic. Messages are defined as data structures (e.g., JSON).
+*   HSP v0.1.1 is transport-agnostic. Messages are defined as data structures (e.g., JSON).
 *   Common transports could include:
     *   **WebSockets:** For persistent bidirectional connections.
     *   **HTTP/2 or HTTP/3:** For Req/Rep, potentially with Server-Sent Events (SSE) for some Pub/Sub.
     *   **gRPC:** For high-performance P2P or client-server interactions (requires Protobuf).
-    *   **MQTT:** For lightweight Pub/Sub, especially with a broker.
+    *   **MQTT:** For lightweight Pub/Sub, especially with a broker. (Current reference implementation uses MQTT).
 *   The choice of transport will affect how connections are managed and how the HSP envelope is framed for transmission.
 
 ## 7. Future Considerations & Versioning
 *   **Versioning:**
     *   `hsp_envelope_version`: For changes to the envelope structure.
-    *   `protocol_version` (in envelope): For overall HSP specification version.
+    *   `protocol_version` (in envelope): For overall HSP specification version (e.g., "0.1.1").
     *   `message_type` strings should include versions (e.g., `HSP::Fact_v0.1`, `HSP::Fact_v0.2`).
     *   Semantic versioning (MAJOR.MINOR.PATCH) is recommended.
 *   **Future Enhancements:**
