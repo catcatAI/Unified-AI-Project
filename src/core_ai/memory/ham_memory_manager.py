@@ -2,7 +2,7 @@ import json
 import zlib
 import base64
 import os
-from datetime import datetime
+from datetime import datetime, timezone # Added timezone
 from collections import Counter
 from cryptography.fernet import Fernet, InvalidToken
 import hashlib
@@ -366,7 +366,7 @@ class HAMMemoryManager:
 
         memory_id = self._generate_memory_id()
         data_package: HAMDataPackageInternal = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(), # Made timestamp UTC aware
             "data_type": data_type,
             "encrypted_package": encrypted_data, # This is bytes
             "metadata": current_metadata # Use the processed current_metadata

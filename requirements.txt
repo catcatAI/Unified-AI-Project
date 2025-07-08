@@ -20,6 +20,7 @@ typing-extensions # For Required, NotRequired, etc.
 # For FastAPI API Server
 fastapi
 uvicorn[standard]
+httpx # Required by FastAPI TestClient / Starlette TestClient
 pydantic
 
 # For system monitoring (future use, good to list)
@@ -33,3 +34,6 @@ networkx
 
 # For HSPConnector MQTT transport
 paho-mqtt
+
+# For testing asynchronous code with pytest
+pytest-asyncio
