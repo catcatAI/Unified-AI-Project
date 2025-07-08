@@ -2,8 +2,8 @@ import json
 from typing import List, Dict, Optional, Any
 
 # Assuming 'src' is in PYTHONPATH, making 'services' a top-level package
-from services.llm_interface import LLMInterface, LLMInterfaceConfig
-from shared.types.common_types import ExtractedFact # Import the new type
+from src.services.llm_interface import LLMInterface, LLMInterfaceConfig # Changed to src.services
+from src.shared.types.common_types import ExtractedFact # Changed to src.shared
 # LearnedFactRecord content is what this module aims to extract, but the full record is assembled by LearningManager
 
 

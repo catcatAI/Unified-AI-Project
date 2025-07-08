@@ -31,7 +31,7 @@ TEST_AI_ID_MAIN = "did:hsp:test_ai_main_001"
 TEST_AI_ID_PEER_A = "did:hsp:test_ai_peer_A_002"
 TEST_AI_ID_PEER_B = "did:hsp:test_ai_peer_B_003"
 
-MQTT_BROKER_ADDRESS = "localhost"
+MQTT_BROKER_ADDRESS = "127.0.0.1" # Changed from localhost
 MQTT_BROKER_PORT = 1883
 
 FACT_TOPIC_GENERAL = "hsp/knowledge/facts/test_general"
