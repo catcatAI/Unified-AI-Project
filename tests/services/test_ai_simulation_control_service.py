@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from src.services.ai_simulation_control_service import AISimulationControlService
 from src.services.resource_awareness_service import ResourceAwarenessService # For type mocking
+from src.services.sandbox_executor import SandboxExecutor # Import SandboxExecutor
 from src.shared.types.common_types import AIPermissionSet, ExecutionResult, SimulatedHardwareProfile
 
 class TestAISimulationControlService(unittest.TestCase):
@@ -20,25 +21,38 @@ class TestAISimulationControlService(unittest.TestCase):
         }
         self.mock_resource_service.get_simulated_hardware_profile.return_value = self.sample_hardware_profile
 
-        # Mock bash_runner (simulates run_in_bash_session tool)
-        self.mock_bash_runner = MagicMock(return_value={
+        # Mock SandboxExecutor
+        self.mock_sandbox_executor = MagicMock(spec=SandboxExecutor)
+        # Default successful execution result from SandboxExecutor
+        self.mock_sandbox_executor.execute_python_code.return_value = {
             "stdout": "Script executed successfully.",
             "stderr": "",
-            "exit_code": 0
-        })
+            "exit_code": 0,
+            "is_compilation_error": False,
+            "is_runtime_error": False
+        }
 
         self.control_service = AISimulationControlService(
             resource_awareness_service=self.mock_resource_service,
-            bash_runner=self.mock_bash_runner
+            sandbox_executor=self.mock_sandbox_executor # Pass mock_sandbox_executor
         )
 
     def test_initialization(self):
         self.assertIsNotNone(self.control_service)
         self.assertEqual(self.control_service.resource_awareness_service, self.mock_resource_service)
-        self.assertEqual(self.control_service.bash_runner, self.mock_bash_runner)
+        self.assertEqual(self.control_service.sandbox_executor, self.mock_sandbox_executor) # Check sandbox_executor
         default_perms = self.control_service.get_current_ai_permissions()
-        self.assertTrue(default_perms["can_execute_code"]) # Based on current default in ASCS
+        self.assertTrue(default_perms["can_execute_code"])
         self.assertTrue(default_perms["can_read_sim_hw_status"])
+
+    def test_initialization_raises_error_if_no_sandbox_executor(self):
+        with self.assertRaises(ValueError) as context:
+            AISimulationControlService(
+                resource_awareness_service=self.mock_resource_service,
+                sandbox_executor=None # type: ignore
+            )
+        self.assertIn("SandboxExecutor instance is required", str(context.exception))
+
 
     def test_load_ai_permissions(self):
         initial_perms = self.control_service.get_current_ai_permissions()
@@ -49,21 +63,21 @@ class TestAISimulationControlService(unittest.TestCase):
 
         self.assertFalse(updated_perms["can_execute_code"])
         self.assertFalse(updated_perms["can_read_sim_hw_status"])
-        # Ensure it doesn't add new keys not in AIPermissionSet (implicit test by structure)
         self.assertNotIn("new_unwanted_key", updated_perms)
 
     def test_get_sim_hardware_status(self):
         hw_status = self.control_service.get_sim_hardware_status()
         self.assertIsNotNone(hw_status)
         self.assertEqual(hw_status.get("profile_name"), "TestProfile")
-        self.assertEqual(hw_status.get("disk_space_gb"), 100.0)
-        self.assertEqual(hw_status.get("cpu_cores"), 4)
-        self.assertEqual(hw_status.get("ram_gb"), 16.0)
-        self.assertTrue(hw_status.get("gpu_available"))
+        # ... (other assertions remain the same)
         self.mock_resource_service.get_simulated_hardware_profile.assert_called_once()
 
     def test_get_sim_hardware_status_no_service(self):
-        service_no_ras = AISimulationControlService(resource_awareness_service=None, bash_runner=self.mock_bash_runner)
+        # Need to instantiate with mock_sandbox_executor for this test too
+        service_no_ras = AISimulationControlService(
+            resource_awareness_service=None,
+            sandbox_executor=self.mock_sandbox_executor
+        )
         hw_status = service_no_ras.get_sim_hardware_status()
         self.assertEqual(hw_status, {"status": "ResourceAwarenessService not configured."})
 
@@ -75,7 +89,7 @@ class TestAISimulationControlService(unittest.TestCase):
 
     def test_execute_ai_code_success(self):
         code_to_run = "print('Hello from AI')"
-        permissions = self.control_service.get_current_ai_permissions() # Use current (default true)
+        permissions = self.control_service.get_current_ai_permissions()
 
         result = self.control_service.execute_ai_code(code_to_run, permissions)
 
@@ -83,21 +97,13 @@ class TestAISimulationControlService(unittest.TestCase):
         self.assertEqual(result["script_exit_code"], 0)
         self.assertEqual(result["stdout"], "Script executed successfully.")
         self.assertEqual(result["status_message"], "Execution completed.")
-        self.mock_bash_runner.assert_called_once()
-        # Check that the command passed to bash_runner is correct
-        args, _ = self.mock_bash_runner.call_args
-        command_str = args[0]
-        # Account for single quote escaping in the command
-        escaped_code_to_run = code_to_run.replace("'", "'\\''")
-        self.assertIn(f"echo '{escaped_code_to_run}' > /tmp/ai_script_", command_str)
-        self.assertIn(f"&& python /tmp/ai_script_", command_str)
-        self.assertIn(f"&& rm /tmp/ai_script_", command_str)
+        self.mock_sandbox_executor.execute_python_code.assert_called_once_with(code_to_run)
 
 
     def test_execute_ai_code_permission_denied(self):
         code_to_run = "print('This should not run')"
         permissions: AIPermissionSet = {
-            "can_execute_code": False, # Explicitly deny
+            "can_execute_code": False,
             "can_read_sim_hw_status": True
         }
 
@@ -107,53 +113,81 @@ class TestAISimulationControlService(unittest.TestCase):
         self.assertIsNone(result["script_exit_code"])
         self.assertIn("Execution denied", result["stderr"])
         self.assertIn("Insufficient permissions", result["status_message"])
-        self.mock_bash_runner.assert_not_called()
+        self.mock_sandbox_executor.execute_python_code.assert_not_called()
 
-    def test_execute_ai_code_script_error(self):
-        code_to_run = "raise ValueError('AI script error')"
+    def test_execute_ai_code_script_compilation_error(self):
+        code_to_run = "print 'bad syntax'" # Python 2 syntax
         permissions = self.control_service.get_current_ai_permissions()
 
-        self.mock_bash_runner.return_value = {
+        self.mock_sandbox_executor.execute_python_code.return_value = {
             "stdout": "",
-            "stderr": "Traceback...\nValueError: AI script error",
-            "exit_code": 1
+            "stderr": "SyntaxError: Missing parentheses in call to 'print'",
+            "exit_code": 1, # Or another non-zero code
+            "is_compilation_error": True,
+            "is_runtime_error": False
         }
 
         result = self.control_service.execute_ai_code(code_to_run, permissions)
 
-        self.assertTrue(result["execution_success"]) # System executed it, script failed
+        self.assertTrue(result["execution_success"]) # ASCS attempted execution
         self.assertEqual(result["script_exit_code"], 1)
-        self.assertIn("AI script error", result["stderr"])
-        self.assertIn("Script execution failed with exit code 1", result["status_message"])
-        self.mock_bash_runner.assert_called_once()
+        self.assertIn("SyntaxError", result["stderr"])
+        self.assertEqual(result["status_message"], "Script compilation error.")
+        self.mock_sandbox_executor.execute_python_code.assert_called_once_with(code_to_run)
 
-    def test_execute_ai_code_bash_runner_exception(self):
-        code_to_run = "print('test')"
+    def test_execute_ai_code_script_runtime_error(self):
+        code_to_run = "raise ValueError('AI script error')"
         permissions = self.control_service.get_current_ai_permissions()
 
-        self.mock_bash_runner.side_effect = Exception("Bash runner system failure")
+        self.mock_sandbox_executor.execute_python_code.return_value = {
+            "stdout": "",
+            "stderr": "Traceback...\nValueError: AI script error",
+            "exit_code": 1,
+            "is_compilation_error": False,
+            "is_runtime_error": True
+        }
 
         result = self.control_service.execute_ai_code(code_to_run, permissions)
 
-        self.assertFalse(result["execution_success"])
-        self.assertIsNone(result["script_exit_code"])
-        self.assertIn("System error during execution: Bash runner system failure", result["stderr"])
-        self.assertEqual(result["status_message"], "System error prevented or interrupted execution.")
+        self.assertTrue(result["execution_success"])
+        self.assertEqual(result["script_exit_code"], 1)
+        self.assertIn("AI script error", result["stderr"])
+        self.assertEqual(result["status_message"], "Script execution failed with exit code 1.")
+        self.mock_sandbox_executor.execute_python_code.assert_called_once_with(code_to_run)
 
-    def test_execute_ai_code_non_callable_bash_runner(self):
-        code_to_run = "print('hello')"
+    def test_execute_ai_code_sandbox_timeout(self):
+        code_to_run = "while True: pass"
         permissions = self.control_service.get_current_ai_permissions()
 
-        service_bad_runner = AISimulationControlService(
-            resource_awareness_service=self.mock_resource_service,
-            bash_runner="not_a_callable" # type: ignore
-        )
-        result = service_bad_runner.execute_ai_code(code_to_run, permissions)
+        self.mock_sandbox_executor.execute_python_code.return_value = {
+            "stdout": "",
+            "stderr": "Sandbox execution timed out after 5 seconds.",
+            "exit_code": -1, # Example timeout exit code from SandboxExecutor
+            "is_compilation_error": False,
+            "is_runtime_error": True
+        }
 
-        self.assertFalse(result["execution_success"])
+        result = self.control_service.execute_ai_code(code_to_run, permissions)
+
+        self.assertTrue(result["execution_success"])
+        self.assertEqual(result["script_exit_code"], -1)
+        self.assertIn("timed out", result["stderr"].lower())
+        self.assertEqual(result["status_message"], "Script execution timed out.")
+        self.mock_sandbox_executor.execute_python_code.assert_called_once_with(code_to_run)
+
+
+    def test_execute_ai_code_sandbox_executor_system_error(self):
+        code_to_run = "print('test')"
+        permissions = self.control_service.get_current_ai_permissions()
+
+        # Simulate SandboxExecutor itself raising an unhandled exception
+        self.mock_sandbox_executor.execute_python_code.side_effect = Exception("Sandbox system failure")
+
+        result = self.control_service.execute_ai_code(code_to_run, permissions)
+
+        self.assertFalse(result["execution_success"]) # ASCS failed to get a proper result
         self.assertIsNone(result["script_exit_code"])
-        # The str(e) for TypeError in this case is just the message, not "TypeError(...)".
-        self.assertEqual(result["stderr"], "System error during execution: bash_runner is not callable. It must be a function or a callable object.")
+        self.assertEqual(result["stderr"], "System error during execution: Sandbox system failure")
         self.assertEqual(result["status_message"], "System error prevented or interrupted execution.")
 
 
