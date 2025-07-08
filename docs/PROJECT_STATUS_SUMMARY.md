@@ -98,13 +98,13 @@ This summary is based on automated code and documentation review.
     *   Sending task requests and results.
     *   Subscribing to topics and basic message handling.
     *   Callback registration for different message types.
-    *   `ServiceDiscoveryModule` for managing known capabilities from peers, including trust score integration.
+    *   `ServiceDiscoveryModule` (intended for HSP capabilities): The instantiation in `core_services.py` expects this module to integrate with `TrustManager` and process `HSPCapabilityAdvertisementPayload` via a `process_capability_advertisement` method. **However, the current file at `src/core_ai/service_discovery/service_discovery_module.py` implements a generic service registry with a different interface and functionality.** This module requires significant refactoring or replacement to fulfill its intended HSP role.
     *   Basic trust management via `TrustManager`.
 *   **Pending (Explicit TODOs from `TODO_PLACEHOLDERS.md`):**
-    *   `hsp/connector.py` (Line ~63): Implement MQTT reconnection strategy in `_on_mqtt_disconnect`.
+    *   `hsp/connector.py` (Line ~63): CLARIFIED: Reconnection strategy is handled by the Paho MQTT client. (Verified in `feat/hsp-connector-robustness`).
     *   `hsp/connector.py` (Line ~128): Add schema URIs to `payload_schema_uri` in `_build_hsp_envelope` when defined.
-    *   `hsp/connector.py` (Line ~260): Implement logic for sending ACKs if `requires_ack` is true.
-    *   `service_discovery_module.py` (Line ~177): Add logic for staleness/expiration of capabilities.
+    *   `hsp/connector.py` (Line ~260): CLARIFIED: Logic for sending 'received' ACKs is implemented. (Verified in `feat/hsp-ack-handling`).
+    *   `service_discovery_module.py` (HSP-specific version, Line ~177 in `TODO_PLACEHOLDERS.md`): Add logic for staleness/expiration of capabilities. **Prerequisite: This module must first be correctly implemented/refactored to handle HSP capabilities and integrate with `TrustManager` as expected by `core_services.py`.**
 *   **Further Development / Conceptual Goals:**
     *   Full adherence to `docs/HSP_SPECIFICATION.md` (this spec itself needs review to identify further gaps).
     *   More robust error handling and message validation.
