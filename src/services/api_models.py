@@ -15,7 +15,7 @@ class AIOutput(BaseModel):
 class SessionStartRequest(BaseModel):
     user_id: Optional[str] = None
 
-from typing import Optional, Dict, Any # Added Dict, Any
+from typing import Optional, Dict, Any, Literal # Added Dict, Any, Literal
 from pydantic import BaseModel, Field # Added Field
 
 class SessionStartResponse(BaseModel):

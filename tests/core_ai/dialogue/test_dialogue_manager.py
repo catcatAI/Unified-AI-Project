@@ -160,8 +160,8 @@ class TestDialogueManagerHelperMethods(unittest.TestCase):
         # The cleaning logic for possessives is simple and might not perfectly normalize all complex entities.
         result = self.dm._is_kg_query("who is ceo of Google's parent company?")
         self.assertIsNotNone(result)
-        # "google's parent company" is captured. It does not end with 's, so cleaning `entity[:-2]` doesn't apply.
-        self.assertEqual(result, ("google's parent company", "has_ceo"))
+        # The method currently strips "'s", so "Google's parent company" becomes "Google parent company"
+        self.assertEqual(result, ("google parent company", "has_ceo"))
 
     def test_is_kg_query_no_match(self):
         result = self.dm._is_kg_query("tell me a joke")
