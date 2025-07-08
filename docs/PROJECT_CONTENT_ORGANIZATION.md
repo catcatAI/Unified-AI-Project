@@ -19,6 +19,8 @@ Key files at the project root:
 
 Contains the core Python source code for the AI and its services.
 
+*   `core_services.py`: Provides central initialization (dependency injection) and access to core AI service instances. Responsible for instantiating and wiring together major components like DialogueManager, Memory, LLMInterface, etc.
+
 ### 2.1. Core AI Logic (`src/core_ai/`)
 
 Houses the central intelligence and decision-making components of the AI.
@@ -41,6 +43,7 @@ Houses the central intelligence and decision-making components of the AI.
     *   `service_discovery_module.py`: Manages discovery and registry of capabilities advertised by other AIs on the HSP network.
 *   **`trust_manager/`**:
     *   `trust_manager_module.py`: Manages trust scores for interactions with other AI peers in the HSP network.
+*   **`lis/`**: Contains early placeholders (`lis_cache_interface.py`) for the Linguistic Immune System (LIS), a conceptual system for advanced error processing and linguistic evolution (see `docs/architecture/Linguistic_Immune_System_spec.md`).
 *   `emotion_system.py`: Manages and simulates the AI's emotional state.
 *   `crisis_system.py`: Assesses input for crisis situations and can trigger appropriate responses.
 *   `time_system.py`: Provides time-related context (e.g., time of day).
@@ -58,6 +61,7 @@ Contains internal "tools" that the AI can use to augment its capabilities.
 
 *   `tool_dispatcher.py`: Enables the AI to select and use various tools.
 *   `math_tool.py`, `logic_tool.py`, `translation_tool.py`: Example or actual implementations of specific tools.
+*   `code_understanding_tool.py`: A callable tool providing code understanding capabilities.
 *   Subdirectories like `math_model/`, `logic_model/`, `translation_model/` likely contain machine learning models or data related to these tools.
 *   `js_tool_dispatcher/`: Appears to be for dispatching tools implemented in JavaScript.
 
@@ -78,6 +82,8 @@ Backend services, including API servers and interfaces to external systems.
 *   `llm_interface.py`: Standardized interface for interacting with various Large Language Models (e.g., Ollama, OpenAI).
 *   `sandbox_executor.py`: For safely executing code, likely used in tool drafting or other dynamic code execution scenarios.
 *   `audio_service.py`, `vision_service.py`: Placeholders or implementations for audio and vision processing capabilities.
+*   `resource_awareness_service.py`: Manages and provides information about the AI's simulated hardware resources, configured via `configs/simulated_resources.yaml`.
+*   `ai_virtual_input_service.py`: Implements the AI Virtual Input Service (AVIS) for simulated GUI interaction (e.g., virtual mouse/keyboard). (See `docs/architecture/AI_Virtual_Input_System_spec.md`).
 *   `node_services/`: Contains a Node.js server, possibly for supporting JavaScript-based tools or UI backend components.
 *   `api_models.py`: Defines Pydantic models for API request/response validation.
 
@@ -121,6 +127,7 @@ Centralized configuration for various aspects of the AI system.
 *   `system_config.yaml`: General system-wide configurations.
 *   `api_keys.yaml`: Structure and placeholders for external API keys (actual keys typically via `.env`).
 *   `ontology_mappings.yaml`: Mappings for ontologies, likely used by `ContentAnalyzerModule`.
+*   `simulated_resources.yaml`: Defines profiles for simulated hardware resources, used by the `ResourceAwarenessService`.
 *   `version_manifest.json`: Manages versions of different components or data schemas.
 *   **`formula_configs/`**:
     *   `default_formulas.json`: Defines rules for the Formula Engine.
