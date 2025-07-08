@@ -31,6 +31,7 @@ These are comments indicating planned work or missing functionality that require
     *   **Line:** ~177
     *   **Placeholder:** `# TODO: Add logic for staleness/expiration of capabilities based on self.last_seen`
     *   **Context:** End of the class definition.
+    *   **Prerequisite Note:** The `ServiceDiscoveryModule` at this path currently implements a generic service registry. It must be refactored or replaced to align with the HSP-specific interface (handling `HSPCapabilityAdvertisementPayload`, integrating with `TrustManager`, having `process_capability_advertisement` method) as expected by `core_services.py` before this staleness logic for HSP capabilities can be implemented. (See also notes in `PROJECT_STATUS_SUMMARY.md` and `PROJECT_CONTENT_ORGANIZATION.md`).
     *   **Required Functionality:** Implement a mechanism to automatically mark or remove advertised HSP capabilities if they haven't been re-advertised or "seen" for a defined period, to avoid using stale service information.
 
 *   **File:** `src/hsp/connector.py`
