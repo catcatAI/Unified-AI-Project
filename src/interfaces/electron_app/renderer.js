@@ -134,7 +134,39 @@ document.addEventListener('DOMContentLoaded', () => {
                             Status: ${service.availability_status} <br>
                             Tags: ${(service.tags || []).join(', ')}
                         `;
-                        // TODO: Add button here to trigger this service (for Sub-step 2.14.2)
+
+                        const useServiceButton = document.createElement('button');
+                        useServiceButton.textContent = 'Use Service';
+                        useServiceButton.setAttribute('data-capability-id', service.capability_id);
+                        useServiceButton.style.marginLeft = '10px'; // Basic styling
+
+                        useServiceButton.addEventListener('click', (event) => {
+                            const capId = event.target.getAttribute('data-capability-id');
+                            const hspTaskCapIdInputElement = document.getElementById('hspTaskCapId');
+                            const hspTaskParamsTextareaElement = document.getElementById('hspTaskParams');
+
+                            if (hspTaskCapIdInputElement && capId) {
+                                hspTaskCapIdInputElement.value = capId;
+                                if (hspTaskParamsTextareaElement) {
+                                    hspTaskParamsTextareaElement.value = ''; // Clear previous params
+                                }
+                                console.log(`Capability ID '${capId}' populated into task form.`);
+                                // Optionally, focus the parameters textarea or scroll to the form
+                                // hspTaskParamsTextareaElement?.focus();
+                                hspTaskCapIdInputElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                            } else {
+                                if (!hspTaskCapIdInputElement) {
+                                    console.error('HSP Task Capability ID input field (#hspTaskCapId) not found.');
+                                }
+                                if (!capId) {
+                                    console.error('Capability ID not found on the clicked button.');
+                                }
+                            }
+                        });
+
+                        li.appendChild(document.createElement('br')); // Add a line break before the button
+                        li.appendChild(useServiceButton);
                         ul.appendChild(li);
                     });
                     hspServiceListDiv.appendChild(ul);
