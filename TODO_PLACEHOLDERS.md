@@ -42,10 +42,10 @@ These are comments indicating planned work or missing functionality that require
     *   **Placeholder:** `"payload_schema_uri": None, # TODO: Add schema URIs when defined`
     *   **Context:** Within the `_build_hsp_envelope` method.
     *   **Required Functionality:** Update this to populate the `payload_schema_uri` field with appropriate URIs once the HSP message payload schemas are formally defined and published.
-    *   **Line:** ~260
-    *   **Placeholder:** `# TODO: Implement logic for sending ACKs if the received message's qos_parameters.requires_ack is true.`
-    *   **Context:** In the `_handle_hsp_message_str` method.
-    *   **Required Functionality:** Implement the part of the HSP protocol responsible for sending acknowledgement (ACK) messages back to the sender if an incoming message indicates it requires an ACK (based on its `qos_parameters`).
+    *   **Line:** ~260 (Original TODO location)
+    *   **Placeholder:** `# CLARIFIED: Logic for sending 'received' ACKs when qos_parameters.requires_ack is true is implemented in _handle_hsp_message_str and _send_acknowledgement.`
+    *   **Context:** Was in the `_handle_hsp_message_str` method.
+    *   **Required Functionality:** (Addressed for 'received' ACKs) The connector sends 'received' ACKs as required. Functionality verified and tested in `feat/hsp-ack-handling`. (Future enhancements could include 'processed' ACKs or NACKs).
 
 *   **File:** `src/interfaces/electron_app/renderer.js`
     *   **Line:** ~137
