@@ -805,4 +805,3 @@ class TestHSPConflictResolution:
 #       `time.sleep` is used for simplicity to allow messages to propagate.
 #       If tests are flaky, these sleep durations might need adjustment or a more robust
 #       event signaling mechanism between the connectors and test assertions.
-```

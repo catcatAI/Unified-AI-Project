@@ -3,11 +3,12 @@ import json
 from pathlib import Path
 import shutil # For cleaning up test directories
 
-# Adjust import path to reach FormulaEngine from src/core_ai/formula_engine/
-# This assumes tests are run from the project root (Unified-AI-Project)
-# and PYTHONPATH includes 'src'
-from core_ai.formula_engine import FormulaEngine
-from shared.types.common_types import FormulaConfigEntry
+import sys # Added
+import os  # Added
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))) # Added
+
+from src.core_ai.formula_engine import FormulaEngine # Changed
+from src.shared.types.common_types import FormulaConfigEntry # Changed
 
 class TestFormulaEngine(unittest.TestCase):
 
