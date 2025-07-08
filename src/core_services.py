@@ -214,14 +214,7 @@ def initialize_services(
             # Note: HSPConnector currently supports one callback for each type.
             # If DialogueManager also needs task results, a dispatching mechanism or
             # allowing multiple callbacks in HSPConnector would be needed.
-            # For now, this will overwrite DM's if DM also registers for generic task results.
-            # Assuming distinct callbacks or a dispatcher will be handled if needed.
-            # For now, let's check if DM registered one, and if so, warn.
-            if hasattr(hsp_connector_instance, '_on_task_result_callback') and \
-               hsp_connector_instance._on_task_result_callback is not None and \
-               hsp_connector_instance._on_task_result_callback != fragmenta_orchestrator_instance._handle_hsp_sub_task_result:
-                print("Core Services: WARNING - HSPConnector already has a task result callback registered. Overwriting with Fragmenta's. Consider a dispatcher if multiple modules need task results.")
-
+            # (This is now addressed by HSPConnector supporting multiple task result callbacks)
             hsp_connector_instance.register_on_task_result_callback(
                 fragmenta_orchestrator_instance._handle_hsp_sub_task_result
             )
