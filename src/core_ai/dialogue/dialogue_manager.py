@@ -313,7 +313,8 @@ class DialogueManager:
             user_mem_id = self.memory_manager.store_experience(user_input, "user_dialogue_text", user_metadata)
 
         if user_mem_id and self.learning_manager and not (self.crisis_system.assess_input_for_crisis({"text": user_input}) > 0):
-            await self.learning_manager.process_and_store_learnables(text=user_input, user_id=user_id, session_id=session_id, source_interaction_ref=user_mem_id)
+            # process_and_store_learnables is currently synchronous
+            self.learning_manager.process_and_store_learnables(text=user_input, user_id=user_id, session_id=session_id, source_interaction_ref=user_mem_id)
 
         crisis_level = self.crisis_system.assess_input_for_crisis({"text": user_input})
         analysis_command = "!analyze: "

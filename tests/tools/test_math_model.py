@@ -177,13 +177,19 @@ class TestMathModelComponents(unittest.TestCase):
         # This test assumes math_tool.calculate will return the model unavailable error
         # as we are not providing a trained model.
         result = dispatcher.dispatch("calculate 2 + 2")
-        self.assertIn("Error: Math model is not available.", result)
+        self.assertEqual(result["status"], "success") # The tool itself ran, but returned an error string as payload
+        self.assertIsInstance(result["payload"], str)
+        self.assertIn("Error: Math model is not available.", result["payload"])
 
         result_explicit = dispatcher.dispatch("what is 3*3?", explicit_tool_name="calculate")
-        self.assertIn("Error: Math model is not available.", result_explicit)
+        self.assertEqual(result_explicit["status"], "success")
+        self.assertIsInstance(result_explicit["payload"], str)
+        self.assertIn("Error: Math model is not available.", result_explicit["payload"])
 
         result_no_tool = dispatcher.dispatch("hello world")
-        self.assertIsNone(result_no_tool) # Expecting None if no tool is matched
+        # Dispatcher now returns a specific response for unhandled, not None
+        self.assertEqual(result_no_tool["status"], "unhandled_by_local_tool")
+        self.assertIsNone(result_no_tool["payload"])
         print("test_tool_dispatcher_math_routing PASSED")
 
 if __name__ == '__main__':

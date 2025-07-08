@@ -19,7 +19,7 @@ from src.core_ai.dialogue.dialogue_manager import DialogueManager
 
 # --- Constants for API Tests ---
 TEST_API_PEER_AI_ID = "did:hsp:test_api_peer_007"
-MQTT_BROKER_ADDRESS = "localhost" # Must match what core_services will use
+MQTT_BROKER_ADDRESS = "127.0.0.1" # Changed from localhost. Must match what core_services will use
 MQTT_BROKER_PORT = 1883
 
 @pytest.fixture(scope="module")
@@ -268,5 +268,3 @@ class TestHSPEndpoints:
         status_data = response.json()
         assert status_data["correlation_id"] == mock_corr_id
         assert status_data["status"] == "unknown_or_expired"
-
-```

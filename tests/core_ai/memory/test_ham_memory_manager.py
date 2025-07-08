@@ -41,6 +41,17 @@ class TestHAMMemoryManager(unittest.TestCase):
 
         # For resource awareness tests, we'll set up a specific HAM manager with a mock service
         self.mock_resource_service = MagicMock(spec=ResourceAwarenessService)
+        # Configure the mock to return a dictionary for get_simulated_disk_config()
+        # And that dictionary's get('space_gb',...) to return a float.
+        mock_disk_config_dict = {
+            'space_gb': 100.0,  # Example float value
+            'warning_threshold_percent': 80.0,
+            'critical_threshold_percent': 95.0,
+            'lag_factor_warning': 0.1, # Example value
+            'lag_factor_critical': 0.5  # Example value
+        }
+        self.mock_resource_service.get_simulated_disk_config.return_value = mock_disk_config_dict
+
         self.ham_manager_with_res = HAMMemoryManager(
             core_storage_filename="test_ham_res_aware_memory.json",
             resource_awareness_service=self.mock_resource_service
