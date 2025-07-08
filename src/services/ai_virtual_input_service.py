@@ -18,8 +18,16 @@ from src.shared.types.common_types import (
     VirtualKeyboardCommand,
     VirtualMouseEventType,
     VirtualKeyboardActionType,
-    VirtualInputElementDescription # Added this import
+    VirtualInputElementDescription, # Added this import
+    AIPermissionSet, # New type for AI permissions
+    ExecutionResult # For process_code_execution_command
 )
+
+# Import ResourceAwarenessService for type hinting, will be optional
+from src.services.resource_awareness_service import ResourceAwarenessService
+# Import AISimulationControlService for instantiation
+from src.services.ai_simulation_control_service import AISimulationControlService
+
 
 # Further imports will be added as the class is implemented.
 # For example, datetime for logging timestamps.
@@ -32,28 +40,86 @@ class AIVirtualInputService:
     Operates primarily in a simulation mode, with future potential for actual control
     under strict permissions.
     """
-    def __init__(self, initial_mode: VirtualInputPermissionLevel = "simulation_only"):
+    def __init__(self,
+                 initial_mode: VirtualInputPermissionLevel = "simulation_only",
+                 resource_awareness_service: Optional[ResourceAwarenessService] = None,
+                 bash_runner: Optional[Any] = None): # For AISimulationControlService
         """
         Initializes the AI Virtual Input Service.
 
         Args:
             initial_mode (VirtualInputPermissionLevel): The starting operational mode.
-                Defaults to "simulation_only".
+            resource_awareness_service (Optional[ResourceAwarenessService]):
+                An instance of ResourceAwarenessService.
+            bash_runner (Optional[Any]): A callable (like Jules's run_in_bash_session)
+                for executing shell commands, passed to AISimulationControlService.
         """
         self.mode: VirtualInputPermissionLevel = initial_mode
 
-        # Virtual cursor position (x_ratio, y_ratio) relative to a 1.0x1.0 abstract window/screen.
-        # (0.0, 0.0) is top-left, (1.0, 1.0) is bottom-right.
-        self.virtual_cursor_position: Tuple[float, float] = (0.5, 0.5) # Start at center
+        # Initialize AISimulationControlService first, as it provides permissions and hw status
+        self.ai_simulation_control_service = AISimulationControlService(
+            resource_awareness_service=resource_awareness_service,
+            bash_runner=bash_runner
+        )
 
+        # Virtual cursor position
+        self.virtual_cursor_position: Tuple[float, float] = (0.5, 0.5)
         self.virtual_focused_element_id: Optional[str] = None
-        self.action_log: List[Dict[str, Any]] = [] # Stores a log of commands processed
-
-        # Holds the current state of the virtual UI elements
+        self.action_log: List[Dict[str, Any]] = []
         self.virtual_ui_elements: List[VirtualInputElementDescription] = []
 
+        # Populate AVIS state from AISimulationControlService
+        self.current_ai_permissions: AIPermissionSet = self.ai_simulation_control_service.get_current_ai_permissions()
+        self.current_sim_hardware_status: Dict[str, Any] = self.ai_simulation_control_service.get_sim_hardware_status()
+
+        # Keep a reference if needed, though AISimulationControlService holds its own
+        self.resource_awareness_service: Optional[ResourceAwarenessService] = resource_awareness_service
+
+
         print(f"AIVirtualInputService initialized in '{self.mode}' mode.")
+        print(f"  AISimulationControlService integration active.")
         print(f"  Initial virtual cursor: {self.virtual_cursor_position}")
+        print(f"  Current AI Permissions: {self.current_ai_permissions}")
+        print(f"  Current Sim Hardware Status: {self.current_sim_hardware_status}")
+
+    def refresh_simulation_status(self) -> None:
+        """
+        Refreshes AI permissions and simulated hardware status from AISimulationControlService.
+        Also updates the relevant display elements in the virtual UI if they exist.
+        """
+        if not self.ai_simulation_control_service:
+            print("AVIS: AISimulationControlService not available to refresh status.")
+            return
+
+        self.current_ai_permissions = self.ai_simulation_control_service.get_current_ai_permissions()
+        self.current_sim_hardware_status = self.ai_simulation_control_service.get_sim_hardware_status()
+
+        print(f"AVIS: Simulation status refreshed.")
+        print(f"  Updated AI Permissions: {self.current_ai_permissions}")
+        print(f"  Updated Sim Hardware Status: {self.current_sim_hardware_status}")
+
+        # Update UI elements (implementation in a later step)
+        self._update_info_display_elements()
+
+
+    def _update_info_display_elements(self) -> None:
+        """
+        Updates the 'value' of predefined virtual UI elements that display
+        AI permissions and simulated hardware status.
+        (Element IDs: 'ai_permissions_display', 'sim_hw_status_display')
+        """
+        perm_display_el = self._find_element_by_id("ai_permissions_display")
+        if perm_display_el:
+            # Simple string representation for now
+            perm_display_el["value"] = f"Permissions: CodeExec={self.current_ai_permissions.get('can_execute_code')}, ReadHW={self.current_ai_permissions.get('can_read_sim_hw_status')}"
+            print(f"AVIS: Updated 'ai_permissions_display' element.")
+
+        hw_display_el = self._find_element_by_id("sim_hw_status_display")
+        if hw_display_el:
+            # Simple string representation
+            hw_display_el["value"] = f"HW Status: Profile={self.current_sim_hardware_status.get('profile_name', 'N/A')}, CPU={self.current_sim_hardware_status.get('cpu_cores')} cores"
+            print(f"AVIS: Updated 'sim_hw_status_display' element.")
+
 
     def load_virtual_ui(self, elements: List[VirtualInputElementDescription]) -> None:
         """
@@ -150,13 +216,31 @@ class AIVirtualInputService:
             click_details = {
                 "click_type": click_type,
                 "target_element_id": target_element,
-                "position": (pos_x, pos_y) # This might be element-relative or window-relative based on command version
+                "position": (pos_x, pos_y)
             }
             outcome = {"status": "simulated", "action": "click", "details": click_details}
             print(f"  AVIS Sim: Click logged: {click_details}")
-            if target_element: # Assume click might change focus
+
+            if target_element == "run_code_button":
+                print(f"  AVIS Sim: 'run_code_button' clicked. Attempting to execute code.")
+                code_editor_element = self._find_element_by_id("code_editor")
+                if code_editor_element and "value" in code_editor_element:
+                    code_to_execute = str(code_editor_element.get("value", "")) # Ensure it's a string
+                    self.process_code_execution_command(code_to_execute)
+                    outcome["details"]["triggered_action"] = "code_execution" # type: ignore
+                    outcome["details"]["code_editor_found"] = True # type: ignore
+                    outcome["details"]["code_length"] = len(code_to_execute) # type: ignore
+                else:
+                    print("  AVIS Sim: 'code_editor' element not found or has no value. Cannot execute code.")
+                    outcome["details"]["triggered_action"] = "code_execution_failed_no_editor" # type: ignore
+                    outcome["details"]["code_editor_found"] = False # type: ignore
+                # Focus does not change just by clicking the run button usually
+
+            elif target_element: # Handle focus for other clickable elements
                 self.virtual_focused_element_id = target_element
                 print(f"  AVIS Sim: Focused element set to '{target_element}' due to click.")
+            # If no target_element, focus remains unchanged.
+
 
         elif action_type == "hover":
             target_element = command.get("target_element_id")
@@ -301,7 +385,74 @@ class AIVirtualInputService:
             "mode": self.mode,
             "virtual_cursor_position": self.virtual_cursor_position,
             "virtual_focused_element_id": self.virtual_focused_element_id,
-            "action_log_count": len(self.action_log)
+            "action_log_count": len(self.action_log),
+            "current_ai_permissions": self.current_ai_permissions,
+            "current_sim_hardware_status": self.current_sim_hardware_status
         }
+
+    def process_code_execution_command(self, code_string: str, output_element_id: str = "code_output_display") -> None:
+        """
+        Processes a command to execute AI-provided code.
+        Uses AISimulationControlService to perform the execution and updates a
+        designated virtual UI element with the result.
+
+        Args:
+            code_string (str): The Python code string to execute.
+            output_element_id (str): The element_id of the virtual UI text_area
+                                     where execution results should be displayed.
+                                     Defaults to "code_output_display".
+        """
+        if not self.ai_simulation_control_service:
+            print("AVIS: Cannot process code execution. AISimulationControlService is not available.")
+            # Optionally update output element with this error
+            output_el = self._find_element_by_id(output_element_id)
+            if output_el:
+                output_el["value"] = "Error: AISimulationControlService not available."
+            return
+
+        print(f"AVIS: Received code execution command for {len(code_string)} chars of code.")
+
+        # Execute the code via the control service
+        # Permissions are checked by the AISimulationControlService using its current set.
+        execution_result: ExecutionResult = self.ai_simulation_control_service.execute_ai_code(
+            code_string,
+            self.current_ai_permissions # Pass the current permissions from AVIS state
+        )
+
+        result_str = (
+            f"--- Execution Result (Request ID: {execution_result['request_id']}) ---\n"
+            f"Status: {execution_result['status_message']}\n"
+            f"Success: {execution_result['execution_success']}\n"
+            f"Exit Code: {execution_result['script_exit_code'] if execution_result['script_exit_code'] is not None else 'N/A'}\n"
+            f"STDOUT:\n{execution_result['stdout']}\n"
+            f"STDERR:\n{execution_result['stderr']}\n"
+            f"-------------------------------------------------"
+        )
+
+        # Update the designated output element in the virtual UI
+        output_element = self._find_element_by_id(output_element_id)
+        if output_element:
+            if "value" in output_element:
+                output_element["value"] = result_str
+                print(f"AVIS: Updated element '{output_element_id}' with execution result.")
+            else:
+                print(f"AVIS: Warning - Output element '{output_element_id}' has no 'value' attribute to update.")
+        else:
+            print(f"AVIS: Warning - Output element '{output_element_id}' not found in virtual UI.")
+
+        # Log this action
+        self._log_action(
+            command_type="code_execution",
+            command_details={"code_length": len(code_string), "output_element_id": output_element_id},
+            outcome={
+                "request_id": execution_result["request_id"],
+                "execution_success": execution_result["execution_success"],
+                "status_message": execution_result["status_message"]
+            }
+        )
+
+        # Potentially refresh hardware status if code execution might affect it
+        # For now, this is manual or tied to a general refresh.
+        # self.refresh_simulation_status() # Consider if this should be automatic.
 
 print("AIVirtualInputService module loaded.")
