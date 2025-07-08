@@ -40,7 +40,7 @@ Houses the central intelligence and decision-making components of the AI.
 *   **`code_understanding/`**:
     *   `lightweight_code_model.py`: Provides basic static analysis of Python code, particularly for understanding tool structures.
 *   **`service_discovery/`**:
-    *   `service_discovery_module.py`: Manages discovery and registry of capabilities advertised by other AIs on the HSP network.
+    *   `service_discovery_module.py`: Contains a service discovery implementation. **Note:** Its current code defines a generic service registry with TTL-based expiry and its own `ServiceAdvertisement` type. This differs from the HSP-specific capability discovery mechanism (expected to handle `HSPCapabilityAdvertisementPayload`, integrate with `TrustManager`, and have a `process_capability_advertisement` method) that is anticipated by `core_services.py` for HSP integration. This module requires refactoring or replacement to fulfill the HSP-related role.
 *   **`trust_manager/`**:
     *   `trust_manager_module.py`: Manages trust scores for interactions with other AI peers in the HSP network.
 *   **`lis/`**: Contains early placeholders (`lis_cache_interface.py`) for the Linguistic Immune System (LIS), a conceptual system for advanced error processing and linguistic evolution (see `docs/architecture/Linguistic_Immune_System_spec.md`).
