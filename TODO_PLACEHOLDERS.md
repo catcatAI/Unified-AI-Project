@@ -22,10 +22,10 @@ These are values intended to be replaced by actual secrets or configurations, ty
 These are comments indicating planned work or missing functionality that requires code implementation.
 
 *   **File:** `src/core_ai/code_understanding/lightweight_code_model.py`
-    *   **Line:** ~177
-    *   **Placeholder:** `# TODO: Add logic to resolve tool_name to filepath if not already a path.`
-    *   **Context:** In the `get_tool_structure` method.
-    *   **Required Functionality:** Implement logic to find a tool's Python file using its name by searching within the `tools_directory`, if a direct file path is not provided as input.
+    *   **Line:** ~177 (Original TODO location in `get_tool_structure`)
+    *   **Placeholder:** `# COMPLETED: Logic to resolve tool_name to a filepath has been implemented.`
+    *   **Context:** Was in the `get_tool_structure` method.
+    *   **Required Functionality:** (Implemented in `feat/lcm-tool-name-resolution`) The `get_tool_structure` method now resolves `tool_path_or_name` by checking if it's a direct path, then attempting to find `name.py`, `tool_name.py`, or `name_tool.py` in the configured `tools_directory`.
 
 *   **File:** `src/core_ai/service_discovery/service_discovery_module.py`
     *   **Line:** ~177 (Original TODO location in a previous version of the file)

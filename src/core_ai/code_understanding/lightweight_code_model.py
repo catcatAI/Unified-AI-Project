@@ -1,10 +1,13 @@
 import ast
 import os
 import glob
+import logging # Added logging
 from typing import List, Dict, Any, Optional, Union
 
 # Placeholder for a lightweight model to understand code structure,
 # dependencies, and potentially generate simple code or configurations.
+
+logger = logging.getLogger(__name__)
 
 class LightweightCodeModel:
     """
@@ -21,11 +24,9 @@ class LightweightCodeModel:
         """
         self.tools_directory = tools_directory
         if not os.path.isdir(tools_directory):
-            # This is a configuration issue, but for now, we'll just print a warning.
-            # In a real scenario, this might raise an error or have better handling.
-            print(f"Warning: Tools directory '{tools_directory}' does not exist or is not a directory.")
-            # Fallback to a path relative to this file's location if a common structure is assumed
-            # For now, we'll assume the provided path is correct relative to project root.
+            logger.warning(f"Tools directory '{tools_directory}' does not exist or is not a directory.")
+            # Consider raising an error or ensuring tools_directory is always valid upon instantiation.
+            # For now, behavior relies on later checks in methods using this directory.
 
     def list_tool_files(self) -> List[str]:
         """
@@ -116,7 +117,7 @@ class LightweightCodeModel:
                                       or None if the file cannot be parsed or analyzed.
         """
         if not os.path.isfile(filepath):
-            print(f"Error: File not found at '{filepath}'")
+            logger.error(f"File not found at '{filepath}' for analysis.")
             return None
 
         try:
@@ -124,7 +125,7 @@ class LightweightCodeModel:
                 source_code = source_file.read()
             tree = ast.parse(source_code, filename=filepath)
         except Exception as e:
-            print(f"Error parsing file '{filepath}': {e}")
+            logger.error(f"Error parsing Python file '{filepath}': {e}", exc_info=True)
             return None
 
         file_structure: Dict[str, Any] = {
@@ -170,26 +171,87 @@ class LightweightCodeModel:
     def get_tool_structure(self, tool_name_or_filepath: str) -> Optional[Dict[str, Any]]:
         """
         Main interface method to get the structure of a specific tool.
-        It can accept a tool name (which it tries to resolve to a filepath)
-        or a direct filepath.
-        (Placeholder - to be implemented)
-        """
-        # TODO: Add logic to resolve tool_name to filepath if not already a path.
-        # For now, assume tool_name_or_filepath is a direct path.
-        if os.path.isfile(tool_name_or_filepath):
-            return self.analyze_tool_file(tool_name_or_filepath)
-        else:
-            # Try to find it in self.tools_directory
-            # This part needs more robust path joining and searching
-            potential_path = os.path.join(self.tools_directory, tool_name_or_filepath)
-            if not potential_path.endswith(".py"):
-                potential_path += ".py"
 
-            if os.path.isfile(potential_path):
-                return self.analyze_tool_file(potential_path)
+        The `tool_name_or_filepath` can be:
+        1. A direct absolute or relative path to a Python tool file.
+        2. A tool name (e.g., "my_tool" or "my_tool.py"). If a name is provided:
+           - It first looks for an exact match (e.g., "my_tool.py") in `self.tools_directory`.
+           - If not found, it searches for common patterns like "tool_my_tool.py" or
+             "my_tool_tool.py" in `self.tools_directory`.
+           - Resolution fails if the name is ambiguous (multiple pattern matches) or no match is found.
+
+        Args:
+            tool_name_or_filepath (str): The name of the tool or direct filepath to the tool's Python file.
+
+        Returns:
+            Optional[Dict[str, Any]]: A dictionary containing structural information about the tool
+                                      (classes, methods, docstrings, params, returns) if resolved and parsed,
+                                      otherwise None.
+        """
+        resolved_path: Optional[str] = None
+
+        # 1. Check if tools_directory is valid for name resolution
+        # This check is more critical if we are about to list its contents for name search
+        # If input is a direct path, tools_directory might not be used.
+
+        # 2. Determine if input is a path or a name
+        is_potential_path = os.sep in tool_name_or_filepath or \
+                            (os.altsep and os.altsep in tool_name_or_filepath)
+
+        if is_potential_path:
+            if os.path.isfile(tool_name_or_filepath):
+                resolved_path = tool_name_or_filepath
+                logger.debug(f"Input '{tool_name_or_filepath}' is a direct file path.")
             else:
-                print(f"Warning: Could not find tool file for '{tool_name_or_filepath}' at '{potential_path}' or as direct path.")
+                logger.warning(f"Input '{tool_name_or_filepath}' appears to be a path but was not found or is not a file.")
                 return None
+        else:
+            # Input is a name.
+            if not os.path.isdir(self.tools_directory):
+                logger.warning(f"Tools directory '{self.tools_directory}' is not valid. Cannot resolve tool by name: {tool_name_or_filepath}")
+                return None
+
+            tool_name_input = tool_name_or_filepath
+
+            name_to_check_direct = tool_name_input
+            if not name_to_check_direct.endswith(".py"):
+                name_to_check_direct += ".py"
+
+            potential_path_direct = os.path.join(self.tools_directory, name_to_check_direct)
+            if os.path.isfile(potential_path_direct):
+                resolved_path = potential_path_direct
+                logger.info(f"Tool name '{tool_name_input}' resolved to '{resolved_path}' by direct match in {self.tools_directory}.")
+            else:
+                base_name = os.path.splitext(tool_name_input)[0]
+                found_pattern_matches: List[str] = []
+
+                try:
+                    for filename in os.listdir(self.tools_directory):
+                        if not filename.endswith(".py"):
+                            continue
+
+                        module_part = os.path.splitext(filename)[0]
+                        full_candidate_path = os.path.join(self.tools_directory, filename)
+
+                        if module_part == f"tool_{base_name}" or \
+                           module_part == f"{base_name}_tool":
+                            found_pattern_matches.append(full_candidate_path)
+                except OSError as e:
+                    logger.error(f"Error listing tools directory '{self.tools_directory}': {e}", exc_info=True)
+                    return None
+
+                if len(found_pattern_matches) == 1:
+                    resolved_path = found_pattern_matches[0]
+                    logger.info(f"Tool name '{tool_name_input}' (base: '{base_name}') resolved to '{resolved_path}' by pattern search in {self.tools_directory}.")
+                elif len(found_pattern_matches) > 1:
+                    logger.warning(f"Ambiguous tool name '{tool_name_input}' (base: '{base_name}'). Found multiple pattern matches in {self.tools_directory}: {found_pattern_matches}. Please provide a more specific name or direct path.")
+                    return None
+
+        if resolved_path:
+            return self.analyze_tool_file(resolved_path)
+        else:
+            logger.warning(f"Could not resolve tool '{tool_name_or_filepath}' to a Python file in '{self.tools_directory}' using supported conventions, nor as a direct path.")
+            return None
 
 if __name__ == '__main__':
     # Example Usage (for testing during development)
