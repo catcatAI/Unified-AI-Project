@@ -19,21 +19,33 @@ class ServiceDiscoveryModule:
     on the HSP network, integrating with a TrustManager.
     This module is intended to handle HSPCapabilityAdvertisementPayload objects.
     """
+    DEFAULT_STALENESS_THRESHOLD_SECONDS: int = 600 # 10 minutes
 
-    def __init__(self, trust_manager: TrustManager):
+    def __init__(self, trust_manager: TrustManager, staleness_threshold_seconds: Optional[int] = None):
         """
         Initializes the ServiceDiscoveryModule for HSP capabilities.
 
         Args:
             trust_manager (TrustManager): An instance of the TrustManager to use for
                                           assessing the trustworthiness of capability advertisers.
+            staleness_threshold_seconds (Optional[int]): The duration in seconds after which
+                                                         a capability advertisement is considered stale.
+                                                         Defaults to DEFAULT_STALENESS_THRESHOLD_SECONDS.
         """
         self.trust_manager: TrustManager = trust_manager
         # Stores capability_id -> (HSPCapabilityAdvertisementPayload, last_seen_datetime_utc)
         self.known_capabilities: Dict[str, Tuple[HSPCapabilityAdvertisementPayload, datetime]] = {}
         self.lock = threading.RLock() # For thread-safe access to known_capabilities
 
-        logger.info("HSP ServiceDiscoveryModule initialized.")
+        if staleness_threshold_seconds is None:
+            self.staleness_threshold_seconds: int = self.DEFAULT_STALENESS_THRESHOLD_SECONDS
+        else:
+            self.staleness_threshold_seconds: int = staleness_threshold_seconds
+
+        logger.info(
+            "HSP ServiceDiscoveryModule initialized. Staleness threshold: %d seconds.",
+            self.staleness_threshold_seconds
+        )
 
     def process_capability_advertisement(
         self,
@@ -82,7 +94,9 @@ class ServiceDiscoveryModule:
         sort_by_trust: bool = False
     ) -> List[HSPCapabilityAdvertisementPayload]:
         """
-        Finds registered and non-stale (in future) capabilities based on specified filters.
+        Finds registered capabilities based on specified filters, excluding stale entries.
+        A capability is considered stale if its 'last_seen' timestamp is older than
+        the configured 'staleness_threshold_seconds'.
 
         Args:
             capability_id_filter: Filter by exact capability ID.
@@ -97,22 +111,28 @@ class ServiceDiscoveryModule:
         # Tuples of (payload, trust_score) for potential sorting
         pre_results: List[Tuple[HSPCapabilityAdvertisementPayload, float]] = []
 
-        # TODO: In a future step, integrate staleness_threshold_seconds from __init__
-        # current_time_for_staleness_check = datetime.now(timezone.utc)
+        current_time = datetime.now(timezone.utc)
 
         with self.lock:
             # Iterate over a copy of values in case of concurrent modification (though less likely here)
-            capabilities_to_check = list(self.known_capabilities.values())
+            # No, iterate items to get capability_id for logging if needed.
+            # capabilities_to_check = list(self.known_capabilities.values())
+            # Iterate items to get capability_id for logging if needed.
+            capabilities_to_iterate = list(self.known_capabilities.items())
 
-            for payload, last_seen in capabilities_to_check:
-                # --- STALENESS CHECK (to be implemented based on original TODO) ---
-                # if (current_time_for_staleness_check - last_seen).total_seconds() > self.staleness_threshold_seconds:
-                #     logger.debug("Skipping stale capability ID: %s", payload.get('capability_id'))
-                #     continue
-                # For now, all capabilities are considered non-stale.
+
+            for capability_id, (payload, last_seen) in capabilities_to_iterate:
+                # --- Staleness Check ---
+                age_seconds = (current_time - last_seen).total_seconds()
+                if age_seconds > self.staleness_threshold_seconds:
+                    logger.debug(
+                        "Skipping stale capability ID: %s from AI: %s (age: %.2fs, threshold: %ds)",
+                        capability_id, payload.get('ai_id'), age_seconds, self.staleness_threshold_seconds
+                    )
+                    continue
 
                 # Apply capability_id_filter
-                if capability_id_filter and payload.get('capability_id') != capability_id_filter:
+                if capability_id_filter and capability_id != capability_id_filter: # Use capability_id from item key
                     continue
 
                 # Apply capability_name_filter
@@ -152,23 +172,31 @@ class ServiceDiscoveryModule:
     def get_capability_by_id(self, capability_id: str) -> Optional[HSPCapabilityAdvertisementPayload]:
         """
         Retrieves a specific capability by its ID.
-        (Does not yet check for staleness - this will be added later).
+        Returns None if the capability is not found or if it is considered stale
+        (i.e., its 'last_seen' timestamp is older than 'staleness_threshold_seconds').
 
         Args:
             capability_id (str): The unique ID of the capability to retrieve.
 
         Returns:
-            Optional[HSPCapabilityAdvertisementPayload]: The capability payload if found
-                                                         (and not stale in the future),
+            Optional[HSPCapabilityAdvertisementPayload]: The capability payload if found and not stale,
                                                          otherwise None.
         """
         with self.lock:
             capability_entry = self.known_capabilities.get(capability_id)
             if capability_entry:
                 payload, last_seen = capability_entry
-                # TODO: Add staleness check here in the future, similar to find_capabilities
-                # For now, if it exists, return it.
-                logger.debug("Capability ID '%s' found. Last seen: %s", capability_id, last_seen.isoformat())
+                current_time = datetime.now(timezone.utc)
+                age_seconds = (current_time - last_seen).total_seconds()
+
+                if age_seconds > self.staleness_threshold_seconds:
+                    logger.info( # INFO level as this might be directly requested and user should know it's stale
+                        "Capability ID '%s' from AI: %s found but is stale (age: %.2fs, threshold: %ds). Returning None.",
+                        capability_id, payload.get('ai_id'), age_seconds, self.staleness_threshold_seconds
+                    )
+                    return None
+
+                logger.debug("Capability ID '%s' found and not stale. Last seen: %s", capability_id, last_seen.isoformat())
                 return payload
             else:
                 logger.debug("Capability ID '%s' not found in known capabilities.", capability_id)

@@ -28,11 +28,11 @@ These are comments indicating planned work or missing functionality that require
     *   **Required Functionality:** Implement logic to find a tool's Python file using its name by searching within the `tools_directory`, if a direct file path is not provided as input.
 
 *   **File:** `src/core_ai/service_discovery/service_discovery_module.py`
-    *   **Line:** ~177
-    *   **Placeholder:** `# TODO: Add logic for staleness/expiration of capabilities based on self.last_seen`
-    *   **Context:** End of the class definition.
-    *   **Prerequisite Note:** The `ServiceDiscoveryModule` at this path currently implements a generic service registry. It must be refactored or replaced to align with the HSP-specific interface (handling `HSPCapabilityAdvertisementPayload`, integrating with `TrustManager`, having `process_capability_advertisement` method) as expected by `core_services.py` before this staleness logic for HSP capabilities can be implemented. (See also notes in `PROJECT_STATUS_SUMMARY.md` and `PROJECT_CONTENT_ORGANIZATION.md`).
-    *   **Required Functionality:** Implement a mechanism to automatically mark or remove advertised HSP capabilities if they haven't been re-advertised or "seen" for a defined period, to avoid using stale service information.
+    *   **Line:** ~177 (Original TODO location in a previous version of the file)
+    *   **Placeholder:** `# COMPLETED: Logic for staleness/expiration of capabilities based on last_seen and a configurable threshold is now implemented.`
+    *   **Context:** Was at the end of the class definition in a prior version. Logic now integrated into `find_capabilities` and `get_capability_by_id`.
+    *   **Prerequisite Note:** (Resolved) The `ServiceDiscoveryModule` was refactored in `feat/hsp-service-discovery-module` to align with HSP requirements.
+    *   **Required Functionality:** (Implemented in `feat/sdm-capability-staleness`) A mechanism to filter out stale advertised HSP capabilities based on `last_seen` timestamp and a configurable `staleness_threshold_seconds` has been added to `find_capabilities` and `get_capability_by_id`.
 
 *   **File:** `src/hsp/connector.py`
     *   **Line:** ~63 (Comment in code updated/removed)
