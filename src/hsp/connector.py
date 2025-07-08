@@ -3,7 +3,7 @@ import uuid
 import asyncio
 import logging # Added logging
 from datetime import datetime, timezone
-from typing import Callable, Dict, Any, Optional, Literal
+from typing import Callable, Dict, Any, Optional, Literal, List
 import paho.mqtt.client as mqtt # type: ignore
 
 from .types import (
@@ -83,7 +83,7 @@ class HSPConnector:
         self._on_fact_received_callback: Optional[Callable[[HSPFactPayload, str, HSPMessageEnvelope], None]] = None
         self._on_capability_advertisement_callback: Optional[Callable[[HSPCapabilityAdvertisementPayload, str, HSPMessageEnvelope], None]] = None
         self._on_task_request_callback: Optional[Callable[[HSPTaskRequestPayload, str, HSPMessageEnvelope], None]] = None
-        self._on_task_result_callback: Optional[Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]] = None
+        self._on_task_result_callbacks: List[Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]] = [] # Changed to a list
         # ... other specific payload callbacks can be added
 
         self.default_qos: int = 1 # MQTT QoS level for publishing
@@ -332,8 +332,15 @@ class HSPConnector:
                         self._on_capability_advertisement_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
                     elif message_type.startswith("HSP::TaskRequest") and self._on_task_request_callback:
                         self._on_task_request_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
-                    elif message_type.startswith("HSP::TaskResult") and self._on_task_result_callback:
-                        self._on_task_result_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
+                    elif message_type.startswith("HSP::TaskResult") and self._on_task_result_callbacks:
+                        for callback in self._on_task_result_callbacks:
+                            try:
+                                callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
+                            except Exception as cb_e:
+                                logger.error(f"HSPConnector ({self.ai_id}): Error in a TaskResult callback for msg {envelope.get('message_id')}: {cb_e}", exc_info=True)
+                                # Decide if this should set specific_handler_error. If one callback fails, others should still run.
+                                # For now, we'll let specific_handler_error be set by the last error, or None if all succeed.
+                                specific_handler_error = cb_e # This might capture only the last error.
                     # Add other specific handlers here
                 except Exception as e:
                     specific_handler_error = e
@@ -396,8 +403,16 @@ class HSPConnector:
         self._on_task_request_callback = callback
 
     def register_on_task_result_callback(self, callback: Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]):
-        """Registers a callback for HSP TaskResult messages."""
-        self._on_task_result_callback = callback
+        """Registers a callback for HSP TaskResult messages. Multiple callbacks can be registered."""
+        if callback not in self._on_task_result_callbacks:
+            self._on_task_result_callbacks.append(callback)
+
+    def unregister_on_task_result_callback(self, callback: Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]):
+        """Unregisters a previously registered callback for HSP TaskResult messages."""
+        try:
+            self._on_task_result_callbacks.remove(callback)
+        except ValueError:
+            logger.warning(f"HSPConnector ({self.ai_id}): Attempted to unregister a task result callback that was not registered.")
 
     # --- New methods for publishing/sending Tasking and Capabilities ---
     def publish_capability_advertisement(self, payload: HSPCapabilityAdvertisementPayload, topic: str, version: str = "0.1") -> bool:
