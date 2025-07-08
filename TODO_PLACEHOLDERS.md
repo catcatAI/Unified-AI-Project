@@ -67,7 +67,8 @@ These are comments indicating planned work or missing functionality that require
 *   **File:** `src/hsp/connector.py` (Related to `core_services.py`)
     *   **Context:** `HSPConnector.register_on_task_result_callback` currently allows only one callback to be registered for task results. Both `DialogueManager` and `FragmentaOrchestrator` might need to process task results.
     *   **TODO:** Enhance `HSPConnector` to support multiple callbacks for task results (e.g., a list of callbacks) or implement a central dispatcher mechanism within `core_services.py` that receives all task results and routes them to the appropriate module (DM or Fragmenta) based on `correlation_id` or other metadata. This is to prevent one module's registration from overwriting another's.
-    *   **Status:** Pending.
+    *   **Status:** COMPLETED.
+    *   **Resolution:** `HSPConnector` was modified to change `_on_task_result_callback` to `_on_task_result_callbacks` (a list). The `register_on_task_result_callback` method now appends to this list, and `unregister_on_task_result_callback` was added. The message handling logic iterates through all registered callbacks. The warning in `core_services.py` about overwriting was removed. Unit tests for this functionality were added in `tests/hsp/test_hsp_connector.py`.
 
 *   **File:** `src/fragmenta/fragmenta_orchestrator.py`
     *   **Context:** The `process_complex_task` method has basic state management for handling asynchronous HSP calls.
