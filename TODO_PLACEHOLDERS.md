@@ -47,6 +47,10 @@ These are comments indicating planned work or missing functionality that require
     *   **Placeholder:** `# CLARIFIED: Logic for sending 'received' ACKs when qos_parameters.requires_ack is true is implemented in _handle_hsp_message_str and _send_acknowledgement.`
     *   **Context:** Was in the `_handle_hsp_message_str` method.
     *   **Required Functionality:** (Addressed for 'received' ACKs) The connector sends 'received' ACKs as required. Functionality verified and tested in `feat/hsp-ack-handling`. (Future enhancements could include 'processed' ACKs or NACKs).
+    *   **Line:** ~128 (Original location of the TODO in `_build_hsp_envelope`)
+    *   **Placeholder:** `# COMPLETED (Placeholder): Logic to generate conventional placeholder schema URIs (e.g., 'hsp:schema:payload/Fact/0.1') for 'payload_schema_uri' is implemented.`
+    *   **Context:** Within the `_build_hsp_envelope` method.
+    *   **Required Functionality:** (Partially Addressed in `feat/hsp-payload-schema-uri-placeholder`) The `payload_schema_uri` field is now populated with placeholder URIs based on message type and version. Actual schema definition and hosting at resolvable URIs are still pending future architectural work.
 
 *   **File:** `src/interfaces/electron_app/renderer.js`
     *   **Line:** ~137
