@@ -41,22 +41,20 @@ class TestAIVirtualInputService(unittest.TestCase):
             "status_message": "Execution completed."
         }
 
-        # Mock ResourceAwarenessService (though AISimulationControlService uses it, AVIS might get it too)
+        # Mock ResourceAwarenessService
         self.mock_resource_service = MagicMock()
 
-        # Mock bash_runner
-        self.mock_bash_runner = MagicMock()
-
-        # Patch 'AISimulationControlService' in the module where AIVirtualInputService imports it
-        # This is cleaner than trying to inject it if AIVisualInputService instantiates it directly.
-        # However, our AIVisualInputService now takes it as an argument (or bash_runner for it).
+        # Mock SandboxExecutor
+        self.mock_sandbox_executor = MagicMock()
 
         self.avis = AIVirtualInputService(
             initial_mode="simulation_only",
-            resource_awareness_service=self.mock_resource_service, # Passed to ASCS
-            bash_runner=self.mock_bash_runner # Passed to ASCS
+            resource_awareness_service=self.mock_resource_service,
+            sandbox_executor=self.mock_sandbox_executor # Pass SandboxExecutor
         )
         # Replace the internally created AISimulationControlService with our mock for fine-grained testing
+        # This allows us to assert calls on mock_sim_control_service without needing to
+        # also mock what AISimulationControlService passes to SandboxExecutor.
         self.avis.ai_simulation_control_service = self.mock_sim_control_service
 
 
@@ -474,7 +472,7 @@ if __name__ == '__main__':
         # Test setup: Create a new AVIS instance, then load UI, then refresh.
         avis_for_init_test = AIVirtualInputService(
             resource_awareness_service=self.mock_resource_service,
-            bash_runner=self.mock_bash_runner
+            sandbox_executor=self.mock_sandbox_executor # Use sandbox_executor
         )
         avis_for_init_test.ai_simulation_control_service = self.mock_sim_control_service # Inject mock
 
