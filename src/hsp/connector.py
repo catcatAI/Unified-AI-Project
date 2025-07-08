@@ -92,6 +92,42 @@ class HSPConnector:
         self.subscribed_topics: set[str] = set()
         self._was_unexpectedly_disconnected: bool = False
 
+    @staticmethod
+    def _generate_payload_schema_uri(message_type: str) -> Optional[str]:
+        """
+        Generates a conventional placeholder URI for the payload schema based on message type.
+
+        The convention is `hsp:schema:payload/{TypeName}/{Version}`.
+        Parses TypeName and Version from message_type string like "HSP::TypeName_vVersion".
+
+        Args:
+            message_type: The HSP message type string.
+
+        Returns:
+            A placeholder schema URI string, or None if parsing fails.
+        """
+        if not message_type:
+            # logger.debug("Cannot generate schema URI for empty message_type.") # Use logger from class or module
+            return None
+
+        processed_type = message_type
+        if processed_type.startswith("HSP::"):
+            processed_type = processed_type[len("HSP::"):]
+
+        parts = processed_type.rsplit("_v", 1)
+        if len(parts) == 2:
+            type_name = parts[0]
+            version = parts[1]
+            if type_name and version:  # Ensure neither part is empty
+                return f"hsp:schema:payload/{type_name}/{version}"
+            else:
+                logger.warning(f"Parsed empty TypeName or Version from message_type '{message_type}' (processed: '{processed_type}'). No schema URI generated.")
+                return None
+        else:
+            # Log this case as it's an unexpected format if we expect all types to be versioned this way.
+            logger.warning(f"Could not parse TypeName and Version from message_type '{message_type}' (processed: '{processed_type}'). Expected format like 'TypeName_vVersion'. No schema URI generated.")
+            return None
+
     def _on_mqtt_connect(self, client, userdata, flags, reason_code, properties):
         if reason_code == 0:
             connection_type = "reconnected" if self._was_unexpectedly_disconnected else "connected"
@@ -160,7 +196,13 @@ class HSPConnector:
                             correlation_id: Optional[str] = None,
                             qos_params: Optional[HSPQoSParameters] = None,
                             protocol_version: str = "0.1") -> HSPMessageEnvelope:
-        """Builds a standard HSP message envelope."""
+        """
+        Builds a standard HSP message envelope.
+
+        This includes generating a placeholder URI for `payload_schema_uri`
+        based on the `message_type` (e.g., "hsp:schema:payload/Fact/0.1").
+        Actual schema URIs should be used when defined and available.
+        """
         effective_correlation_id = correlation_id if correlation_id else str(uuid.uuid4())
 
         # Constructing a dictionary that conforms to the HSPMessageEnvelope TypedDict
@@ -177,7 +219,7 @@ class HSPConnector:
             "security_parameters": {"signature_algorithm": None, "signature": None, "encryption_details": None}, # Basic for v0.1
             "qos_parameters": qos_params if qos_params else {"priority": "medium", "requires_ack": False}, # HSP QoS, not MQTT QoS
             "routing_info": {},
-            "payload_schema_uri": None, # TODO: Add schema URIs when defined
+            "payload_schema_uri": HSPConnector._generate_payload_schema_uri(message_type), # Call static method
             "payload": payload
         }
         return envelope
