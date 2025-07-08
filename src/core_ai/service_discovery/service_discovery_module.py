@@ -1,328 +1,208 @@
 # src/core_ai/service_discovery/service_discovery_module.py
 
-import json
-import time
+import logging
 import threading
-from typing import Dict, Any, Optional, Callable, List, Tuple
-from enum import Enum
-import uuid
-import random # For jitter
+from datetime import datetime, timezone
+from typing import Dict, Optional, List, Tuple
 
-# Assuming common_types.py is in a reachable path like 'shared.types'
-# from shared.types.common_types import ServiceStatus, ServiceAdvertisement, ServiceQuery, ServiceInstanceHealth
-# For now, using placeholder definitions if not found, to allow isolated development.
-try:
-    from src.shared.types.common_types import ServiceStatus, ServiceAdvertisement, ServiceQuery, ServiceInstanceHealth, ServiceType
-except ImportError:
-    from typing import TypedDict # Import TypedDict here for the fallback definitions
-    print("ServiceDiscoveryModule: common_types not found, using placeholders.")
-    class ServiceStatus(Enum):
-        UNKNOWN = 0
-        STARTING = 1
-        HEALTHY = 2
-        UNHEALTHY = 3
-        STOPPING = 4
-        STOPPED = 5
-        DEGRADED = 6
+from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
+# Assuming TrustManager is correctly importable. If it's in the same directory, this might need adjustment
+# based on how __init__.py in trust_manager_module's folder is set up.
+# For now, direct import path as per typical project structure.
+from src.core_ai.trust_manager.trust_manager_module import TrustManager
 
-    class ServiceType(Enum):
-        UNKNOWN = "unknown"
-        CORE_AI_COMPONENT = "core_ai_component"
-        EXTERNAL_API = "external_api"
-        DATA_STORE = "data_store"
-        INTERNAL_TOOL = "internal_tool"
-        # Add more as needed
-
-    class ServiceAdvertisement(TypedDict): # Changed to TypedDict for consistency
-        service_id: str
-        service_name: str
-        service_type: ServiceType # Using enum
-        service_version: str
-        endpoint_url: Optional[str] # e.g., http://localhost:8000/api
-        metadata: Dict[str, Any] # Custom metadata (capabilities, load, etc.)
-        status: ServiceStatus # Current status
-        last_seen_timestamp: float # Unix timestamp
-        ttl: int # Time-to-live in seconds for this advertisement
-
-    class ServiceQuery(TypedDict, total=False): # Changed to TypedDict for consistency
-        service_type: Optional[ServiceType] # Using enum
-        service_name: Optional[str]
-        min_version: Optional[str]
-        required_capabilities: Optional[List[str]] # e.g., ["text_to_speech", "sentiment_analysis"]
-        status_filter: Optional[List[ServiceStatus]] # e.g., [ServiceStatus.HEALTHY, ServiceStatus.DEGRADED]
-
-    class ServiceInstanceHealth(TypedDict): # Changed to TypedDict for consistency
-        service_id: str
-        instance_id: str # If multiple instances of a service exist
-        status: ServiceStatus
-        last_heartbeat: float
-        metrics: Optional[Dict[str, Any]] # e.g., CPU load, memory usage, qps
-
+logger = logging.getLogger(__name__)
 
 class ServiceDiscoveryModule:
     """
-    Manages service registration, discovery, and basic health checking (via TTL).
-    This is a conceptual, in-memory implementation. A real-world scenario might use
-    Consul, etcd, Zookeeper, or a cloud provider's service discovery mechanism.
+    Manages discovery and registry of capabilities advertised by other AIs
+    on the HSP network, integrating with a TrustManager.
+    This module is intended to handle HSPCapabilityAdvertisementPayload objects.
     """
 
-    def __init__(self, ai_id: str, operational_config: Optional[Dict[str, Any]] = None):
-        self.ai_id = ai_id
-        self.config = operational_config or {}
-        self.registry: Dict[str, ServiceAdvertisement] = {} # service_id -> ServiceAdvertisement
-        self.lock = threading.RLock() # Reentrant lock for registry access
-
-        # Configuration for health checks and cleanup
-        self.default_ttl = self.config.get("service_discovery_default_ttl_seconds", 300) # 5 minutes
-        self.cleanup_interval = self.config.get("service_discovery_cleanup_interval_seconds", 60) # 1 minute
-        self.health_check_jitter_max = self.config.get("service_discovery_health_check_jitter_max_seconds", 5)
-
-        self._stop_event = threading.Event()
-        self._cleanup_thread = threading.Thread(target=self._periodic_cleanup, daemon=True)
-        self._cleanup_thread.start()
-        print(f"ServiceDiscoveryModule initialized for AI ID '{self.ai_id}'. Cleanup interval: {self.cleanup_interval}s, Default TTL: {self.default_ttl}s.")
-
-
-    def register_service(self,
-                         service_name: str,
-                         service_type: ServiceType,
-                         service_version: str,
-                         endpoint_url: Optional[str] = None,
-                         metadata: Optional[Dict[str, Any]] = None,
-                         initial_status: ServiceStatus = ServiceStatus.STARTING,
-                         ttl_seconds: Optional[int] = None,
-                         service_id_override: Optional[str] = None
-                        ) -> str:
+    def __init__(self, trust_manager: TrustManager):
         """
-        Registers a new service or updates an existing one.
-        A unique service_id is generated if not provided.
+        Initializes the ServiceDiscoveryModule for HSP capabilities.
+
+        Args:
+            trust_manager (TrustManager): An instance of the TrustManager to use for
+                                          assessing the trustworthiness of capability advertisers.
         """
+        self.trust_manager: TrustManager = trust_manager
+        # Stores capability_id -> (HSPCapabilityAdvertisementPayload, last_seen_datetime_utc)
+        self.known_capabilities: Dict[str, Tuple[HSPCapabilityAdvertisementPayload, datetime]] = {}
+        self.lock = threading.RLock() # For thread-safe access to known_capabilities
+
+        logger.info("HSP ServiceDiscoveryModule initialized.")
+
+    def process_capability_advertisement(
+        self,
+        payload: HSPCapabilityAdvertisementPayload,
+        sender_ai_id: str,  # The direct sender from the HSP envelope
+        envelope: HSPMessageEnvelope # Full envelope for context if needed
+    ) -> None:
+        """
+        Processes an incoming HSPCapabilityAdvertisementPayload.
+        Stores or updates the capability in the registry with a 'last_seen' timestamp.
+
+        Args:
+            payload (HSPCapabilityAdvertisementPayload): The capability advertisement data.
+            sender_ai_id (str): The AI ID of the direct sender of this message.
+                                (May or may not be the same as payload.get('ai_id')).
+            envelope (HSPMessageEnvelope): The full message envelope.
+        """
+        capability_id = payload.get('capability_id')
+        advertiser_ai_id = payload.get('ai_id') # The AI actually offering the capability
+
+        if not capability_id:
+            logger.error("Received capability advertisement with no capability_id. Discarding. Payload: %s", payload)
+            return
+
+        if not advertiser_ai_id:
+            logger.error("Received capability advertisement (ID: %s) with no 'ai_id' (advertiser AI ID) in payload. Discarding. Payload: %s", capability_id, payload)
+            return
+
+        # Optional: Could use sender_ai_id for additional trust checks or logging if different from advertiser_ai_id
+        # For now, the primary identifier for trust is the advertiser_ai_id from the payload.
+
         with self.lock:
-            service_id = service_id_override if service_id_override else f"{service_name}_{uuid.uuid4().hex[:8]}"
-
-            if service_id in self.registry:
-                print(f"ServiceDiscovery: Updating existing service '{service_id}' ({service_name}).")
-            else:
-                print(f"ServiceDiscovery: Registering new service '{service_id}' ({service_name}).")
-
-            advertisement = ServiceAdvertisement(
-                service_id=service_id,
-                service_name=service_name,
-                service_type=service_type,
-                service_version=service_version,
-                endpoint_url=endpoint_url,
-                metadata=metadata or {},
-                status=initial_status,
-                last_seen_timestamp=time.time(),
-                ttl=ttl_seconds if ttl_seconds is not None else self.default_ttl
+            current_time = datetime.now(timezone.utc)
+            self.known_capabilities[capability_id] = (payload, current_time)
+            logger.info(
+                "Processed capability advertisement for ID: %s from AI: %s (Sender: %s). Last seen updated to: %s.",
+                capability_id, advertiser_ai_id, sender_ai_id, current_time.isoformat()
             )
-            self.registry[service_id] = advertisement
-            print(f"  Service '{service_id}' registered/updated. Type: {service_type.value}, Status: {initial_status.name}, Endpoint: {endpoint_url}, TTL: {advertisement['ttl']}s")
-            return service_id
 
-    def deregister_service(self, service_id: str) -> bool:
-        """Removes a service from the registry."""
-        with self.lock:
-            if service_id in self.registry:
-                del self.registry[service_id]
-                print(f"ServiceDiscovery: Service '{service_id}' deregistered.")
-                return True
-            print(f"ServiceDiscovery: Service '{service_id}' not found for deregistration.")
-            return False
-
-    def update_service_status(self, service_id: str, new_status: ServiceStatus, metadata_update: Optional[Dict[str, Any]] = None) -> bool:
-        """Updates the status and optionally metadata of a registered service, refreshing its TTL."""
-        with self.lock:
-            if service_id in self.registry:
-                advertisement = self.registry[service_id]
-                advertisement['status'] = new_status
-                advertisement['last_seen_timestamp'] = time.time() # Refresh timestamp (heartbeat)
-                if metadata_update:
-                    advertisement['metadata'].update(metadata_update)
-
-                # No need to re-assign self.registry[service_id] = advertisement if TypedDict is mutable
-                print(f"ServiceDiscovery: Updated status for service '{service_id}' to {new_status.name}. Metadata updated: {bool(metadata_update)}.")
-                return True
-            print(f"ServiceDiscovery: Service '{service_id}' not found for status update.")
-            return False
-
-    def heartbeat_service(self, service_id: str) -> bool:
-        """Refreshes the last_seen_timestamp for a service, keeping it alive."""
-        return self.update_service_status(service_id, self.registry[service_id]['status'] if service_id in self.registry else ServiceStatus.UNKNOWN)
-
-
-    def discover_services(self, query: ServiceQuery) -> List[ServiceAdvertisement]:
+    def find_capabilities(
+        self,
+        capability_id_filter: Optional[str] = None,
+        capability_name_filter: Optional[str] = None,
+        tags_filter: Optional[List[str]] = None,
+        min_trust_score: Optional[float] = None,
+        sort_by_trust: bool = False
+    ) -> List[HSPCapabilityAdvertisementPayload]:
         """
-        Finds services based on a query.
-        Considers service status (e.g., only HEALTHY or DEGRADED) and TTL.
-        """
-        with self.lock:
-            current_time = time.time()
-            results: List[ServiceAdvertisement] = []
+        Finds registered and non-stale (in future) capabilities based on specified filters.
 
-            for ad in list(self.registry.values()): # Iterate over a copy in case of modification during cleanup
-                if current_time > (ad['last_seen_timestamp'] + ad['ttl']):
+        Args:
+            capability_id_filter: Filter by exact capability ID.
+            capability_name_filter: Filter by exact capability name.
+            tags_filter: Filter by capabilities that include ALL specified tags.
+            min_trust_score: Filter by capabilities from AIs with at least this trust score.
+            sort_by_trust: If True, sort results by trust score in descending order.
+
+        Returns:
+            A list of HSPCapabilityAdvertisementPayload objects matching the criteria.
+        """
+        # Tuples of (payload, trust_score) for potential sorting
+        pre_results: List[Tuple[HSPCapabilityAdvertisementPayload, float]] = []
+
+        # TODO: In a future step, integrate staleness_threshold_seconds from __init__
+        # current_time_for_staleness_check = datetime.now(timezone.utc)
+
+        with self.lock:
+            # Iterate over a copy of values in case of concurrent modification (though less likely here)
+            capabilities_to_check = list(self.known_capabilities.values())
+
+            for payload, last_seen in capabilities_to_check:
+                # --- STALENESS CHECK (to be implemented based on original TODO) ---
+                # if (current_time_for_staleness_check - last_seen).total_seconds() > self.staleness_threshold_seconds:
+                #     logger.debug("Skipping stale capability ID: %s", payload.get('capability_id'))
+                #     continue
+                # For now, all capabilities are considered non-stale.
+
+                # Apply capability_id_filter
+                if capability_id_filter and payload.get('capability_id') != capability_id_filter:
                     continue
 
-                match = True
-                if query.get('service_type') and ad['service_type'] != query['service_type']:
-                    match = False
-                if query.get('service_name') and ad['service_name'] != query['service_name']:
-                    match = False
+                # Apply capability_name_filter
+                if capability_name_filter and payload.get('name') != capability_name_filter:
+                    continue
 
-                if query.get('min_version') and ad['service_version'] < query['min_version']:
-                    match = False
+                # Apply tags_filter (must match ALL tags in filter)
+                if tags_filter:
+                    capability_tags = payload.get('tags', [])
+                    if not capability_tags or not all(tag in capability_tags for tag in tags_filter):
+                        continue
 
-                if query.get('required_capabilities'):
-                    service_caps = ad['metadata'].get("capabilities", [])
-                    if not all(cap in service_caps for cap in query['required_capabilities']):
-                        match = False
+                advertiser_ai_id = payload.get('ai_id')
+                if not advertiser_ai_id: # Should not happen if process_capability_advertisement validates
+                    logger.warning("Found capability with no advertiser_ai_id during find: %s. Skipping.", payload.get('capability_id'))
+                    continue
 
-                if query.get('status_filter') and ad['status'] not in query['status_filter']:
-                    match = False
+                trust_score = self.trust_manager.get_trust_score(advertiser_ai_id)
 
-                if match:
-                    results.append(ad)
+                # Apply min_trust_score filter
+                if min_trust_score is not None and trust_score < min_trust_score:
+                    continue
 
-            print(f"ServiceDiscovery: Discovery query found {len(results)} matching service(s).")
-            return results
+                pre_results.append((payload, trust_score))
 
-    def get_service_details(self, service_id: str) -> Optional[ServiceAdvertisement]:
-        """Retrieves the details of a specific service if it's alive."""
+        # Sort if requested
+        if sort_by_trust:
+            pre_results.sort(key=lambda item: item[1], reverse=True) # Sort by trust_score descending
+
+        # Extract just the payloads for the final list
+        final_results = [payload for payload, _ in pre_results]
+
+        logger.info("Found %d capabilities matching criteria. ID_filter: %s, Name_filter: %s, Tags_filter: %s, Min_trust: %s",
+                    len(final_results), capability_id_filter, capability_name_filter, tags_filter, min_trust_score)
+        return final_results
+
+    def get_capability_by_id(self, capability_id: str) -> Optional[HSPCapabilityAdvertisementPayload]:
+        """
+        Retrieves a specific capability by its ID.
+        (Does not yet check for staleness - this will be added later).
+
+        Args:
+            capability_id (str): The unique ID of the capability to retrieve.
+
+        Returns:
+            Optional[HSPCapabilityAdvertisementPayload]: The capability payload if found
+                                                         (and not stale in the future),
+                                                         otherwise None.
+        """
         with self.lock:
-            ad = self.registry.get(service_id)
-            if ad:
-                current_time = time.time()
-                if current_time <= (ad['last_seen_timestamp'] + ad['ttl']):
-                    return ad
-                else:
-                    print(f"ServiceDiscovery: Service '{service_id}' found but TTL expired. Considered unavailable.")
-            return None
+            capability_entry = self.known_capabilities.get(capability_id)
+            if capability_entry:
+                payload, last_seen = capability_entry
+                # TODO: Add staleness check here in the future, similar to find_capabilities
+                # For now, if it exists, return it.
+                logger.debug("Capability ID '%s' found. Last seen: %s", capability_id, last_seen.isoformat())
+                return payload
+            else:
+                logger.debug("Capability ID '%s' not found in known capabilities.", capability_id)
+                return None
 
-    def _remove_expired_services(self):
-        """Internal method to remove services whose TTL has expired."""
-        with self.lock:
-            current_time = time.time()
-            expired_ids = [
-                sid for sid, ad in self.registry.items()
-                if current_time > (ad['last_seen_timestamp'] + ad['ttl'])
-            ]
-            for sid in expired_ids:
-                print(f"ServiceDiscovery: TTL expired for service '{self.registry[sid]['service_name']}' (ID: {sid}). Removing from registry.")
-                del self.registry[sid]
-            if expired_ids:
-                 print(f"ServiceDiscovery: Removed {len(expired_ids)} expired service(s).")
+if __name__ == '__main__':
+    # Basic test/example of instantiation (requires a mock TrustManager)
+    class MockTrustManager(TrustManager):
+        def __init__(self):
+            super().__init__() # Call parent __init__ if it has one and it's needed
+            logger.info("MockTrustManager initialized for SDM example.")
+        def get_trust_score(self, ai_id: str) -> float:
+            return 0.5 # Default mock score
+        def update_trust_score(self, ai_id: str, new_absolute_score: Optional[float] = None, change_reason: Optional[str] = None, interaction_quality: Optional[float] = None):
+            pass
 
+    mock_tm = MockTrustManager()
+    sdm_instance = ServiceDiscoveryModule(trust_manager=mock_tm)
+    logger.info(f"ServiceDiscoveryModule instance created: {sdm_instance}")
+    logger.info(f"Known capabilities initially: {sdm_instance.known_capabilities}")
 
-    def _periodic_cleanup(self):
-        """Runs periodically to remove expired services."""
-        print("ServiceDiscovery: Periodic cleanup thread started.")
-        while not self._stop_event.is_set():
-            try:
-                jitter = random.uniform(0, self.health_check_jitter_max)
-                actual_interval = self.cleanup_interval + jitter
-
-                wait_chunk = 1.0
-                waited_time = 0.0
-                while waited_time < actual_interval and not self._stop_event.is_set():
-                    remaining_wait = min(wait_chunk, actual_interval - waited_time)
-                    self._stop_event.wait(timeout=remaining_wait)
-                    waited_time += remaining_wait
-
-                if self._stop_event.is_set():
-                    break
-                self._remove_expired_services()
-
-            except Exception as e:
-                print(f"ServiceDiscovery: Error in periodic cleanup thread: {e}")
-                self._stop_event.wait(timeout=self.cleanup_interval * 2)
-
-        print("ServiceDiscovery: Periodic cleanup thread stopped.")
-
-    def stop(self):
-        """Stops the periodic cleanup thread."""
-        print("ServiceDiscovery: Stopping periodic cleanup thread...")
-        self._stop_event.set()
-        if self._cleanup_thread.is_alive():
-            self._cleanup_thread.join(timeout=self.cleanup_interval + 5)
-        if self._cleanup_thread.is_alive():
-            print("ServiceDiscovery: Cleanup thread did not terminate cleanly.")
-
-
-if __name__ == "__main__":
-    print("--- ServiceDiscoveryModule Example ---")
-    # Need to import TypedDict for this example if not globally available
-    from typing import TypedDict
-
-    discovery_module = ServiceDiscoveryModule(ai_id="test_ai_host_for_sdm")
-
-    tts_service_id = discovery_module.register_service(
-        service_name="TextToSpeechService",
-        service_type=ServiceType.CORE_AI_COMPONENT,
-        service_version="1.2.0",
-        endpoint_url="http://localhost:8080/tts",
-        metadata={"language_support": ["en-US", "es-ES"], "voice_quality": "high"},
-        initial_status=ServiceStatus.HEALTHY,
-        ttl_seconds=60
+    # Example of how process_capability_advertisement might be called (method not yet implemented)
+    sample_cap_payload = HSPCapabilityAdvertisementPayload(
+        capability_id="test_cap_001",
+        ai_id="did:hsp:test_advertiser_ai",
+        name="Test Capability",
+        description="A capability for testing.",
+        version="1.0",
+        availability_status="online",
+        # other fields as required by HSPCapabilityAdvertisementPayload
     )
-    print(f"Registered TTS Service ID: {tts_service_id}")
+    # sdm_instance.process_capability_advertisement(sample_cap_payload, "did:hsp:test_advertiser_ai", {}) # type: ignore
+    # logger.info(f"Known capabilities after hypothetical advertisement: {sdm_instance.known_capabilities}")
 
-    ner_service_id = discovery_module.register_service(
-        service_name="NamedEntityRecognition",
-        service_type=ServiceType.CORE_AI_COMPONENT,
-        service_version="0.9.5",
-        endpoint_url="grpc://ner-service:50051",
-        metadata={"model_type": "transformer_large", "entity_types": ["PER", "ORG", "LOC", "DATE"]},
-        initial_status=ServiceStatus.HEALTHY,
-        ttl_seconds=120
-    )
-    print(f"Registered NER Service ID: {ner_service_id}")
-
-    db_service_id = discovery_module.register_service(
-        service_name="KnowledgeGraphDB",
-        service_type=ServiceType.DATA_STORE,
-        service_version="2.0.1",
-        initial_status=ServiceStatus.STARTING,
-        metadata={"storage_type": "graph"}
-    )
-
-    print("\n--- Discovering AI Modules ---")
-    ai_module_query = ServiceQuery(service_type=ServiceType.CORE_AI_COMPONENT, status_filter=[ServiceStatus.HEALTHY])
-    healthy_ai_modules = discovery_module.discover_services(ai_module_query)
-    for ad in healthy_ai_modules:
-        print(f"  Found Healthy AI Module: {ad['service_name']} (ID: {ad['service_id']}) at {ad['endpoint_url']}")
-        print(f"    Metadata: {ad['metadata']}")
-
-    print("\n--- Discovering specific service by name ---")
-    tts_query = ServiceQuery(service_name="TextToSpeechService")
-    tts_services = discovery_module.discover_services(tts_query)
-    if tts_services:
-        print(f"  TTS Service Details: {tts_services[0]}")
-    else:
-        print("  TTS Service not found (or not healthy if status filter was applied).")
-
-    print(f"\n--- Updating status for {db_service_id} to HEALTHY ---")
-    discovery_module.update_service_status(db_service_id, ServiceStatus.HEALTHY, {"message": "Database fully initialized."})
-    db_details = discovery_module.get_service_details(db_service_id)
-    if db_details:
-        print(f"  DB Service now: Status={db_details['status'].name}, Meta={db_details['metadata']}")
-
-    print(f"\n--- Simulating time passing (e.g., {tts_services[0]['ttl'] + 10 if tts_services else 70} seconds) for TTS service '{tts_service_id}' to expire ---")
-
-    print("Manually triggering cleanup for demo purposes...")
-    if tts_services:
-        with discovery_module.lock:
-            if tts_service_id in discovery_module.registry:
-                 discovery_module.registry[tts_service_id]['last_seen_timestamp'] = time.time() - (discovery_module.registry[tts_service_id]['ttl'] + 10)
-        discovery_module._remove_expired_services()
-
-    print("\n--- Discovering TTS service again (should be expired if TTL was short and cleanup ran) ---")
-    tts_services_after_expiry = discovery_module.discover_services(tts_query)
-    if tts_services_after_expiry:
-        print(f"  TTS Service still found (unexpected for short TTL test): {tts_services_after_expiry[0]['service_name']}")
-    else:
-        print("  TTS Service not found (as expected after TTL expiry and cleanup).")
-
-    discovery_module.stop()
-    print("\n--- ServiceDiscoveryModule Example Finished ---")
-# ``` # This was the offending line, now removed.
+    # Example of find_capabilities (method not yet implemented)
+    # found_caps = sdm_instance.find_capabilities(capability_name_filter="Test Capability")
+    # logger.info(f"Found capabilities: {found_caps}")

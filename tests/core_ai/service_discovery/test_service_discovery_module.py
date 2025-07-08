@@ -1,165 +1,210 @@
-import unittest
-from unittest.mock import MagicMock
-from datetime import datetime, timezone
+import pytest
+from unittest.mock import MagicMock, patch
+from datetime import datetime, timezone, timedelta
+import logging # For caplog if needed, or to check logs from module
+
+# Ensure src is in path for imports
 import sys
 import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src')))
+from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+from src.core_ai.trust_manager.trust_manager_module import TrustManager # For type hinting and mocking
+from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope # For creating test payloads
 
-from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule, StoredCapabilityInfo
-from core_ai.trust_manager.trust_manager_module import TrustManager
-from hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
+# --- Mock TrustManager ---
+@pytest.fixture
+def mock_trust_manager():
+    mock_tm = MagicMock(spec=TrustManager)
+    # Default behavior: always return a neutral trust score
+    mock_tm.get_trust_score.return_value = 0.5
+    return mock_tm
 
-class TestServiceDiscoveryModule(unittest.TestCase):
+# --- Test ServiceDiscoveryModule ---
+class TestServiceDiscoveryModule:
 
-    def setUp(self):
-        self.mock_trust_manager = MagicMock(spec=TrustManager)
-        self.discovery_module_with_trust = ServiceDiscoveryModule(trust_manager=self.mock_trust_manager)
-        self.discovery_module_no_trust = ServiceDiscoveryModule(trust_manager=None)
+    def test_init(self, mock_trust_manager: MagicMock):
+        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
+        assert sdm.trust_manager == mock_trust_manager
+        assert sdm.known_capabilities == {}
+        assert sdm.lock is not None
+        # logger.info("HSP ServiceDiscoveryModule initialized.") - Check log if desired with caplog
 
-    def _create_sample_capability_payload(self, cap_id: str, ai_id: str, name: str, tags: list = None) -> HSPCapabilityAdvertisementPayload:
-        return HSPCapabilityAdvertisementPayload(
-            capability_id=cap_id,
-            ai_id=ai_id,
-            name=name,
-            description=f"Description for {name}",
-            version="1.0",
-            availability_status="online",
-            tags=tags or []
+    def test_process_capability_advertisement_new_and_update(self, mock_trust_manager: MagicMock):
+        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
+
+        cap_id_1 = "cap_test_001"
+        # Provide all required fields for HSPCapabilityAdvertisementPayload based on its TypedDict definition
+        payload1 = HSPCapabilityAdvertisementPayload(
+            capability_id=cap_id_1, ai_id="ai1", name="TestCap1", description="Desc1",
+            version="1.0", availability_status="online",
+            # Optional fields can be omitted or set to None if that's how they are defined
+            tags=["t1", "t2"],
+            input_schema_uri=None, input_schema_example=None,
+            output_schema_uri=None, output_schema_example=None,
+            data_format_preferences=None, hsp_protocol_requirements=None,
+            cost_estimate_template=None, access_policy_id=None
         )
+        mock_envelope = MagicMock(spec=HSPMessageEnvelope)
 
-    def _create_sample_envelope(self, sender_ai_id: str) -> HSPMessageEnvelope:
-        return HSPMessageEnvelope(
-            message_id="test_msg_id",
-            sender_ai_id=sender_ai_id,
-            recipient_ai_id="test_recipient",
-            timestamp_sent=datetime.now(timezone.utc).isoformat(),
-            message_type="HSP::CapabilityAdvertisement_v0.1",
-            protocol_version="0.1",
-            communication_pattern="publish",
-            payload={} # Actual payload set by caller
+        time_before_add = datetime.now(timezone.utc)
+        sdm.process_capability_advertisement(payload1, "sender_ai_id_1", mock_envelope)
+        time_after_add = datetime.now(timezone.utc)
+
+        assert cap_id_1 in sdm.known_capabilities
+        stored_payload1, stored_time1 = sdm.known_capabilities[cap_id_1]
+        assert stored_payload1 == payload1
+        assert time_before_add <= stored_time1 <= time_after_add
+
+        # Test update
+        payload1_updated = HSPCapabilityAdvertisementPayload(
+            capability_id=cap_id_1, ai_id="ai1", name="TestCap1_Updated", description="Desc1_Updated",
+            version="1.1", availability_status="online", tags=["t1", "t3"],
+            input_schema_uri=None, input_schema_example=None,
+            output_schema_uri=None, output_schema_example=None,
+            data_format_preferences=None, hsp_protocol_requirements=None,
+            cost_estimate_template=None, access_policy_id=None
         )
+        time_before_update = datetime.now(timezone.utc)
+        sdm.process_capability_advertisement(payload1_updated, "sender_ai_id_1", mock_envelope)
+        time_after_update = datetime.now(timezone.utc)
 
-    def test_process_capability_advertisement_with_trust_manager(self):
-        cap_payload = self._create_sample_capability_payload("cap1", "ai1", "Translator")
-        sender_ai_id = "ai1"
-        envelope = self._create_sample_envelope(sender_ai_id)
+        assert cap_id_1 in sdm.known_capabilities
+        stored_payload1_upd, stored_time1_upd = sdm.known_capabilities[cap_id_1]
+        assert stored_payload1_upd == payload1_updated
+        assert stored_payload1_upd.get("name") == "TestCap1_Updated"
+        assert time_before_update <= stored_time1_upd <= time_after_update
+        assert stored_time1_upd > stored_time1 # Ensure timestamp was updated
 
-        self.mock_trust_manager.get_trust_score.return_value = 0.75
+    def test_process_capability_advertisement_missing_ids(self, mock_trust_manager: MagicMock, caplog):
+        caplog.set_level(logging.ERROR, logger="src.core_ai.service_discovery.service_discovery_module")
+        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
+        mock_envelope = MagicMock(spec=HSPMessageEnvelope)
 
-        self.discovery_module_with_trust.process_capability_advertisement(cap_payload, sender_ai_id, envelope)
+        # Missing capability_id
+        # Ensure all *required* fields for HSPCapabilityAdvertisementPayload are present for the parts that don't cause error
+        payload_no_cap_id = { # type: ignore
+            "ai_id": "ai_no_cap_id", "name": "NoCapIdService", "description": "d",
+            "version": "v", "availability_status": "online"
+        }
+        sdm.process_capability_advertisement(payload_no_cap_id, "sender1", mock_envelope) # type: ignore
+        assert "Received capability advertisement with no capability_id" in caplog.text
+        assert not sdm.known_capabilities # Should not be added
 
-        self.assertIn("cap1", self.discovery_module_with_trust.known_capabilities)
-        stored_cap = self.discovery_module_with_trust.known_capabilities["cap1"]
+        caplog.clear()
+        # Missing ai_id in payload
+        payload_no_ai_id = { # type: ignore
+            "capability_id": "cap_no_ai_id", "name": "NoAiIdService", "description": "d",
+            "version": "v", "availability_status": "online"
+        }
+        sdm.process_capability_advertisement(payload_no_ai_id, "sender2", mock_envelope) # type: ignore
+        assert "Received capability advertisement (ID: cap_no_ai_id) with no 'ai_id'" in caplog.text
+        assert not sdm.known_capabilities
 
-        self.assertEqual(stored_cap.get("name"), "Translator")
-        self.assertEqual(stored_cap.get("_trust_score"), 0.75)
-        self.mock_trust_manager.get_trust_score.assert_called_once_with("ai1")
-        self.assertIn("cap1", self.discovery_module_with_trust.last_seen)
+    def test_get_capability_by_id(self, mock_trust_manager: MagicMock):
+        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
+        cap_id = "get_cap_001"
+        payload = HSPCapabilityAdvertisementPayload(
+            capability_id=cap_id, ai_id="ai_get", name="GetCap", description="d", version="v",
+            availability_status="online", input_schema_uri=None, input_schema_example=None,
+            output_schema_uri=None, output_schema_example=None, data_format_preferences=None,
+            hsp_protocol_requirements=None, cost_estimate_template=None, access_policy_id=None, tags=None
+        )
+        sdm.process_capability_advertisement(payload, "sender", MagicMock(spec=HSPMessageEnvelope))
 
-    def test_process_capability_advertisement_no_trust_manager(self):
-        cap_payload = self._create_sample_capability_payload("cap2", "ai2", "Summarizer")
-        sender_ai_id = "ai2"
-        envelope = self._create_sample_envelope(sender_ai_id)
+        found_payload = sdm.get_capability_by_id(cap_id)
+        assert found_payload == payload
 
-        self.discovery_module_no_trust.process_capability_advertisement(cap_payload, sender_ai_id, envelope)
+        assert sdm.get_capability_by_id("non_existent_id") is None
 
-        self.assertIn("cap2", self.discovery_module_no_trust.known_capabilities)
-        stored_cap = self.discovery_module_no_trust.known_capabilities["cap2"]
+    # --- Tests for find_capabilities ---
+    @pytest.fixture
+    def populated_sdm(self, mock_trust_manager: MagicMock):
+        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
 
-        self.assertEqual(stored_cap.get("name"), "Summarizer")
-        self.assertEqual(stored_cap.get("_trust_score"), TrustManager.DEFAULT_TRUST_SCORE) # Should use default
-        self.assertIn("cap2", self.discovery_module_no_trust.last_seen)
+        mock_trust_manager.get_trust_score.side_effect = lambda ai_id: {"ai_high_trust": 0.9, "ai_mid_trust": 0.6, "ai_low_trust": 0.3}.get(ai_id, 0.1)
 
-    def test_process_capability_advertisement_missing_id(self):
-        cap_payload_no_id = self._create_sample_capability_payload("cap3", "ai3", "Test")
-        del cap_payload_no_id["capability_id"] # Remove essential field
-        sender_ai_id = "ai3"
-        envelope = self._create_sample_envelope(sender_ai_id)
+        caps_data = [
+            {"capability_id":"c1", "ai_id":"ai_high_trust", "name":"CapAlpha", "tags":["nlp", "translation"]},
+            {"capability_id":"c2", "ai_id":"ai_mid_trust", "name":"CapBeta", "tags":["image", "nlp"]},
+            {"capability_id":"c3", "ai_id":"ai_low_trust", "name":"CapAlpha", "version":"2.0", "tags":["storage"]},
+            {"capability_id":"c4", "ai_id":"ai_high_trust", "name":"CapGamma", "tags":["math"]},
+        ]
 
-        with patch('builtins.print') as mock_print:
-            self.discovery_module_no_trust.process_capability_advertisement(cap_payload_no_id, sender_ai_id, envelope) # type: ignore
-            self.assertNotIn("cap3", self.discovery_module_no_trust.known_capabilities)
-            mock_print.assert_any_call("ServiceDiscoveryModule: Received capability advertisement without a capability_id. Skipping.")
+        for data in caps_data:
+            # Construct full payload ensuring all required fields are present
+            payload = HSPCapabilityAdvertisementPayload(
+                capability_id=data["capability_id"], ai_id=data["ai_id"], name=data["name"],
+                description=data.get("description", "Test Desc"), version=data.get("version", "1.0"),
+                availability_status=data.get("availability_status", "online"), # type: ignore
+                tags=data.get("tags"), input_schema_uri=None, input_schema_example=None,
+                output_schema_uri=None, output_schema_example=None, data_format_preferences=None,
+                hsp_protocol_requirements=None, cost_estimate_template=None, access_policy_id=None
+            )
+            sdm.process_capability_advertisement(payload, payload['ai_id'], MagicMock(spec=HSPMessageEnvelope))
+        return sdm
 
-    def test_find_capabilities_by_name_and_id(self):
-        cap1 = self._create_sample_capability_payload("id1", "ai1", "ServiceA")
-        cap2 = self._create_sample_capability_payload("id2", "ai2", "ServiceB")
-        self.discovery_module_no_trust.process_capability_advertisement(cap1, "ai1", self._create_sample_envelope("ai1"))
-        self.discovery_module_no_trust.process_capability_advertisement(cap2, "ai2", self._create_sample_envelope("ai2"))
+    def test_find_capabilities_no_filters(self, populated_sdm: ServiceDiscoveryModule):
+        results = populated_sdm.find_capabilities()
+        assert len(results) == 4
 
-        results_name: List[StoredCapabilityInfo] = self.discovery_module_no_trust.find_capabilities(capability_name_filter="ServiceA")
-        self.assertEqual(len(results_name), 1)
-        self.assertEqual(results_name[0].get("capability_id"), "id1")
+    def test_find_capabilities_by_id(self, populated_sdm: ServiceDiscoveryModule):
+        results = populated_sdm.find_capabilities(capability_id_filter="c1")
+        assert len(results) == 1
+        assert results[0].get('capability_id') == "c1"
 
-        results_id: List[StoredCapabilityInfo] = self.discovery_module_no_trust.find_capabilities(capability_id_filter="id2")
-        self.assertEqual(len(results_id), 1)
-        self.assertEqual(results_id[0].get("name"), "ServiceB")
+    def test_find_capabilities_by_name(self, populated_sdm: ServiceDiscoveryModule):
+        results = populated_sdm.find_capabilities(capability_name_filter="CapAlpha")
+        assert len(results) == 2
+        assert {res.get('capability_id') for res in results} == {"c1", "c3"}
 
-    def test_find_capabilities_with_trust_filter_and_sort(self):
-        cap1 = self._create_sample_capability_payload("id1", "ai_high_trust", "ServiceHigh")
-        cap2 = self._create_sample_capability_payload("id2", "ai_low_trust", "ServiceLow")
-        cap3 = self._create_sample_capability_payload("id3", "ai_mid_trust", "ServiceMid")
+    def test_find_capabilities_by_tags(self, populated_sdm: ServiceDiscoveryModule):
+        results_nlp = populated_sdm.find_capabilities(tags_filter=["nlp"])
+        assert len(results_nlp) == 2
+        assert {res.get('capability_id') for res in results_nlp} == {"c1", "c2"}
 
-        self.mock_trust_manager.get_trust_score.side_effect = lambda ai_id: {"ai_high_trust": 0.9, "ai_low_trust": 0.3, "ai_mid_trust": 0.6}.get(ai_id, 0.5)
+        results_nlp_translation = populated_sdm.find_capabilities(tags_filter=["nlp", "translation"])
+        assert len(results_nlp_translation) == 1
+        assert results_nlp_translation[0].get('capability_id') == "c1"
 
-        self.discovery_module_with_trust.process_capability_advertisement(cap1, "ai_high_trust", self._create_sample_envelope("ai_high_trust"))
-        self.discovery_module_with_trust.process_capability_advertisement(cap2, "ai_low_trust", self._create_sample_envelope("ai_low_trust"))
-        self.discovery_module_with_trust.process_capability_advertisement(cap3, "ai_mid_trust", self._create_sample_envelope("ai_mid_trust"))
+        results_non_existent_tag = populated_sdm.find_capabilities(tags_filter=["non_existent"])
+        assert len(results_non_existent_tag) == 0
 
-        # Test filtering
-        results_min_trust: List[StoredCapabilityInfo] = self.discovery_module_with_trust.find_capabilities(min_trust_score=0.5)
-        self.assertEqual(len(results_min_trust), 2) # Should include high (0.9) and mid (0.6)
-        self.assertNotIn("id2", [c.get("capability_id") for c in results_min_trust])
+        results_mixed_tags = populated_sdm.find_capabilities(tags_filter=["nlp", "storage"])
+        assert len(results_mixed_tags) == 0
 
-        # Test sorting
-        results_sorted: List[StoredCapabilityInfo] = self.discovery_module_with_trust.find_capabilities(sort_by_trust=True)
-        self.assertEqual(len(results_sorted), 3)
-        self.assertEqual(results_sorted[0].get("capability_id"), "id1") # Highest trust
-        self.assertEqual(results_sorted[1].get("capability_id"), "id3") # Mid trust
-        self.assertEqual(results_sorted[2].get("capability_id"), "id2") # Low trust
+    def test_find_capabilities_by_min_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
+        results_min_trust_0_7 = populated_sdm.find_capabilities(min_trust_score=0.7)
+        assert len(results_min_trust_0_7) == 2
+        assert {res.get('capability_id') for res in results_min_trust_0_7} == {"c1", "c4"}
 
-        # Test filtering and sorting
-        results_filtered_sorted: List[StoredCapabilityInfo] = self.discovery_module_with_trust.find_capabilities(min_trust_score=0.5, sort_by_trust=True)
-        self.assertEqual(len(results_filtered_sorted), 2)
-        self.assertEqual(results_filtered_sorted[0].get("capability_id"), "id1") # High
-        self.assertEqual(results_filtered_sorted[1].get("capability_id"), "id3") # Mid
+        results_min_trust_0_5 = populated_sdm.find_capabilities(min_trust_score=0.5)
+        assert len(results_min_trust_0_5) == 3
+        assert {res.get('capability_id') for res in results_min_trust_0_5} == {"c1", "c2", "c4"}
 
-    def test_get_capability_by_id(self):
-        cap1 = self._create_sample_capability_payload("id1", "ai1", "ServiceA")
-        self.discovery_module_no_trust.process_capability_advertisement(cap1, "ai1", self._create_sample_envelope("ai1"))
+        results_min_trust_1_0 = populated_sdm.find_capabilities(min_trust_score=1.0)
+        assert len(results_min_trust_1_0) == 0
 
-        found_cap: Optional[StoredCapabilityInfo] = self.discovery_module_no_trust.get_capability_by_id("id1")
-        self.assertIsNotNone(found_cap)
-        self.assertEqual(found_cap.get("name"), "ServiceA") # type: ignore
+    def test_find_capabilities_sort_by_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
+        results = populated_sdm.find_capabilities(sort_by_trust=True)
+        assert len(results) == 4
 
-        not_found_cap = self.discovery_module_no_trust.get_capability_by_id("nonexistent")
-        self.assertIsNone(not_found_cap)
+        trust_scores_ordered = [mock_trust_manager.get_trust_score(res.get('ai_id','')) for res in results] # type: ignore
+        assert trust_scores_ordered == [0.9, 0.9, 0.6, 0.3]
 
-    def test_remove_capability(self):
-        cap1 = self._create_sample_capability_payload("id1", "ai1", "ServiceA")
-        self.discovery_module_no_trust.process_capability_advertisement(cap1, "ai1", self._create_sample_envelope("ai1"))
-        self.assertIn("id1", self.discovery_module_no_trust.known_capabilities)
+        top_trust_ids = {results[0].get('capability_id'), results[1].get('capability_id')}
+        assert top_trust_ids == {"c1", "c4"}
+        assert results[2].get('capability_id') == "c2"
+        assert results[3].get('capability_id') == "c3"
 
-        removed = self.discovery_module_no_trust.remove_capability("id1")
-        self.assertTrue(removed)
-        self.assertNotIn("id1", self.discovery_module_no_trust.known_capabilities)
-        self.assertNotIn("id1", self.discovery_module_no_trust.last_seen)
+    def test_find_capabilities_combined_filters_and_sort(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
+        results = populated_sdm.find_capabilities(tags_filter=["nlp"], min_trust_score=0.5, sort_by_trust=True)
+        assert len(results) == 2
+        assert results[0].get('capability_id') == "c1"
+        assert results[1].get('capability_id') == "c2"
 
-        removed_again = self.discovery_module_no_trust.remove_capability("id1")
-        self.assertFalse(removed_again)
-
-    def test_get_all_capabilities(self):
-        cap1 = self._create_sample_capability_payload("id1", "ai1", "ServiceA")
-        cap2 = self._create_sample_capability_payload("id2", "ai2", "ServiceB")
-        self.discovery_module_no_trust.process_capability_advertisement(cap1, "ai1", self._create_sample_envelope("ai1"))
-        self.discovery_module_no_trust.process_capability_advertisement(cap2, "ai2", self._create_sample_envelope("ai2"))
-
-        all_caps: List[StoredCapabilityInfo] = self.discovery_module_no_trust.get_all_capabilities()
-        self.assertEqual(len(all_caps), 2)
-        cap_ids_present = {c.get("capability_id") for c in all_caps}
-        self.assertIn("id1", cap_ids_present)
-        self.assertIn("id2", cap_ids_present)
-
-if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    # TODO: Add tests for staleness once that logic is implemented
+    # def test_find_capabilities_filters_stale_entries(self, populated_sdm_with_stale: ServiceDiscoveryModule):
+    #     pass
+    # def test_get_capability_by_id_returns_none_for_stale(self, populated_sdm_with_stale: ServiceDiscoveryModule):
+    #     pass
