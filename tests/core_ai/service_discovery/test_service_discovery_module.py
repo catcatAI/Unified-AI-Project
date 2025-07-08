@@ -1,329 +1,271 @@
-import pytest
-from unittest.mock import MagicMock, patch
-from datetime import datetime, timezone, timedelta # Ensure timedelta is imported
-import logging # For caplog if needed, or to check logs from module
+import unittest
+import time # For time.sleep in staleness test
+from datetime import datetime, timezone, timedelta
+from typing import Dict, Optional, List, Any
 
-# Ensure src is in path for imports
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+# Modules to test
+from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule, StoredCapabilityInfo
+from src.core_ai.trust_manager.trust_manager_module import TrustManager
+from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
 
-from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from src.core_ai.trust_manager.trust_manager_module import TrustManager # For type hinting and mocking
-from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope # For creating test payloads
+# Mock TrustManager for testing
+class MockTrustManager(TrustManager):
+    def __init__(self, initial_trust_scores: Optional[Dict[str, float]] = None):
+        super().__init__(initial_trust_scores)
+        self.scores_to_return = initial_trust_scores if initial_trust_scores else {}
 
-# --- Mock TrustManager ---
-@pytest.fixture
-def mock_trust_manager():
-    mock_tm = MagicMock(spec=TrustManager)
-    # Default behavior: always return a neutral trust score
-    mock_tm.get_trust_score.return_value = 0.5
-    return mock_tm
+    def get_trust_score(self, ai_id: str) -> float:
+        return self.scores_to_return.get(ai_id, self.DEFAULT_TRUST_SCORE)
 
-# --- Test ServiceDiscoveryModule ---
-class TestServiceDiscoveryModule:
+    def set_mock_score(self, ai_id: str, score: float):
+        self.scores_to_return[ai_id] = score
 
-    def test_init(self, mock_trust_manager: MagicMock, caplog):
-        caplog.set_level(logging.INFO, logger="src.core_ai.service_discovery.service_discovery_module")
-        # Test with default staleness threshold
-        sdm_default = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
-        assert sdm_default.trust_manager == mock_trust_manager
-        assert sdm_default.known_capabilities == {}
-        assert sdm_default.lock is not None
-        assert sdm_default.staleness_threshold_seconds == ServiceDiscoveryModule.DEFAULT_STALENESS_THRESHOLD_SECONDS
-        assert f"Staleness threshold: {ServiceDiscoveryModule.DEFAULT_STALENESS_THRESHOLD_SECONDS} seconds" in caplog.text
+class TestHSPServiceDiscoveryModule(unittest.TestCase):
 
-        caplog.clear()
-        # Test with custom staleness threshold
-        custom_threshold = 30
-        sdm_custom = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=custom_threshold)
-        assert sdm_custom.staleness_threshold_seconds == custom_threshold
-        assert f"Staleness threshold: {custom_threshold} seconds" in caplog.text
+    def setUp(self):
+        self.mock_trust_manager = MockTrustManager()
+        # Short staleness for easier testing
+        self.sdm = ServiceDiscoveryModule(trust_manager=self.mock_trust_manager, staleness_threshold_seconds=1)
 
-
-    def test_process_capability_advertisement_new_and_update(self, mock_trust_manager: MagicMock):
-        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
-
-        cap_id_1 = "cap_test_001"
-        # Provide all required fields for HSPCapabilityAdvertisementPayload based on its TypedDict definition
-        payload1 = HSPCapabilityAdvertisementPayload(
-            capability_id=cap_id_1, ai_id="ai1", name="TestCap1", description="Desc1",
-            version="1.0", availability_status="online",
-            # Optional fields can be omitted or set to None if that's how they are defined
-            tags=["t1", "t2"],
-            input_schema_uri=None, input_schema_example=None,
-            output_schema_uri=None, output_schema_example=None,
-            data_format_preferences=None, hsp_protocol_requirements=None,
-            cost_estimate_template=None, access_policy_id=None
-        )
-        mock_envelope = MagicMock(spec=HSPMessageEnvelope)
-
-        time_before_add = datetime.now(timezone.utc)
-        sdm.process_capability_advertisement(payload1, "sender_ai_id_1", mock_envelope)
-        time_after_add = datetime.now(timezone.utc)
-
-        assert cap_id_1 in sdm.known_capabilities
-        stored_payload1, stored_time1 = sdm.known_capabilities[cap_id_1]
-        assert stored_payload1 == payload1
-        assert time_before_add <= stored_time1 <= time_after_add
-
-        # Test update
-        payload1_updated = HSPCapabilityAdvertisementPayload(
-            capability_id=cap_id_1, ai_id="ai1", name="TestCap1_Updated", description="Desc1_Updated",
-            version="1.1", availability_status="online", tags=["t1", "t3"],
-            input_schema_uri=None, input_schema_example=None,
-            output_schema_uri=None, output_schema_example=None,
-            data_format_preferences=None, hsp_protocol_requirements=None,
-            cost_estimate_template=None, access_policy_id=None
-        )
-        time_before_update = datetime.now(timezone.utc)
-        sdm.process_capability_advertisement(payload1_updated, "sender_ai_id_1", mock_envelope)
-        time_after_update = datetime.now(timezone.utc)
-
-        assert cap_id_1 in sdm.known_capabilities
-        stored_payload1_upd, stored_time1_upd = sdm.known_capabilities[cap_id_1]
-        assert stored_payload1_upd == payload1_updated
-        assert stored_payload1_upd.get("name") == "TestCap1_Updated"
-        assert time_before_update <= stored_time1_upd <= time_after_update
-        assert stored_time1_upd > stored_time1 # Ensure timestamp was updated
-
-    def test_process_capability_advertisement_missing_ids(self, mock_trust_manager: MagicMock, caplog):
-        caplog.set_level(logging.ERROR, logger="src.core_ai.service_discovery.service_discovery_module")
-        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
-        mock_envelope = MagicMock(spec=HSPMessageEnvelope)
-
-        # Missing capability_id
-        # Ensure all *required* fields for HSPCapabilityAdvertisementPayload are present for the parts that don't cause error
-        payload_no_cap_id = { # type: ignore
-            "ai_id": "ai_no_cap_id", "name": "NoCapIdService", "description": "d",
-            "version": "v", "availability_status": "online"
+        # Sample Payloads & Envelopes
+        self.cap_adv1_payload: HSPCapabilityAdvertisementPayload = {
+            "capability_id": "translator_v1", "ai_id": "did:hsp:ai_translator_1", "name": "Fast Translator",
+            "description": "Translates text fast.", "version": "1.0", "availability_status": "online",
+            "tags": ["translation", "nlp", "text"]
         }
-        sdm.process_capability_advertisement(payload_no_cap_id, "sender1", mock_envelope) # type: ignore
-        assert "Received capability advertisement with no capability_id" in caplog.text
-        assert not sdm.known_capabilities # Should not be added
+        self.cap_adv1_envelope: HSPMessageEnvelope = {
+            "hsp_envelope_version": "0.1", "message_id": "msg1", "sender_ai_id": "did:hsp:ai_translator_1",
+            "recipient_ai_id": "hsp/capabilities/advertisements", "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "message_type": "HSP::CapabilityAdvertisement_v0.1", "protocol_version": "0.1.1",
+            "communication_pattern": "publish", "payload": self.cap_adv1_payload
+        } # type: ignore
 
-        caplog.clear()
-        # Missing ai_id in payload
-        payload_no_ai_id = { # type: ignore
-            "capability_id": "cap_no_ai_id", "name": "NoAiIdService", "description": "d",
-            "version": "v", "availability_status": "online"
+        self.cap_adv2_payload: HSPCapabilityAdvertisementPayload = {
+            "capability_id": "image_analyzer_v2", "ai_id": "did:hsp:ai_vision_1", "name": "Image Analyzer",
+            "description": "Analyzes images.", "version": "2.0", "availability_status": "online",
+            "tags": ["vision", "cv", "images"]
         }
-        sdm.process_capability_advertisement(payload_no_ai_id, "sender2", mock_envelope) # type: ignore
-        assert "Received capability advertisement (ID: cap_no_ai_id) with no 'ai_id'" in caplog.text
-        assert not sdm.known_capabilities
+        self.cap_adv2_envelope: HSPMessageEnvelope = {
+            "hsp_envelope_version": "0.1", "message_id": "msg2", "sender_ai_id": "did:hsp:ai_vision_1",
+            "recipient_ai_id": "hsp/capabilities/advertisements", "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "message_type": "HSP::CapabilityAdvertisement_v0.1", "protocol_version": "0.1.1",
+            "communication_pattern": "publish", "payload": self.cap_adv2_payload
+        } # type: ignore
 
-    def test_get_capability_by_id(self, mock_trust_manager: MagicMock):
-        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
-        cap_id = "get_cap_001"
-        payload = HSPCapabilityAdvertisementPayload(
-            capability_id=cap_id, ai_id="ai_get", name="GetCap", description="d", version="v",
-            availability_status="online", input_schema_uri=None, input_schema_example=None,
-            output_schema_uri=None, output_schema_example=None, data_format_preferences=None,
-            hsp_protocol_requirements=None, cost_estimate_template=None, access_policy_id=None, tags=None
-        )
-        sdm.process_capability_advertisement(payload, "sender", MagicMock(spec=HSPMessageEnvelope))
+        self.cap_adv3_payload_offline: HSPCapabilityAdvertisementPayload = {
+            "capability_id": "offline_tool_v1", "ai_id": "did:hsp:ai_translator_1", "name": "Offline Text Utility",
+            "description": "A tool that is offline.", "version": "1.0", "availability_status": "offline",
+            "tags": ["utility", "text"]
+        }
+        self.cap_adv3_envelope: HSPMessageEnvelope = {
+            "hsp_envelope_version": "0.1", "message_id": "msg3", "sender_ai_id": "did:hsp:ai_translator_1",
+            "recipient_ai_id": "hsp/capabilities/advertisements", "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "message_type": "HSP::CapabilityAdvertisement_v0.1", "protocol_version": "0.1.1",
+            "communication_pattern": "publish", "payload": self.cap_adv3_payload_offline
+        } # type: ignore
 
-        found_payload = sdm.get_capability_by_id(cap_id)
-        assert found_payload == payload
+    def test_initialization(self):
+        self.assertIsNotNone(self.sdm)
+        self.assertEqual(self.sdm.staleness_threshold_seconds, 1)
+        self.assertEqual(len(self.sdm._capabilities_store), 0)
 
-        assert sdm.get_capability_by_id("non_existent_id") is None
+    def test_process_capability_advertisement_valid(self):
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope)
+        self.assertIn("translator_v1", self.sdm._capabilities_store)
+        stored_item = self.sdm._capabilities_store["translator_v1"]
+        self.assertEqual(stored_item['payload']['name'], "Fast Translator")
+        self.assertEqual(stored_item['sender_ai_id'], "did:hsp:ai_translator_1")
+        self.assertEqual(stored_item['message_id'], "msg1")
+        self.assertAlmostEqual(stored_item['last_seen_timestamp'].timestamp(), datetime.now(timezone.utc).timestamp(), delta=1)
 
-    # --- Tests for find_capabilities ---
-    @pytest.fixture
-    def populated_sdm(self, mock_trust_manager: MagicMock):
-        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
+    def test_process_capability_advertisement_update(self):
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope)
+        original_timestamp = self.sdm._capabilities_store["translator_v1"]['last_seen_timestamp']
 
-        mock_trust_manager.get_trust_score.side_effect = lambda ai_id: {"ai_high_trust": 0.9, "ai_mid_trust": 0.6, "ai_low_trust": 0.3}.get(ai_id, 0.1)
+        time.sleep(0.1) # Ensure timestamp changes
+        updated_payload = self.cap_adv1_payload.copy()
+        updated_payload["version"] = "1.1"
+        updated_envelope = self.cap_adv1_envelope.copy()
+        updated_envelope["payload"] = updated_payload
+        updated_envelope["message_id"] = "msg1_updated"
+        updated_envelope["timestamp_sent"] = datetime.now(timezone.utc).isoformat()
 
-        caps_data = [
-            {"capability_id":"c1", "ai_id":"ai_high_trust", "name":"CapAlpha", "tags":["nlp", "translation"]},
-            {"capability_id":"c2", "ai_id":"ai_mid_trust", "name":"CapBeta", "tags":["image", "nlp"]},
-            {"capability_id":"c3", "ai_id":"ai_low_trust", "name":"CapAlpha", "version":"2.0", "tags":["storage"]},
-            {"capability_id":"c4", "ai_id":"ai_high_trust", "name":"CapGamma", "tags":["math"]},
-        ]
+        self.sdm.process_capability_advertisement(updated_payload, updated_envelope['sender_ai_id'], updated_envelope)
 
-        for data in caps_data:
-            # Construct full payload ensuring all required fields are present
-            payload = HSPCapabilityAdvertisementPayload(
-                capability_id=data["capability_id"], ai_id=data["ai_id"], name=data["name"],
-                description=data.get("description", "Test Desc"), version=data.get("version", "1.0"),
-                availability_status=data.get("availability_status", "online"), # type: ignore
-                tags=data.get("tags"), input_schema_uri=None, input_schema_example=None,
-                output_schema_uri=None, output_schema_example=None, data_format_preferences=None,
-                hsp_protocol_requirements=None, cost_estimate_template=None, access_policy_id=None
-            )
-            sdm.process_capability_advertisement(payload, payload['ai_id'], MagicMock(spec=HSPMessageEnvelope))
-        return sdm
+        self.assertIn("translator_v1", self.sdm._capabilities_store)
+        stored_item = self.sdm._capabilities_store["translator_v1"]
+        self.assertEqual(stored_item['payload']['version'], "1.1")
+        self.assertNotEqual(stored_item['last_seen_timestamp'], original_timestamp)
+        self.assertTrue(stored_item['last_seen_timestamp'] > original_timestamp)
+        self.assertEqual(stored_item['message_id'], "msg1_updated")
 
-    def test_find_capabilities_no_filters(self, populated_sdm: ServiceDiscoveryModule):
-        results = populated_sdm.find_capabilities()
-        assert len(results) == 4
+    def test_process_capability_advertisement_invalid_payload(self):
+        invalid_payload = self.cap_adv1_payload.copy()
+        del invalid_payload["name"] # Missing a required field
 
-    def test_find_capabilities_by_id(self, populated_sdm: ServiceDiscoveryModule):
-        results = populated_sdm.find_capabilities(capability_id_filter="c1")
-        assert len(results) == 1
-        assert results[0].get('capability_id') == "c1"
+        self.sdm.process_capability_advertisement(invalid_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope) # type: ignore
+        self.assertEqual(len(self.sdm._capabilities_store), 0) # Should not store invalid payload
 
-    def test_find_capabilities_by_name(self, populated_sdm: ServiceDiscoveryModule):
-        results = populated_sdm.find_capabilities(capability_name_filter="CapAlpha")
-        assert len(results) == 2
-        assert {res.get('capability_id') for res in results} == {"c1", "c3"}
+    def test_get_capability_by_id(self):
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope)
+        retrieved_cap = self.sdm.get_capability_by_id("translator_v1")
+        self.assertIsNotNone(retrieved_cap)
+        self.assertEqual(retrieved_cap['name'], "Fast Translator") # type: ignore
 
-    def test_find_capabilities_by_tags(self, populated_sdm: ServiceDiscoveryModule):
-        results_nlp = populated_sdm.find_capabilities(tags_filter=["nlp"])
-        assert len(results_nlp) == 2
-        assert {res.get('capability_id') for res in results_nlp} == {"c1", "c2"}
+        non_existent_cap = self.sdm.get_capability_by_id("non_existent_id")
+        self.assertIsNone(non_existent_cap)
 
-        results_nlp_translation = populated_sdm.find_capabilities(tags_filter=["nlp", "translation"])
-        assert len(results_nlp_translation) == 1
-        assert results_nlp_translation[0].get('capability_id') == "c1"
+    def test_find_capabilities_no_filters(self):
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope)
+        self.sdm.process_capability_advertisement(self.cap_adv2_payload, self.cap_adv2_envelope['sender_ai_id'], self.cap_adv2_envelope)
+        results = self.sdm.find_capabilities(exclude_unavailable=False) # include offline for this count
+        self.assertEqual(len(results), 2)
 
-        results_non_existent_tag = populated_sdm.find_capabilities(tags_filter=["non_existent"])
-        assert len(results_non_existent_tag) == 0
+    def test_find_capabilities_by_name(self):
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope)
+        results = self.sdm.find_capabilities(capability_name_filter="Fast Translator")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['capability_id'], "translator_v1")
 
-        results_mixed_tags = populated_sdm.find_capabilities(tags_filter=["nlp", "storage"])
-        assert len(results_mixed_tags) == 0
+        results_case_insensitive = self.sdm.find_capabilities(capability_name_filter="fast translator")
+        self.assertEqual(len(results_case_insensitive), 1)
+        self.assertEqual(results_case_insensitive[0]['capability_id'], "translator_v1")
 
-    def test_find_capabilities_by_min_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
-        results_min_trust_0_7 = populated_sdm.find_capabilities(min_trust_score=0.7)
-        assert len(results_min_trust_0_7) == 2
-        assert {res.get('capability_id') for res in results_min_trust_0_7} == {"c1", "c4"}
+        results_no_match = self.sdm.find_capabilities(capability_name_filter="NonExistent Name")
+        self.assertEqual(len(results_no_match), 0)
 
-        results_min_trust_0_5 = populated_sdm.find_capabilities(min_trust_score=0.5)
-        assert len(results_min_trust_0_5) == 3
-        assert {res.get('capability_id') for res in results_min_trust_0_5} == {"c1", "c2", "c4"}
+    def test_find_capabilities_by_id(self):
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope)
+        results = self.sdm.find_capabilities(capability_id_filter="translator_v1")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['name'], "Fast Translator")
 
-        results_min_trust_1_0 = populated_sdm.find_capabilities(min_trust_score=1.0)
-        assert len(results_min_trust_1_0) == 0
+    def test_find_capabilities_by_tags(self):
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope) # tags: translation, nlp, text
+        self.sdm.process_capability_advertisement(self.cap_adv2_payload, self.cap_adv2_envelope['sender_ai_id'], self.cap_adv2_envelope) # tags: vision, cv, images
 
-    def test_find_capabilities_sort_by_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
-        results = populated_sdm.find_capabilities(sort_by_trust=True)
-        assert len(results) == 4
+        results_nlp = self.sdm.find_capabilities(tags_filter=["nlp"])
+        self.assertEqual(len(results_nlp), 1)
+        self.assertEqual(results_nlp[0]['capability_id'], "translator_v1")
 
-        trust_scores_ordered = [mock_trust_manager.get_trust_score(res.get('ai_id','')) for res in results] # type: ignore
-        assert trust_scores_ordered == [0.9, 0.9, 0.6, 0.3]
+        results_text_vision = self.sdm.find_capabilities(tags_filter=["text", "vision"]) # No capability has both
+        self.assertEqual(len(results_text_vision), 0)
 
-        top_trust_ids = {results[0].get('capability_id'), results[1].get('capability_id')}
-        assert top_trust_ids == {"c1", "c4"}
-        assert results[2].get('capability_id') == "c2"
-        assert results[3].get('capability_id') == "c3"
+        results_multi_tag_match = self.sdm.find_capabilities(tags_filter=["translation", "text"])
+        self.assertEqual(len(results_multi_tag_match), 1)
+        self.assertEqual(results_multi_tag_match[0]['capability_id'], "translator_v1")
 
-    def test_find_capabilities_combined_filters_and_sort(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
-        results = populated_sdm.find_capabilities(tags_filter=["nlp"], min_trust_score=0.5, sort_by_trust=True)
-        assert len(results) == 2
-        assert results[0].get('capability_id') == "c1"
-        assert results[1].get('capability_id') == "c2"
-
-    # TODO: Add tests for staleness once that logic is implemented
-    # def test_find_capabilities_filters_stale_entries(self, populated_sdm_with_stale: ServiceDiscoveryModule):
-    #     pass
-    # def test_get_capability_by_id_returns_none_for_stale(self, populated_sdm_with_stale: ServiceDiscoveryModule):
-    #     pass
-
-    def _add_capability_at_time(self, sdm: ServiceDiscoveryModule, cap_payload: HSPCapabilityAdvertisementPayload, mock_now_time: datetime):
-        # Helper to add/update a capability as if it was processed at a specific time
-        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_obj:
-            mock_datetime_obj.now.return_value = mock_now_time
-            # Ensure all required fields are present for HSPCapabilityAdvertisementPayload
-            # Merging with defaults for optional fields if not present in cap_payload
-            full_cap_payload = HSPCapabilityAdvertisementPayload(
-                capability_id=cap_payload.get("capability_id", "default_id"), # type: ignore
-                ai_id=cap_payload.get("ai_id", "default_ai_id"), # type: ignore
-                name=cap_payload.get("name", "Default Name"), # type: ignore
-                description=cap_payload.get("description", "Default Desc"), # type: ignore
-                version=cap_payload.get("version", "1.0"), # type: ignore
-                availability_status=cap_payload.get("availability_status", "online"), # type: ignore
-                tags=cap_payload.get("tags"),
-                input_schema_uri=cap_payload.get("input_schema_uri"),
-                input_schema_example=cap_payload.get("input_schema_example"),
-                output_schema_uri=cap_payload.get("output_schema_uri"),
-                output_schema_example=cap_payload.get("output_schema_example"),
-                data_format_preferences=cap_payload.get("data_format_preferences"),
-                hsp_protocol_requirements=cap_payload.get("hsp_protocol_requirements"),
-                cost_estimate_template=cap_payload.get("cost_estimate_template"),
-                access_policy_id=cap_payload.get("access_policy_id")
-            )
-            sdm.process_capability_advertisement(full_cap_payload, full_cap_payload['ai_id'], MagicMock(spec=HSPMessageEnvelope))
+        results_case_insensitive_tags = self.sdm.find_capabilities(tags_filter=["TRANSLATION"])
+        self.assertEqual(len(results_case_insensitive_tags), 1)
 
 
-    def test_staleness_checks(self, mock_trust_manager: MagicMock, caplog):
-        """Combined test for find_capabilities and get_capability_by_id staleness."""
-        caplog.set_level(logging.DEBUG, logger="src.core_ai.service_discovery.service_discovery_module")
-        threshold = 60  # 1 minute
-        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=threshold)
+    def test_find_capabilities_with_trust_filter_and_sort(self):
+        self.mock_trust_manager.set_mock_score("did:hsp:ai_translator_1", 0.8) # translator_v1
+        self.mock_trust_manager.set_mock_score("did:hsp:ai_vision_1", 0.3)    # image_analyzer_v2
 
-        # Use a fixed "current time" for consistent calculations within this test
-        # This will be the time when find_capabilities or get_capability_by_id is called
-        current_test_time = datetime.now(timezone.utc)
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope)
+        self.sdm.process_capability_advertisement(self.cap_adv2_payload, self.cap_adv2_envelope['sender_ai_id'], self.cap_adv2_envelope)
 
-        cap_fresh_payload_dict = {"capability_id":"fresh_cap", "ai_id":"ai_fresh", "name":"Fresh", "description":"d", "version":"v", "availability_status":"online"}
-        cap_stale_payload_dict = {"capability_id":"stale_cap", "ai_id":"ai_stale", "name":"Stale", "description":"d", "version":"v", "availability_status":"online"}
+        # Test filtering by min_trust_score
+        results_min_trust = self.sdm.find_capabilities(min_trust_score=0.5)
+        self.assertEqual(len(results_min_trust), 1)
+        self.assertEqual(results_min_trust[0]['capability_id'], "translator_v1")
 
-        # Add fresh capability (seen 30 seconds ago relative to current_test_time)
-        time_fresh_seen = current_test_time - timedelta(seconds=30)
-        self._add_capability_at_time(sdm, cap_fresh_payload_dict, time_fresh_seen) # type: ignore
+        # Test sorting by trust (default)
+        self.mock_trust_manager.set_mock_score("did:hsp:ai_vision_1", 0.9) # Make vision AI more trusted
+        results_sorted = self.sdm.find_capabilities(exclude_unavailable=False) # Get all, including offline if any
+        self.assertEqual(len(results_sorted), 2)
+        self.assertEqual(results_sorted[0]['capability_id'], "image_analyzer_v2") # Vision AI (0.9)
+        self.assertEqual(results_sorted[1]['capability_id'], "translator_v1") # Translator AI (0.8)
 
-        # Add stale capability (seen 90 seconds ago relative to current_test_time)
-        time_stale_seen = current_test_time - timedelta(seconds=90)
-        self._add_capability_at_time(sdm, cap_stale_payload_dict, time_stale_seen) # type: ignore
+        # Test no sort
+        results_no_sort = self.sdm.find_capabilities(sort_by_trust=False, exclude_unavailable=False)
+        self.assertEqual(len(results_no_sort), 2)
+        # Order might be insertion order or dict order, less predictable without sort
 
-        # Patch datetime.now for the duration of the find_capabilities and get_capability_by_id calls
-        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_for_check:
-            mock_datetime_for_check.now.return_value = current_test_time # This is when staleness is evaluated
+    def test_staleness(self):
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope)
 
-            # Test find_capabilities
-            results = sdm.find_capabilities()
-            assert len(results) == 1
-            assert results[0].get('capability_id') == "fresh_cap"
-            assert "Skipping stale capability ID: stale_cap" in caplog.text
+        # Initially, it should be found
+        self.assertIsNotNone(self.sdm.get_capability_by_id("translator_v1"))
+        found_caps = self.sdm.find_capabilities(capability_id_filter="translator_v1")
+        self.assertEqual(len(found_caps), 1)
 
-            # Test get_capability_by_id for fresh
-            fresh_found = sdm.get_capability_by_id("fresh_cap")
-            assert fresh_found is not None
-            assert fresh_found.get('capability_id') == "fresh_cap"
+        # Artificially make it stale by directly manipulating its timestamp for test purposes
+        # This is a white-box testing approach.
+        with self.sdm._store_lock:
+            if "translator_v1" in self.sdm._capabilities_store:
+                current_entry = self.sdm._capabilities_store["translator_v1"]
+                stale_time = datetime.now(timezone.utc) - timedelta(seconds=self.sdm.staleness_threshold_seconds + 5)
+                # Create a new StoredCapabilityInfo with the old timestamp
+                # Correctly creating a new dict for the StoredCapabilityInfo type
+                self.sdm._capabilities_store["translator_v1"] = StoredCapabilityInfo(
+                    payload=current_entry['payload'],
+                    sender_ai_id=current_entry['sender_ai_id'],
+                    last_seen_timestamp=stale_time, # This makes it stale
+                    message_id=current_entry['message_id']
+                )
+            else:
+                self.fail("Test setup error: translator_v1 not in store for staleness test.")
 
-            caplog.clear()
-            # Test get_capability_by_id for stale
-            stale_found = sdm.get_capability_by_id("stale_cap")
-            assert stale_found is None
-            # Log level for this specific message in get_capability_by_id is INFO
-            assert "found but is stale" in "".join(r.message for r in caplog.records if r.levelname == "INFO")
-            assert "stale_cap" in "".join(r.message for r in caplog.records if r.levelname == "INFO")
+        # Now it should be considered stale
+        self.assertIsNone(self.sdm.get_capability_by_id("translator_v1"), "Stale entry was not filtered by get_capability_by_id")
+
+        found_caps_after_stale = self.sdm.find_capabilities(capability_id_filter="translator_v1")
+        self.assertEqual(len(found_caps_after_stale), 0, "Stale entry was not filtered by find_capabilities")
+
+        # Test re-advertising makes it not stale
+        fresh_envelope = self.cap_adv1_envelope.copy()
+        fresh_envelope["timestamp_sent"] = datetime.now(timezone.utc).isoformat()
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, fresh_envelope['sender_ai_id'], fresh_envelope)
+        self.assertIsNotNone(self.sdm.get_capability_by_id("translator_v1"))
 
 
-    def test_get_capability_by_id_staleness_direct_variant(self, mock_trust_manager: MagicMock, caplog):
-        """More focused test for get_capability_by_id staleness with INFO log level."""
-        caplog.set_level(logging.INFO, logger="src.core_ai.service_discovery.service_discovery_module")
-        threshold = 100
-        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=threshold)
+    def test_availability_filtering(self):
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope) # online
+        self.sdm.process_capability_advertisement(self.cap_adv3_payload_offline, self.cap_adv3_envelope['sender_ai_id'], self.cap_adv3_envelope) # offline
 
-        cap_id = "cap_for_get_stale"
-        payload_dict = {"capability_id":cap_id, "ai_id":"ai_get_stale", "name":"GetStale", "description":"d", "version":"v", "availability_status":"online"}
+        # Default: exclude_unavailable=True
+        online_caps = self.sdm.find_capabilities(capability_name_filter="Fast Translator")
+        self.assertEqual(len(online_caps), 1)
+        self.assertEqual(online_caps[0]['capability_id'], 'translator_v1')
 
-        # Advertised 150s ago relative to when it will be checked
-        time_advertised = datetime.now(timezone.utc) - timedelta(seconds=150)
-        self._add_capability_at_time(sdm, payload_dict, time_advertised) # type: ignore
+        offline_caps_excluded = self.sdm.find_capabilities(capability_name_filter="Offline Text Utility")
+        self.assertEqual(len(offline_caps_excluded), 0)
 
-        current_simulated_time_for_check = datetime.now(timezone.utc)
-        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_obj_get:
-            mock_datetime_obj_get.now.return_value = current_simulated_time_for_check
+        # exclude_unavailable=False
+        all_caps_utility = self.sdm.find_capabilities(capability_name_filter="Offline Text Utility", exclude_unavailable=False)
+        self.assertEqual(len(all_caps_utility), 1)
+        self.assertEqual(all_caps_utility[0]['capability_id'], 'offline_tool_v1')
 
-            retrieved_cap = sdm.get_capability_by_id(cap_id)
-            assert retrieved_cap is None
-            assert f"Capability ID '{cap_id}' from AI: {payload_dict.get('ai_id')} found but is stale" in caplog.text
+        # get_capability_by_id
+        self.assertIsNotNone(self.sdm.get_capability_by_id("offline_tool_v1", exclude_unavailable=False))
+        self.assertIsNone(self.sdm.get_capability_by_id("offline_tool_v1", exclude_unavailable=True))
+        self.assertIsNotNone(self.sdm.get_capability_by_id("translator_v1", exclude_unavailable=True)) # translator_v1 is online
 
-        # Test non-stale case for get_capability_by_id
-        caplog.clear()
-        # Re-advertise or add as new, but this time it was seen recently
-        time_advertised_not_stale = current_simulated_time_for_check - timedelta(seconds=50)
-        self._add_capability_at_time(sdm, payload_dict, time_advertised_not_stale) # type: ignore
+    def test_get_all_capabilities(self):
+        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope)
+        self.sdm.process_capability_advertisement(self.cap_adv2_payload, self.cap_adv2_envelope['sender_ai_id'], self.cap_adv2_envelope)
+        self.sdm.process_capability_advertisement(self.cap_adv3_payload_offline, self.cap_adv3_envelope['sender_ai_id'], self.cap_adv3_envelope)
 
-        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_obj_get_not_stale:
-            mock_datetime_obj_get_not_stale.now.return_value = current_simulated_time_for_check
-            retrieved_cap_not_stale = sdm.get_capability_by_id(cap_id)
-            assert retrieved_cap_not_stale is not None
-            assert retrieved_cap_not_stale.get('capability_id') == cap_id
-            assert "found but is stale" not in caplog.text
+        # Default: exclude_stale=True, exclude_unavailable=False
+        all_caps = self.sdm.get_all_capabilities()
+        self.assertEqual(len(all_caps), 3)
 
-# Path for patching datetime.now within the module under test
-DATETIME_NOW_PATCH_PATH = "src.core_ai.service_discovery.service_discovery_module.datetime"
+        # Exclude unavailable
+        online_only = self.sdm.get_all_capabilities(exclude_unavailable=True)
+        self.assertEqual(len(online_only), 2)
+        self.assertTrue(all(c.get('availability_status') == 'online' for c in online_only))
+
+        # Simulate staleness for one
+        with self.sdm._store_lock:
+            if "translator_v1" in self.sdm._capabilities_store:
+                 self.sdm._capabilities_store["translator_v1"]["last_seen_timestamp"] -= timedelta(seconds=self.sdm.staleness_threshold_seconds + 5)
+
+        not_stale_caps = self.sdm.get_all_capabilities(exclude_stale=True, exclude_unavailable=False)
+        self.assertEqual(len(not_stale_caps), 2) # cap1 is now stale
+        self.assertFalse(any(c.get('capability_id') == 'translator_v1' for c in not_stale_caps))
+
+
+if __name__ == '__main__':
+    unittest.main()

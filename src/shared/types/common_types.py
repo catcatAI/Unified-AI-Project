@@ -276,4 +276,51 @@ class ExecutionResult(TypedDict):
     status_message: str            # e.g., "Execution denied: Insufficient permissions", "Execution completed", "Script error"
     # Future: Add execution_time_ms: Optional[float]
 
+# --- Types for HAMMemoryManager ---
+class HAMDataPackageInternal(TypedDict):
+    timestamp: str
+    data_type: str
+    encrypted_package: bytes
+    metadata: DialogueMemoryEntryMetadata
+
+class HAMRecallResult(TypedDict):
+    id: str
+    timestamp: str
+    data_type: str
+    rehydrated_gist: Any
+    metadata: DialogueMemoryEntryMetadata
+
+# --- Types for LLMInterface ---
+class LLMInterfaceConfig(TypedDict, total=False):
+    default_provider: Required[str]
+    default_model: Required[str]
+    providers: Required[Dict[str, Any]] # e.g., {"ollama": {"base_url": "http://localhost:11434"}}
+    default_generation_params: Optional[Dict[str, Any]]
+    operational_configs: Optional[Dict[str, Any]] # Could point to OperationalConfig if that's fully defined too
+
+class LLMProviderConfigEntry(TypedDict, total=False): # Base for provider-specific configs
+    api_key_env_var: Optional[str]
+    # Add other common provider config fields here if they arise
+
+class LLMProviderOllamaConfig(LLMProviderConfigEntry): # Inherits, though Ollama doesn't use api_key_env_var typically
+    base_url: Required[str]
+    default_model: Optional[str] # Model to use if not specified in request for this provider
+    default_keep_alive: Optional[Union[str, int]] # e.g., "5m" or 300 (seconds)
+
+class LLMProviderAnthropicConfig(LLMProviderConfigEntry):
+    # anthropic_version: Optional[str] # Example if needed later
+    default_model: Optional[str]
+
+class LLMProviderOpenAIConfig(LLMProviderConfigEntry):
+    default_model: Optional[str]
+    # Add fields like 'organization_id', 'project_id' if needed by implementation
+
+class LLMModelInfo(TypedDict, total=False):
+    model_id: Required[str] # e.g., "ollama/llama2" or "openai/gpt-3.5-turbo"
+    description: Optional[str]
+    provider: Optional[str]
+    context_length: Optional[int]
+    # Add other metadata like creator, type (chat, completion), etc.
+
+
 print("common_types.py (debug version) finished definitions.")
