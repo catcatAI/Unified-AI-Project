@@ -201,6 +201,78 @@ class SandboxExecutor:
             except Exception as e:
                 return None, f"Error in sandbox executor system: {str(e)}\n{traceback.format_exc()}"
 
+    def execute_python_code(self, code_string: str) -> Dict[str, Any]:
+        """
+        Executes a raw string of Python code in a sandboxed environment.
+        This is a simplified version of `run` for direct code execution.
+
+        Args:
+            code_string: The Python code string to execute.
+
+        Returns:
+            A dictionary with keys: 'stdout', 'stderr', 'exit_code',
+            'is_compilation_error', 'is_runtime_error'.
+            The error flags help distinguish script errors from system errors.
+        """
+        # Create a temporary directory that will be automatically cleaned up
+        with tempfile.TemporaryDirectory() as temp_dir:
+            script_filename = "_sandboxed_script.py"
+            script_filepath = os.path.join(temp_dir, script_filename)
+
+            try:
+                with open(script_filepath, "w", encoding="utf-8") as f_script:
+                    f_script.write(code_string)
+
+                python_executable = sys.executable or 'python'
+
+                process_result = subprocess.run(
+                    [python_executable, '-u', script_filepath], # -u for unbuffered output
+                    capture_output=True,
+                    text=True,
+                    cwd=temp_dir,
+                    timeout=self.timeout_seconds,
+                    check=False # Do not raise exception for non-zero exit codes
+                )
+
+                # Basic error type detection (can be refined)
+                is_compilation_error = False # Placeholder, actual detection is complex
+                is_runtime_error = process_result.returncode != 0 and bool(process_result.stderr)
+
+                # If stderr contains "SyntaxError" or "IndentationError", it's likely compilation.
+                # This is a heuristic.
+                if process_result.stderr:
+                    if "SyntaxError:" in process_result.stderr or \
+                       "IndentationError:" in process_result.stderr or \
+                       "TabError:" in process_result.stderr:
+                        is_compilation_error = True
+                        is_runtime_error = False # Usually compilation errors prevent runtime
+
+                return {
+                    "stdout": process_result.stdout or "",
+                    "stderr": process_result.stderr or "",
+                    "exit_code": process_result.returncode,
+                    "is_compilation_error": is_compilation_error,
+                    "is_runtime_error": is_runtime_error and not is_compilation_error
+                }
+
+            except subprocess.TimeoutExpired:
+                return {
+                    "stdout": "",
+                    "stderr": f"Sandbox execution timed out after {self.timeout_seconds} seconds.",
+                    "exit_code": -1, # Using -1 or a specific code for timeout
+                    "is_compilation_error": False,
+                    "is_runtime_error": True # Timeout is a runtime issue
+                }
+            except Exception as e:
+                # This catches errors in setting up the sandbox or subprocess call itself
+                return {
+                    "stdout": "",
+                    "stderr": f"System error in SandboxExecutor: {str(e)}\n{traceback.format_exc()}",
+                    "exit_code": -2, # Using -2 or a specific code for system errors
+                    "is_compilation_error": False,
+                    "is_runtime_error": True # System error is a runtime issue for the caller
+                }
+
 
 if __name__ == '__main__':
     # This block is for direct testing of sandbox_executor.py

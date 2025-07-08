@@ -14,14 +14,15 @@ The `AISimulationControlService` (ASCS) is a crucial component within the Unifie
     *   Interfaces with the `ResourceAwarenessService` to fetch the current status of the simulated hardware environment (e.g., CPU, disk space, memory).
     *   Provides this information to other services (like AVIS) so it can be displayed to the AI, allowing the AI to make resource-aware decisions.
 
-3.  **AI-Generated Code Execution:**
-    *   Provides a secure mechanism to execute code strings provided by the AI (e.g., Python scripts).
+3.  **AI-Generated Code Execution (Python):**
+    *   Provides a mechanism to execute Python code strings provided by the AI.
     *   Before execution, it checks the AI's `can_execute_code` permission.
-    *   If permitted, it uses a sandboxed execution environment (typically through the `run_in_bash_session` tool provided by the underlying agent framework) to run the code. This involves:
-        *   Writing the code to a temporary script file within the sandbox.
-        *   Executing the script using the appropriate interpreter (e.g., `python`).
+    *   If permitted, it utilizes the `SandboxExecutor` service (`src/services/sandbox_executor.py`) to run the Python code. The `SandboxExecutor` handles:
+        *   Writing the code to a temporary script file.
+        *   Executing the script in a separate subprocess, providing a degree of isolation.
         *   Capturing `stdout`, `stderr`, and the script's exit code.
-    *   Returns the execution outcome as an `ExecutionResult` TypedDict, which includes the captured output and status messages.
+        *   Handling execution timeouts.
+    *   ASCS returns the execution outcome as an `ExecutionResult` TypedDict, derived from the results provided by `SandboxExecutor`.
 
 ## Key Responsibilities
 
@@ -39,9 +40,9 @@ The `AISimulationControlService` (ASCS) is a crucial component within the Unifie
 *   **`ResourceAwarenessService`:**
     *   ASCS takes an instance of `ResourceAwarenessService` during initialization.
     *   It calls methods on this service (e.g., `get_simulated_hardware_profile()`) to retrieve hardware status information.
-*   **`run_in_bash_session` (Tool/Framework Capability):**
-    *   ASCS is provided with a `bash_runner` callable (expected to be the `run_in_bash_session` tool or a compatible wrapper) during its initialization.
-    *   It uses this runner to execute shell commands that create and run the AI's script in a sandboxed environment.
+*   **`SandboxExecutor`:**
+    *   ASCS requires an instance of `SandboxExecutor` during its initialization.
+    *   It calls `sandbox_executor.execute_python_code()` to run AI-provided Python scripts.
 
 ## Future Enhancements
 
