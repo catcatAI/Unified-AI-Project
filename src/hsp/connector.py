@@ -1,18 +1,28 @@
 import json
 import uuid
 import asyncio
+import logging # Added logging
 from datetime import datetime, timezone
-from typing import Callable, Dict, Any, Optional, Literal # Added Optional, Literal, Dict, Any, Callable
-import paho.mqtt.client as mqtt # type: ignore # Using type: ignore as paho-mqtt might not have perfect type hints
+from typing import Callable, Dict, Any, Optional, Literal
+import paho.mqtt.client as mqtt # type: ignore
 
-from .types import HSPMessageEnvelope, HSPFactPayload, HSPQoSParameters # Using .types for relative import, added HSPQoSParameters
-
-from .types import HSPMessageEnvelope, HSPFactPayload, \
-    HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload # Added new types
+from .types import (
+    HSPMessageEnvelope, HSPFactPayload, HSPQoSParameters,
+    HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload,
+    HSPAcknowledgementPayload # Added for _send_acknowledgement
+)
 
 # Placeholder for other payload types to be defined in src/hsp/types.py
 # e.g., HSPBeliefPayload, HSPEnvironmentalStatePayload etc.
+# Note: HSPErrorDetails is used in example_hsp_usage, but not directly in HSPConnector class methods yet.
+# If it were, it would also need to be imported.
 
+# Initialize logger for this module
+logger = logging.getLogger(__name__)
+# You can also use a more specific name like logging.getLogger("HSPConnector")
+# For basic setup that shows logs during testing with caplog, ensure the level is appropriate.
+# Default level for root logger is WARNING. If tests need INFO, it should be configured.
+# For now, we'll assume pytest's caplog might set a lower level or we can set it in tests.
 
 class HSPConnector:
     """
@@ -62,7 +72,7 @@ class HSPConnector:
 
         # Configure Paho MQTT's automatic reconnection
         self.mqtt_client.reconnect_delay_set(min_delay=self.reconnect_min_delay, max_delay=self.reconnect_max_delay)
-        print(f"HSPConnector ({self.ai_id}): MQTT auto-reconnect configured with min_delay={self.reconnect_min_delay}s, max_delay={self.reconnect_max_delay}s.")
+        logger.info(f"HSPConnector ({self.ai_id}): MQTT auto-reconnect configured with min_delay={self.reconnect_min_delay}s, max_delay={self.reconnect_max_delay}s.")
 
         self.mqtt_client.on_connect = self._on_mqtt_connect
         self.mqtt_client.on_disconnect = self._on_mqtt_disconnect
@@ -80,65 +90,66 @@ class HSPConnector:
 
         # For managing subscriptions
         self.subscribed_topics: set[str] = set()
+        self._was_unexpectedly_disconnected: bool = False
 
     def _on_mqtt_connect(self, client, userdata, flags, reason_code, properties):
         if reason_code == 0:
-            print(f"HSPConnector ({self.ai_id}): Successfully connected to MQTT Broker at {self.broker_address}:{self.broker_port}")
+            connection_type = "reconnected" if self._was_unexpectedly_disconnected else "connected"
+            logger.info(f"HSPConnector ({self.ai_id}): Successfully {connection_type} to MQTT Broker at {self.broker_address}:{self.broker_port}")
             self.is_connected = True
+            self._was_unexpectedly_disconnected = False # Reset flag
             # Resubscribe to any topics if it's a reconnect
             for topic in list(self.subscribed_topics): # Iterate over a copy
-                self.subscribe(topic)
+                self.subscribe(topic) # subscribe method already logs success/failure
         else:
-            print(f"HSPConnector ({self.ai_id}): Failed to connect to MQTT Broker, reason code {reason_code}")
+            # This path means connection attempt failed, Paho will retry based on reconnect_delay_set
+            logger.warning(f"HSPConnector ({self.ai_id}): Failed to connect to MQTT Broker (during connect/reconnect attempt), reason code {reason_code}. Paho client will continue to retry.")
             self.is_connected = False
+            # Do not set _was_unexpectedly_disconnected here, as this is a failed *connect* attempt.
 
     def _on_mqtt_disconnect(self, client, userdata, reason_code, properties):
         self.is_connected = False
         if reason_code == 0:
             # MQTT_ERR_SUCCESS (0) usually means a clean disconnect initiated by client.disconnect()
-            print(f"HSPConnector ({self.ai_id}): Cleanly disconnected from MQTT Broker (reason code {reason_code}).")
+            logger.info(f"HSPConnector ({self.ai_id}): Cleanly disconnected from MQTT Broker (reason code {reason_code}).")
+            self._was_unexpectedly_disconnected = False # Reset on clean disconnect
         else:
             # Other reason codes indicate an unexpected disconnect (network issue, broker down, etc.)
-            print(f"HSPConnector ({self.ai_id}): Unexpectedly disconnected from MQTT Broker (reason code {reason_code}).")
-            print(f"HSPConnector ({self.ai_id}): Paho client will attempt to reconnect automatically (min_delay={self.reconnect_min_delay}s, max_delay={self.reconnect_max_delay}s).")
-        # The # TODO: Implement reconnection strategy is now handled by Paho's reconnect_delay_set
+            logger.warning(f"HSPConnector ({self.ai_id}): Unexpectedly disconnected from MQTT Broker (reason code {reason_code}).")
+            logger.info(f"HSPConnector ({self.ai_id}): Paho client will attempt to reconnect automatically (min_delay={self.reconnect_min_delay}s, max_delay={self.reconnect_max_delay}s).")
+            self._was_unexpectedly_disconnected = True # Set flag for unexpected disconnect
+        # Paho's internal reconnect_delay_set handles the reconnection strategy.
 
     def _on_mqtt_message(self, client, userdata, msg):
         """Handles incoming MQTT messages and forwards them to HSP message handler."""
-        print(f"HSPConnector ({self.ai_id}): Raw MQTT message received on topic '{msg.topic}'")
+        logger.debug(f"HSPConnector ({self.ai_id}): Raw MQTT message received on topic '{msg.topic}'") # Changed to debug
         try:
             message_str = msg.payload.decode('utf-8')
             self._handle_hsp_message_str(message_str, msg.topic)
         except Exception as e:
-            print(f"HSPConnector ({self.ai_id}): Error processing raw MQTT message: {e}")
+            logger.error(f"HSPConnector ({self.ai_id}): Error processing raw MQTT message on topic {msg.topic}: {e}", exc_info=True) # Added exc_info
 
     def connect(self) -> bool:
         """Connects to the MQTT broker."""
         if self.is_connected:
-            print(f"HSPConnector ({self.ai_id}): Already connected.")
+            logger.info(f"HSPConnector ({self.ai_id}): Already connected.")
             return True
         try:
-            print(f"HSPConnector ({self.ai_id}): Attempting to connect to MQTT Broker at {self.broker_address}:{self.broker_port}...")
+            logger.info(f"HSPConnector ({self.ai_id}): Attempting to connect to MQTT Broker at {self.broker_address}:{self.broker_port}...")
             self.mqtt_client.connect(self.broker_address, self.broker_port, keepalive=60)
             self.mqtt_client.loop_start() # Starts a background thread for network operations, callbacks
-            # Connection status will be updated by _on_mqtt_connect callback
-            # For initial check, we can assume it will connect or fail quickly for this simple version.
-            # A more robust version would await the on_connect callback.
-            # For now, we'll return True and let the callback update is_connected.
-            # This is a simplification for non-async paho-mqtt in an async conceptual flow.
             return True
         except Exception as e:
-            print(f"HSPConnector ({self.ai_id}): MQTT connection error: {e}")
+            logger.error(f"HSPConnector ({self.ai_id}): MQTT connection error: {e}", exc_info=True)
             self.is_connected = False
             return False
 
     def disconnect(self):
         """Disconnects from the MQTT broker."""
-        if self.mqtt_client and self.is_connected:
+        if self.mqtt_client and self.is_connected: # Ensure client exists before calling methods on it
             self.mqtt_client.loop_stop()
             self.mqtt_client.disconnect()
-            # is_connected will be set to False by _on_mqtt_disconnect
-        print(f"HSPConnector ({self.ai_id}): Disconnection process initiated.")
+        logger.info(f"HSPConnector ({self.ai_id}): Disconnection process initiated.")
 
     def _build_hsp_envelope(self, payload: Dict[str, Any], message_type: str, recipient_ai_id_or_topic: str,
                             communication_pattern: Literal[
@@ -174,7 +185,7 @@ class HSPConnector:
     def _send_hsp_message(self, envelope: HSPMessageEnvelope, mqtt_topic: str, mqtt_qos: Optional[int] = None) -> bool:
         """Sends a pre-built HSP envelope over MQTT."""
         if not self.is_connected:
-            print(f"HSPConnector ({self.ai_id}): Not connected. Cannot send message.")
+            logger.warning(f"HSPConnector ({self.ai_id}): Not connected. Cannot send message to {mqtt_topic}.")
             return False
 
         message_str = json.dumps(envelope)
@@ -182,15 +193,20 @@ class HSPConnector:
 
         try:
             msg_info = self.mqtt_client.publish(mqtt_topic, payload=message_str, qos=effective_mqtt_qos)
-            msg_info.wait_for_publish(timeout=5) # Wait for publish confirmation (for QoS > 0)
-            if msg_info.is_published():
-                print(f"HSPConnector ({self.ai_id}): Successfully published message {envelope.get('message_id')} to topic '{mqtt_topic}' (MQTT MID: {msg_info.mid})")
+            # msg_info.wait_for_publish(timeout=5) # This can block the calling thread.
+            # For a library, it's often better to let Paho handle publish retries in its loop
+            # or rely on on_publish callback if strict confirmation is needed without blocking.
+            # For QoS 0, is_published() is often True immediately. For QoS 1/2, it updates after ACK.
+            # Given loop_start() is used, Paho handles this in background.
+            # Let's log based on initial rc from publish and assume Paho handles retries for QoS1/2.
+            if msg_info.rc == mqtt.MQTT_ERR_SUCCESS:
+                logger.info(f"HSPConnector ({self.ai_id}): Message {envelope.get('message_id')} published to topic '{mqtt_topic}' (MQTT MID: {msg_info.mid}, QoS: {effective_mqtt_qos}). Paho will handle delivery for QoS>0.")
                 return True
             else:
-                print(f"HSPConnector ({self.ai_id}): Failed to publish message {envelope.get('message_id')} to topic '{mqtt_topic}' (MQTT MID: {msg_info.mid}) - not confirmed.")
+                logger.error(f"HSPConnector ({self.ai_id}): Failed to publish message {envelope.get('message_id')} to topic '{mqtt_topic}'. MQTT rc: {msg_info.rc}")
                 return False
         except Exception as e:
-            print(f"HSPConnector ({self.ai_id}): Error sending MQTT message to topic '{mqtt_topic}': {e}")
+            logger.error(f"HSPConnector ({self.ai_id}): Error sending MQTT message to topic '{mqtt_topic}': {e}", exc_info=True)
             return False
 
     def publish_fact(self, fact_payload: HSPFactPayload, topic: str, fact_payload_version: str = "0.1") -> bool:
@@ -209,28 +225,27 @@ class HSPConnector:
     def subscribe(self, topic: str, mqtt_qos: Optional[int] = None) -> bool:
         """Subscribes to an MQTT topic to receive HSP messages."""
         if not self.is_connected:
-            print(f"HSPConnector ({self.ai_id}): Not connected. Cannot subscribe to topic '{topic}'.")
+            logger.warning(f"HSPConnector ({self.ai_id}): Not connected. Cannot subscribe to topic '{topic}'.")
             return False
         try:
             effective_mqtt_qos = mqtt_qos if mqtt_qos is not None else self.default_qos
             result, mid = self.mqtt_client.subscribe(topic, qos=effective_mqtt_qos)
             if result == mqtt.MQTT_ERR_SUCCESS:
                 self.subscribed_topics.add(topic)
-                print(f"HSPConnector ({self.ai_id}): Successfully subscribed to topic '{topic}' with QoS {effective_mqtt_qos} (MID: {mid})")
+                logger.info(f"HSPConnector ({self.ai_id}): Successfully subscribed to topic '{topic}' with QoS {effective_mqtt_qos} (MID: {mid})")
                 return True
             else:
-                print(f"HSPConnector ({self.ai_id}): Failed to subscribe to topic '{topic}', error code {result}")
+                logger.error(f"HSPConnector ({self.ai_id}): Failed to subscribe to topic '{topic}', error code {result}")
                 return False
         except Exception as e:
-            print(f"HSPConnector ({self.ai_id}): Error subscribing to topic '{topic}': {e}")
+            logger.error(f"HSPConnector ({self.ai_id}): Error subscribing to topic '{topic}': {e}", exc_info=True)
             return False
 
     def unsubscribe(self, topic: str) -> bool:
         """Unsubscribes from an MQTT topic."""
         if not self.is_connected:
-            print(f"HSPConnector ({self.ai_id}): Not connected. Cannot unsubscribe from topic '{topic}'.")
-            # Still remove from local tracking if desired
-            if topic in self.subscribed_topics:
+            logger.warning(f"HSPConnector ({self.ai_id}): Not connected. Cannot unsubscribe from topic '{topic}'.")
+            if topic in self.subscribed_topics: # Still remove from local tracking if desired
                 self.subscribed_topics.remove(topic)
             return False
         try:
@@ -238,106 +253,85 @@ class HSPConnector:
             if result == mqtt.MQTT_ERR_SUCCESS:
                 if topic in self.subscribed_topics:
                     self.subscribed_topics.remove(topic)
-                print(f"HSPConnector ({self.ai_id}): Successfully unsubscribed from topic '{topic}' (MID: {mid})")
+                logger.info(f"HSPConnector ({self.ai_id}): Successfully unsubscribed from topic '{topic}' (MID: {mid})")
                 return True
             else:
-                print(f"HSPConnector ({self.ai_id}): Failed to unsubscribe from topic '{topic}', error code {result}")
+                logger.error(f"HSPConnector ({self.ai_id}): Failed to unsubscribe from topic '{topic}', error code {result}")
                 return False
         except Exception as e:
-            print(f"HSPConnector ({self.ai_id}): Error unsubscribing from topic '{topic}': {e}")
+            logger.error(f"HSPConnector ({self.ai_id}): Error unsubscribing from topic '{topic}': {e}", exc_info=True)
             return False
 
     def _handle_hsp_message_str(self, message_str: str, received_on_topic: str):
         """Deserializes and processes an incoming HSP message string."""
         try:
             envelope: HSPMessageEnvelope = json.loads(message_str)
-            # Basic validation of envelope structure (more robust with TypedDict/Pydantic)
             if not all(k in envelope for k in ["message_id", "sender_ai_id", "message_type", "payload"]):
-                print(f"HSPConnector ({self.ai_id}): Received message with missing core envelope fields from topic '{received_on_topic}'.")
+                logger.warning(f"HSPConnector ({self.ai_id}): Received message with missing core envelope fields from topic '{received_on_topic}'. Message snippet: {message_str[:200]}")
                 return
 
-            print(f"HSPConnector ({self.ai_id}): Decoded HSP message {envelope['message_id']} from {envelope['sender_ai_id']} on topic '{received_on_topic}'")
+            logger.info(f"HSPConnector ({self.ai_id}): Decoded HSP message {envelope['message_id']} from {envelope['sender_ai_id']} on topic '{received_on_topic}'")
 
-            # Invoke generic callback if registered
             if self._on_generic_message_callback:
                 try:
                     self._on_generic_message_callback(envelope, received_on_topic)
                 except Exception as e:
-                    print(f"HSPConnector ({self.ai_id}): Error in generic message callback: {e}")
+                    logger.error(f"HSPConnector ({self.ai_id}): Error in generic message callback for msg {envelope.get('message_id')}: {e}", exc_info=True)
 
-            # Invoke specific callbacks based on message_type
             payload = envelope.get("payload")
             message_type = envelope.get("message_type")
 
-            if message_type and payload is not None: # Ensure payload is not None
-                # Dispatch to specific handlers first
-                if message_type.startswith("HSP::Fact") and self._on_fact_received_callback:
-                    try:
+            if message_type and payload is not None:
+                specific_handler_error = None
+                try:
+                    if message_type.startswith("HSP::Fact") and self._on_fact_received_callback:
                         self._on_fact_received_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
-                    except Exception as e:
-                        print(f"HSPConnector ({self.ai_id}): Error in Fact callback: {e}")
-                elif message_type.startswith("HSP::CapabilityAdvertisement") and self._on_capability_advertisement_callback:
-                    try:
+                    elif message_type.startswith("HSP::CapabilityAdvertisement") and self._on_capability_advertisement_callback:
                         self._on_capability_advertisement_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
-                    except Exception as e:
-                        print(f"HSPConnector ({self.ai_id}): Error in CapabilityAdvertisement callback: {e}")
-                elif message_type.startswith("HSP::TaskRequest") and self._on_task_request_callback:
-                    try:
+                    elif message_type.startswith("HSP::TaskRequest") and self._on_task_request_callback:
                         self._on_task_request_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
-                    except Exception as e:
-                        print(f"HSPConnector ({self.ai_id}): Error in TaskRequest callback: {e}")
-                elif message_type.startswith("HSP::TaskResult") and self._on_task_result_callback:
-                    try:
+                    elif message_type.startswith("HSP::TaskResult") and self._on_task_result_callback:
                         self._on_task_result_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
-                    except Exception as e:
-                        print(f"HSPConnector ({self.ai_id}): Error in TaskResult callback: {e}")
-                # Add elif for other specific message types (Belief, EnvironmentalState, Ack, Nack etc.) here
+                    # Add other specific handlers here
+                except Exception as e:
+                    specific_handler_error = e
+                    logger.error(f"HSPConnector ({self.ai_id}): Error in specific callback for {message_type} msg {envelope.get('message_id')}: {e}", exc_info=True)
 
-                # The generic callback is called AFTER specific ones (if any matched), or if no specific one matched.
-                # However, the current generic callback is called before this block.
-                # Decision: Generic callback should be for *all* messages. Specific ones are for convenience.
-                    # The current structure calls generic first, then tries specific. This is acceptable.
-
-            # Check if an ACK is required
             qos_params = envelope.get("qos_parameters", {})
             if isinstance(qos_params, dict) and qos_params.get("requires_ack"):
                 self._send_acknowledgement(
-                    target_ai_id=envelope["sender_ai_id"], # ACK goes back to the original sender
+                    target_ai_id=envelope["sender_ai_id"],
                     acknowledged_message_id=envelope["message_id"],
-                    status="received", # Mark as received
-                    # Determine reply topic for ACK - this is a simplification.
-                    # A robust system might use a dedicated reply-to field from the original message
-                    # or a pre-agreed ACK topic structure.
-                    # For now, publish to a general "acks" sub-topic for the sender.
+                    status="received", # "processed" might be too strong if specific_handler_error occurred
                     ack_topic=f"hsp/acks/{envelope['sender_ai_id']}"
                 )
 
         except json.JSONDecodeError:
-            print(f"HSPConnector ({self.ai_id}): Received invalid JSON on topic '{received_on_topic}': {message_str[:200]}...") # Log snippet
-            # Consider sending NACK if possible and appropriate for JSON errors, though NACK for unparseable message is tricky.
+            logger.error(f"HSPConnector ({self.ai_id}): Received invalid JSON on topic '{received_on_topic}': {message_str[:200]}...")
         except Exception as e:
-            print(f"HSPConnector ({self.ai_id}): Unhandled error processing HSP message from topic '{received_on_topic}': {e}")
-            # Consider sending NACK if the message was parsed but processing failed.
+            logger.error(f"HSPConnector ({self.ai_id}): Unhandled error processing HSP message from topic '{received_on_topic}': {e}", exc_info=True)
 
     def _send_acknowledgement(self, target_ai_id: str, acknowledged_message_id: str, status: Literal["received", "processed"], ack_topic: str, version: str = "0.1"):
         """Helper method to construct and send an HSP Acknowledgement message."""
-        ack_payload = HSPAcknowledgementPayload(
-            status=status,
-            ack_timestamp=datetime.now(timezone.utc).isoformat(),
-            target_message_id=acknowledged_message_id
-        )
+        # Ensure HSPAcknowledgementPayload is defined or imported from .types
+        # For now, assuming it's a dict-like structure if not strictly typed yet
+        ack_payload: Dict[str, Any] = { # HSPAcknowledgementPayload
+            "status": status,
+            "ack_timestamp": datetime.now(timezone.utc).isoformat(),
+            "target_message_id": acknowledged_message_id
+        }
         ack_message_type = f"HSP::Acknowledgement_v{version}"
 
         envelope = self._build_hsp_envelope(
-            payload=dict(ack_payload),
+            payload=ack_payload, # payload=dict(ack_payload) if strictly TypedDict
             message_type=ack_message_type,
-            recipient_ai_id_or_topic=ack_topic, # The topic where the target AI listens for ACKs or its direct inbox
+            recipient_ai_id_or_topic=ack_topic,
             communication_pattern="acknowledgement",
-            correlation_id=acknowledged_message_id # Correlate ACK to the original message
+            correlation_id=acknowledged_message_id
         )
-        print(f"HSPConnector ({self.ai_id}): Sending ACK for message '{acknowledged_message_id}' to '{target_ai_id}' on topic '{ack_topic}'. Status: {status}")
+        logger.info(f"HSPConnector ({self.ai_id}): Sending ACK for message '{acknowledged_message_id}' to '{target_ai_id}' on topic '{ack_topic}'. Status: {status}")
         if not self._send_hsp_message(envelope, mqtt_topic=ack_topic):
-            print(f"HSPConnector ({self.ai_id}): Failed to send ACK for message '{acknowledged_message_id}'.")
+            logger.warning(f"HSPConnector ({self.ai_id}): Failed to send ACK for message '{acknowledged_message_id}'.")
 
 
     # Registration methods for callbacks
