@@ -40,6 +40,7 @@ AVIS interfaces with several key components:
     *   It loads virtual UI configurations into AVIS.
     *   It sends commands to AVIS to simulate user actions or request code execution.
     *   It queries AVIS to get the current UI state, permissions, and hardware status.
+    *   An example of such an entity is the `SimpleCodingAgent` (see `src/agents/simple_coding_agent.py`), which is used for testing and demonstrating AVIS's code execution capabilities.
 
 ## 4. Core Concepts
 
