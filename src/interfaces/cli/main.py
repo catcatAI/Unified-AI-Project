@@ -5,7 +5,7 @@ import uuid
 from typing import Dict, Any, Optional, List
 
 # Assuming src is in PYTHONPATH or this script is run from project root level
-from src.hsp.types import HSPFactPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload # Added src.
+from src.hsp.types import HSPFactPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload, HSPTaskResultPayload # Added HSPTaskResultPayload
 from src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID, DEFAULT_LLM_CONFIG, DEFAULT_OPERATIONAL_CONFIGS # Import new service management
 
 # --- CLI Specific AI ID ---
@@ -185,4 +185,3 @@ def main_cli_logic():
 
 if __name__ == '__main__':
     main_cli_logic()
-```

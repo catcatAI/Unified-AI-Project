@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Literal # Added Literal
 from pydantic import BaseModel
 
 class UserInput(BaseModel):

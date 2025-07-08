@@ -21,6 +21,7 @@ typing-extensions # For Required, NotRequired, etc.
 fastapi
 uvicorn[standard]
 pydantic
+httpx # For FastAPI TestClient
 
 # For system monitoring (future use, good to list)
 psutil
@@ -33,3 +34,6 @@ networkx
 
 # For HSPConnector MQTT transport
 paho-mqtt
+
+# For pytest asyncio tests
+pytest-asyncio

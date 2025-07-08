@@ -270,4 +270,3 @@ if __name__ == '__main__':
 
     shutdown_services()
     print("--- Core Services Initialization Test Finished ---")
-```

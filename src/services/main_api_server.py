@@ -179,34 +179,6 @@ async def request_hsp_task(task_input: HSPTaskRequestInput):
     api_session_id = f"api_session_hsp_{uuid.uuid4().hex[:6]}"
     original_query_context = f"API request for capability {task_input.target_capability_id}"
 
-    interim_response_str = await dialogue_manager._dispatch_hsp_task_request(
-        capability_advertisement=selected_capability_adv,
-        request_parameters=task_input.parameters,
-        original_user_query=original_query_context,
-        user_id=api_user_id,
-        session_id=api_session_id,
-        request_type="api_initiated_hsp_task" # A new request type for clarity
-    )
-
-    # _dispatch_hsp_task_request returns the correlation_id (as part of the interim message string, implicitly)
-    # Or it returns an error message directly.
-    # The actual correlation_id is stored in dialogue_manager.pending_hsp_task_requests.
-    # We need to retrieve it if the dispatch was successful.
-
-    # Let's find the correlation_id from pending requests. This is a bit of a hack.
-    # Ideally, _dispatch_hsp_task_request would return a structured object or tuple.
-    # For now, we rely on the interim message format.
-
-    correlation_id_from_dispatch: Optional[str] = None
-    if interim_response_str and "I've sent your request" in interim_response_str:
-        # Try to find the latest added correlation_id that matches the context. This is fragile.
-        # A better way would be for _dispatch_hsp_task_request to return it directly.
-        # For now, let's assume the last one added to pending_hsp_task_requests for this context *might* be it.
-        # This needs refinement in DM._dispatch_hsp_task_request to return correlation_id.
-
-        # Let's modify _dispatch_hsp_task_request to return correlation_id along with message.
-        # For now, we'll assume it was successful if interim_response_str is positive.
-        # And we'll try to find the correlation_id in pending_hsp_task_requests by some other means if possible, or just return a generic success.
     # _dispatch_hsp_task_request now returns -> (user_message, correlation_id)
     user_message, correlation_id = await dialogue_manager._dispatch_hsp_task_request(
         capability_advertisement=selected_capability_adv,
