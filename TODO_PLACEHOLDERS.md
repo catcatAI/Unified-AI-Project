@@ -58,6 +58,24 @@ These are comments indicating planned work or missing functionality that require
     *   **Context:** Was inside the `loadHspServices` function.
     *   **Required Functionality:** (Implemented in `feat/electron-hsp-use-service-button`) A "Use Service" button is now added to each service in the HSP services list. Clicking it populates the "Target Capability ID" field in the HSP Task Request form and clears the parameters field.
 
+*   **File:** `src/core_services.py`
+    *   **Context:** The `HSPConnector` instance in `initialize_services` subscribes to topics like `f"{CAP_ADVERTISEMENT_TOPIC}/#"` and `f"{FACT_TOPIC_GENERAL}/#"`.
+    *   **TODO:** Define the constants `CAP_ADVERTISEMENT_TOPIC` and `FACT_TOPIC_GENERAL`. These are currently used as f-string components without prior definition in `core_services.py`. They should be defined, perhaps in `src/hsp/constants.py` or loaded from a configuration, and then imported/used in `core_services.py`.
+    *   **Status:** Pending.
+
+*   **File:** `src/hsp/connector.py` (Related to `core_services.py`)
+    *   **Context:** `HSPConnector.register_on_task_result_callback` currently allows only one callback to be registered for task results. Both `DialogueManager` and `FragmentaOrchestrator` might need to process task results.
+    *   **TODO:** Enhance `HSPConnector` to support multiple callbacks for task results (e.g., a list of callbacks) or implement a central dispatcher mechanism within `core_services.py` that receives all task results and routes them to the appropriate module (DM or Fragmenta) based on `correlation_id` or other metadata. This is to prevent one module's registration from overwriting another's.
+    *   **Status:** Pending.
+
+*   **File:** `src/fragmenta/fragmenta_orchestrator.py`
+    *   **Context:** The `process_complex_task` method has basic state management for handling asynchronous HSP calls.
+    *   **TODO:** Enhance state management for more complex scenarios, such as tasks involving multiple sequential or parallel HSP calls, or mixed local and HSP steps. This might require a more formal plan execution engine within Fragmenta.
+    *   **Status:** Pending.
+    *   **Context:** Error handling for HSP tasks (e.g., timeouts, complex failure payloads from peers) is currently basic.
+    *   **TODO:** Implement more robust error handling and potentially retry strategies for HSP sub-tasks dispatched by Fragmenta. Consider how HSP task timeouts should be managed.
+    *   **Status:** Pending.
+
 ## 3. Code/Data Comments & Clarifications
 
 These are comments that were picked up by the search but are not actionable code placeholders requiring new implementation. They are either logic that handles TODOs, commented-out debug lines, TODOs within example data, or general clarifications.
