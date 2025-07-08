@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta # Ensure timedelta is imported
 import logging # For caplog if needed, or to check logs from module
 
 # Ensure src is in path for imports
@@ -23,12 +23,23 @@ def mock_trust_manager():
 # --- Test ServiceDiscoveryModule ---
 class TestServiceDiscoveryModule:
 
-    def test_init(self, mock_trust_manager: MagicMock):
-        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
-        assert sdm.trust_manager == mock_trust_manager
-        assert sdm.known_capabilities == {}
-        assert sdm.lock is not None
-        # logger.info("HSP ServiceDiscoveryModule initialized.") - Check log if desired with caplog
+    def test_init(self, mock_trust_manager: MagicMock, caplog):
+        caplog.set_level(logging.INFO, logger="src.core_ai.service_discovery.service_discovery_module")
+        # Test with default staleness threshold
+        sdm_default = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
+        assert sdm_default.trust_manager == mock_trust_manager
+        assert sdm_default.known_capabilities == {}
+        assert sdm_default.lock is not None
+        assert sdm_default.staleness_threshold_seconds == ServiceDiscoveryModule.DEFAULT_STALENESS_THRESHOLD_SECONDS
+        assert f"Staleness threshold: {ServiceDiscoveryModule.DEFAULT_STALENESS_THRESHOLD_SECONDS} seconds" in caplog.text
+
+        caplog.clear()
+        # Test with custom staleness threshold
+        custom_threshold = 30
+        sdm_custom = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=custom_threshold)
+        assert sdm_custom.staleness_threshold_seconds == custom_threshold
+        assert f"Staleness threshold: {custom_threshold} seconds" in caplog.text
+
 
     def test_process_capability_advertisement_new_and_update(self, mock_trust_manager: MagicMock):
         sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
@@ -208,3 +219,111 @@ class TestServiceDiscoveryModule:
     #     pass
     # def test_get_capability_by_id_returns_none_for_stale(self, populated_sdm_with_stale: ServiceDiscoveryModule):
     #     pass
+
+    def _add_capability_at_time(self, sdm: ServiceDiscoveryModule, cap_payload: HSPCapabilityAdvertisementPayload, mock_now_time: datetime):
+        # Helper to add/update a capability as if it was processed at a specific time
+        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_obj:
+            mock_datetime_obj.now.return_value = mock_now_time
+            # Ensure all required fields are present for HSPCapabilityAdvertisementPayload
+            # Merging with defaults for optional fields if not present in cap_payload
+            full_cap_payload = HSPCapabilityAdvertisementPayload(
+                capability_id=cap_payload.get("capability_id", "default_id"), # type: ignore
+                ai_id=cap_payload.get("ai_id", "default_ai_id"), # type: ignore
+                name=cap_payload.get("name", "Default Name"), # type: ignore
+                description=cap_payload.get("description", "Default Desc"), # type: ignore
+                version=cap_payload.get("version", "1.0"), # type: ignore
+                availability_status=cap_payload.get("availability_status", "online"), # type: ignore
+                tags=cap_payload.get("tags"),
+                input_schema_uri=cap_payload.get("input_schema_uri"),
+                input_schema_example=cap_payload.get("input_schema_example"),
+                output_schema_uri=cap_payload.get("output_schema_uri"),
+                output_schema_example=cap_payload.get("output_schema_example"),
+                data_format_preferences=cap_payload.get("data_format_preferences"),
+                hsp_protocol_requirements=cap_payload.get("hsp_protocol_requirements"),
+                cost_estimate_template=cap_payload.get("cost_estimate_template"),
+                access_policy_id=cap_payload.get("access_policy_id")
+            )
+            sdm.process_capability_advertisement(full_cap_payload, full_cap_payload['ai_id'], MagicMock(spec=HSPMessageEnvelope))
+
+
+    def test_staleness_checks(self, mock_trust_manager: MagicMock, caplog):
+        """Combined test for find_capabilities and get_capability_by_id staleness."""
+        caplog.set_level(logging.DEBUG, logger="src.core_ai.service_discovery.service_discovery_module")
+        threshold = 60  # 1 minute
+        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=threshold)
+
+        # Use a fixed "current time" for consistent calculations within this test
+        # This will be the time when find_capabilities or get_capability_by_id is called
+        current_test_time = datetime.now(timezone.utc)
+
+        cap_fresh_payload_dict = {"capability_id":"fresh_cap", "ai_id":"ai_fresh", "name":"Fresh", "description":"d", "version":"v", "availability_status":"online"}
+        cap_stale_payload_dict = {"capability_id":"stale_cap", "ai_id":"ai_stale", "name":"Stale", "description":"d", "version":"v", "availability_status":"online"}
+
+        # Add fresh capability (seen 30 seconds ago relative to current_test_time)
+        time_fresh_seen = current_test_time - timedelta(seconds=30)
+        self._add_capability_at_time(sdm, cap_fresh_payload_dict, time_fresh_seen) # type: ignore
+
+        # Add stale capability (seen 90 seconds ago relative to current_test_time)
+        time_stale_seen = current_test_time - timedelta(seconds=90)
+        self._add_capability_at_time(sdm, cap_stale_payload_dict, time_stale_seen) # type: ignore
+
+        # Patch datetime.now for the duration of the find_capabilities and get_capability_by_id calls
+        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_for_check:
+            mock_datetime_for_check.now.return_value = current_test_time # This is when staleness is evaluated
+
+            # Test find_capabilities
+            results = sdm.find_capabilities()
+            assert len(results) == 1
+            assert results[0].get('capability_id') == "fresh_cap"
+            assert "Skipping stale capability ID: stale_cap" in caplog.text
+
+            # Test get_capability_by_id for fresh
+            fresh_found = sdm.get_capability_by_id("fresh_cap")
+            assert fresh_found is not None
+            assert fresh_found.get('capability_id') == "fresh_cap"
+
+            caplog.clear()
+            # Test get_capability_by_id for stale
+            stale_found = sdm.get_capability_by_id("stale_cap")
+            assert stale_found is None
+            # Log level for this specific message in get_capability_by_id is INFO
+            assert "found but is stale" in "".join(r.message for r in caplog.records if r.levelname == "INFO")
+            assert "stale_cap" in "".join(r.message for r in caplog.records if r.levelname == "INFO")
+
+
+    def test_get_capability_by_id_staleness_direct_variant(self, mock_trust_manager: MagicMock, caplog):
+        """More focused test for get_capability_by_id staleness with INFO log level."""
+        caplog.set_level(logging.INFO, logger="src.core_ai.service_discovery.service_discovery_module")
+        threshold = 100
+        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=threshold)
+
+        cap_id = "cap_for_get_stale"
+        payload_dict = {"capability_id":cap_id, "ai_id":"ai_get_stale", "name":"GetStale", "description":"d", "version":"v", "availability_status":"online"}
+
+        # Advertised 150s ago relative to when it will be checked
+        time_advertised = datetime.now(timezone.utc) - timedelta(seconds=150)
+        self._add_capability_at_time(sdm, payload_dict, time_advertised) # type: ignore
+
+        current_simulated_time_for_check = datetime.now(timezone.utc)
+        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_obj_get:
+            mock_datetime_obj_get.now.return_value = current_simulated_time_for_check
+
+            retrieved_cap = sdm.get_capability_by_id(cap_id)
+            assert retrieved_cap is None
+            assert f"Capability ID '{cap_id}' from AI: {payload_dict.get('ai_id')} found but is stale" in caplog.text
+
+        # Test non-stale case for get_capability_by_id
+        caplog.clear()
+        # Re-advertise or add as new, but this time it was seen recently
+        time_advertised_not_stale = current_simulated_time_for_check - timedelta(seconds=50)
+        self._add_capability_at_time(sdm, payload_dict, time_advertised_not_stale) # type: ignore
+
+        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_obj_get_not_stale:
+            mock_datetime_obj_get_not_stale.now.return_value = current_simulated_time_for_check
+            retrieved_cap_not_stale = sdm.get_capability_by_id(cap_id)
+            assert retrieved_cap_not_stale is not None
+            assert retrieved_cap_not_stale.get('capability_id') == cap_id
+            assert "found but is stale" not in caplog.text
+
+# Path for patching datetime.now within the module under test
+DATETIME_NOW_PATCH_PATH = "src.core_ai.service_discovery.service_discovery_module.datetime"
