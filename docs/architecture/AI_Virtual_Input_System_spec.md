@@ -31,8 +31,8 @@ AVIS interfaces with several key components:
     *   A new service responsible for:
         *   Managing AI operational permissions (e.g., `can_execute_code`, `can_read_sim_hw_status`).
         *   Interfacing with `ResourceAwarenessService` to fetch current simulated hardware status.
-        *   Orchestrating the execution of AI-provided code strings using a sandboxed execution mechanism (e.g., `run_in_bash_session`).
-        *   Returning execution results (`stdout`, `stderr`, exit codes) to AVIS.
+        *   Orchestrating the execution of AI-provided Python code strings using the `SandboxExecutor` service. The `SandboxExecutor` provides a more controlled environment for running code compared to a direct bash session.
+        *   Returning execution results (`stdout`, `stderr`, exit codes, error flags) from `SandboxExecutor` to AVIS.
 *   **`ResourceAwarenessService` (External):**
     *   Provides information about the simulated hardware environment (CPU, disk, etc.). ASCS queries this service.
 *   **AI Agent / Test Harness (External):**
@@ -106,10 +106,10 @@ AVIS enables AI-driven code execution through specific UI interactions and inter
     4.  `process_code_execution_command` then invokes `AISimulationControlService.execute_ai_code(code_string, current_permissions)`.
     5.  The `AISimulationControlService` (ASCS):
         *   Checks if the AI's `current_permissions` (specifically `can_execute_code`) allow execution.
-        *   If permitted, it prepares the code (e.g., writes to a temporary script file) and uses the `run_in_bash_session` tool to execute it in a sandboxed environment.
-        *   Captures `stdout`, `stderr`, and the script's exit code.
-        *   Returns an `ExecutionResult` TypedDict.
-    6.  `AIVirtualInputService` receives the `ExecutionResult`.
+        *   If permitted, it calls `SandboxExecutor.execute_python_code(code_string)`. The `SandboxExecutor` handles the details of writing the code to a temporary file and running it in an isolated subprocess.
+        *   `SandboxExecutor` captures `stdout`, `stderr`, the script's exit code, and flags for compilation/runtime errors.
+        *   ASCS receives this detailed result from `SandboxExecutor` and maps it to an `ExecutionResult` TypedDict.
+    6.  `AIVirtualInputService` receives the `ExecutionResult` from ASCS.
     7.  It formats this result into a string and updates the `value` of the `code_output_display` virtual UI element.
     8.  The action (code execution attempt) and its outcome are logged in AVIS's action log.
 

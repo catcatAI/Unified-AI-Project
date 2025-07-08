@@ -15,77 +15,17 @@ sys.path.insert(0, project_root)
 
 from src.services.resource_awareness_service import ResourceAwarenessService
 from src.services.ai_virtual_input_service import AIVirtualInputService
+from src.services.sandbox_executor import SandboxExecutor # Import SandboxExecutor
 from src.agents.simple_coding_agent import SimpleCodingAgent
 from src.shared.types.common_types import VirtualInputElementDescription
 
-# --- Mock or Real `run_in_bash_session` ---
-# For this driver script, we need a callable that mimics `run_in_bash_session`.
-# If this script is run by Jules (the agent), Jules would inject its actual tool.
-# If run standalone for testing, we can use a mock or a simple local subprocess version.
-
-def mock_bash_runner(command: str) -> Dict[str, Any]:
-    """
-    A mock bash runner that can execute simple Python scripts from a string command.
-    Format: "echo '<code>' > <filepath> && python <filepath> && rm <filepath>"
-    """
-    print(f"MockBashRunner executing: {command[:100]}...") # Log truncated command
-    try:
-        # This is a simplified parser for the specific command structure
-        if not command.startswith("echo '") or "&& python" not in command or "&& rm" not in command:
-            raise ValueError("Command format not recognized by mock_bash_runner.")
-
-        # Extract code: echo '<code>' > /tmp/file.py ...
-        code_part = command.split("echo '")[1].split("' > /tmp/ai_script_")[0]
-        # Reverse the escaping done by AISimulationControlService
-        code_to_execute = code_part.replace("'\\''", "'")
-
-        # For security and simplicity in a mock, we won't actually write to /tmp or run rm.
-        # We'll execute the code directly using exec, capturing stdout/stderr.
-        # This is NOT a secure sandbox, just for mocking the execution result.
-
-        import io
-        from contextlib import redirect_stdout, redirect_stderr
-
-        stdout_capture = io.StringIO()
-        stderr_capture = io.StringIO()
-        exit_code = 0
-
-        global_scope: Dict[str, Any] = {} # Make it a class member or pass if state needed across execs
-
-        try:
-            with redirect_stdout(stdout_capture):
-                with redirect_stderr(stderr_capture):
-                    exec(code_to_execute, global_scope)
-        except Exception as e:
-            # exec itself doesn't populate stderr well for compilation vs runtime errors
-            # but if the script prints to stderr, it will be caught.
-            # For exceptions during exec:
-            import traceback
-            stderr_capture.write(traceback.format_exc())
-            exit_code = 1
-
-        stdout_val = stdout_capture.getvalue()
-        stderr_val = stderr_capture.getvalue()
-
-        print(f"MockBashRunner STDOUT:\n{stdout_val}")
-        print(f"MockBashRunner STDERR:\n{stderr_val}")
-        print(f"MockBashRunner ExitCode: {exit_code}")
-
-        return {
-            "stdout": stdout_val,
-            "stderr": stderr_val,
-            "exit_code": exit_code
-        }
-    except Exception as e:
-        print(f"MockBashRunner general error: {e}")
-        return {
-            "stdout": "",
-            "stderr": f"MockBashRunner error: {e}",
-            "exit_code": -1
-        }
-
 def main():
     print("--- Setting up environment for SimpleCodingAgent ---")
+
+    # 0. Instantiate SandboxExecutor
+    # This will use its default timeout.
+    print("Initializing SandboxExecutor...")
+    sandbox_executor = SandboxExecutor()
 
     # 1. Instantiate ResourceAwarenessService
     # Ensure 'configs/simulated_resources.yaml' exists or provide a valid path.
@@ -122,10 +62,11 @@ simulated_hardware_profile:
 
 
     # 2. Instantiate AIVirtualInputService
-    # Provide the mock_bash_runner for AISimulationControlService to use.
+    # Pass the real SandboxExecutor instance
+    print("Initializing AIVirtualInputService...")
     avis_service = AIVirtualInputService(
         resource_awareness_service=resource_service,
-        bash_runner=mock_bash_runner
+        sandbox_executor=sandbox_executor # Pass the actual SandboxExecutor
     )
 
     # 3. Define and load the virtual UI
@@ -165,5 +106,3 @@ simulated_hardware_profile:
 
 if __name__ == "__main__":
     main()
-
-[end of examples/run_simple_coding_agent.py]

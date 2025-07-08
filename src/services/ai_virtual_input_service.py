@@ -27,6 +27,8 @@ from src.shared.types.common_types import (
 from src.services.resource_awareness_service import ResourceAwarenessService
 # Import AISimulationControlService for instantiation
 from src.services.ai_simulation_control_service import AISimulationControlService
+# Import SandboxExecutor for type hinting and passing to ASCS
+from src.services.sandbox_executor import SandboxExecutor
 
 
 # Further imports will be added as the class is implemented.
@@ -43,7 +45,7 @@ class AIVirtualInputService:
     def __init__(self,
                  initial_mode: VirtualInputPermissionLevel = "simulation_only",
                  resource_awareness_service: Optional[ResourceAwarenessService] = None,
-                 bash_runner: Optional[Any] = None): # For AISimulationControlService
+                 sandbox_executor: Optional[SandboxExecutor] = None): # Changed from bash_runner
         """
         Initializes the AI Virtual Input Service.
 
@@ -51,15 +53,25 @@ class AIVirtualInputService:
             initial_mode (VirtualInputPermissionLevel): The starting operational mode.
             resource_awareness_service (Optional[ResourceAwarenessService]):
                 An instance of ResourceAwarenessService.
-            bash_runner (Optional[Any]): A callable (like Jules's run_in_bash_session)
-                for executing shell commands, passed to AISimulationControlService.
+            sandbox_executor (Optional[SandboxExecutor]): An instance of SandboxExecutor
+                to be used for code execution by AISimulationControlService.
+                If None, AISimulationControlService might raise an error or use a default mock,
+                depending on its implementation (currently it raises an error).
         """
         self.mode: VirtualInputPermissionLevel = initial_mode
+
+        if sandbox_executor is None:
+            # This is a critical dependency for the current design of ASCS.
+            # Consider if AVIS should create a default SandboxExecutor if None is provided,
+            # or if ASCS should have its own internal default/mock if None is passed to it.
+            # For now, let's make it explicit that it's needed.
+            raise ValueError("A SandboxExecutor instance is required for AIVirtualInputService "
+                             "to correctly initialize AISimulationControlService.")
 
         # Initialize AISimulationControlService first, as it provides permissions and hw status
         self.ai_simulation_control_service = AISimulationControlService(
             resource_awareness_service=resource_awareness_service,
-            bash_runner=bash_runner
+            sandbox_executor=sandbox_executor # Pass SandboxExecutor
         )
 
         # Virtual cursor position
