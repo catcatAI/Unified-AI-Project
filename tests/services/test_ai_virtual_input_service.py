@@ -9,14 +9,69 @@ from src.shared.types.common_types import (
     VirtualKeyboardCommand,
     VirtualMouseEventType,
     VirtualKeyboardActionType,
-    VirtualInputPermissionLevel
+    VirtualInputPermissionLevel,
+    AIPermissionSet,
+    ExecutionResult,
+    VirtualInputElementDescription # Make sure this is imported
 )
+from unittest.mock import MagicMock, patch
+
+# Mock AISimulationControlService for testing AIVirtualInputService in isolation
+# We can patch it where AIVisualInputService tries to import it, or pass a mock.
+# For now, let's design tests to allow injecting a mock.
 
 class TestAIVirtualInputService(unittest.TestCase):
 
     def setUp(self):
         """Set up for each test method."""
-        self.avis = AIVirtualInputService(initial_mode="simulation_only")
+        # Mock AISimulationControlService
+        self.mock_sim_control_service = MagicMock()
+        self.mock_sim_control_service.get_current_ai_permissions.return_value = {
+            "can_execute_code": True, "can_read_sim_hw_status": True
+        }
+        self.mock_sim_control_service.get_sim_hardware_status.return_value = {
+            "profile_name": "TestHWProfile", "cpu_cores": 4
+        }
+        self.mock_sim_control_service.execute_ai_code.return_value = { # type: ignore
+            "request_id": "test-req-123",
+            "execution_success": True,
+            "script_exit_code": 0,
+            "stdout": "Mock code execution success",
+            "stderr": "",
+            "status_message": "Execution completed."
+        }
+
+        # Mock ResourceAwarenessService (though AISimulationControlService uses it, AVIS might get it too)
+        self.mock_resource_service = MagicMock()
+
+        # Mock bash_runner
+        self.mock_bash_runner = MagicMock()
+
+        # Patch 'AISimulationControlService' in the module where AIVirtualInputService imports it
+        # This is cleaner than trying to inject it if AIVisualInputService instantiates it directly.
+        # However, our AIVisualInputService now takes it as an argument (or bash_runner for it).
+
+        self.avis = AIVirtualInputService(
+            initial_mode="simulation_only",
+            resource_awareness_service=self.mock_resource_service, # Passed to ASCS
+            bash_runner=self.mock_bash_runner # Passed to ASCS
+        )
+        # Replace the internally created AISimulationControlService with our mock for fine-grained testing
+        self.avis.ai_simulation_control_service = self.mock_sim_control_service
+
+
+        # Define standard UI elements that will be used in multiple tests
+        self.code_editor_el: VirtualInputElementDescription = {"element_id": "code_editor", "element_type": "text_area", "value": ""} # type: ignore
+        self.run_button_el: VirtualInputElementDescription = {"element_id": "run_code_button", "element_type": "button"} # type: ignore
+        self.output_display_el: VirtualInputElementDescription = {"element_id": "code_output_display", "element_type": "text_area", "value": "", "read_write": False} # type: ignore
+        self.perm_display_el: VirtualInputElementDescription = {"element_id": "ai_permissions_display", "element_type": "text_area", "value": "", "read_write": False} # type: ignore
+        self.hw_display_el: VirtualInputElementDescription = {"element_id": "sim_hw_status_display", "element_type": "text_area", "value": "", "read_write": False} # type: ignore
+
+        self.full_test_ui: List[VirtualInputElementDescription] = [
+            self.code_editor_el, self.run_button_el, self.output_display_el,
+            self.perm_display_el, self.hw_display_el
+        ]
+
 
     def tearDown(self):
         """Clean up after each test method."""
@@ -293,3 +348,141 @@ class TestAIVirtualInputService(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+    # --- New Tests for AISimulationControlService Integration ---
+
+    def test_initialization_with_sim_control_service(self):
+        # Test that AVIS initializes AISimulationControlService and fetches initial status
+        self.avis.ai_simulation_control_service.get_current_ai_permissions.assert_called_once()
+        self.avis.ai_simulation_control_service.get_sim_hardware_status.assert_called_once()
+
+        self.assertEqual(self.avis.current_ai_permissions["can_execute_code"], True)
+        self.assertEqual(self.avis.current_sim_hardware_status["profile_name"], "TestHWProfile")
+
+    def test_refresh_simulation_status(self):
+        # Reset call counts for this specific test
+        self.avis.ai_simulation_control_service.get_current_ai_permissions.reset_mock()
+        self.avis.ai_simulation_control_service.get_sim_hardware_status.reset_mock()
+
+        # Load UI that includes display elements
+        self.avis.load_virtual_ui(self.full_test_ui)
+
+        # Change the mock return values for the next call
+        self.mock_sim_control_service.get_current_ai_permissions.return_value = {
+            "can_execute_code": False, "can_read_sim_hw_status": False
+        }
+        self.mock_sim_control_service.get_sim_hardware_status.return_value = {
+            "profile_name": "RefreshedProfile", "cpu_cores": 8
+        }
+
+        self.avis.refresh_simulation_status()
+
+        self.avis.ai_simulation_control_service.get_current_ai_permissions.assert_called_once()
+        self.avis.ai_simulation_control_service.get_sim_hardware_status.assert_called_once()
+
+        self.assertFalse(self.avis.current_ai_permissions["can_execute_code"])
+        self.assertEqual(self.avis.current_sim_hardware_status["profile_name"], "RefreshedProfile")
+
+        # Check if UI display elements were updated
+        perm_display = self.avis._find_element_by_id("ai_permissions_display")
+        self.assertIn("CodeExec=False", perm_display.get("value", "")) # type: ignore
+        hw_display = self.avis._find_element_by_id("sim_hw_status_display")
+        self.assertIn("Profile=RefreshedProfile", hw_display.get("value", "")) # type: ignore
+        self.assertIn("CPU=8 cores", hw_display.get("value", "")) # type: ignore
+
+
+    def test_process_mouse_command_click_run_code_button(self):
+        self.avis.load_virtual_ui(self.full_test_ui)
+
+        # Set some code in the code editor element
+        code_editor = self.avis._find_element_by_id("code_editor")
+        test_code = "print('Hello AVIS from test')"
+        code_editor["value"] = test_code # type: ignore
+
+        click_command: VirtualMouseCommand = { # type: ignore
+            "action_type": "click",
+            "target_element_id": "run_code_button"
+        }
+        response = self.avis.process_mouse_command(click_command)
+
+        self.assertEqual(response["status"], "simulated")
+        self.assertEqual(response["details"].get("triggered_action"), "code_execution")
+
+        # Verify that AISimulationControlService.execute_ai_code was called correctly
+        self.avis.ai_simulation_control_service.execute_ai_code.assert_called_once_with(
+            test_code,
+            self.avis.current_ai_permissions # Should pass its current permissions
+        )
+
+        # Verify that the output display was updated
+        output_display = self.avis._find_element_by_id("code_output_display")
+        self.assertIn("Mock code execution success", output_display.get("value", "")) # type: ignore
+        self.assertIn("test-req-123", output_display.get("value", "")) # type: ignore
+
+    def test_process_mouse_command_click_run_code_button_no_editor(self):
+        # UI without a code editor
+        ui_no_editor = [self.run_button_el, self.output_display_el]
+        self.avis.load_virtual_ui(ui_no_editor)
+
+        click_command: VirtualMouseCommand = { # type: ignore
+            "action_type": "click",
+            "target_element_id": "run_code_button"
+        }
+        response = self.avis.process_mouse_command(click_command)
+        self.assertEqual(response["details"].get("triggered_action"), "code_execution_failed_no_editor")
+        self.avis.ai_simulation_control_service.execute_ai_code.assert_not_called()
+
+
+    def test_process_code_execution_command_direct_call(self):
+        self.avis.load_virtual_ui(self.full_test_ui) # Ensure output element exists
+        test_code = "print('Direct call test')"
+
+        self.avis.process_code_execution_command(test_code)
+
+        self.avis.ai_simulation_control_service.execute_ai_code.assert_called_once_with(
+            test_code,
+            self.avis.current_ai_permissions
+        )
+        output_display = self.avis._find_element_by_id("code_output_display")
+        self.assertIn("Mock code execution success", output_display.get("value", "")) # type: ignore
+
+    def test_process_code_execution_command_no_sim_control_service(self):
+        self.avis.load_virtual_ui(self.full_test_ui)
+        self.avis.ai_simulation_control_service = None # Simulate service not available
+
+        test_code = "print('This will fail')"
+        self.avis.process_code_execution_command(test_code)
+
+        output_display = self.avis._find_element_by_id("code_output_display")
+        self.assertEqual(output_display.get("value", ""), "Error: AISimulationControlService not available.") # type: ignore
+
+    def test_info_displays_populated_on_init_via_refresh(self):
+        # This test relies on _update_info_display_elements being called after status fetch in __init__
+        # (which happens if refresh_simulation_status is called or its parts are)
+        # We need to ensure AIVS calls _update_info_display_elements after its own init.
+        # The current AIVS __init__ calls parts of refresh_simulation_status internally.
+        # Let's re-initialize AVIS with a UI already loaded to test this path.
+
+        # For this test, we need to ensure _update_info_display_elements is called by __init__
+        # The current structure of AIVS __init__ gets permissions/status,
+        # then _update_info_display_elements is called by refresh_simulation_status.
+        # AIVS.__init__ does not explicitly call refresh_simulation_status.
+        # It *does* call the underlying service methods to get the status.
+        # Let's ensure the _update_info_display_elements is called during/after load_virtual_ui or refresh.
+
+        # Test setup: Create a new AVIS instance, then load UI, then refresh.
+        avis_for_init_test = AIVirtualInputService(
+            resource_awareness_service=self.mock_resource_service,
+            bash_runner=self.mock_bash_runner
+        )
+        avis_for_init_test.ai_simulation_control_service = self.mock_sim_control_service # Inject mock
+
+        avis_for_init_test.load_virtual_ui(self.full_test_ui) # Load UI
+        avis_for_init_test.refresh_simulation_status() # Explicitly refresh to trigger UI update
+
+        perm_display = avis_for_init_test._find_element_by_id("ai_permissions_display")
+        self.assertIn("CodeExec=True", perm_display.get("value", "")) # type: ignore
+        hw_display = avis_for_init_test._find_element_by_id("sim_hw_status_display")
+        self.assertIn("Profile=TestHWProfile", hw_display.get("value", "")) # type: ignore
+        self.assertIn("CPU=4 cores", hw_display.get("value", "")) # type: ignore

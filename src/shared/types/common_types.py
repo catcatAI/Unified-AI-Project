@@ -1,6 +1,6 @@
 # src/shared/types/common_types.py
 from enum import Enum
-from typing import TypedDict, Optional, List, Any, Dict, Literal, Union, Callable # Added Literal, Union, Callable back for other types
+from typing import TypedDict, Optional, List, Any, Dict, Literal, Union, Callable, Tuple # Added Tuple
 from typing_extensions import Required
 
 print("common_types.py (debug version) is being imported and defining ServiceStatus...")
@@ -121,6 +121,33 @@ class OverwriteDecision(Enum): # For HAMMemoryManager -> DialogueManager
     ASK_USER = "ask_user"
     MERGE_IF_APPLICABLE = "merge_if_applicable"
 
+# --- Types for ResourceAwarenessService ---
+class SimulatedDiskConfig(TypedDict, total=False):
+    space_gb: Required[float]
+    warning_threshold_percent: Required[float] # Percentage (0-100)
+    critical_threshold_percent: Required[float] # Percentage (0-100)
+    lag_factor_warning: float # Multiplier for perceived time lag
+    lag_factor_critical: float # Multiplier for perceived time lag
+
+class SimulatedCPUConfig(TypedDict, total=False):
+    cores: Required[int]
+    # Future: base_mhz, current_load_percent, lag_factor_high_load
+
+class SimulatedRAMConfig(TypedDict, total=False):
+    ram_gb: Required[float]
+    # Future: warning_threshold_percent, critical_threshold_percent, lag_factor_warning, lag_factor_critical
+
+class SimulatedHardwareProfile(TypedDict, total=False):
+    profile_name: Required[str]
+    disk: Required[SimulatedDiskConfig]
+    cpu: Required[SimulatedCPUConfig]
+    ram: Required[SimulatedRAMConfig]
+    gpu_available: Required[bool]
+    # Future: network_config: SimulatedNetworkConfig
+
+class SimulatedResourcesRoot(TypedDict): # For the root of the YAML file
+    simulated_hardware_profile: SimulatedHardwareProfile
+
 class SimulatedResourceConfig(TypedDict): # For HAMMemoryManager -> DialogueManager
     name: str
     current_level: float
@@ -152,9 +179,101 @@ class NarrativeAntibodyObject(TypedDict): # Renamed from LIS_AntibodyObject
     antibody_id: str
     # ...
 
-# Virtual Input types - minimal for AIVirtualInputService -> DialogueManager
+# --- Virtual Input Types for AIVirtualInputService ---
+VirtualInputPermissionLevel = Literal[
+    "simulation_only",      # Default: Only simulate, no real input.
+    "requires_approval",    # Future: Actions require user approval.
+    "full_control_dangerous" # Future: AI has direct input control (use with extreme caution).
+]
+
+VirtualMouseEventType = Literal[
+    "move_relative_to_window", # Moves cursor to (x_ratio, y_ratio) relative to abstract window (0-1, 0-1)
+    "click",                   # Simulates a mouse click (left, right, middle)
+    "scroll",                  # Simulates mouse wheel scrolling
+    "drag_start",              # Future: For drag-and-drop simulation
+    "drag_end",                # Future: For drag-and-drop simulation
+    "hover"                    # Simulates hovering over an element or point
+]
+
+VirtualKeyboardActionType = Literal[
+    "type_string",             # Types a given string.
+    "press_keys",              # Presses a combination of keys (e.g., Ctrl+C).
+    "special_key"              # Presses a special key (e.g., Enter, Esc, F1).
+]
+
+class VirtualMouseCommand(TypedDict, total=False):
+    action_type: Required[VirtualMouseEventType]
+    # For move_relative_to_window:
+    relative_x: Optional[float]
+    relative_y: Optional[float]
+    # For click:
+    target_element_id: Optional[str] # Optional, click can be at coordinates
+    click_type: Optional[Literal["left", "right", "middle"]]
+    # For scroll:
+    scroll_direction: Optional[Literal["up", "down", "left", "right"]]
+    scroll_amount_pixels: Optional[int] # For pixel-based scrolling
+    scroll_amount_ratio: Optional[float] # For ratio-based scrolling (0-1 of scrollable area)
+    scroll_pages: Optional[float] # For page-based scrolling (e.g. 1 page, 0.5 pages)
+    # For hover:
+    # target_element_id already covered, relative_x/y also covered
+
+class VirtualKeyboardCommand(TypedDict, total=False):
+    action_type: Required[VirtualKeyboardActionType]
+    # For type_string:
+    text_to_type: Optional[str]
+    target_element_id: Optional[str] # Element to focus before typing (optional)
+    # For press_keys:
+    keys: Optional[List[str]] # List of key names (e.g., ["control", "alt", "delete"])
+    # For special_key:
+    # keys: Optional[List[str]] # e.g. ["enter"], used by press_keys for special keys too.
+                               # special_key might just use one key from the list.
+
 class VirtualInputElementDescription(TypedDict, total=False):
     element_id: Required[str]
-    element_type: Required[str]
+    element_type: Required[str] # e.g., "button", "text_field", "label", "window", "panel", "list_item"
+    value: Optional[Any] # Current value (e.g. text in input, state of checkbox)
+    label_text: Optional[str] # Visible text label
+    is_enabled: Optional[bool]
+    is_focused: Optional[bool] # Whether this element currently has virtual focus
+    children: Optional[List['VirtualInputElementDescription']] # For nested elements
+    # Bounding box for coarse hit detection, relative to parent or window if top-level
+    # (x_ratio_start, y_ratio_start, width_ratio, height_ratio)
+    bounding_box_ratios: Optional[Tuple[float, float, float, float]]
+    properties: Optional[Dict[str, Any]] # Other type-specific properties
+
+
+# --- Types for AI Code Execution in AVIS ---
+class AIPermissionSet(TypedDict, total=False):
+    """
+    Defines the set of permissions for an AI operating within AVIS,
+    particularly concerning code execution and resource access.
+    """
+    can_execute_code: Required[bool]          # General permission to execute code
+    can_read_sim_hw_status: Required[bool]    # Permission to read simulated hardware status
+    allowed_execution_paths: Optional[List[str]] # Future: Specific paths AI code can run from
+    allowed_service_imports: Optional[List[str]] # Future: Python modules AI code can import
+    max_execution_time_ms: Optional[int]         # Future: Max execution time for AI-generated code
+
+class ExecutionRequest(TypedDict):
+    """
+    Represents a request to execute code, including the code itself
+    and the permissions context under which it should run.
+    """
+    request_id: str
+    code_to_execute: str
+    permissions_context: AIPermissionSet
+    # Future: Add resource_requirements: Optional[Dict[str, Any]]
+
+class ExecutionResult(TypedDict):
+    """
+    Represents the outcome of an AI code execution attempt.
+    """
+    request_id: str
+    execution_success: bool        # True if execution proceeded (even if script had errors), False if pre-execution checks failed (e.g. permissions)
+    script_exit_code: Optional[int] # Exit code of the executed script (if execution_success was True)
+    stdout: str
+    stderr: str
+    status_message: str            # e.g., "Execution denied: Insufficient permissions", "Execution completed", "Script error"
+    # Future: Add execution_time_ms: Optional[float]
 
 print("common_types.py (debug version) finished definitions.")
