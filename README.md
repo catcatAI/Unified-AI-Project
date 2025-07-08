@@ -34,6 +34,8 @@ This project integrates and is developing several core AI components:
 
 *   **Tool Dispatcher (`src/tools/tool_dispatcher.py`):** Enables the AI to use external or internal "tools" (e.g., calculators, information retrieval functions) to augment its capabilities. Tools can be triggered by the Formula Engine or other AI logic.
 
+*   **AI Virtual Input System (AVIS) (`src/services/ai_virtual_input_service.py` and `docs/architecture/AI_Virtual_Input_System_spec.md`):** A system enabling the AI to simulate GUI interactions (mouse, keyboard) and execute code within a controlled virtual environment. Works with the `AISimulationControlService` for permissions and execution.
+
 *   **LLM Interface (`src/services/llm_interface.py`):** Provides a standardized interface to interact with various Large Language Models (e.g., Ollama, OpenAI), managing API calls and model configurations.
 
 *   **Configuration System (`configs/`):** Centralized YAML and JSON files for system behavior, personality profiles, API keys, formulas, etc.
