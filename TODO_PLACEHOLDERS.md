@@ -34,10 +34,10 @@ These are comments indicating planned work or missing functionality that require
     *   **Required Functionality:** Implement a mechanism to automatically mark or remove advertised HSP capabilities if they haven't been re-advertised or "seen" for a defined period, to avoid using stale service information.
 
 *   **File:** `src/hsp/connector.py`
-    *   **Line:** ~63
-    *   **Placeholder:** `# TODO: Implement reconnection strategy`
-    *   **Context:** In the `_on_mqtt_disconnect` method.
-    *   **Required Functionality:** Add logic for the HSP connector to automatically attempt to reconnect to the MQTT broker after a disconnection event.
+    *   **Line:** ~63 (Comment in code updated/removed)
+    *   **Placeholder:** `# CLARIFIED: Reconnection strategy is handled by the Paho MQTT client's built-in features (see class docstring and `reconnect_delay_set` usage in HSPConnector).`
+    *   **Context:** Was in the `_on_mqtt_disconnect` method, referring to manual reconnection logic.
+    *   **Required Functionality:** (N/A - Handled by Paho MQTT client) The connector now relies on Paho's automatic reconnection. Verification and enhanced logging were completed in `feat/hsp-connector-robustness`.
     *   **Line:** ~128
     *   **Placeholder:** `"payload_schema_uri": None, # TODO: Add schema URIs when defined`
     *   **Context:** Within the `_build_hsp_envelope` method.
