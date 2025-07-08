@@ -22,6 +22,7 @@ from fragmenta.fragmenta_orchestrator import FragmentaOrchestrator # Added impor
 # Services
 from services.llm_interface import LLMInterface, LLMInterfaceConfig
 from hsp.connector import HSPConnector
+from hsp.constants import CAP_ADVERTISEMENT_TOPIC, FACT_TOPIC_GENERAL
 
 # --- Global Singleton Instances ---
 # These will be initialized by `initialize_services`
@@ -144,9 +145,9 @@ def initialize_services(
         else:
             print(f"Core Services: HSPConnector for {ai_id} connected.")
             # Basic subscriptions needed by multiple modules
-            hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#")
+            hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#") # Uses imported constant
             hsp_connector_instance.subscribe(f"hsp/results/{ai_id}/#") # For DM task results
-            hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL}/#") # For general facts
+            hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL}/#") # Uses imported constant
 
     if not service_discovery_module_instance:
         service_discovery_module_instance = ServiceDiscoveryModule(trust_manager=trust_manager_instance)
@@ -213,14 +214,7 @@ def initialize_services(
             # Note: HSPConnector currently supports one callback for each type.
             # If DialogueManager also needs task results, a dispatching mechanism or
             # allowing multiple callbacks in HSPConnector would be needed.
-            # For now, this will overwrite DM's if DM also registers for generic task results.
-            # Assuming distinct callbacks or a dispatcher will be handled if needed.
-            # For now, let's check if DM registered one, and if so, warn.
-            if hasattr(hsp_connector_instance, '_on_task_result_callback') and \
-               hsp_connector_instance._on_task_result_callback is not None and \
-               hsp_connector_instance._on_task_result_callback != fragmenta_orchestrator_instance._handle_hsp_sub_task_result:
-                print("Core Services: WARNING - HSPConnector already has a task result callback registered. Overwriting with Fragmenta's. Consider a dispatcher if multiple modules need task results.")
-
+            # (This is now addressed by HSPConnector supporting multiple task result callbacks)
             hsp_connector_instance.register_on_task_result_callback(
                 fragmenta_orchestrator_instance._handle_hsp_sub_task_result
             )
