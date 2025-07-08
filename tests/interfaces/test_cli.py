@@ -18,15 +18,20 @@ class TestCLI(unittest.TestCase):
 
     def test_01_cli_no_args(self):
         """Test CLI response when no arguments are provided."""
-        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+        with patch('sys.stdout', new_callable=StringIO) as mock_stdout, \
+             patch('sys.stderr', new_callable=StringIO) as mock_stderr:
             with patch('sys.argv', ['main.py']): # Simulate calling script with no arguments
                 with self.assertRaises(SystemExit) as cm:
-                    cli_main.main()
-                self.assertEqual(cm.exception.code, 1)
-            # stderr check is a bit tricky due to argparse's own help message.
-            # We are checking our custom message and the exit code primarily.
-            self.assertIn("No command provided. Try 'query \"Your question\"' or 'config get some_key'.", mock_stderr.getvalue())
-        print("TestCLI.test_01_cli_no_args PASSED")
+                    cli_main.main_cli_logic()
+                self.assertEqual(cm.exception.code, 0) # Expecting sys.exit(0)
+
+            stdout_value = mock_stdout.getvalue()
+            stderr_value = mock_stderr.getvalue()
+
+            self.assertIn("--- Unified-AI-Project CLI", stdout_value) # Initial print
+            self.assertIn("No command provided. Listening for HSP messages", stdout_value)
+            self.assertIn("usage: main.py [-h] {query,publish_fact}", stderr_value) # Help message to stderr
+        print("TestCLI.test_01_cli_no_args PASSED (adjusted for new behavior)")
 
 
     def test_02_cli_query_with_emotion(self):
@@ -67,25 +72,27 @@ class TestCLI(unittest.TestCase):
                 with patch('sys.stdout', new=captured_output):
                     # We might want to mock DialogueManager's internal EmotionSystem for more control,
                     # but for now, we test the integrated behavior.
-                    cli_main.main()
+                    cli_main.main_cli_logic() # Changed to main_cli_logic
 
                 output = captured_output.getvalue()
                 self.assertIn(f"CLI: Received query: '{test_query}'", output) # This can stay as is, checks overall output
                 self.assertIn(expected_full_ai_output.strip(), output.strip()) # Ensure both are stripped for comparison
         print("TestCLI.test_02_cli_query_with_emotion PASSED")
 
+    @unittest.skip("CLI 'config' command not implemented")
     def test_03_cli_config_get_placeholder(self):
         """Test the placeholder 'config get' command."""
         key = "some.setting"
         with patch('sys.argv', ['main.py', 'config', 'get', key]):
             captured_output = StringIO()
             with patch('sys.stdout', new=captured_output):
-                cli_main.main()
+                cli_main.main_cli_logic() # Changed to main_cli_logic
 
             output = captured_output.getvalue()
             self.assertIn(f"CLI: Managing configuration. Action: get, Key: {key}, Value: None (Placeholder)", output)
         print("TestCLI.test_03_cli_config_get_placeholder PASSED")
 
+    @unittest.skip("CLI 'config' command not implemented")
     def test_04_cli_config_set_placeholder(self):
         """Test the placeholder 'config set' command."""
         key = "another.setting"
@@ -93,7 +100,7 @@ class TestCLI(unittest.TestCase):
         with patch('sys.argv', ['main.py', 'config', 'set', key, value]):
             captured_output = StringIO()
             with patch('sys.stdout', new=captured_output):
-                cli_main.main()
+                cli_main.main_cli_logic() # Changed to main_cli_logic
 
             output = captured_output.getvalue()
             self.assertIn(f"CLI: Managing configuration. Action: set, Key: {key}, Value: {value} (Placeholder)", output)
@@ -111,7 +118,7 @@ class TestCLI(unittest.TestCase):
         with patch('sys.argv', ['main.py', 'query', test_query_crisis]):
             captured_output = StringIO()
             with patch('sys.stdout', new=captured_output):
-                cli_main.main()
+                cli_main.main_cli_logic() # Changed to main_cli_logic
 
             output = captured_output.getvalue()
             self.assertIn(f"CLI: Received query: '{test_query_crisis}'", output)

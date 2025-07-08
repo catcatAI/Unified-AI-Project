@@ -2,12 +2,16 @@ import uvicorn # For running the app
 from fastapi import FastAPI
 from datetime import datetime
 import uuid # For generating session IDs
+from typing import List, Optional, Dict, Any # Ensuring all used typing imports are here
 
 # Assuming src is in PYTHONPATH or this script is run from project root
 # Adjust paths as necessary if running from within services directory directly for testing
-from core_ai.dialogue.dialogue_manager import DialogueManager
-from services.api_models import UserInput, AIOutput, SessionStartRequest, SessionStartResponse
-
+from src.core_ai.dialogue.dialogue_manager import DialogueManager # Changed to src.core_ai
+from src.services.api_models import ( # Changed to src.services
+    UserInput, AIOutput, SessionStartRequest, SessionStartResponse,
+    HSPTaskRequestInput, HSPTaskRequestOutput, HSPTaskStatusOutput # Added HSP API models
+)
+from src.hsp.types import HSPCapabilityAdvertisementPayload # Added HSP type
 
 app = FastAPI(
     title="Unified AI Project API",
@@ -188,26 +192,8 @@ async def request_hsp_task(task_input: HSPTaskRequestInput):
         request_type="api_initiated_hsp_task" # A new request type for clarity
     )
 
-    # _dispatch_hsp_task_request returns the correlation_id (as part of the interim message string, implicitly)
-    # Or it returns an error message directly.
-    # The actual correlation_id is stored in dialogue_manager.pending_hsp_task_requests.
-    # We need to retrieve it if the dispatch was successful.
-
-    # Let's find the correlation_id from pending requests. This is a bit of a hack.
-    # Ideally, _dispatch_hsp_task_request would return a structured object or tuple.
-    # For now, we rely on the interim message format.
-
-    correlation_id_from_dispatch: Optional[str] = None
-    if interim_response_str and "I've sent your request" in interim_response_str:
-        # Try to find the latest added correlation_id that matches the context. This is fragile.
-        # A better way would be for _dispatch_hsp_task_request to return it directly.
-        # For now, let's assume the last one added to pending_hsp_task_requests for this context *might* be it.
-        # This needs refinement in DM._dispatch_hsp_task_request to return correlation_id.
-
-        # Let's modify _dispatch_hsp_task_request to return correlation_id along with message.
-        # For now, we'll assume it was successful if interim_response_str is positive.
-        # And we'll try to find the correlation_id in pending_hsp_task_requests by some other means if possible, or just return a generic success.
-    # _dispatch_hsp_task_request now returns -> (user_message, correlation_id)
+    # Note: The _dispatch_hsp_task_request method in DialogueManager was updated to return
+    # a tuple: (user_facing_message_str, correlation_id_or_none_on_failure)
     user_message, correlation_id = await dialogue_manager._dispatch_hsp_task_request(
         capability_advertisement=selected_capability_adv,
         request_parameters=task_input.parameters,
@@ -218,6 +204,7 @@ async def request_hsp_task(task_input: HSPTaskRequestInput):
     )
 
     if correlation_id: # Dispatch was successful if correlation_id is returned
+        # Ensuring this block is indented
         return HSPTaskRequestOutput(
             status_message=user_message or "HSP Task request sent successfully.",
             correlation_id=correlation_id,
@@ -225,6 +212,7 @@ async def request_hsp_task(task_input: HSPTaskRequestInput):
             error=None
         )
     else: # Dispatch failed
+        # Ensuring this block is indented
         return HSPTaskRequestOutput(
             status_message=user_message or "Error: Failed to dispatch HSP task request.",
             correlation_id=None,

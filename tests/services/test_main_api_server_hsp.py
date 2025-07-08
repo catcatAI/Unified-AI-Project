@@ -268,5 +268,3 @@ class TestHSPEndpoints:
         status_data = response.json()
         assert status_data["correlation_id"] == mock_corr_id
         assert status_data["status"] == "unknown_or_expired"
-
-```
