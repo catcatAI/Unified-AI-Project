@@ -47,12 +47,16 @@ These are comments indicating planned work or missing functionality that require
     *   **Placeholder:** `# CLARIFIED: Logic for sending 'received' ACKs when qos_parameters.requires_ack is true is implemented in _handle_hsp_message_str and _send_acknowledgement.`
     *   **Context:** Was in the `_handle_hsp_message_str` method.
     *   **Required Functionality:** (Addressed for 'received' ACKs) The connector sends 'received' ACKs as required. Functionality verified and tested in `feat/hsp-ack-handling`. (Future enhancements could include 'processed' ACKs or NACKs).
+    *   **Line:** ~128 (Original location of the TODO in `_build_hsp_envelope`)
+    *   **Placeholder:** `# COMPLETED (Placeholder): Logic to generate conventional placeholder schema URIs (e.g., 'hsp:schema:payload/Fact/0.1') for 'payload_schema_uri' is implemented.`
+    *   **Context:** Within the `_build_hsp_envelope` method.
+    *   **Required Functionality:** (Partially Addressed in `feat/hsp-payload-schema-uri-placeholder`) The `payload_schema_uri` field is now populated with placeholder URIs based on message type and version. Actual schema definition and hosting at resolvable URIs are still pending future architectural work.
 
 *   **File:** `src/interfaces/electron_app/renderer.js`
-    *   **Line:** ~137
-    *   **Placeholder:** `// TODO: Add button here to trigger this service (for Sub-step 2.14.2)`
-    *   **Context:** Inside the `loadHspServices` function, where discovered HSP services are listed in the UI.
-    *   **Required Functionality:** Add a UI button next to each displayed HSP service. Clicking this button should allow the user to trigger or make a request to that specific service (likely by pre-filling parts of the "HSP Task Request" form).
+    *   **Line:** ~137 (Original location of TODO comment)
+    *   **Placeholder:** `# COMPLETED: Button to trigger/select HSP service has been added.`
+    *   **Context:** Was inside the `loadHspServices` function.
+    *   **Required Functionality:** (Implemented in `feat/electron-hsp-use-service-button`) A "Use Service" button is now added to each service in the HSP services list. Clicking it populates the "Target Capability ID" field in the HSP Task Request form and clears the parameters field.
 
 ## 3. Code/Data Comments & Clarifications
 
