@@ -28,29 +28,25 @@ These are comments indicating planned work or missing functionality that require
     *   **Required Functionality:** (Implemented in `feat/lcm-tool-name-resolution`) The `get_tool_structure` method now resolves `tool_path_or_name` by checking if it's a direct path, then attempting to find `name.py`, `tool_name.py`, or `name_tool.py` in the configured `tools_directory`.
 
 *   **File:** `src/core_ai/service_discovery/service_discovery_module.py`
-    *   **Line:** ~177 (Original TODO location in a previous version of the file)
-    *   **Placeholder:** `# COMPLETED: Logic for staleness/expiration of capabilities based on last_seen and a configurable threshold is now implemented.`
-    *   **Context:** Was at the end of the class definition in a prior version. Logic now integrated into `find_capabilities` and `get_capability_by_id`.
-    *   **Prerequisite Note:** (Resolved) The `ServiceDiscoveryModule` was refactored in `feat/hsp-service-discovery-module` to align with HSP requirements.
-    *   **Required Functionality:** (Implemented in `feat/sdm-capability-staleness`) A mechanism to filter out stale advertised HSP capabilities based on `last_seen` timestamp and a configurable `staleness_threshold_seconds` has been added to `find_capabilities` and `get_capability_by_id`.
+    *   **Original TODO Context:** Logic for staleness/expiration of capabilities.
+    *   **Status:** PARTIALLY ADDRESSED / REQUIRES REWORK.
+    *   **Details:** While logic for staleness based on `last_seen` and a threshold was implemented (`feat/sdm-capability-staleness`), the `ServiceDiscoveryModule` itself is a generic service registry. It **requires significant refactoring or replacement** to properly handle HSP-specific `HSPCapabilityAdvertisementPayload`, integrate with `TrustManager`, and fulfill its intended role in the HSP ecosystem as expected by `core_services.py`. The existing staleness logic would need to be adapted to this new HSP-aligned structure.
+    *   **Required Functionality (Revised):**
+        1.  Refactor/reimplement `ServiceDiscoveryModule` to be HSP-centric.
+        2.  Integrate `TrustManager` for capability processing.
+        3.  Implement/adapt logic for managing capability lifecycle, including advertisement processing, storage, and staleness/expiration based on `last_seen` and a configurable threshold, within the new HSP-aligned structure.
 
 *   **File:** `src/hsp/connector.py`
-    *   **Line:** ~63 (Comment in code updated/removed)
-    *   **Placeholder:** `# CLARIFIED: Reconnection strategy is handled by the Paho MQTT client's built-in features (see class docstring and `reconnect_delay_set` usage in HSPConnector).`
-    *   **Context:** Was in the `_on_mqtt_disconnect` method, referring to manual reconnection logic.
-    *   **Required Functionality:** (N/A - Handled by Paho MQTT client) The connector now relies on Paho's automatic reconnection. Verification and enhanced logging were completed in `feat/hsp-connector-robustness`.
-    *   **Line:** ~128
-    *   **Placeholder:** `"payload_schema_uri": None, # TODO: Add schema URIs when defined`
-    *   **Context:** Within the `_build_hsp_envelope` method.
-    *   **Required Functionality:** Update this to populate the `payload_schema_uri` field with appropriate URIs once the HSP message payload schemas are formally defined and published.
-    *   **Line:** ~260 (Original TODO location)
-    *   **Placeholder:** `# CLARIFIED: Logic for sending 'received' ACKs when qos_parameters.requires_ack is true is implemented in _handle_hsp_message_str and _send_acknowledgement.`
-    *   **Context:** Was in the `_handle_hsp_message_str` method.
-    *   **Required Functionality:** (Addressed for 'received' ACKs) The connector sends 'received' ACKs as required. Functionality verified and tested in `feat/hsp-ack-handling`. (Future enhancements could include 'processed' ACKs or NACKs).
-    *   **Line:** ~128 (Original location of the TODO in `_build_hsp_envelope`)
-    *   **Placeholder:** `# COMPLETED (Placeholder): Logic to generate conventional placeholder schema URIs (e.g., 'hsp:schema:payload/Fact/0.1') for 'payload_schema_uri' is implemented.`
-    *   **Context:** Within the `_build_hsp_envelope` method.
-    *   **Required Functionality:** (Partially Addressed in `feat/hsp-payload-schema-uri-placeholder`) The `payload_schema_uri` field is now populated with placeholder URIs based on message type and version. Actual schema definition and hosting at resolvable URIs are still pending future architectural work.
+    *   **Original TODO Context (Line ~63):** Manual reconnection logic in `_on_mqtt_disconnect`.
+    *   **Status:** CLARIFIED / HANDLED BY LIBRARY.
+    *   **Details:** Reconnection strategy is handled by the Paho MQTT client's built-in features. Verification and enhanced logging were completed (`feat/hsp-connector-robustness`).
+    *   **Original TODO Context (Line ~128, in `_build_hsp_envelope`):** `"payload_schema_uri": None, # TODO: Add schema URIs when defined`
+    *   **Status:** PENDING (Placeholder in place).
+    *   **Details:** The `payload_schema_uri` field is currently populated with conventional placeholder URIs (e.g., 'hsp:schema:payload/Fact/0.1') based on message type and version (`feat/hsp-payload-schema-uri-placeholder`).
+    *   **Required Functionality:** Update this to populate the `payload_schema_uri` field with actual, resolvable URIs once the HSP message payload schemas are formally defined, published, and hosted externally/internally.
+    *   **Original TODO Context (Line ~260, in `_handle_hsp_message_str`):** Logic for sending 'received' ACKs.
+    *   **Status:** CLARIFIED / IMPLEMENTED.
+    *   **Details:** The connector sends 'received' ACKs when `qos_parameters.requires_ack` is true. Functionality verified and tested (`feat/hsp-ack-handling`). Future enhancements could include 'processed' ACKs or NACKs.
 
 *   **File:** `src/interfaces/electron_app/renderer.js`
     *   **Line:** ~137 (Original location of TODO comment)

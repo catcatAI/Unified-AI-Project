@@ -367,3 +367,24 @@ By maintaining such metadata, an AI can build a more nuanced understanding of it
 
 ---
 This initial draft captures the core ideas. It will need significant refinement, examples for all message types, and more detailed sequence diagrams for interactions. However, this forms the basis for `docs/HSP_SPECIFICATION.md`.
+
+---
+
+## Appendix A: Current Implementation Status Notes (as of July 2024)
+
+This appendix provides a brief overview of the current implementation status of certain HSP components, which may differ from the ideal state described in the main specification. This is intended to provide context for developers working with the current codebase.
+
+*   **`ServiceDiscoveryModule` (`src/core_ai/service_discovery/service_discovery_module.py`):**
+    *   The current implementation of the `ServiceDiscoveryModule` is a generic service registry. It **does not yet fully align with the HSP-specific requirements** for processing `HSPCapabilityAdvertisementPayload`, integrating with the `TrustManager` for capability assessment, or managing the lifecycle of HSP capabilities as envisioned in this specification (e.g., Section 5.1).
+    *   Significant refactoring or replacement of this module is required to meet the HSP specification. Logic for capability staleness, while prototyped, will need to be integrated into an HSP-compliant version.
+
+*   **`payload_schema_uri` in HSP Message Envelope:**
+    *   As per Section 4.2, the `payload_schema_uri` field is intended to point to a resolvable schema for the message payload.
+    *   In the current implementation (`src/hsp/connector.py`), this field is populated with **conventional placeholder URIs** (e.g., `hsp:schema:payload/Fact/0.1`) based on message type and version.
+    *   The formal definition, publication, and hosting of these schemas at resolvable URIs are pending future architectural work. For now, developers should be aware that these URIs are placeholders and do not resolve to actual schemas.
+
+*   **General Completeness:**
+    *   While core message types and MQTT-based transport are functional, advanced features like comprehensive semantic translation services, complex consensus mechanisms, and detailed state synchronization (`AIStateSynchronization`) are still conceptual or in early stages of consideration.
+    *   Robust error handling and advanced QoS features beyond basic MQTT support are areas for ongoing development.
+
+These notes are intended to bridge the gap between the specification and the current codebase. Refer to `docs/PROJECT_STATUS_SUMMARY.md` for a more comprehensive status of all project components.
