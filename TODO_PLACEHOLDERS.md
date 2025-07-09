@@ -66,12 +66,15 @@ These are comments indicating planned work or missing functionality that require
     *   **Resolution:** `HSPConnector` was modified to change `_on_task_result_callback` to `_on_task_result_callbacks` (a list). The `register_on_task_result_callback` method now appends to this list, and `unregister_on_task_result_callback` was added. The message handling logic iterates through all registered callbacks. The warning in `core_services.py` about overwriting was removed. Unit tests for this functionality were added in `tests/hsp/test_hsp_connector.py`.
 
 *   **File:** `src/fragmenta/fragmenta_orchestrator.py`
-    *   **Context:** The `process_complex_task` method has basic state management for handling asynchronous HSP calls.
-    *   **TODO:** Enhance state management for more complex scenarios, such as tasks involving multiple sequential or parallel HSP calls, or mixed local and HSP steps. This might require a more formal plan execution engine within Fragmenta.
-    *   **Status:** Pending.
-    *   **Context:** Error handling for HSP tasks (e.g., timeouts, complex failure payloads from peers) is currently basic.
-    *   **TODO:** Implement more robust error handling and potentially retry strategies for HSP sub-tasks dispatched by Fragmenta. Consider how HSP task timeouts should be managed.
-    *   **Status:** Pending.
+    *   **Original TODO 1:** Enhance state management for more complex scenarios (sequential/parallel HSP, mixed local/HSP steps).
+    *   **Status:** SUBSTANTIALLY ADDRESSED / IN PROGRESS.
+    *   **Details:** `FragmentaOrchestrator` was refactored with `EnhancedComplexTaskState` and `EnhancedStrategyPlan`. It now uses a state machine (`_advance_complex_task`) to process a list of steps, including HSP tasks. It can handle sequences of tasks by checking dependencies on previous step results. Basic concurrent HSP calls are possible as dispatches are non-blocking; however, true parallel execution paths with complex join logic are not yet implemented. The foundation for more complex plan execution is now in place.
+    *   **Remaining/Future:** Implementing more complex graph-like dependency management, true parallelism for local and HSP tasks with sophisticated join strategies.
+
+    *   **Original TODO 2:** Implement more robust error handling, retry strategies, and timeout management for HSP sub-tasks.
+    *   **Status:** SUBSTANTIALLY ADDRESSED.
+    *   **Details:** Basic error handling for HSP tasks (dispatch errors, peer-reported failures, timeouts) is now implemented within `_advance_complex_task` and `_handle_hsp_sub_task_result`. A configurable retry mechanism (max retries, initial delay, backoff factor) for these HSP failures is also included. Timeout detection for HSP steps is based on `dispatch_timestamp` and a configurable threshold.
+    *   **Remaining/Future:** More advanced error recovery (e.g., dynamic fallback strategies, user intervention prompts), more sophisticated backoff calculations, or per-step timeout/retry configurations if needed beyond global defaults.
 
 ## 3. Code/Data Comments & Clarifications
 
