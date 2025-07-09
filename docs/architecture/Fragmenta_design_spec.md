@@ -102,6 +102,8 @@ This is a critical function of Fragmenta.
 
 ## 5. `FragmentaOrchestrator` Class (Conceptual API - v0.1)
 
+**Implementation Status Note (July 2024):** The `FragmentaOrchestrator` currently exists as a basic class structure with a rudimentary implementation of `process_complex_task`. This includes very simple input analysis, chunking, dispatch to LLM/tools, and result merging (primarily string concatenation). Most of the advanced features described in this design specification (e.g., sophisticated task analysis, semantic chunking, advanced pre/post-processing, parallelism, robust HSP integration, self-evaluation, hardware awareness) are still conceptual and await full implementation. Refer to `docs/PROJECT_STATUS_SUMMARY.md` for current details.
+
 File: `src/fragmenta/fragmenta_orchestrator.py`
 
 ```python
