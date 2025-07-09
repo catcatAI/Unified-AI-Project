@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HSPTaskRequestPayload_v0.1",
+  "description": "Schema for HSP Task Request Payload version 0.1. An AI requests another AI to perform a task.",
+  "type": "object",
+  "properties": {
+    "request_id": {"type": "string", "format": "uuid", "description": "Unique ID for this task request."},
+    "requester_ai_id": {"type": "string", "description": "DID or URI of the AI making the request."},
+    "target_ai_id": {"type": "string", "description": "Optional specific DID or URI of the target AI."},
+    "capability_id_filter": {"type": "string", "description": "ID of the specific capability being requested."},
+    "capability_name_filter": {"type": "string", "description": "Name of the capability being requested (alternative to id_filter)."},
+    "parameters": {"type": "object", "description": "Input parameters for the capability, conforming to its input schema."},
+    "requested_output_data_format": {"type": "string", "description": "Requester can hint preferred output data format."},
+    "priority": {"type": "integer", "description": "Priority of the task (e.g., 1-10)."},
+    "deadline_timestamp": {"type": "string", "format": "date-time", "description": "ISO 8601 UTC timestamp by which the task should ideally be completed."},
+    "callback_address": {"type": "string", "description": "URI/topic where the TaskResult should be sent by the executing AI."}
+  },
+  "required": ["request_id", "requester_ai_id", "parameters"]
+}
