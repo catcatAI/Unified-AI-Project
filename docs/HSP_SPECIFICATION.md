@@ -261,7 +261,7 @@ All HSP messages are wrapped in the following envelope:
     "time_to_live_sec": null // Or an integer if set
   },
   "routing_info": null, // Or absent, or {"hops": [], "final_destination_ai_id": "..."}
-  "payload_schema_uri": null, // Or absent, or "hsp:schema:payload/Fact/0.1"
+  "payload_schema_uri": "urn:hsp:payload:Fact:0.1", // Example with new URN format
   "payload": {
     "id": "fact_uuid_envelope_example",
     "statement_type": "natural_language",
@@ -380,8 +380,8 @@ This appendix provides a brief overview of the current implementation status of 
 
 *   **`payload_schema_uri` in HSP Message Envelope:**
     *   As per Section 4.2, the `payload_schema_uri` field is intended to point to a resolvable schema for the message payload.
-    *   In the current implementation (`src/hsp/connector.py`), this field is populated with **conventional placeholder URIs** (e.g., `hsp:schema:payload/Fact/0.1`) based on message type and version.
-    *   The formal definition, publication, and hosting of these schemas at resolvable URIs are pending future architectural work. For now, developers should be aware that these URIs are placeholders and do not resolve to actual schemas.
+    *   In the current implementation (`src/hsp/connector.py`), this field is populated with **structured URNs** (e.g., `urn:hsp:payload:Fact:0.1`) based on message type and version.
+    *   While these URNs provide unique identification, the actual JSON schemas they refer to are currently conceptual placeholders (e.g., minimal files in `schemas/hsp_payloads/`). Full schema definition and online resolvability (if URNs were to be resolved via a future registry) are pending.
 
 *   **General Completeness:**
     *   While core message types and MQTT-based transport are functional, advanced features like comprehensive semantic translation services, complex consensus mechanisms, and detailed state synchronization (`AIStateSynchronization`) are still conceptual or in early stages of consideration.

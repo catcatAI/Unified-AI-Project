@@ -40,9 +40,9 @@ These are comments indicating planned work or missing functionality that require
     *   **Status:** CLARIFIED / HANDLED BY LIBRARY.
     *   **Details:** Reconnection strategy is handled by the Paho MQTT client's built-in features. Verification and enhanced logging were completed (`feat/hsp-connector-robustness`).
     *   **Original TODO Context (Line ~128, in `_build_hsp_envelope`):** `"payload_schema_uri": None, # TODO: Add schema URIs when defined`
-    *   **Status:** PENDING (Placeholder in place).
-    *   **Details:** The `payload_schema_uri` field is currently populated with conventional placeholder URIs (e.g., 'hsp:schema:payload/Fact/0.1') based on message type and version (`feat/hsp-payload-schema-uri-placeholder`).
-    *   **Required Functionality:** Update this to populate the `payload_schema_uri` field with actual, resolvable URIs once the HSP message payload schemas are formally defined, published, and hosted externally/internally.
+    *   **Status:** ADDRESSED (Structured URNs implemented; full schema hosting/resolution pending).
+    *   **Details:** The `payload_schema_uri` field in `HSPConnector` is now populated with structured URNs (e.g., `urn:hsp:payload:Fact:0.1`) derived from the `message_type` string. Minimal placeholder schema files have been created in `schemas/hsp_payloads/` to conceptually correspond to these URNs.
+    *   **Remaining/Future:** Full JSON schema definition for all payload types and potential online hosting/resolution mechanism for these URNs.
     *   **Original TODO Context (Line ~260, in `_handle_hsp_message_str`):** Logic for sending 'received' ACKs.
     *   **Status:** CLARIFIED / IMPLEMENTED.
     *   **Details:** The connector sends 'received' ACKs when `qos_parameters.requires_ack` is true. Functionality verified and tested (`feat/hsp-ack-handling`). Future enhancements could include 'processed' ACKs or NACKs.

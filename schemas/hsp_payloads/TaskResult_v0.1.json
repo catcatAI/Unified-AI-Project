@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HSPTaskResultPayload_v0.1",
+  "description": "Schema for HSP Task Result Payload version 0.1. The outcome of a TaskRequest.",
+  "type": "object",
+  "properties": {
+    "result_id": {"type": "string", "format": "uuid", "description": "Unique ID for this task result."},
+    "request_id": {"type": "string", "format": "uuid", "description": "ID of the corresponding TaskRequest."},
+    "executing_ai_id": {"type": "string", "description": "DID or URI of the AI that executed the task."},
+    "status": {"type": "string", "enum": ["success", "failure", "in_progress", "queued", "rejected"], "description": "Status of the task execution."},
+    "payload": {"type": "object", "description": "The actual result data if status is 'success', conforming to the capability's output schema."},
+    "output_data_format": {"type": "string", "description": "Confirms the data format of the payload (e.g., 'application/json')."},
+    "error_details": {
+      "type": "object",
+      "description": "Details of the error if status is 'failure' or 'rejected'.",
+      "properties": {
+        "error_code": {"type": "string"},
+        "error_message": {"type": "string"},
+        "error_context": {"type": "object"}
+      },
+      "required": ["error_code", "error_message"]
+    },
+    "timestamp_completed": {"type": "string", "format": "date-time", "description": "ISO 8601 UTC timestamp of when the task completed or terminally failed."},
+    "execution_metadata": {"type": "object", "description": "Additional metadata about the execution (e.g., {'time_taken_ms': 150})."}
+  },
+  "required": ["result_id", "request_id", "executing_ai_id", "status"]
+}

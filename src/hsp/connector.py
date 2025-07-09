@@ -116,16 +116,21 @@ class HSPConnector:
 
         parts = processed_type.rsplit("_v", 1)
         if len(parts) == 2:
-            type_name = parts[0]
-            version = parts[1]
-            if type_name and version:  # Ensure neither part is empty
-                return f"hsp:schema:payload/{type_name}/{version}"
+            type_name_raw = parts[0] # e.g., "Fact", "CapabilityAdvertisement"
+            version_raw = parts[1]   # e.g., "0.1", "1.0.0"
+
+            if type_name_raw and version_raw:
+                # Normalize type_name for consistency if needed (e.g. CamelCase)
+                # For URNs, path components are typically case-sensitive but convention helps.
+                # Let's assume TypeName as parsed is fine.
+                return f"urn:hsp:payload:{type_name_raw}:{version_raw}"
             else:
-                logger.warning(f"Parsed empty TypeName or Version from message_type '{message_type}' (processed: '{processed_type}'). No schema URI generated.")
+                logger.warning(f"Parsed empty TypeName or Version from message_type '{message_type}' (processed: '{processed_type}'). No URN schema URI generated.")
                 return None
         else:
-            # Log this case as it's an unexpected format if we expect all types to be versioned this way.
-            logger.warning(f"Could not parse TypeName and Version from message_type '{message_type}' (processed: '{processed_type}'). Expected format like 'TypeName_vVersion'. No schema URI generated.")
+            # If message_type doesn't follow the _vX.Y pattern, maybe it's an older type or unversioned
+            # For now, we require the pattern for URN generation.
+            logger.warning(f"Could not parse TypeName and Version from message_type '{message_type}' (processed: '{processed_type}'). Expected format like 'TypeName_vVersion'. No URN schema URI generated.")
             return None
 
     def _on_mqtt_connect(self, client, userdata, flags, reason_code, properties):

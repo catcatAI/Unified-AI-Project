@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HSPCapabilityAdvertisementPayload_v0.1",
+  "description": "Schema for HSP Capability Advertisement Payload version 0.1. An AI advertises a skill, service, or tool it can offer.",
+  "type": "object",
+  "properties": {
+    "capability_id": {"type": "string", "description": "Unique ID for this capability offering."},
+    "ai_id": {"type": "string", "description": "DID or URI of the AI offering the capability."},
+    "name": {"type": "string", "description": "Human-readable name of the capability."},
+    "description": {"type": "string", "description": "Detailed description of the capability."},
+    "version": {"type": "string", "description": "Version of the capability (e.g., '1.0', '0.2.1')."},
+    "input_schema_uri": {"type": "string", "format": "uri-reference", "description": "URI pointing to the JSON schema for the input parameters."},
+    "input_schema_example": {"type": "object", "description": "An example of valid input parameters."},
+    "output_schema_uri": {"type": "string", "format": "uri-reference", "description": "URI pointing to the JSON schema for the output payload."},
+    "output_schema_example": {"type": "object", "description": "An example of a typical output payload."},
+    "data_format_preferences": {"type": "array", "items": {"type": "string"}, "description": "Preferred or supported data formats (e.g., ['application/json', 'text/plain'])."},
+    "hsp_protocol_requirements": {"type": "object", "description": "Specific HSP protocol features required or supported (e.g., {'requires_streaming_input': true})."},
+    "cost_estimate_template": {"type": "object", "description": "Template or information regarding potential cost of using the capability."},
+    "availability_status": {"type": "string", "enum": ["online", "offline", "degraded", "maintenance"], "description": "Current availability status of the capability."},
+    "access_policy_id": {"type": "string", "description": "Identifier for a policy governing access to this capability."},
+    "tags": {"type": "array", "items": {"type": "string"}, "description": "Keywords or categories for discovery."}
+  },
+  "required": ["capability_id", "ai_id", "name", "description", "version", "availability_status"]
+}

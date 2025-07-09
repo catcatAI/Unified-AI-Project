@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HSPFactPayload_v0.1",
+  "description": "Schema for HSP Fact Payload version 0.1. Represents a statement about the world or an entity.",
+  "type": "object",
+  "properties": {
+    "id": {"type": "string", "format": "uuid", "description": "Unique identifier for this fact instance."},
+    "statement_type": {"type": "string", "enum": ["natural_language", "semantic_triple", "json_ld"], "description": "Specifies the representation of the core assertion."},
+    "statement_nl": {"type": "string", "description": "The assertion in natural language (optional if statement_structured is present)."},
+    "statement_structured": {"type": "object", "description": "Structured representation of the assertion (e.g., semantic triple, JSON-LD object). Optional if statement_nl is present."},
+    "source_ai_id": {"type": "string", "description": "ID of the AI originating or asserting this fact (e.g., DID or URI)."},
+    "original_source_info": {"type": "object", "description": "Information about the ultimate source if learned externally."},
+    "timestamp_created": {"type": "string", "format": "date-time", "description": "ISO 8601 UTC timestamp of when this fact was asserted/created."},
+    "timestamp_observed": {"type": "string", "format": "date-time", "description": "ISO 8601 UTC timestamp of when the described event was observed or occurred."},
+    "confidence_score": {"type": "number", "minimum": 0.0, "maximum": 1.0, "description": "The AI's confidence in the truth of this fact."},
+    "weight": {"type": "number", "default": 1.0, "description": "General-purpose weight (relevance, importance, priority)."},
+    "valid_from": {"type": "string", "format": "date-time", "description": "Timestamp from which the fact is considered valid."},
+    "valid_until": {"type": "string", "format": "date-time", "description": "Timestamp until which the fact is considered valid."},
+    "context": {"type": "object", "description": "Key-value pairs describing the context in which this fact is true."},
+    "tags": {"type": "array", "items": {"type": "string"}, "description": "Keywords or categories associated with the fact."},
+    "access_policy_id": {"type": "string", "description": "Identifier for a policy governing sharing/use of this fact."}
+  },
+  "required": ["id", "statement_type", "source_ai_id", "timestamp_created", "confidence_score"]
+}
