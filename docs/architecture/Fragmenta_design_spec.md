@@ -24,12 +24,19 @@ Fragmenta will be responsible for:
         *   Future models (Code Model, Daily Language Model).
         *   Other `core_ai` components.
     *   **HSP Capabilities (New):** Dispatching sub-tasks to external AIs via HSP if a suitable capability is discovered using the `ServiceDiscoveryModule`.
-    *   Managing dependencies and execution flow between sub-tasks: The system now uses an `EnhancedStrategyPlan` which defines sequences of stages. Each stage can be a single step or a group of steps for parallel execution. Dependency management includes checking completion of source steps (defined in `input_sources`) before dispatching dependent steps. Data from source steps can be mapped to current step parameters using `input_mapping`.
-    *   State management for local and HSP tasks is more robust, including error handling, retries, and timeouts for HSP tasks.
-    *   Parallel Processing: The plan structure supports defining parallel groups. The orchestrator dispatches ready tasks in such groups and waits for all to complete before proceeding (basic join mechanism). True dynamic parallel strategy generation is future work.
+    *   Managing dependencies and execution flow between sub-tasks:
+        *   **State Management Core:** Uses `EnhancedComplexTaskState` to track overall task progress and `EnhancedStrategyPlan` to define the execution flow.
+        *   **Plan Structure:** An `EnhancedStrategyPlan` consists of a list of stages. Each stage is either a single `ProcessingStep` (executed sequentially relative to other stages) or a `List[ProcessingStep]` (a group of steps intended for parallel execution within that stage).
+        *   **Step Definitions:** `ProcessingStep` is a union of `HSPStepDetails` and `LocalStepDetails`, each capturing specific parameters, detailed status (e.g., `pending_dispatch`, `dispatched`, `awaiting_result`, `completed`, `failed_response`, `timeout_error`, `retrying` for HSP; `pending`, `in_progress`, `completed`, `failed` for local), results, and error information.
+        *   **Dependency Management & I/O Mapping:**
+            *   `input_sources`: Each step can define multiple input sources (e.g., `[{"step_id": "s1", "output_key": "summary"}, {"step_id": "s2"}]`) to aggregate data from prior completed steps.
+            *   `input_mapping`: Rules (e.g., `{"prompt": "Data: {s1.summary} and {s2.full_result}. Original: {$original_input}"}`) define how aggregated inputs and original task data are mapped to the current step's parameters.
+            *   This is handled by `_prepare_step_input` (gathers inputs, checks dependencies) and `_execute_or_dispatch_step` (applies mappings using f-string-like templating).
+        *   **HSP Task Lifecycle:** For HSP steps, the system manages the full lifecycle, including dispatch, configurable retries with backoff on failure (dispatch error, peer error, timeout), and timeout detection.
+    *   **Parallel Processing (Foundational):** The plan structure allows defining parallel groups of steps within a stage. The orchestrator (`_advance_complex_task`) dispatches all ready steps in such a group and waits for all ofthem to reach a terminal state (basic join mechanism) before proceeding to the next stage. Dynamic identification of parallelizable steps is future work.
 5.  **Result Synthesis & Post-processing:**
-    *   **Merging:** Combining results from all completed steps (local and/or HSP) into a coherent final output. This is handled by the `_merge_results` method using data from `EnhancedComplexTaskState.step_results`, which now aggregates results from a potentially multi-stage, parallel-stage plan.
-    *   **Formatting:** Ensuring the final output is in the desired format for the user or calling system (handled by the merging strategy or final step).
+    *   **Merging:** Combining results from all completed steps (local and/or HSP) into a coherent final output. This is handled by the `_merge_results` method using data from `EnhancedComplexTaskState.step_results`, which now aggregates results from a potentially multi-stage plan that may include parallel stages.
+    *   **Formatting:** Ensuring the final output is in the desired format for the user or calling system (handled by the merging strategy or the final step of the plan).
 6.  **Self-Evaluation & Learning (Future - Phase 4 Hooks):**
     *   (No change - Still Future) Receiving feedback on task outcomes.
     *   (No change - Still Future) Logging task performance and potentially requesting model/tool upgrades or fine-tuning via hooks.
@@ -37,7 +44,28 @@ Fragmenta will be responsible for:
 7.  **Cross-Domain Orchestration (Tripartite Model):** (No change - Still Conceptual) Explicitly manage and mediate interactions between MikoAI's internal state/reasoning, the local computer environment (files, system info, hardware), and external network resources (APIs, web data).
 8.  **Multimodal Data Handling (Conceptual):** (No change - Still Conceptual) Design to eventually support and orchestrate tasks involving different data modalities (text, image, audio, structured data), including routing to appropriate specialized tools and fusing results. Initial implementations may be text-focused.
 
-## 3. Key Interactions
+## 3. Key Data Structures for Orchestration (New Section)
+
+The enhanced `FragmentaOrchestrator` relies on the following key `TypedDict` structures (defined in `fragmenta_orchestrator.py`) to manage complex tasks:
+
+*   **`HSPStepDetails`**: Defines an HSP task step, including `capability_id`, `target_ai_id`, `request_parameters`, `input_sources`, `input_mapping`, and detailed status fields like `status`, `correlation_id`, `dispatch_timestamp`, `result`, `error_info`, `max_retries`, `retries_left`, `retry_delay_seconds`, `last_retry_timestamp`.
+*   **`LocalStepDetails`**: Defines a local task step (tool, LLM, or chunk processing), including `tool_or_model_name`, `parameters`, `input_sources`, `input_mapping`, `status`, `result`, and `error_info`.
+*   **`ProcessingStep`**: A `Union` of `HSPStepDetails` and `LocalStepDetails`.
+*   **`EnhancedStrategyPlan`**:
+    *   `plan_id`: Unique ID for the plan.
+    *   `name`: Descriptive name for the strategy.
+    *   `steps`: `List[Union[ProcessingStep, List[ProcessingStep]]]`. This is the core of the plan, representing a sequence of stages. Each stage is either a single `ProcessingStep` (for sequential execution relative to other stages) or a `List[ProcessingStep]` (a group of steps to be executed in parallel within that stage).
+*   **`EnhancedComplexTaskState`**:
+    *   `complex_task_id`: Unique ID for the overall complex task.
+    *   `original_task_description`: The initial request.
+    *   `original_input_data`: The initial input.
+    *   `strategy_plan`: The `EnhancedStrategyPlan` being executed.
+    *   `step_results`: A dictionary mapping `step_id` to its result.
+    *   `overall_status`: Tracks the high-level status of the complex task (e.g., "new", "planning", "executing", "waiting_for_hsp", "completed", "failed_execution").
+    *   `current_executing_step_ids`: List of step IDs currently dispatched (especially relevant for parallel HSP tasks).
+    *   `next_step_to_evaluate_index`: Pointer to the current stage/step being evaluated in the plan's `steps` list.
+
+## 3. Key Interactions (Renumbered to 3.1)
 
 Fragmenta will interact with:
 

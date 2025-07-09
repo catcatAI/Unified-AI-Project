@@ -67,27 +67,34 @@ This summary is based on automated code and documentation review.
 
 ## 4. Fragmenta Orchestration (`src/fragmenta/`)
 
-*   **Implemented (Enhanced State Management, Basic Parallelism & I/O Mapping):**
-    *   `FragmentaOrchestrator.py` uses an `EnhancedStrategyPlan` where `steps` can be a list of stages, with each stage being a single step (sequential) or a list of steps (parallel group).
-    *   The `_advance_complex_task` method processes these stages:
-        *   It dispatches all ready steps in a parallel group and waits for their completion (basic join).
-        *   Sequential stages execute one after another.
-    *   **Dependency Management & I/O:** Steps define `input_sources` (list of source step IDs/output keys) and `input_mapping` (rules for constructing current step parameters). The `_prepare_step_input` helper gathers source data, and `_execute_or_dispatch_step` applies basic f-string-like templating for `input_mapping`.
-    *   Maintains previously implemented HSP task integration, including error detection (dispatch, peer failure, timeout) and a configurable retry mechanism.
-    *   Rudimentary local processing (chunking, LLM/tool dispatch, result merging) is integrated.
+*   **Implemented (Enhanced Capabilities - July 2024):**
+    *   **Advanced State Management:** `FragmentaOrchestrator.py` now employs a sophisticated state management system using `EnhancedComplexTaskState` and `EnhancedStrategyPlan`. The plan defines tasks as a sequence of stages, where each stage can be a single `ProcessingStep` (for sequential execution) or a list of `ProcessingStep` items (for parallel execution within that stage). `HSPStepDetails` and `LocalStepDetails` (subtypes of `ProcessingStep`) store detailed status, parameters, and results for each step.
+    *   **Robust HSP Task Lifecycle:** Full lifecycle management for HSP tasks is implemented, including:
+        *   Detailed status tracking (e.g., `pending_dispatch`, `dispatched`, `awaiting_result`, `completed`, `failed_response`, `failed_dispatch`, `timeout_error`, `retrying`).
+        *   Configurable automated retries with exponential backoff for HSP task failures (dispatch, peer error, timeout).
+        *   Timeout detection for HSP tasks based on configurable defaults.
+    *   **Parallel Step Execution (Foundational):** The system can execute defined groups of steps in parallel within a stage. It dispatches all ready steps in such a group and waits for all of them to complete (basic join mechanism) before proceeding to the next stage. Dynamic identification of parallelizable steps is future work.
+    *   **Explicit Input Aggregation & Mapping:**
+        *   Steps can define `input_sources` to gather results from multiple prior steps (potentially from different branches of a parallel execution after a join).
+        *   `input_mapping` allows for constructing the parameters for a step by templating values from these aggregated inputs, original task input (`{$original_input}`), or task description (`{$task_description}`).
+        *   This is facilitated by helper methods `_prepare_step_input` (gathers source data, checks dependencies) and `_execute_or_dispatch_step` (applies mappings).
+    *   **Core Execution Logic:** The `_advance_complex_task` method serves as the central state machine, processing the `EnhancedStrategyPlan` stage by stage and step by step, managing dependencies, dispatching local or HSP tasks, and handling their outcomes.
+    *   **Local Processing:** Rudimentary local processing capabilities (chunking, LLM/tool dispatch via `_dispatch_chunk_to_processing`, and result merging via `_merge_results`) are integrated within this enhanced stateful framework.
+    *   **Testing:** A comprehensive pytest suite (`tests/fragmenta/test_fragmenta_orchestrator.py`) validates these new capabilities, including HSP task lifecycles, retries, timeouts, and input mapping.
 *   **Status Update on Previous TODOs (from `TODO_PLACEHOLDERS.MD`):**
-    *   **State Management:** Further enhanced. The new plan structure supports defining parallel execution stages. Basic dependency checking and input sourcing from prior steps (including parallel ones after a join) are functional. More complex graph-like dependencies and dynamic parallelism are future work.
-    *   **Error Handling:** Basic error handling, retries, and timeouts for HSP tasks remain implemented within the new stateful execution model. Advanced error recovery strategies are future work.
+    *   **State Management & Parallelism:** Significantly enhanced. The new plan structure and execution logic provide robust state tracking and foundational support for defining and executing parallel stages with explicit input sourcing.
+    *   **Error Handling (HSP):** Substantially addressed for HSP tasks with the implementation of retries and timeouts.
 *   **Further Development / Conceptual Goals (largely from `docs/architecture/Fragmenta_design_spec.md`):**
-    *   While foundational state management and HSP error handling are improved, many advanced features from the design specification are still pending full implementation. This includes:
-        *   Sophisticated task analysis and dynamic strategy selection.
+    *   While foundational capabilities are much improved, many advanced features from the design specification are still pending full implementation. This includes:
+        *   Sophisticated task analysis and dynamic strategy selection (e.g., dynamically identifying parallelizable steps rather than relying on predefined parallel groups).
         *   Advanced data pre-processing (e.g., semantic chunking, handling diverse file types beyond plain text).
-        *   Robust sub-task orchestration, including dependency management and potential parallelism for sub-tasks.
-        *   Advanced result synthesis and post-processing methods beyond simple string joining.
-        *   Self-evaluation capabilities and meta-learning hooks for adapting strategies over time.
-        *   Cross-domain orchestration (envisioned tripartite model: User-AI-World).
+        *   More complex dependency graphs (beyond current stage-based sequential/parallel model).
+        *   Advanced result synthesis and post-processing methods.
+        *   Self-evaluation capabilities and meta-learning hooks.
+        *   Cross-domain orchestration (User-AI-World).
         *   Comprehensive multimodal data handling.
-        *   Hardware awareness and adaptive behavior based on available resources.
+        *   Hardware awareness and adaptive behavior.
+        *   Advanced error recovery strategies beyond current HSP retries (e.g., dynamic fallback, user intervention).
 
 ## 5. Heterogeneous Synchronization Protocol (HSP - `src/hsp/`)
 

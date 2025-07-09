@@ -67,14 +67,27 @@ These are comments indicating planned work or missing functionality that require
 
 *   **File:** `src/fragmenta/fragmenta_orchestrator.py`
     *   **Original TODO 1:** Enhance state management for more complex scenarios (sequential/parallel HSP, mixed local/HSP steps).
-    *   **Status:** FURTHER ADDRESSED / IN PROGRESS.
-    *   **Details:** Building on prior state management refactoring, the `EnhancedStrategyPlan` now supports defining stages of execution, where each stage can be a single step or a list of steps for parallel execution. `_advance_complex_task` processes these stages, including basic join logic for parallel groups. Steps now define `input_sources` and `input_mapping` for more explicit I/O. Basic f-string-like templating for `input_mapping` is implemented via `_execute_or_dispatch_step` and `_prepare_step_input`.
-    *   **Remaining/Future:** Sophisticated dynamic strategy generation for parallelism, complex graph-like dependency management (beyond current sequential stage checks), advanced input aggregation/templating logic for `input_mapping`, and more robust handling of failures within parallel groups.
+    *   **Status:** SIGNIFICANTLY ADDRESSED / ENHANCED (July 2024).
+    *   **Details:** The `FragmentaOrchestrator` now uses an `EnhancedStrategyPlan` and `EnhancedComplexTaskState` with detailed `ProcessingStep` definitions (`HSPStepDetails`, `LocalStepDetails`). This supports:
+        *   Defining tasks as a sequence of stages.
+        *   Each stage can contain a single step (sequential) or a list of steps (for parallel execution within that stage).
+        *   Basic join logic for parallel groups is implemented.
+        *   Steps explicitly define `input_sources` (to gather data from multiple prior steps) and `input_mapping` (to construct current step parameters using basic f-string-like templating from source data, original input, or task description).
+        *   The `_advance_complex_task` method is the core state machine managing this execution.
+    *   **Remaining/Future:**
+        *   Sophisticated dynamic strategy generation (e.g., for identifying parallelism automatically).
+        *   Complex graph-like dependency management (beyond current stage-based model).
+        *   Advanced input aggregation/templating logic for `input_mapping`.
+        *   More nuanced failure propagation and handling within parallel execution groups.
 
     *   **Original TODO 2:** Implement more robust error handling, retry strategies, and timeout management for HSP sub-tasks.
-    *   **Status:** SUBSTANTIALLY ADDRESSED (No change from previous update on this specific TODO, as this iteration focused on parallelism and I/O).
-    *   **Details:** Basic error handling for HSP tasks (dispatch errors, peer-reported failures, timeouts), a configurable retry mechanism, and timeout detection remain implemented.
-    *   **Remaining/Future:** More advanced error recovery (e.g., dynamic fallback strategies), nuanced failure propagation in parallel plans.
+    *   **Status:** SUBSTANTIALLY ADDRESSED (July 2024).
+    *   **Details:**
+        *   Full lifecycle management for HSP tasks is implemented with detailed status tracking.
+        *   Configurable automated retries with exponential backoff are in place for HSP task failures (dispatch errors, peer-reported errors, timeouts).
+        *   Timeout detection for HSP tasks is active.
+        *   These are integrated into the `_advance_complex_task` state machine.
+    *   **Remaining/Future:** More advanced error recovery strategies (e.g., dynamic fallback to different capabilities or local methods, user intervention prompts).
 
 ## 3. Code/Data Comments & Clarifications
 
