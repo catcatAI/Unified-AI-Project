@@ -40,9 +40,12 @@ These are comments indicating planned work or missing functionality that require
     *   **Status:** CLARIFIED / HANDLED BY LIBRARY.
     *   **Details:** Reconnection strategy is handled by the Paho MQTT client's built-in features. Verification and enhanced logging were completed (`feat/hsp-connector-robustness`).
     *   **Original TODO Context (Line ~128, in `_build_hsp_envelope`):** `"payload_schema_uri": None, # TODO: Add schema URIs when defined`
-    *   **Status:** ADDRESSED (Structured URNs implemented; full schema hosting/resolution pending).
-    *   **Details:** The `payload_schema_uri` field in `HSPConnector` is now populated with structured URNs (e.g., `urn:hsp:payload:Fact:0.1`) derived from the `message_type` string. Minimal placeholder schema files have been created in `schemas/hsp_payloads/` to conceptually correspond to these URNs.
-    *   **Remaining/Future:** Full JSON schema definition for all payload types and potential online hosting/resolution mechanism for these URNs.
+    *   **Status:** SIGNIFICANTLY ADDRESSED (Detailed local schemas created, URNs in use; full schema hosting/resolution pending).
+    *   **Details:** The `payload_schema_uri` field in `HSPConnector` is populated with structured URNs (e.g., `urn:hsp:payload:Fact:0.1`). The corresponding JSON schema definition files in `schemas/hsp_payloads/` for key payloads (Fact, CapabilityAdvertisement, TaskRequest, TaskResult) have now been updated with detailed structures, types, and constraints, replacing previous minimal placeholders.
+    *   **Remaining/Future:**
+        *   Define detailed JSON schemas for any remaining HSP payload types.
+        *   Implement runtime JSON schema validation within HSPConnector or by message consumers if deemed necessary.
+        *   Establish an online hosting/resolution mechanism for these URNs if external validation or public schema access is required.
     *   **Original TODO Context (Line ~260, in `_handle_hsp_message_str`):** Logic for sending 'received' ACKs.
     *   **Status:** CLARIFIED / IMPLEMENTED.
     *   **Details:** The connector sends 'received' ACKs when `qos_parameters.requires_ack` is true. Functionality verified and tested (`feat/hsp-ack-handling`). Future enhancements could include 'processed' ACKs or NACKs.
