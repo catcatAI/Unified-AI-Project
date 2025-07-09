@@ -98,15 +98,16 @@ This summary is based on automated code and documentation review.
     *   Publishing facts and basic capability advertisements.
     *   Sending task requests and processing task results.
     *   Subscribing to relevant topics and basic message handling logic.
-    *   Callback registration mechanism for different HSP message types (now supporting multiple callbacks for task results).
+    *   Callback registration mechanism for different HSP message types (supporting multiple callbacks for task results).
     *   Basic trust management via `TrustManager` to influence fact processing.
     *   Integration with `LearningManager` for fact exchange and conflict resolution (Type 1 ID-based, Type 2 Semantic).
-    *   Integration with `DialogueManager` for task brokering using a basic version of service discovery.
+    *   Integration with `DialogueManager` for task brokering.
     *   API exposure of some HSP functionalities (service listing, task initiation/polling) via FastAPI.
     *   Basic UI elements in the Electron app for HSP interaction.
+    *   **`ServiceDiscoveryModule` (`src/core_ai/service_discovery/service_discovery_module.py`):** Found to be an existing HSP-specific implementation that largely aligns with requirements. It includes `TrustManager` integration and staleness logic. Minor refinement (validation of `description` field) was applied.
 *   **Pending Issues & Refinements:**
-    *   **`ServiceDiscoveryModule` Rework:** The current `src/core_ai/service_discovery/service_discovery_module.py` is a generic service registry and **requires significant refactoring or replacement** to fulfill its intended HSP role. It needs to correctly process `HSPCapabilityAdvertisementPayload`, integrate deeply with the `TrustManager`, and manage HSP-specific service capabilities as expected by `core_services.py`. The logic for staleness/expiration of capabilities, while prototyped, depends on this rework.
-    *   **Payload Schema URIs:** The `payload_schema_uri` field in `_build_hsp_envelope` (within `hsp/connector.py`) currently uses placeholder URIs. This needs to be updated with actual, resolvable URIs once the HSP message payload schemas are formally defined, published, and hosted.
+    *   **Payload Schema URIs:** The `payload_schema_uri` field in `_build_hsp_envelope` (within `src/hsp/connector.py`) currently uses placeholder URIs. This **needs to be updated with actual, resolvable URIs** once the HSP message payload schemas are formally defined, published, and hosted.
+    *   **`ServiceDiscoveryModule` Future Enhancements:** While largely complete, potential future enhancements include implementing an active pruning mechanism for stale capabilities (the method `_prune_stale_capabilities` exists but is not currently called periodically).
 *   **Further Development / Conceptual Goals:**
     *   Full adherence to `docs/HSP_SPECIFICATION.md` (this specification itself may need updating to reflect ongoing design decisions and identify further gaps).
     *   More robust error handling and message validation.
