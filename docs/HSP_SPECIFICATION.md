@@ -227,6 +227,44 @@ This section details the structure of the primary data objects exchanged via HSP
 *   Default for v0.1.1: JSON.
 *   It is highly recommended that publishers of data also publish or link to a JSON Schema defining the structure of their payloads (e.g., in `CapabilityAdvertisement` or a schema registry).
 
+### 3.10. Payload JSON Schemas (v0.1)
+This section details the JSON Schema definitions for the primary HSP payload types. These schemas correspond to the `payload_schema_uri` URNs (e.g., `urn:hsp:payload:Fact:0.1` maps to `Fact_v0.1.json`). The full schema files are located in the `schemas/hsp_payloads/` directory in the repository.
+
+**General Schema Principles:**
+*   Based on JSON Schema Draft 07.
+*   `additionalProperties: false` is generally used for defined objects to enforce stricter adherence unless otherwise specified.
+*   Timestamps are ISO 8601 UTC strings (e.g., `"format": "date-time"`).
+*   UUIDs are used for unique identifiers (e.g., `"format": "uuid"`).
+
+**Key Payload Schemas:**
+
+*   **`Fact_v0.1.json`**:
+    *   **Description**: Represents a statement about the world or an entity.
+    *   **Key Properties**: `id` (string, uuid, required), `statement_type` (string, enum, required), `statement_nl` (string), `statement_structured` (object, conditional based on `statement_type`), `source_ai_id` (string, required), `timestamp_created` (string, date-time, required), `confidence_score` (number, 0-1, required).
+    *   `statement_structured` uses `oneOf` to define structures for "semantic_triple" (with properties like `subject_uri`, `predicate_uri`, `object_literal`/`object_uri`) and "json_ld".
+    *   Includes optional fields like `original_source_info`, `timestamp_observed`, `weight`, `valid_from`, `valid_until`, `context`, `tags`, `access_policy_id`.
+    *   Conditional requirements for `statement_nl` or `statement_structured` based on `statement_type`.
+
+*   **`CapabilityAdvertisement_v0.1.json`**:
+    *   **Description**: An AI advertises a skill, service, or tool it can offer.
+    *   **Key Properties**: `capability_id` (string, required), `ai_id` (string, required), `name` (string, required), `description` (string, required), `version` (string, required), `availability_status` (string, enum, required).
+    *   Includes optional fields for schema URIs and examples (`input_schema_uri`, `output_schema_uri`, etc.), `data_format_preferences`, `hsp_protocol_requirements`, `cost_estimate_template`, `access_policy_id`, `tags`, `last_updated_timestamp`.
+
+*   **`TaskRequest_v0.1.json`**:
+    *   **Description**: An AI requests another AI to perform a task.
+    *   **Key Properties**: `request_id` (string, uuid, required), `requester_ai_id` (string, required), `parameters` (object, required).
+    *   Requires either `capability_id_filter` or `capability_name_filter` using `anyOf`.
+    *   Includes optional fields like `target_ai_id`, `capability_version_filter`, `requested_output_data_format`, `priority`, `deadline_timestamp`, `callback_address`, `context_id`.
+
+*   **`TaskResult_v0.1.json`**:
+    *   **Description**: The outcome of a TaskRequest.
+    *   **Key Properties**: `result_id` (string, uuid, required), `request_id` (string, uuid, required), `executing_ai_id` (string, required), `status` (string, enum, required), `timestamp_generated` (string, date-time, required).
+    *   `payload` (object) is conditionally required if `status` is "success".
+    *   `error_details` (object with `error_code`, `error_message`) is conditionally required if `status` indicates failure.
+    *   Includes optional fields like `output_data_format`, `execution_metadata`, `progress_percentage`.
+
+Refer to the actual `.json` files in `schemas/hsp_payloads/` for the complete and normative definitions.
+
 ## 4. Communication Patterns & Message Envelope
 
 ### 4.1. Communication Patterns
@@ -381,7 +419,8 @@ This appendix provides a brief overview of the current implementation status of 
 *   **`payload_schema_uri` in HSP Message Envelope:**
     *   As per Section 4.2, the `payload_schema_uri` field is intended to point to a resolvable schema for the message payload.
     *   In the current implementation (`src/hsp/connector.py`), this field is populated with **structured URNs** (e.g., `urn:hsp:payload:Fact:0.1`) based on message type and version.
-    *   While these URNs provide unique identification, the actual JSON schemas they refer to are currently conceptual placeholders (e.g., minimal files in `schemas/hsp_payloads/`). Full schema definition and online resolvability (if URNs were to be resolved via a future registry) are pending.
+    *   The JSON schema definition files in `schemas/hsp_payloads/` corresponding to these URNs for key payloads (Fact, CapabilityAdvertisement, TaskRequest, TaskResult) have now been **updated with detailed structures, types, and constraints**, replacing previous minimal placeholders.
+    *   Full online hosting/resolution of these URNs to publicly accessible schema documents remains a future step if required for external validation.
 
 *   **General Completeness:**
     *   While core message types and MQTT-based transport are functional, advanced features like comprehensive semantic translation services, complex consensus mechanisms, and detailed state synchronization (`AIStateSynchronization`) are still conceptual or in early stages of consideration.

@@ -116,7 +116,7 @@ This summary is based on automated code and documentation review.
         *   Handles staleness of advertisements, including **active periodic pruning** of stale capabilities from its store (newly implemented).
         *   Minor refinement for `description` field validation was previously applied.
 *   **Pending Issues & Refinements:**
-    *   **Payload Schema URIs:** The `payload_schema_uri` field in `_build_hsp_envelope` (within `src/hsp/connector.py`) currently uses placeholder URIs. This **needs to be updated with actual, resolvable URIs** once the HSP message payload schemas are formally defined, published, and hosted.
+    *   **Payload Schema URIs & Definitions:** The `payload_schema_uri` field in `_build_hsp_envelope` (within `src/hsp/connector.py`) uses structured URNs (e.g., `urn:hsp:payload:Fact:0.1`). The corresponding JSON schema definition files in `schemas/hsp_payloads/` for key payloads (Fact, CapabilityAdvertisement, TaskRequest, TaskResult) have now been **updated with detailed structures, types, and constraints**, replacing previous minimal placeholders. Full online hosting/resolution of these URNs to publicly accessible schema documents remains a future step if required for external validation.
     *   **`ServiceDiscoveryModule` Future Enhancements:** JSON schema validation for incoming `HSPCapabilityAdvertisementPayload` could be considered if/when official schemas become available and resolvable.
 *   **Further Development / Conceptual Goals:**
     *   Full adherence to `docs/HSP_SPECIFICATION.md` (this specification itself may need updating to reflect ongoing design decisions and identify further gaps).
