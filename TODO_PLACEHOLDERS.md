@@ -29,12 +29,11 @@ These are comments indicating planned work or missing functionality that require
 
 *   **File:** `src/core_ai/service_discovery/service_discovery_module.py`
     *   **Original TODO Context:** Logic for staleness/expiration of capabilities.
-    *   **Status:** PARTIALLY ADDRESSED / REQUIRES REWORK.
-    *   **Details:** While logic for staleness based on `last_seen` and a threshold was implemented (`feat/sdm-capability-staleness`), the `ServiceDiscoveryModule` itself is a generic service registry. It **requires significant refactoring or replacement** to properly handle HSP-specific `HSPCapabilityAdvertisementPayload`, integrate with `TrustManager`, and fulfill its intended role in the HSP ecosystem as expected by `core_services.py`. The existing staleness logic would need to be adapted to this new HSP-aligned structure.
-    *   **Required Functionality (Revised):**
-        1.  Refactor/reimplement `ServiceDiscoveryModule` to be HSP-centric.
-        2.  Integrate `TrustManager` for capability processing.
-        3.  Implement/adapt logic for managing capability lifecycle, including advertisement processing, storage, and staleness/expiration based on `last_seen` and a configurable threshold, within the new HSP-aligned structure.
+    *   **Status:** LARGELY IMPLEMENTED / VERIFIED.
+    *   **Details:** The module was found to be an existing HSP-specific implementation, already including `TrustManager` integration and staleness logic. A minor refinement was made to include `description` in the essential fields check during capability advertisement processing. The core logic for handling HSP capabilities, staleness, and trust is functional.
+    *   **Future Enhancements (Optional):**
+        1.  Implement an active pruning mechanism for stale capabilities (the method `_prune_stale_capabilities` exists but is not currently called periodically).
+        2.  Consider adding JSON schema validation for incoming `HSPCapabilityAdvertisementPayload` if/when official schemas become available and resolvable.
 
 *   **File:** `src/hsp/connector.py`
     *   **Original TODO Context (Line ~63):** Manual reconnection logic in `_on_mqtt_disconnect`.
