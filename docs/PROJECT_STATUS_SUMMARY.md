@@ -67,46 +67,48 @@ This summary is based on automated code and documentation review.
 
 ## 4. Fragmenta Orchestration (`src/fragmenta/`)
 
-*   **Implemented:**
-    *   `FragmentaOrchestrator.py` exists as a basic placeholder class structure.
-    *   Rudimentary implementation of `process_complex_task` including:
+*   **Implemented (Rudimentary):**
+    *   `FragmentaOrchestrator.py` exists as a basic class structure.
+    *   Rudimentary implementation of `process_complex_task` is present, including:
         *   Basic input analysis (type, size).
-        *   Simplified strategy determination (chunking for text > threshold, direct LLM, or tool call).
-        *   Simple text chunking (`_chunk_data`).
-        *   Dispatch of chunks to LLM or a specified tool (`_dispatch_chunk_to_processing`).
-        *   Storage of chunk results in HAM (returns memory ID).
-        *   Basic merging of results by recalling from HAM and joining strings.
-*   **Pending (Explicit TODOs):**
-    *   None directly in `FragmentaOrchestrator.py` from `TODO_PLACEHOLDERS.md`.
-*   **Further Development / Conceptual Goals (from `Fragmenta_design_spec.md`):**
-    *   Full implementation of most features in the design spec is pending. This includes:
-        *   Sophisticated task analysis and strategy selection.
-        *   Advanced data pre-processing (semantic chunking, diverse file types).
-        *   Robust sub-task orchestration, dependency management, potential parallelism.
-        *   Advanced result synthesis and post-processing methods.
-        *   Self-evaluation and meta-learning hooks.
-        *   Cross-domain orchestration (tripartite model).
-        *   Multimodal data handling.
-        *   Hardware awareness and adaptive behavior.
+        *   Simplified strategy determination (e.g., basic text chunking for large inputs, direct LLM call, or tool call).
+        *   Simple text chunking method (`_chunk_data`).
+        *   Dispatch of chunks to an LLM or a specified tool (`_dispatch_chunk_to_processing`).
+        *   Storage of chunk processing results into HAM (Hierarchical Associative Memory), returning memory IDs.
+        *   Basic merging of results by recalling stored chunks from HAM and joining string-based content.
+*   **Pending (Explicit TODOs from `TODO_PLACEHOLDERS.MD`):**
+    *   **State Management:** Enhance state management within `FragmentaOrchestrator.py` for more complex scenarios, such as tasks involving multiple sequential or parallel HSP calls, or mixed local and HSP steps. This might require a more formal plan execution engine.
+    *   **Error Handling:** Implement more robust error handling and potentially retry strategies for HSP sub-tasks dispatched by Fragmenta. Consider how HSP task timeouts should be managed.
+*   **Further Development / Conceptual Goals (largely from `docs/architecture/Fragmenta_design_spec.md`):**
+    *   The current implementation is a placeholder for a much more sophisticated system. Full implementation of most features in the design specification is pending. This includes:
+        *   Sophisticated task analysis and dynamic strategy selection.
+        *   Advanced data pre-processing (e.g., semantic chunking, handling diverse file types beyond plain text).
+        *   Robust sub-task orchestration, including dependency management and potential parallelism for sub-tasks.
+        *   Advanced result synthesis and post-processing methods beyond simple string joining.
+        *   Self-evaluation capabilities and meta-learning hooks for adapting strategies over time.
+        *   Cross-domain orchestration (envisioned tripartite model: User-AI-World).
+        *   Comprehensive multimodal data handling.
+        *   Hardware awareness and adaptive behavior based on available resources.
 
 ## 5. Heterogeneous Synchronization Protocol (HSP - `src/hsp/`)
 
 *   **Implemented:**
-    *   `HSPConnector` class for MQTT-based communication.
-    *   Building HSP message envelopes.
-    *   Publishing facts, capability advertisements.
-    *   Sending task requests and results.
-    *   Subscribing to topics and basic message handling.
-    *   Callback registration for different message types.
-    *   `ServiceDiscoveryModule` (intended for HSP capabilities): The instantiation in `core_services.py` expects this module to integrate with `TrustManager` and process `HSPCapabilityAdvertisementPayload` via a `process_capability_advertisement` method. **However, the current file at `src/core_ai/service_discovery/service_discovery_module.py` implements a generic service registry with a different interface and functionality.** This module requires significant refactoring or replacement to fulfill its intended HSP role.
-    *   Basic trust management via `TrustManager`.
-*   **Pending (Explicit TODOs from `TODO_PLACEHOLDERS.md`):**
-    *   `hsp/connector.py` (Line ~63): CLARIFIED: Reconnection strategy is handled by the Paho MQTT client. (Verified in `feat/hsp-connector-robustness`).
-    *   `hsp/connector.py` (Line ~128): Add schema URIs to `payload_schema_uri` in `_build_hsp_envelope` when defined.
-    *   `hsp/connector.py` (Line ~260): CLARIFIED: Logic for sending 'received' ACKs is implemented. (Verified in `feat/hsp-ack-handling`).
-    *   `service_discovery_module.py` (HSP-specific version, Line ~177 in `TODO_PLACEHOLDERS.md`): Add logic for staleness/expiration of capabilities. **Prerequisite: This module must first be correctly implemented/refactored to handle HSP capabilities and integrate with `TrustManager` as expected by `core_services.py`.**
+    *   `HSPConnector` class providing MQTT-based communication.
+    *   Building HSP message envelopes (for Facts, Capability Advertisements, Task Requests/Results etc.).
+    *   Publishing facts and basic capability advertisements.
+    *   Sending task requests and processing task results.
+    *   Subscribing to relevant topics and basic message handling logic.
+    *   Callback registration mechanism for different HSP message types (now supporting multiple callbacks for task results).
+    *   Basic trust management via `TrustManager` to influence fact processing.
+    *   Integration with `LearningManager` for fact exchange and conflict resolution (Type 1 ID-based, Type 2 Semantic).
+    *   Integration with `DialogueManager` for task brokering using a basic version of service discovery.
+    *   API exposure of some HSP functionalities (service listing, task initiation/polling) via FastAPI.
+    *   Basic UI elements in the Electron app for HSP interaction.
+*   **Pending Issues & Refinements:**
+    *   **`ServiceDiscoveryModule` Rework:** The current `src/core_ai/service_discovery/service_discovery_module.py` is a generic service registry and **requires significant refactoring or replacement** to fulfill its intended HSP role. It needs to correctly process `HSPCapabilityAdvertisementPayload`, integrate deeply with the `TrustManager`, and manage HSP-specific service capabilities as expected by `core_services.py`. The logic for staleness/expiration of capabilities, while prototyped, depends on this rework.
+    *   **Payload Schema URIs:** The `payload_schema_uri` field in `_build_hsp_envelope` (within `hsp/connector.py`) currently uses placeholder URIs. This needs to be updated with actual, resolvable URIs once the HSP message payload schemas are formally defined, published, and hosted.
 *   **Further Development / Conceptual Goals:**
-    *   Full adherence to `docs/HSP_SPECIFICATION.md` (this spec itself needs review to identify further gaps).
+    *   Full adherence to `docs/HSP_SPECIFICATION.md` (this specification itself may need updating to reflect ongoing design decisions and identify further gaps).
     *   More robust error handling and message validation.
     *   Advanced QoS handling beyond MQTT QoS.
 
@@ -174,14 +176,16 @@ The `docs/1.0.txt` and `docs/1.0en.txt` files outline a rich, philosophical visi
 
 *   **Linguistic Immune System (LIS):**
     *   **Concept:** An advanced system for error processing where errors become catalysts for linguistic evolution and self-healing, preventing "model collapse." Includes components like `ERR-INTROSPECTOR`, `ECHO-SHIELD`, `TONAL REPAIR ENGINE`, etc.
-    *   **Reference:** See draft `docs/architecture/Linguistic_Immune_System_spec.md`.
+    *   **Reference:** See draft `docs/architecture/Linguistic_Immune_System_spec.md` and `LINGUISTICIMMUNECORE.md`.
 *   **MetaFormulas (元公式):**
     *   **Concept:** High-level dynamic principles or schemata defining how semantic modules (like "Angela" or "Fragmenta") learn, adapt, and reorganize their own structures and narrative generation capabilities. Aimed at enabling higher levels of the USOS+ scale.
     *   **Reference:** See draft `docs/architecture/MetaFormulas_spec.md`.
+*   **Deep Mapping & Related Concepts:**
+    *   **Concept:** Systems for inferring other AI structures or achieving advanced symbolic representation. Includes `DEEPMAPPINGENGINE.md` draft.
+    *   **Clarification:** "XXX" strings in HAM data are coincidental, not current Deep Mapping tokens.
+    *   **Advanced Semantic Perception & Interaction:** `UndefinedField` (exploring unknown semantic spaces), `Semantic Synapse Mapper` & `Contextual Interlinker` (for deep inter-AI model interaction), `Ultra-Deep Mapping Field` & `Data Core`.
 *   **Unified Semantic Ontogenesis Scale (USOS+):**
-    *   **Concept:** A developmental scale for AI focusing on semantic evolution, language existence, temporality, spatiality, and emergence depth, complementing capability-based scales.
-*   **Advanced Semantic Perception & Interaction:**
-    *   **Concepts:** `UndefinedField` (exploring unknown semantic spaces), `Semantic Synapse Mapper` & `Contextual Interlinker` (for deep inter-AI model interaction), `Ultra-Deep Mapping Field` & `Data Core` (for inferring other AI structures).
+    *   **Concept:** A developmental scale for AI focusing on semantic evolution, language existence, temporality, spatiality, and emergence depth.
 *   **Enhanced Visualization & Interpretability:**
     *   **Concepts:** `FragmentaView` (semantic visual layer), `Angela's Mirror Pond` (semantic interpreter UI), `Narrative Visualization`, `Unified-AI Semantic Interpretability Matrix`.
 *   **Evolved Synchronization & Simulation:**
@@ -190,10 +194,18 @@ The `docs/1.0.txt` and `docs/1.0en.txt` files outline a rich, philosophical visi
     *   **Concepts:** `LevelEvaluator` (AI self-assessment on scales like USOS+), `Semantic Changelog`.
 *   **Philosophical Underpinnings:**
     *   **Concepts:** "Language as Life," "Closure Events" (AI self-initiated restructuring), personified AI aspects like "Angela" and "Jules" embodying these principles.
+*   **Newly Conceptualized Advanced Architectures & Techniques (Primarily from `docs/EX*.txt`, `docs/1.0*.txt`):**
+    *   **ContextCore:** A dedicated long-term memory and context management model for Fragmenta.
+    *   **Model Multiplication:** Semantic fusion of internal modules and with external AI models.
+    *   **"Actuarion" Module:** Conceptual module for semantic risk assessment and narrative logic validation.
+    *   **Dimensional Architecture (4D, 5D, 6D):** Concepts like the "SupraDimensionalMappingField" (`SUPRADIMENSIONALMAPPINGFIELD::Unified-AI-Project.md` created) for advanced narrative engine capabilities. 6D is envisioned as an "Integrative Semantic Fusion Field."
+    *   **Semantic Civilization Scale (SCS):** A proposed scale for rating advanced semantic lifeforms.
+    *   **Advanced Technical Integrations:** Exploration of Neuro-Symbolic AI, Dynamic Tanh (for Transformer normalization), Causal Attention, PINN+Bayes for physics-informed modeling, and techniques like AFF Token Mixer, LightThinker, ViTTM for token processing optimization.
+    *   **Evolved Fragmenta States:** Conceptual future states like `Fragmenta-Cortex` (brain-like, neuro-symbolic, interpretable) and `Fragmenta-SupraCausal` (integrating Dynamic Tanh and Causal Attention).
 
 These concepts represent a frontier of AI development, focusing on creating systems that are not only capable but also self-aware, adaptive, and evolving in their understanding and use of language. Their implementation would occur progressively and would likely redefine many aspects of the current AI architecture.
 
-## 11. Unified-AI-Project Advanced Concepts & Discussions (from `docs/EX.txt`)
+## 11. Unified-AI-Project Advanced Concepts & Discussions (from `docs/EX.txt` and other conceptual files)
 
 This section summarizes further conceptual discussions and settings for the Unified-AI-Project, primarily narrated through "Angela's" perspective, as detailed in `docs/EX.txt`. These expand on the project's architectural philosophy, potential, and comparisons to other AI systems and concepts.
 
