@@ -24,17 +24,17 @@ Fragmenta will be responsible for:
         *   Future models (Code Model, Daily Language Model).
         *   Other `core_ai` components.
     *   **HSP Capabilities (New):** Dispatching sub-tasks to external AIs via HSP if a suitable capability is discovered using the `ServiceDiscoveryModule`.
-    *   Managing dependencies and execution flow between sub-tasks (including asynchronous HSP tasks).
-    *   Conceptual support for parallel processing of independent chunks and tasks.
+    *   Managing dependencies and execution flow between sub-tasks. This now includes more robust state management for sequential local and HSP tasks, including basic error handling, retries, and timeouts for HSP tasks.
+    *   Conceptual support for parallel processing of independent chunks and tasks remains, though the current implementation focuses on sequential step execution with concurrent HSP calls.
 5.  **Result Synthesis & Post-processing:**
-    *   **Merging:** Combining results from processed local chunks and/or HSP sub-tasks into a coherent final output. This might involve summarization of summaries, structured data aggregation, etc.
-    *   **Formatting:** Ensuring the final output is in the desired format for the user or calling system.
+    *   **Merging:** Combining results from processed local steps and/or HSP sub-tasks into a coherent final output. This is handled by the `_merge_results` method using data from the `EnhancedComplexTaskState.step_results`.
+    *   **Formatting:** Ensuring the final output is in the desired format for the user or calling system (handled by the merging strategy or final step).
 6.  **Self-Evaluation & Learning (Future - Phase 4 Hooks):**
-    *   Receiving feedback on task outcomes.
-    *   Logging task performance and potentially requesting model/tool upgrades or fine-tuning via hooks.
-    *   Adapting strategies based on past performance (meta-learning aspect).
-7.  **Cross-Domain Orchestration (Tripartite Model):** Explicitly manage and mediate interactions between MikoAI's internal state/reasoning, the local computer environment (files, system info, hardware), and external network resources (APIs, web data).
-8.  **Multimodal Data Handling (Conceptual):** Design to eventually support and orchestrate tasks involving different data modalities (text, image, audio, structured data), including routing to appropriate specialized tools and fusing results. Initial implementations may be text-focused.
+    *   (No change - Still Future) Receiving feedback on task outcomes.
+    *   (No change - Still Future) Logging task performance and potentially requesting model/tool upgrades or fine-tuning via hooks.
+    *   (No change - Still Future) Adapting strategies based on past performance (meta-learning aspect).
+7.  **Cross-Domain Orchestration (Tripartite Model):** (No change - Still Conceptual) Explicitly manage and mediate interactions between MikoAI's internal state/reasoning, the local computer environment (files, system info, hardware), and external network resources (APIs, web data).
+8.  **Multimodal Data Handling (Conceptual):** (No change - Still Conceptual) Design to eventually support and orchestrate tasks involving different data modalities (text, image, audio, structured data), including routing to appropriate specialized tools and fusing results. Initial implementations may be text-focused.
 
 ## 3. Key Interactions
 
@@ -102,7 +102,13 @@ This is a critical function of Fragmenta.
 
 ## 5. `FragmentaOrchestrator` Class (Conceptual API - v0.1)
 
-**Implementation Status Note (July 2024):** The `FragmentaOrchestrator` currently exists as a basic class structure with a rudimentary implementation of `process_complex_task`. This includes very simple input analysis, chunking, dispatch to LLM/tools, and result merging (primarily string concatenation). Most of the advanced features described in this design specification (e.g., sophisticated task analysis, semantic chunking, advanced pre/post-processing, parallelism, robust HSP integration, self-evaluation, hardware awareness) are still conceptual and await full implementation. Refer to `docs/PROJECT_STATUS_SUMMARY.md` for current details.
+**Implementation Status Note (July 2024 - Updated):** The `FragmentaOrchestrator` has been significantly refactored. It now implements an enhanced state management system (`EnhancedComplexTaskState`, `EnhancedStrategyPlan` with `ProcessingStep` details) allowing for more complex task flows. Key improvements include:
+*   **Stateful Step Execution:** The `_advance_complex_task` method processes tasks as a sequence of defined steps, checking dependencies.
+*   **HSP Task Integration:** Can dispatch HSP sub-tasks and receive their results asynchronously.
+*   **Error Handling & Retries for HSP:** Basic error detection (dispatch errors, peer-reported failures, timeouts) and a configurable retry mechanism with backoff for HSP tasks are now implemented.
+*   **Rudimentary local processing** (chunking, LLM/tool dispatch, result merging) is maintained within this new stateful framework.
+
+While this addresses core TODOs for HSP state management and error handling, many advanced features from this design spec (e.g., sophisticated dynamic strategy selection, true parallelism beyond concurrent HSP calls, semantic chunking, deep self-evaluation, full hardware awareness) remain conceptual or for future implementation. Refer to `docs/PROJECT_STATUS_SUMMARY.md` for current details.
 
 File: `src/fragmenta/fragmenta_orchestrator.py`
 
@@ -173,11 +179,13 @@ This is a complex area requiring significant research and development, likely ev
 
 ## 7. Future Considerations (Renumbered)
 
-*   More sophisticated strategy selection (potentially ML-based, incorporating hardware context).
-*   Dynamic adjustment of strategies based on intermediate results.
+*   More sophisticated strategy selection (potentially ML-based, incorporating hardware context, or allowing for more graph-like plans rather than simple sequences).
+*   Dynamic adjustment of strategies based on intermediate results or failures of alternative paths.
 *   Cost/resource estimation for different strategies.
-*   Robust error handling and retry mechanisms for sub-tasks.
-*   Integration with the "Contextual LSTM Model" for long-term memory context in strategy selection or chunk processing.
+*   **Error Handling & Retries:** While basic error handling, timeouts, and retries for HSP tasks have been implemented, more advanced error recovery strategies (e.g., dynamic fallback to different capabilities or local methods, user intervention prompts) are future considerations.
+*   **Parallelism:** True parallel execution of independent plan steps (beyond concurrent HSP calls) needs further design and implementation.
+*   Integration with the "Contextual LSTM Model" or other advanced memory/context systems for richer strategy selection or chunk processing.
+*   More sophisticated input parameter mapping between steps.
 
-This v0.1 specification provides a starting point for developing Fragmenta's foundational capabilities, especially around data handling.
+This v0.1 specification, along with recent implementations, provides a foundational stateful orchestrator. Further enhancements will build upon this.
 ```

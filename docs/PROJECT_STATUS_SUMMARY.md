@@ -67,20 +67,18 @@ This summary is based on automated code and documentation review.
 
 ## 4. Fragmenta Orchestration (`src/fragmenta/`)
 
-*   **Implemented (Rudimentary):**
-    *   `FragmentaOrchestrator.py` exists as a basic class structure.
-    *   Rudimentary implementation of `process_complex_task` is present, including:
-        *   Basic input analysis (type, size).
-        *   Simplified strategy determination (e.g., basic text chunking for large inputs, direct LLM call, or tool call).
-        *   Simple text chunking method (`_chunk_data`).
-        *   Dispatch of chunks to an LLM or a specified tool (`_dispatch_chunk_to_processing`).
-        *   Storage of chunk processing results into HAM (Hierarchical Associative Memory), returning memory IDs.
-        *   Basic merging of results by recalling stored chunks from HAM and joining string-based content.
-*   **Pending (Explicit TODOs from `TODO_PLACEHOLDERS.MD`):**
-    *   **State Management:** Enhance state management within `FragmentaOrchestrator.py` for more complex scenarios, such as tasks involving multiple sequential or parallel HSP calls, or mixed local and HSP steps. This might require a more formal plan execution engine.
-    *   **Error Handling:** Implement more robust error handling and potentially retry strategies for HSP sub-tasks dispatched by Fragmenta. Consider how HSP task timeouts should be managed.
+*   **Implemented (Foundation with Basic HSP Error Handling):**
+    *   `FragmentaOrchestrator.py` has been significantly refactored with an enhanced state management system (`EnhancedComplexTaskState`, `EnhancedStrategyPlan` with `ProcessingStep` details).
+    *   The `_advance_complex_task` method now processes tasks as a sequence of defined steps, checks basic dependencies.
+    *   Can dispatch HSP sub-tasks and receive their results asynchronously to update step states.
+    *   **Basic error handling for HSP tasks implemented:** Detects dispatch errors, peer-reported failures, and timeouts.
+    *   **Configurable retry mechanism for HSP tasks:** Includes number of retries and basic exponential backoff for delays.
+    *   Rudimentary local processing (input analysis, chunking, LLM/tool dispatch via `_dispatch_chunk_to_processing`, result merging via `_merge_results`) is integrated into the new stateful framework.
+*   **Partially Addressed / In Progress (from `TODO_PLACEHOLDERS.MD`):**
+    *   **State Management:** The new state machine provides a foundation for more complex scenarios. It can handle sequences of HSP tasks and mixed local/HSP steps to some extent. True parallelism and very complex graph-like dependencies are future work.
+    *   **Error Handling:** Basic error handling, retries, and timeouts for HSP tasks are now implemented. More advanced strategies (e.g., dynamic fallbacks, user intervention) are future considerations.
 *   **Further Development / Conceptual Goals (largely from `docs/architecture/Fragmenta_design_spec.md`):**
-    *   The current implementation is a placeholder for a much more sophisticated system. Full implementation of most features in the design specification is pending. This includes:
+    *   While foundational state management and HSP error handling are improved, many advanced features from the design specification are still pending full implementation. This includes:
         *   Sophisticated task analysis and dynamic strategy selection.
         *   Advanced data pre-processing (e.g., semantic chunking, handling diverse file types beyond plain text).
         *   Robust sub-task orchestration, including dependency management and potential parallelism for sub-tasks.
