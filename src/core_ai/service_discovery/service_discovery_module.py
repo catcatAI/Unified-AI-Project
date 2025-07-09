@@ -22,7 +22,10 @@ class ServiceDiscoveryModule:
     This module is intended to replace the previous generic service discovery.
     """
 
-    def __init__(self, trust_manager: TrustManager, staleness_threshold_seconds: int = 3600 * 24):
+    def __init__(self,
+                 trust_manager: TrustManager,
+                 staleness_threshold_seconds: int = 3600 * 24,
+                 pruning_interval_seconds: int = 60 * 10): # Default 10 minutes
         """
         Initializes the HSP ServiceDiscoveryModule.
 
@@ -30,12 +33,46 @@ class ServiceDiscoveryModule:
             trust_manager: An instance of the TrustManager.
             staleness_threshold_seconds: How long an advertisement is considered valid
                                          without being re-advertised (default: 24 hours).
+            pruning_interval_seconds: How often to run the pruning mechanism for stale capabilities.
         """
         self.trust_manager: TrustManager = trust_manager
         self.staleness_threshold_seconds: int = staleness_threshold_seconds
         self._capabilities_store: Dict[str, StoredCapabilityInfo] = {}
         self._store_lock: threading.Lock = threading.Lock()
-        logger.info(f"HSP ServiceDiscoveryModule initialized. Staleness threshold: {self.staleness_threshold_seconds}s.")
+        self._pruning_interval_seconds: int = pruning_interval_seconds
+        self._pruning_timer: Optional[threading.Timer] = None
+        self._stop_pruning_event: threading.Event = threading.Event()
+
+        self._start_pruning_timer()
+        logger.info(f"HSP ServiceDiscoveryModule initialized. Staleness threshold: {self.staleness_threshold_seconds}s, Pruning interval: {self._pruning_interval_seconds}s.")
+
+    def _start_pruning_timer(self) -> None:
+        """Starts the recurring timer for pruning stale capabilities."""
+        if not self._stop_pruning_event.is_set():
+            self._pruning_timer = threading.Timer(self._pruning_interval_seconds, self._run_pruning_cycle)
+            self._pruning_timer.daemon = True  # Allow program to exit even if timer is active
+            self._pruning_timer.start()
+            logger.info(f"Pruning timer started. Next check in {self._pruning_interval_seconds} seconds.")
+
+    def _run_pruning_cycle(self) -> None:
+        """Internal method called by the timer to execute pruning and reschedule."""
+        logger.debug("Pruning cycle triggered.")
+        self._prune_stale_capabilities()
+        # Reschedule the timer for the next run, unless stop event is set
+        if not self._stop_pruning_event.is_set():
+            self._start_pruning_timer()
+        else:
+            logger.info("Pruning timer stop event detected. Not rescheduling.")
+
+    def stop_pruning_timer(self) -> None:
+        """Stops the active pruning timer."""
+        logger.info("Attempting to stop pruning timer...")
+        self._stop_pruning_event.set() # Signal the timer loop to stop
+        if self._pruning_timer and self._pruning_timer.is_alive():
+            self._pruning_timer.cancel() # Cancel the current wait
+            logger.info("Pruning timer cancelled.")
+        self._pruning_timer = None
+
 
     def process_capability_advertisement(
         self,
@@ -229,17 +266,28 @@ class ServiceDiscoveryModule:
         """
         (Optional internal method for future use if background pruning is desired)
         Removes stale capabilities from the store.
+        This method is now called periodically by the pruning timer.
         """
         with self._store_lock:
             current_time = datetime.now(timezone.utc)
+            # Ensure items() is called on a copy if modification during iteration is a concern,
+            # though lock should prevent concurrent modification issues from other threads.
+            # For simplicity here, direct iteration with a lock is common.
             stale_ids = [
-                cap_id for cap_id, stored_info in self._capabilities_store.items()
+                cap_id for cap_id, stored_info in list(self._capabilities_store.items()) # Iterate over a copy
                 if self._is_stale(stored_info, current_time)
             ]
             if stale_ids:
+                logger.info(f"Found {len(stale_ids)} stale capabilities to prune.")
                 for cap_id in stale_ids:
-                    del self._capabilities_store[cap_id]
-                logger.info(f"Pruned {len(stale_ids)} stale capabilities from the store.")
+                    try:
+                        del self._capabilities_store[cap_id]
+                        logger.debug(f"Successfully pruned stale capability ID: {cap_id}")
+                    except KeyError:
+                        logger.warning(f"Attempted to prune capability ID {cap_id} but it was already removed (possibly by a concurrent operation, though unlikely with current locking).")
+                logger.info(f"Finished pruning. Total {len(stale_ids)} stale capabilities removed.")
+            else:
+                logger.debug("No stale capabilities found to prune.")
 
 # Example usage (for testing or direct instantiation if needed)
 if __name__ == '__main__':
