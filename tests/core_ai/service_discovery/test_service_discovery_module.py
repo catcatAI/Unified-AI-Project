@@ -311,6 +311,146 @@ class TestHSPServiceDiscoveryModule(unittest.TestCase):
         self.assertEqual(len(not_stale_caps), 2) # cap1 is now stale
         self.assertFalse(any(c.get('capability_id') == 'translator_v1' for c in not_stale_caps))
 
+    def tearDown(self):
+        # Ensure the timer is stopped after each test if it was started
+        if hasattr(self.sdm, '_pruning_timer') and self.sdm._pruning_timer is not None:
+            self.sdm.stop_pruning_timer()
+
+class TestActivePruning(unittest.TestCase):
+    def setUp(self):
+        self.mock_trust_manager = MockTrustManager()
+        # Use very short staleness and pruning intervals for testing
+        self.sdm = ServiceDiscoveryModule(
+            trust_manager=self.mock_trust_manager,
+            staleness_threshold_seconds=1, # Stale after 1 second
+            pruning_interval_seconds=0.1  # Prune very frequently
+        )
+        # Payloads
+        self.cap_fresh_payload: HSPCapabilityAdvertisementPayload = {
+            "capability_id": "fresh_cap", "ai_id": "did:hsp:ai_fresh", "name": "Fresh Capability",
+            "description": "This should remain.", "version": "1.0", "availability_status": "online", "tags": []
+        }
+        self.cap_fresh_envelope: HSPMessageEnvelope = {
+            "hsp_envelope_version": "0.1", "message_id": "msg_fresh", "sender_ai_id": "did:hsp:ai_fresh",
+            "recipient_ai_id": "hsp/cap_adv", "timestamp_sent": "", "message_type": "HSP::CapAdv",
+            "protocol_version": "0.1.1", "communication_pattern": "publish", "payload": self.cap_fresh_payload
+        } # type: ignore
+
+        self.cap_stale_payload: HSPCapabilityAdvertisementPayload = {
+            "capability_id": "stale_cap", "ai_id": "did:hsp:ai_stale", "name": "Stale Capability",
+            "description": "This should be pruned.", "version": "1.0", "availability_status": "online", "tags": []
+        }
+        self.cap_stale_envelope: HSPMessageEnvelope = {
+            "hsp_envelope_version": "0.1", "message_id": "msg_stale", "sender_ai_id": "did:hsp:ai_stale",
+            "recipient_ai_id": "hsp/cap_adv", "timestamp_sent": "", "message_type": "HSP::CapAdv",
+            "protocol_version": "0.1.1", "communication_pattern": "publish", "payload": self.cap_stale_payload
+        } # type: ignore
+
+
+    @unittest.mock.patch('threading.Timer')
+    def test_active_pruning_removes_stale_capabilities(self, MockTimer):
+        # Mock the timer to control its execution
+        # The timer callback is sdm._run_pruning_cycle
+        # We want to simulate it being called.
+
+        # Store a capability that will become stale
+        stale_timestamp = datetime.now(timezone.utc) - timedelta(seconds=self.sdm.staleness_threshold_seconds + 5)
+        self.cap_stale_envelope["timestamp_sent"] = stale_timestamp.isoformat() # Not directly used by process_cap but good practice
+        self.sdm.process_capability_advertisement(self.cap_stale_payload, self.cap_stale_envelope['sender_ai_id'], self.cap_stale_envelope)
+        # Manually set its last_seen_timestamp to be in the past for process_capability_advertisement behavior
+        with self.sdm._store_lock:
+             self.sdm._capabilities_store["stale_cap"]["last_seen_timestamp"] = stale_timestamp
+
+
+        # Store a fresh capability
+        fresh_timestamp = datetime.now(timezone.utc) - timedelta(seconds=0.5) # Well within staleness threshold
+        self.cap_fresh_envelope["timestamp_sent"] = fresh_timestamp.isoformat()
+        self.sdm.process_capability_advertisement(self.cap_fresh_payload, self.cap_fresh_envelope['sender_ai_id'], self.cap_fresh_envelope)
+        with self.sdm._store_lock: # Ensure its timestamp is recent
+            self.sdm._capabilities_store["fresh_cap"]["last_seen_timestamp"] = fresh_timestamp
+
+
+        self.assertIn("stale_cap", self.sdm._capabilities_store)
+        self.assertIn("fresh_cap", self.sdm._capabilities_store)
+
+        # Simulate the timer firing and calling _run_pruning_cycle
+        # The actual timer is mocked, so we call the method it would call.
+        self.sdm._run_pruning_cycle() # This will call _prune_stale_capabilities
+
+        self.assertNotIn("stale_cap", self.sdm._capabilities_store, "Stale capability was not pruned.")
+        self.assertIn("fresh_cap", self.sdm._capabilities_store, "Fresh capability was incorrectly pruned.")
+
+        # Check if the timer was "restarted" by _run_pruning_cycle (i.e., Timer was called again)
+        # _start_pruning_timer is called at the end of _run_pruning_cycle
+        # So, MockTimer should have been called multiple times: once in __init__, once by _run_pruning_cycle
+        self.assertTrue(MockTimer.call_count >= 2)
+
+
+    @unittest.mock.patch('threading.Timer')
+    def test_stop_pruning_timer(self, MockTimer):
+        # SDM is initialized in setUp, so timer is already mocked and 'started' (constructor called)
+        initial_timer_call_count = MockTimer.call_count
+
+        self.sdm.stop_pruning_timer()
+
+        # Check that the stop event is set
+        self.assertTrue(self.sdm._stop_pruning_event.is_set())
+
+        # Check that the timer instance's cancel method was called if it existed
+        # The actual timer object is stored in self.sdm._pruning_timer
+        # MockTimer().cancel is what we need to check.
+        # The timer instance is created by MockTimer(interval, callback).
+        # We need to get the instance that was created.
+        if MockTimer.return_value.is_alive.return_value: # If mock timer was "alive"
+             MockTimer.return_value.cancel.assert_called_once()
+
+        # Simulate _run_pruning_cycle being called after stop_event is set
+        # It should not reschedule the timer
+        self.sdm._run_pruning_cycle()
+
+        # The number of times Timer was constructed should not increase beyond what it was
+        # after the initial start and the one call from _run_pruning_cycle before stop.
+        # If _run_pruning_cycle was called, it might try to start one more if not for stop_event.
+        # Let's be more precise: after stop, _run_pruning_cycle should not call _start_pruning_timer
+        # which means MockTimer() constructor should not be called again by it.
+
+        # Reset call count for the next part of the check or verify based on specific calls.
+        # Count how many times MockTimer was instantiated AFTER stop_pruning_timer was called.
+        # This is tricky because the first timer is started in __init__.
+        # Let's verify that _start_pruning_timer within _run_pruning_cycle doesn't start a new one.
+
+        # After stop_pruning_timer, _start_pruning_timer (called by _run_pruning_cycle)
+        # should see the stop_event and not create a new Timer.
+        # So, the number of MockTimer instantiations should be fixed after stop.
+
+        # Let's refine:
+        # 1. Timer is called in __init__ via _start_pruning_timer.
+        # 2. We call sdm.stop_pruning_timer().
+        # 3. We manually call sdm._run_pruning_cycle().
+        # 4. Inside this _run_pruning_cycle, _start_pruning_timer is called.
+        # 5. This _start_pruning_timer should NOT instantiate a new MockTimer because _stop_pruning_event is set.
+
+        # So, if __init__ called Timer once. Then MockTimer.call_count is 1.
+        # If _run_pruning_cycle is called directly by test, it will call _start_pruning_timer.
+        # If stop_event is set, this _start_pruning_timer does not create a new Timer.
+        # So the call_count should remain what it was just before the last _run_pruning_cycle if stop_event is set.
+
+        # Let's re-initialize a fresh sdm for this specific test for clarity on call counts
+        sdm_for_stop_test = ServiceDiscoveryModule(
+            trust_manager=self.mock_trust_manager,
+            pruning_interval_seconds=0.1
+        )
+        # At this point, MockTimer has been called once (in __init__)
+        self.assertEqual(MockTimer.call_count, initial_timer_call_count + 1)
+
+        sdm_for_stop_test.stop_pruning_timer()
+        # Manually trigger the cycle that would have happened if timer fired
+        sdm_for_stop_test._run_pruning_cycle()
+
+        # No new timer should have been created by the above _run_pruning_cycle call
+        self.assertEqual(MockTimer.call_count, initial_timer_call_count + 1,
+                         "Timer should not be rescheduled after stop_pruning_timer and a manual cycle run.")
+
 
 if __name__ == '__main__':
     unittest.main()

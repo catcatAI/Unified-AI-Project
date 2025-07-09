@@ -110,10 +110,14 @@ This summary is based on automated code and documentation review.
     *   Integration with `DialogueManager` for task brokering.
     *   API exposure of some HSP functionalities (service listing, task initiation/polling) via FastAPI.
     *   Basic UI elements in the Electron app for HSP interaction.
-    *   **`ServiceDiscoveryModule` (`src/core_ai/service_discovery/service_discovery_module.py`):** Found to be an existing HSP-specific implementation that largely aligns with requirements. It includes `TrustManager` integration and staleness logic. Minor refinement (validation of `description` field) was applied.
+    *   **`ServiceDiscoveryModule` (`src/core_ai/service_discovery/service_discovery_module.py`):**
+        *   Robust HSP-specific implementation managing capability advertisements.
+        *   Integrates with `TrustManager` for filtering/sorting.
+        *   Handles staleness of advertisements, including **active periodic pruning** of stale capabilities from its store (newly implemented).
+        *   Minor refinement for `description` field validation was previously applied.
 *   **Pending Issues & Refinements:**
     *   **Payload Schema URIs:** The `payload_schema_uri` field in `_build_hsp_envelope` (within `src/hsp/connector.py`) currently uses placeholder URIs. This **needs to be updated with actual, resolvable URIs** once the HSP message payload schemas are formally defined, published, and hosted.
-    *   **`ServiceDiscoveryModule` Future Enhancements:** While largely complete, potential future enhancements include implementing an active pruning mechanism for stale capabilities (the method `_prune_stale_capabilities` exists but is not currently called periodically).
+    *   **`ServiceDiscoveryModule` Future Enhancements:** JSON schema validation for incoming `HSPCapabilityAdvertisementPayload` could be considered if/when official schemas become available and resolvable.
 *   **Further Development / Conceptual Goals:**
     *   Full adherence to `docs/HSP_SPECIFICATION.md` (this specification itself may need updating to reflect ongoing design decisions and identify further gaps).
     *   More robust error handling and message validation.
@@ -128,7 +132,7 @@ This summary is based on automated code and documentation review.
     *   Formula-based dispatch to tools via `DialogueManager`.
     *   Tool drafting capability initiated by `DialogueManager` using LLMs and `SandboxExecutor`.
 *   **Pending (Explicit TODOs from `TODO_PLACEHOLDERS.md`):**
-    *   `core_ai/code_understanding/lightweight_code_model.py` (Line ~177): Add logic to resolve `tool_name` to filepath if not already a path in `get_tool_structure`.
+    *   `core_ai/code_understanding/lightweight_code_model.py` (Line ~177): ~~Add logic to resolve `tool_name` to filepath if not already a path in `get_tool_structure`~~ **COMPLETED**.
 *   **Further Development / Conceptual Goals:**
     *   Expansion of available tools.
     *   More sophisticated tool discovery and selection.
@@ -144,7 +148,7 @@ This summary is based on automated code and documentation review.
         *   View for listing discovered HSP services (via IPC to backend).
         *   Interface for sending HSP task requests and polling for status (via IPC).
 *   **Pending (Explicit TODOs from `TODO_PLACEHOLDERS.md`):**
-    *   `src/interfaces/electron_app/renderer.js` (Line ~137): Add a UI button next to each listed HSP service to directly trigger/call that service.
+    *   `src/interfaces/electron_app/renderer.js` (Line ~137): ~~Add a UI button next to each listed HSP service to directly trigger/call that service~~ **COMPLETED**.
 *   **Further Development / Conceptual Goals:**
     *   More feature-rich UI for Electron app (e.g., configuration, memory inspection, advanced HSP interaction).
     *   Potential for other interfaces (e.g., web).
