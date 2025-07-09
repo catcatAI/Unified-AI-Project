@@ -1,7 +1,7 @@
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, Optional, Any, List, TypedDict, Literal
+from typing import Dict, Optional, Any, List, TypedDict, Literal, Union, Tuple
 
 from core_ai.memory.ham_memory_manager import HAMMemoryManager
 from services.llm_interface import LLMInterface
@@ -21,9 +21,13 @@ class HSPStepDetails(TypedDict):
     type: Literal["hsp_task"]
     capability_id: str
     target_ai_id: str
-    request_parameters: Dict[str, Any]
-    input_source_step_id: Optional[str]
-    input_parameter_mapping: Optional[Dict[str, str]]
+    request_parameters: Dict[str, Any] # Parameters to be sent in the HSP task request
+    # input_sources defines where this step gets its data.
+    # Each dict specifies a source step_id and optionally a key if the source result is a dict.
+    input_sources: Optional[List[Dict[str, str]]] # e.g., [{"step_id": "s1", "output_key": "summary"}, {"step_id": "s2"}]
+    # input_mapping defines how data from input_sources is mapped to this step's effective input or its request_parameters.
+    # Keys are target parameter names for this step, values describe how to get the data.
+    input_mapping: Optional[Dict[str, Any]] # e.g., {"text_to_process": "s1.summary", "user_context": "s2"} / Complex: {"prompt": "Summarize: {s1.summary} with context {s2}"}
     status: Literal["pending_dispatch", "dispatched", "awaiting_result",
                     "completed", "failed_response", "failed_dispatch", "timeout_error", "retrying"]
     correlation_id: Optional[str]
@@ -39,11 +43,11 @@ class LocalStepDetails(TypedDict):
     step_id: str
     type: Literal["local_tool", "local_llm", "local_chunk_process"]
     tool_or_model_name: str
-    parameters: Dict[str, Any]
-    input_source_step_id: Optional[str]
-    input_parameter_mapping: Optional[Dict[str, str]]
+    parameters: Dict[str, Any] # Parameters for the tool/LLM call, or chunking_params
+    input_sources: Optional[List[Dict[str, str]]]
+    input_mapping: Optional[Dict[str, Any]]
     status: Literal["pending", "in_progress", "completed", "failed"]
-    result: Optional[Any]
+    result: Optional[Any] # Could be memory ID or actual content
     error_info: Optional[Dict[str, Any]]
 
 ProcessingStep = Union[HSPStepDetails, LocalStepDetails]
@@ -51,7 +55,9 @@ ProcessingStep = Union[HSPStepDetails, LocalStepDetails]
 class EnhancedStrategyPlan(TypedDict):
     plan_id: str
     name: str
-    steps: List[ProcessingStep]
+    # A plan is a list of items. Each item is either a single ProcessingStep (sequential)
+    # or a list of ProcessingSteps (parallel group).
+    steps: List[Union[ProcessingStep, List[ProcessingStep]]]
 
 class EnhancedComplexTaskState(TypedDict):
     complex_task_id: str
@@ -253,7 +259,7 @@ class FragmentaOrchestrator:
                         task_ctx["next_step_to_evaluate_index"] += 1 # Consider this path terminal or moving to retry
 
                     elif hsp_step["status"] == "retrying":
-                        last_retry_ts = datetime.fromisoformat(hsp_step["last_retry_timestamp"]_ if hsp_step["last_retry_timestamp"] else "1970-01-01T00:00:00+00:00") # type: ignore
+                        last_retry_ts = datetime.fromisoformat(hsp_step["last_retry_timestamp"] if hsp_step["last_retry_timestamp"] else "1970-01-01T00:00:00+00:00") # type: ignore
                         # Basic backoff, can be made more sophisticated
                         current_retry_delay = hsp_step["retry_delay_seconds"] * (self.hsp_task_defaults.get("retry_backoff_factor", 2) ** (hsp_step["max_retries"] - hsp_step["retries_left"] -1))
 
@@ -457,7 +463,7 @@ class FragmentaOrchestrator:
                         "retry_delay_seconds": self.hsp_task_defaults.get("initial_retry_delay_seconds", 5),
                         "last_retry_timestamp": None,
                     }
-                    steps.append(hsp_step)
+                    steps.append(hsp_step) # Appending a single step (sequential stage)
                 else:
                     logger.warning(f"Fragmenta (ID: {complex_task_id}): Requested HSP capability ID '{cap_id}' not found, unavailable, or missing ai_id. Creating a failed step.")
                     plan_name = f"error_hsp_cap_unavailable_{cap_id}"
@@ -472,10 +478,8 @@ class FragmentaOrchestrator:
                         "max_retries": 0, "retries_left": 0, "retry_delay_seconds": 0, "last_retry_timestamp": None,
                     }
                     steps.append(failed_hsp_step)
-                    # Fall through to default local processing or error plan - No, this should be the only step if it fails here.
 
-        # Priority 2: Specific local tool requested (if no HSP step was created)
-        # This logic should only run if no HSP step was determined (successfully or as a failed discovery step)
+        # Priority 2: Specific local tool requested (if no step was created by HSP logic)
         if not steps and task_description.get("requested_tool"):
             requested_tool = task_description["requested_tool"]
             plan_name = f"direct_tool_call_{requested_tool}"

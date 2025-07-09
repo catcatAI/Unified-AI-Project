@@ -67,16 +67,17 @@ This summary is based on automated code and documentation review.
 
 ## 4. Fragmenta Orchestration (`src/fragmenta/`)
 
-*   **Implemented (Foundation with Basic HSP Error Handling):**
-    *   `FragmentaOrchestrator.py` has been significantly refactored with an enhanced state management system (`EnhancedComplexTaskState`, `EnhancedStrategyPlan` with `ProcessingStep` details).
-    *   The `_advance_complex_task` method now processes tasks as a sequence of defined steps, checks basic dependencies.
-    *   Can dispatch HSP sub-tasks and receive their results asynchronously to update step states.
-    *   **Basic error handling for HSP tasks implemented:** Detects dispatch errors, peer-reported failures, and timeouts.
-    *   **Configurable retry mechanism for HSP tasks:** Includes number of retries and basic exponential backoff for delays.
-    *   Rudimentary local processing (input analysis, chunking, LLM/tool dispatch via `_dispatch_chunk_to_processing`, result merging via `_merge_results`) is integrated into the new stateful framework.
-*   **Partially Addressed / In Progress (from `TODO_PLACEHOLDERS.MD`):**
-    *   **State Management:** The new state machine provides a foundation for more complex scenarios. It can handle sequences of HSP tasks and mixed local/HSP steps to some extent. True parallelism and very complex graph-like dependencies are future work.
-    *   **Error Handling:** Basic error handling, retries, and timeouts for HSP tasks are now implemented. More advanced strategies (e.g., dynamic fallbacks, user intervention) are future considerations.
+*   **Implemented (Enhanced State Management, Basic Parallelism & I/O Mapping):**
+    *   `FragmentaOrchestrator.py` uses an `EnhancedStrategyPlan` where `steps` can be a list of stages, with each stage being a single step (sequential) or a list of steps (parallel group).
+    *   The `_advance_complex_task` method processes these stages:
+        *   It dispatches all ready steps in a parallel group and waits for their completion (basic join).
+        *   Sequential stages execute one after another.
+    *   **Dependency Management & I/O:** Steps define `input_sources` (list of source step IDs/output keys) and `input_mapping` (rules for constructing current step parameters). The `_prepare_step_input` helper gathers source data, and `_execute_or_dispatch_step` applies basic f-string-like templating for `input_mapping`.
+    *   Maintains previously implemented HSP task integration, including error detection (dispatch, peer failure, timeout) and a configurable retry mechanism.
+    *   Rudimentary local processing (chunking, LLM/tool dispatch, result merging) is integrated.
+*   **Status Update on Previous TODOs (from `TODO_PLACEHOLDERS.MD`):**
+    *   **State Management:** Further enhanced. The new plan structure supports defining parallel execution stages. Basic dependency checking and input sourcing from prior steps (including parallel ones after a join) are functional. More complex graph-like dependencies and dynamic parallelism are future work.
+    *   **Error Handling:** Basic error handling, retries, and timeouts for HSP tasks remain implemented within the new stateful execution model. Advanced error recovery strategies are future work.
 *   **Further Development / Conceptual Goals (largely from `docs/architecture/Fragmenta_design_spec.md`):**
     *   While foundational state management and HSP error handling are improved, many advanced features from the design specification are still pending full implementation. This includes:
         *   Sophisticated task analysis and dynamic strategy selection.
