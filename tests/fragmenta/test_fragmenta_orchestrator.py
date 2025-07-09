@@ -2,6 +2,7 @@ import pytest
 import uuid
 from unittest.mock import MagicMock, patch, ANY
 from datetime import datetime, timezone, timedelta
+from typing import Dict, List, Optional, Any, Tuple # Added missing imports
 
 from src.fragmenta.fragmenta_orchestrator import FragmentaOrchestrator, EnhancedStrategyPlan, HSPStepDetails, LocalStepDetails, ProcessingStep, EnhancedComplexTaskState
 from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPErrorDetails
@@ -351,7 +352,7 @@ if freeze_time:
         for i in range(max_retries + 1):
             assert hsp_step["status"] == "dispatched"
 
-            dispatch_time = datetime.fromisoformat(hsp_step["dispatch_timestamp"]_ if hsp_step["dispatch_timestamp"] else current_time.isoformat() ) # type: ignore
+            dispatch_time = datetime.fromisoformat(hsp_step["dispatch_timestamp"] if hsp_step["dispatch_timestamp"] else current_time.isoformat() ) # type: ignore
             current_time = dispatch_time + timedelta(seconds=orchestrator.hsp_task_defaults["timeout_seconds"] + 1)
             with freeze_time(current_time):
                 orchestrator._advance_complex_task(complex_task_id)
@@ -438,11 +439,136 @@ def test_hsp_task_result_failure_and_retry(orchestrator: FragmentaOrchestrator, 
     assert final_output["status"] == "completed"
     assert final_output["result"] == {"data": "retry success data"}
 
-# TODO: Add tests for sequential steps (local -> HSP, HSP -> local)
-# TODO: Add tests for _dispatch_hsp_sub_task specific failures (connector unavailable)
-# TODO: Add tests for merging results from multiple steps.
-# TODO: Test for local_chunk_process step type more thoroughly.
-# TODO: Test input_parameter_mapping if implemented.
+
+# --- Tests for _prepare_step_input ---
+def test_prepare_step_input_no_sources(orchestrator: FragmentaOrchestrator):
+    task_desc = {"goal": "test"}
+    input_data = "original_input"
+    plan = orchestrator._determine_processing_strategy(task_desc, orchestrator._analyze_input(input_data), "task_prep_0")
+    orchestrator._complex_task_context["task_prep_0"] = EnhancedComplexTaskState(
+        complex_task_id="task_prep_0", original_task_description=task_desc, original_input_data=input_data,
+        strategy_plan=plan, step_results={}, overall_status="executing",
+        current_executing_step_ids=[], next_step_to_evaluate_index=0
+    )
+    task_ctx = orchestrator._complex_task_context["task_prep_0"]
+    step_details_no_source = plan["steps"][0] # Assuming first step has no input_sources by default
+    step_details_no_source["input_sources"] = None # Explicitly set for test clarity
+
+    prepared_input, deps_met, dep_failure = orchestrator._prepare_step_input(step_details_no_source, task_ctx) # type: ignore
+    assert deps_met is True
+    assert dep_failure is False
+    assert prepared_input == "original_input"
+
+def test_prepare_step_input_single_source_completed(orchestrator: FragmentaOrchestrator):
+    step1_details: LocalStepDetails = {"step_id": "s1", "type": "local_llm", "tool_or_model_name": "tm", "parameters": {}, "status": "completed", "input_sources":None, "input_mapping":None, "result": {"text": "output_from_s1"}, "error_info": None}
+    step2_details: LocalStepDetails = {"step_id": "s2", "type": "local_llm", "tool_or_model_name": "tm2", "parameters": {}, "status": "pending", "input_sources": [{"step_id": "s1"}], "input_mapping": None, "result": None, "error_info": None}
+    plan = EnhancedStrategyPlan(plan_id="p1", name="test_plan", steps=[step1_details, step2_details]) # type: ignore
+    task_ctx = EnhancedComplexTaskState(
+        complex_task_id="task_prep_1", original_task_description={}, original_input_data="orig",
+        strategy_plan=plan, step_results={"s1": {"text": "output_from_s1"}},
+        overall_status="executing", current_executing_step_ids=[], next_step_to_evaluate_index=1
+    )
+    prepared_input, deps_met, dep_failure = orchestrator._prepare_step_input(step2_details, task_ctx)
+    assert deps_met is True
+    assert dep_failure is False
+    assert prepared_input == {"text": "output_from_s1"} # Returns the whole result of s1
+
+def test_prepare_step_input_single_source_with_output_key(orchestrator: FragmentaOrchestrator):
+    step1_details: LocalStepDetails = {"step_id": "s1", "type": "local_llm", "tool_or_model_name": "tm", "parameters": {}, "status": "completed", "input_sources":None, "input_mapping":None, "result": {"text": "output_from_s1", "extra": "value"}, "error_info": None}
+    step2_details: LocalStepDetails = {"step_id": "s2", "type": "local_llm", "tool_or_model_name": "tm2", "parameters": {}, "status": "pending", "input_sources": [{"step_id": "s1", "output_key": "text"}], "input_mapping": None, "result": None, "error_info": None}
+    plan = EnhancedStrategyPlan(plan_id="p1", name="test_plan", steps=[step1_details, step2_details]) # type: ignore
+    task_ctx = EnhancedComplexTaskState(
+        complex_task_id="task_prep_2", original_task_description={}, original_input_data="orig",
+        strategy_plan=plan, step_results={"s1": {"text": "output_from_s1", "extra": "value"}},
+        overall_status="executing", current_executing_step_ids=[], next_step_to_evaluate_index=1
+    )
+    prepared_input, deps_met, dep_failure = orchestrator._prepare_step_input(step2_details, task_ctx)
+    assert deps_met is True
+    assert dep_failure is False
+    assert prepared_input == {"s1.text": "output_from_s1"} # Map includes the keyed value
+
+def test_prepare_step_input_dependency_not_met(orchestrator: FragmentaOrchestrator):
+    step1_details: LocalStepDetails = {"step_id": "s1", "type": "local_llm", "tool_or_model_name": "tm", "parameters": {}, "status": "pending", "input_sources":None, "input_mapping":None, "result": None, "error_info": None} # s1 is pending
+    step2_details: LocalStepDetails = {"step_id": "s2", "type": "local_llm", "tool_or_model_name": "tm2", "parameters": {}, "status": "pending", "input_sources": [{"step_id": "s1"}], "input_mapping": None, "result": None, "error_info": None}
+    plan = EnhancedStrategyPlan(plan_id="p1", name="test_plan", steps=[step1_details, step2_details]) # type: ignore
+    task_ctx = EnhancedComplexTaskState(
+        complex_task_id="task_prep_3", original_task_description={}, original_input_data="orig",
+        strategy_plan=plan, step_results={}, overall_status="executing",
+        current_executing_step_ids=[], next_step_to_evaluate_index=1
+    )
+    _, deps_met, dep_failure = orchestrator._prepare_step_input(step2_details, task_ctx)
+    assert deps_met is False
+    assert dep_failure is False
+
+def test_prepare_step_input_dependency_failed(orchestrator: FragmentaOrchestrator):
+    step1_details: LocalStepDetails = {"step_id": "s1", "type": "local_llm", "tool_or_model_name": "tm", "parameters": {}, "status": "failed", "input_sources":None, "input_mapping":None, "result": None, "error_info": {"msg":"s1 failed"}} # s1 failed
+    step2_details: LocalStepDetails = {"step_id": "s2", "type": "local_llm", "tool_or_model_name": "tm2", "parameters": {}, "status": "pending", "input_sources": [{"step_id": "s1"}], "input_mapping": None, "result": None, "error_info": None}
+    plan = EnhancedStrategyPlan(plan_id="p1", name="test_plan", steps=[step1_details, step2_details]) # type: ignore
+    task_ctx = EnhancedComplexTaskState(
+        complex_task_id="task_prep_4", original_task_description={}, original_input_data="orig",
+        strategy_plan=plan, step_results={"s1": None}, overall_status="executing",
+        current_executing_step_ids=[], next_step_to_evaluate_index=1
+    )
+    _, deps_met, dep_failure = orchestrator._prepare_step_input(step2_details, task_ctx)
+    assert deps_met is False
+    assert dep_failure is True
+
+# --- Tests for input_mapping in _execute_or_dispatch_step ---
+def test_execute_step_with_input_mapping_simple_template(orchestrator: FragmentaOrchestrator):
+    # This test focuses on the input_mapping part of _execute_or_dispatch_step
+    # It assumes _prepare_step_input has provided the necessary data in current_step_input_map
+    step_details: LocalStepDetails = {
+        "step_id": "s_map", "type": "local_llm", "tool_or_model_name": "mapped_llm",
+        "parameters": {"base_param": "initial"}, # Default params for the tool
+        "input_sources": [{"step_id": "s_source", "output_key": "text_val"}],
+        "input_mapping": {"prompt": "Input was: {s_source.text_val} and original: {$original_input}"}, # type: ignore
+        "status": "pending", "result": None, "error_info": None
+    }
+    task_ctx = EnhancedComplexTaskState( # Mocked task_ctx
+        complex_task_id="task_map_1", original_task_description={"desc_key": "task_desc_val"},
+        original_input_data="original task data", strategy_plan=MagicMock(), step_results={},
+        overall_status="executing", current_executing_step_ids=[], next_step_to_evaluate_index=0
+    )
+    # This is what _prepare_step_input would produce for current_step_input argument
+    prepared_inputs_map = {"s_source.text_val": "hello from source"}
+
+    with patch.object(orchestrator, '_dispatch_chunk_to_processing') as mock_dispatch:
+        orchestrator._execute_or_dispatch_step("task_map_1", step_details, prepared_inputs_map, task_ctx)
+
+    mock_dispatch.assert_called_once()
+    call_args = mock_dispatch.call_args[0]
+    strategy_step_arg = call_args[1] # This is the dict like {"tool_or_model": ..., "params": ...}
+
+    expected_prompt = "Input was: hello from source and original: original task data"
+    assert strategy_step_arg["params"]["prompt"] == expected_prompt
+    assert strategy_step_arg["params"]["base_param"] == "initial" # Ensure original params preserved if not overwritten
+
+
+def test_execute_step_with_input_mapping_direct_assignment(orchestrator: FragmentaOrchestrator):
+    step_details: LocalStepDetails = {
+        "step_id": "s_map_direct", "type": "local_tool", "tool_or_model_name": "direct_tool",
+        "parameters": {},
+        "input_sources": [{"step_id": "s_data"}],
+        "input_mapping": {"data_input": "{s_data}", "fixed_val": "literal"}, # type: ignore
+        "status": "pending", "result": None, "error_info": None
+    }
+    task_ctx = MagicMock() # Simplified context
+    prepared_inputs_map = {"s_data": {"complex": "object"}}
+
+    with patch.object(orchestrator, '_dispatch_chunk_to_processing') as mock_dispatch:
+        orchestrator._execute_or_dispatch_step("task_map_2", step_details, prepared_inputs_map, task_ctx)
+
+    strategy_step_arg = mock_dispatch.call_args[0][1]
+    assert strategy_step_arg["params"]["data_input"] == {"complex": "object"} # Direct assignment of complex type
+    assert strategy_step_arg["params"]["fixed_val"] == "literal"
+
+
+# TODO: Add tests for PARALLEL execution scenarios using the new plan structure
+# - Plan with [[stepA, stepB], stepC]
+# - Verify A and B are dispatched if deps met
+# - Verify _advance_complex_task waits if A is done but B is pending_hsp
+# - Verify C is dispatched only after A and B are complete
+# - Verify failure in A (a parallel branch) leads to overall_status = failed_execution
 
 # To run tests:
 # pytest tests/fragmenta/test_fragmenta_orchestrator.py

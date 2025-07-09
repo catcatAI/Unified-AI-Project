@@ -67,14 +67,14 @@ These are comments indicating planned work or missing functionality that require
 
 *   **File:** `src/fragmenta/fragmenta_orchestrator.py`
     *   **Original TODO 1:** Enhance state management for more complex scenarios (sequential/parallel HSP, mixed local/HSP steps).
-    *   **Status:** SUBSTANTIALLY ADDRESSED / IN PROGRESS.
-    *   **Details:** `FragmentaOrchestrator` was refactored with `EnhancedComplexTaskState` and `EnhancedStrategyPlan`. It now uses a state machine (`_advance_complex_task`) to process a list of steps, including HSP tasks. It can handle sequences of tasks by checking dependencies on previous step results. Basic concurrent HSP calls are possible as dispatches are non-blocking; however, true parallel execution paths with complex join logic are not yet implemented. The foundation for more complex plan execution is now in place.
-    *   **Remaining/Future:** Implementing more complex graph-like dependency management, true parallelism for local and HSP tasks with sophisticated join strategies.
+    *   **Status:** FURTHER ADDRESSED / IN PROGRESS.
+    *   **Details:** Building on prior state management refactoring, the `EnhancedStrategyPlan` now supports defining stages of execution, where each stage can be a single step or a list of steps for parallel execution. `_advance_complex_task` processes these stages, including basic join logic for parallel groups. Steps now define `input_sources` and `input_mapping` for more explicit I/O. Basic f-string-like templating for `input_mapping` is implemented via `_execute_or_dispatch_step` and `_prepare_step_input`.
+    *   **Remaining/Future:** Sophisticated dynamic strategy generation for parallelism, complex graph-like dependency management (beyond current sequential stage checks), advanced input aggregation/templating logic for `input_mapping`, and more robust handling of failures within parallel groups.
 
     *   **Original TODO 2:** Implement more robust error handling, retry strategies, and timeout management for HSP sub-tasks.
-    *   **Status:** SUBSTANTIALLY ADDRESSED.
-    *   **Details:** Basic error handling for HSP tasks (dispatch errors, peer-reported failures, timeouts) is now implemented within `_advance_complex_task` and `_handle_hsp_sub_task_result`. A configurable retry mechanism (max retries, initial delay, backoff factor) for these HSP failures is also included. Timeout detection for HSP steps is based on `dispatch_timestamp` and a configurable threshold.
-    *   **Remaining/Future:** More advanced error recovery (e.g., dynamic fallback strategies, user intervention prompts), more sophisticated backoff calculations, or per-step timeout/retry configurations if needed beyond global defaults.
+    *   **Status:** SUBSTANTIALLY ADDRESSED (No change from previous update on this specific TODO, as this iteration focused on parallelism and I/O).
+    *   **Details:** Basic error handling for HSP tasks (dispatch errors, peer-reported failures, timeouts), a configurable retry mechanism, and timeout detection remain implemented.
+    *   **Remaining/Future:** More advanced error recovery (e.g., dynamic fallback strategies), nuanced failure propagation in parallel plans.
 
 ## 3. Code/Data Comments & Clarifications
 
