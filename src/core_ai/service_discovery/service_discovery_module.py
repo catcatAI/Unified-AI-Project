@@ -55,11 +55,12 @@ class ServiceDiscoveryModule:
         capability_id = capability_payload.get('capability_id')
         advertised_ai_id = capability_payload.get('ai_id') # The AI ID stated *in the payload*
         name = capability_payload.get('name')
+        description = capability_payload.get('description')
         version = capability_payload.get('version')
         availability_status = capability_payload.get('availability_status')
 
-        if not all([capability_id, advertised_ai_id, name, version, availability_status]):
-            logger.warning(f"Received capability advertisement from {sender_ai_id} with missing essential fields (capability_id, ai_id, name, version, or availability_status). Payload: {capability_payload}. Ignoring.")
+        if not all([capability_id, advertised_ai_id, name, description, version, availability_status]):
+            logger.warning(f"Received capability advertisement from {sender_ai_id} with missing essential fields (capability_id, ai_id, name, description, version, or availability_status). Payload: {capability_payload}. Ignoring.")
             return
 
         if advertised_ai_id != sender_ai_id:
