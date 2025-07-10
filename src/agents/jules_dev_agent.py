@@ -267,7 +267,43 @@ class JulesDevelopmentCapability:
             # Conceptual: result = await self.sandbox_executor.execute_python_code(script_content_or_path=step.get("script_path"))
             new_outputs_from_step["test_results"] = "Mock test passed."
             step_execution_result["message"] = "Sandbox test run simulated."
-            pass # Retain pass
+
+        elif step_type == "avis_write_file":
+            file_path_to_write = step.get("path")
+            content_var_name = step.get("content_var")
+            content_to_write = current_step_outputs.get(content_var_name)
+            output_key = step.get("output_key", "write_status") # Optional: key to store write status
+
+            if not file_path_to_write or not content_var_name:
+                step_execution_result = {"status": "error", "message": "Missing 'path' or 'content_var' for avis_write_file step."}
+            elif content_to_write is None: # Check if content was actually retrieved
+                step_execution_result = {"status": "error", "message": f"Content from '{content_var_name}' is None, cannot write to file."}
+            else:
+                avis_command = {
+                    "action_type": "file_operation",
+                    "operation": "write_file",
+                    "path": file_path_to_write,
+                    "content": str(content_to_write) # Ensure content is string
+                }
+                if hasattr(self.avis_service, 'process_file_operation_command'):
+                    try:
+                        avis_response = self.avis_service.process_file_operation_command(avis_command)
+                        if avis_response.get("status") == "success":
+                            step_execution_result["message"] = f"Successfully wrote to virtual file: {file_path_to_write}"
+                            new_outputs_from_step[output_key] = True
+                        else:
+                            step_execution_result["status"] = "error"
+                            step_execution_result["message"] = f"AVIS Error writing {file_path_to_write}: {avis_response.get('message')}"
+                            new_outputs_from_step[output_key] = False
+                    except Exception as e:
+                        step_execution_result["status"] = "error"
+                        step_execution_result["message"] = f"Exception calling AVIS for write to {file_path_to_write}: {str(e)}"
+                        new_outputs_from_step[output_key] = False
+                else:
+                    step_execution_result["status"] = "error"
+                    step_execution_result["message"] = "AVIS service does not have 'process_file_operation_command' or is not available."
+                    new_outputs_from_step[output_key] = False
+
         # Add more step types...
         else:
             step_execution_result["message"] = f"Step type '{step_type}' simulation placeholder."
@@ -437,20 +473,21 @@ if __name__ == '__main__':
                         "goal_summary": "Fix typo in calculate_sum in main.py and update its usage in utils.py"}
             if "generate a detailed step-by-step plan" in prompt: # Corresponds to develop_solution_plan
                  return [
-                    {"type": "avis_read_file", "path": "src/main.py", "output_key": "main_py_content"},
-                    {"type": "avis_read_file", "path": "src/utils.py", "output_key": "utils_py_content"},
-                    {"type": "llm_generate_code_modification",
-                     "inputs": {"original_code_var": "main_py_content", "task_description": "Fix typo in calculate_sum"},
-                     "instruction": "In the provided code (main_py_content), find function 'calculate_sum' and fix typo 'smu' to 'sum'.",
-                     "output_key": "modified_main_py_code_block"},
-                    {"type": "llm_generate_code_modification",
-                     "inputs": {"original_code_var": "utils_py_content", "task_description": "Update usage of calculate_sum if affected by changes in main.py"},
-                     "instruction": "In utils_py_content, review usage of 'calculate_sum' and update if necessary.",
-                     "output_key": "modified_utils_py_code_block"},
-                    {"type": "avis_apply_modification", "path": "src/main.py", "modification_var": "modified_main_py_code_block"},
-                    {"type": "avis_apply_modification", "path": "src/utils.py", "modification_var": "modified_utils_py_code_block"},
-                    {"type": "sandbox_run_test", "script_path": "tests/test_main.py", "inputs": {}},
-                    {"type": "generate_commit_message", "inputs": {"task_description": self.current_task_context['original_description'] if hasattr(self, 'current_task_context') and self.current_task_context else "N/A", "changes_made_summary_var": "final_summary_from_llm"}},
+                    {"type": "avis_read_file", "path": "src/main.py", "output_key": "main_py_content"}, # Reads main.py
+                    {"type": "avis_read_file", "path": "src/utils.py", "output_key": "utils_py_content"}, # Reads utils.py
+                    {"type": "llm_generate_code_modification", # Modifies main.py content (conceptual)
+                     "inputs": {"original_code_var": "main_py_content", "task_description": "Fix typo in calculate_sum in main.py"},
+                     "instruction": "In the provided code (main_py_content), find function 'calculate_sum' and fix typo 'smu' to 'sum'. Return only the full corrected code for main.py.",
+                     "output_key": "modified_main_py_content"},
+                    {"type": "avis_write_file", "path": "src/main.py", "content_var": "modified_main_py_content", "output_key": "main_py_write_status"}, # Writes modified main.py
+                    {"type": "llm_generate_code_modification", # Modifies utils.py content (conceptual)
+                     "inputs": {"original_code_var": "utils_py_content", "task_description": "Update usage of calculate_sum in utils.py if it was renamed or its signature changed based on main.py modifications."},
+                     "instruction": "In utils_py_content, review usage of 'calculate_sum' (it should now be 'calculate_sum'). Ensure it's called correctly. Return only the full corrected code for utils.py.",
+                     "output_key": "modified_utils_py_content"},
+                    {"type": "avis_write_file", "path": "src/utils.py", "content_var": "modified_utils_py_content", "output_key": "utils_py_write_status"}, # Writes modified utils.py
+                    {"type": "avis_read_file", "path": "src/main.py", "output_key": "reread_main_py_content"}, # Verify write
+                    {"type": "sandbox_run_test", "script_path": "tests/test_main.py", "inputs": {}}, # Runs tests
+                    {"type": "generate_commit_message", "inputs": {"task_description": self.current_task_context['original_description'] if hasattr(self, 'current_task_context') and self.current_task_context else "N/A", "changes_made_summary_var": "final_summary_from_llm"}}, # Generates commit message
                 ]
             return {} # Default empty structured output
 
