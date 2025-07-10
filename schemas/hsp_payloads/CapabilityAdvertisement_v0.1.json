@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HSPCapabilityAdvertisementPayload_v0.1",
+  "description": "Schema for HSP Capability Advertisement Payload version 0.1. An AI advertises a skill, service, or tool it can offer.",
+  "type": "object",
+  "properties": {
+    "capability_id": {
+      "type": "string",
+      "description": "Unique ID for this capability offering (e.g., 'myorg:text_summarizer:v1.2'). (Required)"
+    },
+    "ai_id": {
+      "type": "string",
+      "description": "DID or URI of the AI instance offering the capability. (Required)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the capability. (Required)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of what the capability does. (Required)"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of this specific capability offering (e.g., '1.0.0', '0.2.1-beta'). (Required)"
+    },
+    "input_schema_uri": {
+      "type": "string",
+      "format": "uri-reference",
+      "description": "Optional URI pointing to a resolvable JSON schema for the input parameters this capability expects."
+    },
+    "input_schema_example": {
+      "type": "object",
+      "description": "Optional example of a valid input parameter object. Useful if input_schema_uri is not provided or for quick reference."
+    },
+    "output_schema_uri": {
+      "type": "string",
+      "format": "uri-reference",
+      "description": "Optional URI pointing to a resolvable JSON schema for the output payload this capability produces on success."
+    },
+    "output_schema_example": {
+      "type": "object",
+      "description": "Optional example of a typical successful output payload. Useful if output_schema_uri is not provided or for quick reference."
+    },
+    "data_format_preferences": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Optional list of preferred or supported data formats for input/output (e.g., ['application/json', 'text/plain', 'image/png'])."
+    },
+    "hsp_protocol_requirements": {
+      "type": "object",
+      "description": "Optional object detailing specific HSP protocol features required or supported by this capability (e.g., {'requires_streaming_input': true, 'supports_stream_ack': true}).",
+      "additionalProperties": {"type": "boolean"}
+    },
+    "cost_estimate_template": {
+      "type": "object",
+      "description": "Optional object providing a template or information regarding potential cost of using the capability (e.g., {'unit': 'credits', 'per_call': 10, 'per_1k_tokens': 0.02}). Structure is flexible."
+    },
+    "availability_status": {
+      "type": "string",
+      "enum": ["online", "offline", "degraded", "maintenance", "busy", "unknown"],
+      "description": "Current availability status of the capability. (Required)"
+    },
+    "access_policy_id": {
+      "type": "string",
+      "description": "Optional identifier for an access control policy governing the use of this capability."
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Keywords or categories for discovery (e.g., ['nlp', 'summarization', 'translation', 'text_processing'])."
+    },
+    "last_updated_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional ISO 8601 UTC timestamp of when this capability advertisement was last updated by the advertising AI."
+    }
+  },
+  "required": [
+    "capability_id",
+    "ai_id",
+    "name",
+    "description",
+    "version",
+    "availability_status"
+  ],
+  "additionalProperties": false
+}

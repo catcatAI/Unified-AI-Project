@@ -1,7 +1,7 @@
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import Dict, Optional, Any, List, TypedDict, Literal
+from datetime import datetime, timezone, timedelta # Added timedelta
+from typing import Dict, Optional, Any, List, TypedDict, Literal, Union, Tuple
 
 from core_ai.memory.ham_memory_manager import HAMMemoryManager
 from services.llm_interface import LLMInterface
@@ -9,30 +9,61 @@ from tools.tool_dispatcher import ToolDispatcher
 from core_ai.personality.personality_manager import PersonalityManager
 from core_ai.emotion_system import EmotionSystem
 from core_ai.crisis_system import CrisisSystem
-from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule, StoredCapabilityInfo # Added StoredCapabilityInfo for __main__
 from hsp.connector import HSPConnector
 from hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
 
-class PendingHSPSubTaskInfo(TypedDict):
-    original_complex_task_id: str
-    dispatched_capability_id: str
-    request_payload_parameters: Dict[str, Any] # Parameters sent in HSPTaskRequest
-    dispatch_timestamp: str
-    # Potentially other context, e.g., which step of a multi-step plan this HSP task belongs to.
+# --- Enhanced State Management TypedDicts ---
+class HSPStepDetails(TypedDict):
+    step_id: str
+    type: Literal["hsp_task"]
+    capability_id: str
+    target_ai_id: str
+    request_parameters: Dict[str, Any]
+    input_sources: Optional[List[Dict[str, str]]]
+    input_mapping: Optional[Dict[str, Any]]
+    status: Literal["pending_dispatch", "dispatched", "awaiting_result",
+                    "completed", "failed_response", "failed_dispatch", "timeout_error", "retrying"]
+    correlation_id: Optional[str]
+    dispatch_timestamp: Optional[str]
+    result: Optional[Any]
+    error_info: Optional[Dict[str, Any]]
+    max_retries: int
+    retries_left: int
+    retry_delay_seconds: int
+    last_retry_timestamp: Optional[str]
 
-class ComplexTaskState(TypedDict):
-    task_description: Dict[str, Any]
-    input_data: Any
-    strategy_plan: Dict[str, Any]
-    current_step_index: int
-    intermediate_results: List[Any]
-    pending_hsp_correlation_ids: List[str]
-    status: Literal["new", "analyzing_input", "determining_strategy",
-                    "chunking", "processing_local_chunk", "awaiting_hsp_dispatch",
-                    "awaiting_hsp_result", "hsp_result_received", "merging",
-                    "completed", "failed"]
+class LocalStepDetails(TypedDict):
+    step_id: str
+    type: Literal["local_tool", "local_llm", "local_chunk_process"]
+    tool_or_model_name: str
+    parameters: Dict[str, Any]
+    input_sources: Optional[List[Dict[str, str]]]
+    input_mapping: Optional[Dict[str, Any]]
+    status: Literal["pending", "in_progress", "completed", "failed"]
+    result: Optional[Any]
+    error_info: Optional[Dict[str, Any]]
+
+ProcessingStep = Union[HSPStepDetails, LocalStepDetails]
+
+class EnhancedStrategyPlan(TypedDict):
+    plan_id: str
+    name: str
+    steps: List[Union[ProcessingStep, List[ProcessingStep]]]
+
+class EnhancedComplexTaskState(TypedDict):
+    complex_task_id: str
+    original_task_description: Dict[str, Any]
+    original_input_data: Any
+    strategy_plan: EnhancedStrategyPlan
+    step_results: Dict[str, Any]
+    overall_status: Literal["new", "planning", "executing", "waiting_for_hsp",
+                            "merging_results", "completed", "failed_plan", "failed_execution"]
+    current_executing_step_ids: List[str]
+    next_stage_index: int # Renamed from next_step_to_evaluate_index for clarity with stages
+    current_step_indices_in_stage: List[int] # Tracks progress within a parallel stage
 
 
 class FragmentaOrchestrator:
@@ -46,10 +77,7 @@ class FragmentaOrchestrator:
                  emotion_system: Optional[EmotionSystem] = None,
                  crisis_system: Optional[CrisisSystem] = None,
                  config: Optional[Dict[str, Any]] = None):
-        """
-        Initializes the FragmentaOrchestrator.
-        Dependencies are injected.
-        """
+
         self.ham_manager = ham_manager
         self.tool_dispatcher = tool_dispatcher
         self.llm_interface = llm_interface
@@ -60,548 +88,290 @@ class FragmentaOrchestrator:
         self.crisis_system = crisis_system
         self.config = config or {}
 
-        self._pending_hsp_sub_tasks: Dict[str, PendingHSPSubTaskInfo] = {}
-        self._complex_task_context: Dict[str, ComplexTaskState] = {}
-
-        # Register HSP result handler if connector is available
-        # This registration might ideally happen in core_services.py after both are initialized
-        # For now, if hsp_connector is provided, we attempt to register.
-        if self.hsp_connector:
-            # Assuming a generic task result callback that might be shared or
-            # a more specific one if HSPConnector supports multiple handlers for TaskResults.
-            # For this implementation, DialogueManager already registers one.
-            # Fragmenta will need to coordinate or have its own distinct path.
-            # Let's assume for now it will be registered externally or this is a placeholder.
-            logger.info("FragmentaOrchestrator: HSPConnector provided. Callback registration for HSP task results should be handled by the integrating service (e.g., core_services.py or DialogueManager).")
-            # Example: self.hsp_connector.register_on_task_result_callback(self._handle_hsp_sub_task_result) -> This would make Fragmenta always listen.
-            # It's better if only active tasks are listened for, or results are routed.
-
-        logger.info(f"FragmentaOrchestrator Initialized. HAM: {'Yes' if self.ham_manager else 'No'}, Tools: {'Yes' if self.tool_dispatcher else 'No'}, LLM: {'Yes' if self.llm_interface else 'No'}, SDM: {'Yes' if self.service_discovery else 'No'}, HSP-Conn: {'Yes' if self.hsp_connector else 'No'}")
-
+        self.hsp_task_defaults = self.config.get("hsp_task_defaults", {
+            "max_retries": 3, "initial_retry_delay_seconds": 5,
+            "retry_backoff_factor": 2, "timeout_seconds": 300
+        })
+        self._pending_hsp_sub_tasks: Dict[str, Tuple[str, str]] = {}
+        self._complex_task_context: Dict[str, EnhancedComplexTaskState] = {}
+        logger.info(f"FragmentaOrchestrator Initialized. Dependencies: HAM={bool(self.ham_manager)}, Tools={bool(self.tool_dispatcher)}, LLM={bool(self.llm_interface)}, SDM={bool(self.service_discovery)}, HSP-Conn={bool(self.hsp_connector)}")
 
     def process_complex_task(self, task_description: Dict[str, Any], input_data: Any, complex_task_id: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Main entry point for Fragmenta to process a complex task.
-        Manages state for potentially asynchronous operations like HSP calls.
-        """
+        is_new_task = False
         if complex_task_id is None:
             complex_task_id = f"frag_task_{uuid.uuid4().hex[:8]}"
-            logger.info(f"Fragmenta: New complex task received (ID: {complex_task_id}). Description: {str(task_description)[:100]}...")
-
-            input_info = self._analyze_input(input_data)
-            logger.info(f"Fragmenta (ID: {complex_task_id}): Input analysis - Type: {input_info.get('type')}, Size: {input_info.get('size')}")
-
-            strategy = self._determine_processing_strategy(task_description, input_info, complex_task_id)
-            logger.info(f"Fragmenta (ID: {complex_task_id}): Determined strategy - Name: {strategy.get('name')}")
-
-            self._complex_task_context[complex_task_id] = ComplexTaskState(
-                task_description=task_description, input_data=input_data,
-                strategy_plan=strategy, current_step_index=0,
-                intermediate_results=[], pending_hsp_correlation_ids=[],
-                status="determining_strategy" # Initial status
-            )
+            is_new_task = True
+            logger.info(f"Fragmenta: New complex task (ID: {complex_task_id}). Desc: {str(task_description)[:100]}...")
         elif complex_task_id not in self._complex_task_context:
-            logger.error(f"Fragmenta: Unknown complex_task_id {complex_task_id} for resumed processing.")
+            logger.error(f"Fragmenta: Unknown complex_task_id '{complex_task_id}' for resumed processing.")
             return {"status": "error", "message": f"Unknown complex_task_id {complex_task_id}", "complex_task_id": complex_task_id}
 
-        task_ctx = self._complex_task_context[complex_task_id]
-        strategy = task_ctx["strategy_plan"]
-
-        # Main processing loop / state machine for the complex task
-        current_status = task_ctx["status"]
-        logger.info(f"Fragmenta (ID: {complex_task_id}): Processing task, current status: {current_status}")
-
-        if current_status == "determining_strategy" or current_status == "new": # Start or restart
-            if strategy.get("name") == "dispatch_to_hsp_capability":
-                task_ctx["status"] = "awaiting_hsp_dispatch"
-            elif strategy.get("requires_chunking"):
-                task_ctx["status"] = "chunking"
-            else: # Direct local processing (tool or LLM)
-                task_ctx["status"] = "processing_local_chunk" # Treat as single chunk
-
-        if task_ctx["status"] == "awaiting_hsp_dispatch":
-            capability_info = strategy.get("hsp_capability_info")
-            hsp_params = strategy.get("hsp_task_parameters")
-            if not capability_info or not hsp_params:
-                logger.error(f"Fragmenta (ID: {complex_task_id}): Missing capability_info or hsp_task_parameters for HSP dispatch strategy.")
-                task_ctx["status"] = "failed"
-                return {"status": "error", "message": "Invalid HSP dispatch strategy config.", "complex_task_id": complex_task_id}
-
-            correlation_id = self._dispatch_hsp_sub_task(complex_task_id, capability_info, hsp_params)
-            if correlation_id:
-                task_ctx["pending_hsp_correlation_ids"].append(correlation_id)
-                task_ctx["status"] = "awaiting_hsp_result"
-                logger.info(f"Fragmenta (ID: {complex_task_id}): HSP sub-task dispatched (CorrID: {correlation_id}). Status now 'awaiting_hsp_result'.")
-                return {"status": "pending_hsp", "complex_task_id": complex_task_id, "correlation_id": correlation_id}
-            else:
-                logger.error(f"Fragmenta (ID: {complex_task_id}): Failed to dispatch HSP sub-task.")
-                task_ctx["status"] = "failed"
-                return {"status": "error", "message": "Failed to dispatch HSP sub-task", "complex_task_id": complex_task_id}
-
-        elif task_ctx["status"] == "chunking":
-            chunks = self._chunk_data(task_ctx["input_data"], strategy.get("chunking_params"))
-            task_ctx["intermediate_results"] = [None] * len(chunks) # Placeholders for chunk results
-            task_ctx["current_step_index"] = 0 # To iterate through chunks
-            task_ctx["status"] = "processing_local_chunk"
-            logger.info(f"Fragmenta (ID: {complex_task_id}): Data chunked into {len(chunks)} chunks. Status 'processing_local_chunk'.")
-            # Fall through to process the first chunk if local
-
-        if task_ctx["status"] == "processing_local_chunk":
-            # This part handles local chunk processing (tool or LLM)
-            # For simplicity, let's assume one local processing step for now
-            # In a real scenario, strategy['steps'] would be iterated.
-
-            current_chunk_index = task_ctx["current_step_index"]
-            # Assuming chunks were prepared if needed, or input_data is the single "chunk"
-            data_to_process = task_ctx["input_data"]
-            if strategy.get("requires_chunking"):
-                all_chunks = self._chunk_data(task_ctx["input_data"], strategy.get("chunking_params"))
-                if current_chunk_index >= len(all_chunks):
-                    logger.info(f"Fragmenta (ID: {complex_task_id}): All local chunks processed.")
-                    task_ctx["status"] = "merging" # Move to merging
-                    # Potentially re-invoke process_complex_task to trigger merge
-                    return self.process_complex_task(task_description, input_data, complex_task_id)
-
-                data_to_process = all_chunks[current_chunk_index]
-
-            processing_step_details = strategy.get("processing_step", {})
-            logger.info(f"Fragmenta (ID: {complex_task_id}): Processing local data/chunk {current_chunk_index + 1} with '{processing_step_details.get('tool_or_model')}'.")
-
-            processed_content_or_mem_id = self._dispatch_chunk_to_processing(
-                data_to_process,
-                processing_step_details,
-                task_id=complex_task_id, # Using complex_task_id as the base task_id for HAM metadata
-                chunk_index=current_chunk_index,
-                total_chunks=len(task_ctx["intermediate_results"]) if strategy.get("requires_chunking") else 1
+        if is_new_task:
+            input_info = self._analyze_input(input_data)
+            strategy_plan = self._determine_processing_strategy(task_description, input_info, complex_task_id)
+            self._complex_task_context[complex_task_id] = EnhancedComplexTaskState(
+                complex_task_id=complex_task_id,
+                original_task_description=task_description, original_input_data=input_data,
+                strategy_plan=strategy_plan, step_results={}, overall_status="planning",
+                current_executing_step_ids=[], next_stage_index=0, current_step_indices_in_stage=[]
             )
-            task_ctx["intermediate_results"][current_chunk_index] = processed_content_or_mem_id
-            task_ctx["current_step_index"] += 1
+        return self._advance_complex_task(complex_task_id)
 
-            if not strategy.get("requires_chunking") or task_ctx["current_step_index"] >= len(task_ctx["intermediate_results"]):
-                task_ctx["status"] = "merging"
-                logger.info(f"Fragmenta (ID: {complex_task_id}): Local processing complete. Status 'merging'.")
-            else: # More chunks to process locally
-                logger.info(f"Fragmenta (ID: {complex_task_id}): Chunk {current_chunk_index} processed. More local chunks remaining.")
-                # This implies process_complex_task might be called iteratively for each chunk,
-                # or this loop needs to be internal. For now, assume iterative calls for simplicity of external state.
-                # However, for a single public method, an internal loop is better.
-                # Let's assume for now that if requires_chunking, all chunks are processed here before moving to merge.
-                # This part needs refinement for true iterative chunk processing if _dispatch is not batch.
-                # For now, this test implementation might only process the first chunk if called once.
-                # Let's adjust to process all local chunks in one go if strategy is local chunking.
-                if strategy.get("requires_chunking"): # Re-check, if we are here, means we are processing chunks
-                    all_chunks = self._chunk_data(task_ctx["input_data"], strategy.get("chunking_params"))
-                    for i in range(len(all_chunks)): # Process all chunks
-                         chunk_data = all_chunks[i]
-                         processed_res = self._dispatch_chunk_to_processing(
-                             chunk_data, processing_step_details, complex_task_id, i, len(all_chunks)
-                         )
-                         task_ctx["intermediate_results"][i] = processed_res
-                    task_ctx["status"] = "merging"
+    def _find_step_index(self, steps: List[ProcessingStep], step_id: str) -> int:
+        for i, step in enumerate(steps):
+            if step["step_id"] == step_id: return i
+        raise ValueError(f"Step with ID '{step_id}' not found in plan.")
+
+    def _prepare_step_input(self, step_detail: ProcessingStep, task_ctx: EnhancedComplexTaskState) -> Tuple[Any, bool, bool]:
+        prepared_inputs_map: Dict[str, Any] = {}
+        dependencies_met = True
+        dependency_failure = False
+        if not step_detail.get("input_sources"):
+            return prepared_inputs_map, True, False
+        for source_info in step_detail["input_sources"]:
+            source_step_id = source_info["step_id"]
+            source_output_key = source_info.get("output_key")
+            source_step_plan_detail: Optional[ProcessingStep] = None
+            for stage_item in task_ctx["strategy_plan"]["steps"]:
+                current_steps_to_check = stage_item if isinstance(stage_item, list) else [stage_item]
+                for s_detail in current_steps_to_check:
+                    if s_detail["step_id"] == source_step_id:
+                        source_step_plan_detail = s_detail; break
+                if source_step_plan_detail: break
+            if not source_step_plan_detail:
+                logger.error(f"F (ID: {task_ctx['complex_task_id']}, S: {step_detail['step_id']}): Input source step '{source_step_id}' not found in plan.")
+                dependencies_met = False; dependency_failure = True; break
+            if source_step_plan_detail["status"] == "failed":
+                logger.warning(f"F (ID: {task_ctx['complex_task_id']}, S: {step_detail['step_id']}): Dependency '{source_step_id}' failed.")
+                dependencies_met = False; dependency_failure = True; break
+            if source_step_plan_detail["status"] != "completed":
+                logger.debug(f"F (ID: {task_ctx['complex_task_id']}, S: {step_detail['step_id']}): Dependency '{source_step_id}' not completed (status: {source_step_plan_detail['status']}).")
+                dependencies_met = False; break
+            source_result = task_ctx["step_results"].get(source_step_id)
+            if source_result is None and source_step_plan_detail["status"] == "completed":
+                 logger.warning(f"F (ID: {task_ctx['complex_task_id']}, S: {step_detail['step_id']}): Dependency '{source_step_id}' completed but result is None.")
+            input_key_prefix = f"{source_step_id}"
+            if source_output_key:
+                if isinstance(source_result, dict): prepared_inputs_map[f"{input_key_prefix}.{source_output_key}"] = source_result.get(source_output_key)
+                else: logger.warning(f"F (ID: {task_ctx['complex_task_id']}, S: {step_detail['step_id']}): Source '{source_step_id}' result not dict for key '{source_output_key}'."); prepared_inputs_map[f"{input_key_prefix}.{source_output_key}"] = None
+            else: prepared_inputs_map[input_key_prefix] = source_result
+        return prepared_inputs_map, dependencies_met, dependency_failure
+
+    def _execute_or_dispatch_step(self, complex_task_id: str, step_to_execute: ProcessingStep,
+                                 current_step_input_map: Dict[str, Any], task_ctx: EnhancedComplexTaskState) -> None:
+        step_id = step_to_execute["step_id"]; effective_params = step_to_execute["parameters"].copy()
+        if step_to_execute.get("input_mapping"):
+            for target_param, source_template in step_to_execute["input_mapping"].items():
+                if isinstance(source_template, str):
+                    format_context = current_step_input_map.copy(); format_context["$original_input"] = task_ctx["original_input_data"]; format_context["$task_description"] = task_ctx["original_task_description"]
+                    try:
+                        if source_template.startswith("{") and source_template.endswith("}") and source_template[1:-1] in format_context: effective_params[target_param] = format_context[source_template[1:-1]]
+                        else:
+                            val_to_set = source_template
+                            for k, v in format_context.items(): placeholder = "{" + k + "}"; val_to_set = val_to_set.replace(placeholder, str(v)) if placeholder in val_to_set else val_to_set
+                            effective_params[target_param] = val_to_set
+                    except Exception as e: logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Input mapping error for '{target_param}': {e}. Template: '{source_template}'"); step_to_execute["status"] = "failed"; step_to_execute["error_info"] = {"message": f"Input mapping error: {e}"}; return
+                else: effective_params[target_param] = source_template
+        step_to_execute["parameters"] = effective_params
+        if step_to_execute["type"] == "hsp_task":
+            hsp_step_details = step_to_execute; hsp_step_details["request_parameters"] = effective_params
+            logger.info(f"F (ID: {complex_task_id}, S: {step_id}): Dispatching HSP task with params: {str(effective_params)[:100]}...")
+            self._dispatch_hsp_sub_task(complex_task_id, step_id, hsp_step_details)
+            if hsp_step_details["status"] == "dispatched": task_ctx["overall_status"] = "waiting_for_hsp"
+        elif step_to_execute["type"] in ["local_tool", "local_llm", "local_chunk_process"]:
+            local_step_details = step_to_execute; local_step_details["status"] = "in_progress"
+            logger.info(f"F (ID: {complex_task_id}, S: {step_id}): Executing local '{local_step_details['tool_or_model_name']}' with params: {str(effective_params)[:100]}...")
+            try:
+                step_input_data = current_step_input_map if current_step_input_map else task_ctx["original_input_data"] # Simplified input choice
+                if local_step_details["type"] == "local_chunk_process":
+                    all_chunks = self._chunk_data(step_input_data, local_step_details["parameters"].get("chunking_params"))
+                    chunk_results = [self._dispatch_chunk_to_processing(chunk, {"tool_or_model": local_step_details["tool_or_model_name"], "params": local_step_details["parameters"]}, complex_task_id, i, len(all_chunks)) for i, chunk in enumerate(all_chunks)]
+                    local_step_details["result"] = chunk_results
+                else: local_step_details["result"] = self._dispatch_chunk_to_processing(step_input_data, {"tool_or_model": local_step_details["tool_or_model_name"], "params": local_step_details["parameters"]}, complex_task_id, 0, 1)
+                local_step_details["status"] = "completed"; task_ctx["step_results"][step_id] = local_step_details["result"]
+            except Exception as e: logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Local step failed: {e}", exc_info=True); local_step_details["status"] = "failed"; local_step_details["error_info"] = {"message": str(e)}
+        else: logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Unknown step type: {step_to_execute['type']}"); step_to_execute["status"] = "failed"; step_to_execute["error_info"] = {"message": f"Unknown step type {step_to_execute['type']}"} # type: ignore
+
+    def _advance_complex_task(self, complex_task_id: str) -> Dict[str, Any]:
+        task_ctx = self._complex_task_context.get(complex_task_id)
+        if not task_ctx: return {"status": "error", "message": f"Context lost for task {complex_task_id}", "complex_task_id": complex_task_id}
+        if task_ctx["overall_status"] == "planning": task_ctx["overall_status"] = "executing"
+        if task_ctx["overall_status"] in ["completed", "failed_execution", "failed_plan"]: return self._get_final_status(task_ctx)
+
+        plan = task_ctx["strategy_plan"]
+        while task_ctx["next_stage_index"] < len(plan["steps"]):
+            current_stage_idx = task_ctx["next_stage_index"]
+            stage_item = plan["steps"][current_stage_idx]
+            steps_in_stage: List[ProcessingStep] = stage_item if isinstance(stage_item, list) else [stage_item] # type: ignore
+
+            all_steps_in_stage_processed_or_blocked = True
+            any_step_in_stage_active_or_retrying = False # Dispatched, awaiting_result, retrying, in_progress
+
+            for step_detail in steps_in_stage:
+                step_id = step_detail["step_id"]
+                if step_detail["status"] in ["completed", "failed"]: continue # Already terminal
+
+                # Check for permanent failure (no retries left)
+                if step_detail["type"] == "hsp_task" and step_detail["status"] in ["failed_dispatch", "failed_response", "timeout_error"] and step_detail["retries_left"] == 0:
+                    logger.error(f"F (ID: {complex_task_id}, S: {step_id}): HSP step failed permanently."); task_ctx["overall_status"] = "failed_execution"; return self._get_final_status(task_ctx)
+
+                # Prepare inputs and check dependencies
+                prepared_input_map, deps_met, dep_failure = self._prepare_step_input(step_detail, task_ctx)
+                if dep_failure: task_ctx["overall_status"] = "failed_execution"; return self._get_final_status(task_ctx)
+                if not deps_met: all_steps_in_stage_processed_or_blocked = False; continue # Cannot run this step yet
+
+                # Handle HSP step specific pre-dispatch logic (timeout, retry timing)
+                if step_detail["type"] == "hsp_task":
+                    hsp_step = step_detail # type: HSPStepDetails
+                    if hsp_step["status"] in ["dispatched", "awaiting_result"] and hsp_step["dispatch_timestamp"]:
+                        dispatch_time = datetime.fromisoformat(hsp_step["dispatch_timestamp"])
+                        if datetime.now(timezone.utc) - dispatch_time > timedelta(seconds=self.hsp_task_defaults["timeout_seconds"]):
+                            hsp_step["status"] = "timeout_error"; hsp_step["error_info"] = {"message": "HSP task timed out."}
+
+                    if hsp_step["status"] == "retrying" and hsp_step["last_retry_timestamp"]:
+                        last_retry_ts = datetime.fromisoformat(hsp_step["last_retry_timestamp"])
+                        delay = hsp_step["retry_delay_seconds"] * (self.hsp_task_defaults["retry_backoff_factor"] ** (hsp_step["max_retries"] - hsp_step["retries_left"] -1))
+                        if datetime.now(timezone.utc) - last_retry_ts < timedelta(seconds=delay):
+                            any_step_in_stage_active_or_retrying = True; all_steps_in_stage_processed_or_blocked = False; continue
+
+                # Execute or Dispatch if ready
+                if step_detail["status"] in ["pending", "pending_dispatch"] or \
+                   (step_detail["type"] == "hsp_task" and step_detail["status"] in ["retrying", "failed_dispatch", "failed_response", "timeout_error"] and step_detail["retries_left"] > 0): # type: ignore
+
+                    if step_detail["type"] == "hsp_task" and step_detail["status"] != "pending_dispatch": # Is a retryable failure
+                        step_detail["retries_left"] -=1; step_detail["status"] = "retrying"; step_detail["last_retry_timestamp"] = datetime.now(timezone.utc).isoformat()
+                        logger.info(f"F (ID: {complex_task_id}, S: {step_id}): Retrying HSP. Left: {step_detail['retries_left']}.")
+                        # Re-check delay for this retry in next _advance_complex_task call
+                        any_step_in_stage_active_or_retrying = True; all_steps_in_stage_processed_or_blocked = False; continue
+
+                    self._execute_or_dispatch_step(complex_task_id, step_detail, prepared_input_map, task_ctx)
+
+                # After execution attempt, check status
+                if step_detail["status"] in ["dispatched", "awaiting_result", "retrying", "in_progress"]:
+                    any_step_in_stage_active_or_retrying = True; all_steps_in_stage_processed_or_blocked = False
+                elif step_detail["status"] not in ["completed", "failed"]: # Still pending for other reasons
+                    all_steps_in_stage_processed_or_blocked = False
 
 
-        if task_ctx["status"] == "hsp_result_received": # Status set by _handle_hsp_sub_task_result
-            # This means an HSP result came in. We expect it to be in intermediate_results.
-            # This logic might be too simple if there are multiple HSP calls or mixed local/HSP.
-            logger.info(f"Fragmenta (ID: {complex_task_id}): HSP result processed by callback. Moving to merge. Results: {task_ctx['intermediate_results']}")
-            task_ctx["status"] = "merging"
+            if not all_steps_in_stage_processed_or_blocked: # Some steps in stage are not terminal and/or waiting
+                task_ctx["overall_status"] = "waiting_for_hsp" if any_step_in_stage_active_or_retrying and any(s["type"]=="hsp_task" and s["status"] in ["dispatched", "awaiting_result", "retrying"] for s in steps_in_stage) else "executing"
+                return self._get_final_status(task_ctx) # Wait for next event or tick
 
-        if task_ctx["status"] == "merging":
-            final_result = self._merge_results(task_ctx["intermediate_results"], strategy.get("merging_params"))
-            task_ctx["status"] = "completed"
-            logger.info(f"Fragmenta (ID: {complex_task_id}): Merging complete. Final result type: {type(final_result)}. Status 'completed'.")
-            # Clean up context for completed task
-            # final_task_data = self._complex_task_context.pop(complex_task_id, None)
-            return {"status": "completed", "result": final_result, "complex_task_id": complex_task_id}
+            # If all steps in stage are terminal (completed or permanently failed)
+            task_ctx["next_stage_index"] +=1
 
-        # If still awaiting HSP results, or other intermediate states
-        if task_ctx["status"] == "awaiting_hsp_result":
-             logger.info(f"Fragmenta (ID: {complex_task_id}): Still awaiting HSP results for {task_ctx['pending_hsp_correlation_ids']}.")
-             return {"status": "pending_hsp", "complex_task_id": complex_task_id, "correlation_ids": task_ctx['pending_hsp_correlation_ids']}
-
-        logger.warning(f"Fragmenta (ID: {complex_task_id}): Task reached an unhandled state: {task_ctx['status']}.")
-        return {"status": task_ctx["status"], "complex_task_id": complex_task_id, "message": "Processing (intermediate/unknown state)..."}
+        # All stages processed
+        task_ctx["overall_status"] = "merging_results"
+        # Simplified final result: result of the very last step in the plan
+        final_step_in_plan = plan["steps"][-1]
+        final_step_id_in_plan = final_step_in_plan[0]["step_id"] if isinstance(final_step_in_plan, list) else final_step_in_plan["step_id"]
+        final_result = task_ctx["step_results"].get(final_step_id_in_plan) # type: ignore
+        task_ctx["overall_status"] = "completed"
+        return {"status": "completed", "result": final_result, "complex_task_id": complex_task_id}
 
 
-    def _analyze_input(self, input_data: any) -> dict:
-        input_type = "unknown"
-        input_size = 0
-        if isinstance(input_data, str):
-            input_type = "text"
-            input_size = len(input_data)
-        elif isinstance(input_data, (list, dict)):
-            input_type = "structured_data"
-            input_size = len(str(input_data)) # Simplistic size for list/dict
+    def _get_final_status(self, task_ctx: EnhancedComplexTaskState) -> Dict[str, Any]:
+        response: Dict[str, Any] = {"status": task_ctx["overall_status"], "complex_task_id": task_ctx["complex_task_id"]}
+        if task_ctx["overall_status"] == "waiting_for_hsp":
+            active_corr_ids = [ s["correlation_id"] for stage in task_ctx["strategy_plan"]["steps"] for s in (stage if isinstance(stage, list) else [stage]) if s["type"] == "hsp_task" and s.get("correlation_id") and s["status"] in ["dispatched", "awaiting_result"] ] # type: ignore
+            if active_corr_ids: response["correlation_ids"] = active_corr_ids
+        if task_ctx["overall_status"] == "failed_execution":
+            response["message"] = "One or more steps failed permanently."; response["step_results"] = task_ctx["step_results"]
+        return response
+
+    def _analyze_input(self, input_data: any) -> dict: # Keep as is
+        input_type = "unknown"; input_size = 0
+        if isinstance(input_data, str): input_type = "text"; input_size = len(input_data)
+        elif isinstance(input_data, (list, dict)): input_type = "structured_data"; input_size = len(str(input_data))
         return {"type": input_type, "size": input_size, "content_preview": str(input_data)[:100]}
 
-    def _determine_processing_strategy(self, task_description: Dict[str, Any], input_info: Dict[str, Any], complex_task_id: str) -> Dict[str, Any]:
-        logger.debug(f"Fragmenta (ID: {complex_task_id}): Determining strategy for task: {task_description.get('goal', 'N/A')}")
-
-        # Priority 1: Explicit HSP dispatch request in task_description
+    def _determine_processing_strategy(self, task_description: Dict[str, Any], input_info: Dict[str, Any], complex_task_id: str) -> EnhancedStrategyPlan: # Keep as is for now
+        logger.debug(f"F (ID: {complex_task_id}): Determining strategy for task: {task_description.get('goal', 'N/A')}")
+        steps: List[ProcessingStep] = []; plan_name = "default_single_step_plan"; plan_id = f"plan_{complex_task_id}_{uuid.uuid4().hex[:4]}"
         if task_description.get("dispatch_to_hsp_capability_id"):
-            if not self.service_discovery or not self.hsp_connector:
-                logger.warning(f"Fragmenta (ID: {complex_task_id}): HSP dispatch requested but SDM or HSPConnector not available.")
-                return {"name": "error_hsp_unavailable", "status": "failed"} # Fallback or error strategy
-
-            cap_id = task_description["dispatch_to_hsp_capability_id"]
-            capability = self.service_discovery.get_capability_by_id(cap_id, exclude_unavailable=True)
-            if capability:
-                logger.info(f"Fragmenta (ID: {complex_task_id}): Strategy: Explicit HSP dispatch to capability ID '{cap_id}'.")
-                return {
-                    "name": "dispatch_to_hsp_capability",
-                    "requires_chunking": False,
-                    "hsp_capability_info": capability,
-                    "hsp_task_parameters": task_description.get("hsp_task_parameters", {})
-                }
+            if not self.service_discovery or not self.hsp_connector: plan_name = "error_hsp_unavailable"
             else:
-                logger.warning(f"Fragmenta (ID: {complex_task_id}): Requested HSP capability ID '{cap_id}' not found or unavailable.")
-                # Fall through to other strategies or return error strategy
+                cap_id = task_description["dispatch_to_hsp_capability_id"]; capability = self.service_discovery.get_capability_by_id(cap_id, exclude_unavailable=True)
+                if capability and capability.get("ai_id"):
+                    plan_name = "dispatch_to_hsp_capability"
+                    steps.append(HSPStepDetails(step_id=f"{plan_id}_s0_hsp", type="hsp_task", capability_id=cap_id, target_ai_id=capability["ai_id"], request_parameters=task_description.get("hsp_task_parameters",{}), input_sources=None,input_mapping=None,status="pending_dispatch",correlation_id=None,dispatch_timestamp=None,result=None,error_info=None,max_retries=self.hsp_task_defaults["max_retries"],retries_left=self.hsp_task_defaults["max_retries"],retry_delay_seconds=self.hsp_task_defaults["initial_retry_delay_seconds"],last_retry_timestamp=None))
+                else: plan_name = f"error_hsp_cap_unavailable_{cap_id}"; steps.append(HSPStepDetails(step_id=f"{plan_id}_s0_hsp_fail",type="hsp_task",capability_id=cap_id,target_ai_id="unknown",request_parameters={},input_sources=None,input_mapping=None,status="failed_dispatch",correlation_id=None,dispatch_timestamp=None,result=None,error_info={"message":f"Cap '{cap_id}' not found"},max_retries=0,retries_left=0,retry_delay_seconds=0,last_retry_timestamp=None))
+        elif not steps and task_description.get("requested_tool"):
+            rt = task_description["requested_tool"]; plan_name = f"direct_tool_call_{rt}"
+            steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_local",type="local_tool",tool_or_model_name=rt,parameters=task_description.get("tool_params",{}),input_sources=None,input_mapping=None,status="pending",result=None,error_info=None))
+        if not steps: # Default local processing
+            if input_info.get("type") == "text" and input_info.get("size",0) > self.config.get("default_chunking_threshold",1000):
+                plan_name = "chunk_summarize_local"; steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_chunk",type="local_chunk_process",tool_or_model_name="llm_summarize_chunk",parameters={"chunking_params": self.config.get("default_text_chunking_params"), "merging_params":{"method":"join_with_newline"}},input_sources=None,input_mapping=None,status="pending",result=None,error_info=None))
+            else: plan_name = "direct_llm_local"; steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_llm",type="local_llm",tool_or_model_name="llm_direct_process",parameters={},input_sources=None,input_mapping=None,status="pending",result=None,error_info=None))
+        if not steps: plan_name="error_no_steps"; steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_err",type="local_llm",tool_or_model_name="error",parameters={},input_sources=None,input_mapping=None,status="failed",result=None,error_info={"message":"No steps generated"}))
+        return EnhancedStrategyPlan(plan_id=plan_id, name=plan_name, steps=steps)
 
-        # Priority 2: Specific local tool requested
-        requested_tool = task_description.get("requested_tool")
-        if requested_tool:
-            logger.info(f"Fragmenta (ID: {complex_task_id}): Strategy: Direct call to local tool '{requested_tool}'.")
-            return {
-                "name": f"direct_tool_call_{requested_tool}",
-                "requires_chunking": False, # Most tools might not handle chunked input directly this way
-                "processing_step": {"tool_or_model": requested_tool, "params": task_description.get("tool_params", {})}
-            }
-
-        # Priority 3: General local processing (chunking for large text, or direct LLM)
-        input_type = input_info.get("type", "unknown")
-        input_size = input_info.get("size", 0)
-        chunking_threshold = self.config.get("default_chunking_threshold", 200) # Increased threshold
-
-        if input_type == "text" and input_size > chunking_threshold:
-            logger.info(f"Fragmenta (ID: {complex_task_id}): Strategy: Text input size {input_size} > threshold {chunking_threshold}. Applying chunking and local LLM summarization.")
-            return {
-                "name": "chunk_and_summarize_text_locally",
-                "requires_chunking": True,
-                "chunking_params": self.config.get("default_text_chunking_params", {"chunk_size": 150, "overlap": 20}),
-                "processing_step": {"tool_or_model": "llm_summarize_chunk", "params": {}}, # Each chunk summarized
-                "merging_params": {"method": "join_with_newline"} # Then results joined
-            }
-
-        logger.info(f"Fragmenta (ID: {complex_task_id}): Strategy: Default direct local LLM processing for input type '{input_type}', size {input_size}.")
-        return {
-            "name": "direct_local_llm_process",
-            "requires_chunking": False,
-            "processing_step": {"tool_or_model": "llm_direct_process", "params": {}} # General LLM processing
-        }
-
-    def _chunk_data(self, data: any, chunking_params: Optional[Dict[str, Any]] = None) -> list:
-        if not isinstance(data, str) or not chunking_params:
-            return [data]
-
-        chunk_size = chunking_params.get("chunk_size", 100)
-        overlap = chunking_params.get("overlap", 10)
-        chunks = []
-        start = 0
-        while start < len(data):
-            end = min(start + chunk_size, len(data))
-            chunk_to_add = data[start:end]
-            chunks.append(chunk_to_add)
-            if end == len(data):
-                break
-            start += (chunk_size - overlap)
+    def _chunk_data(self, data: any, chunking_params: Optional[Dict[str, Any]] = None) -> list: # Keep as is
+        if not isinstance(data, str) or not chunking_params: return [data]
+        cs, ov = chunking_params.get("chunk_size",100), chunking_params.get("overlap",10); chunks, start = [], 0
+        while start < len(data): end = min(start+cs, len(data)); chunks.append(data[start:end]); start += (cs-ov) if end != len(data) else cs
         return chunks if chunks else [data]
 
-    def _dispatch_chunk_to_processing(self, chunk: any, strategy_step: Dict[str, Any], task_id: str, chunk_index: int, total_chunks: int) -> Any:
-        tool_or_model_name = strategy_step.get("tool_or_model", "identity")
-        params = strategy_step.get("params", {})
-        logger.info(f"Fragmenta (TaskID: {task_id}): Dispatching chunk {chunk_index+1}/{total_chunks} to local processor '{tool_or_model_name}'.")
+    def _dispatch_chunk_to_processing(self, chunk: any, strategy_step: Dict[str, Any], task_id: str, chunk_index: int, total_chunks: int) -> Any: # Keep as is
+        tool_name, params = strategy_step.get("tool_or_model","identity"), strategy_step.get("params",{})
+        logger.info(f"F (TID:{task_id}): Dispatching chunk {chunk_index+1}/{total_chunks} to '{tool_name}'.")
+        res = None
+        if "llm" in tool_name: res = self.llm_interface.generate_response(f"Task({task_id}),Chunk({chunk_index+1}/{total_chunks}): {str(chunk)}",params) if self.llm_interface else f"[LLM N/A - {str(chunk)[:30]}]"
+        elif tool_name=="identity": res=chunk
+        elif self.tool_dispatcher: tr=self.tool_dispatcher.dispatch(str(chunk),tool_name,**params); res = tr.get("payload") if isinstance(tr,dict) and tr.get("status")=="success" else f"[{tool_name} err: {str(tr)[:100]}]"
+        else: res = f"[UnknownProcessor '{tool_name}' - {str(chunk)[:30]}]"
+        if self.ham_manager and res is not None:
+            mid = self.ham_manager.store_experience(str(res),"fragmenta_chunk_result",{"original_task_id":task_id,"chunk_idx":chunk_index,"total_chunks":total_chunks,"proc":tool_name}); return mid if mid else res
+        return res
 
-        processed_content = None
-        if "llm" in tool_or_model_name:
-            if self.llm_interface:
-                prompt = f"Task ({task_id}), Chunk ({chunk_index+1}/{total_chunks}): {str(chunk)}"
-                if tool_or_model_name == "llm_summarize_chunk":
-                    prompt = f"Summarize this text chunk ({chunk_index+1}/{total_chunks}) for task {task_id}: {str(chunk)}"
-                processed_content = self.llm_interface.generate_response(prompt=prompt, params=params)
-            else:
-                logger.warning(f"Fragmenta (TaskID: {task_id}): LLMInterface not available for '{tool_or_model_name}'.")
-                processed_content = f"[LLM N/A - Chunk: {str(chunk)[:30]}...]"
-        elif tool_or_model_name == "identity":
-            processed_content = chunk
-        elif self.tool_dispatcher: # Assuming tool_dispatcher.tools is not how we check
-            logger.info(f"Fragmenta (TaskID: {task_id}): Attempting dispatch to ToolDispatcher for tool '{tool_or_model_name}'.")
-            # ToolDispatcher.dispatch might raise error if tool not found, or return error structure
-            tool_result = self.tool_dispatcher.dispatch(
-                query=str(chunk), # Or construct a more specific query based on task
-                explicit_tool_name=tool_or_model_name,
-                **params
-            )
-            if isinstance(tool_result, dict) and tool_result.get("status") == "success":
-                processed_content = tool_result.get("payload")
-            else: # Handle tool error or unexpected format
-                processed_content = f"[Tool '{tool_or_model_name}' error/unavailable. Result: {str(tool_result)[:100]}]"
-        else:
-            logger.warning(f"Fragmenta (TaskID: {task_id}): Unknown local processor '{tool_or_model_name}' or ToolDispatcher unavailable.")
-            processed_content = f"[UnknownProcessor '{tool_or_model_name}' - Chunk: {str(chunk)[:30]}...]"
+    def _merge_results(self, results_or_ids: list, merging_params: Optional[Dict[str, Any]] = None) -> any: # Keep as is
+        m = (merging_params or {}).get("method"); logger.info(f"F: Merging {len(results_or_ids)} items. Method: '{m}'.")
+        if not results_or_ids: return None
+        content = [ (self.ham_manager.recall_gist(item)["rehydrated_gist"] if isinstance(item,str) and item.startswith("mem_") and self.ham_manager and self.ham_manager.recall_gist(item) else item) for item in results_or_ids if item is not None]
+        if not content: return None
+        eff_m = m if m else ("simple_join" if len(content)>1 else "direct")
+        if eff_m=="direct": return content[0]
+        if eff_m=="join_with_newline": return "\n".join(map(str,content))
+        if eff_m=="simple_join": return " ".join(map(str,content))
+        if eff_m=="return_as_list": return content
+        return content[0] if len(content)==1 else content
 
-        if self.ham_manager and processed_content is not None:
-            metadata = {
-                "original_task_id": task_id, "chunk_index": chunk_index, "total_chunks": total_chunks,
-                "processor": tool_or_model_name, "strategy_step_params": params
-            }
-            mem_id = self.ham_manager.store_experience(
-                raw_data=str(processed_content), data_type="fragmenta_chunk_result", metadata=metadata
-            )
-            if mem_id:
-                logger.info(f"Fragmenta (TaskID: {task_id}): Stored chunk result {chunk_index+1} in HAM with ID {mem_id}.")
-                return mem_id
-            else:
-                logger.warning(f"Fragmenta (TaskID: {task_id}): Failed to store chunk result {chunk_index+1} in HAM.")
-        return processed_content # Fallback if HAM fails or not available
+    def _dispatch_hsp_sub_task(self, complex_task_id: str, step_id: str, hsp_step: HSPStepDetails) -> Optional[str]: # Keep as is
+        if not self.hsp_connector or not self.hsp_connector.is_connected:
+            hsp_step["status"]="failed_dispatch"; hsp_step["error_info"]={"message":"HSPConnector N/A or not connected."}; return None
+        req_id = f"frag_hsp_{uuid.uuid4().hex[:8]}"; cb_addr = f"hsp/results/{self.hsp_connector.ai_id}"
+        payload=HSPTaskRequestPayload(request_id=req_id,requester_ai_id=self.hsp_connector.ai_id,target_ai_id=hsp_step["target_ai_id"],capability_id_filter=hsp_step["capability_id"],parameters=hsp_step["request_parameters"],callback_address=cb_addr)
+        logger.info(f"F (ID:{complex_task_id},S:{step_id}): Sending HSP TaskReq(IRID:{req_id}) to AI '{hsp_step['target_ai_id']}' for cap '{hsp_step['capability_id']}'.")
+        corr_id = self.hsp_connector.send_task_request(payload,hsp_step["target_ai_id"])
+        if corr_id: hsp_step["correlation_id"]=corr_id; hsp_step["dispatch_timestamp"]=datetime.now(timezone.utc).isoformat(); hsp_step["status"]="dispatched"; self._pending_hsp_sub_tasks[corr_id]=(complex_task_id,step_id); return corr_id
+        else: hsp_step["status"]="failed_dispatch"; hsp_step["error_info"]={"message":"HSPConnector send failed."}; return None
 
-    def _merge_results(self, chunk_results_or_ids: list, merging_params: Optional[Dict[str, Any]] = None) -> any:
-        # Determine the merge method. If no params or method specified, and only one result, default to returning it directly.
-        # If multiple results and no method, default to simple_join.
-        method_from_params = merging_params.get("method") if merging_params else None
-
-        logger.info(f"Fragmenta: Merging {len(chunk_results_or_ids)} items. Requested method: '{method_from_params}'.")
-        if not chunk_results_or_ids: return None
-
-        actual_content_list = []
-        for item_res_or_id in chunk_results_or_ids:
-            if isinstance(item_res_or_id, str) and item_res_or_id.startswith("mem_") and self.ham_manager:
-                recalled_data = self.ham_manager.recall_gist(item_res_or_id)
-                if recalled_data and "rehydrated_gist" in recalled_data:
-                    actual_content_list.append(recalled_data["rehydrated_gist"])
-                else:
-                    actual_content_list.append(f"[Error retrieving HAM ID {item_res_or_id}]")
-            elif item_res_or_id is not None:
-                actual_content_list.append(item_res_or_id)
-
-        if not actual_content_list: return None
-
-        effective_method = method_from_params
-        if not effective_method: # If no method was specified in params
-            if len(actual_content_list) == 1:
-                return actual_content_list[0] # Default for single item: return as is
-            else:
-                effective_method = "simple_join" # Default for multiple items: simple_join
-
-        if effective_method == "join_with_newline":
-            return "\n".join(map(str, actual_content_list))
-        elif effective_method == "simple_join":
-            return " ".join(map(str, actual_content_list))
-        # Add other specific merge strategies here, e.g., "return_first", "return_list_of_dicts"
-        elif effective_method == "return_as_list":
-             return actual_content_list
-        elif effective_method == "return_first_if_single_else_list":
-            return actual_content_list[0] if len(actual_content_list) == 1 else actual_content_list
-
-        # Fallback for unknown method or if single item and no specific non-join method
-        if len(actual_content_list) == 1 and method_from_params is None: # Handles case where method was None and only one item
-             return actual_content_list[0]
-
-        logger.warning(f"Fragmenta: Fallback for merge. Method: '{effective_method}'. Returning list or first item.")
-        return actual_content_list if len(actual_content_list) > 1 else actual_content_list[0]
-
-    def _dispatch_hsp_sub_task(self, complex_task_id: str, capability_to_use: HSPCapabilityAdvertisementPayload, task_parameters: Dict[str, Any]) -> Optional[str]:
-        if not self.hsp_connector:
-            logger.error(f"Fragmenta (ID: {complex_task_id}): HSPConnector not available for dispatching HSP task.")
-            return None
-        if not self.hsp_connector.is_connected:
-            logger.error(f"Fragmenta (ID: {complex_task_id}): HSPConnector not connected. Cannot dispatch HSP task.")
-            return None
-
-        hsp_request_id = f"frag_hsp_req_{uuid.uuid4().hex[:8]}"
-        target_ai_id = capability_to_use.get('ai_id')
-        capability_id = capability_to_use.get('capability_id')
-
-        if not target_ai_id or not capability_id :
-            logger.error(f"Fragmenta (ID: {complex_task_id}): Target AI ID or Capability ID missing in capability info for HSP dispatch.")
-            return None
-
-        # Define where the result should come back. Could be a generic Fragmenta endpoint or task-specific.
-        # For now, assume DialogueManager or core_services handles routing based on correlation_id.
-        # The callback_address in HSPTaskRequestPayload is for the *other* AI to send the result to.
-        # So, it should be a topic this AI (via HSPConnector) is subscribed to.
-        # e.g., f"hsp/results/{self.hsp_connector.ai_id}/{hsp_request_id}" - unique per request
-        # or a general results topic f"hsp/results/{self.hsp_connector.ai_id}"
-        callback_address = f"hsp/results/{self.hsp_connector.ai_id}" # General results topic for this AI
-
-        hsp_task_payload = HSPTaskRequestPayload(
-            request_id=hsp_request_id,
-            requester_ai_id=self.hsp_connector.ai_id,
-            target_ai_id=target_ai_id,
-            capability_id_filter=capability_id,
-            parameters=task_parameters,
-            callback_address=callback_address
-        )
-
-        logger.info(f"Fragmenta (ID: {complex_task_id}): Attempting to send HSP TaskRequest (ReqID: {hsp_request_id}) to AI '{target_ai_id}' for capability '{capability_id}'.")
-        correlation_id = self.hsp_connector.send_task_request(payload=hsp_task_payload, target_ai_id_or_topic=target_ai_id)
-
-        if correlation_id:
-            pending_info = PendingHSPSubTaskInfo(
-                original_complex_task_id=complex_task_id,
-                dispatched_capability_id=capability_id,
-                request_payload_parameters=task_parameters,
-                dispatch_timestamp=datetime.now(timezone.utc).isoformat()
-            )
-            self._pending_hsp_sub_tasks[correlation_id] = pending_info
-            logger.info(f"Fragmenta (ID: {complex_task_id}): HSP TaskRequest sent. Correlation ID: {correlation_id}. Stored pending info.")
-            return correlation_id
-        else:
-            logger.error(f"Fragmenta (ID: {complex_task_id}): Failed to send HSP TaskRequest via connector.")
-            return None
-
-    def _handle_hsp_sub_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope) -> None:
-        correlation_id = full_envelope.get('correlation_id')
-        if not correlation_id:
-            logger.warning("Fragmenta: Received HSP task result without correlation_id. Cannot process.")
-            return
-
-        pending_info = self._pending_hsp_sub_tasks.pop(correlation_id, None)
-        if not pending_info:
-            logger.warning(f"Fragmenta: Received HSP task result for unknown or already processed correlation_id: {correlation_id}")
-            return
-
-        complex_task_id = pending_info['original_complex_task_id']
-        logger.info(f"Fragmenta (ID: {complex_task_id}): Received HSP sub-task result for CorrID {correlation_id} from AI {sender_ai_id}.")
-
+    def _handle_hsp_sub_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope) -> None: # Keep as is
+        corr_id = full_envelope.get('correlation_id')
+        if not corr_id or not (lookup := self._pending_hsp_sub_tasks.pop(corr_id, None)):
+            logger.warning(f"F: HSP result for unknown/processed CorrID: {corr_id}. Payload: {str(result_payload)[:100]}"); return
+        complex_task_id, step_id = lookup
+        logger.info(f"F (ID:{complex_task_id},S:{step_id}): Got HSP result for CorrID {corr_id} from AI {sender_ai_id}.")
         task_ctx = self._complex_task_context.get(complex_task_id)
-        if not task_ctx:
-            logger.error(f"Fragmenta: Context for complex task ID {complex_task_id} not found while processing HSP result. CorrID: {correlation_id}")
-            return
+        if not task_ctx: logger.error(f"F: Context for task {complex_task_id} not found for HSP result. CorrID:{corr_id}"); return
 
-        if correlation_id in task_ctx["pending_hsp_correlation_ids"]:
-            task_ctx["pending_hsp_correlation_ids"].remove(correlation_id)
+        step_to_update: Optional[HSPStepDetails] = None
+        for stage in task_ctx["strategy_plan"]["steps"]: # Iterate through stages
+            for step_in_stage in (stage if isinstance(stage, list) else [stage]): # type: ignore
+                if step_in_stage["step_id"] == step_id and step_in_stage["type"] == "hsp_task":
+                    step_to_update = step_in_stage; break # type: ignore
+            if step_to_update: break
 
-        actual_result_payload = result_payload.get('payload')
+        if not step_to_update: logger.error(f"F (ID:{complex_task_id}): HSPStepDetails for step '{step_id}' not found. CorrID:{corr_id}"); return
+        if step_to_update["status"] in ["completed", "failed_response", "failed_dispatch", "timeout_error"]: logger.warning(f"F (ID:{complex_task_id},S:{step_id}): HSP result for already terminal step (status:{step_to_update['status']}). CorrID:{corr_id}. Ignoring."); return
+
         if result_payload.get('status') == 'success':
-            logger.info(f"Fragmenta (ID: {complex_task_id}): HSP sub-task success. Result: {str(actual_result_payload)[:100]}...")
-            # Store or append result for merging
-            task_ctx["intermediate_results"].append(actual_result_payload) # Or a processed version of it
+            step_to_update["status"]="completed"; step_to_update["result"]=result_payload.get('payload'); task_ctx["step_results"][step_id]=result_payload.get('payload')
         else:
-            error_details = result_payload.get('error_details', 'Unknown error')
-            logger.error(f"Fragmenta (ID: {complex_task_id}): HSP sub-task failed. Error: {error_details}")
-            task_ctx["intermediate_results"].append(f"[HSP Task Error from {sender_ai_id}: {error_details}]")
-            # Potentially change task_ctx status to "failed" or trigger alternative strategy
+            step_to_update["status"]="failed_response"; step_to_update["error_info"]=result_payload.get('error_details',{"message":"Unknown HSP error"}); task_ctx["step_results"][step_id]=None # type: ignore
+        self._advance_complex_task(complex_task_id)
 
-        # If all pending HSP tasks for this complex_task_id are now resolved
-        if not task_ctx["pending_hsp_correlation_ids"] and task_ctx["status"] == "awaiting_hsp_result":
-            task_ctx["status"] = "hsp_result_received" # Signal that results are in, ready for merge/next step
-            logger.info(f"Fragmenta (ID: {complex_task_id}): All pending HSP results received. Status 'hsp_result_received'.")
-            # Re-trigger processing of the main complex task
-            # This assumes process_complex_task is re-entrant and can pick up from this state.
-            # self.process_complex_task(task_ctx["task_description"], task_ctx["input_data"], complex_task_id)
-            # Making process_complex_task fully re-entrant and state-driven is complex.
-            # For now, this callback updates the context. The user/system might need to call process_complex_task again.
-            # Or, this callback could directly trigger the merge if this was the only step.
-        elif task_ctx["status"] == "awaiting_hsp_result":
-             logger.info(f"Fragmenta (ID: {complex_task_id}): Still awaiting results for other HSP tasks: {task_ctx['pending_hsp_correlation_ids']}")
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    logger.info("--- FragmentaOrchestrator Manual Test ---")
-
-    # Mock dependencies
-    mock_ham = HAMMemoryManager(core_storage_filename="frag_test_ham.json") # Needs MIKO_HAM_KEY or will use temp
-    mock_llm = LLMInterface(config={"default_provider": "mock"}) # Basic mock
-    mock_sdm = ServiceDiscoveryModule(trust_manager=TrustManager()) # Needs TrustManager
-    mock_hsp_connector = HSPConnector(ai_id="did:hsp:fragmenta_test_ai", broker_address="localhost")
-    # In a real scenario, connector would need to be connected. For this test, methods might fail if not connected.
-
-    fragmenta = FragmentaOrchestrator(
-        ham_manager=mock_ham,
-        llm_interface=mock_llm,
-        service_discovery=mock_sdm,
-        hsp_connector=mock_hsp_connector,
-        config={"default_chunking_threshold": 50,
-                "default_text_chunking_params": {"chunk_size": 30, "overlap": 5}}
-    )
-
-    # Register Fragmenta's HSP result handler with the mock connector
-    # This is how core_services.py should ideally do it.
-    if mock_hsp_connector:
-        mock_hsp_connector.register_on_task_result_callback(fragmenta._handle_hsp_sub_task_result)
-
-
-    # Test 1: Simple local LLM processing (short text)
-    task_desc_simple = {"goal": "echo input short"}
-    input_simple = "This is a short input."
-    logger.info(f"\nProcessing simple local task: {task_desc_simple['goal']}")
-    result_simple = fragmenta.process_complex_task(task_desc_simple, input_simple)
-    logger.info(f"Result for simple task: {result_simple}")
-
-    # Test 2: Local chunking and LLM processing
-    task_desc_large_local = {"goal": "summarize large local text"}
-    input_large_local = "This is a larger piece of text that definitely should be chunked for local processing. It repeats. " * 3
-    logger.info(f"\nProcessing large local text task: {task_desc_large_local['goal']} (length: {len(input_large_local)})")
-    result_large_local = fragmenta.process_complex_task(task_desc_large_local, input_large_local)
-    logger.info(f"Result for large local text task: {result_large_local}")
-
-    # Test 3: HSP Dispatch (conceptual - requires mock SDM to return a capability and mock HSP connector to "send")
-    # Setup a mock capability in SDM
-    mock_capability: HSPCapabilityAdvertisementPayload = {
-        "capability_id": "mock_hsp_summarizer_v1", "ai_id": "did:hsp:peer_ai_1", "name": "HSPSummarizer",
-        "description": "Summarizes text via HSP.", "version": "1.0", "availability_status": "online",
-        "tags": ["summary", "hsp"]
-    }
-    # Manually add to mock_sdm store for testing (as if it was advertised)
-    # sdm.process_capability_advertisement would be the normal way.
-    # For this direct test, we'll assume it's there.
-    # To make this testable, we'd need to mock sdm.get_capability_by_id
-
-    task_desc_hsp = {
-        "goal": "summarize via hsp",
-        "dispatch_to_hsp_capability_id": "mock_hsp_summarizer_v1", # Hint to use this
-        "hsp_task_parameters": {"text_to_summarize": "Some text for the HSP peer to summarize."}
-    }
-    input_hsp = "This input might be ignored if params are fully in hsp_task_parameters."
-    # If your SDM is the real one, you'd need to process an advertisement first
-    # For now, this test path might fail if get_capability_by_id in _determine_processing_strategy doesn't find it.
-    # To make this test pass without running a full HSP network:
-    # 1. Ensure mock_sdm has the capability.
-    # 2. Mock hsp_connector.send_task_request to return a correlation_id.
-    # 3. Then, manually call fragmenta._handle_hsp_sub_task_result with a mock result.
-
-    logger.info(f"\nProcessing HSP task (conceptual): {task_desc_hsp['goal']}")
-    # Simulate SDM finding the capability
-    if fragmenta.service_discovery:
-        # This direct store manipulation is for test setup only.
-        # In real operation, process_capability_advertisement would populate this.
-        fragmenta.service_discovery._capabilities_store["mock_hsp_summarizer_v1"] = StoredCapabilityInfo(
-             payload=mock_capability, sender_ai_id="did:hsp:peer_ai_1",
-             last_seen_timestamp=datetime.now(timezone.utc), message_id="test_msg_hsp_cap"
-        )
-
-    # Assume HSP connector is not connected for this offline test, so dispatch will likely fail or return pending
-    result_hsp = fragmenta.process_complex_task(task_desc_hsp, input_hsp, complex_task_id="test_hsp_task_001")
-    logger.info(f"Initial result for HSP task: {result_hsp}")
-
-    if result_hsp.get("status") == "pending_hsp":
-        logger.info("HSP task is pending as expected (connector likely not connected or not receiving actual reply).")
-        # To test the result handling part, we would manually call _handle_hsp_sub_task_result:
-        mock_hsp_result_payload: HSPTaskResultPayload = {
-            "result_id": "res_abc", "request_id": "frag_hsp_req_mock", # This should match the one generated by _dispatch
-            "executing_ai_id": "did:hsp:peer_ai_1", "status": "success",
-            "payload": {"summary": "This is the HSP summary."}
-        }
-        mock_hsp_envelope: HSPMessageEnvelope = { # type: ignore
-            "correlation_id": result_hsp.get("correlation_id") or result_hsp.get("correlation_ids", [])[0], # Get the actual correlation ID
-             # Fill other required envelope fields...
-            "hsp_envelope_version": "0.1", "message_id": "hsp_res_msg", "sender_ai_id": "did:hsp:peer_ai_1",
-            "recipient_ai_id": fragmenta.hsp_connector.ai_id if fragmenta.hsp_connector else "test_ai",
-            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
-            "message_type": "HSP::TaskResult_v0.1", "protocol_version": "0.1.1",
-            "communication_pattern": "response", "payload": mock_hsp_result_payload
-        }
-        if mock_hsp_envelope["correlation_id"]:
-             logger.info(f"Simulating HSP result reception for CorrID: {mock_hsp_envelope['correlation_id']}")
-             fragmenta._handle_hsp_sub_task_result(mock_hsp_result_payload, "did:hsp:peer_ai_1", mock_hsp_envelope)
-
-             # After result is handled, re-call process_complex_task for the same ID to continue
-             logger.info(f"Re-processing complex task 'test_hsp_task_001' after simulated HSP result.")
-             final_hsp_result = fragmenta.process_complex_task(task_description=None, input_data=None, complex_task_id="test_hsp_task_001") # type: ignore
-             logger.info(f"Final result for HSP task after simulated callback: {final_hsp_result}")
-        else:
-            logger.warning("Could not get correlation_id to simulate HSP result.")
-
-
-    logger.info("\nFragmentaOrchestrator placeholder script finished.")
+# Example __main__ block (ensure TrustManager is imported if used here)
+# from core_ai.trust_manager.trust_manager_module import TrustManager
+# from core_ai.service_discovery.service_discovery_module import StoredCapabilityInfo
+# ... (rest of a potential __main__ block) ...

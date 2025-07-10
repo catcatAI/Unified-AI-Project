@@ -6,6 +6,10 @@ The **Unified-AI-Project** aims to create a versatile and intelligent conversati
 
 For details on the initial project structure, merge strategy, and architectural principles that guided the consolidation, please refer to the [MERGE_AND_RESTRUCTURE_PLAN.md](MERGE_AND_RESTRUCTURE_PLAN.md). For a summary of the current implementation status of various components, see [Project Status Summary](docs/PROJECT_STATUS_SUMMARY.md), and for an overview of how project files are organized, see [Project Content Organization](docs/PROJECT_CONTENT_ORGANIZATION.md).
 
+### Current Project Status & Critical Merge Information
+
+**Important:** As detailed in the `MERGE_AND_RESTRUCTURE_PLAN.md` (Section 8, "Post-Merge Status Update"), the project's `master` branch is currently impacted by significant merge challenges. Due to sandbox environment limitations, a number of feature branches containing substantial structural and foundational code (including initial setup, data migration, and configuration migration) could not be successfully merged. This means the remote `master` branch may not fully reflect all intended features or the complete project structure. Development and integration efforts for these branches are ongoing and require an environment not constrained by these limitations.
+
 ### Future Vision
 
 Beyond the currently implemented features, the project holds a long-term vision inspired by concepts of "Language as Life," aiming for an AI that is deeply self-aware, adaptive, and capable of semantic evolution. This includes exploring advanced ideas such as a "Linguistic Immune System" and "MetaFormulas" to guide its development towards a "Polydimensional Semantic Entity." These philosophical underpinnings and future conceptual goals are further elaborated in project documentation (see `docs/PROJECT_STATUS_SUMMARY.md` and `docs/architecture/`).
@@ -42,10 +46,15 @@ This project integrates and is developing several core AI components:
 
 *   **Heterogeneous Synchronization Protocol (HSP) (`src/hsp/`):**
     *   **Purpose:** Enables different AI instances (peers) to communicate, share knowledge, and collaborate on tasks.
-    *   **Functionality:** Defines message types (Facts, Capability Advertisements, Task Requests/Results, etc.) and communication patterns (Publish/Subscribe, Request/Reply) for inter-AI interaction.
+    *   **Functionality:** Defines message types (Facts, Capability Advertisements, Task Requests/Results, etc.) and communication patterns (Publish/Subscribe, Request/Reply) for inter-AI interaction. Core functionalities like message transport (MQTT via `HSPConnector`), fact publishing/processing, and basic task brokering are implemented.
     *   **Transport:** Currently uses MQTT for message transport.
-    *   **Key Features:** Includes mechanisms for service discovery, basic trust management between peers, and strategies for handling conflicting information received from different AIs.
-    *   **Specification:** See `docs/HSP_SPECIFICATION.md` for more details.
+    *   **Key Features:** Includes mechanisms for basic service discovery (though the `ServiceDiscoveryModule` requires significant rework for full HSP alignment), basic trust management, and strategies for handling conflicting information.
+    *   **Status:** Core components are functional. However, full adherence to the specification, advanced QoS, and robust error handling are ongoing. The `ServiceDiscoveryModule` in particular needs refactoring to fully support HSP capability advertisements and integration with the `TrustManager`. See `docs/PROJECT_STATUS_SUMMARY.md` for more details.
+    *   **Specification:** See `docs/HSP_SPECIFICATION.md`.
+
+*   **Fragmenta Orchestrator (`src/fragmenta/fragmenta_orchestrator.py`):**
+    *   **Purpose:** Designed to manage complex tasks, coordinate data flow between modules, and apply sophisticated processing strategies.
+    *   **Status:** A basic class structure and a rudimentary `process_complex_task` method (with simple chunking and LLM/tool dispatch) are implemented. However, most advanced features outlined in its design specification (e.g., sophisticated task analysis, advanced pre/post-processing, parallelism, self-evaluation) are currently conceptual and pending full implementation. See `docs/architecture/Fragmenta_design_spec.md` and `docs/PROJECT_STATUS_SUMMARY.md`.
 
 ## Getting Started
 
@@ -215,12 +224,18 @@ If you have questions, find a bug, or want to suggest an enhancement, please con
 
 This section highlights some current observations, known issues from testing, and architectural considerations for ongoing development.
 
-### Current Test Status & Observations
+### Current Project State & Development Observations
 
-*   **Known Failing Tests:** As of the last full test run, a few tests consistently fail. These are being investigated, with current hypotheses pointing towards:
-    *   Limitations in mock LLM responses for deeply nested module calls (e.g., `TestCLI` where sub-modules like `FactExtractorModule` expect specific JSON from mocks).
-    *   Subtle data handling or string manipulation issues (e.g., text truncation in `TestFragmentaOrchestrator`, or dictionary lookup anomalies in `TestTranslationModelComponents`).
-*   **Asynchronous Code Warnings:** Tests have surfaced `RuntimeWarning: coroutine ... was never awaited` for some `async def` test methods. Developers should be mindful of correctly implementing and testing asynchronous code using appropriate `async/await` patterns and async-aware testing libraries if needed.
+*   **Critical Merge Status:** As mentioned in the Overview, the `master` branch is impacted by incomplete merges of several foundational feature branches due to sandbox limitations. This affects the overall stability and completeness of the current codebase on `master`.
+*   **Test Status Update (July 2024):**
+    *   **Resolved `FragmentaOrchestrator` Test Failures:** Previously noted `AttributeError`s in `tests/fragmenta/test_fragmenta_orchestrator.py` (related to missing helper methods) have been resolved by ensuring the correct, updated version of `src/fragmenta/fragmenta_orchestrator.py` is loaded during test execution. All tests in this suite now pass.
+    *   **Resolved Asynchronous Code Warnings:** `RuntimeWarning: coroutine ... was never awaited` in `tests/core_ai/dialogue/test_dialogue_manager.py` have been fixed by refactoring async tests to use `asyncio.run()`. Subsequent assertion failures in these tests due to output changes were also corrected. All tests in this suite now pass.
+    *   **Remaining Known Issues:**
+        *   **HSP Integration Tests:** Tests in `tests/hsp/test_hsp_integration.py` and `tests/services/test_main_api_server_hsp.py` consistently error out due to `ConnectionRefusedError`. These tests require an active MQTT broker. They are now marked with `pytest.mark.skipif` to automatically skip if a broker is not detected at `localhost:1883`, preventing test suite errors in environments without a broker.
+        *   **Mock LLM Dependent Failures:** A few tests in `tests/interfaces/test_cli.py` and `tests/tools/test_translation_model.py` fail due to current mock LLM responses not aligning with the specific JSON or intent formats expected by the modules under test. These require refinement of the mock LLM setups for those specific test cases.
+*   **(Original) Known Failing Tests:** Some automated tests consistently fail. Current hypotheses point towards limitations in mock LLM responses for deeply nested module calls and potential subtle data handling or string manipulation issues. These are under investigation. *(This is now superseded by the more specific points above but kept for historical context if needed)*
+*   **(Original) Asynchronous Code Warnings:** Test runs have surfaced `RuntimeWarning: coroutine ... was never awaited` for some `async def` test methods. Developers should ensure correct implementation and testing of asynchronous code using appropriate `async/await` patterns. *(This is now superseded by the more specific points above)*
+
 
 ### Inter-Module Data Flow and Synchronization
 
