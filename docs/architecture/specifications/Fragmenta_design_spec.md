@@ -141,7 +141,7 @@ This is a critical function of Fragmenta.
 *   **Error Handling & Retries for HSP:** Basic error detection (dispatch errors, peer-reported failures, timeouts) and a configurable retry mechanism with backoff for HSP tasks are integrated with the new state machine.
 *   **Rudimentary local processing** (chunking, LLM/tool dispatch, result merging) is maintained within this new stateful framework.
 
-While these changes provide foundational support for parallelism and more explicit data flow, many advanced features from this design spec (e.g., sophisticated dynamic strategy selection for parallelism, complex input aggregation logic, semantic chunking, deep self-evaluation, full hardware awareness) remain conceptual or for future implementation. Refer to `docs/PROJECT_STATUS_SUMMARY.md` for current details.
+While these changes provide foundational support for parallelism and more explicit data flow, many advanced features from this design spec (e.g., sophisticated dynamic strategy selection for parallelism, complex input aggregation logic, semantic chunking, deep self-evaluation, full hardware awareness) remain conceptual or for future implementation. Refer to `../../project/STATUS_SUMMARY.md` for current details.
 
 File: `src/fragmenta/fragmenta_orchestrator.py`
 
