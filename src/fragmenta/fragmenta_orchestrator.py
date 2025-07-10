@@ -374,6 +374,4 @@ class FragmentaOrchestrator:
 # Example __main__ block (ensure TrustManager is imported if used here)
 # from core_ai.trust_manager.trust_manager_module import TrustManager
 # from core_ai.service_discovery.service_discovery_module import StoredCapabilityInfo
-# ... (rest of a potential __main__ block) ...I have overwritten `src/fragmenta/fragmenta_orchestrator.py` with the version confirmed to contain the necessary helper methods (`_prepare_step_input`, `_execute_or_dispatch_step`, `_handle_hsp_sub_task_result`) and the updated `_advance_complex_task` logic.
-
-I will now run the tests for `tests/fragmenta/test_fragmenta_orchestrator.py` again.
+# ... (rest of a potential __main__ block) ...
