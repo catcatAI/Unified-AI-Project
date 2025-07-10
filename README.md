@@ -218,6 +218,7 @@ Contributions are welcome and greatly appreciated! Here are some guidelines to h
 *   **Python:** Follow PEP 8.
 *   **JavaScript/TypeScript:** Follow standard community practices. Consider using Prettier for consistent formatting.
 *   **Internal Data Structures:** For data exchanged between internal Python modules, adhere to the standards outlined in [Internal Data Standards (`docs/INTERNAL_DATA_STANDARDS.md`)](docs/INTERNAL_DATA_STANDARDS.md). This primarily involves using `TypedDict` for clarity and static type checking.
+*   **Translations:** For information on how to add or update translations for the project, please see the [Translation Guide (`docs/TRANSLATION_GUIDE.md`)](docs/TRANSLATION_GUIDE.md).
 *   **General:** Aim for clear, readable, and well-documented code.
 
 ### Questions or Issues
