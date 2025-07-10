@@ -21,11 +21,11 @@ Contains the core Python source code for the AI and its services.
 
 *   `core_services.py`: Provides central initialization (dependency injection) and access to core AI service instances. Responsible for instantiating and wiring together major components like DialogueManager, Memory, LLMInterface, etc.
 
-### 2.1. Agents (`src/agents/`)
+### 2.1. Agent-related Modules & Specialized Capabilities (`src/agents/`)
 
-Hosts implementations or placeholders for various AI agents.
-*   `simple_coding_agent.py`: A basic scripted agent for testing AVIS code execution.
-*   `jules_dev_agent.py`: Placeholder for the Jules Asynchronous Development Agent.
+Hosts implementations or placeholders for modules that provide specialized, agent-like capabilities or serve as test harnesses. These are typically orchestrated by the core AI persona (Angela).
+*   `simple_coding_agent.py`: A basic scripted agent primarily for testing AVIS code execution functionalities. Can be seen as a utility script rather than a full agent.
+*   `jules_dev_agent.py`: Contains the `JulesDevelopmentCapability` class, providing a set of software development functions for Angela to use.
 
 ### 2.1.1. Core AI Logic and Modules (`src/core_ai/`)
 
