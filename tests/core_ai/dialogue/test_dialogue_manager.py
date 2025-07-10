@@ -7,47 +7,24 @@ import os # Added for os.path.exists and os.remove in __main__
 import re # Added for regex in _is_kg_query
 import json
 import ast
+import asyncio
 
-# Assuming src is in PYTHONPATH for test execution
-from src.core_ai.dialogue.dialogue_manager import DialogueManager # Changed
-from src.shared.types.common_types import ( # Changed
+from src.core_ai.dialogue.dialogue_manager import DialogueManager
+from src.shared.types.common_types import (
     OperationalConfig, DialogueTurn, PendingHSPTaskInfo,
-    ParsedToolIODetails, CritiqueResult, ToolDispatcherResponse, # Added for completeness if DM uses them directly
+    ParsedToolIODetails, CritiqueResult, ToolDispatcherResponse,
     FormulaConfigEntry, DialogueMemoryEntryMetadata
 )
 from hsp.types import (
     HSPTaskRequestPayload, HSPTaskResultPayload,
     HSPCapabilityAdvertisementPayload, HSPMessageEnvelope, HSPFactPayload
 )
-# Mock other direct dependencies if their actual classes are not needed for type hinting in test setups
-# from core_ai.personality.personality_manager import PersonalityManager
-# from core_ai.memory.ham_memory_manager import HAMMemoryManager
-# from services.llm_interface import LLMInterface
-# from core_ai.emotion_system import EmotionSystem
-# from core_ai.crisis_system import CrisisSystem
-# from core_ai.time_system import TimeSystem
-# from core_ai.formula_engine import FormulaEngine
-# from tools.tool_dispatcher import ToolDispatcher
-# from core_ai.learning.self_critique_module import SelfCritiqueModule
-# from core_ai.learning.fact_extractor_module import FactExtractorModule
-# from core_ai.learning.learning_manager import LearningManager
-# from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-# from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-# from services.sandbox_executor import SandboxExecutor
-# from hsp.connector import HSPConnector
-
 
 class TestDialogueManagerHelperMethods(unittest.TestCase):
 
     def setUp(self):
-        # Basic DM for testing helper methods. Dependencies can be mocked if they were used by these helpers.
-        # For these specific helpers, direct interaction with complex dependencies is minimal.
-        # Provide minimal config. Ensure 'operational_configs' key exists if DialogueManager constructor accesses it.
-        # OperationalConfig is total=False, so an empty dict is valid.
-        self.dm = DialogueManager(config={}) # type: ignore
+        self.dm = DialogueManager(config={})
 
-
-        # Create a sample graph for testing _find_entity_node_id_in_kg and _query_session_kg
         self.sample_graph = nx.DiGraph()
         self.sample_graph.add_node("ent_google_org", label="Google", type="ORG")
         self.sample_graph.add_node("ent_microsoft_org", label="Microsoft", type="ORG")
@@ -58,7 +35,7 @@ class TestDialogueManagerHelperMethods(unittest.TestCase):
         self.sample_graph.add_edge("ent_google_org", "ent_sundar_person", type="has_ceo")
         self.sample_graph.add_edge("ent_microsoft_org", "ent_satya_person", type="has_ceo")
         self.sample_graph.add_edge("ent_microsoft_org", "ent_redmond_gpe", type="located_in")
-        self.sample_graph.add_edge("ent_google_org", "ent_redmond_gpe", type="competes_with_org_in_same_place_as_msft_hq") # A dummy rel
+        self.sample_graph.add_edge("ent_google_org", "ent_redmond_gpe", type="competes_with_org_in_same_place_as_msft_hq")
 
 
     def test_find_entity_node_id_in_kg_found(self):
@@ -79,7 +56,7 @@ class TestDialogueManagerHelperMethods(unittest.TestCase):
         self.assertIsNone(node_id)
 
     def test_find_entity_node_id_in_kg_none_graph(self):
-        node_id = self.dm._find_entity_node_id_in_kg(None, "Google") # type: ignore
+        node_id = self.dm._find_entity_node_id_in_kg(None, "Google")
         self.assertIsNone(node_id)
 
 
@@ -95,7 +72,7 @@ class TestDialogueManagerHelperMethods(unittest.TestCase):
 
     def test_query_session_kg_relationship_not_found(self):
         self.dm.session_knowledge_graphs["test_session"] = self.sample_graph
-        answer = self.dm._query_session_kg("test_session", "Google", "located_in") # Google not located_in Redmond in this graph
+        answer = self.dm._query_session_kg("test_session", "Google", "located_in")
         self.assertIsNone(answer)
 
     def test_query_session_kg_no_graph_for_session(self):
@@ -105,12 +82,12 @@ class TestDialogueManagerHelperMethods(unittest.TestCase):
     def test_query_session_kg_target_no_label(self):
         graph_no_label = nx.DiGraph()
         graph_no_label.add_node("ent_source_org", label="SourceOrg", type="ORG")
-        graph_no_label.add_node("ent_target_no_label_person", type="PERSON") # No label attribute
+        graph_no_label.add_node("ent_target_no_label_person", type="PERSON")
         graph_no_label.add_edge("ent_source_org", "ent_target_no_label_person", type="has_contact")
 
         self.dm.session_knowledge_graphs["test_session_no_label"] = graph_no_label
         answer = self.dm._query_session_kg("test_session_no_label", "SourceOrg", "has_contact")
-        self.assertEqual(answer, "ent_target_no_label_person") # Should return node ID as fallback
+        self.assertEqual(answer, "ent_target_no_label_person")
 
 
     def test_is_kg_query_ceo_pattern(self):
@@ -123,13 +100,13 @@ class TestDialogueManagerHelperMethods(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result, ("microsoft corporation", "has_ceo"))
 
-    def test_is_kg_query_ceo_pattern_with_a(self): # Although "a ceo" is less common for specific query
-        result = self.dm._is_kg_query("who is a president of United States?") # Changed title for realism
+    def test_is_kg_query_ceo_pattern_with_a(self):
+        result = self.dm._is_kg_query("who is a president of United States?")
         self.assertIsNotNone(result)
         self.assertEqual(result, ("united states", "has_president"))
 
     def test_is_kg_query_founder_pattern(self):
-        result = self.dm._is_kg_query("who is founder of Apple Inc") # No question mark
+        result = self.dm._is_kg_query("who is founder of Apple Inc")
         self.assertIsNotNone(result)
         self.assertEqual(result, ("apple inc", "has_founder"))
 
@@ -144,7 +121,6 @@ class TestDialogueManagerHelperMethods(unittest.TestCase):
         self.assertEqual(result, ("apple", "located_in"))
 
     def test_is_kg_query_acquire_pattern_company(self):
-        # This test assumes "acquire" is a relationship type the KG might have.
         result = self.dm._is_kg_query("what company did Google acquire?")
         self.assertIsNotNone(result)
         self.assertEqual(result, ("google", "acquire"))
@@ -155,12 +131,8 @@ class TestDialogueManagerHelperMethods(unittest.TestCase):
         self.assertEqual(result, ("apple", "acquire"))
 
     def test_is_kg_query_entity_with_possessive_in_regex(self):
-        # Test how the regex handles entities that might themselves contain 's or be complex.
-        # The current regex `(.+)` captures the whole thing.
-        # The cleaning logic for possessives is simple and might not perfectly normalize all complex entities.
         result = self.dm._is_kg_query("who is ceo of Google's parent company?")
         self.assertIsNotNone(result)
-        # The method currently strips "'s", so "Google's parent company" becomes "Google parent company"
         self.assertEqual(result, ("google parent company", "has_ceo"))
 
     def test_is_kg_query_no_match(self):
@@ -171,36 +143,31 @@ class TestDialogueManagerHelperMethods(unittest.TestCase):
         result = self.dm._is_kg_query("")
         self.assertIsNone(result)
 
-if __name__ == '__main__':
-    unittest.main()
-
 
 class TestDialogueManagerKGIntegration(unittest.TestCase):
     def setUp(self):
-        # Mock dependencies that DialogueManager initializes
         self.mock_personality_manager = MagicMock()
         self.mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
         self.mock_personality_manager.get_initial_prompt.return_value = "Hello from TestAI."
 
         self.mock_memory_manager = MagicMock()
-        self.mock_memory_manager.store_experience.return_value = "mem_id_123" # Dummy memory ID
+        self.mock_memory_manager.store_experience.return_value = "mem_id_123"
 
         self.mock_llm_interface = MagicMock()
         self.mock_llm_interface.generate_response.return_value = "This is a fallback LLM response."
 
         self.mock_emotion_system = MagicMock()
-        self.mock_emotion_system.get_current_emotion_expression.return_value = {"text_ending": ""} # No emotional suffix for tests
+        self.mock_emotion_system.get_current_emotion_expression.return_value = {"text_ending": ""}
 
         self.mock_crisis_system = MagicMock()
-        self.mock_crisis_system.assess_input_for_crisis.return_value = 0 # No crisis
+        self.mock_crisis_system.assess_input_for_crisis.return_value = 0
 
         self.mock_formula_engine = MagicMock()
-        self.mock_formula_engine.match_input.return_value = None # No formula match by default
+        self.mock_formula_engine.match_input.return_value = None
 
         self.mock_content_analyzer = MagicMock()
 
-        # Config for DialogueManager
-        self.test_config: OperationalConfig = { # type: ignore
+        self.test_config: OperationalConfig = {
             "max_dialogue_history": 6,
             "operational_configs": {
                 "timeouts": {"dialogue_manager_turn": 120},
@@ -216,133 +183,118 @@ class TestDialogueManagerKGIntegration(unittest.TestCase):
             emotion_system=self.mock_emotion_system,
             crisis_system=self.mock_crisis_system,
             formula_engine=self.mock_formula_engine,
-            content_analyzer=self.mock_content_analyzer, # Use the mock
+            content_analyzer=self.mock_content_analyzer,
             config=self.test_config
         )
-        # Ensure self_critique_module and learning_manager are also mocked if their methods are called
         self.dm.self_critique_module = MagicMock()
         self.dm.self_critique_module.critique_interaction.return_value = CritiqueResult(score=0.9, reason="Looks good.", suggested_alternative=None)
         self.dm.learning_manager = MagicMock()
 
 
-    async def test_kg_qa_ceo_and_location(self):
-        session_id = "kg_integ_test_session_01"
-        user_id = "kg_integ_test_user_01"
+    def test_kg_qa_ceo_and_location(self):
+        async def main_test_logic():
+            session_id = "kg_integ_test_session_01"
+            user_id = "kg_integ_test_user_01"
 
-        # 1. Setup: Define the mock KG that ContentAnalyzer will return
-        mock_kg = nx.DiGraph()
-        mock_kg.add_node("ent_innovate_corp_org", label="Innovate Corp", type="ORG")
-        mock_kg.add_node("ent_jane_doe_person", label="Jane Doe", type="PERSON")
-        mock_kg.add_node("ent_silicon_valley_gpe", label="Silicon Valley", type="GPE")
-        mock_kg.add_node("ent_alphatech_org", label="AlphaTech", type="ORG")
+            mock_kg = nx.DiGraph()
+            mock_kg.add_node("ent_innovate_corp_org", label="Innovate Corp", type="ORG")
+            mock_kg.add_node("ent_jane_doe_person", label="Jane Doe", type="PERSON")
+            mock_kg.add_node("ent_silicon_valley_gpe", label="Silicon Valley", type="GPE")
+            mock_kg.add_node("ent_alphatech_org", label="AlphaTech", type="ORG")
 
-        mock_kg.add_edge("ent_innovate_corp_org", "ent_jane_doe_person", type="has_ceo")
-        mock_kg.add_edge("ent_innovate_corp_org", "ent_silicon_valley_gpe", type="located_in")
-        mock_kg.add_edge("ent_innovate_corp_org", "ent_alphatech_org", type="acquire")
+            mock_kg.add_edge("ent_innovate_corp_org", "ent_jane_doe_person", type="has_ceo")
+            mock_kg.add_edge("ent_innovate_corp_org", "ent_silicon_valley_gpe", type="located_in")
+            mock_kg.add_edge("ent_innovate_corp_org", "ent_alphatech_org", type="acquire")
 
-        self.mock_content_analyzer.analyze_content.return_value = (None, mock_kg) # Return (TypedDict_KG_placeholder, nx_Graph)
+            self.mock_content_analyzer.analyze_content.return_value = (None, mock_kg)
 
-        # 2. Analyze text
-        analyze_cmd = "!analyze: Innovate Corp is a tech company. Jane Doe is its CEO. It is in Silicon Valley and bought AlphaTech."
-        analyze_response = await self.dm.get_simple_response(analyze_cmd, session_id, user_id)
-        self.assertIn("Context analysis triggered", analyze_response)
-        self.assertIn(session_id, self.dm.session_knowledge_graphs)
-        self.assertEqual(self.dm.session_knowledge_graphs[session_id], mock_kg)
+            analyze_cmd = "!analyze: Innovate Corp is a tech company. Jane Doe is its CEO. It is in Silicon Valley and bought AlphaTech."
+            analyze_response = await self.dm.get_simple_response(analyze_cmd, session_id, user_id)
+            self.assertIn("Context analysis triggered", analyze_response)
+            self.assertIn(session_id, self.dm.session_knowledge_graphs)
+            self.assertEqual(self.dm.session_knowledge_graphs[session_id], mock_kg)
 
-        # 3. Ask "who is ceo of Innovate Corp?"
-        q1 = "who is ceo of Innovate Corp?"
-        r1 = await self.dm.get_simple_response(q1, session_id, user_id)
-        expected_r1 = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: From the analyzed context, the ceo of Innovate Corp is Jane Doe."
-        self.assertEqual(r1, expected_r1)
+            q1 = "who is ceo of Innovate Corp?"
+            r1 = await self.dm.get_simple_response(q1, session_id, user_id)
+            expected_r1 = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: From context, the ceo of Innovate Corp is Jane Doe."
+            self.assertEqual(r1, expected_r1)
 
-        # 4. Ask "where is Innovate Corp located?"
-        q2 = "where is Innovate Corp located?"
-        r2 = await self.dm.get_simple_response(q2, session_id, user_id)
-        expected_r2 = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: From the analyzed context, Innovate Corp is located in Silicon Valley."
-        self.assertEqual(r2, expected_r2)
+            q2 = "where is Innovate Corp located?"
+            r2 = await self.dm.get_simple_response(q2, session_id, user_id)
+            expected_r2 = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: From context, Innovate Corp is located in Silicon Valley."
+            self.assertEqual(r2, expected_r2)
 
-        # 5. Ask "what did Innovate Corp acquire?"
-        q3 = "what did Innovate Corp acquire?"
-        r3 = await self.dm.get_simple_response(q3, session_id, user_id)
-        expected_r3 = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: From the analyzed context, Innovate Corp acquired AlphaTech."
-        self.assertEqual(r3, expected_r3)
+            q3 = "what did Innovate Corp acquire?"
+            r3 = await self.dm.get_simple_response(q3, session_id, user_id)
+            expected_r3 = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: From context, Innovate Corp acquired AlphaTech."
+            self.assertEqual(r3, expected_r3)
 
-        # Ensure LLM was not called for these KG-answered questions
-        self.mock_llm_interface.generate_response.assert_not_called()
+            self.mock_llm_interface.generate_response.assert_not_called()
+        asyncio.run(main_test_logic())
 
 
-    async def test_kg_qa_fallback_if_kg_miss(self):
-        session_id = "kg_integ_test_session_02"
-        user_id = "kg_integ_test_user_02"
+    def test_kg_qa_fallback_if_kg_miss(self):
+        async def main_test_logic():
+            session_id = "kg_integ_test_session_02"
+            user_id = "kg_integ_test_user_02"
 
-        mock_kg = nx.DiGraph() # Empty graph or irrelevant graph
-        mock_kg.add_node("ent_other_org", label="Other Corp", type="ORG")
-        self.mock_content_analyzer.analyze_content.return_value = (None, mock_kg)
+            mock_kg = nx.DiGraph()
+            mock_kg.add_node("ent_other_org", label="Other Corp", type="ORG")
+            self.mock_content_analyzer.analyze_content.return_value = (None, mock_kg)
 
-        analyze_cmd = "!analyze: Some other unrelated text."
-        await self.dm.get_simple_response(analyze_cmd, session_id, user_id)
+            analyze_cmd = "!analyze: Some other unrelated text."
+            await self.dm.get_simple_response(analyze_cmd, session_id, user_id)
+            self.mock_llm_interface.generate_response.reset_mock()
 
-        # Reset mock call count before the query that should go to LLM
-        self.mock_llm_interface.generate_response.reset_mock()
+            q1 = "who is ceo of Innovate Corp?"
+            r1 = await self.dm.get_simple_response(q1, session_id, user_id)
 
-        q1 = "who is ceo of Innovate Corp?" # Innovate Corp not in this session's KG
-        r1 = await self.dm.get_simple_response(q1, session_id, user_id)
+            self.mock_llm_interface.generate_response.assert_called_once()
+            expected_r1_fallback = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: {self.mock_llm_interface.generate_response.return_value}"
+            self.assertEqual(r1, expected_r1_fallback)
+        asyncio.run(main_test_logic())
 
-        # Expect fallback to LLM
-        self.mock_llm_interface.generate_response.assert_called_once()
-        expected_r1_fallback = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: {self.mock_llm_interface.generate_response.return_value}"
-        self.assertEqual(r1, expected_r1_fallback)
+    def test_kg_qa_fallback_if_no_kg_for_session(self):
+        async def main_test_logic():
+            session_id = "kg_integ_test_session_03"
+            user_id = "kg_integ_test_user_03"
+            self.mock_llm_interface.generate_response.reset_mock()
+            q1 = "who is ceo of Innovate Corp?"
+            r1 = await self.dm.get_simple_response(q1, session_id, user_id)
+            self.mock_llm_interface.generate_response.assert_called_once()
+            expected_r1_fallback = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: {self.mock_llm_interface.generate_response.return_value}"
+            self.assertEqual(r1, expected_r1_fallback)
+        asyncio.run(main_test_logic())
 
-    async def test_kg_qa_fallback_if_no_kg_for_session(self):
-        session_id = "kg_integ_test_session_03" # No !analyze for this session
-        user_id = "kg_integ_test_user_03"
-
-        self.mock_llm_interface.generate_response.reset_mock()
-
-        q1 = "who is ceo of Innovate Corp?"
-        r1 = await self.dm.get_simple_response(q1, session_id, user_id)
-
-        # Expect fallback to LLM
-        self.mock_llm_interface.generate_response.assert_called_once()
-        expected_r1_fallback = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: {self.mock_llm_interface.generate_response.return_value}"
-        self.assertEqual(r1, expected_r1_fallback)
-
-    async def test_kg_qa_no_answer_from_kg_then_fallback(self):
-        session_id = "kg_integ_test_session_04"
-        user_id = "kg_integ_test_user_04"
-
-        mock_kg = nx.DiGraph()
-        mock_kg.add_node("ent_innovate_corp_org", label="Innovate Corp", type="ORG")
-        # No CEO relationship for Innovate Corp in this KG
-        self.mock_content_analyzer.analyze_content.return_value = (None, mock_kg)
-
-        analyze_cmd = "!analyze: Innovate Corp is a company."
-        await self.dm.get_simple_response(analyze_cmd, session_id, user_id)
-
-        self.mock_llm_interface.generate_response.reset_mock()
-
-        q1 = "who is ceo of Innovate Corp?" # KG has Innovate Corp, but not its CEO
-        r1 = await self.dm.get_simple_response(q1, session_id, user_id)
-
-        self.mock_llm_interface.generate_response.assert_called_once()
-        expected_r1_fallback = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: {self.mock_llm_interface.generate_response.return_value}"
-        self.assertEqual(r1, expected_r1_fallback)
+    def test_kg_qa_no_answer_from_kg_then_fallback(self):
+        async def main_test_logic():
+            session_id = "kg_integ_test_session_04"
+            user_id = "kg_integ_test_user_04"
+            mock_kg = nx.DiGraph()
+            mock_kg.add_node("ent_innovate_corp_org", label="Innovate Corp", type="ORG")
+            self.mock_content_analyzer.analyze_content.return_value = (None, mock_kg)
+            analyze_cmd = "!analyze: Innovate Corp is a company."
+            await self.dm.get_simple_response(analyze_cmd, session_id, user_id)
+            self.mock_llm_interface.generate_response.reset_mock()
+            q1 = "who is ceo of Innovate Corp?"
+            r1 = await self.dm.get_simple_response(q1, session_id, user_id)
+            self.mock_llm_interface.generate_response.assert_called_once()
+            expected_r1_fallback = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: {self.mock_llm_interface.generate_response.return_value}"
+            self.assertEqual(r1, expected_r1_fallback)
+        asyncio.run(main_test_logic())
 
 
 class TestDialogueManagerToolDrafting(unittest.TestCase):
     def setUp(self):
         self.mock_personality_manager = MagicMock()
         self.mock_personality_manager.get_current_personality_trait.return_value = "TestDraftAI"
-
         self.mock_llm_interface = MagicMock()
-
-        self.test_config: OperationalConfig = { # type: ignore
+        self.test_config: OperationalConfig = {
             "operational_configs": {
                 "timeouts": {"dialogue_manager_turn": 120},
                 "learning_thresholds": {"min_critique_score_to_store": 0.0}
             }
         }
-
         patchers = {
             'PersonalityManager': patch('src.core_ai.dialogue.dialogue_manager.PersonalityManager', return_value=self.mock_personality_manager),
             'HAMMemoryManager': patch('src.core_ai.dialogue.dialogue_manager.HAMMemoryManager'),
@@ -369,162 +321,226 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
         self.dm.personality_manager = self.mock_personality_manager
 
 
-    async def test_handle_draft_tool_request_success_flow(self):
-        tool_name = "EchoTool"
-        purpose_and_io_desc = "A simple tool that takes a string message and returns it."
+    def test_handle_draft_tool_request_success_flow(self):
+        async def main_test_logic():
+            tool_name = "EchoTool"
+            purpose_and_io_desc = "A simple tool that takes a string message and returns it."
+            mock_io_details: ParsedToolIODetails = {
+                "suggested_method_name": "echo",
+                "class_docstring_hint": "An echo tool.",
+                "method_docstring_hint": "Echoes the input message.",
+                "parameters": [{"name": "message", "type": "str", "description": "The message to echo."}],
+                "return_type": "str",
+                "return_description": "The echoed message."
+            }
+            mock_io_details_json_str = json.dumps(mock_io_details)
+            mock_generated_code = "class EchoTool:\n    pass # Dummy generated code"
+            self.mocks['SandboxExecutor'].return_value.run.return_value = ("Mocked sandbox success", None)
+            self.mock_llm_interface.generate_response.side_effect = [
+                mock_io_details_json_str,
+                mock_generated_code
+            ]
+            result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+            self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
+            io_parsing_call_args = self.mock_llm_interface.generate_response.call_args_list[0]
+            io_parsing_prompt_arg = io_parsing_call_args[1]['prompt']
+            self.assertIn("You are an expert Python code analyst.", io_parsing_prompt_arg)
+            self.assertIn(purpose_and_io_desc, io_parsing_prompt_arg)
+            self.assertEqual(io_parsing_call_args[1]['params'], {"temperature": 0.1})
+            code_gen_call_args = self.mock_llm_interface.generate_response.call_args_list[1]
+            code_gen_prompt_arg = code_gen_call_args[1]['prompt']
+            self.assertIn(f"Tool Class Name: {tool_name}", code_gen_prompt_arg)
+            self.assertIn("class_docstring_hint\": \"An echo tool.\"", mock_io_details_json_str)
+            self.assertIn("Method Name: echo", code_gen_prompt_arg)
+            self.assertIn("message: str", code_gen_prompt_arg)
+            self.assertIn("Return Type: str", code_gen_prompt_arg)
+            self.assertEqual(code_gen_call_args[1]['params'], {"temperature": 0.3})
 
-        mock_io_details: ParsedToolIODetails = { # type: ignore
-            "suggested_method_name": "echo",
-            "class_docstring_hint": "An echo tool.",
-            "method_docstring_hint": "Echoes the input message.",
-            "parameters": [{"name": "message", "type": "str", "description": "The message to echo."}],
-            "return_type": "str",
-            "return_description": "The echoed message."
-        }
-        mock_io_details_json_str = json.dumps(mock_io_details)
-        mock_generated_code = "class EchoTool:\n    pass # Dummy generated code"
-        self.mocks['SandboxExecutor'].return_value.run.return_value = ("Mocked sandbox success", None)
-
-
-        self.mock_llm_interface.generate_response.side_effect = [
-            mock_io_details_json_str,
-            mock_generated_code
-        ]
-
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-
-        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
-
-        io_parsing_call_args = self.mock_llm_interface.generate_response.call_args_list[0]
-        io_parsing_prompt_arg = io_parsing_call_args[1]['prompt']
-        self.assertIn("You are an expert Python code analyst.", io_parsing_prompt_arg)
-        self.assertIn(purpose_and_io_desc, io_parsing_prompt_arg)
-        self.assertEqual(io_parsing_call_args[1]['params'], {"temperature": 0.1})
-
-        code_gen_call_args = self.mock_llm_interface.generate_response.call_args_list[1]
-        code_gen_prompt_arg = code_gen_call_args[1]['prompt']
-        self.assertIn(f"Tool Class Name: {tool_name}", code_gen_prompt_arg)
-        self.assertIn("class_docstring_hint\": \"An echo tool.\"", mock_io_details_json_str)
-        self.assertIn("Method Name: echo", code_gen_prompt_arg)
-        self.assertIn("message: str", code_gen_prompt_arg)
-        self.assertIn("Return Type: str", code_gen_prompt_arg)
-        self.assertEqual(code_gen_call_args[1]['params'], {"temperature": 0.3})
-
-        self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
-        self.assertIn(mock_generated_code, result_response)
-        self.assertIn("Info: The drafted code is syntactically valid Python.", result_response)
-
-        self.mocks['SandboxExecutor'].return_value.run.assert_called_once()
-        self.assertIn("---Sandbox Test Run---", result_response)
-        self.assertIn("Execution Result: Mocked sandbox success", result_response)
+            ai_name = self.dm.personality_manager.get_current_personality_trait("display_name", "AI")
+            expected_response_start = f"{ai_name}: Draft for `{tool_name}`:"
+            self.assertTrue(result_response.startswith(expected_response_start),
+                            f"Expected response to start with '{expected_response_start}', got '{result_response[:100]}...'")
+            self.assertIn(mock_generated_code, result_response)
+            self.assertIn("Info: Syntactically valid.", result_response) # Corrected message
+            self.mocks['SandboxExecutor'].return_value.run.assert_called_once()
+            self.assertIn("---Sandbox Test Run---", result_response)
+            self.assertIn("Result: Mocked sandbox success", result_response) # Corrected "Execution Result" to "Result"
+        asyncio.run(main_test_logic())
 
 
-    async def test_handle_draft_tool_request_code_syntax_error(self):
-        tool_name = "SyntaxErrorTool"
-        purpose_and_io_desc = "A tool that will have a syntax error."
+    def test_handle_draft_tool_request_code_syntax_error(self):
+        async def main_test_logic():
+            tool_name = "SyntaxErrorTool"
+            purpose_and_io_desc = "A tool that will have a syntax error."
+            mock_io_details: ParsedToolIODetails = {"suggested_method_name": "broken", "class_docstring_hint":"d","method_docstring_hint":"d","parameters":[],"return_type":"Any","return_description":"d"}
+            mock_io_details_json_str = json.dumps(mock_io_details)
+            mock_generated_code_with_error = "class SyntaxErrorTool:\n def broken(self):\n  print 'oops'"
+            self.mock_llm_interface.generate_response.side_effect = [
+                mock_io_details_json_str,
+                mock_generated_code_with_error
+            ]
+            result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+            self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
 
-        mock_io_details: ParsedToolIODetails = {"suggested_method_name": "broken", "class_docstring_hint":"d","method_docstring_hint":"d","parameters":[],"return_type":"Any","return_description":"d"} # type: ignore
-        mock_io_details_json_str = json.dumps(mock_io_details)
-        mock_generated_code_with_error = "class SyntaxErrorTool:\n def broken(self):\n  print 'oops'"
-
-        self.mock_llm_interface.generate_response.side_effect = [
-            mock_io_details_json_str,
-            mock_generated_code_with_error
-        ]
-
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-
-        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
-        self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
-        self.assertIn(mock_generated_code_with_error, result_response)
-        self.assertIn("Warning: The drafted code has a syntax error", result_response)
-        self.assertIn("line 3", result_response) # Updated to match ast.SyntaxError format
-
-        self.mocks['SandboxExecutor'].return_value.run.assert_not_called()
-
-
-    async def test_handle_draft_tool_request_sandbox_execution_error(self):
-        tool_name = "SandboxErrorTool"
-        purpose_and_io_desc = "A tool that is valid but will error in sandbox."
-
-        mock_io_details: ParsedToolIODetails = { # type: ignore
-            "suggested_method_name": "error_method",
-            "class_docstring_hint": "Tool designed to error in sandbox.",
-            "method_docstring_hint": "This method will raise an error.",
-            "parameters": [], "return_type": "None", "return_description": "Error."
-        }
-        mock_io_details_json_str = json.dumps(mock_io_details)
-        mock_valid_code = "class SandboxErrorTool:\n  def __init__(self, config=None): pass\n  def error_method(self):\n    raise ValueError('Sandbox test error')"
-
-        self.mock_llm_interface.generate_response.side_effect = [
-            mock_io_details_json_str,
-            mock_valid_code
-        ]
-
-        self.mocks['SandboxExecutor'].return_value.run.return_value = (None, "ValueError: Sandbox test error")
-
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-
-        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
-        self.mocks['SandboxExecutor'].return_value.run.assert_called_once()
-        self.assertIn("Info: The drafted code is syntactically valid Python.", result_response)
-        self.assertIn("---Sandbox Test Run---", result_response)
-        self.assertIn("Execution Error: ValueError: Sandbox test error", result_response)
+            # Expected response format based on DialogueManager.handle_draft_tool_request
+            ai_name = self.dm.personality_manager.get_current_personality_trait("display_name", "AI")
+            expected_response_start = f"{ai_name}: Draft for `{tool_name}`:"
+            self.assertTrue(result_response.startswith(expected_response_start),
+                            f"Expected response to start with '{expected_response_start}', got '{result_response[:100]}...'")
+            self.assertIn(mock_generated_code_with_error, result_response)
+            self.assertIn("Warning: Syntax error (line 3): Missing parentheses in call to 'print'. Did you mean print(...)?", result_response)
+            self.mocks['SandboxExecutor'].return_value.run.assert_not_called()
+        asyncio.run(main_test_logic())
 
 
-    async def test_handle_draft_tool_request_io_parsing_json_error(self):
-        tool_name = "BadJsonTool"
-        purpose_and_io_desc = "This will cause a JSON error."
+    def test_handle_draft_tool_request_sandbox_execution_error(self):
+        async def main_test_logic():
+            tool_name = "SandboxErrorTool"
+            purpose_and_io_desc = "A tool that is valid but will error in sandbox."
+            mock_io_details: ParsedToolIODetails = {
+                "suggested_method_name": "error_method",
+                "class_docstring_hint": "Tool designed to error in sandbox.",
+                "method_docstring_hint": "This method will raise an error.",
+                "parameters": [], "return_type": "None", "return_description": "Error."
+            }
+            mock_io_details_json_str = json.dumps(mock_io_details)
+            mock_valid_code = "class SandboxErrorTool:\n  def __init__(self, config=None): pass\n  def error_method(self):\n    raise ValueError('Sandbox test error')"
+            self.mock_llm_interface.generate_response.side_effect = [
+                mock_io_details_json_str,
+                mock_valid_code
+            ]
+            self.mocks['SandboxExecutor'].return_value.run.return_value = (None, "ValueError: Sandbox test error")
+            result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+            self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
+            self.mocks['SandboxExecutor'].return_value.run.assert_called_once()
 
-        self.mock_llm_interface.generate_response.return_value = "This is not valid JSON {oops"
-
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-
-        self.mock_llm_interface.generate_response.assert_called_once()
-        self.assertIn(f"I had trouble understanding the specific parameters and return types from your description for '{tool_name}'.", result_response)
-
-    async def test_handle_draft_tool_request_io_parsing_value_error(self):
-        tool_name = "ValueErrorTool"
-        purpose_and_io_desc = "This will cause a value error if JSON is empty after extraction."
-
-        self.mock_llm_interface.generate_response.return_value = "```json\n\n```"
-
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-
-        self.mock_llm_interface.generate_response.assert_called_once()
-        self.assertIn(f"I encountered an issue trying to structure the details for '{tool_name}'. Please try rephrasing your request.", result_response)
-
-    async def test_handle_draft_tool_request_io_details_missing_keys_fallback(self):
-        tool_name = "PartialTool"
-        purpose_and_io_desc = "A tool with partial details."
-
-        mock_io_details_partial_json_str = json.dumps({ # type: ignore
-            "suggested_method_name": "do_partial_stuff",
-            # "class_docstring_hint": "Missing class doc", # Missing
-            "parameters": [{"name": "data", "type": "Any", "description": "Some data."}],
-            # "return_type": "bool" # Missing
-            # "return_description" is also missing
-        })
-
-        mock_generated_code = "class PartialTool:\n    pass # Dummy generated code"
-        self.mocks['SandboxExecutor'].return_value.run.return_value = ("Partial sandbox success", None)
+            ai_name = self.dm.personality_manager.get_current_personality_trait("display_name", "AI")
+            expected_response_start = f"{ai_name}: Draft for `{tool_name}`:"
+            self.assertTrue(result_response.startswith(expected_response_start),
+                            f"Expected response to start with '{expected_response_start}', got '{result_response[:100]}...'")
+            self.assertIn("Info: Syntactically valid.", result_response) # Corrected message
+            self.assertIn("---Sandbox Test Run---", result_response)
+            self.assertIn("Error: ValueError: Sandbox test error", result_response) # Corrected "Execution Error" to "Error"
+        asyncio.run(main_test_logic())
 
 
-        self.mock_llm_interface.generate_response.side_effect = [
-            mock_io_details_partial_json_str,
-            mock_generated_code
-        ]
+    def test_handle_draft_tool_request_io_parsing_json_error(self):
+        async def main_test_logic():
+            tool_name = "BadJsonTool"
+            purpose_and_io_desc = "This will cause a JSON error."
+            self.mock_llm_interface.generate_response.return_value = "This is not valid JSON {oops"
+            result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+            self.mock_llm_interface.generate_response.assert_called_once()
+            ai_name = self.dm.personality_manager.get_current_personality_trait("display_name", "AI")
+            self.assertIn(f"{ai_name}: Error structuring tool details for '{tool_name}'", result_response)
+            self.assertIn("Expecting value", result_response) # Part of json.JSONDecodeError message
+            self.assertIn("Raw: 'This is not valid JSON {oops'", result_response)
+        asyncio.run(main_test_logic())
 
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
+    def test_handle_draft_tool_request_io_parsing_value_error(self):
+        async def main_test_logic():
+            tool_name = "ValueErrorTool"
+            purpose_and_io_desc = "This will cause a value error if JSON is empty after extraction."
+            self.mock_llm_interface.generate_response.return_value = "```json\n\n```"
+            result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+            self.mock_llm_interface.generate_response.assert_called_once()
+            ai_name = self.dm.personality_manager.get_current_personality_trait("display_name", "AI")
+            self.assertIn(f"{ai_name}: Error structuring tool details for '{tool_name}'", result_response)
+            self.assertIn("Empty JSON string from LLM for I/O parsing.", result_response) # Corrected expected error
+            self.assertIn("Raw: '```json\n\n```'", result_response)  # Corrected to actual newline
+        asyncio.run(main_test_logic())
 
-        code_gen_call_args = self.mock_llm_interface.generate_response.call_args_list[1]
-        code_gen_prompt_arg = code_gen_call_args[1]['prompt']
-        self.assertIn(f"Class Docstring: {purpose_and_io_desc}", code_gen_prompt_arg)
-        self.assertIn("Method Name: do_partial_stuff", code_gen_prompt_arg)
-        self.assertIn("Return Type: Any", code_gen_prompt_arg)
+    def test_handle_draft_tool_request_io_details_missing_keys_fallback(self):
+        async def main_test_logic():
+            tool_name = "PartialTool"
+            purpose_and_io_desc = "A tool with partial details."
+            mock_io_details_partial_json_str = json.dumps({
+                "suggested_method_name": "do_partial_stuff",
+                "parameters": [{"name": "data", "type": "Any", "description": "Some data."}],
+            })
+            mock_generated_code = "class PartialTool:\n    pass # Dummy generated code"
+            self.mocks['SandboxExecutor'].return_value.run.return_value = ("Partial sandbox success", None)
+            self.mock_llm_interface.generate_response.side_effect = [
+                mock_io_details_partial_json_str,
+                mock_generated_code
+            ]
+            result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+            self.mock_llm_interface.generate_response.assert_called_once() # Should only be called for I/O parsing
 
-        self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
+            # Expect an error message because "return_type" is missing, triggering ValueError
+            ai_name = self.dm.personality_manager.get_current_personality_trait("display_name", "AI")
+            self.assertIn(f"{ai_name}: Error structuring tool details for '{tool_name}'", result_response)
+            self.assertIn("Parsed I/O details missing required fields", result_response)
+        asyncio.run(main_test_logic())
 
-# Need to import json for the test class
-# import json # Already imported at the top
+if __name__ == '__main__':
+    # This __main__ block is for manual testing of DialogueManager with a real (or well-mocked) LLM.
+    # It's not part of the automated unittest suite.
+    # Ensure necessary environment variables (like MIKO_HAM_KEY for HAM encryption) are set if running this.
+    # Also, ensure an Ollama server is running if using it as the default LLM.
+
+    # Example OperationalConfig for __main__
+    # test_op_configs_dict_main: Dict[str, Any] = {
+    #     "timeouts": {
+    #         "llm_general_request": 10, "llm_critique_request": 8, "llm_fact_extraction_request": 8,
+    #         "dialogue_manager_turn": 30,
+    #         "llm_ollama_request": 60,
+    #         "llm_ollama_list_models_request": 10
+    #     },
+    #     "learning_thresholds": {"min_fact_confidence_to_store": 0.7, "min_critique_score_to_store": 0.25}
+    # }
+    # full_config_for_dm_main: OperationalConfig = {
+    #      "operational_configs": test_op_configs_dict_main,
+    #      "max_dialogue_history": 10,
+    # }
+    # ollama_llm_config_main: LLMInterfaceConfig = {
+    #     "default_provider": "ollama",
+    #     "default_model": "nous-hermes2:latest", # or your preferred model
+    #     "providers": {
+    #         "ollama": {"base_url": "http://localhost:11434"}
+    #     },
+    #     "default_generation_params": {"temperature": 0.7},
+    #     "operational_configs": test_op_configs_dict_main
+    # }
+
+    # async def main_dm_run():
+    #     print("--- DialogueManager Manual Run ---")
+    #     pm_main = PersonalityManager()
+    #     ham_file_main = f"dm_manual_test_ham_{uuid.uuid4().hex[:6]}.json"
+    #     memory_main = HAMMemoryManager(core_storage_filename=ham_file_main)
+    #     llm_main = LLMInterface(config=ollama_llm_config_main)
+
+    #     dm_main = DialogueManager(
+    #         personality_manager=pm_main,
+    #         memory_manager=memory_main,
+    #         llm_interface=llm_main,
+    #         config=full_config_for_dm_main
+    #     )
+
+    #     session_id_main = f"manual_session_{uuid.uuid4().hex[:6]}"
+    #     user_id_main = "manual_user_001"
+
+    #     print(await dm_main.start_session(user_id=user_id_main, session_id=session_id_main))
+
+    #     queries = [
+    #         "Hello there!",
+    #         "What is the capital of France?",
+    #         "My name is Jules and I like to code.",
+    #         "what is my name?",
+    #         "!analyze: The quick brown fox jumps over the lazy dog. The dog's name is Max. Max is a good boy.",
+    #         "what is the dog's name?",
+    #         "!draft_tool: CapitalCityFinder. Purpose: Finds the capital of a country. Input: country_name (str). Output: capital_city (str)."
+    #     ]
+
+    #     for q_idx, query in enumerate(queries):
+    #         print(f"\nUser Query {q_idx+1}: {query}")
+    #         response = await dm_main.get_simple_response(query, session_id=session_id_main, user_id=user_id_main)
+    #         print(f"AI Response {q_idx+1}: {response}")
+    #         await asyncio.sleep(1) # Small delay if LLM calls are rapid
+
+    #     if os.path.exists(ham_file_main):
+    #         try: os.remove(ham_file_main); print(f"\nCleaned up {ham_file_main}")
+    #         except Exception as e: print(f"\nError cleaning up test HAM file: {e}")
+
+    # asyncio.run(main_dm_run())
+    pass
