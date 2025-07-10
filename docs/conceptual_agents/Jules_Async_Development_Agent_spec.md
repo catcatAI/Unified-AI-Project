@@ -44,7 +44,8 @@ Angela, when employing her Jules development capabilities, will require access t
     *   `{"type": "avis_read_file", "path": "path/to/file.py", "output_key": "file_content_variable"}`: Instructs AVIS to read the content of a virtual file and store it in the task's accumulated outputs under `file_content_variable`.
     *   `{"type": "llm_analyze_code", "inputs": {"code_var": "file_content_variable"}, "instruction": "Identify function 'foo'", "output_key": "analysis_result"}`
     *   `{"type": "llm_generate_code_modification", "inputs": {"code_var": "file_content_variable", "analysis_var": "analysis_result"}, "instruction": "Add a parameter 'new_param' to function 'foo'", "output_key": "modified_code"}`
-    *   `{"type": "avis_write_file", "path": "path/to/file.py", "content_var": "modified_code"}` (or a more granular `avis_apply_modification` step)
+    *   `{"type": "avis_write_file", "path": "path/to/file.py", "content_var": "modified_code_variable", "output_key": "write_status_variable"}`: Instructs AVIS to write the content (referenced by `content_var` from accumulated outputs) to the specified virtual file path. The success/failure is stored under `write_status_variable`.
+    *   `{"type": "avis_apply_modification", "path": "path/to/file.py", "modification_var": "modified_code"}`: (Alternative to `avis_write_file`) This is a more abstract step that might involve more complex logic within AVIS or Jules to apply changes (e.g., a diff or specific line changes) rather than overwriting the whole file. Implementation TBD.
     *   `{"type": "sandbox_run_test", "script_path": "tests/test_file.py"}`
     *   `{"type": "generate_commit_message", "inputs": {"task_description_var": "original_description", "changes_summary_var": "llm_generated_summary"}}`
     *   `{"type": "generate_git_commands", "inputs": {"commit_message_var": "generated_commit_message", "branch_name": "feat/task-123"}}`
