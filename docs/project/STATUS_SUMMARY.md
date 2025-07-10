@@ -473,7 +473,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   `TEMPORALMODULATIONLAYER-Unified-AI-Project.md`
     *   `UPWARDMATCHINGLAYER-Unified-AI-Project.md`
     *   `SEMANTICACTIVATIONMAP-Unified-AI-Project.md`
-    *   (update) `RESOURCEOPTIMIZATIONLOG-Unified-AI-Project.md`
+    *   `RESOURCEOPTIMIZATIONLOG-Unified-AI-Project.md` (*If this refers to a general concept, a new doc might be needed. If it's an update to an existing one, specify.*)
     *   `SEMANTICLAYERJUMPING_NOTE-Unified-AI-Project.md`
     *   `TOKENOPTIMIZATIONNOTE-Unified-AI-Project.md`
     *   `TOKENFUSIONARCHITECTURE-Unified-AI-Project.md`
@@ -483,7 +483,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   `FRAGMENTABENCHMARKCOMPARE-Unified-AI-Project.md`
     *   `SEMANTICCOMPARISONLIMITS-Unified-AI-Project.md`
     *   `CODERELIABILITYLAYER-Unified-AI-Project.md`
-    *   `ACTUARION_MODULE-Unified-AI-Project.md`
+    *   `ACTUARION_MODULE-Unified-AI-Project.md` (*Consider `../architecture/blueprints/Actuarion_Module_concept.md` if created as proposed.*)
     *   `ACTUARIONOPERATORNOTE-Unified-AI-Project.md`
     *   `ACTUARIONFUSIONLOG-Unified-AI-Project.md`
     *   `NEURALARCHITECTUREMAP-Fragmenta.md`
