@@ -330,12 +330,17 @@ class DialogueManager:
             kg_query_parts = self._is_kg_query(user_input)
             if kg_query_parts:
                 entity_label, rel_query_keyword = kg_query_parts
+                # Retrieve the source node data to get its original label for a more natural response
+                source_node_id = self._find_entity_node_id_in_kg(self.session_knowledge_graphs[session_id], entity_label)
+                source_node_data = self.session_knowledge_graphs[session_id].nodes.get(source_node_id, {}) if source_node_id else {}
+                display_entity_label = source_node_data.get('label', entity_label.capitalize())
+
                 answer_from_kg = self._query_session_kg(session_id, entity_label, rel_query_keyword)
                 if answer_from_kg:
-                    if rel_query_keyword.startswith("has_"): response_text = f"{ai_name}: From context, the {rel_query_keyword.split('has_')[1].replace('_', ' ')} of {entity_label.capitalize()} is {answer_from_kg}."
-                    elif rel_query_keyword == "located_in": response_text = f"{ai_name}: From context, {entity_label.capitalize()} is located in {answer_from_kg}."
-                    elif rel_query_keyword == "acquire": response_text = f"{ai_name}: From context, {entity_label.capitalize()} acquired {answer_from_kg}."
-                    else: response_text = f"{ai_name}: From context regarding {entity_label.capitalize()}: {answer_from_kg}."
+                    if rel_query_keyword.startswith("has_"): response_text = f"{ai_name}: From context, the {rel_query_keyword.split('has_')[1].replace('_', ' ')} of {display_entity_label} is {answer_from_kg}."
+                    elif rel_query_keyword == "located_in": response_text = f"{ai_name}: From context, {display_entity_label} is located in {answer_from_kg}."
+                    elif rel_query_keyword == "acquire": response_text = f"{ai_name}: From context, {display_entity_label} acquired {answer_from_kg}."
+                    else: response_text = f"{ai_name}: From context regarding {display_entity_label}: {answer_from_kg}."
                     print(f"DialogueManager: Answered from KG: '{response_text}'")
 
         # --- HSP Task Dispatch Trigger (if no response yet) ---
@@ -465,7 +470,13 @@ class DialogueManager:
         parsed_io_details: Optional[ParsedToolIODetails] = None
         try:
             json_match = re.search(r"```json\s*([\s\S]*?)\s*```|([\s\S]*)", raw_io_details_str, re.DOTALL)
-            json_str_candidate = (json_match.group(1) or json_match.group(2) if json_match else "").strip()
+            # Guard against json_match being None before calling .group or .strip
+            json_str_candidate = ""
+            if json_match:
+                group1 = json_match.group(1)
+                group2 = json_match.group(2)
+                json_str_candidate = (group1 if group1 is not None else group2 if group2 is not None else "").strip()
+
             if not json_str_candidate: raise ValueError("Empty JSON string from LLM for I/O parsing.")
             parsed_io_details = json.loads(json_str_candidate)
             # Basic validation of ParsedToolIODetails structure
@@ -475,7 +486,10 @@ class DialogueManager:
         except (json.JSONDecodeError, ValueError) as e:
             return f"{ai_name}: Error structuring tool details for '{tool_name}': {e}. Raw: '{raw_io_details_str}'"
 
-        if not parsed_io_details: return f"{ai_name}: Couldn't structure I/O for '{tool_name}'." # Should be caught
+        if not parsed_io_details:
+            # This case should ideally be caught by the exception block if json_str_candidate is empty.
+            # However, as a safeguard or if validation above fails in a way that doesn't raise ValueError but leaves parsed_io_details as None.
+            return f"{ai_name}: Couldn't structure I/O for '{tool_name}' (details remained None after parsing attempt)."
 
         code_gen_prompt = self._construct_code_generation_prompt(
             tool_name, parsed_io_details.get("class_docstring_hint", purpose_and_io_desc), # type: ignore
