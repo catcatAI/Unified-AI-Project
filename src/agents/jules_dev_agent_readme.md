@@ -1,9 +1,11 @@
-# Jules Development Agent (`jules_dev_agent.py`)
+# Jules Development Capability (`jules_dev_agent.py`)
 
 ## 1. Overview
 
-The `JulesDevAgent` is a conceptual AI agent designed to operate within the Unified-AI-Project framework. Its primary role is to autonomously handle software development tasks, such as:
-*   Understanding bug reports or feature requests.
+The `JulesDevelopmentCapability` module (`jules_dev_agent.py`) provides a set of functionalities enabling the core AI persona of the Unified-AI-Project (e.g., "Angela") to perform software development tasks. It is not a standalone agent but rather a specialized capability set that Angela orchestrates.
+
+These tasks include:
+*   Processing development task descriptions (e.g., bug reports, feature requests).
 *   Analyzing relevant parts of a (simulated) codebase.
 *   Formulating a plan to address the task.
 *   Simulating the execution of this plan, which may involve:
@@ -11,64 +13,59 @@ The `JulesDevAgent` is a conceptual AI agent designed to operate within the Unif
     *   Executing code or tests (via `SandboxExecutor`).
     *   Generating code changes, commit messages, and simulated version control commands.
 
-Jules is envisioned as an "asynchronous development agent," capable of managing tasks that may require multiple steps and potentially take time to complete.
+The "Jules" capabilities are designed for asynchronous operation, allowing Angela to manage development tasks that may require multiple steps and time to complete.
 
 ## 2. Purpose and Goals
 
-*   **Automate Development Tasks:** To assist human developers by tackling well-defined, small to medium-sized coding tasks in a simulated environment.
-*   **Research Platform:** To serve as a platform for researching AI-driven software development, planning, and simulated environment interaction.
-*   **Demonstrate Integration:** To showcase how various Unified-AI-Project services (`AIVirtualInputService`, `SandboxExecutor`, `LightweightCodeModel`, `LLMInterface`, `HAMMemoryManager`) can be orchestrated to achieve complex agent behavior.
+*   **Empower Core AI:** To provide Angela with the tools and processes to assist human developers by tackling well-defined, small to medium-sized coding tasks in a simulated environment.
+*   **Research Platform:** To serve as a platform for researching AI-driven software development, where planning, execution, and simulated environment interaction are managed by a central AI persona.
+*   **Demonstrate Orchestrated Integration:** To showcase how various Unified-AI-Project services (`AIVirtualInputService`, `SandboxExecutor`, `LightweightCodeModel`, `LLMInterface`, `HAMMemoryManager`) can be coordinated by a central AI (Angela) to achieve complex development-related behaviors.
 
-**Note:** This is a conceptual agent. The current `jules_dev_agent.py` provides a placeholder structure with mocked interactions. Full implementation of its capabilities would require significant development.
+**Note:** The current `jules_dev_agent.py` (housing `JulesDevelopmentCapability`) provides a foundational structure. Full implementation of its sophisticated capabilities is an ongoing development effort.
 
-## 3. Core Components & Functionality (Conceptual)
+## 3. Core Components & Functionality (Conceptual, Orchestrated by Angela)
 
-The `JulesDevAgent` class in `jules_dev_agent.py` outlines the following conceptual workflow:
+The `JulesDevelopmentCapability` class in `jules_dev_agent.py` outlines the following conceptual workflow, which would be invoked and managed by Angela:
 
 1.  **Initialization (`__init__`):**
-    *   Takes instances of various Unified-AI-Project services as dependencies.
-    *   Initializes its internal state.
+    *   Takes instances of various Unified-AI-Project services as dependencies. These services are the tools Angela will use through this capability.
+    *   Initializes its internal state for managing a task.
 
-2.  **Task Intake (`intake_task`):**
-    *   Receives a natural language description of a development task.
-    *   Conceptually uses an LLM to parse this into a structured task representation.
-    *   Stores the task and potentially logs it to memory (HAM).
+2.  **Task Description Processing (`process_development_task_description`):**
+    *   Angela provides a natural language description of a development task.
+    *   This capability uses an LLM to parse this into a structured `current_task_context` (e.g., type of task, relevant files, goals).
 
-3.  **Codebase Context Analysis (`analyze_codebase_context`):**
-    *   Given relevant file paths for the task, it would use `LightweightCodeModel` (or AVIS for virtual file reading) to understand the structure and content of the code.
-    *   This context is crucial for planning.
+3.  **Codebase Context Analysis (`analyze_code_context_for_task`):**
+    *   Given relevant file paths (either from the processed task description or specified by Angela), this capability uses `LightweightCodeModel` (or AVIS for virtual file reading) to understand the structure and content of the code.
+    *   The analysis is stored in the `current_task_context`.
 
-4.  **Plan Development (`develop_plan`):**
-    *   Based on the structured task and code context, Jules uses an LLM to generate a multi-step plan.
-    *   Plan steps might include actions like:
-        *   Reading a virtual file.
-        *   Modifying code (e.g., instructing an LLM to make specific changes).
-        *   Writing to a virtual file.
-        *   Running a test script in the sandbox.
-        *   Generating a commit message.
+4.  **Solution Plan Development (`develop_solution_plan`):**
+    *   Based on the `current_task_context` (including the processed task and code analysis), this capability uses an LLM to generate a multi-step plan.
+    *   Plan steps might include actions like reading/writing virtual files, modifying code, running tests, or generating commit messages.
+    *   The plan is stored in the `current_task_context`.
 
-5.  **Plan Execution (`execute_plan_step`, `run_full_plan`):**
-    *   Iterates through the plan, executing each step.
-    *   This involves interacting with services like AVIS (for simulated file/UI operations), `SandboxExecutor` (for code execution), and `LLMInterface` (for code generation/modification tasks).
-    *   These methods are `async` to accommodate potentially long-running operations.
+5.  **Plan Execution (`execute_step_in_plan`, `execute_full_solution_plan`):**
+    *   Angela directs the execution of the plan.
+    *   The capability iterates through the plan, executing each step. This involves interactions with AVIS, `SandboxExecutor`, and `LLMInterface`.
+    *   These methods are `async` to accommodate potentially long-running operations. Output from one step can be used as input for subsequent steps.
 
-6.  **Output Generation (`generate_output`):**
-    *   After plan execution, Jules compiles the results.
-    *   This could include:
-        *   A textual diff of the changes made.
-        *   A generated commit message.
-        *   A list of simulated `git` commands.
+6.  **Output Generation (`generate_development_output`):**
+    *   After plan execution, Angela can instruct this capability to compile the results.
+    *   This could include a textual diff of changes, a generated commit message, and a list of simulated `git` commands.
 
-7.  **Status Reporting (`report_status`):**
-    *   Provides information about its current state (idle, busy) and the status of the active task.
+7.  **Status Reporting (`get_current_task_status_and_context`):**
+    *   Provides Angela with information about the current state of the task being handled by this capability.
 
-## 4. Dependencies
+8.  **Context Clearing (`clear_current_task_context`):**
+    *   Resets the capability's internal context, making it ready for a new task from Angela.
 
-Jules relies on several other components of the Unified-AI-Project:
 
-*   `DialogueManager`: For task assignment and communication.
+## 4. Dependencies (Services Utilized by this Capability)
+
+The `JulesDevelopmentCapability` relies on several other components of the Unified-AI-Project, which are provided to it during initialization:
+
 *   `AIVirtualInputService` (AVIS): For all interactions with the simulated development environment (virtual files, virtual UI for code editing).
-*   `AISimulationControlService` (ASCS): To manage permissions for actions orchestrated by Jules via AVIS.
+*   `AISimulationControlService` (ASCS): (Implicitly via AVIS) To manage permissions for actions performed via AVIS.
 *   `SandboxExecutor`: For safely executing code snippets or test scripts.
 *   `LightweightCodeModel`: For understanding the structure of existing code.
 *   `HAMMemoryManager`: For persisting task states, plans, learnings, and potentially code snippets.

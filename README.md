@@ -56,9 +56,9 @@ This project integrates and is developing several core AI components:
     *   **Purpose:** Designed to manage complex tasks, coordinate data flow between modules, and apply sophisticated processing strategies.
     *   **Status:** A basic class structure and a rudimentary `process_complex_task` method (with simple chunking and LLM/tool dispatch) are implemented. However, most advanced features outlined in its design specification (e.g., sophisticated task analysis, advanced pre/post-processing, parallelism, self-evaluation) are currently conceptual and pending full implementation. See `docs/architecture/Fragmenta_design_spec.md` and `docs/PROJECT_STATUS_SUMMARY.md`.
 
-*   **Jules - Asynchronous Development Agent (`src/agents/jules_dev_agent.py`):**
-    *   **Purpose:** A conceptual AI agent designed to autonomously handle software development tasks like fixing bugs and implementing small features. It aims to interact with a simulated development environment.
-    *   **Status:** Conceptual design phase. A placeholder agent structure and design specification (`docs/conceptual_agents/Jules_Async_Development_Agent_spec.md`) have been created. Core functionalities like task understanding, code comprehension, planning, and simulated environment interaction are envisioned.
+*   **Jules - Asynchronous Development Capability (`src/agents/jules_dev_agent.py` module):**
+    *   **Purpose:** A specialized capability set, orchestrated by the core AI persona (Angela), to handle software development tasks like fixing bugs and implementing small features. This involves interacting with a simulated development environment.
+    *   **Status:** Conceptual design phase. The `JulesDevelopmentCapability` class structure and an updated design specification (`docs/conceptual_agents/Jules_Async_Development_Agent_spec.md`) frame Jules as a set of functions Angela can utilize. Core functionalities like task understanding, code comprehension, planning, and simulated environment interaction are envisioned to be managed by Angela through this capability.
 
 ## Getting Started
 
