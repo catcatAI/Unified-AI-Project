@@ -40,14 +40,24 @@ Angela, when employing her Jules development capabilities, will require access t
     *   Generating commit messages.
     *   Generating git commands.
 *   **Output:** A sequence of actions to be performed, managed and overseen by Angela.
+*   **Example Plan Step Types (Conceptual):**
+    *   `{"type": "avis_read_file", "path": "path/to/file.py", "output_key": "file_content_variable"}`: Instructs AVIS to read the content of a virtual file and store it in the task's accumulated outputs under `file_content_variable`.
+    *   `{"type": "llm_analyze_code", "inputs": {"code_var": "file_content_variable"}, "instruction": "Identify function 'foo'", "output_key": "analysis_result"}`
+    *   `{"type": "llm_generate_code_modification", "inputs": {"code_var": "file_content_variable", "analysis_var": "analysis_result"}, "instruction": "Add a parameter 'new_param' to function 'foo'", "output_key": "modified_code"}`
+    *   `{"type": "avis_write_file", "path": "path/to/file.py", "content_var": "modified_code"}` (or a more granular `avis_apply_modification` step)
+    *   `{"type": "sandbox_run_test", "script_path": "tests/test_file.py"}`
+    *   `{"type": "generate_commit_message", "inputs": {"task_description_var": "original_description", "changes_summary_var": "llm_generated_summary"}}`
+    *   `{"type": "generate_git_commands", "inputs": {"commit_message_var": "generated_commit_message", "branch_name": "feat/task-123"}}`
+
 
 ### 3.4. Simulated Environment Interaction
 Angela, through the Jules capability set, interacts with a simulated environment provided by Unified-AI-Project services:
 *   **File System Operations (Simulated):**
-    *   Angela uses the `AIVirtualInputService` (AVIS) to simulate reading, writing, and modifying files within a virtual project structure.
-    *   Commands like `read_file(path)`, `write_file(path, content)`, `insert_into_file(path, after_line, content)` would be actions Angela directs AVIS to simulate.
+    *   Angela uses the `AIVirtualInputService` (AVIS) to simulate reading, writing, and modifying files within a virtual project structure. This is done via `AVISFileOperationCommand` requests.
+    *   For reading, AVIS is expected to return the file content (e.g., via `AVISFileOperationResponse.content`).
+    *   For writing, AVIS would update its internal virtual file system.
 *   **Code Editing (Simulated):**
-    *   Specific AVIS commands for targeted code changes, potentially building on AVIS's `text_area` interaction but with more structure (e.g., `replace_code_block(element_id, start_line, end_line, new_code)`), executed under Angela's instruction.
+    *   This could involve AVIS reading a file, an LLM proposing changes, and then AVIS writing the modified content back. More advanced AVIS commands might support targeted modifications if the virtual environment is rich enough (e.g., element-based editing in a virtual IDE view).
 *   **Code Execution & Testing:**
     *   Angela uses the `SandboxExecutor` (via AVIS or `AISimulationControlService`) to run modified code or tests and observe the output (`stdout`, `stderr`, exit codes).
     *   This is crucial for Angela to verify changes and guide iterative development.

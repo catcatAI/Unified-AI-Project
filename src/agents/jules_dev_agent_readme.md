@@ -41,12 +41,12 @@ The `JulesDevelopmentCapability` class in `jules_dev_agent.py` outlines the foll
 
 4.  **Solution Plan Development (`develop_solution_plan`):**
     *   Based on the `current_task_context` (including the processed task and code analysis), this capability uses an LLM to generate a multi-step plan.
-    *   Plan steps might include actions like reading/writing virtual files, modifying code, running tests, or generating commit messages.
+    *   Plan steps might include actions like reading/writing virtual files (e.g., using an `avis_read_file` step type that calls `AIVirtualInputService.process_file_operation_command`), modifying code, running tests, or generating commit messages.
     *   The plan is stored in the `current_task_context`.
 
 5.  **Plan Execution (`execute_step_in_plan`, `execute_full_solution_plan`):**
     *   Angela directs the execution of the plan.
-    *   The capability iterates through the plan, executing each step. This involves interactions with AVIS, `SandboxExecutor`, and `LLMInterface`.
+    *   The capability iterates through the plan, executing each step. This involves interactions with `AIVirtualInputService` (for file operations like reading via `process_file_operation_command` or simulated UI actions), `SandboxExecutor` (for code execution), and `LLMInterface` (for code generation/analysis).
     *   These methods are `async` to accommodate potentially long-running operations. Output from one step can be used as input for subsequent steps.
 
 6.  **Output Generation (`generate_development_output`):**

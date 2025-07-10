@@ -90,7 +90,7 @@ The AVIS will support a range of mouse and keyboard actions, and as of v0.4, AI 
 
 ### 5.3. AI Code Execution Actions (v0.4)
 
-AVIS enables AI-driven code execution through specific UI interactions and internal service calls.
+AVIS enables AI-driven code execution through specific UI interactions and internal service calls. This is primarily designed for scenarios where an AI (like Angela using Jules capabilities) needs to test code snippets.
 
 *   **UI Elements for Code Execution:**
     *   `code_editor` (e.g., `element_id="code_editor"`): A virtual `text_area` where the AI can input or modify code (typically Python).
@@ -166,6 +166,51 @@ This section also includes types related to code execution as of v0.4.
     *   `stderr: str`
     *   `status_message: str`
 
+### 5.4. Virtual File System Operations (Conceptual for v0.5+, supporting Jules Capability)
+
+To support capabilities like Jules that need to interact with a file system (even a virtual one), AVIS will need to handle file operations.
+
+*   **Conceptual UI for File Interaction:** While Jules might interact programmatically, a conceptual UI could involve:
+    *   A `file_explorer_tree` element displaying a virtual directory structure.
+    *   A `file_content_viewer` (perhaps a `text_area`) to display content of a selected file.
+    *   Buttons for "Open File", "Save File", "Create File/Folder", "Delete".
+*   **Programmatic Interaction (Primary for Jules):**
+    *   Jules will use specific `AVISFileOperationCommand`s sent to a dedicated AVIS method (e.g., `process_file_operation_command`).
+*   **AVIS Internal Process for File Operations:**
+    1.  AVIS receives an `AVISFileOperationCommand` (e.g., `{"action_type": "file_operation", "operation": "read_file", "path": "src/test.py"}`).
+    2.  It interacts with its internal `virtual_file_system` (a dictionary mapping paths to content).
+    3.  For `read_file`: It retrieves content from `virtual_file_system`.
+    4.  For `write_file`: It updates or adds content in `virtual_file_system`.
+    5.  For `list_directory`: It generates a listing based on keys in `virtual_file_system`.
+    6.  AVIS returns an `AVISFileOperationResponse` with status, and content/listing if applicable.
+    7.  The action is logged.
+
+## 6. API and Data Structures (TypedDicts)
+
+The interaction with AVIS will be through commands defined by TypedDicts. These types are defined in `src/shared/types/common_types.py`.
+This section also includes types related to code execution as of v0.4 and file operations for v0.5+.
+
+*   **`VirtualMouseEventType = Literal[...]`** (as before)
+*   **`VirtualKeyboardActionType = Literal[...]`** (as before)
+*   **`AVISFileOperationType = Literal["read_file", "write_file", "list_directory"]` (New for v0.5+)**
+*   **`VirtualInputPermissionLevel = Literal[...]`** (as before)
+*   **`VirtualInputElementDescription(TypedDict)`**: (as before)
+*   **`VirtualMouseCommand(TypedDict)`**: (as before)
+*   **`VirtualKeyboardCommand(TypedDict)`**: (as before)
+*   **`AVISFileOperationCommand(TypedDict)` (New for v0.5+):**
+    *   `action_type: Required[Literal["file_operation"]]`
+    *   `operation: Required[AVISFileOperationType]`
+    *   `path: Required[str]`
+    *   `content: Optional[str]` (for "write_file")
+*   **`AVISFileOperationResponse(TypedDict)` (New for v0.5+):**
+    *   `status: Required[Literal["success", "error_file_not_found", ...]]`
+    *   `message: Optional[str]`
+    *   `content: Optional[str]` (for "read_file")
+    *   `directory_listing: Optional[List[str]]` (for "list_directory")
+*   **`AIPermissionSet(TypedDict)` (v0.4)**: (as before)
+*   **`ExecutionRequest(TypedDict)` (v0.4)**: (as before)
+*   **`ExecutionResult(TypedDict)` (v0.4)**: (as before)
+
 ## 7. Permissions Model (v0.4 Update)
 
 The permissions model is evolving with the introduction of code execution. It's managed by `AISimulationControlService` and visible to the AI via AVIS.
@@ -197,9 +242,10 @@ The permissions model is evolving with the introduction of code execution. It's 
 
 ## 8. Simulation Environment & Feedback Loop (v0.4 Update)
 
-*   **Virtual Environment State:**
+*   **Virtual Environment State (v0.5+ includes Virtual File System):**
     *   AVIS maintains `self.virtual_ui_elements` (the virtual UI).
-    *   AVIS also now maintains `self.current_ai_permissions` and `self.current_sim_hardware_status`, populated from `AISimulationControlService`.
+    *   AVIS maintains `self.virtual_file_system: Dict[str, str]` for mock file content. This can be populated via `load_virtual_files()`.
+    *   AVIS also maintains `self.current_ai_permissions` and `self.current_sim_hardware_status`, populated from `AISimulationControlService`.
     *   The AI can query the full UI via `avis.get_current_virtual_ui()`.
     *   Dedicated UI elements (`ai_permissions_display`, `sim_hw_status_display`) are updated by AVIS to show current permissions and hardware status. AVIS provides `refresh_simulation_status()` to update these and the internal state.
 *   **AI Interaction Loop (Simulated - General):**
@@ -215,6 +261,13 @@ The permissions model is evolving with the introduction of code execution. It's 
     3.  AVIS (via `AISimulationControlService`) executes the code (checking permissions).
     4.  AVIS updates the `code_output_display` element with results (`stdout`, `stderr`, status).
     5.  AI reads the `code_output_display` element's value to get feedback.
+*   **AI Interaction Loop (File Operation - v0.5+):**
+    1.  Angela (using Jules capability) determines a need to read a virtual file (e.g., `src/code.py`).
+    2.  Jules capability module constructs an `AVISFileOperationCommand` like `{"action_type": "file_operation", "operation": "read_file", "path": "src/code.py"}`.
+    3.  This command is sent to `avis.process_file_operation_command()`.
+    4.  AVIS looks up "src/code.py" in its `self.virtual_file_system`.
+    5.  AVIS returns an `AVISFileOperationResponse` containing the file's content or an error.
+    6.  Jules capability receives the content and proceeds with its plan (e.g., passing it to an LLM for analysis).
 
 ## 9. Open Questions and Future Considerations
 
@@ -225,11 +278,11 @@ The permissions model is evolving with the introduction of code execution. It's 
 *   **Focus Management:** Detailed logic for how virtual focus is managed, especially with 'Tab' or programmatic focus changes.
 *   **Window Management:** Virtual actions related to windows themselves (focus window, close window, resize - likely out of scope for initial simulation focus).
 *   **Security and Safety for Actual Control:** Defining robust mechanisms to prevent misuse or unintended actions if/when actual control is implemented. This includes rate limiting, interrupt mechanisms, and context validation.
-*   **Integration with AI's Planning/Task Execution:** How will an AI agent use AVIS as part of a larger plan to achieve a goal?
+*   **Integration with AI's Planning/Task Execution:** How will an AI agent or capability module (like Jules) use AVIS as part of a larger plan to achieve a goal? (Partially addressed by showing Jules interaction for file ops).
 *   **Advanced Feedback Mechanisms (Deep Mapping & Adaptive Capture):**
     *   **Dynamic Screen Analysis:** Future versions should explore dynamic screen capture and analysis (e.g., using computer vision, OCR, or accessibility APIs) to transform real-time screen output into a structured understanding of UI elements, their properties, and their relationships ("Guanxi," e.g., for folder structures or UI layouts). This "deep mapping" would provide a much richer and more accurate environmental model for the AI.
     *   **Performance-Adaptive Capture:** The screen analysis process can be resource-intensive. The system should ideally adjust the frequency, detail, or scope of screen capture and processing based on available computer performance (CPU, GPU, memory). This requires hardware identification and load monitoring capabilities, which may be a prerequisite foundational service (potentially related to `Fragmenta_design_spec.md`'s hardware awareness concepts).
+*   **Virtual File System Richness:** The current `virtual_file_system` is a simple path-to-content dict. Future enhancements could include actual directory structures, file metadata (timestamps, permissions), etc.
 
-This v0.3 specification provides a foundational design for the AI Virtual Input System, prioritizing element-based interaction and a simulation-first approach with stateful virtual UI, while acknowledging pathways for more advanced perceptual capabilities and actual control.
-
-**v0.4 Update Scope:** This version (v0.4) introduces capabilities for AI-driven code execution within the AVIS environment, mediated by a new `AISimulationControlService`. This includes UI elements for code input/output, and displays for AI permissions and simulated hardware status.
+This v0.4 specification provides a foundational design for AVIS.
+**v0.5+ Conceptual Additions:** This document now also outlines conceptual additions for virtual file system operations (read, write, list) to support capabilities like Jules, along with the necessary API extensions (`AVISFileOperationCommand`, `AVISFileOperationResponse`).

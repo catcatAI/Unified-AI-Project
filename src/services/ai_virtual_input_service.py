@@ -18,10 +18,14 @@ from src.shared.types.common_types import (
     VirtualKeyboardCommand,
     VirtualMouseEventType,
     VirtualKeyboardActionType,
-    VirtualInputElementDescription, # Added this import
-    AIPermissionSet, # New type for AI permissions
-    ExecutionResult # For process_code_execution_command
+    VirtualInputElementDescription,
+    AIPermissionSet,
+    ExecutionResult,
+    AVISFileOperationCommand, # New
+    AVISFileOperationResponse, # New
+    AVISFileOperationType # New
 )
+from typing import Literal # To use Literal for outcome_status type hint
 
 # Import ResourceAwarenessService for type hinting, will be optional
 from src.services.resource_awareness_service import ResourceAwarenessService
@@ -79,6 +83,7 @@ class AIVirtualInputService:
         self.virtual_focused_element_id: Optional[str] = None
         self.action_log: List[Dict[str, Any]] = []
         self.virtual_ui_elements: List[VirtualInputElementDescription] = []
+        self.virtual_file_system: Dict[str, str] = {} # New: Virtual file system
 
         # Populate AVIS state from AISimulationControlService
         self.current_ai_permissions: AIPermissionSet = self.ai_simulation_control_service.get_current_ai_permissions()
@@ -466,5 +471,127 @@ class AIVirtualInputService:
         # Potentially refresh hardware status if code execution might affect it
         # For now, this is manual or tied to a general refresh.
         # self.refresh_simulation_status() # Consider if this should be automatic.
+
+    # --- Virtual File System Methods ---
+    def load_virtual_files(self, files_content: Dict[str, str]) -> None:
+        """
+        Loads or replaces the content of the virtual file system.
+        Args:
+            files_content: A dictionary where keys are file paths and values are their string content.
+        """
+        self.virtual_file_system = copy.deepcopy(files_content)
+        print(f"AVIS: Virtual file system loaded with {len(self.virtual_file_system)} files.")
+
+    def clear_virtual_files(self) -> None:
+        """Clears all files from the virtual file system."""
+        self.virtual_file_system = {}
+        print("AVIS: Virtual file system cleared.")
+
+    def process_file_operation_command(self, command: AVISFileOperationCommand) -> AVISFileOperationResponse:
+        """Processes a virtual file operation command."""
+        loggable_command_details = dict(command)
+        operation: Optional[AVISFileOperationType] = command.get("operation")
+        path: Optional[str] = command.get("path")
+
+        outcome_status: Literal["success", "error_file_not_found", "error_permission_denied", "error_other"] = "error_other"
+        response_content: Optional[str] = None
+        response_message: str = f"File operation '{operation}' on path '{str(path)}' failed or not implemented."
+        directory_listing: Optional[List[str]] = None
+
+        if not operation or not path:
+            response_message = "Missing 'operation' or 'path' in file operation command."
+            self._log_action(command_type="file_operation", command_details=loggable_command_details, outcome={"status": "error_other", "message": response_message})
+            return {"status": "error_other", "message": response_message}
+
+        # Currently, all file operations are simulation_only. Add permission checks here if modes evolve.
+        if self.mode != "simulation_only":
+            # This is a simulation-only feature for now.
+            # If actual file system access were ever implemented, it would need strict permission checks here.
+            outcome_status = "error_permission_denied"
+            response_message = f"Mode '{self.mode}' does not support direct file operations. Action denied."
+            self._log_action(command_type="file_operation", command_details=loggable_command_details, outcome={"status": outcome_status, "message": response_message})
+            return {"status": outcome_status, "message": response_message}
+
+        print(f"AVIS: Processing file operation: {operation} on path '{path}'")
+
+        if operation == "read_file":
+            if path in self.virtual_file_system:
+                response_content = self.virtual_file_system[path]
+                outcome_status = "success"
+                response_message = f"Successfully read virtual file: {path}"
+                print(f"  AVIS Sim: Read content from virtual file '{path}'. Length: {len(response_content or '')}")
+            else:
+                outcome_status = "error_file_not_found"
+                response_message = f"Virtual file not found: {path}"
+                print(f"  AVIS Sim: Virtual file not found: {path}")
+
+        elif operation == "write_file":
+            # Conceptual: Check permissions if/when actual file writing is implemented
+            content_to_write = command.get("content", "") # Default to empty string if no content provided
+            self.virtual_file_system[path] = content_to_write
+            outcome_status = "success"
+            response_message = f"Successfully wrote to virtual file: {path} (Length: {len(content_to_write)})"
+            print(f"  AVIS Sim: Wrote content to virtual file '{path}'. Length: {len(content_to_write)}")
+
+        elif operation == "list_directory":
+            # Basic simulation: list keys that start with the given path (if it's a directory)
+            # For simplicity, assumes path ends with '/' for directories to list.
+            # A more robust implementation would handle directory structures properly.
+            if not path.endswith('/'):
+                path_prefix = path + '/'
+            else:
+                path_prefix = path
+
+            listing = [p for p in self.virtual_file_system.keys() if p.startswith(path_prefix)]
+            # This is a flat listing. True directory structure would require more complex logic.
+            # For now, just return paths that seem to be "under" the requested path.
+            # To make it more like a directory listing, we might want to strip the prefix and show only the next level.
+            # This is a simplified version for now.
+
+            # More realistic listing (still simplified):
+            directory_listing = []
+            for p_key in self.virtual_file_system.keys():
+                if p_key.startswith(path_prefix):
+                    # Get the part of the path after the prefix
+                    relative_path = p_key[len(path_prefix):]
+                    # If it contains another '/', it's deeper, so take only the first part
+                    if '/' in relative_path:
+                        first_part = relative_path.split('/')[0] + '/' # Indicate it's a dir
+                        if first_part not in directory_listing:
+                            directory_listing.append(first_part)
+                    else: # It's a file or empty dir name (if key itself was path_prefix)
+                         if relative_path and relative_path not in directory_listing: # Avoid empty strings if key was path_prefix
+                            directory_listing.append(relative_path)
+
+            if not directory_listing and path_prefix[:-1] not in self.virtual_file_system and path_prefix not in self.virtual_file_system:
+                # If the path itself isn't a file and doesn't lead to any files/dirs
+                # Check if the path is a known file, in which case list_directory is an error for a file
+                if path in self.virtual_file_system:
+                    outcome_status = "error_other"
+                    response_message = f"Path '{path}' is a file, not a directory. Cannot list."
+                else: # Path doesn't exist as a file or a prefix to other files/dirs
+                    outcome_status = "error_file_not_found" # Or error_path_not_found
+                    response_message = f"Virtual directory or path prefix not found: {path}"
+            else:
+                outcome_status = "success"
+                response_message = f"Successfully listed virtual directory: {path}"
+
+            print(f"  AVIS Sim: Listed directory '{path}'. Found: {directory_listing}")
+        else:
+            # outcome_status remains "error_other"
+            response_message = f"Unsupported file operation: {operation}"
+            print(f"  AVIS Sim: Unsupported file operation: {operation}")
+
+        final_response: AVISFileOperationResponse = {
+            "status": outcome_status,
+            "message": response_message,
+        }
+        if response_content is not None:
+            final_response["content"] = response_content
+        if directory_listing is not None:
+            final_response["directory_listing"] = directory_listing
+
+        self._log_action(command_type="file_operation", command_details=loggable_command_details, outcome=final_response)
+        return final_response
 
 print("AIVirtualInputService module loaded.")

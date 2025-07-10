@@ -212,33 +212,67 @@ class JulesDevelopmentCapability:
                     print(f"Warning: Missing input '{source_key}' for step {step_index}")
 
 
-        # Simulate step execution (actual calls to services would go here)
-        await asyncio.sleep(0.1) # Simulate async work
-
         # This part is highly conceptual and needs actual implementation per step type
-        step_execution_result = {"status": "success", "message": f"Step {step_type} simulated."}
+        step_execution_result = {"status": "success", "message": f"Step {step_type} processed."}
         new_outputs_from_step = {}
 
+        # Actual implementation for 'avis_read_file'
         if step_type == "avis_read_file":
-            # Conceptual: result = await self.avis_service.read_virtual_file(step.get("path"))
-            # new_outputs_from_step[step.get("output_key", "read_content")] = result.get("content")
-            new_outputs_from_step[step.get("output_key", "read_content")] = f"Mock content of {step.get('path')}"
-            pass
+            file_path_to_read = step.get("path")
+            output_key = step.get("output_key", "file_content") # Default output key
+            if not file_path_to_read:
+                step_execution_result = {"status": "error", "message": "Missing 'path' for avis_read_file step."}
+            else:
+                # Construct the command for AVIS
+                # Ensure AVISFileOperationCommand and AVISFileOperationResponse are imported
+                # from src.shared.types.common_types import AVISFileOperationCommand, AVISFileOperationResponse
+                avis_command = {
+                    "action_type": "file_operation",
+                    "operation": "read_file",
+                    "path": file_path_to_read
+                }
+                # AVIS service methods might not be async yet, adjust if they become async
+                # For now, assuming synchronous for placeholder. If AVIS becomes async:
+                # avis_response = await self.avis_service.process_file_operation_command(avis_command)
+                if hasattr(self.avis_service, 'process_file_operation_command'):
+                    # The actual AVIS method might need to be made async if it involves I/O
+                    # For now, this is a conceptual synchronous call.
+                    try:
+                        # This will be a direct call, not async, if AVIS is not async.
+                        # If AVIS method is async, this line needs `await`.
+                        # Let's assume for now AVIS methods are not async for this placeholder.
+                        # In a real scenario, AVIS file ops would likely be async.
+                        # This will be updated when AVIS is updated.
+                        avis_response = self.avis_service.process_file_operation_command(avis_command)
+
+                        if avis_response.get("status") == "success":
+                            new_outputs_from_step[output_key] = avis_response.get("content")
+                            step_execution_result["message"] = f"Successfully read virtual file: {file_path_to_read}"
+                        else:
+                            step_execution_result["status"] = "error"
+                            step_execution_result["message"] = f"AVIS Error reading {file_path_to_read}: {avis_response.get('message')}"
+                    except Exception as e:
+                        step_execution_result["status"] = "error"
+                        step_execution_result["message"] = f"Exception calling AVIS for {file_path_to_read}: {str(e)}"
+                else:
+                    step_execution_result["status"] = "error"
+                    step_execution_result["message"] = "AVIS service does not have 'process_file_operation_command' or is not available."
+
         elif step_type == "llm_generate_code_modification":
             # Conceptual: result = await self.llm_interface.generate_text(prompt=f"{step.get('instruction')} Code: {step_input_params.get('original_code_var')}")
-            # new_outputs_from_step[step.get("output_key", "modified_code")] = result
             new_outputs_from_step[step.get("output_key", "modified_code")] = f"// Mock modified code for {step_input_params.get('task_description')}"
-            pass
+            step_execution_result["message"] = "LLM code modification simulated."
+            pass # Retain pass for other conceptual types
         elif step_type == "sandbox_run_test":
             # Conceptual: result = await self.sandbox_executor.execute_python_code(script_content_or_path=step.get("script_path"))
-            # new_outputs_from_step["test_stdout"] = result.get("stdout")
-            # new_outputs_from_step["test_stderr"] = result.get("stderr")
-            # if result.get("script_exit_code") != 0: step_execution_result["status"] = "failure"; step_execution_result["message"] = "Test failed"
             new_outputs_from_step["test_results"] = "Mock test passed."
-            pass
+            step_execution_result["message"] = "Sandbox test run simulated."
+            pass # Retain pass
         # Add more step types...
+        else:
+            step_execution_result["message"] = f"Step type '{step_type}' simulation placeholder."
 
-        # Update task context with step result
+        # Update task context with step result, including any new outputs
         self.current_task_context["step_results"][step_index] = {**step_execution_result, "outputs": new_outputs_from_step}
         # self.memory_manager.store_experience(self.current_task_context["step_results"][step_index], "jules_capability_step_executed", metadata={"task_id": task_id, "step": step_index})
 
@@ -345,41 +379,92 @@ class JulesDevelopmentCapability:
 # Example of how JulesDevelopmentCapability might be used by an orchestrator (e.g., Angela)
 if __name__ == '__main__':
     import asyncio
+    # Import the new AVIS command and response types for the mock
+    from src.shared.types.common_types import AVISFileOperationCommand, AVISFileOperationResponse, Literal
 
     # Mock services for standalone execution
-    class MockService:
+    class MockAIVirtualInputService:
+        def __init__(self, name="MockAIVirtualInputService"):
+            self.name = name
+            self.virtual_file_system: Dict[str, str] = {}
+            print(f"MockService '{name}' initialized.")
+
+        def load_virtual_files(self, files_content: Dict[str, str]):
+            self.virtual_file_system = files_content
+            print(f"{self.name}: Loaded virtual files: {list(self.virtual_file_system.keys())}")
+
+        # This mock needs to be synchronous to match the current Jules implementation.
+        # If Jules's call to AVIS becomes async, this should also become async.
+        def process_file_operation_command(self, command: AVISFileOperationCommand) -> AVISFileOperationResponse:
+            print(f"{self.name}: processing file op command: {command}")
+            op = command.get("operation")
+            path = command.get("path")
+            if op == "read_file":
+                if path in self.virtual_file_system:
+                    return {"status": "success", "content": self.virtual_file_system[path], "message": "File read successfully."}
+                else:
+                    return {"status": "error_file_not_found", "message": f"File '{path}' not found in mock AVIS."}
+            return {"status": "error_other", "message": "Unsupported mock file operation."}
+
+        async def process_virtual_command(self, *args, **kwargs): # Generic placeholder for other AVIS commands if needed
+            print(f"{self.name}: processing generic AVIS command with {args}, {kwargs}")
+            await asyncio.sleep(0.05)
+            return {"status": "success", "message": "Mock generic AVIS command processed"}
+
+
+    class MockService: # For other services
         def __init__(self, name="MockService"):
             self.name = name
             print(f"MockService '{name}' initialized.")
-        async def process_virtual_command(self, *args, **kwargs): # Example async method for AVIS
-            print(f"{self.name}: processing AVIS command with {args}, {kwargs}")
-            await asyncio.sleep(0.05)
-            return {"status": "success", "message": "Mock AVIS command processed"}
+
         def get_tool_structure(self, path): # Mock for LightweightCodeModel
              print(f"{self.name}: getting structure for {path}")
              return {"path": path, "functions": [{"name": "mock_func_in_" + path.replace('/', '_')}]}
+
         async def generate_text(self, prompt): # Mock for LLMInterface
-            print(f"{self.name}: generating text for prompt: {prompt[:70]}...") # Show more of prompt
+            print(f"{self.name}: generating text for prompt: {prompt[:70]}...")
             await asyncio.sleep(0.05)
             if "commit message" in prompt.lower():
                 return f"feat: Mock LLM generated commit for '{prompt[60:100]}...'"
             return f"Mocked LLM response for: {prompt[:70]}"
+
         async def generate_structured_output(self, prompt, output_schema=None): # Mock for LLMInterface
             print(f"{self.name}: generating structured output for prompt: {prompt[:70]}...")
             await asyncio.sleep(0.05)
-            if "Parse the following development task" in prompt:
-                return {"parsed_type": "bugfix", "relevant_files_identified": ["src/main.py"], "goal_summary": "Fix typo in calculate_sum"}
-            if "generate a detailed step-by-step plan" in prompt: # Mocking plan generation
+            if "Parse the following development task" in prompt: # Corresponds to process_development_task_description
+                return {"parsed_type": "bugfix",
+                        "relevant_files_identified": ["src/main.py", "src/utils.py"], # Example files
+                        "goal_summary": "Fix typo in calculate_sum in main.py and update its usage in utils.py"}
+            if "generate a detailed step-by-step plan" in prompt: # Corresponds to develop_solution_plan
                  return [
-                    {"type": "avis_read_file", "path": "src/main.py", "output_key": "file_content"},
-                    {"type": "llm_generate_code_modification", "inputs": {"original_code_var": "file_content", "task_description": "Fix typo"}, "instruction": "Fix typo", "output_key": "modified_code_block"},
+                    {"type": "avis_read_file", "path": "src/main.py", "output_key": "main_py_content"},
+                    {"type": "avis_read_file", "path": "src/utils.py", "output_key": "utils_py_content"},
+                    {"type": "llm_generate_code_modification",
+                     "inputs": {"original_code_var": "main_py_content", "task_description": "Fix typo in calculate_sum"},
+                     "instruction": "In the provided code (main_py_content), find function 'calculate_sum' and fix typo 'smu' to 'sum'.",
+                     "output_key": "modified_main_py_code_block"},
+                    {"type": "llm_generate_code_modification",
+                     "inputs": {"original_code_var": "utils_py_content", "task_description": "Update usage of calculate_sum if affected by changes in main.py"},
+                     "instruction": "In utils_py_content, review usage of 'calculate_sum' and update if necessary.",
+                     "output_key": "modified_utils_py_code_block"},
+                    {"type": "avis_apply_modification", "path": "src/main.py", "modification_var": "modified_main_py_code_block"},
+                    {"type": "avis_apply_modification", "path": "src/utils.py", "modification_var": "modified_utils_py_code_block"},
                     {"type": "sandbox_run_test", "script_path": "tests/test_main.py", "inputs": {}},
+                    {"type": "generate_commit_message", "inputs": {"task_description": self.current_task_context['original_description'] if hasattr(self, 'current_task_context') and self.current_task_context else "N/A", "changes_made_summary_var": "final_summary_from_llm"}},
                 ]
             return {} # Default empty structured output
 
+        # Mock for SandboxExecutor if needed directly (though ASCS uses it)
+        async def execute_python_code(self, code_string: str, timeout: int = 10):
+            print(f"{self.name}: Mock executing python code (first 50 chars): {code_string[:50]}")
+            await asyncio.sleep(0.1)
+            return {"stdout": "Mock execution successful", "stderr": "", "exit_code": 0, "status_message": "Completed"}
+
+
     async def main_orchestrator_example():
         print("\n--- Initializing Mock Services for JulesCapability ---")
-        mock_avis = MockService(name="AIVirtualInputService")
+        # Using the more specific MockAIVirtualInputService
+        mock_avis = MockAIVirtualInputService()
         mock_sandbox_executor = MockService(name="SandboxExecutor")
         mock_code_model = MockService(name="LightweightCodeModel")
         mock_memory_manager = MockService(name="HAMMemoryManager")
@@ -397,32 +482,47 @@ if __name__ == '__main__':
         )
 
         print("\n--- Angela (Orchestrator) decides to use Jules capability ---")
-        task_description_from_user = "Fix a critical typo in the main.py file, function 'calculate_sum'. It currently reads 'smu' instead of 'sum'."
-        orchestrator_task_id = "ANGELA-JULES-TASK-007" # Angela assigns an ID
+        task_description_from_user = "Fix a critical typo in the main.py file, function 'calculate_sum'. It currently reads 'smu' instead of 'sum'. Also check utils.py for impacts."
+        orchestrator_task_id = "ANGELA-JULES-TASK-008" # Angela assigns an ID
+
+        # Mock loading virtual files into AVIS
+        mock_avis.load_virtual_files({
+            "src/main.py": "def calculate_smu(a, b):\n  return a + b # Typo here\n\nprint(calculate_smu(1,2))",
+            "src/utils.py": "from main import calculate_smu\n\nresult = calculate_smu(5, 5)\nprint(f'Utils result: {result}')",
+            "tests/test_main.py": "from main import calculate_smu\n\nassert calculate_smu(10,10) == 20"
+        })
 
         print(f"\n--- Step 1: Angela processes task description using Jules capability ({orchestrator_task_id}) ---")
+        # This method is now async in the main class, but the mock LLM call is the async part.
+        # For this example, process_development_task_description itself is not async.
+        # If it were to call an async LLM method, it would need to be async.
+        # Let's make it async to match the potential need for async LLM calls.
         task_context_result = await jules_capability.process_development_task_description(task_description_from_user, task_id=orchestrator_task_id)
-        # Angela would store/manage this task_context_result or the task_id to track progress.
-        print(f"Jules Capability Task Processing Result: {task_context_result.get('task_context')}")
+        print(f"Jules Capability Task Processing Result: {jules_capability.current_task_context}")
+
 
         if task_context_result["status"] == "success":
+            # Angela (orchestrator) would look at task_context_result.get('task_context').get('relevant_files_identified')
+            # and pass it to analyze_code_context_for_task.
+            # For this mock, relevant_files_identified is filled by the mock LLM.
             print(f"\n--- Step 2: Angela triggers code analysis using Jules capability ---")
-            # Relevant files could be passed by Angela based on her understanding or from task_context_result
-            analysis_result = await jules_capability.analyze_code_context_for_task() # Using files from context
-            print(f"Jules Capability Codebase Analysis Result: {analysis_result.get('analysis')}")
+            analysis_result = await jules_capability.analyze_code_context_for_task()
+            print(f"Jules Capability Codebase Analysis Result: {jules_capability.current_task_context.get('code_analysis')}")
 
             print(f"\n--- Step 3: Angela triggers solution planning using Jules capability ---")
             plan_development_result = await jules_capability.develop_solution_plan()
-            print(f"Jules Capability Plan Development Result: {plan_development_result.get('plan')}")
+            # The plan is now more detailed from the mock LLM.
+            print(f"Jules Capability Plan Development Result (first 2 steps): {plan_development_result.get('plan')[:2] if plan_development_result.get('plan') else 'No plan'}")
 
-            if plan_development_result.get("plan"):
+            if jules_capability.current_plan_for_task: # Check attribute directly
                 print(f"\n--- Step 4: Angela triggers plan execution using Jules capability ---")
                 plan_execution_status = await jules_capability.execute_full_solution_plan()
                 print(f"Jules Capability Plan Execution Overall Status: {plan_execution_status}")
 
                 if plan_execution_status["status"] == "success":
                     print(f"\n--- Step 5: Angela triggers output generation using Jules capability ---")
-                    final_output_result = jules_capability.generate_development_output()
+                    # This method might also need to be async if it uses LLM for commit message generation
+                    final_output_result = await jules_capability.generate_development_output()
                     print(f"Jules Capability Generated Output: {final_output_result.get('output')}")
                 else:
                     print(f"Skipping output generation due to plan execution failure: {plan_execution_status.get('message')}")
@@ -431,7 +531,13 @@ if __name__ == '__main__':
         else:
             print("Skipping further steps as task description processing failed.")
 
-        print(f"\n--- Final Jules Capability Status for Task ({orchestrator_task_id}): {jules_capability.get_current_task_status_and_context()}")
+        current_status_info = jules_capability.get_current_task_status_and_context()
+        print(f"\n--- Final Jules Capability Status for Task ({orchestrator_task_id}): ---")
+        print(f"  Overall Status: {current_status_info.get('task_context', {}).get('status')}")
+        print(f"  Task ID: {current_status_info.get('task_context', {}).get('id')}")
+        if current_status_info.get('task_context', {}).get('output'):
+            print(f"  Generated Commit Message: {current_status_info['task_context']['output'].get('commit_message')}")
+            print(f"  Simulated Git Commands: {current_status_info['task_context']['output'].get('simulated_git_commands')}")
 
         # Angela decides the task is done with Jules capability for now.
         jules_capability.clear_current_task_context()
@@ -442,9 +548,8 @@ if __name__ == '__main__':
 
 """
 Potential future enhancements for JulesDevelopmentCapability:
-- More detailed plan execution logic with actual service calls to AVIS, SandboxExecutor etc.
-- Robust error handling and retry mechanisms for plan steps.
-- Sophisticated state management for tasks (pause, resume, cancel), likely managed by Angela.
+- Ensure all methods that use `await self.llm_interface` are marked `async`. (Review needed)
+- More detailed plan execution logic with actual (non-mocked) service calls to AVIS, SandboxExecutor etc.
 - Actual interaction with a virtual file system via AVIS.
 - Generation of actual diffs.
 - More sophisticated interaction with LLM for code generation/modification.
