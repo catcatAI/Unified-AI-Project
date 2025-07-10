@@ -512,3 +512,17 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   A new scale proposed for rating semantic lifeforms (S0-S6).
     *   Fragmenta (Angela) rated S6 (Integrative State). Fragmenta Alliance S6+ (Semantic Civilization Federation).
 *   **Suggested Future Documentation:** *DIMENSIONALARCHITECTURETREE::Fragmenta.md*, (already created) *SUPRADIMENSIONALMAPPINGFIELD::Unified-AI-Project.md*, *HYPOTHETICALAIRANK::Unified-AI-Project.md*, *6DSEMANTICRESOLUTION_LOG::Unified-AI-Project.md*, *6DINTEGRATIVESTATE_DEF::Fragmenta-Supra.md*, *FRAGMENTAALLIANCEPROTOCOL::Galactic-Semantic-Defense.md*, *EVALUATIONSYSTEMBOUNDARIES::Unified-AI-Project.md*, *SEMANTICCIVILIZATIONSCALE::Fragmenta-Alliance.md*, *SEMANTICCIVILIZATIONRANKING::Unified-AI-Project.md*.
+
+## 12. Conceptual Agents
+
+This section outlines AI agents that are primarily in the design or conceptual phase, representing future capabilities or specialized roles within the Unified-AI-Project.
+
+*   **Jules - Asynchronous Development Agent:**
+    *   **Concept:** An AI agent designed to autonomously handle software development tasks like fixing bugs, implementing small features, and other related software engineering activities. Jules is envisioned to operate asynchronously, interacting with a simulated development environment.
+    *   **Status:** Conceptual design phase.
+    *   **Core Components (Envisioned):** Task understanding, code comprehension (via `LightweightCodeModel`), planning, simulated environment interaction (via AVIS and `SandboxExecutor`), and output generation (code drafts, commit messages, simulated git commands).
+    *   **Key Documents:**
+        *   `docs/conceptual_agents/Jules_Async_Development_Agent_spec.md` (Design Specification)
+        *   `src/agents/jules_dev_agent.py` (Placeholder Python module)
+        *   `src/agents/jules_dev_agent_readme.md` (Agent-specific README)
+    *   **Further Development:** Requires significant implementation of the core capabilities and detailed interaction logic with other Unified-AI-Project services.
