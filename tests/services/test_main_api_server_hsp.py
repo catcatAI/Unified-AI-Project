@@ -1,6 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
 import uuid
+from ..conftest import is_mqtt_broker_available # Import the utility
+
+# Skip all tests in this module if MQTT broker is not available
+pytestmark = pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available for API HSP tests")
 import time
 from unittest.mock import MagicMock, ANY
 

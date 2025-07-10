@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HSPNegativeAcknowledgementPayload_v0.1",
+  "description": "Schema for HSP Negative Acknowledgement Payload version 0.1. Used to signal an error or rejection in processing a message.",
+  "type": "object",
+  "properties": {
+    "status": {"type": "string", "enum": ["error", "rejected", "validation_failed"], "description": "Status indicating the nature of the NACK."},
+    "nack_timestamp": {"type": "string", "format": "date-time", "description": "ISO 8601 UTC timestamp of when the NACK was generated."},
+    "target_message_id": {"type": "string", "format": "uuid", "description": "The message_id of the HSP message being NACKed."},
+    "error_details": {
+      "type": "object",
+      "description": "Details of the error.",
+      "properties": {
+        "error_code": {"type": "string"},
+        "error_message": {"type": "string"},
+        "error_context": {"type": "object"}
+      },
+      "required": ["error_code", "error_message"]
+    }
+  },
+  "required": ["status", "nack_timestamp", "target_message_id", "error_details"]
+}
