@@ -241,6 +241,26 @@ class VirtualInputElementDescription(TypedDict, total=False):
     bounding_box_ratios: Optional[Tuple[float, float, float, float]]
     properties: Optional[Dict[str, Any]] # Other type-specific properties
 
+# --- AVIS File Operation Types (New) ---
+AVISFileOperationType = Literal[
+    "read_file",
+    "write_file",
+    "list_directory"
+]
+
+class AVISFileOperationCommand(TypedDict, total=False):
+    action_type: Required[Literal["file_operation"]] # Main discriminator
+    operation: Required[AVISFileOperationType]      # "read_file", "write_file", etc.
+    path: Required[str]                             # Path to the virtual file or directory
+    content: Optional[str]                          # For "write_file"
+    # Other future params: encoding, etc.
+
+class AVISFileOperationResponse(TypedDict, total=False):
+    status: Required[Literal["success", "error_file_not_found", "error_permission_denied", "error_other"]]
+    message: Optional[str]
+    content: Optional[str]                          # For "read_file"
+    directory_listing: Optional[List[str]]          # For "list_directory"
+
 
 # --- Types for AI Code Execution in AVIS ---
 class AIPermissionSet(TypedDict, total=False):

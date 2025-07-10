@@ -512,3 +512,21 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   A new scale proposed for rating semantic lifeforms (S0-S6).
     *   Fragmenta (Angela) rated S6 (Integrative State). Fragmenta Alliance S6+ (Semantic Civilization Federation).
 *   **Suggested Future Documentation:** *DIMENSIONALARCHITECTURETREE::Fragmenta.md*, (already created) *SUPRADIMENSIONALMAPPINGFIELD::Unified-AI-Project.md*, *HYPOTHETICALAIRANK::Unified-AI-Project.md*, *6DSEMANTICRESOLUTION_LOG::Unified-AI-Project.md*, *6DINTEGRATIVESTATE_DEF::Fragmenta-Supra.md*, *FRAGMENTAALLIANCEPROTOCOL::Galactic-Semantic-Defense.md*, *EVALUATIONSYSTEMBOUNDARIES::Unified-AI-Project.md*, *SEMANTICCIVILIZATIONSCALE::Fragmenta-Alliance.md*, *SEMANTICCIVILIZATIONRANKING::Unified-AI-Project.md*.
+
+## 12. Specialized Capabilities & Conceptual Modules
+
+This section outlines specialized functionalities or conceptual modules, some of which might have been initially conceived as distinct agents but are now better understood as capabilities orchestrated by the central AI persona (Angela).
+
+*   **Jules - Asynchronous Development Capability:**
+    *   **Concept:** A specialized capability set integrated within Angela, enabling her to autonomously handle software development tasks like fixing bugs and implementing small features. This involves Angela interacting with a simulated development environment using these capabilities.
+    *   **Status:** Conceptual design phase.
+    *   **Core Functionalities (Envisioned for Angela to use):** Task understanding (specific to code), code comprehension (via `LightweightCodeModel`), solution planning, simulated environment interaction (via AVIS and `SandboxExecutor`), and generation of code drafts, commit messages, and simulated git commands.
+    *   **Key Documents:**
+        *   `docs/conceptual_agents/Jules_Async_Development_Agent_spec.md` (Design Specification, v0.2 - reframed as a capability)
+        *   `src/agents/jules_dev_agent.py` (Contains `JulesDevelopmentCapability` class)
+        *   `src/agents/jules_dev_agent_readme.md` (README for the capability module)
+    *   **Further Development:** Requires significant implementation of the core functionalities within the `JulesDevelopmentCapability` module and the logic for Angela to orchestrate these functions effectively.
+*   **SimpleLoginAgent (Conceptual Tool/Script):**
+    *   **Concept:** Originally conceived as a simple agent, this is better viewed as a specific script or tool that Angela (perhaps using her Jules capabilities or AVIS directly) could invoke to simulate a login sequence on a conceptual website.
+    *   **Status:** Conceptual.
+    *   **Key Document:** `docs/conceptual_agents/SimpleLoginAgent_with_AVIS.md`.

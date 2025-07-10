@@ -21,7 +21,13 @@ Contains the core Python source code for the AI and its services.
 
 *   `core_services.py`: Provides central initialization (dependency injection) and access to core AI service instances. Responsible for instantiating and wiring together major components like DialogueManager, Memory, LLMInterface, etc.
 
-### 2.1. Core AI Logic (`src/core_ai/`)
+### 2.1. Agent-related Modules & Specialized Capabilities (`src/agents/`)
+
+Hosts implementations or placeholders for modules that provide specialized, agent-like capabilities or serve as test harnesses. These are typically orchestrated by the core AI persona (Angela).
+*   `simple_coding_agent.py`: A basic scripted agent primarily for testing AVIS code execution functionalities. Can be seen as a utility script rather than a full agent.
+*   `jules_dev_agent.py`: Contains the `JulesDevelopmentCapability` class, providing a set of software development functions for Angela to use.
+
+### 2.1.1. Core AI Logic and Modules (`src/core_ai/`)
 
 Houses the central intelligence and decision-making components of the AI.
 
@@ -118,6 +124,9 @@ Contains project documentation, design specifications, and architectural notes.
     *   `HAM_design_spec.md`: Design specification for the Hierarchical Associative Memory.
     *   `Heterogeneous_Protocol_spec.md`: Conceptual design for the "AI Heterogeneous Architecture Protocol (AHAP)" (v0.1), distinct from HSP, aimed at transferring AI characteristics (personality, roles) between MikoAI and external AI systems. Its implementation status is conceptual.
     *   `MEMORY_SYSTEM.md`: Brief overview of the HAM memory system, pointing to the detailed `HAM_design_spec.md`.
+*   **`conceptual_agents/`**: Subdirectory for design specifications of conceptual AI agents.
+    *   `Jules_Async_Development_Agent_spec.md`: Design specification for the Jules agent.
+    *   `SimpleLoginAgent_with_AVIS.md`: Design for a simple agent using AVIS for login simulation.
 *   `1.0.txt`, `1.0en.txt`: Stylized, narrative/philosophical texts discussing AI evolution concepts, internal project metaphors (e.g., "Angela", "Fragmenta" as entities), and potential future ideas. Their content is more conceptual and brainstorming-oriented than formal technical specification.
 
 ## 4. Configuration Files (`configs/`)
