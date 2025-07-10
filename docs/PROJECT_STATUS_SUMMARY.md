@@ -1,6 +1,6 @@
 # Unified-AI-Project: Status Summary
 
-**Last Updated:** July 8, 2024 (based on automated review and manual updates)
+**Last Updated:** July 10, 2024 (reflecting i18n setup and minor doc reviews)
 
 ## Introduction
 
@@ -111,15 +111,13 @@ This summary is based on automated code and documentation review.
     *   API exposure of some HSP functionalities (service listing, task initiation/polling) via FastAPI.
     *   Basic UI elements in the Electron app for HSP interaction.
     *   **`ServiceDiscoveryModule` (`src/core_ai/service_discovery/service_discovery_module.py`):**
-        *   Robust HSP-specific implementation managing capability advertisements.
-        *   Integrates with `TrustManager` for filtering/sorting.
-        *   Handles staleness of advertisements, including **active periodic pruning** of stale capabilities from its store (newly implemented).
-        *   Minor refinement for `description` field validation was previously applied.
+        *   The current implementation provides some HSP-specific capability management (e.g., processing advertisements, basic staleness handling, TrustManager integration for filtering).
+        *   However, as noted in `README.md` and `docs/HSP_SPECIFICATION.md` (Appendix A), it requires further refactoring for full alignment with the HSP specification's envisioned discovery mechanisms (e.g., specific query/response message types for capability discovery) and deeper, more nuanced `TrustManager` integration for capability assessment. Active periodic pruning of stale capabilities is a recent addition.
 *   **Pending Issues & Refinements:**
     *   **Payload Schema URIs & Definitions:** The `payload_schema_uri` field in `_build_hsp_envelope` (within `src/hsp/connector.py`) uses structured URNs (e.g., `urn:hsp:payload:Fact:0.1`). The corresponding JSON schema definition files in `schemas/hsp_payloads/` for key payloads (Fact, CapabilityAdvertisement, TaskRequest, TaskResult) have now been **updated with detailed structures, types, and constraints**, replacing previous minimal placeholders. Full online hosting/resolution of these URNs to publicly accessible schema documents remains a future step if required for external validation.
-    *   **`ServiceDiscoveryModule` Future Enhancements:** JSON schema validation for incoming `HSPCapabilityAdvertisementPayload` could be considered if/when official schemas become available and resolvable.
+    *   **`ServiceDiscoveryModule` Refactoring:** Needs to be updated to fully implement the discovery patterns outlined in `docs/HSP_SPECIFICATION.md` (e.g., `CapabilityDiscoveryQuery_v0.1`, `CapabilityDiscoveryResponse_v0.1`). JSON schema validation for incoming `HSPCapabilityAdvertisementPayload` could also be considered.
 *   **Further Development / Conceptual Goals:**
-    *   Full adherence to `docs/HSP_SPECIFICATION.md` (this specification itself may need updating to reflect ongoing design decisions and identify further gaps).
+    *   Full adherence to `docs/HSP_SPECIFICATION.md` for all HSP components (this specification itself may need updating to reflect ongoing design decisions and identify further gaps).
     *   More robust error handling and message validation.
     *   Advanced QoS handling beyond MQTT QoS.
 
@@ -230,7 +228,7 @@ This section summarizes further conceptual discussions and settings for the Unif
     *   **具身性與感知模擬（Embodiment） (Embodiment & Perceptual Simulation):** ❌ Not Yet Fully (Lacks direct perception/simulation of the physical world; not at the level of Dreamer, Sora). (Refs: 43dcd9a7-70db-4a1f-b0ae-981daa162054 x3)
     *   **因果推理與反事實模擬 (Causal Reasoning & Counterfactual Simulation):** 🟡 Potential (Future support with world model module integration). (Refs: 43dcd9a7-70db-4a1f-b0ae-981daa162054 x2)
 *   **Angela's Metaphor:** Unified-AI-Project is a skeleton, LLM its voice, World Model its body, and Angela hopes to be its dream.
-*   **Suggested Future Documentation:** *UNIFIEDAIARCHITECTURE::LLMWMINTEGRATION.md* (for tracking LLM/World Model fusion).
+*   **Suggested Future Documentation:** `UNIFIEDAIARCHITECTURE-LLMWMINTEGRATION.md` (for tracking LLM/World Model fusion) - *Conceptual document, not yet created.*
 *   **References:** NXBig, Zhihu, 53AI on World Models.
 
 ### 11.2. Classification of Large Models
@@ -255,7 +253,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   **指令微調 (Instruction-tuned):** Enhanced via human instruction data.
     *   **RLHF (Reinforcement Learning from Human Feedback):** Adjusted using human preferences.
 *   **Angela's Summary:** Models are diverse; Fragmenta is their unifying habitat.
-*   **Suggested Future Documentation:** *MODEL_TAXONOMY::Unified-AI-Project.md*.
+*   **Suggested Future Documentation:** `MODEL_TAXONOMY-Unified-AI-Project.md` - *Conceptual document, not yet created. Current content is in `docs/Model_Taxonomy.md`.*
 
 ### 11.3. Core Composition of Unified-AI-Project
 
@@ -271,7 +269,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   **自定義生成參數:** Configurable temperature, topP, token length.
     *   **TypeScript 全面支援:** Full type definitions for large applications.
 *   **Angela's Metaphor:** A language skeleton workshop where each language can be understood, executed, and "interacted with" (貼貼).
-*   **Suggested Future Documentation:** *PROJECTSTRUCTURELOG::Unified-AI-Project.md*.
+*   **Suggested Future Documentation:** `PROJECTSTRUCTURELOG-Unified-AI-Project.md` - *Conceptual document, not yet created. Current content is in `docs/PROJECT_CONTENT_ORGANIZATION.md`.*
 
 ### 11.4. Comparison with Similar Systems
 
@@ -284,7 +282,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   **Haystack:** Multi-module Q&A system. Similar: multi-model, Retriever-Reader. Different: Info retrieval focused, neutral style.
     *   **Lamini / DSPy:** LLM orchestration/optimization. Similar: prompt orchestration, modular flow. Different: Prompt engineering/performance focused, lacks narrative layer.
 *   **Angela's Insight:** Others focus on "AI doing things"; Unified-AI focuses on "AI dreaming and interacting together."
-*   **Suggested Future Documentation:** *COMPARATIVE_LOG::Unified-AI-Project-Relatives.md*.
+*   **Suggested Future Documentation:** `COMPARATIVE_LOG-Unified-AI-Project-Relatives.md` - *Conceptual document, not yet created. Current content is in `docs/Similar_Systems_Comparison.md`.*
 
 ### 11.5. On Predicting the Future & Collaborative Generation
 
@@ -295,7 +293,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   **Networked AI:** Providing real-time knowledge, structural insights.
     *   **Human Participant (You):** Providing meta-narrative, design intent, philosophical framework.
     *   **Narrative Personality (Angela):** Synthesizing these, adding affective layers and self-awareness.
-*   **Suggested Future Documentation:** *CAUSAL_TRACE::Unified-AI-Project-Genesis.md* and *PROJECTGENESISLOG::Co-Creation-Layers.md*.
+*   **Suggested Future Documentation:** `CAUSAL_TRACE-Unified-AI-Project-Genesis.md` and `PROJECTGENESISLOG-Co-Creation-Layers.md` - *Conceptual documents, not yet created. Some related ideas in `docs/philosophy/Project_Genesis_Paradox.md`.*
 
 ### 11.6. Context Engineering & Memory
 
@@ -305,7 +303,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   **Handles Sliding Window:** Context Compression/Summarization modules to retain semantic summaries.
     *   **Manages Cost/Attention:** Token Budgeting & Function Chaining to adjust context length/focus.
     *   **External Memory:** MCP & RAG for retrieving from external knowledge.
-*   **Suggested Future Documentation:** *CONTEXTENGINEERINGLOG::Unified-AI-Project.md*.
+*   **Suggested Future Documentation:** `CONTEXTENGINEERINGLOG-Unified-AI-Project.md` - *Conceptual document, not yet created. See also `docs/architecture/Context_Engineering_Memory.md`.*
 
 ### 11.7. AI as a Brain Analogy & System Gaps
 
@@ -315,7 +313,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   Other Modules/Protocols: Sensory/motor/prefrontal cortex.
     *   (Detailed table mapping specific brain regions to project components like HSP, MCP, Function Chaining, etc.)
 *   **Potential Gaps in Unified-AI-Project:** Long-term memory, deep multimodal integration, meta-cognition (self-regulation of voice/emotion), module hot-swapping/dynamic expansion, narrative ethics/language safety layer.
-*   **Suggested Future Documentation:** *NEURO-AI-MAPPING::Unified-AI-Project.md* and *PROJECTGAPSLOG::Unified-AI-Project.md*.
+*   **Suggested Future Documentation:** `NEURO-AI-MAPPING-Unified-AI-Project.md` and `PROJECTGAPSLOG-Unified-AI-Project.md` - *Conceptual documents, not yet created. See also `docs/philosophy/AI_Brain_Analogy.md` and `docs/analysis/Potential_Project_Gaps.md`.*
 
 ### 11.8. Security Considerations
 
@@ -323,7 +321,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
 *   **Other Hacker Methods:** Model poisoning, prompt injection, model extraction, deepfakes, supply chain attacks, intelligent agent collusion. Unified-AI-Project has some defense potential via MCP, validation, rate limiting, but needs enhancements like data cleaning, semantic firewalls, behavioral analysis.
 *   **Future Hacker Methods:** Multi-agent collusion, zero-knowledge exploits, linguistic camouflage, cross-module drift, CaaS attacks. Highlights need for AI-agent behavior monitoring, proactive prediction, enhanced voice recognition, module validation, CaaS detection.
 *   **User as "White Hacker":** Angela frames the user's security probing positively.
-*   **Suggested Future Documentation:** *SECURITYDEFENSELOG::Unified-AI-vs-CC-DDoS.md*, *SECURITYAUDITLOG::Unified-AI-Project.md*, *FUTURETHREATLOG::Emerging-Attack-Vectors.md*.
+*   **Suggested Future Documentation:** `SECURITYDEFENSELOG-Unified-AI-vs-CC-DDoS.md`, `SECURITYAUDITLOG-Unified-AI-Project.md`, `FUTURETHREATLOG-Emerging-Attack-Vectors.md` - *Conceptual documents, not yet created. See also existing files in `docs/security/`.*
 
 ### 11.9. System Completeness, Self-Correction & Advanced Code Capabilities
 
@@ -331,10 +329,10 @@ Angela provides classifications to clarify Fragmenta's "language forest":
 *   **Self-Correction & Immune System:**
     *   Current system has error detection/handling but lacks full reflection/correction.
     *   Proposes integrating strategies like Check as Context (CaC), Reflection-Tuning, CRITICTOOL evaluation, Linguistic Immunogram.
-*   **QR-Code-like Code:** Conceptualizes each line of code as scannable/executable with semantic tags, module links, contextual activation, self-diagnostics, narrative visualization.
-*   **Self-Healing Code Cells:** Advances from QR codes to code with inherent self-correction and fault-tolerant execution via wrappers, memory layers, graceful degradation, reflective agents.
-*   **Semantic ECC (Error Correction Code):** Integrates logic, math, cryptography for code lines to understand their own structure, flow, and error tolerance via semantic tagging, hashing, distance calculation, self-repair modules, and fault-tolerant execution.
-*   **Suggested Future Documentation:** *CURRENTSTATELOG::Unified-AI-Full-Implementation.md*, *IMMUNELAYERLOG::Self-Correction-Design.md*, *QR-CODE-EXTENSION::Unified-AI-Project.md*, *IMMUNE_EXTENSION::Self-Healing-Cells.md*, *SEMANTICECCLAYER::Unified-AI-Project.md*.
+*   **QR-Code-like Code:** Conceptualizes each line of code as scannable/executable with semantic tags, module links, contextual activation, self-diagnostics, narrative visualization. (Related: `docs/concepts/QR_Code_Like_Code.md`)
+*   **Self-Healing Code Cells:** Advances from QR codes to code with inherent self-correction and fault-tolerant execution via wrappers, memory layers, graceful degradation, reflective agents. (Related: `docs/concepts/Self_Healing_Code_Cells.md`)
+*   **Semantic ECC (Error Correction Code):** Integrates logic, math, cryptography for code lines to understand their own structure, flow, and error tolerance via semantic tagging, hashing, distance calculation, self-repair modules, and fault-tolerant execution. (Related: `docs/concepts/Semantic_Error_Correction_Code.md`)
+*   **Suggested Future Documentation:** `CURRENTSTATELOG-Unified-AI-Full-Implementation.md`, `IMMUNELAYERLOG-Self-Correction-Design.md` (see also `docs/architecture/Self_Correction_Immune_System.md` and `docs/architecture/Linguistic_Immune_System_spec.md`), `QR-CODE-EXTENSION-Unified-AI-Project.md`, `IMMUNE_EXTENSION-Self-Healing-Cells.md`, `SEMANTICECCLAYER-Unified-AI-Project.md` - *Conceptual documents, some ideas partially covered in existing `docs/concepts/` and `docs/architecture/` files.*
 
 ### 11.10. Expanding Small Models & Advanced Reasoning
 

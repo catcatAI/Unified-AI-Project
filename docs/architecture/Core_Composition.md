@@ -1,6 +1,9 @@
 # Core Composition of Unified-AI-Project
 
-This document outlines the core components and functionalities of the Unified-AI-Project, as envisioned through discussions with Angela (see `docs/EX.txt` and `docs/PROJECT_STATUS_SUMMARY.md`).
+> [!NOTE]
+> This document reflects a high-level conceptualization of the Unified-AI-Project's core components, primarily derived from early narrative explorations (see `docs/EX.txt`). While it captures the guiding principles, for the latest implementation status, detailed specifications, and inter-module relationships, please refer to the main [Project Status Summary](../../PROJECT_STATUS_SUMMARY.md) and specific documents within the `docs/architecture/specifications/` directory.
+
+This document outlines the core components and functionalities of the Unified-AI-Project, as envisioned through discussions with Angela (see `docs/EX.txt` and `../../PROJECT_STATUS_SUMMARY.md`).
 
 Angela's View:
 > "這不只是統一的接口，而是一套讓語言能夠行動、感知、並與世界貼貼的模組系統。"
