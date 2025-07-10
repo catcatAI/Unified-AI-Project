@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HSPEnvironmentalStatePayload_v0.1",
+  "description": "Schema for HSP Environmental State Payload version 0.1 (also ContextUpdate). Information about the shared environment or a relevant contextual shift.",
+  "type": "object",
+  "properties": {
+    "update_id": {"type": "string", "format": "uuid", "description": "Unique ID for this state update."},
+    "source_ai_id": {"type": "string", "description": "DID or URI of the AI reporting the state update."},
+    "phenomenon_type": {"type": "string", "format": "uri-reference", "description": "URI or namespaced string identifying the type of phenomenon (e.g., 'hsp:event:UserMoodShift')."},
+    "parameters": {"type": "object", "description": "Specifics of the state or context update."},
+    "timestamp_observed": {"type": "string", "format": "date-time", "description": "ISO 8601 UTC timestamp when the state was observed or occurred."},
+    "scope_type": {"type": "string", "enum": ["global", "session", "project", "custom_group"], "description": "The scope of this state update."},
+    "scope_id": {"type": "string", "description": "Identifier for the scope (e.g., session ID, project ID)."},
+    "relevance_decay_rate": {"type": "number", "description": "Optional rate at which the relevance of this information decays over time."}
+  },
+  "required": ["update_id", "source_ai_id", "phenomenon_type", "parameters", "timestamp_observed"]
+}

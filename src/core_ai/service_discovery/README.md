@@ -14,8 +14,9 @@ This module replaces a previous generic service registry and is specifically des
 *   **Integration with TrustManager:**
     *   Uses an instance of the `TrustManager` to retrieve trust scores for AIs advertising capabilities.
     *   Allows filtering and sorting of discovered capabilities based on these trust scores.
-*   **Staleness Handling:**
-    *   Advertisements are considered stale and are filtered out if not re-advertised within a configurable threshold (`staleness_threshold_seconds`).
+*   **Staleness Handling & Active Pruning:**
+    *   Advertisements are considered stale and are filtered out during queries if not re-advertised within a configurable `staleness_threshold_seconds`.
+    *   **Active Pruning:** The module now includes an internal timer that periodically runs a pruning mechanism (`_prune_stale_capabilities`) to remove stale entries directly from the store. The interval for this pruning is configurable via `pruning_interval_seconds` (defaulting to 10 minutes).
 *   **Flexible Querying:**
     *   Provides methods to find capabilities based on:
         *   Capability ID (`capability_id_filter`)
@@ -48,7 +49,7 @@ This module replaces a previous generic service registry and is specifically des
 
 *   **`core_services.py`:** This central service initializer is responsible for:
     *   Instantiating the `TrustManager`.
-    *   Instantiating the `ServiceDiscoveryModule`, providing it with the `TrustManager` instance.
+    *   Instantiating the `ServiceDiscoveryModule`, providing it with the `TrustManager` instance, `staleness_threshold_seconds`, and `pruning_interval_seconds`.
     *   Instantiating the `HSPConnector`.
     *   Registering the `ServiceDiscoveryModule`'s `process_capability_advertisement` method as a callback with the `HSPConnector` so it can receive incoming advertisements.
 *   **`DialogueManager` (or other capability consumers):**
@@ -57,5 +58,6 @@ This module replaces a previous generic service registry and is specifically des
 ## Configuration
 
 *   **`staleness_threshold_seconds`:** Passed during instantiation. Defines how long a capability advertisement remains valid if not refreshed. Defaults to 24 hours (3600 * 24 seconds).
+*   **`pruning_interval_seconds`:** Passed during instantiation. Defines how often the active pruning mechanism runs to remove stale capabilities from the store. Defaults to 10 minutes (60 * 10 seconds).
 
 This module is crucial for enabling dynamic and trust-aware discovery of services in the HSP network, facilitating more intelligent and robust inter-AI collaboration.
