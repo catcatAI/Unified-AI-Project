@@ -526,12 +526,16 @@ class AIVirtualInputService:
                 print(f"  AVIS Sim: Virtual file not found: {path}")
 
         elif operation == "write_file":
-            # Conceptual: Check permissions if/when actual file writing is implemented
-            content_to_write = command.get("content", "") # Default to empty string if no content provided
+            content_to_write = command.get("content") # content is Optional[str]
+            if content_to_write is None: # Explicitly handle None case, though "" is also valid
+                content_to_write = "" # Default to writing an empty string if content is None
+
+            # Future: Add permission checks here if AVIS mode allows actual file system writes.
+            # For "simulation_only" mode, this is always allowed on the virtual_file_system.
             self.virtual_file_system[path] = content_to_write
             outcome_status = "success"
-            response_message = f"Successfully wrote to virtual file: {path} (Length: {len(content_to_write)})"
-            print(f"  AVIS Sim: Wrote content to virtual file '{path}'. Length: {len(content_to_write)}")
+            response_message = f"Successfully wrote to virtual file: {path} (Content Length: {len(content_to_write)})"
+            print(f"  AVIS Sim: Wrote {len(content_to_write)} chars to virtual file '{path}'.")
 
         elif operation == "list_directory":
             # Basic simulation: list keys that start with the given path (if it's a directory)
