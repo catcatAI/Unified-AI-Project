@@ -1,186 +1,125 @@
 # Unified-AI-Project: Content Organization
 
-> [!WARNING]
-> **This document describes a previous project organization.**
-> The project's documentation structure was significantly reorganized on July 10, 2024. This document needs to be updated to reflect the new structure as outlined in the project's commit history and the [Project Status Summary](STATUS_SUMMARY.md) (which itself refers to new paths). Many of the paths and categorizations below are no longer accurate.
-
 ## Introduction
 
-This document provides an organized overview of the Unified-AI-Project's content, categorizing key directories and files to aid in understanding the project's structure and the purpose of its various components. This is based on the file structure available as of **July 8, 2024 (needs update)**.
+This document provides an organized overview of the Unified-AI-Project's content. Its purpose is to help contributors and users understand the project's structure, navigate the codebase and documentation, and locate relevant information efficiently.
 
-## 1. Root Directory Files
+The project structure and documentation are subject to ongoing evolution. This document describes the organization as of the last major documentation restructuring (July 10, 2024). For the most current status of individual components and features, please refer to the [Project Status Summary](STATUS_SUMMARY.md).
 
-Key files at the project root (some may have moved to `docs/project/`):
+## 1. Top-Level Project Files
 
-*   `README.md`: Main entry point for project information, overview, setup, and contribution guidelines. (Path: `../../README.md` from here)
-*   `MERGE_AND_RESTRUCTURE_PLAN.md`: Documents the initial project structure, merge strategy, and architectural principles. (Now at `MERGE_AND_RESTRUCTURE_PLAN.md` in this directory)
+These files are located in the root directory of the project:
+
+*   `README.md`: The main entry point for the project. Provides a general overview, setup instructions, contribution guidelines, and links to key documentation.
 *   `.gitignore`: Specifies intentionally untracked files that Git should ignore.
-*   `requirements.txt`: Lists Python dependencies for the project.
-*   `package.json`: Defines Node.js dependencies and scripts for the project (e.g., for Electron app).
-*   `.env.example`: Example environment variable file; a `.env` file should be created from this for local configuration.
+*   `requirements.txt`: Lists Python dependencies required for the project.
+*   `package.json`: Defines Node.js dependencies and scripts, primarily for the Electron application and other Node.js-based services or tools.
+*   `.env.example`: An example environment variable file. Users should copy this to `.env` and fill in their specific configurations (e.g., API keys).
+*   `babel.cfg`: Configuration file for Babel, used for internationalization (i18n) to extract translatable strings from Python source code.
+*   Other configuration files (e.g., for linters, formatters, CI/CD) may also be present.
 
 ## 2. Source Code (`src/`)
 
-Contains the core Python source code for the AI and its services.
+The `src/` directory contains all the core Python source code for the AI, its services, tools, and interfaces. Key subdirectories include:
 
-*   `core_services.py`: Provides central initialization (dependency injection) and access to core AI service instances. Responsible for instantiating and wiring together major components like DialogueManager, Memory, LLMInterface, etc.
+*   `agents/`: Contains specialized capability modules, such as `JulesDevelopmentCapability` for AI-assisted software development tasks. These are typically orchestrated by the core AI persona.
+*   `core_ai/`: Houses the central intelligence and decision-making components of the AI, including dialogue management, memory (HAM), learning systems, personality, formula engine, and more.
+*   `fragmenta/`: Home of the Fragmenta Orchestrator, a system designed for managing complex tasks and coordinating data flow between modules.
+*   `hsp/`: Implements the Heterogeneous Synchronization Protocol (HSP) for inter-AI communication and collaboration.
+*   `interfaces/`: Contains code for different user interaction points, such as the Command Line Interface (`cli/`) and the Electron desktop application (`electron_app/`).
+*   `modules_fragmenta/`: Contains specialized processing modules that can be utilized by the Fragmenta system.
+*   `services/`: Backend services, including the main API server (FastAPI), interfaces to Large Language Models (LLMs), AIVirtualInputService (AVIS), SandboxExecutor, and other utility services.
+*   `shared/`: Common utilities, type definitions (`TypedDict`s), and constants used across different parts of the project.
+*   `tools/`: Contains internal "tools" that the AI can use to augment its capabilities, such as mathematical tools, logical reasoners, or translation tools, along with their respective models or dispatchers.
 
-### 2.1. Agent-related Modules & Specialized Capabilities (`src/agents/`)
-
-Hosts implementations or placeholders for modules that provide specialized, agent-like capabilities or serve as test harnesses. These are typically orchestrated by the core AI persona (Angela).
-*   `simple_coding_agent.py`: A basic scripted agent primarily for testing AVIS code execution functionalities. Can be seen as a utility script rather than a full agent.
-*   `jules_dev_agent.py`: Contains the `JulesDevelopmentCapability` class, providing a set of software development functions for Angela to use.
-
-### 2.1.1. Core AI Logic and Modules (`src/core_ai/`)
-
-Houses the central intelligence and decision-making components of the AI.
-
-*   **`dialogue/`**:
-*   `dialogue/dialogue_manager.py`: Orchestrates conversation flow, integrates various AI components, and generates responses.
-*   **`memory/`**:
-    *   `ham_memory_manager.py`: Implements the Hierarchical Associative Memory for storing and retrieving experiences, learned facts, and dialogue context.
-*   **`learning/`**:
-    *   `learning_manager.py`: Coordinates the learning process, including fact extraction and storage.
-    *   `fact_extractor_module.py`: Extracts structured facts from dialogue.
-    *   `self_critique_module.py`: Evaluates AI responses for quality and coherence.
-    *   `content_analyzer_module.py`: Aims for deep context understanding by analyzing text to create knowledge graphs (utilizes spaCy and NetworkX).
-*   **`personality/`**:
-    *   `personality_manager.py`: Manages different AI personalities and their profiles.
-*   **`formula_engine/`**: Contains the logic for the rule-based formula engine that can trigger actions or responses.
-*   **`code_understanding/`**:
-    *   `lightweight_code_model.py`: Provides basic static analysis of Python code, particularly for understanding tool structures.
-*   **`service_discovery/`**:
-    *   `service_discovery_module.py`: Contains a service discovery implementation. **Note:** Its current code defines a generic service registry with TTL-based expiry and its own `ServiceAdvertisement` type. This differs from the HSP-specific capability discovery mechanism (expected to handle `HSPCapabilityAdvertisementPayload`, integrate with `TrustManager`, and have a `process_capability_advertisement` method) that is anticipated by `core_services.py` for HSP integration. This module requires refactoring or replacement to fulfill the HSP-related role.
-*   **`trust_manager/`**:
-    *   `trust_manager_module.py`: Manages trust scores for interactions with other AI peers in the HSP network.
-*   **`lis/`**: Contains early placeholders (`lis_cache_interface.py`) for the Linguistic Immune System (LIS), a conceptual system for advanced error processing and linguistic evolution (see `../architecture/specifications/Linguistic_Immune_System_spec.md`).
-*   `emotion_system.py`: Manages and simulates the AI's emotional state.
-*   `crisis_system.py`: Assesses input for crisis situations and can trigger appropriate responses.
-*   `time_system.py`: Provides time-related context (e.g., time of day).
-
-### 2.2. Heterogeneous Synchronization Protocol (`src/hsp/`)
-
-Defines the protocol and connector for inter-AI communication.
-
-*   `connector.py`: Manages MQTT-based communication with the HSP network, handles message serialization/deserialization, and implements features like automatic reconnection and ACK sending.
-*   `types.py`: Defines `TypedDict` structures for various HSP message envelopes and payloads.
-
-### 2.3. Tools (`src/tools/`)
-
-Contains internal "tools" that the AI can use to augment its capabilities.
-
-*   `tool_dispatcher.py`: Enables the AI to select and use various tools.
-*   `math_tool.py`, `logic_tool.py`, `translation_tool.py`: Example or actual implementations of specific tools.
-*   `code_understanding_tool.py`: A callable tool providing code understanding capabilities.
-*   Subdirectories like `math_model/`, `logic_model/`, `translation_model/` likely contain machine learning models or data related to these tools.
-*   `js_tool_dispatcher/`: Appears to be for dispatching tools implemented in JavaScript.
-
-### 2.4. Fragmenta Meta-Orchestration (`src/fragmenta/` and `src/modules_fragmenta/`)
-
-System for managing complex tasks and large data.
-
-*   `fragmenta/fragmenta_orchestrator.py`: Placeholder and basic implementation for the system that will manage complex tasks, chunk data, and coordinate modules.
-*   `modules_fragmenta/`: Contains specialized processing modules potentially used by Fragmenta:
-    *   `element_layer.py`: Placeholder for processing data at an elemental level.
-    *   `vision_tone_inverter.py`: Placeholder for adjusting visual representations based on tone.
-
-### 2.5. Services (`src/services/`)
-
-Backend services, including API servers and interfaces to external systems.
-
-*   `main_api_server.py`: FastAPI application providing API endpoints for interacting with the AI.
-*   `llm_interface.py`: Standardized interface for interacting with various Large Language Models (e.g., Ollama, OpenAI).
-*   `sandbox_executor.py`: For safely executing code, likely used in tool drafting or other dynamic code execution scenarios.
-*   `audio_service.py`, `vision_service.py`: Placeholders or implementations for audio and vision processing capabilities.
-*   `resource_awareness_service.py`: Manages and provides information about the AI's simulated hardware resources, configured via `configs/simulated_resources.yaml`.
-*   `ai_virtual_input_service.py`: Implements the AI Virtual Input Service (AVIS) for simulated GUI interaction (e.g., virtual mouse/keyboard). (See `../architecture/specifications/AI_Virtual_Input_System_spec.md`).
-*   `node_services/`: Contains a Node.js server, possibly for supporting JavaScript-based tools or UI backend components.
-*   `api_models.py`: Defines Pydantic models for API request/response validation.
-
-### 2.6. Shared Utilities (`src/shared/`)
-
-Common utilities, types, and configurations used across different parts of the project.
-
-*   `types/common_types.py`: Central repository for common `TypedDict` data structures used for internal data exchange.
-*   Likely contains other shared helper functions or constants.
-
-### 2.7. User Interfaces (Implementations) (`src/interfaces/`)
-
-Code for different ways users can interact with the AI.
-
-*   **`cli/`**:
-    *   `main.py`: Implementation for the Command Line Interface (CLI).
-*   **`electron_app/`**: Contains the source code for the Electron-based desktop application (HTML, CSS, JavaScript for frontend; `main.js` for Electron main process, `preload.js` for context bridge, `renderer.js` for frontend logic).
+Many modules within `src/` have their own `README.md` or `*_readme.md` files providing specific details about their functionality and usage.
 
 ## 3. Documentation (`docs/`)
 
-Contains project documentation, design specifications, and architectural notes.
-(This section describes the OLD structure and needs complete rewriting to reflect the new `docs/` subdirectories like `project/`, `architecture/specifications/`, `guides/`, etc.)
+The `docs/` directory is the central repository for all detailed design documents, specifications, guides, background information, and project management documentation.
 
-*   `README.md` (in root, but effectively project documentation) -> `../../README.md`
-*   `HSP_SPECIFICATION.md`: Detailed specification for the Heterogeneous Synchronization Protocol. (Now at `../architecture/specifications/HSP_SPECIFICATION.md`)
-*   `INTERNAL_DATA_STANDARDS.md`: Guidelines for using `TypedDict` for internal data structures. (Now at `../guides/INTERNAL_DATA_STANDARDS.md`)
-*   `PROJECT_STATUS_SUMMARY.md`: This document, summarizing implemented vs. pending features. (Now at `STATUS_SUMMARY.md` in this directory)
-*   `PROJECT_CONTENT_ORGANIZATION.md`: This document, providing an overview of file organization. (This file itself)
-*   **`architecture/`**: Subdirectory for more detailed architectural documents (Now `../architecture/` with subdirectories like `specifications/`, `blueprints/`)
-    *   `DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`: Discussion on advanced data mapping and personality concepts. (Now at `../architecture/blueprints/DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`)
-    *   `ENHANCED_DECOUPLING_STRATEGIES.md`: Identifies areas and strategies for improving module decoupling. (Now at `../architecture/blueprints/ENHANCED_DECOUPLING_STRATEGIES.md`)
-    *   `Fragmenta_design_spec.md`: Design specification for the Fragmenta meta-orchestration system. (Now at `../architecture/specifications/Fragmenta_design_spec.md`)
-    *   `HAM_design_spec.md`: Design specification for the Hierarchical Associative Memory. (Now at `../architecture/specifications/HAM_design_spec.md`)
-    *   `Heterogeneous_Protocol_spec.md`: Conceptual design for the "AI Heterogeneous Architecture Protocol (AHAP)" (v0.1). (Now at `../architecture/blueprints/Heterogeneous_Protocol_spec.md`)
-    *   `MEMORY_SYSTEM.md`: Brief overview of the HAM memory system. (Now at `../architecture/blueprints/MEMORY_SYSTEM.md`)
-*   **`conceptual_agents/`**: Subdirectory for design specifications of conceptual AI agents. (This directory was removed, content moved to `../architecture/specifications/`)
-    *   `Jules_Async_Development_Agent_spec.md`: Design specification for the Jules agent. (Now at `../architecture/specifications/Jules_Development_Capability_spec.md`)
-    *   `SimpleLoginAgent_with_AVIS.md`: Design for a simple agent using AVIS for login simulation. (Now at `../architecture/specifications/SimpleLoginAgent_AVIS_example.md`)
-*   `1.0.txt`, `1.0en.txt`: Stylized, narrative/philosophical texts. (Still in `../` relative to `docs/project/`, e.g. `../1.0.txt`. See `../archive/TXT_FILES_README.md` for context).
+### 3.1. `docs/project/`
+Purpose: Contains project-level management, status, and organizational documents.
+Key Files:
+*   `STATUS_SUMMARY.md`: Summarizes the implementation status of various components, features, and conceptual goals. **This is a crucial document for understanding the current state of the project.**
+*   `CONTENT_ORGANIZATION.md` (This file): Describes the organization of project content.
+*   `MERGE_AND_RESTRUCTURE_PLAN.md`: Historical document detailing the initial project merge and restructuring strategy.
+*   `TODO_PLACEHOLDERS.md`: Historical list of TODO items and placeholders identified in the codebase.
 
-## 4. Configuration Files (`configs/`)
+### 3.2. `docs/architecture/`
+Purpose: Contains all documents related to the AI system's architecture and design.
+*   **`docs/architecture/specifications/`**
+    *   Purpose: Formal technical specification documents for core components, protocols, and capabilities.
+    *   Key Files: `HSP_SPECIFICATION.md`, `Fragmenta_design_spec.md`, `HAM_design_spec.md`, `AI_Virtual_Input_System_spec.md`, `Linguistic_Immune_System_spec.md` (draft), `MetaFormulas_spec.md` (draft), `Jules_Development_Capability_spec.md`.
+*   **`docs/architecture/blueprints/`**
+    *   Purpose: Documents describing high-level architectural designs, core component compositions, overviews of systems, and significant architectural concepts.
+    *   Key Files: `Core_Composition.md`, `DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`, `LLM_World_Model_Integration.md`, `MEMORY_SYSTEM.md`.
+*   **`docs/architecture/advanced_concepts/`**
+    *   Purpose: Collection of documents exploring more advanced, forward-looking, or specific technical/architectural concepts that might be experimental or in early stages of consideration.
+    *   Key Files: `Self_Correction_Immune_System.md`, `Asynchronous_Reasoning.md`, `QR_Code_Like_Code.md`, `Self_Healing_Code_Cells.md`.
 
-Centralized configuration for various aspects of the AI system.
+### 3.3. `docs/guides/`
+Purpose: Provides practical guides, standards, and guidelines for development, usage, and contribution.
+Key Files:
+*   `INTERNAL_DATA_STANDARDS.md`: Standards for internal data structures (e.g., using `TypedDict`).
+*   `TRANSLATION_GUIDE.md`: Guide for adding and managing translations (i18n).
+*   `message_processing_guidelines.md`: Guidelines for how messages are processed within the system.
 
-*   `system_config.yaml`: General system-wide configurations.
-*   `api_keys.yaml`: Structure and placeholders for external API keys (actual keys typically via `.env`).
-*   `ontology_mappings.yaml`: Mappings for ontologies, likely used by `ContentAnalyzerModule`.
-*   `simulated_resources.yaml`: Defines profiles for simulated hardware resources, used by the `ResourceAwarenessService`.
-*   `version_manifest.json`: Manages versions of different components or data schemas.
-*   **`formula_configs/`**:
-    *   `default_formulas.json`: Defines rules for the Formula Engine.
-*   **`personality_profiles/`**:
-    *   `miko_base.json`: Base personality profile for an AI instance. Other JSON files would define different personalities.
+### 3.4. `docs/reference_and_analysis/`
+Purpose: Contains background reference materials, comparative analyses, philosophical discussions, security considerations, and system analyses.
+Key Files:
+*   `Model_Taxonomy.md`: Classification of large models.
+*   `Similar_Systems_Comparison.md`: Comparison with other AI systems.
+*   `Potential_Project_Gaps.md`: Analysis of potential gaps in the project.
+*   `AI_Brain_Analogy.md`: Philosophical exploration of AI using brain analogies.
+*   `CC_vs_DDoS_Defense.md`: Discussion on security aspects.
 
-## 5. Test Suites (`tests/`)
+### 3.5. `docs/archive/`
+Purpose: For archived documents or meta-documentation about specific types of historical files.
+Key Files:
+*   `TXT_FILES_README.md`: Explains the nature, purpose, and reference value of the various `.txt` files (e.g., `1.0.txt`, `EX.txt`) found in the `docs/` directory, which often contain early conceptual and narrative explorations. Note: The `.txt` files themselves may still reside in the parent `docs/` directory or be moved here in the future.
 
-Contains unit and integration tests for the project. The directory structure generally mirrors `src/`.
+## 4. Configuration (`configs/`)
 
-*   `tests/core_ai/`: Tests for core AI components (dialogue, memory, learning, etc.).
-    *   `memory/test_ham_memory_manager.py`: Tests for HAM.
-    *   `dialogue/test_dialogue_manager.py`: Tests for Dialogue Manager.
-*   `tests/fragmenta/`: Tests for Fragmenta.
-*   `tests/hsp/`: Tests for HSP components.
-*   `tests/services/`: Tests for backend services.
-*   `tests/tools/`: Tests for AI tools.
-*   ... and so on for other modules.
+This directory holds configuration files for the system, including:
+*   System-wide settings (`system_config.yaml`).
+*   API key templates/placeholders (`api_keys.yaml`).
+*   AI personality profiles (`personality_profiles/`).
+*   Formula engine rules (`formula_configs/`).
+*   Ontology mappings (`ontology_mappings.yaml`).
+*   Simulated hardware resources (`simulated_resources.yaml`).
+
+## 5. Data (`data/`)
+
+The `data/` directory is intended for various data used by or generated by the AI. This includes:
+*   Raw datasets for training or knowledge ingestion.
+*   Processed data.
+*   Knowledge bases.
+*   Chat histories.
+*   Firebase related data.
+Typically, large data files or sensitive data within this directory are excluded from version control via `.gitignore`, but the directory structure and example files might be included.
 
 ## 6. Scripts (`scripts/`)
 
-Utility scripts for various tasks like data processing, setup, or prototyping.
+Contains utility scripts for various tasks, such as:
+*   Data processing and ingestion (e.g., `data_processing/`).
+*   Project setup utilities (`project_setup_utils.py`).
+*   Translation management (`translation_helper.py`).
+*   Prototyping (`prototypes/`).
 
-*   **`data_processing/`**:
-    *   `ingest_processed_logs_to_ham.py`: Script to ingest processed log data into HAM.
-    *   `process_copilot_logs.py`: Script to process Copilot activity logs.
-*   **`data_migration/`**: Placeholder for data migration scripts.
-*   **`prototypes/`**: Contains prototype code, e.g., `miko_core_ham_prototype.py`.
-*   `project_setup_utils.py`: Utilities for project setup.
-*   `mock_hsp_peer.py`: A script to mock an HSP peer for testing communication.
+## 7. Tests (`tests/`)
 
-## 7. Data Storage (`data/`)
+This directory contains all automated tests for the project, including unit tests and integration tests. The structure within `tests/` generally mirrors the `src/` directory structure.
 
-Contains various data used by or generated by the AI. This directory is typically in `.gitignore` for large datasets or sensitive information but contains subdirectories for different data types.
+## How to Find Information
 
-*   **`chat_histories/`**: Stores chat logs (e.g., `ollama_chat_histories.json`).
-*   **`firebase/`**: Configuration files related to Firebase integration.
-*   **`knowledge_bases/`**: Stores structured knowledge data (e.g., emotion maps, personality definitions, formulas).
-*   **`processed_data/`**: For data that has been processed from raw sources, including HAM memory files (e.g., `dialogue_context_memory.json`).
-*   **`raw_datasets/`**: For raw input data before processing.
+*   **Starting Point:** Begin with the main `README.md` (in the project root) for a general overview and setup instructions.
+*   **Current Status:** Refer to `docs/project/STATUS_SUMMARY.md` for the latest on feature implementation and component status.
+*   **Technical Details:** For in-depth technical specifications of core components and protocols, consult the documents in `docs/architecture/specifications/`.
+*   **High-Level Design:** For architectural overviews and design principles, see `docs/architecture/blueprints/`.
+*   **Development Guides:** Check `docs/guides/` for coding standards, translation processes, etc.
+*   **Conceptual Background:** The `.txt` files (see `docs/archive/TXT_FILES_README.md`) and documents in `docs/reference_and_analysis/` provide context on the project's vision and advanced concepts.
 
-This organization should help in navigating the project and understanding where different functionalities reside.
+## Contributing to Documentation
+
+Clear, accurate, and up-to-date documentation is crucial. Contributions to improving the documentation are welcome. Please ensure that any significant changes to code or architecture are reflected in the relevant documents.
