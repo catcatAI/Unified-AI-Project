@@ -227,8 +227,15 @@ This section highlights some current observations, known issues from testing, an
 ### Current Project State & Development Observations
 
 *   **Critical Merge Status:** As mentioned in the Overview, the `master` branch is impacted by incomplete merges of several foundational feature branches due to sandbox limitations. This affects the overall stability and completeness of the current codebase on `master`.
-*   **Known Failing Tests:** Some automated tests consistently fail. Current hypotheses point towards limitations in mock LLM responses for deeply nested module calls and potential subtle data handling or string manipulation issues. These are under investigation.
-*   **Asynchronous Code Warnings:** Test runs have surfaced `RuntimeWarning: coroutine ... was never awaited` for some `async def` test methods. Developers should ensure correct implementation and testing of asynchronous code using appropriate `async/await` patterns.
+*   **Test Status Update (July 2024):**
+    *   **Resolved `FragmentaOrchestrator` Test Failures:** Previously noted `AttributeError`s in `tests/fragmenta/test_fragmenta_orchestrator.py` (related to missing helper methods) have been resolved by ensuring the correct, updated version of `src/fragmenta/fragmenta_orchestrator.py` is loaded during test execution. All tests in this suite now pass.
+    *   **Resolved Asynchronous Code Warnings:** `RuntimeWarning: coroutine ... was never awaited` in `tests/core_ai/dialogue/test_dialogue_manager.py` have been fixed by refactoring async tests to use `asyncio.run()`. Subsequent assertion failures in these tests due to output changes were also corrected. All tests in this suite now pass.
+    *   **Remaining Known Issues:**
+        *   **HSP Integration Tests:** Tests in `tests/hsp/test_hsp_integration.py` and `tests/services/test_main_api_server_hsp.py` consistently error out due to `ConnectionRefusedError`. These tests require an active MQTT broker, which is not available in the standard automated test environment.
+        *   **Mock LLM Dependent Failures:** A few tests in `tests/interfaces/test_cli.py` and `tests/tools/test_translation_model.py` fail due to current mock LLM responses not aligning with the specific JSON or intent formats expected by the modules under test. These require refinement of the mock LLM setups for those specific test cases.
+*   **(Original) Known Failing Tests:** Some automated tests consistently fail. Current hypotheses point towards limitations in mock LLM responses for deeply nested module calls and potential subtle data handling or string manipulation issues. These are under investigation. *(This is now superseded by the more specific points above but kept for historical context if needed)*
+*   **(Original) Asynchronous Code Warnings:** Test runs have surfaced `RuntimeWarning: coroutine ... was never awaited` for some `async def` test methods. Developers should ensure correct implementation and testing of asynchronous code using appropriate `async/await` patterns. *(This is now superseded by the more specific points above)*
+
 
 ### Inter-Module Data Flow and Synchronization
 
