@@ -483,10 +483,10 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   `FRAGMENTABENCHMARKCOMPARE-Unified-AI-Project.md`
     *   `SEMANTICCOMPARISONLIMITS-Unified-AI-Project.md`
     *   `CODERELIABILITYLAYER-Unified-AI-Project.md`
-    *   `ACTUARION_MODULE-Unified-AI-Project.md` (*Consider `../architecture/blueprints/Actuarion_Module_concept.md` if created as proposed.*)
-    *   `ACTUARIONOPERATORNOTE-Unified-AI-Project.md`
-    *   `ACTUARIONFUSIONLOG-Unified-AI-Project.md`
-    *   `NEURALARCHITECTUREMAP-Fragmenta.md`
+    *   `../architecture/blueprints/Actuarion_Module_concept.md` - *Initial concept document created.*
+    *   `ACTUARIONOPERATORNOTE-Unified-AI-Project.md` - *Conceptual document, not yet created.*
+    *   `ACTUARIONFUSIONLOG-Unified-AI-Project.md` - *Conceptual document, not yet created.*
+    *   `NEURALARCHITECTUREMAP-Fragmenta.md` - *Conceptual document, not yet created.*
     *   `LNNINTEGRATIONNOTE-Unified-AI-Project.md`
     *   `NEURAL-ECOLOGYDEFENSELAYER-Unified-AI-Project.md`
     *   `LNNFUSIONPLAN-Unified-AI-Project.md`
