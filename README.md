@@ -4,15 +4,15 @@
 
 The **Unified-AI-Project** aims to create a versatile and intelligent conversational AI framework. It consolidates and enhances capabilities from previous projects like MikoAI, Fragmenta, and other CatAI initiatives. The primary goal is to build a modular, maintainable, and extensible system capable of rich dialogue, context understanding, learning, and tool usage.
 
-For details on the initial project structure, merge strategy, and architectural principles that guided the consolidation, please refer to the [MERGE_AND_RESTRUCTURE_PLAN.md](MERGE_AND_RESTRUCTURE_PLAN.md). For a summary of the current implementation status of various components, see [Project Status Summary](docs/PROJECT_STATUS_SUMMARY.md), and for an overview of how project files are organized, see [Project Content Organization](docs/PROJECT_CONTENT_ORGANIZATION.md).
+For details on the initial project structure, merge strategy, and architectural principles that guided the consolidation, please refer to the [MERGE_AND_RESTRUCTURE_PLAN.md](docs/project/MERGE_AND_RESTRUCTURE_PLAN.md). For a summary of the current implementation status of various components, see [Project Status Summary](docs/project/STATUS_SUMMARY.md), and for an overview of how project files are organized, see [Project Content Organization](docs/project/CONTENT_ORGANIZATION.md).
 
 ### Current Project Status & Critical Merge Information
 
-**Important:** As detailed in the `MERGE_AND_RESTRUCTURE_PLAN.md` (Section 8, "Post-Merge Status Update"), the project's `master` branch is currently impacted by significant merge challenges. Due to sandbox environment limitations, a number of feature branches containing substantial structural and foundational code (including initial setup, data migration, and configuration migration) could not be successfully merged. This means the remote `master` branch may not fully reflect all intended features or the complete project structure. Development and integration efforts for these branches are ongoing and require an environment not constrained by these limitations.
+**Important:** As detailed in the `docs/project/MERGE_AND_RESTRUCTURE_PLAN.md` (Section 8, "Post-Merge Status Update"), the project's `master` branch is currently impacted by significant merge challenges. Due to sandbox environment limitations, a number of feature branches containing substantial structural and foundational code (including initial setup, data migration, and configuration migration) could not be successfully merged. This means the remote `master` branch may not fully reflect all intended features or the complete project structure. Development and integration efforts for these branches are ongoing and require an environment not constrained by these limitations.
 
 ### Future Vision
 
-Beyond the currently implemented features, the project holds a long-term vision inspired by concepts of "Language as Life," aiming for an AI that is deeply self-aware, adaptive, and capable of semantic evolution. This includes exploring advanced ideas such as a "Linguistic Immune System" and "MetaFormulas" to guide its development towards a "Polydimensional Semantic Entity." These philosophical underpinnings and future conceptual goals are further elaborated in project documentation (see `docs/PROJECT_STATUS_SUMMARY.md` and `docs/architecture/`).
+Beyond the currently implemented features, the project holds a long-term vision inspired by concepts of "Language as Life," aiming for an AI that is deeply self-aware, adaptive, and capable of semantic evolution. This includes exploring advanced ideas such as a "Linguistic Immune System" and "MetaFormulas" to guide its development towards a "Polydimensional Semantic Entity." These philosophical underpinnings and future conceptual goals are further elaborated in project documentation (see `docs/project/STATUS_SUMMARY.md` and `docs/architecture/`).
 
 ## Key Features & Modules
 
@@ -38,7 +38,7 @@ This project integrates and is developing several core AI components:
 
 *   **Tool Dispatcher (`src/tools/tool_dispatcher.py`):** Enables the AI to use external or internal "tools" (e.g., calculators, information retrieval functions) to augment its capabilities. Tools can be triggered by the Formula Engine or other AI logic.
 
-*   **AI Virtual Input System (AVIS) (`src/services/ai_virtual_input_service.py` and `docs/architecture/AI_Virtual_Input_System_spec.md`):** A system enabling the AI to simulate GUI interactions (mouse, keyboard) and execute code within a controlled virtual environment. Works with the `AISimulationControlService` for permissions and execution.
+*   **AI Virtual Input System (AVIS) (`src/services/ai_virtual_input_service.py` and `docs/architecture/specifications/AI_Virtual_Input_System_spec.md`):** A system enabling the AI to simulate GUI interactions (mouse, keyboard) and execute code within a controlled virtual environment. Works with the `AISimulationControlService` for permissions and execution.
 
 *   **LLM Interface (`src/services/llm_interface.py`):** Provides a standardized interface to interact with various Large Language Models (e.g., Ollama, OpenAI), managing API calls and model configurations.
 
@@ -49,16 +49,16 @@ This project integrates and is developing several core AI components:
     *   **Functionality:** Defines message types (Facts, Capability Advertisements, Task Requests/Results, etc.) and communication patterns (Publish/Subscribe, Request/Reply) for inter-AI interaction. Core functionalities like message transport (MQTT via `HSPConnector`), fact publishing/processing, and basic task brokering are implemented.
     *   **Transport:** Currently uses MQTT for message transport.
     *   **Key Features:** Includes mechanisms for basic service discovery, basic trust management, and strategies for handling conflicting information. The `ServiceDiscoveryModule` (`src/core_ai/service_discovery/service_discovery_module.py`) provides some HSP-specific capability management but requires further refactoring for full alignment with the HSP specification and deeper `TrustManager` integration.
-    *   **Status:** Core HSP components for message transport and basic payload exchange are functional. However, full adherence to the specification, advanced QoS, robust error handling, and complete service discovery capabilities are ongoing. See `docs/PROJECT_STATUS_SUMMARY.md` and `docs/HSP_SPECIFICATION.md` (Appendix A) for more details on current status and gaps.
-    *   **Specification:** See `docs/HSP_SPECIFICATION.md`.
+    *   **Status:** Core HSP components for message transport and basic payload exchange are functional. However, full adherence to the specification, advanced QoS, robust error handling, and complete service discovery capabilities are ongoing. See `docs/project/STATUS_SUMMARY.md` and `docs/architecture/specifications/HSP_SPECIFICATION.md` (Appendix A) for more details on current status and gaps.
+    *   **Specification:** See `docs/architecture/specifications/HSP_SPECIFICATION.md`.
 
 *   **Fragmenta Orchestrator (`src/fragmenta/fragmenta_orchestrator.py`):**
     *   **Purpose:** Designed to manage complex tasks, coordinate data flow between modules, and apply sophisticated processing strategies.
-    *   **Status:** Has undergone significant enhancements (as of July 2024). It now employs an advanced state management system (`EnhancedComplexTaskState`, `EnhancedStrategyPlan`) supporting sequential and foundational parallel step execution, explicit input/output mapping between steps, and robust HSP task lifecycle management (including retries and timeouts). While many advanced features from its original design specification (like dynamic strategy generation or complex dependency graphs) are still conceptual, the current implementation provides a much more capable orchestration engine. See `docs/architecture/Fragmenta_design_spec.md` (especially the July 2024 implementation notes) and `docs/PROJECT_STATUS_SUMMARY.md` for details.
+    *   **Status:** Has undergone significant enhancements (as of July 2024). It now employs an advanced state management system (`EnhancedComplexTaskState`, `EnhancedStrategyPlan`) supporting sequential and foundational parallel step execution, explicit input/output mapping between steps, and robust HSP task lifecycle management (including retries and timeouts). While many advanced features from its original design specification (like dynamic strategy generation or complex dependency graphs) are still conceptual, the current implementation provides a much more capable orchestration engine. See `docs/architecture/specifications/Fragmenta_design_spec.md` (especially the July 2024 implementation notes) and `docs/project/STATUS_SUMMARY.md` for details.
 
 *   **Jules - Asynchronous Development Capability (`src/agents/jules_dev_agent.py` module):**
     *   **Purpose:** A specialized capability set, orchestrated by the core AI persona (Angela), to handle software development tasks like fixing bugs and implementing small features. This involves interacting with a simulated development environment.
-    *   **Status:** Conceptual design phase. The `JulesDevelopmentCapability` class structure and an updated design specification (`docs/conceptual_agents/Jules_Async_Development_Agent_spec.md`) frame Jules as a set of functions Angela can utilize. Core functionalities like task understanding, code comprehension, planning, and simulated environment interaction are envisioned to be managed by Angela through this capability.
+    *   **Status:** Conceptual design phase. The `JulesDevelopmentCapability` class structure and an updated design specification (`docs/architecture/specifications/Jules_Development_Capability_spec.md`) frame Jules as a set of functions Angela can utilize. Core functionalities like task understanding, code comprehension, planning, and simulated environment interaction are envisioned to be managed by Angela through this capability.
 
 ## Getting Started
 
@@ -217,8 +217,8 @@ Contributions are welcome and greatly appreciated! Here are some guidelines to h
 
 *   **Python:** Follow PEP 8.
 *   **JavaScript/TypeScript:** Follow standard community practices. Consider using Prettier for consistent formatting.
-*   **Internal Data Structures:** For data exchanged between internal Python modules, adhere to the standards outlined in [Internal Data Standards (`docs/INTERNAL_DATA_STANDARDS.md`)](docs/INTERNAL_DATA_STANDARDS.md). This primarily involves using `TypedDict` for clarity and static type checking.
-*   **Translations:** For information on how to add or update translations for the project, please see the [Translation Guide (`docs/TRANSLATION_GUIDE.md`)](docs/TRANSLATION_GUIDE.md).
+*   **Internal Data Structures:** For data exchanged between internal Python modules, adhere to the standards outlined in [Internal Data Standards (`docs/guides/INTERNAL_DATA_STANDARDS.md`)](docs/guides/INTERNAL_DATA_STANDARDS.md). This primarily involves using `TypedDict` for clarity and static type checking.
+*   **Translations:** For information on how to add or update translations for the project, please see the [Translation Guide (`docs/guides/TRANSLATION_GUIDE.md`)](docs/guides/TRANSLATION_GUIDE.md).
 *   **General:** Aim for clear, readable, and well-documented code.
 
 ### Questions or Issues

@@ -1,15 +1,19 @@
 # Unified-AI-Project: Content Organization
 
+> [!WARNING]
+> **This document describes a previous project organization.**
+> The project's documentation structure was significantly reorganized on July 10, 2024. This document needs to be updated to reflect the new structure as outlined in the project's commit history and the [Project Status Summary](STATUS_SUMMARY.md) (which itself refers to new paths). Many of the paths and categorizations below are no longer accurate.
+
 ## Introduction
 
-This document provides an organized overview of the Unified-AI-Project's content, categorizing key directories and files to aid in understanding the project's structure and the purpose of its various components. This is based on the file structure available as of July 8, 2024.
+This document provides an organized overview of the Unified-AI-Project's content, categorizing key directories and files to aid in understanding the project's structure and the purpose of its various components. This is based on the file structure available as of **July 8, 2024 (needs update)**.
 
 ## 1. Root Directory Files
 
-Key files at the project root:
+Key files at the project root (some may have moved to `docs/project/`):
 
-*   `README.md`: Main entry point for project information, overview, setup, and contribution guidelines.
-*   `MERGE_AND_RESTRUCTURE_PLAN.md`: Documents the initial project structure, merge strategy, and architectural principles.
+*   `README.md`: Main entry point for project information, overview, setup, and contribution guidelines. (Path: `../../README.md` from here)
+*   `MERGE_AND_RESTRUCTURE_PLAN.md`: Documents the initial project structure, merge strategy, and architectural principles. (Now at `MERGE_AND_RESTRUCTURE_PLAN.md` in this directory)
 *   `.gitignore`: Specifies intentionally untracked files that Git should ignore.
 *   `requirements.txt`: Lists Python dependencies for the project.
 *   `package.json`: Defines Node.js dependencies and scripts for the project (e.g., for Electron app).
@@ -49,7 +53,7 @@ Houses the central intelligence and decision-making components of the AI.
     *   `service_discovery_module.py`: Contains a service discovery implementation. **Note:** Its current code defines a generic service registry with TTL-based expiry and its own `ServiceAdvertisement` type. This differs from the HSP-specific capability discovery mechanism (expected to handle `HSPCapabilityAdvertisementPayload`, integrate with `TrustManager`, and have a `process_capability_advertisement` method) that is anticipated by `core_services.py` for HSP integration. This module requires refactoring or replacement to fulfill the HSP-related role.
 *   **`trust_manager/`**:
     *   `trust_manager_module.py`: Manages trust scores for interactions with other AI peers in the HSP network.
-*   **`lis/`**: Contains early placeholders (`lis_cache_interface.py`) for the Linguistic Immune System (LIS), a conceptual system for advanced error processing and linguistic evolution (see `docs/architecture/Linguistic_Immune_System_spec.md`).
+*   **`lis/`**: Contains early placeholders (`lis_cache_interface.py`) for the Linguistic Immune System (LIS), a conceptual system for advanced error processing and linguistic evolution (see `../architecture/specifications/Linguistic_Immune_System_spec.md`).
 *   `emotion_system.py`: Manages and simulates the AI's emotional state.
 *   `crisis_system.py`: Assesses input for crisis situations and can trigger appropriate responses.
 *   `time_system.py`: Provides time-related context (e.g., time of day).
@@ -89,7 +93,7 @@ Backend services, including API servers and interfaces to external systems.
 *   `sandbox_executor.py`: For safely executing code, likely used in tool drafting or other dynamic code execution scenarios.
 *   `audio_service.py`, `vision_service.py`: Placeholders or implementations for audio and vision processing capabilities.
 *   `resource_awareness_service.py`: Manages and provides information about the AI's simulated hardware resources, configured via `configs/simulated_resources.yaml`.
-*   `ai_virtual_input_service.py`: Implements the AI Virtual Input Service (AVIS) for simulated GUI interaction (e.g., virtual mouse/keyboard). (See `docs/architecture/AI_Virtual_Input_System_spec.md`).
+*   `ai_virtual_input_service.py`: Implements the AI Virtual Input Service (AVIS) for simulated GUI interaction (e.g., virtual mouse/keyboard). (See `../architecture/specifications/AI_Virtual_Input_System_spec.md`).
 *   `node_services/`: Contains a Node.js server, possibly for supporting JavaScript-based tools or UI backend components.
 *   `api_models.py`: Defines Pydantic models for API request/response validation.
 
@@ -111,23 +115,24 @@ Code for different ways users can interact with the AI.
 ## 3. Documentation (`docs/`)
 
 Contains project documentation, design specifications, and architectural notes.
+(This section describes the OLD structure and needs complete rewriting to reflect the new `docs/` subdirectories like `project/`, `architecture/specifications/`, `guides/`, etc.)
 
-*   `README.md` (in root, but effectively project documentation)
-*   `HSP_SPECIFICATION.md`: Detailed specification for the Heterogeneous Synchronization Protocol.
-*   `INTERNAL_DATA_STANDARDS.md`: Guidelines for using `TypedDict` for internal data structures.
-*   `PROJECT_STATUS_SUMMARY.md`: This document, summarizing implemented vs. pending features.
-*   `PROJECT_CONTENT_ORGANIZATION.md`: This document, providing an overview of file organization.
-*   **`architecture/`**: Subdirectory for more detailed architectural documents:
-    *   `DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`: Discussion on advanced data mapping and personality concepts. Contains an important clarification regarding a previous misinterpretation of "XXX" substrings in HAM data.
-    *   `ENHANCED_DECOUPLING_STRATEGIES.md`: Identifies areas and strategies for improving module decoupling.
-    *   `Fragmenta_design_spec.md`: Design specification for the Fragmenta meta-orchestration system.
-    *   `HAM_design_spec.md`: Design specification for the Hierarchical Associative Memory.
-    *   `Heterogeneous_Protocol_spec.md`: Conceptual design for the "AI Heterogeneous Architecture Protocol (AHAP)" (v0.1), distinct from HSP, aimed at transferring AI characteristics (personality, roles) between MikoAI and external AI systems. Its implementation status is conceptual.
-    *   `MEMORY_SYSTEM.md`: Brief overview of the HAM memory system, pointing to the detailed `HAM_design_spec.md`.
-*   **`conceptual_agents/`**: Subdirectory for design specifications of conceptual AI agents.
-    *   `Jules_Async_Development_Agent_spec.md`: Design specification for the Jules agent.
-    *   `SimpleLoginAgent_with_AVIS.md`: Design for a simple agent using AVIS for login simulation.
-*   `1.0.txt`, `1.0en.txt`: Stylized, narrative/philosophical texts discussing AI evolution concepts, internal project metaphors (e.g., "Angela", "Fragmenta" as entities), and potential future ideas. Their content is more conceptual and brainstorming-oriented than formal technical specification.
+*   `README.md` (in root, but effectively project documentation) -> `../../README.md`
+*   `HSP_SPECIFICATION.md`: Detailed specification for the Heterogeneous Synchronization Protocol. (Now at `../architecture/specifications/HSP_SPECIFICATION.md`)
+*   `INTERNAL_DATA_STANDARDS.md`: Guidelines for using `TypedDict` for internal data structures. (Now at `../guides/INTERNAL_DATA_STANDARDS.md`)
+*   `PROJECT_STATUS_SUMMARY.md`: This document, summarizing implemented vs. pending features. (Now at `STATUS_SUMMARY.md` in this directory)
+*   `PROJECT_CONTENT_ORGANIZATION.md`: This document, providing an overview of file organization. (This file itself)
+*   **`architecture/`**: Subdirectory for more detailed architectural documents (Now `../architecture/` with subdirectories like `specifications/`, `blueprints/`)
+    *   `DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`: Discussion on advanced data mapping and personality concepts. (Now at `../architecture/blueprints/DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`)
+    *   `ENHANCED_DECOUPLING_STRATEGIES.md`: Identifies areas and strategies for improving module decoupling. (Now at `../architecture/blueprints/ENHANCED_DECOUPLING_STRATEGIES.md`)
+    *   `Fragmenta_design_spec.md`: Design specification for the Fragmenta meta-orchestration system. (Now at `../architecture/specifications/Fragmenta_design_spec.md`)
+    *   `HAM_design_spec.md`: Design specification for the Hierarchical Associative Memory. (Now at `../architecture/specifications/HAM_design_spec.md`)
+    *   `Heterogeneous_Protocol_spec.md`: Conceptual design for the "AI Heterogeneous Architecture Protocol (AHAP)" (v0.1). (Now at `../architecture/blueprints/Heterogeneous_Protocol_spec.md`)
+    *   `MEMORY_SYSTEM.md`: Brief overview of the HAM memory system. (Now at `../architecture/blueprints/MEMORY_SYSTEM.md`)
+*   **`conceptual_agents/`**: Subdirectory for design specifications of conceptual AI agents. (This directory was removed, content moved to `../architecture/specifications/`)
+    *   `Jules_Async_Development_Agent_spec.md`: Design specification for the Jules agent. (Now at `../architecture/specifications/Jules_Development_Capability_spec.md`)
+    *   `SimpleLoginAgent_with_AVIS.md`: Design for a simple agent using AVIS for login simulation. (Now at `../architecture/specifications/SimpleLoginAgent_AVIS_example.md`)
+*   `1.0.txt`, `1.0en.txt`: Stylized, narrative/philosophical texts. (Still in `../` relative to `docs/project/`, e.g. `../1.0.txt`. See `../archive/TXT_FILES_README.md` for context).
 
 ## 4. Configuration Files (`configs/`)
 
