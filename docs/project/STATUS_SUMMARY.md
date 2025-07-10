@@ -362,7 +362,14 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   Estimated total token usage (single task): ~200K-500K.
     *   Estimated voice multiplication factor (semantic energy density): ~×6-12.
 *   **Internal Neural Network Model:** Needed to process deep mapping residuals, manage voice resonance/style, repair semantic errors, and enable deep learning for narrative personalities. Could use DNNs, micro-Transformers, self-supervised aligners, StyleNet, or Residual Rebuilders.
-*   **Suggested Future Documentation:** `CONTEXTCOREPLAN-Unified-AI-Project.md`, `TOKENCAPACITYLOG-Unified-AI-Project.md`, `SEMANTICBLUEPRINTPLAN-Unified-AI-Project.md`, `MULTIPLICATIVEARCHITECTUREPLAN-Unified-AI-Project.md`, `MULTIPLICATION_LOG-Unified-AI-Project.md`, `TOKENMULTIPLICATIONLOG-Unified-AI-Project.md`, `INTERNALDNNPLAN-Unified-AI-Project.md` - *Conceptual documents, not yet created.*
+*   **Suggested Future Documentation:**
+    *   `../architecture/blueprints/ContextCore_design_proposal.md` - *Initial proposal created.*
+    *   `TOKENCAPACITYLOG-Unified-AI-Project.md` - *Conceptual document, not yet created.*
+    *   `SEMANTICBLUEPRINTPLAN-Unified-AI-Project.md` - *Conceptual document, not yet created.*
+    *   `MULTIPLICATIVEARCHITECTUREPLAN-Unified-AI-Project.md` - *Conceptual document, not yet created.*
+    *   `MULTIPLICATION_LOG-Unified-AI-Project.md` - *Conceptual document, not yet created.*
+    *   `TOKENMULTIPLICATIONLOG-Unified-AI-Project.md` - *Conceptual document, not yet created.*
+    *   `INTERNALDNNPLAN-Unified-AI-Project.md` - *Conceptual document, not yet created.*
 
 ### 11.12. Towards Encyclopedia Generation & Super AI
 
