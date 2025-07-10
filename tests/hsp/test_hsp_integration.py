@@ -2,6 +2,10 @@ import pytest
 import asyncio
 import uuid
 import time
+from ..conftest import is_mqtt_broker_available # Import the utility
+
+# Skip all tests in this module if MQTT broker is not available
+pytestmark = pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available for HSP integration tests")
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 from typing import Dict, Any, Optional, List, Callable
