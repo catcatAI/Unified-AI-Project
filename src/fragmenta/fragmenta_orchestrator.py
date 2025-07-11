@@ -12,6 +12,11 @@ from core_ai.crisis_system import CrisisSystem
 from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule, StoredCapabilityInfo # Added StoredCapabilityInfo for __main__
 from hsp.connector import HSPConnector
 from hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+# Import ErrIntrospector for optional integration
+try:
+    from core_ai.lis.err_introspector import ErrIntrospector
+except ImportError:
+    ErrIntrospector = None # Allows Fragmenta to run if LIS components are not fully available
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +86,7 @@ class FragmentaOrchestrator:
                  personality_manager: Optional[PersonalityManager] = None,
                  emotion_system: Optional[EmotionSystem] = None,
                  crisis_system: Optional[CrisisSystem] = None,
+                 err_introspector: Optional['ErrIntrospector'] = None, # Added ErrIntrospector
                  config: Optional[Dict[str, Any]] = None):
 
         self.ham_manager = ham_manager
@@ -91,7 +97,13 @@ class FragmentaOrchestrator:
         self.personality_manager = personality_manager
         self.emotion_system = emotion_system
         self.crisis_system = crisis_system
+        self.err_introspector = err_introspector # Store it
         self.config = config or {}
+
+        if ErrIntrospector is None and err_introspector is not None:
+            logger.warning("FragmentaOrchestrator: ErrIntrospector provided but class could not be imported. LIS inspection will be disabled.")
+            self.err_introspector = None
+
 
         self.hsp_task_defaults = self.config.get("hsp_task_defaults", {
             "max_retries": 3, "initial_retry_delay_seconds": 5,
@@ -396,6 +408,30 @@ class FragmentaOrchestrator:
         # Store task outcome in HAM if terminal state reached
         if task_ctx["overall_status"] in ["completed", "failed_execution", "failed_plan"]:
             self._store_task_outcome_in_ham(task_ctx)
+
+        # If task completed successfully, and ErrIntrospector is available, inspect output
+        if task_ctx["overall_status"] == "completed" and self.err_introspector and ErrIntrospector is not None:
+            final_result_for_inspection = response.get("result") # Result from the current response dict
+            if final_result_for_inspection is not None:
+                try:
+                    logger.info(f"F (ID: {task_ctx['complex_task_id']}): Task completed. Triggering ErrIntrospector inspection.")
+                    # Conversation history might not be directly available to Fragmenta tasks.
+                    # Passing None or an empty list for now.
+                    # Task description is passed for context.
+                    incident_id = self.err_introspector.inspect_fragmenta_output(
+                        complex_task_id=task_ctx['complex_task_id'],
+                        task_description=task_ctx['original_task_description'],
+                        fragmenta_output=final_result_for_inspection,
+                        conversation_history=[] # Placeholder for now
+                    )
+                    if incident_id:
+                        logger.info(f"F (ID: {task_ctx['complex_task_id']}): ErrIntrospector created LIS incident {incident_id}.")
+                    else:
+                        logger.warning(f"F (ID: {task_ctx['complex_task_id']}): ErrIntrospector inspection did not result in an LIS incident.")
+                except Exception as e:
+                    logger.error(f"F (ID: {task_ctx['complex_task_id']}): Error during ErrIntrospector inspection: {e}", exc_info=True)
+            else:
+                logger.info(f"F (ID: {task_ctx['complex_task_id']}): Task completed, but no final result in response for ErrIntrospector inspection.")
 
         return response
 
