@@ -1,5 +1,7 @@
 # Fragmenta-SupraCausal: Conceptual Architecture
 
+**Part of the [Advanced Technical Concepts Overview](../advanced_concepts/Advanced_Technical_Concepts_Overview.md).**
+
 ## 1. Introduction
 
 Fragmenta-SupraCausal is a conceptual evolution of the Fragmenta system, envisioned in `EX1.txt`. It represents an advanced AI architecture that tightly integrates two key technologies:

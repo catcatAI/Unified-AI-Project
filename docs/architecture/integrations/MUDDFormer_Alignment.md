@@ -1,5 +1,7 @@
 # MUDDFormer Principles and Alignment with Fragmenta's Architecture
 
+**Part of the [Advanced Technical Concepts Overview](../advanced_concepts/Advanced_Technical_Concepts_Overview.md).**
+
 ## 1. Introduction
 
 This document explores the MUDDFormer architecture, known for its "Multi-path Dense Dynamic Connections," and discusses its conceptual alignment with the design philosophy of the Fragmenta system within the Unified-AI-Project. While Fragmenta does not explicitly implement MUDDFormer, the principles behind MUDDFormer resonate with Fragmenta's goals for dynamic, multi-layered semantic processing and efficient information flow, as touched upon in `EX1.txt`.
