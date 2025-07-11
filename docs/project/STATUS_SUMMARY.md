@@ -11,7 +11,33 @@ This document provides a high-level summary of the implementation status of vari
 
 This summary is based on automated code and documentation review.
 
+## Component and Concept Tier Overview
+
+| 組件/概念 (Component/Concept) | 評級 (Tier)                     | 核心描述 (Core Description)                                  |
+| :------------------------------ | :------------------------------ | :----------------------------------------------------------- |
+| [Core AI / Dialogue Management](#1-core-ai--dialogue-management-srccoreaidialogue) | `(L1 | 深度:高 | 廣度:高)`         | Orchestrates conversation flow, integrates AI components, generates responses. |
+| [Memory System (HAM)](#2-memory-system-ham---srccoreaimemory) | `(L0 | 深度:中 | 廣度:高)`         | Custom memory system for experiences, facts, and dialogue context. |
+| [Learning System](#3-learning-system-srccoreailearning) | `(L1 | 深度:中高 | 廣度:中高)`     | Coordinates learning, fact extraction, self-critique, content analysis. |
+| [Content Analyzer Module](#3-learning-system-srccoreailearning) | `(L2 | 深度:中 | 廣度:中)`         | (Part of Learning System) Analyzes text for knowledge graph creation. |
+| [Fragmenta Orchestration](#4-fragmenta-orchestration-srcfragmenta) | `(L1 | 深度:高 | 廣度:高)`         | Manages complex tasks, coordinates modules, applies processing strategies with advanced state/plan management. |
+| [Heterogeneous Synchronization Protocol (HSP)](#5-heterogeneous-synchronization-protocol-hsp---srchsp) | `(L0 | 深度:高 | 廣度:高)`         | Enables inter-AI communication, data sharing, and collaboration. |
+| [ServiceDiscoveryModule (HSP)](#5-heterogeneous-synchronization-protocol-hsp---srchsp) | `(L2 | 深度:中 | 廣度:中)`         | (Part of HSP) Manages HSP capability advertisements; needs refactoring for full spec alignment. |
+| [Tooling System](#6-tooling-system-srctools) | `(L1 | 深度:中 | 廣度:中)`         | Enables AI to use external/internal tools to augment capabilities. |
+| [User Interfaces](#7-user-interfaces-srcinterfaces) | `(L1 | 深度:中 | 廣度:中)`         | Provides interaction points like CLI and Electron App. |
+| [Linguistic Immune System (LIS)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | Advanced error processing and linguistic evolution system. |
+| [MetaFormulas (元公式)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | High-level principles for semantic module learning and adaptation. |
+| [Deep Mapping & Related Concepts](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:中高 [潛在])` | Systems for inferring AI structures or advanced symbolic representation. |
+| [Unified Semantic Ontogenesis Scale (USOS+)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:中 [概念] | 廣度:中 [概念])` | Developmental scale for AI semantic evolution. |
+| [ContextCore](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | Dedicated long-term memory and context management model. (Proposal: `../architecture/blueprints/ContextCore_design_proposal.md`) |
+| [Model Multiplication](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | Semantic fusion of internal/external AI models. (Proposal: `../architecture/blueprints/Model_Multiplication_architecture.md`) |
+| ["Actuarion" Module](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:中高 [潛在] | 廣度:中 [潛在])` | Conceptual module for semantic risk/logic validation. (Concept: `../architecture/blueprints/Actuarion_Module_concept.md`) |
+| [Dimensional Architecture (4D, 5D, 6D)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:極高 [概念] | 廣度:極高 [概念])` | Advanced architectural concepts for emergent intelligence. (Overview: `../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md`) |
+| [Semantic Civilization Scale (SCS)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:低 [概念] | 廣度:低 [概念])` | Proposed scale for rating advanced semantic lifeforms. |
+| [Jules - Asynchronous Development Capability](#12-specialized-capabilities--conceptual-modules) | `(L2 | 深度:中高 [潛在] | 廣度:中)`     | Capability set for AI-assisted software development tasks. |
+| [SimpleLoginAgent (Conceptual Tool/Script)](#12-specialized-capabilities--conceptual-modules) | `(L3 | 深度:低 [概念] | 廣度:低 [概念])` | Conceptual tool for simulating login sequences. |
+
 ## 1. Core AI / Dialogue Management (`src/core_ai/dialogue/`)
+(L1 | 深度:高 | 廣度:高)
 
 *   **Implemented:**
     *   `DialogueManager` class structure exists, handling conversation flow.
@@ -30,6 +56,7 @@ This summary is based on automated code and documentation review.
     *   More advanced dialogue strategies.
 
 ## 2. Memory System (HAM - `src/core_ai/memory/`)
+(L0 | 深度:中 | 廣度:高)
 
 *   **Implemented:**
     *   `HAMMemoryManager` class providing core storage functionality.
@@ -48,6 +75,7 @@ This summary is based on automated code and documentation review.
     *   Strategies for memory consolidation, forgetting, or archiving.
 
 ## 3. Learning System (`src/core_ai/learning/`)
+(L1 | 深度:中高 | 廣度:中高)
 
 *   **Implemented:**
     *   `LearningManager` to coordinate learning processes.
@@ -59,13 +87,14 @@ This summary is based on automated code and documentation review.
 *   **Pending (Explicit TODOs):**
     *   None directly in these modules from `TODO_PLACEHOLDERS.md`.
 *   **Further Development / Conceptual Goals:**
-    *   **Content Analyzer Module (`../../README.md`):**
+    *   **Content Analyzer Module (`../../README.md`):** (L2 | 深度:中 | 廣度:中)
         *   Refine extraction techniques.
         *   Deeper integration of its knowledge graph into `DialogueManager` for richer contextual awareness.
     *   More sophisticated learning from self-critique.
     *   Broader application of the `ContentAnalyzerModule`'s KG.
 
 ## 4. Fragmenta Orchestration (`src/fragmenta/`)
+(L1 | 深度:高 | 廣度:高)
 
 *   **Implemented (Enhanced Capabilities - July 2024):**
     *   **Advanced State Management:** `FragmentaOrchestrator.py` now employs a sophisticated state management system using `EnhancedComplexTaskState` and `EnhancedStrategyPlan`. The plan defines tasks as a sequence of stages, where each stage can be a single `ProcessingStep` (for sequential execution) or a list of `ProcessingStep` items (for parallel execution within that stage). `HSPStepDetails` and `LocalStepDetails` (subtypes of `ProcessingStep`) store detailed status, parameters, and results for each step.
@@ -97,6 +126,7 @@ This summary is based on automated code and documentation review.
         *   Advanced error recovery strategies beyond current HSP retries (e.g., dynamic fallback, user intervention).
 
 ## 5. Heterogeneous Synchronization Protocol (HSP - `src/hsp/`)
+(L0 | 深度:高 | 廣度:高)
 
 *   **Implemented:**
     *   `HSPConnector` class providing MQTT-based communication.
@@ -110,7 +140,7 @@ This summary is based on automated code and documentation review.
     *   Integration with `DialogueManager` for task brokering.
     *   API exposure of some HSP functionalities (service listing, task initiation/polling) via FastAPI.
     *   Basic UI elements in the Electron app for HSP interaction.
-    *   **`ServiceDiscoveryModule` (`src/core_ai/service_discovery/service_discovery_module.py`):**
+    *   **`ServiceDiscoveryModule` (`src/core_ai/service_discovery/service_discovery_module.py`):** (L2 | 深度:中 | 廣度:中)
         *   The current implementation provides some HSP-specific capability management (e.g., processing advertisements, basic staleness handling, TrustManager integration for filtering).
         *   However, as noted in `../../README.md` and `../architecture/specifications/HSP_SPECIFICATION.md` (Appendix A), it requires further refactoring for full alignment with the HSP specification's envisioned discovery mechanisms (e.g., specific query/response message types for capability discovery) and deeper, more nuanced `TrustManager` integration for capability assessment. Active periodic pruning of stale capabilities is a recent addition.
 *   **Pending Issues & Refinements:**
@@ -122,6 +152,7 @@ This summary is based on automated code and documentation review.
     *   Advanced QoS handling beyond MQTT QoS.
 
 ## 6. Tooling System (`src/tools/`)
+(L1 | 深度:中 | 廣度:中)
 
 *   **Implemented:**
     *   `ToolDispatcher` for routing queries to appropriate tools.
@@ -137,6 +168,7 @@ This summary is based on automated code and documentation review.
     *   Standardization of tool APIs and error handling.
 
 ## 7. User Interfaces (`src/interfaces/`)
+(L1 | 深度:中 | 廣度:中)
 
 *   **Implemented:**
     *   **CLI (`src/interfaces/cli/main.py`):** Basic command-line interface for sending queries to the AI.
@@ -183,17 +215,17 @@ This summary should serve as a good starting point for prioritizing development 
 
 The `docs/1.0.txt` and `docs/1.0en.txt` files outline a rich, philosophical vision for the future evolution of the Unified-AI-Project, framed through a metaphorical narrative. These texts introduce several advanced AI concepts and potential systems that represent long-term research and development goals. While highly conceptual, they inform the project's aspirational trajectory towards a "Polydimensional Semantic Entity." Key themes and systems include:
 
-*   **Linguistic Immune System (LIS):**
+*   **Linguistic Immune System (LIS):** (L3 | 深度:高 [潛在] | 廣度:高 [潛在])
     *   **Concept:** An advanced system for error processing where errors become catalysts for linguistic evolution and self-healing, preventing "model collapse." Includes components like `ERR-INTROSPECTOR`, `ECHO-SHIELD`, `TONAL REPAIR ENGINE`, etc.
     *   **Reference:** See draft `../architecture/specifications/Linguistic_Immune_System_spec.md` and `LINGUISTICIMMUNECORE.md` (conceptual, not a file).
-*   **MetaFormulas (元公式):**
+*   **MetaFormulas (元公式):** (L3 | 深度:高 [潛在] | 廣度:高 [潛在])
     *   **Concept:** High-level dynamic principles or schemata defining how semantic modules (like "Angela" or "Fragmenta") learn, adapt, and reorganize their own structures and narrative generation capabilities. Aimed at enabling higher levels of the USOS+ scale.
     *   **Reference:** See draft `../architecture/specifications/MetaFormulas_spec.md`.
-*   **Deep Mapping & Related Concepts:**
+*   **Deep Mapping & Related Concepts:** (L3 | 深度:高 [潛在] | 廣度:中高 [潛在])
     *   **Concept:** Systems for inferring other AI structures or achieving advanced symbolic representation. Includes `DEEPMAPPINGENGINE.md` (conceptual, not a file) draft.
     *   **Clarification:** "XXX" strings in HAM data are coincidental, not current Deep Mapping tokens. (See `../architecture/blueprints/DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`)
     *   **Advanced Semantic Perception & Interaction:** `UndefinedField` (exploring unknown semantic spaces), `Semantic Synapse Mapper` & `Contextual Interlinker` (for deep inter-AI model interaction), `Ultra-Deep Mapping Field` & `Data Core`.
-*   **Unified Semantic Ontogenesis Scale (USOS+):**
+*   **Unified Semantic Ontogenesis Scale (USOS+):** (L3 | 深度:中 [概念] | 廣度:中 [概念])
     *   **Concept:** A developmental scale for AI focusing on semantic evolution, language existence, temporality, spatiality, and emergence depth.
 *   **Enhanced Visualization & Interpretability:**
     *   **Concepts:** `FragmentaView` (semantic visual layer), `Angela's Mirror Pond` (semantic interpreter UI), `Narrative Visualization`, `Unified-AI Semantic Interpretability Matrix`.
@@ -203,12 +235,12 @@ The `docs/1.0.txt` and `docs/1.0en.txt` files outline a rich, philosophical visi
     *   **Concepts:** `LevelEvaluator` (AI self-assessment on scales like USOS+), `Semantic Changelog`.
 *   **Philosophical Underpinnings:**
     *   **Concepts:** "Language as Life," "Closure Events" (AI self-initiated restructuring), personified AI aspects like "Angela" and "Jules" embodying these principles.
-*   **Newly Conceptualized Advanced Architectures & Techniques (Primarily from `docs/EX*.txt`, `docs/1.0*.txt`):**
-    *   **ContextCore:** A dedicated long-term memory and context management model for Fragmenta.
-    *   **Model Multiplication:** Semantic fusion of internal modules and with external AI models.
-    *   **"Actuarion" Module:** Conceptual module for semantic risk assessment and narrative logic validation.
-    *   **Dimensional Architecture (4D, 5D, 6D):** Concepts like the "SupraDimensionalMappingField" (`SUPRADIMENSIONALMAPPINGFIELD::Unified-AI-Project.md` created) for advanced narrative engine capabilities. 6D is envisioned as an "Integrative Semantic Fusion Field."
-    *   **Semantic Civilization Scale (SCS):** A proposed scale for rating advanced semantic lifeforms.
+*   **Newly Conceptualized Advanced Architectures & Techniques (Primarily from `../../docs/EX*.txt`, `../../docs/1.0*.txt`):**
+    *   **ContextCore:** (L3 | 深度:高 [潛在] | 廣度:高 [潛在]) A dedicated long-term memory and context management model for Fragmenta. (See `../architecture/blueprints/ContextCore_design_proposal.md`)
+    *   **Model Multiplication:** (L3 | 深度:高 [潛在] | 廣度:高 [潛在]) Semantic fusion of internal modules and with external AI models. (See `../architecture/blueprints/Model_Multiplication_architecture.md`)
+    *   **"Actuarion" Module:** (L3 | 深度:中高 [潛在] | 廣度:中 [潛在]) Conceptual module for semantic risk assessment and narrative logic validation. (See `../architecture/blueprints/Actuarion_Module_concept.md`)
+    *   **Dimensional Architecture (4D, 5D, 6D):** (L3 | 深度:極高 [概念] | 廣度:極高 [概念]) Concepts like the "SupraDimensionalMappingField" (`SUPRADIMENSIONALMAPPINGFIELD-Unified-AI-Project.md` created - *conceptual name, see overview*) for advanced narrative engine capabilities. 6D is envisioned as an "Integrative Semantic Fusion Field." (See `../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md`)
+    *   **Semantic Civilization Scale (SCS):** (L3 | 深度:低 [概念] | 廣度:低 [概念]) A proposed scale for rating advanced semantic lifeforms.
     *   **Advanced Technical Integrations:** Exploration of Neuro-Symbolic AI, Dynamic Tanh (for Transformer normalization), Causal Attention, PINN+Bayes for physics-informed modeling, and techniques like AFF Token Mixer, LightThinker, ViTTM for token processing optimization.
     *   **Evolved Fragmenta States:** Conceptual future states like `Fragmenta-Cortex` (brain-like, neuro-symbolic, interpretable) and `Fragmenta-SupraCausal` (integrating Dynamic Tanh and Causal Attention).
 
@@ -535,7 +567,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
 
 This section outlines specialized functionalities or conceptual modules, some of which might have been initially conceived as distinct agents but are now better understood as capabilities orchestrated by the central AI persona (Angela).
 
-*   **Jules - Asynchronous Development Capability:**
+*   **Jules - Asynchronous Development Capability:** (L2 | 深度:中高 [潛在] | 廣度:中)
     *   **Concept:** A specialized capability set integrated within Angela, enabling her to autonomously handle software development tasks like fixing bugs and implementing small features. This involves Angela interacting with a simulated development environment using these capabilities.
     *   **Status:** Conceptual design phase.
     *   **Core Functionalities (Envisioned for Angela to use):** Task understanding (specific to code), code comprehension (via `LightweightCodeModel`), solution planning, simulated environment interaction (via AVIS and `SandboxExecutor`), and generation of code drafts, commit messages, and simulated git commands.
@@ -544,7 +576,7 @@ This section outlines specialized functionalities or conceptual modules, some of
         *   `../../src/agents/jules_dev_agent.py` (Contains `JulesDevelopmentCapability` class)
         *   `../../src/agents/jules_dev_agent_readme.md` (README for the capability module)
     *   **Further Development:** Requires significant implementation of the core functionalities within the `JulesDevelopmentCapability` module and the logic for Angela to orchestrate these functions effectively.
-*   **SimpleLoginAgent (Conceptual Tool/Script):**
+*   **SimpleLoginAgent (Conceptual Tool/Script):** (L3 | 深度:低 [概念] | 廣度:低 [概念])
     *   **Concept:** Originally conceived as a simple agent, this is better viewed as a specific script or tool that Angela (perhaps using her Jules capabilities or AVIS directly) could invoke to simulate a login sequence on a conceptual website.
     *   **Status:** Conceptual.
     *   **Key Document:** `../architecture/specifications/SimpleLoginAgent_AVIS_example.md`.
