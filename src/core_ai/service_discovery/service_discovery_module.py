@@ -118,9 +118,23 @@ class ServiceDiscoveryModule:
         )
 
         with self._store_lock:
+            if capability_id in self._capabilities_store:
+                old_stored_info = self._capabilities_store[capability_id]
+                logger.info(
+                    f"Updating existing capability advertisement: '{name}' (ID: {capability_id}) from AI '{sender_ai_id}'. "
+                    f"Old version: {old_stored_info['payload'].get('version')}, New version: {version}. "
+                    f"Old status: {old_stored_info['payload'].get('availability_status')}, New status: {availability_status}."
+                )
+            else:
+                logger.info(
+                    f"Processed new capability advertisement: '{name}' (ID: {capability_id}, Version: {version}) "
+                    f"from AI '{sender_ai_id}'. Availability: {availability_status}."
+                )
             self._capabilities_store[capability_id] = stored_info
 
-        logger.info(f"Processed capability advertisement: '{name}' (ID: {capability_id}, Version: {version}) from AI '{sender_ai_id}'. Availability: {availability_status}.")
+        # Original log message can be removed or kept if it adds value.
+        # For now, let's remove it as the new logs are more specific.
+        # logger.info(f"Processed capability advertisement: '{name}' (ID: {capability_id}, Version: {version}) from AI '{sender_ai_id}'. Availability: {availability_status}.")
 
     def _is_stale(self, stored_capability: StoredCapabilityInfo, current_time: datetime) -> bool:
         """Checks if a stored capability is stale."""
