@@ -490,9 +490,25 @@ class FragmentaOrchestrator:
             "all_step_statuses": all_step_statuses
         }
 
+
+        # Extract keywords from description_summary for HAM metadata
+        summary_keywords = []
+        if isinstance(description_summary, str):
+            # Simple keyword extraction: lowercase, split, take unique, first N words (e.g., up to 5)
+            # More sophisticated keyword extraction could be used in the future.
+            words = [word.strip(".,!?;:'\"()") for word in description_summary.lower().split()]
+            unique_words = []
+            for word in words:
+                if word and word not in unique_words: # Basic stopword removal could be added here
+                    unique_words.append(word)
+            summary_keywords = unique_words[:5]
+
         ham_metadata = {
             "source_module": "FragmentaOrchestrator",
-            "complex_task_id_ref": task_ctx["complex_task_id"] # For potential direct HAM query on this ID
+            "complex_task_id_ref": task_ctx["complex_task_id"], # For potential direct HAM query on this ID
+            "task_description_keywords": summary_keywords,
+            "strategy_plan_name_ref": task_ctx["strategy_plan"]["name"], # Add plan name for easier filtering
+            "final_status_ref": task_ctx["overall_status"] # Add final status for easier filtering
         }
 
         try:
@@ -556,30 +572,84 @@ class FragmentaOrchestrator:
                             logger.warning(f"  - Past outcome (MemID: {outcome_recall_result.get('id')}) gist not a dict: {type(outcome_recall_result.get('rehydrated_gist'))}")
 
                 # Placeholder for actual decision logic based on past_outcomes:
-                # if any(outcome['final_status'] == 'failed_execution' for outcome in relevant_past_outcomes):
-                #     logger.info(f"F (ID: {complex_task_id}): Similar tasks failed before. Considering alternative strategy.")
-                #     # ... logic to pick a different plan_name or modify steps ...
+                # --- Basic Adaptive Logic based on past_outcomes ---
+                problematic_past_strategy_names: List[str] = []
+                if past_outcomes: # Ensure past_outcomes is not None and not empty
+                    strategy_failure_counts: Dict[str, int] = {}
+                    for outcome_recall_result in past_outcomes:
+                        if isinstance(outcome_recall_result.get("rehydrated_gist"), dict):
+                            past_payload = outcome_recall_result["rehydrated_gist"]
+                            past_strategy_name = past_payload.get('strategy_plan_name')
+                            past_status = past_payload.get('final_status')
+                            if past_strategy_name and past_status == "failed_execution":
+                                strategy_failure_counts[past_strategy_name] = strategy_failure_counts.get(past_strategy_name, 0) + 1
+
+                    # Identify strategies that failed frequently (e.g., more than once for this simple heuristic)
+                    for name, count in strategy_failure_counts.items():
+                        if count > 1: # Arbitrary threshold for "frequent failure"
+                            problematic_past_strategy_names.append(name)
+                            logger.info(f"F (ID: {complex_task_id}): Strategy '{name}' identified as problematic (failed {count} times) for similar past tasks.")
+
             except Exception as e:
-                logger.error(f"F (ID: {complex_task_id}): Error querying HAM for past task outcomes: {e}", exc_info=True)
-        # --- End HAM Query Section ---
+                logger.error(f"F (ID: {complex_task_id}): Error processing past task outcomes from HAM: {e}", exc_info=True)
+        # --- End HAM Query & Basic Adaptive Logic Section ---
 
         steps: List[ProcessingStep] = []; plan_name = "default_single_step_plan"; plan_id = f"plan_{complex_task_id}_{uuid.uuid4().hex[:4]}"
+
+        # --- Standard Strategy Determination Logic ---
+        # This logic will now be influenced by `problematic_past_strategy_names`
+
+        # 1. HSP Dispatch based on direct request
         if task_description.get("dispatch_to_hsp_capability_id"):
-            if not self.service_discovery or not self.hsp_connector: plan_name = "error_hsp_unavailable"
+            tentative_plan_name = "dispatch_to_hsp_capability"
+            if tentative_plan_name in problematic_past_strategy_names:
+                logger.warning(f"F (ID: {complex_task_id}): Default strategy '{tentative_plan_name}' was problematic in the past. Skipping direct HSP dispatch based on task_description field.")
+            elif not self.service_discovery or not self.hsp_connector:
+                plan_name = "error_hsp_unavailable" # This will likely be caught by validation or result in failure
             else:
-                cap_id = task_description["dispatch_to_hsp_capability_id"]; capability = self.service_discovery.get_capability_by_id(cap_id, exclude_unavailable=True)
+                cap_id = task_description["dispatch_to_hsp_capability_id"]
+                capability = self.service_discovery.get_capability_by_id(cap_id, exclude_unavailable=True)
                 if capability and capability.get("ai_id"):
-                    plan_name = "dispatch_to_hsp_capability"
+                    plan_name = tentative_plan_name # Use the good name
                     steps.append(HSPStepDetails(step_id=f"{plan_id}_s0_hsp", type="hsp_task", capability_id=cap_id, target_ai_id=capability["ai_id"], request_parameters=task_description.get("hsp_task_parameters",{}), input_sources=None,input_mapping=None,status="pending_dispatch",correlation_id=None,dispatch_timestamp=None,result=None,error_info=None,max_retries=self.hsp_task_defaults["max_retries"],retries_left=self.hsp_task_defaults["max_retries"],retry_delay_seconds=self.hsp_task_defaults["initial_retry_delay_seconds"],last_retry_timestamp=None))
-                else: plan_name = f"error_hsp_cap_unavailable_{cap_id}"; steps.append(HSPStepDetails(step_id=f"{plan_id}_s0_hsp_fail",type="hsp_task",capability_id=cap_id,target_ai_id="unknown",request_parameters={},input_sources=None,input_mapping=None,status="failed_dispatch",correlation_id=None,dispatch_timestamp=None,result=None,error_info={"message":f"Cap '{cap_id}' not found"},max_retries=0,retries_left=0,retry_delay_seconds=0,last_retry_timestamp=None))
-        elif not steps and task_description.get("requested_tool"):
-            rt = task_description["requested_tool"]; plan_name = f"direct_tool_call_{rt}"
-            steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_local",type="local_tool",tool_or_model_name=rt,parameters=task_description.get("tool_params",{}),input_sources=None,input_mapping=None,status="pending",result=None,error_info=None, max_retries=self.local_task_defaults["max_retries"], retries_left=self.local_task_defaults["max_retries"], retry_delay_seconds=self.local_task_defaults["initial_retry_delay_seconds"], last_retry_timestamp=None))
-        if not steps: # Default local processing
+                else:
+                    plan_name = f"error_hsp_cap_unavailable_{cap_id}"
+                    steps.append(HSPStepDetails(step_id=f"{plan_id}_s0_hsp_fail",type="hsp_task",capability_id=cap_id,target_ai_id="unknown",request_parameters={},input_sources=None,input_mapping=None,status="failed_dispatch",correlation_id=None,dispatch_timestamp=None,result=None,error_info={"message":f"Cap '{cap_id}' not found"},max_retries=0,retries_left=0,retry_delay_seconds=0,last_retry_timestamp=None))
+
+        # 2. Local Tool Call based on direct request (if no HSP step was added yet)
+        if not steps and task_description.get("requested_tool"):
+            rt = task_description["requested_tool"]
+            tentative_plan_name = f"direct_tool_call_{rt}"
+            if tentative_plan_name in problematic_past_strategy_names:
+                logger.warning(f"F (ID: {complex_task_id}): Default strategy '{tentative_plan_name}' was problematic in the past. Skipping direct tool call.")
+            else:
+                plan_name = tentative_plan_name
+                steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_local",type="local_tool",tool_or_model_name=rt,parameters=task_description.get("tool_params",{}),input_sources=None,input_mapping=None,status="pending",result=None,error_info=None, max_retries=self.local_task_defaults["max_retries"], retries_left=self.local_task_defaults["max_retries"], retry_delay_seconds=self.local_task_defaults["initial_retry_delay_seconds"], last_retry_timestamp=None))
+
+        # 3. Default local processing (chunking or direct LLM) if no specific dispatch/tool request filled `steps`
+        if not steps:
             if input_info.get("type") == "text" and input_info.get("size",0) > self.config.get("default_chunking_threshold",1000):
-                plan_name = "chunk_summarize_local"; steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_chunk",type="local_chunk_process",tool_or_model_name="llm_summarize_chunk",parameters={"chunking_params": self.config.get("default_text_chunking_params"), "merging_params":{"method":"join_with_newline"}},input_sources=None,input_mapping=None,status="pending",result=None,error_info=None, max_retries=self.local_task_defaults["max_retries"], retries_left=self.local_task_defaults["max_retries"], retry_delay_seconds=self.local_task_defaults["initial_retry_delay_seconds"], last_retry_timestamp=None))
-            else: plan_name = "direct_llm_local"; steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_llm",type="local_llm",tool_or_model_name="llm_direct_process",parameters={},input_sources=None,input_mapping=None,status="pending",result=None,error_info=None, max_retries=self.local_task_defaults["max_retries"], retries_left=self.local_task_defaults["max_retries"], retry_delay_seconds=self.local_task_defaults["initial_retry_delay_seconds"], last_retry_timestamp=None))
-        if not steps: plan_name="error_no_steps"; steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_err",type="local_llm",tool_or_model_name="error",parameters={},input_sources=None,input_mapping=None,status="failed",result=None,error_info={"message":"No steps generated"}, max_retries=0, retries_left=0, retry_delay_seconds=0, last_retry_timestamp=None)) # No retries for error step
+                tentative_plan_name = "chunk_summarize_local"
+                if tentative_plan_name in problematic_past_strategy_names:
+                    logger.warning(f"F (ID: {complex_task_id}): Default strategy '{tentative_plan_name}' was problematic. Falling through (may lead to direct_llm_local or error).")
+                    # If chunking was problematic, maybe direct LLM is the fallback, or it will hit the final default.
+                else:
+                    plan_name = tentative_plan_name
+                    steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_chunk",type="local_chunk_process",tool_or_model_name="llm_summarize_chunk",parameters={"chunking_params": self.config.get("default_text_chunking_params"), "merging_params":{"method":"join_with_newline"}},input_sources=None,input_mapping=None,status="pending",result=None,error_info=None, max_retries=self.local_task_defaults["max_retries"], retries_left=self.local_task_defaults["max_retries"], retry_delay_seconds=self.local_task_defaults["initial_retry_delay_seconds"], last_retry_timestamp=None))
+
+            if not steps: # If chunking wasn't chosen or was skipped due to past failures
+                tentative_plan_name = "direct_llm_local"
+                if tentative_plan_name in problematic_past_strategy_names:
+                     logger.warning(f"F (ID: {complex_task_id}): Default strategy '{tentative_plan_name}' was problematic. No further fallbacks, may lead to error_no_steps.")
+                else:
+                    plan_name = tentative_plan_name
+                    steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_llm",type="local_llm",tool_or_model_name="llm_direct_process",parameters={},input_sources=None,input_mapping=None,status="pending",result=None,error_info=None, max_retries=self.local_task_defaults["max_retries"], retries_left=self.local_task_defaults["max_retries"], retry_delay_seconds=self.local_task_defaults["initial_retry_delay_seconds"], last_retry_timestamp=None))
+
+        # 4. Final fallback if no steps were generated by any logic above
+        if not steps:
+            plan_name="error_no_steps"
+            steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_err",type="local_llm",tool_or_model_name="error",parameters={},input_sources=None,input_mapping=None,status="failed",result=None,error_info={"message":"No steps generated"}, max_retries=0, retries_left=0, retry_delay_seconds=0, last_retry_timestamp=None)) # No retries for error step
+
         return EnhancedStrategyPlan(plan_id=plan_id, name=plan_name, steps=steps)
 
     def _chunk_data(self, data: any, chunking_params: Optional[Dict[str, Any]] = None) -> list: # Keep as is
