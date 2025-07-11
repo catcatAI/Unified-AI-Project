@@ -2,6 +2,7 @@
 
 from typing import Optional, Dict, Any
 import uuid
+import os
 
 # Core AI Modules
 from core_ai.dialogue.dialogue_manager import DialogueManager
@@ -79,8 +80,8 @@ DEFAULT_LLM_CONFIG: LLMInterfaceConfig = { #type: ignore
 
 def initialize_services(
     ai_id: str = DEFAULT_AI_ID,
-    hsp_broker_address: str = DEFAULT_MQTT_BROKER,
-    hsp_broker_port: int = DEFAULT_MQTT_PORT,
+    hsp_broker_address: str = os.getenv("MQTT_BROKER_ADDRESS", DEFAULT_MQTT_BROKER),
+    hsp_broker_port: int = int(os.getenv("MQTT_BROKER_PORT", DEFAULT_MQTT_PORT)),
     llm_config: Optional[LLMInterfaceConfig] = None,
     operational_configs: Optional[Dict[str, Any]] = None,
     use_mock_ham: bool = False # Flag to use MockHAM for CLI/testing ease

@@ -303,6 +303,64 @@ class DialogueManager:
             print(f"DialogueManager: KG for context '{context_id}' updated: {nx_graph.number_of_nodes()} nodes, {nx_graph.number_of_edges()} edges.")
         except Exception as e: print(f"DialogueManager: Error during content analysis for '{context_id}': {e}")
 
+    async def get_response_with_tool_support(self, user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> Dict[str, Any]:
+        print(f"DialogueManager: Received input='{user_input}', session_id='{session_id}', user_id='{user_id}'")
+        ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
+        
+        # Store user input
+        user_mem_id: Optional[str] = None
+        if self.memory_manager:
+            user_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id} # type: ignore
+            user_mem_id = self.memory_manager.store_experience(user_input, "user_dialogue_text", user_metadata)
+
+        # Check for formula match that indicates a tool call
+        matched_formula = self.formula_engine.match_input(user_input)
+        if matched_formula:
+            formula_result = self.formula_engine.execute_formula(matched_formula)
+            action_name = formula_result.get("action_name")
+            if action_name == "dispatch_tool":
+                action_params = formula_result.get("action_params", {})
+                tool_name = action_params.get("tool_name")
+                tool_query = action_params.get("tool_query")
+                if tool_name and tool_query:
+                    return {
+                        "type": "tool_call",
+                        "tool_name": tool_name,
+                        "tool_query": tool_query,
+                        "action_params": action_params
+                    }
+
+        # If no tool call, fallback to simple response generation
+        response_text = await self.get_simple_response(user_input, session_id, user_id)
+        return {"type": "text", "content": response_text}
+
+    async def get_response_from_tool_result(self, tool_name: str, tool_result: Dict[str, Any], session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
+        ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
+        
+        # Log the tool result
+        if self.memory_manager:
+            tool_metadata = {
+                "speaker": "system",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "user_id": user_id,
+                "session_id": session_id,
+                "tool_name": tool_name,
+                "tool_result": tool_result
+            }
+            self.memory_manager.store_experience(f"Tool {tool_name} executed.", "system_tool_result", tool_metadata)
+
+        # Generate a response based on the tool result
+        prompt = f"The user asked to use the '{tool_name}' tool. The tool returned the following result: {json.dumps(tool_result)}. Please formulate a natural language response to the user based on this result."
+        
+        response_text = self.llm_interface.generate_response(prompt=prompt)
+        
+        # Store AI response
+        if self.memory_manager:
+            ai_metadata: DialogueMemoryEntryMetadata = {"speaker": "ai", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id} # type: ignore
+            self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata)
+            
+        return f"{ai_name}: {response_text}"
+
     async def get_simple_response(self, user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
         print(f"DialogueManager: Received input='{user_input}', session_id='{session_id}', user_id='{user_id}'")
         ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
