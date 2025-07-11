@@ -1,10 +1,31 @@
-# Fragmenta Meta-Orchestration System - Design Specification v0.1
+# Fragmenta Meta-Orchestration System - Design Specification v0.2
+
+> [!IMPORTANT]
+> **Implementation Status (as of July 10, 2024):**
+> The Fragmenta Orchestrator (`src/fragmenta/fragmenta_orchestrator.py`) has undergone significant refactoring and enhancement compared to the initial v0.1 conceptual design.
+> Key implemented features in the current version (approximating v0.2 functionality) include:
+> *   **Advanced State Management:** Utilizes `EnhancedComplexTaskState` and `EnhancedStrategyPlan` TypedDicts for robust tracking of complex, multi-step tasks.
+> *   **Stage-Based Execution Model:** Plans are defined as a sequence of "stages," where each stage can contain one or more "processing steps."
+> *   **Sequential and Foundational Parallel Execution:** Stages are executed sequentially. Steps within a single stage (if defined as a list) are dispatched for parallel execution, with a basic join mechanism before proceeding to the next stage.
+> *   **HSP Task Lifecycle Management:** Full lifecycle support for HSP sub-tasks, including dispatch, result handling, configurable timeouts, and automated retries with exponential backoff.
+> *   **Input/Output Mapping:** Steps can define `input_sources` to aggregate results from prior steps and `input_mapping` to construct parameters using basic f-string-like templating.
+> *   **Core Orchestration Logic:** The `_advance_complex_task` method acts as the central state machine.
+>
+> However, many advanced features originally envisioned for Fragmenta (and some still listed in this document as future goals) remain conceptual or are pending full implementation. These include, but are not limited to:
+> *   Sophisticated dynamic strategy generation and selection (beyond current simple rule-based determination).
+> *   Advanced data pre-processing techniques (e.g., true semantic chunking).
+> *   Complex graph-like dependency management between steps (beyond current stage-based model).
+> *   Advanced result synthesis and post-processing methods.
+> *   Comprehensive self-evaluation and meta-learning capabilities.
+> *   Full hardware awareness and adaptive behavior.
+>
+> This document aims to reflect the current design direction and implemented foundations, while also retaining some of the original broader vision for context. Readers should refer to the source code and `docs/project/STATUS_SUMMARY.md` for the most up-to-date details on specific feature implementations.
 
 ## 1. Introduction
 
 Fragmenta is envisioned as a meta-learning and task orchestration system for MikoAI. Its primary role is to enable MikoAI to handle complex tasks, manage large data inputs/outputs, and coordinate various specialized AI modules and tools. Fragmenta aims to provide a layer of advanced reasoning and strategy selection, breaking down complex problems into manageable sub-tasks and synthesizing results.
 
-This document outlines the initial conceptual design (v0.1) for Fragmenta, focusing on its core responsibilities, interactions, and particularly its approach to handling large data volumes.
+This document outlines the conceptual design (v0.2, reflecting recent enhancements) for Fragmenta, focusing on its core responsibilities, interactions, and particularly its approach to handling large data volumes and distributed task execution.
 
 ## 2. Core Responsibilities
 
@@ -14,29 +35,27 @@ Fragmenta will be responsible for:
 2.  **Strategy Selection:** Based on the task analysis (including input data type and size), selecting an appropriate processing strategy. This might involve choosing specific models, tools, or data handling techniques (e.g., chunking).
 3.  **Data Pre-processing (especially for large data):**
     *   **Input Analysis:** Detecting the type (text, file path, raw binary, structured data) and size of input data.
-    *   **Chunking:** If data is large (e.g., long text, large files), splitting it into smaller, manageable chunks suitable for processing by underlying models or tools (e.g., respecting LLM context window limits).
-    *   **Metadata Generation:** Creating metadata for chunks (e.g., sequence ID, source, relationship to other chunks).
-4.  **Sub-task Orchestration & Dispatch:**
-    *   Dispatching chunks or sub-tasks to appropriate specialized modules:
-        *   `HAMMemoryManager` for memory recall or storage of intermediate results.
-        *   `ToolDispatcher` for functional tools (math, logic, translation, etc.).
-        *   `LLMInterface` for generative tasks, summarization, analysis of chunks.
-        *   Future models (Code Model, Daily Language Model).
-        *   Other `core_ai` components.
-    *   **HSP Capabilities (New):** Dispatching sub-tasks to external AIs via HSP if a suitable capability is discovered using the `ServiceDiscoveryModule`.
-    *   Managing dependencies and execution flow between sub-tasks:
-        *   **State Management Core:** Uses `EnhancedComplexTaskState` to track overall task progress and `EnhancedStrategyPlan` to define the execution flow.
-        *   **Plan Structure:** An `EnhancedStrategyPlan` consists of a list of stages. Each stage is either a single `ProcessingStep` (executed sequentially relative to other stages) or a `List[ProcessingStep]` (a group of steps intended for parallel execution within that stage).
-        *   **Step Definitions:** `ProcessingStep` is a union of `HSPStepDetails` and `LocalStepDetails`, each capturing specific parameters, detailed status (e.g., `pending_dispatch`, `dispatched`, `awaiting_result`, `completed`, `failed_response`, `timeout_error`, `retrying` for HSP; `pending`, `in_progress`, `completed`, `failed` for local), results, and error information.
-        *   **Dependency Management & I/O Mapping:**
-            *   `input_sources`: Each step can define multiple input sources (e.g., `[{"step_id": "s1", "output_key": "summary"}, {"step_id": "s2"}]`) to aggregate data from prior completed steps.
-            *   `input_mapping`: Rules (e.g., `{"prompt": "Data: {s1.summary} and {s2.full_result}. Original: {$original_input}"}`) define how aggregated inputs and original task data are mapped to the current step's parameters.
-            *   This is handled by `_prepare_step_input` (gathers inputs, checks dependencies) and `_execute_or_dispatch_step` (applies mappings using f-string-like templating).
-        *   **HSP Task Lifecycle:** For HSP steps, the system manages the full lifecycle, including dispatch, configurable retries with backoff on failure (dispatch error, peer error, timeout), and timeout detection.
-    *   **Parallel Processing (Foundational):** The plan structure allows defining parallel groups of steps within a stage. The orchestrator (`_advance_complex_task`) dispatches all ready steps in such a group and waits for all ofthem to reach a terminal state (basic join mechanism) before proceeding to the next stage. Dynamic identification of parallelizable steps is future work.
+    *   **Chunking:** If data is large (e.g., long text, large files), splitting it into smaller, manageable chunks. This is typically defined as part of a `LocalStepDetails` of type `local_chunk_process`.
+    *   **Metadata Generation:** Implicitly handled by storing chunk processing results or their IDs.
+4.  **Sub-task Orchestration & Dispatch (Core of `_advance_complex_task`):**
+    *   **Execution based on `EnhancedStrategyPlan`:** The orchestrator processes a plan composed of sequential "stages". Each stage can contain a single `ProcessingStep` or a list of `ProcessingStep`s intended for parallel execution.
+    *   **Step Types (`ProcessingStep`):**
+        *   **`LocalStepDetails`**: For tasks executed locally. This can be a call to a tool via `ToolDispatcher` (`local_tool`), direct LLM processing via `LLMInterface` (`local_llm`), or a specific chunk-processing loop (`local_chunk_process`) which itself might use tools or LLMs.
+        *   **`HSPStepDetails`**: For tasks dispatched to external AIs via the Heterogeneous Synchronization Protocol (HSP).
+    *   **Dependency Management (`input_sources`):** Each step can declare its input dependencies on the outputs of prior steps. The orchestrator ensures these dependencies are met before a step is executed.
+    *   **Input/Output Mapping (`input_mapping`):** Allows flexible construction of a step's input parameters from various sources: outputs of prior steps, the original complex task input (`{$original_input}`), or the task description (`{$task_description}`). Uses a basic f-string-like templating mechanism.
+    *   **HSP Task Lifecycle Management:** For `HSPStepDetails`, the orchestrator manages the full lifecycle:
+        *   Dispatching the task request via `HSPConnector`.
+        *   Tracking the task using a `correlation_id`.
+        *   Handling asynchronous results via a callback mechanism (`_handle_hsp_sub_task_result`).
+        *   Implementing configurable timeouts for responses.
+        *   Implementing configurable retries with exponential backoff for dispatch failures, peer-reported errors, or timeouts.
+    *   **Parallel Execution (Foundational):** When a stage in the `EnhancedStrategyPlan` contains a list of `ProcessingStep`s, the orchestrator attempts to dispatch all ready steps in that list concurrently (especially for non-blocking HSP tasks). It then waits for all steps in that parallel group to reach a terminal state (completed or failed with no retries left) before proceeding to the next stage (basic join mechanism).
+    *   **State Tracking:** Utilizes `EnhancedComplexTaskState` to maintain the overall status of the complex task, the status of each individual step, intermediate results, and manages retry/timeout counters for HSP tasks.
 5.  **Result Synthesis & Post-processing:**
-    *   **Merging:** Combining results from all completed steps (local and/or HSP) into a coherent final output. This is handled by the `_merge_results` method using data from `EnhancedComplexTaskState.step_results`, which now aggregates results from a potentially multi-stage plan that may include parallel stages.
-    *   **Formatting:** Ensuring the final output is in the desired format for the user or calling system (handled by the merging strategy or the final step of the plan).
+    *   **Intermediate Results:** Results from each step are stored in `EnhancedComplexTaskState.step_results`.
+    *   **Final Result:** The current implementation primarily considers the result of the final step in the plan as the overall result of the complex task. More sophisticated merging logic (as prototyped in `_merge_results`) for combining outputs from multiple branches or steps is a future enhancement for complex strategies.
+    *   **Formatting:** Ensuring the final output is in the desired format would typically be the responsibility of the final step(s) in the plan or a dedicated formatting step.
 6.  **Self-Evaluation & Learning (Future - Phase 4 Hooks):**
     *   (No change - Still Future) Receiving feedback on task outcomes.
     *   (No change - Still Future) Logging task performance and potentially requesting model/tool upgrades or fine-tuning via hooks.
@@ -60,29 +79,29 @@ The enhanced `FragmentaOrchestrator` relies on the following key `TypedDict` str
     *   `original_task_description`: The initial request.
     *   `original_input_data`: The initial input.
     *   `strategy_plan`: The `EnhancedStrategyPlan` being executed.
-    *   `step_results`: A dictionary mapping `step_id` to its result.
-    *   `overall_status`: Tracks the high-level status of the complex task (e.g., "new", "planning", "executing", "waiting_for_hsp", "completed", "failed_execution").
-    *   `current_executing_step_ids`: List of step IDs currently dispatched (especially relevant for parallel HSP tasks).
-    *   `next_step_to_evaluate_index`: Pointer to the current stage/step being evaluated in the plan's `steps` list.
+    *   `step_results`: A dictionary mapping `step_id` to its processed result.
+    *   `overall_status`: Tracks the high-level status of the complex task (e.g., "new", "planning", "executing", "waiting_for_hsp", "merging_results", "completed", "failed_plan", "failed_execution").
+    *   `current_executing_step_ids`: List of step IDs currently dispatched or in active execution (especially relevant for parallel HSP tasks).
+    *   `next_stage_index`: An integer pointing to the index of the current stage in the `strategy_plan.steps` list that is being evaluated or executed.
+    *   `current_step_indices_in_stage`: A list of integers, used when a stage consists of a list of parallel steps. It tracks the indices of steps within that parallel list that are currently being processed or have been dispatched. (This field was noted in code but its exact usage in the current `_advance_complex_task` loop might need further clarification based on the implementation's iteration logic for parallel stages).
 
 ## 3. Key Interactions (Renumbered to 3.1)
 
 Fragmenta will interact with:
 
-*   **DialogueManager / Main Application Logic:** Receives tasks from and returns final results to the primary interaction handler.
+*   **DialogueManager / Main Application Logic:** Receives complex task requests and (eventually) receives the final synthesized results.
 *   **HAMMemoryManager (`ham_memory_manager.py`):**
-    *   To retrieve relevant past experiences or knowledge chunks.
-    *   To store intermediate results of chunked processing, along with their metadata and relationships.
-    *   To store the final synthesized result of a complex task.
+    *   Potentially used to retrieve relevant past experiences or knowledge chunks that might inform strategy selection (though this is advanced and not current core logic).
+    *   Can be used by local steps to store or retrieve data. The orchestrator itself primarily manages results in its `EnhancedComplexTaskState.step_results`.
 *   **ToolDispatcher (`tool_dispatcher.py`):**
-    *   To execute specific functional tools on data chunks or as part of a task plan.
+    *   Used by `LocalStepDetails` of type `local_tool` to execute specific tools.
 *   **LLMInterface (`llm_interface.py`):**
-    *   To perform operations like summarization, analysis, or generation on data chunks or for planning steps.
+    *   Used by `LocalStepDetails` of type `local_llm` or `local_chunk_process` to perform LLM-based operations.
 *   **Other Core AI Modules (Emotion, Personality, Crisis):**
-    *   To inform strategy selection or to provide context for sub-tasks (e.g., tailoring chunk processing based on overall emotional context).
+    *   These modules are passed during `FragmentaOrchestrator` initialization but are not directly used in the current core task execution loop (`_advance_complex_task`). Their integration would be part of more advanced dynamic strategy selection or context-aware processing in future iterations.
 *   **Specialized Models (Future):**
-    *   Code Model, Daily Language Model, Contextual LSTM Model.
-*   **ServiceDiscoveryModule (`service_discovery_module.py` - New Interaction):**
+    *   Future plans might involve direct interaction with specialized models beyond what's covered by `ToolDispatcher` or `LLMInterface`.
+*   **ServiceDiscoveryModule (`service_discovery_module.py`):**
     *   To query for available HSP capabilities from peer AIs that might fulfill a sub-task.
 *   **HSPConnector (`hsp_connector.py` - New Interaction):**
     *   To send `HSPTaskRequestPayload` messages to peer AIs.
@@ -131,19 +150,23 @@ This is a critical function of Fragmenta.
     *   **Structured Data Aggregation:** If chunks produce structured data, merge them into a final structure.
 *   The merging logic will be a key part of the strategy selected by Fragmenta.
 
-## 5. `FragmentaOrchestrator` Class (Conceptual API - v0.1)
+## 5. Orchestrator Interaction and API (v0.2 Focus)
 
-**Implementation Status Note (July 2024 - Further Updated):** The `FragmentaOrchestrator` has been significantly refactored. It now implements an enhanced state management system (`EnhancedComplexTaskState`, `EnhancedStrategyPlan` with `ProcessingStep` details) allowing for more complex task flows. Key improvements include:
-*   **Stateful Step Execution:** The `_advance_complex_task` method processes tasks based on a plan composed of sequential stages, where each stage can be a single step or a group of steps intended for parallel execution. Basic dependency checking between steps is performed using `input_sources`.
-*   **Parallelism Foundation:** The plan structure (`EnhancedStrategyPlan.steps` as `List[Union[ProcessingStep, List[ProcessingStep]]]`) now supports defining parallel groups of tasks. The orchestrator will attempt to dispatch all ready tasks in a parallel group and wait for their completion before proceeding (basic join).
-*   **Improved I/O Mapping:** Steps now define `input_sources` (list of source step/output key) and `input_mapping` (to construct parameters for the current step). A basic f-string like templating for `input_mapping` has been implemented.
-*   **HSP Task Integration:** Can dispatch HSP sub-tasks and receive their results asynchronously, with states updated within the new plan structure.
-*   **Error Handling & Retries for HSP:** Basic error detection (dispatch errors, peer-reported failures, timeouts) and a configurable retry mechanism with backoff for HSP tasks are integrated with the new state machine.
-*   **Rudimentary local processing** (chunking, LLM/tool dispatch, result merging) is maintained within this new stateful framework.
+> [!WARNING]
+> The following sub-sections describe the conceptual API from the original v0.1 specification. This API is now largely outdated due to the significant refactoring of the `FragmentaOrchestrator`'s internal logic, which is now driven by the `EnhancedStrategyPlan` and the `_advance_complex_task` state machine.
+>
+> The primary external interaction point remains the `process_complex_task(task_description: Dict[str, Any], input_data: Any, complex_task_id: Optional[str] = None)` method. However, its internal operation and the way strategies are determined and executed have fundamentally changed.
+>
+> For an accurate understanding of the current capabilities and interaction patterns, please refer to:
+> *   **Section 2: Core Responsibilities** (especially sub-section 4 on Sub-task Orchestration & Dispatch).
+> *   **Section 3: Key Data Structures for Orchestration**.
+> *   The source code: `src/fragmenta/fragmenta_orchestrator.py`.
+>
+> The old conceptual methods like `_analyze_input`, `_determine_processing_strategy` (in its simple v0.1 form), `_chunk_data`, `_dispatch_chunk_to_processing`, and `_merge_results` still exist in the code but their roles are now more as helper functions or simplified fallbacks within the new state-driven execution model, rather than direct top-level API components of a simple sequential process. The `_determine_processing_strategy` in particular is very basic in the current implementation and does not reflect advanced dynamic strategy selection.
 
-While these changes provide foundational support for parallelism and more explicit data flow, many advanced features from this design spec (e.g., sophisticated dynamic strategy selection for parallelism, complex input aggregation logic, semantic chunking, deep self-evaluation, full hardware awareness) remain conceptual or for future implementation. Refer to `../../project/STATUS_SUMMARY.md` for current details.
+**Original v0.1 Conceptual API (Largely Outdated):**
 
-File: `src/fragmenta/fragmenta_orchestrator.py`
+File: `src/fragmenta/fragmenta_orchestrator.py` (Note: Link refers to the file, but the class structure below is the v0.1 concept)
 
 ```python
 class FragmentaOrchestrator:
@@ -212,13 +235,23 @@ This is a complex area requiring significant research and development, likely ev
 
 ## 7. Future Considerations (Renumbered)
 
-*   More sophisticated strategy selection (potentially ML-based, incorporating hardware context, or allowing for more graph-like plans rather than the current list-of-stages). This includes dynamic generation of parallel execution groups.
-*   Dynamic adjustment of strategies based on intermediate results or failures of alternative paths.
-*   Cost/resource estimation for different strategies.
-*   **Error Handling & Retries:** While basic error handling, timeouts, and retries for HSP tasks are implemented, more advanced error recovery strategies (e.g., dynamic fallback to different capabilities or local methods, user intervention prompts, more nuanced failure propagation in parallel groups) are future considerations.
-*   **Parallelism:** The current plan structure supports defining parallel groups, and the orchestrator can dispatch them and wait for completion. However, more advanced parallel control (e.g., limiting concurrency of local tasks, complex join conditions beyond "all complete", dynamic identification of parallelizable steps) needs further design.
-*   Integration with the "Contextual LSTM Model" or other advanced memory/context systems for richer strategy selection or chunk processing.
-*   **Input Parameter Mapping:** The current f-string-like templating for `input_mapping` is basic. More sophisticated mapping logic (e.g., JSONPath, small expression language, conditional mapping) could be added for complex data transformations between steps.
+*   **Sophisticated Strategy Generation & Selection:** The current `_determine_processing_strategy` is very basic. Future work should focus on more dynamic and intelligent strategy generation, potentially using ML models, rule-based systems, or planning algorithms, and incorporating factors like hardware context, task type, and past performance.
+*   **Advanced Dependency Management:** Evolve beyond the current stage-based dependencies to support more complex, graph-like dependency structures between steps.
+*   **Dynamic Strategy Adjustment:** Allow the orchestrator to modify the execution plan mid-stream based on intermediate results, failures of certain paths, or changes in the environment.
+*   **Cost, Resource, and Time Estimation:** Incorporate mechanisms to estimate the cost (e.g., tokens, API calls), computational resources, and time required for different strategies or steps, enabling more informed strategy selection.
+*   **Enhanced Error Handling and Recovery:**
+    *   Develop more sophisticated error recovery strategies beyond the current HSP retries (e.g., dynamic fallback to alternative capabilities or local methods, prompting for user intervention).
+    *   Implement standardized error handling and retry mechanisms for `LocalStepDetails` comparable to what exists for HSP steps.
+    *   Improve failure propagation logic, especially within parallel execution groups.
+*   **Advanced Parallel Control:**
+    *   Implement mechanisms to limit the concurrency of local tasks (e.g., thread pools, async task limits).
+    *   Support more complex join conditions for parallel step groups beyond simply "all completed or failed."
+    *   Explore dynamic identification of parallelizable steps within a task.
+*   **Integration with `ContextCore`:** Deeply integrate with the proposed `ContextCore` (see `../blueprints/ContextCore_design_proposal.md`) for richer contextual information to inform strategy selection, step parameterization, and long-term learning from task executions.
+*   **Sophisticated Input/Output Parameter Mapping:** Enhance the current basic f-string templating for `input_mapping` with more powerful tools like JSONPath, a small expression language, or conditional mapping logic for complex data transformations between steps.
+*   **Comprehensive Result Synthesis:** Develop more advanced methods for `_merge_results` to synthesize final outputs from multiple, potentially diverse, intermediate step results, especially for branched or parallel execution plans.
+*   **Plan Validation:** Implement more robust validation of `EnhancedStrategyPlan` structures before execution to catch errors in dependencies, input/output mappings, or step definitions.
+*   **Improved Local Chunk Processing:** Refine the `local_chunk_process` step type to better manage inputs/outputs for chunk-wise operations and their subsequent aggregation.
 
-This v0.1 specification, along with recent implementations, provides a stateful orchestrator with foundational support for sequential and basic parallel step execution, and improved HSP task management. Further enhancements will build upon this.
+This v0.2 specification, reflecting recent enhancements, provides a more robust and flexible orchestration foundation. Future work will focus on building more advanced intelligence and capabilities upon this base.
 ```
