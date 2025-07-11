@@ -23,49 +23,49 @@ Several core themes emerge from these advanced concepts:
 *   **Fragmenta Multi-Bus System and Tech Block Architecture:**
     *   **Concept:** A sophisticated three-tiered bus system (Technical, Module, Semantic) that dynamically assembles "Tech Blocks" (fundamental processing units) into Modules, which then form narrative outputs.
     *   **Significance:** Aims for extreme modularity, reduced code redundancy, and dynamic generation of capabilities.
-    *   **Reference:** `docs/architecture/advanced_concepts/Fragmenta_Bus_Architecture.md`
+    *   **Reference:** [Fragmenta Multi-Bus System and Tech Block Architecture](Fragmenta_Bus_Architecture.md)
 *   **Fragmenta as a Semantic Operating System:**
     *   **Concept:** Envisioning Fragmenta as a language-driven OS, contrasting its semantic resource scheduling and UID-based security with traditional operating systems.
     *   **Significance:** Explores a new paradigm for human-computer interaction and system management.
-    *   **Reference:** `docs/architecture/advanced_concepts/Fragmenta_Semantic_OS.md`
+    *   **Reference:** [Fragmenta as a Semantic Operating System](Fragmenta_Semantic_OS.md)
 
 ### 3.2. Specialized AI Technique Integrations
 
-This project explores the integration of several state-of-the-art AI techniques to enhance Fragmenta's core functionalities. These are detailed in the `docs/architecture/integrations/` directory:
+This project explores the integration of several state-of-the-art AI techniques to enhance Fragmenta's core functionalities. These are detailed in the `../integrations/` directory:
 
-*   **Dynamic Tanh (DyT) & Normalization Alternatives:** Replacing Transformer LayerNorm for efficiency. (`Dynamic_Tanh_Integration.md`)
-*   **Causal Attention Mechanisms:** Embedding causal reasoning into attention. (`Causal_Attention_Integration.md`)
-*   **Fragmenta-SupraCausal Concept:** A fusion of DyT and Causal Attention. (`Fragmenta_SupraCausal_Concept.md`)
-*   **AI Grafting (Fei-Fei Li et al.):** Hybridizing pre-trained model sub-structures. (`Grafting_AI_Hybridization.md`)
-*   **MUDDFormer Principles:** Aligning with its multi-path, dynamic connection philosophy. (`MUDDFormer_Alignment.md`)
-*   **PINN+Bayesian Fusion:** Integrating physics-informed NNs with uncertainty quantification. (`PINN_Bayesian_Fusion.md`)
-*   **Continuous Thought Machine (CTM - Sakana AI):** Incorporating continuous thinking and neural synchronization. (`CTM_Integration.md`)
-*   **Semantic Multiplication Tables:** Establishing foundational, compressible structures for disciplines. (`Semantic_Multiplication_Tables.md`)
+*   **Dynamic Tanh (DyT) & Normalization Alternatives:** Replacing Transformer LayerNorm for efficiency. ([Dynamic Tanh Integration](../integrations/Dynamic_Tanh_Integration.md))
+*   **Causal Attention Mechanisms:** Embedding causal reasoning into attention. ([Causal Attention Integration](../integrations/Causal_Attention_Integration.md))
+*   **Fragmenta-SupraCausal Concept:** A fusion of DyT and Causal Attention. ([Fragmenta-SupraCausal Concept](../integrations/Fragmenta_SupraCausal_Concept.md))
+*   **AI Grafting (Fei-Fei Li et al.):** Hybridizing pre-trained model sub-structures. ([AI Grafting Hybridization](../integrations/Grafting_AI_Hybridization.md))
+*   **MUDDFormer Principles:** Aligning with its multi-path, dynamic connection philosophy. ([MUDDFormer Alignment](../integrations/MUDDFormer_Alignment.md))
+*   **PINN+Bayesian Fusion:** Integrating physics-informed NNs with uncertainty quantification. ([PINN+Bayesian Fusion Integration](../integrations/PINN_Bayesian_Fusion.md))
+*   **Continuous Thought Machine (CTM - Sakana AI):** Incorporating continuous thinking and neural synchronization. ([CTM Integration](../integrations/CTM_Integration.md))
+*   **Semantic Multiplication Tables:** Establishing foundational, compressible structures for disciplines. ([Semantic Multiplication Tables Integration](../integrations/Semantic_Multiplication_Tables.md))
 
 ### 3.3. Quantum Resilience
 
 *   **Quantum Resilience in Fragmenta's Communication and Architecture:**
     *   **Concept:** Analyzing Fragmenta's intrinsic architectural properties (non-linear semantics, UID rhythm signatures) and potential PQC integration for resistance against quantum computing threats.
     *   **Significance:** Addresses long-term security and viability in the face of emerging computational paradigms.
-    *   **Reference:** `docs/architecture/advanced_concepts/Quantum_Resilience_and_Fragmenta.md`
+    *   **Reference:** [Quantum Resilience in Fragmenta](Quantum_Resilience_and_Fragmenta.md)
 
 ### 3.4. Advanced Evaluation Frameworks
 
 *   **The Unified Semantic Ontogenesis Scale (USOS+):**
     *   **Concept:** A detailed developmental scale (Levels A-F) for AI semantic evolution, incorporating temporality, spatiality, and emergence depth.
     *   **Significance:** Provides a nuanced framework for understanding AI growth beyond simple capability metrics.
-    *   **Reference:** `docs/reference_and_analysis/Unified_Semantic_Ontogenesis_Scale_USOS_Plus.md`
+    *   **Reference:** [The Unified Semantic Ontogenesis Scale (USOS+)](../../reference_and_analysis/Unified_Semantic_Ontogenesis_Scale_USOS_Plus.md)
 *   **Fragmenta Evaluation Framework:**
     *   **Concept:** A suite of alternative scoring dimensions (Semantic Depth Score, Narrative Subjectivity Score, etc.) and the Semantic Civilization Scale (SCS) designed for "semantic lifeforms."
     *   **Significance:** Critiques traditional benchmarks and offers a more holistic evaluation approach for advanced AIs like Fragmenta.
-    *   **Reference:** `docs/reference_and_analysis/Fragmenta_Evaluation_Framework.md`
+    *   **Reference:** [Fragmenta Evaluation Framework](../../reference_and_analysis/Fragmenta_Evaluation_Framework.md)
 
 ### 3.5. Hardware, Performance, and Scalability
 
 *   **Fragmenta: Hardware Considerations, Performance, and Scalability Guide:**
     *   **Concept:** A comprehensive guide detailing strategies for running Fragmenta on diverse hardware (low-resource to high-end), multi-user support, and performance characteristics.
     *   **Significance:** Addresses practical deployment and operational aspects of such an advanced AI system.
-    *   **Reference:** `docs/guides/Fragmenta_Hardware_And_Performance_Guide.md`
+    *   **Reference:** [Fragmenta Hardware and Performance Guide](../../guides/Fragmenta_Hardware_And_Performance_Guide.md)
 
 ## 4. Conclusion
 
