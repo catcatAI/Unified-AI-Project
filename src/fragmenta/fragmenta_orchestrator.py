@@ -537,52 +537,64 @@ class FragmentaOrchestrator:
 
         # --- Query HAM for past outcomes of similar tasks (Conceptual V1 - Logging only) ---
         if self.ham_manager:
-            # Formulate a simple query based on task description summary
-            # This is a very basic keyword search on the stored 'original_task_description_summary'
-            # A more advanced query would involve better summarization/embedding/similarity.
-            query_keywords = task_goal_summary.lower().split()[:5] # Use first 5 words as rough keywords
+            # Extract 1-2 primary keywords from the current task's goal summary for HAM metadata query.
+            current_task_raw_keywords = [kw.strip(".,!?;:'\"()") for kw in task_goal_summary.lower().split() if kw.strip(".,!?;:'\"()")]
+            # Filter out very short words, could also use a stopword list here.
+            current_task_filtered_keywords = [kw for kw in current_task_raw_keywords if len(kw) > 2]
+            # Take up to 2 unique, primary keywords for querying.
+            query_keywords_for_ham_metadata = list(set(current_task_filtered_keywords))[:2]
 
-            # Metadata filter for complex_task_id_ref could be used if we want to find outcomes
-            # related to a specific *previous* task ID, but here we want similar *descriptions*.
-            # For now, we'll rely on keywords in the payload's description summary.
-            # A proper search would require HAM to support searching within the raw_data (payload).
-            # Current HAM query_core_memory searches keywords in *metadata*.
-            # So, for this to work effectively, some keywords from description_summary
-            # would need to be in HAM metadata when outcomes are stored.
-            # Let's assume for now we just log this attempt.
+            all_retrieved_past_outcomes: List[Any] = [] # Stores HAMRecallResult objects
+            processed_ham_ids_for_aggregation = set() # To avoid duplicates if multiple keywords match same outcome
 
-            logger.info(f"F (ID: {complex_task_id}): Conceptually querying HAM for past outcomes related to: '{task_goal_summary}' (keywords: {query_keywords})")
-            # This query will likely not be effective with current HAMMemoryManager.query_core_memory
-            # as it searches metadata, not payload content. This highlights a need for HAM enhancement or different query.
-            # For now, we demonstrate the intent.
-            try:
-                past_outcomes = self.ham_manager.query_core_memory(
-                    keywords=query_keywords, # This searches HAM metadata, not payload.
-                    data_type_filter="fragmenta_task_outcome_v0.1",
-                    limit=3 # Get a few recent ones
-                )
-                if past_outcomes:
-                    logger.info(f"F (ID: {complex_task_id}): Found {len(past_outcomes)} potentially related past task outcomes in HAM.")
-                    for outcome_recall_result in past_outcomes:
-                        # outcome_recall_result.rehydrated_gist should be the task_outcome_payload dict
-                        if isinstance(outcome_recall_result.get("rehydrated_gist"), dict):
-                            past_payload = outcome_recall_result["rehydrated_gist"]
-                            logger.info(f"  - Past Task ID: {past_payload.get('complex_task_id')}, Strategy: {past_payload.get('strategy_plan_name')}, Status: {past_payload.get('final_status')}")
+            if query_keywords_for_ham_metadata:
+                logger.info(f"F (ID: {complex_task_id}): Will query HAM for past outcomes using metadata_filters with keywords: {query_keywords_for_ham_metadata}")
+                for keyword in query_keywords_for_ham_metadata:
+                    # This query relies on HAMMemoryManager.query_core_memory's metadata_filters
+                    # being able to check if 'keyword' is contained within the list stored in
+                    # the 'task_description_keywords' metadata field of HAM entries.
+                    # If HAM only supports exact match for list metadata fields, this specific query might need HAM enhancement.
+                    # For now, this demonstrates the intended targeted query.
+                    metadata_filter_query = {"task_description_keywords": keyword}
+                    logger.debug(f"F (ID: {complex_task_id}): Attempting HAM query with filter: {metadata_filter_query}")
+                    try:
+                        retrieved_for_keyword = self.ham_manager.query_core_memory(
+                            metadata_filters=metadata_filter_query,
+                            data_type_filter="fragmenta_task_outcome_v0.1",
+                            limit=5 # Get a few results per keyword
+                        )
+                        if retrieved_for_keyword:
+                            logger.debug(f"F (ID: {complex_task_id}): HAM query for keyword '{keyword}' returned {len(retrieved_for_keyword)} items.")
+                            for item in retrieved_for_keyword:
+                                ham_id = item.get("id")
+                                if ham_id and ham_id not in processed_ham_ids_for_aggregation:
+                                    all_retrieved_past_outcomes.append(item)
+                                    processed_ham_ids_for_aggregation.add(ham_id)
                         else:
-                            logger.warning(f"  - Past outcome (MemID: {outcome_recall_result.get('id')}) gist not a dict: {type(outcome_recall_result.get('rehydrated_gist'))}")
+                            logger.debug(f"F (ID: {complex_task_id}): HAM query for keyword '{keyword}' returned no items.")
+                    except Exception as e_query:
+                         logger.error(f"F (ID: {complex_task_id}): Exception during HAM query for keyword '{keyword}': {e_query}", exc_info=True)
 
-                # Placeholder for actual decision logic based on past_outcomes:
-                # --- Basic Adaptive Logic based on past_outcomes ---
-                problematic_past_strategy_names: List[str] = []
-                if past_outcomes: # Ensure past_outcomes is not None and not empty
-                    strategy_failure_counts: Dict[str, int] = {}
-                    for outcome_recall_result in past_outcomes:
-                        if isinstance(outcome_recall_result.get("rehydrated_gist"), dict):
-                            past_payload = outcome_recall_result["rehydrated_gist"]
-                            past_strategy_name = past_payload.get('strategy_plan_name')
-                            past_status = past_payload.get('final_status')
-                            if past_strategy_name and past_status == "failed_execution":
-                                strategy_failure_counts[past_strategy_name] = strategy_failure_counts.get(past_strategy_name, 0) + 1
+            if all_retrieved_past_outcomes:
+                logger.info(f"F (ID: {complex_task_id}): Aggregated {len(all_retrieved_past_outcomes)} unique past task outcomes from HAM queries.")
+                for outcome_recall_result in all_retrieved_past_outcomes: # Log details of what was found
+                    if isinstance(outcome_recall_result.get("rehydrated_gist"), dict):
+                        past_payload = outcome_recall_result["rehydrated_gist"]
+                        logger.info(f"  - Past Task ID: {past_payload.get('complex_task_id')}, Strategy: {past_payload.get('strategy_plan_name')}, Status: {past_payload.get('final_status')}")
+                    else:
+                        logger.warning(f"  - Past outcome (MemID: {outcome_recall_result.get('id')}) gist not a dict: {type(outcome_recall_result.get('rehydrated_gist'))}")
+
+            # --- Basic Adaptive Logic based on past_outcomes ---
+            problematic_past_strategy_names: List[str] = []
+            if all_retrieved_past_outcomes:
+                strategy_failure_counts: Dict[str, int] = {}
+                for outcome_recall_result in all_retrieved_past_outcomes: # Iterate over the aggregated list
+                    if isinstance(outcome_recall_result.get("rehydrated_gist"), dict):
+                        past_payload = outcome_recall_result["rehydrated_gist"]
+                        past_strategy_name = past_payload.get('strategy_plan_name')
+                        past_status = past_payload.get('final_status')
+                        if past_strategy_name and past_status == "failed_execution":
+                            strategy_failure_counts[past_strategy_name] = strategy_failure_counts.get(past_strategy_name, 0) + 1
 
                     # Identify strategies that failed frequently (e.g., more than once for this simple heuristic)
                     for name, count in strategy_failure_counts.items():
