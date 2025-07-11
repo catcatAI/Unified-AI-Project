@@ -1,6 +1,8 @@
 import pytest
-import paho.mqtt.client as mqtt
-import socket
+# Delay imports of paho and socket until they are actually needed within a function call,
+# as conftest is loaded very early by pytest.
+# import paho.mqtt.client as mqtt
+# import socket
 
 # --- Configuration for MQTT Broker (used by tests needing a live broker) ---
 # These could be moved to a more central test config if needed.
@@ -18,6 +20,9 @@ def is_mqtt_broker_available(address=MQTT_BROKER_ADDRESS, port=MQTT_BROKER_PORT,
     global _mqtt_broker_available
     if _mqtt_broker_available is not None:
         return _mqtt_broker_available
+
+    import paho.mqtt.client as mqtt  # Import here
+    import socket  # Import here
 
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="pytest_mqtt_check")
     # Set a short timeout for the socket connection attempt itself
