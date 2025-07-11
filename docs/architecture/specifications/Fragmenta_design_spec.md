@@ -235,6 +235,8 @@ This is a complex area requiring significant research and development, likely ev
 
 ## 7. Future Considerations (Renumbered)
 
+*   **Advanced Orchestration Architectures:**
+    *   **Multi-Bus System and Tech Blocks:** A significant conceptual evolution involves redesigning Fragmenta around a multi-layered bus system (Technical, Module, and Semantic buses) that dynamically assembles fundamental "Tech Blocks" into modules and personalities. This aims for greater modularity, efficiency, and emergent capabilities. For a detailed exploration of this concept, see `docs/architecture/advanced_concepts/Fragmenta_Bus_Architecture.md`.
 *   **Sophisticated Strategy Generation & Selection:** The current `_determine_processing_strategy` is very basic. Future work should focus on more dynamic and intelligent strategy generation, potentially using ML models, rule-based systems, or planning algorithms, and incorporating factors like hardware context, task type, and past performance.
 *   **Advanced Dependency Management:** Evolve beyond the current stage-based dependencies to support more complex, graph-like dependency structures between steps.
 *   **Dynamic Strategy Adjustment:** Allow the orchestrator to modify the execution plan mid-stream based on intermediate results, failures of certain paths, or changes in the environment.
