@@ -4,6 +4,8 @@
 
 The **Unified-AI-Project** aims to create a versatile and intelligent conversational AI framework. It consolidates and enhances capabilities from previous projects like MikoAI, Fragmenta, and other CatAI initiatives. The primary goal is to build a modular, maintainable, and extensible system capable of rich dialogue, context understanding, learning, and tool usage.
 
+For a comprehensive guide to all documentation, please see the [Project Table of Contents](docs/CONTENTS.md).
+
 For details on the initial project structure, merge strategy, and architectural principles that guided the consolidation, please refer to the [MERGE_AND_RESTRUCTURE_PLAN.md](docs/project/MERGE_AND_RESTRUCTURE_PLAN.md). For a summary of the current implementation status of various components, see [Project Status Summary](docs/project/STATUS_SUMMARY.md), and for an overview of how project files are organized, see [Project Content Organization](docs/project/CONTENT_ORGANIZATION.md).
 
 ### Current Project Status & Critical Merge Information

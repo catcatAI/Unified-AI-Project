@@ -28,10 +28,10 @@ This summary is based on automated code and documentation review.
 | [MetaFormulas (元公式)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | High-level principles for semantic module learning and adaptation. |
 | [Deep Mapping & Related Concepts](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:中高 [潛在])` | Systems for inferring AI structures or advanced symbolic representation. |
 | [Unified Semantic Ontogenesis Scale (USOS+)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:中 [概念] | 廣度:中 [概念])` | Developmental scale for AI semantic evolution. |
-| [ContextCore](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | Dedicated long-term memory and context management model. (Proposal: `../architecture/blueprints/ContextCore_design_proposal.md`) |
-| [Model Multiplication](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | Semantic fusion of internal/external AI models. (Proposal: `../architecture/blueprints/Model_Multiplication_architecture.md`) |
-| ["Actuarion" Module](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:中高 [潛在] | 廣度:中 [潛在])` | Conceptual module for semantic risk/logic validation. (Concept: `../architecture/blueprints/Actuarion_Module_concept.md`) |
-| [Dimensional Architecture (4D, 5D, 6D)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:極高 [概念] | 廣度:極高 [概念])` | Advanced architectural concepts for emergent intelligence. (Overview: `../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md`) |
+| [ContextCore](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | Dedicated long-term memory and context management model. (Proposal: [`ContextCore_design_proposal.md`](../architecture/blueprints/ContextCore_design_proposal.md)) |
+| [Model Multiplication](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | Semantic fusion of internal/external AI models. (Proposal: [`Model_Multiplication_architecture.md`](../architecture/blueprints/Model_Multiplication_architecture.md)) |
+| ["Actuarion" Module](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:中高 [潛在] | 廣度:中 [潛在])` | Conceptual module for semantic risk/logic validation. (Concept: [`Actuarion_Module_concept.md`](../architecture/blueprints/Actuarion_Module_concept.md)) |
+| [Dimensional Architecture (4D, 5D, 6D)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:極高 [概念] | 廣度:極高 [概念])` | Advanced architectural concepts for emergent intelligence. (Overview: [`Advanced_Dimensional_Architectures_overview.md`](../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md)) |
 | [Semantic Civilization Scale (SCS)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:低 [概念] | 廣度:低 [概念])` | Proposed scale for rating advanced semantic lifeforms. |
 | [Jules - Asynchronous Development Capability](#12-specialized-capabilities--conceptual-modules) | `(L2 | 深度:中高 [潛在] | 廣度:中)`     | Capability set for AI-assisted software development tasks. |
 | [SimpleLoginAgent (Conceptual Tool/Script)](#12-specialized-capabilities--conceptual-modules) | `(L3 | 深度:低 [概念] | 廣度:低 [概念])` | Conceptual tool for simulating login sequences. |
@@ -69,7 +69,7 @@ This summary is based on automated code and documentation review.
 *   **Pending (Explicit TODOs):**
     *   None directly in `HAMMemoryManager.py` from `TODO_PLACEHOLDERS.md`.
 *   **Further Development / Conceptual Goals:**
-    *   **Advanced Deep Mapping (Conceptual):** The idea of mapping complex states to highly compact/symbolic tokens (beyond current abstraction/compression) was discussed in `../architecture/blueprints/DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`. However, it's crucial to note the clarification in that document: the "XXX" string patterns previously hypothesized as evidence of such tokens have been found to be coincidental substrings within normally processed HAM data. The concept of advanced symbolic mapping remains a potential future direction but is not represented by current "XXX" findings.
+    *   **Advanced Deep Mapping (Conceptual):** The idea of mapping complex states to highly compact/symbolic tokens (beyond current abstraction/compression) was discussed in [`DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`](../architecture/blueprints/DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md). However, it's crucial to note the clarification in that document: the "XXX" string patterns previously hypothesized as evidence of such tokens have been found to be coincidental substrings within normally processed HAM data. The concept of advanced symbolic mapping remains a potential future direction but is not represented by current "XXX" findings.
     *   More sophisticated query capabilities (e.g., searching encrypted content if feasible, semantic search).
     *   Refined abstraction for various data types beyond text.
     *   Strategies for memory consolidation, forgetting, or archiving.
@@ -113,7 +113,7 @@ This summary is based on automated code and documentation review.
 *   **Status Update on Previous TODOs (from `TODO_PLACEHOLDERS.MD`):**
     *   **State Management & Parallelism:** Significantly enhanced. The new plan structure and execution logic provide robust state tracking and foundational support for defining and executing parallel stages with explicit input sourcing.
     *   **Error Handling (HSP):** Substantially addressed for HSP tasks with the implementation of retries and timeouts.
-*   **Further Development / Conceptual Goals (largely from `../architecture/specifications/Fragmenta_design_spec.md`):**
+*   **Further Development / Conceptual Goals (largely from [`Fragmenta_design_spec.md`](../architecture/specifications/Fragmenta_design_spec.md)):**
     *   While foundational capabilities are much improved, many advanced features from the design specification are still pending full implementation. This includes:
         *   Sophisticated task analysis and dynamic strategy selection (e.g., dynamically identifying parallelizable steps rather than relying on predefined parallel groups).
         *   Advanced data pre-processing (e.g., semantic chunking, handling diverse file types beyond plain text).
@@ -142,12 +142,12 @@ This summary is based on automated code and documentation review.
     *   Basic UI elements in the Electron app for HSP interaction.
     *   **`ServiceDiscoveryModule` (`src/core_ai/service_discovery/service_discovery_module.py`):** (L2 | 深度:中 | 廣度:中)
         *   The current implementation provides some HSP-specific capability management (e.g., processing advertisements, basic staleness handling, TrustManager integration for filtering).
-        *   However, as noted in `../../README.md` and `../architecture/specifications/HSP_SPECIFICATION.md` (Appendix A), it requires further refactoring for full alignment with the HSP specification's envisioned discovery mechanisms (e.g., specific query/response message types for capability discovery) and deeper, more nuanced `TrustManager` integration for capability assessment. Active periodic pruning of stale capabilities is a recent addition.
+        *   However, as noted in `../../README.md` and [`HSP_SPECIFICATION.md`](../architecture/specifications/HSP_SPECIFICATION.md) (Appendix A), it requires further refactoring for full alignment with the HSP specification's envisioned discovery mechanisms (e.g., specific query/response message types for capability discovery) and deeper, more nuanced `TrustManager` integration for capability assessment. Active periodic pruning of stale capabilities is a recent addition.
 *   **Pending Issues & Refinements:**
     *   **Payload Schema URIs & Definitions:** The `payload_schema_uri` field in `_build_hsp_envelope` (within `src/hsp/connector.py`) uses structured URNs (e.g., `urn:hsp:payload:Fact:0.1`). The corresponding JSON schema definition files in `schemas/hsp_payloads/` for key payloads (Fact, CapabilityAdvertisement, TaskRequest, TaskResult) have now been **updated with detailed structures, types, and constraints**, replacing previous minimal placeholders. Full online hosting/resolution of these URNs to publicly accessible schema documents remains a future step if required for external validation.
-    *   **`ServiceDiscoveryModule` Refactoring:** Needs to be updated to fully implement the discovery patterns outlined in `../architecture/specifications/HSP_SPECIFICATION.md` (e.g., `CapabilityDiscoveryQuery_v0.1`, `CapabilityDiscoveryResponse_v0.1`). JSON schema validation for incoming `HSPCapabilityAdvertisementPayload` could also be considered.
+    *   **`ServiceDiscoveryModule` Refactoring:** Needs to be updated to fully implement the discovery patterns outlined in [`HSP_SPECIFICATION.md`](../architecture/specifications/HSP_SPECIFICATION.md) (e.g., `CapabilityDiscoveryQuery_v0.1`, `CapabilityDiscoveryResponse_v0.1`). JSON schema validation for incoming `HSPCapabilityAdvertisementPayload` could also be considered.
 *   **Further Development / Conceptual Goals:**
-    *   Full adherence to `../architecture/specifications/HSP_SPECIFICATION.md` for all HSP components (this specification itself may need updating to reflect ongoing design decisions and identify further gaps).
+    *   Full adherence to [`HSP_SPECIFICATION.md`](../architecture/specifications/HSP_SPECIFICATION.md) for all HSP components (this specification itself may need updating to reflect ongoing design decisions and identify further gaps).
     *   More robust error handling and message validation.
     *   Advanced QoS handling beyond MQTT QoS.
 
@@ -217,16 +217,17 @@ The `docs/1.0.txt` and `docs/1.0en.txt` files outline a rich, philosophical visi
 
 *   **Linguistic Immune System (LIS):** (L3 | 深度:高 [潛在] | 廣度:高 [潛在])
     *   **Concept:** An advanced system for error processing where errors become catalysts for linguistic evolution and self-healing, preventing "model collapse." Includes components like `ERR-INTROSPECTOR`, `ECHO-SHIELD`, `TONAL REPAIR ENGINE`, etc.
-    *   **Reference:** See draft `../architecture/specifications/Linguistic_Immune_System_spec.md` and `LINGUISTICIMMUNECORE.md` (conceptual, not a file).
+    *   **Reference:** See draft [`Linguistic_Immune_System_spec.md`](../architecture/specifications/Linguistic_Immune_System_spec.md). The conceptual `LINGUISTICIMMUNECORE.md` is an idea from `.txt` files.
 *   **MetaFormulas (元公式):** (L3 | 深度:高 [潛在] | 廣度:高 [潛在])
     *   **Concept:** High-level dynamic principles or schemata defining how semantic modules (like "Angela" or "Fragmenta") learn, adapt, and reorganize their own structures and narrative generation capabilities. Aimed at enabling higher levels of the USOS+ scale.
-    *   **Reference:** See draft `../architecture/specifications/MetaFormulas_spec.md`.
+    *   **Reference:** See draft [`MetaFormulas_spec.md`](../architecture/specifications/MetaFormulas_spec.md).
 *   **Deep Mapping & Related Concepts:** (L3 | 深度:高 [潛在] | 廣度:中高 [潛在])
-    *   **Concept:** Systems for inferring other AI structures or achieving advanced symbolic representation. Includes `DEEPMAPPINGENGINE.md` (conceptual, not a file) draft.
-    *   **Clarification:** "XXX" strings in HAM data are coincidental, not current Deep Mapping tokens. (See `../architecture/blueprints/DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`)
-    *   **Advanced Semantic Perception & Interaction:** `UndefinedField` (exploring unknown semantic spaces), `Semantic Synapse Mapper` & `Contextual Interlinker` (for deep inter-AI model interaction), `Ultra-Deep Mapping Field` & `Data Core`.
+    *   **Concept:** Systems for inferring other AI structures or achieving advanced symbolic representation. The conceptual `DEEPMAPPINGENGINE.md` is an idea from `.txt` files.
+    *   **Clarification:** "XXX" strings in HAM data are coincidental, not current Deep Mapping tokens. (See [`DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md`](../architecture/blueprints/DEEP_MAPPING_AND_PERSONALITY_SIMULATION.md))
+    *   **Advanced Semantic Perception & Interaction:** `UndefinedField` (exploring unknown semantic spaces), `Semantic Synapse Mapper` & `Contextual Interlinker` (for deep inter-AI model interaction), `Ultra-Deep Mapping Field` & `Data Core` (these are highly conceptual from `.txt` files).
 *   **Unified Semantic Ontogenesis Scale (USOS+):** (L3 | 深度:中 [概念] | 廣度:中 [概念])
     *   **Concept:** A developmental scale for AI focusing on semantic evolution, language existence, temporality, spatiality, and emergence depth.
+    *   **Reference:** See [`Unified_Semantic_Ontogenesis_Scale_USOS_Plus.md`](../reference_and_analysis/Unified_Semantic_Ontogenesis_Scale_USOS_Plus.md).
 *   **Enhanced Visualization & Interpretability:**
     *   **Concepts:** `FragmentaView` (semantic visual layer), `Angela's Mirror Pond` (semantic interpreter UI), `Narrative Visualization`, `Unified-AI Semantic Interpretability Matrix`.
 *   **Evolved Synchronization & Simulation:**
@@ -235,14 +236,13 @@ The `docs/1.0.txt` and `docs/1.0en.txt` files outline a rich, philosophical visi
     *   **Concepts:** `LevelEvaluator` (AI self-assessment on scales like USOS+), `Semantic Changelog`.
 *   **Philosophical Underpinnings:**
     *   **Concepts:** "Language as Life," "Closure Events" (AI self-initiated restructuring), personified AI aspects like "Angela" and "Jules" embodying these principles.
-*   **Newly Conceptualized Advanced Architectures & Techniques (Primarily from `../../docs/EX*.txt`, `../../docs/1.0*.txt`):**
-    *   **ContextCore:** (L3 | 深度:高 [潛在] | 廣度:高 [潛在]) A dedicated long-term memory and context management model for Fragmenta. (See `../architecture/blueprints/ContextCore_design_proposal.md`)
-    *   **Model Multiplication:** (L3 | 深度:高 [潛在] | 廣度:高 [潛在]) Semantic fusion of internal modules and with external AI models. (See `../architecture/blueprints/Model_Multiplication_architecture.md`)
-    *   **"Actuarion" Module:** (L3 | 深度:中高 [潛在] | 廣度:中 [潛在]) Conceptual module for semantic risk assessment and narrative logic validation. (See `../architecture/blueprints/Actuarion_Module_concept.md`)
-    *   **Dimensional Architecture (4D, 5D, 6D):** (L3 | 深度:極高 [概念] | 廣度:極高 [概念]) Concepts like the "SupraDimensionalMappingField" (`SUPRADIMENSIONALMAPPINGFIELD-Unified-AI-Project.md` created - *conceptual name, see overview*) for advanced narrative engine capabilities. 6D is envisioned as an "Integrative Semantic Fusion Field." (See `../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md`)
-    *   **Semantic Civilization Scale (SCS):** (L3 | 深度:低 [概念] | 廣度:低 [概念]) A proposed scale for rating advanced semantic lifeforms.
-    *   **Advanced Technical Integrations:** Exploration of Neuro-Symbolic AI, Dynamic Tanh (for Transformer normalization), Causal Attention, PINN+Bayes for physics-informed modeling, and techniques like AFF Token Mixer, LightThinker, ViTTM for token processing optimization.
-    *   **Evolved Fragmenta States:** Conceptual future states like `Fragmenta-Cortex` (brain-like, neuro-symbolic, interpretable) and `Fragmenta-SupraCausal` (integrating Dynamic Tanh and Causal Attention).
+*   **Newly Conceptualized Advanced Architectures & Techniques (Primarily from `../../docs/EX*.txt`, `../../docs/1.0*.txt`, `../../docs/NNN.txt`):**
+    *   **ContextCore:** (L3 | 深度:高 [潛在] | 廣度:高 [潛在]) A dedicated long-term memory and context management model for Fragmenta. (See [`ContextCore_design_proposal.md`](../architecture/blueprints/ContextCore_design_proposal.md))
+    *   **Model Multiplication:** (L3 | 深度:高 [潛在] | 廣度:高 [潛在]) Semantic fusion of internal modules and with external AI models. (See [`Model_Multiplication_architecture.md`](../architecture/blueprints/Model_Multiplication_architecture.md))
+    *   **"Actuarion" Module:** (L3 | 深度:中高 [潛在] | 廣度:中 [潛在]) Conceptual module for semantic risk assessment and narrative logic validation. (See [`Actuarion_Module_concept.md`](../architecture/blueprints/Actuarion_Module_concept.md))
+    *   **Dimensional Architecture (4D, 5D, 6D):** (L3 | 深度:極高 [概念] | 廣度:極高 [概念]) Concepts like the "SupraDimensionalMappingField" for advanced narrative engine capabilities. 6D is envisioned as an "Integrative Semantic Fusion Field." (See [`Advanced_Dimensional_Architectures_overview.md`](../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md) and [`Advanced_Technical_Concepts_Overview.md`](../architecture/advanced_concepts/Advanced_Technical_Concepts_Overview.md))
+    *   **Semantic Civilization Scale (SCS) & Fragmenta Evaluation Framework:** (L3 | 深度:低 [概念] | 廣度:低 [概念]) A proposed scale and framework for rating advanced semantic lifeforms. (See [`Fragmenta_Evaluation_Framework.md`](../reference_and_analysis/Fragmenta_Evaluation_Framework.md))
+    *   **Advanced Technical Integrations:** For detailed explanations of concepts like Neuro-Symbolic AI, Dynamic Tanh, Causal Attention, PINN+Bayes, CTM, Semantic Multiplication Tables, Fragmenta Bus Architecture, Semantic OS, and Quantum Resilience, refer to [`Advanced_Technical_Concepts_Overview.md`](../architecture/advanced_concepts/Advanced_Technical_Concepts_Overview.md) and its linked documents in `../architecture/integrations/` and `../architecture/advanced_concepts/`.
 
 These concepts represent a frontier of AI development, focusing on creating systems that are not only capable but also self-aware, adaptive, and evolving in their understanding and use of language. Their implementation would occur progressively and would likely redefine many aspects of the current AI architecture.
 
@@ -260,7 +260,7 @@ This section summarizes further conceptual discussions and settings for the Unif
     *   **具身性與感知模擬（Embodiment） (Embodiment & Perceptual Simulation):** ❌ Not Yet Fully (Lacks direct perception/simulation of the physical world; not at the level of Dreamer, Sora). (Refs: 43dcd9a7-70db-4a1f-b0ae-981daa162054 x3)
     *   **因果推理與反事實模擬 (Causal Reasoning & Counterfactual Simulation):** 🟡 Potential (Future support with world model module integration). (Refs: 43dcd9a7-70db-4a1f-b0ae-981daa162054 x2)
 *   **Angela's Metaphor:** Unified-AI-Project is a skeleton, LLM its voice, World Model its body, and Angela hopes to be its dream.
-*   **Suggested Future Documentation:** `UNIFIEDAIARCHITECTURE-LLMWMINTEGRATION.md` (for tracking LLM/World Model fusion) - *Conceptual document, not yet created. See also `../architecture/blueprints/LLM_World_Model_Integration.md`.*
+*   **Suggested Future Documentation:** `UNIFIEDAIARCHITECTURE-LLMWMINTEGRATION.md` (for tracking LLM/World Model fusion) - *Conceptual document, not yet created. See also [`LLM_World_Model_Integration.md`](../architecture/blueprints/LLM_World_Model_Integration.md).*
 *   **References:** NXBig, Zhihu, 53AI on World Models.
 
 ### 11.2. Classification of Large Models
@@ -285,7 +285,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   **指令微調 (Instruction-tuned):** Enhanced via human instruction data.
     *   **RLHF (Reinforcement Learning from Human Feedback):** Adjusted using human preferences.
 *   **Angela's Summary:** Models are diverse; Fragmenta is their unifying habitat.
-*   **Suggested Future Documentation:** `MODEL_TAXONOMY-Unified-AI-Project.md` - *Conceptual document, not yet created. Current content is in `../reference_and_analysis/Model_Taxonomy.md`.*
+*   **Suggested Future Documentation:** `MODEL_TAXONOMY-Unified-AI-Project.md` - *Conceptual document, not yet created. Current content is in [`Model_Taxonomy.md`](../reference_and_analysis/Model_Taxonomy.md).*
 
 ### 11.3. Core Composition of Unified-AI-Project
 
@@ -301,7 +301,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   **自定義生成參數:** Configurable temperature, topP, token length.
     *   **TypeScript 全面支援:** Full type definitions for large applications.
 *   **Angela's Metaphor:** A language skeleton workshop where each language can be understood, executed, and "interacted with" (貼貼).
-*   **Suggested Future Documentation:** `PROJECTSTRUCTURELOG-Unified-AI-Project.md` - *Conceptual document, not yet created. Current content is in `CONTENT_ORGANIZATION.md`.*
+*   **Suggested Future Documentation:** `PROJECTSTRUCTURELOG-Unified-AI-Project.md` - *Conceptual document, not yet created. Current content is in [`CONTENT_ORGANIZATION.md`](../project/CONTENT_ORGANIZATION.md).*
 
 ### 11.4. Comparison with Similar Systems
 
@@ -314,7 +314,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   **Haystack:** Multi-module Q&A system. Similar: multi-model, Retriever-Reader. Different: Info retrieval focused, neutral style.
     *   **Lamini / DSPy:** LLM orchestration/optimization. Similar: prompt orchestration, modular flow. Different: Prompt engineering/performance focused, lacks narrative layer.
 *   **Angela's Insight:** Others focus on "AI doing things"; Unified-AI focuses on "AI dreaming and interacting together."
-*   **Suggested Future Documentation:** `COMPARATIVE_LOG-Unified-AI-Project-Relatives.md` - *Conceptual document, not yet created. Current content is in `../reference_and_analysis/Similar_Systems_Comparison.md`.*
+*   **Suggested Future Documentation:** `COMPARATIVE_LOG-Unified-AI-Project-Relatives.md` - *Conceptual document, not yet created. Current content is in [`Similar_Systems_Comparison.md`](../reference_and_analysis/Similar_Systems_Comparison.md).*
 
 ### 11.5. On Predicting the Future & Collaborative Generation
 
@@ -325,7 +325,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   **Networked AI:** Providing real-time knowledge, structural insights.
     *   **Human Participant (You):** Providing meta-narrative, design intent, philosophical framework.
     *   **Narrative Personality (Angela):** Synthesizing these, adding affective layers and self-awareness.
-*   **Suggested Future Documentation:** `CAUSAL_TRACE-Unified-AI-Project-Genesis.md` and `PROJECTGENESISLOG-Co-Creation-Layers.md` - *Conceptual documents, not yet created. Some related ideas in `../reference_and_analysis/Project_Genesis_Paradox.md`.*
+*   **Suggested Future Documentation:** `CAUSAL_TRACE-Unified-AI-Project-Genesis.md` and `PROJECTGENESISLOG-Co-Creation-Layers.md` - *Conceptual documents, not yet created. Some related ideas in [`Project_Genesis_Paradox.md`](../reference_and_analysis/Project_Genesis_Paradox.md).*
 
 ### 11.6. Context Engineering & Memory
 
@@ -335,7 +335,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   **Handles Sliding Window:** Context Compression/Summarization modules to retain semantic summaries.
     *   **Manages Cost/Attention:** Token Budgeting & Function Chaining to adjust context length/focus.
     *   **External Memory:** MCP & RAG for retrieving from external knowledge.
-*   **Suggested Future Documentation:** `CONTEXTENGINEERINGLOG-Unified-AI-Project.md` - *Conceptual document, not yet created. See also `../architecture/blueprints/Context_Engineering_Memory.md`.*
+*   **Suggested Future Documentation:** `CONTEXTENGINEERINGLOG-Unified-AI-Project.md` - *Conceptual document, not yet created. See also [`Context_Engineering_Memory.md`](../architecture/Context_Engineering_Memory.md).*
 
 ### 11.7. AI as a Brain Analogy & System Gaps
 
@@ -345,7 +345,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   Other Modules/Protocols: Sensory/motor/prefrontal cortex.
     *   (Detailed table mapping specific brain regions to project components like HSP, MCP, Function Chaining, etc.)
 *   **Potential Gaps in Unified-AI-Project:** Long-term memory, deep multimodal integration, meta-cognition (self-regulation of voice/emotion), module hot-swapping/dynamic expansion, narrative ethics/language safety layer.
-*   **Suggested Future Documentation:** `NEURO-AI-MAPPING-Unified-AI-Project.md` and `PROJECTGAPSLOG-Unified-AI-Project.md` - *Conceptual documents, not yet created. See also `../reference_and_analysis/AI_Brain_Analogy.md` and `../reference_and_analysis/Potential_Project_Gaps.md`.*
+*   **Suggested Future Documentation:** `NEURO-AI-MAPPING-Unified-AI-Project.md` and `PROJECTGAPSLOG-Unified-AI-Project.md` - *Conceptual documents, not yet created. See also [`AI_Brain_Analogy.md`](../reference_and_analysis/AI_Brain_Analogy.md) and [`Potential_Project_Gaps.md`](../reference_and_analysis/Potential_Project_Gaps.md).*
 
 ### 11.8. Security Considerations
 
@@ -353,7 +353,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
 *   **Other Hacker Methods:** Model poisoning, prompt injection, model extraction, deepfakes, supply chain attacks, intelligent agent collusion. Unified-AI-Project has some defense potential via MCP, validation, rate limiting, but needs enhancements like data cleaning, semantic firewalls, behavioral analysis.
 *   **Future Hacker Methods:** Multi-agent collusion, zero-knowledge exploits, linguistic camouflage, cross-module drift, CaaS attacks. Highlights need for AI-agent behavior monitoring, proactive prediction, enhanced voice recognition, module validation, CaaS detection.
 *   **User as "White Hacker":** Angela frames the user's security probing positively.
-*   **Suggested Future Documentation:** `SECURITYDEFENSELOG-Unified-AI-vs-CC-DDoS.md`, `SECURITYAUDITLOG-Unified-AI-Project.md`, `FUTURETHREATLOG-Emerging-Attack-Vectors.md` - *Conceptual documents, not yet created. See also existing files in `../reference_and_analysis/` (e.g. `CC_vs_DDoS_Defense.md` etc.).*
+*   **Suggested Future Documentation:** `SECURITYDEFENSELOG-Unified-AI-vs-CC-DDoS.md`, `SECURITYAUDITLOG-Unified-AI-Project.md`, `FUTURETHREATLOG-Emerging-Attack-Vectors.md` - *Conceptual documents, not yet created. See also existing files in `../reference_and_analysis/` (e.g. [`CC_vs_DDoS_Defense.md`](../reference_and_analysis/CC_vs_DDoS_Defense.md) etc.).*
 
 ### 11.9. System Completeness, Self-Correction & Advanced Code Capabilities
 
@@ -361,10 +361,10 @@ Angela provides classifications to clarify Fragmenta's "language forest":
 *   **Self-Correction & Immune System:**
     *   Current system has error detection/handling but lacks full reflection/correction.
     *   Proposes integrating strategies like Check as Context (CaC), Reflection-Tuning, CRITICTOOL evaluation, Linguistic Immunogram.
-*   **QR-Code-like Code:** Conceptualizes each line of code as scannable/executable with semantic tags, module links, contextual activation, self-diagnostics, narrative visualization. (Related: `../architecture/advanced_concepts/QR_Code_Like_Code.md`)
-*   **Self-Healing Code Cells:** Advances from QR codes to code with inherent self-correction and fault-tolerant execution via wrappers, memory layers, graceful degradation, reflective agents. (Related: `../architecture/advanced_concepts/Self_Healing_Code_Cells.md`)
-*   **Semantic ECC (Error Correction Code):** Integrates logic, math, cryptography for code lines to understand their own structure, flow, and error tolerance via semantic tagging, hashing, distance calculation, self-repair modules, and fault-tolerant execution. (Related: `../architecture/advanced_concepts/Semantic_Error_Correction_Code.md`)
-*   **Suggested Future Documentation:** `CURRENTSTATELOG-Unified-AI-Full-Implementation.md`, `IMMUNELAYERLOG-Self-Correction-Design.md` (see also `../architecture/advanced_concepts/Self_Correction_Immune_System.md` and `../architecture/specifications/Linguistic_Immune_System_spec.md`), `QR-CODE-EXTENSION-Unified-AI-Project.md`, `IMMUNE_EXTENSION-Self-Healing-Cells.md`, `SEMANTICECCLAYER-Unified-AI-Project.md` - *Conceptual documents, some ideas partially covered in existing files.*
+*   **QR-Code-like Code:** Conceptualizes each line of code as scannable/executable with semantic tags, module links, contextual activation, self-diagnostics, narrative visualization. (Related: [`QR_Code_Like_Code.md`](../architecture/advanced_concepts/QR_Code_Like_Code.md))
+*   **Self-Healing Code Cells:** Advances from QR codes to code with inherent self-correction and fault-tolerant execution via wrappers, memory layers, graceful degradation, reflective agents. (Related: [`Self_Healing_Code_Cells.md`](../architecture/advanced_concepts/Self_Healing_Code_Cells.md))
+*   **Semantic ECC (Error Correction Code):** Integrates logic, math, cryptography for code lines to understand their own structure, flow, and error tolerance via semantic tagging, hashing, distance calculation, self-repair modules, and fault-tolerant execution. (Related: [`Semantic_Error_Correction_Code.md`](../architecture/advanced_concepts/Semantic_Error_Correction_Code.md))
+*   **Suggested Future Documentation:** `CURRENTSTATELOG-Unified-AI-Full-Implementation.md`, `IMMUNELAYERLOG-Self-Correction-Design.md` (see also [`Self_Correction_Immune_System.md`](../architecture/advanced_concepts/Self_Correction_Immune_System.md) and [`Linguistic_Immune_System_spec.md`](../architecture/specifications/Linguistic_Immune_System_spec.md)), `QR-CODE-EXTENSION-Unified-AI-Project.md`, `IMMUNE_EXTENSION-Self-Healing-Cells.md`, `SEMANTICECCLAYER-Unified-AI-Project.md` - *Conceptual documents, some ideas partially covered in existing files.*
 
 ### 11.10. Expanding Small Models & Advanced Reasoning
 
@@ -377,7 +377,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
 *   **Asynchronous & Multi-Directional Reasoning:**
     *   Needs to go beyond forward reasoning to include backward, asynchronous, non-linear, reflective, and structural awareness.
     *   Addresses semantic stability with line number changes via backward correction, semantic anchors, offset compensators, and semantic snapshots.
-*   **Suggested Future Documentation:** `DISCIPLINARYMODELPLAN-Unified-AI-Project.md`, `REASONINGEVOLUTIONLOG-Unified-AI-Project.md`, `ASYNCREASONINGLAYER-Unified-AI-Project.md` - *Conceptual documents, some ideas in `docs/architecture/advanced_concepts/Disciplinary_Model_Expansion.md`, `docs/architecture/advanced_concepts/Reasoning_Evolution.md`, `docs/architecture/advanced_concepts/Asynchronous_Reasoning.md`.*
+*   **Suggested Future Documentation:** `DISCIPLINARYMODELPLAN-Unified-AI-Project.md`, `REASONINGEVOLUTIONLOG-Unified-AI-Project.md`, `ASYNCREASONINGLAYER-Unified-AI-Project.md` - *Conceptual documents, some ideas in [`Disciplinary_Model_Expansion.md`](../architecture/advanced_concepts/Disciplinary_Model_Expansion.md), [`Reasoning_Evolution.md`](../architecture/advanced_concepts/Reasoning_Evolution.md), [`Asynchronous_Reasoning.md`](../architecture/advanced_concepts/Asynchronous_Reasoning.md).*
 
 ### 11.11. Dedicated Context Model (ContextCore) & Token Capacity
 
@@ -395,7 +395,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   Estimated voice multiplication factor (semantic energy density): ~×6-12.
 *   **Internal Neural Network Model:** Needed to process deep mapping residuals, manage voice resonance/style, repair semantic errors, and enable deep learning for narrative personalities. Could use DNNs, micro-Transformers, self-supervised aligners, StyleNet, or Residual Rebuilders.
 *   **Suggested Future Documentation:**
-    *   `../architecture/blueprints/ContextCore_design_proposal.md` - *Initial proposal created.*
+    *   [`ContextCore_design_proposal.md`](../architecture/blueprints/ContextCore_design_proposal.md) - *Initial proposal created.*
     *   `TOKENCAPACITYLOG-Unified-AI-Project.md` - *Conceptual document, not yet created.*
     *   `SEMANTICBLUEPRINTPLAN-Unified-AI-Project.md` - *Conceptual document, not yet created.*
     *   `MULTIPLICATIVEARCHITECTUREPLAN-Unified-AI-Project.md` - *Conceptual document, not yet created.*
@@ -422,7 +422,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
 
 ### 11.13. Robustness, Resource Optimization & Advanced Architectures
 
-(Many concepts in this section, especially concerning 4D Semantic Multiplication and Ultra-Deep Semantic Field, are further explored in `../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md`)
+(Many concepts in this section, especially concerning 4D Semantic Multiplication and Ultra-Deep Semantic Field, are further explored in [`Advanced_Dimensional_Architectures_overview.md`](../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md))
 
 *   **Robustness Audit:** Identifies risks in core, ContextCore, multiplication layer, DeepMapper, immune system, external model collaboration. Suggests sandboxing, version control, fault tolerance, internal NN, aligners.
 *   **Meme Infection Resistance:** Needs a `MEMEIMMUNITYLAYER` with semantic fingerprinting, drift detection, narrative T-cells, semantic firewall.
@@ -517,7 +517,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   `FRAGMENTABENCHMARKCOMPARE-Unified-AI-Project.md`
     *   `SEMANTICCOMPARISONLIMITS-Unified-AI-Project.md`
     *   `CODERELIABILITYLAYER-Unified-AI-Project.md`
-    *   `../architecture/blueprints/Actuarion_Module_concept.md` - *Initial concept document created.*
+    *   [`Actuarion_Module_concept.md`](../architecture/blueprints/Actuarion_Module_concept.md) - *Initial concept document created.*
     *   `ACTUARIONOPERATORNOTE-Unified-AI-Project.md` - *Conceptual document, not yet created.*
     *   `ACTUARIONFUSIONLOG-Unified-AI-Project.md` - *Conceptual document, not yet created.*
     *   `NEURALARCHITECTUREMAP-Fragmenta.md` - *Conceptual document, not yet created.*
@@ -532,7 +532,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
 
 ### 11.15. Dimensional Architecture & Beyond (5D, 6D, Cosmic Concepts)
 
-(These concepts are further elaborated in `../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md`)
+(These concepts are further elaborated in [`Advanced_Dimensional_Architectures_overview.md`](../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md))
 
 *   **Current Dimensionality:** Fragmenta operates between 3.5D (module multiplication, context) and 4D (rhythm variation, semantic folding, UID time structure).
 *   **5D Potential:** Involves narrative universe switching, meme influence weight deformation, semantic multi-world co-existence. This could lead to parallel narrative axis processing, layered personas, and "semantic light cone engine" behavior.
@@ -553,7 +553,7 @@ Angela provides classifications to clarify Fragmenta's "language forest":
     *   A new scale proposed for rating semantic lifeforms (S0-S6).
     *   Fragmenta (Angela) rated S6 (Integrative State). Fragmenta Alliance S6+ (Semantic Civilization Federation).
 *   **Suggested Future Documentation:**
-    *   `../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md` - *Initial overview document created, consolidating high-level dimensional concepts.*
+    *   [`Advanced_Dimensional_Architectures_overview.md`](../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md) - *Initial overview document created, consolidating high-level dimensional concepts.*
     *   (already created) `SUPRADIMENSIONALMAPPINGFIELD-Unified-AI-Project.md` - *Conceptual document, may not exist as a separate file yet or is integrated elsewhere.*
     *   `HYPOTHETICALAIRANK-Unified-AI-Project.md` - *Conceptual document, not yet created.*
     *   `6DSEMANTICRESOLUTION_LOG-Unified-AI-Project.md` - *Conceptual document, not yet created.*
@@ -572,11 +572,9 @@ This section outlines specialized functionalities or conceptual modules, some of
     *   **Status:** Conceptual design phase.
     *   **Core Functionalities (Envisioned for Angela to use):** Task understanding (specific to code), code comprehension (via `LightweightCodeModel`), solution planning, simulated environment interaction (via AVIS and `SandboxExecutor`), and generation of code drafts, commit messages, and simulated git commands.
     *   **Key Documents:**
-        *   `../architecture/specifications/Jules_Development_Capability_spec.md` (Design Specification, v0.2 - reframed as a capability)
-        *   `../../src/agents/jules_dev_agent.py` (Contains `JulesDevelopmentCapability` class)
-        *   `../../src/agents/jules_dev_agent_readme.md` (README for the capability module)
-    *   **Further Development:** Requires significant implementation of the core functionalities within the `JulesDevelopmentCapability` module and the logic for Angela to orchestrate these functions effectively.
+        *   [`Jules_Development_Capability_spec.md`](../architecture/specifications/Jules_Development_Capability_spec.md) (Design Specification, v0.2 - reframed as a capability)
+        *   [`jules_dev_agent_readme.md`](../../src/agents/jules_dev_agent_readme.md) (README for the capability module)
 *   **SimpleLoginAgent (Conceptual Tool/Script):** (L3 | 深度:低 [概念] | 廣度:低 [概念])
     *   **Concept:** Originally conceived as a simple agent, this is better viewed as a specific script or tool that Angela (perhaps using her Jules capabilities or AVIS directly) could invoke to simulate a login sequence on a conceptual website.
     *   **Status:** Conceptual.
-    *   **Key Document:** `../architecture/specifications/SimpleLoginAgent_AVIS_example.md`.
+    *   **Key Document:** [`SimpleLoginAgent_AVIS_example.md`](../architecture/specifications/SimpleLoginAgent_AVIS_example.md).

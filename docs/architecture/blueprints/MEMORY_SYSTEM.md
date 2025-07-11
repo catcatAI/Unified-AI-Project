@@ -26,7 +26,7 @@ The HAM system is primarily implemented in the `HAMMemoryManager` class, located
 
 For a comprehensive technical explanation of the HAM model, including data flow, API specifications, and future development plans, please refer to the detailed design document:
 
-*   **[Hierarchical Abstractive Memory (HAM) - Design Specification](./HAM_design_spec.md)**
+*   **[Hierarchical Abstractive Memory (HAM) - Design Specification](../specifications/HAM_design_spec.md)**
 
 ## Integration
 
