@@ -11,6 +11,31 @@ This document provides a high-level summary of the implementation status of vari
 
 This summary is based on automated code and documentation review.
 
+## Component and Concept Tier Overview
+
+| 組件/概念 (Component/Concept) | 評級 (Tier)                     | 核心描述 (Core Description)                                  |
+| :------------------------------ | :------------------------------ | :----------------------------------------------------------- |
+| [Core AI / Dialogue Management](#1-core-ai--dialogue-management-srccoreaidialogue) | `(L1 | 深度:高 | 廣度:高)`         | Orchestrates conversation flow, integrates AI components, generates responses. |
+| [Memory System (HAM)](#2-memory-system-ham---srccoreaimemory) | `(L0 | 深度:中 | 廣度:高)`         | Custom memory system for experiences, facts, and dialogue context. |
+| [Learning System](#3-learning-system-srccoreailearning) | `(L1 | 深度:中高 | 廣度:中高)`     | Coordinates learning, fact extraction, self-critique, content analysis. |
+| [Content Analyzer Module](#3-learning-system-srccoreailearning) | `(L2 | 深度:中 | 廣度:中)`         | (Part of Learning System) Analyzes text for knowledge graph creation. |
+| [Fragmenta Orchestration](#4-fragmenta-orchestration-srcfragmenta) | `(L1 | 深度:高 | 廣度:高)`         | Manages complex tasks, coordinates modules, applies processing strategies with advanced state/plan management. |
+| [Heterogeneous Synchronization Protocol (HSP)](#5-heterogeneous-synchronization-protocol-hsp---srchsp) | `(L0 | 深度:高 | 廣度:高)`         | Enables inter-AI communication, data sharing, and collaboration. |
+| [ServiceDiscoveryModule (HSP)](#5-heterogeneous-synchronization-protocol-hsp---srchsp) | `(L2 | 深度:中 | 廣度:中)`         | (Part of HSP) Manages HSP capability advertisements; needs refactoring for full spec alignment. |
+| [Tooling System](#6-tooling-system-srctools) | `(L1 | 深度:中 | 廣度:中)`         | Enables AI to use external/internal tools to augment capabilities. |
+| [User Interfaces](#7-user-interfaces-srcinterfaces) | `(L1 | 深度:中 | 廣度:中)`         | Provides interaction points like CLI and Electron App. |
+| [Linguistic Immune System (LIS)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | Advanced error processing and linguistic evolution system. |
+| [MetaFormulas (元公式)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | High-level principles for semantic module learning and adaptation. |
+| [Deep Mapping & Related Concepts](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:中高 [潛在])` | Systems for inferring AI structures or advanced symbolic representation. |
+| [Unified Semantic Ontogenesis Scale (USOS+)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:中 [概念] | 廣度:中 [概念])` | Developmental scale for AI semantic evolution. |
+| [ContextCore](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | Dedicated long-term memory and context management model. (Proposal: `../architecture/blueprints/ContextCore_design_proposal.md`) |
+| [Model Multiplication](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:高 [潛在] | 廣度:高 [潛在])` | Semantic fusion of internal/external AI models. (Proposal: `../architecture/blueprints/Model_Multiplication_architecture.md`) |
+| ["Actuarion" Module](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:中高 [潛在] | 廣度:中 [潛在])` | Conceptual module for semantic risk/logic validation. (Concept: `../architecture/blueprints/Actuarion_Module_concept.md`) |
+| [Dimensional Architecture (4D, 5D, 6D)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:極高 [概念] | 廣度:極高 [概念])` | Advanced architectural concepts for emergent intelligence. (Overview: `../architecture/advanced_concepts/Advanced_Dimensional_Architectures_overview.md`) |
+| [Semantic Civilization Scale (SCS)](#10-future-conceptual-goals--advanced-research-directions-from-docs10txt-and-docs10entxt) | `(L3 | 深度:低 [概念] | 廣度:低 [概念])` | Proposed scale for rating advanced semantic lifeforms. |
+| [Jules - Asynchronous Development Capability](#12-specialized-capabilities--conceptual-modules) | `(L2 | 深度:中高 [潛在] | 廣度:中)`     | Capability set for AI-assisted software development tasks. |
+| [SimpleLoginAgent (Conceptual Tool/Script)](#12-specialized-capabilities--conceptual-modules) | `(L3 | 深度:低 [概念] | 廣度:低 [概念])` | Conceptual tool for simulating login sequences. |
+
 ## 1. Core AI / Dialogue Management (`src/core_ai/dialogue/`)
 (L1 | 深度:高 | 廣度:高)
 
