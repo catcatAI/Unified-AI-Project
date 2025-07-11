@@ -1,5 +1,7 @@
 # Project Placeholders and TODOs Summary
 
+**Note (July 2024): This document is a snapshot of TODOs identified at a specific point in time. Many of these have been addressed or are tracked elsewhere (e.g., GitHub Issues, specific module READMEs, or within `STATUS_SUMMARY.md`). Please refer to those sources for the most current status of development tasks.**
+
 This document outlines the placeholders and TODO items found within the Unified-AI-Project codebase.
 
 ## 1. Configuration Placeholders

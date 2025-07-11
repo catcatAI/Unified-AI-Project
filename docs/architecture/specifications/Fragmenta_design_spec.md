@@ -236,7 +236,7 @@ This is a complex area requiring significant research and development, likely ev
 ## 7. Future Considerations (Renumbered)
 
 *   **Advanced Orchestration Architectures:**
-    *   **Multi-Bus System and Tech Blocks:** A significant conceptual evolution involves redesigning Fragmenta around a multi-layered bus system (Technical, Module, and Semantic buses) that dynamically assembles fundamental "Tech Blocks" into modules and personalities. This aims for greater modularity, efficiency, and emergent capabilities. For a detailed exploration of this concept, see `docs/architecture/advanced_concepts/Fragmenta_Bus_Architecture.md`.
+    *   **Multi-Bus System and Tech Blocks:** A significant conceptual evolution involves redesigning Fragmenta around a multi-layered bus system (Technical, Module, and Semantic buses) that dynamically assembles fundamental "Tech Blocks" into modules and personalities. This aims for greater modularity, efficiency, and emergent capabilities. For a detailed exploration of this concept, see [`Fragmenta_Bus_Architecture.md`](../advanced_concepts/Fragmenta_Bus_Architecture.md).
 *   **Sophisticated Strategy Generation & Selection:** The current `_determine_processing_strategy` is very basic. Future work should focus on more dynamic and intelligent strategy generation, potentially using ML models, rule-based systems, or planning algorithms, and incorporating factors like hardware context, task type, and past performance.
 *   **Advanced Dependency Management:** Evolve beyond the current stage-based dependencies to support more complex, graph-like dependency structures between steps.
 *   **Dynamic Strategy Adjustment:** Allow the orchestrator to modify the execution plan mid-stream based on intermediate results, failures of certain paths, or changes in the environment.
@@ -249,7 +249,7 @@ This is a complex area requiring significant research and development, likely ev
     *   Implement mechanisms to limit the concurrency of local tasks (e.g., thread pools, async task limits).
     *   Support more complex join conditions for parallel step groups beyond simply "all completed or failed."
     *   Explore dynamic identification of parallelizable steps within a task.
-*   **Integration with `ContextCore`:** Deeply integrate with the proposed `ContextCore` (see `../blueprints/ContextCore_design_proposal.md`) for richer contextual information to inform strategy selection, step parameterization, and long-term learning from task executions.
+*   **Integration with `ContextCore`:** Deeply integrate with the proposed `ContextCore` (see [`ContextCore_design_proposal.md`](../blueprints/ContextCore_design_proposal.md)) for richer contextual information to inform strategy selection, step parameterization, and long-term learning from task executions.
 *   **Sophisticated Input/Output Parameter Mapping:** Enhance the current basic f-string templating for `input_mapping` with more powerful tools like JSONPath, a small expression language, or conditional mapping logic for complex data transformations between steps.
 *   **Comprehensive Result Synthesis:** Develop more advanced methods for `_merge_results` to synthesize final outputs from multiple, potentially diverse, intermediate step results, especially for branched or parallel execution plans.
 *   **Plan Validation:** Implement more robust validation of `EnhancedStrategyPlan` structures before execution to catch errors in dependencies, input/output mappings, or step definitions.
