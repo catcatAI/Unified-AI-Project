@@ -1,5 +1,7 @@
 # Integrating Causal Attention Mechanisms into Fragmenta
 
+**Part of the [Advanced Technical Concepts Overview](../advanced_concepts/Advanced_Technical_Concepts_Overview.md).**
+
 ## 1. Introduction
 
 This document discusses the potential integration of Causal Attention mechanisms into the Fragmenta system. Traditional attention mechanisms in Transformers, while powerful for capturing relationships in sequences, primarily model correlation. Causal Attention, as explored in recent research and discussed in `EX1.txt`, aims to imbue models with an understanding of cause-and-effect relationships, which could significantly enhance Fragmenta's reasoning and narrative generation capabilities.

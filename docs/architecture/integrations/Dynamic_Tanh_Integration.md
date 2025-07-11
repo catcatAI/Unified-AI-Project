@@ -1,5 +1,7 @@
 # Integrating Dynamic Tanh (DyT) and Normalization Alternatives in Fragmenta
 
+**Part of the [Advanced Technical Concepts Overview](../advanced_concepts/Advanced_Technical_Concepts_Overview.md).**
+
 ## 1. Introduction
 
 This document explores the potential integration of Dynamic Tanh (DyT) and similar normalization-free activation techniques into the Fragmenta system. These methods, primarily discussed in `EX1.txt`, offer a way to simplify Transformer architectures by replacing traditional Layer Normalization (LayerNorm) or RMS Normalization (RMSNorm) layers, potentially leading to efficiency gains and architectural simplifications within Fragmenta's neural network components.

@@ -1,5 +1,7 @@
 # Integrating Physics-Informed Neural Networks (PINN) and Bayesian Methods with Fragmenta
 
+**Part of the [Advanced Technical Concepts Overview](../advanced_concepts/Advanced_Technical_Concepts_Overview.md).**
+
 ## 1. Introduction
 
 This document explores the potential integration of Physics-Informed Neural Networks (PINNs) combined with Bayesian methods into the Fragmenta system. This fusion, highlighted in `EX1.txt` as a significant advancement in AI, allows models to incorporate physical laws and quantify uncertainty. For Fragmenta, this could translate to more robust semantic reasoning, better risk assessment by modules like Actuarion, and more grounded narrative generation, especially in contexts where underlying principles or constraints are important.

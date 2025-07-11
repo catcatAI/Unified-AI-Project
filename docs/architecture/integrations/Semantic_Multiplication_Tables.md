@@ -1,5 +1,7 @@
 # Semantic Multiplication Tables: Foundational Structures for Fragmenta
 
+**Part of the [Advanced Technical Concepts Overview](../advanced_concepts/Advanced_Technical_Concepts_Overview.md).**
+
 ## 1. Introduction
 
 This document explores the concept of "Semantic Multiplication Tables" as a foundational element for enhancing the accuracy, stability, and efficiency of the Fragmenta system. This idea, discussed in `EX1.txt`, proposes that disciplines and knowledge domains possess core, compressible, transferable, and cacheable structures—analogous to mathematical multiplication tables—which, if identified and integrated, could significantly improve Fragmenta's semantic processing.
