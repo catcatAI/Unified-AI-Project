@@ -392,7 +392,86 @@ class FragmentaOrchestrator:
             if active_corr_ids: response["correlation_ids"] = active_corr_ids
         if task_ctx["overall_status"] == "failed_execution":
             response["message"] = "One or more steps failed permanently."; response["step_results"] = task_ctx["step_results"]
+
+        # Store task outcome in HAM if terminal state reached
+        if task_ctx["overall_status"] in ["completed", "failed_execution", "failed_plan"]:
+            self._store_task_outcome_in_ham(task_ctx)
+
         return response
+
+    def _store_task_outcome_in_ham(self, task_ctx: EnhancedComplexTaskState) -> None:
+        if not self.ham_manager:
+            logger.warning(f"F (ID: {task_ctx['complex_task_id']}): HAMMemoryManager not available. Cannot store task outcome.")
+            return
+
+        description_summary = str(task_ctx['original_task_description'].get('goal', task_ctx['original_task_description'].get('name', 'N/A')))[:256]
+
+        outcome_details_str = "Task completed."
+        final_step_in_plan = None
+        if task_ctx["strategy_plan"]["steps"]:
+            last_stage_item = task_ctx["strategy_plan"]["steps"][-1]
+            final_step_in_plan = last_stage_item[0] if isinstance(last_stage_item, list) and last_stage_item else (last_stage_item if not isinstance(last_stage_item, list) else None)
+
+        if task_ctx["overall_status"] == "completed" and final_step_in_plan:
+            final_result = task_ctx["step_results"].get(final_step_in_plan["step_id"]) # type: ignore
+            outcome_details_str = f"Completed successfully. Final step '{final_step_in_plan['step_id']}' result type: {type(final_result).__name__}, summary: {str(final_result)[:128]}"
+        elif task_ctx["overall_status"] == "failed_execution":
+            failed_step_ids = [
+                s["step_id"] for stage in task_ctx["strategy_plan"]["steps"]
+                for s in (stage if isinstance(stage, list) else [stage]) # type: ignore
+                if s["status"] == "failed" or (s.get("retries_left") == 0 and s["status"] not in ["completed", "pending", "pending_dispatch"]) # type: ignore
+            ]
+            first_failed_step_id = failed_step_ids[0] if failed_step_ids else "unknown"
+            # Try to get error message from the first failed step
+            error_message = "Unknown error."
+            for stage in task_ctx["strategy_plan"]["steps"]:
+                for step_detail_item in (stage if isinstance(stage, list) else [stage]): # type: ignore
+                    if step_detail_item["step_id"] == first_failed_step_id:
+                        error_info = step_detail_item.get("error_info")
+                        if error_info and isinstance(error_info, dict):
+                            error_message = error_info.get("message", "No error message provided.")
+                        break
+                if error_message != "Unknown error.": break
+            outcome_details_str = f"Failed execution. First failed step: '{first_failed_step_id}'. Error: {str(error_message)[:256]}"
+
+        elif task_ctx["overall_status"] == "failed_plan":
+            outcome_details_str = f"Failed due to plan issue. Plan ID: {task_ctx['strategy_plan']['plan_id']}"
+
+        all_step_statuses = {}
+        for stage in task_ctx["strategy_plan"]["steps"]:
+            for step_detail in (stage if isinstance(stage, list) else [stage]): # type: ignore
+                 all_step_statuses[step_detail["step_id"]] = step_detail["status"]
+
+        task_outcome_payload = {
+            "complex_task_id": task_ctx["complex_task_id"],
+            "original_task_description_summary": description_summary,
+            "strategy_plan_id": task_ctx["strategy_plan"]["plan_id"],
+            "strategy_plan_name": task_ctx["strategy_plan"]["name"],
+            "final_status": task_ctx["overall_status"],
+            "timestamp_concluded": datetime.now(timezone.utc).isoformat(),
+            "input_data_info": self._analyze_input(task_ctx["original_input_data"]), # Re-analyze or store initial analysis
+            "outcome_details": outcome_details_str,
+            "all_step_statuses": all_step_statuses
+        }
+
+        ham_metadata = {
+            "source_module": "FragmentaOrchestrator",
+            "complex_task_id_ref": task_ctx["complex_task_id"] # For potential direct HAM query on this ID
+        }
+
+        try:
+            mem_id = self.ham_manager.store_experience(
+                raw_data=task_outcome_payload,
+                data_type="fragmenta_task_outcome_v0.1",
+                metadata=ham_metadata # type: ignore
+            )
+            if mem_id:
+                logger.info(f"F (ID: {task_ctx['complex_task_id']}): Stored task outcome in HAM (MemID: {mem_id}).")
+            else:
+                logger.error(f"F (ID: {task_ctx['complex_task_id']}): Failed to store task outcome in HAM.")
+        except Exception as e:
+            logger.error(f"F (ID: {task_ctx['complex_task_id']}): Exception storing task outcome in HAM: {e}", exc_info=True)
+
 
     def _analyze_input(self, input_data: any) -> dict: # Keep as is
         input_type = "unknown"; input_size = 0
@@ -400,8 +479,54 @@ class FragmentaOrchestrator:
         elif isinstance(input_data, (list, dict)): input_type = "structured_data"; input_size = len(str(input_data))
         return {"type": input_type, "size": input_size, "content_preview": str(input_data)[:100]}
 
-    def _determine_processing_strategy(self, task_description: Dict[str, Any], input_info: Dict[str, Any], complex_task_id: str) -> EnhancedStrategyPlan: # Keep as is for now
-        logger.debug(f"F (ID: {complex_task_id}): Determining strategy for task: {task_description.get('goal', 'N/A')}")
+    def _determine_processing_strategy(self, task_description: Dict[str, Any], input_info: Dict[str, Any], complex_task_id: str) -> EnhancedStrategyPlan:
+        task_goal_summary = str(task_description.get('goal', task_description.get('name', 'N/A')))[:128]
+        logger.debug(f"F (ID: {complex_task_id}): Determining strategy for task: {task_goal_summary}")
+
+        # --- Query HAM for past outcomes of similar tasks (Conceptual V1 - Logging only) ---
+        if self.ham_manager:
+            # Formulate a simple query based on task description summary
+            # This is a very basic keyword search on the stored 'original_task_description_summary'
+            # A more advanced query would involve better summarization/embedding/similarity.
+            query_keywords = task_goal_summary.lower().split()[:5] # Use first 5 words as rough keywords
+
+            # Metadata filter for complex_task_id_ref could be used if we want to find outcomes
+            # related to a specific *previous* task ID, but here we want similar *descriptions*.
+            # For now, we'll rely on keywords in the payload's description summary.
+            # A proper search would require HAM to support searching within the raw_data (payload).
+            # Current HAM query_core_memory searches keywords in *metadata*.
+            # So, for this to work effectively, some keywords from description_summary
+            # would need to be in HAM metadata when outcomes are stored.
+            # Let's assume for now we just log this attempt.
+
+            logger.info(f"F (ID: {complex_task_id}): Conceptually querying HAM for past outcomes related to: '{task_goal_summary}' (keywords: {query_keywords})")
+            # This query will likely not be effective with current HAMMemoryManager.query_core_memory
+            # as it searches metadata, not payload content. This highlights a need for HAM enhancement or different query.
+            # For now, we demonstrate the intent.
+            try:
+                past_outcomes = self.ham_manager.query_core_memory(
+                    keywords=query_keywords, # This searches HAM metadata, not payload.
+                    data_type_filter="fragmenta_task_outcome_v0.1",
+                    limit=3 # Get a few recent ones
+                )
+                if past_outcomes:
+                    logger.info(f"F (ID: {complex_task_id}): Found {len(past_outcomes)} potentially related past task outcomes in HAM.")
+                    for outcome_recall_result in past_outcomes:
+                        # outcome_recall_result.rehydrated_gist should be the task_outcome_payload dict
+                        if isinstance(outcome_recall_result.get("rehydrated_gist"), dict):
+                            past_payload = outcome_recall_result["rehydrated_gist"]
+                            logger.info(f"  - Past Task ID: {past_payload.get('complex_task_id')}, Strategy: {past_payload.get('strategy_plan_name')}, Status: {past_payload.get('final_status')}")
+                        else:
+                            logger.warning(f"  - Past outcome (MemID: {outcome_recall_result.get('id')}) gist not a dict: {type(outcome_recall_result.get('rehydrated_gist'))}")
+
+                # Placeholder for actual decision logic based on past_outcomes:
+                # if any(outcome['final_status'] == 'failed_execution' for outcome in relevant_past_outcomes):
+                #     logger.info(f"F (ID: {complex_task_id}): Similar tasks failed before. Considering alternative strategy.")
+                #     # ... logic to pick a different plan_name or modify steps ...
+            except Exception as e:
+                logger.error(f"F (ID: {complex_task_id}): Error querying HAM for past task outcomes: {e}", exc_info=True)
+        # --- End HAM Query Section ---
+
         steps: List[ProcessingStep] = []; plan_name = "default_single_step_plan"; plan_id = f"plan_{complex_task_id}_{uuid.uuid4().hex[:4]}"
         if task_description.get("dispatch_to_hsp_capability_id"):
             if not self.service_discovery or not self.hsp_connector: plan_name = "error_hsp_unavailable"
