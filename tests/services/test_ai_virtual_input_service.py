@@ -484,3 +484,215 @@ if __name__ == '__main__':
         hw_display = avis_for_init_test._find_element_by_id("sim_hw_status_display")
         self.assertIn("Profile=TestHWProfile", hw_display.get("value", "")) # type: ignore
         self.assertIn("CPU=4 cores", hw_display.get("value", "")) # type: ignore
+
+    # --- Tests for Virtual File System Operations ---
+
+    def test_virtual_file_system_initialization(self):
+        """Test that the virtual file system is empty upon AVIS initialization."""
+        self.assertEqual(self.avis.virtual_file_system, {})
+
+    def test_load_virtual_files(self):
+        """Test loading files into the virtual file system."""
+        # Test loading into an empty FS
+        files_to_load1 = {
+            "src/main.py": "print('hello')",
+            "data/config.txt": "key=value"
+        }
+        self.avis.load_virtual_files(files_to_load1)
+        self.assertEqual(self.avis.virtual_file_system, files_to_load1)
+        # Ensure it's a copy
+        self.assertIsNot(self.avis.virtual_file_system, files_to_load1)
+
+        # Test that loading new files replaces the old FS
+        files_to_load2 = {
+            "docs/readme.md": "# Project Readme"
+        }
+        self.avis.load_virtual_files(files_to_load2)
+        self.assertEqual(self.avis.virtual_file_system, files_to_load2)
+        self.assertNotEqual(self.avis.virtual_file_system, files_to_load1)
+
+        # Test loading empty dictionary
+        self.avis.load_virtual_files({})
+        self.assertEqual(self.avis.virtual_file_system, {})
+
+    def test_clear_virtual_files(self):
+        """Test clearing the virtual file system."""
+        files_to_load = {
+            "src/main.py": "print('hello')"
+        }
+        self.avis.load_virtual_files(files_to_load)
+        self.assertNotEqual(self.avis.virtual_file_system, {}) # Ensure it's not empty
+
+        self.avis.clear_virtual_files()
+        self.assertEqual(self.avis.virtual_file_system, {})
+
+    def test_process_file_op_read_file_exists(self):
+        """Test reading an existing file from the virtual file system."""
+        file_path = "src/readable.py"
+        file_content = "print('I am readable')"
+        self.avis.load_virtual_files({file_path: file_content})
+
+        command: Dict[str, Any] = { # Using Dict for easier construction than exact AVISFileOperationCommand
+            "action_type": "file_operation",
+            "operation": "read_file",
+            "path": file_path
+        }
+        response = self.avis.process_file_operation_command(command) # type: ignore
+
+        self.assertEqual(response["status"], "success")
+        self.assertEqual(response.get("content"), file_content)
+        self.assertIn(f"Successfully read virtual file: {file_path}", response.get("message", ""))
+
+        # Check logs
+        log = self.avis.get_action_log()
+        self.assertEqual(len(log), 1) # Assuming log is cleared by tearDown or setUp
+        self.assertEqual(log[0]["command_type"], "file_operation")
+        self.assertEqual(log[0]["command_details"], command)
+        self.assertEqual(log[0]["outcome"]["status"], "success")
+
+
+    def test_process_file_op_read_file_not_exists(self):
+        """Test reading a non-existent file from the virtual file system."""
+        self.avis.load_virtual_files({"some/other_file.txt": "content"}) # Ensure FS is not empty but target is missing
+
+        command: Dict[str, Any] = {
+            "action_type": "file_operation",
+            "operation": "read_file",
+            "path": "src/non_existent.py"
+        }
+        response = self.avis.process_file_operation_command(command) # type: ignore
+
+        self.assertEqual(response["status"], "error_file_not_found")
+        self.assertIsNone(response.get("content"))
+        self.assertIn(f"Virtual file not found: {command['path']}", response.get("message", ""))
+
+    def test_process_file_op_write_file_new(self):
+        """Test writing a new file to the virtual file system."""
+        file_path = "gen/new_file.txt"
+        file_content = "This is a newly written file."
+        command: Dict[str, Any] = {
+            "action_type": "file_operation",
+            "operation": "write_file",
+            "path": file_path,
+            "content": file_content
+        }
+        response = self.avis.process_file_operation_command(command) # type: ignore
+
+        self.assertEqual(response["status"], "success")
+        self.assertIn(f"Successfully wrote to virtual file: {file_path}", response.get("message", ""))
+        self.assertEqual(self.avis.virtual_file_system.get(file_path), file_content)
+
+        log = self.avis.get_action_log()
+        self.assertEqual(len(log), 1)
+        self.assertEqual(log[0]["outcome"]["status"], "success")
+
+    def test_process_file_op_write_file_overwrite(self):
+        """Test overwriting an existing file in the virtual file system."""
+        file_path = "config/settings.ini"
+        initial_content = "old_setting=true"
+        new_content = "new_setting=false\nanother_setting=123"
+        self.avis.load_virtual_files({file_path: initial_content})
+
+        command: Dict[str, Any] = {
+            "action_type": "file_operation",
+            "operation": "write_file",
+            "path": file_path,
+            "content": new_content
+        }
+        response = self.avis.process_file_operation_command(command) # type: ignore
+
+        self.assertEqual(response["status"], "success")
+        self.assertEqual(self.avis.virtual_file_system.get(file_path), new_content)
+
+    def test_process_file_op_write_file_empty_content(self):
+        """Test writing empty content to a file."""
+        file_path = "empty_file.md"
+        command: Dict[str, Any] = {
+            "action_type": "file_operation",
+            "operation": "write_file",
+            "path": file_path,
+            "content": "" # Empty string
+        }
+        response = self.avis.process_file_operation_command(command) # type: ignore
+        self.assertEqual(response["status"], "success")
+        self.assertEqual(self.avis.virtual_file_system.get(file_path), "")
+
+        # Test writing with content=None (should also result in empty string as per current implementation)
+        command_none_content: Dict[str, Any] = {
+            "action_type": "file_operation",
+            "operation": "write_file",
+            "path": "none_content_file.txt",
+            "content": None
+        }
+        self.avis.clear_action_log() # Clear log from previous operation in this test
+        response_none = self.avis.process_file_operation_command(command_none_content) # type: ignore
+        self.assertEqual(response_none["status"], "success")
+        self.assertEqual(self.avis.virtual_file_system.get("none_content_file.txt"), "")
+
+    def test_process_file_op_list_directory(self):
+        """Test listing directory contents from the virtual file system."""
+        files_structure = {
+            "dir1/fileA.txt": "contentA",
+            "dir1/subdirB/fileB.txt": "contentB",
+            "dir1/another_file.log": "log data",
+            "fileC.txt": "contentC",
+            "empty_dir/": "" # Representing an empty directory conceptually by its path ending in /
+                             # The actual AVIS list_directory logic might not need this if it infers dirs from paths.
+        }
+        self.avis.load_virtual_files(files_structure)
+
+        # Test listing root (conceptual "/") - AVIS code treats "" or "/" as root for listing
+        # The current AVIS list_directory logic might not support a true "root" listing well without a common prefix.
+        # Let's test based on its current behavior: listing items that don't have a '/' before their first segment.
+        # Or, more accurately, how it segments paths.
+        # The code iterates all keys. If path_prefix is "", it lists all top-level items.
+
+        # Test listing root (empty path implies root for the current AVIS logic)
+        cmd_root: Dict[str, Any] = {"action_type": "file_operation", "operation": "list_directory", "path": ""}
+        res_root = self.avis.process_file_operation_command(cmd_root) # type: ignore
+        self.assertEqual(res_root["status"], "success", "Listing root should succeed")
+        # Expected: items in the "root" of the flat virtual_file_system keys.
+        # The AVIS list_directory logic creates a pseudo-hierarchy.
+        # For path="", it should list "dir1/" and "fileC.txt", "empty_dir/"
+        expected_root_listing = sorted(["dir1/", "fileC.txt", "empty_dir/"])
+        self.assertEqual(sorted(res_root.get("directory_listing", [])), expected_root_listing)
+
+
+        # Test listing "dir1/"
+        cmd_dir1: Dict[str, Any] = {"action_type": "file_operation", "operation": "list_directory", "path": "dir1/"}
+        res_dir1 = self.avis.process_file_operation_command(cmd_dir1) # type: ignore
+        self.assertEqual(res_dir1["status"], "success")
+        expected_dir1_listing = sorted(["fileA.txt", "subdirB/", "another_file.log"])
+        self.assertEqual(sorted(res_dir1.get("directory_listing", [])), expected_dir1_listing)
+
+        # Test listing "dir1/subdirB/"
+        cmd_subdirB: Dict[str, Any] = {"action_type": "file_operation", "operation": "list_directory", "path": "dir1/subdirB/"}
+        res_subdirB = self.avis.process_file_operation_command(cmd_subdirB) # type: ignore
+        self.assertEqual(res_subdirB["status"], "success")
+        self.assertEqual(sorted(res_subdirB.get("directory_listing", [])), ["fileB.txt"])
+
+        # Test listing an "empty_dir/" (which is empty of files but exists as a prefix)
+        # The current logic might show it as empty or might depend on how it's defined.
+        # If "empty_dir/" key exists, it implies it's a known path.
+        # If we query "empty_dir/", it should list things *under* it. Since nothing is, it should be empty.
+        cmd_empty_dir: Dict[str, Any] = {"action_type": "file_operation", "operation": "list_directory", "path": "empty_dir/"}
+        res_empty_dir = self.avis.process_file_operation_command(cmd_empty_dir) # type: ignore
+        self.assertEqual(res_empty_dir["status"], "success")
+        self.assertEqual(res_empty_dir.get("directory_listing", []), [])
+
+        # Test listing a non-existent directory
+        cmd_non_existent: Dict[str, Any] = {"action_type": "file_operation", "operation": "list_directory", "path": "non_existent_dir/"}
+        res_non_existent = self.avis.process_file_operation_command(cmd_non_existent) # type: ignore
+        self.assertEqual(res_non_existent["status"], "error_file_not_found") # Or some path_not_found error
+
+        # Test listing a path that is a file
+        cmd_list_file: Dict[str, Any] = {"action_type": "file_operation", "operation": "list_directory", "path": "fileC.txt"}
+        res_list_file = self.avis.process_file_operation_command(cmd_list_file) # type: ignore
+        self.assertEqual(res_list_file["status"], "error_other") # As per AVIS code: path is a file
+        self.assertIn("is a file, not a directory", res_list_file.get("message", ""))
+
+        # Test listing a path that is a prefix but not explicitly ending with / in command
+        cmd_dir1_no_slash: Dict[str, Any] = {"action_type": "file_operation", "operation": "list_directory", "path": "dir1"}
+        res_dir1_no_slash = self.avis.process_file_operation_command(cmd_dir1_no_slash) # type: ignore
+        self.assertEqual(res_dir1_no_slash["status"], "success")
+        self.assertEqual(sorted(res_dir1_no_slash.get("directory_listing", [])), expected_dir1_listing)
