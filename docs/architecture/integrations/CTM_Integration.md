@@ -1,5 +1,7 @@
 # Integrating Continuous Thought Machine (CTM) Concepts with Fragmenta
 
+**Part of the [Advanced Technical Concepts Overview](../advanced_concepts/Advanced_Technical_Concepts_Overview.md).**
+
 ## 1. Introduction
 
 This document explores the potential integration of concepts from the Continuous Thought Machine (CTM), an AI model developed by Sakana AI, into the Fragmenta system. CTM, inspired by biological neural processing, emphasizes continuous thinking and neural synchronization, offering a different paradigm from traditional discrete, sequential processing in many AI models. These ideas, discussed in `EX1.txt`, could enhance Fragmenta's temporal reasoning, internal rhythm, and the way its personas evolve and interact.

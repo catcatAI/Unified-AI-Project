@@ -1,5 +1,7 @@
 # Applying AI Grafting Techniques to Fragmenta Modules
 
+**Part of the [Advanced Technical Concepts Overview](../advanced_concepts/Advanced_Technical_Concepts_Overview.md).**
+
 ## 1. Introduction
 
 This document explores the concept of "AI Grafting," as presented in research by Fei-Fei Li's team, and its potential applications within the Fragmenta system of the Unified-AI-Project. Grafting, in this context, refers to the technique of combining sub-structures (like attention layers or residual blocks) from different pre-trained models to create new hybrid models with desired capabilities, often at a significantly lower computational cost than training from scratch. This idea was discussed in `EX1.txt` in relation to Fragmenta's existing modularity and future evolution.
