@@ -1,29 +1,66 @@
 # src/core_services.py
 
+import yaml
+import os
 from typing import Optional, Dict, Any
 import uuid
-import os
+
+# Helper function to load YAML files
+def _load_yaml_config(filepath: str) -> Dict[str, Any]:
+    if not os.path.exists(filepath):
+        print(f"Warning: Config file not found at {filepath}. Returning empty dict.")
+        return {}
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return yaml.safe_load(f) or {}
+    except yaml.YAMLError as e:
+        print(f"Error parsing YAML from {filepath}: {e}. Returning empty dict.")
+        return {}
+    except Exception as e:
+        print(f"An unexpected error occurred loading config from {filepath}: {e}. Returning empty dict.")
+        return {}
+
+# Helper function to recursively resolve environment variables in a dictionary
+def _resolve_env_vars(config_data: Any) -> Any:
+    if isinstance(config_data, dict):
+        return {k: _resolve_env_vars(v) for k, v in config_data.items()}
+    elif isinstance(config_data, list):
+        return [_resolve_env_vars(elem) for elem in config_data]
+    elif isinstance(config_data, str):
+        # Handle _PLACEHOLDER pattern (e.g., "GEMINI_API_KEY_PLACEHOLDER")
+        if config_data.endswith('_PLACEHOLDER'):
+            env_var_name = config_data.replace('_PLACEHOLDER', '')
+            return os.getenv(env_var_name, config_data) # Return original if env var not set
+        # Handle ${ENV_VAR} pattern
+        elif config_data.startswith('${') and config_data.endswith('}'):
+            env_var_name = config_data[2:-1]
+            return os.getenv(env_var_name, config_data) # Return original if env var not set
+        return config_data
+    else:
+        return config_data
+
+
 
 # Core AI Modules
-from core_ai.dialogue.dialogue_manager import DialogueManager
-from core_ai.learning.learning_manager import LearningManager
-from core_ai.learning.fact_extractor_module import FactExtractorModule
-from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from core_ai.trust_manager.trust_manager_module import TrustManager
-from core_ai.memory.ham_memory_manager import HAMMemoryManager
-from core_ai.personality.personality_manager import PersonalityManager
-from core_ai.emotion_system import EmotionSystem
-from core_ai.crisis_system import CrisisSystem
-from core_ai.time_system import TimeSystem
-from core_ai.formula_engine import FormulaEngine
-from tools.tool_dispatcher import ToolDispatcher
-from fragmenta.fragmenta_orchestrator import FragmentaOrchestrator # Added import
+from src.core_ai.dialogue.dialogue_manager import DialogueManager
+from src.core_ai.learning.learning_manager import LearningManager
+from src.core_ai.learning.fact_extractor_module import FactExtractorModule
+from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+from src.core_ai.trust_manager.trust_manager_module import TrustManager
+from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from src.core_ai.personality.personality_manager import PersonalityManager
+from src.core_ai.emotion_system import EmotionSystem
+from src.core_ai.crisis_system import CrisisSystem
+from src.core_ai.time_system import TimeSystem
+from src.core_ai.formula_engine import FormulaEngine
+from src.tools.tool_dispatcher import ToolDispatcher
+from src.fragmenta.fragmenta_orchestrator import FragmentaOrchestrator # Added import
 
 # Services
-from services.llm_interface import LLMInterface, LLMInterfaceConfig
-from hsp.connector import HSPConnector
-from hsp.constants import CAP_ADVERTISEMENT_TOPIC, FACT_TOPIC_GENERAL
+from src.services.llm_interface import LLMInterface, LLMInterfaceConfig
+from src.hsp.connector import HSPConnector
+from src.hsp.constants import CAP_ADVERTISEMENT_TOPIC, FACT_TOPIC_GENERAL
 
 # --- Global Singleton Instances ---
 # These will be initialized by `initialize_services`
@@ -99,20 +136,80 @@ def initialize_services(
     print(f"Core Services: Initializing for AI ID: {ai_id}")
 
     # --- 0. Configurations ---
-    effective_llm_config = llm_config if llm_config else DEFAULT_LLM_CONFIG
-    effective_op_configs = operational_configs if operational_configs else DEFAULT_OPERATIONAL_CONFIGS
+    # Determine project root for config file paths
+    project_root = os.path.dirname(os.path.abspath(__file__)) # src/
+    project_root = os.path.abspath(os.path.join(project_root, '..')) # Unified-AI-Project/
 
-    # Ensure operational_configs are part of the main config dict for modules that expect it at top level
+    # Load system_config.yaml
+    system_config_path = os.path.join(project_root, 'configs', 'system_config.yaml')
+    loaded_system_config = _load_yaml_config(system_config_path)
+
+    # Load api_keys.yaml and resolve environment variables
+    api_keys_config_path = os.path.join(project_root, 'configs', 'api_keys.yaml')
+    loaded_api_keys_raw = _load_yaml_config(api_keys_config_path)
+    resolved_api_keys = _resolve_env_vars(loaded_api_keys_raw)
+
+    # Merge provided operational_configs with loaded system_config
+    # Provided operational_configs take precedence
+    effective_op_configs = loaded_system_config.get('operational_configs', {})
+    if operational_configs:
+        # Deep merge operational_configs if necessary, for now, simple update
+        effective_op_configs.update(operational_configs)
+
+    # Construct the main config dictionary to be passed around
     main_config_dict = {
-        "operational_configs": effective_op_configs,
-        # Add other top-level config keys if needed by modules from self.config
+        **loaded_system_config, # Start with all system config
+        "operational_configs": effective_op_configs, # Ensure operational_configs are updated
+        "api_keys": resolved_api_keys, # Add resolved API keys
+        # Any other top-level configs from system_config.yaml will be included here
     }
+
+    # Update effective_llm_config based on loaded configs
+    # Start with default LLM config, then override with system_config and api_keys
+    effective_llm_config = DEFAULT_LLM_CONFIG.copy() # Start with a copy to avoid modifying global default
+    
+    # Override default_provider and default_model from system_config if present
+    if 'llm_settings' in loaded_system_config:
+        llm_sys_settings = loaded_system_config['llm_settings']
+        if 'default_provider' in llm_sys_settings:
+            effective_llm_config['default_provider'] = llm_sys_settings['default_provider']
+        if 'default_model' in llm_sys_settings:
+            effective_llm_config['default_model'] = llm_sys_settings['default_model']
+
+    # Merge providers from system_config and api_keys
+    # Providers from system_config (e.g., ollama base_url)
+    if 'llm_settings' in loaded_system_config and 'providers' in loaded_system_config['llm_settings']:
+        for provider_name, provider_config in loaded_system_config['llm_settings']['providers'].items():
+            if provider_name not in effective_llm_config['providers']:
+                effective_llm_config['providers'][provider_name] = {}
+            effective_llm_config['providers'][provider_name].update(provider_config)
+
+    # Providers from resolved_api_keys (e.g., gemini api_key)
+    if 'api_keys' in main_config_dict:
+        for provider_name, api_key_config in main_config_dict['api_keys'].items():
+            if provider_name not in effective_llm_config['providers']:
+                effective_llm_config['providers'][provider_name] = {}
+            effective_llm_config['providers'][provider_name].update(api_key_config)
+
+    # If an llm_config was explicitly passed to initialize_services, it takes highest precedence
+    if llm_config:
+        # Deep merge the passed llm_config into the effective_llm_config
+        # This is a simplified merge, for production, a more robust deep_merge might be needed
+        for key, value in llm_config.items():
+            if isinstance(value, dict) and key in effective_llm_config and isinstance(effective_llm_config[key], dict):
+                effective_llm_config[key].update(value)
+            else:
+                effective_llm_config[key] = value
+
+    # Ensure operational_configs are passed to LLMInterface if it expects them
+    effective_llm_config['operational_configs'] = effective_op_configs
 
     # --- 1. Foundational Services ---
     if not llm_interface_instance:
         llm_interface_instance = LLMInterface(config=effective_llm_config)
 
     if not ham_manager_instance:
+        ham_encryption_key = main_config_dict.get('system', {}).get('ham_encryption_key')
         if use_mock_ham:
             # This is a simplified MockHAM, the one in CLI is more elaborate.
             # For true shared mock, it should be defined centrally or passed.
@@ -122,10 +219,12 @@ def initialize_services(
                 def store_experience(self, raw_data, data_type, metadata=None): mid = f"temp_mock_ham_{self.next_id}"; self.next_id+=1; self.memory_store[mid]={}; return mid
                 def query_core_memory(self, **kwargs): return []
                 def recall_gist(self, mem_id): return None
-            ham_manager_instance = TempMockHAM(encryption_key="mock_key", db_path=None) # type: ignore
+            ham_manager_instance = TempMockHAM(encryption_key=ham_encryption_key, db_path=None) # type: ignore
         else:
-            # Ensure MIKO_HAM_KEY is set for real HAM
-            ham_manager_instance = HAMMemoryManager(core_storage_filename=f"ham_core_{ai_id.replace(':','_')}.json")
+            ham_manager_instance = HAMMemoryManager(
+                core_storage_filename=f"ham_core_{ai_id.replace(':','_')}.json",
+                encryption_key=ham_encryption_key # Pass the key here
+            )
 
     if not personality_manager_instance:
         personality_manager_instance = PersonalityManager() # Uses default profile initially
@@ -153,9 +252,11 @@ def initialize_services(
     if not service_discovery_module_instance:
         service_discovery_module_instance = ServiceDiscoveryModule(trust_manager=trust_manager_instance)
         if hsp_connector_instance: # Register callback if connector is up
+            hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#") # Uses imported constant
             hsp_connector_instance.register_on_capability_advertisement_callback(
                 service_discovery_module_instance.process_capability_advertisement
             )
+            service_discovery_module_instance.set_hsp_connector(hsp_connector_instance) # Pass the connector
 
     # --- 3. Core AI Logic Modules ---
     if not fact_extractor_instance:
@@ -183,7 +284,7 @@ def initialize_services(
 
     # Initialize Emotion, Crisis, Time systems as they might be dependencies for Fragmenta or DM
     if not emotion_system_instance:
-        emotion_system_instance = EmotionSystem(personality_profile=personality_manager_instance.current_personality)
+        emotion_system_instance = EmotionSystem(personality_profile=personality_manager_instance.current_personality, config=main_config_dict)
 
     if not crisis_system_instance:
         crisis_system_instance = CrisisSystem(config=main_config_dict)

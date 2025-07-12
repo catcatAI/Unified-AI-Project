@@ -156,3 +156,17 @@ class HSPNegativeAcknowledgementPayload(TypedDict):
     nack_timestamp: str # ISO 8601 UTC
     target_message_id: str # ID of the message being NACKed
     error_details: HSPErrorDetails
+
+# New: Capability Re-Advertisement Request
+class HSPCapabilityReAdvertisementRequestPayload(TypedDict):
+    # No specific fields needed for this request, as it's a broadcast to re-advertise all capabilities.
+    # Could include filters if needed in future, e.g., "only re-advertise capabilities with tag 'X'"
+    pass
+
+# New: Echo Task Payloads
+class HSPEchoTaskRequestPayload(TypedDict):
+    message: str # The message to be echoed
+
+class HSPEchoTaskResultPayload(TypedDict):
+    echoed_message: str # The echoed message
+    original_request_id: str # The ID of the original echo request

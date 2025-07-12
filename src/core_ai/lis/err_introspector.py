@@ -39,7 +39,11 @@ class ErrIntrospector:
             raise ValueError("SelfCritiqueModule dependency is required for ErrIntrospector.")
         if not lis_cache:
             raise ValueError("LISCacheInterface dependency is required for ErrIntrospector.")
+<<<<<<< Updated upstream
 
+=======
+            
+>>>>>>> Stashed changes
         self.self_critique_module = self_critique_module
         self.lis_cache = lis_cache
         logger.info("ErrIntrospector initialized.")
@@ -72,7 +76,11 @@ class ErrIntrospector:
         # Prepare inputs for critique
         # The "user_input" for critique context should be the original goal/description of the Fragmenta task.
         critique_user_input = str(task_description.get('goal', task_description.get('name', 'Unknown Task')))
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
         # The "ai_response" for critique is the output from Fragmenta.
         # Convert complex fragmenta_output to a string representation if it's not already.
         critique_ai_response = ""
@@ -83,7 +91,11 @@ class ErrIntrospector:
                 critique_ai_response = str(fragmenta_output)
         else:
             critique_ai_response = str(fragmenta_output)
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
         # Limit length to avoid overly long critique prompts
         critique_ai_response = critique_ai_response[:1024] # Max 1024 chars for critique
 
@@ -104,10 +116,17 @@ class ErrIntrospector:
         # Transform CritiqueResult to LIS_IncidentRecord
         # For now, let's assume any critique (even good ones) can be logged as an incident
         # for observability, or apply a threshold later.
+<<<<<<< Updated upstream
 
         incident_id = f"lis_inc_{uuid.uuid4().hex}"
         anomaly_id = f"lis_anom_{uuid.uuid4().hex}"
 
+=======
+        
+        incident_id = f"lis_inc_{uuid.uuid4().hex}"
+        anomaly_id = f"lis_anom_{uuid.uuid4().hex}"
+        
+>>>>>>> Stashed changes
         # Determine anomaly type and severity
         # Simple mapping: if score < 0.5, it's a more severe "issue".
         # Otherwise, it's more of an "observation" or "minor_flaw".
@@ -120,7 +139,11 @@ class ErrIntrospector:
             anomaly_type = "CRITICAL_PERFORMANCE_ISSUE" # Example specific type
         elif critique_result["score"] < 0.6:
             anomaly_type = "SUBOPTIMAL_RESPONSE_QUALITY" # Example specific type
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
         semantic_event: LIS_SemanticAnomalyDetectedEvent = {
             "anomaly_id": anomaly_id,
             "anomaly_type": anomaly_type,

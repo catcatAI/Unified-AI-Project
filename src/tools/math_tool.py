@@ -1,6 +1,6 @@
 import os
 import re
-from src.tools.math_model.model import ArithmeticSeq2Seq # Corrected import
+# from src.tools.math_model.model import ArithmeticSeq2Seq # Corrected import
 
 # --- Configuration ---
 # Determine paths relative to this file or a known project root.
@@ -16,27 +16,28 @@ _model_instance = None
 
 def _load_math_model():
     """Loads the arithmetic model and character maps."""
-    global _model_instance
-    if _model_instance is None:
-        print("Loading arithmetic model for the first time...")
-        try:
-            # These dimensions must match the ones used during training.
-            # Ideally, these should be saved in char_maps.json or a model config file.
-            # For now, using the values from train.py.
-            # latent_dim = 256 # No longer needed here
-            # embedding_dim = 128 # No longer needed here
-            _model_instance = ArithmeticSeq2Seq.load_for_inference(
-                MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH # latent_dim and embedding_dim removed
-            )
-            print("Arithmetic model loaded successfully.")
-        except FileNotFoundError as e:
-            print(f"Error loading math model: {e}")
-            print("Please ensure the model and char maps are trained and saved correctly.")
-            _model_instance = None # Ensure it stays None if loading fails
-        except Exception as e:
-            print(f"An unexpected error occurred while loading the math model: {e}")
-            _model_instance = None
-    return _model_instance
+    # global _model_instance
+    # if _model_instance is None:
+    #     print("Loading arithmetic model for the first time...")
+    #     try:
+    #         # These dimensions must match the ones used during training.
+    #         # Ideally, these should be saved in char_maps.json or a model config file.
+    #         # For now, using the values from train.py.
+    #         # latent_dim = 256 # No longer needed here
+    #         # embedding_dim = 128 # No longer needed here
+    #         _model_instance = ArithmeticSeq2Seq.load_for_inference(
+    #             MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH # latent_dim and embedding_dim removed
+    #         )
+    #         print("Arithmetic model loaded successfully.")
+    #     except FileNotFoundError as e:
+    #         print(f"Error loading math model: {e}")
+    #         print("Please ensure the model and char maps are trained and saved correctly.")
+    #         _model_instance = None # Ensure it stays None if loading fails
+    #     except Exception as e:
+    #         print(f"An unexpected error occurred while loading the math model: {e}")
+    #         _model_instance = None
+    # return _model_instance
+    return None
 
 def extract_arithmetic_problem(text: str) -> str | None:
     """
@@ -101,9 +102,10 @@ def calculate(input_string: str) -> str:
     Takes a natural language string, extracts an arithmetic problem,
     and returns the calculated answer using the trained model.
     """
-    model = _load_math_model()
-    if model is None:
-        return "Error: Math model is not available."
+    # model = _load_math_model()
+    # if model is None:
+    #     return "Error: Math model is not available."
+    return "Error: Math model is not available due to TensorFlow dependency."
 
     problem_to_solve = extract_arithmetic_problem(input_string)
 

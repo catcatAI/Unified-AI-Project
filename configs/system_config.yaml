@@ -1,6 +1,7 @@
 system:
   log_path: logs # To be placed under Unified-AI-Project/data/logs/ eventually
   log_level: INFO
+  ham_encryption_key: "MIKO_HAM_KEY_PLACEHOLDER" # Placeholder for HAM encryption key
 
 ai_name: Miko # Or a new unified name, TBD
 

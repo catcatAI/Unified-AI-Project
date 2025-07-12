@@ -6,7 +6,7 @@
         "description": "Responds to common user greetings.",
         "parameters": {},
         "priority": 10,
-        "enabled": true,
+        "enabled": false,
         "version": "1.0",
         "response_template": "Hello! I am {ai_name}. How can I help you today?"
     },

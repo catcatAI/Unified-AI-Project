@@ -5,12 +5,12 @@
 # Example common dependencies (uncomment and specify versions as needed):
 Flask
 numpy
-tensorflow
+# tensorflow
 cryptography
 # pandas
 requests
 # beautifulsoup4
-# google-generativeai
+google-generativeai
 python-dotenv
 PyYAML
 typing-extensions # For Required, NotRequired, etc.
