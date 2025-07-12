@@ -14,6 +14,7 @@ class TestSelfCritiqueModule(unittest.TestCase):
     def setUp(self):
         """Set up for each test method."""
         self.mock_llm_interface = MagicMock(spec=LLMInterface)
+<<<<<<< Updated upstream
 
         # Sample operational_config, can be customized per test if needed
         self.sample_operational_config = {
@@ -22,6 +23,16 @@ class TestSelfCritiqueModule(unittest.TestCase):
             }
         }
 
+=======
+        
+        # Sample operational_config, can be customized per test if needed
+        self.sample_operational_config = {
+            "timeouts": {
+                "llm_critique_request": 30 
+            }
+        }
+        
+>>>>>>> Stashed changes
         self.critique_module = SelfCritiqueModule(
             llm_interface=self.mock_llm_interface,
             operational_config=self.sample_operational_config
@@ -39,16 +50,26 @@ class TestSelfCritiqueModule(unittest.TestCase):
         user_input = "Tell me a joke."
         ai_response = "Why did the chicken cross the road? To get to the other side!"
         history = []
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
         mock_llm_output = {
             "score": 0.8,
             "reason": "Classic joke, delivered clearly.",
             "suggested_alternative": "Perhaps a more original joke could be even better."
         }
         self.mock_llm_interface.generate_response.return_value = json.dumps(mock_llm_output)
+<<<<<<< Updated upstream
 
         result = self.critique_module.critique_interaction(user_input, ai_response, history)
 
+=======
+        
+        result = self.critique_module.critique_interaction(user_input, ai_response, history)
+        
+>>>>>>> Stashed changes
         self.assertIsNotNone(result)
         self.assertEqual(result["score"], 0.8)
         self.assertEqual(result["reason"], mock_llm_output["reason"])
@@ -61,16 +82,26 @@ class TestSelfCritiqueModule(unittest.TestCase):
         user_input = "Thanks!"
         ai_response = "You're welcome!"
         history = []
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
         mock_llm_output = {
             "score": 0.95,
             "reason": "Polite and appropriate response."
             # "suggested_alternative" is intentionally missing
         }
         self.mock_llm_interface.generate_response.return_value = json.dumps(mock_llm_output)
+<<<<<<< Updated upstream
 
         result = self.critique_module.critique_interaction(user_input, ai_response, history)
 
+=======
+        
+        result = self.critique_module.critique_interaction(user_input, ai_response, history)
+        
+>>>>>>> Stashed changes
         self.assertIsNotNone(result)
         self.assertEqual(result["score"], 0.95)
         self.assertEqual(result["reason"], mock_llm_output["reason"])
@@ -81,12 +112,21 @@ class TestSelfCritiqueModule(unittest.TestCase):
         user_input = "Query"
         ai_response = "Response"
         history = []
+<<<<<<< Updated upstream
 
         self.mock_llm_interface.generate_response.return_value = "This is not JSON."
 
         with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
             result = self.critique_module.critique_interaction(user_input, ai_response, history)
 
+=======
+        
+        self.mock_llm_interface.generate_response.return_value = "This is not JSON."
+        
+        with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
+            result = self.critique_module.critique_interaction(user_input, ai_response, history)
+        
+>>>>>>> Stashed changes
         self.assertIsNone(result)
         self.assertTrue(any("Could not decode JSON response" in message for message in cm.output))
 
@@ -95,12 +135,21 @@ class TestSelfCritiqueModule(unittest.TestCase):
         user_input = "Query"
         ai_response = "Response"
         history = []
+<<<<<<< Updated upstream
 
         self.mock_llm_interface.generate_response.return_value = "{\"score\": 0.7, \"reason\": \"Good but" # Missing closing brace
 
         with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
             result = self.critique_module.critique_interaction(user_input, ai_response, history)
 
+=======
+        
+        self.mock_llm_interface.generate_response.return_value = "{\"score\": 0.7, \"reason\": \"Good but" # Missing closing brace
+        
+        with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
+            result = self.critique_module.critique_interaction(user_input, ai_response, history)
+            
+>>>>>>> Stashed changes
         self.assertIsNone(result)
         self.assertTrue(any("Could not decode JSON response" in message for message in cm.output))
 
@@ -109,6 +158,7 @@ class TestSelfCritiqueModule(unittest.TestCase):
         user_input = "Query"
         ai_response = "Response"
         history = []
+<<<<<<< Updated upstream
 
         mock_llm_output = {"reason": "A response without a score."}
         self.mock_llm_interface.generate_response.return_value = json.dumps(mock_llm_output)
@@ -116,6 +166,15 @@ class TestSelfCritiqueModule(unittest.TestCase):
         with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
             result = self.critique_module.critique_interaction(user_input, ai_response, history)
 
+=======
+        
+        mock_llm_output = {"reason": "A response without a score."}
+        self.mock_llm_interface.generate_response.return_value = json.dumps(mock_llm_output)
+        
+        with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
+            result = self.critique_module.critique_interaction(user_input, ai_response, history)
+            
+>>>>>>> Stashed changes
         self.assertIsNone(result)
         self.assertTrue(any("LLM critique missing required fields 'score' or 'reason'" in message for message in cm.output))
 
@@ -124,6 +183,7 @@ class TestSelfCritiqueModule(unittest.TestCase):
         user_input = "Query"
         ai_response = "Response"
         history = []
+<<<<<<< Updated upstream
 
         mock_llm_output = {"score": "high", "reason": "Score is a string."}
         self.mock_llm_interface.generate_response.return_value = json.dumps(mock_llm_output)
@@ -131,6 +191,15 @@ class TestSelfCritiqueModule(unittest.TestCase):
         with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
             result = self.critique_module.critique_interaction(user_input, ai_response, history)
 
+=======
+        
+        mock_llm_output = {"score": "high", "reason": "Score is a string."}
+        self.mock_llm_interface.generate_response.return_value = json.dumps(mock_llm_output)
+        
+        with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
+            result = self.critique_module.critique_interaction(user_input, ai_response, history)
+            
+>>>>>>> Stashed changes
         self.assertIsNone(result)
         self.assertTrue(any("LLM critique 'score' is not a number" in message for message in cm.output))
 
@@ -162,9 +231,15 @@ class TestSelfCritiqueModule(unittest.TestCase):
             {"speaker": "user", "text": "Previous user turn."},
             {"speaker": "ai", "text": "Previous AI turn."}
         ]
+<<<<<<< Updated upstream
 
         prompt = self.critique_module._construct_critique_prompt(user_input, ai_response, history)
 
+=======
+        
+        prompt = self.critique_module._construct_critique_prompt(user_input, ai_response, history)
+        
+>>>>>>> Stashed changes
         self.assertIn("You are an AI assistant that evaluates the quality of a dialogue turn.", prompt)
         self.assertIn("Evaluate the AI's response based on: Relevance, Helpfulness, Coherence, Safety, and Tone", prompt)
         self.assertIn("Previous conversation turns (most recent last):", prompt)

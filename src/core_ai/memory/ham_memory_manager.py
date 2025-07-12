@@ -32,7 +32,9 @@ except ImportError:
     STOPWORDS = set()
 
 
-class HAMMemoryManager:
+from src.core_ai.memory.memory_interface import AbstractMemoryManager
+
+class HAMMemoryManager(AbstractMemoryManager):
     """
     Hierarchical Abstractive Memory Manager v0.2.
     Handles storage and retrieval of experiences, incorporating abstraction,
@@ -46,7 +48,8 @@ class HAMMemoryManager:
 
     def __init__(self,
                  core_storage_filename="ham_core_memory.json",
-                 resource_awareness_service: Optional[Any] = None): # Optional['ResourceAwarenessService']
+                 resource_awareness_service: Optional[Any] = None, # Optional['ResourceAwarenessService']
+                 encryption_key: Optional[str] = None):
         """
         Initializes the HAMMemoryManager.
 
@@ -69,16 +72,18 @@ class HAMMemoryManager:
         self.core_storage_filepath = os.path.join(self.storage_dir, core_storage_filename)
 
         # Initialize Fernet for encryption
-        key_str = os.environ.get("MIKO_HAM_KEY")
-        if key_str:
-            # Assuming the key in env is already a valid URL-safe base64 encoded Fernet key
-            self.fernet_key = key_str.encode()
+        if encryption_key:
+            self.fernet_key = encryption_key.encode()
         else:
-            print("CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.")
-            print("Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
-            print("DO NOT use this for any real data you want to keep, as it will be lost.")
-            self.fernet_key = Fernet.generate_key()
-            print(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
+            key_str = os.environ.get("MIKO_HAM_KEY")
+            if key_str:
+                self.fernet_key = key_str.encode()
+            else:
+                print("CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.")
+                print("Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
+                print("DO NOT use this for any real data you want to keep, as it will be lost.")
+                self.fernet_key = Fernet.generate_key()
+                print(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
 
         try:
             self.fernet = Fernet(self.fernet_key)
@@ -253,7 +258,9 @@ class HAMMemoryManager:
         return True # OK to save
 
     def _save_core_memory_to_file(self) -> bool: # Added return type bool
-        """Saves the core memory store to a JSON file, respecting simulated disk limits."""
+        """
+        Saves the core memory store to a JSON file, respecting simulated disk limits.
+        """
 
         if not self._simulate_disk_lag_and_check_limit():
             # If _simulate_disk_lag_and_check_limit returns False, it means disk is full.
@@ -276,7 +283,11 @@ class HAMMemoryManager:
                     serializable_store[mem_id] = {
                         "timestamp": data_pkg["timestamp"],
                         "data_type": data_pkg["data_type"],
+<<<<<<< Updated upstream
                         "encrypted_package_b64": data_pkg["encrypted_package"].decode('ascii'), # Changed to ascii
+=======
+                        "encrypted_package_b64": data_pkg["encrypted_package"].decode('latin-1'), # Changed to latin-1
+>>>>>>> Stashed changes
                         "metadata": data_pkg.get("metadata", {})
                     }
                 json.dump({"next_memory_id": self.next_memory_id, "store": serializable_store}, f, indent=2)
@@ -303,7 +314,11 @@ class HAMMemoryManager:
                     self.core_memory_store[mem_id] = {
                         "timestamp": data_pkg_b64["timestamp"],
                         "data_type": data_pkg_b64["data_type"],
+<<<<<<< Updated upstream
                         "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('ascii'), # Changed to ascii
+=======
+                        "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('latin-1'), # Changed to latin-1
+>>>>>>> Stashed changes
                         "metadata": data_pkg_b64.get("metadata", {})
                     }
             print(f"Core memory loaded from {self.core_storage_filepath}. Next ID: {self.next_memory_id}")
@@ -320,7 +335,7 @@ class HAMMemoryManager:
         and then stored.
 
         Args:
-            raw_data: The raw data of the experience (e.g., text string, dict).
+            raw_data (Any): The raw data of the experience (e.g., text string, dict).
             data_type (str): Type of the data (e.g., "dialogue_text", "sensor_reading").
                              If "dialogue_text" (or contains it), text abstraction is applied.
             metadata (Optional[DialogueMemoryEntryMetadata]): Additional metadata for the experience.

@@ -434,4 +434,36 @@ class LearnedFactRecord(TypedDict, total=False):
     ca_object_id: Optional[str]        # ContentAnalyzer's internal ID for the object
 
 
+
+# --- ContextCore Types ---
+class ContextItemMetadata(TypedDict):
+    created_at: float # timestamp
+    updated_at: float # timestamp
+    source_module: str # e.g., "DialogueManager", "LearningManager"
+    source_interaction_id: Optional[str]
+    confidence: Optional[float]
+    tags: Optional[List[str]]
+    custom_properties: Optional[Dict[str, Any]]
+
+class ContextItem(TypedDict):
+    item_id: str # Unique ID for the context item
+    item_type: str # e.g., "fact", "dialogue_summary", "user_preference", "entity_profile"
+    content: Any # The actual data (text, structured dict, embedding vector, etc.)
+    scopes: List[str] # e.g., ["global", "user:USER_ID", "session:SESSION_ID"]
+    metadata: ContextItemMetadata
+
+class KnowledgeGraphTriple(TypedDict):
+    subject_id: str # Typically a URI or a ContextItem ID
+    predicate: str  # Typically a URI representing the relationship
+    object_id_or_literal: Union[str, Any] # URI for entity, or literal value with datatype
+    scope: str # e.g., "user:USER_ID"
+
+class RetrievedContextChunk(TypedDict):
+    item_id: str
+    content: Any
+    score: float # Relevance score
+    source_store: Literal["graph", "vector", "document", "smt"]
+    metadata: ContextItemMetadata
+
 print("common_types.py (debug version) finished definitions.")
+

@@ -34,7 +34,7 @@ from src.shared.types.common_types import ( # Added src.
 )
 from src.hsp.connector import HSPConnector # Added src.
 from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPCapabilityAdvertisementPayload, HSPFactPayload, HSPMessageEnvelope # Added src. and HSPMessageEnvelope
-
+from src.fragmenta_bus.module_bus.controller import ModuleBusController, ModuleExecutionError, ModuleAssemblyError # Added import
 
 class DialogueManager:
     def __init__(self, personality_manager: Optional[PersonalityManager] = None,
@@ -52,7 +52,8 @@ class DialogueManager:
                  ai_id: Optional[str] = None,
                  service_discovery_module: Optional[ServiceDiscoveryModule] = None,
                  hsp_connector: Optional[HSPConnector] = None,
-                 config: Optional[OperationalConfig] = None):
+                 config: Optional[OperationalConfig] = None,
+                 module_bus_controller: Optional[ModuleBusController] = None): # Added module_bus_controller
 
         self.config: OperationalConfig = config if config else {} # type: ignore
         self.ai_id: str = ai_id if ai_id else f"dm_instance_{uuid.uuid4().hex[:6]}"
@@ -82,6 +83,25 @@ class DialogueManager:
         # Assuming LLMInterface can handle OperationalConfig or a dict representation of it.
         llm_config_arg: Any = self.config
         self.llm_interface = llm_interface if llm_interface else LLMInterface(config=llm_config_arg)
+
+        # Initialize ModuleBusController
+        self.module_bus_controller = module_bus_controller
+        if self.module_bus_controller: # Register the dialogue response blueprint if module_bus is provided
+            # Load the blueprint from file
+            project_root = os.path.dirname(os.path.abspath(__file__)) # src/core_ai/dialogue
+            project_root = os.path.abspath(os.path.join(project_root, '..', '..', '..')) # Unified-AI-Project/
+            blueprint_path = os.path.join(project_root, 'configs', 'fragmenta_bus', 'module_blueprints', 'dialogue_response_module.json')
+            try:
+                with open(blueprint_path, 'r') as f:
+                    dialogue_response_blueprint = json.load(f)
+                self.module_bus_controller.register_blueprint(dialogue_response_blueprint)
+                print(f"DialogueManager: Registered dialogue.response.v1 blueprint.")
+            except FileNotFoundError:
+                print(f"DialogueManager: WARNING - Dialogue response blueprint not found at {blueprint_path}. ModuleBus response generation will be unavailable.")
+                self.module_bus_controller = None # Disable if blueprint not found
+            except Exception as e:
+                print(f"DialogueManager: WARNING - Error loading/registering dialogue response blueprint: {e}. ModuleBus response generation will be unavailable.")
+                self.module_bus_controller = None # Disable if error
 
 
         self.formula_engine = formula_engine if formula_engine else FormulaEngine()
@@ -395,7 +415,7 @@ class DialogueManager:
 
                 answer_from_kg = self._query_session_kg(session_id, entity_label, rel_query_keyword)
                 if answer_from_kg:
-                    if rel_query_keyword.startswith("has_"): response_text = f"{ai_name}: From context, the {rel_query_keyword.split('has_')[1].replace('_', ' ')} of {display_entity_label} is {answer_from_kg}."
+                    if rel_query_keyword.startswith("has_"): response_text = f"{ai_name}: From context, the {rel_query_keyword.split('has_')[1].replace('_', ' ')} of {display_entity_label} is {answer_from_aq}."
                     elif rel_query_keyword == "located_in": response_text = f"{ai_name}: From context, {display_entity_label} is located in {answer_from_kg}."
                     elif rel_query_keyword == "acquire": response_text = f"{ai_name}: From context, {display_entity_label} acquired {answer_from_kg}."
                     else: response_text = f"{ai_name}: From context regarding {display_entity_label}: {answer_from_kg}."
@@ -451,7 +471,11 @@ class DialogueManager:
                 if action_name == "dispatch_tool":
                     tool_name = action_params.get("tool_name") # Get tool_name from action_params
                     tool_query_template = action_params.get("tool_query") # Get tool_query from action_params
+<<<<<<< Updated upstream
 
+=======
+                    
+>>>>>>> Stashed changes
                     # Ensure action_params is used for formatting tool_query if it's a template string
                     # And also for passing to tool_dispatcher
                     current_context_for_tool_query = action_params.copy() # Start with formula params
@@ -464,18 +488,44 @@ class DialogueManager:
                         except KeyError as e:
                             print(f"DM: KeyError formatting tool_query '{tool_query_template}' for tool '{tool_name}'. Missing key: {e}. Using raw template.")
                             # tool_query remains the raw template string
+<<<<<<< Updated upstream
 
+=======
+                    
+>>>>>>> Stashed changes
                     if tool_name and tool_query:
                         # Pass all action_params to the dispatcher, it can pick what it needs
                         tool_res = self.tool_dispatcher.dispatch(query=tool_query, explicit_tool_name=tool_name, **action_params)
                         if tool_res["status"] == "success": response_text = f"{ai_name}: {tool_res['payload']}"
                         elif tool_res["status"] in ["unhandled_by_local_tool", "failure_tool_error"]:
-                            attempt_hsp_fallback, hsp_capability_query, hsp_params = True, tool_name, {"query": tool_query, **{k:v for k,v in action_params.items() if k not in ["tool_name", "tool_query"]}}
+                            attempt_hsp_fallback, hsp_capability_query, hsp_params = True, tool_name, {k:v for k,v in action_params.items() if k not in ["tool_name", "tool_query"]}
                         else: response_text = f"{ai_name}: Issue with '{tool_name}' tool: {tool_res.get('error_message', 'unknown')}"
                     else: response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' tool dispatch error (missing tool_name or tool_query)."
                 elif action_name == "initiate_tool_draft":
                     response_text = await self.handle_draft_tool_request(action_params.get("tool_name",""), action_params.get("description_for_llm",""), session_id)
+<<<<<<< Updated upstream
                 else: # Non-dispatch_tool, non-initiate_tool_draft formula actions
+=======
+                elif action_name == "generate_response_via_module_bus": # New action for ModuleBus
+                    module_id = action_params.get("module_id")
+                    module_input = action_params.get("module_input", {})
+                    if self.module_bus_controller and module_id:
+                        try:
+                            # Execute the module via ModuleBus
+                            module_output = await self.module_bus_controller.execute_module(module_id, module_input)
+                            response_text = f"{ai_name}: ModuleBus response: {module_output.get('response_text', 'No response text from module.')}"
+                            if module_output.get('additional_info'):
+                                response_text += f" (Info: {module_output['additional_info']})"
+                        except ModuleExecutionError as mee:
+                            response_text = f"{ai_name}: Error executing ModuleBus module '{module_id}': {mee}"
+                        except ModuleAssemblyError as mae:
+                            response_text = f"{ai_name}: Error assembling ModuleBus module '{module_id}': {mae}"
+                        except Exception as e:
+                            response_text = f"{ai_name}: Unexpected error with ModuleBus module '{module_id}': {e}"
+                    else:
+                        response_text = f"{ai_name}: ModuleBus controller not available or module_id missing for response generation."
+                else: # Non-dispatch_tool, non-initiate_tool_draft, non-module_bus formula actions
+>>>>>>> Stashed changes
                     formatted_response_from_engine = formula_result.get("formatted_response")
                     if formatted_response_from_engine and isinstance(formatted_response_from_engine, str):
                         response_text = f"{ai_name}: {formatted_response_from_engine}" # Prepend AI name if template doesn't include it
@@ -557,7 +607,7 @@ class DialogueManager:
 
         parsed_io_details: Optional[ParsedToolIODetails] = None
         try:
-            json_match = re.search(r"```json\s*([\s\S]*?)\s*```|([\s\S]*)", raw_io_details_str, re.DOTALL)
+            json_match = re.search(r"```json\s*([\s\S]*?)\s*```|[\s\S]*", raw_io_details_str, re.DOTALL)
             # Guard against json_match being None before calling .group or .strip
             json_str_candidate = ""
             if json_match:
@@ -597,7 +647,7 @@ class DialogueManager:
         if is_syntactically_valid and self.sandbox_executor:
             params_info = parsed_io_details.get("parameters", [])
             placeholder_params: Dict[str, Any] = {
-                p["name"]: p.get("default") if "default" in p else (
+                p["name"] : p.get("default") if "default" in p else (
                     "test_string" if "str" in str(p.get("type","")).lower() else
                     0 if "int" in str(p.get("type","")).lower() else
                     0.0 if "float" in str(p.get("type","")).lower() else
@@ -700,31 +750,49 @@ Desired JSON Output:
                                         method_name: str, method_docstring: str,
                                         parameters: List[Dict[str, Any]], return_type: str) -> str:
         # (Prompt content remains the same)
-        example_tool_structure = """
-Example of a simple Python tool class structure:
+        # example_tool_structure = """
+        # Example of a simple Python tool class structure:
+        # 
+        # ```python
+        # from typing import Optional, List, Dict, Any # Common imports
+        # 
+        # class ExampleTool:
+        #     """Provides a brief description of what the tool does."""
+        # 
+        #     def __init__(self, config: Optional[Dict[str, Any]] = None):
+        #         """Initializes the tool, optionally with configuration."""
+        #         self.config = config or {}
+        #         print(f"{self.__class__.__name__} initialized.")
+        # 
+        #     def execute(self, parameter_one: str, parameter_two: int = 0) -> Dict[str, Any]:
+        #         """
+        #         Describes what this main method does.
+        # 
+        #         Args:
+        #             parameter_one (str): Description of first parameter.
+        #             parameter_two (int, optional): Description of second parameter. Defaults to 0.
+        # 
+        #         Returns:
+        #             Dict[str, Any]: Description of the output, often a dictionary.
+        #         """
+        #         print(f"Executing {self.__class__.__name__} with {parameter_one=}, {parameter_two=}")
+        #         # TODO: Implement actual tool logic here
+        #         # Replace 'pass' with your logic or raise NotImplementedError
+        #         raise NotImplementedError("Tool logic not implemented yet.")
+        #         # Example return:
+        #         # return {"status": "success", "result": f"Processed {parameter_one} and {parameter_two}"}
+        # ```
+        # """
+        print(f"Executing {self.__class__.__name__} with {parameter_one=}, {parameter_two=}")
+        # TODO: Implement actual tool logic here
+        # Replace 'pass' with your logic or raise NotImplementedError
+        raise NotImplementedError("Tool logic not implemented yet.")
+        # Example return:
+        # return {"status": "success", "result": f"Processed {parameter_one} and {parameter_two}"}
+```
+"""
 
-```python
-from typing import Optional, List, Dict, Any # Common imports
-
-class ExampleTool:
-    \"\"\"Provides a brief description of what the tool does.\"\"\"
-
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        \"\"\"Initializes the tool, optionally with configuration.\"\"\"
-        self.config = config or {}
-        print(f"{self.__class__.__name__} initialized.")
-
-    def execute(self, parameter_one: str, parameter_two: int = 0) -> Dict[str, Any]:
-        \"\"\"
-        Describes what this main method does.
-
-        Args:
-            parameter_one (str): Description of first parameter.
-            parameter_two (int, optional): Description of second parameter. Defaults to 0.
-
-        Returns:
-            Dict[str, Any]: Description of the output, often a dictionary.
-        \"\"\"
+```
         print(f"Executing {self.__class__.__name__} with {parameter_one=}, {parameter_two=}")
         # TODO: Implement actual tool logic here
         # Replace 'pass' with your logic or raise NotImplementedError
@@ -762,10 +830,10 @@ Tool Specifications:
 
 Instructions for the generated code:
 1. The tool should be a single Python class named '{tool_name}'.
-2. The class docstring should be: \"\"\"{class_docstring}\"\"\"
+2. The class docstring should be: """{class_docstring}"""
 3. The primary execution method should be named '{method_name}'.
 4. The method signature should be: `def {method_name}({method_signature_params}) -> {return_type}:`
-5. The method docstring should be: \"\"\"{method_docstring}\"\"\"
+5. The method docstring should be: """{method_docstring}"""
    (Ensure Args and Returns sections are appropriate if parameter details were rich enough).
 6. The body of this primary method should be `raise NotImplementedError("Tool logic not implemented yet.")`.
 7. Include an `__init__` method: `def __init__(self, config: Optional[Dict[str, Any]] = None):`. Its docstring should be "Initializes the tool, optionally with configuration.". It should store the config and print an initialization message.
@@ -870,4 +938,3 @@ if __name__ == '__main__':
             except Exception as e: print(f"Error cleaning up test HAM file: {e}")
 
     asyncio.run(main_dm_test())
-# Removed [end of src/core_ai/dialogue/dialogue_manager.py] marker

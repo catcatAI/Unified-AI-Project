@@ -3,17 +3,18 @@ from typing import Dict, Any, Optional, List
 import json
 import requests # Added for Ollama integration
 import re # For more robust mock matching
-# from typing import Dict, Any, Optional, List # Redundant with line 1
+import google.generativeai as genai # Import Google Generative AI
+import os # For accessing environment variables
 
-# Attempt to import LLMInterfaceConfig, handle if module run directly or types not generated yet
-# Assuming 'src' is in PYTHONPATH, making 'shared' a top-level package
-from src.shared.types.common_types import ( # Added src.
+from src.shared.types.common_types import (
     LLMInterfaceConfig, LLMProviderOllamaConfig,
     LLMProviderOpenAIConfig, OperationalConfig, LLMModelInfo # Added LLMModelInfo
 )
 
 
-class LLMInterface:
+from src.services.llm_interface_abstract import AbstractLLMInterface
+
+class LLMInterface(AbstractLLMInterface):
     def __init__(self, config: Optional[LLMInterfaceConfig] = None):
         self.config: LLMInterfaceConfig = config if config else self._get_default_config() # type: ignore
         self.active_provider_name: Optional[str] = None
@@ -29,9 +30,9 @@ class LLMInterface:
             "default_provider": "mock",
             "default_model": "mock-generic-v1",
             "providers": {
-                # Ollama config is here as an example, but won't be used by default mock
                 "ollama": {"base_url": "http://localhost:11434"},
-                "openai": {"api_key": "YOUR_OPENAI_KEY_HERE_IF_YOU_HAD_ONE"}
+                "openai": {"api_key": "YOUR_OPENAI_KEY_HERE_IF_YOU_HAD_ONE"},
+                "gemini": {"api_key": "YOUR_GEMINI_API_KEY_HERE"} # Added Gemini placeholder
             },
             "default_generation_params": {"temperature": 0.7}
         }
@@ -45,34 +46,41 @@ class LLMInterface:
             self.active_llm_client = "mock" # Special string to indicate mock client
             print("LLMInterface: Initialized MOCK client.")
         elif self.active_provider_name == "ollama":
-            # Placeholder for Ollama client initialization
-            # ollama_conf: Optional[LLMProviderOllamaConfig] = provider_configs.get('ollama') # type: ignore
-            # if ollama_conf and ollama_conf.get('base_url'):
-            #     print(f"LLMInterface: Ollama client would be initialized with base_url: {ollama_conf['base_url']}")
-            #     # self.active_llm_client = OllamaClient(base_url=ollama_conf['base_url']) # Example
-            # else:
             ollama_config: Optional[LLMProviderOllamaConfig] = provider_configs.get('ollama') # type: ignore
             if ollama_config and ollama_config.get('base_url'):
                 self.active_llm_client = {"base_url": ollama_config["base_url"]} # Store base_url for requests
                 print(f"LLMInterface: Initialized Ollama provider. Base URL: {ollama_config['base_url']}")
-                # No persistent client object needed for requests-based approach for Ollama
             else:
                 print("LLMInterface: Warning - Ollama provider configured but base_url is missing. Falling back to MOCK.")
                 self.active_provider_name = "mock"
                 self.active_llm_client = "mock"
 
         elif self.active_provider_name == "openai":
-            # Placeholder for OpenAI client
-            # openai_conf: Optional[LLMProviderOpenAIConfig] = provider_configs.get('openai') # type: ignore
-            # if openai_conf and openai_conf.get('api_key'):
-            #      print(f"LLMInterface: OpenAI client would be initialized.")
-            #      # self.active_llm_client = OpenAIClient(api_key=openai_conf['api_key']) # Example
-            # else:
-            #      print("LLMInterface: Warning - OpenAI provider configured but api_key is missing.")
             print("LLMInterface: OpenAI client initialization is NOT YET IMPLEMENTED.")
             self.active_llm_client = "mock" # Fallback to mock
             self.active_provider_name = "mock"
             print("LLMInterface: Falling back to MOCK client as OpenAI is not implemented.")
+
+        elif self.active_provider_name == "gemini":
+            gemini_config = provider_configs.get('gemini')
+            api_key = os.getenv("GEMINI_API_KEY") or (gemini_config.get('api_key') if gemini_config else None)
+
+            if api_key:
+                genai.configure(api_key=api_key)
+                try:
+                    # Test if the API key is valid by listing models
+                    # This will raise an exception if the key is invalid or network issues
+                    list(genai.list_models())
+                    self.active_llm_client = genai # Store the configured generativeai module
+                    print("LLMInterface: Initialized Google Gemini provider.")
+                except Exception as e:
+                    print(f"LLMInterface: Error initializing Gemini client (API key invalid or network issue): {e}. Falling back to MOCK.")
+                    self.active_provider_name = "mock"
+                    self.active_llm_client = "mock"
+            else:
+                print("LLMInterface: Warning - Gemini provider configured but API key is missing. Falling back to MOCK.")
+                self.active_provider_name = "mock"
+                self.active_llm_client = "mock"
         else:
             print(f"LLMInterface: Unknown or unsupported provider '{self.active_provider_name}'. Falling back to MOCK.")
             self.active_provider_name = "mock"
@@ -80,36 +88,24 @@ class LLMInterface:
 
     def _get_mock_response(self, prompt: str, model_name: Optional[str]) -> str:
         """Generates a predefined mock response."""
-        # print(f"LLMInterface (Mock): ENTERING _get_mock_response. Prompt starts with: '{prompt[:150].replace('\n', '\\n')}' for model='{model_name}'")
-
         is_tool_prompt_check_available = "Available tools:" in prompt
         is_tool_prompt_check_query = "User Query:" in prompt
-        # print(f"LLMInterface (Mock): Check 'Available tools:': {is_tool_prompt_check_available}") # DEBUG
-        # print(f"LLMInterface (Mock): Check 'User Query:': {is_tool_prompt_check_query}") # DEBUG
 
         if is_tool_prompt_check_available and is_tool_prompt_check_query:
-            # print(f"LLMInterface (Mock): Tool prompt condition MET.") # DEBUG
             query_match = re.search(r"User Query: \"(.*?)\"", prompt, re.S)
             actual_query_in_prompt = query_match.group(1).strip() if query_match else ""
-            # print(f"LLMInterface (Mock): Extracted query for tool prompt: '{actual_query_in_prompt}'") # DEBUG
 
             if actual_query_in_prompt == "calculate 2 + 2":
-                # print("LLMInterface Mock: Matched 'calculate 2 + 2'") # DEBUG
                 return json.dumps({"tool_name": "calculate", "parameters": {"query": "2 + 2", "original_query": "calculate 2 + 2"}})
             elif actual_query_in_prompt == "evaluate true AND false":
-                # print("LLMInterface Mock: Matched 'evaluate true AND false'") # DEBUG
                 return json.dumps({"tool_name": "evaluate_logic", "parameters": {"query": "true AND false", "original_query": "evaluate true AND false"}})
             elif actual_query_in_prompt == "NOT (true OR false)":
-                # print("LLMInterface Mock: Matched 'NOT (true OR false)'") # DEBUG
                 return json.dumps({"tool_name": "evaluate_logic", "parameters": {"query": "NOT (true OR false)", "original_query": "NOT (true OR false)"}})
             elif actual_query_in_prompt == "translate '你好' to English":
-                # print("LLMInterface Mock: Matched 'translate '你好' to English'") # DEBUG
                 return json.dumps({"tool_name": "translate_text", "parameters": {"text_to_translate": "你好", "target_language": "English", "original_query": "translate '你好' to English"}})
 
-            # print(f"LLMInterface Mock: Tool selection prompt for query '{actual_query_in_prompt}' was detected but NOT MATCHED by specific tool rules. Returning NO_TOOL.") # DEBUG
             return json.dumps({"tool_name": "NO_TOOL", "parameters": {}})
         else:
-            # print(f"LLMInterface (Mock): Tool prompt condition NOT MET (is_tool_prompt_check_available={is_tool_prompt_check_available}, is_tool_prompt_check_query={is_tool_prompt_check_query}). Falling back to other mock responses or generic.") # DEBUG
             if "hello" in prompt.lower():
                 return f"Mock model {model_name or 'default_mock'} says: Hello there! How can I help you today?"
             elif "capital of france" in prompt.lower():
@@ -117,7 +113,6 @@ class LLMInterface:
             elif "weather" in prompt.lower():
                 return f"Mock model {model_name or 'default_mock'} says: The weather is mockingly perfect!"
 
-        # print(f"LLMInterface (Mock): No specific mock rule matched in _get_mock_response. Returning generic response for prompt: {prompt[:50]}...") # DEBUG
         return f"This is a generic mock response from {model_name or 'default_mock'} to the prompt: \"{prompt}\""
 
     def generate_response(self, prompt: str, model_name: Optional[str] = None, params: Optional[Dict[str, Any]] = None) -> str:
@@ -160,11 +155,20 @@ class LLMInterface:
                 return "Error: Ollama client misconfigured."
 
         elif self.active_provider_name == "openai":
-            # Actual OpenAI call
             print(f"LLMInterface (OpenAI - NOT IMPLEMENTED): Would generate response for prompt='{prompt[:50]}...' using model='{effective_model_name}' with params={generation_params}.")
             return f"Placeholder OPENAI response from {effective_model_name} (not really): {prompt}"
 
-        # Fallback if no client is properly configured or active_llm_client is None/unsupported string
+        elif self.active_provider_name == "gemini":
+            try:
+                model = self.active_llm_client.GenerativeModel(effective_model_name)
+                # Convert generation_params to safety_settings and generation_config if needed
+                # For simplicity, directly pass params for now, assuming they align or are ignored by the API
+                response = model.generate_content(prompt, generation_config=generation_params)
+                return response.text
+            except Exception as e:
+                print(f"LLMInterface (Gemini): Error generating content: {e}")
+                return f"Error: Gemini content generation failed - {e}"
+
         print(f"LLMInterface: No active LLM client for provider '{self.active_provider_name}'. Returning generic placeholder.")
         return f"Generic placeholder response (no active client) for model {effective_model_name} to: {prompt}"
 
@@ -186,7 +190,6 @@ class LLMInterface:
                 api_url = f"{base_url.rstrip('/')}/api/tags"
                 try:
                     print(f"LLMInterface (Ollama): Fetching available models from {api_url}")
-                    # Safely access operational_configs and timeouts
                     op_configs = self.config.get("operational_configs", {})
                     timeouts = op_configs.get("timeouts", {}) if isinstance(op_configs, dict) else {}
                     timeout_duration = timeouts.get("llm_ollama_list_models_request", 10)
@@ -222,6 +225,24 @@ class LLMInterface:
             else:
                 print("LLMInterface (Ollama): Ollama client not properly configured for listing models.")
                 return [LLMModelInfo(id="ollama-misconfigured-listing-models", provider="ollama")]
+
+        elif self.active_provider_name == "gemini":
+            try:
+                gemini_models: List[LLMModelInfo] = []
+                for m in self.active_llm_client.list_models():
+                    gemini_models.append(LLMModelInfo(
+                        id=m.name,
+                        provider="gemini",
+                        name=m.display_name,
+                        description=m.description,
+                        input_token_limit=m.input_token_limit,
+                        output_token_limit=m.output_token_limit,
+                        supported_generation_methods=m.supported_generation_methods
+                    ))
+                return gemini_models
+            except Exception as e:
+                print(f"LLMInterface (Gemini): Error listing models: {e}")
+                return [LLMModelInfo(id="gemini-error-listing-models", provider="gemini")]
 
         print(f"LLMInterface: list_available_models not implemented for provider '{self.active_provider_name}'.")
         return [LLMModelInfo(id="unknown-model", provider=str(self.active_provider_name))]
@@ -302,3 +323,4 @@ if __name__ == '__main__':
 
 
     print("\nLLM Interface script with Ollama tests finished (or attempted).")
+
