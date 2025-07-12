@@ -191,7 +191,11 @@ class TestFormulaEngine(unittest.TestCase):
         # Create a dummy formula for this test or ensure one exists in valid_formulas_data
         # For now, assume greeting_high: "Greetings, {user_name}! It's a pleasure to see you."
         formula_with_template = self.valid_formulas_data[0] # greeting_high
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
         context_missing_keys = {"location": "the office"} # Missing user_name
         # Expect a warning to be printed by FormulaEngine, and raw template in formatted_response
         with patch('builtins.print') as mock_print:
@@ -224,12 +228,21 @@ class TestFormulaEngine(unittest.TestCase):
         # The current valid_formulas_data all have templates. Let's assume 'disabled_formula' is modified
         # or we conceptually add one.
         # For this test, we will mock a formula entry without the template.
+<<<<<<< Updated upstream
 
         mock_formula_entry = {"name": "mock_no_template", "action": "mock_action", "parameters": {}}
 
         context = {"user_name": "TestUser"}
         result = engine.execute_formula(mock_formula_entry, context) # type: ignore
 
+=======
+        
+        mock_formula_entry = {"name": "mock_no_template", "action": "mock_action", "parameters": {}}
+        
+        context = {"user_name": "TestUser"}
+        result = engine.execute_formula(mock_formula_entry, context) # type: ignore
+        
+>>>>>>> Stashed changes
         expected_result = {
             "action_name": "mock_action",
             "action_params": {}
@@ -242,7 +255,11 @@ class TestFormulaEngine(unittest.TestCase):
     def test_execute_formula_no_context_with_template(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
         formula_with_template = self.valid_formulas_data[0] # greeting_high has "Greetings, {user_name}!"
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
         # Expect a warning if template has placeholders, and raw template in formatted_response
         with patch('builtins.print') as mock_print:
             result = engine.execute_formula(formula_with_template, context=None) # type: ignore
