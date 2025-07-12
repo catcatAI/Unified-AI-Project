@@ -254,6 +254,98 @@ class TestDialogueManagerKGIntegration(unittest.TestCase):
             self.assertEqual(r1, expected_r1_fallback)
         asyncio.run(main_test_logic())
 
+    def test_get_simple_response_with_formula_template(self):
+        """Test that DialogueManager uses formatted_response from FormulaEngine."""
+        async def main_test_logic():
+            session_id = "formula_template_test_session"
+            user_id = "formula_template_user"
+            user_input = "trigger formula hello"
+            ai_name = "TestAI" # Matches self.mock_personality_manager.get_current_personality_trait.return_value
+
+            # Setup mock FormulaEngine behavior
+            mock_matched_formula: FormulaConfigEntry = { # type: ignore
+                "name": "test_template_formula",
+                "conditions": ["trigger formula hello"], # Not directly used by DM once matched
+                "action": "custom_action_with_template",
+                "description": "Test", "parameters": {"param1": "val1"},
+                "priority": 1, "enabled": True, "version": "1.0",
+                "response_template": "Template says: Hello {user_id} from {ai_name} with {param1}."
+            }
+
+            # This is what FormulaEngine.execute_formula would return AFTER processing the template
+            mock_formula_execution_result = {
+                "action_name": "custom_action_with_template",
+                "action_params": {"param1": "val1"},
+                "formatted_response": f"Template says: Hello {user_id} from {ai_name} with val1." # Pre-formatted
+            }
+
+            self.dm.formula_engine.match_input.return_value = mock_matched_formula
+            self.dm.formula_engine.execute_formula.return_value = mock_formula_execution_result
+
+            # Ensure LLM is not called if formula provides a response
+            self.mock_llm_interface.generate_response.reset_mock()
+
+            response = await self.dm.get_simple_response(user_input, session_id, user_id)
+
+            # Verify FormulaEngine methods were called correctly
+            self.dm.formula_engine.match_input.assert_called_once_with(user_input)
+
+            expected_context_for_formula = {
+                "user_id": user_id,
+                "session_id": session_id,
+                "ai_name": ai_name
+            }
+            self.dm.formula_engine.execute_formula.assert_called_once_with(
+                mock_matched_formula,
+                context=expected_context_for_formula
+            )
+
+            # Verify DM uses the formatted_response
+            expected_response_text = f"{ai_name}: {mock_formula_execution_result['formatted_response']}"
+            self.assertEqual(response, expected_response_text)
+
+            # Verify LLM was not called
+            self.mock_llm_interface.generate_response.assert_not_called()
+
+        asyncio.run(main_test_logic())
+
+    def test_get_simple_response_formula_no_template_fallback(self):
+        """Test DM fallback when formula has action but no formatted_response."""
+        async def main_test_logic():
+            session_id = "formula_no_template_session"
+            user_id = "formula_no_template_user"
+            user_input = "trigger no template action"
+            ai_name = "TestAI"
+
+            mock_matched_formula_no_template: FormulaConfigEntry = { # type: ignore
+                "name": "action_only_formula",
+                "conditions": ["trigger no template action"],
+                "action": "perform_generic_task",
+                "description": "Test", "parameters": {},
+                "priority": 1, "enabled": True, "version": "1.0"
+                # No response_template
+            }
+
+            mock_formula_execution_result_no_template = {
+                "action_name": "perform_generic_task",
+                "action_params": {}
+                # No formatted_response
+            }
+
+            self.dm.formula_engine.match_input.return_value = mock_matched_formula_no_template
+            self.dm.formula_engine.execute_formula.return_value = mock_formula_execution_result_no_template
+            self.mock_llm_interface.generate_response.reset_mock()
+
+            response = await self.dm.get_simple_response(user_input, session_id, user_id)
+
+            self.dm.formula_engine.execute_formula.assert_called_once()
+            # Check DM's fallback response
+            expected_fallback_response = f"{ai_name}: Action 'perform_generic_task' triggered."
+            self.assertEqual(response, expected_fallback_response)
+            self.mock_llm_interface.generate_response.assert_not_called()
+
+        asyncio.run(main_test_logic())
+
     def test_kg_qa_fallback_if_no_kg_for_session(self):
         async def main_test_logic():
             session_id = "kg_integ_test_session_03"

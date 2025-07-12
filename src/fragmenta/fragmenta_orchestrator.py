@@ -12,6 +12,11 @@ from core_ai.crisis_system import CrisisSystem
 from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule, StoredCapabilityInfo # Added StoredCapabilityInfo for __main__
 from hsp.connector import HSPConnector
 from hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+# Import ErrIntrospector for optional integration
+try:
+    from core_ai.lis.err_introspector import ErrIntrospector
+except ImportError:
+    ErrIntrospector = None # Allows Fragmenta to run if LIS components are not fully available
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +47,14 @@ class LocalStepDetails(TypedDict):
     parameters: Dict[str, Any]
     input_sources: Optional[List[Dict[str, str]]]
     input_mapping: Optional[Dict[str, Any]]
-    status: Literal["pending", "in_progress", "completed", "failed"]
+    status: Literal["pending", "in_progress", "completed", "failed", "retrying_local"] # Added "retrying_local"
     result: Optional[Any]
     error_info: Optional[Dict[str, Any]]
+    # Fields for retry logic, similar to HSPStepDetails
+    max_retries: int
+    retries_left: int
+    retry_delay_seconds: int
+    last_retry_timestamp: Optional[str]
 
 ProcessingStep = Union[HSPStepDetails, LocalStepDetails]
 
@@ -76,6 +86,7 @@ class FragmentaOrchestrator:
                  personality_manager: Optional[PersonalityManager] = None,
                  emotion_system: Optional[EmotionSystem] = None,
                  crisis_system: Optional[CrisisSystem] = None,
+                 err_introspector: Optional['ErrIntrospector'] = None, # Added ErrIntrospector
                  config: Optional[Dict[str, Any]] = None):
 
         self.ham_manager = ham_manager
@@ -86,11 +97,20 @@ class FragmentaOrchestrator:
         self.personality_manager = personality_manager
         self.emotion_system = emotion_system
         self.crisis_system = crisis_system
+        self.err_introspector = err_introspector # Store it
         self.config = config or {}
+
+        if ErrIntrospector is None and err_introspector is not None:
+            logger.warning("FragmentaOrchestrator: ErrIntrospector provided but class could not be imported. LIS inspection will be disabled.")
+            self.err_introspector = None
+
 
         self.hsp_task_defaults = self.config.get("hsp_task_defaults", {
             "max_retries": 3, "initial_retry_delay_seconds": 5,
             "retry_backoff_factor": 2, "timeout_seconds": 300
+        })
+        self.local_task_defaults = self.config.get("local_task_defaults", {
+            "max_retries": 0, "initial_retry_delay_seconds": 1 # Default to no retries for local tasks
         })
         self._pending_hsp_sub_tasks: Dict[str, Tuple[str, str]] = {}
         self._complex_task_context: Dict[str, EnhancedComplexTaskState] = {}
@@ -112,10 +132,76 @@ class FragmentaOrchestrator:
             self._complex_task_context[complex_task_id] = EnhancedComplexTaskState(
                 complex_task_id=complex_task_id,
                 original_task_description=task_description, original_input_data=input_data,
-                strategy_plan=strategy_plan, step_results={}, overall_status="planning",
+                strategy_plan=strategy_plan, step_results={}, overall_status="new", # Start as 'new' before validation
                 current_executing_step_ids=[], next_stage_index=0, current_step_indices_in_stage=[]
             )
+
+            if not self._validate_strategy_plan(strategy_plan, complex_task_id):
+                task_ctx = self._complex_task_context[complex_task_id]
+                task_ctx["overall_status"] = "failed_plan"
+                logger.error(f"F (ID: {complex_task_id}): Strategy plan validation failed.")
+                return self._get_final_status(task_ctx)
+
+            # If validation passes, move to planning/executing
+            self._complex_task_context[complex_task_id]["overall_status"] = "planning"
+
         return self._advance_complex_task(complex_task_id)
+
+    def _validate_strategy_plan(self, plan: EnhancedStrategyPlan, complex_task_id: str) -> bool:
+        all_step_ids_in_plan = set()
+        processed_step_ids_for_dependency_check = set()
+
+        if not plan.get("steps"):
+            logger.error(f"F_Validate (ID: {complex_task_id}, Plan: {plan['plan_id']}): Plan has no steps.")
+            return False
+
+        for i, stage_item in enumerate(plan["steps"]):
+            current_stage_steps: List[ProcessingStep] = stage_item if isinstance(stage_item, list) else [stage_item] # type: ignore
+
+            current_stage_step_ids = set()
+            for step_detail in current_stage_steps:
+                step_id = step_detail.get("step_id")
+                if not step_id:
+                    logger.error(f"F_Validate (ID: {complex_task_id}, Plan: {plan['plan_id']}, Stage: {i}): Step found without a step_id.")
+                    return False
+                if step_id in all_step_ids_in_plan:
+                    logger.error(f"F_Validate (ID: {complex_task_id}, Plan: {plan['plan_id']}, Stage: {i}): Duplicate step_id '{step_id}' found.")
+                    return False
+                all_step_ids_in_plan.add(step_id)
+                current_stage_step_ids.add(step_id)
+
+                step_type = step_detail.get("type")
+                if step_type not in ["hsp_task", "local_tool", "local_llm", "local_chunk_process"]:
+                    logger.error(f"F_Validate (ID: {complex_task_id}, Plan: {plan['plan_id']}, Step: {step_id}): Invalid step type '{step_type}'.")
+                    return False
+
+                # Validate input_sources
+                if step_detail.get("input_sources"):
+                    for source_info in step_detail["input_sources"]:
+                        source_step_id = source_info.get("step_id")
+                        if not source_step_id:
+                            logger.error(f"F_Validate (ID: {complex_task_id}, Plan: {plan['plan_id']}, Step: {step_id}): Input source missing 'step_id'.")
+                            return False
+                        if source_step_id == step_id: # Self-dependency
+                            logger.error(f"F_Validate (ID: {complex_task_id}, Plan: {plan['plan_id']}, Step: {step_id}): Step '{step_id}' cannot have itself as an input source.")
+                            return False
+                        if source_step_id not in processed_step_ids_for_dependency_check:
+                            # This check ensures source_step_id comes from a *previous* stage or *earlier within the same parallel stage* (though true parallel check is tricky here)
+                            # For simplicity, we're primarily checking against already fully processed stages for sequential plans.
+                            # A more robust check for parallel stages would ensure sources are not from later stages or from steps defined later in the same parallel list.
+                            # However, the current logic of _prepare_step_input dynamically checks statuses, so this is a structural pre-check.
+                            logger.warning(f"F_Validate (ID: {complex_task_id}, Plan: {plan['plan_id']}, Step: {step_id}): Input source step '{source_step_id}' not found in previously processed steps or stages. This might be an issue for non-parallel plans or if it's a forward reference within a parallel stage.")
+                            # Not returning False here as _prepare_step_input will be the ultimate gatekeeper for readiness.
+                            # This is more of a structural sanity check. A strict check would be:
+                            # if source_step_id not in processed_step_ids_for_dependency_check and source_step_id not in current_stage_step_ids (for parallel cases where order might not be guaranteed):
+                            #    logger.error(f"F_Validate (ID: {complex_task_id}, Plan: {plan['plan_id']}, Step: {step_id}): Input source step '{source_step_id}' is a forward reference or not found.")
+                            #    return False
+
+            # After processing all steps in a stage, add their IDs to the set of processed steps
+            processed_step_ids_for_dependency_check.update(current_stage_step_ids)
+
+        logger.info(f"F_Validate (ID: {complex_task_id}, Plan: {plan['plan_id']}): Plan validation successful.")
+        return True
 
     def _find_step_index(self, steps: List[ProcessingStep], step_id: str) -> int:
         for i, step in enumerate(steps):
@@ -186,11 +272,26 @@ class FragmentaOrchestrator:
                 if local_step_details["type"] == "local_chunk_process":
                     all_chunks = self._chunk_data(step_input_data, local_step_details["parameters"].get("chunking_params"))
                     chunk_results = [self._dispatch_chunk_to_processing(chunk, {"tool_or_model": local_step_details["tool_or_model_name"], "params": local_step_details["parameters"]}, complex_task_id, i, len(all_chunks)) for i, chunk in enumerate(all_chunks)]
-                    local_step_details["result"] = chunk_results
-                else: local_step_details["result"] = self._dispatch_chunk_to_processing(step_input_data, {"tool_or_model": local_step_details["tool_or_model_name"], "params": local_step_details["parameters"]}, complex_task_id, 0, 1)
+                    local_step_details["result"] = chunk_results # Assuming chunk processing itself handles internal errors or returns partial success
+                else:
+                    local_step_details["result"] = self._dispatch_chunk_to_processing(step_input_data, {"tool_or_model": local_step_details["tool_or_model_name"], "params": local_step_details["parameters"]}, complex_task_id, 0, 1)
+
+                # Check if _dispatch_chunk_to_processing indicated an error (e.g. by returning specific error object or None)
+                # For simplicity, we'll assume _dispatch_chunk_to_processing raises an exception on failure, caught below.
                 local_step_details["status"] = "completed"; task_ctx["step_results"][step_id] = local_step_details["result"]
-            except Exception as e: logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Local step failed: {e}", exc_info=True); local_step_details["status"] = "failed"; local_step_details["error_info"] = {"message": str(e)}
-        else: logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Unknown step type: {step_to_execute['type']}"); step_to_execute["status"] = "failed"; step_to_execute["error_info"] = {"message": f"Unknown step type {step_to_execute['type']}"} # type: ignore
+
+            except Exception as e:
+                logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Local step execution failed: {e}", exc_info=True)
+                if local_step_details["retries_left"] > 0:
+                    local_step_details["status"] = "retrying_local"
+                    local_step_details["error_info"] = {"message": str(e), "reason": "Execution error, will retry"}
+                    # Retries_left will be decremented in _advance_complex_task
+                else:
+                    local_step_details["status"] = "failed"
+                    local_step_details["error_info"] = {"message": str(e), "reason": "Execution error, no retries left"}
+        else:
+            logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Unknown step type: {step_to_execute['type']}")
+            step_to_execute["status"] = "failed"; step_to_execute["error_info"] = {"message": f"Unknown step type {step_to_execute['type']}"} # type: ignore
 
     def _advance_complex_task(self, complex_task_id: str) -> Dict[str, Any]:
         task_ctx = self._complex_task_context.get(complex_task_id)
@@ -212,8 +313,10 @@ class FragmentaOrchestrator:
                 if step_detail["status"] in ["completed", "failed"]: continue # Already terminal
 
                 # Check for permanent failure (no retries left)
-                if step_detail["type"] == "hsp_task" and step_detail["status"] in ["failed_dispatch", "failed_response", "timeout_error"] and step_detail["retries_left"] == 0:
+                if step_detail["status"] in ["failed_dispatch", "failed_response", "timeout_error"] and step_detail["type"] == "hsp_task" and step_detail["retries_left"] == 0:
                     logger.error(f"F (ID: {complex_task_id}, S: {step_id}): HSP step failed permanently."); task_ctx["overall_status"] = "failed_execution"; return self._get_final_status(task_ctx)
+                if step_detail["status"] == "failed" and step_detail["type"] != "hsp_task" and step_detail["retries_left"] == 0 : # Covers local steps that have failed and no retries left
+                    logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Local step failed permanently."); task_ctx["overall_status"] = "failed_execution"; return self._get_final_status(task_ctx)
 
                 # Prepare inputs and check dependencies
                 prepared_input_map, deps_met, dep_failure = self._prepare_step_input(step_detail, task_ctx)
@@ -230,24 +333,48 @@ class FragmentaOrchestrator:
 
                     if hsp_step["status"] == "retrying" and hsp_step["last_retry_timestamp"]:
                         last_retry_ts = datetime.fromisoformat(hsp_step["last_retry_timestamp"])
+                        # HSP uses exponential backoff, for local we can use a simpler fixed delay or make it configurable
                         delay = hsp_step["retry_delay_seconds"] * (self.hsp_task_defaults["retry_backoff_factor"] ** (hsp_step["max_retries"] - hsp_step["retries_left"] -1))
                         if datetime.now(timezone.utc) - last_retry_ts < timedelta(seconds=delay):
                             any_step_in_stage_active_or_retrying = True; all_steps_in_stage_processed_or_blocked = False; continue
 
-                # Execute or Dispatch if ready
-                if step_detail["status"] in ["pending", "pending_dispatch"] or \
-                   (step_detail["type"] == "hsp_task" and step_detail["status"] in ["retrying", "failed_dispatch", "failed_response", "timeout_error"] and step_detail["retries_left"] > 0): # type: ignore
+                # Handle Local step specific pre-dispatch logic (retry timing)
+                elif step_detail["type"] != "hsp_task" and step_detail["status"] == "retrying_local" and step_detail["last_retry_timestamp"]: # type: ignore
+                    local_step_retrying = step_detail # type: LocalStepDetails
+                    last_retry_ts = datetime.fromisoformat(local_step_retrying["last_retry_timestamp"])
+                    # Using fixed delay for local steps for now
+                    if datetime.now(timezone.utc) - last_retry_ts < timedelta(seconds=local_step_retrying["retry_delay_seconds"]):
+                        any_step_in_stage_active_or_retrying = True; all_steps_in_stage_processed_or_blocked = False; continue
 
-                    if step_detail["type"] == "hsp_task" and step_detail["status"] != "pending_dispatch": # Is a retryable failure
+
+                # Execute or Dispatch if ready
+                # For HSP: pending_dispatch, or retryable failures with retries left
+                # For Local: pending, or retrying_local with retries left
+                is_hsp_retryable = step_detail["type"] == "hsp_task" and \
+                                   step_detail["status"] in ["retrying", "failed_dispatch", "failed_response", "timeout_error"] and \
+                                   step_detail["retries_left"] > 0
+                is_local_retryable = step_detail["type"] != "hsp_task" and \
+                                     step_detail["status"] == "retrying_local" and \
+                                     step_detail["retries_left"] > 0 # type: ignore
+
+                if step_detail["status"] in ["pending", "pending_dispatch"] or is_hsp_retryable or is_local_retryable:
+                    if is_hsp_retryable and step_detail["status"] != "pending_dispatch": # Is an HSP retryable failure
                         step_detail["retries_left"] -=1; step_detail["status"] = "retrying"; step_detail["last_retry_timestamp"] = datetime.now(timezone.utc).isoformat()
                         logger.info(f"F (ID: {complex_task_id}, S: {step_id}): Retrying HSP. Left: {step_detail['retries_left']}.")
-                        # Re-check delay for this retry in next _advance_complex_task call
                         any_step_in_stage_active_or_retrying = True; all_steps_in_stage_processed_or_blocked = False; continue
+
+                    elif is_local_retryable: # Is a Local retryable failure
+                        local_step_to_retry = step_detail # type: LocalStepDetails
+                        local_step_to_retry["retries_left"] -= 1
+                        local_step_to_retry["status"] = "pending" # Reset to pending for re-execution by _execute_or_dispatch_step
+                        local_step_to_retry["last_retry_timestamp"] = datetime.now(timezone.utc).isoformat()
+                        logger.info(f"F (ID: {complex_task_id}, S: {step_id}): Retrying Local Step. Left: {local_step_to_retry['retries_left']}.")
+                        # _execute_or_dispatch_step will be called below for this "pending" step
 
                     self._execute_or_dispatch_step(complex_task_id, step_detail, prepared_input_map, task_ctx)
 
                 # After execution attempt, check status
-                if step_detail["status"] in ["dispatched", "awaiting_result", "retrying", "in_progress"]:
+                if step_detail["status"] in ["dispatched", "awaiting_result", "retrying", "in_progress", "retrying_local"]:
                     any_step_in_stage_active_or_retrying = True; all_steps_in_stage_processed_or_blocked = False
                 elif step_detail["status"] not in ["completed", "failed"]: # Still pending for other reasons
                     all_steps_in_stage_processed_or_blocked = False
@@ -277,7 +404,126 @@ class FragmentaOrchestrator:
             if active_corr_ids: response["correlation_ids"] = active_corr_ids
         if task_ctx["overall_status"] == "failed_execution":
             response["message"] = "One or more steps failed permanently."; response["step_results"] = task_ctx["step_results"]
+
+        # Store task outcome in HAM if terminal state reached
+        if task_ctx["overall_status"] in ["completed", "failed_execution", "failed_plan"]:
+            self._store_task_outcome_in_ham(task_ctx)
+
+        # If task completed successfully, and ErrIntrospector is available, inspect output
+        if task_ctx["overall_status"] == "completed" and self.err_introspector and ErrIntrospector is not None:
+            final_result_for_inspection = response.get("result") # Result from the current response dict
+            if final_result_for_inspection is not None:
+                try:
+                    logger.info(f"F (ID: {task_ctx['complex_task_id']}): Task completed. Triggering ErrIntrospector inspection.")
+                    # Conversation history might not be directly available to Fragmenta tasks.
+                    # Passing None or an empty list for now.
+                    # Task description is passed for context.
+                    incident_id = self.err_introspector.inspect_fragmenta_output(
+                        complex_task_id=task_ctx['complex_task_id'],
+                        task_description=task_ctx['original_task_description'],
+                        fragmenta_output=final_result_for_inspection,
+                        conversation_history=[] # Placeholder for now
+                    )
+                    if incident_id:
+                        logger.info(f"F (ID: {task_ctx['complex_task_id']}): ErrIntrospector created LIS incident {incident_id}.")
+                    else:
+                        logger.warning(f"F (ID: {task_ctx['complex_task_id']}): ErrIntrospector inspection did not result in an LIS incident.")
+                except Exception as e:
+                    logger.error(f"F (ID: {task_ctx['complex_task_id']}): Error during ErrIntrospector inspection: {e}", exc_info=True)
+            else:
+                logger.info(f"F (ID: {task_ctx['complex_task_id']}): Task completed, but no final result in response for ErrIntrospector inspection.")
+
         return response
+
+    def _store_task_outcome_in_ham(self, task_ctx: EnhancedComplexTaskState) -> None:
+        if not self.ham_manager:
+            logger.warning(f"F (ID: {task_ctx['complex_task_id']}): HAMMemoryManager not available. Cannot store task outcome.")
+            return
+
+        description_summary = str(task_ctx['original_task_description'].get('goal', task_ctx['original_task_description'].get('name', 'N/A')))[:256]
+
+        outcome_details_str = "Task completed."
+        final_step_in_plan = None
+        if task_ctx["strategy_plan"]["steps"]:
+            last_stage_item = task_ctx["strategy_plan"]["steps"][-1]
+            final_step_in_plan = last_stage_item[0] if isinstance(last_stage_item, list) and last_stage_item else (last_stage_item if not isinstance(last_stage_item, list) else None)
+
+        if task_ctx["overall_status"] == "completed" and final_step_in_plan:
+            final_result = task_ctx["step_results"].get(final_step_in_plan["step_id"]) # type: ignore
+            outcome_details_str = f"Completed successfully. Final step '{final_step_in_plan['step_id']}' result type: {type(final_result).__name__}, summary: {str(final_result)[:128]}"
+        elif task_ctx["overall_status"] == "failed_execution":
+            failed_step_ids = [
+                s["step_id"] for stage in task_ctx["strategy_plan"]["steps"]
+                for s in (stage if isinstance(stage, list) else [stage]) # type: ignore
+                if s["status"] == "failed" or (s.get("retries_left") == 0 and s["status"] not in ["completed", "pending", "pending_dispatch"]) # type: ignore
+            ]
+            first_failed_step_id = failed_step_ids[0] if failed_step_ids else "unknown"
+            # Try to get error message from the first failed step
+            error_message = "Unknown error."
+            for stage in task_ctx["strategy_plan"]["steps"]:
+                for step_detail_item in (stage if isinstance(stage, list) else [stage]): # type: ignore
+                    if step_detail_item["step_id"] == first_failed_step_id:
+                        error_info = step_detail_item.get("error_info")
+                        if error_info and isinstance(error_info, dict):
+                            error_message = error_info.get("message", "No error message provided.")
+                        break
+                if error_message != "Unknown error.": break
+            outcome_details_str = f"Failed execution. First failed step: '{first_failed_step_id}'. Error: {str(error_message)[:256]}"
+
+        elif task_ctx["overall_status"] == "failed_plan":
+            outcome_details_str = f"Failed due to plan issue. Plan ID: {task_ctx['strategy_plan']['plan_id']}"
+
+        all_step_statuses = {}
+        for stage in task_ctx["strategy_plan"]["steps"]:
+            for step_detail in (stage if isinstance(stage, list) else [stage]): # type: ignore
+                 all_step_statuses[step_detail["step_id"]] = step_detail["status"]
+
+        task_outcome_payload = {
+            "complex_task_id": task_ctx["complex_task_id"],
+            "original_task_description_summary": description_summary,
+            "strategy_plan_id": task_ctx["strategy_plan"]["plan_id"],
+            "strategy_plan_name": task_ctx["strategy_plan"]["name"],
+            "final_status": task_ctx["overall_status"],
+            "timestamp_concluded": datetime.now(timezone.utc).isoformat(),
+            "input_data_info": self._analyze_input(task_ctx["original_input_data"]), # Re-analyze or store initial analysis
+            "outcome_details": outcome_details_str,
+            "all_step_statuses": all_step_statuses
+        }
+
+
+        # Extract keywords from description_summary for HAM metadata
+        summary_keywords = []
+        if isinstance(description_summary, str):
+            # Simple keyword extraction: lowercase, split, take unique, first N words (e.g., up to 5)
+            # More sophisticated keyword extraction could be used in the future.
+            words = [word.strip(".,!?;:'\"()") for word in description_summary.lower().split()]
+            unique_words = []
+            for word in words:
+                if word and word not in unique_words: # Basic stopword removal could be added here
+                    unique_words.append(word)
+            summary_keywords = unique_words[:5]
+
+        ham_metadata = {
+            "source_module": "FragmentaOrchestrator",
+            "complex_task_id_ref": task_ctx["complex_task_id"], # For potential direct HAM query on this ID
+            "task_description_keywords": summary_keywords,
+            "strategy_plan_name_ref": task_ctx["strategy_plan"]["name"], # Add plan name for easier filtering
+            "final_status_ref": task_ctx["overall_status"] # Add final status for easier filtering
+        }
+
+        try:
+            mem_id = self.ham_manager.store_experience(
+                raw_data=task_outcome_payload,
+                data_type="fragmenta_task_outcome_v0.1",
+                metadata=ham_metadata # type: ignore
+            )
+            if mem_id:
+                logger.info(f"F (ID: {task_ctx['complex_task_id']}): Stored task outcome in HAM (MemID: {mem_id}).")
+            else:
+                logger.error(f"F (ID: {task_ctx['complex_task_id']}): Failed to store task outcome in HAM.")
+        except Exception as e:
+            logger.error(f"F (ID: {task_ctx['complex_task_id']}): Exception storing task outcome in HAM: {e}", exc_info=True)
+
 
     def _analyze_input(self, input_data: any) -> dict: # Keep as is
         input_type = "unknown"; input_size = 0
@@ -285,25 +531,137 @@ class FragmentaOrchestrator:
         elif isinstance(input_data, (list, dict)): input_type = "structured_data"; input_size = len(str(input_data))
         return {"type": input_type, "size": input_size, "content_preview": str(input_data)[:100]}
 
-    def _determine_processing_strategy(self, task_description: Dict[str, Any], input_info: Dict[str, Any], complex_task_id: str) -> EnhancedStrategyPlan: # Keep as is for now
-        logger.debug(f"F (ID: {complex_task_id}): Determining strategy for task: {task_description.get('goal', 'N/A')}")
+    def _determine_processing_strategy(self, task_description: Dict[str, Any], input_info: Dict[str, Any], complex_task_id: str) -> EnhancedStrategyPlan:
+        task_goal_summary = str(task_description.get('goal', task_description.get('name', 'N/A')))[:128]
+        logger.debug(f"F (ID: {complex_task_id}): Determining strategy for task: {task_goal_summary}")
+
+        # --- Query HAM for past outcomes of similar tasks (Conceptual V1 - Logging only) ---
+        if self.ham_manager:
+            # Extract 1-2 primary keywords from the current task's goal summary for HAM metadata query.
+            current_task_raw_keywords = [kw.strip(".,!?;:'\"()") for kw in task_goal_summary.lower().split() if kw.strip(".,!?;:'\"()")]
+            # Filter out very short words, could also use a stopword list here.
+            current_task_filtered_keywords = [kw for kw in current_task_raw_keywords if len(kw) > 2]
+            # Take up to 2 unique, primary keywords for querying.
+            query_keywords_for_ham_metadata = list(set(current_task_filtered_keywords))[:2]
+
+            all_retrieved_past_outcomes: List[Any] = [] # Stores HAMRecallResult objects
+            processed_ham_ids_for_aggregation = set() # To avoid duplicates if multiple keywords match same outcome
+
+            if query_keywords_for_ham_metadata:
+                logger.info(f"F (ID: {complex_task_id}): Will query HAM for past outcomes using metadata_filters with keywords: {query_keywords_for_ham_metadata}")
+                for keyword in query_keywords_for_ham_metadata:
+                    # This query relies on HAMMemoryManager.query_core_memory's metadata_filters
+                    # being able to check if 'keyword' is contained within the list stored in
+                    # the 'task_description_keywords' metadata field of HAM entries.
+                    # If HAM only supports exact match for list metadata fields, this specific query might need HAM enhancement.
+                    # For now, this demonstrates the intended targeted query.
+                    metadata_filter_query = {"task_description_keywords": keyword}
+                    logger.debug(f"F (ID: {complex_task_id}): Attempting HAM query with filter: {metadata_filter_query}")
+                    try:
+                        retrieved_for_keyword = self.ham_manager.query_core_memory(
+                            metadata_filters=metadata_filter_query,
+                            data_type_filter="fragmenta_task_outcome_v0.1",
+                            limit=5 # Get a few results per keyword
+                        )
+                        if retrieved_for_keyword:
+                            logger.debug(f"F (ID: {complex_task_id}): HAM query for keyword '{keyword}' returned {len(retrieved_for_keyword)} items.")
+                            for item in retrieved_for_keyword:
+                                ham_id = item.get("id")
+                                if ham_id and ham_id not in processed_ham_ids_for_aggregation:
+                                    all_retrieved_past_outcomes.append(item)
+                                    processed_ham_ids_for_aggregation.add(ham_id)
+                        else:
+                            logger.debug(f"F (ID: {complex_task_id}): HAM query for keyword '{keyword}' returned no items.")
+                    except Exception as e_query:
+                         logger.error(f"F (ID: {complex_task_id}): Exception during HAM query for keyword '{keyword}': {e_query}", exc_info=True)
+
+            if all_retrieved_past_outcomes:
+                logger.info(f"F (ID: {complex_task_id}): Aggregated {len(all_retrieved_past_outcomes)} unique past task outcomes from HAM queries.")
+                for outcome_recall_result in all_retrieved_past_outcomes: # Log details of what was found
+                    if isinstance(outcome_recall_result.get("rehydrated_gist"), dict):
+                        past_payload = outcome_recall_result["rehydrated_gist"]
+                        logger.info(f"  - Past Task ID: {past_payload.get('complex_task_id')}, Strategy: {past_payload.get('strategy_plan_name')}, Status: {past_payload.get('final_status')}")
+                    else:
+                        logger.warning(f"  - Past outcome (MemID: {outcome_recall_result.get('id')}) gist not a dict: {type(outcome_recall_result.get('rehydrated_gist'))}")
+
+            # --- Basic Adaptive Logic based on past_outcomes ---
+            problematic_past_strategy_names: List[str] = []
+            if all_retrieved_past_outcomes:
+                strategy_failure_counts: Dict[str, int] = {}
+                for outcome_recall_result in all_retrieved_past_outcomes: # Iterate over the aggregated list
+                    if isinstance(outcome_recall_result.get("rehydrated_gist"), dict):
+                        past_payload = outcome_recall_result["rehydrated_gist"]
+                        past_strategy_name = past_payload.get('strategy_plan_name')
+                        past_status = past_payload.get('final_status')
+                        if past_strategy_name and past_status == "failed_execution":
+                            strategy_failure_counts[past_strategy_name] = strategy_failure_counts.get(past_strategy_name, 0) + 1
+
+                    # Identify strategies that failed frequently (e.g., more than once for this simple heuristic)
+                    for name, count in strategy_failure_counts.items():
+                        if count > 1: # Arbitrary threshold for "frequent failure"
+                            problematic_past_strategy_names.append(name)
+                            logger.info(f"F (ID: {complex_task_id}): Strategy '{name}' identified as problematic (failed {count} times) for similar past tasks.")
+
+            except Exception as e:
+                logger.error(f"F (ID: {complex_task_id}): Error processing past task outcomes from HAM: {e}", exc_info=True)
+        # --- End HAM Query & Basic Adaptive Logic Section ---
+
         steps: List[ProcessingStep] = []; plan_name = "default_single_step_plan"; plan_id = f"plan_{complex_task_id}_{uuid.uuid4().hex[:4]}"
+
+        # --- Standard Strategy Determination Logic ---
+        # This logic will now be influenced by `problematic_past_strategy_names`
+
+        # 1. HSP Dispatch based on direct request
         if task_description.get("dispatch_to_hsp_capability_id"):
-            if not self.service_discovery or not self.hsp_connector: plan_name = "error_hsp_unavailable"
+            tentative_plan_name = "dispatch_to_hsp_capability"
+            if tentative_plan_name in problematic_past_strategy_names:
+                logger.warning(f"F (ID: {complex_task_id}): Default strategy '{tentative_plan_name}' was problematic in the past. Skipping direct HSP dispatch based on task_description field.")
+            elif not self.service_discovery or not self.hsp_connector:
+                plan_name = "error_hsp_unavailable" # This will likely be caught by validation or result in failure
             else:
-                cap_id = task_description["dispatch_to_hsp_capability_id"]; capability = self.service_discovery.get_capability_by_id(cap_id, exclude_unavailable=True)
+                cap_id = task_description["dispatch_to_hsp_capability_id"]
+                capability = self.service_discovery.get_capability_by_id(cap_id, exclude_unavailable=True)
                 if capability and capability.get("ai_id"):
-                    plan_name = "dispatch_to_hsp_capability"
+                    plan_name = tentative_plan_name # Use the good name
                     steps.append(HSPStepDetails(step_id=f"{plan_id}_s0_hsp", type="hsp_task", capability_id=cap_id, target_ai_id=capability["ai_id"], request_parameters=task_description.get("hsp_task_parameters",{}), input_sources=None,input_mapping=None,status="pending_dispatch",correlation_id=None,dispatch_timestamp=None,result=None,error_info=None,max_retries=self.hsp_task_defaults["max_retries"],retries_left=self.hsp_task_defaults["max_retries"],retry_delay_seconds=self.hsp_task_defaults["initial_retry_delay_seconds"],last_retry_timestamp=None))
-                else: plan_name = f"error_hsp_cap_unavailable_{cap_id}"; steps.append(HSPStepDetails(step_id=f"{plan_id}_s0_hsp_fail",type="hsp_task",capability_id=cap_id,target_ai_id="unknown",request_parameters={},input_sources=None,input_mapping=None,status="failed_dispatch",correlation_id=None,dispatch_timestamp=None,result=None,error_info={"message":f"Cap '{cap_id}' not found"},max_retries=0,retries_left=0,retry_delay_seconds=0,last_retry_timestamp=None))
-        elif not steps and task_description.get("requested_tool"):
-            rt = task_description["requested_tool"]; plan_name = f"direct_tool_call_{rt}"
-            steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_local",type="local_tool",tool_or_model_name=rt,parameters=task_description.get("tool_params",{}),input_sources=None,input_mapping=None,status="pending",result=None,error_info=None))
-        if not steps: # Default local processing
+                else:
+                    plan_name = f"error_hsp_cap_unavailable_{cap_id}"
+                    steps.append(HSPStepDetails(step_id=f"{plan_id}_s0_hsp_fail",type="hsp_task",capability_id=cap_id,target_ai_id="unknown",request_parameters={},input_sources=None,input_mapping=None,status="failed_dispatch",correlation_id=None,dispatch_timestamp=None,result=None,error_info={"message":f"Cap '{cap_id}' not found"},max_retries=0,retries_left=0,retry_delay_seconds=0,last_retry_timestamp=None))
+
+        # 2. Local Tool Call based on direct request (if no HSP step was added yet)
+        if not steps and task_description.get("requested_tool"):
+            rt = task_description["requested_tool"]
+            tentative_plan_name = f"direct_tool_call_{rt}"
+            if tentative_plan_name in problematic_past_strategy_names:
+                logger.warning(f"F (ID: {complex_task_id}): Default strategy '{tentative_plan_name}' was problematic in the past. Skipping direct tool call.")
+            else:
+                plan_name = tentative_plan_name
+                steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_local",type="local_tool",tool_or_model_name=rt,parameters=task_description.get("tool_params",{}),input_sources=None,input_mapping=None,status="pending",result=None,error_info=None, max_retries=self.local_task_defaults["max_retries"], retries_left=self.local_task_defaults["max_retries"], retry_delay_seconds=self.local_task_defaults["initial_retry_delay_seconds"], last_retry_timestamp=None))
+
+        # 3. Default local processing (chunking or direct LLM) if no specific dispatch/tool request filled `steps`
+        if not steps:
             if input_info.get("type") == "text" and input_info.get("size",0) > self.config.get("default_chunking_threshold",1000):
-                plan_name = "chunk_summarize_local"; steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_chunk",type="local_chunk_process",tool_or_model_name="llm_summarize_chunk",parameters={"chunking_params": self.config.get("default_text_chunking_params"), "merging_params":{"method":"join_with_newline"}},input_sources=None,input_mapping=None,status="pending",result=None,error_info=None))
-            else: plan_name = "direct_llm_local"; steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_llm",type="local_llm",tool_or_model_name="llm_direct_process",parameters={},input_sources=None,input_mapping=None,status="pending",result=None,error_info=None))
-        if not steps: plan_name="error_no_steps"; steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_err",type="local_llm",tool_or_model_name="error",parameters={},input_sources=None,input_mapping=None,status="failed",result=None,error_info={"message":"No steps generated"}))
+                tentative_plan_name = "chunk_summarize_local"
+                if tentative_plan_name in problematic_past_strategy_names:
+                    logger.warning(f"F (ID: {complex_task_id}): Default strategy '{tentative_plan_name}' was problematic. Falling through (may lead to direct_llm_local or error).")
+                    # If chunking was problematic, maybe direct LLM is the fallback, or it will hit the final default.
+                else:
+                    plan_name = tentative_plan_name
+                    steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_chunk",type="local_chunk_process",tool_or_model_name="llm_summarize_chunk",parameters={"chunking_params": self.config.get("default_text_chunking_params"), "merging_params":{"method":"join_with_newline"}},input_sources=None,input_mapping=None,status="pending",result=None,error_info=None, max_retries=self.local_task_defaults["max_retries"], retries_left=self.local_task_defaults["max_retries"], retry_delay_seconds=self.local_task_defaults["initial_retry_delay_seconds"], last_retry_timestamp=None))
+
+            if not steps: # If chunking wasn't chosen or was skipped due to past failures
+                tentative_plan_name = "direct_llm_local"
+                if tentative_plan_name in problematic_past_strategy_names:
+                     logger.warning(f"F (ID: {complex_task_id}): Default strategy '{tentative_plan_name}' was problematic. No further fallbacks, may lead to error_no_steps.")
+                else:
+                    plan_name = tentative_plan_name
+                    steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_llm",type="local_llm",tool_or_model_name="llm_direct_process",parameters={},input_sources=None,input_mapping=None,status="pending",result=None,error_info=None, max_retries=self.local_task_defaults["max_retries"], retries_left=self.local_task_defaults["max_retries"], retry_delay_seconds=self.local_task_defaults["initial_retry_delay_seconds"], last_retry_timestamp=None))
+
+        # 4. Final fallback if no steps were generated by any logic above
+        if not steps:
+            plan_name="error_no_steps"
+            steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_err",type="local_llm",tool_or_model_name="error",parameters={},input_sources=None,input_mapping=None,status="failed",result=None,error_info={"message":"No steps generated"}, max_retries=0, retries_left=0, retry_delay_seconds=0, last_retry_timestamp=None)) # No retries for error step
+
         return EnhancedStrategyPlan(plan_id=plan_id, name=plan_name, steps=steps)
 
     def _chunk_data(self, data: any, chunking_params: Optional[Dict[str, Any]] = None) -> list: # Keep as is

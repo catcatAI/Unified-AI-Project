@@ -434,25 +434,55 @@ class DialogueManager:
             hsp_params = {"query": user_input}
 
             if matched_formula:
-                formula_result = self.formula_engine.execute_formula(matched_formula)
-                action_name, action_params = formula_result.get("action_name"), formula_result.get("action_params", {})
+                # Construct context for formula engine
+                context_for_formula: Dict[str, Any] = {
+                    "user_id": user_id,
+                    "session_id": session_id,
+                    "ai_name": ai_name,
+                    # TODO: Add more context like current emotion, time, etc. later if needed by templates
+                }
+                # Remove None keys from context to avoid issues with .format if templates aren't robust
+                context_for_formula = {k: v for k, v in context_for_formula.items() if v is not None}
+
+                formula_result = self.formula_engine.execute_formula(matched_formula, context=context_for_formula)
+                action_name = formula_result.get("action_name")
+                action_params = formula_result.get("action_params", {}) # Ensure action_params is a dict
+
                 if action_name == "dispatch_tool":
-                    tool_name, tool_query_template = action_params.get("tool_name"), action_params.get("tool_query")
-                    tool_query = str(tool_query_template).format(**action_params) if isinstance(tool_query_template, str) else str(tool_query_template)
+                    tool_name = action_params.get("tool_name") # Get tool_name from action_params
+                    tool_query_template = action_params.get("tool_query") # Get tool_query from action_params
+
+                    # Ensure action_params is used for formatting tool_query if it's a template string
+                    # And also for passing to tool_dispatcher
+                    current_context_for_tool_query = action_params.copy() # Start with formula params
+                    current_context_for_tool_query.update(context_for_formula) # Add DM context
+
+                    tool_query = str(tool_query_template)
+                    if isinstance(tool_query_template, str):
+                        try:
+                            tool_query = tool_query_template.format(**current_context_for_tool_query)
+                        except KeyError as e:
+                            print(f"DM: KeyError formatting tool_query '{tool_query_template}' for tool '{tool_name}'. Missing key: {e}. Using raw template.")
+                            # tool_query remains the raw template string
+
                     if tool_name and tool_query:
+                        # Pass all action_params to the dispatcher, it can pick what it needs
                         tool_res = self.tool_dispatcher.dispatch(query=tool_query, explicit_tool_name=tool_name, **action_params)
                         if tool_res["status"] == "success": response_text = f"{ai_name}: {tool_res['payload']}"
                         elif tool_res["status"] in ["unhandled_by_local_tool", "failure_tool_error"]:
                             attempt_hsp_fallback, hsp_capability_query, hsp_params = True, tool_name, {"query": tool_query, **{k:v for k,v in action_params.items() if k not in ["tool_name", "tool_query"]}}
                         else: response_text = f"{ai_name}: Issue with '{tool_name}' tool: {tool_res.get('error_message', 'unknown')}"
-                    else: response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' tool dispatch error."
+                    else: response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' tool dispatch error (missing tool_name or tool_query)."
                 elif action_name == "initiate_tool_draft":
                     response_text = await self.handle_draft_tool_request(action_params.get("tool_name",""), action_params.get("description_for_llm",""), session_id)
-                else: # Non-dispatch_tool formula actions
-                    response_template = matched_formula.get("response_template")
-                    if response_template: response_text = response_template.format(ai_name=ai_name, **action_params)
-                    elif action_name: response_text = f"{ai_name}: Action '{action_name}' triggered."
-                    else: response_text = f"{ai_name}: Recognized pattern: '{matched_formula.get('name')}'."
+                else: # Non-dispatch_tool, non-initiate_tool_draft formula actions
+                    formatted_response_from_engine = formula_result.get("formatted_response")
+                    if formatted_response_from_engine and isinstance(formatted_response_from_engine, str):
+                        response_text = f"{ai_name}: {formatted_response_from_engine}" # Prepend AI name if template doesn't include it
+                    elif action_name: # Fallback if no formatted_response
+                        response_text = f"{ai_name}: Action '{action_name}' triggered."
+                    else: # Fallback if no action_name either (should not happen for valid formulas)
+                        response_text = f"{ai_name}: Recognized pattern: '{matched_formula.get('name')}'."
             else: # No formula matched
                 attempt_hsp_fallback = True
 
