@@ -50,7 +50,7 @@ async def chat_loop():
                 tool_name = dm_response["tool_name"]
                 tool_query = dm_response["tool_query"]
                 action_params = dm_response.get("action_params", {})
-                
+
                 print(f"[CLI is executing tool: {tool_name} with query: '{tool_query}']")
 
                 # 3. Execute the tool using the ToolDispatcher

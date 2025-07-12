@@ -99,7 +99,7 @@ class FragmentaOrchestrator:
         self.crisis_system = crisis_system
         self.err_introspector = err_introspector # Store it
         self.config = config or {}
-        
+
         if ErrIntrospector is None and err_introspector is not None:
             logger.warning("FragmentaOrchestrator: ErrIntrospector provided but class could not be imported. LIS inspection will be disabled.")
             self.err_introspector = None
@@ -147,10 +147,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-            
+
 >>>>>>> Stashed changes
 =======
-            
+
 >>>>>>> Stashed changes
             if not self._validate_strategy_plan(strategy_plan, complex_task_id):
                 task_ctx = self._complex_task_context[complex_task_id]
@@ -161,10 +161,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-            
+
 >>>>>>> Stashed changes
 =======
-            
+
 >>>>>>> Stashed changes
             # If validation passes, move to planning/executing
             self._complex_task_context[complex_task_id]["overall_status"] = "planning"
@@ -185,10 +185,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-            
+
 >>>>>>> Stashed changes
 =======
-            
+
 >>>>>>> Stashed changes
             current_stage_step_ids = set()
             for step_detail in current_stage_steps:
@@ -237,10 +237,10 @@ class FragmentaOrchestrator:
 =======
 =======
 >>>>>>> Stashed changes
-            
+
             # After processing all steps in a stage, add their IDs to the set of processed steps
             processed_step_ids_for_dependency_check.update(current_stage_step_ids)
-            
+
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
@@ -324,14 +324,14 @@ class FragmentaOrchestrator:
                     local_step_details["result"] = self._dispatch_chunk_to_processing(step_input_data, {"tool_or_model": local_step_details["tool_or_model_name"], "params": local_step_details["parameters"]}, complex_task_id, 0, 1)
 
 =======
-                else: 
+                else:
                     local_step_details["result"] = self._dispatch_chunk_to_processing(step_input_data, {"tool_or_model": local_step_details["tool_or_model_name"], "params": local_step_details["parameters"]}, complex_task_id, 0, 1)
-                
+
 >>>>>>> Stashed changes
 =======
-                else: 
+                else:
                     local_step_details["result"] = self._dispatch_chunk_to_processing(step_input_data, {"tool_or_model": local_step_details["tool_or_model_name"], "params": local_step_details["parameters"]}, complex_task_id, 0, 1)
-                
+
 >>>>>>> Stashed changes
                 # Check if _dispatch_chunk_to_processing indicated an error (e.g. by returning specific error object or None)
                 # For simplicity, we'll assume _dispatch_chunk_to_processing raises an exception on failure, caught below.
@@ -350,10 +350,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
         else:
 =======
-        else: 
+        else:
 >>>>>>> Stashed changes
 =======
-        else: 
+        else:
 >>>>>>> Stashed changes
             logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Unknown step type: {step_to_execute['type']}")
             step_to_execute["status"] = "failed"; step_to_execute["error_info"] = {"message": f"Unknown step type {step_to_execute['type']}"} # type: ignore
@@ -402,7 +402,7 @@ class FragmentaOrchestrator:
                         delay = hsp_step["retry_delay_seconds"] * (self.hsp_task_defaults["retry_backoff_factor"] ** (hsp_step["max_retries"] - hsp_step["retries_left"] -1))
                         if datetime.now(timezone.utc) - last_retry_ts < timedelta(seconds=delay):
                             any_step_in_stage_active_or_retrying = True; all_steps_in_stage_processed_or_blocked = False; continue
-                
+
                 # Handle Local step specific pre-dispatch logic (retry timing)
                 elif step_detail["type"] != "hsp_task" and step_detail["status"] == "retrying_local" and step_detail["last_retry_timestamp"]:
                     local_step_retrying = step_detail # type: LocalStepDetails
@@ -455,7 +455,7 @@ class FragmentaOrchestrator:
                         step_detail["retries_left"] -=1; step_detail["status"] = "retrying"; step_detail["last_retry_timestamp"] = datetime.now(timezone.utc).isoformat()
                         logger.info(f"F (ID: {complex_task_id}, S: {step_id}): Retrying HSP. Left: {step_detail['retries_left']}.")
                         any_step_in_stage_active_or_retrying = True; all_steps_in_stage_processed_or_blocked = False; continue
-                    
+
                     elif is_local_retryable: # Is a Local retryable failure
                         local_step_to_retry = step_detail # type: LocalStepDetails
                         local_step_to_retry["retries_left"] -= 1
@@ -512,10 +512,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         # Store task outcome in HAM if terminal state reached
         if task_ctx["overall_status"] in ["completed", "failed_execution", "failed_plan"]:
@@ -557,10 +557,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         outcome_details_str = "Task completed."
         final_step_in_plan = None
@@ -577,10 +577,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
                 s["step_id"] for stage in task_ctx["strategy_plan"]["steps"]
 =======
-                s["step_id"] for stage in task_ctx["strategy_plan"]["steps"] 
+                s["step_id"] for stage in task_ctx["strategy_plan"]["steps"]
 >>>>>>> Stashed changes
 =======
-                s["step_id"] for stage in task_ctx["strategy_plan"]["steps"] 
+                s["step_id"] for stage in task_ctx["strategy_plan"]["steps"]
 >>>>>>> Stashed changes
                 for s in (stage if isinstance(stage, list) else [stage]) # type: ignore
                 if s["status"] == "failed" or (s.get("retries_left") == 0 and s["status"] not in ["completed", "pending", "pending_dispatch"]) # type: ignore
@@ -609,10 +609,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         task_outcome_payload = {
             "complex_task_id": task_ctx["complex_task_id"],
@@ -630,10 +630,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         # Extract keywords from description_summary for HAM metadata
         summary_keywords = []
@@ -690,10 +690,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
             query_keywords_for_ham_metadata = list(set(current_task_filtered_keywords))[:2]
 =======
-            query_keywords_for_ham_metadata = list(set(current_task_filtered_keywords))[:2] 
+            query_keywords_for_ham_metadata = list(set(current_task_filtered_keywords))[:2]
 >>>>>>> Stashed changes
 =======
-            query_keywords_for_ham_metadata = list(set(current_task_filtered_keywords))[:2] 
+            query_keywords_for_ham_metadata = list(set(current_task_filtered_keywords))[:2]
 >>>>>>> Stashed changes
 
             all_retrieved_past_outcomes: List[Any] = [] # Stores HAMRecallResult objects
@@ -730,10 +730,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-            
+
 >>>>>>> Stashed changes
 =======
-            
+
 >>>>>>> Stashed changes
             if all_retrieved_past_outcomes:
                 logger.info(f"F (ID: {complex_task_id}): Aggregated {len(all_retrieved_past_outcomes)} unique past task outcomes from HAM queries.")
@@ -752,10 +752,10 @@ class FragmentaOrchestrator:
 =======
 =======
 >>>>>>> Stashed changes
-            
+
             # --- Basic Adaptive Logic based on past_outcomes ---
             problematic_past_strategy_names: List[str] = []
-            if all_retrieved_past_outcomes: 
+            if all_retrieved_past_outcomes:
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
@@ -772,10 +772,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-                    
+
 >>>>>>> Stashed changes
 =======
-                    
+
 >>>>>>> Stashed changes
                     # Identify strategies that failed frequently (e.g., more than once for this simple heuristic)
                     for name, count in strategy_failure_counts.items():
@@ -805,10 +805,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         # --- Standard Strategy Determination Logic ---
         # This logic will now be influenced by `problematic_past_strategy_names`
@@ -833,10 +833,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         # 2. Local Tool Call based on direct request (if no HSP step was added yet)
         if not steps and task_description.get("requested_tool"):
@@ -853,10 +853,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
         if not steps:
 =======
-        if not steps: 
+        if not steps:
 >>>>>>> Stashed changes
 =======
-        if not steps: 
+        if not steps:
 >>>>>>> Stashed changes
             if input_info.get("type") == "text" and input_info.get("size",0) > self.config.get("default_chunking_threshold",1000):
                 tentative_plan_name = "chunk_summarize_local"
@@ -870,10 +870,10 @@ class FragmentaOrchestrator:
 <<<<<<< Updated upstream
 
 =======
-            
+
 >>>>>>> Stashed changes
 =======
-            
+
 >>>>>>> Stashed changes
             if not steps: # If chunking wasn't chosen or was skipped due to past failures
                 tentative_plan_name = "direct_llm_local"
@@ -893,10 +893,10 @@ class FragmentaOrchestrator:
 =======
 =======
 >>>>>>> Stashed changes
-        if not steps: 
+        if not steps:
             plan_name="error_no_steps"
             steps.append(LocalStepDetails(step_id=f"{plan_id}_s0_err",type="local_llm",tool_or_model_name="error",parameters={},input_sources=None,input_mapping=None,status="failed",result=None,error_info={"message":"No steps generated"}, max_retries=0, retries_left=0, retry_delay_seconds=0, last_retry_timestamp=None)) # No retries for error step
-        
+
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======

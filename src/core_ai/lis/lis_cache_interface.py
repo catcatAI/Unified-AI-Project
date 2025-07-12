@@ -511,10 +511,10 @@ class HAMLISCache(LISCacheInterface):
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         # Fetch a larger batch initially to allow for tag-based filtering if needed,
         # and ensure we have enough candidates before slicing to top_n.
@@ -575,7 +575,7 @@ class HAMLISCache(LISCacheInterface):
 
     def get_learned_antibodies(self,
 =======
-        
+
         # The `query_incidents` method should already sort by timestamp_logged desc.
         # If further sorting or scoring were needed (e.g., by number of matching tags), it would happen here.
         # For now, recency is the primary sort key from query_incidents.
@@ -586,7 +586,7 @@ class HAMLISCache(LISCacheInterface):
                                self,
 >>>>>>> Stashed changes
 =======
-        
+
         # The `query_incidents` method should already sort by timestamp_logged desc.
         # If further sorting or scoring were needed (e.g., by number of matching tags), it would happen here.
         # For now, recency is the primary sort key from query_incidents.
@@ -686,7 +686,7 @@ class HAMLISCache(LISCacheInterface):
 
 =======
         print(f"Conceptual: HAMLISCache.update_incident_status for {incident_id} to {new_status}")
-        
+
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
@@ -740,10 +740,10 @@ class HAMLISCache(LISCacheInterface):
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         # Re-store the updated incident. This will create a new HAM entry.
         # The LIS system will then need to rely on querying by lis_object_id (incident_id)
@@ -758,10 +758,10 @@ class HAMLISCache(LISCacheInterface):
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         return store_success
 

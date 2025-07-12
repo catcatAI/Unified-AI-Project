@@ -28,7 +28,7 @@
                 }
             },
             "runtime_config_mapping": {
-                "model_name": {"literal_value": "mock-creative-v1"}, 
+                "model_name": {"literal_value": "mock-creative-v1"},
                 "params": {"literal_value": {"temperature": 0.7}}
             }
         }

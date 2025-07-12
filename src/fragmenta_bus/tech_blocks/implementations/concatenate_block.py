@@ -41,6 +41,6 @@ class StringConcatenateBlock(TechBlock):
         string1 = input_data.get("data", {}).get("string1", "")
         string2 = input_data.get("data", {}).get("string2", "")
         separator = input_data.get("config", {}).get("separator", self._instance_config.get("separator", ""))
-        
+
         concatenated_string = f"{string1}{separator}{string2}"
         return TechBlockOutput(result=concatenated_string, status="success", error_message=None)

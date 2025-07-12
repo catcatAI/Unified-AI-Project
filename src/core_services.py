@@ -167,7 +167,7 @@ def initialize_services(
     # Update effective_llm_config based on loaded configs
     # Start with default LLM config, then override with system_config and api_keys
     effective_llm_config = DEFAULT_LLM_CONFIG.copy() # Start with a copy to avoid modifying global default
-    
+
     # Override default_provider and default_model from system_config if present
     if 'llm_settings' in loaded_system_config:
         llm_sys_settings = loaded_system_config['llm_settings']

@@ -326,7 +326,7 @@ class DialogueManager:
     async def get_response_with_tool_support(self, user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> Dict[str, Any]:
         print(f"DialogueManager: Received input='{user_input}', session_id='{session_id}', user_id='{user_id}'")
         ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
-        
+
         # Store user input
         user_mem_id: Optional[str] = None
         if self.memory_manager:
@@ -356,7 +356,7 @@ class DialogueManager:
 
     async def get_response_from_tool_result(self, tool_name: str, tool_result: Dict[str, Any], session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
         ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
-        
+
         # Log the tool result
         if self.memory_manager:
             tool_metadata = {
@@ -371,14 +371,14 @@ class DialogueManager:
 
         # Generate a response based on the tool result
         prompt = f"The user asked to use the '{tool_name}' tool. The tool returned the following result: {json.dumps(tool_result)}. Please formulate a natural language response to the user based on this result."
-        
+
         response_text = self.llm_interface.generate_response(prompt=prompt)
-        
+
         # Store AI response
         if self.memory_manager:
             ai_metadata: DialogueMemoryEntryMetadata = {"speaker": "ai", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id} # type: ignore
             self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata)
-            
+
         return f"{ai_name}: {response_text}"
 
     async def get_simple_response(self, user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
@@ -475,10 +475,10 @@ class DialogueManager:
 <<<<<<< Updated upstream
 
 =======
-                    
+
 >>>>>>> Stashed changes
 =======
-                    
+
 >>>>>>> Stashed changes
                     # Ensure action_params is used for formatting tool_query if it's a template string
                     # And also for passing to tool_dispatcher
@@ -496,10 +496,10 @@ class DialogueManager:
 <<<<<<< Updated upstream
 
 =======
-                    
+
 >>>>>>> Stashed changes
 =======
-                    
+
 >>>>>>> Stashed changes
                     if tool_name and tool_query:
                         # Pass all action_params to the dispatcher, it can pick what it needs
@@ -766,26 +766,26 @@ Desired JSON Output:
         # (Prompt content remains the same)
         # example_tool_structure = """
         # Example of a simple Python tool class structure:
-        # 
+        #
         # ```python
         # from typing import Optional, List, Dict, Any # Common imports
-        # 
+        #
         # class ExampleTool:
         #     """Provides a brief description of what the tool does."""
-        # 
+        #
         #     def __init__(self, config: Optional[Dict[str, Any]] = None):
         #         """Initializes the tool, optionally with configuration."""
         #         self.config = config or {}
         #         print(f"{self.__class__.__name__} initialized.")
-        # 
+        #
         #     def execute(self, parameter_one: str, parameter_two: int = 0) -> Dict[str, Any]:
         #         """
         #         Describes what this main method does.
-        # 
+        #
         #         Args:
         #             parameter_one (str): Description of first parameter.
         #             parameter_two (int, optional): Description of second parameter. Defaults to 0.
-        # 
+        #
         #         Returns:
         #             Dict[str, Any]: Description of the output, often a dictionary.
         #         """
