@@ -2,7 +2,7 @@ import json
 import zlib
 import base64
 import os
-from datetime import datetime, timezone # Added timezone
+from datetime import datetime, timezone
 from collections import Counter
 from cryptography.fernet import Fernet, InvalidToken
 import hashlib
@@ -32,9 +32,7 @@ except ImportError:
     STOPWORDS = set()
 
 
-from src.core_ai.memory.memory_interface import AbstractMemoryManager
-
-class HAMMemoryManager(AbstractMemoryManager):
+class HAMMemoryManager:
     """
     Hierarchical Abstractive Memory Manager v0.2.
     Handles storage and retrieval of experiences, incorporating abstraction,
@@ -48,8 +46,7 @@ class HAMMemoryManager(AbstractMemoryManager):
 
     def __init__(self,
                  core_storage_filename="ham_core_memory.json",
-                 resource_awareness_service: Optional[Any] = None, # Optional['ResourceAwarenessService']
-                 encryption_key: Optional[str] = None):
+                 resource_awareness_service: Optional[Any] = None): # Optional['ResourceAwarenessService']
         """
         Initializes the HAMMemoryManager.
 
@@ -72,18 +69,16 @@ class HAMMemoryManager(AbstractMemoryManager):
         self.core_storage_filepath = os.path.join(self.storage_dir, core_storage_filename)
 
         # Initialize Fernet for encryption
-        if encryption_key:
-            self.fernet_key = encryption_key.encode()
+        key_str = os.environ.get("MIKO_HAM_KEY")
+        if key_str:
+            # Assuming the key in env is already a valid URL-safe base64 encoded Fernet key
+            self.fernet_key = key_str.encode()
         else:
-            key_str = os.environ.get("MIKO_HAM_KEY")
-            if key_str:
-                self.fernet_key = key_str.encode()
-            else:
-                print("CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.")
-                print("Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
-                print("DO NOT use this for any real data you want to keep, as it will be lost.")
-                self.fernet_key = Fernet.generate_key()
-                print(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
+            print("CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.")
+            print("Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
+            print("DO NOT use this for any real data you want to keep, as it will be lost.")
+            self.fernet_key = Fernet.generate_key()
+            print(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
 
         try:
             self.fernet = Fernet(self.fernet_key)
@@ -258,9 +253,7 @@ class HAMMemoryManager(AbstractMemoryManager):
         return True # OK to save
 
     def _save_core_memory_to_file(self) -> bool: # Added return type bool
-        """
-        Saves the core memory store to a JSON file, respecting simulated disk limits.
-        """
+        """Saves the core memory store to a JSON file, respecting simulated disk limits."""
 
         if not self._simulate_disk_lag_and_check_limit():
             # If _simulate_disk_lag_and_check_limit returns False, it means disk is full.
@@ -283,15 +276,7 @@ class HAMMemoryManager(AbstractMemoryManager):
                     serializable_store[mem_id] = {
                         "timestamp": data_pkg["timestamp"],
                         "data_type": data_pkg["data_type"],
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                        "encrypted_package_b64": data_pkg["encrypted_package"].decode('ascii'), # Changed to ascii
-=======
-                        "encrypted_package_b64": data_pkg["encrypted_package"].decode('latin-1'), # Changed to latin-1
->>>>>>> Stashed changes
-=======
-                        "encrypted_package_b64": data_pkg["encrypted_package"].decode('latin-1'), # Changed to latin-1
->>>>>>> Stashed changes
+                        "encrypted_package_b64": data_pkg["encrypted_package"].decode('latin-1'), # latin-1 for bytes
                         "metadata": data_pkg.get("metadata", {})
                     }
                 json.dump({"next_memory_id": self.next_memory_id, "store": serializable_store}, f, indent=2)
@@ -318,15 +303,7 @@ class HAMMemoryManager(AbstractMemoryManager):
                     self.core_memory_store[mem_id] = {
                         "timestamp": data_pkg_b64["timestamp"],
                         "data_type": data_pkg_b64["data_type"],
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                        "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('ascii'), # Changed to ascii
-=======
-                        "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('latin-1'), # Changed to latin-1
->>>>>>> Stashed changes
-=======
-                        "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('latin-1'), # Changed to latin-1
->>>>>>> Stashed changes
+                        "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('latin-1'),
                         "metadata": data_pkg_b64.get("metadata", {})
                     }
             print(f"Core memory loaded from {self.core_storage_filepath}. Next ID: {self.next_memory_id}")
@@ -343,7 +320,7 @@ class HAMMemoryManager(AbstractMemoryManager):
         and then stored.
 
         Args:
-            raw_data (Any): The raw data of the experience (e.g., text string, dict).
+            raw_data: The raw data of the experience (e.g., text string, dict).
             data_type (str): Type of the data (e.g., "dialogue_text", "sensor_reading").
                              If "dialogue_text" (or contains it), text abstraction is applied.
             metadata (Optional[DialogueMemoryEntryMetadata]): Additional metadata for the experience.
@@ -389,7 +366,7 @@ class HAMMemoryManager(AbstractMemoryManager):
 
         memory_id = self._generate_memory_id()
         data_package: HAMDataPackageInternal = {
-            "timestamp": datetime.now(timezone.utc).isoformat(), # Made timestamp UTC aware
+            "timestamp": datetime.now().isoformat(),
             "data_type": data_type,
             "encrypted_package": encrypted_data, # This is bytes
             "metadata": current_metadata # Use the processed current_metadata
@@ -523,9 +500,13 @@ class HAMMemoryManager(AbstractMemoryManager):
                 try:
                     item_dt = datetime.fromisoformat(item["timestamp"])
                     start_date, end_date = date_range
+                    # Ensure timezone consistency for comparison
+                    if item_dt.tzinfo is None:
+                        # If stored timestamp is naive, assume UTC for comparison
+                        item_dt = item_dt.replace(tzinfo=timezone.utc)
                     if not (start_date <= item_dt <= end_date):
                         match = False
-                except ValueError: # If timestamp is not valid ISO format
+                except (ValueError, TypeError): # If timestamp is not valid ISO format or other error
                     match = False # Or log error and continue
 
             if match and metadata_filters:

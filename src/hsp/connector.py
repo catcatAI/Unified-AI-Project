@@ -3,7 +3,7 @@ import uuid
 import asyncio
 import logging # Added logging
 from datetime import datetime, timezone
-from typing import Callable, Dict, Any, Optional, Literal, List
+from typing import Callable, Dict, Any, Optional, Literal
 import paho.mqtt.client as mqtt # type: ignore
 
 from .types import (
@@ -83,7 +83,7 @@ class HSPConnector:
         self._on_fact_received_callback: Optional[Callable[[HSPFactPayload, str, HSPMessageEnvelope], None]] = None
         self._on_capability_advertisement_callback: Optional[Callable[[HSPCapabilityAdvertisementPayload, str, HSPMessageEnvelope], None]] = None
         self._on_task_request_callback: Optional[Callable[[HSPTaskRequestPayload, str, HSPMessageEnvelope], None]] = None
-        self._on_task_result_callbacks: List[Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]] = [] # Changed to a list
+        self._on_task_result_callback: Optional[Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]] = None
         # ... other specific payload callbacks can be added
 
         self.default_qos: int = 1 # MQTT QoS level for publishing
@@ -116,21 +116,16 @@ class HSPConnector:
 
         parts = processed_type.rsplit("_v", 1)
         if len(parts) == 2:
-            type_name_raw = parts[0] # e.g., "Fact", "CapabilityAdvertisement"
-            version_raw = parts[1]   # e.g., "0.1", "1.0.0"
-
-            if type_name_raw and version_raw:
-                # Normalize type_name for consistency if needed (e.g. CamelCase)
-                # For URNs, path components are typically case-sensitive but convention helps.
-                # Let's assume TypeName as parsed is fine.
-                return f"urn:hsp:payload:{type_name_raw}:{version_raw}"
+            type_name = parts[0]
+            version = parts[1]
+            if type_name and version:  # Ensure neither part is empty
+                return f"hsp:schema:payload/{type_name}/{version}"
             else:
-                logger.warning(f"Parsed empty TypeName or Version from message_type '{message_type}' (processed: '{processed_type}'). No URN schema URI generated.")
+                logger.warning(f"Parsed empty TypeName or Version from message_type '{message_type}' (processed: '{processed_type}'). No schema URI generated.")
                 return None
         else:
-            # If message_type doesn't follow the _vX.Y pattern, maybe it's an older type or unversioned
-            # For now, we require the pattern for URN generation.
-            logger.warning(f"Could not parse TypeName and Version from message_type '{message_type}' (processed: '{processed_type}'). Expected format like 'TypeName_vVersion'. No URN schema URI generated.")
+            # Log this case as it's an unexpected format if we expect all types to be versioned this way.
+            logger.warning(f"Could not parse TypeName and Version from message_type '{message_type}' (processed: '{processed_type}'). Expected format like 'TypeName_vVersion'. No schema URI generated.")
             return None
 
     def _on_mqtt_connect(self, client, userdata, flags, reason_code, properties):
@@ -148,7 +143,7 @@ class HSPConnector:
             self.is_connected = False
             # Do not set _was_unexpectedly_disconnected here, as this is a failed *connect* attempt.
 
-    def _on_mqtt_disconnect(self, client, userdata, flags, reason_code, properties):
+    def _on_mqtt_disconnect(self, client, userdata, reason_code, properties):
         self.is_connected = False
         if reason_code == 0:
             # MQTT_ERR_SUCCESS (0) usually means a clean disconnect initiated by client.disconnect()
@@ -337,15 +332,8 @@ class HSPConnector:
                         self._on_capability_advertisement_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
                     elif message_type.startswith("HSP::TaskRequest") and self._on_task_request_callback:
                         self._on_task_request_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
-                    elif message_type.startswith("HSP::TaskResult") and self._on_task_result_callbacks:
-                        for callback in self._on_task_result_callbacks:
-                            try:
-                                callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
-                            except Exception as cb_e:
-                                logger.error(f"HSPConnector ({self.ai_id}): Error in a TaskResult callback for msg {envelope.get('message_id')}: {cb_e}", exc_info=True)
-                                specific_handler_error = cb_e
-                    elif message_type.startswith("HSP::CapabilityReAdvertisementRequest") and self._on_capability_re_advertisement_request_callback:
-                        self._on_capability_re_advertisement_request_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
+                    elif message_type.startswith("HSP::TaskResult") and self._on_task_result_callback:
+                        self._on_task_result_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
                     # Add other specific handlers here
                 except Exception as e:
                     specific_handler_error = e
@@ -408,20 +396,8 @@ class HSPConnector:
         self._on_task_request_callback = callback
 
     def register_on_task_result_callback(self, callback: Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]):
-        """Registers a callback for HSP TaskResult messages. Multiple callbacks can be registered."""
-        if callback not in self._on_task_result_callbacks:
-            self._on_task_result_callbacks.append(callback)
-
-    def unregister_on_task_result_callback(self, callback: Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]):
-        """Unregisters a previously registered callback for HSP TaskResult messages."""
-        try:
-            self._on_task_result_callbacks.remove(callback)
-        except ValueError:
-            logger.warning(f"HSPConnector ({self.ai_id}): Attempted to unregister a task result callback that was not registered.")
-
-    def register_on_capability_re_advertisement_request_callback(self, callback: Callable[[Dict[str, Any], str, HSPMessageEnvelope], None]):
-        """Registers a callback for HSP CapabilityReAdvertisementRequest messages."""
-        self._on_capability_re_advertisement_request_callback = callback
+        """Registers a callback for HSP TaskResult messages."""
+        self._on_task_result_callback = callback
 
     # --- New methods for publishing/sending Tasking and Capabilities ---
     def publish_capability_advertisement(self, payload: HSPCapabilityAdvertisementPayload, topic: str, version: str = "0.1") -> bool:
@@ -435,7 +411,7 @@ class HSPConnector:
         )
         return self._send_hsp_message(envelope, mqtt_topic=topic)
 
-    def send_task_request(self, payload: HSPTaskRequestPayload, target_ai_id: str, version: str = "0.1") -> Optional[str]:
+    def send_task_request(self, payload: HSPTaskRequestPayload, target_ai_id_or_topic: str, version: str = "0.1") -> Optional[str]:
         """Sends a TaskRequest payload and returns the correlation_id used."""
         message_type = f"HSP::TaskRequest_v{version}"
         # Task requests should have a unique correlation_id for tracking responses.
@@ -443,12 +419,11 @@ class HSPConnector:
         envelope = self._build_hsp_envelope(
             payload=dict(payload), # Ensure it's a dict
             message_type=message_type,
-            recipient_ai_id_or_topic=target_ai_id,
+            recipient_ai_id_or_topic=target_ai_id_or_topic,
             communication_pattern="request"
             # correlation_id will be auto-generated by _build_hsp_envelope
         )
-        mqtt_topic = f"hsp/requests/{target_ai_id}"
-        if self._send_hsp_message(envelope, mqtt_topic=mqtt_topic): # Topic could be specific to target AI or a general task request topic
+        if self._send_hsp_message(envelope, mqtt_topic=target_ai_id_or_topic): # Topic could be specific to target AI or a general task request topic
             return envelope.get("correlation_id")
         return None
 
@@ -463,18 +438,6 @@ class HSPConnector:
             correlation_id=correlation_id # Crucial to link to the request
         )
         return self._send_hsp_message(envelope, mqtt_topic=reply_to_address)
-
-    def request_capability_re_advertisement(self, topic: str = "hsp/capabilities/re_advertise_request", version: str = "0.1") -> bool:
-        """Sends a request for all AIs to re-advertise their capabilities."""
-        message_type = f"HSP::CapabilityReAdvertisementRequest_v{version}"
-        envelope = self._build_hsp_envelope(
-            payload={}, # No specific payload needed for this request
-            message_type=message_type,
-            recipient_ai_id_or_topic=topic, # Broadcast topic
-            communication_pattern="request"
-        )
-        logger.info(f"HSPConnector ({self.ai_id}): Requesting capability re-advertisement on topic '{topic}'.")
-        return self._send_hsp_message(envelope, mqtt_topic=topic)
 
     def set_default_mqtt_qos(self, qos: int):
         """Sets the default MQTT QoS level for publishing messages (0, 1, or 2)."""

@@ -5,12 +5,12 @@
 # Example common dependencies (uncomment and specify versions as needed):
 Flask
 numpy
-# tensorflow
+tensorflow
 cryptography
 # pandas
 requests
 # beautifulsoup4
-google-generativeai
+# google-generativeai
 python-dotenv
 PyYAML
 typing-extensions # For Required, NotRequired, etc.
@@ -20,8 +20,8 @@ typing-extensions # For Required, NotRequired, etc.
 # For FastAPI API Server
 fastapi
 uvicorn[standard]
-httpx # Required by FastAPI TestClient / Starlette TestClient
 pydantic
+httpx # For FastAPI TestClient
 
 # For system monitoring (future use, good to list)
 psutil
@@ -35,5 +35,5 @@ networkx
 # For HSPConnector MQTT transport
 paho-mqtt
 
-# For testing asynchronous code with pytest
+# For pytest asyncio tests
 pytest-asyncio

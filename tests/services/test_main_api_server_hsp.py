@@ -1,11 +1,6 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Skipping due to dialogue_manager.py SyntaxError")
 from fastapi.testclient import TestClient
 import uuid
-from ..conftest import is_mqtt_broker_available # Import the utility
-
-# Skip all tests in this module if MQTT broker is not available
-pytestmark = pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available for API HSP tests")
 import time
 from unittest.mock import MagicMock, ANY
 
@@ -21,10 +16,11 @@ from src.hsp.connector import HSPConnector
 from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload
 from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
+from tests.conftest import is_mqtt_broker_available
 
 # --- Constants for API Tests ---
 TEST_API_PEER_AI_ID = "did:hsp:test_api_peer_007"
-MQTT_BROKER_ADDRESS = "127.0.0.1" # Changed from localhost. Must match what core_services will use
+MQTT_BROKER_ADDRESS = "127.0.0.1" # Must match what core_services will use
 MQTT_BROKER_PORT = 1883
 
 @pytest.fixture(scope="module")
@@ -61,6 +57,7 @@ def api_test_peer_connector():
     peer_conn.disconnect()
     time.sleep(0.1)
 
+@pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available for API HSP tests")
 class TestHSPEndpoints:
 
     def test_list_hsp_services_empty(self, client: TestClient):

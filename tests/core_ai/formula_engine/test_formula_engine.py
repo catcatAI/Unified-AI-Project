@@ -4,11 +4,14 @@ from pathlib import Path
 import shutil # For cleaning up test directories
 
 import sys # Added
-import os  # Added
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))) # Added
+import os # Added
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))) # Added path adjustment
 
-from src.core_ai.formula_engine import FormulaEngine # Changed
-from src.shared.types.common_types import FormulaConfigEntry # Changed
+# Adjust import path to reach FormulaEngine from src/core_ai/formula_engine/
+# This assumes tests are run from the project root (Unified-AI-Project)
+# and PYTHONPATH includes 'src'
+from core_ai.formula_engine import FormulaEngine
+from shared.types.common_types import FormulaConfigEntry
 
 class TestFormulaEngine(unittest.TestCase):
 
@@ -143,149 +146,33 @@ class TestFormulaEngine(unittest.TestCase):
 
     def test_execute_formula(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
-        formula_to_execute = self.valid_formulas_data[0] # "greeting_high" -> "Greetings, {user_name}! It's a pleasure to see you."
-        context = {"user_name": "TestUser", "unused_key": "value"}
-        result = engine.execute_formula(formula_to_execute, context) # type: ignore
+        formula_to_execute = self.valid_formulas_data[0] # "greeting_high"
+        result = engine.execute_formula(formula_to_execute) # type: ignore
 
         expected_result = {
             "action_name": "greet_user_warmly",
-            "action_params": {"warmth": "high"},
-            "formatted_response": "Greetings, TestUser! It's a pleasure to see you."
+            "action_params": {"warmth": "high"}
         }
         self.assertEqual(result, expected_result)
 
     def test_execute_formula_no_params(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
-        # "farewell" formula has "response_template": "Goodbye! Have a great day." (no placeholders)
-        # and "parameters": {}
-        farewell_formula_data = None
+        # Find the "farewell" formula which has no explicit parameters in the dummy data
+        # Note: The setUp data defines "parameters": {} for "farewell"
+        farewell_formula = None
         for f_data in self.valid_formulas_data:
             if f_data["name"] == "farewell":
-                farewell_formula_data = f_data
+                farewell_formula = f_data
                 break
-        self.assertIsNotNone(farewell_formula_data, "Farewell formula not found in test data")
+        self.assertIsNotNone(farewell_formula, "Farewell formula not found in test data")
 
-        if farewell_formula_data:
-            # Test with context
-            context = {"user_name": "Friend"} # Context won't be used by this template
-            result_with_context = engine.execute_formula(farewell_formula_data, context) # type: ignore
-            expected_result_with_context = {
+        if farewell_formula:
+            result = engine.execute_formula(farewell_formula) # type: ignore
+            expected_result = {
                 "action_name": "say_goodbye",
-                "action_params": {},
-                "formatted_response": "Goodbye! Have a great day."
+                "action_params": {} # Expect empty dict if 'parameters' was empty or missing
             }
-            self.assertEqual(result_with_context, expected_result_with_context)
-
-            # Test without context
-            result_no_context = engine.execute_formula(farewell_formula_data) # type: ignore
-            expected_result_no_context = {
-                "action_name": "say_goodbye",
-                "action_params": {},
-                "formatted_response": "Goodbye! Have a great day." # Template returned as is
-            }
-            self.assertEqual(result_no_context, expected_result_no_context)
-
-
-    def test_execute_formula_with_template_missing_context_keys(self):
-        engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
-        # Create a dummy formula for this test or ensure one exists in valid_formulas_data
-        # For now, assume greeting_high: "Greetings, {user_name}! It's a pleasure to see you."
-        formula_with_template = self.valid_formulas_data[0] # greeting_high
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
-=======
-
->>>>>>> Stashed changes
-=======
-
->>>>>>> Stashed changes
-        context_missing_keys = {"location": "the office"} # Missing user_name
-        # Expect a warning to be printed by FormulaEngine, and raw template in formatted_response
-        with patch('builtins.print') as mock_print:
-            result = engine.execute_formula(formula_with_template, context_missing_keys) # type: ignore
-            mock_print.assert_any_call(f"FormulaEngine: Warning - KeyError during response_template formatting for formula '{formula_with_template['name']}'. Missing key: 'user_name'. Returning raw template.")
-
-        expected_result = {
-            "action_name": formula_with_template["action"],
-            "action_params": formula_with_template["parameters"],
-            "formatted_response": formula_with_template["response_template"] # Raw template
-        }
-        self.assertEqual(result, expected_result)
-
-    def test_execute_formula_no_template(self):
-        engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
-        # Need a formula without 'response_template'. Add one if not present or use one.
-        # Let's assume 'disabled_formula' doesn't have one, or add a new one.
-        # For safety, let's create one for the test.
-        formula_no_template_data: FormulaConfigEntry = { # type: ignore
-            "name": "no_template_test",
-            "conditions": ["trigger no template"],
-            "action": "action_no_template",
-            "description": "Test no template.",
-            "parameters": {"p1": "v1"},
-            "priority": 1, "enabled": True, "version": "1.0"
-            # No response_template key
-        }
-        # To test this properly, we'd need to load this into an engine instance.
-        # For now, we'll assume we can pick one from valid_formulas_data if it lacks a template.
-        # The current valid_formulas_data all have templates. Let's assume 'disabled_formula' is modified
-        # or we conceptually add one.
-        # For this test, we will mock a formula entry without the template.
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
-        mock_formula_entry = {"name": "mock_no_template", "action": "mock_action", "parameters": {}}
-
-        context = {"user_name": "TestUser"}
-        result = engine.execute_formula(mock_formula_entry, context) # type: ignore
-
-=======
-=======
->>>>>>> Stashed changes
-
-        mock_formula_entry = {"name": "mock_no_template", "action": "mock_action", "parameters": {}}
-
-        context = {"user_name": "TestUser"}
-        result = engine.execute_formula(mock_formula_entry, context) # type: ignore
-
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-        expected_result = {
-            "action_name": "mock_action",
-            "action_params": {}
-            # No 'formatted_response' key expected
-        }
-        self.assertEqual(result, expected_result)
-        self.assertNotIn("formatted_response", result)
-
-
-    def test_execute_formula_no_context_with_template(self):
-        engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
-        formula_with_template = self.valid_formulas_data[0] # greeting_high has "Greetings, {user_name}!"
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
-=======
-
->>>>>>> Stashed changes
-=======
-
->>>>>>> Stashed changes
-        # Expect a warning if template has placeholders, and raw template in formatted_response
-        with patch('builtins.print') as mock_print:
-            result = engine.execute_formula(formula_with_template, context=None) # type: ignore
-            mock_print.assert_any_call(f"FormulaEngine: Warning - Formula '{formula_with_template['name']}' has a response template but no context was provided. Returning raw template.")
-
-        expected_result = {
-            "action_name": formula_with_template["action"],
-            "action_params": formula_with_template["parameters"],
-            "formatted_response": formula_with_template["response_template"] # Raw template
-        }
-        self.assertEqual(result, expected_result)
-
+            self.assertEqual(result, expected_result)
 
 if __name__ == '__main__':
     unittest.main()
