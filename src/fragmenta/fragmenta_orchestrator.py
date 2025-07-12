@@ -18,6 +18,11 @@ try:
 except ImportError:
     ErrIntrospector = None # Allows Fragmenta to run if LIS components are not fully available
 
+try:
+    from .tech_block import TechBlock # Relative import for tech_block
+except ImportError:
+    TechBlock = None # type: ignore # Allows Fragmenta to run if TechBlock is not available
+
 logger = logging.getLogger(__name__)
 
 # --- Enhanced State Management TypedDicts ---
@@ -42,8 +47,8 @@ class HSPStepDetails(TypedDict):
 
 class LocalStepDetails(TypedDict):
     step_id: str
-    type: Literal["local_tool", "local_llm", "local_chunk_process"]
-    tool_or_model_name: str
+    type: Literal["local_tool", "local_llm", "local_chunk_process", "local_tech_block"] # Added "local_tech_block"
+    tool_or_model_name: str # For tech_block, this will be tech_block_id
     parameters: Dict[str, Any]
     input_sources: Optional[List[Dict[str, str]]]
     input_mapping: Optional[Dict[str, Any]]
@@ -86,7 +91,8 @@ class FragmentaOrchestrator:
                  personality_manager: Optional[PersonalityManager] = None,
                  emotion_system: Optional[EmotionSystem] = None,
                  crisis_system: Optional[CrisisSystem] = None,
-                 err_introspector: Optional['ErrIntrospector'] = None, # Added ErrIntrospector
+                 err_introspector: Optional['ErrIntrospector'] = None,
+                 tech_block_registry: Optional[Dict[str, 'TechBlock']] = None, # Added tech_block_registry
                  config: Optional[Dict[str, Any]] = None):
 
         self.ham_manager = ham_manager
@@ -104,6 +110,11 @@ class FragmentaOrchestrator:
             logger.warning("FragmentaOrchestrator: ErrIntrospector provided but class could not be imported. LIS inspection will be disabled.")
             self.err_introspector = None
 
+        self.tech_block_registry: Dict[str, TechBlock] = tech_block_registry or {}
+        if TechBlock is None and self.tech_block_registry:
+            logger.warning("FragmentaOrchestrator: tech_block_registry provided but TechBlock class could not be imported. Tech block execution will be disabled.")
+            self.tech_block_registry = {}
+
 
         self.hsp_task_defaults = self.config.get("hsp_task_defaults", {
             "max_retries": 3, "initial_retry_delay_seconds": 5,
@@ -114,9 +125,9 @@ class FragmentaOrchestrator:
         })
         self._pending_hsp_sub_tasks: Dict[str, Tuple[str, str]] = {}
         self._complex_task_context: Dict[str, EnhancedComplexTaskState] = {}
-        logger.info(f"FragmentaOrchestrator Initialized. Dependencies: HAM={bool(self.ham_manager)}, Tools={bool(self.tool_dispatcher)}, LLM={bool(self.llm_interface)}, SDM={bool(self.service_discovery)}, HSP-Conn={bool(self.hsp_connector)}")
+        logger.info(f"FragmentaOrchestrator Initialized. Dependencies: HAM={bool(self.ham_manager)}, Tools={bool(self.tool_dispatcher)}, LLM={bool(self.llm_interface)}, SDM={bool(self.service_discovery)}, HSP-Conn={bool(self.hsp_connector)}, TechBlocks={len(self.tech_block_registry)})")
 
-    def process_complex_task(self, task_description: Dict[str, Any], input_data: Any, complex_task_id: Optional[str] = None) -> Dict[str, Any]:
+    async def process_complex_task(self, task_description: Dict[str, Any], input_data: Any, complex_task_id: Optional[str] = None) -> Dict[str, Any]:
         is_new_task = False
         if complex_task_id is None:
             complex_task_id = f"frag_task_{uuid.uuid4().hex[:8]}"
@@ -145,7 +156,7 @@ class FragmentaOrchestrator:
             # If validation passes, move to planning/executing
             self._complex_task_context[complex_task_id]["overall_status"] = "planning"
 
-        return self._advance_complex_task(complex_task_id)
+        return await self._advance_complex_task(complex_task_id)
 
     def _validate_strategy_plan(self, plan: EnhancedStrategyPlan, complex_task_id: str) -> bool:
         all_step_ids_in_plan = set()
@@ -243,7 +254,7 @@ class FragmentaOrchestrator:
             else: prepared_inputs_map[input_key_prefix] = source_result
         return prepared_inputs_map, dependencies_met, dependency_failure
 
-    def _execute_or_dispatch_step(self, complex_task_id: str, step_to_execute: ProcessingStep,
+    async def _execute_or_dispatch_step(self, complex_task_id: str, step_to_execute: ProcessingStep,
                                  current_step_input_map: Dict[str, Any], task_ctx: EnhancedComplexTaskState) -> None:
         step_id = step_to_execute["step_id"]; effective_params = step_to_execute["parameters"].copy()
         if step_to_execute.get("input_mapping"):
@@ -265,35 +276,51 @@ class FragmentaOrchestrator:
             self._dispatch_hsp_sub_task(complex_task_id, step_id, hsp_step_details)
             if hsp_step_details["status"] == "dispatched": task_ctx["overall_status"] = "waiting_for_hsp"
         elif step_to_execute["type"] in ["local_tool", "local_llm", "local_chunk_process"]:
-            local_step_details = step_to_execute; local_step_details["status"] = "in_progress"
-            logger.info(f"F (ID: {complex_task_id}, S: {step_id}): Executing local '{local_step_details['tool_or_model_name']}' with params: {str(effective_params)[:100]}...")
+            local_step_details = step_to_execute # type: LocalStepDetails
+            local_step_details["status"] = "in_progress"
+            logger.info(f"F (ID: {complex_task_id}, S: {step_id}): Executing local '{local_step_details['type']}' - '{local_step_details['tool_or_model_name']}' with params: {str(effective_params)[:100]}...")
             try:
-                step_input_data = current_step_input_map if current_step_input_map else task_ctx["original_input_data"] # Simplified input choice
-                if local_step_details["type"] == "local_chunk_process":
+                step_input_data = current_step_input_map if current_step_input_map else task_ctx["original_input_data"]
+
+                if local_step_details["type"] == "local_tech_block":
+                    if TechBlock is None or not self.tech_block_registry:
+                        raise ValueError("TechBlock system not available or registry empty.")
+                    tech_block_id = local_step_details["tool_or_model_name"]
+                    tech_block_instance = self.tech_block_registry.get(tech_block_id)
+                    if not tech_block_instance:
+                        raise ValueError(f"TechBlock with ID '{tech_block_id}' not found in registry.")
+
+                    # Pass effective_params which already includes mapped inputs
+                    local_step_details["result"] = await tech_block_instance.process(
+                        inputs=effective_params, # Pass the fully resolved parameters
+                        complex_task_id=complex_task_id,
+                        step_id=step_id
+                    )
+                elif local_step_details["type"] == "local_chunk_process":
                     all_chunks = self._chunk_data(step_input_data, local_step_details["parameters"].get("chunking_params"))
+                    # Note: _dispatch_chunk_to_processing is sync, if it needs to be async with tech blocks, it needs change
                     chunk_results = [self._dispatch_chunk_to_processing(chunk, {"tool_or_model": local_step_details["tool_or_model_name"], "params": local_step_details["parameters"]}, complex_task_id, i, len(all_chunks)) for i, chunk in enumerate(all_chunks)]
-                    local_step_details["result"] = chunk_results # Assuming chunk processing itself handles internal errors or returns partial success
-                else:
+                    local_step_details["result"] = chunk_results
+                else: # local_tool, local_llm
                     local_step_details["result"] = self._dispatch_chunk_to_processing(step_input_data, {"tool_or_model": local_step_details["tool_or_model_name"], "params": local_step_details["parameters"]}, complex_task_id, 0, 1)
 
-                # Check if _dispatch_chunk_to_processing indicated an error (e.g. by returning specific error object or None)
-                # For simplicity, we'll assume _dispatch_chunk_to_processing raises an exception on failure, caught below.
-                local_step_details["status"] = "completed"; task_ctx["step_results"][step_id] = local_step_details["result"]
+                local_step_details["status"] = "completed"
+                task_ctx["step_results"][step_id] = local_step_details["result"]
 
             except Exception as e:
                 logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Local step execution failed: {e}", exc_info=True)
                 if local_step_details["retries_left"] > 0:
                     local_step_details["status"] = "retrying_local"
                     local_step_details["error_info"] = {"message": str(e), "reason": "Execution error, will retry"}
-                    # Retries_left will be decremented in _advance_complex_task
                 else:
                     local_step_details["status"] = "failed"
                     local_step_details["error_info"] = {"message": str(e), "reason": "Execution error, no retries left"}
         else:
-            logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Unknown step type: {step_to_execute['type']}")
+            # This case should ideally not be reached if type hints for ProcessingStep are exhaustive
+            logger.error(f"F (ID: {complex_task_id}, S: {step_id}): Unknown step type: {step_to_execute['type']}") # type: ignore
             step_to_execute["status"] = "failed"; step_to_execute["error_info"] = {"message": f"Unknown step type {step_to_execute['type']}"} # type: ignore
 
-    def _advance_complex_task(self, complex_task_id: str) -> Dict[str, Any]:
+    async def _advance_complex_task(self, complex_task_id: str) -> Dict[str, Any]:
         task_ctx = self._complex_task_context.get(complex_task_id)
         if not task_ctx: return {"status": "error", "message": f"Context lost for task {complex_task_id}", "complex_task_id": complex_task_id}
         if task_ctx["overall_status"] == "planning": task_ctx["overall_status"] = "executing"
@@ -371,7 +398,7 @@ class FragmentaOrchestrator:
                         logger.info(f"F (ID: {complex_task_id}, S: {step_id}): Retrying Local Step. Left: {local_step_to_retry['retries_left']}.")
                         # _execute_or_dispatch_step will be called below for this "pending" step
 
-                    self._execute_or_dispatch_step(complex_task_id, step_detail, prepared_input_map, task_ctx)
+                    await self._execute_or_dispatch_step(complex_task_id, step_detail, prepared_input_map, task_ctx)
 
                 # After execution attempt, check status
                 if step_detail["status"] in ["dispatched", "awaiting_result", "retrying", "in_progress", "retrying_local"]:
