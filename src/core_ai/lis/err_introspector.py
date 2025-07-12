@@ -40,7 +40,11 @@ class ErrIntrospector:
         if not lis_cache:
             raise ValueError("LISCacheInterface dependency is required for ErrIntrospector.")
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+            
+>>>>>>> Stashed changes
 =======
             
 >>>>>>> Stashed changes
@@ -77,7 +81,11 @@ class ErrIntrospector:
         # The "user_input" for critique context should be the original goal/description of the Fragmenta task.
         critique_user_input = str(task_description.get('goal', task_description.get('name', 'Unknown Task')))
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
 =======
         
 >>>>>>> Stashed changes
@@ -92,7 +100,11 @@ class ErrIntrospector:
         else:
             critique_ai_response = str(fragmenta_output)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
 =======
         
 >>>>>>> Stashed changes
@@ -117,15 +129,21 @@ class ErrIntrospector:
         # For now, let's assume any critique (even good ones) can be logged as an incident
         # for observability, or apply a threshold later.
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
         incident_id = f"lis_inc_{uuid.uuid4().hex}"
         anomaly_id = f"lis_anom_{uuid.uuid4().hex}"
 
 =======
+=======
+>>>>>>> Stashed changes
         
         incident_id = f"lis_inc_{uuid.uuid4().hex}"
         anomaly_id = f"lis_anom_{uuid.uuid4().hex}"
         
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         # Determine anomaly type and severity
         # Simple mapping: if score < 0.5, it's a more severe "issue".
@@ -140,7 +158,11 @@ class ErrIntrospector:
         elif critique_result["score"] < 0.6:
             anomaly_type = "SUBOPTIMAL_RESPONSE_QUALITY" # Example specific type
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
 =======
         
 >>>>>>> Stashed changes

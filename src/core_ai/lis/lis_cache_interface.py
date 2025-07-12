@@ -508,7 +508,11 @@ class HAMLISCache(LISCacheInterface):
         # We might fetch more than top_n initially if we apply more sophisticated scoring later.
         # For now, let's rely on query_incidents' limit and sorting.
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
 =======
         
 >>>>>>> Stashed changes
@@ -544,9 +548,14 @@ class HAMLISCache(LISCacheInterface):
                  # If no tag matches, but type matches exist, we could return those or an empty list.
                  # Let's stick to returning only tag-matched if tags were provided in the event.
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                  # If no tags in event, then all candidates are fine.
                  pass # filtered_incidents will be used
             elif not new_event_context_tags: # No tags to filter by in the event
+=======
+                 pass # filtered_incidents will be used
+            elif not new_event_context_tags: # No tags in the new event, so all candidates matching anomaly_type are relevant
+>>>>>>> Stashed changes
 =======
                  pass # filtered_incidents will be used
             elif not new_event_context_tags: # No tags in the new event, so all candidates matching anomaly_type are relevant
@@ -556,6 +565,7 @@ class HAMLISCache(LISCacheInterface):
         else: # No tags in the new event, so all candidates matching anomaly_type are relevant
             filtered_incidents = candidate_incidents
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
         # The `query_incidents` method should already sort by timestamp_logged desc.
         # If further sorting or scoring were needed (e.g., by number of matching tags), it would happen here.
@@ -564,6 +574,17 @@ class HAMLISCache(LISCacheInterface):
         return filtered_incidents[:top_n]
 
     def get_learned_antibodies(self,
+=======
+        
+        # The `query_incidents` method should already sort by timestamp_logged desc.
+        # If further sorting or scoring were needed (e.g., by number of matching tags), it would happen here.
+        # For now, recency is the primary sort key from query_incidents.
+
+        return filtered_incidents[:top_n]
+
+    def get_learned_antibodies(
+                               self,
+>>>>>>> Stashed changes
 =======
         
         # The `query_incidents` method should already sort by timestamp_logged desc.
@@ -666,6 +687,9 @@ class HAMLISCache(LISCacheInterface):
 =======
         print(f"Conceptual: HAMLISCache.update_incident_status for {incident_id} to {new_status}")
         
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         incident_record = self.get_incident_by_id(incident_id)
         if not incident_record:
@@ -713,7 +737,11 @@ class HAMLISCache(LISCacheInterface):
                 else: # If it was something else, overwrite with a new list
                     incident_record["intervention_reports"] = [intervention_report]
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
 =======
         
 >>>>>>> Stashed changes
@@ -727,7 +755,11 @@ class HAMLISCache(LISCacheInterface):
         else:
             print(f"HAMLISCache: Failed to re-store updated incident '{incident_id}'.")
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
 =======
         
 >>>>>>> Stashed changes
