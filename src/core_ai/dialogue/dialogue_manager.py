@@ -472,7 +472,11 @@ class DialogueManager:
                     tool_name = action_params.get("tool_name") # Get tool_name from action_params
                     tool_query_template = action_params.get("tool_query") # Get tool_query from action_params
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+                    
+>>>>>>> Stashed changes
 =======
                     
 >>>>>>> Stashed changes
@@ -489,7 +493,11 @@ class DialogueManager:
                             print(f"DM: KeyError formatting tool_query '{tool_query_template}' for tool '{tool_name}'. Missing key: {e}. Using raw template.")
                             # tool_query remains the raw template string
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+                    
+>>>>>>> Stashed changes
 =======
                     
 >>>>>>> Stashed changes
@@ -504,8 +512,11 @@ class DialogueManager:
                 elif action_name == "initiate_tool_draft":
                     response_text = await self.handle_draft_tool_request(action_params.get("tool_name",""), action_params.get("description_for_llm",""), session_id)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 else: # Non-dispatch_tool, non-initiate_tool_draft formula actions
 =======
+=======
+>>>>>>> Stashed changes
                 elif action_name == "generate_response_via_module_bus": # New action for ModuleBus
                     module_id = action_params.get("module_id")
                     module_input = action_params.get("module_input", {})
@@ -525,6 +536,9 @@ class DialogueManager:
                     else:
                         response_text = f"{ai_name}: ModuleBus controller not available or module_id missing for response generation."
                 else: # Non-dispatch_tool, non-initiate_tool_draft, non-module_bus formula actions
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                     formatted_response_from_engine = formula_result.get("formatted_response")
                     if formatted_response_from_engine and isinstance(formatted_response_from_engine, str):
