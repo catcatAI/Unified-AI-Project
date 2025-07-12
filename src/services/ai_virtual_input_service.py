@@ -18,22 +18,8 @@ from src.shared.types.common_types import (
     VirtualKeyboardCommand,
     VirtualMouseEventType,
     VirtualKeyboardActionType,
-    VirtualInputElementDescription,
-    AIPermissionSet,
-    ExecutionResult,
-    AVISFileOperationCommand, # New
-    AVISFileOperationResponse, # New
-    AVISFileOperationType # New
+    VirtualInputElementDescription # Added this import
 )
-from typing import Literal # To use Literal for outcome_status type hint
-
-# Import ResourceAwarenessService for type hinting, will be optional
-from src.services.resource_awareness_service import ResourceAwarenessService
-# Import AISimulationControlService for instantiation
-from src.services.ai_simulation_control_service import AISimulationControlService
-# Import SandboxExecutor for type hinting and passing to ASCS
-from src.services.sandbox_executor import SandboxExecutor
-
 
 # Further imports will be added as the class is implemented.
 # For example, datetime for logging timestamps.
@@ -46,97 +32,28 @@ class AIVirtualInputService:
     Operates primarily in a simulation mode, with future potential for actual control
     under strict permissions.
     """
-    def __init__(self,
-                 initial_mode: VirtualInputPermissionLevel = "simulation_only",
-                 resource_awareness_service: Optional[ResourceAwarenessService] = None,
-                 sandbox_executor: Optional[SandboxExecutor] = None): # Changed from bash_runner
+    def __init__(self, initial_mode: VirtualInputPermissionLevel = "simulation_only"):
         """
         Initializes the AI Virtual Input Service.
 
         Args:
             initial_mode (VirtualInputPermissionLevel): The starting operational mode.
-            resource_awareness_service (Optional[ResourceAwarenessService]):
-                An instance of ResourceAwarenessService.
-            sandbox_executor (Optional[SandboxExecutor]): An instance of SandboxExecutor
-                to be used for code execution by AISimulationControlService.
-                If None, AISimulationControlService might raise an error or use a default mock,
-                depending on its implementation (currently it raises an error).
+                Defaults to "simulation_only".
         """
         self.mode: VirtualInputPermissionLevel = initial_mode
 
-        if sandbox_executor is None:
-            # This is a critical dependency for the current design of ASCS.
-            # Consider if AVIS should create a default SandboxExecutor if None is provided,
-            # or if ASCS should have its own internal default/mock if None is passed to it.
-            # For now, let's make it explicit that it's needed.
-            raise ValueError("A SandboxExecutor instance is required for AIVirtualInputService "
-                             "to correctly initialize AISimulationControlService.")
+        # Virtual cursor position (x_ratio, y_ratio) relative to a 1.0x1.0 abstract window/screen.
+        # (0.0, 0.0) is top-left, (1.0, 1.0) is bottom-right.
+        self.virtual_cursor_position: Tuple[float, float] = (0.5, 0.5) # Start at center
 
-        # Initialize AISimulationControlService first, as it provides permissions and hw status
-        self.ai_simulation_control_service = AISimulationControlService(
-            resource_awareness_service=resource_awareness_service,
-            sandbox_executor=sandbox_executor # Pass SandboxExecutor
-        )
-
-        # Virtual cursor position
-        self.virtual_cursor_position: Tuple[float, float] = (0.5, 0.5)
         self.virtual_focused_element_id: Optional[str] = None
-        self.action_log: List[Dict[str, Any]] = []
+        self.action_log: List[Dict[str, Any]] = [] # Stores a log of commands processed
+
+        # Holds the current state of the virtual UI elements
         self.virtual_ui_elements: List[VirtualInputElementDescription] = []
-        self.virtual_file_system: Dict[str, str] = {} # New: Virtual file system
-
-        # Populate AVIS state from AISimulationControlService
-        self.current_ai_permissions: AIPermissionSet = self.ai_simulation_control_service.get_current_ai_permissions()
-        self.current_sim_hardware_status: Dict[str, Any] = self.ai_simulation_control_service.get_sim_hardware_status()
-
-        # Keep a reference if needed, though AISimulationControlService holds its own
-        self.resource_awareness_service: Optional[ResourceAwarenessService] = resource_awareness_service
-
 
         print(f"AIVirtualInputService initialized in '{self.mode}' mode.")
-        print(f"  AISimulationControlService integration active.")
         print(f"  Initial virtual cursor: {self.virtual_cursor_position}")
-        print(f"  Current AI Permissions: {self.current_ai_permissions}")
-        print(f"  Current Sim Hardware Status: {self.current_sim_hardware_status}")
-
-    def refresh_simulation_status(self) -> None:
-        """
-        Refreshes AI permissions and simulated hardware status from AISimulationControlService.
-        Also updates the relevant display elements in the virtual UI if they exist.
-        """
-        if not self.ai_simulation_control_service:
-            print("AVIS: AISimulationControlService not available to refresh status.")
-            return
-
-        self.current_ai_permissions = self.ai_simulation_control_service.get_current_ai_permissions()
-        self.current_sim_hardware_status = self.ai_simulation_control_service.get_sim_hardware_status()
-
-        print(f"AVIS: Simulation status refreshed.")
-        print(f"  Updated AI Permissions: {self.current_ai_permissions}")
-        print(f"  Updated Sim Hardware Status: {self.current_sim_hardware_status}")
-
-        # Update UI elements (implementation in a later step)
-        self._update_info_display_elements()
-
-
-    def _update_info_display_elements(self) -> None:
-        """
-        Updates the 'value' of predefined virtual UI elements that display
-        AI permissions and simulated hardware status.
-        (Element IDs: 'ai_permissions_display', 'sim_hw_status_display')
-        """
-        perm_display_el = self._find_element_by_id("ai_permissions_display")
-        if perm_display_el:
-            # Simple string representation for now
-            perm_display_el["value"] = f"Permissions: CodeExec={self.current_ai_permissions.get('can_execute_code')}, ReadHW={self.current_ai_permissions.get('can_read_sim_hw_status')}"
-            print(f"AVIS: Updated 'ai_permissions_display' element.")
-
-        hw_display_el = self._find_element_by_id("sim_hw_status_display")
-        if hw_display_el:
-            # Simple string representation
-            hw_display_el["value"] = f"HW Status: Profile={self.current_sim_hardware_status.get('profile_name', 'N/A')}, CPU={self.current_sim_hardware_status.get('cpu_cores')} cores"
-            print(f"AVIS: Updated 'sim_hw_status_display' element.")
-
 
     def load_virtual_ui(self, elements: List[VirtualInputElementDescription]) -> None:
         """
@@ -233,31 +150,13 @@ class AIVirtualInputService:
             click_details = {
                 "click_type": click_type,
                 "target_element_id": target_element,
-                "position": (pos_x, pos_y)
+                "position": (pos_x, pos_y) # This might be element-relative or window-relative based on command version
             }
             outcome = {"status": "simulated", "action": "click", "details": click_details}
             print(f"  AVIS Sim: Click logged: {click_details}")
-
-            if target_element == "run_code_button":
-                print(f"  AVIS Sim: 'run_code_button' clicked. Attempting to execute code.")
-                code_editor_element = self._find_element_by_id("code_editor")
-                if code_editor_element and "value" in code_editor_element:
-                    code_to_execute = str(code_editor_element.get("value", "")) # Ensure it's a string
-                    self.process_code_execution_command(code_to_execute)
-                    outcome["details"]["triggered_action"] = "code_execution" # type: ignore
-                    outcome["details"]["code_editor_found"] = True # type: ignore
-                    outcome["details"]["code_length"] = len(code_to_execute) # type: ignore
-                else:
-                    print("  AVIS Sim: 'code_editor' element not found or has no value. Cannot execute code.")
-                    outcome["details"]["triggered_action"] = "code_execution_failed_no_editor" # type: ignore
-                    outcome["details"]["code_editor_found"] = False # type: ignore
-                # Focus does not change just by clicking the run button usually
-
-            elif target_element: # Handle focus for other clickable elements
+            if target_element: # Assume click might change focus
                 self.virtual_focused_element_id = target_element
                 print(f"  AVIS Sim: Focused element set to '{target_element}' due to click.")
-            # If no target_element, focus remains unchanged.
-
 
         elif action_type == "hover":
             target_element = command.get("target_element_id")
@@ -402,200 +301,7 @@ class AIVirtualInputService:
             "mode": self.mode,
             "virtual_cursor_position": self.virtual_cursor_position,
             "virtual_focused_element_id": self.virtual_focused_element_id,
-            "action_log_count": len(self.action_log),
-            "current_ai_permissions": self.current_ai_permissions,
-            "current_sim_hardware_status": self.current_sim_hardware_status
+            "action_log_count": len(self.action_log)
         }
-
-    def process_code_execution_command(self, code_string: str, output_element_id: str = "code_output_display") -> None:
-        """
-        Processes a command to execute AI-provided code.
-        Uses AISimulationControlService to perform the execution and updates a
-        designated virtual UI element with the result.
-
-        Args:
-            code_string (str): The Python code string to execute.
-            output_element_id (str): The element_id of the virtual UI text_area
-                                     where execution results should be displayed.
-                                     Defaults to "code_output_display".
-        """
-        if not self.ai_simulation_control_service:
-            print("AVIS: Cannot process code execution. AISimulationControlService is not available.")
-            # Optionally update output element with this error
-            output_el = self._find_element_by_id(output_element_id)
-            if output_el:
-                output_el["value"] = "Error: AISimulationControlService not available."
-            return
-
-        print(f"AVIS: Received code execution command for {len(code_string)} chars of code.")
-
-        # Execute the code via the control service
-        # Permissions are checked by the AISimulationControlService using its current set.
-        execution_result: ExecutionResult = self.ai_simulation_control_service.execute_ai_code(
-            code_string,
-            self.current_ai_permissions # Pass the current permissions from AVIS state
-        )
-
-        result_str = (
-            f"--- Execution Result (Request ID: {execution_result['request_id']}) ---\n"
-            f"Status: {execution_result['status_message']}\n"
-            f"Success: {execution_result['execution_success']}\n"
-            f"Exit Code: {execution_result['script_exit_code'] if execution_result['script_exit_code'] is not None else 'N/A'}\n"
-            f"STDOUT:\n{execution_result['stdout']}\n"
-            f"STDERR:\n{execution_result['stderr']}\n"
-            f"-------------------------------------------------"
-        )
-
-        # Update the designated output element in the virtual UI
-        output_element = self._find_element_by_id(output_element_id)
-        if output_element:
-            if "value" in output_element:
-                output_element["value"] = result_str
-                print(f"AVIS: Updated element '{output_element_id}' with execution result.")
-            else:
-                print(f"AVIS: Warning - Output element '{output_element_id}' has no 'value' attribute to update.")
-        else:
-            print(f"AVIS: Warning - Output element '{output_element_id}' not found in virtual UI.")
-
-        # Log this action
-        self._log_action(
-            command_type="code_execution",
-            command_details={"code_length": len(code_string), "output_element_id": output_element_id},
-            outcome={
-                "request_id": execution_result["request_id"],
-                "execution_success": execution_result["execution_success"],
-                "status_message": execution_result["status_message"]
-            }
-        )
-
-        # Potentially refresh hardware status if code execution might affect it
-        # For now, this is manual or tied to a general refresh.
-        # self.refresh_simulation_status() # Consider if this should be automatic.
-
-    # --- Virtual File System Methods ---
-    def load_virtual_files(self, files_content: Dict[str, str]) -> None:
-        """
-        Loads or replaces the content of the virtual file system.
-        Args:
-            files_content: A dictionary where keys are file paths and values are their string content.
-        """
-        self.virtual_file_system = copy.deepcopy(files_content)
-        print(f"AVIS: Virtual file system loaded with {len(self.virtual_file_system)} files.")
-
-    def clear_virtual_files(self) -> None:
-        """Clears all files from the virtual file system."""
-        self.virtual_file_system = {}
-        print("AVIS: Virtual file system cleared.")
-
-    def process_file_operation_command(self, command: AVISFileOperationCommand) -> AVISFileOperationResponse:
-        """Processes a virtual file operation command."""
-        loggable_command_details = dict(command)
-        operation: Optional[AVISFileOperationType] = command.get("operation")
-        path: Optional[str] = command.get("path")
-
-        outcome_status: Literal["success", "error_file_not_found", "error_permission_denied", "error_other"] = "error_other"
-        response_content: Optional[str] = None
-        response_message: str = f"File operation '{operation}' on path '{str(path)}' failed or not implemented."
-        directory_listing: Optional[List[str]] = None
-
-        if not operation or not path:
-            response_message = "Missing 'operation' or 'path' in file operation command."
-            self._log_action(command_type="file_operation", command_details=loggable_command_details, outcome={"status": "error_other", "message": response_message})
-            return {"status": "error_other", "message": response_message}
-
-        # Currently, all file operations are simulation_only. Add permission checks here if modes evolve.
-        if self.mode != "simulation_only":
-            # This is a simulation-only feature for now.
-            # If actual file system access were ever implemented, it would need strict permission checks here.
-            outcome_status = "error_permission_denied"
-            response_message = f"Mode '{self.mode}' does not support direct file operations. Action denied."
-            self._log_action(command_type="file_operation", command_details=loggable_command_details, outcome={"status": outcome_status, "message": response_message})
-            return {"status": outcome_status, "message": response_message}
-
-        print(f"AVIS: Processing file operation: {operation} on path '{path}'")
-
-        if operation == "read_file":
-            if path in self.virtual_file_system:
-                response_content = self.virtual_file_system[path]
-                outcome_status = "success"
-                response_message = f"Successfully read virtual file: {path}"
-                print(f"  AVIS Sim: Read content from virtual file '{path}'. Length: {len(response_content or '')}")
-            else:
-                outcome_status = "error_file_not_found"
-                response_message = f"Virtual file not found: {path}"
-                print(f"  AVIS Sim: Virtual file not found: {path}")
-
-        elif operation == "write_file":
-            content_to_write = command.get("content") # content is Optional[str]
-            if content_to_write is None: # Explicitly handle None case, though "" is also valid
-                content_to_write = "" # Default to writing an empty string if content is None
-
-            # Future: Add permission checks here if AVIS mode allows actual file system writes.
-            # For "simulation_only" mode, this is always allowed on the virtual_file_system.
-            self.virtual_file_system[path] = content_to_write
-            outcome_status = "success"
-            response_message = f"Successfully wrote to virtual file: {path} (Content Length: {len(content_to_write)})"
-            print(f"  AVIS Sim: Wrote {len(content_to_write)} chars to virtual file '{path}'.")
-
-        elif operation == "list_directory":
-            # Basic simulation: list keys that start with the given path (if it's a directory)
-            # For simplicity, assumes path ends with '/' for directories to list.
-            # A more robust implementation would handle directory structures properly.
-            if not path.endswith('/'):
-                path_prefix = path + '/'
-            else:
-                path_prefix = path
-
-            listing = [p for p in self.virtual_file_system.keys() if p.startswith(path_prefix)]
-            # This is a flat listing. True directory structure would require more complex logic.
-            # For now, just return paths that seem to be "under" the requested path.
-            # To make it more like a directory listing, we might want to strip the prefix and show only the next level.
-            # This is a simplified version for now.
-
-            # More realistic listing (still simplified):
-            directory_listing = []
-            for p_key in self.virtual_file_system.keys():
-                if p_key.startswith(path_prefix):
-                    # Get the part of the path after the prefix
-                    relative_path = p_key[len(path_prefix):]
-                    # If it contains another '/', it's deeper, so take only the first part
-                    if '/' in relative_path:
-                        first_part = relative_path.split('/')[0] + '/' # Indicate it's a dir
-                        if first_part not in directory_listing:
-                            directory_listing.append(first_part)
-                    else: # It's a file or empty dir name (if key itself was path_prefix)
-                         if relative_path and relative_path not in directory_listing: # Avoid empty strings if key was path_prefix
-                            directory_listing.append(relative_path)
-
-            if not directory_listing and path_prefix[:-1] not in self.virtual_file_system and path_prefix not in self.virtual_file_system:
-                # If the path itself isn't a file and doesn't lead to any files/dirs
-                # Check if the path is a known file, in which case list_directory is an error for a file
-                if path in self.virtual_file_system:
-                    outcome_status = "error_other"
-                    response_message = f"Path '{path}' is a file, not a directory. Cannot list."
-                else: # Path doesn't exist as a file or a prefix to other files/dirs
-                    outcome_status = "error_file_not_found" # Or error_path_not_found
-                    response_message = f"Virtual directory or path prefix not found: {path}"
-            else:
-                outcome_status = "success"
-                response_message = f"Successfully listed virtual directory: {path}"
-
-            print(f"  AVIS Sim: Listed directory '{path}'. Found: {directory_listing}")
-        else:
-            # outcome_status remains "error_other"
-            response_message = f"Unsupported file operation: {operation}"
-            print(f"  AVIS Sim: Unsupported file operation: {operation}")
-
-        final_response: AVISFileOperationResponse = {
-            "status": outcome_status,
-            "message": response_message,
-        }
-        if response_content is not None:
-            final_response["content"] = response_content
-        if directory_listing is not None:
-            final_response["directory_listing"] = directory_listing
-
-        self._log_action(command_type="file_operation", command_details=loggable_command_details, outcome=final_response)
-        return final_response
 
 print("AIVirtualInputService module loaded.")

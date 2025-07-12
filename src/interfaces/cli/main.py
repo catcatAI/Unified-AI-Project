@@ -3,35 +3,10 @@ import sys
 import asyncio
 import uuid
 from typing import Dict, Any, Optional, List
-import gettext
 
 # Assuming src is in PYTHONPATH or this script is run from project root level
-from src.hsp.types import HSPFactPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload, HSPTaskResultPayload # Added src. and HSPTaskResultPayload
+from src.hsp.types import HSPFactPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload, HSPTaskResultPayload # Added HSPTaskResultPayload
 from src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID, DEFAULT_LLM_CONFIG, DEFAULT_OPERATIONAL_CONFIGS # Import new service management
-
-import os # Added for environment variable
-
-# Setup basic gettext for now
-# In a real app, this would be more sophisticated, likely based on a global language setting
-try:
-    # Determine language from environment variable APP_LANG, default to 'en'
-    app_lang = os.environ.get('APP_LANG', 'en')
-
-    # Ensure localedir is absolute or relative to this script's location if needed.
-    # For simplicity, assuming 'locales' is in the project root relative to where this script is run from.
-    # A more robust way might be to calculate localedir based on script path.
-    locales_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'locales')
-
-
-    translation = gettext.translation('messages', localedir=locales_path, languages=[app_lang], fallback=True)
-    translation.install()
-    _ = translation.gettext
-    print(f"CLI: Loaded translations for language: {app_lang}", file=sys.stderr)
-except FileNotFoundError:
-    # Fallback if .mo file not found or gettext not fully set up
-    _ = lambda s: s
-    print(f"CLI: Warning - Could not load translations for language '{os.environ.get('APP_LANG', 'en')}'. Using fallback (original strings). Ensure .mo files are compiled and locales_path is correct: {locales_path}", file=sys.stderr)
-
 
 # --- CLI Specific AI ID ---
 cli_ai_id = f"did:hsp:cli_ai_instance_{uuid.uuid4().hex[:6]}"
@@ -41,32 +16,32 @@ cli_ai_id = f"did:hsp:cli_ai_instance_{uuid.uuid4().hex[:6]}"
 def cli_handle_incoming_hsp_fact(fact_payload: HSPFactPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope):
     services = get_services()
     learning_manager = services.get("learning_manager")
-    print(_("\n[CLI App] HSP Fact Received from '{sender_ai_id}':").format(sender_ai_id=sender_ai_id))
-    print(_("  Fact ID: {fact_id}, Statement: {statement}").format(fact_id=fact_payload.get('id'), statement=(fact_payload.get('statement_nl') or fact_payload.get('statement_structured'))))
+    print(f"\n[CLI App] HSP Fact Received from '{sender_ai_id}':")
+    print(f"  Fact ID: {fact_payload.get('id')}, Statement: {fact_payload.get('statement_nl') or fact_payload.get('statement_structured')}")
     if learning_manager:
-        print(_("  Forwarding to LearningManager for processing..."))
+        print(f"  Forwarding to LearningManager for processing...")
         # Note: LearningManager's process_and_store_hsp_fact might call ContentAnalyzer internally
         learning_manager.process_and_store_hsp_fact(fact_payload, sender_ai_id, full_envelope)
     else:
-        print(_("  LearningManager not available via core_services, cannot process HSP fact."))
+        print("  LearningManager not available via core_services, cannot process HSP fact.")
 
 def cli_handle_incoming_capability_advertisement(cap_payload: HSPCapabilityAdvertisementPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope):
     services = get_services()
     service_discovery_module = services.get("service_discovery")
-    print(_("\n[CLI App] HSP Capability Advertisement Received from '{sender_ai_id}':").format(sender_ai_id=sender_ai_id))
-    print(_("  Capability ID: {capability_id}, Name: {name}").format(capability_id=cap_payload.get('capability_id'), name=cap_payload.get('name')))
+    print(f"\n[CLI App] HSP Capability Advertisement Received from '{sender_ai_id}':")
+    print(f"  Capability ID: {cap_payload.get('capability_id')}, Name: {cap_payload.get('name')}")
     if service_discovery_module:
         service_discovery_module.process_capability_advertisement(cap_payload, sender_ai_id, full_envelope)
     else:
-        print(_("  ServiceDiscoveryModule not available via core_services, cannot process capability advertisement."))
+        print("  ServiceDiscoveryModule not available via core_services, cannot process capability advertisement.")
 
 def cli_handle_incoming_task_result(result_payload: HSPTaskResultPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope):
     # This is a generic handler for task results if CLI were to directly observe them.
     # However, DialogueManager handles task results it initiated.
     # This callback might be useful if CLI itself sends a task request and needs to handle the result directly.
     # For now, DM's own callback registered in its __init__ (via core_services) handles results for DM-initiated tasks.
-    print(_("\n[CLI App] Generic HSP TaskResult Received from '{sender_ai_id}' for CorrID '{correlation_id}':").format(sender_ai_id=sender_ai_id, correlation_id=full_envelope.get('correlation_id')))
-    print(_("  Status: {status}, Payload: {payload}").format(status=result_payload.get('status'), payload=result_payload.get('payload')))
+    print(f"\n[CLI App] Generic HSP TaskResult Received from '{sender_ai_id}' for CorrID '{full_envelope.get('correlation_id')}':")
+    print(f"  Status: {result_payload.get('status')}, Payload: {result_payload.get('payload')}")
 
 
 def setup_cli_hsp_callbacks():
@@ -83,31 +58,31 @@ def setup_cli_hsp_callbacks():
         # For example, to just print *all* facts, not just those processed by LM:
         # hsp_connector.register_on_fact_callback(cli_handle_incoming_hsp_fact)
         # For now, we rely on the service-level registrations done in core_services.
-        print(_("CLI App: Core service HSP callbacks are expected to be registered by initialize_services."))
+        print("CLI App: Core service HSP callbacks are expected to be registered by initialize_services.")
         # If we wanted the CLI to also directly see all facts (in addition to LM), we could do:
         # hsp_connector.register_on_fact_callback(cli_handle_incoming_hsp_fact) # This would make CLI print them too.
         # hsp_connector.register_on_capability_advertisement_callback(cli_handle_incoming_capability_advertisement) # If SDM wasn't already doing it.
         # hsp_connector.register_on_task_result_callback(cli_handle_incoming_task_result) # If CLI needs to see ALL task results.
 
     else:
-        print(_("CLI App: HSPConnector not available from core_services. Cannot register CLI HSP callbacks."))
+        print("CLI App: HSPConnector not available from core_services. Cannot register CLI HSP callbacks.")
 
 
 def handle_query(args):
     services = get_services()
     dialogue_manager = services.get("dialogue_manager")
     if not dialogue_manager:
-        print(_("CLI Error: DialogueManager not available from core_services."))
+        print("CLI Error: DialogueManager not available from core_services.")
         return
 
-    print(_("CLI: Sending query to DialogueManager: '{query_text}'").format(query_text=args.query_text))
+    print(f"CLI: Sending query to DialogueManager: '{args.query_text}'")
 
     response_text = asyncio.run(dialogue_manager.get_simple_response(
-        user_input=args.query_text, # Changed text_input to user_input
+        user_input=args.query_text,
         user_id="cli_user",
         session_id=f"cli_session_{uuid.uuid4().hex[:6]}" # Unique session for each query
     ))
-    print(_("AI: {response_text}").format(response_text=response_text))
+    print(f"AI: {response_text}")
 
 
 def handle_publish_fact(args):
@@ -124,10 +99,10 @@ def handle_publish_fact(args):
 
 
     if not hsp_connector or not hsp_connector.is_connected:
-        print(_("CLI Error: HSPConnector not ready for publishing."))
+        print("CLI Error: HSPConnector not ready for publishing.")
         return
 
-    print(_("CLI: Publishing a manual fact via HSP as AI '{current_instance_ai_id}': '{fact_statement}'").format(current_instance_ai_id=current_instance_ai_id, fact_statement=args.fact_statement))
+    print(f"CLI: Publishing a manual fact via HSP as AI '{current_instance_ai_id}': '{args.fact_statement}'")
     fact_id = f"manual_cli_fact_{uuid.uuid4().hex[:6]}"
     timestamp = datetime.now(timezone.utc).isoformat()
 
@@ -147,26 +122,26 @@ def handle_publish_fact(args):
 
     success = hsp_connector.publish_fact(hsp_payload, topic)
     if success:
-        print(_("CLI: Manual fact '{fact_id}' published to topic '{topic}'.").format(fact_id=fact_id, topic=topic))
+        print(f"CLI: Manual fact '{fact_id}' published to topic '{topic}'.")
     else:
-        print(_("CLI: Failed to publish manual fact to topic '{topic}'.").format(topic=topic))
+        print(f"CLI: Failed to publish manual fact to topic '{topic}'.")
 
 
 def main_cli_logic():
-    parser = argparse.ArgumentParser(description=_("Unified-AI-Project Command Line Interface"))
-    subparsers = parser.add_subparsers(dest="command", help=_("Available commands"), required=False)
+    parser = argparse.ArgumentParser(description="Unified-AI-Project Command Line Interface")
+    subparsers = parser.add_subparsers(dest="command", help="Available commands", required=False)
 
-    query_parser = subparsers.add_parser("query", help=_("Send a query to the AI"))
-    query_parser.add_argument("query_text", type=str, help=_("The query text to send to the AI"))
+    query_parser = subparsers.add_parser("query", help="Send a query to the AI")
+    query_parser.add_argument("query_text", type=str, help="The query text to send to the AI")
     query_parser.set_defaults(func=handle_query)
 
-    publish_parser = subparsers.add_parser("publish_fact", help=_("Manually publish a fact via HSP"))
-    publish_parser.add_argument("fact_statement", type=str, help=_("The statement of the fact"))
-    publish_parser.add_argument("--confidence", type=float, default=0.9, help=_("Confidence score (0.0-1.0)"))
-    publish_parser.add_argument("--topic", type=str, help=_("HSP topic to publish to"))
+    publish_parser = subparsers.add_parser("publish_fact", help="Manually publish a fact via HSP")
+    publish_parser.add_argument("fact_statement", type=str, help="The statement of the fact")
+    publish_parser.add_argument("--confidence", type=float, default=0.9, help="Confidence score (0.0-1.0)")
+    publish_parser.add_argument("--topic", type=str, help="HSP topic to publish to")
     publish_parser.set_defaults(func=handle_publish_fact)
 
-    print(_("--- Unified-AI-Project CLI (Instance AI ID will be: {cli_ai_id}) ---").format(cli_ai_id=cli_ai_id))
+    print(f"--- Unified-AI-Project CLI (Instance AI ID will be: {cli_ai_id}) ---")
 
     # Initialize core services
     # For CLI, we might want to use MockHAM and MockLLM by default.
@@ -183,7 +158,7 @@ def main_cli_logic():
         if len(sys.argv) <= 1 :
              parser.print_help(sys.stderr)
              # Keep CLI running to listen for HSP messages if no command is given
-             print(_("\nCLI: No command provided. Listening for HSP messages for 60 seconds (Ctrl+C to exit)..."))
+             print("\nCLI: No command provided. Listening for HSP messages for 60 seconds (Ctrl+C to exit)...")
              asyncio.run(asyncio.sleep(60))
              sys.exit(0)
 
@@ -192,20 +167,20 @@ def main_cli_logic():
             args.func(args)
             # If it was not a query, keep alive briefly for HSP messages
             if args.command != "query":
-                 print(_("\nCLI: Task complete. Listening for HSP messages for a few seconds (Ctrl+C to exit)..."))
+                 print("\nCLI: Task complete. Listening for HSP messages for a few seconds (Ctrl+C to exit)...")
                  asyncio.run(asyncio.sleep(10))
         else: # Should be caught by len(sys.argv) check if truly no command
             parser.print_help(sys.stderr)
 
 
     except KeyboardInterrupt:
-        print(_("\nCLI: Keyboard interrupt received. Shutting down..."))
+        print("\nCLI: Keyboard interrupt received. Shutting down...")
     except Exception as e:
-        print(_("\nCLI Error: An unexpected error occurred: {error}").format(error=e))
+        print(f"\nCLI Error: An unexpected error occurred: {e}")
     finally:
-        print(_("CLI: Initiating service shutdown..."))
+        print("CLI: Initiating service shutdown...")
         shutdown_services() # From core_services
-        print(_("CLI: Exiting."))
+        print("CLI: Exiting.")
 
 
 if __name__ == '__main__':

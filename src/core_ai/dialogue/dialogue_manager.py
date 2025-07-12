@@ -34,7 +34,7 @@ from src.shared.types.common_types import ( # Added src.
 )
 from src.hsp.connector import HSPConnector # Added src.
 from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPCapabilityAdvertisementPayload, HSPFactPayload, HSPMessageEnvelope # Added src. and HSPMessageEnvelope
-from src.fragmenta_bus.module_bus.controller import ModuleBusController, ModuleExecutionError, ModuleAssemblyError # Added import
+
 
 class DialogueManager:
     def __init__(self, personality_manager: Optional[PersonalityManager] = None,
@@ -52,8 +52,7 @@ class DialogueManager:
                  ai_id: Optional[str] = None,
                  service_discovery_module: Optional[ServiceDiscoveryModule] = None,
                  hsp_connector: Optional[HSPConnector] = None,
-                 config: Optional[OperationalConfig] = None,
-                 module_bus_controller: Optional[ModuleBusController] = None): # Added module_bus_controller
+                 config: Optional[OperationalConfig] = None):
 
         self.config: OperationalConfig = config if config else {} # type: ignore
         self.ai_id: str = ai_id if ai_id else f"dm_instance_{uuid.uuid4().hex[:6]}"
@@ -83,25 +82,6 @@ class DialogueManager:
         # Assuming LLMInterface can handle OperationalConfig or a dict representation of it.
         llm_config_arg: Any = self.config
         self.llm_interface = llm_interface if llm_interface else LLMInterface(config=llm_config_arg)
-
-        # Initialize ModuleBusController
-        self.module_bus_controller = module_bus_controller
-        if self.module_bus_controller: # Register the dialogue response blueprint if module_bus is provided
-            # Load the blueprint from file
-            project_root = os.path.dirname(os.path.abspath(__file__)) # src/core_ai/dialogue
-            project_root = os.path.abspath(os.path.join(project_root, '..', '..', '..')) # Unified-AI-Project/
-            blueprint_path = os.path.join(project_root, 'configs', 'fragmenta_bus', 'module_blueprints', 'dialogue_response_module.json')
-            try:
-                with open(blueprint_path, 'r') as f:
-                    dialogue_response_blueprint = json.load(f)
-                self.module_bus_controller.register_blueprint(dialogue_response_blueprint)
-                print(f"DialogueManager: Registered dialogue.response.v1 blueprint.")
-            except FileNotFoundError:
-                print(f"DialogueManager: WARNING - Dialogue response blueprint not found at {blueprint_path}. ModuleBus response generation will be unavailable.")
-                self.module_bus_controller = None # Disable if blueprint not found
-            except Exception as e:
-                print(f"DialogueManager: WARNING - Error loading/registering dialogue response blueprint: {e}. ModuleBus response generation will be unavailable.")
-                self.module_bus_controller = None # Disable if error
 
 
         self.formula_engine = formula_engine if formula_engine else FormulaEngine()
@@ -303,15 +283,15 @@ class DialogueManager:
         title_patterns = [r"who is (?:the |a )?(ceo|president|founder|manager|director|cto|coo|cfo|cio|cmo|vp|chairman|chairwoman|chairperson) of (.+)\??"]
         for pattern_str in title_patterns:
             match = re.match(pattern_str, user_input_lower)
-            if match: return match.group(2).strip().rstrip('?').replace("'s", "").strip(), f"has_{match.group(1).strip()}"
+            if match: return match.group(2).strip().rstrip('?').strip(), f"has_{match.group(1).strip()}"
         location_patterns = [r"where is (.+) located\??", r"where is (.+) based\??"]
         for pattern_str in location_patterns:
             match = re.match(pattern_str, user_input_lower)
-            if match: return match.group(1).strip().rstrip('?').replace("'s", "").strip(), "located_in"
+            if match: return match.group(1).strip().rstrip('?').strip(), "located_in"
         acquire_patterns = [r"what (?:company|organization|entity|firm|startup) did (.+) acquire\??", r"what did (.+) acquire\??"]
         for pattern_str in acquire_patterns:
             match = re.match(pattern_str, user_input_lower)
-            if match: return match.group(1).strip().rstrip('?').replace("'s", "").strip(), "acquire"
+            if match: return match.group(1).strip().rstrip('?').strip(), "acquire"
         return None
 
     async def _analyze_and_store_text_context(self, text_content: str, context_id: str):
@@ -323,64 +303,6 @@ class DialogueManager:
             print(f"DialogueManager: KG for context '{context_id}' updated: {nx_graph.number_of_nodes()} nodes, {nx_graph.number_of_edges()} edges.")
         except Exception as e: print(f"DialogueManager: Error during content analysis for '{context_id}': {e}")
 
-    async def get_response_with_tool_support(self, user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> Dict[str, Any]:
-        print(f"DialogueManager: Received input='{user_input}', session_id='{session_id}', user_id='{user_id}'")
-        ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
-
-        # Store user input
-        user_mem_id: Optional[str] = None
-        if self.memory_manager:
-            user_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id} # type: ignore
-            user_mem_id = self.memory_manager.store_experience(user_input, "user_dialogue_text", user_metadata)
-
-        # Check for formula match that indicates a tool call
-        matched_formula = self.formula_engine.match_input(user_input)
-        if matched_formula:
-            formula_result = self.formula_engine.execute_formula(matched_formula)
-            action_name = formula_result.get("action_name")
-            if action_name == "dispatch_tool":
-                action_params = formula_result.get("action_params", {})
-                tool_name = action_params.get("tool_name")
-                tool_query = action_params.get("tool_query")
-                if tool_name and tool_query:
-                    return {
-                        "type": "tool_call",
-                        "tool_name": tool_name,
-                        "tool_query": tool_query,
-                        "action_params": action_params
-                    }
-
-        # If no tool call, fallback to simple response generation
-        response_text = await self.get_simple_response(user_input, session_id, user_id)
-        return {"type": "text", "content": response_text}
-
-    async def get_response_from_tool_result(self, tool_name: str, tool_result: Dict[str, Any], session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
-        ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
-
-        # Log the tool result
-        if self.memory_manager:
-            tool_metadata = {
-                "speaker": "system",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "user_id": user_id,
-                "session_id": session_id,
-                "tool_name": tool_name,
-                "tool_result": tool_result
-            }
-            self.memory_manager.store_experience(f"Tool {tool_name} executed.", "system_tool_result", tool_metadata)
-
-        # Generate a response based on the tool result
-        prompt = f"The user asked to use the '{tool_name}' tool. The tool returned the following result: {json.dumps(tool_result)}. Please formulate a natural language response to the user based on this result."
-
-        response_text = self.llm_interface.generate_response(prompt=prompt)
-
-        # Store AI response
-        if self.memory_manager:
-            ai_metadata: DialogueMemoryEntryMetadata = {"speaker": "ai", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id} # type: ignore
-            self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata)
-
-        return f"{ai_name}: {response_text}"
-
     async def get_simple_response(self, user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
         print(f"DialogueManager: Received input='{user_input}', session_id='{session_id}', user_id='{user_id}'")
         ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
@@ -391,8 +313,7 @@ class DialogueManager:
             user_mem_id = self.memory_manager.store_experience(user_input, "user_dialogue_text", user_metadata)
 
         if user_mem_id and self.learning_manager and not (self.crisis_system.assess_input_for_crisis({"text": user_input}) > 0):
-            # process_and_store_learnables is currently synchronous
-            self.learning_manager.process_and_store_learnables(text=user_input, user_id=user_id, session_id=session_id, source_interaction_ref=user_mem_id)
+            await self.learning_manager.process_and_store_learnables(text=user_input, user_id=user_id, session_id=session_id, source_interaction_ref=user_mem_id)
 
         crisis_level = self.crisis_system.assess_input_for_crisis({"text": user_input})
         analysis_command = "!analyze: "
@@ -408,17 +329,12 @@ class DialogueManager:
             kg_query_parts = self._is_kg_query(user_input)
             if kg_query_parts:
                 entity_label, rel_query_keyword = kg_query_parts
-                # Retrieve the source node data to get its original label for a more natural response
-                source_node_id = self._find_entity_node_id_in_kg(self.session_knowledge_graphs[session_id], entity_label)
-                source_node_data = self.session_knowledge_graphs[session_id].nodes.get(source_node_id, {}) if source_node_id else {}
-                display_entity_label = source_node_data.get('label', entity_label.capitalize())
-
                 answer_from_kg = self._query_session_kg(session_id, entity_label, rel_query_keyword)
                 if answer_from_kg:
-                    if rel_query_keyword.startswith("has_"): response_text = f"{ai_name}: From context, the {rel_query_keyword.split('has_')[1].replace('_', ' ')} of {display_entity_label} is {answer_from_aq}."
-                    elif rel_query_keyword == "located_in": response_text = f"{ai_name}: From context, {display_entity_label} is located in {answer_from_kg}."
-                    elif rel_query_keyword == "acquire": response_text = f"{ai_name}: From context, {display_entity_label} acquired {answer_from_kg}."
-                    else: response_text = f"{ai_name}: From context regarding {display_entity_label}: {answer_from_kg}."
+                    if rel_query_keyword.startswith("has_"): response_text = f"{ai_name}: From context, the {rel_query_keyword.split('has_')[1].replace('_', ' ')} of {entity_label.capitalize()} is {answer_from_kg}."
+                    elif rel_query_keyword == "located_in": response_text = f"{ai_name}: From context, {entity_label.capitalize()} is located in {answer_from_kg}."
+                    elif rel_query_keyword == "acquire": response_text = f"{ai_name}: From context, {entity_label.capitalize()} acquired {answer_from_kg}."
+                    else: response_text = f"{ai_name}: From context regarding {entity_label.capitalize()}: {answer_from_kg}."
                     print(f"DialogueManager: Answered from KG: '{response_text}'")
 
         # --- HSP Task Dispatch Trigger (if no response yet) ---
@@ -454,99 +370,25 @@ class DialogueManager:
             hsp_params = {"query": user_input}
 
             if matched_formula:
-                # Construct context for formula engine
-                context_for_formula: Dict[str, Any] = {
-                    "user_id": user_id,
-                    "session_id": session_id,
-                    "ai_name": ai_name,
-                    # TODO: Add more context like current emotion, time, etc. later if needed by templates
-                }
-                # Remove None keys from context to avoid issues with .format if templates aren't robust
-                context_for_formula = {k: v for k, v in context_for_formula.items() if v is not None}
-
-                formula_result = self.formula_engine.execute_formula(matched_formula, context=context_for_formula)
-                action_name = formula_result.get("action_name")
-                action_params = formula_result.get("action_params", {}) # Ensure action_params is a dict
-
+                formula_result = self.formula_engine.execute_formula(matched_formula)
+                action_name, action_params = formula_result.get("action_name"), formula_result.get("action_params", {})
                 if action_name == "dispatch_tool":
-                    tool_name = action_params.get("tool_name") # Get tool_name from action_params
-                    tool_query_template = action_params.get("tool_query") # Get tool_query from action_params
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
-=======
-
->>>>>>> Stashed changes
-=======
-
->>>>>>> Stashed changes
-                    # Ensure action_params is used for formatting tool_query if it's a template string
-                    # And also for passing to tool_dispatcher
-                    current_context_for_tool_query = action_params.copy() # Start with formula params
-                    current_context_for_tool_query.update(context_for_formula) # Add DM context
-
-                    tool_query = str(tool_query_template)
-                    if isinstance(tool_query_template, str):
-                        try:
-                            tool_query = tool_query_template.format(**current_context_for_tool_query)
-                        except KeyError as e:
-                            print(f"DM: KeyError formatting tool_query '{tool_query_template}' for tool '{tool_name}'. Missing key: {e}. Using raw template.")
-                            # tool_query remains the raw template string
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
-=======
-
->>>>>>> Stashed changes
-=======
-
->>>>>>> Stashed changes
+                    tool_name, tool_query_template = action_params.get("tool_name"), action_params.get("tool_query")
+                    tool_query = str(tool_query_template).format(**action_params) if isinstance(tool_query_template, str) else str(tool_query_template)
                     if tool_name and tool_query:
-                        # Pass all action_params to the dispatcher, it can pick what it needs
                         tool_res = self.tool_dispatcher.dispatch(query=tool_query, explicit_tool_name=tool_name, **action_params)
                         if tool_res["status"] == "success": response_text = f"{ai_name}: {tool_res['payload']}"
                         elif tool_res["status"] in ["unhandled_by_local_tool", "failure_tool_error"]:
-                            attempt_hsp_fallback, hsp_capability_query, hsp_params = True, tool_name, {k:v for k,v in action_params.items() if k not in ["tool_name", "tool_query"]}
+                            attempt_hsp_fallback, hsp_capability_query, hsp_params = True, tool_name, {"query": tool_query, **{k:v for k,v in action_params.items() if k not in ["tool_name", "tool_query"]}}
                         else: response_text = f"{ai_name}: Issue with '{tool_name}' tool: {tool_res.get('error_message', 'unknown')}"
-                    else: response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' tool dispatch error (missing tool_name or tool_query)."
+                    else: response_text = f"{ai_name}: Formula '{matched_formula.get('name')}' tool dispatch error."
                 elif action_name == "initiate_tool_draft":
                     response_text = await self.handle_draft_tool_request(action_params.get("tool_name",""), action_params.get("description_for_llm",""), session_id)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                else: # Non-dispatch_tool, non-initiate_tool_draft formula actions
-=======
-=======
->>>>>>> Stashed changes
-                elif action_name == "generate_response_via_module_bus": # New action for ModuleBus
-                    module_id = action_params.get("module_id")
-                    module_input = action_params.get("module_input", {})
-                    if self.module_bus_controller and module_id:
-                        try:
-                            # Execute the module via ModuleBus
-                            module_output = await self.module_bus_controller.execute_module(module_id, module_input)
-                            response_text = f"{ai_name}: ModuleBus response: {module_output.get('response_text', 'No response text from module.')}"
-                            if module_output.get('additional_info'):
-                                response_text += f" (Info: {module_output['additional_info']})"
-                        except ModuleExecutionError as mee:
-                            response_text = f"{ai_name}: Error executing ModuleBus module '{module_id}': {mee}"
-                        except ModuleAssemblyError as mae:
-                            response_text = f"{ai_name}: Error assembling ModuleBus module '{module_id}': {mae}"
-                        except Exception as e:
-                            response_text = f"{ai_name}: Unexpected error with ModuleBus module '{module_id}': {e}"
-                    else:
-                        response_text = f"{ai_name}: ModuleBus controller not available or module_id missing for response generation."
-                else: # Non-dispatch_tool, non-initiate_tool_draft, non-module_bus formula actions
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-                    formatted_response_from_engine = formula_result.get("formatted_response")
-                    if formatted_response_from_engine and isinstance(formatted_response_from_engine, str):
-                        response_text = f"{ai_name}: {formatted_response_from_engine}" # Prepend AI name if template doesn't include it
-                    elif action_name: # Fallback if no formatted_response
-                        response_text = f"{ai_name}: Action '{action_name}' triggered."
-                    else: # Fallback if no action_name either (should not happen for valid formulas)
-                        response_text = f"{ai_name}: Recognized pattern: '{matched_formula.get('name')}'."
+                else: # Non-dispatch_tool formula actions
+                    response_template = matched_formula.get("response_template")
+                    if response_template: response_text = response_template.format(ai_name=ai_name, **action_params)
+                    elif action_name: response_text = f"{ai_name}: Action '{action_name}' triggered."
+                    else: response_text = f"{ai_name}: Recognized pattern: '{matched_formula.get('name')}'."
             else: # No formula matched
                 attempt_hsp_fallback = True
 
@@ -621,14 +463,8 @@ class DialogueManager:
 
         parsed_io_details: Optional[ParsedToolIODetails] = None
         try:
-            json_match = re.search(r"```json\s*([\s\S]*?)\s*```|[\s\S]*", raw_io_details_str, re.DOTALL)
-            # Guard against json_match being None before calling .group or .strip
-            json_str_candidate = ""
-            if json_match:
-                group1 = json_match.group(1)
-                group2 = json_match.group(2)
-                json_str_candidate = (group1 if group1 is not None else group2 if group2 is not None else "").strip()
-
+            json_match = re.search(r"```json\s*([\s\S]*?)\s*```|([\s\S]*)", raw_io_details_str, re.DOTALL)
+            json_str_candidate = (json_match.group(1) or json_match.group(2) if json_match else "").strip()
             if not json_str_candidate: raise ValueError("Empty JSON string from LLM for I/O parsing.")
             parsed_io_details = json.loads(json_str_candidate)
             # Basic validation of ParsedToolIODetails structure
@@ -638,10 +474,7 @@ class DialogueManager:
         except (json.JSONDecodeError, ValueError) as e:
             return f"{ai_name}: Error structuring tool details for '{tool_name}': {e}. Raw: '{raw_io_details_str}'"
 
-        if not parsed_io_details:
-            # This case should ideally be caught by the exception block if json_str_candidate is empty.
-            # However, as a safeguard or if validation above fails in a way that doesn't raise ValueError but leaves parsed_io_details as None.
-            return f"{ai_name}: Couldn't structure I/O for '{tool_name}' (details remained None after parsing attempt)."
+        if not parsed_io_details: return f"{ai_name}: Couldn't structure I/O for '{tool_name}'." # Should be caught
 
         code_gen_prompt = self._construct_code_generation_prompt(
             tool_name, parsed_io_details.get("class_docstring_hint", purpose_and_io_desc), # type: ignore
@@ -661,7 +494,7 @@ class DialogueManager:
         if is_syntactically_valid and self.sandbox_executor:
             params_info = parsed_io_details.get("parameters", [])
             placeholder_params: Dict[str, Any] = {
-                p["name"] : p.get("default") if "default" in p else (
+                p["name"]: p.get("default") if "default" in p else (
                     "test_string" if "str" in str(p.get("type","")).lower() else
                     0 if "int" in str(p.get("type","")).lower() else
                     0.0 if "float" in str(p.get("type","")).lower() else
@@ -764,49 +597,31 @@ Desired JSON Output:
                                         method_name: str, method_docstring: str,
                                         parameters: List[Dict[str, Any]], return_type: str) -> str:
         # (Prompt content remains the same)
-        # example_tool_structure = """
-        # Example of a simple Python tool class structure:
-        #
-        # ```python
-        # from typing import Optional, List, Dict, Any # Common imports
-        #
-        # class ExampleTool:
-        #     """Provides a brief description of what the tool does."""
-        #
-        #     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        #         """Initializes the tool, optionally with configuration."""
-        #         self.config = config or {}
-        #         print(f"{self.__class__.__name__} initialized.")
-        #
-        #     def execute(self, parameter_one: str, parameter_two: int = 0) -> Dict[str, Any]:
-        #         """
-        #         Describes what this main method does.
-        #
-        #         Args:
-        #             parameter_one (str): Description of first parameter.
-        #             parameter_two (int, optional): Description of second parameter. Defaults to 0.
-        #
-        #         Returns:
-        #             Dict[str, Any]: Description of the output, often a dictionary.
-        #         """
-        #         print(f"Executing {self.__class__.__name__} with {parameter_one=}, {parameter_two=}")
-        #         # TODO: Implement actual tool logic here
-        #         # Replace 'pass' with your logic or raise NotImplementedError
-        #         raise NotImplementedError("Tool logic not implemented yet.")
-        #         # Example return:
-        #         # return {"status": "success", "result": f"Processed {parameter_one} and {parameter_two}"}
-        # ```
-        # """
-        print(f"Executing {self.__class__.__name__} with {parameter_one=}, {parameter_two=}")
-        # TODO: Implement actual tool logic here
-        # Replace 'pass' with your logic or raise NotImplementedError
-        raise NotImplementedError("Tool logic not implemented yet.")
-        # Example return:
-        # return {"status": "success", "result": f"Processed {parameter_one} and {parameter_two}"}
-```
-"""
+        example_tool_structure = """
+Example of a simple Python tool class structure:
 
-```
+```python
+from typing import Optional, List, Dict, Any # Common imports
+
+class ExampleTool:
+    \"\"\"Provides a brief description of what the tool does.\"\"\"
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        \"\"\"Initializes the tool, optionally with configuration.\"\"\"
+        self.config = config or {}
+        print(f"{self.__class__.__name__} initialized.")
+
+    def execute(self, parameter_one: str, parameter_two: int = 0) -> Dict[str, Any]:
+        \"\"\"
+        Describes what this main method does.
+
+        Args:
+            parameter_one (str): Description of first parameter.
+            parameter_two (int, optional): Description of second parameter. Defaults to 0.
+
+        Returns:
+            Dict[str, Any]: Description of the output, often a dictionary.
+        \"\"\"
         print(f"Executing {self.__class__.__name__} with {parameter_one=}, {parameter_two=}")
         # TODO: Implement actual tool logic here
         # Replace 'pass' with your logic or raise NotImplementedError
@@ -844,10 +659,10 @@ Tool Specifications:
 
 Instructions for the generated code:
 1. The tool should be a single Python class named '{tool_name}'.
-2. The class docstring should be: """{class_docstring}"""
+2. The class docstring should be: \"\"\"{class_docstring}\"\"\"
 3. The primary execution method should be named '{method_name}'.
 4. The method signature should be: `def {method_name}({method_signature_params}) -> {return_type}:`
-5. The method docstring should be: """{method_docstring}"""
+5. The method docstring should be: \"\"\"{method_docstring}\"\"\"
    (Ensure Args and Returns sections are appropriate if parameter details were rich enough).
 6. The body of this primary method should be `raise NotImplementedError("Tool logic not implemented yet.")`.
 7. Include an `__init__` method: `def __init__(self, config: Optional[Dict[str, Any]] = None):`. Its docstring should be "Initializes the tool, optionally with configuration.". It should store the config and print an initialization message.
@@ -952,3 +767,4 @@ if __name__ == '__main__':
             except Exception as e: print(f"Error cleaning up test HAM file: {e}")
 
     asyncio.run(main_dm_test())
+# Removed [end of src/core_ai/dialogue/dialogue_manager.py] marker

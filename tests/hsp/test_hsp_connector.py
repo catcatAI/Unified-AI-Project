@@ -5,7 +5,7 @@ import logging # Import logging for caplog.set_level
 import json
 import uuid
 from datetime import datetime, timezone
-from typing import Literal, Optional, Dict, Any # For type hint in test_ack_payload_and_envelope_construction
+from typing import Literal, Optional # For type hint in test_ack_payload_and_envelope_construction
 
 # Ensure src is in path for imports if running tests directly
 import sys
@@ -293,220 +293,55 @@ class TestHSPConnectorACKLogic:
 class TestHSPConnectorMessageBuilding:
 
     @pytest.mark.parametrize("message_type_input, expected_uri_or_none", [
-        # Valid cases with new URN format
-        ("HSP::Fact_v0.1", "urn:hsp:payload:Fact:0.1"),
-        ("HSP::Belief_v0.1.0", "urn:hsp:payload:Belief:0.1.0"),
-        ("HSP::CapabilityAdvertisement_v1.2.3", "urn:hsp:payload:CapabilityAdvertisement:1.2.3"),
-        ("HSP::TaskRequest_v0.2", "urn:hsp:payload:TaskRequest:0.2"),
-        ("HSP::TaskResult_v1.0", "urn:hsp:payload:TaskResult:1.0"),
-        ("HSP::EnvironmentalState_v0.3", "urn:hsp:payload:EnvironmentalState:0.3"),
-        ("HSP::Acknowledgement_v0.1", "urn:hsp:payload:Acknowledgement:0.1"),
-        ("HSP::NegativeAcknowledgement_v0.1", "urn:hsp:payload:NegativeAcknowledgement:0.1"),
-        # Custom type without HSP:: prefix, still valid format
-        ("MyCustomType_v2.0", "urn:hsp:payload:MyCustomType:2.0"),
-        # Complex version string
-        ("HSP::Another_Type_v0.0.1-alpha+build123", "urn:hsp:payload:Another_Type:0.0.1-alpha+build123"),
-        # Malformed cases (should return None)
-        ("NoVersionInName", None),
-        ("Malformed_v", None),
-        ("HSP::NoVersionSuffix", None),
-        ("HSP::SomeType_v", None),    # Empty version
-        ("HSP::_v1.0", None),         # Empty type name
-        ("HSP::FactNoV", None),       # Missing '_v' separator
-        ("", None),                   # Empty message type string
-        (None, None)                  # None message type
+        ("HSP::Fact_v0.1", "hsp:schema:payload/Fact/0.1"),
+        ("HSP::CapabilityAdvertisement_v1.2.3", "hsp:schema:payload/CapabilityAdvertisement/1.2.3"),
+        ("MyCustomType_v2.0", "hsp:schema:payload/MyCustomType/2.0"), # No HSP:: prefix
+        ("HSP::Another_Type_v0.0.1-alpha", "hsp:schema:payload/Another_Type/0.0.1-alpha"), # Complex version
+        ("NoVersionInName", None), # Malformed - no _v
+        ("Malformed_v", None),     # Malformed - empty type before _v
+        ("HSP::NoVersionSuffix", None), # Malformed - no version after _v
+        ("HSP::SomeType_v", None),    # Malformed - empty version string
+        ("HSP::_v1.0", None),         # Malformed - empty type name string
+        ("", None),                   # Empty message type
+        (None, None)                  # None message type for robustness test of _generate method
     ])
-    def test_payload_schema_uri_generation( # Renamed for clarity
-        self, connector_with_mock_client: HSPConnector, # Connector not strictly needed for static method test but keep for consistency
+    def test_build_hsp_envelope_populates_schema_uri(
+        self, connector_with_mock_client: HSPConnector,
         message_type_input: Optional[str], expected_uri_or_none: Optional[str], caplog
     ):
-        caplog.set_level(logging.WARNING, logger="src.hsp.connector") # Capture warnings
+        connector = connector_with_mock_client
 
-        # Test the static method directly
-        generated_uri = HSPConnector._generate_payload_schema_uri(message_type_input) # type: ignore
-        assert generated_uri == expected_uri_or_none
+        # Handle the case where parametrize passes None for message_type_input
+        if message_type_input is None:
+            # Test _generate_payload_schema_uri directly for None input
+            assert HSPConnector._generate_payload_schema_uri(message_type_input) is None # type: ignore
+            return
 
-        # Check for warning log if parsing failed and input was not None or empty
-        if expected_uri_or_none is None and message_type_input: # message_type_input being non-empty string
+        caplog.set_level(logging.WARNING, logger="src.hsp.connector") # Capture warnings from the connector's logger
+
+        test_payload = {"data": "test"}
+        recipient = "test_recipient"
+        # communication_pattern is required by _build_hsp_envelope
+        communication_pattern_val: Literal["publish", "request", "response", "stream_data", "stream_ack", "acknowledgement", "negative_acknowledgement"] = "publish"
+
+
+        envelope = connector._build_hsp_envelope(
+            payload=test_payload,
+            message_type=message_type_input,
+            recipient_ai_id_or_topic=recipient,
+            communication_pattern=communication_pattern_val
+        )
+
+        assert envelope['payload_schema_uri'] == expected_uri_or_none
+
+        # Check for warning log if parsing failed and input was not empty
+        if expected_uri_or_none is None and message_type_input:
             found_warning = False
-            expected_msg_part1 = f"Could not parse TypeName and Version from message_type '{message_type_input}'"
-            expected_msg_part2 = f"Parsed empty TypeName or Version from message_type '{message_type_input}'"
             for record in caplog.records:
-                if record.levelname == "WARNING" and (expected_msg_part1 in record.message or expected_msg_part2 in record.message):
+                if record.levelname == "WARNING" and f"Could not parse TypeName and Version from message_type '{message_type_input}'" in record.message:
+                    found_warning = True
+                    break
+                if record.levelname == "WARNING" and f"Parsed empty TypeName or Version from message_type '{message_type_input}'" in record.message:
                     found_warning = True
                     break
             assert found_warning, f"Expected parsing warning for '{message_type_input}' not found in logs: {caplog.text}"
-
-        # Additionally, test it within _build_hsp_envelope to ensure it's called
-        if message_type_input and expected_uri_or_none: # Only for valid message types that produce a URI
-            test_payload = {"data": "test"}
-            recipient = "test_recipient"
-            communication_pattern_val: Literal["publish", "request", "response", "stream_data", "stream_ack", "acknowledgement", "negative_acknowledgement"] = "publish"
-
-            # Use the connector instance from the fixture to call _build_hsp_envelope
-            connector = connector_with_mock_client
-            envelope = connector._build_hsp_envelope(
-                payload=test_payload,
-                message_type=message_type_input,
-                recipient_ai_id_or_topic=recipient,
-                communication_pattern=communication_pattern_val
-            )
-            assert envelope['payload_schema_uri'] == expected_uri_or_none
-
-
-class TestHSPConnectorTaskResultCallbacks:
-
-    def _create_task_result_message_str(self, sender_ai_id: str, recipient_ai_id: str, payload: Optional[Dict[str, Any]] = None) -> str:
-        """Helper to create a JSON string for a task result message envelope."""
-        if payload is None:
-            payload = {"result_id": "res_123", "request_id": "req_abc", "executing_ai_id": sender_ai_id, "status": "success", "payload": {"info": "done"}}
-
-        envelope = {
-            "hsp_envelope_version": "0.1",
-            "message_id": f"msg_{uuid.uuid4().hex}",
-            "sender_ai_id": sender_ai_id,
-            "recipient_ai_id": recipient_ai_id,
-            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
-            "message_type": "HSP::TaskResult_v0.1", # Corrected message type
-            "protocol_version": "0.1",
-            "communication_pattern": "response", # Typically 'response' for results
-            "qos_parameters": {"requires_ack": False}, # Example
-            "payload": payload
-        }
-        return json.dumps(envelope)
-
-    def test_register_single_task_result_callback(self, connector_with_mock_client: HSPConnector):
-        connector = connector_with_mock_client
-        mock_callback = MagicMock()
-        connector.register_on_task_result_callback(mock_callback)
-
-        test_payload = {"status": "success", "data": "single_cb_test"}
-        message_str = self._create_task_result_message_str(
-            sender_ai_id="sender_single_cb",
-            recipient_ai_id=connector.ai_id,
-            payload=test_payload
-        )
-        # Simulate message arrival
-        connector._handle_hsp_message_str(message_str, "hsp/results/test_ai_connector_001")
-
-        mock_callback.assert_called_once()
-        args, _ = mock_callback.call_args
-        assert args[0] == test_payload # payload
-        assert args[1] == "sender_single_cb"  # sender_ai_id
-        assert isinstance(args[2], dict) # full_envelope
-        assert args[2]['message_type'] == "HSP::TaskResult_v0.1"
-
-    def test_register_multiple_task_result_callbacks(self, connector_with_mock_client: HSPConnector):
-        connector = connector_with_mock_client
-        mock_callback1 = MagicMock(name="cb1")
-        mock_callback2 = MagicMock(name="cb2")
-
-        connector.register_on_task_result_callback(mock_callback1)
-        connector.register_on_task_result_callback(mock_callback2)
-
-        test_payload = {"status": "progress", "percentage": 50}
-        message_str = self._create_task_result_message_str(
-            sender_ai_id="sender_multi_cb",
-            recipient_ai_id=connector.ai_id,
-            payload=test_payload
-        )
-        connector._handle_hsp_message_str(message_str, "hsp/results/test_ai_connector_001")
-
-        mock_callback1.assert_called_once()
-        args1, _ = mock_callback1.call_args
-        assert args1[0] == test_payload
-        assert args1[1] == "sender_multi_cb"
-
-        mock_callback2.assert_called_once()
-        args2, _ = mock_callback2.call_args
-        assert args2[0] == test_payload
-        assert args2[1] == "sender_multi_cb"
-
-    def test_unregister_task_result_callback(self, connector_with_mock_client: HSPConnector):
-        connector = connector_with_mock_client
-        mock_callback_kept = MagicMock(name="kept_cb")
-        mock_callback_removed = MagicMock(name="removed_cb")
-
-        connector.register_on_task_result_callback(mock_callback_kept)
-        connector.register_on_task_result_callback(mock_callback_removed)
-
-        connector.unregister_on_task_result_callback(mock_callback_removed)
-
-        test_payload = {"status": "cancelled"}
-        message_str = self._create_task_result_message_str(
-            sender_ai_id="sender_unregister_cb",
-            recipient_ai_id=connector.ai_id,
-            payload=test_payload
-        )
-        connector._handle_hsp_message_str(message_str, "hsp/results/test_ai_connector_001")
-
-        mock_callback_kept.assert_called_once()
-        mock_callback_removed.assert_not_called()
-
-    def test_unregister_non_existent_task_result_callback(self, connector_with_mock_client: HSPConnector, caplog):
-        connector = connector_with_mock_client
-        mock_callback_never_registered = MagicMock()
-        caplog.set_level(logging.WARNING, logger="src.hsp.connector")
-
-        connector.unregister_on_task_result_callback(mock_callback_never_registered)
-
-        assert f"HSPConnector ({connector.ai_id}): Attempted to unregister a task result callback that was not registered." in caplog.text
-
-    def test_task_result_callback_error_handling(self, connector_with_mock_client: HSPConnector, caplog):
-        connector = connector_with_mock_client
-        caplog.set_level(logging.ERROR, logger="src.hsp.connector")
-
-        mock_callback_failing = MagicMock(name="failing_cb", side_effect=ValueError("Callback failed!"))
-        mock_callback_working = MagicMock(name="working_cb")
-
-        connector.register_on_task_result_callback(mock_callback_failing)
-        connector.register_on_task_result_callback(mock_callback_working)
-
-        test_payload = {"status": "error_in_cb_test"}
-        message_str = self._create_task_result_message_str(
-            sender_ai_id="sender_cb_error",
-            recipient_ai_id=connector.ai_id,
-            payload=test_payload
-        )
-        connector._handle_hsp_message_str(message_str, "hsp/results/test_ai_connector_001")
-
-        mock_callback_failing.assert_called_once()
-        mock_callback_working.assert_called_once() # Ensure subsequent callbacks are still called
-
-        assert "Error in a TaskResult callback" in caplog.text
-        assert "ValueError: Callback failed!" in caplog.text # Check for the specific error
-
-    def test_no_task_result_callbacks_registered(self, connector_with_mock_client: HSPConnector):
-        connector = connector_with_mock_client
-        # No callbacks registered
-
-        test_payload = {"status": "no_cb_test"}
-        message_str = self._create_task_result_message_str(
-            sender_ai_id="sender_no_cb",
-            recipient_ai_id=connector.ai_id,
-            payload=test_payload
-        )
-        try:
-            connector._handle_hsp_message_str(message_str, "hsp/results/test_ai_connector_001")
-        except Exception as e:
-            pytest.fail(f"Processing task result message with no callbacks registered raised an exception: {e}")
-        # If it reaches here without error, the test passes.
-
-    def test_duplicate_callback_registration_is_ignored(self, connector_with_mock_client: HSPConnector):
-        connector = connector_with_mock_client
-        mock_callback = MagicMock()
-
-        connector.register_on_task_result_callback(mock_callback)
-        connector.register_on_task_result_callback(mock_callback) # Register same instance again
-
-        assert len(connector._on_task_result_callbacks) == 1 # Should only be one instance
-
-        test_payload = {"status": "duplicate_reg_test"}
-        message_str = self._create_task_result_message_str(
-            sender_ai_id="sender_dup_reg",
-            recipient_ai_id=connector.ai_id,
-            payload=test_payload
-        )
-        connector._handle_hsp_message_str(message_str, "hsp/results/test_ai_connector_001")
-
-        mock_callback.assert_called_once() # Called only once

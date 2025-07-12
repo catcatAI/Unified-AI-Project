@@ -1,12 +1,7 @@
 import pytest
-pytestmark = pytest.mark.skip(reason="Skipping due to dialogue_manager.py SyntaxError and complex HSP setup")
 import asyncio
 import uuid
 import time
-from ..conftest import is_mqtt_broker_available # Import the utility
-
-# Skip all tests in this module if MQTT broker is not available
-pytestmark = pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available for HSP integration tests")
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 from typing import Dict, Any, Optional, List, Callable
@@ -30,6 +25,8 @@ from src.tools.tool_dispatcher import ToolDispatcher
 from src.core_ai.formula_engine import FormulaEngine
 from src.shared.types.common_types import ToolDispatcherResponse
 
+
+from tests.conftest import is_mqtt_broker_available # Import the helper
 
 # --- Constants for Testing ---
 TEST_AI_ID_MAIN = "did:hsp:test_ai_main_001"
@@ -186,6 +183,7 @@ def dialogue_manager_fixture( configured_learning_manager: LearningManager, serv
     time.sleep(0.2); return dm
 
 # --- Test Classes ---
+@pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available")
 class TestHSPFactPublishing:
     def test_learning_manager_publishes_fact_via_hsp( self, configured_learning_manager: LearningManager, peer_a_hsp_connector: HSPConnector ):
         # ... (test body as previously defined) ...
@@ -198,6 +196,7 @@ class TestHSPFactPublishing:
         time.sleep(1.0); assert len(received_facts_on_peer) > 0
         rp = received_facts_on_peer[0]["payload"]; assert rp.get("source_ai_id") == TEST_AI_ID_MAIN; assert rp.get("statement_structured", {}).get("subject") == "Berlin"
 
+@pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available")
 class TestHSPFactConsumption:
     @pytest.mark.asyncio
     async def test_main_ai_consumes_nl_fact_and_updates_kg_check_trust_influence(
@@ -317,6 +316,7 @@ class TestHSPFactConsumption:
         print(f"[Test Semantic Mapping] Verified CA mapped external URIs for fact '{fact_id_for_mapping}'.")
 
 
+@pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available")
 class TestHSPTaskBrokering: # ... (all existing tests in this class remain the same) ...
     @pytest.mark.asyncio
     async def test_e2e_task_brokering_flow_with_trust(
@@ -500,6 +500,7 @@ def _create_hsp_envelope_for_conflict_test(
 
 
 # --- Test Class for New Conflict Resolution Logic ---
+@pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available")
 class TestHSPConflictResolution:
 
     @pytest.fixture(autouse=True)

@@ -1,10 +1,9 @@
 import json
-import re
 from typing import List, Dict, Optional, Any
 
 # Assuming 'src' is in PYTHONPATH, making 'services' a top-level package
-from src.services.llm_interface import LLMInterface, LLMInterfaceConfig # Changed to src.services
-from src.shared.types.common_types import ExtractedFact # Changed to src.shared
+from services.llm_interface import LLMInterface, LLMInterfaceConfig
+from shared.types.common_types import ExtractedFact # Import the new type
 # LearnedFactRecord content is what this module aims to extract, but the full record is assembled by LearningManager
 
 
@@ -47,22 +46,15 @@ class FactExtractorModule:
         # Suggesting a specific model or parameters might be useful for fact extraction
         llm_response_str = self.llm_interface.generate_response(
             prompt,
-            model_name="gemini-1.5-flash-latest"
+            model_name="fact_extraction_model_placeholder"
             # params={"temperature": 0.3} # Lower temperature for more factual output
         )
 
         print(f"FactExtractorModule: Received raw fact extraction from LLM:\n---\n{llm_response_str}\n---")
 
         try:
-            # Attempt to extract JSON from a markdown code block first
-            json_match = re.search(r"```json\s*([\s\S]*?)\s*```", llm_response_str)
-            if json_match:
-                json_content = json_match.group(1).strip()
-            else:
-                # If no markdown block, assume the whole response is JSON
-                json_content = llm_response_str.strip()
-
-            extracted_data_list_raw = json.loads(json_content)
+            # The LLM is expected to return a string that is a JSON list of fact objects
+            extracted_data_list_raw = json.loads(llm_response_str)
 
             if not isinstance(extracted_data_list_raw, list):
                 print(f"FactExtractorModule: Error - LLM response is not a list. Response: {llm_response_str}")

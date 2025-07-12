@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import json
 import os
 from typing import List, Optional, Dict, Any
@@ -141,36 +139,10 @@ class FormulaEngine:
         print(f"FormulaEngine: Executing formula '{formula.get('name')}'")
         # Potentially use context to fill in parameters if they are dynamic
         # For now, just returning the static parameters from the formula
-        result = {
+        return {
             "action_name": formula.get("action"),
             "action_params": formula.get("parameters", {}) # Default to empty dict if no params
         }
-
-        response_template = formula.get("response_template")
-        if response_template and isinstance(response_template, str) and context:
-            try:
-                # Only attempt formatting if context is not empty, otherwise format will fail if template has placeholders
-                if context:
-                    formatted_response = response_template.format(**context)
-                    result["formatted_response"] = formatted_response
-                else: # Context is empty or None, but template exists
-                    result["formatted_response"] = response_template # Return raw template
-                    if "{" in response_template and "}" in response_template: # Check if it likely had placeholders
-                         print(f"FormulaEngine: Warning - Formula '{formula.get('name')}' has a response template but context was empty/None. Returning raw template.")
-
-            except KeyError as e:
-                print(f"FormulaEngine: Warning - KeyError during response_template formatting for formula '{formula.get('name')}'. Missing key: {e}. Returning raw template.")
-                result["formatted_response"] = response_template # Return raw template on formatting error
-            except Exception as e:
-                print(f"FormulaEngine: Error during response_template formatting for formula '{formula.get('name')}': {e}. Returning raw template.")
-                result["formatted_response"] = response_template # Return raw template on other formatting errors
-        elif response_template and isinstance(response_template, str) and not context: # Template exists but no context provided
-             result["formatted_response"] = response_template # Return raw template
-             if "{" in response_template and "}" in response_template:
-                 print(f"FormulaEngine: Warning - Formula '{formula.get('name')}' has a response template but no context was provided. Returning raw template.")
-
-
-        return result
 
 if __name__ == '__main__':
     print("--- FormulaEngine Standalone Test ---")
@@ -289,9 +261,3 @@ if __name__ == '__main__':
 
 
     print("\nFormulaEngine standalone test finished.")
-=======
-from .formula_engine import FormulaEngine
->>>>>>> Stashed changes
-=======
-from .formula_engine import FormulaEngine
->>>>>>> Stashed changes

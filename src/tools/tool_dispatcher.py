@@ -104,7 +104,7 @@ class ToolDispatcher:
                 error_message=error_msg
             )
 
-    def _execute_logic_evaluation(self, query: str, method: str = 'parser', **kwargs) -> ToolDispatcherResponse: # Added **kwargs
+    def _execute_logic_evaluation(self, query: str, method: str = 'parser') -> ToolDispatcherResponse:
         """
         Wrapper for the logic_tool.evaluate_expression function.
         The query should be the logical expression string itself.
@@ -153,55 +153,62 @@ class ToolDispatcher:
         Can also be called with explicit text and target_language in kwargs.
         """
         try:
-            text_to_translate_from_kwarg = kwargs.get("text_to_translate")
+            # print(f"Debug TRANSLATE: _execute_translation called with query='{query}', kwargs={kwargs}") # REMOVED DEBUG
+            text_to_translate = query # Default: query is the text
             target_lang_from_kwarg = kwargs.get("target_language")
             source_lang_from_kwarg = kwargs.get("source_language")
+            # print(f"Debug TRANSLATE: target_lang_from_kwarg='{target_lang_from_kwarg}', source_lang_from_kwarg='{source_lang_from_kwarg}'") # REMOVED DEBUG
 
-            text_to_translate: Optional[str] = None
-            resolved_target_lang: Optional[str] = None # Default to None, let translate_text handle default if needed
+            resolved_target_lang = "en" # Overall default
 
-            if text_to_translate_from_kwarg and target_lang_from_kwarg:
-                text_to_translate = str(text_to_translate_from_kwarg)
-                resolved_target_lang = str(target_lang_from_kwarg)
+            if target_lang_from_kwarg:
+                resolved_target_lang = target_lang_from_kwarg
+                # print(f"Debug TRANSLATE: Using target_language from kwargs: {resolved_target_lang}") # REMOVED DEBUG
+                # text_to_translate is already query
             else:
-                # Fallback to parsing from the query string if structured params are not available
-                text_to_translate = query # Default to full query initially for parsing
+                # No target_language in kwargs, parse from query string
+                # Initial default for resolved_target_lang (if "to LANG" isn't found)
+                # print(f"Debug TRANSLATE: Initial resolved_target_lang (before query parse) = {resolved_target_lang}") # REMOVED DEBUG
 
                 # Pattern 1: "translate 'TEXT' to LANGUAGE" or "translate TEXT to LANGUAGE"
                 pattern1_match = re.search(r"translate\s+(?:['\"](.+?)['\"]|(.+?))\s+to\s+([a-zA-Z\-]+)", query, re.IGNORECASE)
                 if pattern1_match:
-                    text_to_translate = (pattern1_match.group(1) or pattern1_match.group(2) or "").strip().strip("'\"")
+                    text_to_translate = pattern1_match.group(1) or pattern1_match.group(2)
+                    text_to_translate = text_to_translate.strip()
                     lang_name_or_code = pattern1_match.group(3).lower()
                     if lang_name_or_code in ["chinese", "zh"]: resolved_target_lang = "zh"
                     elif lang_name_or_code in ["english", "en"]: resolved_target_lang = "en"
-                    else: resolved_target_lang = lang_name_or_code # Use as is
+                    else: resolved_target_lang = lang_name_or_code
                 else:
                     # Pattern 2: "'TEXT' in LANGUAGE" or "TEXT in LANGUAGE"
                     pattern2_match = re.search(r"(?:['\"](.+?)['\"]|(.+?))\s+in\s+([a-zA-Z\-]+)", query, re.IGNORECASE)
                     if pattern2_match:
-                        text_to_translate = (pattern2_match.group(1) or pattern2_match.group(2) or "").strip().strip("'\"")
+                        text_to_translate = pattern2_match.group(1) or pattern2_match.group(2)
+                        text_to_translate = text_to_translate.strip()
                         lang_name_or_code = pattern2_match.group(3).lower()
                         if lang_name_or_code in ["chinese", "zh"]: resolved_target_lang = "zh"
                         elif lang_name_or_code in ["english", "en"]: resolved_target_lang = "en"
                         else: resolved_target_lang = lang_name_or_code
                     else:
-                        # Pattern 3: Fallback "translate TEXT" (target language might be implied or default)
+                        # Pattern 3: Fallback "translate TEXT"
+                        # Here, `to_lang_match` was an attempt to find "to LANG" anywhere in the query.
+                        # Let's use that if available, otherwise default.
                         to_lang_match_general = re.search(r"to\s+([a-zA-Z\-]+)", query, re.IGNORECASE)
                         if to_lang_match_general:
                             lang_name_or_code = to_lang_match_general.group(1).lower()
                             if lang_name_or_code in ["chinese", "zh"]: resolved_target_lang = "zh"
                             elif lang_name_or_code in ["english", "en"]: resolved_target_lang = "en"
                             else: resolved_target_lang = lang_name_or_code
-                        else:
-                            resolved_target_lang = "en" # Default if no "to" clause
+                        # else resolved_target_lang remains its default ("en")
 
                         text_simple_match = re.match(r"translate\s+(.+)", query, re.IGNORECASE)
                         if text_simple_match:
                             text_to_translate = text_simple_match.group(1).strip()
+                            # Remove "to lang" part if it was part of this simple match
                             if to_lang_match_general and text_to_translate.lower().endswith(f" to {to_lang_match_general.group(1).lower()}"):
                                 text_to_translate = text_to_translate[:-(len(f" to {to_lang_match_general.group(1).lower()}"))].strip()
-                            text_to_translate = text_to_translate.strip().strip("'\"")
-                        else: # Cannot determine text to translate
+
+                        else: # Cannot determine text to translate from query string if not using kwargs
                             return ToolDispatcherResponse(
                                 status="error_dispatcher_issue",
                                 payload=None,
@@ -210,7 +217,7 @@ class ToolDispatcher:
                                 error_message="Sorry, I couldn't understand what text to translate from the query."
                             )
 
-            if not text_to_translate or not resolved_target_lang: # Ensure text and target lang are resolved
+            if not text_to_translate: # Ensure text is not empty
                 return ToolDispatcherResponse(
                     status="error_dispatcher_issue",
                     payload=None,
@@ -223,7 +230,7 @@ class ToolDispatcher:
             result_payload = translate_text(text_to_translate, resolved_target_lang, source_language=source_lang_from_kwarg)
             # translate_text already returns a string like "Translation: ..." or error message
             # We need to check if it's an error message from the tool itself.
-            if "Translation not available" in result_payload or "error" in result_payload.lower(): # Simple check
+            if "Translation not available" in result_payload or "error" in result_payload.lower() or "not supported" in result_payload.lower(): # Simple check
                  return ToolDispatcherResponse(
                     status="failure_tool_error", # Or a more specific status if tool provides it
                     payload=None,
@@ -248,17 +255,20 @@ class ToolDispatcher:
                 error_message=error_msg
             )
 
-    def dispatch(self, query: str, explicit_tool_name: Optional[str] = None, **kwargs) -> ToolDispatcherResponse:
+    def dispatch(self, query: str, explicit_tool_name: Optional[str] = None, **kwargs) -> Optional[ToolDispatcherResponse]:
         """
         Dispatches a query to the appropriate tool.
         If explicit_tool_name is provided, it uses that tool.
         Otherwise, it tries to infer the tool from the query.
+        Returns a ToolDispatcherResponse or None if no tool is inferred.
         """
         if explicit_tool_name:
             if explicit_tool_name in self.tools:
                 print(f"Dispatching to explicitly named tool: {explicit_tool_name}")
-                # Pass along original query in kwargs for consistent ToolDispatcherResponse population
                 kwargs_with_orig_query = {"original_query": query, **kwargs}
+                # Explicit calls to translation need kwargs passed differently
+                if explicit_tool_name == 'translate_text':
+                    return self._execute_translation(query, **kwargs_with_orig_query)
                 return self.tools[explicit_tool_name](query, **kwargs_with_orig_query)
             else:
                 return ToolDispatcherResponse(
@@ -274,38 +284,32 @@ class ToolDispatcher:
 
         if intent and intent.get("tool_name") in self.tools:
             tool_name_from_dlm = intent["tool_name"]
-            raw_tool_params = intent.get("parameters", {})
+            tool_params = intent.get("parameters", {})
+            # The 'query' in parameters is the specific data for the tool
+            # The top-level 'query' is the user's original full query
+            tool_specific_query = tool_params.get("query", query)
 
-            # The 'query' key in raw_tool_params is for calc/logic, 'text_to_translate' for translation.
-            # The original full user query is 'query' (the input to the dispatch method).
+            print(f"Dispatching to '{tool_name_from_dlm}' tool based on DLM intent. Effective query for tool: '{tool_specific_query}'")
 
-            primary_text_arg = query # Default to full query
-            if tool_name_from_dlm == "translate_text":
-                primary_text_arg = raw_tool_params.get("text_to_translate", query)
-            elif tool_name_from_dlm in ["calculate", "evaluate_logic", "inspect_code"]:
-                primary_text_arg = raw_tool_params.get("query", query)
+            if "original_query" not in tool_params:
+                tool_params["original_query"] = query
 
-            # Prepare other parameters for the tool.
-            # These are typically from raw_tool_params but we avoid passing the primary_text_arg also as a kwarg if it came from there.
-            final_kwargs = raw_tool_params.copy()
-            if tool_name_from_dlm == "translate_text" and "text_to_translate" in final_kwargs and primary_text_arg == final_kwargs.get("text_to_translate"):
-                pass # _execute_translation will use its first arg (primary_text_arg) and ignore text_to_translate in kwargs
-            elif tool_name_from_dlm in ["calculate", "evaluate_logic", "inspect_code"] and "query" in final_kwargs and primary_text_arg == final_kwargs.get("query"):
-                 if "query" in final_kwargs: del final_kwargs["query"] # Avoid duplicate 'query'
+            # Special parameter mapping for translation
+            if tool_name_from_dlm == 'translate_text':
+                # The _execute_translation method expects the text to translate as the first argument,
+                # and other details in kwargs. The DLM provides these in tool_params.
+                text_to_translate = tool_params.get('text_to_translate', tool_specific_query)
+                return self._execute_translation(text_to_translate, **tool_params)
 
-            if "original_query" not in final_kwargs: # Ensure original full query is always available
-                 final_kwargs["original_query"] = query
+            # Standard tool execution for others
+            # We need to remove the 'query' and 'original_query' from tool_params if it exists to avoid sending it twice
+            tool_params.pop('query', None)
+            tool_params.pop('original_query', None)
+            return self.tools[tool_name_from_dlm](tool_specific_query, **tool_params)
 
-            print(f"Dispatching to '{tool_name_from_dlm}' tool. Positional arg: '{primary_text_arg}', Kwargs: {final_kwargs}")
-            return self.tools[tool_name_from_dlm](primary_text_arg, **final_kwargs)
-
+        # This is the case where DLM returns "NO_TOOL"
         print(f"No specific local tool inferred by DLM for query: '{query}'")
-        return ToolDispatcherResponse(
-            status="unhandled_by_local_tool",
-            payload=None,
-            original_query_for_tool=query,
-            tool_name_attempted=None # No specific tool was attempted by DLM
-        )
+        return None
 
     def get_available_tools(self):
         """Returns a dictionary of available tools and their descriptions."""

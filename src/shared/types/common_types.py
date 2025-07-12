@@ -1,6 +1,6 @@
 # src/shared/types/common_types.py
 from enum import Enum
-from typing import TypedDict, Optional, List, Any, Dict, Literal, Union, Callable, Tuple # Added Tuple
+from typing import TypedDict, Optional, List, Any, Dict, Literal, Union, Callable # Added Literal, Union, Callable back for other types
 from typing_extensions import Required
 
 print("common_types.py (debug version) is being imported and defining ServiceStatus...")
@@ -121,33 +121,6 @@ class OverwriteDecision(Enum): # For HAMMemoryManager -> DialogueManager
     ASK_USER = "ask_user"
     MERGE_IF_APPLICABLE = "merge_if_applicable"
 
-# --- Types for ResourceAwarenessService ---
-class SimulatedDiskConfig(TypedDict, total=False):
-    space_gb: Required[float]
-    warning_threshold_percent: Required[float] # Percentage (0-100)
-    critical_threshold_percent: Required[float] # Percentage (0-100)
-    lag_factor_warning: float # Multiplier for perceived time lag
-    lag_factor_critical: float # Multiplier for perceived time lag
-
-class SimulatedCPUConfig(TypedDict, total=False):
-    cores: Required[int]
-    # Future: base_mhz, current_load_percent, lag_factor_high_load
-
-class SimulatedRAMConfig(TypedDict, total=False):
-    ram_gb: Required[float]
-    # Future: warning_threshold_percent, critical_threshold_percent, lag_factor_warning, lag_factor_critical
-
-class SimulatedHardwareProfile(TypedDict, total=False):
-    profile_name: Required[str]
-    disk: Required[SimulatedDiskConfig]
-    cpu: Required[SimulatedCPUConfig]
-    ram: Required[SimulatedRAMConfig]
-    gpu_available: Required[bool]
-    # Future: network_config: SimulatedNetworkConfig
-
-class SimulatedResourcesRoot(TypedDict): # For the root of the YAML file
-    simulated_hardware_profile: SimulatedHardwareProfile
-
 class SimulatedResourceConfig(TypedDict): # For HAMMemoryManager -> DialogueManager
     name: str
     current_level: float
@@ -179,199 +152,161 @@ class NarrativeAntibodyObject(TypedDict): # Renamed from LIS_AntibodyObject
     antibody_id: str
     # ...
 
-# --- Virtual Input Types for AIVirtualInputService ---
+# Virtual Input types - minimal for AIVirtualInputService -> DialogueManager
+class VirtualInputElementDescription(TypedDict, total=False): # Revised
+    element_id: Required[str]
+    element_type: Required[str] # e.g., "button", "text_field", "checkbox", "link", "container"
+    label: Optional[str]      # Visible text or aria-label
+    value: Optional[str]      # For input fields, textareas
+    is_focused: Optional[bool]
+    is_enabled: Optional[bool]
+    is_visible: Optional[bool]
+    attributes: Optional[Dict[str, Any]] # Other relevant HTML attributes
+    children: Optional[List['VirtualInputElementDescription']] # For nested structure
+
 VirtualInputPermissionLevel = Literal[
-    "simulation_only",      # Default: Only simulate, no real input.
-    "requires_approval",    # Future: Actions require user approval.
-    "full_control_dangerous" # Future: AI has direct input control (use with extreme caution).
+    "simulation_only",
+    "requires_user_confirmation", # Future use
+    "full_control_trusted"        # Future use
 ]
 
 VirtualMouseEventType = Literal[
-    "move_relative_to_window", # Moves cursor to (x_ratio, y_ratio) relative to abstract window (0-1, 0-1)
-    "click",                   # Simulates a mouse click (left, right, middle)
-    "scroll",                  # Simulates mouse wheel scrolling
-    "drag_start",              # Future: For drag-and-drop simulation
-    "drag_end",                # Future: For drag-and-drop simulation
-    "hover"                    # Simulates hovering over an element or point
-]
-
-VirtualKeyboardActionType = Literal[
-    "type_string",             # Types a given string.
-    "press_keys",              # Presses a combination of keys (e.g., Ctrl+C).
-    "special_key"              # Presses a special key (e.g., Enter, Esc, F1).
+    "move_relative_to_window", "move_to_element", "click", "double_click",
+    "right_click", "hover", "drag_start", "drag_end", "scroll"
 ]
 
 class VirtualMouseCommand(TypedDict, total=False):
     action_type: Required[VirtualMouseEventType]
-    # For move_relative_to_window:
+    target_element_id: Optional[str]
     relative_x: Optional[float]
     relative_y: Optional[float]
-    # For click:
-    target_element_id: Optional[str] # Optional, click can be at coordinates
     click_type: Optional[Literal["left", "right", "middle"]]
-    # For scroll:
     scroll_direction: Optional[Literal["up", "down", "left", "right"]]
-    scroll_amount_pixels: Optional[int] # For pixel-based scrolling
-    scroll_amount_ratio: Optional[float] # For ratio-based scrolling (0-1 of scrollable area)
-    scroll_pages: Optional[float] # For page-based scrolling (e.g. 1 page, 0.5 pages)
-    # For hover:
-    # target_element_id already covered, relative_x/y also covered
+    scroll_amount_ratio: Optional[float]
+    scroll_pages: Optional[int]
+    drag_target_element_id: Optional[str]
+    drag_target_x: Optional[float]
+    drag_target_y: Optional[float]
+
+VirtualKeyboardActionType = Literal[
+    "type_string", "press_keys", "release_keys", "special_key"
+]
 
 class VirtualKeyboardCommand(TypedDict, total=False):
     action_type: Required[VirtualKeyboardActionType]
-    # For type_string:
+    target_element_id: Optional[str]
     text_to_type: Optional[str]
-    target_element_id: Optional[str] # Element to focus before typing (optional)
-    # For press_keys:
-    keys: Optional[List[str]] # List of key names (e.g., ["control", "alt", "delete"])
-    # For special_key:
-    # keys: Optional[List[str]] # e.g. ["enter"], used by press_keys for special keys too.
-                               # special_key might just use one key from the list.
-
-class VirtualInputElementDescription(TypedDict, total=False):
-    element_id: Required[str]
-    element_type: Required[str] # e.g., "button", "text_field", "label", "window", "panel", "list_item"
-    value: Optional[Any] # Current value (e.g. text in input, state of checkbox)
-    label_text: Optional[str] # Visible text label
-    is_enabled: Optional[bool]
-    is_focused: Optional[bool] # Whether this element currently has virtual focus
-    children: Optional[List['VirtualInputElementDescription']] # For nested elements
-    # Bounding box for coarse hit detection, relative to parent or window if top-level
-    # (x_ratio_start, y_ratio_start, width_ratio, height_ratio)
-    bounding_box_ratios: Optional[Tuple[float, float, float, float]]
-    properties: Optional[Dict[str, Any]] # Other type-specific properties
-
-# --- AVIS File Operation Types (New) ---
-AVISFileOperationType = Literal[
-    "read_file",
-    "write_file",
-    "list_directory"
-]
-
-class AVISFileOperationCommand(TypedDict, total=False):
-    action_type: Required[Literal["file_operation"]] # Main discriminator
-    operation: Required[AVISFileOperationType]      # "read_file", "write_file", etc.
-    path: Required[str]                             # Path to the virtual file or directory
-    content: Optional[str]                          # For "write_file"
-    # Other future params: encoding, etc.
-
-class AVISFileOperationResponse(TypedDict, total=False):
-    status: Required[Literal["success", "error_file_not_found", "error_permission_denied", "error_other"]]
-    message: Optional[str]
-    content: Optional[str]                          # For "read_file"
-    directory_listing: Optional[List[str]]          # For "list_directory"
+    keys: Optional[List[str]]
 
 
-# --- Types for AI Code Execution in AVIS ---
-class AIPermissionSet(TypedDict, total=False):
-    """
-    Defines the set of permissions for an AI operating within AVIS,
-    particularly concerning code execution and resource access.
-    """
-    can_execute_code: Required[bool]          # General permission to execute code
-    can_read_sim_hw_status: Required[bool]    # Permission to read simulated hardware status
-    allowed_execution_paths: Optional[List[str]] # Future: Specific paths AI code can run from
-    allowed_service_imports: Optional[List[str]] # Future: Python modules AI code can import
-    max_execution_time_ms: Optional[int]         # Future: Max execution time for AI-generated code
-
-class ExecutionRequest(TypedDict):
-    """
-    Represents a request to execute code, including the code itself
-    and the permissions context under which it should run.
-    """
-    request_id: str
-    code_to_execute: str
-    permissions_context: AIPermissionSet
-    # Future: Add resource_requirements: Optional[Dict[str, Any]]
-
-class ExecutionResult(TypedDict):
-    """
-    Represents the outcome of an AI code execution attempt.
-    """
-    request_id: str
-    execution_success: bool        # True if execution proceeded (even if script had errors), False if pre-execution checks failed (e.g. permissions)
-    script_exit_code: Optional[int] # Exit code of the executed script (if execution_success was True)
-    stdout: str
-    stderr: str
-    status_message: str            # e.g., "Execution denied: Insufficient permissions", "Execution completed", "Script error"
-    # Future: Add execution_time_ms: Optional[float]
-
-# --- Types for HAMMemoryManager ---
+# --- HAM (Hierarchical Associative Memory) Types ---
 class HAMDataPackageInternal(TypedDict):
-    timestamp: str
+    timestamp: str  # ISO 8601 UTC string
     data_type: str
-    encrypted_package: bytes
-    metadata: DialogueMemoryEntryMetadata
+    encrypted_package: bytes # The actual encrypted data
+    metadata: Dict[str, Any]
 
 class HAMRecallResult(TypedDict):
-    id: str
-    timestamp: str
+    id: str # Memory ID
+    timestamp: str # ISO 8601 UTC string of original storage
     data_type: str
-    rehydrated_gist: Any
-    metadata: DialogueMemoryEntryMetadata
+    rehydrated_gist: Any # Could be str for text, or other types
+    metadata: Dict[str, Any]
 
-# --- Types for LLMInterface ---
+# Potentially other HAM related types if needed by other modules
+
+# --- LLM Interface Types ---
+class LLMProviderOllamaConfig(TypedDict):
+    base_url: Required[str]
+    # Potentially other Ollama specific params like default_keep_alive, etc.
+
+class LLMProviderOpenAIConfig(TypedDict):
+    api_key: Required[str]
+    # Potentially other OpenAI specific params like organization, project_id
+
+class LLMModelInfo(TypedDict, total=False):
+    id: Required[str]           # Model ID, typically how it's called/identified
+    provider: Required[str]     # e.g., "ollama", "openai", "mock"
+    name: Optional[str]         # Human-readable name, might be same as ID or more descriptive
+    description: Optional[str]
+    modified_at: Optional[str]  # ISO 8601 timestamp
+    size_bytes: Optional[int]
+    # Future: capabilities (e.g., ["chat", "completion", "embedding"]), context_length, etc.
+
 class LLMInterfaceConfig(TypedDict, total=False):
     default_provider: Required[str]
     default_model: Required[str]
-    providers: Required[Dict[str, Any]] # e.g., {"ollama": {"base_url": "http://localhost:11434"}}
-    default_generation_params: Optional[Dict[str, Any]]
-    operational_configs: Optional[Dict[str, Any]] # Could point to OperationalConfig if that's fully defined too
-
-class LLMProviderConfigEntry(TypedDict, total=False): # Base for provider-specific configs
-    api_key_env_var: Optional[str]
-    # Add other common provider config fields here if they arise
-
-class LLMProviderOllamaConfig(LLMProviderConfigEntry): # Inherits, though Ollama doesn't use api_key_env_var typically
-    base_url: Required[str]
-    default_model: Optional[str] # Model to use if not specified in request for this provider
-    default_keep_alive: Optional[Union[str, int]] # e.g., "5m" or 300 (seconds)
-
-class LLMProviderAnthropicConfig(LLMProviderConfigEntry):
-    # anthropic_version: Optional[str] # Example if needed later
-    default_model: Optional[str]
-
-class LLMProviderOpenAIConfig(LLMProviderConfigEntry):
-    default_model: Optional[str]
-    # Add fields like 'organization_id', 'project_id' if needed by implementation
-
-class LLMModelInfo(TypedDict, total=False):
-    model_id: Required[str] # e.g., "ollama/llama2" or "openai/gpt-3.5-turbo"
-    description: Optional[str]
-    provider: Optional[str]
-    context_length: Optional[int]
-    # Add other metadata like creator, type (chat, completion), etc.
-
-# --- Formula Engine Types ---
-class FormulaConfigEntry(TypedDict):
-    name: str
-    conditions: List[str]
-    action: str
-    description: str
-    parameters: Dict[str, Any]
-    priority: int
-    enabled: bool
-    version: str
-    response_template: Optional[str]
+    providers: Required[Dict[str, Union[LLMProviderOllamaConfig, LLMProviderOpenAIConfig, Dict[str, Any]]]] # Extensible for other providers
+    default_generation_params: Optional[Dict[str, Any]] # e.g., temperature, max_tokens for all models
+    operational_configs: Optional[Dict[str, Any]] # For operational settings like timeouts specific to LLMInterface
 
 # --- Knowledge Graph Types (for ContentAnalyzerModule) ---
+class KGEntityAttributes(TypedDict, total=False):
+    start_char: int
+    end_char: int
+    is_conceptual: bool
+    source_text: str
+    rule_added: str
+    # Other attributes can be added as needed
+
 class KGEntity(TypedDict):
-    id: str
-    label: str
-    type: str
-    attributes: Dict[str, Any]
+    id: Required[str]
+    label: Required[str]
+    type: Required[str] # e.g., "ORG", "PERSON", "GPE", "LOC", "CONCEPT", etc.
+    attributes: KGEntityAttributes
+    # Optional: description: Optional[str], confidence: Optional[float]
+
+class KGRelationshipAttributes(TypedDict, total=False):
+    pattern: str # Name of the pattern or rule that extracted this
+    trigger_token: Optional[str]
+    trigger_text: Optional[str]
+    # Optional: confidence: Optional[float], sentence_id: Optional[int]
 
 class KGRelationship(TypedDict):
-    source_id: str
-    target_id: str
-    type: str
-    weight: Optional[float]
-    attributes: Dict[str, Any]
+    source_id: Required[str] # ID of the source KGEntity
+    target_id: Required[str] # ID of the target KGEntity
+    type: Required[str]      # Type of the relationship (e.g., "is_a", "works_for", verb_lemma)
+    weight: Optional[float]  # Or confidence score
+    attributes: KGRelationshipAttributes
+
+class KnowledgeGraphMetadata(TypedDict):
+    source_text_length: Required[int]
+    processed_with_model: Required[str]
+    entity_count: Required[int]
+    relationship_count: Required[int]
+    # Optional: processing_time_ms: Optional[float], source_document_id: Optional[str]
 
 class KnowledgeGraph(TypedDict):
-    entities: Dict[str, KGEntity]
-    relationships: List[KGRelationship]
-    metadata: Dict[str, Any]
+    entities: Required[Dict[str, KGEntity]]
+    relationships: Required[List[KGRelationship]]
+    metadata: Required[KnowledgeGraphMetadata]
+
+# --- Simulated Resource Types (for ResourceAwarenessService) ---
+class SimulatedDiskConfig(TypedDict):
+    space_gb: Required[float]
+    warning_threshold_percent: Required[Union[int, float]]
+    critical_threshold_percent: Required[Union[int, float]]
+    lag_factor_warning: Required[float]
+    lag_factor_critical: Required[float]
+
+class SimulatedCPUConfig(TypedDict):
+    cores: Required[int]
+    # Optional: base_clock_ghz: float, current_load_percent: float, lag_factor_high_load: float
+
+class SimulatedRAMConfig(TypedDict):
+    ram_gb: Required[float]
+    # Optional: current_usage_gb: float, lag_factor_high_usage: float
+
+class SimulatedHardwareProfile(TypedDict):
+    profile_name: Required[str]
+    disk: Required[SimulatedDiskConfig]
+    cpu: Required[SimulatedCPUConfig]
+    ram: Required[SimulatedRAMConfig]
+    gpu_available: Required[bool]
+    # Optional: gpu_name: Optional[str], gpu_vram_gb: Optional[float], network_bandwidth_mbps: Optional[float]
+
+class SimulatedResourcesRoot(TypedDict): # For the root of the YAML config file
+    simulated_hardware_profile: Required[SimulatedHardwareProfile]
 
 # --- Fact Extractor Types ---
 class UserPreferenceContent(TypedDict, total=False):
@@ -379,90 +314,67 @@ class UserPreferenceContent(TypedDict, total=False):
     preference: Required[str]
     liked: Optional[bool]
 
-class UserStatementContent(TypedDict):
-    attribute: str
-    value: str
+class UserStatementContent(TypedDict, total=False):
+    attribute: Required[str]
+    value: Required[Any]
 
-# A fallback for less structured content, though specific types are preferred.
 ExtractedFactContent = Union[UserPreferenceContent, UserStatementContent, Dict[str, Any]]
 
 class ExtractedFact(TypedDict):
-    fact_type: str # e.g., "user_preference", "user_statement"
-    content: ExtractedFactContent
-    confidence: float
+    fact_type: Required[str]
+    content: Required[ExtractedFactContent]
+    confidence: Required[float]
+
+# --- Formula Engine Types ---
+class FormulaConfigEntry(TypedDict, total=False):
+    name: Required[str]
+    conditions: Required[List[str]]
+    action: Required[str]
+    description: Optional[str]
+    parameters: Optional[Dict[str, Any]]
+    priority: Optional[int]
+    enabled: Optional[bool]
+    version: Optional[str]
+    # Other potential fields: id, tags, scope, etc.
 
 # --- Learning Manager Types ---
 class LearnedFactRecord(TypedDict, total=False):
-    """
-    Represents the metadata associated with a fact learned and stored by the LearningManager.
-    This structure is typically stored as the 'metadata' part of a HAM entry for learned facts.
-    """
-    record_id: Required[str] # Unique ID for this learning record instance
-    timestamp: Required[str] # ISO timestamp of when this record was created/processed by LearningManager
-    fact_type: Required[str] # Type of fact (e.g., "user_preference", "hsp_derived_statement")
-    confidence: Required[float] # Confidence score of this fact
-    source_text: Required[str] # Original text or representation from which fact was derived
+    # Core fields
+    record_id: Required[str]
+    timestamp: Required[str]        # ISO 8601, when this HAM record was created
+    fact_type: Required[str]
+    confidence: Required[float]
+    source_text: Optional[str]
 
-    # Optional fields depending on source and context
+    # Context from user interaction
     user_id: Optional[str]
     session_id: Optional[str]
-    source_interaction_ref: Optional[str] # e.g., a message ID, HSP envelope ID
+    source_interaction_ref: Optional[str]
 
-    # HSP-specific fields (if the fact originated from or was processed via HSP)
-    hsp_originator_ai_id: Optional[str] # The AI that originally asserted the fact
-    hsp_sender_ai_id: Optional[str]     # The AI that directly sent this fact to us via HSP
-    hsp_fact_id: Optional[str]          # The original ID of the fact from the HSP network
-    hsp_fact_timestamp_created: Optional[str] # Original creation timestamp from HSP payload
+    # HSP specific fields
+    hsp_originator_ai_id: Optional[str]
+    hsp_sender_ai_id: Optional[str]
+    hsp_fact_id: Optional[str]
+    hsp_fact_timestamp_created: Optional[str]
 
-    # Fields for conflict resolution metadata
-    supersedes_ham_records: Optional[List[str]] # List of HAM record IDs this fact supersedes
-    resolution_strategy: Optional[str]          # Strategy used for conflict resolution (e.g., "confidence_supersede_type1")
-    superseded_reason: Optional[str]            # Brief reason for superseding
-    conflicts_with_ham_records: Optional[List[str]] # List of HAM record IDs this fact contradicts
-    conflicting_values: Optional[List[str]]         # Snippets of conflicting values
-    merged_from_ham_records: Optional[List[str]]    # List of HAM record IDs this fact was merged from
-    original_values: Optional[List[Any]]            # Original values before a merge
-    merged_value: Optional[Any]                     # The result of a merge (e.g., numerical average)
-    merged_confidence: Optional[float]              # Confidence of the merged fact
+    # Conflict resolution metadata
+    resolution_strategy: Optional[str]
+    supersedes_ham_records: Optional[List[str]]
+    superseded_reason: Optional[str]
+    conflicts_with_ham_records: Optional[List[str]]
+    conflicting_values: Optional[List[str]]
+    merged_from_ham_records: Optional[List[str]]
+    original_values: Optional[List[Any]]
+    merged_value: Optional[Any]
+    merged_confidence: Optional[float]
 
-    # Semantic identifiers (often from ContentAnalyzerModule processing of HSP facts)
+    # Semantic identifiers from ContentAnalyzer
     hsp_semantic_subject: Optional[str]
     hsp_semantic_predicate: Optional[str]
-    hsp_semantic_object: Optional[Any] # Can be URI or literal
-    ca_subject_id: Optional[str]       # ContentAnalyzer's internal ID for the subject
-    ca_predicate_type: Optional[str]   # ContentAnalyzer's internal type for the predicate
-    ca_object_id: Optional[str]        # ContentAnalyzer's internal ID for the object
+    hsp_semantic_object: Optional[Any]
+    ca_subject_id: Optional[str]
+    ca_predicate_type: Optional[str]
+    ca_object_id: Optional[str]
 
-
-
-# --- ContextCore Types ---
-class ContextItemMetadata(TypedDict):
-    created_at: float # timestamp
-    updated_at: float # timestamp
-    source_module: str # e.g., "DialogueManager", "LearningManager"
-    source_interaction_id: Optional[str]
-    confidence: Optional[float]
-    tags: Optional[List[str]]
-    custom_properties: Optional[Dict[str, Any]]
-
-class ContextItem(TypedDict):
-    item_id: str # Unique ID for the context item
-    item_type: str # e.g., "fact", "dialogue_summary", "user_preference", "entity_profile"
-    content: Any # The actual data (text, structured dict, embedding vector, etc.)
-    scopes: List[str] # e.g., ["global", "user:USER_ID", "session:SESSION_ID"]
-    metadata: ContextItemMetadata
-
-class KnowledgeGraphTriple(TypedDict):
-    subject_id: str # Typically a URI or a ContextItem ID
-    predicate: str  # Typically a URI representing the relationship
-    object_id_or_literal: Union[str, Any] # URI for entity, or literal value with datatype
-    scope: str # e.g., "user:USER_ID"
-
-class RetrievedContextChunk(TypedDict):
-    item_id: str
-    content: Any
-    score: float # Relevance score
-    source_store: Literal["graph", "vector", "document", "smt"]
-    metadata: ContextItemMetadata
 
 print("common_types.py (debug version) finished definitions.")

@@ -2,16 +2,14 @@ import uvicorn # For running the app
 from fastapi import FastAPI
 from datetime import datetime
 import uuid # For generating session IDs
-from typing import List, Optional, Dict, Any # Ensuring all used typing imports are here
+from typing import List # Added to resolve NameError
 
 # Assuming src is in PYTHONPATH or this script is run from project root
 # Adjust paths as necessary if running from within services directory directly for testing
-from src.core_ai.dialogue.dialogue_manager import DialogueManager # Changed to src.core_ai
-from src.services.api_models import ( # Changed to src.services
-    UserInput, AIOutput, SessionStartRequest, SessionStartResponse,
-    HSPTaskRequestInput, HSPTaskRequestOutput, HSPTaskStatusOutput # Added HSP API models
-)
-from src.hsp.types import HSPCapabilityAdvertisementPayload # Added HSP type
+from core_ai.dialogue.dialogue_manager import DialogueManager
+from services.api_models import UserInput, AIOutput, SessionStartRequest, SessionStartResponse, HSPTaskRequestInput, HSPTaskRequestOutput, HSPTaskStatusOutput
+from src.hsp.types import HSPCapabilityAdvertisementPayload
+
 
 app = FastAPI(
     title="Unified AI Project API",
@@ -183,17 +181,7 @@ async def request_hsp_task(task_input: HSPTaskRequestInput):
     api_session_id = f"api_session_hsp_{uuid.uuid4().hex[:6]}"
     original_query_context = f"API request for capability {task_input.target_capability_id}"
 
-    interim_response_str = await dialogue_manager._dispatch_hsp_task_request(
-        capability_advertisement=selected_capability_adv,
-        request_parameters=task_input.parameters,
-        original_user_query=original_query_context,
-        user_id=api_user_id,
-        session_id=api_session_id,
-        request_type="api_initiated_hsp_task" # A new request type for clarity
-    )
-
-    # Note: The _dispatch_hsp_task_request method in DialogueManager was updated to return
-    # a tuple: (user_facing_message_str, correlation_id_or_none_on_failure)
+    # _dispatch_hsp_task_request now returns -> (user_message, correlation_id)
     user_message, correlation_id = await dialogue_manager._dispatch_hsp_task_request(
         capability_advertisement=selected_capability_adv,
         request_parameters=task_input.parameters,
@@ -204,7 +192,6 @@ async def request_hsp_task(task_input: HSPTaskRequestInput):
     )
 
     if correlation_id: # Dispatch was successful if correlation_id is returned
-        # Ensuring this block is indented
         return HSPTaskRequestOutput(
             status_message=user_message or "HSP Task request sent successfully.",
             correlation_id=correlation_id,
@@ -212,7 +199,6 @@ async def request_hsp_task(task_input: HSPTaskRequestInput):
             error=None
         )
     else: # Dispatch failed
-        # Ensuring this block is indented
         return HSPTaskRequestOutput(
             status_message=user_message or "Error: Failed to dispatch HSP task request.",
             correlation_id=None,

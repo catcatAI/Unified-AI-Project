@@ -1,307 +1,236 @@
-import threading
+# src/core_ai/service_discovery/service_discovery_module.py
+
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Optional, List, Any, TypedDict
+import threading
+from datetime import datetime, timezone
+from typing import Dict, Optional, List, Tuple
 
 from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
-from src.core_ai.trust_manager.trust_manager_module import TrustManager # Assuming path
+# Assuming TrustManager is correctly importable. If it's in the same directory, this might need adjustment
+# based on how __init__.py in trust_manager_module's folder is set up.
+# For now, direct import path as per typical project structure.
+from src.core_ai.trust_manager.trust_manager_module import TrustManager
 
 logger = logging.getLogger(__name__)
 
-class StoredCapabilityInfo(TypedDict):
-    payload: HSPCapabilityAdvertisementPayload
-    sender_ai_id: str
-    last_seen_timestamp: datetime
-    message_id: str # From the HSP envelope
-
 class ServiceDiscoveryModule:
     """
-    Manages the discovery of capabilities advertised by other AIs over HSP.
-    Integrates with TrustManager to filter and sort capabilities by trust.
-    Handles staleness of capability advertisements.
-    This module is intended to replace the previous generic service discovery.
+    Manages discovery and registry of capabilities advertised by other AIs
+    on the HSP network, integrating with a TrustManager.
+    This module is intended to handle HSPCapabilityAdvertisementPayload objects.
     """
+    DEFAULT_STALENESS_THRESHOLD_SECONDS: int = 600 # 10 minutes
 
-    def __init__(self,
-                 trust_manager: TrustManager,
-                 staleness_threshold_seconds: int = 3600 * 24,
-                 pruning_interval_seconds: int = 60 * 10): # Default 10 minutes
+    def __init__(self, trust_manager: TrustManager, staleness_threshold_seconds: Optional[int] = None):
         """
-        Initializes the HSP ServiceDiscoveryModule.
+        Initializes the ServiceDiscoveryModule for HSP capabilities.
 
         Args:
-            trust_manager: An instance of the TrustManager.
-            staleness_threshold_seconds: How long an advertisement is considered valid
-                                         without being re-advertised (default: 24 hours).
-            pruning_interval_seconds: How often to run the pruning mechanism for stale capabilities.
+            trust_manager (TrustManager): An instance of the TrustManager to use for
+                                          assessing the trustworthiness of capability advertisers.
+            staleness_threshold_seconds (Optional[int]): The duration in seconds after which
+                                                         a capability advertisement is considered stale.
+                                                         Defaults to DEFAULT_STALENESS_THRESHOLD_SECONDS.
         """
         self.trust_manager: TrustManager = trust_manager
-        self.staleness_threshold_seconds: int = staleness_threshold_seconds
-        self._capabilities_store: Dict[str, StoredCapabilityInfo] = {}
-        self._store_lock: threading.Lock = threading.Lock()
-        self._pruning_interval_seconds: int = pruning_interval_seconds
-        self._pruning_timer: Optional[threading.Timer] = None
-        self._stop_pruning_event: threading.Event = threading.Event()
+        # Stores capability_id -> (HSPCapabilityAdvertisementPayload, last_seen_datetime_utc)
+        self.known_capabilities: Dict[str, Tuple[HSPCapabilityAdvertisementPayload, datetime]] = {}
+        self.lock = threading.RLock() # For thread-safe access to known_capabilities
 
-        self._start_pruning_timer()
-        logger.info(f"HSP ServiceDiscoveryModule initialized. Staleness threshold: {self.staleness_threshold_seconds}s, Pruning interval: {self._pruning_interval_seconds}s.")
-
-    def _start_pruning_timer(self) -> None:
-        """Starts the recurring timer for pruning stale capabilities."""
-        # print(f"DEBUG SDM: _start_pruning_timer called. Stop event is set: {self._stop_pruning_event.is_set()}") # DEBUG REMOVED
-        if not self._stop_pruning_event.is_set():
-            self._pruning_timer = threading.Timer(self._pruning_interval_seconds, self._run_pruning_cycle)
-            self._pruning_timer.daemon = True  # Allow program to exit even if timer is active
-            self._pruning_timer.start()
-            logger.info(f"Pruning timer started. Next check in {self._pruning_interval_seconds} seconds.")
-        # else: # DEBUG REMOVED
-            # print(f"DEBUG SDM: _start_pruning_timer NOT starting new timer because stop event is set.") # DEBUG REMOVED
-
-
-    def _run_pruning_cycle(self) -> None:
-        """Internal method called by the timer to execute pruning and reschedule."""
-        logger.debug("Pruning cycle triggered.")
-        self._prune_stale_capabilities()
-        # Reschedule the timer for the next run, unless stop event is set
-        if not self._stop_pruning_event.is_set():
-            self._start_pruning_timer()
+        if staleness_threshold_seconds is None:
+            self.staleness_threshold_seconds: int = self.DEFAULT_STALENESS_THRESHOLD_SECONDS
         else:
-            logger.info("Pruning timer stop event detected. Not rescheduling.")
+            self.staleness_threshold_seconds: int = staleness_threshold_seconds
 
-    def stop_pruning_timer(self) -> None:
-        """Stops the active pruning timer."""
-        logger.info("Attempting to stop pruning timer...")
-        self._stop_pruning_event.set() # Signal the timer loop to stop
-        if self._pruning_timer and self._pruning_timer.is_alive():
-            self._pruning_timer.cancel() # Cancel the current wait
-            logger.info("Pruning timer cancelled.")
-        self._pruning_timer = None
-
+        logger.info(
+            "HSP ServiceDiscoveryModule initialized. Staleness threshold: %d seconds.",
+            self.staleness_threshold_seconds
+        )
 
     def process_capability_advertisement(
         self,
-        capability_payload: HSPCapabilityAdvertisementPayload,
-        sender_ai_id: str,
-        full_envelope: HSPMessageEnvelope
+        payload: HSPCapabilityAdvertisementPayload,
+        sender_ai_id: str,  # The direct sender from the HSP envelope
+        envelope: HSPMessageEnvelope # Full envelope for context if needed
     ) -> None:
         """
-        Processes an incoming capability advertisement from the HSPConnector.
-        Stores or updates the capability in the internal store.
-        This method is expected to be called by the HSPConnector's callback.
+        Processes an incoming HSPCapabilityAdvertisementPayload.
+        Stores or updates the capability in the registry with a 'last_seen' timestamp.
+
+        Args:
+            payload (HSPCapabilityAdvertisementPayload): The capability advertisement data.
+            sender_ai_id (str): The AI ID of the direct sender of this message.
+                                (May or may not be the same as payload.get('ai_id')).
+            envelope (HSPMessageEnvelope): The full message envelope.
         """
-        if not capability_payload: # Catches None and also {} because empty dict is falsy
-            logger.warning("Received empty capability_payload. Ignoring.")
+        capability_id = payload.get('capability_id')
+        advertiser_ai_id = payload.get('ai_id') # The AI actually offering the capability
+
+        if not capability_id:
+            logger.error("Received capability advertisement with no capability_id. Discarding. Payload: %s", payload)
             return
 
-        capability_id = capability_payload.get('capability_id')
-        advertised_ai_id = capability_payload.get('ai_id')
-        name = capability_payload.get('name')
-        description = capability_payload.get('description')
-        version = capability_payload.get('version')
-        availability_status = capability_payload.get('availability_status')
-
-        if not all([capability_id, advertised_ai_id, name, description, version, availability_status]):
-            logger.warning(f"Received capability advertisement from {sender_ai_id} with missing essential fields (capability_id, ai_id, name, description, version, or availability_status). Payload: {capability_payload}. Ignoring.")
+        if not advertiser_ai_id:
+            logger.error("Received capability advertisement (ID: %s) with no 'ai_id' (advertiser AI ID) in payload. Discarding. Payload: %s", capability_id, payload)
             return
 
-        if advertised_ai_id != sender_ai_id:
-            logger.warning(f"Capability advertisement {capability_id} from sender '{sender_ai_id}' has mismatched 'ai_id' ('{advertised_ai_id}') in payload. Using sender_ai_id from envelope as the source of truth.")
+        # Optional: Could use sender_ai_id for additional trust checks or logging if different from advertiser_ai_id
+        # For now, the primary identifier for trust is the advertiser_ai_id from the payload.
 
-        current_time = datetime.now(timezone.utc)
-        message_id = full_envelope.get('message_id', 'unknown_message_id')
-
-        stored_info = StoredCapabilityInfo(
-            payload=capability_payload,
-            sender_ai_id=sender_ai_id,
-            last_seen_timestamp=current_time,
-            message_id=message_id
-        )
-
-        with self._store_lock:
-            if capability_id in self._capabilities_store:
-                old_stored_info = self._capabilities_store[capability_id]
-                logger.info(
-                    f"Updating existing capability advertisement: '{name}' (ID: {capability_id}) from AI '{sender_ai_id}'. "
-                    f"Old version: {old_stored_info['payload'].get('version')}, New version: {version}. "
-                    f"Old status: {old_stored_info['payload'].get('availability_status')}, New status: {availability_status}."
-                )
-            else:
-                logger.info(
-                    f"Processed new capability advertisement: '{name}' (ID: {capability_id}, Version: {version}) "
-                    f"from AI '{sender_ai_id}'. Availability: {availability_status}."
-                )
-            self._capabilities_store[capability_id] = stored_info
-
-        # Original log message can be removed or kept if it adds value.
-        # For now, let's remove it as the new logs are more specific.
-        # logger.info(f"Processed capability advertisement: '{name}' (ID: {capability_id}, Version: {version}) from AI '{sender_ai_id}'. Availability: {availability_status}.")
-
-    def _is_stale(self, stored_capability: StoredCapabilityInfo, current_time: datetime) -> bool:
-        """Checks if a stored capability is stale."""
-        if not stored_capability or not stored_capability.get('last_seen_timestamp'):
-            return True
-        age = current_time - stored_capability['last_seen_timestamp']
-        return age.total_seconds() > self.staleness_threshold_seconds
+        with self.lock:
+            current_time = datetime.now(timezone.utc)
+            self.known_capabilities[capability_id] = (payload, current_time)
+            logger.info(
+                "Processed capability advertisement for ID: %s from AI: %s (Sender: %s). Last seen updated to: %s.",
+                capability_id, advertiser_ai_id, sender_ai_id, current_time.isoformat()
+            )
 
     def find_capabilities(
         self,
-        capability_name_filter: Optional[str] = None,
         capability_id_filter: Optional[str] = None,
+        capability_name_filter: Optional[str] = None,
         tags_filter: Optional[List[str]] = None,
         min_trust_score: Optional[float] = None,
-        sort_by_trust: bool = True,
-        exclude_unavailable: bool = True
+        sort_by_trust: bool = False
     ) -> List[HSPCapabilityAdvertisementPayload]:
         """
-        Finds capabilities based on various filters and sorts them.
+        Finds registered capabilities based on specified filters, excluding stale entries.
+        A capability is considered stale if its 'last_seen' timestamp is older than
+        the configured 'staleness_threshold_seconds'.
+
+        Args:
+            capability_id_filter: Filter by exact capability ID.
+            capability_name_filter: Filter by exact capability name.
+            tags_filter: Filter by capabilities that include ALL specified tags.
+            min_trust_score: Filter by capabilities from AIs with at least this trust score.
+            sort_by_trust: If True, sort results by trust score in descending order.
+
+        Returns:
+            A list of HSPCapabilityAdvertisementPayload objects matching the criteria.
         """
-        with self._store_lock:
-            candidate_infos: List[StoredCapabilityInfo] = list(self._capabilities_store.values())
+        # Tuples of (payload, trust_score) for potential sorting
+        pre_results: List[Tuple[HSPCapabilityAdvertisementPayload, float]] = []
 
         current_time = datetime.now(timezone.utc)
-        results_with_scores: List[Tuple[HSPCapabilityAdvertisementPayload, float]] = []
 
-        for stored_info in candidate_infos:
-            if self._is_stale(stored_info, current_time):
-                logger.debug(f"Capability ID {stored_info['payload'].get('capability_id')} is stale. Skipping.")
-                continue
+        with self.lock:
+            # Iterate over a copy of values in case of concurrent modification (though less likely here)
+            # No, iterate items to get capability_id for logging if needed.
+            # capabilities_to_check = list(self.known_capabilities.values())
+            # Iterate items to get capability_id for logging if needed.
+            capabilities_to_iterate = list(self.known_capabilities.items())
 
-            payload = stored_info['payload']
 
-            if exclude_unavailable and payload.get('availability_status') != 'online':
-                logger.debug(f"Capability ID {payload.get('capability_id')} is not 'online' ({payload.get('availability_status')}). Skipping due to exclude_unavailable=True.")
-                continue
-
-            if capability_id_filter and payload.get('capability_id') != capability_id_filter:
-                continue
-
-            if capability_name_filter and (payload.get('name') is None or payload.get('name', '').lower() != capability_name_filter.lower()):
-                continue
-
-            if tags_filter:
-                payload_tags = payload.get('tags', [])
-                if not all(tag.lower() in (pt.lower() for pt in payload_tags) for tag in tags_filter):
+            for capability_id, (payload, last_seen) in capabilities_to_iterate:
+                # --- Staleness Check ---
+                age_seconds = (current_time - last_seen).total_seconds()
+                if age_seconds > self.staleness_threshold_seconds:
+                    logger.debug(
+                        "Skipping stale capability ID: %s from AI: %s (age: %.2fs, threshold: %ds)",
+                        capability_id, payload.get('ai_id'), age_seconds, self.staleness_threshold_seconds
+                    )
                     continue
 
-            advertiser_ai_id = stored_info['sender_ai_id']
-            trust_score = self.trust_manager.get_trust_score(advertiser_ai_id)
+                # Apply capability_id_filter
+                if capability_id_filter and capability_id != capability_id_filter: # Use capability_id from item key
+                    continue
 
-            if min_trust_score is not None and trust_score < min_trust_score:
-                continue
+                # Apply capability_name_filter
+                if capability_name_filter and payload.get('name') != capability_name_filter:
+                    continue
 
-            results_with_scores.append((payload, trust_score))
+                # Apply tags_filter (must match ALL tags in filter)
+                if tags_filter:
+                    capability_tags = payload.get('tags', [])
+                    if not capability_tags or not all(tag in capability_tags for tag in tags_filter):
+                        continue
 
+                advertiser_ai_id = payload.get('ai_id')
+                if not advertiser_ai_id: # Should not happen if process_capability_advertisement validates
+                    logger.warning("Found capability with no advertiser_ai_id during find: %s. Skipping.", payload.get('capability_id'))
+                    continue
+
+                trust_score = self.trust_manager.get_trust_score(advertiser_ai_id)
+
+                # Apply min_trust_score filter
+                if min_trust_score is not None and trust_score < min_trust_score:
+                    continue
+
+                pre_results.append((payload, trust_score))
+
+        # Sort if requested
         if sort_by_trust:
-            results_with_scores.sort(key=lambda item: item[1], reverse=True)
+            pre_results.sort(key=lambda item: item[1], reverse=True) # Sort by trust_score descending
 
-        final_results = [item[0] for item in results_with_scores]
-        logger.debug(f"find_capabilities query returned {len(final_results)} results.")
+        # Extract just the payloads for the final list
+        final_results = [payload for payload, _ in pre_results]
+
+        logger.info("Found %d capabilities matching criteria. ID_filter: %s, Name_filter: %s, Tags_filter: %s, Min_trust: %s",
+                    len(final_results), capability_id_filter, capability_name_filter, tags_filter, min_trust_score)
         return final_results
 
-    def get_capability_by_id(self, capability_id: str, exclude_unavailable: bool = False) -> Optional[HSPCapabilityAdvertisementPayload]:
+    def get_capability_by_id(self, capability_id: str) -> Optional[HSPCapabilityAdvertisementPayload]:
         """
-        Retrieves a specific capability by its unique ID.
+        Retrieves a specific capability by its ID.
+        Returns None if the capability is not found or if it is considered stale
+        (i.e., its 'last_seen' timestamp is older than 'staleness_threshold_seconds').
+
+        Args:
+            capability_id (str): The unique ID of the capability to retrieve.
+
+        Returns:
+            Optional[HSPCapabilityAdvertisementPayload]: The capability payload if found and not stale,
+                                                         otherwise None.
         """
-        with self._store_lock:
-            stored_info = self._capabilities_store.get(capability_id)
+        with self.lock:
+            capability_entry = self.known_capabilities.get(capability_id)
+            if capability_entry:
+                payload, last_seen = capability_entry
+                current_time = datetime.now(timezone.utc)
+                age_seconds = (current_time - last_seen).total_seconds()
 
-        if not stored_info:
-            logger.debug(f"Capability ID '{capability_id}' not found in store.")
-            return None
+                if age_seconds > self.staleness_threshold_seconds:
+                    logger.info( # INFO level as this might be directly requested and user should know it's stale
+                        "Capability ID '%s' from AI: %s found but is stale (age: %.2fs, threshold: %ds). Returning None.",
+                        capability_id, payload.get('ai_id'), age_seconds, self.staleness_threshold_seconds
+                    )
+                    return None
 
-        current_time = datetime.now(timezone.utc)
-        if self._is_stale(stored_info, current_time):
-            logger.info(f"Capability ID '{capability_id}' found but is stale. Not returning.")
-            return None
-
-        payload = stored_info['payload']
-        if exclude_unavailable and payload.get('availability_status') != 'online':
-            logger.debug(f"Capability ID {payload.get('capability_id')} is not 'online' ({payload.get('availability_status')}). Not returning due to exclude_unavailable=True.")
-            return None
-
-        logger.debug(f"Capability ID '{capability_id}' found and is valid.")
-        return payload
-
-    def get_all_capabilities(self, exclude_stale: bool = True, exclude_unavailable: bool = False) -> List[HSPCapabilityAdvertisementPayload]:
-        """
-        Returns all known capabilities, optionally filtering out stale or unavailable ones.
-        """
-        with self._store_lock:
-            all_stored_infos: List[StoredCapabilityInfo] = list(self._capabilities_store.values())
-
-        current_time = datetime.now(timezone.utc)
-        results: List[HSPCapabilityAdvertisementPayload] = []
-
-        for stored_info in all_stored_infos:
-            if exclude_stale and self._is_stale(stored_info, current_time):
-                continue
-
-            payload = stored_info['payload']
-            if exclude_unavailable and payload.get('availability_status') != 'online':
-                continue
-
-            results.append(payload)
-
-        logger.debug(f"get_all_capabilities returned {len(results)} capabilities.")
-        return results
-
-    def _prune_stale_capabilities(self) -> None:
-        """
-        Removes stale capabilities from the store.
-        This method is now called periodically by the pruning timer.
-        """
-        with self._store_lock:
-            current_time = datetime.now(timezone.utc)
-            stale_ids = [
-                cap_id for cap_id, stored_info in list(self._capabilities_store.items())
-                if self._is_stale(stored_info, current_time)
-            ]
-            if stale_ids:
-                logger.info(f"Found {len(stale_ids)} stale capabilities to prune.")
-                for cap_id in stale_ids:
-                    try:
-                        del self._capabilities_store[cap_id]
-                        logger.debug(f"Successfully pruned stale capability ID: {cap_id}")
-                    except KeyError:
-                        logger.warning(f"Attempted to prune capability ID {cap_id} but it was already removed (possibly by a concurrent operation, though unlikely with current locking).")
-                logger.info(f"Finished pruning. Total {len(stale_ids)} stale capabilities removed.")
+                logger.debug("Capability ID '%s' found and not stale. Last seen: %s", capability_id, last_seen.isoformat())
+                return payload
             else:
-                logger.debug("No stale capabilities found to prune.")
+                logger.debug("Capability ID '%s' not found in known capabilities.", capability_id)
+                return None
 
 if __name__ == '__main__':
+    # Basic test/example of instantiation (requires a mock TrustManager)
     class MockTrustManager(TrustManager):
+        def __init__(self):
+            super().__init__() # Call parent __init__ if it has one and it's needed
+            logger.info("MockTrustManager initialized for SDM example.")
         def get_trust_score(self, ai_id: str) -> float:
-            if ai_id == "did:hsp:trusted_ai": return 0.9
-            elif ai_id == "did:hsp:untrusted_ai": return 0.1
-            return 0.5
+            return 0.5 # Default mock score
+        def update_trust_score(self, ai_id: str, new_absolute_score: Optional[float] = None, change_reason: Optional[str] = None, interaction_quality: Optional[float] = None):
+            pass
 
-    mock_trust_manager = MockTrustManager()
-    sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=60, pruning_interval_seconds=30)
+    mock_tm = MockTrustManager()
+    sdm_instance = ServiceDiscoveryModule(trust_manager=mock_tm)
+    logger.info(f"ServiceDiscoveryModule instance created: {sdm_instance}")
+    logger.info(f"Known capabilities initially: {sdm_instance.known_capabilities}")
 
-    cap_adv1_payload: HSPCapabilityAdvertisementPayload = {
-        "capability_id": "translator_v1", "ai_id": "did:hsp:trusted_ai", "name": "Fast Translator",
-        "description": "Translates text fast.", "version": "1.0", "availability_status": "online",
-        "tags": ["translation", "nlp"]
-    }
-    cap_adv1_envelope: HSPMessageEnvelope = {
-        "hsp_envelope_version": "0.1", "message_id": "msg1", "sender_ai_id": "did:hsp:trusted_ai",
-        "recipient_ai_id": "hsp/capabilities/advertisements", "timestamp_sent": datetime.now(timezone.utc).isoformat(),
-        "message_type": "HSP::CapabilityAdvertisement_v0.1", "protocol_version": "0.1.1",
-        "communication_pattern": "publish", "payload": cap_adv1_payload
-    } # type: ignore
+    # Example of how process_capability_advertisement might be called (method not yet implemented)
+    sample_cap_payload = HSPCapabilityAdvertisementPayload(
+        capability_id="test_cap_001",
+        ai_id="did:hsp:test_advertiser_ai",
+        name="Test Capability",
+        description="A capability for testing.",
+        version="1.0",
+        availability_status="online",
+        # other fields as required by HSPCapabilityAdvertisementPayload
+    )
+    # sdm_instance.process_capability_advertisement(sample_cap_payload, "did:hsp:test_advertiser_ai", {}) # type: ignore
+    # logger.info(f"Known capabilities after hypothetical advertisement: {sdm_instance.known_capabilities}")
 
-    logging.basicConfig(level=logging.INFO)
-    logger.info("--- Testing HSP ServiceDiscoveryModule with Pruning ---")
-    sdm.process_capability_advertisement(cap_adv1_payload, cap_adv1_envelope['sender_ai_id'], cap_adv1_envelope)
-    logger.info(f"Initial capabilities: {len(sdm.get_all_capabilities(exclude_stale=False))}")
-
-    try:
-        logger.info("Waiting for pruning cycles (e.g., >60s for staleness, pruning every 30s)...")
-        # time.sleep(70) # Example: wait for it to become stale and pruned
-        # logger.info(f"Capabilities after waiting: {len(sdm.get_all_capabilities(exclude_stale=False))}")
-        # Add assertions here based on expected pruning
-        # This manual test part needs actual waiting or more sophisticated timer control in tests.
-        print("Example __main__ finished. Timer thread will exit if daemon=True.")
-    finally:
-        sdm.stop_pruning_timer() # Important to stop the timer
-        logger.info("Pruning timer stopped by __main__.")
+    # Example of find_capabilities (method not yet implemented)
+    # found_caps = sdm_instance.find_capabilities(capability_name_filter="Test Capability")
+    # logger.info(f"Found capabilities: {found_caps}")
