@@ -402,6 +402,16 @@ class TestHAMMemoryManager(unittest.TestCase):
         self.assertAlmostEqual(self.ham_manager_no_res._get_current_disk_usage_gb(), expected_gb, places=9)
         print("test_16_get_current_disk_usage_gb PASSED")
 
+    def test_17_query_core_memory_return_multiple_candidates(self):
+        print("\nRunning test_17_query_core_memory_return_multiple_candidates...")
+        ham = self.ham_manager
+        for i in range(10):
+            ham.store_experience(f"Candidate test item {i}", "candidate_test", {})
+
+        results = ham.query_core_memory(data_type_filter="candidate_test", limit=5, return_multiple_candidates=True)
+        self.assertEqual(len(results), 5)
+        print("test_17_query_core_memory_return_multiple_candidates PASSED")
+
 if __name__ == '__main__':
     os.makedirs(TEST_STORAGE_DIR, exist_ok=True)
     print(f"HAM Test: Current working directory: {os.getcwd()}")
