@@ -4,6 +4,7 @@ from typing import List, Dict, Optional, Any
 # Assuming 'src' is in PYTHONPATH, making 'services' and 'shared' top-level packages
 from services.llm_interface import LLMInterface, LLMInterfaceConfig
 from shared.types.common_types import CritiqueResult
+from core_ai.lis.tonal_repair_engine import TonalRepairEngine
 
 
 class SelfCritiqueModule:
@@ -11,6 +12,7 @@ class SelfCritiqueModule:
         self.llm_interface = llm_interface
         self.operational_config = operational_config or {}
         self.default_critique_timeout = self.operational_config.get("timeouts", {}).get("llm_critique_request", 45)
+        self.repair_engine = TonalRepairEngine()
         print(f"SelfCritiqueModule initialized. Default critique timeout: {self.default_critique_timeout}s")
 
     def _construct_critique_prompt(self, user_input: str, ai_response: str, context_history: List[Dict[str, str]]) -> str:
@@ -70,6 +72,10 @@ class SelfCritiqueModule:
             }
             # Normalize score to be between 0 and 1 if it's outside for some reason
             critique_result["score"] = max(0.0, min(1.0, critique_result["score"]))
+
+            if critique_result["score"] < 0.5:
+                repaired_text = self.repair_engine.repair_output(ai_response, [critique_result["reason"]])
+                critique_result["suggested_alternative"] = repaired_text
 
             print(f"SelfCritiqueModule: Parsed critique: {critique_result}")
             return critique_result
