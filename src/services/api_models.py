@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Literal # Added Literal
 from pydantic import BaseModel
 
 class UserInput(BaseModel):
@@ -15,7 +15,7 @@ class AIOutput(BaseModel):
 class SessionStartRequest(BaseModel):
     user_id: Optional[str] = None
 
-from typing import Optional, Dict, Any, Literal # Added Dict, Any, Literal
+from typing import Optional, Dict, Any # Added Dict, Any
 from pydantic import BaseModel, Field # Added Field
 
 class SessionStartResponse(BaseModel):

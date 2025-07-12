@@ -1,5 +1,4 @@
 import json
-import re
 from typing import List, Dict, Optional, Any
 
 # Assuming 'src' is in PYTHONPATH, making 'services' and 'shared' top-level packages
@@ -49,20 +48,12 @@ class SelfCritiqueModule:
 
         print(f"SelfCritiqueModule: Sending prompt to LLM for critique:\n---\n{prompt}\n---")
 
-        llm_critique_str = self.llm_interface.generate_response(prompt, model_name="gemini-1.5-flash-latest") # Suggests a specific model might be better
+        llm_critique_str = self.llm_interface.generate_response(prompt, model_name="critique_model_placeholder") # Suggests a specific model might be better
 
         print(f"SelfCritiqueModule: Received raw critique from LLM:\n---\n{llm_critique_str}\n---")
 
         try:
-            # Attempt to extract JSON from a markdown code block first
-            json_match = re.search(r"```json\s*([\s\S]*?)\s*```", llm_critique_str)
-            if json_match:
-                json_content = json_match.group(1).strip()
-            else:
-                # If no markdown block, assume the whole response is JSON
-                json_content = llm_critique_str.strip()
-
-            parsed_critique = json.loads(json_content)
+            parsed_critique = json.loads(llm_critique_str)
 
             # Validate structure (basic check)
             if not all(k in parsed_critique for k in ["score", "reason"]):
