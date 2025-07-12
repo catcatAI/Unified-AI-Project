@@ -276,7 +276,7 @@ class HAMMemoryManager:
                     serializable_store[mem_id] = {
                         "timestamp": data_pkg["timestamp"],
                         "data_type": data_pkg["data_type"],
-                        "encrypted_package_b64": data_pkg["encrypted_package"].decode('latin-1'), # latin-1 for bytes
+                        "encrypted_package_b64": data_pkg["encrypted_package"].decode('ascii'), # Changed to ascii
                         "metadata": data_pkg.get("metadata", {})
                     }
                 json.dump({"next_memory_id": self.next_memory_id, "store": serializable_store}, f, indent=2)
@@ -303,7 +303,7 @@ class HAMMemoryManager:
                     self.core_memory_store[mem_id] = {
                         "timestamp": data_pkg_b64["timestamp"],
                         "data_type": data_pkg_b64["data_type"],
-                        "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('latin-1'),
+                        "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('ascii'), # Changed to ascii
                         "metadata": data_pkg_b64.get("metadata", {})
                     }
             print(f"Core memory loaded from {self.core_storage_filepath}. Next ID: {self.next_memory_id}")

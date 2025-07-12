@@ -519,59 +519,64 @@ class HAMLISCache(LISCacheInterface):
                                event_details: LIS_SemanticAnomalyDetectedEvent,
                                top_n: int = 3
                                ) -> List[LIS_IncidentRecord]:
-        print(f"Conceptual: HAMLISCache.find_related_incidents for event {event_details.get('anomaly_id')}")
+        # print(f"Conceptual: HAMLISCache.find_related_incidents for event {event_details.get('anomaly_id')}") # Removed conceptual print
 
-        metadata_filters: Dict[str, Any] = {}
-        if for_anomaly_type:
-            metadata_filters[HAM_META_ANTIBODY_FOR_ANOMALY] = for_anomaly_type
+        new_event_anomaly_type = event_details.get("anomaly_type")
+        new_event_context_tags = event_details.get("context_tags")
 
-        fetch_limit = limit * 3 if limit < 100 else limit + 50
+        if not new_event_anomaly_type:
+            print("HAMLISCache: Cannot find related incidents without anomaly_type in event_details.")
+            return []
 
-        ham_recall_results = self.ham_manager.query_core_memory(
-            metadata_filters=metadata_filters,
-            data_type_filter=LIS_ANTIBODY_DATA_TYPE_PREFIX,
-            limit=fetch_limit,
-            sort_by_timestamp_desc=False
+        # Initial query based on the same anomaly type.
+        # query_incidents already handles deserialization and some filtering.
+        # We might fetch more than top_n initially if we apply more sophisticated scoring later.
+        # For now, let's rely on query_incidents' limit and sorting.
+
+        # Fetch a larger batch initially to allow for tag-based filtering if needed,
+        # and ensure we have enough candidates before slicing to top_n.
+        # The query_incidents method itself has a 'limit' parameter.
+        initial_fetch_limit = top_n * 5 # Fetch more to filter by tags
+
+        candidate_incidents = self.query_incidents(
+            anomaly_type=new_event_anomaly_type,
+            limit=initial_fetch_limit,
+            sort_by_timestamp_desc=True # Get most recent ones first
         )
 
-        antibodies: List[NarrativeAntibodyObject] = []
-        for ham_result in ham_recall_results:
-            serialized_antibody = ham_result.get("rehydrated_gist")
-            processed_antibody: Optional[NarrativeAntibodyObject] = None
+        if not candidate_incidents:
+            return []
 
-            if isinstance(serialized_antibody, str):
-                try:
-                    processed_antibody = json.loads(serialized_antibody) # type: ignore
-                except json.JSONDecodeError:
-                    print(f"Warning: Skipping malformed LIS antibody record (str) from HAM (ID: {ham_result.get('id')})")
-                    continue
-            elif isinstance(serialized_antibody, dict): # If HAM already deserialized
-                processed_antibody = cast(NarrativeAntibodyObject, serialized_antibody)
-            else:
-                print(f"Warning: Skipping antibody record with unexpected data type in gist (ID: {ham_result.get('id')})")
-                continue
+        # Further refine by context_tags if provided
+        filtered_incidents: List[LIS_IncidentRecord] = []
+        if new_event_context_tags and isinstance(new_event_context_tags, list) and len(new_event_context_tags) > 0:
+            for incident in candidate_incidents:
+                incident_tags = incident.get("tags")
+                if incident_tags and isinstance(incident_tags, list):
+                    # Check for any shared tags
+                    if any(tag in incident_tags for tag in new_event_context_tags):
+                        filtered_incidents.append(incident)
+            # If tag filtering yielded results, use them. Otherwise, fall back to all candidates of the same anomaly_type.
+            # This ensures we always return something if there are type matches, even if no tag matches.
+            if not filtered_incidents and candidate_incidents: # If tag filtering produced nothing, but type matches exist
+                 # Fallback: if no tag matches, consider all type matches up to top_n
+                 # This behavior might need refinement based on desired strictness.
+                 # For now, let's say if tags are specified, we prefer tag matches.
+                 # If no tag matches, but type matches exist, we could return those or an empty list.
+                 # Let's stick to returning only tag-matched if tags were provided in the event.
+                 # If no tags in event, then all candidates are fine.
+                 pass # filtered_incidents will be used
+            elif not new_event_context_tags: # No tags to filter by in the event
+                filtered_incidents = candidate_incidents
 
-            if not processed_antibody: # Should not happen if above logic is correct
-                continue
+        else: # No tags in the new event, so all candidates matching anomaly_type are relevant
+            filtered_incidents = candidate_incidents
 
-            # Post-filter: min_effectiveness
-            if min_effectiveness is not None:
-                effectiveness = processed_antibody.get("effectiveness_score")
-                if effectiveness is None or effectiveness < min_effectiveness:
-                    continue
+        # The `query_incidents` method should already sort by timestamp_logged desc.
+        # If further sorting or scoring were needed (e.g., by number of matching tags), it would happen here.
+        # For now, recency is the primary sort key from query_incidents.
 
-            # Post-filter: for_anomaly_type (if antibody targets multiple types and only primary was in HAM metadata)
-            if for_anomaly_type:
-                target_types = processed_antibody.get("target_anomaly_types", [])
-                if not isinstance(target_types, list) or for_anomaly_type not in target_types:
-                    continue # This antibody, despite matching primary type in HAM, doesn't list this specific type.
-
-            antibodies.append(processed_antibody)
-
-        # Sort by effectiveness (descending), then by creation timestamp (descending) as a tie-breaker
-        antibodies.sort(key=lambda ab: (ab.get("effectiveness_score", 0.0), ab.get("timestamp_created", "")), reverse=True)
-
-        return antibodies[:limit]
+        return filtered_incidents[:top_n]
 
     def get_learned_antibodies(self,
                                for_anomaly_type: Optional[LIS_AnomalyType] = None,
@@ -639,13 +644,10 @@ class HAMLISCache(LISCacheInterface):
                     if for_anomaly_type:
                         target_types = antibody.get("target_anomaly_types", [])
                         if not isinstance(target_types, list) or for_anomaly_type not in target_types:
-                            # If HAM_META_ANTIBODY_FOR_ANOMALY stored only primary, this check ensures true multi-target match
-                            # If HAM_META_ANTIBODY_FOR_ANOMALY stored the exact 'for_anomaly_type', this check is redundant for that part
-                            # but good if an antibody object itself lists multiple targets.
-                            # For now, add_antibody stores primary_target_type in HAM_META_ANTIBODY_FOR_ANOMALY.
-                            # So, if for_anomaly_type was used in initial HAM query, this re-check might be for multi-target antibodies.
-                            # Let's assume the initial HAM filter is sufficient for primary target type.
-                            pass # No further filtering needed if initial query used for_anomaly_type correctly.
+                            # If HAM_META_ANTIBODY_FOR_ANOMALY stored only primary, this check ensures true multi-target match.
+                            # If the specific for_anomaly_type is not in the antibody's own list of target_anomaly_types,
+                            # then it's not a valid match for this query, even if its primary HAM metadata tag matched.
+                            continue # Skip this antibody
 
 
                     antibodies.append(antibody)
@@ -672,53 +674,65 @@ class HAMLISCache(LISCacheInterface):
                                notes: Optional[str] = None,
                                intervention_report: Optional[LIS_InterventionReport] = None
                                ) -> bool:
-        print(f"Conceptual: HAMLISCache.update_incident_status for {incident_id} to {new_status}")
+        # print(f"Conceptual: HAMLISCache.update_incident_status for {incident_id} to {new_status}") # Removed conceptual print
 
-        antibody_id = antibody.get("antibody_id")
-        if not antibody_id:
-            print("Error: NarrativeAntibodyObject is missing 'antibody_id'. Cannot store.")
+        incident_record = self.get_incident_by_id(incident_id)
+        if not incident_record:
+            print(f"HAMLISCache: Incident '{incident_id}' not found for update.")
             return False
 
-        # Construct data_type, potentially using the first target_anomaly_type if available
-        target_anomalies = antibody.get("target_anomaly_types", [])
-        primary_target_type = target_anomalies[0] if target_anomalies else "GENERIC_ANTIBODY"
-        data_type = f"{LIS_ANTIBODY_DATA_TYPE_PREFIX}{primary_target_type}"
+        # Update the incident record object
+        incident_record["status"] = new_status
+        incident_record["timestamp_last_updated"] = datetime.now(timezone.utc).isoformat()
 
-        ham_metadata = {
-            HAM_META_LIS_OBJECT_ID: antibody_id,
-            # Storing a list in HAM metadata might be tricky for querying depending on HAM impl.
-            # For now, let's store the primary target type or a join of types.
-            # A more robust solution might involve separate indexed entries or specific HAM query capabilities.
-            HAM_META_ANTIBODY_FOR_ANOMALY: primary_target_type, # Or json.dumps(target_anomalies)
-            HAM_META_ANTIBODY_EFFECTIVENESS: antibody.get("effectiveness_score"),
-            HAM_META_TIMESTAMP_LOGGED: antibody.get("timestamp_created", datetime.now(timezone.utc).isoformat()) # Use common_types timestamp
-        }
+        if notes:
+            # LIS_IncidentRecord has analysis_and_resolution: Optional[LIS_AnalysisAndResolution]
+            # LIS_AnalysisAndResolution has resolution_notes: Optional[str]
+            if "analysis_and_resolution" not in incident_record or incident_record["analysis_and_resolution"] is None:
+                incident_record["analysis_and_resolution"] = {
+                    "analysis_summary": "", # Ensure all required fields of LIS_AnalysisAndResolution are present
+                    "identified_root_causes": [],
+                    "proposed_solutions": [],
+                    "resolution_strategy_applied": None,
+                    "resolution_notes": notes, # Set new notes
+                    "outcome_assessment": None
+                }
+            else:
+                # Ensure analysis_and_resolution is not None before trying to update sub-fields
+                analysis_res = incident_record["analysis_and_resolution"]
+                if analysis_res is not None: # Should not be None if the above 'if' was false
+                    if analysis_res.get("resolution_notes"):
+                        analysis_res["resolution_notes"] += f"\n---\n{notes}" # Append notes
+                    else:
+                        analysis_res["resolution_notes"] = notes
+                else: # Should ideally not happen if logic is correct
+                     incident_record["analysis_and_resolution"] = {
+                        "analysis_summary": "", "identified_root_causes": [], "proposed_solutions": [],
+                        "resolution_strategy_applied": None, "resolution_notes": notes, "outcome_assessment": None
+                    }
 
-        # Add other queryable fields from antibody to metadata if needed, e.g., version
-        if antibody.get("version") is not None:
-            ham_metadata["lis_antibody_version"] = antibody.get("version")
 
-        # Remove None values from metadata
-        ham_metadata = {k: v for k, v in ham_metadata.items() if v is not None}
+        if intervention_report:
+            if "intervention_reports" not in incident_record or incident_record["intervention_reports"] is None:
+                incident_record["intervention_reports"] = [intervention_report]
+            else:
+                # Ensure intervention_reports is a list before appending
+                if isinstance(incident_record["intervention_reports"], list):
+                    incident_record["intervention_reports"].append(intervention_report)
+                else: # If it was something else, overwrite with a new list
+                    incident_record["intervention_reports"] = [intervention_report]
 
-        try:
-            serialized_antibody = json.dumps(antibody)
-        except TypeError as e:
-            print(f"Error serializing NarrativeAntibodyObject for HAM: {e}")
-            return False
-
-        mem_id = self.ham_manager.store_experience(
-            raw_data=serialized_antibody,
-            data_type=data_type,
-            metadata=ham_metadata
-        )
-
-        if mem_id:
-            print(f"HAMLISCache: Stored antibody '{antibody_id}' with HAM ID '{mem_id}' and data_type '{data_type}'.")
-            return True
+        # Re-store the updated incident. This will create a new HAM entry.
+        # The LIS system will then need to rely on querying by lis_object_id (incident_id)
+        # and potentially sorting by timestamp_last_updated or HAM's internal timestamp
+        # to get the most current version of the incident.
+        store_success = self.store_incident(incident_record)
+        if store_success:
+            print(f"HAMLISCache: Successfully updated (re-stored) incident '{incident_id}'. New status: {new_status}.")
         else:
-            print(f"HAMLISCache: Failed to store antibody '{antibody_id}' in HAM.")
-            return False
+            print(f"HAMLISCache: Failed to re-store updated incident '{incident_id}'.")
+
+        return store_success
 
     def add_antibody(self, antibody: NarrativeAntibodyObject) -> bool:
         """

@@ -95,10 +95,16 @@ class TestHSPServiceDiscoveryModule(unittest.TestCase):
 
 
     def test_process_capability_advertisement_valid(self):
-        self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope)
+        with self.assertLogs(logger='src.core_ai.service_discovery.service_discovery_module', level='INFO') as cm:
+            self.sdm.process_capability_advertisement(self.cap_adv1_payload, self.cap_adv1_envelope['sender_ai_id'], self.cap_adv1_envelope)
+
         self.assertIn("translator_v1", self.sdm._capabilities_store)
         stored_item = self.sdm._capabilities_store["translator_v1"]
         self.assertEqual(stored_item['payload']['name'], "Fast Translator")
+
+        # Check for the "new capability" log message
+        self.assertTrue(any("Processed new capability advertisement" in message for message in cm.output))
+        self.assertTrue(any(self.cap_adv1_payload['name'] in message for message in cm.output)) # Check name in log
 
     def test_process_capability_advertisement_sender_mismatch(self):
         mismatch_payload = self.cap_adv1_payload.copy()
@@ -127,10 +133,17 @@ class TestHSPServiceDiscoveryModule(unittest.TestCase):
         updated_envelope["message_id"] = "msg1_updated"
         updated_envelope["timestamp_sent"] = datetime.now(timezone.utc).isoformat()
 
-        self.sdm.process_capability_advertisement(updated_payload, updated_envelope['sender_ai_id'], updated_envelope)
+        with self.assertLogs(logger='src.core_ai.service_discovery.service_discovery_module', level='INFO') as cm:
+            self.sdm.process_capability_advertisement(updated_payload, updated_envelope['sender_ai_id'], updated_envelope)
+
         stored_item = self.sdm._capabilities_store["translator_v1"]
         self.assertEqual(stored_item['payload']['version'], "1.1")
         self.assertTrue(stored_item['last_seen_timestamp'] > original_timestamp)
+
+        # Check for the "updating capability" log message
+        self.assertTrue(any("Updating existing capability advertisement" in message for message in cm.output))
+        # Check if old and new versions are mentioned in any of the log messages
+        self.assertTrue(any(f"Old version: {self.cap_adv1_payload['version']}" in message and f"New version: {updated_payload['version']}" in message for message in cm.output))
 
 
     def test_process_capability_advertisement_invalid_payload(self):
