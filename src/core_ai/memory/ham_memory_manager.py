@@ -284,7 +284,11 @@ class HAMMemoryManager(AbstractMemoryManager):
                         "timestamp": data_pkg["timestamp"],
                         "data_type": data_pkg["data_type"],
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                         "encrypted_package_b64": data_pkg["encrypted_package"].decode('ascii'), # Changed to ascii
+=======
+                        "encrypted_package_b64": data_pkg["encrypted_package"].decode('latin-1'), # Changed to latin-1
+>>>>>>> Stashed changes
 =======
                         "encrypted_package_b64": data_pkg["encrypted_package"].decode('latin-1'), # Changed to latin-1
 >>>>>>> Stashed changes
@@ -315,7 +319,11 @@ class HAMMemoryManager(AbstractMemoryManager):
                         "timestamp": data_pkg_b64["timestamp"],
                         "data_type": data_pkg_b64["data_type"],
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                         "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('ascii'), # Changed to ascii
+=======
+                        "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('latin-1'), # Changed to latin-1
+>>>>>>> Stashed changes
 =======
                         "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('latin-1'), # Changed to latin-1
 >>>>>>> Stashed changes

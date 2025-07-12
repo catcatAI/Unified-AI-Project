@@ -1,4 +1,5 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import json
 import os
 from typing import List, Optional, Dict, Any
@@ -288,6 +289,9 @@ if __name__ == '__main__':
 
 
     print("\nFormulaEngine standalone test finished.")
+=======
+from .formula_engine import FormulaEngine
+>>>>>>> Stashed changes
 =======
 from .formula_engine import FormulaEngine
 >>>>>>> Stashed changes

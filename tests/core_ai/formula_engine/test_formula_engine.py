@@ -192,7 +192,11 @@ class TestFormulaEngine(unittest.TestCase):
         # For now, assume greeting_high: "Greetings, {user_name}! It's a pleasure to see you."
         formula_with_template = self.valid_formulas_data[0] # greeting_high
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
 =======
         
 >>>>>>> Stashed changes
@@ -229,6 +233,7 @@ class TestFormulaEngine(unittest.TestCase):
         # or we conceptually add one.
         # For this test, we will mock a formula entry without the template.
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
         mock_formula_entry = {"name": "mock_no_template", "action": "mock_action", "parameters": {}}
 
@@ -236,12 +241,17 @@ class TestFormulaEngine(unittest.TestCase):
         result = engine.execute_formula(mock_formula_entry, context) # type: ignore
 
 =======
+=======
+>>>>>>> Stashed changes
         
         mock_formula_entry = {"name": "mock_no_template", "action": "mock_action", "parameters": {}}
         
         context = {"user_name": "TestUser"}
         result = engine.execute_formula(mock_formula_entry, context) # type: ignore
         
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         expected_result = {
             "action_name": "mock_action",
@@ -256,7 +266,11 @@ class TestFormulaEngine(unittest.TestCase):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
         formula_with_template = self.valid_formulas_data[0] # greeting_high has "Greetings, {user_name}!"
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
 =======
         
 >>>>>>> Stashed changes
