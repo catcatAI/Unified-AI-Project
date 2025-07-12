@@ -432,6 +432,8 @@ class DialogueManager:
 
         if self.self_critique_module:
             critique_result = self.self_critique_module.critique_interaction(user_input, response_text, self.active_sessions.get(session_id, []))
+            if critique_result and critique_result["score"] < 0.5 and critique_result["suggested_alternative"]:
+                response_text = critique_result["suggested_alternative"]
 
         # Store AI response
         if self.memory_manager:
