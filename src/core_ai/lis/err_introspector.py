@@ -43,10 +43,10 @@ class ErrIntrospector:
 <<<<<<< Updated upstream
 
 =======
-            
+
 >>>>>>> Stashed changes
 =======
-            
+
 >>>>>>> Stashed changes
         self.self_critique_module = self_critique_module
         self.lis_cache = lis_cache
@@ -84,10 +84,10 @@ class ErrIntrospector:
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         # The "ai_response" for critique is the output from Fragmenta.
         # Convert complex fragmenta_output to a string representation if it's not already.
@@ -103,10 +103,10 @@ class ErrIntrospector:
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         # Limit length to avoid overly long critique prompts
         critique_ai_response = critique_ai_response[:1024] # Max 1024 chars for critique
@@ -137,10 +137,10 @@ class ErrIntrospector:
 =======
 =======
 >>>>>>> Stashed changes
-        
+
         incident_id = f"lis_inc_{uuid.uuid4().hex}"
         anomaly_id = f"lis_anom_{uuid.uuid4().hex}"
-        
+
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
@@ -161,10 +161,10 @@ class ErrIntrospector:
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         semantic_event: LIS_SemanticAnomalyDetectedEvent = {
             "anomaly_id": anomaly_id,

@@ -146,5 +146,3 @@ if __name__ == "__main__":
         print("Please set it before running this script.")
     else:
         asyncio.run(main())
-
-

@@ -195,10 +195,10 @@ class TestFormulaEngine(unittest.TestCase):
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         context_missing_keys = {"location": "the office"} # Missing user_name
         # Expect a warning to be printed by FormulaEngine, and raw template in formatted_response
@@ -243,12 +243,12 @@ class TestFormulaEngine(unittest.TestCase):
 =======
 =======
 >>>>>>> Stashed changes
-        
+
         mock_formula_entry = {"name": "mock_no_template", "action": "mock_action", "parameters": {}}
-        
+
         context = {"user_name": "TestUser"}
         result = engine.execute_formula(mock_formula_entry, context) # type: ignore
-        
+
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
@@ -269,10 +269,10 @@ class TestFormulaEngine(unittest.TestCase):
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         # Expect a warning if template has placeholders, and raw template in formatted_response
         with patch('builtins.print') as mock_print:

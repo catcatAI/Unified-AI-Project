@@ -101,7 +101,7 @@ class ContextCoreManager:
         print(f"ContextCoreManager: Getting user profile summary for '{user_id}'.")
         return None
 
-    async def run_context_maintenance(): 
+    async def run_context_maintenance():
         # Placeholder for context maintenance tasks
         print("ContextCoreManager: Running conceptual context maintenance.")
 

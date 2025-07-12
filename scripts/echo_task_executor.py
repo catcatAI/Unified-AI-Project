@@ -154,4 +154,3 @@ if __name__ == "__main__":
 
     executor_ai = EchoTaskExecutorAI(my_echo_ai_id, broker_addr, broker_port)
     asyncio.run(executor_ai.start())
-

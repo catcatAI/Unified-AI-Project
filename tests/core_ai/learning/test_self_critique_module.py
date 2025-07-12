@@ -27,14 +27,14 @@ class TestSelfCritiqueModule(unittest.TestCase):
 =======
 =======
 >>>>>>> Stashed changes
-        
+
         # Sample operational_config, can be customized per test if needed
         self.sample_operational_config = {
             "timeouts": {
-                "llm_critique_request": 30 
+                "llm_critique_request": 30
             }
         }
-        
+
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
@@ -60,10 +60,10 @@ class TestSelfCritiqueModule(unittest.TestCase):
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         mock_llm_output = {
             "score": 0.8,
@@ -77,14 +77,14 @@ class TestSelfCritiqueModule(unittest.TestCase):
         result = self.critique_module.critique_interaction(user_input, ai_response, history)
 
 =======
-        
+
         result = self.critique_module.critique_interaction(user_input, ai_response, history)
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
         result = self.critique_module.critique_interaction(user_input, ai_response, history)
-        
+
 >>>>>>> Stashed changes
         self.assertIsNotNone(result)
         self.assertEqual(result["score"], 0.8)
@@ -102,10 +102,10 @@ class TestSelfCritiqueModule(unittest.TestCase):
 <<<<<<< Updated upstream
 
 =======
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
 >>>>>>> Stashed changes
         mock_llm_output = {
             "score": 0.95,
@@ -119,14 +119,14 @@ class TestSelfCritiqueModule(unittest.TestCase):
         result = self.critique_module.critique_interaction(user_input, ai_response, history)
 
 =======
-        
+
         result = self.critique_module.critique_interaction(user_input, ai_response, history)
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
         result = self.critique_module.critique_interaction(user_input, ai_response, history)
-        
+
 >>>>>>> Stashed changes
         self.assertIsNotNone(result)
         self.assertEqual(result["score"], 0.95)
@@ -149,12 +149,12 @@ class TestSelfCritiqueModule(unittest.TestCase):
 =======
 =======
 >>>>>>> Stashed changes
-        
+
         self.mock_llm_interface.generate_response.return_value = "This is not JSON."
-        
+
         with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
             result = self.critique_module.critique_interaction(user_input, ai_response, history)
-        
+
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
@@ -178,12 +178,12 @@ class TestSelfCritiqueModule(unittest.TestCase):
 =======
 =======
 >>>>>>> Stashed changes
-        
+
         self.mock_llm_interface.generate_response.return_value = "{\"score\": 0.7, \"reason\": \"Good but" # Missing closing brace
-        
+
         with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
             result = self.critique_module.critique_interaction(user_input, ai_response, history)
-            
+
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
@@ -208,13 +208,13 @@ class TestSelfCritiqueModule(unittest.TestCase):
 =======
 =======
 >>>>>>> Stashed changes
-        
+
         mock_llm_output = {"reason": "A response without a score."}
         self.mock_llm_interface.generate_response.return_value = json.dumps(mock_llm_output)
-        
+
         with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
             result = self.critique_module.critique_interaction(user_input, ai_response, history)
-            
+
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
@@ -239,13 +239,13 @@ class TestSelfCritiqueModule(unittest.TestCase):
 =======
 =======
 >>>>>>> Stashed changes
-        
+
         mock_llm_output = {"score": "high", "reason": "Score is a string."}
         self.mock_llm_interface.generate_response.return_value = json.dumps(mock_llm_output)
-        
+
         with self.assertLogs(logger='src.core_ai.learning.self_critique_module', level='ERROR') as cm:
             result = self.critique_module.critique_interaction(user_input, ai_response, history)
-            
+
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
@@ -287,14 +287,14 @@ class TestSelfCritiqueModule(unittest.TestCase):
         prompt = self.critique_module._construct_critique_prompt(user_input, ai_response, history)
 
 =======
-        
+
         prompt = self.critique_module._construct_critique_prompt(user_input, ai_response, history)
-        
+
 >>>>>>> Stashed changes
 =======
-        
+
         prompt = self.critique_module._construct_critique_prompt(user_input, ai_response, history)
-        
+
 >>>>>>> Stashed changes
         self.assertIn("You are an AI assistant that evaluates the quality of a dialogue turn.", prompt)
         self.assertIn("Evaluate the AI's response based on: Relevance, Helpfulness, Coherence, Safety, and Tone", prompt)
