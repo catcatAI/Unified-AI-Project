@@ -41,10 +41,10 @@ class EchoBlock(TechBlock):
         # The input_data['data'] itself might be a dictionary if mapped from a complex source.
         # For this simple EchoBlock, we assume the relevant string is directly in input_data['data']
         # or if it's a dict, we take a specific key from it.
-        
+
         # For the test case, input_data['data'] will be {"text": "Hello Fragmenta"}
         # We need to extract the actual string to echo.
-        
+
         data_to_echo = input_data.get("data")
         if isinstance(data_to_echo, dict) and "text" in data_to_echo:
             data_to_echo = data_to_echo["text"]
