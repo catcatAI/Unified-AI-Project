@@ -70,7 +70,7 @@ class TestServiceDiscoveryModule:
         assert time_before_add <= stored_time1 <= time_after_add
 
         # Test update
-        time.sleep(0.001) # Ensure timestamp will be different
+        sdm.known_capabilities[cap_id_1] = (stored_payload1, time_before_add - timedelta(seconds=1))
         payload1_updated = HSPCapabilityAdvertisementPayload(
             capability_id=cap_id_1, ai_id="ai1", name="TestCap1_Updated", description="Desc1_Updated",
             version="1.1", availability_status="online", tags=["t1", "t3"],
