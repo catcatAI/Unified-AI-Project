@@ -468,7 +468,8 @@ class HAMMemoryManager:
                           metadata_filters: Optional[Dict[str, Any]] = None,
                           user_id_for_facts: Optional[str] = None,
                           limit: int = 5,
-                          sort_by_confidence: bool = False
+                          sort_by_confidence: bool = False,
+                          return_multiple_candidates: bool = False
                           ) -> List[HAMRecallResult]:
         """
         Enhanced query function.
@@ -537,6 +538,9 @@ class HAMMemoryManager:
 
         # Apply limit
         results: List[HAMRecallResult] = candidate_items_with_id[:limit]
+
+        if return_multiple_candidates:
+            return results
 
         print(f"HAM: Query returned {len(results)} results (limit was {limit}).")
         return results
