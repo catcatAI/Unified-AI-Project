@@ -209,6 +209,18 @@ Contributions are welcome and greatly appreciated! Here are some guidelines to h
 
 If you have questions, find a bug, or want to suggest an enhancement, please consider documenting them or discussing with your team as appropriate for your project management style.
 
+## Architecture
+
+A logic diagram and knowledge graph for the project can be found in the `docs/architecture` directory.
+
+### Logic Diagram
+
+[Logic Diagram](./docs/architecture/logic_diagram.md)
+
+### Knowledge Graph
+
+[Knowledge Graph](./docs/architecture/knowledge_graph.md)
+
 ## Architectural Notes & Known Issues
 
 This section highlights some current observations, known issues from testing, and architectural considerations for ongoing development.

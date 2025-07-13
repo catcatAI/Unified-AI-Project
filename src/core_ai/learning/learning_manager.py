@@ -11,6 +11,7 @@ from src.core_ai.trust_manager.trust_manager_module import TrustManager # Correc
 from src.shared.types.common_types import LearnedFactRecord # Corrected
 from src.hsp.connector import HSPConnector # Corrected
 from src.hsp.types import HSPFactPayload, HSPMessageEnvelope # Corrected
+from src.core_ai.personality.personality_manager import PersonalityManager
 
 
 class LearningManager:
@@ -18,6 +19,7 @@ class LearningManager:
                  ai_id: str,
                  ham_memory_manager: HAMMemoryManager,
                  fact_extractor: FactExtractorModule,
+                 personality_manager: PersonalityManager,
                  content_analyzer: Optional[ContentAnalyzerModule] = None,
                  hsp_connector: Optional[HSPConnector] = None,
                  trust_manager: Optional[TrustManager] = None,
@@ -25,6 +27,7 @@ class LearningManager:
         self.ai_id = ai_id
         self.ham_memory = ham_memory_manager
         self.fact_extractor = fact_extractor
+        self.personality_manager = personality_manager
         self.content_analyzer = content_analyzer
         self.hsp_connector = hsp_connector
         self.trust_manager = trust_manager
@@ -40,7 +43,7 @@ class LearningManager:
 
         print(f"LearningManager initialized for AI ID '{self.ai_id}'. Min fact store conf: {self.min_fact_confidence_to_store}, share conf: {self.min_fact_confidence_to_share_via_hsp}, HSP store conf: {self.min_hsp_fact_confidence_to_store}")
 
-    def process_and_store_learnables(
+    async def process_and_store_learnables(
         self, text: str, user_id: Optional[str], session_id: Optional[str], source_interaction_ref: Optional[str], source_text: Optional[str] = None
     ) -> List[str]:
         if not source_text: # If source_text isn't explicitly passed, use text
@@ -248,54 +251,13 @@ class LearningManager:
                     return None # Ignore the new fact
 
                 # C. Trust/Recency Tie-Breaking (if confidences are similar)
+                # C. Trust/Recency Tie-Breaking (if confidences are similar)
                 elif abs(effective_confidence - existing_stored_confidence) <= self.hsp_fact_conflict_confidence_delta:
-                    print(f"    Semantically conflicting facts have similar confidence. Applying Trust/Recency tie-breaking.")
-                    new_beats_existing = False
-                    # Trust
-                    existing_sender_ai_id = existing_metadata.get("hsp_sender_ai_id")
-                    existing_sender_trust = self.trust_manager.get_trust_score(existing_sender_ai_id) if self.trust_manager and existing_sender_ai_id else TrustManager.DEFAULT_TRUST_SCORE
-
-                    if sender_trust_score > existing_sender_trust + 0.05: # Needs a delta for trust comparison
-                        new_beats_existing = True
-                        print(f"      Tie-break: New fact preferred due to higher sender trust ({sender_trust_score:.2f} vs {existing_sender_trust:.2f}).")
-                    elif existing_sender_trust > sender_trust_score + 0.05:
-                        new_beats_existing = False # Assume new does not beat existing initially for this block
-                        print(f"      Tie-break: Existing fact preferred due to higher sender trust ({existing_sender_trust:.2f} vs {sender_trust_score:.2f}). New fact will not supersede based on trust.")
-                        # Let current_conflict_meta remain "log_contradiction_type2" or whatever it was.
-                        # Do not return None here, to allow other strategies (like merge if applicable) or default logging for the new fact.
-                        # However, for numerical merge test, we want it to proceed if trust doesn't make new win.
-                        # If existing is more trusted, the new fact should generally be ignored unless it's a merge candidate that improves things.
-                        # For now, if existing is more trusted, let's assume the new one is not stored unless numerical merge explicitly creates a *new* merged fact.
-                        # This means the "new_beats_existing" flag from trust determines if current_conflict_meta is updated to supersede.
-                        # If new_beats_existing is false after trust, it remains false.
-
-                    # Only proceed to recency if trust didn't yield a "new_beats_existing = True"
-                    if not new_beats_existing: # This means either trust was similar, or new lost on trust.
-                        new_timestamp_str = hsp_fact_payload.get('timestamp_created', current_time_iso_for_processing)
-                        existing_timestamp_str = existing_metadata.get("hsp_fact_timestamp_created", existing_metadata.get("timestamp"))
-                        try:
-                            new_dt = datetime.fromisoformat(new_timestamp_str.replace('Z', '+00:00')) if isinstance(new_timestamp_str, str) else datetime.min
-                            existing_dt = datetime.fromisoformat(existing_timestamp_str.replace('Z', '+00:00')) if isinstance(existing_timestamp_str, str) else datetime.min
-                            if new_dt > existing_dt:
-                                new_beats_existing = True # New wins by recency
-                                print(f"      Tie-break: New fact preferred due to recency ({new_dt} vs {existing_dt}).")
-                            else:
-                                # New is older or same age. new_beats_existing remains False.
-                                print(f"      Tie-break: Existing fact preferred or same by recency. New fact will not supersede based on recency.")
-                        except ValueError:
-                            print(f"      Tie-break: Could not compare timestamps for recency ('{new_timestamp_str}', '{existing_timestamp_str}'). Defaulting to current strategy.")
-                            # new_beats_existing remains False.
-
-                    if new_beats_existing: # If new won by either trust or recency
-                         current_conflict_meta = {"supersedes_ham_records": [existing_ham_id], "resolution_strategy": "tie_break_trust_recency_type2"}
-                    # If new_beats_existing is still False, current_conflict_meta remains as "log_contradiction_type2" (or whatever it was before this block)
-
-                # D. Value Merging/Averaging (Numerical - PoC)
-                # Attempt if the current strategy is still "log_contradiction_type2" (i.e., not superseded by confidence or tie-breaking)
-                # This is a simplified check and needs robust type checking.
-                can_average = False
-                val_new_num, val_old_num = None, None
-                if current_conflict_meta["resolution_strategy"] == "log_contradiction_type2":
+                    # D. Value Merging/Averaging (Numerical - PoC)
+                    # Attempt if the current strategy is still "log_contradiction_type2" (i.e., not superseded by confidence or tie-breaking)
+                    # This is a simplified check and needs robust type checking.
+                    can_average = False
+                    val_new_num, val_old_num = None, None
                     try:
                         val_new_num = float(hsp_semantic_object) # type: ignore
                         val_old_num = float(existing_value)     # type: ignore
@@ -305,43 +267,83 @@ class LearningManager:
                         print(f"    Values ('{hsp_semantic_object}', '{existing_value}') not both numerical for averaging.")
                         pass # Not numerical
 
-                if can_average and val_new_num is not None and val_old_num is not None:
-                    # Trust-weighted average for value
-                    merged_value = (val_new_num * effective_confidence + val_old_num * existing_stored_confidence) / (effective_confidence + existing_stored_confidence)
-                    # Average confidence for the new merged fact (could be max, or average, etc.)
-                    merged_confidence = (effective_confidence + existing_stored_confidence) / 2
+                    if can_average and val_new_num is not None and val_old_num is not None:
+                        # Trust-weighted average for value
+                        merged_value = (val_new_num * effective_confidence + val_old_num * existing_stored_confidence) / (effective_confidence + existing_stored_confidence)
+                        # Average confidence for the new merged fact (could be max, or average, etc.)
+                        merged_confidence = (effective_confidence + existing_stored_confidence) / 2
 
-                    # The new fact payload's object/value needs to be updated to merged_value
-                    # And its confidence to merged_confidence
-                    # This is a significant change: we are modifying the incoming fact's interpretation.
-                    hsp_semantic_object = str(merged_value) # Update for storing
-                    confidence_to_store = merged_confidence # Update for storing
+                        # The new fact payload's object/value needs to be updated to merged_value
+                        # And its confidence to merged_confidence
+                        # This is a significant change: we are modifying the incoming fact's interpretation.
+                        hsp_semantic_object = str(merged_value) # Update for storing
+                        confidence_to_store = merged_confidence # Update for storing
 
-                    # Update fact_content_for_ham if it was based on the structured part
-                    if hsp_fact_payload.get('statement_type') == "semantic_triple" and \
-                       isinstance(hsp_fact_payload.get('statement_structured'), dict):
-                        hsp_fact_payload['statement_structured']['object_literal'] = hsp_semantic_object
-                        if 'object_uri' in hsp_fact_payload['statement_structured']: # clear URI if we used literal
-                            del hsp_fact_payload['statement_structured']['object_uri']
-                        # Also update statement_nl if it's going to be derived from structured, or make a new one.
-                        # For PoC, assume source_text_for_ham might need regeneration if it showed old value.
-                        # This part is tricky as source_text_for_ham might be the original NL.
-                        # The actual update to learned_record_metadata['source_text'] to note the merge
-                        # happens later, after learned_record_metadata is initially constructed.
-                        # No direct action on learned_record_metadata needed here.
-                        pass
+                        # Update fact_content_for_ham if it was based on the structured part
+                        if hsp_fact_payload.get('statement_type') == "semantic_triple" and \
+                           isinstance(hsp_fact_payload.get('statement_structured'), dict):
+                            hsp_fact_payload['statement_structured']['object_literal'] = hsp_semantic_object
+                            if 'object_uri' in hsp_fact_payload['statement_structured']: # clear URI if we used literal
+                                del hsp_fact_payload['statement_structured']['object_uri']
+                            # Also update statement_nl if it's going to be derived from structured, or make a new one.
+                            # For PoC, assume source_text_for_ham might need regeneration if it showed old value.
+                            # This part is tricky as source_text_for_ham might be the original NL.
+                            # The actual update to learned_record_metadata['source_text'] to note the merge
+                            # happens later, after learned_record_metadata is initially constructed.
+                            # No direct action on learned_record_metadata needed here.
+                            pass
 
-                    current_conflict_meta = {
-                        "merged_from_ham_records": [existing_ham_id],
-                        "resolution_strategy": "numerical_merge_type2",
-                        "original_values": [str(val_old_num), str(val_new_num)],
-                            "merged_value": merged_value, # The float value
-                            "merged_confidence": merged_confidence # Store it here
-                    }
-                    print(f"    Numerically merged: old_val={val_old_num}, new_val={val_new_num} -> merged_val={merged_value:.2f} with conf={merged_confidence:.2f}")
+                        current_conflict_meta = {
+                            "merged_from_ham_records": [existing_ham_id],
+                            "resolution_strategy": "numerical_merge_type2",
+                            "original_values": [str(val_old_num), str(val_new_num)],
+                                "merged_value": merged_value, # The float value
+                                "merged_confidence": merged_confidence # Store it here
+                        }
+                        print(f"    Numerically merged: old_val={val_old_num}, new_val={val_new_num} -> merged_val={merged_value:.2f} with conf={merged_confidence:.2f}")
+                        conflict_metadata_update.update(current_conflict_meta) # This now contains merged_confidence if merge happened
+                    else:
+                        print(f"    Semantically conflicting facts have similar confidence. Applying Trust/Recency tie-breaking.")
+                        new_beats_existing = False
+                        # Trust
+                        existing_sender_ai_id = existing_metadata.get("hsp_sender_ai_id")
+                        existing_sender_trust = self.trust_manager.get_trust_score(existing_sender_ai_id) if self.trust_manager and existing_sender_ai_id else TrustManager.DEFAULT_TRUST_SCORE
 
-                # Apply the chosen conflict_meta for Type 2
-                conflict_metadata_update.update(current_conflict_meta) # This now contains merged_confidence if merge happened
+                        if sender_trust_score > existing_sender_trust + 0.05: # Needs a delta for trust comparison
+                            new_beats_existing = True
+                            print(f"      Tie-break: New fact preferred due to higher sender trust ({sender_trust_score:.2f} vs {existing_sender_trust:.2f}).")
+                        elif existing_sender_trust > sender_trust_score + 0.05:
+                            new_beats_existing = False # Assume new does not beat existing initially for this block
+                            print(f"      Tie-break: Existing fact preferred due to higher sender trust ({existing_sender_trust:.2f} vs {sender_trust_score:.2f}). New fact will not supersede based on trust.")
+                            # Let current_conflict_meta remain "log_contradiction_type2" or whatever it was.
+                            # Do not return None here, to allow other strategies (like merge if applicable) or default logging for the new fact.
+                            # However, for numerical merge test, we want it to proceed if trust doesn't make new win.
+                            # If existing is more trusted, the new fact should generally be ignored unless it's a merge candidate that improves things.
+                            # For now, if existing is more trusted, let's assume the new one is not stored unless numerical merge explicitly creates a *new* merged fact.
+                            # This means the "new_beats_existing" flag from trust determines if current_conflict_meta is updated to supersede.
+                            # If new_beats_existing is false after trust, it remains false.
+
+                        # Only proceed to recency if trust didn't yield a "new_beats_existing = True"
+                        if not new_beats_existing: # This means either trust was similar, or new lost on trust.
+                            new_timestamp_str = hsp_fact_payload.get('timestamp_created', current_time_iso_for_processing)
+                            existing_timestamp_str = existing_metadata.get("hsp_fact_timestamp_created", existing_metadata.get("timestamp"))
+                            try:
+                                new_dt = datetime.fromisoformat(new_timestamp_str.replace('Z', '+00:00')) if isinstance(new_timestamp_str, str) else datetime.min
+                                existing_dt = datetime.fromisoformat(existing_timestamp_str.replace('Z', '+00:00')) if isinstance(existing_timestamp_str, str) else datetime.min
+                                if new_dt > existing_dt:
+                                    new_beats_existing = True # New wins by recency
+                                    print(f"      Tie-break: New fact preferred due to recency ({new_dt} vs {existing_dt}).")
+                                else:
+                                    # New is older or same age. new_beats_existing remains False.
+                                    print(f"      Tie-break: Existing fact preferred or same by recency. New fact will not supersede based on recency.")
+                            except ValueError:
+                                print(f"      Tie-break: Could not compare timestamps for recency ('{new_timestamp_str}', '{existing_timestamp_str}'). Defaulting to current strategy.")
+                                # new_beats_existing remains False.
+
+                        if new_beats_existing: # If new won by either trust or recency
+                             current_conflict_meta = {"supersedes_ham_records": [existing_ham_id], "resolution_strategy": "tie_break_trust_recency_type2"}
+                        # If new_beats_existing is still False, current_conflict_meta remains as "log_contradiction_type2" (or whatever it was before this block)
+                        conflict_metadata_update.update(current_conflict_meta)
 
         # Proceed to store
         record_id = f"lfact_hsp_{uuid.uuid4().hex}"

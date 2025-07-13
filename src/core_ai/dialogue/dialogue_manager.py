@@ -34,6 +34,7 @@ from src.shared.types.common_types import ( # Added src.
 )
 from src.hsp.connector import HSPConnector # Added src.
 from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPCapabilityAdvertisementPayload, HSPFactPayload, HSPMessageEnvelope # Added src. and HSPMessageEnvelope
+from src.core_ai.trust_manager.trust_manager_module import TrustManager
 
 
 class DialogueManager:
@@ -52,7 +53,8 @@ class DialogueManager:
                  ai_id: Optional[str] = None,
                  service_discovery_module: Optional[ServiceDiscoveryModule] = None,
                  hsp_connector: Optional[HSPConnector] = None,
-                 config: Optional[OperationalConfig] = None):
+                 config: Optional[OperationalConfig] = None,
+                 trust_manager: Optional[TrustManager] = None):
 
         self.config: OperationalConfig = config if config else {} # type: ignore
         self.ai_id: str = ai_id if ai_id else f"dm_instance_{uuid.uuid4().hex[:6]}"
@@ -99,6 +101,7 @@ class DialogueManager:
             ai_id=self.ai_id, # Pass ai_id to LearningManager
             ham_memory_manager=self.memory_manager, # Corrected order
             fact_extractor=self.fact_extractor_module,
+            personality_manager=self.personality_manager,
             content_analyzer=content_analyzer, # Pass CA here
             hsp_connector=self.hsp_connector, # Pass HSP connector
             trust_manager=getattr(service_discovery_module, 'trust_manager', None), # Pass TrustManager if available

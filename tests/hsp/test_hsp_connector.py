@@ -79,8 +79,8 @@ class TestHSPConnectorConnectionLogic:
         # Simulate Paho calling _on_mqtt_disconnect due to an error
         # Args for on_disconnect: client, userdata, reason_code, properties (v2) / rc (v1)
         # Let's use a reason code that indicates an error
-        error_reason_code = mqtt.MQTT_ERR_CONN_LOST
-        connector._on_mqtt_disconnect(mock_paho_client, None, error_reason_code, None) # For V2 callback
+        error_reason_code = mqtt.ReasonCode(1)
+        connector._on_mqtt_disconnect(mock_paho_client, None, None, error_reason_code, None) # For V2 callback
 
         assert not connector.is_connected
         assert connector._was_unexpectedly_disconnected
@@ -94,7 +94,8 @@ class TestHSPConnectorConnectionLogic:
         connector._was_unexpectedly_disconnected = True # Simulate previous unexpected disconnect
 
         # Simulate Paho calling _on_mqtt_disconnect for a clean disconnect (e.g., client called disconnect())
-        connector._on_mqtt_disconnect(mock_paho_client, None, mqtt.MQTT_ERR_SUCCESS, None) # MQTT_ERR_SUCCESS = 0
+        reason_code = mqtt.ReasonCode(0)
+        connector._on_mqtt_disconnect(mock_paho_client, None, None, reason_code, None) # MQTT_ERR_SUCCESS = 0
 
         assert not connector.is_connected
         assert not connector._was_unexpectedly_disconnected # Should be reset

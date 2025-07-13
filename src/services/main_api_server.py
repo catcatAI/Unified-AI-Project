@@ -261,7 +261,8 @@ async def get_hsp_task_status(correlation_id: str):
     # A proper HAM query by metadata field is needed for production.
 
     found_record = None
-    for mem_id, record_pkg in ham_manager.core_memory_store.items(): # type: ignore # Accessing internal store for PoC
+    store = getattr(ham_manager, 'memory_store', getattr(ham_manager, 'core_memory_store', {}))
+    for mem_id, record_pkg in store.items():
         metadata = record_pkg.get("metadata", {})
         if metadata.get("hsp_correlation_id") == correlation_id:
             found_record = record_pkg
