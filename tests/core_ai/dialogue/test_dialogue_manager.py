@@ -223,6 +223,7 @@ class TestDialogueManagerKGIntegration(unittest.TestCase):
         self.dm.self_critique_module = MagicMock()
         self.dm.self_critique_module.critique_interaction.return_value = CritiqueResult(score=0.9, reason="Looks good.", suggested_alternative=None)
         self.dm.learning_manager = MagicMock()
+        self.dm.repair_engine = MagicMock()
 
 
     async def test_kg_qa_ceo_and_location(self):
@@ -525,6 +526,24 @@ class TestDialogueManagerToolDrafting(unittest.TestCase):
         self.assertIn("Return Type: Any", code_gen_prompt_arg)
 
         self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
+
+    async def test_low_critique_score_triggers_repair(self):
+        session_id = "repair_test_session"
+        user_id = "repair_test_user"
+        user_input = "This is a test input."
+        initial_response = "This is a bad response."
+        repaired_response = "This is a better response."
+
+        self.dm.llm_interface.generate_response.return_value = initial_response
+        self.dm.self_critique_module.critique_interaction.return_value = CritiqueResult(
+            score=0.2,
+            reason="The response was bad.",
+            suggested_alternative=repaired_response
+        )
+
+        final_response = await self.dm.get_simple_response(user_input, session_id, user_id)
+
+        self.assertEqual(final_response, repaired_response)
 
 # Need to import json for the test class
 # import json # Already imported at the top
