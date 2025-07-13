@@ -247,8 +247,8 @@ class HAMMemoryManager:
             print(f"HAM: INFO - Simulated disk usage ({current_usage_gb:.2f}GB) is at WARNING level (>{warning_thresh_gb:.2f}GB). Simulating {lag_to_apply_seconds:.2f}s lag.")
 
         if lag_to_apply_seconds > 0:
-            import time # Import time locally for this function
-            time.sleep(lag_to_apply_seconds)
+            # Instead of sleeping, we just indicate that the operation should be retried
+            return False
 
         return True # OK to save
 
