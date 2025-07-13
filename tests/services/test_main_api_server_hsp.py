@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 import uuid
 import time
+import asyncio
 from unittest.mock import MagicMock, ANY
 
 # Ensure src is in path for imports
@@ -24,7 +25,7 @@ MQTT_BROKER_ADDRESS = "127.0.0.1" # Must match what core_services will use
 MQTT_BROKER_PORT = 1883
 
 @pytest.fixture(scope="module")
-def client():
+async def client():
     """
     Provides a TestClient for the FastAPI app.
     Manages service initialization and shutdown for the test module.
@@ -37,7 +38,7 @@ def client():
     with TestClient(app) as test_client:
         # Ensure services are up, especially the HSP connector for the main API's AI instance
         # The lifespan should have initialized services. Let's give it a moment.
-        time.sleep(1.0) # Allow time for lifespan startup and MQTT connection
+        await asyncio.sleep(1.0) # Allow time for lifespan startup and MQTT connection
         services = get_services()
         assert services.get("hsp_connector") is not None, "HSPConnector not initialized in API for tests"
         yield test_client
@@ -45,15 +46,31 @@ def client():
 
 
 @pytest.fixture
-def api_test_peer_connector():
+async def api_test_peer_connector():
     """A separate HSPConnector for a mock peer to interact with the API's AI."""
     peer_conn = HSPConnector(TEST_API_PEER_AI_ID, MQTT_BROKER_ADDRESS, MQTT_BROKER_PORT, client_id_suffix=f"api_test_peer_{uuid.uuid4().hex[:4]}")
+    connect_event = asyncio.Event()
+    def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            connect_event.set()
+    peer_conn.client.on_connect = on_connect
     if not peer_conn.connect():
         pytest.fail("Failed to connect api_test_peer_connector for API tests.")
-    time.sleep(0.5)
+    await wait_for_event(connect_event)
     yield peer_conn
+    disconnect_event = asyncio.Event()
+    def on_disconnect(client, userdata, rc):
+        disconnect_event.set()
+    peer_conn.client.on_disconnect = on_disconnect
     peer_conn.disconnect()
-    time.sleep(0.1)
+    await wait_for_event(disconnect_event)
+
+async def wait_for_event(event: asyncio.Event, timeout: float = 2.0):
+    """Waits for an asyncio.Event to be set, with a timeout."""
+    try:
+        await asyncio.wait_for(event.wait(), timeout=timeout)
+    except asyncio.TimeoutError:
+        pytest.fail(f"Event was not set within the {timeout}s timeout.")
 
 @pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available for API HSP tests")
 class TestHSPEndpoints:
@@ -69,7 +86,7 @@ class TestHSPEndpoints:
         assert response.status_code == 200
         assert response.json() == []
 
-    def test_list_hsp_services_with_advertisements(self, client: TestClient, api_test_peer_connector: HSPConnector):
+    async def test_list_hsp_services_with_advertisements(self, client: TestClient, api_test_peer_connector: HSPConnector):
         # service_discovery_module_fixture is from the other test file, might cause issues if not careful with scope.
         # For this test, we want the API's own ServiceDiscoveryModule instance.
         api_sdm = get_services().get("service_discovery")
@@ -86,10 +103,14 @@ class TestHSPEndpoints:
         )
         # Peer advertises a capability
         adv_topic = "hsp/capabilities/advertisements/general" # As subscribed by core_services init
+        adv_event = asyncio.Event()
+        def on_publish(client, userdata, mid):
+            adv_event.set()
+        api_test_peer_connector.client.on_publish = on_publish
         assert api_test_peer_connector.publish_capability_advertisement(adv_payload, adv_topic)
-        time.sleep(5.0) # Allow time for MQTT message to arrive and be processed by API's SDM
+        await wait_for_event(adv_event)
     
-        time.sleep(5)
+        await asyncio.sleep(0.2) # allow api_sdm to process the message
         response = client.get("/api/v1/hsp/services")
         assert response.status_code == 200
         capabilities = response.json()
@@ -104,7 +125,7 @@ class TestHSPEndpoints:
                 break
         assert found_it, "Advertised capability not found in API response."
 
-    def test_request_hsp_task_success(self, client: TestClient, api_test_peer_connector: HSPConnector): # Removed dialogue_manager_fixture as we get it from API context
+    async def test_request_hsp_task_success(self, client: TestClient, api_test_peer_connector: HSPConnector): # Removed dialogue_manager_fixture as we get it from API context
         # We need the DialogueManager from the API's context, not the test_hsp_integration's one
         services = get_services()
         api_dm = services.get("dialogue_manager")
@@ -120,10 +141,11 @@ class TestHSPEndpoints:
             description="Echoes for API tests", version="1.0", availability_status="online", tags=["echo"]
         )
         assert api_test_peer_connector.publish_capability_advertisement(adv_payload, "hsp/capabilities/advertisements/general")
-        time.sleep(5.0) # Allow SDM to process
+        await asyncio.sleep(0.2) # Allow SDM to process
 
         # 2. Setup peer to handle the task request for this capability
         received_task_requests_on_peer: List[HSPTaskRequestPayload] = []
+        task_request_event = asyncio.Event()
         def api_peer_task_handler(payload: HSPTaskRequestPayload, sender: str, envelope: HSPMessageEnvelope):
             if payload.get("capability_id_filter") == mock_echo_cap_id:
                 received_task_requests_on_peer.append(payload)
@@ -138,15 +160,15 @@ class TestHSPEndpoints:
                 corr_id = envelope.get('correlation_id')
                 if cb_addr and corr_id:
                     api_test_peer_connector.send_task_result(result, cb_addr, corr_id)
+                task_request_event.set()
 
         api_test_peer_connector.register_on_task_request_callback(api_peer_task_handler)
         peer_req_topic = f"hsp/requests/{peer_ai_id}/#" # Topic where peer listens for its tasks
         assert api_test_peer_connector.subscribe(peer_req_topic)
-        time.sleep(5.0)
+        await asyncio.sleep(0.1)
 
         # 3. Make API request to trigger the HSP task
         task_params = {"data": "hello from API test"}
-        time.sleep(5)
         response = client.post("/api/v1/hsp/tasks", json={
             "target_capability_id": mock_echo_cap_id,
             "parameters": task_params
@@ -157,7 +179,7 @@ class TestHSPEndpoints:
         assert response_data.get("correlation_id") is not None
         correlation_id_from_api = response_data["correlation_id"]
 
-        time.sleep(5.0) # Allow for full HSP round trip
+        await wait_for_event(task_request_event)
 
         # 4. Assertions
         #    - Peer received the task request
@@ -181,7 +203,7 @@ class TestHSPEndpoints:
         assert response_data.get("correlation_id") is None
         assert response_data.get("error") == "Capability not discovered."
 
-    def test_get_hsp_task_status_pending(self, client: TestClient):
+    async def test_get_hsp_task_status_pending(self, client: TestClient):
         services = get_services()
         dialogue_manager = services.get("dialogue_manager")
         assert dialogue_manager is not None
@@ -191,7 +213,7 @@ class TestHSPEndpoints:
             "capability_id": "test_cap_pending", "target_ai_id": "test_target_pending"
         }
 
-        time.sleep(5)
+        await asyncio.sleep(0.1)
         response = client.get(f"/api/v1/hsp/tasks/{mock_corr_id}")
         assert response.status_code == 200
         status_data = response.json()
