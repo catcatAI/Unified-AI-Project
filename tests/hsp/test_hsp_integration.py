@@ -122,25 +122,63 @@ def trust_manager_fixture() -> TrustManager: return TrustManager()
 def personality_manager_fixture() -> PersonalityManager: return PersonalityManager()
 
 @pytest.fixture
-def main_ai_hsp_connector(trust_manager_fixture: TrustManager):
+async def main_ai_hsp_connector(trust_manager_fixture: TrustManager):
     conn_id_suffix = f"main_test_hsp_{uuid.uuid4().hex[:4]}"
     connector = HSPConnector(TEST_AI_ID_MAIN, MQTT_BROKER_ADDRESS, MQTT_BROKER_PORT, client_id_suffix=conn_id_suffix)
-    if not connector.connect(): pytest.fail(f"Failed to connect main_ai_hsp_connector ({conn_id_suffix}).")
-    time.sleep(0.5); yield connector; connector.disconnect(); time.sleep(0.1)
+    connect_event = asyncio.Event()
+    def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            connect_event.set()
+        else:
+            pytest.fail(f"Main AI connector failed to connect with code {rc}")
+    connector.client.on_connect = on_connect
+    if not connector.connect(): pytest.fail(f"Failed to start main_ai_hsp_connector ({conn_id_suffix}).")
+    await wait_for_event(connect_event)
+    yield connector
+    disconnect_event = asyncio.Event()
+    def on_disconnect(client, userdata, rc):
+        disconnect_event.set()
+    connector.client.on_disconnect = on_disconnect
+    connector.disconnect()
+    await wait_for_event(disconnect_event)
 
 @pytest.fixture
-def peer_a_hsp_connector(trust_manager_fixture: TrustManager):
+async def peer_a_hsp_connector(trust_manager_fixture: TrustManager):
     conn_id_suffix = f"peer_A_hsp_{uuid.uuid4().hex[:4]}"
     connector = HSPConnector(TEST_AI_ID_PEER_A, MQTT_BROKER_ADDRESS, MQTT_BROKER_PORT, client_id_suffix=conn_id_suffix)
-    if not connector.connect(): pytest.fail(f"Failed to connect peer_a_hsp_connector ({conn_id_suffix}).")
-    time.sleep(0.5); yield connector; connector.disconnect(); time.sleep(0.1)
+    connect_event = asyncio.Event()
+    def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            connect_event.set()
+    connector.client.on_connect = on_connect
+    if not connector.connect(): pytest.fail(f"Failed to start peer_a_hsp_connector ({conn_id_suffix}).")
+    await wait_for_event(connect_event)
+    yield connector
+    disconnect_event = asyncio.Event()
+    def on_disconnect(client, userdata, rc):
+        disconnect_event.set()
+    connector.client.on_disconnect = on_disconnect
+    connector.disconnect()
+    await wait_for_event(disconnect_event)
 
 @pytest.fixture
-def peer_b_hsp_connector(trust_manager_fixture: TrustManager):
+async def peer_b_hsp_connector(trust_manager_fixture: TrustManager):
     conn_id_suffix = f"peer_B_hsp_{uuid.uuid4().hex[:4]}"
     connector = HSPConnector(TEST_AI_ID_PEER_B, MQTT_BROKER_ADDRESS, MQTT_BROKER_PORT, client_id_suffix=conn_id_suffix)
-    if not connector.connect(): pytest.fail(f"Failed to connect peer_b_hsp_connector ({conn_id_suffix}).")
-    time.sleep(0.5); yield connector; connector.disconnect(); time.sleep(0.1)
+    connect_event = asyncio.Event()
+    def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            connect_event.set()
+    connector.client.on_connect = on_connect
+    if not connector.connect(): pytest.fail(f"Failed to start peer_b_hsp_connector ({conn_id_suffix}).")
+    await wait_for_event(connect_event)
+    yield connector
+    disconnect_event = asyncio.Event()
+    def on_disconnect(client, userdata, rc):
+        disconnect_event.set()
+    connector.client.on_disconnect = on_disconnect
+    connector.disconnect()
+    await wait_for_event(disconnect_event)
 
 @pytest.fixture
 def configured_learning_manager( ham_manager_fixture: MockHAM, fact_extractor_fixture: FactExtractorModule,
@@ -158,25 +196,24 @@ def service_discovery_module_fixture(main_ai_hsp_connector: HSPConnector, trust_
     time.sleep(0.2); return sdm
 
 @pytest.fixture
-def dialogue_manager_fixture( configured_learning_manager: LearningManager, service_discovery_module_fixture: ServiceDiscoveryModule,
+async def dialogue_manager_fixture( configured_learning_manager: LearningManager, service_discovery_module_fixture: ServiceDiscoveryModule,
     main_ai_hsp_connector: HSPConnector, mock_llm_fixture: MockLLMInterface,
     content_analyzer_module_fixture: ContentAnalyzerModule, trust_manager_fixture: TrustManager, personality_manager_fixture: PersonalityManager ):
     dm_config = { "operational_configs": configured_learning_manager.operational_config if configured_learning_manager else {} }
-    # Ensure DM gets the same instances of components as other fixtures if they are meant to be shared state for a test
-    # For ToolDispatcher, DM's __init__ creates one if not provided. For tests needing to mock it, it's passed here.
     mock_td = MagicMock(spec=ToolDispatcher)
-
     dm = DialogueManager( ai_id=TEST_AI_ID_MAIN,
         personality_manager=personality_manager_fixture,
         memory_manager=configured_learning_manager.ham_memory,
-        llm_interface=mock_llm_fixture, # Use the test-specific mock LLM
+        llm_interface=mock_llm_fixture,
         service_discovery_module=service_discovery_module_fixture,
         hsp_connector=main_ai_hsp_connector,
         content_analyzer=content_analyzer_module_fixture,
         learning_manager=configured_learning_manager,
         config=dm_config )
-    results_topic = f"hsp/results/{TEST_AI_ID_MAIN}/#"; assert main_ai_hsp_connector.subscribe(results_topic), f"Main AI failed to sub to {results_topic}"
-    time.sleep(0.2); return dm
+    results_topic = f"hsp/results/{TEST_AI_ID_MAIN}/#";
+    assert main_ai_hsp_connector.subscribe(results_topic), f"Main AI failed to sub to {results_topic}"
+    await asyncio.sleep(0.1) # Allow subscription to be processed
+    return dm
 
 # --- Test Classes ---
 @pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available")
@@ -349,21 +386,38 @@ class TestHSPTaskBrokering: # ... (all existing tests in this class remain the s
         peer_a_hsp_connector: HSPConnector, mock_llm_fixture: MockLLMInterface, main_ai_hsp_connector: HSPConnector ):
         peer_id=TEST_AI_ID_PEER_A; cap_id=f"{peer_id}_special_hsp_op_v1"; search_term="special_fallback_op"
         reqs:List[Any]=[]
-        def handler(p,s,e): reqs.append(p); r_p=HSPTaskResultPayload(result_id="r_fb",request_id=p['request_id'],executing_ai_id=peer_id,status="success",payload={"data":"fallback_done"},timestamp_completed=datetime.now(timezone.utc).isoformat()); peer_a_hsp_connector.send_task_result(r_p,p['callback_address'],e['correlation_id']) #type: ignore
-        peer_a_hsp_connector.register_on_task_request_callback(handler); peer_a_hsp_connector.subscribe(f"hsp/requests/{peer_id}/#")
-        adv=HSPCapabilityAdvertisementPayload(capability_id=cap_id,ai_id=peer_id,name="FallbackOp",description="Handles fallback.",version="1.0",availability_status="online",tags=[search_term]); assert peer_a_hsp_connector.publish_capability_advertisement(adv,CAP_ADVERTISEMENT_TOPIC); await asyncio.sleep(0.5) #type: ignore
+        task_result_event = asyncio.Event()
+        def handler(p,s,e):
+            reqs.append(p)
+            r_p=HSPTaskResultPayload(result_id="r_fb",request_id=p['request_id'],executing_ai_id=peer_id,status="success",payload={"data":"fallback_done"},timestamp_completed=datetime.now(timezone.utc).isoformat())
+            peer_a_hsp_connector.send_task_result(r_p,p['callback_address'],e['correlation_id'])
+        peer_a_hsp_connector.register_on_task_request_callback(handler)
+        peer_a_hsp_connector.subscribe(f"hsp/requests/{peer_id}/#")
+        adv=HSPCapabilityAdvertisementPayload(capability_id=cap_id,ai_id=peer_id,name="FallbackOp",description="Handles fallback.",version="1.0",availability_status="online",tags=[search_term])
+        assert peer_a_hsp_connector.publish_capability_advertisement(adv,CAP_ADVERTISEMENT_TOPIC)
+        await asyncio.sleep(0.2)
         assert len(service_discovery_module_fixture.find_capabilities(capability_id_filter=cap_id))==1
         dialogue_manager_fixture.tool_dispatcher = MagicMock(spec=ToolDispatcher)
-        dialogue_manager_fixture.tool_dispatcher.dispatch.return_value=ToolDispatcherResponse(status="unhandled_by_local_tool",tool_name_attempted=search_term,payload=None, error_message="Local unhandled") #type: ignore
+        dialogue_manager_fixture.tool_dispatcher.dispatch.return_value=ToolDispatcherResponse(status="unhandled_by_local_tool",tool_name_attempted=search_term,payload=None, error_message="Local unhandled")
         dialogue_manager_fixture._dispatch_hsp_task_request=MagicMock(wraps=dialogue_manager_fixture._dispatch_hsp_task_request)
-        res_h:List[Any]=[]; orig_h=dialogue_manager_fixture._handle_incoming_hsp_task_result; dialogue_manager_fixture._handle_incoming_hsp_task_result=MagicMock(wraps=lambda p,s,e:res_h.append(p)) #type: ignore
+        res_h:List[Any]=[]
+        orig_h=dialogue_manager_fixture._handle_incoming_hsp_task_result
+        def result_handler_wrapper(p,s,e):
+            res_h.append(p)
+            task_result_event.set()
+        dialogue_manager_fixture._handle_incoming_hsp_task_result=MagicMock(wraps=result_handler_wrapper)
         mock_llm_fixture.generate_response_history.clear()
-        mock_fe=MagicMock(spec=FormulaEngine); formula={"name":"f_fallback","action":"dispatch_tool","parameters":{"tool_name":search_term,"tool_query":"q_fallback","other_data":"context"}}; mock_fe.match_input.return_value=formula; mock_fe.execute_formula.return_value={"action_name":"dispatch_tool","action_params":formula["parameters"]}; dialogue_manager_fixture.formula_engine=mock_fe #type: ignore
-        await dialogue_manager_fixture.get_simple_response("trigger_fallback_formula","u_fb","s_fb"); await asyncio.sleep(5.0)
+        mock_fe=MagicMock(spec=FormulaEngine)
+        formula={"name":"f_fallback","action":"dispatch_tool","parameters":{"tool_name":search_term,"tool_query":"q_fallback","other_data":"context"}}
+        mock_fe.match_input.return_value=formula
+        mock_fe.execute_formula.return_value={"action_name":"dispatch_tool","action_params":formula["parameters"]}
+        dialogue_manager_fixture.formula_engine=mock_fe
+        await dialogue_manager_fixture.get_simple_response("trigger_fallback_formula","u_fb","s_fb")
+        await wait_for_event(task_result_event)
         dialogue_manager_fixture.tool_dispatcher.dispatch.assert_called_once()
         dialogue_manager_fixture._dispatch_hsp_task_request.assert_called_once()
         dispatch_hsp_args = dialogue_manager_fixture._dispatch_hsp_task_request.call_args[0]
-        dispatched_cap_adv: HSPCapabilityAdvertisementPayload = dispatch_hsp_args[0] #type: ignore
+        dispatched_cap_adv: HSPCapabilityAdvertisementPayload = dispatch_hsp_args[0]
         dispatched_req_params: Dict[str,Any] = dispatch_hsp_args[1]
         assert dispatched_cap_adv["capability_id"] == cap_id
         assert dispatched_req_params.get("query") == "q_fallback"
@@ -379,8 +433,12 @@ class TestHSPTaskBrokering: # ... (all existing tests in this class remain the s
         dialogue_manager_fixture.tool_dispatcher = MagicMock(spec=ToolDispatcher)
         mock_td=dialogue_manager_fixture.tool_dispatcher
         tool_n,tool_q,res_p="local_echo","echo_local","Echoed:echo_local"
-        mock_td.dispatch.return_value=ToolDispatcherResponse(status="success",payload=res_p,tool_name_attempted=tool_n,original_query_for_tool=tool_q) #type: ignore
-        mock_fe=MagicMock(spec=FormulaEngine); formula={"name":"f_local","action":"dispatch_tool","parameters":{"tool_name":tool_n,"tool_query":tool_q}}; mock_fe.match_input.return_value=formula; mock_fe.execute_formula.return_value={"action_name":"dispatch_tool","action_params":formula["parameters"]}; dialogue_manager_fixture.formula_engine=mock_fe #type: ignore
+        mock_td.dispatch.return_value=ToolDispatcherResponse(status="success",payload=res_p,tool_name_attempted=tool_n,original_query_for_tool=tool_q)
+        mock_fe=MagicMock(spec=FormulaEngine)
+        formula={"name":"f_local","action":"dispatch_tool","parameters":{"tool_name":tool_n,"tool_query":tool_q}}
+        mock_fe.match_input.return_value=formula
+        mock_fe.execute_formula.return_value={"action_name":"dispatch_tool","action_params":formula["parameters"]}
+        dialogue_manager_fixture.formula_engine=mock_fe
         dialogue_manager_fixture._dispatch_hsp_task_request=MagicMock(wraps=dialogue_manager_fixture._dispatch_hsp_task_request)
         mock_llm_fixture.generate_response_history.clear()
         resp = await dialogue_manager_fixture.get_simple_response("trigger_local_echo","u_ls","s_ls")
@@ -388,17 +446,22 @@ class TestHSPTaskBrokering: # ... (all existing tests in this class remain the s
         assert f"{ai_name}: {res_p}" in resp
         dialogue_manager_fixture.tool_dispatcher.dispatch.assert_called_once()
         dialogue_manager_fixture._dispatch_hsp_task_request.assert_not_called()
-        mock_llm_fixture.generate_response_history.clear() # Clear history before assertion
+        mock_llm_fixture.generate_response_history.clear()
         assert not mock_llm_fixture.generate_response_history
         dialogue_manager_fixture.formula_engine=FormulaEngine()
 
     @pytest.mark.asyncio
     async def test_dm_no_local_no_hsp_fallback_to_llm( self, dialogue_manager_fixture: DialogueManager, service_discovery_module_fixture: ServiceDiscoveryModule, mock_llm_fixture: MockLLMInterface ):
-        service_discovery_module_fixture.find_capabilities=MagicMock(return_value=[]); mock_fe=MagicMock(spec=FormulaEngine); mock_fe.match_input.return_value=None; dialogue_manager_fixture.formula_engine=mock_fe
+        service_discovery_module_fixture.find_capabilities=MagicMock(return_value=[])
+        mock_fe=MagicMock(spec=FormulaEngine)
+        mock_fe.match_input.return_value=None
+        dialogue_manager_fixture.formula_engine=mock_fe
         dialogue_manager_fixture.tool_dispatcher = MagicMock(spec=ToolDispatcher)
-        dialogue_manager_fixture.tool_dispatcher.dispatch.return_value=ToolDispatcherResponse(status="unhandled_by_local_tool",payload=None) #type: ignore
-        dialogue_manager_fixture._dispatch_hsp_task_request=MagicMock(wraps=dialogue_manager_fixture._dispatch_hsp_task_request); mock_llm_fixture.generate_response_history.clear()
-        llm_resp="I'm not sure how to help with that, but I can process this with LLM."; user_q="completely_unhandled_query_for_llm"
+        dialogue_manager_fixture.tool_dispatcher.dispatch.return_value=ToolDispatcherResponse(status="unhandled_by_local_tool",payload=None)
+        dialogue_manager_fixture._dispatch_hsp_task_request=MagicMock(wraps=dialogue_manager_fixture._dispatch_hsp_task_request)
+        mock_llm_fixture.generate_response_history.clear()
+        llm_resp="I'm not sure how to help with that, but I can process this with LLM."
+        user_q="completely_unhandled_query_for_llm"
         resp = await dialogue_manager_fixture.get_simple_response(user_q,"u_llm_fb","s_llm_fb")
         ai_name = dialogue_manager_fixture.personality_manager.get_current_personality_trait("display_name", dialogue_manager_fixture.ai_id)
         assert f"{ai_name}: {llm_resp}" in resp
@@ -412,44 +475,81 @@ class TestHSPTaskBrokering: # ... (all existing tests in this class remain the s
         self, dialogue_manager_fixture: DialogueManager, service_discovery_module_fixture: ServiceDiscoveryModule,
         peer_a_hsp_connector: HSPConnector, mock_llm_fixture: MockLLMInterface, main_ai_hsp_connector: HSPConnector ):
         peer_id=TEST_AI_ID_PEER_A; cap_id=f"{peer_id}_failing_op_v1"; search_term="failing_hsp_op"
-        def handler(p,s,e): err_d=HSPErrorDetails(error_code="FAIL",error_message="failed_peer"); rp=HSPTaskResultPayload(result_id="r_f",request_id=p['request_id'],executing_ai_id=peer_id,status="failure",error_details=err_d,timestamp_completed=datetime.now(timezone.utc).isoformat()); peer_a_hsp_connector.send_task_result(rp,p['callback_address'],e['correlation_id']) #type: ignore
-        peer_a_hsp_connector.register_on_task_request_callback(handler); peer_a_hsp_connector.subscribe(f"hsp/requests/{peer_id}/#")
-        adv=HSPCapabilityAdvertisementPayload(capability_id=cap_id,ai_id=peer_id,name="FailingOp",description="fails",version="1.0",availability_status="online",tags=[search_term]); assert peer_a_hsp_connector.publish_capability_advertisement(adv,CAP_ADVERTISEMENT_TOPIC); await asyncio.sleep(0.5) #type: ignore
+        task_result_event = asyncio.Event()
+        def handler(p,s,e):
+            err_d=HSPErrorDetails(error_code="FAIL",error_message="failed_peer")
+            rp=HSPTaskResultPayload(result_id="r_f",request_id=p['request_id'],executing_ai_id=peer_id,status="failure",error_details=err_d,timestamp_completed=datetime.now(timezone.utc).isoformat())
+            peer_a_hsp_connector.send_task_result(rp,p['callback_address'],e['correlation_id'])
+        peer_a_hsp_connector.register_on_task_request_callback(handler)
+        peer_a_hsp_connector.subscribe(f"hsp/requests/{peer_id}/#")
+        adv=HSPCapabilityAdvertisementPayload(capability_id=cap_id,ai_id=peer_id,name="FailingOp",description="fails",version="1.0",availability_status="online",tags=[search_term])
+        assert peer_a_hsp_connector.publish_capability_advertisement(adv,CAP_ADVERTISEMENT_TOPIC)
+        await asyncio.sleep(0.2)
         assert len(service_discovery_module_fixture.find_capabilities(capability_id_filter=cap_id))==1
         dialogue_manager_fixture.tool_dispatcher = MagicMock(spec=ToolDispatcher)
-        dialogue_manager_fixture.tool_dispatcher.dispatch.return_value=ToolDispatcherResponse(status="unhandled_by_local_tool",payload=None) #type: ignore
-        mock_fe=MagicMock(spec=FormulaEngine); formula={"name":"f_fail_hsp","action":"dispatch_tool","parameters":{"tool_name":search_term,"tool_query":"q_fail_hsp"}}; mock_fe.match_input.return_value=formula; mock_fe.execute_formula.return_value={"action_name":"dispatch_tool","action_params":formula["parameters"]}; dialogue_manager_fixture.formula_engine=mock_fe #type: ignore
+        dialogue_manager_fixture.tool_dispatcher.dispatch.return_value=ToolDispatcherResponse(status="unhandled_by_local_tool",payload=None)
+        mock_fe=MagicMock(spec=FormulaEngine)
+        formula={"name":"f_fail_hsp","action":"dispatch_tool","parameters":{"tool_name":search_term,"tool_query":"q_fail_hsp"}}
+        mock_fe.match_input.return_value=formula
+        mock_fe.execute_formula.return_value={"action_name":"dispatch_tool","action_params":formula["parameters"]}
+        dialogue_manager_fixture.formula_engine=mock_fe
         dialogue_manager_fixture._dispatch_hsp_task_request=MagicMock(wraps=dialogue_manager_fixture._dispatch_hsp_task_request)
-        res_h:List[Any]=[]; orig_h=dialogue_manager_fixture._handle_incoming_hsp_task_result; dialogue_manager_fixture._handle_incoming_hsp_task_result=MagicMock(wraps=lambda p,s,e:(res_h.append(p),orig_h(p,s,e))) #type: ignore
+        res_h:List[Any]=[]
+        orig_h=dialogue_manager_fixture._handle_incoming_hsp_task_result
+        def result_handler_wrapper(p,s,e):
+            res_h.append(p)
+            orig_h(p,s,e)
+            task_result_event.set()
+        dialogue_manager_fixture._handle_incoming_hsp_task_result=MagicMock(wraps=result_handler_wrapper)
         mock_llm_fixture.generate_response_history.clear()
         user_q = "hsp_task_failed_what_now"
         resp = await dialogue_manager_fixture.get_simple_response(user_q,"u_hsp_f","s_hsp_f")
-        assert "I've sent your request" in resp; await asyncio.sleep(5.0)
+        assert "I've sent your request" in resp
+        await wait_for_event(task_result_event)
         dialogue_manager_fixture._dispatch_hsp_task_request.assert_called_once()
         dialogue_manager_fixture._handle_incoming_hsp_task_result.assert_called()
         assert len(res_h) > 0
-        assert res_h[0]['status']=='failure' and res_h[0]['error_details']['error_code']=="FAIL" #type: ignore
+        assert res_h[0]['status']=='failure' and res_h[0]['error_details']['error_code']=="FAIL"
         assert not mock_llm_fixture.generate_response_history
         print("[Test HSP Fail -> User Informed] Verified HSP task dispatch, failure handling by DM. LLM not called for this turn.")
-        dialogue_manager_fixture.formula_engine=FormulaEngine(); dialogue_manager_fixture._handle_incoming_hsp_task_result=orig_h
+        dialogue_manager_fixture.formula_engine=FormulaEngine()
+        dialogue_manager_fixture._handle_incoming_hsp_task_result=orig_h
 
     @pytest.mark.asyncio
     async def test_task_result_description_processed_by_content_analyzer(
         self, dialogue_manager_fixture: DialogueManager, service_discovery_module_fixture: ServiceDiscoveryModule,
         content_analyzer_module_fixture: ContentAnalyzerModule, main_ai_hsp_connector: HSPConnector, peer_a_hsp_connector: HSPConnector ):
         peer_id=TEST_AI_ID_PEER_A; cap_id=f"{peer_id}_describe_entity_v1.0"
-        adv=HSPCapabilityAdvertisementPayload(capability_id=cap_id,ai_id=peer_id,name="MockDesc",description="desc",version="1.0",availability_status="online",tags=["mock","description"],input_schema_example={"entity_name":"string"},output_schema_example={"description":"string"}) #type: ignore
-        peer_a_hsp_connector.publish_capability_advertisement(adv,CAP_ADVERTISEMENT_TOPIC); await asyncio.sleep(0.5)
+        task_result_event = asyncio.Event()
+        adv=HSPCapabilityAdvertisementPayload(capability_id=cap_id,ai_id=peer_id,name="MockDesc",description="desc",version="1.0",availability_status="online",tags=["mock","description"],input_schema_example={"entity_name":"string"},output_schema_example={"description":"string"})
+        peer_a_hsp_connector.publish_capability_advertisement(adv,CAP_ADVERTISEMENT_TOPIC)
+        await asyncio.sleep(0.2)
         assert len(service_discovery_module_fixture.find_capabilities(capability_id_filter=cap_id))==1
-        orig_ca_method=content_analyzer_module_fixture.process_hsp_fact_content; content_analyzer_module_fixture.process_hsp_fact_content=MagicMock(wraps=orig_ca_method)
-        def handler(p,s,e): entity=p['parameters'].get('entity_name','Default'); desc=f"Entity '{entity}' is a prominent feature in the Cygnus constellation."; res_p=HSPTaskResultPayload(result_id="r_desc",request_id=p['request_id'],executing_ai_id=peer_id,status="success",payload={"description":desc},timestamp_completed=datetime.now(timezone.utc).isoformat()); peer_a_hsp_connector.send_task_result(res_p,p['callback_address'],e['correlation_id']) #type: ignore
-        peer_a_hsp_connector.register_on_task_request_callback(handler); peer_a_hsp_connector.subscribe(f"hsp/requests/{peer_id}/#"); time.sleep(0.2)
-        entity_desc="GalaxyNova"; await dialogue_manager_fixture.get_simple_response(f"hsp_task:{cap_id} with params {{\"entity_name\":\"{entity_desc}\"}}","u_ca","s_ca"); await asyncio.sleep(5.0)
+        orig_ca_method=content_analyzer_module_fixture.process_hsp_fact_content
+        content_analyzer_module_fixture.process_hsp_fact_content=MagicMock(wraps=orig_ca_method)
+        def handler(p,s,e):
+            entity=p['parameters'].get('entity_name','Default')
+            desc=f"Entity '{entity}' is a prominent feature in the Cygnus constellation."
+            res_p=HSPTaskResultPayload(result_id="r_desc",request_id=p['request_id'],executing_ai_id=peer_id,status="success",payload={"description":desc},timestamp_completed=datetime.now(timezone.utc).isoformat())
+            peer_a_hsp_connector.send_task_result(res_p,p['callback_address'],e['correlation_id'])
+        peer_a_hsp_connector.register_on_task_request_callback(handler)
+        peer_a_hsp_connector.subscribe(f"hsp/requests/{peer_id}/#")
+        await asyncio.sleep(0.1)
+        orig_dm_handler = dialogue_manager_fixture._handle_incoming_hsp_task_result
+        def result_handler_wrapper(p,s,e):
+            orig_dm_handler(p,s,e)
+            task_result_event.set()
+        dialogue_manager_fixture._handle_incoming_hsp_task_result = result_handler_wrapper
+        entity_desc="GalaxyNova"
+        await dialogue_manager_fixture.get_simple_response(f"hsp_task:{cap_id} with params {{\"entity_name\":\"{entity_desc}\"}}","u_ca","s_ca")
+        await wait_for_event(task_result_event)
         content_analyzer_module_fixture.process_hsp_fact_content.assert_called()
         ca_args=content_analyzer_module_fixture.process_hsp_fact_content.call_args[0][0]
-        assert f"entity '{entity_desc}'" in ca_args.get('statement_nl','').lower() #type: ignore
-        g=content_analyzer_module_fixture.graph; assert any(entity_desc.lower() in n_d.get('label','').lower() and n_d.get('hsp_source_info',{}).get('source_ai')==peer_id for _,n_d in g.nodes(data=True))
+        assert f"entity '{entity_desc}'" in ca_args.get('statement_nl','').lower()
+        g=content_analyzer_module_fixture.graph
+        assert any(entity_desc.lower() in n_d.get('label','').lower() and n_d.get('hsp_source_info',{}).get('source_ai')==peer_id for _,n_d in g.nodes(data=True))
         content_analyzer_module_fixture.process_hsp_fact_content=orig_ca_method
+        dialogue_manager_fixture._handle_incoming_hsp_task_result = orig_dm_handler
 
     @pytest.mark.asyncio
     async def test_dm_prefers_higher_trust_capability(
@@ -459,16 +559,25 @@ class TestHSPTaskBrokering: # ... (all existing tests in this class remain the s
         cap_name="shared_calc"; cap_id_a=f"{TEST_AI_ID_PEER_A}_{cap_name}_v1"; cap_id_b=f"{TEST_AI_ID_PEER_B}_{cap_name}_v1"
         trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A,new_absolute_score=0.9)
         trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_B,new_absolute_score=0.3)
-        adv_a=HSPCapabilityAdvertisementPayload(capability_id=cap_id_a,ai_id=TEST_AI_ID_PEER_A,name=cap_name,description="Calc by A",version="1.0",availability_status="online",tags=[cap_name]); peer_a_hsp_connector.publish_capability_advertisement(adv_a,CAP_ADVERTISEMENT_TOPIC) #type: ignore
-        adv_b=HSPCapabilityAdvertisementPayload(capability_id=cap_id_b,ai_id=TEST_AI_ID_PEER_B,name=cap_name,description="Calc by B",version="1.0",availability_status="online",tags=[cap_name]); peer_b_hsp_connector.publish_capability_advertisement(adv_b,CAP_ADVERTISEMENT_TOPIC); await asyncio.sleep(0.5) #type: ignore
-        caps=service_discovery_module_fixture.find_capabilities(capability_name_filter=cap_name,sort_by_trust=True); assert len(caps)==2 and caps[0]['ai_id']==TEST_AI_ID_PEER_A
+        adv_a=HSPCapabilityAdvertisementPayload(capability_id=cap_id_a,ai_id=TEST_AI_ID_PEER_A,name=cap_name,description="Calc by A",version="1.0",availability_status="online",tags=[cap_name])
+        peer_a_hsp_connector.publish_capability_advertisement(adv_a,CAP_ADVERTISEMENT_TOPIC)
+        adv_b=HSPCapabilityAdvertisementPayload(capability_id=cap_id_b,ai_id=TEST_AI_ID_PEER_B,name=cap_name,description="Calc by B",version="1.0",availability_status="online",tags=[cap_name])
+        peer_b_hsp_connector.publish_capability_advertisement(adv_b,CAP_ADVERTISEMENT_TOPIC)
+        await asyncio.sleep(0.2)
+        caps=service_discovery_module_fixture.find_capabilities(capability_name_filter=cap_name,sort_by_trust=True)
+        assert len(caps)==2 and caps[0]['ai_id']==TEST_AI_ID_PEER_A
         dialogue_manager_fixture._dispatch_hsp_task_request=MagicMock(wraps=dialogue_manager_fixture._dispatch_hsp_task_request)
-        mock_fe=MagicMock(spec=FormulaEngine); formula={"name":"f_shared","action":"dispatch_tool","parameters":{"tool_name":cap_name,"tool_query":"1+1"}}; mock_fe.match_input.return_value=formula; mock_fe.execute_formula.return_value={"action_name":"dispatch_tool","action_params":formula["parameters"]}; dialogue_manager_fixture.formula_engine=mock_fe #type: ignore
+        mock_fe=MagicMock(spec=FormulaEngine)
+        formula={"name":"f_shared","action":"dispatch_tool","parameters":{"tool_name":cap_name,"tool_query":"1+1"}}
+        mock_fe.match_input.return_value=formula
+        mock_fe.execute_formula.return_value={"action_name":"dispatch_tool","action_params":formula["parameters"]}
+        dialogue_manager_fixture.formula_engine=mock_fe
         dialogue_manager_fixture.tool_dispatcher = MagicMock(spec=ToolDispatcher)
-        dialogue_manager_fixture.tool_dispatcher.dispatch.return_value = ToolDispatcherResponse(status="unhandled_by_local_tool",payload=None) #type: ignore
-        await dialogue_manager_fixture.get_simple_response("trigger_shared_calc","u_trust_pref","s_trust_pref"); await asyncio.sleep(0.5)
+        dialogue_manager_fixture.tool_dispatcher.dispatch.return_value = ToolDispatcherResponse(status="unhandled_by_local_tool",payload=None)
+        await dialogue_manager_fixture.get_simple_response("trigger_shared_calc","u_trust_pref","s_trust_pref")
+        await asyncio.sleep(0.2) # Allow dispatch to happen
         dialogue_manager_fixture._dispatch_hsp_task_request.assert_called_once()
-        selected_cap_adv:HSPCapabilityAdvertisementPayload = dialogue_manager_fixture._dispatch_hsp_task_request.call_args[0][0] #type: ignore
+        selected_cap_adv:HSPCapabilityAdvertisementPayload = dialogue_manager_fixture._dispatch_hsp_task_request.call_args[0][0]
         assert selected_cap_adv["ai_id"] == TEST_AI_ID_PEER_A, f"DM did not select higher trust peer. Got: {selected_cap_adv['ai_id']}"
         dialogue_manager_fixture.formula_engine=FormulaEngine()
 
@@ -478,17 +587,17 @@ def _create_hsp_fact_for_conflict_test(
     fact_id: str,
     source_ai_id: str,
     statement_nl: Optional[str] = None,
-    statement_structured: Optional[HSPFactStatementStructured] = None, #type: ignore
+    statement_structured: Optional[HSPFactStatementStructured] = None,
     statement_type: str = "natural_language", # or "semantic_triple"
     confidence: float = 0.8,
     timestamp: Optional[str] = None,
     tags: Optional[List[str]] = None
 ) -> HSPFactPayload:
-    return HSPFactPayload( #type: ignore
+    return HSPFactPayload(
         id=fact_id,
         source_ai_id=source_ai_id,
         statement_nl=statement_nl,
-        statement_structured=statement_structured, #type: ignore
+        statement_structured=statement_structured,
         statement_type=statement_type,
         confidence_score=confidence,
         timestamp_created=timestamp or datetime.now(timezone.utc).isoformat(),
@@ -502,7 +611,7 @@ def _create_hsp_envelope_for_conflict_test(
     message_type: str = "HSP::Fact_v0.1",
     communication_pattern: str = "publish"
 ) -> HSPMessageEnvelope:
-    return HSPMessageEnvelope( #type: ignore
+    return HSPMessageEnvelope(
         message_id=f"msg_{uuid.uuid4().hex[:8]}",
         sender_ai_id=sender_ai_id,
         recipient_ai_id=recipient_ai_id,
@@ -510,7 +619,7 @@ def _create_hsp_envelope_for_conflict_test(
         message_type=message_type,
         protocol_version="0.1", # Replace with actual version
         communication_pattern=communication_pattern,
-        payload=payload #type: ignore
+        payload=payload
     )
 
 
@@ -832,6 +941,20 @@ class TestHSPConflictResolution:
 # 2. From the project root: pytest tests/hsp/test_hsp_integration.py
 #
 # Note: These tests involve network communication and timing.
-#       `time.sleep` is used for simplicity to allow messages to propagate.
+#       `asyncio.sleep` is used to allow messages to propagate.
 #       If tests are flaky, these sleep durations might need adjustment or a more robust
 #       event signaling mechanism between the connectors and test assertions.
+
+async def wait_for_event(event: asyncio.Event, timeout: float = 2.0):
+    """Waits for an asyncio.Event to be set, with a timeout."""
+    try:
+        await asyncio.wait_for(event.wait(), timeout=timeout)
+    except asyncio.TimeoutError:
+        pytest.fail(f"Event was not set within the {timeout}s timeout.")
+
+async def wait_for_event(event: asyncio.Event, timeout: float = 2.0):
+    """Waits for an asyncio.Event to be set, with a timeout."""
+    try:
+        await asyncio.wait_for(event.wait(), timeout=timeout)
+    except asyncio.TimeoutError:
+        pytest.fail(f"Event was not set within the {timeout}s timeout.")
