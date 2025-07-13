@@ -143,9 +143,10 @@ class HSPConnector:
             self.is_connected = False
             # Do not set _was_unexpectedly_disconnected here, as this is a failed *connect* attempt.
 
-    def _on_mqtt_disconnect(self, client, userdata, reason_code, properties):
+    def _on_mqtt_disconnect(self, client, userdata, disconnect_flags, reason_code, properties):
         self.is_connected = False
-        if reason_code == 0:
+        # The reason_code is now a a ReasonCode object. We can check its value.
+        if reason_code and reason_code.value == 0:
             # MQTT_ERR_SUCCESS (0) usually means a clean disconnect initiated by client.disconnect()
             logger.info(f"HSPConnector ({self.ai_id}): Cleanly disconnected from MQTT Broker (reason code {reason_code}).")
             self._was_unexpectedly_disconnected = False # Reset on clean disconnect
@@ -255,7 +256,7 @@ class HSPConnector:
         """Publishes a Fact payload to a given HSP topic via MQTT."""
         message_type = f"HSP::Fact_v{fact_payload_version}"
         # TypedDict is structurally compatible with Dict[str, Any] for the payload argument
-        envelope = self._build_h_sp_envelope(
+        envelope = self._build_hsp_envelope(
             payload=dict(fact_payload), # Ensure payload is a dict if fact_payload is a TypedDict
             message_type=message_type,
             recipient_ai_id_or_topic=topic, # For Pub/Sub, recipient_ai_id in envelope is the topic
