@@ -16,27 +16,48 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "Flask",
+    "numpy",
+    "cryptography",
+    "requests",
+    "python-dotenv",
+    "PyYAML",
+    "typing-extensions",
+    "langchain",
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "httpx",
+    "psutil",
+    "spacy",
+    "networkx",
+    "paho-mqtt",
+    "pytest-asyncio",
+    "tensorflow==2.16.1"
+]
 
 [project.urls]
 "Homepage" = "https://github.com/pypa/sampleproject"
 "Bug Tracker" = "https://github.com/pypa/sampleproject/issues"
 
-[project.dependencies]
-Flask = "*"
-numpy = "*"
-cryptography = "*"
-requests = "*"
-python-dotenv = "*"
-PyYAML = "*"
-typing-extensions = "*"
-langchain = "*"
-fastapi = "*"
-"uvicorn[standard]" = "*"
-pydantic = "*"
-httpx = "*"
-psutil = "*"
-spacy = "*"
-networkx = "*"
-paho-mqtt = "*"
-pytest-asyncio = "*"
-tensorflow = "==2.16.1"
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["core_ai", "services", "tools", "interfaces", "hsp"]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  ".",
+  "src",
+]
+testpaths = [
+    "tests",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\")",
+    "online: marks tests that require an internet connection",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+addopts = "-p no:warnings"
