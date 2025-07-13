@@ -69,9 +69,9 @@ These instructions will get you a copy of the project up and running on your loc
     python -m venv venv
     source venv/bin/activate  # On Windows use `venv\Scripts\activate`
     ```
-    Install Python dependencies:
+    Install the project in editable mode, which will also install all dependencies:
     ```bash
-    pip install -r requirements.txt
+    pip install -e .
     ```
 
 3.  **Set up Node.js Environment:**
