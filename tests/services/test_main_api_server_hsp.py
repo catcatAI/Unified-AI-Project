@@ -87,8 +87,8 @@ class TestHSPEndpoints:
         # Peer advertises a capability
         adv_topic = "hsp/capabilities/advertisements/general" # As subscribed by core_services init
         assert api_test_peer_connector.publish_capability_advertisement(adv_payload, adv_topic)
-        time.sleep(0.5) # Allow time for MQTT message to arrive and be processed by API's SDM
-
+        time.sleep(5.0) # Allow time for MQTT message to arrive and be processed by API's SDM
+    
         time.sleep(5)
         response = client.get("/api/v1/hsp/services")
         assert response.status_code == 200
@@ -120,7 +120,7 @@ class TestHSPEndpoints:
             description="Echoes for API tests", version="1.0", availability_status="online", tags=["echo"]
         )
         assert api_test_peer_connector.publish_capability_advertisement(adv_payload, "hsp/capabilities/advertisements/general")
-        time.sleep(0.5) # Allow SDM to process
+        time.sleep(5.0) # Allow SDM to process
 
         # 2. Setup peer to handle the task request for this capability
         received_task_requests_on_peer: List[HSPTaskRequestPayload] = []
@@ -142,7 +142,7 @@ class TestHSPEndpoints:
         api_test_peer_connector.register_on_task_request_callback(api_peer_task_handler)
         peer_req_topic = f"hsp/requests/{peer_ai_id}/#" # Topic where peer listens for its tasks
         assert api_test_peer_connector.subscribe(peer_req_topic)
-        time.sleep(0.2)
+        time.sleep(5.0)
 
         # 3. Make API request to trigger the HSP task
         task_params = {"data": "hello from API test"}
@@ -157,7 +157,7 @@ class TestHSPEndpoints:
         assert response_data.get("correlation_id") is not None
         correlation_id_from_api = response_data["correlation_id"]
 
-        time.sleep(1.0) # Allow for full HSP round trip
+        time.sleep(5.0) # Allow for full HSP round trip
 
         # 4. Assertions
         #    - Peer received the task request

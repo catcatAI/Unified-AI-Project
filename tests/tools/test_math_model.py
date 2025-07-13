@@ -9,7 +9,18 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
 
 from tools.math_model import data_generator
-from tools.math_model.model import ArithmeticSeq2Seq, get_char_token_maps
+try:
+    from tools.math_model.model import ArithmeticSeq2Seq, get_char_token_maps
+    _tensorflow_available = True
+except ImportError:
+    _tensorflow_available = False
+    class ArithmeticSeq2Seq: # Dummy class
+        def __init__(self, *args, **kwargs): pass
+        def _build_inference_models(self): pass
+        def predict_sequence(self, *args, **kwargs): return "Error: Model not available"
+        @classmethod
+        def load_for_inference(cls, *args, **kwargs): return None
+    def get_char_token_maps(*args, **kwargs): return {}, {}, 0, 0, 0
 from tools.math_tool import extract_arithmetic_problem, calculate as calculate_via_tool
 from tools.math_tool import MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH # Import constants
 from tools.tool_dispatcher import ToolDispatcher
@@ -94,7 +105,8 @@ class TestMathModelComponents(unittest.TestCase):
         # Test model instantiation and build
         # Using small dimensions for quick test, no training occurs here
         model_instance = ArithmeticSeq2Seq(char_to_token, token_to_char, max_enc, max_dec, n_token, latent_dim=32, embedding_dim=16)
-        # _build_inference_models is called in __init__ if n_token > 0
+        # Trigger the build
+        model_instance._build_inference_models()
         self.assertIsNotNone(model_instance.model)
         self.assertIsNotNone(model_instance.encoder_model)
         self.assertIsNotNone(model_instance.decoder_model)

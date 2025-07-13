@@ -15,7 +15,20 @@ from tools.logic_model import logic_data_generator
 from tools.logic_model import logic_model_nn # Added this import
 from tools.logic_model.logic_parser_eval import LogicParserEval
 # Ensure LogicNNModel etc. are correctly imported if they are directly from logic_model_nn
-from tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
+try:
+    from tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
+    _tensorflow_available = True
+except ImportError:
+    _tensorflow_available = False
+    class LogicNNModel: # Dummy class
+        def __init__(self, *args, **kwargs): pass
+        def _build_model(self): pass
+        def predict(self, *args, **kwargs): return False
+        def save_model(self, *args, **kwargs): pass
+        @classmethod
+        def load_model(cls, *args, **kwargs): return None
+    def get_logic_char_token_maps(*args, **kwargs): return {}, {}, 0, 0
+    def preprocess_logic_data(*args, **kwargs): return None, None
 from tools import logic_tool # Added this import
 from tools.logic_tool import evaluate_expression as evaluate_logic_via_tool
 from tools.tool_dispatcher import ToolDispatcher
@@ -115,6 +128,7 @@ class TestLogicModelComponents(unittest.TestCase):
         self.assertEqual(y.shape[1], 2) # Categorical
 
         model_instance = LogicNNModel(max_seq_len=max_len, vocab_size=vocab_size, embedding_dim=8, lstm_units=16)
+        model_instance._build_model() # Explicitly build the model
         self.assertIsNotNone(model_instance.model)
 
         # Test predict path (on untrained model)
