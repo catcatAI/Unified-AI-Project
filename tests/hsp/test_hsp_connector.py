@@ -77,14 +77,14 @@ class TestHSPConnectorConnectionLogic:
         connector._was_unexpectedly_disconnected = False
 
         # Simulate Paho calling _on_mqtt_disconnect due to an error
-        # Args for on_disconnect: client, userdata, reason_code, properties (v2) / rc (v1)
         # Let's use a reason code that indicates an error
-        error_reason_code = mqtt.ReasonCode(1)
-        connector._on_mqtt_disconnect(mock_paho_client, None, None, error_reason_code, None) # For V2 callback
+        mock_reason_code = MagicMock()
+        mock_reason_code.value = 1 # Simulate an error code
+        connector._on_mqtt_disconnect(mock_paho_client, None, None, mock_reason_code, None) # For V2 callback
 
         assert not connector.is_connected
         assert connector._was_unexpectedly_disconnected
-        assert f"HSPConnector ({TEST_AI_ID}): Unexpectedly disconnected from MQTT Broker (reason code {error_reason_code})" in caplog.text
+        assert f"HSPConnector ({TEST_AI_ID}): Unexpectedly disconnected from MQTT Broker (reason code {mock_reason_code})" in caplog.text
         assert "Paho client will attempt to reconnect automatically" in caplog.text
 
     def test_clean_disconnection_flag_reset_and_logging(self, connector_with_mock_client: HSPConnector, mock_paho_client: MagicMock, caplog):
@@ -94,12 +94,13 @@ class TestHSPConnectorConnectionLogic:
         connector._was_unexpectedly_disconnected = True # Simulate previous unexpected disconnect
 
         # Simulate Paho calling _on_mqtt_disconnect for a clean disconnect (e.g., client called disconnect())
-        reason_code = mqtt.ReasonCode(0)
-        connector._on_mqtt_disconnect(mock_paho_client, None, None, reason_code, None) # MQTT_ERR_SUCCESS = 0
+        mock_reason_code = MagicMock()
+        mock_reason_code.value = 0 # MQTT_ERR_SUCCESS
+        connector._on_mqtt_disconnect(mock_paho_client, None, None, mock_reason_code, None)
 
         assert not connector.is_connected
         assert not connector._was_unexpectedly_disconnected # Should be reset
-        assert f"HSPConnector ({TEST_AI_ID}): Cleanly disconnected from MQTT Broker (reason code {mqtt.MQTT_ERR_SUCCESS})" in caplog.text
+        assert f"HSPConnector ({TEST_AI_ID}): Cleanly disconnected from MQTT Broker (reason code {mock_reason_code})" in caplog.text
 
     def test_reconnection_logging_and_flag_reset(self, connector_with_mock_client: HSPConnector, mock_paho_client: MagicMock, caplog):
         caplog.set_level(logging.INFO, logger="src.hsp.connector")

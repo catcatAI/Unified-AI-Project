@@ -246,6 +246,7 @@ class LearningManager:
                 if effective_confidence > existing_stored_confidence + self.hsp_fact_conflict_confidence_delta:
                     print(f"    New semantically conflicting fact more confident ({effective_confidence:.2f} vs stored {existing_stored_confidence:.2f}). Storing new, superseding.")
                     current_conflict_meta = {"supersedes_ham_records": [existing_ham_id], "resolution_strategy": "confidence_supersede_type2", "superseded_reason": "higher_confidence_semantic"}
+                    conflict_metadata_update.update(current_conflict_meta)
                 elif effective_confidence < existing_stored_confidence - self.hsp_fact_conflict_confidence_delta:
                     print(f"    Existing semantically conflicting fact more confident ({existing_stored_confidence:.2f} vs new {effective_confidence:.2f}). Ignoring new fact.")
                     return None # Ignore the new fact
