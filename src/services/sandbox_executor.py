@@ -253,11 +253,10 @@ class NonJsonTool:
     else: print(f"  Result: {{result}}"); assert False, "Error was expected" # Corrected
 
     infinite_loop_code_main = """
-import time
 class LoopTool:
     def __init__(self): pass
     def loop_forever(self):
-        while True: time.sleep(0.1)
+        while True: pass
 """
     print("\\nTesting infinite_loop_code (LoopTool)...")
     result, error = executor.run(infinite_loop_code_main, "LoopTool", "loop_forever", {{}}) # Corrected
