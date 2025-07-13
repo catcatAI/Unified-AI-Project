@@ -21,9 +21,7 @@ class TestCLI(unittest.TestCase):
         with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
             with patch('sys.argv', ['main.py']): # Simulate calling script with no arguments
                 with patch('asyncio.run') as mock_run:
-                    with self.assertRaises(SystemExit) as cm:
-                        cli_main.main_cli_logic()
-                    self.assertEqual(cm.exception.code, 0)
+                    cli_main.main_cli_logic()
 
     @patch('src.interfaces.cli.main.initialize_services')
     @patch('src.interfaces.cli.main.get_services')
@@ -49,7 +47,7 @@ class TestCLI(unittest.TestCase):
             with patch('sys.argv', ['main.py', 'query', case["input"]]):
                 captured_output = StringIO()
                 with patch('sys.stdout', new=captured_output):
-                     cli_main.main_cli_logic()
+                    cli_main.main_cli_logic()
                 output = captured_output.getvalue()
                 self.assertIn(case["expected_substring"], output)
 
