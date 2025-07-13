@@ -160,7 +160,7 @@ def main_cli_logic():
              # Keep CLI running to listen for HSP messages if no command is given
              print("\nCLI: No command provided. Listening for HSP messages for 60 seconds (Ctrl+C to exit)...")
              asyncio.run(asyncio.sleep(60))
-             sys.exit(0)
+             return # Exit the function gracefully
 
         args = parser.parse_args()
         if hasattr(args, 'func'):
