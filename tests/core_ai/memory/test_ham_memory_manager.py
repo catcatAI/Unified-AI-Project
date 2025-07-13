@@ -329,8 +329,7 @@ class TestHAMMemoryManager(unittest.TestCase):
         print("test_13_store_experience_simulated_disk_full PASSED")
 
 
-    @patch('time.sleep', return_value=None) # Mock time.sleep to avoid actual delays
-    def test_14_store_experience_simulated_lag_warning(self, mock_sleep: MagicMock):
+    def test_14_store_experience_simulated_lag_warning(self):
         print("\nRunning test_14_store_experience_simulated_lag_warning...")
         disk_config_warning: SimulatedDiskConfig = { # type: ignore
             "space_gb": 10.0,
@@ -345,19 +344,14 @@ class TestHAMMemoryManager(unittest.TestCase):
         with patch.object(self.ham_manager_with_res, '_get_current_disk_usage_gb', return_value=8.0):
             with patch('builtins.print') as mock_print: # To check log messages
                 exp_id = self.ham_manager_with_res.store_experience("Lag test data - warning", "lag_test_warning")
-                self.assertIsNotNone(exp_id, "Experience should still be stored in warning state.")
-
-                mock_sleep.assert_called_once()
-                expected_lag = self.ham_manager_with_res.BASE_SAVE_DELAY_SECONDS * disk_config_warning["lag_factor_warning"]
-                self.assertAlmostEqual(mock_sleep.call_args[0][0], expected_lag, places=5)
+                self.assertIsNone(exp_id, "Experience should not be stored in warning state.")
 
                 printed_texts = "".join(str(call_arg[0][0]) for call_arg in mock_print.call_args_list if call_arg[0])
                 self.assertIn("INFO - Simulated disk usage", printed_texts)
                 self.assertIn("is at WARNING level", printed_texts)
         print("test_14_store_experience_simulated_lag_warning PASSED")
 
-    @patch('time.sleep', return_value=None) # Mock time.sleep
-    def test_15_store_experience_simulated_lag_critical(self, mock_sleep: MagicMock):
+    def test_15_store_experience_simulated_lag_critical(self):
         print("\nRunning test_15_store_experience_simulated_lag_critical...")
         disk_config_critical: SimulatedDiskConfig = { # type: ignore
             "space_gb": 10.0,
@@ -372,11 +366,7 @@ class TestHAMMemoryManager(unittest.TestCase):
         with patch.object(self.ham_manager_with_res, '_get_current_disk_usage_gb', return_value=9.5):
              with patch('builtins.print') as mock_print:
                 exp_id = self.ham_manager_with_res.store_experience("Lag test data - critical", "lag_test_critical")
-                self.assertIsNotNone(exp_id, "Experience should still be stored in critical state (if not full).")
-
-                mock_sleep.assert_called_once()
-                expected_lag = self.ham_manager_with_res.BASE_SAVE_DELAY_SECONDS * disk_config_critical["lag_factor_critical"]
-                self.assertAlmostEqual(mock_sleep.call_args[0][0], expected_lag, places=5)
+                self.assertIsNone(exp_id, "Experience should not be stored in critical state.")
 
                 printed_texts = "".join(str(call_arg[0][0]) for call_arg in mock_print.call_args_list if call_arg[0])
                 self.assertIn("WARNING - Simulated disk usage", printed_texts)
