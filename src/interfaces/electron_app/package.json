@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build": "echo \"Build script placeholder for Electron app\"",
-    "package": "electron-packager . --overwrite --platform=linux --arch=x64 --out=out --prune=true",
+    "package": "electron-packager . --overwrite --out=out --prune=true",
     "test": "echo \"Error: no test specified for electron_app yet\" && exit 1"
   },
   "keywords": [

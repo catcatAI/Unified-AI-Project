@@ -67,7 +67,10 @@ These instructions will get you a copy of the project up and running on your loc
     It's highly recommended to use a virtual environment:
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    # On Windows
+    .\venv\Scripts\activate
+    # On macOS/Linux
+    source venv/bin/activate
     ```
     Install the project in editable mode, which will also install all dependencies:
     ```bash
@@ -90,6 +93,11 @@ These instructions will get you a copy of the project up and running on your loc
     The project uses a `.env` file for sensitive configurations like API keys.
     Copy the example file and fill in your details:
     ```bash
+    # On Windows (Command Prompt)
+    copy .env.example .env
+    # On Windows (PowerShell)
+    Copy-Item .env.example .env
+    # On macOS/Linux
     cp .env.example .env
     ```
     Now, edit `.env` with your specific keys and settings.
@@ -97,9 +105,12 @@ These instructions will get you a copy of the project up and running on your loc
 5.  **PYTHONPATH (if needed):**
     The project uses absolute imports from the `src` directory (e.g., `from core_ai...`). If you encounter import errors, ensure your `PYTHONPATH` includes the project root directory or the `src` directory. Many IDEs handle this automatically. Alternatively, you can set it temporarily in your shell:
     ```bash
-    export PYTHONPATH="${PYTHONPATH}:$(pwd)"  # For Linux/macOS
-    # For Windows (cmd.exe): set PYTHONPATH=%PYTHONPATH%;%CD%
-    # For Windows (PowerShell): $env:PYTHONPATH += ";${pwd}"
+    # On Windows (Command Prompt)
+    set PYTHONPATH=%PYTHONPATH%;%CD%
+    # On Windows (PowerShell)
+    $env:PYTHONPATH += ";${pwd}"
+    # On macOS/Linux
+    export PYTHONPATH="${PYTHONPATH}:$(pwd)"
     ```
     It's often better to run Python scripts from the project root to avoid import issues.
 
