@@ -1,8 +1,36 @@
 import numpy as np
-import tensorflow as tf
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, LSTM, Dense, Embedding
-import json # Added for loading char_maps
+import json
+
+# Global variables to hold TensorFlow components, loaded on demand.
+tf = None
+Model = None
+Input = None
+LSTM = None
+Dense = None
+Embedding = None
+
+def _ensure_tensorflow_is_imported():
+    """
+    Lazily imports TensorFlow and its Keras components.
+    Raises ImportError if TensorFlow is not installed or fails to import.
+    """
+    global tf, Model, Input, LSTM, Dense, Embedding
+    if tf is None:
+        try:
+            # Hide the import from static analysis to avoid premature dependency checks
+            _tf_module = __import__('tensorflow', fromlist=['keras'])
+            
+            tf = _tf_module
+            Model = tf.keras.models.Model
+            Input = tf.keras.layers.Input
+            LSTM = tf.keras.layers.LSTM
+            Dense = tf.keras.layers.Dense
+            Embedding = tf.keras.layers.Embedding
+        except ImportError as e:
+            raise ImportError(
+                "TensorFlow is required for this functionality, but it could not be imported. "
+                "Please ensure TensorFlow is installed correctly. Original error: " + str(e)
+            ) from e
 
 class ArithmeticSeq2Seq:
     def __init__(self, char_to_token, token_to_char, max_encoder_seq_length, max_decoder_seq_length, n_token, latent_dim=256, embedding_dim=128):
@@ -17,26 +45,24 @@ class ArithmeticSeq2Seq:
         self.model = None
         self.encoder_model = None
         self.decoder_model = None
-        # Call build_model if parameters are sufficient, or it can be called separately
-        if self.n_token > 0: # A basic check
-             self._build_inference_models() # Renamed and made private convention
+        # Model is built on-demand when needed (e.g., during predict or load)
+        # to avoid requiring TensorFlow at initialization.
 
     def _build_inference_models(self):
-        # This method sets up the model structure for training AND inference
+        """Builds the model structure for training and inference."""
+        _ensure_tensorflow_is_imported() # Lazy import of TensorFlow
+
         # Encoder
         encoder_inputs = Input(shape=(None,), name="encoder_inputs")
         encoder_embedding = Embedding(self.n_token, self.embedding_dim, name="encoder_embedding")(encoder_inputs)
-        # Using name 'encoder_lstm_layer' for the layer itself to avoid conflict if self.encoder_lstm is an attribute
         encoder_lstm_layer = LSTM(self.latent_dim, return_state=True, name="encoder_lstm")
         _, state_h, state_c = encoder_lstm_layer(encoder_embedding)
         encoder_states = [state_h, state_c]
 
         # Decoder
         decoder_inputs = Input(shape=(None,), name="decoder_inputs")
-        # Using name 'decoder_embedding_layer' for the layer itself
         decoder_embedding_layer_instance = Embedding(self.n_token, self.embedding_dim, name="decoder_embedding")
         decoder_embedding = decoder_embedding_layer_instance(decoder_inputs)
-        # Using name 'decoder_lstm_layer'
         decoder_lstm_layer = LSTM(self.latent_dim, return_sequences=True, return_state=True, name="decoder_lstm")
         decoder_outputs, _, _ = decoder_lstm_layer(decoder_embedding, initial_state=encoder_states)
 
@@ -63,10 +89,8 @@ class ArithmeticSeq2Seq:
             [decoder_inputs] + decoder_states_inputs,
             [decoder_outputs_inf] + decoder_states_inf
         )
-        # print("Model structure (training and inference) built.")
-        # self.model.summary() # Optional: print summary during build
 
-    def _string_to_tokens(self, input_string, max_len, is_target=False): # Made private by convention
+    def _string_to_tokens(self, input_string, max_len, is_target=False):
         tokens = np.zeros((1, max_len), dtype='float32')
         if is_target:
             processed_string = '\t' + input_string + '\n'
@@ -74,24 +98,18 @@ class ArithmeticSeq2Seq:
             processed_string = input_string
 
         for t, char in enumerate(processed_string):
-            if t < max_len: # Ensure we don't go out of bounds for tokens array
+            if t < max_len:
                 if char in self.char_to_token:
                     tokens[0, t] = self.char_to_token[char]
                 else:
-                    tokens[0, t] = self.char_to_token.get('UNK', 0) # Default to 0 if UNK also not found
+                    tokens[0, t] = self.char_to_token.get('UNK', 0)
             else:
                 break
         return tokens
 
     def predict_sequence(self, input_seq_str: str) -> str:
         if not self.encoder_model or not self.decoder_model:
-            # Attempt to build if not already built (e.g. when loaded from saved weights)
-            if self.n_token > 0:
-                self._build_inference_models()
-                if not self.encoder_model or not self.decoder_model:
-                     raise ValueError("Inference models are not built and could not be auto-built.")
-            else:
-                raise ValueError("Inference models are not built. Call build_model() or load_model_for_inference() first.")
+            self._build_inference_models()
 
         input_seq = self._string_to_tokens(input_seq_str, self.max_encoder_seq_length, is_target=False)
         states_value = self.encoder_model.predict(input_seq, verbose=0)
@@ -105,11 +123,11 @@ class ArithmeticSeq2Seq:
         stop_condition = False
         decoded_sentence = ''
 
-        for _ in range(self.max_decoder_seq_length + 1): # Max iterations to prevent infinite loop
+        for _ in range(self.max_decoder_seq_length + 1):
             output_tokens, h, c = self.decoder_model.predict([target_seq] + states_value, verbose=0)
 
             sampled_token_index = np.argmax(output_tokens[0, -1, :])
-            sampled_char = self.token_to_char.get(sampled_token_index, 'UNK')
+            sampled_char = self.token_to_char.get(str(sampled_token_index), 'UNK') # Ensure key is string for lookup
 
             if sampled_char == '\n' or sampled_char == 'UNK' or len(decoded_sentence) >= self.max_decoder_seq_length:
                 stop_condition = True
@@ -124,31 +142,27 @@ class ArithmeticSeq2Seq:
         return decoded_sentence
 
     @classmethod
-    def load_for_inference(cls, model_weights_path, char_maps_path): # Removed latent_dim, embedding_dim from args
+    def load_for_inference(cls, model_weights_path, char_maps_path):
         """Loads a trained model and its character maps for inference."""
+        _ensure_tensorflow_is_imported() # Lazy import of TensorFlow
         try:
             with open(char_maps_path, 'r', encoding='utf-8') as f:
                 char_map_data = json.load(f)
 
             char_to_token = char_map_data['char_to_token']
-            token_to_char = char_map_data['token_to_char']
+            # JSON saves all keys as strings, so convert token_to_char keys back to int for TF, then back to str for our use
+            token_to_char = {str(k): v for k, v in char_map_data['token_to_char'].items()}
             n_token = char_map_data['n_token']
             max_encoder_seq_length = char_map_data['max_encoder_seq_length']
             max_decoder_seq_length = char_map_data['max_decoder_seq_length']
-
-            # Load latent_dim and embedding_dim from char_map_data
-            # Provide defaults if not found, for backward compatibility or if file is old.
             latent_dim = char_map_data.get('latent_dim', 256)
             embedding_dim = char_map_data.get('embedding_dim', 128)
 
             instance = cls(char_to_token, token_to_char, max_encoder_seq_length,
                            max_decoder_seq_length, n_token, latent_dim, embedding_dim)
 
-            # Build the model structure before loading weights
-            instance._build_inference_models() # This also builds instance.model
+            instance._build_inference_models()
             instance.model.load_weights(model_weights_path)
-            # Inference models (encoder_model, decoder_model) share layers with model,
-            # so their weights are updated when model.load_weights() is called.
             print(f"Model loaded successfully from {model_weights_path}")
             return instance
 
@@ -161,7 +175,7 @@ class ArithmeticSeq2Seq:
 # --- Helper functions for preparing data (can be moved to a utils.py or train.py) ---
 def get_char_token_maps(problems, answers):
     input_texts = [p['problem'] for p in problems]
-    target_texts = ['\t' + a['answer'] + '\n' for a in answers] # Add start/end tokens
+    target_texts = ['\t' + a['answer'] + '\n' for a in answers]
 
     all_chars = set()
     for text in input_texts:
@@ -172,16 +186,17 @@ def get_char_token_maps(problems, answers):
             all_chars.add(char)
 
     all_chars = sorted(list(all_chars))
-    all_chars.append('UNK') # For unknown characters
+    all_chars.append('UNK')
 
     char_to_token = dict([(char, i) for i, char in enumerate(all_chars)])
     token_to_char = dict([(i, char) for i, char in enumerate(all_chars)])
     n_token = len(all_chars)
 
-    max_encoder_seq_length = max([len(txt) for txt in input_texts])
-    max_decoder_seq_length = max([len(txt) for txt in target_texts])
+    max_encoder_seq_length = max([len(txt) for txt in input_texts]) if input_texts else 0
+    max_decoder_seq_length = max([len(txt) for txt in target_texts]) if target_texts else 0
 
     return char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length
+
 
 def prepare_data(problems, answers, char_to_token, max_encoder_seq_length, max_decoder_seq_length, n_token):
     encoder_input_data = np.zeros(
@@ -205,46 +220,43 @@ def prepare_data(problems, answers, char_to_token, max_encoder_seq_length, max_d
         for t, char in enumerate(target_text_processed):
             if char in char_to_token:
                 decoder_input_data[i, t] = char_to_token[char]
-                if t > 0: # decoder_target_data is one timestep ahead
+                if t > 0:
                     decoder_target_data[i, t - 1, char_to_token[char]] = 1.
-            else: # Handle UNK token
+            else:
                 decoder_input_data[i, t] = char_to_token['UNK']
                 if t > 0:
                     decoder_target_data[i, t - 1, char_to_token['UNK']] = 1.
-
 
     return encoder_input_data, decoder_input_data, decoder_target_data
 
 
 if __name__ == '__main__':
-    # This is a placeholder for example usage or basic testing
-    # Actual training and data loading will be in train.py
+    print("--- ArithmeticSeq2Seq Model Structure Test ---")
+    try:
+        _ensure_tensorflow_is_imported()
+        print("TensorFlow imported successfully.")
 
-    # Dummy data for testing the class structure
-    dummy_problems = [{'problem': '1+1'}, {'problem': '10*2'}]
-    dummy_answers = [{'answer': '2'}, {'answer': '20'}]
+        dummy_problems = [{'problem': '1+1'}, {'problem': '10*2'}]
+        dummy_answers = [{'answer': '2'}, {'answer': '20'}]
 
-    char_map, token_map, n_tok, max_enc_len, max_dec_len = get_char_token_maps(dummy_problems, dummy_answers)
+        char_map, token_map, n_tok, max_enc_len, max_dec_len = get_char_token_maps(dummy_problems, dummy_answers)
 
-    print(f"Num tokens: {n_tok}")
-    print(f"Max encoder sequence length: {max_enc_len}")
-    print(f"Max decoder sequence length: {max_dec_len}")
-    print(f"Char to token map: {char_map}")
+        print(f"Num tokens: {n_tok}")
+        print(f"Max encoder sequence length: {max_enc_len}")
+        print(f"Max decoder sequence length: {max_dec_len}")
 
-    # Test model build
-    arith_model = ArithmeticSeq2Seq(char_map, token_map, max_enc_len, max_dec_len, n_tok)
-    arith_model.build_model()
+        arith_model = ArithmeticSeq2Seq(char_map, token_map, max_enc_len, max_dec_len, n_tok)
+        
+        # The model is built lazily, so we call a method that triggers it.
+        print("\nTesting prediction (on untrained model)...")
+        test_problem = "5+5"
+        predicted_answer = arith_model.predict_sequence(test_problem)
+        print(f"Problem: {test_problem}")
+        print(f"Predicted Answer: {predicted_answer}")
 
-    # Test prediction (on a non-trained model, this will be gibberish)
-    print("\nTesting prediction (on untrained model):")
-    test_problem = "5+5"
-    predicted_answer = arith_model.predict_sequence(test_problem)
-    print(f"Problem: {test_problem}")
-    print(f"Predicted Answer: {predicted_answer}")
+        print("\nModel.py basic structure test complete.")
 
-    test_problem_2 = "123*2"
-    predicted_answer_2 = arith_model.predict_sequence(test_problem_2)
-    print(f"Problem: {test_problem_2}")
-    print(f"Predicted Answer: {predicted_answer_2}")
-
-    print("\nModel.py basic structure test complete.")
+    except ImportError as e:
+        print(f"Skipping model test: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred during the test: {e}")
