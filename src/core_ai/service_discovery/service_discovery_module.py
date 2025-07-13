@@ -202,6 +202,10 @@ class ServiceDiscoveryModule:
                 logger.debug("Capability ID '%s' not found in known capabilities.", capability_id)
                 return None
 
+    def get_all_capabilities(self) -> List[HSPCapabilityAdvertisementPayload]:
+        """Returns a list of all known, non-stale capabilities."""
+        return self.find_capabilities()
+
 if __name__ == '__main__':
     # Basic test/example of instantiation (requires a mock TrustManager)
     class MockTrustManager(TrustManager):

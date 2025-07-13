@@ -22,6 +22,10 @@ from tools.tool_dispatcher import ToolDispatcher
 from services.llm_interface import LLMInterface, LLMInterfaceConfig
 from hsp.connector import HSPConnector
 
+# --- Constants ---
+CAP_ADVERTISEMENT_TOPIC = "hsp/capabilities/advertisements/general"
+FACT_TOPIC_GENERAL = "hsp/knowledge/facts/general"
+
 # --- Global Singleton Instances ---
 # These will be initialized by `initialize_services`
 
@@ -169,6 +173,7 @@ def initialize_services(
             ai_id=ai_id,
             ham_memory_manager=ham_manager_instance,
             fact_extractor=fact_extractor_instance,
+            personality_manager=personality_manager_instance,
             content_analyzer=content_analyzer_instance,
             hsp_connector=hsp_connector_instance,
             trust_manager=trust_manager_instance,
