@@ -1,4 +1,5 @@
-from typing import TypedDict, Optional, List, Dict, Any, Literal, Union # Added Union back
+from typing import Optional, List, Dict, Any, Literal, Union # Added Union back
+from typing_extensions import TypedDict # Import TypedDict from typing_extensions
 from typing_extensions import Required, NotRequired # For Required/NotRequired fields in TypedDict
 
 # For TypedDict, 'Required' is implicitly all keys unless total=False.
