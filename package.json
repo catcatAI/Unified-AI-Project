@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A unified AI project consolidating MikoAI, Fragmenta, and other CatAI initiatives.",
   "scripts": {
-    "test": "echo \"Error: no test specified for root project\" && exit 1"
+    "test": "cmd /c \"scripts\\setup_env.bat\" && pytest"
   },
   "keywords": [
     "ai",
