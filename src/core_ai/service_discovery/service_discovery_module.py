@@ -74,6 +74,8 @@ class ServiceDiscoveryModule:
             logger.error("Received capability advertisement (ID: %s) with no 'ai_id' (advertiser AI ID) in payload. Discarding. Payload: %s", capability_id, payload)
             return
 
+        logger.debug("Processing capability advertisement: ID=%s, AI=%s, Sender=%s", capability_id, advertiser_ai_id, sender_ai_id)
+
         # Optional: Could use sender_ai_id for additional trust checks or logging if different from advertiser_ai_id
         # For now, the primary identifier for trust is the advertiser_ai_id from the payload.
 
@@ -84,6 +86,7 @@ class ServiceDiscoveryModule:
                 "Processed capability advertisement for ID: %s from AI: %s (Sender: %s). Last seen updated to: %s.",
                 capability_id, advertiser_ai_id, sender_ai_id, current_time.isoformat()
             )
+            logger.debug("Stored capability: %s, Last seen: %s", capability_id, current_time.isoformat())
 
     def find_capabilities(
         self,
@@ -113,6 +116,10 @@ class ServiceDiscoveryModule:
 
         current_time = datetime.now(timezone.utc)
 
+        logger.debug("Finding capabilities with filters: ID=%s, Name=%s, Tags=%s, MinTrust=%s, SortByTrust=%s",
+                     capability_id_filter, capability_name_filter, tags_filter, min_trust_score, sort_by_trust)
+        logger.debug("Current known_capabilities before filtering: %s", self.known_capabilities)
+
         with self.lock:
             # Iterate over a copy of values in case of concurrent modification (though less likely here)
             # No, iterate items to get capability_id for logging if needed.
@@ -122,38 +129,42 @@ class ServiceDiscoveryModule:
 
 
             for capability_id, (payload, last_seen) in capabilities_to_iterate:
+                logger.debug("Checking capability: %s, Last seen: %s", capability_id, last_seen.isoformat())
                 # --- Staleness Check ---
                 age_seconds = (current_time - last_seen).total_seconds()
+                logger.debug("Capability %s age: %.2fs, threshold: %ds", capability_id, age_seconds, self.staleness_threshold_seconds)
                 if age_seconds > self.staleness_threshold_seconds:
-                    logger.debug(
-                        "Skipping stale capability ID: %s from AI: %s (age: %.2fs, threshold: %ds)",
-                        capability_id, payload.get('ai_id'), age_seconds, self.staleness_threshold_seconds
-                    )
+                    logger.debug("Skipping stale capability ID: %s (age: %.2fs > threshold: %ds)", capability_id, age_seconds, self.staleness_threshold_seconds)
                     continue
 
                 # Apply capability_id_filter
-                if capability_id_filter and capability_id != capability_id_filter: # Use capability_id from item key
+                if capability_id_filter and capability_id != capability_id_filter:
+                    logger.debug("Skipping capability %s: ID filter mismatch (expected %s)", capability_id, capability_id_filter)
                     continue
 
                 # Apply capability_name_filter
                 if capability_name_filter and payload.get('name') != capability_name_filter:
+                    logger.debug("Skipping capability %s: Name filter mismatch (expected %s, got %s)", capability_id, capability_name_filter, payload.get('name'))
                     continue
 
                 # Apply tags_filter (must match ALL tags in filter)
                 if tags_filter:
                     capability_tags = payload.get('tags', [])
                     if not capability_tags or not all(tag in capability_tags for tag in tags_filter):
+                        logger.debug("Skipping capability %s: Tags filter mismatch (expected all of %s, got %s)", capability_id, tags_filter, capability_tags)
                         continue
 
                 advertiser_ai_id = payload.get('ai_id')
-                if not advertiser_ai_id: # Should not happen if process_capability_advertisement validates
+                if not advertiser_ai_id:
                     logger.warning("Found capability with no advertiser_ai_id during find: %s. Skipping.", payload.get('capability_id'))
                     continue
 
                 trust_score = self.trust_manager.get_trust_score(advertiser_ai_id)
+                logger.debug("Capability %s trust score: %.2f (min_trust_score: %s)", capability_id, trust_score, min_trust_score)
 
                 # Apply min_trust_score filter
                 if min_trust_score is not None and trust_score < min_trust_score:
+                    logger.debug("Skipping capability %s: Trust score %.2f below min_trust_score %.2f", capability_id, trust_score, min_trust_score)
                     continue
 
                 pre_results.append((payload, trust_score))

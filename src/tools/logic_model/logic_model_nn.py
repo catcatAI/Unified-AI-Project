@@ -1,6 +1,7 @@
 import os
 import json
 import numpy as np
+import sys # Added for debugging sys.path
 
 # Global variables to hold TensorFlow components, loaded on demand.
 tf = None
@@ -19,6 +20,7 @@ def _ensure_tensorflow_is_imported():
     Raises ImportError if TensorFlow is not installed or fails to import.
     """
     global tf, Model, Input, Embedding, LSTM, Dense, Dropout, pad_sequences, to_categorical
+    print("Current sys.path:", sys.path) # Added for debugging
     if tf is None:
         try:
             _tf_module = __import__('tensorflow', fromlist=['keras'])

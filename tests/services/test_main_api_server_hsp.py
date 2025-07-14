@@ -19,10 +19,17 @@ from src.core_ai.service_discovery.service_discovery_module import ServiceDiscov
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
 from tests.conftest import is_mqtt_broker_available
 
+import logging
+
 # --- Constants for API Tests ---
 TEST_API_PEER_AI_ID = "did:hsp:test_api_peer_007"
 MQTT_BROKER_ADDRESS = "127.0.0.1" # Must match what core_services will use
 MQTT_BROKER_PORT = 1883
+
+# Set logging level for HSPConnector to DEBUG for detailed output during tests
+logging.getLogger("src.hsp.connector").setLevel(logging.DEBUG)
+logging.getLogger("src.core_ai.service_discovery.service_discovery_module").setLevel(logging.DEBUG)
+logging.getLogger("src.core_ai.dialogue.dialogue_manager").setLevel(logging.DEBUG)
 
 @pytest.fixture(scope="module")
 async def client():
@@ -50,18 +57,13 @@ async def api_test_peer_connector():
     """A separate HSPConnector for a mock peer to interact with the API's AI."""
     peer_conn = HSPConnector(TEST_API_PEER_AI_ID, MQTT_BROKER_ADDRESS, MQTT_BROKER_PORT, client_id_suffix=f"api_test_peer_{uuid.uuid4().hex[:4]}")
     connect_event = asyncio.Event()
-    def on_connect(client, userdata, flags, rc):
-        if rc == 0:
-            connect_event.set()
-    peer_conn.client.on_connect = on_connect
+    disconnect_event = asyncio.Event()
+    peer_conn.register_on_connect_callback(connect_event.set)
+    peer_conn.register_on_disconnect_callback(disconnect_event.set)
     if not peer_conn.connect():
         pytest.fail("Failed to connect api_test_peer_connector for API tests.")
     await wait_for_event(connect_event)
     yield peer_conn
-    disconnect_event = asyncio.Event()
-    def on_disconnect(client, userdata, rc):
-        disconnect_event.set()
-    peer_conn.client.on_disconnect = on_disconnect
     peer_conn.disconnect()
     await wait_for_event(disconnect_event)
 
@@ -75,7 +77,8 @@ async def wait_for_event(event: asyncio.Event, timeout: float = 2.0):
 @pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available for API HSP tests")
 class TestHSPEndpoints:
 
-    def test_list_hsp_services_empty(self, client: TestClient):
+    @pytest.mark.asyncio
+    async def test_list_hsp_services_empty(self, client: TestClient):
         # Clear any existing services from ServiceDiscoveryModule first for a clean test
         services = get_services()
         sdm = services.get("service_discovery")
@@ -104,11 +107,11 @@ class TestHSPEndpoints:
         # Peer advertises a capability
         adv_topic = "hsp/capabilities/advertisements/general" # As subscribed by core_services init
         adv_event = asyncio.Event()
-        def on_publish(client, userdata, mid):
+        def on_publish(client, userdata, mid, reason_code, properties):
             adv_event.set()
-        api_test_peer_connector.client.on_publish = on_publish
+        api_test_peer_connector.mqtt_client.on_publish = on_publish
         assert api_test_peer_connector.publish_capability_advertisement(adv_payload, adv_topic)
-        await wait_for_event(adv_event)
+        await wait_for_event(adv_event, timeout=2.0)
     
         await asyncio.sleep(0.2) # allow api_sdm to process the message
         response = client.get("/api/v1/hsp/services")
@@ -179,7 +182,7 @@ class TestHSPEndpoints:
         assert response_data.get("correlation_id") is not None
         correlation_id_from_api = response_data["correlation_id"]
 
-        await wait_for_event(task_request_event)
+        await wait_for_event(task_request_event, timeout=2.0)
 
         # 4. Assertions
         #    - Peer received the task request
@@ -191,7 +194,8 @@ class TestHSPEndpoints:
         #      The pending request should be removed after result is handled.
         assert correlation_id_from_api not in api_dm.pending_hsp_task_requests # type: ignore
 
-    def test_request_hsp_task_capability_not_found(self, client: TestClient):
+    @pytest.mark.asyncio
+    async def test_request_hsp_task_capability_not_found(self, client: TestClient):
         response = client.post("/api/v1/hsp/tasks", json={
             "target_capability_id": "non_existent_capability_for_api",
             "parameters": {"data": "test"}
@@ -223,7 +227,8 @@ class TestHSPEndpoints:
 
         del dialogue_manager.pending_hsp_task_requests[mock_corr_id] # Clean up
 
-    def test_get_hsp_task_status_completed_from_ham(self, client: TestClient):
+    @pytest.mark.asyncio
+    async def test_get_hsp_task_status_completed_from_ham(self, client: TestClient):
         services = get_services()
         ham_manager = services.get("ham_manager")
         assert ham_manager is not None
@@ -246,7 +251,7 @@ class TestHSPEndpoints:
                 "hsp_task_service_payload": expected_result_payload # Simulate DM storing this
             } #type: ignore
         )
-
+        await asyncio.sleep(0.1) # Give time for HAM to process
         response = client.get(f"/api/v1/hsp/tasks/{mock_corr_id}")
         assert response.status_code == 200
         status_data = response.json()
@@ -259,7 +264,8 @@ class TestHSPEndpoints:
              ham_manager.memory_store = {k:v for k,v in ham_manager.memory_store.items() if v['metadata'].get('hsp_correlation_id') != mock_corr_id}
 
 
-    def test_get_hsp_task_status_failed_from_ham(self, client: TestClient):
+    @pytest.mark.asyncio
+    async def test_get_hsp_task_status_failed_from_ham(self, client: TestClient):
         services = get_services()
         ham_manager = services.get("ham_manager")
         assert ham_manager is not None
@@ -276,6 +282,7 @@ class TestHSPEndpoints:
                 "error_details": expected_error_details
             }
         )
+        await asyncio.sleep(0.1) # Give time for HAM to process
         response = client.get(f"/api/v1/hsp/tasks/{mock_corr_id}")
         assert response.status_code == 200
         status_data = response.json()
@@ -286,7 +293,8 @@ class TestHSPEndpoints:
              ham_manager.memory_store = {k:v for k,v in ham_manager.memory_store.items() if v['metadata'].get('hsp_correlation_id') != mock_corr_id}
 
 
-    def test_get_hsp_task_status_unknown(self, client: TestClient):
+    @pytest.mark.asyncio
+    async def test_get_hsp_task_status_unknown(self, client: TestClient):
         mock_corr_id = "unknown_corr_id_000"
         response = client.get(f"/api/v1/hsp/tasks/{mock_corr_id}")
         assert response.status_code == 200

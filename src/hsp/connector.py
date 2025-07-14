@@ -84,6 +84,8 @@ class HSPConnector:
         self._on_capability_advertisement_callback: Optional[Callable[[HSPCapabilityAdvertisementPayload, str, HSPMessageEnvelope], None]] = None
         self._on_task_request_callback: Optional[Callable[[HSPTaskRequestPayload, str, HSPMessageEnvelope], None]] = None
         self._on_task_result_callback: Optional[Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]] = None
+        self._external_on_connect_callback: Optional[Callable[[], None]] = None
+        self._external_on_disconnect_callback: Optional[Callable[[], None]] = None
         # ... other specific payload callbacks can be added
 
         self.default_qos: int = 1 # MQTT QoS level for publishing
@@ -137,6 +139,8 @@ class HSPConnector:
             # Resubscribe to any topics if it's a reconnect
             for topic in list(self.subscribed_topics): # Iterate over a copy
                 self.subscribe(topic) # subscribe method already logs success/failure
+            if self._external_on_connect_callback:
+                self._external_on_connect_callback()
         else:
             # This path means connection attempt failed, Paho will retry based on reconnect_delay_set
             logger.warning(f"HSPConnector ({self.ai_id}): Failed to connect to MQTT Broker (during connect/reconnect attempt), reason code {reason_code}. Paho client will continue to retry.")
@@ -155,11 +159,18 @@ class HSPConnector:
             logger.warning(f"HSPConnector ({self.ai_id}): Unexpectedly disconnected from MQTT Broker (reason code {reason_code}).")
             logger.info(f"HSPConnector ({self.ai_id}): Paho client will attempt to reconnect automatically (min_delay={self.reconnect_min_delay}s, max_delay={self.reconnect_max_delay}s).")
             self._was_unexpectedly_disconnected = True # Set flag for unexpected disconnect
+        if self._external_on_disconnect_callback:
+            self._external_on_disconnect_callback()
         # Paho's internal reconnect_delay_set handles the reconnection strategy.
 
     def _on_mqtt_message(self, client, userdata, msg):
         """Handles incoming MQTT messages and forwards them to HSP message handler."""
-        logger.debug(f"HSPConnector ({self.ai_id}): Raw MQTT message received on topic '{msg.topic}'") # Changed to debug
+        logger.debug(f"HSPConnector ({self.ai_id}): Raw MQTT message received on topic '{msg.topic}' with payload: {msg.payload.decode('utf-8')[:100]}...")
+        try:
+            message_str = msg.payload.decode('utf-8')
+            self._handle_hsp_message_str(message_str, msg.topic)
+        except Exception as e:
+            logger.error(f"HSPConnector ({self.ai_id}): Error processing raw MQTT message on topic {msg.topic}: {e}", exc_info=True) # Added exc_info") # Changed to debug
         try:
             message_str = msg.payload.decode('utf-8')
             self._handle_hsp_message_str(message_str, msg.topic)
@@ -313,7 +324,8 @@ class HSPConnector:
                 logger.warning(f"HSPConnector ({self.ai_id}): Received message with missing core envelope fields from topic '{received_on_topic}'. Message snippet: {message_str[:200]}")
                 return
 
-            logger.info(f"HSPConnector ({self.ai_id}): Decoded HSP message {envelope['message_id']} from {envelope['sender_ai_id']} on topic '{received_on_topic}'")
+            message_type = envelope.get("message_type", "UNKNOWN") # Ensure message_type is always set
+            logger.info(f"HSPConnector ({self.ai_id}): Decoded HSP message {envelope['message_id']} from {envelope['sender_ai_id']} on topic '{received_on_topic}'. Type: {message_type}")
 
             if self._on_generic_message_callback:
                 try:
@@ -322,18 +334,21 @@ class HSPConnector:
                     logger.error(f"HSPConnector ({self.ai_id}): Error in generic message callback for msg {envelope.get('message_id')}: {e}", exc_info=True)
 
             payload = envelope.get("payload")
-            message_type = envelope.get("message_type")
 
-            if message_type and payload is not None:
+            if message_type != "UNKNOWN" and payload is not None:
                 specific_handler_error = None
                 try:
                     if message_type.startswith("HSP::Fact") and self._on_fact_received_callback:
+                        logger.debug(f"HSPConnector ({self.ai_id}): Dispatching Fact message.")
                         self._on_fact_received_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
                     elif message_type.startswith("HSP::CapabilityAdvertisement") and self._on_capability_advertisement_callback:
+                        logger.debug(f"HSPConnector ({self.ai_id}): Dispatching CapabilityAdvertisement message.")
                         self._on_capability_advertisement_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
                     elif message_type.startswith("HSP::TaskRequest") and self._on_task_request_callback:
+                        logger.debug(f"HSPConnector ({self.ai_id}): Dispatching TaskRequest message.")
                         self._on_task_request_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
                     elif message_type.startswith("HSP::TaskResult") and self._on_task_result_callback:
+                        logger.debug(f"HSPConnector ({self.ai_id}): Dispatching TaskResult message.")
                         self._on_task_result_callback(payload, envelope["sender_ai_id"], envelope) # type: ignore
                     # Add other specific handlers here
                 except Exception as e:
@@ -447,6 +462,14 @@ class HSPConnector:
         else:
             print(f"HSPConnector ({self.ai_id}): Invalid MQTT QoS value {qos}. Must be 0, 1, or 2.")
 
+    def register_on_connect_callback(self, callback: Callable[[], None]):
+        """Registers an external callback to be called when the MQTT client connects."""
+        self._external_on_connect_callback = callback
+
+    def register_on_disconnect_callback(self, callback: Callable[[], None]):
+        """Registers an external callback to be called when the MQTT client disconnects."""
+        self._external_on_disconnect_callback = callback
+
 # Example of how this might be used (conceptual, would be in main application logic)
 async def example_hsp_usage():
     print("Starting HSP Connector example...")
@@ -476,10 +499,16 @@ async def example_hsp_usage():
     connector.register_on_generic_message_callback(generic_hsp_message_handler)
     connector.register_on_fact_callback(fact_message_handler)
 
+    # Register external connect/disconnect callbacks
+    connect_event = asyncio.Event()
+    disconnect_event = asyncio.Event()
+    connector.register_on_connect_callback(connect_event.set)
+    connector.register_on_disconnect_callback(disconnect_event.set)
+
     if connector.connect(): # This starts the MQTT loop in a thread
         print("Connector initiated connection sequence.")
         # Wait a bit for connection to establish (in real app, use more robust check or awaitable connect)
-        await asyncio.sleep(2)
+        await wait_for_event(connect_event) # Use the helper function
 
         if connector.is_connected:
             print("Connector is connected. Subscribing to topics...")
@@ -521,6 +550,7 @@ async def example_hsp_usage():
             print("Failed to connect to MQTT broker for example.")
 
         connector.disconnect()
+        await wait_for_event(disconnect_event) # Wait for clean disconnect
         print("HSP Connector example finished.")
     else:
         print("Initial connection call failed.")
