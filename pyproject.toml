@@ -5,17 +5,23 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "unified-ai-project"
 version = "0.1.0"
-authors = [
-  { name="Example Author", email="author@example.com" },
-]
-description = "A unified AI project."
+authors = [{name = "Unified AI Project Team"}]
+description = "A unified AI project with modular architecture and optional dependencies"
 readme = "README.md"
 requires-python = ">=3.8"
+license = {text = "MIT"}
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
+
+# Core dependencies - essential for basic functionality
 dependencies = [
     "Flask",
     "numpy",
@@ -24,18 +30,69 @@ dependencies = [
     "python-dotenv",
     "PyYAML",
     "typing-extensions",
+    "paho-mqtt",
+    "networkx",
+    "psutil",
+]
+
+# Optional dependencies for enhanced features
+[project.optional-dependencies]
+ai = [
+    "tensorflow>=2.15.0",
+    "spacy>=3.4.0",
+    "langchain",
+]
+web = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "httpx",
+]
+testing = [
+    "pytest-asyncio",
+    "pytest>=6.0",
+]
+nlp = [
+    "spacy>=3.4.0",
+    "nltk",
+    "textblob",
+]
+ml = [
+    "tensorflow>=2.15.0",
+    "scikit-learn",
+    "pandas",
+]
+dev = [
+    "black",
+    "flake8",
+    "mypy",
+    "pre-commit",
+]
+# Convenience groups
+standard = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "httpx",
+    "pytest-asyncio",
+    "pytest>=6.0",
+]
+full = [
+    "tensorflow>=2.15.0",
+    "spacy>=3.4.0",
     "langchain",
     "fastapi",
     "uvicorn[standard]",
     "pydantic",
     "httpx",
-    "psutil",
-    "spacy",
-    "networkx",
-    "paho-mqtt",
     "pytest-asyncio",
-    "tensorflow==2.16.1"
+    "pytest>=6.0",
+    "nltk",
+    "textblob",
+    "scikit-learn",
+    "pandas",
 ]
+minimal = []  # Only core requirements
 
 [project.urls]
 "Homepage" = "https://github.com/pypa/sampleproject"

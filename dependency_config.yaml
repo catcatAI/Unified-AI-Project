@@ -1,0 +1,172 @@
+# Dependency Configuration for Unified AI Project
+# This file defines core dependencies, optional dependencies, and their fallbacks
+
+dependencies:
+  # Core/Essential Dependencies - Project cannot run without these
+  core:
+    - name: "Flask"
+      description: "Web framework for basic HTTP services"
+      essential: true
+      fallbacks: ["fastapi", "tornado"]
+      
+    - name: "numpy"
+      description: "Numerical computing library"
+      essential: true
+      fallbacks: ["array", "math"]
+      
+    - name: "cryptography"
+      description: "Cryptographic functions for security"
+      essential: true
+      fallbacks: ["pycryptodome", "hashlib"]
+      
+    - name: "requests"
+      description: "HTTP library for API calls"
+      essential: true
+      fallbacks: ["urllib3", "httpx"]
+      
+    - name: "python-dotenv"
+      description: "Environment variable management"
+      essential: true
+      fallbacks: ["os.environ"]
+      
+    - name: "PyYAML"
+      description: "YAML configuration file parsing"
+      essential: true
+      fallbacks: ["json", "configparser"]
+      
+    - name: "typing-extensions"
+      description: "Extended type hints"
+      essential: true
+      fallbacks: ["typing"]
+      
+    - name: "paho-mqtt"
+      description: "MQTT client for HSP communication"
+      essential: true
+      fallbacks: ["asyncio-mqtt", "gmqtt"]
+      
+    - name: "networkx"
+      description: "Graph analysis library for knowledge graphs"
+      essential: true
+      fallbacks: ["igraph", "graph-tool"]
+      
+    - name: "psutil"
+      description: "System and process utilities"
+      essential: true
+      fallbacks: ["os", "platform"]
+
+  # Optional Dependencies - Enhanced functionality
+  optional:
+    - name: "tensorflow"
+      description: "Machine learning framework for neural network models"
+      essential: false
+      fallbacks: ["tensorflow-cpu", "scikit-learn", "numpy"]
+      features: ["math_model", "logic_model_nn"]
+      
+    - name: "spacy"
+      description: "Advanced natural language processing"
+      essential: false
+      fallbacks: ["nltk", "textblob", "re"]
+      features: ["advanced_nlp", "entity_recognition"]
+      
+    - name: "langchain"
+      description: "LLM integration framework"
+      essential: false
+      fallbacks: ["openai", "anthropic", "requests"]
+      features: ["llm_integration", "chain_operations"]
+      
+    - name: "fastapi"
+      description: "Modern web framework for APIs"
+      essential: false
+      fallbacks: ["Flask", "tornado"]
+      features: ["modern_api", "async_web"]
+      
+    - name: "uvicorn"
+      description: "ASGI server for FastAPI"
+      essential: false
+      fallbacks: ["gunicorn", "waitress", "werkzeug"]
+      features: ["asgi_server", "high_performance"]
+      
+    - name: "pydantic"
+      description: "Data validation using Python type annotations"
+      essential: false
+      fallbacks: ["dataclasses", "typing"]
+      features: ["data_validation", "serialization"]
+      
+    - name: "httpx"
+      description: "Async HTTP client"
+      essential: false
+      fallbacks: ["requests", "urllib3"]
+      features: ["async_http", "http2_support"]
+      
+    - name: "pytest-asyncio"
+      description: "Async testing support"
+      essential: false
+      fallbacks: ["pytest", "unittest"]
+      features: ["async_testing"]
+
+# Fallback strategies for different scenarios
+fallback_strategies:
+  # When TensorFlow is not available
+  tensorflow_unavailable:
+    - disable_features: ["neural_network_models", "deep_learning"]
+    - use_alternatives: ["scikit-learn", "numpy"]
+    - fallback_message: "Neural network features disabled. Using basic mathematical operations."
+    
+  # When spaCy is not available
+  spacy_unavailable:
+    - disable_features: ["advanced_nlp", "named_entity_recognition"]
+    - use_alternatives: ["nltk", "re", "string"]
+    - fallback_message: "Advanced NLP features disabled. Using basic text processing."
+    
+  # When LangChain is not available
+  langchain_unavailable:
+    - disable_features: ["llm_chains", "advanced_prompting"]
+    - use_alternatives: ["direct_api_calls"]
+    - fallback_message: "LLM chain features disabled. Using direct API calls."
+    
+  # When FastAPI is not available
+  fastapi_unavailable:
+    - use_alternatives: ["Flask"]
+    - fallback_message: "Using Flask instead of FastAPI for web services."
+    
+  # When MQTT client is not available
+  mqtt_unavailable:
+    - disable_features: ["hsp_communication", "distributed_ai"]
+    - fallback_message: "HSP communication disabled. Running in standalone mode."
+
+# Environment-specific configurations
+environments:
+  development:
+    - allow_fallbacks: true
+    - warn_on_fallback: true
+    - strict_mode: false
+    
+  production:
+    - allow_fallbacks: true
+    - warn_on_fallback: true
+    - strict_mode: false
+    - log_fallbacks: true
+    
+  testing:
+    - allow_fallbacks: true
+    - warn_on_fallback: false
+    - strict_mode: false
+    - mock_unavailable: true
+
+# Installation recommendations
+installation:
+  minimal:
+    description: "Minimal installation for basic functionality"
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil"]
+    
+  standard:
+    description: "Standard installation with common optional features"
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "fastapi", "uvicorn", "pydantic", "httpx"]
+    
+  full:
+    description: "Full installation with all features"
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain", "fastapi", "uvicorn", "pydantic", "httpx", "pytest-asyncio"]
+    
+  ai_focused:
+    description: "AI and ML focused installation"
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain"]

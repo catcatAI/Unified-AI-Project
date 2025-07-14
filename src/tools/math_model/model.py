@@ -1,5 +1,16 @@
 import numpy as np
 import json
+import os
+import sys
+
+# Add src directory to sys.path for dependency manager import
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
+SRC_DIR = os.path.join(PROJECT_ROOT, "src")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
+from core_ai.dependency_manager import dependency_manager, get_dependency, is_dependency_available
 
 # Global variables to hold TensorFlow components, loaded on demand.
 tf = None
@@ -9,43 +20,44 @@ LSTM = None
 Dense = None
 Embedding = None
 
-_tensorflow_is_available = False
-
 def _ensure_tensorflow_is_imported():
     """
-    Lazily imports TensorFlow and its Keras components.
+    Lazily imports TensorFlow and its Keras components using dependency manager.
     Returns True if successful, False otherwise.
     """
-    global tf, Model, Input, LSTM, Dense, Embedding, _tensorflow_is_available
-    if tf is None:
+    global tf, Model, Input, LSTM, Dense, Embedding
+    
+    if tf is not None:
+        return True
+    
+    # Use dependency manager to get TensorFlow
+    tf_module = get_dependency('tensorflow')
+    if tf_module is not None:
         try:
-            # Hide the import from static analysis to avoid premature dependency checks
-            _tf_module = __import__('tensorflow', fromlist=['keras'])
-            
-            tf = _tf_module
+            tf = tf_module
             Model = tf.keras.models.Model
             Input = tf.keras.layers.Input
             LSTM = tf.keras.layers.LSTM
             Dense = tf.keras.layers.Dense
             Embedding = tf.keras.layers.Embedding
-            _tensorflow_is_available = True
             return True
-        except ImportError as e:
-            print(f"Warning: TensorFlow could not be imported. Math model functionality will be disabled. Error: {e}")
-            _tensorflow_is_available = False
-            return False
         except Exception as e:
-            print(f"Warning: An unexpected error occurred during TensorFlow import. Math model functionality will be disabled. Error: {e}")
-            _tensorflow_is_available = False
+            print(f"Warning: Error accessing TensorFlow components: {e}")
             return False
-    return _tensorflow_is_available
+    else:
+        print("Warning: TensorFlow not available. Math model functionality will be disabled.")
+        return False
+
+def _tensorflow_is_available():
+    """Check if TensorFlow is available."""
+    return is_dependency_available('tensorflow')
 
 # Attempt to import TensorFlow on module load
 _ensure_tensorflow_is_imported()
 
 class ArithmeticSeq2Seq:
     def __init__(self, char_to_token, token_to_char, max_encoder_seq_length, max_decoder_seq_length, n_token, latent_dim=256, embedding_dim=128):
-        if not _tensorflow_is_available:
+        if not _tensorflow_is_available():
             print("ArithmeticSeq2Seq: TensorFlow not available. This instance will be non-functional.")
             self.char_to_token = char_to_token
             self.token_to_char = token_to_char
@@ -75,7 +87,7 @@ class ArithmeticSeq2Seq:
 
     def _build_inference_models(self):
         """Builds the model structure for training and inference."""
-        if not _tensorflow_is_available:
+        if not _tensorflow_is_available():
             print("Cannot build inference models: TensorFlow not available.")
             return
         _ensure_tensorflow_is_imported() # Lazy import of TensorFlow
@@ -119,7 +131,7 @@ class ArithmeticSeq2Seq:
         )
 
     def _string_to_tokens(self, input_string, max_len, is_target=False):
-        if not _tensorflow_is_available:
+        if not _tensorflow_is_available():
             print("Cannot convert string to tokens: TensorFlow not available.")
             return np.array([])
         tokens = np.zeros((1, max_len), dtype='float32')
@@ -139,7 +151,7 @@ class ArithmeticSeq2Seq:
         return tokens
 
     def predict_sequence(self, input_seq_str: str) -> str:
-        if not _tensorflow_is_available or not self.encoder_model or not self.decoder_model:
+        if not _tensorflow_is_available() or not self.encoder_model or not self.decoder_model:
             print("Cannot predict sequence: TensorFlow not available or models not built.")
             return "Error: Math model is not available."
 
@@ -180,7 +192,7 @@ class ArithmeticSeq2Seq:
     @classmethod
     def load_for_inference(cls, model_weights_path, char_maps_path):
         """Loads a trained model and its character maps for inference."""
-        if not _tensorflow_is_available:
+        if not _tensorflow_is_available():
             print("Cannot load model for inference: TensorFlow not available.")
             return None
         _ensure_tensorflow_is_imported() # Lazy import of TensorFlow

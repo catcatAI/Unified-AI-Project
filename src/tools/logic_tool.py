@@ -10,6 +10,7 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 from tools.logic_model.logic_parser_eval import LogicParserEval
+from core_ai.dependency_manager import dependency_manager, get_dependency, is_dependency_available
 
 # --- Configuration for NN Model ---
 MODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
@@ -33,6 +34,12 @@ def _get_nn_model_evaluator():
     """Loads the LogicNNModel, handling potential TensorFlow import errors."""
     global _nn_model_evaluator, _nn_char_to_token, _tensorflow_import_error
     if _nn_model_evaluator is not None or _tensorflow_import_error is not None:
+        return _nn_model_evaluator, _nn_char_to_token
+
+    # Check if TensorFlow is available through dependency manager
+    if not is_dependency_available('tensorflow'):
+        _tensorflow_import_error = "TensorFlow not available through dependency manager"
+        print(f"CRITICAL: TensorFlow not available. Logic tool's NN features will be disabled.")
         return _nn_model_evaluator, _nn_char_to_token
 
     try:

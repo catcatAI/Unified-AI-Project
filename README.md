@@ -59,9 +59,59 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-*   **Python:** Version 3.9 or higher is recommended.
+*   **Python:** Version 3.8 or higher is required (3.9+ recommended).
 *   **Node.js:** Version 16.x or higher is recommended, along with npm.
 *   **Git:** For cloning the repository.
+
+### Dependency Management
+
+This project uses a **flexible dependency management system** that allows you to:
+- Install only the dependencies you need for your use case
+- Automatically fallback to alternative packages when preferred ones are unavailable
+- Run the project even when some optional dependencies are missing
+
+**Installation Options:**
+
+1. **Minimal Installation** (core functionality only):
+   ```bash
+   pip install -e .
+   ```
+
+2. **Standard Installation** (web API + testing):
+   ```bash
+   pip install -e .[standard]
+   ```
+
+3. **Full Installation** (all features):
+   ```bash
+   pip install -e .[full]
+   ```
+
+4. **Specific Feature Groups:**
+   ```bash
+   pip install -e .[ai]        # AI/ML features (TensorFlow, spaCy, etc.)
+   pip install -e .[web]       # Web API features (FastAPI, uvicorn, etc.)
+   pip install -e .[nlp]       # Natural Language Processing
+   pip install -e .[ml]        # Machine Learning
+   pip install -e .[dev]       # Development tools
+   ```
+
+**Dependency Status Checking:**
+
+Before starting, you can check which dependencies are available:
+```bash
+python src/tools/dependency_checker.py
+```
+
+For detailed status with error information:
+```bash
+python src/tools/dependency_checker.py --detailed
+```
+
+To export dependency status to JSON:
+```bash
+python src/tools/dependency_checker.py --json dependency_status.json
+```
 
 ### Setup
 
@@ -127,7 +177,43 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Running the Application
 
-You can interact with the Unified-AI-Project in several ways:
+#### Smart Startup with Dependency Fallbacks
+
+The project includes an intelligent startup system that automatically detects available dependencies and configures the application accordingly:
+
+```bash
+# Auto-detect best mode based on available dependencies
+python startup_with_fallbacks.py
+
+# Or specify a specific mode
+python startup_with_fallbacks.py --mode standard
+python startup_with_fallbacks.py --mode minimal
+python startup_with_fallbacks.py --mode full
+python startup_with_fallbacks.py --mode ai_focused
+```
+
+**Startup Modes:**
+- **minimal**: Core functionality only (Flask, numpy, PyYAML)
+- **standard**: Web API + HSP communication (adds FastAPI, MQTT)
+- **full**: All features enabled (adds AI models, NLP, knowledge graphs)
+- **ai_focused**: AI/ML capabilities without web interface
+- **auto**: Automatically selects the best mode based on available dependencies
+
+**Startup Options:**
+```bash
+# Check dependencies without starting
+python startup_with_fallbacks.py --check-only
+
+# Get mode suggestion
+python startup_with_fallbacks.py --suggest-mode
+
+# Start with custom port and debug mode
+python startup_with_fallbacks.py --port 8080 --debug
+```
+
+#### Traditional Application Interfaces
+
+You can also interact with the Unified-AI-Project in several traditional ways:
 
 1.  **Command Line Interface (CLI):**
     To send a query to the AI via the CLI:
@@ -143,16 +229,45 @@ You can interact with the Unified-AI-Project in several ways:
     npm start
     ```
 
-3.  **API Server (FastAPI):**
-    To start the backend API server:
+3.  **API Server (FastAPI/Flask):**
+    The startup script will automatically choose the best available web framework:
     ```bash
+    # Using the smart startup (recommended)
+    python startup_with_fallbacks.py --mode standard
+    
+    # Or start directly (if dependencies are available)
     python src/services/main_api_server.py
-    ```
-    Or, for development with auto-reload (run from project root):
-    ```bash
+    
+    # For development with auto-reload
     uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000
     ```
-    The API will then be accessible at `http://localhost:8000` (or `http://0.0.0.0:8000`). You can find Swagger UI documentation at `http://localhost:8000/docs`.
+    The API will be accessible at `http://localhost:5000` (Flask) or `http://localhost:8000` (FastAPI). Swagger UI documentation is available at `/docs` for FastAPI.
+
+#### Troubleshooting
+
+If you encounter dependency-related issues:
+
+1. **Check dependency status:**
+   ```bash
+   python src/tools/dependency_checker.py --detailed
+   ```
+
+2. **Install missing dependencies:**
+   ```bash
+   # The checker will suggest installation commands
+   pip install tensorflow spacy  # Example for AI features
+   ```
+
+3. **Use fallback mode:**
+   ```bash
+   python startup_with_fallbacks.py --mode minimal
+   ```
+
+4. **Check configuration:**
+   ```bash
+   # View current dependency configuration
+   cat dependency_config.yaml
+   ```
 
 ### Key Configuration Files
 
