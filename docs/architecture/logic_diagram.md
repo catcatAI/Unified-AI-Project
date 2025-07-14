@@ -18,6 +18,8 @@ graph TD
         L[Content Analyzer]
         M[Service Discovery]
         N[Trust Manager]
+        LM[Logic Model]
+        MM[Math Model]
     end
 
     subgraph Services
@@ -39,6 +41,9 @@ graph TD
     C --> E
     C --> F
     C --> G
+
+    G --> LM
+    G --> MM
     C --> H
     C --> I
     C --> J

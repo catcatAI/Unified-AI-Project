@@ -118,6 +118,10 @@ This summary is based on automated code and documentation review.
     *   `LightweightCodeModel` for basic static analysis of Python tool files (structure, params).
     *   Formula-based dispatch to tools via `DialogueManager`.
     *   Tool drafting capability initiated by `DialogueManager` using LLMs and `SandboxExecutor`.
+*   **Current Status & Known Issues (Specific Tools):**
+    *   **Logic Model (`src/tools/logic_model/`):** Development is ongoing. Tests in `tests/tools/test_logic_model.py` indicate some components are not yet fully stable or require further refinement.
+    *   **Math Model (`src/tools/math_model/`):** Handles numerical computations and mathematical problem-solving. Tests in `tests/tools/test_math_model.py` indicate some components are not yet fully stable or require further refinement.
+    *   **Translation Model (`src/tools/translation_model/`):** Basic implementation exists. Tests may reveal further issues or areas for improvement.
 *   **Pending (Explicit TODOs from `TODO_PLACEHOLDERS.md`):**
     *   `core_ai/code_understanding/lightweight_code_model.py` (Line ~177): Add logic to resolve `tool_name` to filepath if not already a path in `get_tool_structure`.
 *   **Further Development / Conceptual Goals:**

@@ -18,7 +18,8 @@ This project integrates and is developing several core AI components:
 
 *   **Personality Management (`src/core_ai/personality/personality_manager.py`):** Manages different AI personalities, influencing tone, response style, and core values. Profiles are configurable (see `configs/personality_profiles/`).
 
-*   **Hierarchical Associative Memory (HAM) (`src/core_ai/memory/ham_memory_manager.py`):** A custom memory system designed for storing and retrieving experiences, learned facts, and dialogue context.
+    *   **Hierarchical Associative Memory (HAM) (`src/core_ai/memory/ham_memory_manager.py`):** A custom memory system designed for storing and retrieving experiences, learned facts, and dialogue context.
+    *   **Current Status & Known Issues:** While core memory storage and retrieval are functional, the `test_08_query_memory_date_range` test in `tests/core_ai/memory/test_ham_memory_manager.py` indicates an issue with date range querying. This is under investigation.
 
 *   **Learning System (`src/core_ai/learning/`):**
     *   **Fact Extractor Module:** Extracts structured facts from dialogue.
@@ -32,6 +33,12 @@ This project integrates and is developing several core AI components:
 
 *   **Formula Engine (`src/core_ai/formula_engine/`):** Implements a rule-based system where predefined "formulas" (see `configs/formula_configs/`) can trigger specific actions or responses based on input conditions. This allows for deterministic behaviors and tool dispatch.
 
+*   **Logic Model (`src/tools/logic_model/`):** Focuses on symbolic reasoning and logical inference.
+    *   **Current Status & Known Issues:** Development is ongoing. Tests in `tests/tools/test_logic_model.py` indicate some components are not yet fully stable or require further refinement.
+
+*   **Math Model (`src/tools/math_model/`):** Handles numerical computations and mathematical problem-solving.
+    *   **Current Status & Known Issues:** Development is ongoing. Tests in `tests/tools/test_math_model.py` indicate some components are not yet fully stable or require further refinement.
+
 *   **Tool Dispatcher (`src/tools/tool_dispatcher.py`):** Enables the AI to use external or internal "tools" (e.g., calculators, information retrieval functions) to augment its capabilities. Tools can be triggered by the Formula Engine or other AI logic.
 
 *   **LLM Interface (`src/services/llm_interface.py`):** Provides a standardized interface to interact with various Large Language Models (e.g., Ollama, OpenAI), managing API calls and model configurations.
@@ -44,6 +51,7 @@ This project integrates and is developing several core AI components:
     *   **Transport:** Currently uses MQTT for message transport.
     *   **Key Features:** Includes mechanisms for service discovery, basic trust management between peers, and strategies for handling conflicting information received from different AIs.
     *   **Specification:** See `docs/HSP_SPECIFICATION.md` for more details.
+    *   **Current Status & Known Issues:** While the core protocol is defined, integration tests (`tests/hsp/test_hsp_integration.py` and `tests/services/test_main_api_server_hsp.py`) currently show failures related to task brokering, DM fallback mechanisms, and task result processing. These issues are under active investigation, focusing on inter-module communication stability and data consistency.
 
 ## Getting Started
 
@@ -241,9 +249,12 @@ This section highlights some current observations, known issues from testing, an
 
 ### Current Test Status & Observations
 
-*   **Known Failing Tests:** As of the last full test run, a few tests consistently fail. These are being investigated, with current hypotheses pointing towards:
-    *   Limitations in mock LLM responses for deeply nested module calls (e.g., `TestCLI` where sub-modules like `FactExtractorModule` expect specific JSON from mocks).
-    *   Subtle data handling or string manipulation issues (e.g., text truncation in `TestFragmentaOrchestrator`, or dictionary lookup anomalies in `TestTranslationModelComponents`).
+*   **Known Failing Tests:** As of the last full test run, several tests consistently fail, particularly those related to:
+    *   **Heterogeneous Synchronization Protocol (HSP):** Integration tests in `tests/hsp/test_hsp_integration.py` and `tests/services/test_main_api_server_hsp.py` are failing, indicating issues with task brokering, DM fallback, and task result processing.
+    *   **Hierarchical Associative Memory (HAM):** The `test_08_query_memory_date_range` in `tests/core_ai/memory/test_ham_memory_manager.py` is failing, suggesting issues with date range querying.
+    *   **Logic and Math Models:** Tests in `tests/tools/test_logic_model.py` and `tests/tools/test_math_model.py` are failing, indicating instability or incomplete development in these core model components.
+    *   **General Issues:** Other failures point towards limitations in mock LLM responses for deeply nested module calls (e.g., `TestCLI` where sub-modules like `FactExtractorModule` expect specific JSON from mocks), and subtle data handling or string manipulation issues (e.g., text truncation in `TestFragmentaOrchestrator`, or dictionary lookup anomalies in `TestTranslationModelComponents`).
+These issues are under active investigation.
 *   **Asynchronous Code Warnings:** Tests have surfaced `RuntimeWarning: coroutine ... was never awaited` for some `async def` test methods. Developers should be mindful of correctly implementing and testing asynchronous code using appropriate `async/await` patterns and async-aware testing libraries if needed.
 
 ### Inter-Module Data Flow and Synchronization

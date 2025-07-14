@@ -18,6 +18,7 @@ This version (0.1) focuses on establishing the foundational elements of the HSP,
 *   Basic communication patterns (Publish/Subscribe, Request/Response).
 *   A standardized message envelope.
 *   Initial concepts for AI discovery, capability advertisement, and trust.
+    *   **Note on Implementation Status:** While these concepts are defined, their full implementation and integration are ongoing. Specifically, the `ServiceDiscoveryModule` requires significant refactoring to align with the intended HSP role, and related integration tests are currently failing (as noted in `README.md` and `docs/PROJECT_STATUS_SUMMARY.md`).
 Advanced features like complex consensus mechanisms, comprehensive semantic translation services, and detailed state synchronization are planned for future versions.
 
 ### 1.4. Guiding Principles
