@@ -58,6 +58,11 @@ These are comments indicating planned work or missing functionality that require
     *   **Context:** Was inside the `loadHspServices` function.
     *   **Required Functionality:** (Implemented in `feat/electron-hsp-use-service-button`) A "Use Service" button is now added to each service in the HSP services list. Clicking it populates the "Target Capability ID" field in the HSP Task Request form and clears the parameters field.
 
+*   **Electron App Improvements:**
+    *   **File:** `docs/interfaces/ELECTRON_APP_IMPROVEMENTS.md`
+    *   **Context:** Comprehensive improvement suggestions for the Electron desktop application.
+    *   **Required Functionality:** The document outlines detailed plans for UI enhancements, feature additions, code structure optimizations, and security improvements for the Electron app interface. These improvements are organized into a phased implementation roadmap.
+
 ## 3. Code/Data Comments & Clarifications
 
 These are comments that were picked up by the search but are not actionable code placeholders requiring new implementation. They are either logic that handles TODOs, commented-out debug lines, TODOs within example data, or general clarifications.

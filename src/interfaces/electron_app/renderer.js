@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     const userInputField = document.getElementById('userInput');
-    const userInputField = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
     const chatDisplay = document.getElementById('chatDisplay');
 
@@ -22,12 +21,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiBaseUrl = 'http://localhost:8000/api/v1';
 
     function showView(viewId) {
+        // Hide all views
         chatView.style.display = 'none';
         hspServicesView.style.display = 'none';
-        document.getElementById(viewId).style.display = 'flex'; // Assuming views are flex containers
-        if (viewId === 'hspServicesView') { // Auto-refresh if switching to HSP view and list is empty
+        
+        // Show selected view
+        document.getElementById(viewId).style.display = 'flex';
+        
+        // Update navigation buttons
+        chatViewButton.classList.remove('active');
+        hspViewButton.classList.remove('active');
+        
+        if (viewId === 'chatView') {
+            chatViewButton.classList.add('active');
+        } else if (viewId === 'hspServicesView') {
+            hspViewButton.classList.add('active');
+            // Auto-refresh if switching to HSP view and list is empty
             if (hspServiceListDiv.children.length <= 1 && hspServiceListDiv.children[0]?.tagName === 'P') {
-                 loadHspServices();
+                loadHspServices();
             }
         }
     }
@@ -118,27 +129,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- HSP Services Logic ---
     async function loadHspServices() {
-        hspServiceListDiv.innerHTML = '<p>Loading HSP services...</p>';
+        hspServiceListDiv.innerHTML = '<p class="loading-message"><i>Loading HSP services...</i></p>';
         try {
             if (window.electronAPI && window.electronAPI.invoke) {
                 const services = await window.electronAPI.invoke('hsp:get-discovered-services');
                 hspServiceListDiv.innerHTML = ''; // Clear loading message
+                
                 if (services && services.length > 0) {
                     const ul = document.createElement('ul');
+                    ul.className = 'service-list';
+                    
                     services.forEach(service => {
                         const li = document.createElement('li');
-                        li.innerHTML = `
-                            <strong>${service.name} (v${service.version})</strong> [ID: ${service.capability_id}]<br>
-                            Provider AI: ${service.ai_id}<br>
-                            Description: ${service.description || 'N/A'}<br>
-                            Status: ${service.availability_status} <br>
-                            Tags: ${(service.tags || []).join(', ')}
+                        li.className = 'service-item';
+                        
+                        // Create service header with name and version
+                        const serviceHeader = document.createElement('div');
+                        serviceHeader.className = 'service-header';
+                        serviceHeader.innerHTML = `
+                            <h4>${service.name} <span class="service-version">v${service.version}</span></h4>
+                            <span class="service-status ${service.availability_status === 'available' ? 'status-available' : 'status-unavailable'}">
+                                ${service.availability_status}
+                            </span>
                         `;
-
+                        
+                        // Create service details
+                        const serviceDetails = document.createElement('div');
+                        serviceDetails.className = 'service-details';
+                        serviceDetails.innerHTML = `
+                            <div class="detail-row"><strong>ID:</strong> <span class="service-id">${service.capability_id}</span></div>
+                            <div class="detail-row"><strong>Provider:</strong> ${service.ai_id}</div>
+                            <div class="detail-row"><strong>Description:</strong> ${service.description || 'N/A'}</div>
+                            <div class="detail-row"><strong>Tags:</strong> ${(service.tags || []).join(', ') || 'None'}</div>
+                        `;
+                        
+                        // Create action button
+                        const actionContainer = document.createElement('div');
+                        actionContainer.className = 'service-actions';
+                        
                         const useServiceButton = document.createElement('button');
+                        useServiceButton.className = 'action-button';
                         useServiceButton.textContent = 'Use Service';
                         useServiceButton.setAttribute('data-capability-id', service.capability_id);
-                        useServiceButton.style.marginLeft = '10px'; // Basic styling
 
                         useServiceButton.addEventListener('click', (event) => {
                             const capId = event.target.getAttribute('data-capability-id');
@@ -151,10 +183,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                     hspTaskParamsTextareaElement.value = ''; // Clear previous params
                                 }
                                 console.log(`Capability ID '${capId}' populated into task form.`);
-                                // Optionally, focus the parameters textarea or scroll to the form
-                                // hspTaskParamsTextareaElement?.focus();
-                                hspTaskCapIdInputElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
+                                
+                                // Scroll to the form section
+                                document.querySelector('.hsp-section:nth-child(2)').scrollIntoView({ 
+                                    behavior: 'smooth', 
+                                    block: 'start' 
+                                });
+                                
+                                // Focus on the parameters textarea
+                                setTimeout(() => {
+                                    hspTaskParamsTextareaElement?.focus();
+                                }, 500);
                             } else {
                                 if (!hspTaskCapIdInputElement) {
                                     console.error('HSP Task Capability ID input field (#hspTaskCapId) not found.');
@@ -165,26 +204,32 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         });
 
-                        li.appendChild(document.createElement('br')); // Add a line break before the button
-                        li.appendChild(useServiceButton);
+                        actionContainer.appendChild(useServiceButton);
+                        
+                        // Assemble the service item
+                        li.appendChild(serviceHeader);
+                        li.appendChild(serviceDetails);
+                        li.appendChild(actionContainer);
                         ul.appendChild(li);
                     });
+                    
                     hspServiceListDiv.appendChild(ul);
                 } else {
-                    hspServiceListDiv.innerHTML = '<p>No HSP services discovered.</p>';
+                    hspServiceListDiv.innerHTML = '<p class="empty-message">No HSP services discovered.</p>';
                 }
             } else {
                 throw new Error("electronAPI or invoke method not available on window. Make sure preload.js is correctly exposing it.");
             }
         } catch (error) {
             console.error('Error loading HSP services:', error);
-            hspServiceListDiv.innerHTML = `<p>Error loading HSP services: ${error.message}</p>`;
+            hspServiceListDiv.innerHTML = `<p class="error-message">Error loading HSP services: ${error.message}</p>`;
         }
     }
 
     refreshHspServicesButton.addEventListener('click', loadHspServices);
 
     // Initial view setup
+    chatViewButton.classList.add('active'); // Set initial active state
     showView('chatView'); // Default to chat view
     // Start a session when the renderer is ready for chat
     startNewSession();
@@ -194,7 +239,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const paramsJsonStr = hspTaskParamsTextarea.value.trim();
 
         if (!targetCapabilityId) {
-            hspTaskResponseDisplay.innerHTML = '<p style="color: red;">Error: Target Capability ID is required.</p>';
+            // Create error response container for missing capability ID
+            hspTaskResponseDisplay.innerHTML = '';
+            const errorContainer = document.createElement('div');
+            errorContainer.className = 'task-status-container';
+            errorContainer.innerHTML = `
+                <div class="task-header">
+                    <div>
+                        <strong>Parameter Error</strong>
+                    </div>
+                    <span class="status-badge status-badge-error">error</span>
+                </div>
+                <div class="task-error">
+                    <div class="error-header">Error:</div>
+                    <div>Target Capability ID is required.</div>
+                </div>
+            `;
+            hspTaskResponseDisplay.appendChild(errorContainer);
             return;
         }
 
@@ -202,7 +263,23 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             parameters = paramsJsonStr ? JSON.parse(paramsJsonStr) : {};
         } catch (e) {
-            hspTaskResponseDisplay.innerHTML = `<p style="color: red;">Error: Parameters are not valid JSON: ${e.message}</p>`;
+            // Create error response container for JSON parsing error
+            hspTaskResponseDisplay.innerHTML = '';
+            const errorContainer = document.createElement('div');
+            errorContainer.className = 'task-status-container';
+            errorContainer.innerHTML = `
+                <div class="task-header">
+                    <div>
+                        <strong>Parameter Error</strong>
+                    </div>
+                    <span class="status-badge status-badge-error">error</span>
+                </div>
+                <div class="task-error">
+                    <div class="error-header">Invalid JSON parameters:</div>
+                    <div>${e.message}</div>
+                </div>
+            `;
+            hspTaskResponseDisplay.appendChild(errorContainer);
             return;
         }
 
@@ -238,20 +315,57 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!statusDiv) {
             statusDiv = document.createElement('div');
             statusDiv.id = `hsp-task-status-${correlationId}`;
+            statusDiv.className = 'task-status-container';
             // Prepend to hspTaskResponseDisplay so new statuses appear at the top
             hspTaskResponseDisplay.insertBefore(statusDiv, hspTaskResponseDisplay.firstChild);
         }
 
-        let statusHtml = `<strong>Task ${correlationId}:</strong> ${statusData.status}<br>`;
+        // Create status badge with appropriate color
+        const getStatusBadgeClass = (status) => {
+            switch(status) {
+                case 'completed': return 'status-badge-success';
+                case 'failed': return 'status-badge-error';
+                case 'pending': return 'status-badge-pending';
+                case 'in_progress': return 'status-badge-progress';
+                case 'unknown_or_expired': return 'status-badge-unknown';
+                default: return 'status-badge-default';
+            }
+        };
+
+        const timestamp = new Date().toLocaleTimeString();
+        
+        let statusHtml = `
+            <div class="task-header">
+                <div>
+                    <strong>Task ID:</strong> <span class="task-id">${correlationId}</span>
+                    <span class="task-timestamp">${timestamp}</span>
+                </div>
+                <span class="status-badge ${getStatusBadgeClass(statusData.status)}">${statusData.status}</span>
+            </div>
+        `;
+        
         if (statusData.message) {
-            statusHtml += `<em>${statusData.message}</em><br>`;
+            statusHtml += `<div class="task-message"><em>${statusData.message}</em></div>`;
         }
+        
         if (statusData.status === "completed" && statusData.result_payload) {
-            statusHtml += `Result: <pre>${JSON.stringify(statusData.result_payload, null, 2)}</pre>`;
+            statusHtml += `
+                <div class="task-result">
+                    <div class="result-header">Result:</div>
+                    <pre>${JSON.stringify(statusData.result_payload, null, 2)}</pre>
+                </div>
+            `;
         }
+        
         if (statusData.status === "failed" && statusData.error_details) {
-            statusHtml += `Error: <pre>${JSON.stringify(statusData.error_details, null, 2)}</pre>`;
+            statusHtml += `
+                <div class="task-error">
+                    <div class="error-header">Error:</div>
+                    <pre>${JSON.stringify(statusData.error_details, null, 2)}</pre>
+                </div>
+            `;
         }
+        
         statusDiv.innerHTML = statusHtml;
 
         if (["completed", "failed", "unknown_or_expired"].includes(statusData.status)) {
@@ -294,26 +408,81 @@ document.addEventListener('DOMContentLoaded', () => {
         const paramsJsonStr = hspTaskParamsTextarea.value.trim();
 
         if (!targetCapabilityId) {
-            hspTaskResponseDisplay.innerHTML = '<p style="color: red;">Error: Target Capability ID is required.</p>';
+            // Create error response container for missing capability ID
+            hspTaskResponseDisplay.innerHTML = '';
+            const errorContainer = document.createElement('div');
+            errorContainer.className = 'task-status-container';
+            errorContainer.innerHTML = `
+                <div class="task-header">
+                    <div>
+                        <strong>Parameter Error</strong>
+                    </div>
+                    <span class="status-badge status-badge-error">error</span>
+                </div>
+                <div class="task-error">
+                    <div class="error-header">Error:</div>
+                    <div>Target Capability ID is required.</div>
+                </div>
+            `;
+            hspTaskResponseDisplay.appendChild(errorContainer);
             return;
         }
         let parameters;
         try {
             parameters = paramsJsonStr ? JSON.parse(paramsJsonStr) : {};
         } catch (e) {
-            hspTaskResponseDisplay.innerHTML = `<p style="color: red;">Error: Parameters are not valid JSON: ${e.message}</p>`;
+            // Create error response container for JSON parsing error
+            hspTaskResponseDisplay.innerHTML = '';
+            const errorContainer = document.createElement('div');
+            errorContainer.className = 'task-status-container';
+            errorContainer.innerHTML = `
+                <div class="task-header">
+                    <div>
+                        <strong>Parameter Error</strong>
+                    </div>
+                    <span class="status-badge status-badge-error">error</span>
+                </div>
+                <div class="task-error">
+                    <div class="error-header">Invalid JSON parameters:</div>
+                    <div>${e.message}</div>
+                </div>
+            `;
+            hspTaskResponseDisplay.appendChild(errorContainer);
             return;
         }
 
-        hspTaskResponseDisplay.innerHTML = '<p>Sending HSP task request...</p>'; // Initial feedback
+        // Create a loading indicator
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading-indicator';
+        loadingDiv.innerHTML = `
+            <div class="loading-spinner"></div>
+            <p>Sending HSP task request...</p>
+        `;
+        hspTaskResponseDisplay.innerHTML = '';
+        hspTaskResponseDisplay.appendChild(loadingDiv);
         try {
             if (window.electronAPI && window.electronAPI.invoke) {
                 const response = await window.electronAPI.invoke('hsp:request-task', { targetCapabilityId, parameters });
-                // Display initial response from POST /tasks
-                let initialResponseHtml = `<strong>Initial API Response:</strong> ${response.status_message}<br>`;
+                // Remove loading indicator
+                hspTaskResponseDisplay.innerHTML = '';
+                
+                // Create initial response container
+                const responseContainer = document.createElement('div');
+                responseContainer.className = 'initial-response';
+                
                 if (response.correlation_id) {
-                    initialResponseHtml += `<strong>Correlation ID:</strong> ${response.correlation_id}<br><i>Polling for final status...</i>`;
-                    hspTaskResponseDisplay.innerHTML = initialResponseHtml; // Show this first
+                    responseContainer.innerHTML = `
+                        <div class="response-header">
+                            <h4>Task Request Sent</h4>
+                            <span class="status-badge status-badge-pending">pending</span>
+                        </div>
+                        <div class="response-details">
+                            <div><strong>Status:</strong> ${response.status_message}</div>
+                            <div><strong>Correlation ID:</strong> <span class="task-id">${response.correlation_id}</span></div>
+                            <div class="polling-message"><i>Polling for final status...</i></div>
+                        </div>
+                    `;
+                    hspTaskResponseDisplay.appendChild(responseContainer);
 
                     // Start polling if we got a correlation ID and success message
                     if (response.correlation_id && !response.error) {
@@ -331,10 +500,37 @@ document.addEventListener('DOMContentLoaded', () => {
                         }, 3000); // Poll every 3 seconds
                     }
                 } else if (response.error) {
-                     initialResponseHtml += `<strong style="color: red;">Error:</strong> ${response.error}<br>`;
-                     hspTaskResponseDisplay.innerHTML = initialResponseHtml;
+                    // Create error response container
+                    const errorContainer = document.createElement('div');
+                    errorContainer.className = 'task-status-container';
+                    errorContainer.innerHTML = `
+                        <div class="task-header">
+                            <div>
+                                <strong>Task Request Failed</strong>
+                            </div>
+                            <span class="status-badge status-badge-error">error</span>
+                        </div>
+                        <div class="task-error">
+                            <div class="error-header">Error:</div>
+                            <div>${response.error}</div>
+                        </div>
+                    `;
+                    hspTaskResponseDisplay.appendChild(errorContainer);
                 } else {
-                    hspTaskResponseDisplay.innerHTML = initialResponseHtml; // Should contain error message
+                    // Create generic response container
+                    const genericContainer = document.createElement('div');
+                    genericContainer.className = 'task-status-container';
+                    genericContainer.innerHTML = `
+                        <div class="task-header">
+                            <div>
+                                <strong>Task Request Status</strong>
+                            </div>
+                        </div>
+                        <div>
+                            <div>${response.status_message || 'No status message provided'}</div>
+                        </div>
+                    `;
+                    hspTaskResponseDisplay.appendChild(genericContainer);
                 }
             } else {
                 throw new Error("electronAPI or invoke method not available for 'hsp:request-task'.");

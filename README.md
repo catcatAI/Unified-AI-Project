@@ -48,7 +48,7 @@ This project integrates and is developing several core AI components:
 *   **Heterogeneous Synchronization Protocol (HSP) (`src/hsp/`):**
     *   **Purpose:** Enables different AI instances (peers) to communicate, share knowledge, and collaborate on tasks.
     *   **Functionality:** Defines message types (Facts, Capability Advertisements, Task Requests/Results, etc.) and communication patterns (Publish/Subscribe, Request/Reply) for inter-AI interaction.
-    *   **Transport:** Currently uses MQTT for message transport.
+    *   **Transport:** Currently uses MQTT for message transport. For detailed analysis of MQTT broker alternatives, see [MQTT Broker Alternatives Analysis](docs/architecture/MQTT_BROKER_ALTERNATIVES_ANALYSIS.md).
     *   **Key Features:** Includes mechanisms for service discovery, basic trust management between peers, and strategies for handling conflicting information received from different AIs.
     *   **Specification:** See `docs/HSP_SPECIFICATION.md` for more details.
     *   **Current Status & Known Issues:** While the core protocol is defined, integration tests (`tests/hsp/test_hsp_integration.py` and `tests/services/test_main_api_server_hsp.py`) currently show failures related to task brokering, DM fallback mechanisms, and task result processing. These issues are under active investigation, focusing on inter-module communication stability and data consistency.
@@ -242,6 +242,14 @@ A logic diagram and knowledge graph for the project can be found in the `docs/ar
 ### Knowledge Graph
 
 [Knowledge Graph](./docs/architecture/knowledge_graph.md)
+
+## Interface Improvements
+
+### Electron Application
+
+We have documented a comprehensive set of improvement suggestions for the Electron desktop application interface. These suggestions cover UI enhancements, feature additions, code structure optimizations, and security improvements.
+
+[Electron App Improvements](./docs/interfaces/ELECTRON_APP_IMPROVEMENTS.md)
 
 ## Architectural Notes & Known Issues
 

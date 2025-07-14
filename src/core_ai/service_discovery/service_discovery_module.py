@@ -53,6 +53,7 @@ class ServiceDiscoveryModule:
         sender_ai_id: str,  # The direct sender from the HSP envelope
         envelope: HSPMessageEnvelope # Full envelope for context if needed
     ) -> None:
+        logger.debug("Entering process_capability_advertisement. Payload: %s, Sender: %s, Envelope: %s", payload, sender_ai_id, envelope)
         """
         Processes an incoming HSPCapabilityAdvertisementPayload.
         Stores or updates the capability in the registry with a 'last_seen' timestamp.
@@ -87,6 +88,7 @@ class ServiceDiscoveryModule:
                 capability_id, advertiser_ai_id, sender_ai_id, current_time.isoformat()
             )
             logger.debug("Stored capability: %s, Last seen: %s", capability_id, current_time.isoformat())
+            logger.debug("Current known_capabilities state after update: %s", self.known_capabilities)
 
     def find_capabilities(
         self,
