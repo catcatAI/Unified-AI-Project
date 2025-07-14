@@ -17,6 +17,8 @@ graph TD
         K[Content Analyzer]
         L[Tool Dispatcher]
         M[Sandbox Executor]
+        LM[Logic Model]
+        MM[Math Model]
     end
 
     A -- "communicates via" --> B
@@ -30,6 +32,9 @@ graph TD
     H -- "uses" --> J
     H -- "uses" --> K
     H -- "uses" --> L
+
+    L -- "uses" --> LM
+    L -- "uses" --> MM
 
     I -- "uses" --> J
     I -- "uses" --> K

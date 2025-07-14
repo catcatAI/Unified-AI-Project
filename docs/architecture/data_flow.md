@@ -20,6 +20,17 @@ sequenceDiagram
     DialogueManager-->>CLI: "Miko: Hello there!"
     CLI-->>User: "Miko: Hello there!"
 
+    alt Tool Usage Example
+        User->>CLI: "query: What is 2 + 2?"
+        CLI->>DialogueManager: get_response("What is 2 + 2?")
+        DialogueManager->>ToolDispatcher: dispatch_tool("math_tool", "2 + 2")
+        ToolDispatcher->>MathModel: execute_math_operation("2 + 2")
+        MathModel-->>ToolDispatcher: result("4")
+        ToolDispatcher-->>DialogueManager: tool_result("4")
+        DialogueManager-->>CLI: "Miko: The answer is 4."
+        CLI-->>User: "Miko: The answer is 4."
+    end
+
     User->>ElectronApp: "Hello"
     ElectronApp->>MainAPIServer: /api/v1/query
     MainAPIServer->>DialogueManager: get_simple_response("Hello")
