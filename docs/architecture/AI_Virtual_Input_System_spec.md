@@ -6,6 +6,8 @@ This document outlines the design for the AI Virtual Input System (AVIS), a syst
 
 This system is foundational for exploring how an AI's behavior, decision-making, and problem-solving strategies evolve when granted more direct agency within a typical computing environment.
 
+**Current Implementation Status:** The core `AI Virtual Input Service` (`src/services/ai_virtual_input_service.py`) provides a functional prototype of the simulation layer as described in this specification. Its current capabilities align with the "Initial Focus (Simulation)" outlined in Section 2.
+
 **Key Goals:**
 *   Enable simulation of GUI interactions for research and development.
 *   Provide a framework for potential future direct GUI control by the AI.

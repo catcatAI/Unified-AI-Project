@@ -62,7 +62,9 @@ Contains internal "tools" that the AI can use to augment its capabilities.
 *   `tool_dispatcher.py`: Enables the AI to select and use various tools.
 *   `math_tool.py`, `logic_tool.py`, `translation_tool.py`: Example or actual implementations of specific tools.
 *   `code_understanding_tool.py`: A callable tool providing code understanding capabilities.
-*   Subdirectories like `math_model/`, `logic_model/`, `translation_model/` likely contain machine learning models or data related to these tools.
+*   **`logic_model/`**: Contains the core Logic Model, responsible for symbolic reasoning and logical inference.
+*   **`math_model/`**: Contains the core Math Model, responsible for numerical computations and mathematical problem-solving.
+*   **`translation_model/`**: Contains the core Translation Model, responsible for language translation.
 *   `js_tool_dispatcher/`: Appears to be for dispatching tools implemented in JavaScript.
 
 ### 2.4. Fragmenta Meta-Orchestration (`src/fragmenta/` and `src/modules_fragmenta/`)
