@@ -64,18 +64,21 @@ These instructions will get you a copy of the project up and running on your loc
     ```
 
 2.  **Set up Python Environment:**
-    It's highly recommended to use a virtual environment:
-    ```bash
-    python -m venv venv
-    # On Windows
-    .\venv\Scripts\activate
-    # On macOS/Linux
-    source venv/bin/activate
-    ```
-    Install the project in editable mode, which will also install all dependencies:
-    ```bash
-    pip install -e .
-    ```
+    Run the appropriate setup script for your operating system. These scripts will create a virtual environment (`venv/`) and install all necessary Python dependencies.
+
+    *   **On Windows (Command Prompt or PowerShell):**
+        ```bash
+        .\scripts\setup_env.bat
+        ```
+    *   **On macOS/Linux (Bash or Zsh):**
+        ```bash
+        bash ./scripts/setup_env.sh
+        ```
+    After running the script, your virtual environment will be activated, and all dependencies from `requirements.txt` will be installed. You will see `(venv)` in your terminal prompt, indicating the virtual environment is active.
+
+    To activate the virtual environment in a new terminal session, run:
+    *   **On Windows:** `.\venv\Scripts\activate.bat`
+    *   **On macOS/Linux:** `source ./venv/bin/activate`
 
 3.  **Set up Node.js Environment:**
     Install root project Node.js dependencies:
@@ -102,8 +105,8 @@ These instructions will get you a copy of the project up and running on your loc
     ```
     Now, edit `.env` with your specific keys and settings.
 
-5.  **PYTHONPATH (if needed):**
-    The project uses absolute imports from the `src` directory (e.g., `from core_ai...`). If you encounter import errors, ensure your `PYTHONPATH` includes the project root directory or the `src` directory. Many IDEs handle this automatically. Alternatively, you can set it temporarily in your shell:
+5.  **PYTHONPATH (usually not needed with setup scripts):**
+    The project uses absolute imports from the `src` directory (e.g., `from core_ai...`). If you use the `setup_env` scripts, the virtual environment activation should handle this automatically. If you encounter import errors when running scripts directly (not through the activated venv), ensure your `PYTHONPATH` includes the project root directory or the `src` directory. Many IDEs handle this automatically. Alternatively, you can set it temporarily in your shell:
     ```bash
     # On Windows (Command Prompt)
     set PYTHONPATH=%PYTHONPATH%;%CD%

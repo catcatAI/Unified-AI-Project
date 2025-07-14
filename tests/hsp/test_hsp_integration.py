@@ -29,6 +29,8 @@ from src.core_ai.personality.personality_manager import PersonalityManager
 
 from tests.conftest import is_mqtt_broker_available # Import the helper
 
+import logging
+
 # --- Constants for Testing ---
 TEST_AI_ID_MAIN = "did:hsp:test_ai_main_001"
 TEST_AI_ID_PEER_A = "did:hsp:test_ai_peer_A_002"
@@ -39,6 +41,11 @@ MQTT_BROKER_PORT = 1883
 
 FACT_TOPIC_GENERAL = "hsp/knowledge/facts/test_general"
 CAP_ADVERTISEMENT_TOPIC = "hsp/capabilities/advertisements/general"
+
+# Set logging level for HSPConnector to DEBUG for detailed output during tests
+logging.getLogger("src.hsp.connector").setLevel(logging.DEBUG)
+logging.getLogger("src.core_ai.service_discovery.service_discovery_module").setLevel(logging.DEBUG)
+logging.getLogger("src.core_ai.dialogue.dialogue_manager").setLevel(logging.DEBUG)
 
 # --- Mock Classes ---
 class MockLLMInterface(LLMInterface):
@@ -126,19 +133,12 @@ async def main_ai_hsp_connector(trust_manager_fixture: TrustManager):
     conn_id_suffix = f"main_test_hsp_{uuid.uuid4().hex[:4]}"
     connector = HSPConnector(TEST_AI_ID_MAIN, MQTT_BROKER_ADDRESS, MQTT_BROKER_PORT, client_id_suffix=conn_id_suffix)
     connect_event = asyncio.Event()
-    def on_connect(client, userdata, flags, rc):
-        if rc == 0:
-            connect_event.set()
-        else:
-            pytest.fail(f"Main AI connector failed to connect with code {rc}")
-    connector.client.on_connect = on_connect
+    disconnect_event = asyncio.Event()
+    connector.register_on_connect_callback(connect_event.set)
+    connector.register_on_disconnect_callback(disconnect_event.set)
     if not connector.connect(): pytest.fail(f"Failed to start main_ai_hsp_connector ({conn_id_suffix}).")
     await wait_for_event(connect_event)
     yield connector
-    disconnect_event = asyncio.Event()
-    def on_disconnect(client, userdata, rc):
-        disconnect_event.set()
-    connector.client.on_disconnect = on_disconnect
     connector.disconnect()
     await wait_for_event(disconnect_event)
 
@@ -147,17 +147,12 @@ async def peer_a_hsp_connector(trust_manager_fixture: TrustManager):
     conn_id_suffix = f"peer_A_hsp_{uuid.uuid4().hex[:4]}"
     connector = HSPConnector(TEST_AI_ID_PEER_A, MQTT_BROKER_ADDRESS, MQTT_BROKER_PORT, client_id_suffix=conn_id_suffix)
     connect_event = asyncio.Event()
-    def on_connect(client, userdata, flags, rc):
-        if rc == 0:
-            connect_event.set()
-    connector.client.on_connect = on_connect
+    disconnect_event = asyncio.Event()
+    connector.register_on_connect_callback(connect_event.set)
+    connector.register_on_disconnect_callback(disconnect_event.set)
     if not connector.connect(): pytest.fail(f"Failed to start peer_a_hsp_connector ({conn_id_suffix}).")
     await wait_for_event(connect_event)
     yield connector
-    disconnect_event = asyncio.Event()
-    def on_disconnect(client, userdata, rc):
-        disconnect_event.set()
-    connector.client.on_disconnect = on_disconnect
     connector.disconnect()
     await wait_for_event(disconnect_event)
 
@@ -166,39 +161,44 @@ async def peer_b_hsp_connector(trust_manager_fixture: TrustManager):
     conn_id_suffix = f"peer_B_hsp_{uuid.uuid4().hex[:4]}"
     connector = HSPConnector(TEST_AI_ID_PEER_B, MQTT_BROKER_ADDRESS, MQTT_BROKER_PORT, client_id_suffix=conn_id_suffix)
     connect_event = asyncio.Event()
-    def on_connect(client, userdata, flags, rc):
-        if rc == 0:
-            connect_event.set()
-    connector.client.on_connect = on_connect
+    disconnect_event = asyncio.Event()
+    connector.register_on_connect_callback(connect_event.set)
+    connector.register_on_disconnect_callback(disconnect_event.set)
     if not connector.connect(): pytest.fail(f"Failed to start peer_b_hsp_connector ({conn_id_suffix}).")
     await wait_for_event(connect_event)
     yield connector
-    disconnect_event = asyncio.Event()
-    def on_disconnect(client, userdata, rc):
-        disconnect_event.set()
-    connector.client.on_disconnect = on_disconnect
     connector.disconnect()
     await wait_for_event(disconnect_event)
 
 @pytest.fixture
-def configured_learning_manager( ham_manager_fixture: MockHAM, fact_extractor_fixture: FactExtractorModule,
+async def configured_learning_manager( ham_manager_fixture: MockHAM, fact_extractor_fixture: FactExtractorModule,
     content_analyzer_module_fixture: ContentAnalyzerModule, main_ai_hsp_connector: HSPConnector, trust_manager_fixture: TrustManager, personality_manager_fixture: PersonalityManager ):
+    if asyncio.iscoroutine(main_ai_hsp_connector):
+        main_ai_hsp_connector = await main_ai_hsp_connector
     config = { "learning_thresholds": {"min_fact_confidence_to_store":0.7,"min_fact_confidence_to_share_via_hsp":0.8,"min_hsp_fact_confidence_to_store":0.55,"hsp_fact_conflict_confidence_delta":0.1}, "default_hsp_fact_topic":FACT_TOPIC_GENERAL}
     lm = LearningManager( TEST_AI_ID_MAIN, ham_manager_fixture, fact_extractor_fixture, personality_manager_fixture, content_analyzer_module_fixture, main_ai_hsp_connector, trust_manager_fixture, config )
     if main_ai_hsp_connector: main_ai_hsp_connector.register_on_fact_callback(lm.process_and_store_hsp_fact)
     return lm
 
 @pytest.fixture
-def service_discovery_module_fixture(main_ai_hsp_connector: HSPConnector, trust_manager_fixture: TrustManager):
+async def service_discovery_module_fixture(main_ai_hsp_connector: HSPConnector, trust_manager_fixture: TrustManager):
+    if asyncio.iscoroutine(main_ai_hsp_connector):
+        main_ai_hsp_connector = await main_ai_hsp_connector
     sdm = ServiceDiscoveryModule(trust_manager=trust_manager_fixture)
     main_ai_hsp_connector.register_on_capability_advertisement_callback(sdm.process_capability_advertisement)
     assert main_ai_hsp_connector.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#"), f"Main AI failed to subscribe to {CAP_ADVERTISEMENT_TOPIC}/#"
-    time.sleep(0.2); return sdm
+    await asyncio.sleep(0.2); return sdm
 
 @pytest.fixture
 async def dialogue_manager_fixture( configured_learning_manager: LearningManager, service_discovery_module_fixture: ServiceDiscoveryModule,
     main_ai_hsp_connector: HSPConnector, mock_llm_fixture: MockLLMInterface,
     content_analyzer_module_fixture: ContentAnalyzerModule, trust_manager_fixture: TrustManager, personality_manager_fixture: PersonalityManager ):
+    if asyncio.iscoroutine(configured_learning_manager):
+        configured_learning_manager = await configured_learning_manager
+    if asyncio.iscoroutine(service_discovery_module_fixture):
+        service_discovery_module_fixture = await service_discovery_module_fixture
+    if asyncio.iscoroutine(main_ai_hsp_connector):
+        main_ai_hsp_connector = await main_ai_hsp_connector
     dm_config = { "operational_configs": configured_learning_manager.operational_config if configured_learning_manager else {} }
     mock_td = MagicMock(spec=ToolDispatcher)
     dm = DialogueManager( ai_id=TEST_AI_ID_MAIN,

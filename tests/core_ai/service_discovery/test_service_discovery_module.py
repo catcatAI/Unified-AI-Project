@@ -79,6 +79,8 @@ class TestServiceDiscoveryModule:
             data_format_preferences=None, hsp_protocol_requirements=None,
             cost_estimate_template=None, access_policy_id=None
         )
+        # Add a small sleep to ensure timestamp changes for the update
+        time.sleep(0.001) 
         time_before_update = datetime.now(timezone.utc)
         sdm.process_capability_advertisement(payload1_updated, "sender_ai_id_1", mock_envelope)
         time_after_update = datetime.now(timezone.utc)
