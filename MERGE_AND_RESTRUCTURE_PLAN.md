@@ -145,6 +145,7 @@ The merge will be executed in phases:
         *   Merge `tool_registry.json` from all relevant sources.
     *   **Interfaces (`src/interfaces/`):**
         *   **Electron App:** This is a significant integration. Start with the most complete Electron app version (likely from `MikoAI-Project-Codebase/src/interfaces/electron_app/` or `src/versions/miko-v3/`, which itself was a result of prior merges). Integrate UI elements or specific functionalities from `Fragmenta/frontend/` and `mikage_rei_electron/` if they offer distinct advantages.
+            *   **Future Improvements:** A comprehensive set of improvement suggestions for the Electron app has been documented in `docs/interfaces/ELECTRON_APP_IMPROVEMENTS.md`, covering UI enhancements, feature additions, code structure optimizations, and security improvements. These improvements are organized into a phased implementation roadmap.
         *   **CLI:** Adapt `MikoAI-Project-Codebase/main.py` if it serves as a CLI.
     *   **Shared Utilities (`src/shared/`):**
         *   Collect and consolidate utility functions and type definitions from all projects.

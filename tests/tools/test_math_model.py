@@ -3,33 +3,39 @@ import os
 import json
 import csv
 import sys
+import pytest # Import pytest
 
 # Add src directory to sys.path to allow aletive imports
 # This is often needed when running tests from a tests/ subdirectory
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
 
 from tools.math_model import data_generator
-try:
+from tools.math_tool import extract_arithmetic_problem, calculate as calculate_via_tool
+from tools.math_tool import MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH # Import constants
+from tools.tool_dispatcher import ToolDispatcher
+
+# Check TensorFlow availability from the source module
+from tools.math_model.model import _tensorflow_is_available as _tensorflow_is_available_for_math
+
+# Conditionally import or define dummy classes/functions
+if _tensorflow_is_available_for_math:
     from tools.math_model.model import ArithmeticSeq2Seq, get_char_token_maps
-    _tensorflow_available = True
-except ImportError:
-    _tensorflow_available = False
-    class ArithmeticSeq2Seq: # Dummy class
+else:
+    print("Warning: TensorFlow not available for math model. Math model tests will be skipped.")
+    class ArithmeticSeq2Seq:
         def __init__(self, *args, **kwargs): pass
         def _build_inference_models(self): pass
         def predict_sequence(self, *args, **kwargs): return "Error: Model not available"
         @classmethod
         def load_for_inference(cls, *args, **kwargs): return None
     def get_char_token_maps(*args, **kwargs): return {}, {}, 0, 0, 0
-from tools.math_tool import extract_arithmetic_problem, calculate as calculate_via_tool
-from tools.math_tool import MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH # Import constants
-from tools.tool_dispatcher import ToolDispatcher
 
 # Define a consistent test output directory
 TEST_OUTPUT_DIR = "Unified-AI-Project/tests/test_output_data/"
 # Ensure this test output directory exists
 os.makedirs(TEST_OUTPUT_DIR, exist_ok=True)
 
+@pytest.mark.skipif(not _tensorflow_is_available_for_math, reason="TensorFlow not available or failed to import for math model tests.")
 class TestMathModelComponents(unittest.TestCase):
 
     def setUp(self):

@@ -100,6 +100,8 @@ This summary is based on automated code and documentation review.
     *   Callback registration for different message types.
     *   `ServiceDiscoveryModule` (intended for HSP capabilities): The instantiation in `core_services.py` expects this module to integrate with `TrustManager` and process `HSPCapabilityAdvertisementPayload` via a `process_capability_advertisement` method. **However, the current file at `src/core_ai/service_discovery/service_discovery_module.py` implements a generic service registry with a different interface and functionality.** This module requires significant refactoring or replacement to fulfill its intended HSP role.
     *   Basic trust management via `TrustManager`.
+*   **Transport Layer Analysis:**
+    *   Comprehensive analysis of MQTT broker alternatives and selection criteria documented in [`docs/architecture/MQTT_BROKER_ALTERNATIVES_ANALYSIS.md`](architecture/MQTT_BROKER_ALTERNATIVES_ANALYSIS.md), covering options from lightweight development brokers to enterprise-grade solutions.
 *   **Pending (Explicit TODOs from `TODO_PLACEHOLDERS.md`):**
     *   `hsp/connector.py` (Line ~63): CLARIFIED: Reconnection strategy is handled by the Paho MQTT client. (Verified in `feat/hsp-connector-robustness`).
     *   `hsp/connector.py` (Line ~128): Add schema URIs to `payload_schema_uri` in `_build_hsp_envelope` when defined.
@@ -143,6 +145,8 @@ This summary is based on automated code and documentation review.
 *   **Further Development / Conceptual Goals:**
     *   More feature-rich UI for Electron app (e.g., configuration, memory inspection, advanced HSP interaction).
     *   Potential for other interfaces (e.g., web).
+*   **Improvement Plans:**
+    *   A comprehensive set of improvement suggestions for the Electron desktop application has been documented in [`docs/interfaces/ELECTRON_APP_IMPROVEMENTS.md`](../interfaces/ELECTRON_APP_IMPROVEMENTS.md), covering UI enhancements, feature additions, code structure optimizations, and security improvements.
 
 ## 8. Code Quality & Testing (`README.md`, `tests/`)
 

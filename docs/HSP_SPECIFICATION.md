@@ -366,6 +366,7 @@ By maintaining such metadata, an AI can build a more nuanced understanding of it
     *   **gRPC:** For high-performance P2P or client-server interactions (requires Protobuf).
     *   **MQTT:** For lightweight Pub/Sub, especially with a broker.
 *   The choice of transport will affect how connections are managed and how the HSP envelope is framed for transmission.
+*   **MQTT Broker Selection:** For detailed analysis of MQTT broker alternatives and selection criteria, see [MQTT Broker Alternatives Analysis](architecture/MQTT_BROKER_ALTERNATIVES_ANALYSIS.md).
 
 ## 7. Future Considerations & Versioning
 *   **Versioning:**

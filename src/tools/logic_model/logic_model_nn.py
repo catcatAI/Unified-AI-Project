@@ -1,7 +1,7 @@
 import os
 import json
 import numpy as np
-import sys # Added for debugging sys.path
+import sys
 
 # Global variables to hold TensorFlow components, loaded on demand.
 tf = None
@@ -14,13 +14,14 @@ Dropout = None
 pad_sequences = None
 to_categorical = None
 
+_tensorflow_is_available = False
+
 def _ensure_tensorflow_is_imported():
     """
     Lazily imports TensorFlow and its Keras components.
-    Raises ImportError if TensorFlow is not installed or fails to import.
+    Returns True if successful, False otherwise.
     """
-    global tf, Model, Input, Embedding, LSTM, Dense, Dropout, pad_sequences, to_categorical
-    print("Current sys.path:", sys.path) # Added for debugging
+    global tf, Model, Input, Embedding, LSTM, Dense, Dropout, pad_sequences, to_categorical, _tensorflow_is_available
     if tf is None:
         try:
             _tf_module = __import__('tensorflow', fromlist=['keras'])
@@ -36,11 +37,20 @@ def _ensure_tensorflow_is_imported():
             Dropout = tf.keras.layers.Dropout
             pad_sequences = _keras_preprocessing.pad_sequences
             to_categorical = _keras_utils.to_categorical
+            _tensorflow_is_available = True
+            return True
         except ImportError as e:
-            raise ImportError(
-                "TensorFlow is required for this functionality, but it could not be imported. "
-                "Please ensure TensorFlow is installed correctly. Original error: " + str(e)
-            ) from e
+            print(f"Warning: TensorFlow could not be imported. Logic model functionality will be disabled. Error: {e}")
+            _tensorflow_is_available = False
+            return False
+        except Exception as e:
+            print(f"Warning: An unexpected error occurred during TensorFlow import. Logic model functionality will be disabled. Error: {e}")
+            _tensorflow_is_available = False
+            return False
+    return _tensorflow_is_available
+
+# Attempt to import TensorFlow on module load
+_ensure_tensorflow_is_imported()
 
 # Define paths (relative to project root, assuming this script is in src/tools/logic_model)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -51,6 +61,10 @@ TRAIN_DATA_PATH = os.path.join(PROJECT_ROOT, "data/raw_datasets/logic_train.json
 
 class LogicNNModel:
     def __init__(self, max_seq_len, vocab_size, embedding_dim=32, lstm_units=64):
+        if not _tensorflow_is_available:
+            print("LogicNNModel: TensorFlow not available. This instance will be non-functional.")
+            self.model = None
+            return
         self.max_seq_len = max_seq_len
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
@@ -58,7 +72,9 @@ class LogicNNModel:
         self.model = None # Build lazily
 
     def _build_model(self):
-        _ensure_tensorflow_is_imported()
+        if not _tensorflow_is_available:
+            print("Cannot build model: TensorFlow not available.")
+            return
         input_layer = Input(shape=(self.max_seq_len,), name="input_proposition")
         embedding_layer = Embedding(input_dim=self.vocab_size,
                                     output_dim=self.embedding_dim,
@@ -73,8 +89,9 @@ class LogicNNModel:
         self.model = model
 
     def train(self, X_train, y_train, X_val, y_val, epochs=20, batch_size=32):
-        if self.model is None:
-            self._build_model()
+        if not _tensorflow_is_available or self.model is None:
+            print("Cannot train model: TensorFlow not available or model not built.")
+            return None
         print(f"Starting training: epochs={epochs}, batch_size={batch_size}")
         history = self.model.fit(X_train, y_train,
                                  epochs=epochs,
@@ -85,9 +102,9 @@ class LogicNNModel:
         return history
 
     def predict(self, proposition_str, char_to_token):
-        if self.model is None:
-            self._build_model()
-        _ensure_tensorflow_is_imported()
+        if not _tensorflow_is_available or self.model is None:
+            print("Cannot predict: TensorFlow not available or model not built.")
+            return False # Default/dummy return
         tokens = [char_to_token.get(char, char_to_token.get('<UNK>', 0)) for char in proposition_str]
         padded_sequence = pad_sequences([tokens], maxlen=self.max_seq_len, padding='post', truncating='post')
 
@@ -96,14 +113,17 @@ class LogicNNModel:
         return bool(predicted_class)
 
     def save_model(self, path):
-        if self.model is None:
-            raise ValueError("Model has not been built or loaded. Cannot save.")
+        if not _tensorflow_is_available or self.model is None:
+            print("Cannot save model: TensorFlow not available or model not built.")
+            return
         self.model.save(path)
         print(f"Model saved to {path}")
 
     @classmethod
     def load_model(cls, model_path, char_maps_path):
-        _ensure_tensorflow_is_imported()
+        if not _tensorflow_is_available:
+            print("Cannot load model: TensorFlow not available.")
+            return None
         with open(char_maps_path, 'r') as f:
             char_maps = json.load(f)
 
@@ -121,6 +141,9 @@ class LogicNNModel:
 
 # --- Helper functions for data preparation ---
 def get_logic_char_token_maps(dataset_path):
+    if not _tensorflow_is_available:
+        print("Cannot get char maps: TensorFlow not available.")
+        return {}, {}, 0, 0
     propositions = []
     with open(dataset_path, 'r') as f:
         data = json.load(f)
@@ -153,7 +176,9 @@ def get_logic_char_token_maps(dataset_path):
     return char_to_token, token_to_char, vocab_size, max_seq_len
 
 def preprocess_logic_data(dataset_path, char_to_token, max_seq_len, num_classes=2):
-    _ensure_tensorflow_is_imported()
+    if not _tensorflow_is_available:
+        print("Cannot preprocess data: TensorFlow not available.")
+        return None, None
     propositions = []
     answers = []
     with open(dataset_path, 'r') as f:
@@ -171,8 +196,7 @@ def preprocess_logic_data(dataset_path, char_to_token, max_seq_len, num_classes=
 
 if __name__ == "__main__":
     print("Logic NN Model Script (for structure definition and basic tests)")
-    try:
-        _ensure_tensorflow_is_imported()
+    if _tensorflow_is_available:
         print("TensorFlow imported successfully.")
 
         if not os.path.exists(TRAIN_DATA_PATH):
@@ -218,9 +242,7 @@ if __name__ == "__main__":
             os.remove(MODEL_SAVE_PATH)
             print(f"Removed dummy {MODEL_SAVE_PATH}")
 
-    except ImportError as e:
-        print(f"Skipping model test: {e}")
-    except Exception as e:
-        print(f"An unexpected error occurred during the test: {e}")
+    else:
+        print("TensorFlow not available. Skipping model functionality tests.")
 
     print("logic_model_nn.py executed.")
