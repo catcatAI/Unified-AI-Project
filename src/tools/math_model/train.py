@@ -6,9 +6,14 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLRO
 from model import ArithmeticSeq2Seq, get_char_token_maps, prepare_data
 
 # --- Configuration ---
-DATASET_PATH = "Unified-AI-Project/data/raw_datasets/arithmetic_train_dataset.json" # Using JSON for easier loading
-MODEL_SAVE_PATH = "Unified-AI-Project/data/models/arithmetic_model.keras" # Updated extension for Keras 3
-CHAR_MAP_SAVE_PATH = "Unified-AI-Project/data/models/arithmetic_char_maps.json"
+# Get absolute paths
+import os
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
+
+DATASET_PATH = os.path.join(PROJECT_ROOT, "data", "raw_datasets", "arithmetic_train_dataset.json")
+MODEL_SAVE_PATH = os.path.join(PROJECT_ROOT, "data", "models", "arithmetic_model.keras")
+CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT, "data", "models", "arithmetic_char_maps.json")
 
 # Training Hyperparameters
 BATCH_SIZE = 64

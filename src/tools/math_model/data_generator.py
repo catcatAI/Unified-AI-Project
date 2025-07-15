@@ -58,7 +58,11 @@ def generate_dataset(num_samples, output_dir, filename_prefix="arithmetic", file
 if __name__ == "__main__":
     num_train_samples = 10000
     num_test_samples = 2000
-    output_directory = "Unified-AI-Project/data/raw_datasets/"
+    
+    # Get absolute path to project root
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
+    output_directory = os.path.join(project_root, "data", "raw_datasets")
 
     # Generate training data as JSON (for train.py)
     generate_dataset(num_train_samples,

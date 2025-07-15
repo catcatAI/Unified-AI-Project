@@ -1,0 +1,21 @@
+{
+  "model_type": "lightweight_logic_model",
+  "version": "1.0",
+  "operators": {
+    "AND": "and",
+    "OR": "or",
+    "NOT": "not",
+    "&": "and",
+    "|": "or",
+    "!": "not"
+  },
+  "boolean_values": {
+    "true": true,
+    "false": false,
+    "True": true,
+    "False": false,
+    "1": true,
+    "0": false
+  },
+  "description": "Rule-based lightweight logical reasoning model"
+}
