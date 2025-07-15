@@ -1,0 +1,13 @@
+{
+  "model_type": "lightweight_math_model",
+  "version": "1.0",
+  "operations": [
+    "+",
+    "-",
+    "*",
+    "/",
+    "**",
+    "%"
+  ],
+  "description": "Rule-based lightweight mathematical model"
+}

@@ -1,5 +1,24 @@
 # --- (Project Status Update as of July 2025) ---
 
+## Table of Contents
+
+- [A. Current Implemented Architecture](#a-current-implemented-architecture)
+- [B. Status of Future Concepts](#b-status-of-future-concepts)
+  - [B.1. Currently Dormant/Future-Oriented Modules (Code Present, Not Actively Triggered)](#b1-currently-dormantfuture-oriented-modules-code-present-not-actively-triggered)
+- [C. Proposed Next-Phase Development Roadmap](#c-proposed-next-phase-development-roadmap)
+- [D. Long-Term Research Vision & Philosophical Concepts](#d-long-term-research-vision--philosophical-concepts)
+- [MikoAI & Fragmenta Project Merge and Restructure Plan](#mikoai--fragmenta-project-merge-and-restructure-plan)
+  - [1. Introduction and Rationale](#1-introduction-and-rationale)
+  - [2. Guiding Architectural Principles](#2-guiding-architectural-principles)
+  - [3. Proposed Merged Project Structure (`Unified-AI-Project/`)](#3-proposed-merged-project-structure-unified-ai-project)
+  - [4. Merge Process Execution Plan](#4-merge-process-execution-plan)
+  - [5. Role of the Chosen "Tool" (`restructure_phase1.py` logic)](#5-role-of-the-chosen-tool-restructure_phase1py-logic)
+  - [6. Application of Fragmenta Architecture](#6-application-of-fragmenta-architecture)
+  - [7. Potential Challenges](#7-potential-challenges)
+  - [Phase 2 Development Highlights (Post-Initial Merge)](#phase-2-development-highlights-post-initial-merge)
+  - [8. Post-Merge Status Update (As of Current Session)](#8-post-merge-status-update-as-of-current-session)
+  - [9. Post-Merge Learnings and Future Architectural Considerations](#9-post-merge-learnings-and-future-architectural-considerations)
+
 ## A. Current Implemented Architecture
 
 The initial merge and restructuring described in this document can be considered **complete and successful**. The project has evolved into a stable, functional, and layered agent architecture. The current "as-is" state is defined by the following key implementations:
@@ -193,7 +212,7 @@ The merge will be executed in phases:
     *   Initialize a new `README.md` (briefly pointing to this plan) and `.gitignore` (merged from existing projects).
     *   Initialize `package.json` (for Electron/Node scripts) and `requirements.txt` (for Python).
     *   Adapt the directory creation logic from `MikoAI-Project-Codebase/scripts/restructure_phase1.py` into a new utility script `scripts/project_setup_utils.py` to help automate the creation of the detailed internal structure of `src/`.
-    *   Implement a backup function in `project_setup_utils.py`, inspired by `restructure_phase1.py`, to backup key source directories before migration.
+    *   Implement a backup function in `scripts/project_setup_utils.py`, inspired by `restructure_phase1.py`, to backup key source directories before migration.
 
 2.  **Configuration Migration:**
     *   Identify canonical configuration files from `MikoAI-Project-Codebase/`, `Fragmenta/`, and other sources.

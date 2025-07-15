@@ -1,0 +1,4002 @@
+[
+  {
+    "proposition": "(true OR false) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false AND false)",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (false AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR true) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (true OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND true) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND true) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (true AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (false OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR false) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (true AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND false) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (false AND false)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (true OR true)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (true AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR false) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND true) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR false) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (true OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR false) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR false) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR true) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (false OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (true OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (true OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (false OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (true OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR true) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (false OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR false) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR false) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (false OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (true AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (false OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (true OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND false) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true OR true)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND true) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true OR true)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (true OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (true OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND true) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND false) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND true) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (true OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND true) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (false OR true)",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (true AND false)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND true) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (true OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR false) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND false) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (true OR true)",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (true AND false)",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (true OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND true) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (true AND false)",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (true OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (true OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (true OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (true AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR true) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR false) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (true OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR true) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (true AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (true AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (false OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR true) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND false) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (false OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND false) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (false OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND true) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (true AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (true AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR false) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND false) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(false OR false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (true OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND false) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (true OR true)",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (false OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND (true AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "true OR (false OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND true) OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (true OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND true) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (true AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR false) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND true) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR false) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "false OR false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(false OR false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "(true AND true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND true) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR (true AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "(true OR false) AND true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "true OR false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "(true OR false) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND true) OR false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true AND true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND (true OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(true AND false) AND true",
+    "answer": false
+  },
+  {
+    "proposition": "false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (false AND false)",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false OR true)",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND false) AND false",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true OR (false AND true)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "(false AND true) OR true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND true",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (true OR false)",
+    "answer": true
+  },
+  {
+    "proposition": "NOT false",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "NOT true",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "false OR (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "true AND (false AND true)",
+    "answer": false
+  },
+  {
+    "proposition": "false OR true",
+    "answer": true
+  },
+  {
+    "proposition": "true",
+    "answer": true
+  },
+  {
+    "proposition": "true AND false",
+    "answer": false
+  },
+  {
+    "proposition": "false AND (false OR false)",
+    "answer": false
+  },
+  {
+    "proposition": "(false AND true) OR true",
+    "answer": true
+  }
+]
