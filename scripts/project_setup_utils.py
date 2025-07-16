@@ -201,7 +201,7 @@ def example_run():
     print("Running ProjectSetupUtils example...")
 
     # Determine the root of the Unified-AI-Project.
-    # Assumes this script is in Unified-AI-Project/scripts/
+    # Assumes this script is in scripts/
     current_script_path = Path(__file__).resolve()
     unified_project_root = current_script_path.parent.parent
 
@@ -272,7 +272,7 @@ if __name__ == "__main__":
     # This is what you'd typically want when actually setting up the project.
     print("Executing direct setup of Unified-AI-Project structure...")
     current_script_path = Path(__file__).resolve()
-    project_root_for_setup = current_script_path.parent.parent # Assumes script is in Unified-AI-Project/scripts/
+    project_root_for_setup = current_script_path.parent.parent # Assumes script is in scripts/
 
     setup_tool = ProjectSetupUtils(project_root=project_root_for_setup)
     setup_tool.setup_project_directories()
