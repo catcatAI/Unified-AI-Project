@@ -13,7 +13,7 @@ try:
     from core_ai.memory.ham_memory_manager import HAMMemoryManager
 except ImportError:
     print("Error: Could not import HAMMemoryManager.")
-    print("Ensure that Unified-AI-Project/src is in your PYTHONPATH or accessible,")
+    print("Ensure that src is in your PYTHONPATH or accessible,")
     print("and that ham_memory_manager.py is in core_ai/memory/ under src.")
     sys.exit(1)
 

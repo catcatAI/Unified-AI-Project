@@ -140,7 +140,7 @@ if __name__ == '__main__':
     # Ensure data exists, if not, guide user to generate it.
     if not tf.io.gfile.exists(DATASET_PATH):
         print(f"Dataset not found at {DATASET_PATH}.")
-        print("Please run `python Unified-AI-Project/src/tools/math_model/data_generator.py` to generate the dataset first.")
+        print("Please run `python src/tools/math_model/data_generator.py` to generate the dataset first.")
         print("Note: The data_generator script is currently set to output CSV. Update DATASET_PATH in train.py if you change it to JSON, or modify data_generator to output JSON by default for training.")
         # For now, let's assume data_generator.py will be updated to output JSON for the training set.
         # Or, we can modify load_dataset to handle CSV. For simplicity, assume JSON.

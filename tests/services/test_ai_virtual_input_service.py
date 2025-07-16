@@ -2,14 +2,10 @@
 import unittest
 from typing import Tuple, Optional, List, Dict, Any
 
-# Assuming 'src' is a top-level package in the test execution context
-from src.services.ai_virtual_input_service import AIVirtualInputService
+from src.services.ai_virtual_input_service import AIVirtualInputService, VirtualInputElementDescription
 from src.shared.types.common_types import (
     VirtualMouseCommand,
     VirtualKeyboardCommand,
-    VirtualMouseEventType,
-    VirtualKeyboardActionType,
-    VirtualInputPermissionLevel
 )
 
 class TestAIVirtualInputService(unittest.TestCase):

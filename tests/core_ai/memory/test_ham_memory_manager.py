@@ -4,17 +4,13 @@ import json
 from datetime import datetime, timedelta, timezone # Added timezone
 from typing import Optional, Dict, Any, List # Keep List for general list operations
 
-import sys
-
-# Add src directory to sys.path to allow imports from src
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src')))
-
-from core_ai.memory.ham_memory_manager import HAMMemoryManager
-from shared.types.common_types import (
-    DialogueMemoryEntryMetadata, HAMRecallResult,
-    SimulatedDiskConfig, SimulatedHardwareProfile, SimulatedCPUConfig, SimulatedRAMConfig
+from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from src.shared.types.common_types import (
+    DialogueMemoryEntryMetadata,
+    HAMRecallResult,
+    SimulatedDiskConfig,
 )
-from services.resource_awareness_service import ResourceAwarenessService # New import
+from src.services.resource_awareness_service import ResourceAwarenessService
 from cryptography.fernet import Fernet, InvalidToken # For testing invalid token
 import hashlib # For testing checksums
 from unittest.mock import patch, MagicMock # For mocking

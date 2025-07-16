@@ -5,9 +5,9 @@ import csv
 from model import ArithmeticSeq2Seq # Assuming model.py is in the same directory or accessible
 
 # --- Configuration ---
-TEST_DATASET_PATH = "Unified-AI-Project/data/raw_datasets/arithmetic_test_dataset.csv"
-MODEL_LOAD_PATH = "Unified-AI-Project/data/models/arithmetic_model.keras"
-CHAR_MAP_LOAD_PATH = "Unified-AI-Project/data/models/arithmetic_char_maps.json"
+TEST_DATASET_PATH = "data/raw_datasets/arithmetic_test_dataset.csv"
+MODEL_LOAD_PATH = "data/models/arithmetic_model.keras"
+CHAR_MAP_LOAD_PATH = "data/models/arithmetic_char_maps.json"
 
 def load_char_maps(file_path):
     """Loads character token maps from a JSON file."""
@@ -133,6 +133,6 @@ if __name__ == '__main__':
         print("Please train the model first using train.py.")
     elif not tf.io.gfile.exists(TEST_DATASET_PATH):
         print(f"Test dataset not found at {TEST_DATASET_PATH}.")
-        print("Please run `python Unified-AI-Project/src/tools/math_model/data_generator.py` to generate the test dataset (CSV format).")
+        print("Please run `python src/tools/math_model/data_generator.py` to generate the test dataset (CSV format).")
     else:
         main()
