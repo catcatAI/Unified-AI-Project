@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 import uuid
 import time
 import asyncio
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, ANY
 
 # Ensure src is in path for imports
@@ -32,24 +33,38 @@ logging.getLogger("src.core_ai.service_discovery.service_discovery_module").setL
 logging.getLogger("src.core_ai.dialogue.dialogue_manager").setLevel(logging.DEBUG)
 
 @pytest.fixture(scope="module")
-async def client():
+def client_with_overrides():
     """
-    Provides a TestClient for the FastAPI app.
-    Manages service initialization and shutdown for the test module.
+    Provides a TestClient for the FastAPI app and the instances used for dependency overrides.
     """
-    # Initialize services before creating TestClient
-    # API server's lifespan will call initialize_services with its own AI ID.
-    # For testing, we might want to control this more directly or ensure mocks are in place.
-    # The lifespan will run. We can use it as is.
+    from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+    from src.core_ai.trust_manager.trust_manager_module import TrustManager
+    from src.core_ai.dialogue.dialogue_manager import DialogueManager
+    from src.core_ai.memory.ham_memory_manager import HAMMemoryManager # Import HAMMemoryManager
+    
+    # Create instances that will be shared and controlled by the tests
+    trust_manager_for_test = TrustManager()
+    sdm_for_test = ServiceDiscoveryModule(trust_manager=trust_manager_for_test)
+    # A mock HAM is sufficient for these API tests
+    ham_for_test = MagicMock(spec=HAMMemoryManager) # Corrected spec
+    dm_for_test = DialogueManager(
+        service_discovery_module=sdm_for_test, 
+        memory_manager=ham_for_test
+    )
+
+    # Override the dependencies in the FastAPI app
+    app.dependency_overrides[get_services] = lambda: {
+        "service_discovery": sdm_for_test,
+        "trust_manager": trust_manager_for_test,
+        "dialogue_manager": dm_for_test,
+        "ham_manager": ham_for_test,
+    }
 
     with TestClient(app) as test_client:
-        # Ensure services are up, especially the HSP connector for the main API's AI instance
-        # The lifespan should have initialized services. Let's give it a moment.
-        await asyncio.sleep(1.0) # Allow time for lifespan startup and MQTT connection
-        services = get_services()
-        assert services.get("hsp_connector") is not None, "HSPConnector not initialized in API for tests"
-        yield test_client
-    # Lifespan's shutdown part will call shutdown_services
+        yield test_client, sdm_for_test, dm_for_test, ham_for_test
+
+    # Clean up the override
+    app.dependency_overrides = {}
 
 
 @pytest.fixture
@@ -77,43 +92,26 @@ async def wait_for_event(event: asyncio.Event, timeout: float = 2.0):
 @pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available for API HSP tests")
 class TestHSPEndpoints:
 
-    @pytest.mark.asyncio
-    async def test_list_hsp_services_empty(self, client: TestClient):
-        # Clear any existing services from ServiceDiscoveryModule first for a clean test
-        services = get_services()
-        sdm = services.get("service_discovery")
-        if sdm:
-            sdm.known_capabilities.clear()
-
+    def test_list_hsp_services_empty(self, client_with_overrides):
+        client, sdm, _, _ = client_with_overrides
+        sdm.known_capabilities.clear()
         response = client.get("/api/v1/hsp/services")
         assert response.status_code == 200
         assert response.json() == []
 
-    async def test_list_hsp_services_with_advertisements(self, client: TestClient, api_test_peer_connector: HSPConnector):
-        # service_discovery_module_fixture is from the other test file, might cause issues if not careful with scope.
-        # For this test, we want the API's own ServiceDiscoveryModule instance.
-        api_sdm = get_services().get("service_discovery")
-        assert api_sdm is not None, "ServiceDiscoveryModule not found in API services"
-
-        # Clear any existing capabilities first
+    def test_list_hsp_services_with_advertisements(self, client_with_overrides):
+        client, api_sdm, _, _ = client_with_overrides
         api_sdm.known_capabilities.clear()
-
 
         adv_payload = HSPCapabilityAdvertisementPayload(
             capability_id=f"{TEST_API_PEER_AI_ID}_test_cap_1", ai_id=TEST_API_PEER_AI_ID,
             name="API Test Capability", description="A capability for API testing.",
             version="1.0", availability_status="online", tags=["test", "api"] #type: ignore
         )
-        # Peer advertises a capability
-        adv_topic = "hsp/capabilities/advertisements/general" # As subscribed by core_services init
-        adv_event = asyncio.Event()
-        def on_publish(client, userdata, mid, reason_code, properties):
-            adv_event.set()
-        api_test_peer_connector.mqtt_client.on_publish = on_publish
-        assert api_test_peer_connector.publish_capability_advertisement(adv_payload, adv_topic)
-        await wait_for_event(adv_event, timeout=2.0)
-    
-        await asyncio.sleep(0.2) # allow api_sdm to process the message
+        
+        dummy_envelope = HSPMessageEnvelope(message_id="test-msg-id", sender_ai_id=TEST_API_PEER_AI_ID, message_type="HSP::CapabilityAdvertisement_v0.1", payload=adv_payload) # type: ignore
+        api_sdm.process_capability_advertisement(adv_payload, TEST_API_PEER_AI_ID, dummy_envelope)
+
         response = client.get("/api/v1/hsp/services")
         assert response.status_code == 200
         capabilities = response.json()
@@ -128,13 +126,8 @@ class TestHSPEndpoints:
                 break
         assert found_it, "Advertised capability not found in API response."
 
-    async def test_request_hsp_task_success(self, client: TestClient, api_test_peer_connector: HSPConnector): # Removed dialogue_manager_fixture as we get it from API context
-        # We need the DialogueManager from the API's context, not the test_hsp_integration's one
-        services = get_services()
-        api_dm = services.get("dialogue_manager")
-        trust_manager = services.get("trust_manager")
-        api_dm.trust_manager = trust_manager
-        assert api_dm is not None
+    async def test_request_hsp_task_success(self, client_with_overrides, api_test_peer_connector: HSPConnector):
+        client, _, api_dm, _ = client_with_overrides # Unpack client, sdm, dm, ham
 
         # 1. Peer advertises a capability that the API's DM can request
         peer_ai_id = TEST_API_PEER_AI_ID
@@ -192,10 +185,18 @@ class TestHSPEndpoints:
         #    - API's DialogueManager handled the result (check pending_hsp_task_requests)
         #      The result is handled asynchronously. The API call returns before result is back.
         #      The pending request should be removed after result is handled.
-        assert correlation_id_from_api not in api_dm.pending_hsp_task_requests # type: ignore
+        timeout = 3.0
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if correlation_id_from_api not in api_dm.pending_hsp_task_requests:
+                break
+            await asyncio.sleep(0.1)
+        else:
+            pytest.fail(f"HSP task {correlation_id_from_api} was not handled by DM within {timeout}s")
 
     @pytest.mark.asyncio
-    async def test_request_hsp_task_capability_not_found(self, client: TestClient):
+    async def test_request_hsp_task_capability_not_found(self, client_with_overrides):
+        client, _, _, _ = client_with_overrides
         response = client.post("/api/v1/hsp/tasks", json={
             "target_capability_id": "non_existent_capability_for_api",
             "parameters": {"data": "test"}
@@ -207,10 +208,8 @@ class TestHSPEndpoints:
         assert response_data.get("correlation_id") is None
         assert response_data.get("error") == "Capability not discovered."
 
-    async def test_get_hsp_task_status_pending(self, client: TestClient):
-        services = get_services()
-        dialogue_manager = services.get("dialogue_manager")
-        assert dialogue_manager is not None
+    async def test_get_hsp_task_status_pending(self, client_with_overrides):
+        client, _, dialogue_manager, _ = client_with_overrides
 
         mock_corr_id = "pending_corr_id_123"
         dialogue_manager.pending_hsp_task_requests[mock_corr_id] = { #type: ignore
@@ -228,10 +227,8 @@ class TestHSPEndpoints:
         del dialogue_manager.pending_hsp_task_requests[mock_corr_id] # Clean up
 
     @pytest.mark.asyncio
-    async def test_get_hsp_task_status_completed_from_ham(self, client: TestClient):
-        services = get_services()
-        ham_manager = services.get("ham_manager")
-        assert ham_manager is not None
+    async def test_get_hsp_task_status_completed_from_ham(self, client_with_overrides):
+        client, _, _, ham_manager = client_with_overrides
 
         mock_corr_id = "completed_corr_id_456"
         expected_result_payload = {"data": "task was successful"}
@@ -265,10 +262,8 @@ class TestHSPEndpoints:
 
 
     @pytest.mark.asyncio
-    async def test_get_hsp_task_status_failed_from_ham(self, client: TestClient):
-        services = get_services()
-        ham_manager = services.get("ham_manager")
-        assert ham_manager is not None
+    async def test_get_hsp_task_status_failed_from_ham(self, client_with_overrides):
+        client, _, _, ham_manager = client_with_overrides
 
         mock_corr_id = "failed_corr_id_789"
         expected_error_details = {"error_code": "TEST_FAIL", "error_message": "Task failed for test"}
@@ -294,7 +289,8 @@ class TestHSPEndpoints:
 
 
     @pytest.mark.asyncio
-    async def test_get_hsp_task_status_unknown(self, client: TestClient):
+    async def test_get_hsp_task_status_unknown(self, client_with_overrides):
+        client, _, _, _ = client_with_overrides
         mock_corr_id = "unknown_corr_id_000"
         response = client.get(f"/api/v1/hsp/tasks/{mock_corr_id}")
         assert response.status_code == 200

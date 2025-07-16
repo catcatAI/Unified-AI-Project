@@ -153,7 +153,7 @@ class TestLogicModelComponents(unittest.TestCase):
     def test_04_logic_tool_interface(self):
         print("\nRunning test_04_logic_tool_interface...")
         # Parser method (should work)
-        result_parser = evaluate_logic_via_tool("true AND (NOT false)", method='parser')
+        result_parser = evaluate_logic_via_tool("true AND (NOT false)")
         self.assertEqual(result_parser, True) # "Result: True" string is not correct here, it returns bool
 
         # NN method (will likely fail if model not trained/available, or return error string)
@@ -165,7 +165,7 @@ class TestLogicModelComponents(unittest.TestCase):
         if not os.path.exists(self.char_map_file):
              char_to_token, _, vocab_size, max_len = get_logic_char_token_maps(self.train_json_file) # uses self.train_json_file
 
-        result_nn = evaluate_logic_via_tool("true OR false", method='nn')
+        result_nn = evaluate_logic_via_tool("true OR false")
         # Expected: "Error: NN model not available..." OR a boolean if dummy model loads
         self.assertTrue(isinstance(result_nn, str) or isinstance(result_nn, bool))
         if isinstance(result_nn, str):

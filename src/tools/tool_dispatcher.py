@@ -104,11 +104,10 @@ class ToolDispatcher:
                 error_message=error_msg
             )
 
-    def _execute_logic_evaluation(self, query: str, method: str = 'parser') -> ToolDispatcherResponse:
+    def _execute_logic_evaluation(self, query: str, **kwargs) -> ToolDispatcherResponse:
         """
         Wrapper for the logic_tool.evaluate_expression function.
         The query should be the logical expression string itself.
-        The 'method' kwarg allows specifying 'parser' or 'nn'.
         """
         try:
             # logic_evaluate expects the expression string directly.
@@ -125,8 +124,8 @@ class ToolDispatcher:
             else:
                 expression_to_evaluate = query # Assume the query is the expression
 
-            print(f"ToolDispatcher DEBUG (_execute_logic_evaluation): expression_to_evaluate='{expression_to_evaluate}', method='{method}'")
-            result = logic_evaluate(expression_to_evaluate, method=method)
+            print(f"ToolDispatcher DEBUG (_execute_logic_evaluation): expression_to_evaluate='{expression_to_evaluate}'")
+            result = logic_evaluate(expression_to_evaluate)
             # The logic_evaluate tool already returns a string like "Result: True"
             return ToolDispatcherResponse(
                 status="success",

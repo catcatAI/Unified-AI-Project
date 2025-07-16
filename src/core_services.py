@@ -152,10 +152,12 @@ def initialize_services(
 
     if not service_discovery_module_instance:
         service_discovery_module_instance = ServiceDiscoveryModule(trust_manager=trust_manager_instance)
-        if hsp_connector_instance: # Register callback if connector is up
-            hsp_connector_instance.register_on_capability_advertisement_callback(
-                service_discovery_module_instance.process_capability_advertisement
-            )
+    
+    # Always attempt to register callbacks if the instances exist, in case of re-initialization or partial setups.
+    if hsp_connector_instance and service_discovery_module_instance:
+        hsp_connector_instance.register_on_capability_advertisement_callback(
+            service_discovery_module_instance.process_capability_advertisement
+        )
 
     # --- 3. Core AI Logic Modules ---
     if not fact_extractor_instance:
