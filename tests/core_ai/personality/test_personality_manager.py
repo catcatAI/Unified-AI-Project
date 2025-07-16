@@ -6,7 +6,7 @@ from pathlib import Path
 
 # Add src directory to sys.path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", "..")) # Unified-AI-Project/
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", "..")) #
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 CONFIGS_DIR = os.path.join(PROJECT_ROOT, "configs") # For accessing personality profiles
 

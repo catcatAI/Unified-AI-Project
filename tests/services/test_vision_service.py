@@ -2,14 +2,7 @@ import unittest
 import os
 import sys
 
-# Add src directory to sys.path
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..")) # Unified-AI-Project/
-SRC_DIR = os.path.join(PROJECT_ROOT, "src")
-if SRC_DIR not in sys.path:
-    sys.path.insert(0, SRC_DIR)
-
-from services.vision_service import VisionService
+from src.services.vision_service import VisionService
 
 class TestVisionService(unittest.TestCase):
 

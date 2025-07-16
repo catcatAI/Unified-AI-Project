@@ -4,19 +4,17 @@ import json
 import sys
 import shutil
 
-# Add src directory to sys.path
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
-SRC_DIR = os.path.join(PROJECT_ROOT, "src")
-if SRC_DIR not in sys.path:
-    sys.path.insert(0, SRC_DIR)
-
-from tools import translation_tool # Imports the module to allow monkeypatching/reloading if needed
-from tools.translation_tool import translate, _detect_language, _load_dictionary, request_model_upgrade
-from tools.tool_dispatcher import ToolDispatcher
+from src.tools import translation_tool
+from src.tools.translation_tool import (
+    translate,
+    _detect_language,
+    _load_dictionary,
+    request_model_upgrade,
+)
+from src.tools.tool_dispatcher import ToolDispatcher
 
 # Define a consistent test output directory for this test suite
-TEST_DATA_DIR = os.path.join(PROJECT_ROOT, "tests", "test_output_data", "translation_model_data")
+TEST_DATA_DIR = "tests/test_output_data/translation_model_data"
 # Path for the dummy dictionary for testing
 DUMMY_DICTIONARY_PATH = os.path.join(TEST_DATA_DIR, "test_translation_dictionary.json")
 

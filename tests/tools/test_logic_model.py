@@ -5,43 +5,19 @@ import sys
 import shutil # For cleaning up directories
 import pytest # Import pytest
 
-# Add src directory to sys.path
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
-SRC_DIR = os.path.join(PROJECT_ROOT, "src")
-if SRC_DIR not in sys.path:
-    sys.path.insert(0, SRC_DIR)
-
-from tools.logic_model import logic_data_generator
-from tools.logic_model import logic_model_nn
-from tools.logic_model.logic_parser_eval import LogicParserEval
-from tools import logic_tool
-from tools.logic_tool import evaluate_expression as evaluate_logic_via_tool
-from tools.tool_dispatcher import ToolDispatcher
-
-# Check TensorFlow availability from the source module
-_tensorflow_is_available_for_logic = logic_model_nn._tensorflow_is_available
-
-# Conditionally import or define dummy classes/functions
-if _tensorflow_is_available_for_logic:
-    from tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
-else:
-    print("Warning: TensorFlow not available for logic model. Logic model tests will be skipped.")
-    class LogicNNModel:
-        def __init__(self, *args, **kwargs): pass
-        def _build_model(self): pass
-        def predict(self, *args, **kwargs): return False
-        def save_model(self, *args, **kwargs): pass
-        @classmethod
-        def load_model(cls, *args, **kwargs): return None
-    def get_logic_char_token_maps(*args, **kwargs): return {}, {}, 0, 0
-    def preprocess_logic_data(*args, **kwargs): return None, None
+from src.tools.logic_model import logic_data_generator
+from src.tools.logic_model import logic_model_nn
+from src.tools.logic_model.logic_parser_eval import LogicParserEval
+from src.tools import logic_tool
+from src.tools.logic_tool import evaluate_expression as evaluate_logic_via_tool
+from src.tools.tool_dispatcher import ToolDispatcher
+from src.tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
 
 # Define a consistent test output directory for this test suite
-TEST_DATA_GEN_OUTPUT_DIR = os.path.join(PROJECT_ROOT, "tests", "test_output_data", "logic_model_data")
-TEST_MODEL_OUTPUT_DIR = os.path.join(PROJECT_ROOT, "tests", "test_output_data", "logic_model_files")
+TEST_DATA_GEN_OUTPUT_DIR = "tests/test_output_data/logic_model_data"
+TEST_MODEL_OUTPUT_DIR = "tests/test_output_data/logic_model_files"
 
-@pytest.mark.skipif(not _tensorflow_is_available_for_logic, reason="TensorFlow not available or failed to import for logic model tests.")
+
 class TestLogicModelComponents(unittest.TestCase):
 
     @classmethod

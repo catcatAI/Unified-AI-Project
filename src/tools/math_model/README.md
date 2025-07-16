@@ -27,11 +27,11 @@ The `data_generator.py` script is used to create training and testing datasets.
 
 -   **To generate default datasets (JSON for training, CSV for testing):**
     ```bash
-    python Unified-AI-Project/src/tools/math_model/data_generator.py
+    python src/tools/math_model/data_generator.py
     ```
     This will create:
-    -   `Unified-AI-Project/data/raw_datasets/arithmetic_train_dataset.json` (10,000 samples)
-    -   `Unified-AI-Project/data/raw_datasets/arithmetic_test_dataset.csv` (2,000 samples)
+    -   `data/raw_datasets/arithmetic_train_dataset.json` (10,000 samples)
+    -   `data/raw_datasets/arithmetic_test_dataset.csv` (2,000 samples)
 
 -   **Customization**: You can modify `data_generator.py` to change the number of samples, `max_digits` for numbers, output filenames, and formats.
 
@@ -39,14 +39,14 @@ The `data_generator.py` script is used to create training and testing datasets.
 
 The `train.py` script is used to train the model.
 
--   **Prerequisites**: Ensure `arithmetic_train_dataset.json` exists in `Unified-AI-Project/data/raw_datasets/`.
+-   **Prerequisites**: Ensure `arithmetic_train_dataset.json` exists in `data/raw_datasets/`.
 -   **To start training:**
     ```bash
-    python Unified-AI-Project/src/tools/math_model/train.py
+    python src/tools/math_model/train.py
     ```
 -   **Outputs**:
-    -   Trained model weights: `Unified-AI-Project/data/models/arithmetic_model.keras`
-    -   Character maps: `Unified-AI-Project/data/models/arithmetic_char_maps.json` (essential for inference)
+    -   Trained model weights: `data/models/arithmetic_model.keras`
+    -   Character maps: `data/models/arithmetic_char_maps.json` (essential for inference)
 -   **Hyperparameters**: Training parameters like `BATCH_SIZE`, `EPOCHS`, `LATENT_DIM`, etc., can be adjusted within `train.py`.
 
 ### 3. Model Evaluation
@@ -54,17 +54,17 @@ The `train.py` script is used to train the model.
 The `evaluate.py` script is used to assess the trained model's performance.
 
 -   **Prerequisites**:
-    -   Trained model (`arithmetic_model.keras`) and character maps (`arithmetic_char_maps.json`) must exist in `Unified-AI-Project/data/models/`.
-    -   Test dataset (`arithmetic_test_dataset.csv`) must exist in `Unified-AI-Project/data/raw_datasets/`.
+    -   Trained model (`arithmetic_model.keras`) and character maps (`arithmetic_char_maps.json`) must exist in `data/models/`.
+    -   Test dataset (`arithmetic_test_dataset.csv`) must exist in `data/raw_datasets/`.
 -   **To evaluate:**
     ```bash
-    python Unified-AI-Project/src/tools/math_model/evaluate.py
+    python src/tools/math_model/evaluate.py
     ```
 -   **Output**: The script will print the accuracy of the model on the test set and show some example predictions.
 
 ### 4. Using the Model for Predictions (via `math_tool.py`)
 
-The `math_tool.py` script (located in `Unified-AI-Project/src/tools/`) provides the primary interface for making predictions with the trained model. It's designed to be used by the `ToolDispatcher`.
+The `math_tool.py` script (located in `src/tools/`) provides the primary interface for making predictions with the trained model. It's designed to be used by the `ToolDispatcher`.
 
 -   **How it works**:
     1.  `math_tool.py` loads the trained model and character maps once.
@@ -72,7 +72,7 @@ The `math_tool.py` script (located in `Unified-AI-Project/src/tools/`) provides 
     3.  It then uses the model's `predict_sequence()` method to get the answer.
 -   **Example (direct use of `math_tool.py` for testing):**
     ```bash
-    python Unified-AI-Project/src/tools/math_tool.py
+    python src/tools/math_tool.py
     ```
     This will run the `if __name__ == '__main__':` block in `math_tool.py`, demonstrating its usage.
 

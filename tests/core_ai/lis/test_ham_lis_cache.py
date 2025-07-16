@@ -4,31 +4,25 @@ import json
 from typing import Dict, Any, Optional, List, cast
 from datetime import datetime, timezone, timedelta # Added timedelta
 
-# Adjust imports based on actual project structure
-# Assuming 'src' is effectively a top-level package for test execution context
 from src.core_ai.lis.lis_cache_interface import (
-    HAMLISCache, LISCacheInterface,
-    # Import constants defined in lis_cache_interface.py
+    HAMLISCache,
+    LISCacheInterface,
     HAM_META_LIS_OBJECT_ID,
     HAM_META_LIS_ANOMALY_TYPE,
     HAM_META_LIS_STATUS,
     HAM_META_LIS_TAGS,
     HAM_META_TIMESTAMP_LOGGED,
     LIS_INCIDENT_DATA_TYPE_PREFIX,
-    # Constants for antibodies
     LIS_ANTIBODY_DATA_TYPE_PREFIX,
     HAM_META_ANTIBODY_FOR_ANOMALY,
-    HAM_META_ANTIBODY_EFFECTIVENESS
+    HAM_META_ANTIBODY_EFFECTIVENESS,
 )
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager, HAMRecallResult
 from src.shared.types.common_types import (
     LIS_IncidentRecord,
     LIS_SemanticAnomalyDetectedEvent,
     LIS_AnomalyType,
-    LIS_InterventionReport,
-    LIS_InterventionOutcome,
-    NarrativeAntibodyObject # Import the new type
-    # LIS_AntibodyStrategyType could be imported if used for strict typing in test helper
+    NarrativeAntibodyObject,
 )
 
 class MockHAMMemoryManager(HAMMemoryManager):
