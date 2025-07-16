@@ -7,14 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Literal, Optional # For type hint in test_ack_payload_and_envelope_construction
 
-# Ensure src is in path for imports if running tests directly
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-
 from src.hsp.connector import HSPConnector
-# Assuming HSPMessageEnvelope and other types are accessible or not strictly needed for these mocks
-# If type checking sent_envelope against HSPMessageEnvelope is desired, it should be imported
 from src.hsp.types import HSPMessageEnvelope
 
 TEST_AI_ID = "test_ai_connector_001"

@@ -6,17 +6,22 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 from typing import Dict, Any, Optional, List, Callable
 
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-
 from src.hsp.connector import HSPConnector
-from src.hsp.types import HSPFactPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload, \
-    HSPTaskRequestPayload, HSPTaskResultPayload, HSPErrorDetails, HSPFactStatementStructured
+from src.hsp.types import (
+    HSPFactPayload,
+    HSPMessageEnvelope,
+    HSPCapabilityAdvertisementPayload,
+    HSPTaskRequestPayload,
+    HSPTaskResultPayload,
+    HSPErrorDetails,
+    HSPFactStatementStructured,
+)
 from src.core_ai.learning.learning_manager import LearningManager
 from src.core_ai.learning.fact_extractor_module import FactExtractorModule
 from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+from src.core_ai.service_discovery.service_discovery_module import (
+    ServiceDiscoveryModule,
+)
 from src.core_ai.trust_manager.trust_manager_module import TrustManager
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
 from src.services.llm_interface import LLMInterface, LLMInterfaceConfig

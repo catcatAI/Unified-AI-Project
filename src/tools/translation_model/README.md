@@ -24,7 +24,7 @@ The Translation Model (v0.1) provides foundational translation capabilities for 
 
 ## Usage
 
-The primary way to use this translation tool is via the `ToolDispatcher` (`Unified-AI-Project/src/tools/tool_dispatcher.py`). The dispatcher is designed to understand natural language queries that imply a translation request and route them to the `translation_tool.py`.
+The primary way to use this translation tool is via the `ToolDispatcher` (`src/tools/tool_dispatcher.py`). The dispatcher is designed to understand natural language queries that imply a translation request and route them to the `translation_tool.py`.
 
 **Example queries for the ToolDispatcher:**
 
@@ -38,7 +38,7 @@ The `translation_tool.py` can also be tested directly by running its `if __name_
 
 To expand the v0.1 model's vocabulary:
 
-1.  Edit `Unified-AI-Project/src/tools/translation_model/data/translation_dictionary.json`.
+1.  Edit `src/tools/translation_model/data/translation_dictionary.json`.
 2.  Add new key-value pairs to both the `zh_to_en` and `en_to_zh` sections.
     *   Ensure the key in one dictionary is the value in the other for bidirectional consistency (e.g., if adding `{"高兴": "Happy"}` to `zh_to_en`, add `{"Happy": "高兴"}` to `en_to_zh`).
 3.  Save the file. The `translation_tool.py` will load the updated dictionary on its next initialization (typically when the application/ToolDispatcher starts or when the tool is first called).

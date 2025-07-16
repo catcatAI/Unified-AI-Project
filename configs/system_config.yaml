@@ -1,5 +1,5 @@
 system:
-  log_path: logs # To be placed under Unified-AI-Project/data/logs/ eventually
+  log_path: logs # To be placed under data/logs/ eventually
   log_level: INFO
 
 ai_name: Miko # Or a new unified name, TBD
@@ -16,7 +16,7 @@ core_systems:
   # memory_system will likely be redefined as part of src/core_ai/memory/
   # personality_file will point to configs/personality_profiles/
   local_storage:
-    path: "data/local_storage" # To be under Unified-AI-Project/data/
+    path: "data/local_storage" # To be under data/
   ollama: # Example, might be moved to a dedicated LLM service config
     base_url: "http://localhost:11434"
     model_name: "llama2"

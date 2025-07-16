@@ -5,14 +5,9 @@ import logging # For caplog if needed, or to check logs from module
 
 import time
 
-# Ensure src is in path for imports
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-
 from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from src.core_ai.trust_manager.trust_manager_module import TrustManager # For type hinting and mocking
-from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope # For creating test payloads
+from src.core_ai.trust_manager.trust_manager_module import TrustManager
+from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
 
 # --- Mock TrustManager ---
 @pytest.fixture
