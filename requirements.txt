@@ -9,13 +9,14 @@ numpy
 uvicorn
 python-dotenv
 websockets
+transformers
+torch
 sentencepiece
 sacremoses
 spacy
 nlp
 pandas
 scikit-learn
-spacy
 py-solc-x
 web3
 pytest
@@ -23,4 +24,4 @@ pytest-cov
 pytest-mock
 pytest-asyncio
 httpx
-tensorflow
+hbmqtt
