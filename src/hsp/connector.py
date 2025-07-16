@@ -4,6 +4,7 @@ import asyncio
 import logging # Added logging
 from datetime import datetime, timezone
 from typing import Callable, Dict, Any, Optional, Literal
+from unittest.mock import MagicMock
 import paho.mqtt.client as mqtt # type: ignore
 
 from .types import (
@@ -45,7 +46,8 @@ class HSPConnector:
     def __init__(self, ai_id: str, broker_address: str, broker_port: int = 1883,
                  client_id_suffix: str = "hsp_connector",
                  reconnect_min_delay: int = 1,
-                 reconnect_max_delay: int = 60):
+                 reconnect_max_delay: int = 60,
+                 mock_mode: bool = False):
         """
         Initializes the HSPConnector.
 
@@ -57,26 +59,31 @@ class HSPConnector:
             reconnect_min_delay (int): Minimum delay (seconds) before the first reconnect attempt.
             reconnect_max_delay (int): Maximum delay (seconds) between reconnect attempts.
                                        Paho uses exponential backoff up to this limit.
+            mock_mode (bool): If True, the connector will not attempt to connect to the broker.
         """
         self.ai_id: str = ai_id
         self.broker_address: str = broker_address
         self.broker_port: int = broker_port
         self.reconnect_min_delay = reconnect_min_delay
         self.reconnect_max_delay = reconnect_max_delay
+        self.mock_mode = mock_mode
 
         # Ensure client_id is unique if multiple instances run for the same AI, though typically one per AI.
         self.mqtt_client_id: str = f"{self.ai_id}-{client_id_suffix}-{uuid.uuid4().hex[:8]}" # Shorter UUID hex
 
         self.is_connected: bool = False
-        self.mqtt_client: mqtt.Client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=self.mqtt_client_id)
+        if not self.mock_mode:
+            self.mqtt_client: mqtt.Client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=self.mqtt_client_id)
+            # Configure Paho MQTT's automatic reconnection
+            self.mqtt_client.reconnect_delay_set(min_delay=self.reconnect_min_delay, max_delay=self.reconnect_max_delay)
+            logger.info(f"HSPConnector ({self.ai_id}): MQTT auto-reconnect configured with min_delay={self.reconnect_min_delay}s, max_delay={self.reconnect_max_delay}s.")
 
-        # Configure Paho MQTT's automatic reconnection
-        self.mqtt_client.reconnect_delay_set(min_delay=self.reconnect_min_delay, max_delay=self.reconnect_max_delay)
-        logger.info(f"HSPConnector ({self.ai_id}): MQTT auto-reconnect configured with min_delay={self.reconnect_min_delay}s, max_delay={self.reconnect_max_delay}s.")
-
-        self.mqtt_client.on_connect = self._on_mqtt_connect
-        self.mqtt_client.on_disconnect = self._on_mqtt_disconnect
-        self.mqtt_client.on_message = self._on_mqtt_message
+            self.mqtt_client.on_connect = self._on_mqtt_connect
+            self.mqtt_client.on_disconnect = self._on_mqtt_disconnect
+            self.mqtt_client.on_message = self._on_mqtt_message
+        else:
+            self.mqtt_client = MagicMock()
+            self.is_connected = True
 
         # Callbacks for different types of HSP messages
         self._on_generic_message_callback: Optional[Callable[[HSPMessageEnvelope, str], None]] = None
@@ -179,6 +186,10 @@ class HSPConnector:
 
     def connect(self) -> bool:
         """Connects to the MQTT broker."""
+        if self.mock_mode:
+            self.is_connected = True
+            self._on_mqtt_connect(self.mqtt_client, None, None, 0, None)
+            return True
         if self.is_connected:
             logger.info(f"HSPConnector ({self.ai_id}): Already connected.")
             return True
@@ -194,6 +205,10 @@ class HSPConnector:
 
     def disconnect(self):
         """Disconnects from the MQTT broker."""
+        if self.mock_mode:
+            self.is_connected = False
+            self._on_mqtt_disconnect(self.mqtt_client, None, None, 0, None)
+            return
         if self.mqtt_client and self.is_connected: # Ensure client exists before calling methods on it
             self.mqtt_client.loop_stop()
             self.mqtt_client.disconnect()
@@ -238,6 +253,8 @@ class HSPConnector:
 
     def _send_hsp_message(self, envelope: HSPMessageEnvelope, mqtt_topic: str, mqtt_qos: Optional[int] = None) -> bool:
         """Sends a pre-built HSP envelope over MQTT."""
+        if self.mock_mode:
+            return True
         if not self.is_connected:
             logger.warning(f"HSPConnector ({self.ai_id}): Not connected. Cannot send message to {mqtt_topic}.")
             return False
@@ -278,6 +295,9 @@ class HSPConnector:
 
     def subscribe(self, topic: str, mqtt_qos: Optional[int] = None) -> bool:
         """Subscribes to an MQTT topic to receive HSP messages."""
+        if self.mock_mode:
+            self.subscribed_topics.add(topic)
+            return True
         if not self.is_connected:
             logger.warning(f"HSPConnector ({self.ai_id}): Not connected. Cannot subscribe to topic '{topic}'.")
             return False
@@ -297,6 +317,10 @@ class HSPConnector:
 
     def unsubscribe(self, topic: str) -> bool:
         """Unsubscribes from an MQTT topic."""
+        if self.mock_mode:
+            if topic in self.subscribed_topics:
+                self.subscribed_topics.remove(topic)
+            return True
         if not self.is_connected:
             logger.warning(f"HSPConnector ({self.ai_id}): Not connected. Cannot unsubscribe from topic '{topic}'.")
             if topic in self.subscribed_topics: # Still remove from local tracking if desired
