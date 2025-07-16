@@ -54,6 +54,16 @@ app = FastAPI(
 
 # DialogueManager will be fetched from get_services() in endpoints
 
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the Unified AI Project API"}
+
+
+@app.get("/status")
+def get_status():
+    return {"status": "running"}
+
+
 @app.post("/api/v1/chat", response_model=AIOutput, tags=["Chat"])
 async def chat_endpoint(user_input: UserInput):
     """
@@ -317,4 +327,4 @@ if __name__ == "__main__":
 
     # If you want to run with auto-reload for development:
     # uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000
-    # (Run from project root: Unified-AI-Project/)
+    # (Run from project root: )

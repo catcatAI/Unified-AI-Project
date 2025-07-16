@@ -8,33 +8,19 @@ import re # Added for regex in _is_kg_query
 import json
 import ast
 
-# Assuming src is in PYTHONPATH for test execution
-from src.core_ai.dialogue.dialogue_manager import DialogueManager # Changed
-from src.shared.types.common_types import ( # Changed
-    OperationalConfig, DialogueTurn, PendingHSPTaskInfo,
-    ParsedToolIODetails, CritiqueResult, ToolDispatcherResponse, # Added for completeness if DM uses them directly
-    FormulaConfigEntry, DialogueMemoryEntryMetadata
+from src.core_ai.dialogue.dialogue_manager import DialogueManager
+from src.shared.types.common_types import (
+    OperationalConfig,
+    ParsedToolIODetails,
+    CritiqueResult,
 )
-from hsp.types import (
-    HSPTaskRequestPayload, HSPTaskResultPayload,
-    HSPCapabilityAdvertisementPayload, HSPMessageEnvelope, HSPFactPayload
+from src.hsp.types import (
+    HSPTaskRequestPayload,
+    HSPTaskResultPayload,
+    HSPCapabilityAdvertisementPayload,
+    HSPMessageEnvelope,
+    HSPFactPayload,
 )
-# Mock other direct dependencies if their actual classes are not needed for type hinting in test setups
-# from core_ai.personality.personality_manager import PersonalityManager
-# from core_ai.memory.ham_memory_manager import HAMMemoryManager
-# from services.llm_interface import LLMInterface
-# from core_ai.emotion_system import EmotionSystem
-# from core_ai.crisis_system import CrisisSystem
-# from core_ai.time_system import TimeSystem
-# from core_ai.formula_engine import FormulaEngine
-# from tools.tool_dispatcher import ToolDispatcher
-# from core_ai.learning.self_critique_module import SelfCritiqueModule
-# from core_ai.learning.fact_extractor_module import FactExtractorModule
-# from core_ai.learning.learning_manager import LearningManager
-# from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-# from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-# from services.sandbox_executor import SandboxExecutor
-# from hsp.connector import HSPConnector
 
 
 class TestDialogueManagerHelperMethods(unittest.TestCase):

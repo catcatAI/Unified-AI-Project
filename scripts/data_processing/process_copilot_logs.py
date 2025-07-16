@@ -4,7 +4,7 @@ import os
 
 # Define paths relative to the project root for consistency
 # This script might be run from various locations, so robust path handling is good.
-# Assuming the script is in Unified-AI-Project/scripts/data_processing/
+# Assuming the script is in scripts/data_processing/
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     # For this script, it's an input, so we just check if it's there.
     if not os.path.exists(CSV_FILE_PATH):
         print(f"Input CSV file {CSV_FILE_PATH} does not exist.")
-        print("Please ensure 'copilot-activity-history.csv' is in 'Unified-AI-Project/data/logs/'.")
+        print("Please ensure 'copilot-activity-history.csv' is in 'data/logs/'.")
         # As a fallback for testing the script's logic if the file isn't found due to `ls` issues:
         # Create a dummy CSV for the script to process if it's missing.
         # This is ONLY for allowing the script to run in a sandbox where file state is uncertain.

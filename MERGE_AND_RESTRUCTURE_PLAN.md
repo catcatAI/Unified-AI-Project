@@ -10,7 +10,7 @@
 - [MikoAI & Fragmenta Project Merge and Restructure Plan](#mikoai--fragmenta-project-merge-and-restructure-plan)
   - [1. Introduction and Rationale](#1-introduction-and-rationale)
   - [2. Guiding Architectural Principles](#2-guiding-architectural-principles)
-  - [3. Proposed Merged Project Structure (`Unified-AI-Project/`)](#3-proposed-merged-project-structure-unified-ai-project)
+  - [3. Proposed Merged Project Structure (``)](#3-proposed-merged-project-structure-unified-ai-project)
   - [4. Merge Process Execution Plan](#4-merge-process-execution-plan)
   - [5. Role of the Chosen "Tool" (`restructure_phase1.py` logic)](#5-role-of-the-chosen-tool-restructure_phase1py-logic)
   - [6. Application of Fragmenta Architecture](#6-application-of-fragmenta-architecture)
@@ -95,7 +95,7 @@ Based on the current status, the following high-level roadmap is proposed for ad
 
 ## 1. Introduction and Rationale
 
-This document outlines the plan to merge the MikoAI, Fragmenta, and various related CatAI projects into a single, unified codebase: `Unified-AI-Project/`.
+This document outlines the plan to merge the MikoAI, Fragmenta, and various related CatAI projects into a single, unified codebase: ``.
 
 **Goals:**
 
@@ -124,10 +124,10 @@ The current state involves numerous scattered folders, making it difficult to ge
     *   **Storage/Deletion:** How and where data is persisted and eventually removed.
 *   **Modularity & Reusability:** Core functionalities will be encapsulated in well-defined modules to promote reuse and independent development.
 
-## 3. Proposed Merged Project Structure (`Unified-AI-Project/`)
+## 3. Proposed Merged Project Structure (``)
 
 ```
-Unified-AI-Project/
+
 ├── .env.example                # Example environment variables
 ├── .gitignore
 ├── README.md                   # Main project README
@@ -208,7 +208,7 @@ Unified-AI-Project/
 The merge will be executed in phases:
 
 1.  **Initial Setup:**
-    *   Create the `Unified-AI-Project/` root directory and the basic top-level directory structure (`configs`, `data`, `src`, `scripts`, `tests`).
+    *   Create the `` root directory and the basic top-level directory structure (`configs`, `data`, `src`, `scripts`, `tests`).
     *   Initialize a new `README.md` (briefly pointing to this plan) and `.gitignore` (merged from existing projects).
     *   Initialize `package.json` (for Electron/Node scripts) and `requirements.txt` (for Python).
     *   Adapt the directory creation logic from `MikoAI-Project-Codebase/scripts/restructure_phase1.py` into a new utility script `scripts/project_setup_utils.py` to help automate the creation of the detailed internal structure of `src/`.
@@ -216,11 +216,11 @@ The merge will be executed in phases:
 
 2.  **Configuration Migration:**
     *   Identify canonical configuration files from `MikoAI-Project-Codebase/`, `Fragmenta/`, and other sources.
-    *   Merge these into the new `Unified-AI-Project/configs/` structure as defined.
+    *   Merge these into the new `configs/` structure as defined.
     *   Create a comprehensive `.env.example`.
 
 3.  **Data Migration:**
-    *   Consolidate all identified data files (JSON, YAML, TXT datasets, rules) into the appropriate subdirectories under `Unified-AI-Project/data/`.
+    *   Consolidate all identified data files (JSON, YAML, TXT datasets, rules) into the appropriate subdirectories under `data/`.
     *   Handle duplicates by manual inspection, merging, or choosing the most relevant version.
 
 4.  **Code Migration (Iterative by Module/Component):**
@@ -251,7 +251,7 @@ The merge will be executed in phases:
     *   Ensure basic module interactions are functional (e.g., core AI modules can be imported by services).
 
 6.  **Testing and Refinement:**
-    *   Migrate existing tests into the `Unified-AI-Project/tests/` directory, updating paths.
+    *   Migrate existing tests into the `tests/` directory, updating paths.
     *   Run tests and begin debugging runtime errors.
     *   Refine the structure and code as integration challenges arise.
 
