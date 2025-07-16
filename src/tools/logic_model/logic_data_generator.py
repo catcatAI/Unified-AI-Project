@@ -3,7 +3,7 @@ import random
 import os
 
 # Define output directory and filenames
-# Assuming script is in Unified-AI-Project/src/tools/logic_model/
+# Assuming script is in src/tools/logic_model/
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
 OUTPUT_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "raw_datasets")

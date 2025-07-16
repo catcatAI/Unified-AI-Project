@@ -2,9 +2,8 @@ import unittest
 from unittest.mock import patch, MagicMock
 import os
 
-# Assuming src is in PYTHONPATH for test execution
-from tools.code_understanding_tool import CodeUnderstandingTool
-from core_ai.code_understanding.lightweight_code_model import LightweightCodeModel # Added import
+from src.tools.code_understanding_tool import CodeUnderstandingTool
+from src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
 
 class TestCodeUnderstandingTool(unittest.TestCase):
 
@@ -13,13 +12,13 @@ class TestCodeUnderstandingTool(unittest.TestCase):
         self.mock_lwm_instance = MagicMock(spec=LightweightCodeModel)
 
         # Patch the LightweightCodeModel class specifically where it's imported by CodeUnderstandingTool
-        self.lwm_patcher = patch('tools.code_understanding_tool.LightweightCodeModel', return_value=self.mock_lwm_instance)
+        self.lwm_patcher = patch('src.tools.code_understanding_tool.LightweightCodeModel', return_value=self.mock_lwm_instance)
         # Start the patcher and keep a reference to the Mock Class if needed, though instance is usually enough
         self.MockLWMClass = self.lwm_patcher.start()
         self.addCleanup(self.lwm_patcher.stop) # Ensure patch is stopped after test method
 
         # Instantiate the tool, which will now use self.mock_lwm_instance
-        self.tool = CodeUnderstandingTool(tools_directory="dummy/tools")
+        self.tool = CodeUnderstandingTool()
 
     def test_list_tools_success(self):
         # Configure the mock_lwm_instance (which is self.tool.code_model)
