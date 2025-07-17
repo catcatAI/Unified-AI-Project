@@ -155,11 +155,42 @@ class DialogueManager:
             self.hsp_connector.register_on_task_result_callback(self._handle_incoming_hsp_task_result)
 
         asyncio.create_task(self._start_assessment_loop())
+        asyncio.create_task(self._delete_old_sessions())
+        asyncio.create_task(self._check_pending_hsp_tasks())
+        asyncio.create_task(self._check_pending_hsp_tasks())
 
     async def _start_assessment_loop(self):
         while True:
             await asyncio.sleep(3600)  # Assess every hour
             await self._assess_and_improve()
+
+    async def _delete_old_sessions(self):
+        """
+        Deletes old sessions that have been inactive for a certain period of time.
+        """
+        import psutil
+
+        while True:
+            await asyncio.sleep(3600)  # Check for old sessions every hour
+            if psutil.virtual_memory().percent > 80:
+                for session_id, turns in sorted(self.active_sessions.items(), key=lambda item: datetime.fromisoformat(item[1][-1]["timestamp"])):
+                    if psutil.virtual_memory().percent > 80:
+                        del self.active_sessions[session_id]
+                        if session_id in self.session_knowledge_graphs:
+                            del self.session_knowledge_graphs[session_id]
+                    else:
+                        break
+
+    async def _check_pending_hsp_tasks(self):
+        """
+        Checks for timed out HSP task requests.
+        """
+        while True:
+            await asyncio.sleep(60)  # Check for timed out tasks every minute
+            for correlation_id, pending_request_info in self.pending_hsp_task_requests.items():
+                request_timestamp = datetime.fromisoformat(pending_request_info["request_timestamp"])
+                if (datetime.now(timezone.utc) - request_timestamp).total_seconds() > self.turn_timeout_seconds:
+                    del self.pending_hsp_task_requests[correlation_id]
 
     async def _assess_and_improve(self):
         """
