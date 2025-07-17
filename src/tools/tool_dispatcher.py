@@ -29,6 +29,7 @@ class ToolDispatcher:
             "translate_text": "Translates text between Chinese and English. Example: 'translate 你好 to English'",
             "inspect_code": "Describes the structure of available tools. Query examples: 'list_tools', or 'describe_tool math_tool'",
         }
+        self.models = []
         print("ToolDispatcher initialized.")
         print(f"Available tools: {list(self.tools.keys())}")
 
@@ -313,6 +314,32 @@ class ToolDispatcher:
     def get_available_tools(self):
         """Returns a dictionary of available tools and their descriptions."""
         return self.tool_descriptions
+
+    def add_model(self, model_code):
+        """Adds a new model to the dispatcher."""
+        exec(model_code, globals())
+        model_name = re.search(r"class (\w+):", model_code).group(1)
+        self.models.append(globals()[model_name]())
+
+    def replace_model(self, old_model, new_model):
+        """Replaces an existing model with a new one."""
+        for i, model in enumerate(self.models):
+            if model.name == old_model.name:
+                self.models[i] = new_model
+                break
+
+    def add_tool(self, tool_code):
+        """Adds a new tool to the dispatcher."""
+        exec(tool_code, globals())
+        tool_name = re.search(r"def (\w+)\(input\):", tool_code).group(1)
+        self.tools[tool_name] = globals()[tool_name]
+
+    def replace_tool(self, old_tool, new_tool):
+        """Replaces an existing tool with a new one."""
+        for tool_name, tool in self.tools.items():
+            if tool == old_tool:
+                self.tools[tool_name] = new_tool
+                break
 
 # Example Usage
 if __name__ == '__main__':

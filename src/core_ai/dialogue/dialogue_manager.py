@@ -161,6 +161,69 @@ class DialogueManager:
             await asyncio.sleep(3600)  # Assess every hour
             await self._assess_and_improve()
 
+    async def _assess_and_improve(self):
+        """
+        Assesses and improves the models and tools.
+        """
+        for model in self.tool_dispatcher.models:
+            dataset = self._get_dataset_for_model(model)
+            evaluation = self.evaluator.evaluate(model, dataset)
+            if evaluation["accuracy"] < 0.8:
+                new_model = self.search_engine.search(f"{model.name} model")
+                if new_model:
+                    self.tool_dispatcher.replace_model(model, new_model)
+                else:
+                    new_model_code = self.creation_engine.create(f"create {model.name} model")
+                    self.tool_dispatcher.add_model(new_model_code)
+            elif len(dataset) > 0:
+                model.train(dataset)
+
+        for tool in self.tool_dispatcher.tools:
+            dataset = self._get_dataset_for_tool(tool)
+            evaluation = self.evaluator.evaluate(tool, dataset)
+            if evaluation["accuracy"] < 0.8:
+                new_tool = self.search_engine.search(f"{tool.name} tool")
+                if new_tool:
+                    self.tool_dispatcher.replace_tool(tool, new_tool)
+                else:
+                    new_tool_code = self.creation_engine.create(f"create {tool.name} tool")
+                    self.tool_dispatcher.add_tool(new_tool_code)
+
+    def _get_dataset_for_model(self, model):
+        """
+        Gets the dataset for a model.
+
+        Args:
+            model: The model to get the dataset for.
+
+        Returns:
+            The dataset for the model.
+        """
+        dataset_path = f"data/raw_datasets/{model.name}.json"
+        if os.path.exists(dataset_path):
+            with open(dataset_path, "r") as f:
+                dataset = json.load(f)
+                return [(item["input"], item["output"]) for item in dataset]
+        else:
+            return []
+
+    def _get_dataset_for_tool(self, tool):
+        """
+        Gets the dataset for a tool.
+
+        Args:
+            tool: The tool to get the dataset for.
+
+        Returns:
+            The dataset for the tool.
+        """
+        dataset_path = f"data/raw_datasets/{tool.name}.json"
+        if os.path.exists(dataset_path):
+            with open(dataset_path, "r") as f:
+                return json.load(f)
+        else:
+            return []
+
     def _handle_incoming_hsp_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope) -> None:
         correlation_id = full_envelope.get("correlation_id")
         print(f"DialogueManager (AI ID: {self.ai_id}): Received HSP TaskResult from '{sender_ai_id}' for correlation ID '{correlation_id}'.")
@@ -789,63 +852,3 @@ if __name__ == '__main__':
 
     asyncio.run(main_dm_test())
 # Removed [end of src/core_ai/dialogue/dialogue_manager.py] marker
-
-    async def _assess_and_improve(self):
-        """
-        Assesses and improves the models and tools.
-        """
-        for model in self.tool_dispatcher.models:
-            dataset = self._get_dataset_for_model(model)
-            evaluation = self.evaluator.evaluate(model, dataset)
-            if evaluation["accuracy"] < 0.8:
-                new_model = self.search_engine.search(f"{model.name} model")
-                if new_model:
-                    self.tool_dispatcher.replace_model(model, new_model)
-                else:
-                    new_model_code = self.creation_engine.create(f"create {model.name} model")
-                    self.tool_dispatcher.add_model(new_model_code)
-
-        for tool in self.tool_dispatcher.tools:
-            dataset = self._get_dataset_for_tool(tool)
-            evaluation = self.evaluator.evaluate(tool, dataset)
-            if evaluation["accuracy"] < 0.8:
-                new_tool = self.search_engine.search(f"{tool.name} tool")
-                if new_tool:
-                    self.tool_dispatcher.replace_tool(tool, new_tool)
-                else:
-                    new_tool_code = self.creation_engine.create(f"create {tool.name} tool")
-                    self.tool_dispatcher.add_tool(new_tool_code)
-
-    def _get_dataset_for_model(self, model):
-        """
-        Gets the dataset for a model.
-
-        Args:
-            model: The model to get the dataset for.
-
-        Returns:
-            The dataset for the model.
-        """
-        dataset_path = f"data/raw_datasets/{model.name}.json"
-        if os.path.exists(dataset_path):
-            with open(dataset_path, "r") as f:
-                return json.load(f)
-        else:
-            return []
-
-    def _get_dataset_for_tool(self, tool):
-        """
-        Gets the dataset for a tool.
-
-        Args:
-            tool: The tool to get the dataset for.
-
-        Returns:
-            The dataset for the tool.
-        """
-        dataset_path = f"data/raw_datasets/{tool.name}.json"
-        if os.path.exists(dataset_path):
-            with open(dataset_path, "r") as f:
-                return json.load(f)
-        else:
-            return []
