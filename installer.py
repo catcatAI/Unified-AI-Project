@@ -80,7 +80,9 @@ class InstallationPage(QWizardPage):
     def initializePage(self):
         self.progress_bar.setValue(0)
         self.wizard().nextButton.setEnabled(False)
-        self.install_dependencies()
+        import threading
+        thread = threading.Thread(target=self.install_dependencies)
+        thread.start()
 
     def install_dependencies(self):
         import subprocess
@@ -88,9 +90,11 @@ class InstallationPage(QWizardPage):
 
         def install(package):
             try:
-                subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+                subprocess.check_call([sys.executable, "-m", "pip", "install", package], timeout=300)
             except subprocess.CalledProcessError as e:
                 print(f"Error installing {package}: {e}")
+            except subprocess.TimeoutExpired as e:
+                print(f"Timeout installing {package}: {e}")
 
         dependencies = ["PyQt5", "psutil", "beautifulsoup4", "scikit-image", "SpeechRecognition", "transformers", "PyGithub", "aiounittest"]
         for i, dependency in enumerate(dependencies):
