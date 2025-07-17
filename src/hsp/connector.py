@@ -52,7 +52,8 @@ class HSPConnector:
                  tls_certfile: Optional[str] = None,
                  tls_keyfile: Optional[str] = None,
                  username: Optional[str] = None,
-                 password: Optional[str] = None):
+                 password: Optional[str] = None,
+                 broker_list: Optional[list] = None):
         """
         Initializes the HSPConnector.
 
@@ -60,6 +61,7 @@ class HSPConnector:
             ai_id (str): The unique identifier for this AI instance.
             broker_address (str): The address of the MQTT broker.
             broker_port (int): The port of the MQTT broker.
+            broker_list (list, optional): A list of brokers to connect to.
             client_id_suffix (str): A suffix to append to the AI ID for a unique MQTT client ID.
             reconnect_min_delay (int): Minimum delay (seconds) before the first reconnect attempt.
             reconnect_max_delay (int): Maximum delay (seconds) between reconnect attempts.
@@ -74,6 +76,7 @@ class HSPConnector:
         self.ai_id: str = ai_id
         self.broker_address: str = broker_address
         self.broker_port: int = broker_port
+        self.broker_list: Optional[list] = broker_list
         self.reconnect_min_delay = reconnect_min_delay
         self.reconnect_max_delay = reconnect_max_delay
         self.mock_mode = mock_mode
@@ -517,12 +520,20 @@ class HSPConnector:
         Returns the address of the MQTT broker that the AI should connect to.
         This is a simple load balancing mechanism that distributes the AI instances across multiple brokers.
         """
+        if not self.broker_list:
+            return self.broker_address
+
+        primary_brokers = [b for b in self.broker_list if b.get("type") == "primary"]
+        backup_brokers = [b for b in self.broker_list if b.get("type") == "backup"]
+        other_brokers = [b for b in self.broker_list if b.get("type") not in ["primary", "backup"]]
+
+        all_brokers = primary_brokers + backup_brokers + other_brokers
+
         # This is a simple example of a load balancing mechanism.
         # In a real-world application, you would want to use a more sophisticated mechanism,
         # such as a service discovery system.
-        brokers = [self.broker_address]
-        broker_index = hash(ai_id) % len(brokers)
-        return brokers[broker_index]
+        broker_index = hash(ai_id) % len(all_brokers)
+        return all_brokers[broker_index]["address"]
 
     async def _send_heartbeat(self, interval: int):
         """Periodically sends a heartbeat message."""
