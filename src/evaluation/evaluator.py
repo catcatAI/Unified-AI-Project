@@ -43,6 +43,8 @@ class Evaluator:
             output = model_or_tool.evaluate(input)
             if output == expected_output:
                 correct += 1
+        if len(dataset) == 0:
+            return 0
         return correct / len(dataset)
 
     def _calculate_performance(self, model_or_tool, dataset):
@@ -81,4 +83,6 @@ class Evaluator:
                 no_exception += 1
             except:
                 pass
+        if len(dataset) == 0:
+            return 0
         return no_exception / len(dataset)
