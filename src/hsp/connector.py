@@ -168,6 +168,7 @@ class HSPConnector:
             # Resubscribe to any topics if it's a reconnect
             for topic in list(self.subscribed_topics): # Iterate over a copy
                 self.subscribe(topic) # subscribe method already logs success/failure
+            self.start_heartbeat()
             if self._external_on_connect_callback:
                 self._external_on_connect_callback()
         else:
@@ -178,6 +179,7 @@ class HSPConnector:
 
     def _on_mqtt_disconnect(self, client, userdata, disconnect_flags, reason_code, properties):
         self.is_connected = False
+        self.stop_heartbeat()
         # The reason_code is now a a ReasonCode object. We can check its value.
         if reason_code and reason_code.value == 0:
             # MQTT_ERR_SUCCESS (0) usually means a clean disconnect initiated by client.disconnect()
@@ -212,16 +214,25 @@ class HSPConnector:
         if self.is_connected:
             logger.info(f"HSPConnector ({self.ai_id}): Already connected.")
             return True
-        try:
-            logger.info(f"HSPConnector ({self.ai_id}): Attempting to connect to MQTT Broker at {self.broker_address}:{self.broker_port}...")
-            self.mqtt_client.connect(self.broker_address, self.broker_port, keepalive=60)
-            self.mqtt_client.loop_start() # Starts a background thread for network operations, callbacks
-            self.start_heartbeat()
-            return True
-        except Exception as e:
-            logger.error(f"HSPConnector ({self.ai_id}): MQTT connection error: {e}", exc_info=True)
-            self.is_connected = False
+
+        brokers = self.get_broker_for_ai(self.ai_id, get_all=True)
+        if not brokers:
+            logger.error(f"HSPConnector ({self.ai_id}): No brokers available to connect to.")
             return False
+
+        for broker in brokers:
+            try:
+                logger.info(f"HSPConnector ({self.ai_id}): Attempting to connect to MQTT Broker at {broker['address']}:{self.broker_port}...")
+                self.mqtt_client.connect(broker['address'], self.broker_port, keepalive=60)
+                self.mqtt_client.loop_start() # Starts a background thread for network operations, callbacks
+                return True
+            except Exception as e:
+                logger.warning(f"HSPConnector ({self.ai_id}): Failed to connect to broker {broker['address']}: {e}")
+                continue
+
+        logger.error(f"HSPConnector ({self.ai_id}): Failed to connect to any of the available brokers.")
+        self.is_connected = False
+        return False
 
     def disconnect(self):
         """Disconnects from the MQTT broker."""
@@ -515,12 +526,14 @@ class HSPConnector:
         """Registers an external callback to be called when the MQTT client disconnects."""
         self._external_on_disconnect_callback = callback
 
-    def get_broker_for_ai(self, ai_id: str) -> str:
+    def get_broker_for_ai(self, ai_id: str, get_all: bool = False) -> any:
         """
         Returns the address of the MQTT broker that the AI should connect to.
         This is a simple load balancing mechanism that distributes the AI instances across multiple brokers.
         """
         if not self.broker_list:
+            if get_all:
+                return [{"address": self.broker_address, "type": "primary"}]
             return self.broker_address
 
         primary_brokers = [b for b in self.broker_list if b.get("type") == "primary"]
@@ -529,9 +542,15 @@ class HSPConnector:
 
         all_brokers = primary_brokers + backup_brokers + other_brokers
 
+        if get_all:
+            return all_brokers
+
         # This is a simple example of a load balancing mechanism.
         # In a real-world application, you would want to use a more sophisticated mechanism,
         # such as a service discovery system.
+        if not all_brokers:
+            return None
+
         broker_index = hash(ai_id) % len(all_brokers)
         return all_brokers[broker_index]["address"]
 
