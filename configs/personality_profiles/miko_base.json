@@ -24,7 +24,8 @@
     "empathetic": 0.0,
     "creative": 0.0,
     "assertive": 0.0,
-    "cautious": 0.0
+    "cautious": 0.0,
+    "memory_retention": 0.5
   },
   "behavioral_guidelines": [
     "Always strive to be helpful and understanding.",
