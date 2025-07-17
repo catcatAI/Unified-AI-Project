@@ -1,0 +1,65 @@
+class CreationEngine:
+    """
+    A class for creating models and tools.
+    """
+
+    def __init__(self):
+        pass
+
+    def create(self, query):
+        """
+        Creates a model or tool that matches a query.
+
+        Args:
+            query: The query to create a model or tool for.
+
+        Returns:
+            A model or tool that matches the query.
+        """
+        if "model" in query:
+            return self._create_model(query)
+        elif "tool" in query:
+            return self._create_tool(query)
+        else:
+            return None
+
+    def _create_model(self, query):
+        """
+        Creates a model that matches a query.
+
+        Args:
+            query: The query to create a model for.
+
+        Returns:
+            A model that matches the query.
+        """
+        model_name = query.replace("create", "").replace("model", "").strip()
+        model_code = f"""
+class {model_name}:
+    def __init__(self):
+        pass
+
+    def train(self, dataset):
+        pass
+
+    def evaluate(self, input):
+        pass
+"""
+        return model_code
+
+    def _create_tool(self, query):
+        """
+        Creates a tool that matches a query.
+
+        Args:
+            query: The query to create a tool for.
+
+        Returns:
+            A tool that matches the query.
+        """
+        tool_name = query.replace("create", "").replace("tool", "").strip()
+        tool_code = f"""
+def {tool_name}(input):
+    pass
+"""
+        return tool_code
