@@ -85,7 +85,8 @@ class DialogueManager:
 
         self.memory_manager = memory_manager if memory_manager else HAMMemoryManager(
             core_storage_filename="dialogue_context_memory.json",
-            resource_awareness_service=self.resource_awareness_service # Pass it here
+            resource_awareness_service=self.resource_awareness_service, # Pass it here
+            personality_manager=self.personality_manager
         )
 
         # LLMInterface expects a config that might contain OperationalConfig, not OperationalConfig directly.
@@ -170,10 +171,18 @@ class DialogueManager:
         import psutil
 
         while True:
-            await asyncio.sleep(3600)  # Check for old sessions every hour
-            if psutil.virtual_memory().percent > 80:
+            # Calculate the deletion interval based on the number of active sessions.
+            # The more active sessions, the more frequently we check for old sessions.
+            deletion_interval = max(60, 3600 - len(self.active_sessions) * 60)
+            await asyncio.sleep(deletion_interval)
+
+            # Delete old sessions if the memory usage is above the threshold.
+            # The threshold is based on the AI's personality.
+            memory_retention = self.personality_manager.get_current_personality_trait("memory_retention", 0.5)
+            memory_threshold = 1 - memory_retention
+            if psutil.virtual_memory().available < psutil.virtual_memory().total * memory_threshold:
                 for session_id, turns in sorted(self.active_sessions.items(), key=lambda item: datetime.fromisoformat(item[1][-1]["timestamp"])):
-                    if psutil.virtual_memory().percent > 80:
+                    if psutil.virtual_memory().available < psutil.virtual_memory().total * memory_threshold:
                         del self.active_sessions[session_id]
                         if session_id in self.session_knowledge_graphs:
                             del self.session_knowledge_graphs[session_id]
