@@ -65,11 +65,8 @@ class {model_name}:
         Returns:
             The output of the model.
         \"\"\"
-        try:
-            # TODO: Implement the evaluation logic here.
-            pass
-        except Exception as e:
-            return f"Error: {e}"
+        # TODO: Implement the evaluation logic here.
+        pass
 """
         return model_code
 
@@ -83,7 +80,7 @@ class {model_name}:
         Returns:
             A tool that matches the query.
         """
-        tool_name = query.replace("create", "").replace("tool", "").strip()
+        tool_name = query.replace("create ", "").replace(" tool", "").strip()
         tool_code = f"""
 def {tool_name}(input):
     \"\"\"
@@ -95,10 +92,7 @@ def {tool_name}(input):
     Returns:
         The output of the tool.
     \"\"\"
-    try:
-        # TODO: Implement the tool logic here.
-        pass
-    except Exception as e:
-        return f"Error: {e}"
+    # TODO: Implement the tool logic here.
+    pass
 """
         return tool_code
