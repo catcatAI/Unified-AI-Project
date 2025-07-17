@@ -157,7 +157,6 @@ class DialogueManager:
         asyncio.create_task(self._start_assessment_loop())
         asyncio.create_task(self._delete_old_sessions())
         asyncio.create_task(self._check_pending_hsp_tasks())
-        asyncio.create_task(self._check_pending_hsp_tasks())
 
     async def _start_assessment_loop(self):
         while True:
