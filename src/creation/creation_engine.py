@@ -36,14 +36,40 @@ class CreationEngine:
         model_name = query.replace("create", "").replace("model", "").strip()
         model_code = f"""
 class {model_name}:
+    \"\"\"
+    A class for the {model_name} model.
+    \"\"\"
+
     def __init__(self):
+        \"\"\"
+        Initializes the {model_name} model.
+        \"\"\"
         pass
 
     def train(self, dataset):
+        \"\"\"
+        Trains the {model_name} model on a dataset.
+
+        Args:
+            dataset: The dataset to be used for training.
+        \"\"\"
         pass
 
     def evaluate(self, input):
-        pass
+        \"\"\"
+        Evaluates the {model_name} model on an input.
+
+        Args:
+            input: The input to be evaluated.
+
+        Returns:
+            The output of the model.
+        \"\"\"
+        try:
+            # TODO: Implement the evaluation logic here.
+            pass
+        except Exception as e:
+            return f"Error: {e}"
 """
         return model_code
 
@@ -60,6 +86,19 @@ class {model_name}:
         tool_name = query.replace("create", "").replace("tool", "").strip()
         tool_code = f"""
 def {tool_name}(input):
-    pass
+    \"\"\"
+    A tool for {tool_name}.
+
+    Args:
+        input: The input to the tool.
+
+    Returns:
+        The output of the tool.
+    \"\"\"
+    try:
+        # TODO: Implement the tool logic here.
+        pass
+    except Exception as e:
+        return f"Error: {e}"
 """
         return tool_code
