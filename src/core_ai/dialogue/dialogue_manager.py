@@ -35,6 +35,9 @@ from src.shared.types.common_types import ( # Added src.
 from src.hsp.connector import HSPConnector # Added src.
 from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPCapabilityAdvertisementPayload, HSPFactPayload, HSPMessageEnvelope # Added src. and HSPMessageEnvelope
 from src.core_ai.trust_manager.trust_manager_module import TrustManager
+from src.evaluation.evaluator import Evaluator
+from src.search.search_engine import SearchEngine
+from src.creation.creation_engine import CreationEngine
 
 
 class DialogueManager:
@@ -54,7 +57,10 @@ class DialogueManager:
                  service_discovery_module: Optional[ServiceDiscoveryModule] = None,
                  hsp_connector: Optional[HSPConnector] = None,
                  config: Optional[OperationalConfig] = None,
-                 trust_manager: Optional[TrustManager] = None):
+                 trust_manager: Optional[TrustManager] = None,
+                 evaluator: Optional[Evaluator] = None,
+                 search_engine: Optional[SearchEngine] = None,
+                 creation_engine: Optional[CreationEngine] = None):
 
         self.config: OperationalConfig = config if config else {} # type: ignore
         self.ai_id: str = ai_id if ai_id else f"dm_instance_{uuid.uuid4().hex[:6]}"
@@ -70,6 +76,9 @@ class DialogueManager:
         self.pending_hsp_task_requests: Dict[str, PendingHSPTaskInfo] = {}
 
         self.personality_manager = personality_manager if personality_manager else PersonalityManager()
+        self.evaluator = evaluator if evaluator else Evaluator()
+        self.search_engine = search_engine if search_engine else SearchEngine()
+        self.creation_engine = creation_engine if creation_engine else CreationEngine()
 
         # Initialize ResourceAwarenessService first if HAM is to be default-instantiated
         self.resource_awareness_service = ResourceAwarenessService() # Uses default config path
@@ -144,6 +153,13 @@ class DialogueManager:
 
         if self.hsp_connector:
             self.hsp_connector.register_on_task_result_callback(self._handle_incoming_hsp_task_result)
+
+        asyncio.create_task(self._start_assessment_loop())
+
+    async def _start_assessment_loop(self):
+        while True:
+            await asyncio.sleep(3600)  # Assess every hour
+            await self._assess_and_improve()
 
     def _handle_incoming_hsp_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope) -> None:
         correlation_id = full_envelope.get("correlation_id")
@@ -773,3 +789,53 @@ if __name__ == '__main__':
 
     asyncio.run(main_dm_test())
 # Removed [end of src/core_ai/dialogue/dialogue_manager.py] marker
+
+    async def _assess_and_improve(self):
+        """
+        Assesses and improves the models and tools.
+        """
+        for model in self.tool_dispatcher.models:
+            dataset = self._get_dataset_for_model(model)
+            evaluation = self.evaluator.evaluate(model, dataset)
+            if evaluation["accuracy"] < 0.8:
+                new_model = self.search_engine.search(f"{model.name} model")
+                if new_model:
+                    self.tool_dispatcher.replace_model(model, new_model)
+                else:
+                    new_model_code = self.creation_engine.create(f"create {model.name} model")
+                    self.tool_dispatcher.add_model(new_model_code)
+
+        for tool in self.tool_dispatcher.tools:
+            dataset = self._get_dataset_for_tool(tool)
+            evaluation = self.evaluator.evaluate(tool, dataset)
+            if evaluation["accuracy"] < 0.8:
+                new_tool = self.search_engine.search(f"{tool.name} tool")
+                if new_tool:
+                    self.tool_dispatcher.replace_tool(tool, new_tool)
+                else:
+                    new_tool_code = self.creation_engine.create(f"create {tool.name} tool")
+                    self.tool_dispatcher.add_tool(new_tool_code)
+
+    def _get_dataset_for_model(self, model):
+        """
+        Gets the dataset for a model.
+
+        Args:
+            model: The model to get the dataset for.
+
+        Returns:
+            The dataset for the model.
+        """
+        pass
+
+    def _get_dataset_for_tool(self, tool):
+        """
+        Gets the dataset for a tool.
+
+        Args:
+            tool: The tool to get the dataset for.
+
+        Returns:
+            The dataset for the tool.
+        """
+        pass
