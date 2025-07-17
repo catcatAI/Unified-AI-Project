@@ -56,10 +56,12 @@ dependencies:
 
   # Optional Dependencies - Enhanced functionality
   optional:
+    # TensorFlow and scikit-learn are not available in the current environment.
+    # The project uses lightweight models as an alternative.
     - name: "tensorflow"
       description: "Machine learning framework for neural network models"
       essential: false
-      fallbacks: ["tensorflow-cpu", "scikit-learn", "numpy"]
+      fallbacks: ["numpy", "tensorflow-cpu", "scikit-learn"]
       features: ["math_model", "logic_model_nn"]
       
     - name: "spacy"
