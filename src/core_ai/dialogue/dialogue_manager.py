@@ -826,7 +826,12 @@ if __name__ == '__main__':
         Returns:
             The dataset for the model.
         """
-        pass
+        dataset_path = f"data/raw_datasets/{model.name}.json"
+        if os.path.exists(dataset_path):
+            with open(dataset_path, "r") as f:
+                return json.load(f)
+        else:
+            return []
 
     def _get_dataset_for_tool(self, tool):
         """
@@ -838,4 +843,9 @@ if __name__ == '__main__':
         Returns:
             The dataset for the tool.
         """
-        pass
+        dataset_path = f"data/raw_datasets/{tool.name}.json"
+        if os.path.exists(dataset_path):
+            with open(dataset_path, "r") as f:
+                return json.load(f)
+        else:
+            return []
