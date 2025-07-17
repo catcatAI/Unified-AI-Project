@@ -85,7 +85,8 @@ class DialogueManager:
 
         self.memory_manager = memory_manager if memory_manager else HAMMemoryManager(
             core_storage_filename="dialogue_context_memory.json",
-            resource_awareness_service=self.resource_awareness_service # Pass it here
+            resource_awareness_service=self.resource_awareness_service, # Pass it here
+            personality_manager=self.personality_manager
         )
 
         # LLMInterface expects a config that might contain OperationalConfig, not OperationalConfig directly.
@@ -155,11 +156,49 @@ class DialogueManager:
             self.hsp_connector.register_on_task_result_callback(self._handle_incoming_hsp_task_result)
 
         asyncio.create_task(self._start_assessment_loop())
+        asyncio.create_task(self._delete_old_sessions())
+        asyncio.create_task(self._check_pending_hsp_tasks())
 
     async def _start_assessment_loop(self):
         while True:
             await asyncio.sleep(3600)  # Assess every hour
             await self._assess_and_improve()
+
+    async def _delete_old_sessions(self):
+        """
+        Deletes old sessions that have been inactive for a certain period of time.
+        """
+        import psutil
+
+        while True:
+            # Calculate the deletion interval based on the number of active sessions.
+            # The more active sessions, the more frequently we check for old sessions.
+            deletion_interval = max(60, 3600 - len(self.active_sessions) * 60)
+            await asyncio.sleep(deletion_interval)
+
+            # Delete old sessions if the memory usage is above the threshold.
+            # The threshold is based on the AI's personality.
+            memory_retention = self.personality_manager.get_current_personality_trait("memory_retention", 0.5)
+            memory_threshold = 1 - memory_retention
+            if psutil.virtual_memory().available < psutil.virtual_memory().total * memory_threshold:
+                for session_id, turns in sorted(self.active_sessions.items(), key=lambda item: datetime.fromisoformat(item[1][-1]["timestamp"])):
+                    if psutil.virtual_memory().available < psutil.virtual_memory().total * memory_threshold:
+                        del self.active_sessions[session_id]
+                        if session_id in self.session_knowledge_graphs:
+                            del self.session_knowledge_graphs[session_id]
+                    else:
+                        break
+
+    async def _check_pending_hsp_tasks(self):
+        """
+        Checks for timed out HSP task requests.
+        """
+        while True:
+            await asyncio.sleep(60)  # Check for timed out tasks every minute
+            for correlation_id, pending_request_info in self.pending_hsp_task_requests.items():
+                request_timestamp = datetime.fromisoformat(pending_request_info["request_timestamp"])
+                if (datetime.now(timezone.utc) - request_timestamp).total_seconds() > self.turn_timeout_seconds:
+                    del self.pending_hsp_task_requests[correlation_id]
 
     async def _assess_and_improve(self):
         """
