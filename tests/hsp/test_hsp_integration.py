@@ -33,7 +33,7 @@ from src.shared.types.common_types import ToolDispatcherResponse
 from src.core_ai.personality.personality_manager import PersonalityManager
 
 
-from hbmqtt.broker import Broker
+from amqtt.broker import Broker
 
 import logging
 
