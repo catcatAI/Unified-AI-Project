@@ -46,15 +46,18 @@ class HAMMemoryManager:
 
     def __init__(self,
                  core_storage_filename="ham_core_memory.json",
-                 resource_awareness_service: Optional[Any] = None): # Optional['ResourceAwarenessService']
+                 resource_awareness_service: Optional[Any] = None, # Optional['ResourceAwarenessService']
+                 personality_manager: Optional[Any] = None): # Optional['PersonalityManager']
         """
         Initializes the HAMMemoryManager.
 
         Args:
             core_storage_filename (str): Filename for the persistent core memory store.
             resource_awareness_service (Optional[ResourceAwarenessService]): Service to get simulated resource limits.
+            personality_manager (Optional[PersonalityManager]): The personality manager.
         """
         self.resource_awareness_service = resource_awareness_service
+        self.personality_manager = personality_manager
         self.core_memory_store: Dict[str, HAMDataPackageInternal] = {}
         self.next_memory_id = 1
 
@@ -89,6 +92,8 @@ class HAMMemoryManager:
 
         self._load_core_memory_from_file()
         print(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
+
+        asyncio.create_task(self._delete_old_experiences())
 
     def _generate_memory_id(self) -> str:
         mem_id = f"mem_{self.next_memory_id:06d}"
@@ -369,7 +374,9 @@ class HAMMemoryManager:
             "timestamp": datetime.now().isoformat(),
             "data_type": data_type,
             "encrypted_package": encrypted_data, # This is bytes
-            "metadata": current_metadata # Use the processed current_metadata
+            "metadata": current_metadata, # Use the processed current_metadata
+            "relevance": 0.5, # Initial relevance score
+            "protected": metadata.get("protected", False) if metadata else False
         }
         self.core_memory_store[memory_id] = data_package
 
@@ -407,6 +414,9 @@ class HAMMemoryManager:
         if not data_package:
             print(f"Error: Memory ID {memory_id} not found.")
             return None
+
+        # Update the relevance score of the recalled experience.
+        data_package["relevance"] = min(1.0, data_package.get("relevance", 0.5) + 0.1)
 
         try:
             decrypted_data = self._decrypt(data_package["encrypted_package"])
@@ -460,6 +470,30 @@ class HAMMemoryManager:
             rehydrated_gist=rehydrated_content,
             metadata=data_package.get("metadata", {}) # type: ignore
         )
+
+    async def _delete_old_experiences(self):
+        """
+        Deletes old experiences that are no longer relevant.
+        """
+        import psutil
+
+        while True:
+            # Calculate the deletion interval based on the number of experiences in the memory.
+            # The more experiences, the more frequently we check for old experiences.
+            deletion_interval = max(60, 3600 - len(self.core_memory_store) * 10)
+            await asyncio.sleep(deletion_interval)
+
+            # Delete old experiences if the memory usage is above the threshold.
+            # The threshold is based on the AI's personality.
+            memory_retention = self.personality_manager.get_current_personality_trait("memory_retention", 0.5)
+            memory_threshold = 1 - memory_retention
+            if psutil.virtual_memory().available < psutil.virtual_memory().total * memory_threshold:
+                for memory_id, data_package in sorted(self.core_memory_store.items(), key=lambda item: (item[1].get("relevance", 0.5), datetime.fromisoformat(item[1]["timestamp"]))):
+                    if not data_package.get("protected", False):
+                        if psutil.virtual_memory().available < psutil.virtual_memory().total * memory_threshold:
+                            del self.core_memory_store[memory_id]
+                        else:
+                            break
 
     def query_core_memory(self,
                           keywords: Optional[List[str]] = None,
