@@ -47,7 +47,13 @@ class HSPConnector:
                  client_id_suffix: str = "hsp_connector",
                  reconnect_min_delay: int = 1,
                  reconnect_max_delay: int = 60,
-                 mock_mode: bool = False):
+                 mock_mode: bool = False,
+                 tls_ca_certs: Optional[str] = None,
+                 tls_certfile: Optional[str] = None,
+                 tls_keyfile: Optional[str] = None,
+                 username: Optional[str] = None,
+                 password: Optional[str] = None,
+                 broker_list: Optional[list] = None):
         """
         Initializes the HSPConnector.
 
@@ -55,15 +61,22 @@ class HSPConnector:
             ai_id (str): The unique identifier for this AI instance.
             broker_address (str): The address of the MQTT broker.
             broker_port (int): The port of the MQTT broker.
+            broker_list (list, optional): A list of brokers to connect to.
             client_id_suffix (str): A suffix to append to the AI ID for a unique MQTT client ID.
             reconnect_min_delay (int): Minimum delay (seconds) before the first reconnect attempt.
             reconnect_max_delay (int): Maximum delay (seconds) between reconnect attempts.
                                        Paho uses exponential backoff up to this limit.
             mock_mode (bool): If True, the connector will not attempt to connect to the broker.
+            tls_ca_certs (str, optional): Path to the CA certificate file.
+            tls_certfile (str, optional): Path to the client certificate file.
+            tls_keyfile (str, optional): Path to the client key file.
+            username (str, optional): The username for authenticating with the MQTT broker.
+            password (str, optional): The password for authenticating with the MQTT broker.
         """
         self.ai_id: str = ai_id
         self.broker_address: str = broker_address
         self.broker_port: int = broker_port
+        self.broker_list: Optional[list] = broker_list
         self.reconnect_min_delay = reconnect_min_delay
         self.reconnect_max_delay = reconnect_max_delay
         self.mock_mode = mock_mode
@@ -77,6 +90,14 @@ class HSPConnector:
             # Configure Paho MQTT's automatic reconnection
             self.mqtt_client.reconnect_delay_set(min_delay=self.reconnect_min_delay, max_delay=self.reconnect_max_delay)
             logger.info(f"HSPConnector ({self.ai_id}): MQTT auto-reconnect configured with min_delay={self.reconnect_min_delay}s, max_delay={self.reconnect_max_delay}s.")
+
+            if tls_ca_certs and tls_certfile and tls_keyfile:
+                self.mqtt_client.tls_set(ca_certs=tls_ca_certs, certfile=tls_certfile, keyfile=tls_keyfile)
+                logger.info(f"HSPConnector ({self.ai_id}): TLS configured.")
+
+            if username and password:
+                self.mqtt_client.username_pw_set(username, password)
+                logger.info(f"HSPConnector ({self.ai_id}): Username and password configured.")
 
             self.mqtt_client.on_connect = self._on_mqtt_connect
             self.mqtt_client.on_disconnect = self._on_mqtt_disconnect
@@ -100,6 +121,7 @@ class HSPConnector:
         # For managing subscriptions
         self.subscribed_topics: set[str] = set()
         self._was_unexpectedly_disconnected: bool = False
+        self._heartbeat_task: Optional[asyncio.Task] = None
 
     @staticmethod
     def _generate_payload_schema_uri(message_type: str) -> Optional[str]:
@@ -168,21 +190,18 @@ class HSPConnector:
             self._was_unexpectedly_disconnected = True # Set flag for unexpected disconnect
         if self._external_on_disconnect_callback:
             self._external_on_disconnect_callback()
+        if self._was_unexpectedly_disconnected:
+            logger.info(f"HSPConnector ({self.ai_id}): Attempting to reconnect...")
         # Paho's internal reconnect_delay_set handles the reconnection strategy.
 
     def _on_mqtt_message(self, client, userdata, msg):
         """Handles incoming MQTT messages and forwards them to HSP message handler."""
-        logger.debug(f"HSPConnector ({self.ai_id}): Raw MQTT message received on topic '{msg.topic}' with payload: {msg.payload.decode('utf-8')[:100]}...")
         try:
+            logger.debug(f"HSPConnector ({self.ai_id}): Raw MQTT message received on topic '{msg.topic}' with payload: {msg.payload.decode('utf-8')[:100]}...")
             message_str = msg.payload.decode('utf-8')
             self._handle_hsp_message_str(message_str, msg.topic)
         except Exception as e:
-            logger.error(f"HSPConnector ({self.ai_id}): Error processing raw MQTT message on topic {msg.topic}: {e}", exc_info=True) # Added exc_info") # Changed to debug
-        try:
-            message_str = msg.payload.decode('utf-8')
-            self._handle_hsp_message_str(message_str, msg.topic)
-        except Exception as e:
-            logger.error(f"HSPConnector ({self.ai_id}): Error processing raw MQTT message on topic {msg.topic}: {e}", exc_info=True) # Added exc_info
+            logger.error(f"HSPConnector ({self.ai_id}): Error processing raw MQTT message on topic {msg.topic}: {e}", exc_info=True)
 
     def connect(self) -> bool:
         """Connects to the MQTT broker."""
@@ -197,6 +216,7 @@ class HSPConnector:
             logger.info(f"HSPConnector ({self.ai_id}): Attempting to connect to MQTT Broker at {self.broker_address}:{self.broker_port}...")
             self.mqtt_client.connect(self.broker_address, self.broker_port, keepalive=60)
             self.mqtt_client.loop_start() # Starts a background thread for network operations, callbacks
+            self.start_heartbeat()
             return True
         except Exception as e:
             logger.error(f"HSPConnector ({self.ai_id}): MQTT connection error: {e}", exc_info=True)
@@ -210,6 +230,7 @@ class HSPConnector:
             self._on_mqtt_disconnect(self.mqtt_client, None, None, 0, None)
             return
         if self.mqtt_client and self.is_connected: # Ensure client exists before calling methods on it
+            self.stop_heartbeat()
             self.mqtt_client.loop_stop()
             self.mqtt_client.disconnect()
         logger.info(f"HSPConnector ({self.ai_id}): Disconnection process initiated.")
@@ -493,6 +514,52 @@ class HSPConnector:
     def register_on_disconnect_callback(self, callback: Callable[[], None]):
         """Registers an external callback to be called when the MQTT client disconnects."""
         self._external_on_disconnect_callback = callback
+
+    def get_broker_for_ai(self, ai_id: str) -> str:
+        """
+        Returns the address of the MQTT broker that the AI should connect to.
+        This is a simple load balancing mechanism that distributes the AI instances across multiple brokers.
+        """
+        if not self.broker_list:
+            return self.broker_address
+
+        primary_brokers = [b for b in self.broker_list if b.get("type") == "primary"]
+        backup_brokers = [b for b in self.broker_list if b.get("type") == "backup"]
+        other_brokers = [b for b in self.broker_list if b.get("type") not in ["primary", "backup"]]
+
+        all_brokers = primary_brokers + backup_brokers + other_brokers
+
+        # This is a simple example of a load balancing mechanism.
+        # In a real-world application, you would want to use a more sophisticated mechanism,
+        # such as a service discovery system.
+        broker_index = hash(ai_id) % len(all_brokers)
+        return all_brokers[broker_index]["address"]
+
+    async def _send_heartbeat(self, interval: int):
+        """Periodically sends a heartbeat message."""
+        while self.is_connected:
+            heartbeat_payload = {"status": "alive", "timestamp": datetime.now(timezone.utc).isoformat()}
+            envelope = self._build_hsp_envelope(
+                payload=heartbeat_payload,
+                message_type="HSP::Heartbeat_v0.1",
+                recipient_ai_id_or_topic=f"hsp/heartbeats/{self.ai_id}",
+                communication_pattern="publish"
+            )
+            self._send_hsp_message(envelope, mqtt_topic=f"hsp/heartbeats/{self.ai_id}")
+            await asyncio.sleep(interval)
+
+    def start_heartbeat(self, interval: int = 60):
+        """Starts the heartbeat mechanism."""
+        if self._heartbeat_task is None:
+            self._heartbeat_task = asyncio.create_task(self._send_heartbeat(interval))
+            logger.info(f"HSPConnector ({self.ai_id}): Heartbeat started with interval {interval}s.")
+
+    def stop_heartbeat(self):
+        """Stops the heartbeat mechanism."""
+        if self._heartbeat_task is not None:
+            self._heartbeat_task.cancel()
+            self._heartbeat_task = None
+            logger.info(f"HSPConnector ({self.ai_id}): Heartbeat stopped.")
 
 # Example of how this might be used (conceptual, would be in main application logic)
 async def example_hsp_usage():
