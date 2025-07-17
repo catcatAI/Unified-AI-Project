@@ -301,12 +301,12 @@ python startup_with_fallbacks.py --port 8080 --debug
     ```
     API 將在 `http://localhost:5000`（Flask）或 `http://localhost:8000`（FastAPI）可訪問。FastAPI 的 Swagger UI 文檔可在 `/docs` 獲得。
 
-### 安裝精靈
+### 命令列安裝程式
 
-項目現在包含一個安裝精靈，可以引導您完成安裝過程。要使用安裝精靈，請運行以下命令：
+項目現在包含一個命令列安裝程式，可以引導您完成安裝過程。要使用安裝程式，請運行以下命令：
 
 ```bash
-python installer.py
+python installer_cli.py
 ```
 
 #### 故障排除
