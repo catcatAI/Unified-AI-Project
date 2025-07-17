@@ -375,7 +375,8 @@ class HAMMemoryManager:
             "data_type": data_type,
             "encrypted_package": encrypted_data, # This is bytes
             "metadata": current_metadata, # Use the processed current_metadata
-            "relevance": 0.5 # Initial relevance score
+            "relevance": 0.5, # Initial relevance score
+            "protected": metadata.get("protected", False) if metadata else False
         }
         self.core_memory_store[memory_id] = data_package
 
@@ -488,10 +489,11 @@ class HAMMemoryManager:
             memory_threshold = 1 - memory_retention
             if psutil.virtual_memory().available < psutil.virtual_memory().total * memory_threshold:
                 for memory_id, data_package in sorted(self.core_memory_store.items(), key=lambda item: (item[1].get("relevance", 0.5), datetime.fromisoformat(item[1]["timestamp"]))):
-                    if psutil.virtual_memory().available < psutil.virtual_memory().total * memory_threshold:
-                        del self.core_memory_store[memory_id]
-                    else:
-                        break
+                    if not data_package.get("protected", False):
+                        if psutil.virtual_memory().available < psutil.virtual_memory().total * memory_threshold:
+                            del self.core_memory_store[memory_id]
+                        else:
+                            break
 
     def query_core_memory(self,
                           keywords: Optional[List[str]] = None,
