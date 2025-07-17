@@ -90,6 +90,8 @@ class HAMMemoryManager:
         self._load_core_memory_from_file()
         print(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
 
+        asyncio.create_task(self._delete_old_experiences())
+
     def _generate_memory_id(self) -> str:
         mem_id = f"mem_{self.next_memory_id:06d}"
         self.next_memory_id += 1
@@ -460,6 +462,21 @@ class HAMMemoryManager:
             rehydrated_gist=rehydrated_content,
             metadata=data_package.get("metadata", {}) # type: ignore
         )
+
+    async def _delete_old_experiences(self):
+        """
+        Deletes old experiences that are no longer relevant.
+        """
+        import psutil
+
+        while True:
+            await asyncio.sleep(3600)  # Check for old experiences every hour
+            if psutil.virtual_memory().percent > 80:
+                for memory_id, data_package in sorted(self.core_memory_store.items(), key=lambda item: datetime.fromisoformat(item[1]["timestamp"])):
+                    if psutil.virtual_memory().percent > 80:
+                        del self.core_memory_store[memory_id]
+                    else:
+                        break
 
     def query_core_memory(self,
                           keywords: Optional[List[str]] = None,
