@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 import os
 import json
@@ -68,7 +69,8 @@ async def ham_manager_fixture(): # Make the fixture async
         pass
 
 # Now, rewrite the tests as functions, using the fixture
-@pytest.mark.asyncio # Mark tests as async
+@pytest.mark.timeout(5)  # 5秒超時
+@pytest.mark.asyncio
 async def test_01_initialization_and_empty_store(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_01_initialization_and_empty_store...")
@@ -78,6 +80,7 @@ async def test_01_initialization_and_empty_store(ham_manager_fixture):
     assert os.path.exists(ham_manager_no_res.core_storage_filepath)
     print("test_01_initialization_and_empty_store PASSED")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_02_store_and_recall_text_experience(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -117,6 +120,7 @@ async def test_02_store_and_recall_text_experience(ham_manager_fixture):
         pytest.fail("Keywords section not found in rehydrated_gist")
     print("test_02_store_and_recall_text_experience PASSED")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_03_store_and_recall_generic_data(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -136,6 +140,7 @@ async def test_03_store_and_recall_generic_data(ham_manager_fixture):
     assert recalled_data['metadata']['sensor_id'] == "temp001"
     print("test_03_store_and_recall_generic_data PASSED")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_04_persistence(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -143,10 +148,11 @@ async def test_04_persistence(ham_manager_fixture):
     test_session_key = Fernet.generate_key()
 
     with patch.dict(os.environ, {"MIKO_HAM_KEY": test_session_key.decode()}):
-        ham_manager_initial = HAMMemoryManager(core_storage_filename=ham_manager_no_res.test_filename)
+        # 使用傳入的 test_filename 變量
+        ham_manager_initial = HAMMemoryManager(core_storage_filename=test_filename)
         if os.path.exists(ham_manager_initial.core_storage_filepath):
             os.remove(ham_manager_initial.core_storage_filepath)
-        ham_manager_initial = HAMMemoryManager(core_storage_filename=ham_manager_no_res.test_filename)
+        ham_manager_initial = HAMMemoryManager(core_storage_filename=test_filename)
 
         raw_text = "Testing persistence of HAM."
         exp_id = ham_manager_initial.store_experience(raw_text, "log_entry")
@@ -162,6 +168,7 @@ async def test_04_persistence(ham_manager_fixture):
         assert recalled_data.get("rehydrated_gist") == str(raw_text)
     print("test_04_persistence PASSED")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_05_recall_non_existent_memory(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -170,6 +177,7 @@ async def test_05_recall_non_existent_memory(ham_manager_fixture):
     assert recalled_data is None
     print("test_05_recall_non_existent_memory PASSED")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_06_query_memory_keywords(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -186,6 +194,7 @@ async def test_06_query_memory_keywords(ham_manager_fixture):
     assert len(results_topic_simple) == 2
     print("test_06_query_memory_keywords PASSED")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_07_query_memory_data_type(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -200,6 +209,7 @@ async def test_07_query_memory_data_type(ham_manager_fixture):
         assert item["data_type"] == "dialogue_text"
     print("test_07_query_memory_data_type PASSED")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_08_query_memory_date_range(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -218,6 +228,7 @@ async def test_08_query_memory_date_range(ham_manager_fixture):
     assert len(results_future) == 0
     print("test_08_query_memory_date_range PASSED (basic check)")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_09_empty_text_abstraction(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -238,6 +249,7 @@ async def test_09_empty_text_abstraction(ham_manager_fixture):
         pytest.fail("Keywords section not found or malformed in rehydrated_gist for empty text.")
     print("test_09_empty_text_abstraction PASSED")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_10_encryption_decryption(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -258,6 +270,7 @@ async def test_10_encryption_decryption(ham_manager_fixture):
         assert any("Invalid token" in call_args[0][0] for call_args in mock_print.call_args_list if call_args[0])
     print("test_10_encryption_decryption PASSED")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_11_checksum_verification(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -287,6 +300,7 @@ async def test_11_checksum_verification(ham_manager_fixture):
         ham_manager_no_res.core_memory_store[memory_id] = original_package
     print("test_11_checksum_verification PASSED (mismatch test depends on encryption state)")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_12_advanced_text_abstraction_placeholders(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -315,6 +329,7 @@ async def test_12_advanced_text_abstraction_placeholders(ham_manager_fixture):
     print("test_12_advanced_text_abstraction_placeholders PASSED")
 
 # --- Tests for Resource Awareness ---
+@pytest.mark.timeout(10)  # 10秒超時，模擬磁盤滿的情況
 @pytest.mark.asyncio
 async def test_13_store_experience_simulated_disk_full(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -338,6 +353,7 @@ async def test_13_store_experience_simulated_disk_full(ham_manager_fixture):
                "In-memory store should not contain the item if save failed due to disk full."
     print("test_13_store_experience_simulated_disk_full PASSED")
 
+@pytest.mark.timeout(10)  # 10秒超時，模擬延遲警告
 @pytest.mark.asyncio
 async def test_14_store_experience_simulated_lag_warning(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -361,6 +377,7 @@ async def test_14_store_experience_simulated_lag_warning(ham_manager_fixture):
             assert "is at WARNING level" in printed_texts
     print("test_14_store_experience_simulated_lag_warning PASSED")
 
+@pytest.mark.timeout(10)  # 10秒超時，模擬嚴重延遲
 @pytest.mark.asyncio
 async def test_15_store_experience_simulated_lag_critical(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -384,6 +401,7 @@ async def test_15_store_experience_simulated_lag_critical(ham_manager_fixture):
             assert "is at CRITICAL level" in printed_texts
     print("test_15_store_experience_simulated_lag_critical PASSED")
 
+@pytest.mark.timeout(10)  # 10秒超時，可能需要較長時間
 @pytest.mark.asyncio
 async def test_16_get_current_disk_usage_gb(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -402,6 +420,7 @@ async def test_16_get_current_disk_usage_gb(ham_manager_fixture):
     assert ham_manager_no_res._get_current_disk_usage_gb() == pytest.approx(expected_gb, rel=1e-9)
     print("test_16_get_current_disk_usage_gb PASSED")
 
+@pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
 async def test_17_query_core_memory_return_multiple_candidates(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
@@ -413,3 +432,106 @@ async def test_17_query_core_memory_return_multiple_candidates(ham_manager_fixtu
     results = ham.query_core_memory(data_type_filter="candidate_test", limit=5, return_multiple_candidates=True)
     assert len(results) == 5
     print("test_17_query_core_memory_return_multiple_candidates PASSED")
+
+@pytest.mark.timeout(5)  # 5秒超時
+@pytest.mark.asyncio
+async def test_18_encryption_failure(ham_manager_fixture, monkeypatch):
+    """測試加密失敗時的錯誤處理"""
+    ham_manager_no_res, _, _, _ = ham_manager_fixture
+    print("\nRunning test_18_encryption_failure...")
+    
+    # 模擬加密失敗
+    def mock_encrypt(data):
+        raise Exception("Encryption failed")
+    
+    monkeypatch.setattr(ham_manager_no_res, '_encrypt', mock_encrypt)
+    
+    # 存儲應該失敗
+    with pytest.raises(Exception, match="Failed to store experience: Encryption failed"):
+        ham_manager_no_res.store_experience("Test data", "test_type")
+    print("test_18_encryption_failure PASSED")
+
+@pytest.mark.timeout(5)  # 5秒超時
+@pytest.mark.asyncio
+async def test_19_disk_full_handling(ham_manager_fixture, monkeypatch):
+    """測試磁盤空間不足時的處理"""
+    ham_manager_no_res, _, _, _ = ham_manager_fixture
+    print("\nRunning test_19_disk_full_handling...")
+    
+    # 模擬_get_current_disk_usage_gb返回高使用率
+    def mock_get_disk_usage():
+        return 9.9  # 假設磁盤空間不足
+    
+    monkeypatch.setattr(ham_manager_no_res, '_get_current_disk_usage_gb', mock_get_disk_usage)
+    
+    # 存儲應該失敗
+    with pytest.raises(Exception, match="Insufficient disk space"):
+        ham_manager_no_res.store_experience("Test data", "test_type")
+    print("test_19_disk_full_handling PASSED")
+
+@pytest.mark.timeout(10)  # 10秒超時，因為這個測試可能涉及等待
+@pytest.mark.asyncio
+async def test_20_delete_old_experiences(ham_manager_fixture, monkeypatch):
+    """測試自動清理舊記憶"""
+    ham_manager_no_res, _, _, _ = ham_manager_fixture
+    print("\nRunning test_20_delete_old_experiences...")
+    
+    # 添加一些測試記憶
+    for i in range(5):
+        ham_manager_no_res.store_experience(f"Test memory {i}", "test_type")
+    
+    # 保存初始記憶數量
+    initial_count = len(ham_manager_no_res.core_memory_store)
+    
+    # 模擬高內存使用率
+    def mock_memory_usage():
+        return 0.9  # 90% 使用率
+    
+    # 創建一個模擬的 personality_manager
+    class MockPersonalityManager:
+        def get_current_personality_trait(self, trait_name, default=None):
+            return 0.1  # 低保留率，更積極地清理
+    
+    # 替換 personality_manager
+    ham_manager_no_res.personality_manager = MockPersonalityManager()
+    
+    # 手動觸發清理
+    await ham_manager_no_res._delete_old_experiences()
+    
+    # 驗證部分記憶已被清理
+    final_count = len(ham_manager_no_res.core_memory_store)
+    assert final_count < initial_count, "Expected some memories to be deleted"
+    print("test_20_delete_old_experiences PASSED")
+
+@pytest.mark.timeout(10)  # 10秒超時，因為這個測試涉及並發操作
+@pytest.mark.asyncio
+async def test_21_concurrent_access(ham_manager_fixture):
+    """測試並發訪問記憶管理器"""
+    ham_manager_no_res, _, _, _ = ham_manager_fixture
+    print("\nRunning test_21_concurrent_access...")
+    
+    async def store_memory(i):
+        memory_id = ham_manager_no_res.store_experience(
+            f"Concurrent test {i}", 
+            "concurrent_test",
+            {"index": i, "timestamp": datetime.now(timezone.utc).isoformat()}
+        )
+        return memory_id, i
+    
+    # 並發存儲多個記憶
+    tasks = [store_memory(i) for i in range(10)]
+    results = await asyncio.gather(*tasks)
+    
+    # 驗證所有記憶都已正確存儲
+    for mem_id, i in results:
+        result = ham_manager_no_res.recall_gist(mem_id)
+        assert result is not None, f"Memory {i} was not stored correctly"
+        assert f"Concurrent test {i}" in str(result.rehydrated_gist), f"Incorrect content for memory {i}"
+    
+    # 驗證查詢功能正常工作
+    query_results = ham_manager_no_res.query_core_memory(
+        data_type_filter="concurrent_test",
+        limit=10
+    )
+    assert len(query_results) == 10, "Expected 10 concurrent test memories"
+    print("test_21_concurrent_access PASSED")

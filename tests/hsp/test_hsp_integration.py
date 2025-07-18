@@ -305,7 +305,10 @@ async def dialogue_manager_fixture(
     dm_config = {
         "operational_configs": configured_learning_manager.operational_config if configured_learning_manager else {}
     }
-    mock_td = MagicMock(spec=ToolDispatcher)
+    
+    # 使用真實的 ToolDispatcher 而不是 Mock
+    tool_dispatcher = ToolDispatcher(llm_interface=mock_llm_fixture)
+    
     dm = DialogueManager(
         ai_id=TEST_AI_ID_MAIN,
         personality_manager=personality_manager_fixture,
@@ -315,6 +318,7 @@ async def dialogue_manager_fixture(
         hsp_connector=main_ai_hsp_connector,
         content_analyzer=content_analyzer_module_fixture,
         learning_manager=configured_learning_manager,
+        tool_dispatcher=tool_dispatcher,  # 傳入真實的 tool_dispatcher
         config=dm_config
     )
     results_topic = f"hsp/results/{TEST_AI_ID_MAIN}/#"
@@ -326,6 +330,7 @@ async def dialogue_manager_fixture(
 # --- Test Classes ---
 class TestHSPFactPublishing:
     @pytest.mark.asyncio
+@pytest.mark.timeout(10)
     async def test_learning_manager_publishes_fact_via_hsp(
         self,
         configured_learning_manager: LearningManager,
@@ -358,6 +363,7 @@ class TestHSPFactPublishing:
 
 class TestHSPFactConsumption:
     @pytest.mark.asyncio
+@pytest.mark.timeout(10)
     async def test_main_ai_consumes_nl_fact_and_updates_kg_check_trust_influence(
         self,
         configured_learning_manager: LearningManager,
@@ -427,6 +433,7 @@ class TestHSPFactConsumption:
         print("[Test Trust Influence on Fact Storage] Verified.")
 
     @pytest.mark.asyncio
+@pytest.mark.timeout(10)
     async def test_main_ai_consumes_structured_fact_updates_kg(
         self,
         configured_learning_manager: LearningManager,
@@ -480,6 +487,7 @@ class TestHSPFactConsumption:
         print(f"[Test Consume Structured Fact] Verified by CA.")
 
     @pytest.mark.asyncio
+@pytest.mark.timeout(10)
     async def test_ca_semantic_mapping_for_hsp_structured_fact(
         self,
         configured_learning_manager: LearningManager,
@@ -560,6 +568,7 @@ class TestHSPFactConsumption:
 
 class TestHSPTaskDelegation:
     @pytest.mark.asyncio
+@pytest.mark.timeout(10)
     async def test_dm_delegates_task_to_specialist_ai_and_gets_result(
         self,
         dialogue_manager_fixture: DialogueManager,
@@ -615,7 +624,7 @@ class TestHSPTaskDelegation:
                 timestamp_completed=datetime.now(timezone.utc).isoformat()
             )  # type: ignore
             
-            await peer_a_hsp_connector.publish_task_result(result_payload, sender_ai_id)
+            peer_a_hsp_connector.send_task_result(result_payload, sender_ai_id, envelope["correlation_id"])
             task_received_event.set()
             
         peer_a_hsp_connector.register_on_task_request_callback(peer_a_task_handler)
@@ -624,7 +633,7 @@ class TestHSPTaskDelegation:
         await asyncio.sleep(0.2)
         
         # 5. Trigger the DM and wait for the result
-        final_response = await dm.process_query(query, "test_user_task", "test_session_task")
+        final_response = await dm.get_simple_response(query, "test_session_task", "test_user_task")
         
         await wait_for_event(task_received_event, timeout=5.0)
         
@@ -633,6 +642,7 @@ class TestHSPTaskDelegation:
         print("[Test Task Delegation] Verified DM delegated task and received result.")
 
     @pytest.mark.asyncio
+@pytest.mark.timeout(10)
     async def test_dm_handles_hsp_task_failure_and_falls_back(
         self,
         dialogue_manager_fixture: DialogueManager,
@@ -641,49 +651,72 @@ class TestHSPTaskDelegation:
         main_ai_hsp_connector: HSPConnector,
         mock_llm_fixture: MockLLMInterface
     ):
-        # ... (test body as previously defined) ...
         dm = dialogue_manager_fixture
         sdm = service_discovery_module_fixture
         
-        # 1. Peer A advertises a capability
+        # 1. Peer A advertises its capability (even though it will fail)
+        capability_id = f"failing_service_{uuid.uuid4().hex}"  # Generate a unique capability ID
         cap_payload = HSPCapabilityAdvertisementPayload(
+            capability_id=capability_id,
             capability_name="failing_service",
             capability_description="A service that always fails.",
-            input_schema={"type": "object", "properties": {"data": {"type": "string"}}},
-            output_schema={"type": "object", "properties": {"status": {"type": "string"}}},
+            ai_id=peer_a_hsp_connector.ai_id,  # Make sure to set the AI ID
+            input_schema={"type": "object", "properties": {"query": {"type": "string"}}},
+            output_schema={"type": "object", "properties": {"result": {"type": "string"}}},
             version="1.0",
-            tags=["fail_test"]
-        )  # type: ignore
+            tags=["test", "failing"]
+        )
+
+        # Publish the capability advertisement to the correct topic
+        topic = f"hsp/capabilities/advertisements/general/{peer_a_hsp_connector.ai_id}"
+        peer_a_hsp_connector.publish_capability_advertisement(cap_payload, topic)
         
-        peer_a_hsp_connector.publish_capability_advertisement(cap_payload, "general")
-        await asyncio.sleep(0.5)
+        # Give some time for the message to be processed
+        await asyncio.sleep(1.0)
         
-        # 2. Peer A's task handler will send a 'failed' result
+        # 2. Verify Main AI's SDM has registered the capability
+        # First, check if the capability was received by the main AI's SDM
+        capabilities = sdm.find_capabilities(capability_id_filter=capability_id)
+        if not capabilities:
+            # If not found by ID, try by name
+            capabilities = sdm.find_capabilities(capability_name_filter="failing_service")
+        
+        # Log the current state for debugging
+        logger.info(f"Known capabilities in SDM: {sdm.known_capabilities}")
+        logger.info(f"Found capabilities: {capabilities}")
+        
+        assert len(capabilities) > 0, f"No capabilities found for 'failing_service'. Known capabilities: {sdm.known_capabilities}"
+        
+        # 3. Set up Peer A to fail the task
+        task_received_event = asyncio.Event()
+        
         async def peer_a_failing_handler(task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+            assert task_payload.capability_name == "failing_service"
+            
+            # Peer A fails to process the task
             result_payload = HSPTaskResultPayload(
                 task_id=task_payload.task_id,
                 status="failed",
-                error_details=HSPErrorDetails(code=500, message="Service unavailable"),
+                error_message="Service unavailable due to maintenance.",
                 timestamp_completed=datetime.now(timezone.utc).isoformat()
             )  # type: ignore
-            await peer_a_hsp_connector.publish_task_result(result_payload, sender_ai_id)
+            
+            peer_a_hsp_connector.send_task_result(result_payload, sender_ai_id, envelope["correlation_id"])
+            task_received_event.set()
             
         peer_a_hsp_connector.register_on_task_request_callback(peer_a_failing_handler)
         task_topic = f"hsp/tasks/{TEST_AI_ID_PEER_A}/failing_service"
         assert peer_a_hsp_connector.subscribe(task_topic)
         await asyncio.sleep(0.2)
         
-        # 3. DM receives a query that triggers the failing service
-        query = "Please use the failing service."
+        # 4. Set up a fallback response from the LLM
+        fallback_response = "I couldn't access the failing service, but here's a fallback response."
+        mock_llm_fixture.add_mock_response("Please use the failing service.", fallback_response)
         
-        # 4. Mock LLM to provide a fallback response
-        mock_llm_fixture.add_mock_response(
-            "hsp_task_failed_what_now",
-            "It seems the specialist AI couldn't help. Let me try to answer directly."
-        )
+        # 5. Trigger the DM with a query that should use the failing service
+        final_response = await dm.get_simple_response("Please use the failing service.", "test_session_fail", "test_user_fail")
         
-        # 5. Trigger DM and verify fallback response
-        final_response = await dm.process_query(query, "test_user_fail", "test_session_fail")
-        
-        assert "specialist AI couldn't help" in final_response
-        print("[Test Task Failure Fallback] Verified DM handled task failure and used LLM fallback.")
+        # 6. Verify the task was received and the fallback was used
+        await wait_for_event(task_received_event, timeout=5.0)
+        assert fallback_response in final_response
+        print("[Test Task Failure] Verified DM handled task failure and used fallback response.")

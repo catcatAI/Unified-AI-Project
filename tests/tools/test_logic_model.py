@@ -40,6 +40,7 @@ class TestLogicModelComponents(unittest.TestCase):
         if os.path.exists(TEST_MODEL_OUTPUT_DIR):
             shutil.rmtree(TEST_MODEL_OUTPUT_DIR)
 
+@pytest.mark.timeout(10)
     def test_01_logic_data_generator(self):
         print("\nRunning test_01_logic_data_generator...")
         dataset = logic_data_generator.generate_dataset(
@@ -61,6 +62,7 @@ class TestLogicModelComponents(unittest.TestCase):
                 self.assertEqual(eval_result, item["answer"], f"Proposition: {item['proposition']}")
         print("test_01_logic_data_generator PASSED")
 
+@pytest.mark.timeout(10)
     def test_02_logic_parser_eval(self):
         print("\nRunning test_02_logic_parser_eval...")
         evaluator = LogicParserEval()
@@ -74,6 +76,7 @@ class TestLogicModelComponents(unittest.TestCase):
             self.assertEqual(evaluator.evaluate(expr), expected, f"Failed for: {expr}")
         print("test_02_logic_parser_eval PASSED")
 
+@pytest.mark.timeout(10)
     def test_03_logic_model_nn_structure_and_helpers(self):
         print("\nRunning test_03_logic_model_nn_structure_and_helpers...")
         # Create a dummy dataset file for char_map generation
@@ -126,6 +129,7 @@ class TestLogicModelComponents(unittest.TestCase):
         logic_model_nn.CHAR_MAP_SAVE_PATH = original_char_map_path # Restore
         print("test_03_logic_model_nn_structure_and_helpers PASSED")
 
+@pytest.mark.timeout(10)
     def test_04_logic_tool_interface(self):
         print("\nRunning test_04_logic_tool_interface...")
         # Parser method (should work)
@@ -150,6 +154,7 @@ class TestLogicModelComponents(unittest.TestCase):
         logic_tool.CHAR_MAP_LOAD_PATH = original_lt_char_map_path # Restore
         print("test_04_logic_tool_interface PASSED")
 
+@pytest.mark.timeout(10)
     def test_05_tool_dispatcher_logic_routing(self):
         print("\nRunning test_05_tool_dispatcher_logic_routing...")
         dispatcher = ToolDispatcher()

@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 import networkx as nx
@@ -128,12 +129,14 @@ async def test_find_entity_node_id_in_kg_empty_graph(dialogue_manager_helper_fix
     assert node_id is None
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_find_entity_node_id_in_kg_none_graph(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     node_id = dm._find_entity_node_id_in_kg(None, "Google") # type: ignore
     assert node_id is None
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_query_session_kg_found(dialogue_manager_helper_fixture):
     dm, sample_graph, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     dm.session_knowledge_graphs["test_session"] = sample_graph
@@ -141,6 +144,7 @@ async def test_query_session_kg_found(dialogue_manager_helper_fixture):
     assert answer == "Sundar Pichai"
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_query_session_kg_entity_not_found(dialogue_manager_helper_fixture):
     dm, sample_graph, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     dm.session_knowledge_graphs["test_session"] = sample_graph
@@ -148,6 +152,7 @@ async def test_query_session_kg_entity_not_found(dialogue_manager_helper_fixture
     assert answer is None
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_query_session_kg_relationship_not_found(dialogue_manager_helper_fixture):
     dm, sample_graph, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     dm.session_knowledge_graphs["test_session"] = sample_graph
@@ -155,12 +160,14 @@ async def test_query_session_kg_relationship_not_found(dialogue_manager_helper_f
     assert answer is None
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_query_session_kg_no_graph_for_session(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     answer = dm._query_session_kg("non_existent_session", "Google", "has_ceo")
     assert answer is None
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_query_session_kg_target_no_label(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     graph_no_label = nx.DiGraph()
@@ -174,6 +181,7 @@ async def test_query_session_kg_target_no_label(dialogue_manager_helper_fixture)
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_is_kg_query_ceo_pattern(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     result = dm._is_kg_query("who is ceo of Google?")
@@ -181,6 +189,7 @@ async def test_is_kg_query_ceo_pattern(dialogue_manager_helper_fixture):
     assert result == ("google", "has_ceo")
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_is_kg_query_ceo_pattern_with_the(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     result = dm._is_kg_query("who is the ceo of Microsoft Corporation?")
@@ -188,6 +197,7 @@ async def test_is_kg_query_ceo_pattern_with_the(dialogue_manager_helper_fixture)
     assert result == ("microsoft corporation", "has_ceo")
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_is_kg_query_ceo_pattern_with_a(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     result = dm._is_kg_query("who is a president of United States?")
@@ -195,6 +205,7 @@ async def test_is_kg_query_ceo_pattern_with_a(dialogue_manager_helper_fixture):
     assert result == ("united states", "has_president")
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_is_kg_query_founder_pattern(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     result = dm._is_kg_query("who is founder of Apple Inc")
@@ -202,6 +213,7 @@ async def test_is_kg_query_founder_pattern(dialogue_manager_helper_fixture):
     assert result == ("apple inc", "has_founder")
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_is_kg_query_location_located_pattern(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     result = dm._is_kg_query("where is Microsoft located")
@@ -209,6 +221,7 @@ async def test_is_kg_query_location_located_pattern(dialogue_manager_helper_fixt
     assert result == ("microsoft", "located_in")
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_is_kg_query_location_based_pattern(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     result = dm._is_kg_query("where is Apple based?")
@@ -216,6 +229,7 @@ async def test_is_kg_query_location_based_pattern(dialogue_manager_helper_fixtur
     assert result == ("apple", "located_in")
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_is_kg_query_acquire_pattern_company(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     result = dm._is_kg_query("what company did Google acquire?")
@@ -223,6 +237,7 @@ async def test_is_kg_query_acquire_pattern_company(dialogue_manager_helper_fixtu
     assert result == ("google", "acquire")
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_is_kg_query_acquire_pattern_general(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     result = dm._is_kg_query("what did Apple acquire")
@@ -230,6 +245,7 @@ async def test_is_kg_query_acquire_pattern_general(dialogue_manager_helper_fixtu
     assert result == ("apple", "acquire")
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_is_kg_query_entity_with_possessive_in_regex(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     result = dm._is_kg_query("who is ceo of Google's parent company?")
@@ -237,12 +253,14 @@ async def test_is_kg_query_entity_with_possessive_in_regex(dialogue_manager_help
     assert result == ("google's parent company", "has_ceo")
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_is_kg_query_no_match(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     result = dm._is_kg_query("tell me a joke")
     assert result is None
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_is_kg_query_empty_input(dialogue_manager_helper_fixture):
     dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
     result = dm._is_kg_query("")
@@ -250,6 +268,7 @@ async def test_is_kg_query_empty_input(dialogue_manager_helper_fixture):
 
 # KG Integration Tests
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_kg_qa_ceo_and_location(dialogue_manager_helper_fixture):
     dm, _, mock_llm_interface, mock_personality_manager, mock_content_analyzer, _, _, _ = dialogue_manager_helper_fixture
     session_id = "kg_integ_test_session_01"
@@ -292,6 +311,7 @@ async def test_kg_qa_ceo_and_location(dialogue_manager_helper_fixture):
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_kg_qa_fallback_if_kg_miss(dialogue_manager_helper_fixture):
     dm, _, mock_llm_interface, mock_personality_manager, mock_content_analyzer, _, _, _ = dialogue_manager_helper_fixture
     session_id = "kg_integ_test_session_02"
@@ -316,6 +336,7 @@ async def test_kg_qa_fallback_if_kg_miss(dialogue_manager_helper_fixture):
     assert r1 == expected_r1_fallback
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_kg_qa_fallback_if_no_kg_for_session(dialogue_manager_helper_fixture):
     dm, _, mock_llm_interface, mock_personality_manager, _, _, _, _ = dialogue_manager_helper_fixture
     session_id = "kg_integ_test_session_03" # No !analyze for this session
@@ -332,6 +353,7 @@ async def test_kg_qa_fallback_if_no_kg_for_session(dialogue_manager_helper_fixtu
     assert r1 == expected_r1_fallback
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)  # 5秒超時
 async def test_kg_qa_no_answer_from_kg_then_fallback(dialogue_manager_helper_fixture):
     dm, _, mock_llm_interface, mock_personality_manager, mock_content_analyzer, _, _, _ = dialogue_manager_helper_fixture
     session_id = "kg_integ_test_session_04"
