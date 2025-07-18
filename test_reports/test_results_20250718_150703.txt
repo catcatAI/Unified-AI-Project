@@ -1,0 +1,313 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.4.1, pluggy-1.6.0 -- /home/jules/.pyenv/versions/3.12.11/bin/python
+cachedir: .pytest_cache
+rootdir: /app
+configfile: pyproject.toml
+plugins: asyncio-1.1.0, timeout-2.4.0, anyio-4.9.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+timeout: 30.0s
+timeout method: thread
+timeout func_only: False
+collecting ... Collecting en-core-web-sm==3.8.0
+  Downloading https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl (12.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 22.2 MB/s eta 0:00:00
+Installing collected packages: en-core-web-sm
+Successfully installed en-core-web-sm-3.8.0
+common_types.py (debug version) is being imported and defining ServiceStatus...
+common_types.py (debug version) finished definitions.
+common_types.py (debug version) is being imported and defining ServiceStatus...
+common_types.py (debug version) finished definitions.
+core_ai.lis package initialized (version 0.0.1)
+Downloading spaCy en_core_web_sm model...
+[38;5;2m✔ Download and installation successful[0m
+You can now load the package via spacy.load('en_core_web_sm')
+core_ai.lis package initialized (version 0.0.1)
+ResourceAwarenessService module loaded.
+AIVirtualInputService module loaded.
+collected 172 items / 11 errors
+
+==================================== ERRORS ====================================
+_______ ERROR collecting tests/core_ai/dialogue/test_dialogue_manager.py _______
+ImportError while importing test module '/app/tests/core_ai/dialogue/test_dialogue_manager.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/core_ai/dialogue/test_dialogue_manager.py:12: in <module>
+    from src.core_ai.dialogue.dialogue_manager import DialogueManager
+src/core_ai/dialogue/__init__.py:2: in <module>
+    from . import dialogue_manager
+src/core_ai/dialogue/dialogue_manager.py:25: in <module>
+    from src.core_ai.learning.learning_manager import LearningManager
+src/core_ai/learning/learning_manager.py:12: in <module>
+    from src.hsp.connector import HSPConnector # Corrected
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hsp/connector.py:8: in <module>
+    import paho.mqtt.client as mqtt # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'paho'
+_ ERROR collecting tests/core_ai/service_discovery/test_service_discovery_module.py _
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:177: in exec_module
+    source_stat, co = _rewrite_test(fn, self.config)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:357: in _rewrite_test
+    tree = ast.parse(source, filename=strfn)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/ast.py:52: in parse
+    return compile(source, filename, mode, flags,
+E     File "/app/tests/core_ai/service_discovery/test_service_discovery_module.py", line 42
+E       def test_process_capability_advertisement_new_and_update(self, mock_trust_manager: MagicMock):
+E   IndentationError: unexpected indent
+_______________ ERROR collecting tests/hsp/test_hsp_connector.py _______________
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:177: in exec_module
+    source_stat, co = _rewrite_test(fn, self.config)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:357: in _rewrite_test
+    tree = ast.parse(source, filename=strfn)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/ast.py:52: in parse
+    return compile(source, filename, mode, flags,
+E     File "/app/tests/hsp/test_hsp_connector.py", line 67
+E       def test_unexpected_disconnection_flag_and_logging(self, connector_with_mock_client: HSPConnector, mock_paho_client: MagicMock, caplog):
+E   IndentationError: unexpected indent
+______________ ERROR collecting tests/hsp/test_hsp_integration.py ______________
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:177: in exec_module
+    source_stat, co = _rewrite_test(fn, self.config)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:357: in _rewrite_test
+    tree = ast.parse(source, filename=strfn)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/ast.py:52: in parse
+    return compile(source, filename, mode, flags,
+E     File "/app/tests/hsp/test_hsp_integration.py", line 366
+E       @pytest.mark.timeout(10)
+E   IndentationError: unexpected unindent
+_________ ERROR collecting tests/integration/test_knowledge_update.py __________
+ImportError while importing test module '/app/tests/integration/test_knowledge_update.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_knowledge_update.py:2: in <module>
+    from src.core_ai.dialogue.dialogue_manager import DialogueManager
+src/core_ai/dialogue/__init__.py:2: in <module>
+    from . import dialogue_manager
+src/core_ai/dialogue/dialogue_manager.py:25: in <module>
+    from src.core_ai.learning.learning_manager import LearningManager
+src/core_ai/learning/learning_manager.py:12: in <module>
+    from src.hsp.connector import HSPConnector # Corrected
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hsp/connector.py:8: in <module>
+    import paho.mqtt.client as mqtt # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'paho'
+_________ ERROR collecting tests/integration/test_self_improvement.py __________
+ImportError while importing test module '/app/tests/integration/test_self_improvement.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_self_improvement.py:2: in <module>
+    from src.core_ai.dialogue.dialogue_manager import DialogueManager
+src/core_ai/dialogue/__init__.py:2: in <module>
+    from . import dialogue_manager
+src/core_ai/dialogue/dialogue_manager.py:25: in <module>
+    from src.core_ai.learning.learning_manager import LearningManager
+src/core_ai/learning/learning_manager.py:12: in <module>
+    from src.hsp.connector import HSPConnector # Corrected
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hsp/connector.py:8: in <module>
+    import paho.mqtt.client as mqtt # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'paho'
+________________ ERROR collecting tests/interfaces/test_cli.py _________________
+ImportError while importing test module '/app/tests/interfaces/test_cli.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/interfaces/test_cli.py:7: in <module>
+    from src.interfaces.cli import main as cli_main
+src/interfaces/cli/main.py:9: in <module>
+    from src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID, DEFAULT_LLM_CONFIG, DEFAULT_OPERATIONAL_CONFIGS # Import new service management
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/core_services.py:7: in <module>
+    from core_ai.dialogue.dialogue_manager import DialogueManager
+src/core_ai/dialogue/__init__.py:2: in <module>
+    from . import dialogue_manager
+src/core_ai/dialogue/dialogue_manager.py:25: in <module>
+    from src.core_ai.learning.learning_manager import LearningManager
+src/core_ai/learning/learning_manager.py:12: in <module>
+    from src.hsp.connector import HSPConnector # Corrected
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hsp/connector.py:8: in <module>
+    import paho.mqtt.client as mqtt # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'paho'
+___________ ERROR collecting tests/services/test_main_api_server.py ____________
+ImportError while importing test module '/app/tests/services/test_main_api_server.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/services/test_main_api_server.py:5: in <module>
+    from src.services.main_api_server import app
+src/services/main_api_server.py:9: in <module>
+    from core_ai.dialogue.dialogue_manager import DialogueManager
+src/core_ai/dialogue/__init__.py:2: in <module>
+    from . import dialogue_manager
+src/core_ai/dialogue/dialogue_manager.py:25: in <module>
+    from src.core_ai.learning.learning_manager import LearningManager
+src/core_ai/learning/learning_manager.py:12: in <module>
+    from src.hsp.connector import HSPConnector # Corrected
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hsp/connector.py:8: in <module>
+    import paho.mqtt.client as mqtt # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'paho'
+_________ ERROR collecting tests/services/test_main_api_server_hsp.py __________
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:177: in exec_module
+    source_stat, co = _rewrite_test(fn, self.config)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:357: in _rewrite_test
+    tree = ast.parse(source, filename=strfn)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/ast.py:52: in parse
+    return compile(source, filename, mode, flags,
+E     File "/app/tests/services/test_main_api_server_hsp.py", line 95
+E       @pytest.mark.timeout(10)
+E       ^
+E   IndentationError: expected an indented block after class definition on line 93
+_______________ ERROR collecting tests/tools/test_logic_model.py _______________
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:177: in exec_module
+    source_stat, co = _rewrite_test(fn, self.config)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:357: in _rewrite_test
+    tree = ast.parse(source, filename=strfn)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/ast.py:52: in parse
+    return compile(source, filename, mode, flags,
+E     File "/app/tests/tools/test_logic_model.py", line 66
+E       def test_02_logic_parser_eval(self):
+E   IndentationError: unexpected indent
+_______________ ERROR collecting tests/tools/test_math_model.py ________________
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:177: in exec_module
+    source_stat, co = _rewrite_test(fn, self.config)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:357: in _rewrite_test
+    tree = ast.parse(source, filename=strfn)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/ast.py:52: in parse
+    return compile(source, filename, mode, flags,
+E     File "/app/tests/tools/test_math_model.py", line 59
+E       def test_data_generator_json(self):
+E   IndentationError: unexpected indent
+=========================== short test summary info ============================
+ERROR tests/core_ai/dialogue/test_dialogue_manager.py
+ERROR tests/core_ai/service_discovery/test_service_discovery_module.py
+ERROR tests/hsp/test_hsp_connector.py
+ERROR tests/hsp/test_hsp_integration.py
+ERROR tests/integration/test_knowledge_update.py
+ERROR tests/integration/test_self_improvement.py
+ERROR tests/interfaces/test_cli.py
+ERROR tests/services/test_main_api_server.py
+ERROR tests/services/test_main_api_server_hsp.py
+ERROR tests/tools/test_logic_model.py
+ERROR tests/tools/test_math_model.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 11 errors during collection !!!!!!!!!!!!!!!!!!!
+============================== 11 errors in 7.55s ==============================

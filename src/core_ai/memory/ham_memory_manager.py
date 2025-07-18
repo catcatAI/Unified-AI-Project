@@ -77,11 +77,7 @@ class HAMMemoryManager:
             # Assuming the key in env is already a valid URL-safe base64 encoded Fernet key
             self.fernet_key = key_str.encode()
         else:
-            print("CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.")
-            print("Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
-            print("DO NOT use this for any real data you want to keep, as it will be lost.")
             self.fernet_key = Fernet.generate_key()
-            print(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
 
         try:
             self.fernet = Fernet(self.fernet_key)
@@ -334,6 +330,8 @@ class HAMMemoryManager:
         Returns:
             Optional[str]: The generated memory ID if successful, otherwise None.
         """
+        if not self._simulate_disk_lag_and_check_limit():
+            return None
         print(f"HAM: Storing experience of type '{data_type}'")
 
         # Ensure metadata is a dict for internal processing, even if None is passed.

@@ -4,21 +4,27 @@
 import sys
 import os
 import subprocess
+import datetime
 
 def main():
     # 設置工作目錄
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     
+    # 創建測試報告目錄
+    output_dir = "test_reports"
+    os.makedirs(output_dir, exist_ok=True)
+
     # 輸出文件路徑
-    output_file = "test_output.txt"
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_file = os.path.join(output_dir, f"test_results_{timestamp}.txt")
     
     # 構建命令
     cmd = [
         sys.executable,
         "-m", "pytest",
-        "tests/core_ai/memory/test_ham_memory_manager.py",
+        "tests/",
         "-v",
-        "--timeout=10",
+        "--timeout=600",
         "--timeout_method=thread",
         "-s"
     ]

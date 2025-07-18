@@ -1,0 +1,1501 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.4.1, pluggy-1.6.0 -- /home/jules/.pyenv/versions/3.12.11/bin/python
+cachedir: .pytest_cache
+rootdir: /app
+configfile: pyproject.toml
+plugins: asyncio-1.1.0, timeout-2.4.0, anyio-4.9.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+timeout: 30.0s
+timeout method: thread
+timeout func_only: False
+collecting ... common_types.py (debug version) is being imported and defining ServiceStatus...
+common_types.py (debug version) finished definitions.
+common_types.py (debug version) is being imported and defining ServiceStatus...
+common_types.py (debug version) finished definitions.
+core_ai.lis package initialized (version 0.0.1)
+ResourceAwarenessService module loaded.
+core_ai.lis package initialized (version 0.0.1)
+AIVirtualInputService module loaded.
+Warning: Error accessing TensorFlow components: module 'numpy' has no attribute 'keras'
+Warning: Error accessing TensorFlow components: module 'numpy' has no attribute 'keras'
+collected 273 items
+
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_analyze_tool_file_no_classes_or_functions PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_analyze_tool_file_not_found PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_analyze_tool_file_parsing_error PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_analyze_tool_file_simple_class_and_function PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_ambiguous_patterns PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_direct_invalid_path PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_direct_valid_path PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_invalid_tools_directory PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_name_not_found PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_path_looks_like_path_but_not_found PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_prefers_exact_over_pattern PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_resolve_exact_name_dot_py PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_resolve_suffix_tool_pattern PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_resolve_tool_prefix_pattern PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_list_tool_files PASSED
+tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_list_tool_files_non_existent_dir PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_find_entity_node_id_in_kg_found ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_find_entity_node_id_in_kg_found_case_insensitive ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_find_entity_node_id_in_kg_not_found ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_find_entity_node_id_in_kg_empty_graph ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_find_entity_node_id_in_kg_none_graph ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_query_session_kg_found ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_query_session_kg_entity_not_found ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_query_session_kg_relationship_not_found ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_query_session_kg_no_graph_for_session ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_query_session_kg_target_no_label ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_is_kg_query_ceo_pattern ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_is_kg_query_ceo_pattern_with_the ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_is_kg_query_ceo_pattern_with_a ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_is_kg_query_founder_pattern ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_is_kg_query_location_located_pattern ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_is_kg_query_location_based_pattern ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_is_kg_query_acquire_pattern_company ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_is_kg_query_acquire_pattern_general ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_is_kg_query_entity_with_possessive_in_regex ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_is_kg_query_no_match ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_is_kg_query_empty_input ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+PASSED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_kg_qa_ceo_and_location ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+DialogueManager: Received input='!analyze: Innovate Corp is a tech company. Jane Doe is its CEO. It is in Silicon Valley and bought AlphaTech.', session_id='kg_integ_test_session_01', user_id='kg_integ_test_user_01'
+DialogueManager: Analyzing content for context_id 'kg_integ_test_session_01'...
+DialogueManager: KG for context 'kg_integ_test_session_01' updated: 4 nodes, 3 edges.
+FAILED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_kg_qa_fallback_if_kg_miss ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+DialogueManager: Received input='!analyze: Some other unrelated text.', session_id='kg_integ_test_session_02', user_id='kg_integ_test_user_02'
+DialogueManager: Analyzing content for context_id 'kg_integ_test_session_02'...
+DialogueManager: KG for context 'kg_integ_test_session_02' updated: 1 nodes, 0 edges.
+FAILED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_kg_qa_fallback_if_no_kg_for_session ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+DialogueManager: Received input='who is ceo of Innovate Corp?', session_id='kg_integ_test_session_03', user_id='kg_integ_test_user_03'
+FAILED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_kg_qa_no_answer_from_kg_then_fallback ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+DialogueManager: Received input='!analyze: Innovate Corp is a company.', session_id='kg_integ_test_session_04', user_id='kg_integ_test_user_04'
+DialogueManager: Analyzing content for context_id 'kg_integ_test_session_04'...
+DialogueManager: KG for context 'kg_integ_test_session_04' updated: 1 nodes, 0 edges.
+FAILED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_handle_draft_tool_request_success_flow ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+DialogueManager: Parsed I/O details: {'suggested_method_name': 'echo', 'class_docstring_hint': 'An echo tool.', 'method_docstring_hint': 'Echoes the input message.', 'parameters': [{'name': 'message', 'type': 'str', 'description': 'The message to echo.'}], 'return_type': 'str', 'return_description': 'The echoed message.'}
+FAILED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_handle_draft_tool_request_code_syntax_error ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+DialogueManager: Parsed I/O details: {'suggested_method_name': 'broken', 'class_docstring_hint': 'd', 'method_docstring_hint': 'd', 'parameters': [], 'return_type': 'Any', 'return_description': 'd'}
+FAILED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_handle_draft_tool_request_sandbox_execution_error ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+DialogueManager: Parsed I/O details: {'suggested_method_name': 'error_method', 'class_docstring_hint': 'Tool designed to error in sandbox.', 'method_docstring_hint': 'This method will raise an error.', 'parameters': [], 'return_type': 'None', 'return_description': 'Error.'}
+FAILED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_handle_draft_tool_request_io_parsing_json_error ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+FAILED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_handle_draft_tool_request_io_parsing_value_error ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+FAILED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_handle_draft_tool_request_io_details_missing_keys_fallback ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+FAILED
+tests/core_ai/dialogue/test_dialogue_manager.py::test_low_critique_score_triggers_repair ResourceAwarenessService initialized. Loaded profile: 'StandardAISandbox_v1' from '/app/configs/simulated_resources.yaml'
+FactExtractorModule initialized.
+DialogueManager: Initialized. Turn timeout: 120s. Min critique score to store: 0.0
+DialogueManager: Received input='This is a test input.', session_id='repair_test_session', user_id='repair_test_user'
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_execute_formula FormulaEngine: Skipping disabled formula entry: disabled_formula
+FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/valid_formulas.json. Loaded 3 formulas.
+FormulaEngine: Executing formula 'greeting_high'
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_execute_formula_no_params FormulaEngine: Skipping disabled formula entry: disabled_formula
+FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/valid_formulas.json. Loaded 3 formulas.
+FormulaEngine: Executing formula 'farewell'
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_load_formulas_empty_list FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/empty_list.json. Loaded 0 formulas.
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_load_formulas_file_not_found FormulaEngine: Error - Formulas file not found at /app/tests/core_ai/formula_engine/test_temp_formulas/non_existent.json
+FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/non_existent.json. Loaded 0 formulas.
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_load_formulas_malformed_json FormulaEngine: Error decoding JSON from /app/tests/core_ai/formula_engine/test_temp_formulas/malformed.json: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/malformed.json. Loaded 0 formulas.
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_load_formulas_valid_file FormulaEngine: Skipping disabled formula entry: disabled_formula
+FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/valid_formulas.json. Loaded 3 formulas.
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_match_input_case_insensitive FormulaEngine: Skipping disabled formula entry: disabled_formula
+FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/valid_formulas.json. Loaded 3 formulas.
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_match_input_disabled_formula FormulaEngine: Skipping disabled formula entry: disabled_formula
+FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/valid_formulas.json. Loaded 3 formulas.
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_match_input_empty_input FormulaEngine: Skipping disabled formula entry: disabled_formula
+FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/valid_formulas.json. Loaded 3 formulas.
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_match_input_no_match FormulaEngine: Skipping disabled formula entry: disabled_formula
+FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/valid_formulas.json. Loaded 3 formulas.
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_match_input_priority FormulaEngine: Skipping disabled formula entry: disabled_formula
+FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/valid_formulas.json. Loaded 3 formulas.
+PASSED
+tests/core_ai/formula_engine/test_formula_engine.py::TestFormulaEngine::test_match_input_simple_match FormulaEngine: Skipping disabled formula entry: disabled_formula
+FormulaEngine initialized. Attempted to load formulas from /app/tests/core_ai/formula_engine/test_temp_formulas/valid_formulas.json. Loaded 3 formulas.
+PASSED
+tests/core_ai/language_models/test_daily_language_model.py::TestDailyLanguageModel::test_01_initialization DailyLanguageModel: No LLMInterface provided, creating default (mock-based).
+LLMInterface: No configuration provided, using default mock configuration.
+LLMInterface: Initialized MOCK client.
+LLMInterface: Initialized. Active provider: mock
+DailyLanguageModel: Initialized with LLMInterface.
+TestDailyLanguageModel.test_01_initialization PASSED
+PASSED
+tests/core_ai/language_models/test_daily_language_model.py::TestDailyLanguageModel::test_02_recognize_intent_calculate DailyLanguageModel: No LLMInterface provided, creating default (mock-based).
+LLMInterface: No configuration provided, using default mock configuration.
+LLMInterface: Initialized MOCK client.
+LLMInterface: Initialized. Active provider: mock
+DailyLanguageModel: Initialized with LLMInterface.
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "calculate 2 + 2"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "calculate", "parameters": {"query": "2 + 2", "original_query": "calculate 2 + 2"}}
+---
+DLM: Recognized intent: tool='calculate', params='{'query': '2 + 2', 'original_query': 'calculate 2 + 2'}'
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "what is 10 * 5"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "calculate", "parameters": {"query": "10 * 5", "original_query": "what is 10 * 5"}}
+---
+DLM: Recognized intent: tool='calculate', params='{'query': '10 * 5', 'original_query': 'what is 10 * 5'}'
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "compute 100 / 20"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "calculate", "parameters": {"query": "100 / 20", "original_query": "compute 100 / 20"}}
+---
+DLM: Recognized intent: tool='calculate', params='{'query': '100 / 20', 'original_query': 'compute 100 / 20'}'
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "solve for 7 - 3"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "calculate", "parameters": {"query": "7 - 3", "original_query": "solve for 7 - 3"}}
+---
+DLM: Recognized intent: tool='calculate', params='{'query': '7 - 3', 'original_query': 'solve for 7 - 3'}'
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "3+3"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "calculate", "parameters": {"query": "3+3", "original_query": "3+3"}}
+---
+DLM: Recognized intent: tool='calculate', params='{'query': '3+3', 'original_query': '3+3'}'
+TestDailyLanguageModel.test_02_recognize_intent_calculate PASSED
+PASSED
+tests/core_ai/language_models/test_daily_language_model.py::TestDailyLanguageModel::test_03_recognize_intent_evaluate_logic DailyLanguageModel: No LLMInterface provided, creating default (mock-based).
+LLMInterface: No configuration provided, using default mock configuration.
+LLMInterface: Initialized MOCK client.
+LLMInterface: Initialized. Active provider: mock
+DailyLanguageModel: Initialized with LLMInterface.
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "evaluate true AND false"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "evaluate_logic", "parameters": {"query": "true AND false", "original_query": "evaluate true AND false"}}
+---
+DLM: Recognized intent: tool='evaluate_logic', params='{'query': 'true AND false', 'original_query': 'evaluate true AND false'}'
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "logic of (NOT true OR false)"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "evaluate_logic", "parameters": {"query": "(NOT true OR false)", "original_query": "logic of (NOT true OR false)"}}
+---
+DLM: Recognized intent: tool='evaluate_logic', params='{'query': '(NOT true OR false)', 'original_query': 'logic of (NOT true OR false)'}'
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "true or false"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "evaluate_logic", "parameters": {"query": "true or false", "original_query": "true or false"}}
+---
+DLM: Recognized intent: tool='evaluate_logic', params='{'query': 'true or false', 'original_query': 'true or false'}'
+TestDailyLanguageModel.test_03_recognize_intent_evaluate_logic PASSED
+PASSED
+tests/core_ai/language_models/test_daily_language_model.py::TestDailyLanguageModel::test_04_recognize_intent_translate_text DailyLanguageModel: No LLMInterface provided, creating default (mock-based).
+LLMInterface: No configuration provided, using default mock configuration.
+LLMInterface: Initialized MOCK client.
+LLMInterface: Initialized. Active provider: mock
+DailyLanguageModel: Initialized with LLMInterface.
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "translate hello to chinese"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "translate_text", "parameters": {"text_to_translate_hint": "hello", "target_language_hint": "chinese", "original_query": "translate hello to chinese"}}
+---
+DLM: Recognized intent: tool='translate_text', params='{'text_to_translate_hint': 'hello', 'target_language_hint': 'chinese', 'original_query': 'translate hello to chinese'}'
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "translate 'good morning' to french"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "translate_text", "parameters": {"text_to_translate_hint": "good morning", "target_language_hint": "french", "original_query": "translate 'good morning' to french"}}
+---
+DLM: Recognized intent: tool='translate_text', params='{'text_to_translate_hint': 'good morning', 'target_language_hint': 'french', 'original_query': "translate 'good morning' to french"}'
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "cat in spanish"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "translate_text", "parameters": {"text_to_translate_hint": "cat", "target_language_hint": "spanish", "original_query": "cat in spanish"}}
+---
+DLM: Recognized intent: tool='translate_text', params='{'text_to_translate_hint': 'cat', 'target_language_hint': 'spanish', 'original_query': 'cat in spanish'}'
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "meaning of bonjour"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "translate_text", "parameters": {"original_query": "meaning of bonjour"}}
+---
+DLM: Recognized intent: tool='translate_text', params='{'original_query': 'meaning of bonjour'}'
+TestDailyLanguageModel.test_04_recognize_intent_translate_text PASSED
+PASSED
+tests/core_ai/language_models/test_daily_language_model.py::TestDailyLanguageModel::test_05_no_intent_recognized DailyLanguageModel: No LLMInterface provided, creating default (mock-based).
+LLMInterface: No configuration provided, using default mock configuration.
+LLMInterface: Initialized MOCK client.
+LLMInterface: Initialized. Active provider: mock
+DailyLanguageModel: Initialized with LLMInterface.
+DLM: Sending prompt to LLM for intent recognition:
+---
+You are an expert at routing user queries to the correct tool.
+Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.
+If no tool is appropriate, respond with "NO_TOOL".
+
+Available tools:
+1. calculate: Performs arithmetic calculations.
+2. evaluate_logic: Evaluates simple logical expressions.
+3. translate_text: Translates text between languages.
+4. inspect_code: Describes the structure of available tools.
+
+User Query: "this is a general statement without clear tool triggers"
+
+Respond ONLY with a valid JSON object adhering to the following structure:
+{
+  "tool_name": "<selected_tool_name_or_NO_TOOL>",
+  "parameters": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }
+}
+
+Specific instructions for the 'parameters' object based on 'tool_name':
+- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.
+- For 'calculate': 'parameters' must be an object like {"query": "<the_full_arithmetic_expression_to_calculate>"}. Example: {"query": "2 + 2 / 5"}.
+- For 'evaluate_logic': 'parameters' must be an object like {"query": "<the_logical_expression_to_evaluate>"}. If the user specifies an evaluation method (e.g., "using nn"), include {"method": "nn"}. Otherwise, you can omit 'method' or use {"method": "parser"}. Example: {"query": "(true AND false) OR NOT true"}.
+- For 'translate_text': 'parameters' must be an object containing {"text_to_translate": "<text_to_be_translated>"} and {"target_language": "<target_language_code_or_name>"}. If the user specifies a source language, also include {"source_language": "<source_language_code_or_name>"}. Example: {"text_to_translate": "Hello world", "target_language": "Spanish"}.
+
+Only include parameters relevant to the selected tool.
+
+---
+DLM: Received raw response from LLM:
+---
+{"tool_name": "NO_TOOL", "parameters": null}
+---
+DLM: LLM indicated no appropriate tool.
+TestDailyLanguageModel.test_05_no_intent_recognized PASSED
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_01_initialization ContentAnalyzerModule: Loaded 14 ontology mappings and 3 prefix definitions from '/app/configs/ontology_mappings.yaml'.
+ContentAnalyzerModule initialized with spaCy model: core_web_sm. Internal graph created. Ontology mappings loaded: 14 entries.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_02_simple_entity_extraction NetworkX graph constructed: 4 nodes, 2 edges.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_03_no_entities_extraction NetworkX graph constructed: 0 nodes, 0 edges.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_04_simple_svo_relationship DEBUG_TEST_04: Processing verb 'develops' (lemma: develop)
+DEBUG_TEST_04: SVO subject candidate: 'Google'
+DEBUG_TEST_04: SVO subj_entity_id for 'Google': ent_google_ORG_rule_0
+NetworkX graph constructed: 2 nodes, 1 edges.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_05_prep_object_relationship DEBUG_MATCHER_LOC: Found ORG token 'Microsoft', GPE/LOC token 'Redmond' in span 'Microsoft is based in Redmond'
+DEBUG_MATCHER_LOC: Source ID: ent_microsoft_ORG_0, Target ID: ent_redmond_GPE_1
+NetworkX graph constructed: 2 nodes, 1 edges.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_06_noun_prep_noun_relationship_of NetworkX graph constructed: 3 nodes, 3 edges.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_07_noun_of_noun_org_has_attribute NetworkX graph constructed: 2 nodes, 1 edges.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_08_noun_of_noun_attribute_of NetworkX graph constructed: 3 nodes, 2 edges.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_08a_entity_is_a_concept NetworkX graph constructed: 2 nodes, 1 edges.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_09_possessive_relationship_entity_to_entity NetworkX graph constructed: 2 nodes, 1 edges.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_10_possessive_relationship_entity_to_concept NetworkX graph constructed: 3 nodes, 1 edges.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_11_matcher_located_in DEBUG_MATCHER_ENTRY: doc='Innovate Corp is located in Silicon Valley.', entities for matcher: [('Innovate Corp', 'ORG'), ('Silicon Valley', 'LOC')]
+DEBUG_MATCHER_ENTRY: extracted_entities keys: ['ent_innovate_corp_ORG_0', 'ent_silicon_valley_LOC_1']
+DEBUG_MATCHER_ENTRY: Number of raw matches from self.matcher(doc): 1
+DEBUG_MATCHER_LOC: Found ORG token 'Corp', GPE/LOC token 'Silicon' in span 'Corp is located in Silicon'
+DEBUG_MATCHER_LOC: Source ID: ent_innovate_corp_ORG_0, Target ID: ent_silicon_valley_LOC_1
+NetworkX graph constructed: 2 nodes, 1 edges.
+PASSED
+tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_12_matcher_works_for NetworkX graph constructed: 2 nodes, 1 edges.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_add_and_get_antibody_roundtrip MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.add_antibody called.
+HAMLISCache: Stored antibody 'antibody_rt_001' with HAM ID 'mock_mem_000001' and data_type 'lis_antibody_v0.1_UNEXPECTED_TONE_SHIFT'.
+Conceptual: HAMLISCache.get_learned_antibodies called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_add_antibody_success MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.add_antibody called.
+HAMLISCache: Stored antibody 'antibody_add_001' with HAM ID 'mock_mem_000001' and data_type 'lis_antibody_v0.1_RHYTHM_BREAK'.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_get_incident_by_id_found MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.get_incident_by_id called for incident_get_002
+HAMLISCache: Retrieved and deserialized incident 'incident_get_002'.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_get_incident_by_id_not_found MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.get_incident_by_id called for non_existent_id_123
+HAMLISCache: Incident 'non_existent_id_123' not found.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_get_learned_antibodies_filter_by_anomaly_type MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.add_antibody called.
+HAMLISCache: Stored antibody 'ab1' with HAM ID 'mock_mem_000001' and data_type 'lis_antibody_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.add_antibody called.
+HAMLISCache: Stored antibody 'ab2' with HAM ID 'mock_mem_000002' and data_type 'lis_antibody_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.add_antibody called.
+HAMLISCache: Stored antibody 'ab3' with HAM ID 'mock_mem_000003' and data_type 'lis_antibody_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.get_learned_antibodies called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_get_learned_antibodies_filter_by_effectiveness MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.add_antibody called.
+HAMLISCache: Stored antibody 'ab1' with HAM ID 'mock_mem_000001' and data_type 'lis_antibody_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.add_antibody called.
+HAMLISCache: Stored antibody 'ab2' with HAM ID 'mock_mem_000002' and data_type 'lis_antibody_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.add_antibody called.
+HAMLISCache: Stored antibody 'ab3' with HAM ID 'mock_mem_000003' and data_type 'lis_antibody_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.get_learned_antibodies called.
+Conceptual: HAMLISCache.get_learned_antibodies called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_get_learned_antibodies_no_filters MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.add_antibody called.
+HAMLISCache: Stored antibody 'ab1' with HAM ID 'mock_mem_000001' and data_type 'lis_antibody_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.add_antibody called.
+HAMLISCache: Stored antibody 'ab2' with HAM ID 'mock_mem_000002' and data_type 'lis_antibody_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.get_learned_antibodies called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_query_incidents_by_anomaly_type MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for q_id1
+HAMLISCache: Stored incident 'q_id1' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id2
+HAMLISCache: Stored incident 'q_id2' with HAM ID 'mock_mem_000002' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.store_incident called for q_id3
+HAMLISCache: Stored incident 'q_id3' with HAM ID 'mock_mem_000003' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id4
+HAMLISCache: Stored incident 'q_id4' with HAM ID 'mock_mem_000004' and data_type 'lis_incident_v0.1_UNEXPECTED_TONE_SHIFT'.
+Conceptual: HAMLISCache.store_incident called for q_id5
+HAMLISCache: Stored incident 'q_id5' with HAM ID 'mock_mem_000005' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.query_incidents called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_query_incidents_by_min_severity MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for q_id1
+HAMLISCache: Stored incident 'q_id1' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id2
+HAMLISCache: Stored incident 'q_id2' with HAM ID 'mock_mem_000002' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.store_incident called for q_id3
+HAMLISCache: Stored incident 'q_id3' with HAM ID 'mock_mem_000003' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id4
+HAMLISCache: Stored incident 'q_id4' with HAM ID 'mock_mem_000004' and data_type 'lis_incident_v0.1_UNEXPECTED_TONE_SHIFT'.
+Conceptual: HAMLISCache.store_incident called for q_id5
+HAMLISCache: Stored incident 'q_id5' with HAM ID 'mock_mem_000005' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.query_incidents called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_query_incidents_by_status MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for q_id1
+HAMLISCache: Stored incident 'q_id1' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id2
+HAMLISCache: Stored incident 'q_id2' with HAM ID 'mock_mem_000002' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.store_incident called for q_id3
+HAMLISCache: Stored incident 'q_id3' with HAM ID 'mock_mem_000003' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id4
+HAMLISCache: Stored incident 'q_id4' with HAM ID 'mock_mem_000004' and data_type 'lis_incident_v0.1_UNEXPECTED_TONE_SHIFT'.
+Conceptual: HAMLISCache.store_incident called for q_id5
+HAMLISCache: Stored incident 'q_id5' with HAM ID 'mock_mem_000005' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.query_incidents called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_query_incidents_by_tags_multiple_all_must_match MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for q_id1
+HAMLISCache: Stored incident 'q_id1' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id2
+HAMLISCache: Stored incident 'q_id2' with HAM ID 'mock_mem_000002' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.store_incident called for q_id3
+HAMLISCache: Stored incident 'q_id3' with HAM ID 'mock_mem_000003' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id4
+HAMLISCache: Stored incident 'q_id4' with HAM ID 'mock_mem_000004' and data_type 'lis_incident_v0.1_UNEXPECTED_TONE_SHIFT'.
+Conceptual: HAMLISCache.store_incident called for q_id5
+HAMLISCache: Stored incident 'q_id5' with HAM ID 'mock_mem_000005' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.query_incidents called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_query_incidents_by_tags_single MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for q_id1
+HAMLISCache: Stored incident 'q_id1' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id2
+HAMLISCache: Stored incident 'q_id2' with HAM ID 'mock_mem_000002' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.store_incident called for q_id3
+HAMLISCache: Stored incident 'q_id3' with HAM ID 'mock_mem_000003' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id4
+HAMLISCache: Stored incident 'q_id4' with HAM ID 'mock_mem_000004' and data_type 'lis_incident_v0.1_UNEXPECTED_TONE_SHIFT'.
+Conceptual: HAMLISCache.store_incident called for q_id5
+HAMLISCache: Stored incident 'q_id5' with HAM ID 'mock_mem_000005' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.query_incidents called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_query_incidents_by_time_window MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for q_id1
+HAMLISCache: Stored incident 'q_id1' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id2
+HAMLISCache: Stored incident 'q_id2' with HAM ID 'mock_mem_000002' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.store_incident called for q_id3
+HAMLISCache: Stored incident 'q_id3' with HAM ID 'mock_mem_000003' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id4
+HAMLISCache: Stored incident 'q_id4' with HAM ID 'mock_mem_000004' and data_type 'lis_incident_v0.1_UNEXPECTED_TONE_SHIFT'.
+Conceptual: HAMLISCache.store_incident called for q_id5
+HAMLISCache: Stored incident 'q_id5' with HAM ID 'mock_mem_000005' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.query_incidents called.
+Conceptual: HAMLISCache.query_incidents called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_query_incidents_combined_filters MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for q_id1
+HAMLISCache: Stored incident 'q_id1' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id2
+HAMLISCache: Stored incident 'q_id2' with HAM ID 'mock_mem_000002' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.store_incident called for q_id3
+HAMLISCache: Stored incident 'q_id3' with HAM ID 'mock_mem_000003' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id4
+HAMLISCache: Stored incident 'q_id4' with HAM ID 'mock_mem_000004' and data_type 'lis_incident_v0.1_UNEXPECTED_TONE_SHIFT'.
+Conceptual: HAMLISCache.store_incident called for q_id5
+HAMLISCache: Stored incident 'q_id5' with HAM ID 'mock_mem_000005' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.query_incidents called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_query_incidents_empty_result MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for q_id1
+HAMLISCache: Stored incident 'q_id1' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id2
+HAMLISCache: Stored incident 'q_id2' with HAM ID 'mock_mem_000002' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.store_incident called for q_id3
+HAMLISCache: Stored incident 'q_id3' with HAM ID 'mock_mem_000003' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id4
+HAMLISCache: Stored incident 'q_id4' with HAM ID 'mock_mem_000004' and data_type 'lis_incident_v0.1_UNEXPECTED_TONE_SHIFT'.
+Conceptual: HAMLISCache.store_incident called for q_id5
+HAMLISCache: Stored incident 'q_id5' with HAM ID 'mock_mem_000005' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.query_incidents called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_query_incidents_limit_and_sorting MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for q_id1
+HAMLISCache: Stored incident 'q_id1' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id2
+HAMLISCache: Stored incident 'q_id2' with HAM ID 'mock_mem_000002' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.store_incident called for q_id3
+HAMLISCache: Stored incident 'q_id3' with HAM ID 'mock_mem_000003' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id4
+HAMLISCache: Stored incident 'q_id4' with HAM ID 'mock_mem_000004' and data_type 'lis_incident_v0.1_UNEXPECTED_TONE_SHIFT'.
+Conceptual: HAMLISCache.store_incident called for q_id5
+HAMLISCache: Stored incident 'q_id5' with HAM ID 'mock_mem_000005' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.query_incidents called.
+Conceptual: HAMLISCache.query_incidents called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_query_incidents_no_filters MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for q_id1
+HAMLISCache: Stored incident 'q_id1' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id2
+HAMLISCache: Stored incident 'q_id2' with HAM ID 'mock_mem_000002' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.store_incident called for q_id3
+HAMLISCache: Stored incident 'q_id3' with HAM ID 'mock_mem_000003' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+Conceptual: HAMLISCache.store_incident called for q_id4
+HAMLISCache: Stored incident 'q_id4' with HAM ID 'mock_mem_000004' and data_type 'lis_incident_v0.1_UNEXPECTED_TONE_SHIFT'.
+Conceptual: HAMLISCache.store_incident called for q_id5
+HAMLISCache: Stored incident 'q_id5' with HAM ID 'mock_mem_000005' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.query_incidents called.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_store_and_get_incident_roundtrip MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for incident_roundtrip_003
+HAMLISCache: Stored incident 'incident_roundtrip_003' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_LOW_DIVERSITY'.
+Conceptual: HAMLISCache.get_incident_by_id called for incident_roundtrip_003
+HAMLISCache: Retrieved and deserialized incident 'incident_roundtrip_003'.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_store_incident_missing_anomaly_event MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for incident_bad_004
+Error: LIS_IncidentRecord is missing 'anomaly_event'. Cannot store.
+PASSED
+tests/core_ai/lis/test_ham_lis_cache.py::TestHAMLISCache::test_store_incident_success MockHAMMemoryManager initialized for LIS tests.
+HAMLISCache initialized, using HAM instance: MockHAMMemoryManager
+Conceptual: HAMLISCache.store_incident called for incident_store_001
+HAMLISCache: Stored incident 'incident_store_001' with HAM ID 'mock_mem_000001' and data_type 'lis_incident_v0.1_RHYTHM_BREAK'.
+PASSED
+tests/core_ai/lis/test_tonal_repair_engine.py::TestTonalRepairEngine::test_repair_output PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_01_initialization_and_empty_store Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_01_initialization_and_empty_store...
+test_01_initialization_and_empty_store PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_02_store_and_recall_text_experience Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_02_store_and_recall_text_experience...
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+HAM: Recalling gist for memory_id 'mem_000001'
+test_02_store_and_recall_text_experience PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_03_store_and_recall_generic_data Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_03_store_and_recall_generic_data...
+HAM: Storing experience of type 'sensor_reading'
+HAM: Stored experience mem_000001
+HAM: Recalling gist for memory_id 'mem_000001'
+test_03_store_and_recall_generic_data PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_04_persistence Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_04_persistence...
+Core memory loaded from /app/data/processed_data/test_ham_core_memory.json. Next ID: 1
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+HAM: Storing experience of type 'log_entry'
+HAM: Stored experience mem_000001
+Core memory loaded from /app/data/processed_data/test_ham_core_memory.json. Next ID: 2
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+HAM: Recalling gist for memory_id 'mem_000001'
+test_04_persistence PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_05_recall_non_existent_memory Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_05_recall_non_existent_memory...
+HAM: Recalling gist for memory_id 'mem_nonexistent'
+Error: Memory ID mem_nonexistent not found.
+test_05_recall_non_existent_memory PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_06_query_memory_keywords Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_06_query_memory_keywords...
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000002
+HAM: Storing experience of type 'log_entry'
+HAM: Stored experience mem_000003
+HAM: Querying core memory (type: None, meta_filters: None, keywords: ['weather', 'alice'])
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Query returned 1 results (limit was 5).
+HAM: Querying core memory (type: None, meta_filters: None, keywords: ['weather'])
+HAM: Recalling gist for memory_id 'mem_000003'
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Query returned 2 results (limit was 5).
+test_06_query_memory_keywords PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_07_query_memory_data_type Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_07_query_memory_data_type...
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+HAM: Storing experience of type 'log_entry'
+HAM: Stored experience mem_000002
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000003
+HAM: Querying core memory (type: dialogue_text, meta_filters: None, keywords: None)
+HAM: Recalling gist for memory_id 'mem_000003'
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Query returned 2 results (limit was 10).
+test_07_query_memory_data_type PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_08_query_memory_date_range Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_08_query_memory_date_range...
+HAM: Storing experience of type 'event'
+HAM: Stored experience mem_000001
+HAM: Querying core memory (type: None, meta_filters: None, keywords: None)
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Query returned 1 results (limit was 5).
+HAM: Querying core memory (type: None, meta_filters: None, keywords: None)
+HAM: Query returned 0 results (limit was 5).
+test_08_query_memory_date_range PASSED (basic check)
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_09_empty_text_abstraction Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_09_empty_text_abstraction...
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+HAM: Recalling gist for memory_id 'mem_000001'
+test_09_empty_text_abstraction PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_10_encryption_decryption Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_10_encryption_decryption...
+test_10_encryption_decryption PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_11_checksum_verification Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_11_checksum_verification...
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+test_11_checksum_verification PASSED (mismatch test depends on encryption state)
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_12_advanced_text_abstraction_placeholders Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_12_advanced_text_abstraction_placeholders...
+HAM: Storing experience of type 'user_dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+HAM: Recalling gist for memory_id 'mem_000001'
+Core memory file not found. Initializing an empty store and saving.
+HAM: Storing experience of type 'user_dialogue_text'
+HAM: Placeholder: Detected Chinese-like text, conceptual radicals would be extracted.
+HAM: Stored experience mem_000001
+HAM: Recalling gist for memory_id 'mem_000001'
+test_12_advanced_text_abstraction_placeholders PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_13_store_experience_simulated_disk_full Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_13_store_experience_simulated_disk_full...
+HAM: CRITICAL - Simulated disk full! Usage: 1.00GB, Limit: 1.00GB. Save operation aborted.
+test_13_store_experience_simulated_disk_full PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_14_store_experience_simulated_lag_warning Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_14_store_experience_simulated_lag_warning...
+test_14_store_experience_simulated_lag_warning PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_15_store_experience_simulated_lag_critical Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_15_store_experience_simulated_lag_critical...
+test_15_store_experience_simulated_lag_critical PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_16_get_current_disk_usage_gb Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_16_get_current_disk_usage_gb...
+HAM: Storing experience of type 'test_file_size'
+HAM: Stored experience mem_000001
+test_16_get_current_disk_usage_gb PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_17_query_core_memory_return_multiple_candidates Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_17_query_core_memory_return_multiple_candidates...
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000001
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000002
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000003
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000004
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000005
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000006
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000007
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000008
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000009
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000010
+HAM: Querying core memory (type: candidate_test, meta_filters: None, keywords: None)
+HAM: Recalling gist for memory_id 'mem_000010'
+HAM: Recalling gist for memory_id 'mem_000009'
+HAM: Recalling gist for memory_id 'mem_000008'
+HAM: Recalling gist for memory_id 'mem_000007'
+HAM: Recalling gist for memory_id 'mem_000006'
+HAM: Recalling gist for memory_id 'mem_000005'
+HAM: Recalling gist for memory_id 'mem_000004'
+HAM: Recalling gist for memory_id 'mem_000003'
+HAM: Recalling gist for memory_id 'mem_000002'
+HAM: Recalling gist for memory_id 'mem_000001'
+test_17_query_core_memory_return_multiple_candidates PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_18_encryption_failure Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_18_encryption_failure...
+HAM: Storing experience of type 'test_type'
+Error during SL processing (compress/encrypt/checksum): Encryption failed
+test_18_encryption_failure PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_19_disk_full_handling Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_19_disk_full_handling...
+HAM: WARNING - Simulated disk usage (9.90GB) is at CRITICAL level (>9.50GB). Simulating 0.05s lag.
+test_19_disk_full_handling PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_20_delete_old_experiences Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_20_delete_old_experiences...
+HAM: Storing experience of type 'test_type'
+HAM: Stored experience mem_000001
+HAM: Storing experience of type 'test_type'
+HAM: Stored experience mem_000002
+HAM: Storing experience of type 'test_type'
+HAM: Stored experience mem_000003
+HAM: Storing experience of type 'test_type'
+HAM: Stored experience mem_000004
+HAM: Storing experience of type 'test_type'
+HAM: Stored experience mem_000005
+test_20_delete_old_experiences PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_21_concurrent_access Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_21_concurrent_access...
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000001
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000002
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000003
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000004
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000005
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000006
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000007
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000008
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000009
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000010
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Recalling gist for memory_id 'mem_000002'
+HAM: Recalling gist for memory_id 'mem_000003'
+HAM: Recalling gist for memory_id 'mem_000004'
+HAM: Recalling gist for memory_id 'mem_000005'
+HAM: Recalling gist for memory_id 'mem_000006'
+HAM: Recalling gist for memory_id 'mem_000007'
+HAM: Recalling gist for memory_id 'mem_000008'
+HAM: Recalling gist for memory_id 'mem_000009'
+HAM: Recalling gist for memory_id 'mem_000010'
+HAM: Querying core memory (type: concurrent_test, meta_filters: None, keywords: None)
+HAM: Recalling gist for memory_id 'mem_000010'
+HAM: Recalling gist for memory_id 'mem_000009'
+HAM: Recalling gist for memory_id 'mem_000008'
+HAM: Recalling gist for memory_id 'mem_000007'
+HAM: Recalling gist for memory_id 'mem_000006'
+HAM: Recalling gist for memory_id 'mem_000005'
+HAM: Recalling gist for memory_id 'mem_000004'
+HAM: Recalling gist for memory_id 'mem_000003'
+HAM: Recalling gist for memory_id 'mem_000002'
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Query returned 10 results (limit was 10).
+test_21_concurrent_access PASSED
+PASSED
+tests/core_ai/meta_formulas/test_meta_formulas.py::TestMetaFormulas::test_errx PASSED
+tests/core_ai/meta_formulas/test_meta_formulas.py::TestMetaFormulas::test_meta_formula PASSED
+tests/core_ai/meta_formulas/test_meta_formulas.py::TestMetaFormulas::test_undefined_field PASSED
+tests/core_ai/personality/test_personality_manager.py::TestPersonalityManager::test_01_initialization_default_path PersonalityManager: Successfully loaded personality 'miko_base'.
+PersonalityManager initialized. Profiles dir: /app/configs/personality_profiles
+PersonalityManager: Profile 'miko_base' not found. Trying default.
+PersonalityManager: Default profile 'miko_base' also not found. No personality loaded.
+PersonalityManager initialized. Profiles dir: /app/tests/test_output_data/personality_manager_files/personality_profiles
+TestPersonalityManager.test_01_initialization_default_path PASSED
+PASSED
+tests/core_ai/personality/test_personality_manager.py::TestPersonalityManager::test_02_initialization_custom_path PersonalityManager: Successfully loaded personality 'miko_base'.
+PersonalityManager initialized. Profiles dir: /app/configs/personality_profiles
+PersonalityManager: Profile 'miko_base' not found. Trying default.
+PersonalityManager: Default profile 'miko_base' also not found. No personality loaded.
+PersonalityManager initialized. Profiles dir: /app/tests/test_output_data/personality_manager_files/personality_profiles
+PersonalityManager: Successfully loaded personality 'dummy_test_profile'.
+PersonalityManager initialized. Profiles dir: /app/tests/test_output_data/personality_manager_files/personality_profiles
+TestPersonalityManager.test_02_initialization_custom_path PASSED
+PASSED
+tests/core_ai/personality/test_personality_manager.py::TestPersonalityManager::test_03_load_personality PersonalityManager: Successfully loaded personality 'miko_base'.
+PersonalityManager initialized. Profiles dir: /app/configs/personality_profiles
+PersonalityManager: Profile 'miko_base' not found. Trying default.
+PersonalityManager: Default profile 'miko_base' also not found. No personality loaded.
+PersonalityManager initialized. Profiles dir: /app/tests/test_output_data/personality_manager_files/personality_profiles
+PersonalityManager: Successfully loaded personality 'dummy_test_profile'.
+TestPersonalityManager.test_03_load_personality PASSED
+PASSED
+tests/core_ai/personality/test_personality_manager.py::TestPersonalityManager::test_04_load_non_existent_profile PersonalityManager: Successfully loaded personality 'miko_base'.
+PersonalityManager initialized. Profiles dir: /app/configs/personality_profiles
+PersonalityManager: Profile 'miko_base' not found. Trying default.
+PersonalityManager: Default profile 'miko_base' also not found. No personality loaded.
+PersonalityManager initialized. Profiles dir: /app/tests/test_output_data/personality_manager_files/personality_profiles
+PersonalityManager: Profile 'non_existent_profile_qwert' not found. Trying default.
+PersonalityManager: Successfully loaded personality 'miko_base'.
+TestPersonalityManager.test_04_load_non_existent_profile PASSED
+PASSED
+tests/core_ai/personality/test_personality_manager.py::TestPersonalityManager::test_05_get_trait PersonalityManager: Successfully loaded personality 'miko_base'.
+PersonalityManager initialized. Profiles dir: /app/configs/personality_profiles
+PersonalityManager: Profile 'miko_base' not found. Trying default.
+PersonalityManager: Default profile 'miko_base' also not found. No personality loaded.
+PersonalityManager initialized. Profiles dir: /app/tests/test_output_data/personality_manager_files/personality_profiles
+TestPersonalityManager.test_05_get_trait PASSED
+PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_init PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_process_capability_advertisement_new_and_update PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_process_capability_advertisement_missing_ids PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_get_capability_by_id PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_find_capabilities_no_filters PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_find_capabilities_by_id PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_find_capabilities_by_name PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_find_capabilities_by_tags PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_find_capabilities_by_min_trust PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_find_capabilities_sort_by_trust PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_find_capabilities_combined_filters_and_sort PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_staleness_checks PASSED
+tests/core_ai/service_discovery/test_service_discovery_module.py::TestServiceDiscoveryModule::test_get_capability_by_id_staleness_direct_variant PASSED
+tests/core_ai/test_crisis_system.py::TestCrisisSystem::test_01_initialization CrisisSystem initialized. Keywords: ['emergency', 'danger', 'unsafe', 'help me please', "i'm in trouble"]
+CrisisSystem initialized. Keywords: ['emergency', 'unsafe', 'critical danger']
+TestCrisisSystem.test_01_initialization PASSED
+PASSED
+tests/core_ai/test_crisis_system.py::TestCrisisSystem::test_02_assess_normal_input CrisisSystem initialized. Keywords: ['emergency', 'danger', 'unsafe', 'help me please', "i'm in trouble"]
+CrisisSystem initialized. Keywords: ['emergency', 'unsafe', 'critical danger']
+TestCrisisSystem.test_02_assess_normal_input PASSED
+PASSED
+tests/core_ai/test_crisis_system.py::TestCrisisSystem::test_03_assess_crisis_input_escalation CrisisSystem initialized. Keywords: ['emergency', 'danger', 'unsafe', 'help me please', "i'm in trouble"]
+CrisisSystem initialized. Keywords: ['emergency', 'unsafe', 'critical danger']
+CrisisSystem: Potential crisis detected or level escalated. New level: 1.
+CrisisSystem: Level 1 detected. Executing protocol: 'test_protocol_level_1'. Input details: this is an emergency!...
+CRISIS_INFO: Protocol 'test_protocol_level_1' executed for level 1.
+CrisisSystem: No crisis keywords in current input, but maintaining ongoing crisis level 1 until explicitly resolved.
+TestCrisisSystem.test_03_assess_crisis_input_escalation PASSED
+CrisisSystem: Crisis level 1 resolved. Details: Test cleanup
+PASSED
+tests/core_ai/test_crisis_system.py::TestCrisisSystem::test_04_resolve_crisis CrisisSystem initialized. Keywords: ['emergency', 'danger', 'unsafe', 'help me please', "i'm in trouble"]
+CrisisSystem initialized. Keywords: ['emergency', 'unsafe', 'critical danger']
+CrisisSystem: Potential crisis detected or level escalated. New level: 1.
+CrisisSystem: Level 1 detected. Executing protocol: 'test_protocol_level_1'. Input details: i feel unsafe....
+CRISIS_INFO: Protocol 'test_protocol_level_1' executed for level 1.
+CrisisSystem: Crisis level 1 resolved. Details: User confirmed okay.
+TestCrisisSystem.test_04_resolve_crisis PASSED
+PASSED
+tests/core_ai/test_crisis_system.py::TestCrisisSystem::test_05_trigger_protocol CrisisSystem initialized. Keywords: ['emergency', 'danger', 'unsafe', 'help me please', "i'm in trouble"]
+CrisisSystem initialized. Keywords: ['emergency', 'unsafe', 'critical danger']
+TestCrisisSystem.test_05_trigger_protocol PASSED
+CrisisSystem: Crisis level 1 resolved. Details: Test cleanup
+PASSED
+tests/core_ai/test_emotion_system.py::TestEmotionSystem::test_01_initialization EmotionSystem initialized. Default emotion: neutral
+TestEmotionSystem.test_01_initialization PASSED
+PASSED
+tests/core_ai/test_emotion_system.py::TestEmotionSystem::test_02_update_emotion_based_on_input EmotionSystem initialized. Default emotion: neutral
+EmotionSystem: Emotion changing from 'neutral' to 'empathetic' based on input: 'i am so sad today....'
+EmotionSystem: Emotion changing from 'empathetic' to 'playful' based on input: 'this is great and i am happy!...'
+EmotionSystem: Emotion changing from 'playful' to 'neutral' based on input: 'the sky is blue....'
+TestEmotionSystem.test_02_update_emotion_based_on_input PASSED
+PASSED
+tests/core_ai/test_emotion_system.py::TestEmotionSystem::test_03_get_current_emotion_expression EmotionSystem initialized. Default emotion: neutral
+TestEmotionSystem.test_03_get_current_emotion_expression PASSED
+PASSED
+tests/core_ai/test_time_system.py::TestTimeSystem::test_01_initialization TimeSystem initialized.
+TestTimeSystem.test_01_initialization PASSED
+PASSED
+tests/core_ai/test_time_system.py::TestTimeSystem::test_02_get_current_time TimeSystem initialized.
+TestTimeSystem.test_02_get_current_time PASSED
+PASSED
+tests/core_ai/test_time_system.py::TestTimeSystem::test_03_get_formatted_current_time TimeSystem initialized.
+TestTimeSystem.test_03_get_formatted_current_time PASSED
+PASSED
+tests/core_ai/test_time_system.py::TestTimeSystem::test_04_set_reminder_placeholder TimeSystem initialized.
+TimeSystem: Reminder set for 'test reminder' at 'in 5 minutes' (Placeholder).
+TestTimeSystem.test_04_set_reminder_placeholder PASSED
+PASSED
+tests/core_ai/test_time_system.py::TestTimeSystem::test_05_check_due_reminders_placeholder TimeSystem initialized.
+TestTimeSystem.test_05_check_due_reminders_placeholder PASSED
+PASSED
+tests/core_ai/test_time_system.py::TestTimeSystem::test_06_get_time_of_day_segment TimeSystem initialized.
+
+Running test_06_get_time_of_day_segment...
+TestTimeSystem.test_06_get_time_of_day_segment PASSED
+PASSED
+tests/creation/test_creation_engine.py::TestCreationEngine::test_create_model PASSED
+tests/creation/test_creation_engine.py::TestCreationEngine::test_create_tool PASSED
+tests/evaluation/test_evaluator.py::TestEvaluator::test_evaluate PASSED
+tests/fragmenta/test_fragmenta_orchestrator.py::TestFragmentaOrchestrator::test_process_complex_task PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorConnectionLogic::test_initial_connection_logging PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorConnectionLogic::test_unexpected_disconnection_flag_and_logging PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorConnectionLogic::test_clean_disconnection_flag_reset_and_logging PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorConnectionLogic::test_reconnection_logging_and_flag_reset PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorConnectionLogic::test_failed_connection_attempt_logging PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorConnectionLogic::test_resubscription_on_connect PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorConnectionLogic::test_constructor_configures_paho_reconnect_delay PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorACKLogic::test_ack_sent_if_required PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorACKLogic::test_ack_not_sent_if_not_required_or_missing[None] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorACKLogic::test_ack_not_sent_if_not_required_or_missing[qos_params1] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorACKLogic::test_ack_not_sent_if_not_required_or_missing[qos_params2] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorACKLogic::test_ack_not_sent_if_not_required_or_missing[qos_params3] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorACKLogic::test_ack_payload_and_envelope_construction PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorMessageBuilding::test_build_hsp_envelope_populates_schema_uri[HSP::Fact_v0.1-hsp:schema:payload/Fact/0.1] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorMessageBuilding::test_build_hsp_envelope_populates_schema_uri[HSP::CapabilityAdvertisement_v1.2.3-hsp:schema:payload/CapabilityAdvertisement/1.2.3] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorMessageBuilding::test_build_hsp_envelope_populates_schema_uri[MyCustomType_v2.0-hsp:schema:payload/MyCustomType/2.0] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorMessageBuilding::test_build_hsp_envelope_populates_schema_uri[HSP::Another_Type_v0.0.1-alpha-hsp:schema:payload/Another_Type/0.0.1-alpha] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorMessageBuilding::test_build_hsp_envelope_populates_schema_uri[NoVersionInName-None] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorMessageBuilding::test_build_hsp_envelope_populates_schema_uri[Malformed_v-None] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorMessageBuilding::test_build_hsp_envelope_populates_schema_uri[HSP::NoVersionSuffix-None] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorMessageBuilding::test_build_hsp_envelope_populates_schema_uri[HSP::SomeType_v-None] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorMessageBuilding::test_build_hsp_envelope_populates_schema_uri[HSP::_v1.0-None] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorMessageBuilding::test_build_hsp_envelope_populates_schema_uri[-None] PASSED
+tests/hsp/test_hsp_connector.py::TestHSPConnectorMessageBuilding::test_build_hsp_envelope_populates_schema_uri[None-None] PASSED
+tests/hsp/test_hsp_integration.py::TestHSPFactPublishing::test_learning_manager_publishes_fact_via_hsp ContentAnalyzerModule: Loaded 14 ontology mappings and 3 prefix definitions from '/app/configs/ontology_mappings.yaml'.
+ContentAnalyzerModule initialized with spaCy model: core_web_sm. Internal graph created. Ontology mappings loaded: 14 entries.
+LLMInterface: Initialized MOCK client.
+LLMInterface: Initialized. Active provider: mock
+FactExtractorModule initialized.
+TrustManager initialized. Default score for new AIs: 0.5
+PersonalityManager: Successfully loaded personality 'miko_base'.
+PersonalityManager initialized. Profiles dir: /app/configs/personality_profiles
+LearningManager initialized for AI ID 'did:hsp:test_ai_main_001'. Min fact store conf: 0.7, share conf: 0.8, HSP store conf: 0.55
+FAILED

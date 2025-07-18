@@ -1,0 +1,762 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.4.1, pluggy-1.6.0 -- /home/jules/.pyenv/versions/3.12.11/bin/python
+cachedir: .pytest_cache
+rootdir: /app
+configfile: pyproject.toml
+plugins: asyncio-1.1.0, timeout-2.4.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+timeout: 10.0s
+timeout method: thread
+timeout func_only: False
+collecting ... common_types.py (debug version) is being imported and defining ServiceStatus...
+common_types.py (debug version) finished definitions.
+ResourceAwarenessService module loaded.
+collected 21 items
+
+tests/core_ai/memory/test_ham_memory_manager.py::test_01_initialization_and_empty_store CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: -hQ_BfzZ5MUX7O64Dk9pOF1XgP19FsFJXsFQ0O9G5eE=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: -ssJ8EVvl7fGPES6G0A4yRld3ClM1MM2EbJLZDwNv9w=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: JhVYy7c89Xz9W14d0ESNyL7FZ_R1tXaqQFjcqnIXqMc=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: ermlr-IGH7wIS6NElbizSppz2nvSXeKUNdEXKGZPUdk=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_01_initialization_and_empty_store...
+test_01_initialization_and_empty_store PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_02_store_and_recall_text_experience CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: hTyibA1Z23_MwtDt6JS5QPWlzNnZ1_BeJd3087FYJU4=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: LqphaUpqyT3qybIK2irxRq2Fmiszh_ckym1UGVmiEm8=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: hD4lcm4bDZV3S-xkL0jDhfl8hoqH8iXtjHlEK_rtzCw=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 4AtAH6KCUK1sS32ATqsys1Wxx816dmrqZqraJT9pqPo=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_02_store_and_recall_text_experience...
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+HAM: Recalling gist for memory_id 'mem_000001'
+test_02_store_and_recall_text_experience PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_03_store_and_recall_generic_data CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: cp4iRfl27wzN2mC3K-HZU3HtPbF69LVQEBveAKk77pU=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: DgO48smzjlw3cYE9t0tj8BDfgfatMQ5dsdC_kC8XgEE=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: UxMcJMkoS8ElV5ceA2OSGIwY5EOc8_ml8_MOEYyjbtc=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: W3ZGIzWGjOqMAmRCy5qQBWQVHkKka3dee0gu7LHoFTY=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_03_store_and_recall_generic_data...
+HAM: Storing experience of type 'sensor_reading'
+HAM: Stored experience mem_000001
+HAM: Recalling gist for memory_id 'mem_000001'
+test_03_store_and_recall_generic_data PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_04_persistence CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 5LIre6b4KGzlyTlbEzPH2zN4gDB5zlNfd86_zYF3XoQ=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: QfoZ_Hp4N9WbSUgktTxg5_32oMpVZ5OOeJd5ObnZ0tY=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: QMwfZ_lRrgNI3Sfi1ugKUieQBH0_eBjjefe2jZbi8g8=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 0nDsGQkHtHEHIXDF79-vAlCmTNsey14xNqQTGCbBHlI=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_04_persistence...
+Core memory loaded from /app/data/processed_data/test_ham_core_memory.json. Next ID: 1
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+HAM: Storing experience of type 'log_entry'
+HAM: Stored experience mem_000001
+Core memory loaded from /app/data/processed_data/test_ham_core_memory.json. Next ID: 2
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+HAM: Recalling gist for memory_id 'mem_000001'
+test_04_persistence PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_05_recall_non_existent_memory CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: xrxZmglSZHdsBLVZbnAOu7JX6Is-VVgbY_KLeYoqJvg=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: D6CH2CZJxQ8_-JbAwf7djC6FnxV2MTdwbehoeXdDb3g=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: YAz5RP428NkyX0pqSy-v3HcuDP8rPCiVRrr9H_XG-x0=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: cwZ_k9ummbQ7oQSwdLwejTWKKXo_EfoMOwNto3r1y80=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_05_recall_non_existent_memory...
+HAM: Recalling gist for memory_id 'mem_nonexistent'
+Error: Memory ID mem_nonexistent not found.
+test_05_recall_non_existent_memory PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_06_query_memory_keywords CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: xZiwUZJupb27HXXIYFBCuWCOS1Rw3lAnhH76Rm93O4w=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 1vi5VzG4jiEQ4qImPy7_stC-tWtBD9XWOUbHwH8lb7k=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: oAuMfwAFaUwVnQU8rCg0aqzacDxj0a-H-ulySoa0MJM=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: FGEm70iuls_Ti88eXsRTCRqcIWUYseC2emqeM8n1r0s=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_06_query_memory_keywords...
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000002
+HAM: Storing experience of type 'log_entry'
+HAM: Stored experience mem_000003
+HAM: Querying core memory (type: None, meta_filters: None, keywords: ['weather', 'alice'])
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Query returned 1 results (limit was 5).
+HAM: Querying core memory (type: None, meta_filters: None, keywords: ['weather'])
+HAM: Recalling gist for memory_id 'mem_000003'
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Query returned 2 results (limit was 5).
+test_06_query_memory_keywords PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_07_query_memory_data_type CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 5xo9W40RzvXUYHWEcar2vWiBorgH2ASu2vB7pWZ3S2w=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: XAJ2FL46Bi0lc_xpbeeCpvGK2LENycfMz3nExBw_avA=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: pjZp-fy-McuUErm-IoDoy6NuqIr2AXkDKI32k4Qtg_E=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: B58RJR4a1VHObfKdS_j4o57ibf19iFk3U-Ks9FGrUF8=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_07_query_memory_data_type...
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+HAM: Storing experience of type 'log_entry'
+HAM: Stored experience mem_000002
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000003
+HAM: Querying core memory (type: dialogue_text, meta_filters: None, keywords: None)
+HAM: Recalling gist for memory_id 'mem_000003'
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Query returned 2 results (limit was 10).
+test_07_query_memory_data_type PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_08_query_memory_date_range CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: HYxgKn8e0RuVKgButnWZBEY7n_unLa-zZtLN0tZox1c=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: UhGscOApkyfqoIwSmKNysuoKvmasaGw_D_TrLH-b_mU=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: Pqxn1xq7k0yAcl2Yb7ERwra2qDUP9ZhlGtvKD8drWI4=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: untiLiXlSuBL7Exn9m-aYeL0jQC0sNBoa8_-dgrqzXQ=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_08_query_memory_date_range...
+HAM: Storing experience of type 'event'
+HAM: Stored experience mem_000001
+HAM: Querying core memory (type: None, meta_filters: None, keywords: None)
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Query returned 1 results (limit was 5).
+HAM: Querying core memory (type: None, meta_filters: None, keywords: None)
+HAM: Query returned 0 results (limit was 5).
+test_08_query_memory_date_range PASSED (basic check)
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_09_empty_text_abstraction CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 4ZcNW50iqdUetn61aQHtQeLhqOO8cfuwnCCtp20emW4=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: VEQp-bMXhsWBayKEH3KMgQIBKYJew15GZAT8IbA8HWE=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: SXzNH6ZxVYc0REYXg5bbrLyiNbWAZvkdnlIW_cO0LIE=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: fp_1SabKGsD_36fbbSd649PPaZVcnOMmTPQOdwfSkiE=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_09_empty_text_abstraction...
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+HAM: Recalling gist for memory_id 'mem_000001'
+test_09_empty_text_abstraction PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_10_encryption_decryption CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: pLxeXVstJd5EZBM6D4REhe6QrgbEasv8YmQsvlIeLUk=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: ICLsRX-y0LOvYOoE-dlp--j7nDurX3-zqmntiAdU4Bg=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: XaHKyM0Kg1Xm5fINsfhJpX-bKGMv00yTUYRfnyAx_A4=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: tzSErUoRdBtLUhD8Y7QYg4QUo2FyVxnb069EA_4zSUY=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_10_encryption_decryption...
+test_10_encryption_decryption PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_11_checksum_verification CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: HfYaRuTzFGbD1Xo-vfRTDhdfE88yoQef-65u3N0NUoU=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: i0VTsDeBTE5IGTVz_GaCebE2MLki6ilLqlv9KE__PxY=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: w6uaS0Lywg9vBeXaYSvh1UnTvcSEZtZ8cFET-b3LoxQ=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: aOLnH-rtHtkj9OMLsv0Qy7SBriAh31EY5cDZdxvHBQQ=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_11_checksum_verification...
+HAM: Storing experience of type 'dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+test_11_checksum_verification PASSED (mismatch test depends on encryption state)
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_12_advanced_text_abstraction_placeholders CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 3xlFIOI5HpNCkR1RLPIqaVMPmG7d_SukCorWSMQxZ_0=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: guww02EeZML1V_lGRrMP5Wfhbb25x5jjJ98eKk-zV8A=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: UiQaNcQdxGTuyPaKuYJCATDYeRhM70GBck9UJJP-Iw4=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: Ha45c9N1G4v6-oePpTN3632tOssfLREByiR_19y3PQc=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_12_advanced_text_abstraction_placeholders...
+HAM: Storing experience of type 'user_dialogue_text'
+HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.
+HAM: Stored experience mem_000001
+HAM: Recalling gist for memory_id 'mem_000001'
+Core memory file not found. Initializing an empty store and saving.
+HAM: Storing experience of type 'user_dialogue_text'
+HAM: Placeholder: Detected Chinese-like text, conceptual radicals would be extracted.
+HAM: Stored experience mem_000001
+HAM: Recalling gist for memory_id 'mem_000001'
+test_12_advanced_text_abstraction_placeholders PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_13_store_experience_simulated_disk_full CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 5vYpinMC2v90Izt9TjizEjXtvTuA2Sq0wV5RXje6FTs=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: dKBaf8gcYuJKwtTcOgbakB7stIlqDHnNUI63wQcWhxc=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: _tB_8BjwdBimiKuf8d9nzqNuGSCJbLbbR_1Sq-H3cco=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: _Wxpm_0CQaJHf-8olc_lw_yBNRJkMS_-cURbUga_p7Q=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_13_store_experience_simulated_disk_full...
+HAM: CRITICAL - Simulated disk full! Usage: 1.00GB, Limit: 1.00GB. Save operation aborted.
+test_13_store_experience_simulated_disk_full PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_14_store_experience_simulated_lag_warning CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: u8eiqJov71B6sc9nffi_X1687U0Ei-a3JShf3A1uZYw=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: Ijx52LSrmaDZdJhlXuz_x0GPe-PJXm-Ww2S9Sm5Frqw=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: -Yfm1TioPeVLru_9HF3SD12PuEUEq4ywbB7k9zvOlkk=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: L4nW-oMJ27Ev4Tg74a-CY9vUz_HaKk2w1JPiEx2oQCw=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_14_store_experience_simulated_lag_warning...
+test_14_store_experience_simulated_lag_warning PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_15_store_experience_simulated_lag_critical CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: I3xZ1SC11DMVS4LKuoP_iP_KwOJxDYddCTu8CjwV5J4=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: Mak3_4MCdrQgdiQOIpYsJd1WSOOnN1ZocCXHSn5tRJc=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: GT02r8PkEv4ZqDCWgWO5NBQUJN_4bnNomb0w7nGqUu8=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: DRIGbVXIz8i7LPZ00eLPAGbQUMFwHzPG3ADu02QqfNI=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_15_store_experience_simulated_lag_critical...
+test_15_store_experience_simulated_lag_critical PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_16_get_current_disk_usage_gb CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: a1R34NwgRf3kxaKM09B8mCRgPvB5M0T8X4Z2LrU__Bw=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: Cj6EM4vE65g_lpb1awc0Aq6yPsKDo8ZmMky-q9lvIVE=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 4McHBLEfY4v06fWQhgYmwtUsHfBY671zOr2P1sb9RU4=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 1a4PYBo8i4OLz3jx8VissiY0M1jv7ITOJICVghfQLmY=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_16_get_current_disk_usage_gb...
+HAM: Storing experience of type 'test_file_size'
+HAM: Stored experience mem_000001
+test_16_get_current_disk_usage_gb PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_17_query_core_memory_return_multiple_candidates CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: wH7NsECPvLvMbm_gpoEgHxqeyWK0pORYvbjf927BQa0=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: y-gjSjUznKaJ9qmzji08pi_oEXN2spad3c5n_D_arlE=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: WKHO4y9ZpgO9NCSYS2xBT56YifwKi0DHf7XpfviFLwM=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 5-GbpKyxjVLzBUz6QkeJPJMwZE6UhsmYpFCiZaobF2o=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_17_query_core_memory_return_multiple_candidates...
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000001
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000002
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000003
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000004
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000005
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000006
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000007
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000008
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000009
+HAM: Storing experience of type 'candidate_test'
+HAM: Stored experience mem_000010
+HAM: Querying core memory (type: candidate_test, meta_filters: None, keywords: None)
+HAM: Recalling gist for memory_id 'mem_000010'
+HAM: Recalling gist for memory_id 'mem_000009'
+HAM: Recalling gist for memory_id 'mem_000008'
+HAM: Recalling gist for memory_id 'mem_000007'
+HAM: Recalling gist for memory_id 'mem_000006'
+HAM: Recalling gist for memory_id 'mem_000005'
+HAM: Recalling gist for memory_id 'mem_000004'
+HAM: Recalling gist for memory_id 'mem_000003'
+HAM: Recalling gist for memory_id 'mem_000002'
+HAM: Recalling gist for memory_id 'mem_000001'
+test_17_query_core_memory_return_multiple_candidates PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_18_encryption_failure CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: _nz_DF9Xar8eCrcMxuIH5YLdlp2hLdCmbkXYewNWYH4=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: EydKBaYV9aFYS4aSPIlmm0pyI_eeZHWMQZGwu1Rqwpc=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: V-4VV49UWoW9eMG_kFK4KBOrtxm-cyCJ4jHFbBJFVPQ=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 1NaG5aS9hT3HIfT84XI8iAHfiiZDxvcQQkuirHqcTuM=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_18_encryption_failure...
+HAM: Storing experience of type 'test_type'
+Error during SL processing (compress/encrypt/checksum): Encryption failed
+test_18_encryption_failure PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_19_disk_full_handling CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: kO3zx_afsfr106CXuvPSh3Y5K7mirNxUzNrpcfL3Ne8=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: F8lAoQ14xUr0TPfDfUFJH9JVCVUfSm44Se5JPuCk8wE=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: Z3l9xNWq2VZD3dyfp_ToVhhyQbqOqWvlY47Cqtt_Au8=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: KCHu-uQWwYoG6yKnr6TsSY1wwcnS4OCEG5FGeAtH6-U=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_19_disk_full_handling...
+HAM: WARNING - Simulated disk usage (9.90GB) is at CRITICAL level (>9.50GB). Simulating 0.05s lag.
+test_19_disk_full_handling PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_20_delete_old_experiences CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: EZUU6dveqi-XY_nAULqNU9wtQ6kgAtS5sE1YWgpLghs=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: kCK_nxbD1VroY4AdAP4tfqBIVljlzRFbmcASVq91HXg=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 9qjf5hRsiSA53BBAZS52vVX5ghIWvggJVFVuSsT-WVs=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: NdRbQTmSHbWf-HIYd3HWHqT0Kwg9R7UKEAa1a4gM08E=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_20_delete_old_experiences...
+HAM: Storing experience of type 'test_type'
+HAM: Stored experience mem_000001
+HAM: Storing experience of type 'test_type'
+HAM: Stored experience mem_000002
+HAM: Storing experience of type 'test_type'
+HAM: Stored experience mem_000003
+HAM: Storing experience of type 'test_type'
+HAM: Stored experience mem_000004
+HAM: Storing experience of type 'test_type'
+HAM: Stored experience mem_000005
+test_20_delete_old_experiences PASSED
+PASSED
+tests/core_ai/memory/test_ham_memory_manager.py::test_21_concurrent_access CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: 8Eh1J0PjWB-_zBQrCzqRtIQ6Nr6SjISNqSeXjqRObgU=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: tVrNJAzjDZ_YyW6wzJR5jkxzTe7n1osgTL7sjilhqrQ=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_core_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: sBkafzdp6u5uGLZVYbIW3P7veW9xwnMWooo3ZRc-veU=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.
+Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.
+DO NOT use this for any real data you want to keep, as it will be lost.
+Temporary MIKO_HAM_KEY for this session: od1M6AdnjYh5fAkgcSgNHLaOqVzE5s9RUrotHmw-3N0=
+Core memory file not found. Initializing an empty store and saving.
+HAMMemoryManager initialized. Core memory file: /app/data/processed_data/test_ham_res_aware_memory.json. Encryption enabled: True
+
+Running test_21_concurrent_access...
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000001
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000002
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000003
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000004
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000005
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000006
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000007
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000008
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000009
+HAM: Storing experience of type 'concurrent_test'
+HAM: Stored experience mem_000010
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Recalling gist for memory_id 'mem_000002'
+HAM: Recalling gist for memory_id 'mem_000003'
+HAM: Recalling gist for memory_id 'mem_000004'
+HAM: Recalling gist for memory_id 'mem_000005'
+HAM: Recalling gist for memory_id 'mem_000006'
+HAM: Recalling gist for memory_id 'mem_000007'
+HAM: Recalling gist for memory_id 'mem_000008'
+HAM: Recalling gist for memory_id 'mem_000009'
+HAM: Recalling gist for memory_id 'mem_000010'
+HAM: Querying core memory (type: concurrent_test, meta_filters: None, keywords: None)
+HAM: Recalling gist for memory_id 'mem_000010'
+HAM: Recalling gist for memory_id 'mem_000009'
+HAM: Recalling gist for memory_id 'mem_000008'
+HAM: Recalling gist for memory_id 'mem_000007'
+HAM: Recalling gist for memory_id 'mem_000006'
+HAM: Recalling gist for memory_id 'mem_000005'
+HAM: Recalling gist for memory_id 'mem_000004'
+HAM: Recalling gist for memory_id 'mem_000003'
+HAM: Recalling gist for memory_id 'mem_000002'
+HAM: Recalling gist for memory_id 'mem_000001'
+HAM: Query returned 10 results (limit was 10).
+test_21_concurrent_access PASSED
+PASSED
+
+============================== 21 passed in 0.30s ==============================

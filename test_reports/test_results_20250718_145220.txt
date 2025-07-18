@@ -1,0 +1,270 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.4.1, pluggy-1.6.0 -- /home/jules/.pyenv/versions/3.12.11/bin/python
+cachedir: .pytest_cache
+rootdir: /app
+configfile: pyproject.toml
+plugins: timeout-2.4.0
+timeout: 10.0s
+timeout method: thread
+timeout func_only: False
+collecting ... /app/tests/core_ai/memory/test_ham_memory_manager.py:73: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:84: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:124: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:144: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:172: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:181: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:198: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:213: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:232: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:253: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:274: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:304: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:333: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:357: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:381: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:405: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:424: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:437: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:455: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:473: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+/app/tests/core_ai/memory/test_ham_memory_manager.py:507: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+  @pytest.mark.asyncio
+common_types.py (debug version) is being imported and defining ServiceStatus...
+common_types.py (debug version) finished definitions.
+ResourceAwarenessService module loaded.
+collected 21 items
+
+tests/core_ai/memory/test_ham_memory_manager.py::test_01_initialization_and_empty_store FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_02_store_and_recall_text_experience FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_03_store_and_recall_generic_data FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_04_persistence FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_05_recall_non_existent_memory FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_06_query_memory_keywords FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_07_query_memory_data_type FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_08_query_memory_date_range FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_09_empty_text_abstraction FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_10_encryption_decryption FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_11_checksum_verification FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_12_advanced_text_abstraction_placeholders FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_13_store_experience_simulated_disk_full FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_14_store_experience_simulated_lag_warning FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_15_store_experience_simulated_lag_critical FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_16_get_current_disk_usage_gb FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_17_query_core_memory_return_multiple_candidates FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_18_encryption_failure FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_19_disk_full_handling FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_20_delete_old_experiences FAILED
+tests/core_ai/memory/test_ham_memory_manager.py::test_21_concurrent_access FAILED
+
+=================================== FAILURES ===================================
+____________________ test_01_initialization_and_empty_store ____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________ test_02_store_and_recall_text_experience ___________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________________ test_03_store_and_recall_generic_data _____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________________________ test_04_persistence ______________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________________ test_05_recall_non_existent_memory ______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________________ test_06_query_memory_keywords _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________________ test_07_query_memory_data_type ________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________________ test_08_query_memory_date_range ________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________________ test_09_empty_text_abstraction ________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________________ test_10_encryption_decryption _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________________ test_11_checksum_verification _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________ test_12_advanced_text_abstraction_placeholders ________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________ test_13_store_experience_simulated_disk_full _________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________ test_14_store_experience_simulated_lag_warning ________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________ test_15_store_experience_simulated_lag_critical ________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________________ test_16_get_current_disk_usage_gb _______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________ test_17_query_core_memory_return_multiple_candidates _____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________________ test_18_encryption_failure __________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________________ test_19_disk_full_handling __________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________________ test_20_delete_old_experiences ________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________________ test_21_concurrent_access ___________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+=========================== short test summary info ============================
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_01_initialization_and_empty_store
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_02_store_and_recall_text_experience
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_03_store_and_recall_generic_data
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_04_persistence
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_05_recall_non_existent_memory
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_06_query_memory_keywords
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_07_query_memory_data_type
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_08_query_memory_date_range
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_09_empty_text_abstraction
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_10_encryption_decryption
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_11_checksum_verification
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_12_advanced_text_abstraction_placeholders
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_13_store_experience_simulated_disk_full
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_14_store_experience_simulated_lag_warning
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_15_store_experience_simulated_lag_critical
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_16_get_current_disk_usage_gb
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_17_query_core_memory_return_multiple_candidates
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_18_encryption_failure
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_19_disk_full_handling
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_20_delete_old_experiences
+FAILED tests/core_ai/memory/test_ham_memory_manager.py::test_21_concurrent_access
+============================== 21 failed in 0.60s ==============================

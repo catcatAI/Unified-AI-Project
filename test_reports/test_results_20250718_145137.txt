@@ -1,0 +1,4 @@
+ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]
+__main__.py: error: unrecognized arguments: --timeout=10 --timeout_method=thread
+  inifile: /app/pyproject.toml
+  rootdir: /app

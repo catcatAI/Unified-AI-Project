@@ -37,7 +37,7 @@ class TestMathModelComponents(unittest.TestCase):
             if os.path.exists(f_path):
                 os.remove(f_path)
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_data_generator_csv(self):
         print("\nRunning test_data_generator_csv...")
         data_generator.generate_dataset(
@@ -55,7 +55,7 @@ class TestMathModelComponents(unittest.TestCase):
             self.assertEqual(reader.fieldnames, ["problem", "answer"])
         print("test_data_generator_csv PASSED")
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_data_generator_json(self):
         print("\nRunning test_data_generator_json...")
         data_generator.generate_dataset(
@@ -73,7 +73,7 @@ class TestMathModelComponents(unittest.TestCase):
             self.assertTrue("answer" in data[0])
         print("test_data_generator_json PASSED")
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_model_build_and_char_maps(self):
         print("\nRunning test_model_build_and_char_maps...")
         # Dummy data for testing structure
@@ -102,7 +102,7 @@ class TestMathModelComponents(unittest.TestCase):
         self.assertIsNotNone(model_instance.decoder_model)
         print("test_model_build_and_char_maps PASSED (structure check only)")
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_extract_arithmetic_problem(self):
         print("\nRunning test_extract_arithmetic_problem...")
         test_cases = {
@@ -124,7 +124,7 @@ class TestMathModelComponents(unittest.TestCase):
             self.assertEqual(extracted, expected, msg=f"Failed for query: {query}")
         print("test_extract_arithmetic_problem PASSED")
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_math_tool_calculate_model_unavailable(self):
         print("\nRunning test_math_tool_calculate_model_unavailable...")
         # Ensure no model is "pre-loaded" by other tests or available
@@ -175,7 +175,7 @@ class TestMathModelComponents(unittest.TestCase):
 
         print("test_math_tool_calculate_model_unavailable PASSED")
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_tool_dispatcher_math_routing(self):
         print("\nRunning test_tool_dispatcher_math_routing...")
         dispatcher = ToolDispatcher()
