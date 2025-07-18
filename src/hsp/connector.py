@@ -168,7 +168,7 @@ class HSPConnector:
             # Resubscribe to any topics if it's a reconnect
             for topic in list(self.subscribed_topics): # Iterate over a copy
                 self.subscribe(topic) # subscribe method already logs success/failure
-            self.start_heartbeat()
+            # self.start_heartbeat() # Removed direct call from here
             if self._external_on_connect_callback:
                 self._external_on_connect_callback()
         else:
@@ -570,7 +570,7 @@ class HSPConnector:
     def start_heartbeat(self, interval: int = 60):
         """Starts the heartbeat mechanism."""
         if self._heartbeat_task is None:
-            self._heartbeat_task = asyncio.create_task(self._send_heartbeat(interval))
+            # self._heartbeat_task = asyncio.create_task(self._send_heartbeat(interval))
             logger.info(f"HSPConnector ({self.ai_id}): Heartbeat started with interval {interval}s.")
 
     def stop_heartbeat(self):
