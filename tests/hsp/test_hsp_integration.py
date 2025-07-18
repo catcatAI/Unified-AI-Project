@@ -9,6 +9,7 @@ import json
 
 from src.hsp.connector import HSPConnector
 from src.hsp.types import (
+
     HSPFactPayload,
     HSPMessageEnvelope,
     HSPCapabilityAdvertisementPayload,
@@ -36,6 +37,7 @@ from src.core_ai.personality.personality_manager import PersonalityManager
 from amqtt.broker import Broker
 
 import logging
+import queue
 
 # --- Constants for Testing ---
 TEST_AI_ID_MAIN = "did:hsp:test_ai_main_001"
@@ -61,7 +63,7 @@ class MockLLMInterface(LLMInterface):
         base_config = config or LLMInterfaceConfig(
             default_provider="mock", 
             default_model="mock-model", 
-            providers={}, 
+            providers={},
             default_generation_params={}
         )
         super().__init__(config=base_config)
@@ -189,56 +191,51 @@ def personality_manager_fixture() -> PersonalityManager:
 import threading
 
 @pytest.fixture
-def broker():
+async def broker(): # Make the fixture async
     b = Broker()
-
-    def run_broker():
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(b.start())
-        loop.run_forever()
-
-    thread = threading.Thread(target=run_broker)
-    thread.daemon = True
-    thread.start()
+    await b.start() # Await the broker startup
     yield b
-    b.shutdown()
+    await b.shutdown() # Await the broker shutdown
 
 
 @pytest.fixture
-async def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker):
+def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker):
     connector = HSPConnector(
         TEST_AI_ID_MAIN,
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
     )
-    await connector.connect()
+    # connector.connect() is now synchronous and returns bool
+    if not connector.connect():
+        pytest.fail("Failed to connect main_ai_hsp_connector")
     yield connector
-    await connector.disconnect()
+    connector.disconnect()
 
 
 @pytest.fixture
-async def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker):
+def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker):
     connector = HSPConnector(
         TEST_AI_ID_PEER_A,
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
     )
-    await connector.connect()
+    if not connector.connect():
+        pytest.fail("Failed to connect peer_a_hsp_connector")
     yield connector
-    await connector.disconnect()
+    connector.disconnect()
 
 
 @pytest.fixture
-async def peer_b_hsp_connector(trust_manager_fixture: TrustManager, broker):
+def peer_b_hsp_connector(trust_manager_fixture: TrustManager, broker):
     connector = HSPConnector(
         TEST_AI_ID_PEER_B,
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
     )
-    await connector.connect()
+    if not connector.connect():
+        pytest.fail("Failed to connect peer_b_hsp_connector")
     yield connector
-    await connector.disconnect()
+    connector.disconnect()
 
 
 @pytest.fixture
@@ -250,8 +247,8 @@ async def configured_learning_manager(
     trust_manager_fixture: TrustManager,
     personality_manager_fixture: PersonalityManager
 ):
-    if asyncio.iscoroutine(main_ai_hsp_connector):
-        main_ai_hsp_connector = await main_ai_hsp_connector
+    # Removed: if asyncio.iscoroutine(main_ai_hsp_connector):
+    # Removed:     main_ai_hsp_connector = await main_ai_hsp_connector
     config = {
         "learning_thresholds": {
             "min_fact_confidence_to_store": 0.7,
@@ -278,14 +275,14 @@ async def configured_learning_manager(
 
 @pytest.fixture
 async def service_discovery_module_fixture(main_ai_hsp_connector: HSPConnector, trust_manager_fixture: TrustManager):
-    if asyncio.iscoroutine(main_ai_hsp_connector):
-        main_ai_hsp_connector = await main_ai_hsp_connector
+    # Removed: if asyncio.iscoroutine(main_ai_hsp_connector):
+    # Removed:     main_ai_hsp_connector = await main_ai_hsp_connector
     sdm = ServiceDiscoveryModule(trust_manager=trust_manager_fixture)
     main_ai_hsp_connector.register_on_capability_advertisement_callback(sdm.process_capability_advertisement)
-    assert main_ai_hsp_connector.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#"), \
-        f"Main AI failed to subscribe to {CAP_ADVERTISEMENT_TOPIC}/#"
+    assert main_ai_hsp_connector.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#"),         f"Main AI failed to subscribe to {CAP_ADVERTISEMENT_TOPIC}/#"
     await asyncio.sleep(0.2)
     return sdm
+
 
 
 @pytest.fixture
@@ -327,7 +324,6 @@ async def dialogue_manager_fixture(
 
 
 # --- Test Classes ---
-@pytest.mark.skip(reason="Skipping HSP integration tests due to MQTT broker dependency")
 class TestHSPFactPublishing:
     @pytest.mark.asyncio
     async def test_learning_manager_publishes_fact_via_hsp(
@@ -360,7 +356,6 @@ class TestHSPFactPublishing:
         assert rp.get("statement_structured", {}).get("subject") == "Berlin"
 
 
-@pytest.mark.skip(reason="Skipping HSP integration tests due to MQTT broker dependency")
 class TestHSPFactConsumption:
     @pytest.mark.asyncio
     async def test_main_ai_consumes_nl_fact_and_updates_kg_check_trust_influence(
@@ -561,3 +556,134 @@ class TestHSPFactConsumption:
         assert edge_data.get('hsp_source_info', {}).get('origin_fact_id') == fact_id_for_mapping
 
         print(f"[Test Semantic Mapping] Verified CA mapped external URIs for fact '{fact_id_for_mapping}'.")
+
+
+class TestHSPTaskDelegation:
+    @pytest.mark.asyncio
+    async def test_dm_delegates_task_to_specialist_ai_and_gets_result(
+        self,
+        dialogue_manager_fixture: DialogueManager,
+        service_discovery_module_fixture: ServiceDiscoveryModule,
+        peer_a_hsp_connector: HSPConnector,
+        main_ai_hsp_connector: HSPConnector
+    ):
+        # ... (test body as previously defined) ...
+        dm = dialogue_manager_fixture
+        sdm = service_discovery_module_fixture
+        
+        # 1. Peer A advertises its capability
+        cap_payload = HSPCapabilityAdvertisementPayload(
+            capability_name="advanced_weather_forecast",
+            capability_description="Provides detailed 7-day weather forecasts for any location.",
+            input_schema={"type": "object", "properties": {"location": {"type": "string"}}},
+            output_schema={"type": "object", "properties": {"forecast": {"type": "string"}}},
+            version="1.0",
+            tags=["weather", "forecast"]
+        )  # type: ignore
+        
+        peer_a_hsp_connector.publish_capability_advertisement(cap_payload, "general")
+        await asyncio.sleep(0.5)
+        
+        # 2. Verify Main AI's SDM has registered the capability
+        assert sdm.is_capability_available("advanced_weather_forecast")
+        
+        # 3. Main AI's DM receives a query that should trigger delegation
+        query = "I need an advanced weather forecast for London."
+        
+        # Mock ToolDispatcher to return no local tool, forcing HSP delegation
+        mock_td = MagicMock(spec=ToolDispatcher)
+        mock_td.dispatch_tool.return_value = ToolDispatcherResponse(
+            tool_name=None,
+            tool_params=None,
+            tool_output=None,
+            error_message="No local tool found for weather forecast."
+        )
+        dm.tool_dispatcher = mock_td
+        
+        # 4. Peer A needs to be ready to handle the task request
+        task_received_event = asyncio.Event()
+        
+        async def peer_a_task_handler(task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+            assert task_payload.capability_name == "advanced_weather_forecast"
+            assert task_payload.input_data.get("location") == "London"
+            
+            # Peer A processes the task and sends a result
+            result_payload = HSPTaskResultPayload(
+                task_id=task_payload.task_id,
+                status="completed",
+                result_data={"forecast": "Sunny with a chance of rain on Tuesday."},
+                timestamp_completed=datetime.now(timezone.utc).isoformat()
+            )  # type: ignore
+            
+            await peer_a_hsp_connector.publish_task_result(result_payload, sender_ai_id)
+            task_received_event.set()
+            
+        peer_a_hsp_connector.register_on_task_request_callback(peer_a_task_handler)
+        task_topic = f"hsp/tasks/{TEST_AI_ID_PEER_A}/advanced_weather_forecast"
+        assert peer_a_hsp_connector.subscribe(task_topic)
+        await asyncio.sleep(0.2)
+        
+        # 5. Trigger the DM and wait for the result
+        final_response = await dm.process_query(query, "test_user_task", "test_session_task")
+        
+        await wait_for_event(task_received_event, timeout=5.0)
+        
+        # 6. Verify the final response incorporates the HSP task result
+        assert "Sunny with a chance of rain" in final_response
+        print("[Test Task Delegation] Verified DM delegated task and received result.")
+
+    @pytest.mark.asyncio
+    async def test_dm_handles_hsp_task_failure_and_falls_back(
+        self,
+        dialogue_manager_fixture: DialogueManager,
+        service_discovery_module_fixture: ServiceDiscoveryModule,
+        peer_a_hsp_connector: HSPConnector,
+        main_ai_hsp_connector: HSPConnector,
+        mock_llm_fixture: MockLLMInterface
+    ):
+        # ... (test body as previously defined) ...
+        dm = dialogue_manager_fixture
+        sdm = service_discovery_module_fixture
+        
+        # 1. Peer A advertises a capability
+        cap_payload = HSPCapabilityAdvertisementPayload(
+            capability_name="failing_service",
+            capability_description="A service that always fails.",
+            input_schema={"type": "object", "properties": {"data": {"type": "string"}}},
+            output_schema={"type": "object", "properties": {"status": {"type": "string"}}},
+            version="1.0",
+            tags=["fail_test"]
+        )  # type: ignore
+        
+        peer_a_hsp_connector.publish_capability_advertisement(cap_payload, "general")
+        await asyncio.sleep(0.5)
+        
+        # 2. Peer A's task handler will send a 'failed' result
+        async def peer_a_failing_handler(task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+            result_payload = HSPTaskResultPayload(
+                task_id=task_payload.task_id,
+                status="failed",
+                error_details=HSPErrorDetails(code=500, message="Service unavailable"),
+                timestamp_completed=datetime.now(timezone.utc).isoformat()
+            )  # type: ignore
+            await peer_a_hsp_connector.publish_task_result(result_payload, sender_ai_id)
+            
+        peer_a_hsp_connector.register_on_task_request_callback(peer_a_failing_handler)
+        task_topic = f"hsp/tasks/{TEST_AI_ID_PEER_A}/failing_service"
+        assert peer_a_hsp_connector.subscribe(task_topic)
+        await asyncio.sleep(0.2)
+        
+        # 3. DM receives a query that triggers the failing service
+        query = "Please use the failing service."
+        
+        # 4. Mock LLM to provide a fallback response
+        mock_llm_fixture.add_mock_response(
+            "hsp_task_failed_what_now",
+            "It seems the specialist AI couldn't help. Let me try to answer directly."
+        )
+        
+        # 5. Trigger DM and verify fallback response
+        final_response = await dm.process_query(query, "test_user_fail", "test_session_fail")
+        
+        assert "specialist AI couldn't help" in final_response
+        print("[Test Task Failure Fallback] Verified DM handled task failure and used LLM fallback.")

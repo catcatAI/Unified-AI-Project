@@ -10,6 +10,7 @@
 - [MikoAI & Fragmenta Project Merge and Restructure Plan](#mikoai--fragmenta-project-merge-and-restructure-plan)
   - [1. Introduction and Rationale](#1-introduction-and-rationale)
   - [2. Guiding Architectural Principles](#2-guiding-architectural-principles)
+  - [2.1. Centralized Dependency and Startup Configuration](#21-centralized-dependency-and-startup-configuration)
   - [3. Proposed Merged Project Structure (``)](#3-proposed-merged-project-structure-unified-ai-project)
   - [4. Merge Process Execution Plan](#4-merge-process-execution-plan)
   - [5. Role of the Chosen "Tool" (`restructure_phase1.py` logic)](#5-role-of-the-chosen-tool-restructure_phase1py-logic)
@@ -122,9 +123,19 @@ The current state involves numerous scattered folders, making it difficult to ge
     *   **Reading:** Accessing configurations, datasets, existing knowledge, and context.
     *   **Modification/Processing:** Transforming data, applying AI logic, updating states.
     *   **Storage/Deletion:** How and where data is persisted and eventually removed.
-*   **Modularity & Reusability:** Core functionalities will be encapsulated in well-defined modules to promote reuse and independent development.
+*   **Modularity & Reusability:** Core functionalities will be encapsulated in well-defined modules to promote reuse and independent development. The `src/core_services.py` file plays a central role in orchestrating these modules through dependency injection, ensuring a loosely coupled and maintainable architecture.
 
-## 3. Proposed Merged Project Structure (``)
+## 2.1. Centralized Dependency and Startup Configuration
+
+A key architectural principle is the centralization of dependency and startup configurations within `dependency_config.yaml`. This file now serves as the single source of truth for:
+
+*   **Dependency Definitions:** Listing all core and optional Python dependencies, including their fallback alternatives.
+*   **Installation Types:** Defining various installation profiles (e.g., `minimal`, `standard`, `full`, `ai_focused`), each specifying the set of packages and features to be installed.
+*   **Feature-to-Dependency Mapping:** Implicitly linking high-level features (e.g., `basic_web`, `ai_models`) to the underlying Python packages required to enable them.
+
+This centralization ensures consistency across installation processes (CLI and GUI installers) and the intelligent startup system (`startup_with_fallbacks.py`), which dynamically configures the application based on available dependencies and selected startup modes defined in this file.
+
+## 3. Proposed Merged Project Structure (`Unified-AI-Project`)
 
 ```
 
@@ -132,6 +143,7 @@ The current state involves numerous scattered folders, making it difficult to ge
 ├── .gitignore
 ├── README.md                   # Main project README
 ├── MERGE_AND_RESTRUCTURE_PLAN.md # This document
+├── dependency_config.yaml      # Centralized dependency and installation configuration
 ├── package.json                # For top-level Node.js dependencies
 ├── requirements.txt            # For Python dependencies
 

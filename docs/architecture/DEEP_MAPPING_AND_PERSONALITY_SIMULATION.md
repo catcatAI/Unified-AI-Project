@@ -50,13 +50,14 @@ Under this hypothesis:
 
 This interpretation suggests a sophisticated level of abstraction and optimization within the system. However, it remains a hypothesis pending detailed code review across all interacting systems (Fragmenta, HAM, DialogueManager, etc.) to find explicit evidence of such tokenization and detokenization logic.
 
-### 2.3. Interaction with Fragmenta and HAM
+### 2.3. Interaction with Fragmenta, HAM, and LearningManager
 
 *   **Fragmenta (`src/fragmenta/fragmenta_orchestrator.py`)**: As Fragmenta processes complex tasks, it often breaks them into chunks and generates intermediate results (see `docs/architecture/Fragmenta_design_spec.md`). These intermediate results, or even recurring patterns in input data processed by Fragmenta, might be prime candidates for Deep Mapping when stored in HAM.
 *   **HAM (`src/core_ai/memory/ham_memory_manager.py`)**: HAM would be responsible for:
     *   Identifying data suitable for Deep Mapping.
     *   Performing the mapping transformation before storage.
     *   Performing the reverse "unmapping" or rehydration process when the data is recalled.
+*   **LearningManager (`src/core_ai/learning/learning_manager.py`)**: The `LearningManager`'s role in resolving fact conflicts (Type 1 and Type 2 semantic conflicts) directly influences the consistency and "truth" of the knowledge stored in HAM. Its conflict resolution strategies (e.g., superseding, numerical merging) can be seen as a form of "deep mapping" at the knowledge level, ensuring that the most reliable or merged representation of a fact is persisted, thus contributing to a more refined and "deeply mapped" understanding of reality within the AI's memory.
 
 ## 3. Personality Simulation
 

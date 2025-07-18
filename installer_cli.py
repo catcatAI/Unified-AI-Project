@@ -1,4 +1,6 @@
 import sys
+import yaml # Added
+import os # Added
 
 def get_os():
     if sys.platform.startswith("win"):
@@ -15,6 +17,18 @@ def main():
     except Exception as e:
         print(f"An error occurred: {e}")
     print("")
+
+    # Load dependency configuration
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'dependency_config.yaml') # Adjusted path
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        print(f"Error: dependency_config.yaml not found at {config_path}", file=sys.stderr)
+        sys.exit(1)
+    except yaml.YAMLError as e:
+        print(f"Error parsing dependency_config.yaml: {e}", file=sys.stderr)
+        sys.exit(1)
 
     # Detect hardware and recommend configuration
     import psutil
@@ -48,12 +62,31 @@ def main():
     # Install dependencies
     print("Installing dependencies...")
     import subprocess
-    dependencies = ["psutil", "beautifulsoup4", "scikit-image", "SpeechRecognition", "transformers", "PyGithub", "aiounittest"]
-    for dependency in dependencies:
+
+    # Prompt user for installation type
+    print("\nAvailable installation types:")
+    for install_type, details in config.get('installation', {}).items():
+        print(f"  - {install_type}: {details.get('description', 'No description provided.')}")
+
+    selected_type = input("Please choose an installation type (e.g., minimal, standard, full, ai_focused): ").strip().lower()
+
+    install_packages = config.get('installation', {}).get(selected_type, {}).get('packages', [])
+
+    if not install_packages:
+        print(f"Warning: No packages found for installation type '{selected_type}'. Installing core dependencies only.", file=sys.stderr)
+        # Fallback to core dependencies if selected type is invalid or has no packages
+        install_packages = [dep['name'] for dep in config.get('dependencies', {}).get('core', [])]
+
+    print(f"Installing packages for '{selected_type}' installation type...")
+    for dependency in install_packages:
         try:
+            print(f"  Installing {dependency}...")
             subprocess.check_call([sys.executable, "-m", "pip", "install", dependency])
+            print(f"  Successfully installed {dependency}.")
         except subprocess.CalledProcessError as e:
-            print(f"Error installing {dependency}: {e}")
+            print(f"Error installing {dependency}: {e}", file=sys.stderr)
+        except Exception as e:
+            print(f"An unexpected error occurred while installing {dependency}: {e}", file=sys.stderr)
 
     # Create desktop shortcut
     print("Creating desktop shortcut...")

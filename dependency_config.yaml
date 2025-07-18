@@ -139,36 +139,40 @@ fallback_strategies:
 # Environment-specific configurations
 environments:
   development:
-    - allow_fallbacks: true
-    - warn_on_fallback: true
-    - strict_mode: false
+    allow_fallbacks: true
+    warn_on_fallback: true
+    strict_mode: false
     
   production:
-    - allow_fallbacks: true
-    - warn_on_fallback: true
-    - strict_mode: false
-    - log_fallbacks: true
+    allow_fallbacks: true
+    warn_on_fallback: true
+    strict_mode: false
+    log_fallbacks: true
     
   testing:
-    - allow_fallbacks: true
-    - warn_on_fallback: false
-    - strict_mode: false
-    - mock_unavailable: true
+    allow_fallbacks: true
+    warn_on_fallback: false
+    strict_mode: false
+    mock_unavailable: true
 
 # Installation recommendations
 installation:
   minimal:
     description: "Minimal installation for basic functionality"
     packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil"]
+    features: ["basic_web", "core_ai"] # Added features
     
   standard:
     description: "Standard installation with common optional features"
     packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "fastapi", "uvicorn", "pydantic", "httpx"]
+    features: ["web_api", "hsp_communication", "core_ai"] # Added features
     
   full:
     description: "Full installation with all features"
     packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain", "fastapi", "uvicorn", "pydantic", "httpx", "pytest-asyncio"]
+    features: ["web_api", "hsp_communication", "ai_models", "nlp", "knowledge_graph"] # Added features
     
   ai_focused:
     description: "AI and ML focused installation"
     packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain"]
+    features: ["ai_models", "nlp", "machine_learning"] # Added features

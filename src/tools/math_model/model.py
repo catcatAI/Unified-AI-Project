@@ -10,7 +10,7 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from core_ai.dependency_manager import dependency_manager, get_dependency, is_dependency_available
+from core_ai.dependency_manager import dependency_manager
 
 # Global variables to hold TensorFlow components, loaded on demand.
 tf = None
@@ -31,7 +31,7 @@ def _ensure_tensorflow_is_imported():
         return True
     
     # Use dependency manager to get TensorFlow
-    tf_module = get_dependency('tensorflow')
+    tf_module = dependency_manager.get_dependency('tensorflow')
     if tf_module is not None:
         try:
             tf = tf_module
@@ -50,14 +50,14 @@ def _ensure_tensorflow_is_imported():
 
 def _tensorflow_is_available():
     """Check if TensorFlow is available."""
-    return is_dependency_available('tensorflow')
+    return dependency_manager.is_available('tensorflow')
 
 # Attempt to import TensorFlow on module load
 _ensure_tensorflow_is_imported()
 
 class ArithmeticSeq2Seq:
     def __init__(self, char_to_token, token_to_char, max_encoder_seq_length, max_decoder_seq_length, n_token, latent_dim=256, embedding_dim=128):
-        if not _tensorflow_is_available():
+        if not dependency_manager.is_available('tensorflow'):
             print("ArithmeticSeq2Seq: TensorFlow not available. This instance will be non-functional.")
             self.char_to_token = char_to_token
             self.token_to_char = token_to_char
@@ -87,7 +87,7 @@ class ArithmeticSeq2Seq:
 
     def _build_inference_models(self):
         """Builds the model structure for training and inference."""
-        if not _tensorflow_is_available():
+        if not dependency_manager.is_available('tensorflow'):
             print("Cannot build inference models: TensorFlow not available.")
             return
         _ensure_tensorflow_is_imported() # Lazy import of TensorFlow
@@ -131,7 +131,7 @@ class ArithmeticSeq2Seq:
         )
 
     def _string_to_tokens(self, input_string, max_len, is_target=False):
-        if not _tensorflow_is_available():
+        if not dependency_manager.is_available('tensorflow'):
             print("Cannot convert string to tokens: TensorFlow not available.")
             return np.array([])
         tokens = np.zeros((1, max_len), dtype='float32')
@@ -192,7 +192,7 @@ class ArithmeticSeq2Seq:
     @classmethod
     def load_for_inference(cls, model_weights_path, char_maps_path):
         """Loads a trained model and its character maps for inference."""
-        if not _tensorflow_is_available():
+        if not dependency_manager.is_available('tensorflow'):
             print("Cannot load model for inference: TensorFlow not available.")
             return None
         _ensure_tensorflow_is_imported() # Lazy import of TensorFlow

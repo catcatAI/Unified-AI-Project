@@ -1,10 +1,10 @@
-import unittest
-from unittest.mock import MagicMock, patch
+import pytest
+from unittest.mock import MagicMock, patch, AsyncMock
 import networkx as nx
 from typing import Optional, Dict, Any, List, Tuple
-import uuid # For test session IDs in __main__
-import os # Added for os.path.exists and os.remove in __main__
-import re # Added for regex in _is_kg_query
+import uuid
+import os
+import re
 import json
 import ast
 
@@ -22,514 +22,567 @@ from src.hsp.types import (
     HSPFactPayload,
 )
 
+# Define a consistent test output directory (relative to project root)
+PROJECT_ROOT_FOR_TEST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+TEST_STORAGE_DIR = os.path.join(PROJECT_ROOT_FOR_TEST, "tests", "test_output_data", "dialogue_manager")
 
-class TestDialogueManagerHelperMethods(unittest.TestCase):
+@pytest.fixture(scope="function")
+async def dialogue_manager_helper_fixture():
+    # Mock dependencies for DialogueManager
+    mock_personality_manager = MagicMock()
+    mock_memory_manager = MagicMock()
+    mock_llm_interface = MagicMock()
+    mock_emotion_system = MagicMock()
+    mock_crisis_system = MagicMock()
+    mock_crisis_system.assess_input_for_crisis.return_value = 0 # Default to no crisis
+    mock_formula_engine = MagicMock()
+    mock_content_analyzer = MagicMock()
+    mock_tool_dispatcher = MagicMock()
+    mock_self_critique_module = MagicMock()
+    mock_learning_manager = AsyncMock()
+    mock_learning_manager.process_and_store_learnables.return_value = []
+    mock_repair_engine = MagicMock()
+    mock_sandbox_executor = MagicMock()
+    mock_time_system = MagicMock()
 
-    def setUp(self):
-        # Basic DM for testing helper methods. Dependencies can be mocked if they were used by these helpers.
-        # For these specific helpers, direct interaction with complex dependencies is minimal.
-        # Provide minimal config. Ensure 'operational_configs' key exists if DialogueManager constructor accesses it.
-        # OperationalConfig is total=False, so an empty dict is valid.
-        self.dm = DialogueManager(config={}) # type: ignore
+    # Provide minimal config. Ensure 'operational_configs' key exists if DialogueManager constructor accesses it.
+    test_config: OperationalConfig = { # type: ignore
+        "max_dialogue_history": 6,
+        "operational_configs": {
+            "timeouts": {"dialogue_manager_turn": 120},
+            "learning_thresholds": {"min_critique_score_to_store": 0.0}
+        },
+        "crisis_response_text": "Crisis response."
+    }
 
+    # Patch the modules that DialogueManager initializes internally
+    with patch('src.core_ai.dialogue.dialogue_manager.PersonalityManager', return_value=mock_personality_manager), \
+         patch('src.core_ai.dialogue.dialogue_manager.HAMMemoryManager', return_value=mock_memory_manager), \
+         patch('src.core_ai.dialogue.dialogue_manager.LLMInterface', return_value=mock_llm_interface), \
+         patch('src.core_ai.dialogue.dialogue_manager.EmotionSystem', return_value=mock_emotion_system), \
+         patch('src.core_ai.dialogue.dialogue_manager.CrisisSystem', return_value=mock_crisis_system), \
+         patch('src.core_ai.dialogue.dialogue_manager.FormulaEngine', return_value=mock_formula_engine), \
+         patch('src.core_ai.dialogue.dialogue_manager.ContentAnalyzerModule', return_value=mock_content_analyzer), \
+         patch('src.core_ai.dialogue.dialogue_manager.ToolDispatcher', return_value=mock_tool_dispatcher), \
+         patch('src.core_ai.dialogue.dialogue_manager.SelfCritiqueModule', return_value=mock_self_critique_module), \
+         patch('src.core_ai.dialogue.dialogue_manager.LearningManager', return_value=mock_learning_manager), \
+         patch('src.core_ai.dialogue.dialogue_manager.SandboxExecutor', return_value=mock_sandbox_executor), \
+         patch('src.core_ai.dialogue.dialogue_manager.TimeSystem', return_value=mock_time_system):
+
+        dm = DialogueManager(
+            personality_manager=mock_personality_manager,
+            memory_manager=mock_memory_manager,
+            llm_interface=mock_llm_interface,
+            emotion_system=mock_emotion_system,
+            crisis_system=mock_crisis_system,
+            formula_engine=mock_formula_engine,
+            content_analyzer=mock_content_analyzer,
+            tool_dispatcher=mock_tool_dispatcher,
+            self_critique_module=mock_self_critique_module,
+            learning_manager=mock_learning_manager,
+            # repair_engine=mock_repair_engine, # Removed this line
+            sandbox_executor=mock_sandbox_executor,
+            time_system=mock_time_system,
+            config=test_config
+        )
 
         # Create a sample graph for testing _find_entity_node_id_in_kg and _query_session_kg
-        self.sample_graph = nx.DiGraph()
-        self.sample_graph.add_node("ent_google_org", label="Google", type="ORG")
-        self.sample_graph.add_node("ent_microsoft_org", label="Microsoft", type="ORG")
-        self.sample_graph.add_node("ent_sundar_person", label="Sundar Pichai", type="PERSON")
-        self.sample_graph.add_node("ent_satya_person", label="Satya Nadella", type="PERSON")
-        self.sample_graph.add_node("ent_redmond_gpe", label="Redmond", type="GPE")
+        sample_graph = nx.DiGraph()
+        sample_graph.add_node("ent_google_org", label="Google", type="ORG")
+        sample_graph.add_node("ent_microsoft_org", label="Microsoft", type="ORG")
+        sample_graph.add_node("ent_sundar_person", label="Sundar Pichai", type="PERSON")
+        sample_graph.add_node("ent_satya_person", label="Satya Nadella", type="PERSON")
+        sample_graph.add_node("ent_redmond_gpe", label="Redmond", type="GPE")
 
-        self.sample_graph.add_edge("ent_google_org", "ent_sundar_person", type="has_ceo")
-        self.sample_graph.add_edge("ent_microsoft_org", "ent_satya_person", type="has_ceo")
-        self.sample_graph.add_edge("ent_microsoft_org", "ent_redmond_gpe", type="located_in")
-        self.sample_graph.add_edge("ent_google_org", "ent_redmond_gpe", type="competes_with_org_in_same_place_as_msft_hq") # A dummy rel
+        sample_graph.add_edge("ent_google_org", "ent_sundar_person", type="has_ceo")
+        sample_graph.add_edge("ent_microsoft_org", "ent_satya_person", type="has_ceo")
+        sample_graph.add_edge("ent_microsoft_org", "ent_redmond_gpe", type="located_in")
+        sample_graph.add_edge("ent_google_org", "ent_redmond_gpe", type="competes_with_org_in_same_place_as_msft_hq")
 
+        yield dm, sample_graph, mock_llm_interface, mock_personality_manager, mock_content_analyzer, mock_sandbox_executor, mock_self_critique_module, mock_learning_manager
 
-    def test_find_entity_node_id_in_kg_found(self):
-        node_id = self.dm._find_entity_node_id_in_kg(self.sample_graph, "Google")
-        self.assertEqual(node_id, "ent_google_org")
+# Helper Methods Tests
+@pytest.mark.asyncio
+async def test_find_entity_node_id_in_kg_found(dialogue_manager_helper_fixture):
+    dm, sample_graph, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    node_id = dm._find_entity_node_id_in_kg(sample_graph, "Google")
+    assert node_id == "ent_google_org"
 
-    def test_find_entity_node_id_in_kg_found_case_insensitive(self):
-        node_id = self.dm._find_entity_node_id_in_kg(self.sample_graph, "microsoft")
-        self.assertEqual(node_id, "ent_microsoft_org")
+@pytest.mark.asyncio
+async def test_find_entity_node_id_in_kg_found_case_insensitive(dialogue_manager_helper_fixture):
+    dm, sample_graph, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    node_id = dm._find_entity_node_id_in_kg(sample_graph, "microsoft")
+    assert node_id == "ent_microsoft_org"
 
-    def test_find_entity_node_id_in_kg_not_found(self):
-        node_id = self.dm._find_entity_node_id_in_kg(self.sample_graph, "Apple")
-        self.assertIsNone(node_id)
+@pytest.mark.asyncio
+async def test_find_entity_node_id_in_kg_not_found(dialogue_manager_helper_fixture):
+    dm, sample_graph, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    node_id = dm._find_entity_node_id_in_kg(sample_graph, "Apple")
+    assert node_id is None
 
-    def test_find_entity_node_id_in_kg_empty_graph(self):
-        empty_graph = nx.DiGraph()
-        node_id = self.dm._find_entity_node_id_in_kg(empty_graph, "Google")
-        self.assertIsNone(node_id)
+@pytest.mark.asyncio
+async def test_find_entity_node_id_in_kg_empty_graph(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    empty_graph = nx.DiGraph()
+    node_id = dm._find_entity_node_id_in_kg(empty_graph, "Google")
+    assert node_id is None
 
-    def test_find_entity_node_id_in_kg_none_graph(self):
-        node_id = self.dm._find_entity_node_id_in_kg(None, "Google") # type: ignore
-        self.assertIsNone(node_id)
+@pytest.mark.asyncio
+async def test_find_entity_node_id_in_kg_none_graph(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    node_id = dm._find_entity_node_id_in_kg(None, "Google") # type: ignore
+    assert node_id is None
 
+@pytest.mark.asyncio
+async def test_query_session_kg_found(dialogue_manager_helper_fixture):
+    dm, sample_graph, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    dm.session_knowledge_graphs["test_session"] = sample_graph
+    answer = dm._query_session_kg("test_session", "Google", "has_ceo")
+    assert answer == "Sundar Pichai"
 
-    def test_query_session_kg_found(self):
-        self.dm.session_knowledge_graphs["test_session"] = self.sample_graph
-        answer = self.dm._query_session_kg("test_session", "Google", "has_ceo")
-        self.assertEqual(answer, "Sundar Pichai")
+@pytest.mark.asyncio
+async def test_query_session_kg_entity_not_found(dialogue_manager_helper_fixture):
+    dm, sample_graph, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    dm.session_knowledge_graphs["test_session"] = sample_graph
+    answer = dm._query_session_kg("test_session", "Apple", "has_ceo")
+    assert answer is None
 
-    def test_query_session_kg_entity_not_found(self):
-        self.dm.session_knowledge_graphs["test_session"] = self.sample_graph
-        answer = self.dm._query_session_kg("test_session", "Apple", "has_ceo")
-        self.assertIsNone(answer)
+@pytest.mark.asyncio
+async def test_query_session_kg_relationship_not_found(dialogue_manager_helper_fixture):
+    dm, sample_graph, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    dm.session_knowledge_graphs["test_session"] = sample_graph
+    answer = dm._query_session_kg("test_session", "Google", "located_in")
+    assert answer is None
 
-    def test_query_session_kg_relationship_not_found(self):
-        self.dm.session_knowledge_graphs["test_session"] = self.sample_graph
-        answer = self.dm._query_session_kg("test_session", "Google", "located_in") # Google not located_in Redmond in this graph
-        self.assertIsNone(answer)
+@pytest.mark.asyncio
+async def test_query_session_kg_no_graph_for_session(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    answer = dm._query_session_kg("non_existent_session", "Google", "has_ceo")
+    assert answer is None
 
-    def test_query_session_kg_no_graph_for_session(self):
-        answer = self.dm._query_session_kg("non_existent_session", "Google", "has_ceo")
-        self.assertIsNone(answer)
+@pytest.mark.asyncio
+async def test_query_session_kg_target_no_label(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    graph_no_label = nx.DiGraph()
+    graph_no_label.add_node("ent_source_org", label="SourceOrg", type="ORG")
+    graph_no_label.add_node("ent_target_no_label_person", type="PERSON")
+    graph_no_label.add_edge("ent_source_org", "ent_target_no_label_person", type="has_contact")
 
-    def test_query_session_kg_target_no_label(self):
-        graph_no_label = nx.DiGraph()
-        graph_no_label.add_node("ent_source_org", label="SourceOrg", type="ORG")
-        graph_no_label.add_node("ent_target_no_label_person", type="PERSON") # No label attribute
-        graph_no_label.add_edge("ent_source_org", "ent_target_no_label_person", type="has_contact")
-
-        self.dm.session_knowledge_graphs["test_session_no_label"] = graph_no_label
-        answer = self.dm._query_session_kg("test_session_no_label", "SourceOrg", "has_contact")
-        self.assertEqual(answer, "ent_target_no_label_person") # Should return node ID as fallback
-
-
-    def test_is_kg_query_ceo_pattern(self):
-        result = self.dm._is_kg_query("who is ceo of Google?")
-        self.assertIsNotNone(result)
-        self.assertEqual(result, ("google", "has_ceo"))
-
-    def test_is_kg_query_ceo_pattern_with_the(self):
-        result = self.dm._is_kg_query("who is the ceo of Microsoft Corporation?")
-        self.assertIsNotNone(result)
-        self.assertEqual(result, ("microsoft corporation", "has_ceo"))
-
-    def test_is_kg_query_ceo_pattern_with_a(self): # Although "a ceo" is less common for specific query
-        result = self.dm._is_kg_query("who is a president of United States?") # Changed title for realism
-        self.assertIsNotNone(result)
-        self.assertEqual(result, ("united states", "has_president"))
-
-    def test_is_kg_query_founder_pattern(self):
-        result = self.dm._is_kg_query("who is founder of Apple Inc") # No question mark
-        self.assertIsNotNone(result)
-        self.assertEqual(result, ("apple inc", "has_founder"))
-
-    def test_is_kg_query_location_located_pattern(self):
-        result = self.dm._is_kg_query("where is Microsoft located")
-        self.assertIsNotNone(result)
-        self.assertEqual(result, ("microsoft", "located_in"))
-
-    def test_is_kg_query_location_based_pattern(self):
-        result = self.dm._is_kg_query("where is Apple based?")
-        self.assertIsNotNone(result)
-        self.assertEqual(result, ("apple", "located_in"))
-
-    def test_is_kg_query_acquire_pattern_company(self):
-        # This test assumes "acquire" is a relationship type the KG might have.
-        result = self.dm._is_kg_query("what company did Google acquire?")
-        self.assertIsNotNone(result)
-        self.assertEqual(result, ("google", "acquire"))
-
-    def test_is_kg_query_acquire_pattern_general(self):
-        result = self.dm._is_kg_query("what did Apple acquire")
-        self.assertIsNotNone(result)
-        self.assertEqual(result, ("apple", "acquire"))
-
-    def test_is_kg_query_entity_with_possessive_in_regex(self):
-        # Test how the regex handles entities that might themselves contain 's or be complex.
-        # The current regex `(.+)` captures the whole thing.
-        # The cleaning logic for possessives is simple and might not perfectly normalize all complex entities.
-        result = self.dm._is_kg_query("who is ceo of Google's parent company?")
-        self.assertIsNotNone(result)
-        # "google's parent company" is captured. It does not end with 's, so cleaning `entity[:-2]` doesn't apply.
-        self.assertEqual(result, ("google's parent company", "has_ceo"))
-
-    def test_is_kg_query_no_match(self):
-        result = self.dm._is_kg_query("tell me a joke")
-        self.assertIsNone(result)
-
-    def test_is_kg_query_empty_input(self):
-        result = self.dm._is_kg_query("")
-        self.assertIsNone(result)
-
-if __name__ == '__main__':
-    unittest.main()
+    dm.session_knowledge_graphs["test_session_no_label"] = graph_no_label
+    answer = dm._query_session_kg("test_session_no_label", "SourceOrg", "has_contact")
+    assert answer == "ent_target_no_label_person"
 
 
-class TestDialogueManagerKGIntegration(unittest.TestCase):
-    def setUp(self):
-        # Mock dependencies that DialogueManager initializes
-        self.mock_personality_manager = MagicMock()
-        self.mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
-        self.mock_personality_manager.get_initial_prompt.return_value = "Hello from TestAI."
+@pytest.mark.asyncio
+async def test_is_kg_query_ceo_pattern(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    result = dm._is_kg_query("who is ceo of Google?")
+    assert result is not None
+    assert result == ("google", "has_ceo")
 
-        self.mock_memory_manager = MagicMock()
-        self.mock_memory_manager.store_experience.return_value = "mem_id_123" # Dummy memory ID
+@pytest.mark.asyncio
+async def test_is_kg_query_ceo_pattern_with_the(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    result = dm._is_kg_query("who is the ceo of Microsoft Corporation?")
+    assert result is not None
+    assert result == ("microsoft corporation", "has_ceo")
 
-        self.mock_llm_interface = MagicMock()
-        self.mock_llm_interface.generate_response.return_value = "This is a fallback LLM response."
+@pytest.mark.asyncio
+async def test_is_kg_query_ceo_pattern_with_a(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    result = dm._is_kg_query("who is a president of United States?")
+    assert result is not None
+    assert result == ("united states", "has_president")
 
-        self.mock_emotion_system = MagicMock()
-        self.mock_emotion_system.get_current_emotion_expression.return_value = {"text_ending": ""} # No emotional suffix for tests
+@pytest.mark.asyncio
+async def test_is_kg_query_founder_pattern(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    result = dm._is_kg_query("who is founder of Apple Inc")
+    assert result is not None
+    assert result == ("apple inc", "has_founder")
 
-        self.mock_crisis_system = MagicMock()
-        self.mock_crisis_system.assess_input_for_crisis.return_value = 0 # No crisis
+@pytest.mark.asyncio
+async def test_is_kg_query_location_located_pattern(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    result = dm._is_kg_query("where is Microsoft located")
+    assert result is not None
+    assert result == ("microsoft", "located_in")
 
-        self.mock_formula_engine = MagicMock()
-        self.mock_formula_engine.match_input.return_value = None # No formula match by default
+@pytest.mark.asyncio
+async def test_is_kg_query_location_based_pattern(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    result = dm._is_kg_query("where is Apple based?")
+    assert result is not None
+    assert result == ("apple", "located_in")
 
-        self.mock_content_analyzer = MagicMock()
+@pytest.mark.asyncio
+async def test_is_kg_query_acquire_pattern_company(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    result = dm._is_kg_query("what company did Google acquire?")
+    assert result is not None
+    assert result == ("google", "acquire")
 
-        # Config for DialogueManager
-        self.test_config: OperationalConfig = { # type: ignore
-            "max_dialogue_history": 6,
-            "operational_configs": {
-                "timeouts": {"dialogue_manager_turn": 120},
-                "learning_thresholds": {"min_critique_score_to_store": 0.0}
-            },
-            "crisis_response_text": "Crisis response."
+@pytest.mark.asyncio
+async def test_is_kg_query_acquire_pattern_general(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    result = dm._is_kg_query("what did Apple acquire")
+    assert result is not None
+    assert result == ("apple", "acquire")
+
+@pytest.mark.asyncio
+async def test_is_kg_query_entity_with_possessive_in_regex(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    result = dm._is_kg_query("who is ceo of Google's parent company?")
+    assert result is not None
+    assert result == ("google's parent company", "has_ceo")
+
+@pytest.mark.asyncio
+async def test_is_kg_query_no_match(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    result = dm._is_kg_query("tell me a joke")
+    assert result is None
+
+@pytest.mark.asyncio
+async def test_is_kg_query_empty_input(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, _, _ = dialogue_manager_helper_fixture
+    result = dm._is_kg_query("")
+    assert result is None
+
+# KG Integration Tests
+@pytest.mark.asyncio
+async def test_kg_qa_ceo_and_location(dialogue_manager_helper_fixture):
+    dm, _, mock_llm_interface, mock_personality_manager, mock_content_analyzer, _, _, _ = dialogue_manager_helper_fixture
+    session_id = "kg_integ_test_session_01"
+    user_id = "kg_integ_test_user_01"
+
+    mock_kg = nx.DiGraph()
+    mock_kg.add_node("ent_innovate_corp_org", label="Innovate Corp", type="ORG")
+    mock_kg.add_node("ent_jane_doe_person", label="Jane Doe", type="PERSON")
+    mock_kg.add_node("ent_silicon_valley_gpe", label="Silicon Valley", type="GPE")
+    mock_kg.add_node("ent_alphatech_org", label="AlphaTech", type="ORG")
+
+    mock_kg.add_edge("ent_innovate_corp_org", "ent_jane_doe_person", type="has_ceo")
+    mock_kg.add_edge("ent_innovate_corp_org", "ent_silicon_valley_gpe", type="located_in")
+    mock_kg.add_edge("ent_innovate_corp_org", "ent_alphatech_org", type="acquire")
+
+    mock_content_analyzer.analyze_content.return_value = (None, mock_kg) # Return (TypedDict_KG_placeholder, nx_Graph)
+
+    analyze_cmd = "!analyze: Innovate Corp is a tech company. Jane Doe is its CEO. It is in Silicon Valley and bought AlphaTech."
+    analyze_response = await dm.get_simple_response(analyze_cmd, session_id, user_id)
+    assert "Context analysis triggered" in analyze_response
+    assert session_id in dm.session_knowledge_graphs
+    assert dm.session_knowledge_graphs[session_id] == mock_kg
+
+    q1 = "who is ceo of Innovate Corp?"
+    r1 = await dm.get_simple_response(q1, session_id, user_id)
+    expected_r1 = f"{mock_personality_manager.get_current_personality_trait.return_value}: From the analyzed context, the ceo of Innovate Corp is Jane Doe."
+    assert r1 == expected_r1
+
+    q2 = "where is Innovate Corp located?"
+    r2 = await dm.get_simple_response(q2, session_id, user_id)
+    expected_r2 = f"{mock_personality_manager.get_current_personality_trait.return_value}: From the analyzed context, Innovate Corp is located in Silicon Valley."
+    assert r2 == expected_r2
+
+    q3 = "what did Innovate Corp acquire?"
+    r3 = await dm.get_simple_response(q3, session_id, user_id)
+    expected_r3 = f"{mock_personality_manager.get_current_personality_trait.return_value}: From the analyzed context, Innovate Corp acquired AlphaTech."
+    assert r3 == expected_r3
+
+    mock_llm_interface.generate_response.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_kg_qa_fallback_if_kg_miss(dialogue_manager_helper_fixture):
+    dm, _, mock_llm_interface, mock_personality_manager, mock_content_analyzer, _, _, _ = dialogue_manager_helper_fixture
+    session_id = "kg_integ_test_session_02"
+    user_id = "kg_integ_test_user_02"
+
+    mock_kg = nx.DiGraph() # Empty graph or irrelevant graph
+    mock_kg.add_node("ent_other_org", label="Other Corp", type="ORG")
+    mock_content_analyzer.analyze_content.return_value = (None, mock_kg)
+
+    analyze_cmd = "!analyze: Some other unrelated text."
+    await dm.get_simple_response(analyze_cmd, session_id, user_id)
+
+    # Reset mock call count before the query that should go to LLM
+    mock_llm_interface.generate_response.reset_mock()
+
+    q1 = "who is ceo of Innovate Corp?" # Innovate Corp not in this session's KG
+    r1 = await dm.get_simple_response(q1, session_id, user_id)
+
+    # Expect fallback to LLM
+    mock_llm_interface.generate_response.assert_called_once()
+    expected_r1_fallback = f"{mock_personality_manager.get_current_personality_trait.return_value}: {mock_llm_interface.generate_response.return_value}"
+    assert r1 == expected_r1_fallback
+
+@pytest.mark.asyncio
+async def test_kg_qa_fallback_if_no_kg_for_session(dialogue_manager_helper_fixture):
+    dm, _, mock_llm_interface, mock_personality_manager, _, _, _, _ = dialogue_manager_helper_fixture
+    session_id = "kg_integ_test_session_03" # No !analyze for this session
+    user_id = "kg_integ_test_user_03"
+
+    mock_llm_interface.generate_response.reset_mock()
+
+    q1 = "who is ceo of Innovate Corp?"
+    r1 = await dm.get_simple_response(q1, session_id, user_id)
+
+    # Expect fallback to LLM
+    mock_llm_interface.generate_response.assert_called_once()
+    expected_r1_fallback = f"{mock_personality_manager.get_current_personality_trait.return_value}: {mock_llm_interface.generate_response.return_value}"
+    assert r1 == expected_r1_fallback
+
+@pytest.mark.asyncio
+async def test_kg_qa_no_answer_from_kg_then_fallback(dialogue_manager_helper_fixture):
+    dm, _, mock_llm_interface, mock_personality_manager, mock_content_analyzer, _, _, _ = dialogue_manager_helper_fixture
+    session_id = "kg_integ_test_session_04"
+    user_id = "kg_integ_test_user_04"
+
+    mock_kg = nx.DiGraph()
+    mock_kg.add_node("ent_innovate_corp_org", label="Innovate Corp", type="ORG")
+    # No CEO relationship for Innovate Corp in this KG
+    mock_content_analyzer.analyze_content.return_value = (None, mock_kg)
+
+    analyze_cmd = "!analyze: Innovate Corp is a company."
+    await dm.get_simple_response(analyze_cmd, session_id, user_id)
+
+    mock_llm_interface.generate_response.reset_mock()
+
+    q1 = "who is ceo of Innovate Corp?" # KG has Innovate Corp, but not its CEO
+    r1 = await dm.get_simple_response(q1, session_id, user_id)
+
+    mock_llm_interface.generate_response.assert_called_once()
+    expected_r1_fallback = f"{mock_personality_manager.get_current_personality_trait.return_value}: {mock_llm_interface.generate_response.return_value}"
+    assert r1 == expected_r1_fallback
+
+# Tool Drafting Tests
+@pytest.fixture(scope="function")
+async def dialogue_manager_tool_drafting_fixture():
+    mock_personality_manager = MagicMock()
+    mock_personality_manager.get_current_personality_trait.return_value = "TestDraftAI"
+    mock_llm_interface = MagicMock()
+
+    test_config: OperationalConfig = { # type: ignore
+        "operational_configs": {
+            "timeouts": {"dialogue_manager_turn": 120},
+            "learning_thresholds": {"min_critique_score_to_store": 0.0}
         }
+    }
+
+    patchers = {
+        'PersonalityManager': patch('src.core_ai.dialogue.dialogue_manager.PersonalityManager', return_value=mock_personality_manager),
+        'HAMMemoryManager': patch('src.core_ai.dialogue.dialogue_manager.HAMMemoryManager'),
+        'EmotionSystem': patch('src.core_ai.dialogue.dialogue_manager.EmotionSystem'),
+        'CrisisSystem': patch('src.core_ai.dialogue.dialogue_manager.CrisisSystem'),
+        'TimeSystem': patch('src.core_ai.dialogue.dialogue_manager.TimeSystem'),
+        'FormulaEngine': patch('src.core_ai.dialogue.dialogue_manager.FormulaEngine'),
+        'ToolDispatcher': patch('src.core_ai.dialogue.dialogue_manager.ToolDispatcher'),
+        'SelfCritiqueModule': patch('src.core_ai.dialogue.dialogue_manager.SelfCritiqueModule'),
+        'FactExtractorModule': patch('src.core_ai.dialogue.dialogue_manager.FactExtractorModule'),
+        'LearningManager': patch('src.core_ai.dialogue.dialogue_manager.LearningManager'),
+        'ContentAnalyzerModule': patch('src.core_ai.dialogue.dialogue_manager.ContentAnalyzerModule'),
+        'SandboxExecutor': patch('src.core_ai.dialogue.dialogue_manager.SandboxExecutor')
+    }
+    mocks = {name: patcher.start() for name, patcher in patchers.items()}
+    # No need for addCleanup with pytest fixtures, teardown is handled by fixture scope
+
+    dm = DialogueManager(
+        llm_interface=mock_llm_interface,
+        personality_manager=mock_personality_manager,
+        config=test_config
+    )
+    dm.personality_manager = mock_personality_manager # Ensure the mock is used
+
+    yield dm, mock_llm_interface, mocks
+
+    # Teardown for mocks (if not handled by pytest's default patching behavior)
+    for patcher in patchers.values():
+        patcher.stop()
+
+@pytest.mark.asyncio
+async def test_handle_draft_tool_request_success_flow(dialogue_manager_tool_drafting_fixture):
+    dm, mock_llm_interface, mocks = dialogue_manager_tool_drafting_fixture
+    tool_name = "EchoTool"
+    purpose_and_io_desc = "A simple tool that takes a string message and returns it."
+
+    mock_io_details: ParsedToolIODetails = { # type: ignore
+        "suggested_method_name": "echo",
+        "class_docstring_hint": "An echo tool.",
+        "method_docstring_hint": "Echoes the input message.",
+        "parameters": [{"name": "message", "type": "str", "description": "The message to echo."}],
+        "return_type": "str",
+        "return_description": "The echoed message."
+    }
+    mock_io_details_json_str = json.dumps(mock_io_details)
+    mock_generated_code = "class EchoTool:\n    pass # Dummy generated code"
+    mocks['SandboxExecutor'].return_value.run.return_value = ("Mocked sandbox success", None)
+
+
+    mock_llm_interface.generate_response.side_effect = [
+        mock_io_details_json_str,
+        mock_generated_code
+    ]
+
+    result_response = await dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+
+    assert mock_llm_interface.generate_response.call_count == 2
+
+    io_parsing_call_args = mock_llm_interface.generate_response.call_args_list[0]
+    io_parsing_prompt_arg = io_parsing_call_args[1]['prompt']
+    assert "You are an expert Python code analyst." in io_parsing_prompt_arg
+    assert purpose_and_io_desc in io_parsing_prompt_arg
+    assert io_parsing_call_args[1]['params'] == {"temperature": 0.1}
+
+    code_gen_call_args = mock_llm_interface.generate_response.call_args_list[1]
+    code_gen_prompt_arg = code_gen_call_args[1]['prompt']
+    assert f"Tool Class Name: {tool_name}" in code_gen_prompt_arg
+    assert "class_docstring_hint\": \"An echo tool.\"" in mock_io_details_json_str
+    assert "Method Name: echo" in code_gen_prompt_arg
+    assert "message: str" in code_gen_prompt_arg
+    assert "Return Type: str" in code_gen_prompt_arg
+    assert code_gen_call_args[1]['params'] == {"temperature": 0.3}
+
+    assert f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`" in result_response
+    assert mock_generated_code in result_response
+    assert "Info: The drafted code is syntactically valid Python." in result_response
+
+    mocks['SandboxExecutor'].return_value.run.assert_called_once()
+    assert "---Sandbox Test Run---" in result_response
+    assert "Execution Result: Mocked sandbox success" in result_response
+
+
+@pytest.mark.asyncio
+async def test_handle_draft_tool_request_code_syntax_error(dialogue_manager_tool_drafting_fixture):
+    dm, mock_llm_interface, mocks = dialogue_manager_tool_drafting_fixture
+    tool_name = "SyntaxErrorTool"
+    purpose_and_io_desc = "A tool that will have a syntax error."
+
+    mock_io_details: ParsedToolIODetails = {"suggested_method_name": "broken", "class_docstring_hint":"d","method_docstring_hint":"d","parameters":[],"return_type":"Any","return_description":"d"} # type: ignore
+    mock_io_details_json_str = json.dumps(mock_io_details)
+    mock_generated_code_with_error = "class SyntaxErrorTool:\n def broken(self):\n  print 'oops'"
+
+    mock_llm_interface.generate_response.side_effect = [
+        mock_io_details_json_str,
+        mock_generated_code_with_error
+    ]
+
+    result_response = await dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+
+    assert mock_llm_interface.generate_response.call_count == 2
+    assert f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`" in result_response
+    assert mock_generated_code_with_error in result_response
+    assert "Warning: The drafted code has a syntax error" in result_response
+    assert "line 3" in result_response
 
-        self.dm = DialogueManager(
-            personality_manager=self.mock_personality_manager,
-            memory_manager=self.mock_memory_manager,
-            llm_interface=self.mock_llm_interface,
-            emotion_system=self.mock_emotion_system,
-            crisis_system=self.mock_crisis_system,
-            formula_engine=self.mock_formula_engine,
-            content_analyzer=self.mock_content_analyzer, # Use the mock
-            config=self.test_config
-        )
-        # Ensure self_critique_module and learning_manager are also mocked if their methods are called
-        self.dm.self_critique_module = MagicMock()
-        self.dm.self_critique_module.critique_interaction.return_value = CritiqueResult(score=0.9, reason="Looks good.", suggested_alternative=None)
-        self.dm.learning_manager = MagicMock()
-        self.dm.repair_engine = MagicMock()
-
-
-    async def test_kg_qa_ceo_and_location(self):
-        session_id = "kg_integ_test_session_01"
-        user_id = "kg_integ_test_user_01"
-
-        # 1. Setup: Define the mock KG that ContentAnalyzer will return
-        mock_kg = nx.DiGraph()
-        mock_kg.add_node("ent_innovate_corp_org", label="Innovate Corp", type="ORG")
-        mock_kg.add_node("ent_jane_doe_person", label="Jane Doe", type="PERSON")
-        mock_kg.add_node("ent_silicon_valley_gpe", label="Silicon Valley", type="GPE")
-        mock_kg.add_node("ent_alphatech_org", label="AlphaTech", type="ORG")
-
-        mock_kg.add_edge("ent_innovate_corp_org", "ent_jane_doe_person", type="has_ceo")
-        mock_kg.add_edge("ent_innovate_corp_org", "ent_silicon_valley_gpe", type="located_in")
-        mock_kg.add_edge("ent_innovate_corp_org", "ent_alphatech_org", type="acquire")
-
-        self.mock_content_analyzer.analyze_content.return_value = (None, mock_kg) # Return (TypedDict_KG_placeholder, nx_Graph)
-
-        # 2. Analyze text
-        analyze_cmd = "!analyze: Innovate Corp is a tech company. Jane Doe is its CEO. It is in Silicon Valley and bought AlphaTech."
-        analyze_response = await self.dm.get_simple_response(analyze_cmd, session_id, user_id)
-        self.assertIn("Context analysis triggered", analyze_response)
-        self.assertIn(session_id, self.dm.session_knowledge_graphs)
-        self.assertEqual(self.dm.session_knowledge_graphs[session_id], mock_kg)
-
-        # 3. Ask "who is ceo of Innovate Corp?"
-        q1 = "who is ceo of Innovate Corp?"
-        r1 = await self.dm.get_simple_response(q1, session_id, user_id)
-        expected_r1 = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: From the analyzed context, the ceo of Innovate Corp is Jane Doe."
-        self.assertEqual(r1, expected_r1)
-
-        # 4. Ask "where is Innovate Corp located?"
-        q2 = "where is Innovate Corp located?"
-        r2 = await self.dm.get_simple_response(q2, session_id, user_id)
-        expected_r2 = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: From the analyzed context, Innovate Corp is located in Silicon Valley."
-        self.assertEqual(r2, expected_r2)
-
-        # 5. Ask "what did Innovate Corp acquire?"
-        q3 = "what did Innovate Corp acquire?"
-        r3 = await self.dm.get_simple_response(q3, session_id, user_id)
-        expected_r3 = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: From the analyzed context, Innovate Corp acquired AlphaTech."
-        self.assertEqual(r3, expected_r3)
-
-        # Ensure LLM was not called for these KG-answered questions
-        self.mock_llm_interface.generate_response.assert_not_called()
-
-
-    async def test_kg_qa_fallback_if_kg_miss(self):
-        session_id = "kg_integ_test_session_02"
-        user_id = "kg_integ_test_user_02"
-
-        mock_kg = nx.DiGraph() # Empty graph or irrelevant graph
-        mock_kg.add_node("ent_other_org", label="Other Corp", type="ORG")
-        self.mock_content_analyzer.analyze_content.return_value = (None, mock_kg)
-
-        analyze_cmd = "!analyze: Some other unrelated text."
-        await self.dm.get_simple_response(analyze_cmd, session_id, user_id)
-
-        # Reset mock call count before the query that should go to LLM
-        self.mock_llm_interface.generate_response.reset_mock()
-
-        q1 = "who is ceo of Innovate Corp?" # Innovate Corp not in this session's KG
-        r1 = await self.dm.get_simple_response(q1, session_id, user_id)
-
-        # Expect fallback to LLM
-        self.mock_llm_interface.generate_response.assert_called_once()
-        expected_r1_fallback = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: {self.mock_llm_interface.generate_response.return_value}"
-        self.assertEqual(r1, expected_r1_fallback)
-
-    async def test_kg_qa_fallback_if_no_kg_for_session(self):
-        session_id = "kg_integ_test_session_03" # No !analyze for this session
-        user_id = "kg_integ_test_user_03"
-
-        self.mock_llm_interface.generate_response.reset_mock()
-
-        q1 = "who is ceo of Innovate Corp?"
-        r1 = await self.dm.get_simple_response(q1, session_id, user_id)
-
-        # Expect fallback to LLM
-        self.mock_llm_interface.generate_response.assert_called_once()
-        expected_r1_fallback = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: {self.mock_llm_interface.generate_response.return_value}"
-        self.assertEqual(r1, expected_r1_fallback)
-
-    async def test_kg_qa_no_answer_from_kg_then_fallback(self):
-        session_id = "kg_integ_test_session_04"
-        user_id = "kg_integ_test_user_04"
-
-        mock_kg = nx.DiGraph()
-        mock_kg.add_node("ent_innovate_corp_org", label="Innovate Corp", type="ORG")
-        # No CEO relationship for Innovate Corp in this KG
-        self.mock_content_analyzer.analyze_content.return_value = (None, mock_kg)
-
-        analyze_cmd = "!analyze: Innovate Corp is a company."
-        await self.dm.get_simple_response(analyze_cmd, session_id, user_id)
-
-        self.mock_llm_interface.generate_response.reset_mock()
-
-        q1 = "who is ceo of Innovate Corp?" # KG has Innovate Corp, but not its CEO
-        r1 = await self.dm.get_simple_response(q1, session_id, user_id)
-
-        self.mock_llm_interface.generate_response.assert_called_once()
-        expected_r1_fallback = f"{self.mock_personality_manager.get_current_personality_trait.return_value}: {self.mock_llm_interface.generate_response.return_value}"
-        self.assertEqual(r1, expected_r1_fallback)
-
-
-class TestDialogueManagerToolDrafting(unittest.TestCase):
-    def setUp(self):
-        self.mock_personality_manager = MagicMock()
-        self.mock_personality_manager.get_current_personality_trait.return_value = "TestDraftAI"
-
-        self.mock_llm_interface = MagicMock()
-
-        self.test_config: OperationalConfig = { # type: ignore
-            "operational_configs": {
-                "timeouts": {"dialogue_manager_turn": 120},
-                "learning_thresholds": {"min_critique_score_to_store": 0.0}
-            }
-        }
-
-        patchers = {
-            'PersonalityManager': patch('src.core_ai.dialogue.dialogue_manager.PersonalityManager', return_value=self.mock_personality_manager),
-            'HAMMemoryManager': patch('src.core_ai.dialogue.dialogue_manager.HAMMemoryManager'),
-            'EmotionSystem': patch('src.core_ai.dialogue.dialogue_manager.EmotionSystem'),
-            'CrisisSystem': patch('src.core_ai.dialogue.dialogue_manager.CrisisSystem'),
-            'TimeSystem': patch('src.core_ai.dialogue.dialogue_manager.TimeSystem'),
-            'FormulaEngine': patch('src.core_ai.dialogue.dialogue_manager.FormulaEngine'),
-            'ToolDispatcher': patch('src.core_ai.dialogue.dialogue_manager.ToolDispatcher'),
-            'SelfCritiqueModule': patch('src.core_ai.dialogue.dialogue_manager.SelfCritiqueModule'),
-            'FactExtractorModule': patch('src.core_ai.dialogue.dialogue_manager.FactExtractorModule'),
-            'LearningManager': patch('src.core_ai.dialogue.dialogue_manager.LearningManager'),
-            'ContentAnalyzerModule': patch('src.core_ai.dialogue.dialogue_manager.ContentAnalyzerModule'),
-            'SandboxExecutor': patch('src.core_ai.dialogue.dialogue_manager.SandboxExecutor')
-        }
-        self.mocks = {name: patcher.start() for name, patcher in patchers.items()}
-        for patcher in patchers.values():
-            self.addCleanup(patcher.stop)
-
-        self.dm = DialogueManager(
-            llm_interface=self.mock_llm_interface,
-            personality_manager=self.mock_personality_manager,
-            config=self.test_config
-        )
-        self.dm.personality_manager = self.mock_personality_manager
-
-
-    async def test_handle_draft_tool_request_success_flow(self):
-        tool_name = "EchoTool"
-        purpose_and_io_desc = "A simple tool that takes a string message and returns it."
-
-        mock_io_details: ParsedToolIODetails = { # type: ignore
-            "suggested_method_name": "echo",
-            "class_docstring_hint": "An echo tool.",
-            "method_docstring_hint": "Echoes the input message.",
-            "parameters": [{"name": "message", "type": "str", "description": "The message to echo."}],
-            "return_type": "str",
-            "return_description": "The echoed message."
-        }
-        mock_io_details_json_str = json.dumps(mock_io_details)
-        mock_generated_code = "class EchoTool:\n    pass # Dummy generated code"
-        self.mocks['SandboxExecutor'].return_value.run.return_value = ("Mocked sandbox success", None)
-
-
-        self.mock_llm_interface.generate_response.side_effect = [
-            mock_io_details_json_str,
-            mock_generated_code
-        ]
-
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-
-        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
-
-        io_parsing_call_args = self.mock_llm_interface.generate_response.call_args_list[0]
-        io_parsing_prompt_arg = io_parsing_call_args[1]['prompt']
-        self.assertIn("You are an expert Python code analyst.", io_parsing_prompt_arg)
-        self.assertIn(purpose_and_io_desc, io_parsing_prompt_arg)
-        self.assertEqual(io_parsing_call_args[1]['params'], {"temperature": 0.1})
-
-        code_gen_call_args = self.mock_llm_interface.generate_response.call_args_list[1]
-        code_gen_prompt_arg = code_gen_call_args[1]['prompt']
-        self.assertIn(f"Tool Class Name: {tool_name}", code_gen_prompt_arg)
-        self.assertIn("class_docstring_hint\": \"An echo tool.\"", mock_io_details_json_str)
-        self.assertIn("Method Name: echo", code_gen_prompt_arg)
-        self.assertIn("message: str", code_gen_prompt_arg)
-        self.assertIn("Return Type: str", code_gen_prompt_arg)
-        self.assertEqual(code_gen_call_args[1]['params'], {"temperature": 0.3})
-
-        self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
-        self.assertIn(mock_generated_code, result_response)
-        self.assertIn("Info: The drafted code is syntactically valid Python.", result_response)
-
-        self.mocks['SandboxExecutor'].return_value.run.assert_called_once()
-        self.assertIn("---Sandbox Test Run---", result_response)
-        self.assertIn("Execution Result: Mocked sandbox success", result_response)
-
-
-    async def test_handle_draft_tool_request_code_syntax_error(self):
-        tool_name = "SyntaxErrorTool"
-        purpose_and_io_desc = "A tool that will have a syntax error."
-
-        mock_io_details: ParsedToolIODetails = {"suggested_method_name": "broken", "class_docstring_hint":"d","method_docstring_hint":"d","parameters":[],"return_type":"Any","return_description":"d"} # type: ignore
-        mock_io_details_json_str = json.dumps(mock_io_details)
-        mock_generated_code_with_error = "class SyntaxErrorTool:\n def broken(self):\n  print 'oops'"
-
-        self.mock_llm_interface.generate_response.side_effect = [
-            mock_io_details_json_str,
-            mock_generated_code_with_error
-        ]
-
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-
-        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
-        self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
-        self.assertIn(mock_generated_code_with_error, result_response)
-        self.assertIn("Warning: The drafted code has a syntax error", result_response)
-        self.assertIn("line 3", result_response) # Updated to match ast.SyntaxError format
-
-        self.mocks['SandboxExecutor'].return_value.run.assert_not_called()
-
-
-    async def test_handle_draft_tool_request_sandbox_execution_error(self):
-        tool_name = "SandboxErrorTool"
-        purpose_and_io_desc = "A tool that is valid but will error in sandbox."
-
-        mock_io_details: ParsedToolIODetails = { # type: ignore
-            "suggested_method_name": "error_method",
-            "class_docstring_hint": "Tool designed to error in sandbox.",
-            "method_docstring_hint": "This method will raise an error.",
-            "parameters": [], "return_type": "None", "return_description": "Error."
-        }
-        mock_io_details_json_str = json.dumps(mock_io_details)
-        mock_valid_code = "class SandboxErrorTool:\n  def __init__(self, config=None): pass\n  def error_method(self):\n    raise ValueError('Sandbox test error')"
-
-        self.mock_llm_interface.generate_response.side_effect = [
-            mock_io_details_json_str,
-            mock_valid_code
-        ]
-
-        self.mocks['SandboxExecutor'].return_value.run.return_value = (None, "ValueError: Sandbox test error")
-
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-
-        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
-        self.mocks['SandboxExecutor'].return_value.run.assert_called_once()
-        self.assertIn("Info: The drafted code is syntactically valid Python.", result_response)
-        self.assertIn("---Sandbox Test Run---", result_response)
-        self.assertIn("Execution Error: ValueError: Sandbox test error", result_response)
-
-
-    async def test_handle_draft_tool_request_io_parsing_json_error(self):
-        tool_name = "BadJsonTool"
-        purpose_and_io_desc = "This will cause a JSON error."
-
-        self.mock_llm_interface.generate_response.return_value = "This is not valid JSON {oops"
-
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-
-        self.mock_llm_interface.generate_response.assert_called_once()
-        self.assertIn(f"I had trouble understanding the specific parameters and return types from your description for '{tool_name}'.", result_response)
-
-    async def test_handle_draft_tool_request_io_parsing_value_error(self):
-        tool_name = "ValueErrorTool"
-        purpose_and_io_desc = "This will cause a value error if JSON is empty after extraction."
-
-        self.mock_llm_interface.generate_response.return_value = "```json\n\n```"
-
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-
-        self.mock_llm_interface.generate_response.assert_called_once()
-        self.assertIn(f"I encountered an issue trying to structure the details for '{tool_name}'. Please try rephrasing your request.", result_response)
-
-    async def test_handle_draft_tool_request_io_details_missing_keys_fallback(self):
-        tool_name = "PartialTool"
-        purpose_and_io_desc = "A tool with partial details."
-
-        mock_io_details_partial_json_str = json.dumps({ # type: ignore
-            "suggested_method_name": "do_partial_stuff",
-            # "class_docstring_hint": "Missing class doc", # Missing
-            "parameters": [{"name": "data", "type": "Any", "description": "Some data."}],
-            # "return_type": "bool" # Missing
-            # "return_description" is also missing
-        })
-
-        mock_generated_code = "class PartialTool:\n    pass # Dummy generated code"
-        self.mocks['SandboxExecutor'].return_value.run.return_value = ("Partial sandbox success", None)
-
-
-        self.mock_llm_interface.generate_response.side_effect = [
-            mock_io_details_partial_json_str,
-            mock_generated_code
-        ]
-
-        result_response = await self.dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
-        self.assertEqual(self.mock_llm_interface.generate_response.call_count, 2)
-
-        code_gen_call_args = self.mock_llm_interface.generate_response.call_args_list[1]
-        code_gen_prompt_arg = code_gen_call_args[1]['prompt']
-        self.assertIn(f"Class Docstring: {purpose_and_io_desc}", code_gen_prompt_arg)
-        self.assertIn("Method Name: do_partial_stuff", code_gen_prompt_arg)
-        self.assertIn("Return Type: Any", code_gen_prompt_arg)
-
-        self.assertIn(f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`", result_response)
-
-    async def test_low_critique_score_triggers_repair(self):
-        session_id = "repair_test_session"
-        user_id = "repair_test_user"
-        user_input = "This is a test input."
-        initial_response = "This is a bad response."
-        repaired_response = "This is a better response."
-
-        self.dm.llm_interface.generate_response.return_value = initial_response
-        self.dm.self_critique_module.critique_interaction.return_value = CritiqueResult(
-            score=0.2,
-            reason="The response was bad.",
-            suggested_alternative=repaired_response
-        )
-
-        final_response = await self.dm.get_simple_response(user_input, session_id, user_id)
-
-        self.assertEqual(final_response, repaired_response)
-
-# Need to import json for the test class
-# import json # Already imported at the top
+    mocks['SandboxExecutor'].return_value.run.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_handle_draft_tool_request_sandbox_execution_error(dialogue_manager_tool_drafting_fixture):
+    dm, mock_llm_interface, mocks = dialogue_manager_tool_drafting_fixture
+    tool_name = "SandboxErrorTool"
+    purpose_and_io_desc = "A tool that is valid but will error in sandbox."
+
+    mock_io_details: ParsedToolIODetails = { # type: ignore
+        "suggested_method_name": "error_method",
+        "class_docstring_hint": "Tool designed to error in sandbox.",
+        "method_docstring_hint": "This method will raise an error.",
+        "parameters": [], "return_type": "None", "return_description": "Error."
+    }
+    mock_io_details_json_str = json.dumps(mock_io_details)
+    mock_valid_code = "class SandboxErrorTool:\n  def __init__(self, config=None): pass\n  def error_method(self):\n    raise ValueError('Sandbox test error')"
+
+    mock_llm_interface.generate_response.side_effect = [
+        mock_io_details_json_str,
+        mock_valid_code
+    ]
+
+    mocks['SandboxExecutor'].return_value.run.return_value = (None, "ValueError: Sandbox test error")
+
+    result_response = await dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+
+    assert mock_llm_interface.generate_response.call_count == 2
+    mocks['SandboxExecutor'].return_value.run.assert_called_once()
+    assert "Info: The drafted code is syntactically valid Python." in result_response
+    assert "---Sandbox Test Run---" in result_response
+    assert "Execution Error: ValueError: Sandbox test error" in result_response
+
+
+@pytest.mark.asyncio
+async def test_handle_draft_tool_request_io_parsing_json_error(dialogue_manager_tool_drafting_fixture):
+    dm, mock_llm_interface, _ = dialogue_manager_tool_drafting_fixture
+    tool_name = "BadJsonTool"
+    purpose_and_io_desc = "This will cause a JSON error."
+
+    mock_llm_interface.generate_response.return_value = "This is not valid JSON {oops"
+
+    result_response = await dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+
+    mock_llm_interface.generate_response.assert_called_once()
+    assert f"I had trouble understanding the specific parameters and return types from your description for '{tool_name}'." in result_response
+
+@pytest.mark.asyncio
+async def test_handle_draft_tool_request_io_parsing_value_error(dialogue_manager_tool_drafting_fixture):
+    dm, mock_llm_interface, _ = dialogue_manager_tool_drafting_fixture
+    tool_name = "ValueErrorTool"
+    purpose_and_io_desc = "This will cause a value error if JSON is empty after extraction."
+
+    mock_llm_interface.generate_response.return_value = "```json\n\n```"
+
+    result_response = await dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+
+    mock_llm_interface.generate_response.assert_called_once()
+    assert f"I encountered an issue trying to structure the details for '{tool_name}'. Please try rephrasing your request." in result_response
+
+@pytest.mark.asyncio
+async def test_handle_draft_tool_request_io_details_missing_keys_fallback(dialogue_manager_tool_drafting_fixture):
+    dm, mock_llm_interface, mocks = dialogue_manager_tool_drafting_fixture
+    tool_name = "PartialTool"
+    purpose_and_io_desc = "A tool with partial details."
+
+    mock_io_details_partial_json_str = json.dumps({ # type: ignore
+        "suggested_method_name": "do_partial_stuff",
+        # "class_docstring_hint": "Missing class doc", # Missing
+        "parameters": [{"name": "data", "type": "Any", "description": "Some data."}],
+        # "return_type": "bool" # Missing
+        # "return_description" is also missing
+    })
+
+    mock_generated_code = "class PartialTool:\n    pass # Dummy generated code"
+    mocks['SandboxExecutor'].return_value.run.return_value = ("Partial sandbox success", None)
+
+
+    mock_llm_interface.generate_response.side_effect = [
+        mock_io_details_partial_json_str,
+        mock_generated_code
+    ]
+
+    result_response = await dm.handle_draft_tool_request(tool_name, purpose_and_io_desc)
+    assert mock_llm_interface.generate_response.call_count == 2
+
+    code_gen_call_args = mock_llm_interface.generate_response.call_args_list[1]
+    code_gen_prompt_arg = code_gen_call_args[1]['prompt']
+    assert f"Class Docstring: {purpose_and_io_desc}" in code_gen_prompt_arg
+    assert "Method Name: do_partial_stuff" in code_gen_prompt_arg
+    assert "Return Type: Any" in code_gen_prompt_arg
+
+    assert f"Okay, I've drafted a Python skeleton for a tool named `{tool_name}`" in result_response
+
+@pytest.mark.asyncio
+async def test_low_critique_score_triggers_repair(dialogue_manager_helper_fixture):
+    dm, _, _, _, _, _, mock_self_critique_module, _ = dialogue_manager_helper_fixture
+    session_id = "repair_test_session"
+    user_id = "repair_test_user"
+    user_input = "This is a test input."
+    initial_response = "This is a bad response."
+    repaired_response = "This is a better response."
+
+    dm.llm_interface.generate_response.return_value = initial_response
+    mock_self_critique_module.critique_interaction.return_value = CritiqueResult(
+        score=0.2,
+        reason="The response was bad.",
+        suggested_alternative=repaired_response
+    )
+
+    final_response = await dm.get_simple_response(user_input, session_id, user_id)
+
+    assert final_response == repaired_response

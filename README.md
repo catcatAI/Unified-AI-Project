@@ -54,7 +54,7 @@
     - **狀態**: 已整合功能原型（第二階段），能夠生成和更新知識圖譜，具備實體和基於規則的關係提取，包括處理結構化 HSP 事實。持續工作重點是完善提取、增強本體使用，並深化與 `DialogueManager` 的整合以實現更豐富的上下文感知
 
 ### 公式引擎 (`src/core_ai/formula_engine/`)
-實現基於規則的系統，其中預定義的「公式」（見 `configs/formula_configs/`）可以根據輸入條件觸發特定動作或響應。這允許確定性行為和工具調度。
+實現基於規則的系統，其中預定義的「公式」（配置於 `configs/formula_configs/default_formulas.json`）可以根據輸入條件（目前支持簡單的關鍵字匹配）觸發特定動作或響應。它負責匹配輸入並返回相應的動作和參數，供其他模組（如 `DialogueManager`）執行。這允許確定性行為和工具調度。
 
 ### 工具系統
 *   **工具調度器 (`src/tools/tool_dispatcher.py`)**: 使 AI 能夠使用外部或內部「工具」（如計算器、信息檢索功能）來增強其能力。工具可由公式引擎或其他 AI 邏輯觸發，支持動態工具加載和執行
@@ -122,37 +122,27 @@
 
 ### 依賴管理
 
-本項目使用**靈活的依賴管理系統**，允許您：
-- 僅安裝您用例所需的依賴項
-- 當首選包不可用時自動回退到替代包
-- 即使某些可選依賴項缺失也能運行項目
-- 依賴項優先級已調整，以支持輕量級模型優先
+本項目使用**靈活的依賴管理系統**，所有依賴項配置均集中在 `dependency_config.yaml` 文件中。這允許您：
+- 根據預定義的安裝類型（如最小、標準、完整或特定功能組）安裝所需依賴項。
+- 當首選包不可用時自動回退到替代包。
+- 即使某些可選依賴項缺失也能運行項目。
+- 依賴項優先級已調整，以支持輕量級模型優先。
 
 **安裝選項：**
 
-1. **最小安裝**（僅核心功能）：
-   ```bash
-   pip install -e .
-   ```
+現在，推薦使用項目提供的安裝程式來管理依賴項。這些安裝程式會讀取 `dependency_config.yaml` 中的配置，並引導您完成安裝過程。
 
-2. **標準安裝**（Web API + 測試）：
-   ```bash
-   pip install -e .[standard]
-   ```
+1.  **命令行安裝程式：**
+    ```bash
+    python installer_cli.py
+    ```
+    運行此命令後，您將被提示選擇所需的安裝類型（例如 `minimal`, `standard`, `full`, `ai_focused` 等）。
 
-3. **完整安裝**（所有功能）：
-   ```bash
-   pip install -e .[full]
-   ```
-
-4. **特定功能組：**
-   ```bash
-   pip install -e .[ai]        # AI/ML 功能（TensorFlow、spaCy 等）
-   pip install -e .[web]       # Web API 功能（FastAPI、uvicorn 等）
-   pip install -e .[nlp]       # 自然語言處理
-   pip install -e .[ml]        # 機器學習
-   pip install -e .[dev]       # 開發工具
-   ```
+2.  **圖形化安裝程式 (GUI)：**
+    ```bash
+    python installer.py
+    ```
+    運行此命令將啟動一個圖形化嚮導，您可以在其中選擇安裝類型和其他配置選項。
 
 **依賴狀態檢查：**
 
@@ -301,6 +291,16 @@ python startup_with_fallbacks.py --port 8080 --debug
     ```
     API 將在 `http://localhost:5000`（Flask）或 `http://localhost:8000`（FastAPI）可訪問。FastAPI 的 Swagger UI 文檔可在 `/docs` 獲得。
 
+### 運行時硬體與作業系統適應
+
+Unified AI Project 旨在在不同硬體配置和作業系統上提供靈活的運行體驗。這種適應性主要通過以下機制實現：
+
+*   **依賴項備用機制：** 專案利用 `dependency_config.yaml` 中定義的備用依賴項。例如，如果 TensorFlow 在特定硬體或作業系統上不可用，系統會自動回退到使用 `scikit-learn` 或 `numpy` 進行 AI 模型操作。這確保了即使在資源受限或特定環境下，核心功能也能保持運行。
+*   **動態服務器選擇：** `startup_with_fallbacks.py` 腳本會根據當前環境中可用的 Web 框架（例如 FastAPI 或 Flask）動態選擇啟動哪個 API 服務器。如果沒有可用的 Web 服務器，專案將回退到僅 CLI 模式運行。
+*   **作業系統特定處理：** 在某些情況下，例如 `src/core_ai/dependency_manager.py` 中，會包含針對特定作業系統（如 Windows）的特殊處理邏輯，以避免兼容性問題（例如，避免在 Windows 上直接導入 TensorFlow 以防止潛在的崩潰）。
+
+這些機制共同確保了專案在多樣化的運行環境中具有彈性和魯棒性。
+
 ### 命令列安裝程式
 
 項目現在包含一個命令列安裝程式，可以引導您完成安裝過程。要使用安裝程式，請運行以下命令：
@@ -432,6 +432,10 @@ python installer_cli.py
 ## 項目架構
 
 項目的邏輯圖和知識圖譜可在 `docs/architecture` 目錄中找到。
+
+### 核心服務初始化 (`src/core_services.py`)
+
+`src/core_services.py` 作為 Unified AI Project 的中央初始化點，負責創建和管理所有核心 AI 模組和服務的單例實例。它通過依賴注入的方式，將所需的依賴項傳遞給各個模組，確保了系統的模塊化和可測試性。此文件還處理基礎配置的載入和 HSP 連接的初始化。
 
 ### 邏輯圖
 

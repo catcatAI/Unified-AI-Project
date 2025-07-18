@@ -55,6 +55,7 @@ The LIS is comprised of several interconnected components. Some may be new, whil
 *   **Outputs:** `SemanticAnomalyDetectedEvent`.
 *   **Relation to Existing Functionalities:**
     *   **`SelfCritiqueModule`:** Provides a foundational LLM-based mechanism for evaluating AI responses against criteria like relevance, coherence, safety, and tone. Its `CritiqueResult` (score, reason, suggestion) could be transformed into a `SemanticAnomalyDetectedEvent`. The LIS could make `SelfCritiqueModule`'s operation more proactive or broaden its evaluation scope.
+    *   **`FactExtractorModule`:** Can serve as an input source for `ERR-INTROSPECTOR` by providing structured facts extracted from user input or AI output. Anomalies in fact extraction (e.g., low confidence, conflicting facts) could signal semantic issues.
     *   **`CrisisSystem`:** Specialized input anomaly detection (keywords). Its pattern of detection -> protocol trigger is analogous. LIS would generalize this for AI self-output.
     *   **`FormulaEngine`:** Could be adapted: if formulas were designed to match "error patterns" in AI output, they could trigger LIS alerts.
 
@@ -104,7 +105,7 @@ The LIS is comprised of several interconnected components. Some may be new, whil
 ### 4.2. External System Interactions - Revised View
 
 *   **`ErrorBloom` / `ErrX` (via `LearningManager` & HSP):**
-    *   Conflicts detected by `LearningManager` during HSP fact processing are prime `ErrorBloom` events. The metadata becomes `ErrX`. LIS's `IMMUNO-NARRATIVE CACHE` would ingest these structured incident reports.
+    *   Conflicts detected by `LearningManager` during HSP fact processing (including Type 1 and Type 2 semantic conflicts) are prime `ErrorBloom` events. The metadata becomes `ErrX`. LIS's `IMMUNO-NARRATIVE CACHE` would ingest these structured incident reports.
 *   **HSP (`ImmunoSync Layer` - Conceptual, built upon `HSPConnector` & `LearningManager`):**
     *   The `ImmunoSync Layer` would enhance `HSPConnector`'s processing pipeline. It would work with `ECHO-SHIELD` (new LIS component) to monitor linguistic patterns in HSP exchanges, not just factual conflicts. It would leverage `LearningManager`'s trust-based filtering.
 *   **`DEEPMAPPINGENGINE.md` (Conceptual):** Remains a future input for detailed diagnostics.

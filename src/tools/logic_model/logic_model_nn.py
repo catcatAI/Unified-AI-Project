@@ -10,7 +10,7 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from core_ai.dependency_manager import dependency_manager, get_dependency, is_dependency_available
+from core_ai.dependency_manager import dependency_manager
 
 # Global variables to hold TensorFlow components, loaded on demand.
 tf = None
@@ -34,7 +34,7 @@ def _ensure_tensorflow_is_imported():
         return True
     
     # Use dependency manager to get TensorFlow
-    tf_module = get_dependency('tensorflow')
+    tf_module = dependency_manager.get_dependency('tensorflow')
     if tf_module is not None:
         try:
             tf = tf_module
@@ -56,7 +56,7 @@ def _ensure_tensorflow_is_imported():
 
 def _tensorflow_is_available():
     """Check if TensorFlow is available."""
-    return is_dependency_available('tensorflow')
+    return dependency_manager.is_available('tensorflow')
 
 # Attempt to import TensorFlow on module load
 _ensure_tensorflow_is_imported()
@@ -70,7 +70,7 @@ TRAIN_DATA_PATH = os.path.join(PROJECT_ROOT, "data/raw_datasets/logic_train.json
 
 class LogicNNModel:
     def __init__(self, max_seq_len, vocab_size, embedding_dim=32, lstm_units=64):
-        if not _tensorflow_is_available():
+        if not dependency_manager.is_available('tensorflow'):
             print("LogicNNModel: TensorFlow not available. This instance will be non-functional.")
             self.model = None
             return
@@ -81,7 +81,7 @@ class LogicNNModel:
         self.model = None # Build lazily
 
     def _build_model(self):
-        if not _tensorflow_is_available():
+        if not dependency_manager.is_available('tensorflow'):
             print("Cannot build model: TensorFlow not available.")
             return
         input_layer = Input(shape=(self.max_seq_len,), name="input_proposition")
@@ -130,7 +130,7 @@ class LogicNNModel:
 
     @classmethod
     def load_model(cls, model_path, char_maps_path):
-        if not _tensorflow_is_available():
+        if not dependency_manager.is_available('tensorflow'):
             print("Cannot load model: TensorFlow not available.")
             return None
         with open(char_maps_path, 'r') as f:

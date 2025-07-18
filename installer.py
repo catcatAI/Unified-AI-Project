@@ -1,9 +1,23 @@
 import sys
+import yaml # Added
+import os # Added
 from PyQt5.QtWidgets import QApplication, QWizard, QWizardPage
 
 class InstallationWizard(QWizard):
     def __init__(self):
         super().__init__()
+
+        # Load dependency configuration
+        config_path = os.path.join(os.path.dirname(__file__), 'dependency_config.yaml')
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                self.dependency_config = yaml.safe_load(f)
+        except FileNotFoundError:
+            print(f"Error: dependency_config.yaml not found at {config_path}", file=sys.stderr)
+            self.dependency_config = {} # Fallback to empty config
+        except yaml.YAMLError as e:
+            print(f"Error parsing dependency_config.yaml: {e}", file=sys.stderr)
+            self.dependency_config = {} # Fallback to empty config
 
         self.addPage(WelcomePage())
         self.addPage(ConfigurationPage())
@@ -12,6 +26,7 @@ class InstallationWizard(QWizard):
         self.addPage(FinishedPage())
 
         self.setWindowTitle("Installation Wizard")
+        self.selected_installation_type = None # Added to store the selected type
 
     def get_os(self):
         if sys.platform.startswith("win"):
@@ -31,7 +46,7 @@ class WelcomePage(QWizardPage):
         layout.addWidget(QLabel("Welcome to the Unified AI Project installation wizard."))
         self.setLayout(layout)
 
-from PyQt5.QtWidgets import QRadioButton, QGroupBox, QVBoxLayout
+from PyQt5.QtWidgets import QRadioButton, QGroupBox, QVBoxLayout, QComboBox, QLabel
 
 class ConfigurationPage(QWizardPage):
     def __init__(self):
@@ -39,6 +54,24 @@ class ConfigurationPage(QWizardPage):
         self.setTitle("Configuration")
 
         layout = QVBoxLayout()
+
+        # Installation Type configuration
+        install_type_group = QGroupBox("Installation Type")
+        install_type_layout = QVBoxLayout()
+        self.install_type_combo = QComboBox()
+        
+        # Populate combo box from dependency_config.yaml
+        installation_types = self.wizard().dependency_config.get('installation', {})
+        for install_type, details in installation_types.items():
+            self.install_type_combo.addItem(f"{install_type} ({details.get('description', '')})", install_type)
+        
+        install_type_layout.addWidget(QLabel("Select the desired installation type:"))
+        install_type_layout.addWidget(self.install_type_combo)
+        install_type_group.setLayout(install_type_layout)
+        layout.addWidget(install_type_group)
+
+        # Connect signal to update wizard's selected_installation_type
+        self.install_type_combo.currentIndexChanged.connect(self._update_selected_type)
 
         # Hardware configuration
         hardware_group = QGroupBox("Hardware Configuration")
@@ -65,6 +98,15 @@ class ConfigurationPage(QWizardPage):
         layout.addWidget(server_group)
 
         self.setLayout(layout)
+
+    def _update_selected_type(self):
+        self.wizard().selected_installation_type = self.install_type_combo.currentData()
+
+    def initializePage(self):
+        # Set default selection if not already set
+        if not self.wizard().selected_installation_type and self.install_type_combo.count() > 0:
+            self.install_type_combo.setCurrentIndex(0)
+            self._update_selected_type()
 
 from PyQt5.QtWidgets import QProgressBar
 
@@ -96,10 +138,25 @@ class InstallationPage(QWizardPage):
             except subprocess.TimeoutExpired as e:
                 print(f"Timeout installing {package}: {e}")
 
-        dependencies = ["PyQt5", "psutil", "beautifulsoup4", "scikit-image", "SpeechRecognition", "transformers", "PyGithub", "aiounittest"]
-        for i, dependency in enumerate(dependencies):
+        selected_type = self.wizard().selected_installation_type
+        config = self.wizard().dependency_config
+
+        if selected_type and config:
+            dependencies_to_install = config.get('installation', {}).get(selected_type, {}).get('packages', [])
+        else:
+            # Fallback to core dependencies if no type selected or config not loaded
+            dependencies_to_install = [dep['name'] for dep in config.get('dependencies', {}).get('core', [])]
+            print("Warning: No installation type selected or config not loaded. Installing core dependencies only.", file=sys.stderr)
+
+        if not dependencies_to_install:
+            print("No dependencies to install for the selected type.", file=sys.stderr)
+            self.progress_bar.setValue(100)
+            self.wizard().nextButton.setEnabled(True)
+            return
+
+        for i, dependency in enumerate(dependencies_to_install):
             install(dependency)
-            self.progress_bar.setValue(int((i + 1) / len(dependencies) * 100))
+            self.progress_bar.setValue(int((i + 1) / len(dependencies_to_install) * 100))
 
         self.create_shortcut()
         self.wizard().nextButton.setEnabled(True)

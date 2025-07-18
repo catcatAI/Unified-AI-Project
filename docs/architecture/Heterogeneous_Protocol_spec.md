@@ -225,6 +225,12 @@ AI 異構架構協議 (AI Heterogeneous Architecture Protocol, AHAP) 是一個�
 - 驗證數字簽名
 - 管理訪問控制
 
+#### 5. 服務發現模塊 (Service Discovery Module)
+- 實現 AI 服務的自動發現和註冊
+- 管理已知能力註冊表，包括過時檢查
+- 根據信任分數過濾和排序能力
+- 實現於 `src/core_ai/service_discovery/service_discovery_module.py`
+
 ## 與 HSP 的關係
 
 AHAP 與 HSP (異構同步協議) 的區別：

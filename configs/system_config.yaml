@@ -1,6 +1,19 @@
 system:
   log_path: logs # To be placed under data/logs/ eventually
   log_level: INFO
+  crisis_system: # Added CrisisSystem configuration
+    crisis_keywords: ["emergency", "danger", "unsafe", "help me please", "i'm in trouble", "suicide", "harm myself"]
+    default_crisis_level_on_keyword: 1
+    crisis_protocols:
+      "1": "log_and_monitor_basic_crisis_response"
+      "2": "notify_human_moderator"
+      "default": "log_only"
+  emotion_system: # Added EmotionSystem configuration
+    emotion_map:
+      neutral: {"text_ending": ""}
+      empathetic: {"text_ending": " (gently)"}
+      playful: {"text_ending": " (playfully) ✨"}
+      sad_response: {"text_ending": " (with a sigh)"}
 
 ai_name: Miko # Or a new unified name, TBD
 
