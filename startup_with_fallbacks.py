@@ -15,6 +15,7 @@ import argparse
 import warnings
 from pathlib import Path
 from typing import Dict, List, Any, Optional
+import yaml # Added
 
 # Add project root to path
 project_root = Path(__file__).parent
@@ -62,32 +63,20 @@ class StartupManager:
     """Manages application startup with dependency fallbacks."""
     
     def __init__(self):
-        self.startup_modes = {
-            'minimal': {
-                'description': 'Minimal mode with only core dependencies',
-                'required_deps': ['Flask', 'numpy', 'PyYAML'],
-                'optional_deps': [],
-                'features': ['basic_web', 'core_ai']
-            },
-            'standard': {
-                'description': 'Standard mode with web and basic AI features',
-                'required_deps': ['Flask', 'numpy', 'PyYAML', 'paho-mqtt'],
-                'optional_deps': ['fastapi', 'uvicorn', 'pydantic'],
-                'features': ['web_api', 'hsp_communication', 'core_ai']
-            },
-            'full': {
-                'description': 'Full mode with all features enabled',
-                'required_deps': ['Flask', 'numpy', 'PyYAML', 'paho-mqtt', 'networkx'],
-                'optional_deps': ['tensorflow', 'spacy', 'langchain', 'fastapi', 'uvicorn'],
-                'features': ['web_api', 'hsp_communication', 'ai_models', 'nlp', 'knowledge_graph']
-            },
-            'ai_focused': {
-                'description': 'AI-focused mode with machine learning capabilities',
-                'required_deps': ['numpy', 'PyYAML'],
-                'optional_deps': ['tensorflow', 'spacy', 'langchain', 'scikit-learn'],
-                'features': ['ai_models', 'nlp', 'machine_learning']
-            }
-        }
+        # Load dependency configuration
+        config_path = Path(__file__).parent / "dependency_config.yaml"
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                self.dependency_config = yaml.safe_load(f)
+        except FileNotFoundError:
+            print(f"Error: dependency_config.yaml not found at {config_path}", file=sys.stderr)
+            self.dependency_config = {} # Fallback to empty config
+        except yaml.YAMLError as e:
+            print(f"Error parsing dependency_config.yaml: {e}", file=sys.stderr)
+            self.dependency_config = {} # Fallback to empty config
+
+        # Initialize startup modes from dependency_config.yaml
+        self.startup_modes = self._load_startup_modes_from_config()
         
         self.fallback_configs = {
             'web_server': {
@@ -122,6 +111,22 @@ class StartupManager:
             }
         }
     
+    def _load_startup_modes_from_config(self) -> Dict[str, Any]:
+        """Loads startup modes from the dependency configuration."""
+        modes = {}
+        installation_configs = self.dependency_config.get('installation', {})
+        for mode_name, details in installation_configs.items():
+            # Assuming 'packages' in installation config are 'required_deps' for startup modes
+            # and there are no explicit 'optional_deps' or 'features' defined in dependency_config.yaml
+            # for startup modes. If needed, these would be derived or added to dependency_config.yaml.
+            modes[mode_name] = {
+                'description': details.get('description', f'{mode_name} installation'),
+                'required_deps': details.get('packages', []),
+                'optional_deps': [], # Not explicitly defined in dependency_config.yaml for installation types
+                'features': details.get('features', []) # Now extracting features from dependency_config.yaml
+            }
+        return modes
+
     def check_mode_compatibility(self, mode: str) -> Dict[str, Any]:
         """Check if a startup mode is compatible with current environment."""
         if mode not in self.startup_modes:
@@ -137,10 +142,10 @@ class StartupManager:
             if not is_dependency_available(dep):
                 missing_required.append(dep)
         
-        # Check optional dependencies
-        for dep in mode_config['optional_deps']:
-            if not is_dependency_available(dep):
-                missing_optional.append(dep)
+        # Optional dependencies are not explicitly defined in dependency_config.yaml for installation types
+        # so we will assume they are empty for now.
+        # If optional dependencies are needed, they should be added to dependency_config.yaml.
+        missing_optional = []
         
         # Determine available features based on dependencies
         for feature in mode_config['features']:
@@ -171,6 +176,9 @@ class StartupManager:
             'knowledge_graph': ['networkx']
         }
         
+        if feature not in feature_deps:
+            return False # Feature not defined in feature_deps
+        
         required_deps = feature_deps.get(feature, [])
         return all(is_dependency_available(dep) for dep in required_deps)
     
@@ -183,9 +191,7 @@ class StartupManager:
             if compatibility['compatible']:
                 # Score based on available features
                 score = len(compatibility['available_features'])
-                # Bonus for having optional dependencies
-                optional_available = len(mode_config['optional_deps']) - len(compatibility['missing_optional'])
-                score += optional_available * 0.5
+                # No bonus for optional dependencies as they are not explicitly defined in dependency_config.yaml
                 mode_scores[mode_name] = score
         
         if not mode_scores:
@@ -256,8 +262,7 @@ class StartupManager:
         if compatibility['disabled_features']:
             print(f"   Disabled Features: {', '.join(compatibility['disabled_features'])}")
         
-        if compatibility['missing_optional']:
-            print(f"   Missing Optional: {', '.join(compatibility['missing_optional'])}")
+        
         
         print(f"\n🔧 Component Configuration:")
         for component, config in fallback_config.items():

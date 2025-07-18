@@ -39,7 +39,46 @@ This document identifies specific areas within the Unified-AI-Project where appl
         *   When `DialogueManager` or `FragmentaOrchestrator` needs to pass emotional context to sub-modules (like LLMs for response generation), they could pass a summarized `EmotionContext` object rather than raw scores, derived from the `EmotionSystem`.
         *   *Benefit:* Standardizes how emotional context is passed and used.
 
-### 2.2. Learning System & Knowledge Dissemination
+### 2.2. Crisis System Integration
+
+*   **Current/Potential Concern:**
+    *   The `CrisisSystem` needs to assess input for crisis indicators and potentially trigger protocols. If it directly instantiates or tightly couples with `EmotionSystem` or `HAMMemoryManager`, changes in those systems could impact `CrisisSystem`.
+
+*   **Recommendations:**
+    1.  **Dependency Injection for Contextual Systems:**
+        *   The `CrisisSystem` currently accepts `emotion_system_ref` and `memory_system_ref` during initialization. This is a good example of dependency injection.
+        *   *Benefit:* `CrisisSystem` remains decoupled from the concrete implementation details of `EmotionSystem` and `HAMMemoryManager`. It operates on the interfaces provided by these injected references, allowing for easier testing and future replacement of these components.
+    2.  **Abstracted Crisis Protocol Triggers:**
+        *   Instead of hardcoding protocol names (e.g., `"log_and_monitor_basic_crisis_response"`), `CrisisSystem` could trigger more abstract events or use a callback mechanism for external handlers to react to crisis levels.
+        *   *Benefit:* The `CrisisSystem` focuses solely on crisis detection and level management, while the actual response logic is handled by other modules (e.g., `DialogueManager` or a dedicated `CrisisResponseOrchestrator`) that subscribe to or are notified of these events.
+
+### 2.3. Dependency Management Abstraction
+
+*   **Current/Potential Concern:**
+    *   If modules directly attempt to import and handle missing dependencies, it leads to scattered error handling and tight coupling with specific package names and import mechanisms.
+
+*   **Recommendations:**
+    1.  **Centralized Dependency Manager (`DependencyManager`):**
+        *   The `DependencyManager` (`src/core_ai/dependency_manager.py`) acts as a facade for dependency resolution. Modules can query `dependency_manager.is_available("package_name")` or `dependency_manager.get_dependency("package_name")` without needing to know the underlying import logic or fallback mechanisms.
+        *   *Benefit:* Decouples consuming modules from the complexities of dependency availability, import names, and fallback logic. It centralizes platform-specific dependency handling (e.g., TensorFlow on Windows).
+    2.  **Configuration-Driven Fallbacks:**
+        *   The `dependency_config.yaml` file defines primary dependencies and their fallbacks. This externalizes the fallback strategy, making it easily configurable without code changes.
+        *   *Benefit:* Enhances flexibility and maintainability, allowing the system to adapt to different environments or resource constraints by simply modifying a configuration file.
+
+### 2.4. Dialogue Manager as a Central Orchestrator
+
+*   **Current/Potential Concern:**
+    *   A central component like `DialogueManager` could become a monolithic class with tight coupling to all its sub-components if not carefully designed.
+
+*   **Recommendations:**
+    1.  **Extensive Dependency Injection:**
+        *   The `DialogueManager` (`src/core_ai/dialogue/dialogue_manager.py`) serves as a prime example of effective dependency injection. It accepts numerous module instances (e.g., `PersonalityManager`, `HAMMemoryManager`, `LLMInterface`, `CrisisSystem`, `ToolDispatcher`, `LearningManager`, `HSPConnector`) via its `__init__` method.
+        *   *Benefit:* This design pattern significantly reduces coupling, making `DialogueManager` highly testable (by mocking dependencies) and flexible (allowing different implementations of its dependencies to be swapped in). It centralizes the orchestration logic without taking on the responsibility of creating its dependencies.
+    2.  **Layered Response Generation:**
+        *   The `get_simple_response` method demonstrates a layered approach to generating responses (Crisis -> KG -> HSP -> Formula -> LLM). This prioritizes different response mechanisms, allowing for a flexible and robust interaction flow.
+        *   *Benefit:* Decouples the decision-making process for response generation, allowing each layer to focus on its specific responsibility.
+
+### 2.5. Learning System & Knowledge Dissemination
 
 *   **Current/Potential Concern:**
     *   When the `LearningManager` stores new facts (from user input or HSP) or when the `ContentAnalyzerModule` updates its knowledge graph (KG), how do other modules like `DialogueManager` (for improved contextual responses) or `FragmentaOrchestrator` (for better task strategies) become aware of and utilize this new knowledge in a timely and efficient manner?
@@ -59,6 +98,9 @@ This document identifies specific areas within the Unified-AI-Project where appl
     3.  **Cache Invalidation / Smart Caching for KGs:**
         *   If `DialogueManager` or other modules maintain an in-memory version or cache of the KG for performance, `KnowledgeGraphUpdatedEvent` can act as a cache invalidation signal.
         *   *Benefit:* Balances performance with data freshness.
+    4.  **Content Analyzer Module (`ContentAnalyzerModule`):**
+        *   This module is responsible for extracting entities and relationships from natural language text and structured HSP facts, building and updating the internal knowledge graph. It uses spaCy for NLP and NetworkX for graph representation.
+        *   *Benefit:* Centralizes the complex logic of knowledge extraction and graph management, providing a clean interface for other modules to contribute text for analysis or query the resulting knowledge graph.
 
 ### 2.3. Fragmenta Orchestrator - Sub-Module Interactions
 

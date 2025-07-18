@@ -155,9 +155,7 @@ class DialogueManager:
         if self.hsp_connector:
             self.hsp_connector.register_on_task_result_callback(self._handle_incoming_hsp_task_result)
 
-        asyncio.create_task(self._start_assessment_loop())
-        asyncio.create_task(self._delete_old_sessions())
-        asyncio.create_task(self._check_pending_hsp_tasks())
+        
 
     async def _start_assessment_loop(self):
         while True:
