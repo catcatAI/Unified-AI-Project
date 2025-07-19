@@ -330,7 +330,7 @@ async def dialogue_manager_fixture(
 # --- Test Classes ---
 class TestHSPFactPublishing:
     @pytest.mark.asyncio
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_learning_manager_publishes_fact_via_hsp(
         self,
         configured_learning_manager: LearningManager,
@@ -363,7 +363,7 @@ class TestHSPFactPublishing:
 
 class TestHSPFactConsumption:
     @pytest.mark.asyncio
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_main_ai_consumes_nl_fact_and_updates_kg_check_trust_influence(
         self,
         configured_learning_manager: LearningManager,
@@ -433,7 +433,7 @@ class TestHSPFactConsumption:
         print("[Test Trust Influence on Fact Storage] Verified.")
 
     @pytest.mark.asyncio
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_main_ai_consumes_structured_fact_updates_kg(
         self,
         configured_learning_manager: LearningManager,
@@ -487,7 +487,7 @@ class TestHSPFactConsumption:
         print(f"[Test Consume Structured Fact] Verified by CA.")
 
     @pytest.mark.asyncio
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_ca_semantic_mapping_for_hsp_structured_fact(
         self,
         configured_learning_manager: LearningManager,
@@ -568,7 +568,7 @@ class TestHSPFactConsumption:
 
 class TestHSPTaskDelegation:
     @pytest.mark.asyncio
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_dm_delegates_task_to_specialist_ai_and_gets_result(
         self,
         dialogue_manager_fixture: DialogueManager,
@@ -642,7 +642,7 @@ class TestHSPTaskDelegation:
         print("[Test Task Delegation] Verified DM delegated task and received result.")
 
     @pytest.mark.asyncio
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_dm_handles_hsp_task_failure_and_falls_back(
         self,
         dialogue_manager_fixture: DialogueManager,

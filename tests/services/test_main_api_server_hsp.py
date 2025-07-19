@@ -92,7 +92,7 @@ async def wait_for_event(event: asyncio.Event, timeout: float = 2.0):
 @pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available for API HSP tests")
 class TestHSPEndpoints:
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_list_hsp_services_empty(self, client_with_overrides):
         client, sdm, _, _ = client_with_overrides
         sdm.known_capabilities.clear()
@@ -100,7 +100,7 @@ class TestHSPEndpoints:
         assert response.status_code == 200
         assert response.json() == []
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_list_hsp_services_with_advertisements(self, client_with_overrides):
         client, api_sdm, _, _ = client_with_overrides
         api_sdm.known_capabilities.clear()
@@ -128,7 +128,7 @@ class TestHSPEndpoints:
                 break
         assert found_it, "Advertised capability not found in API response."
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_request_hsp_task_success(self, client_with_overrides, api_test_peer_connector: HSPConnector):
         client, _, api_dm, _ = client_with_overrides # Unpack client, sdm, dm, ham
 
@@ -198,7 +198,7 @@ class TestHSPEndpoints:
             pytest.fail(f"HSP task {correlation_id_from_api} was not handled by DM within {timeout}s")
 
     @pytest.mark.asyncio
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_request_hsp_task_capability_not_found(self, client_with_overrides):
         client, _, _, _ = client_with_overrides
         response = client.post("/api/v1/hsp/tasks", json={
@@ -212,7 +212,7 @@ class TestHSPEndpoints:
         assert response_data.get("correlation_id") is None
         assert response_data.get("error") == "Capability not discovered."
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_get_hsp_task_status_pending(self, client_with_overrides):
         client, _, dialogue_manager, _ = client_with_overrides
 
@@ -232,7 +232,7 @@ class TestHSPEndpoints:
         del dialogue_manager.pending_hsp_task_requests[mock_corr_id] # Clean up
 
     @pytest.mark.asyncio
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_get_hsp_task_status_completed_from_ham(self, client_with_overrides):
         client, _, _, ham_manager = client_with_overrides
 
@@ -268,7 +268,7 @@ class TestHSPEndpoints:
 
 
     @pytest.mark.asyncio
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_get_hsp_task_status_failed_from_ham(self, client_with_overrides):
         client, _, _, ham_manager = client_with_overrides
 
@@ -296,7 +296,7 @@ class TestHSPEndpoints:
 
 
     @pytest.mark.asyncio
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     async def test_get_hsp_task_status_unknown(self, client_with_overrides):
         client, _, _, _ = client_with_overrides
         mock_corr_id = "unknown_corr_id_000"
