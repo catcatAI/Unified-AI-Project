@@ -49,7 +49,7 @@ def connector_with_mock_client(mock_paho_client: MagicMock):
 
 class TestHSPConnectorConnectionLogic:
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_initial_connection_logging(self, connector_with_mock_client: HSPConnector, mock_paho_client: MagicMock, caplog):
         caplog.set_level(logging.INFO, logger="src.hsp.connector") # Ensure INFO logs are captured for this logger
         connector = connector_with_mock_client
@@ -64,7 +64,7 @@ class TestHSPConnectorConnectionLogic:
         assert f"HSPConnector ({TEST_AI_ID}): Successfully connected to MQTT Broker" in caplog.text
         assert "reconnected" not in caplog.text # Ensure it says "connected", not "reconnected"
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_unexpected_disconnection_flag_and_logging(self, connector_with_mock_client: HSPConnector, mock_paho_client: MagicMock, caplog):
         caplog.set_level(logging.INFO, logger="src.hsp.connector") # Capture INFO and WARNING (default for warning is already on)
         connector = connector_with_mock_client
@@ -82,7 +82,7 @@ class TestHSPConnectorConnectionLogic:
         assert f"HSPConnector ({TEST_AI_ID}): Unexpectedly disconnected from MQTT Broker (reason code {mock_reason_code})" in caplog.text
         assert "Paho client will attempt to reconnect automatically" in caplog.text
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_clean_disconnection_flag_reset_and_logging(self, connector_with_mock_client: HSPConnector, mock_paho_client: MagicMock, caplog):
         caplog.set_level(logging.INFO, logger="src.hsp.connector")
         connector = connector_with_mock_client
@@ -98,7 +98,7 @@ class TestHSPConnectorConnectionLogic:
         assert not connector._was_unexpectedly_disconnected # Should be reset
         assert f"HSPConnector ({TEST_AI_ID}): Cleanly disconnected from MQTT Broker (reason code {mock_reason_code})" in caplog.text
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_reconnection_logging_and_flag_reset(self, connector_with_mock_client: HSPConnector, mock_paho_client: MagicMock, caplog):
         caplog.set_level(logging.INFO, logger="src.hsp.connector")
         connector = connector_with_mock_client
@@ -112,7 +112,7 @@ class TestHSPConnectorConnectionLogic:
         assert not connector._was_unexpectedly_disconnected # Should be reset
         assert f"HSPConnector ({TEST_AI_ID}): Successfully reconnected to MQTT Broker" in caplog.text
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_failed_connection_attempt_logging(self, connector_with_mock_client: HSPConnector, mock_paho_client: MagicMock, caplog):
         connector = connector_with_mock_client
         connector.is_connected = False
@@ -129,7 +129,7 @@ class TestHSPConnectorConnectionLogic:
         assert f"HSPConnector ({TEST_AI_ID}): Failed to connect to MQTT Broker (during connect/reconnect attempt), reason code {fail_reason_code}" in caplog.text
         assert "Paho client will continue to retry" in caplog.text
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_resubscription_on_connect(self, connector_with_mock_client: HSPConnector, mock_paho_client: MagicMock):
         connector = connector_with_mock_client
 
@@ -161,7 +161,7 @@ class TestHSPConnectorConnectionLogic:
 
         assert called_topics == set(topics_to_subscribe)
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_constructor_configures_paho_reconnect_delay(self, mock_paho_client: MagicMock):
         # This test doesn't use the connector_with_mock_client fixture directly,
         # because we want to assert on the call to reconnect_delay_set during __init__.
@@ -187,7 +187,7 @@ class TestHSPConnectorConnectionLogic:
 
 class TestHSPConnectorACKLogic:
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_ack_sent_if_required(self, connector_with_mock_client: HSPConnector, caplog):
         connector = connector_with_mock_client
         caplog.set_level(logging.INFO, logger="src.hsp.connector")
@@ -225,7 +225,7 @@ class TestHSPConnectorACKLogic:
         {"requires_ack": False},
         {"priority": "high"} # requires_ack is missing
     ])
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_ack_not_sent_if_not_required_or_missing(self, connector_with_mock_client: HSPConnector, qos_params, caplog):
         connector = connector_with_mock_client
         caplog.set_level(logging.INFO, logger="src.hsp.connector")
@@ -253,7 +253,7 @@ class TestHSPConnectorACKLogic:
             connector._handle_hsp_message_str(message_str, "test/topic/no_ack_required")
             mock_send_ack.assert_not_called()
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_ack_payload_and_envelope_construction(self, connector_with_mock_client: HSPConnector):
         connector = connector_with_mock_client
 
@@ -310,7 +310,7 @@ class TestHSPConnectorMessageBuilding:
         ("", None),                   # Empty message type
         (None, None)                  # None message type for robustness test of _generate method
     ])
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_build_hsp_envelope_populates_schema_uri(
         self, connector_with_mock_client: HSPConnector,
         message_type_input: Optional[str], expected_uri_or_none: Optional[str], caplog

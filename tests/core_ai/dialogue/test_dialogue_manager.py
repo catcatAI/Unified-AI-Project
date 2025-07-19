@@ -31,15 +31,20 @@ TEST_STORAGE_DIR = os.path.join(PROJECT_ROOT_FOR_TEST, "tests", "test_output_dat
 async def dialogue_manager_helper_fixture():
     # Mock dependencies for DialogueManager
     mock_personality_manager = MagicMock()
+    mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
     mock_memory_manager = MagicMock()
     mock_llm_interface = MagicMock()
     mock_emotion_system = MagicMock()
+    mock_emotion_system.get_current_emotion_expression.return_value = {"text_ending": ""}
     mock_crisis_system = MagicMock()
     mock_crisis_system.assess_input_for_crisis.return_value = 0 # Default to no crisis
     mock_formula_engine = MagicMock()
+    mock_formula_engine.match_input.return_value = None # Default to no formula match
     mock_content_analyzer = MagicMock()
     mock_tool_dispatcher = MagicMock()
     mock_self_critique_module = MagicMock()
+    # Default behavior for critique: return a high score so it doesn't interfere with other tests
+    mock_self_critique_module.critique_interaction.return_value = {"score": 1.0, "suggested_alternative": None}
     mock_learning_manager = AsyncMock()
     mock_learning_manager.process_and_store_learnables.return_value = []
     mock_repair_engine = MagicMock()
