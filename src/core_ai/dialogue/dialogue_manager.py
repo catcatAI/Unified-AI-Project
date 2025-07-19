@@ -450,11 +450,14 @@ class DialogueManager:
                 entity_label, rel_query_keyword = kg_query_parts
                 answer_from_kg = self._query_session_kg(session_id, entity_label, rel_query_keyword)
                 if answer_from_kg:
-                    if answer_from_kg:
-                    if rel_query_keyword.startswith("has_"): response_text = f"{ai_name}: From context, the {rel_query_keyword.split('has_')[1].replace('_', ' ')} of {entity_label.capitalize()} is {answer_from_kg.capitalize()}."
-                    elif rel_query_keyword == "located_in": response_text = f"{ai_name}: From context, {entity_label.capitalize()} is located in {answer_from_kg.capitalize()}.
-                    elif rel_query_keyword == "acquire": response_text = f"{ai_name}: From context, {entity_label.capitalize()} acquired {answer_from_kg.capitalize()}.
-                    else: response_text = f"{ai_name}: From context regarding {entity_label.capitalize()}: {answer_from_kg.capitalize()}."
+                    if rel_query_keyword.startswith("has_"):
+                        response_text = f"{ai_name}: From context, the {rel_query_keyword.split('has_')[1].replace('_', ' ')} of {entity_label.capitalize()} is {answer_from_kg.capitalize()}."
+                    elif rel_query_keyword == "located_in":
+                        response_text = f"{ai_name}: From context, {entity_label.capitalize()} is located in {answer_from_kg.capitalize()}."
+                    elif rel_query_keyword == "acquire":
+                        response_text = f"{ai_name}: From context, {entity_label.capitalize()} acquired {answer_from_kg.capitalize()}."
+                    else:
+                        response_text = f"{ai_name}: From context regarding {entity_label.capitalize()}: {answer_from_kg.capitalize()}."
                     print(f"DialogueManager: Answered from KG: '{response_text}'")
 
         # --- HSP Task Dispatch Trigger (if no response yet) ---
