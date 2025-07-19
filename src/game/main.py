@@ -1,0 +1,70 @@
+import pygame
+import os
+from .scenes import GameStateManager
+from .player import Player
+from .angela import Angela
+
+class Game:
+    def __init__(self):
+        os.environ['SDL_VIDEODRIVER'] = 'dummy'
+        os.environ['SDL_AUDIODRIVER'] = 'dummy'
+        pygame.init()
+        self.screen_width = 800
+        self.screen_height = 600
+        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+        pygame.display.set_caption("Angela's World")
+        self.clock = pygame.time.Clock()
+        self.is_running = True
+        self.assets = {}
+        self.load_assets()
+        self.player = Player(self)
+        self.angela = Angela(self)
+        self.game_state_manager = GameStateManager(self)
+
+    def load_assets(self):
+        self.assets['images'] = self.load_images()
+
+    def load_images(self):
+        images = {}
+        images_path = os.path.join('src', 'game', 'assets', 'images')
+        if not os.path.exists(images_path):
+            os.makedirs(images_path)
+        for filename in os.listdir(images_path):
+            if filename.endswith('.png'):
+                image = pygame.image.load(os.path.join(images_path, filename)).convert_alpha()
+                images[filename.split('.')[0]] = image
+        return images
+
+    async def run(self):
+        print("Starting game loop")
+        frameCount = 0
+        while self.is_running:
+            await self.handle_events()
+            await self.update()
+            self.render()
+            self.clock.tick(60)
+            frameCount += 1
+            if frameCount > 300: # 5 seconds
+                self.is_running = False
+
+    async def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.is_running = False
+            await self.game_state_manager.handle_events(event)
+
+    async def update(self):
+        await self.game_state_manager.update()
+
+    def render(self):
+        self.game_state_manager.render(self.screen)
+        pygame.display.flip()
+
+import asyncio
+
+if __name__ == "__main__":
+    async def main():
+        game = Game()
+        await game.run()
+        print(f"Angela's favorability: {game.angela.favorability}")
+    asyncio.run(main())
