@@ -19,8 +19,7 @@ def mock_trust_manager():
 
 # --- Test ServiceDiscoveryModule ---
 class TestServiceDiscoveryModule:
-
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_init(self, mock_trust_manager: MagicMock, caplog):
         caplog.set_level(logging.INFO, logger="src.core_ai.service_discovery.service_discovery_module")
         # Test with default staleness threshold
@@ -38,8 +37,7 @@ class TestServiceDiscoveryModule:
         assert sdm_custom.staleness_threshold_seconds == custom_threshold
         assert f"Staleness threshold: {custom_threshold} seconds" in caplog.text
 
-
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_process_capability_advertisement_new_and_update(self, mock_trust_manager: MagicMock):
         sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
 
@@ -89,7 +87,7 @@ class TestServiceDiscoveryModule:
         assert time_before_update <= stored_time1_upd <= time_after_update
         assert stored_time1_upd > stored_time1 # Ensure timestamp was updated
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_process_capability_advertisement_missing_ids(self, mock_trust_manager: MagicMock, caplog):
         caplog.set_level(logging.ERROR, logger="src.core_ai.service_discovery.service_discovery_module")
         sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
@@ -115,7 +113,7 @@ class TestServiceDiscoveryModule:
         assert "Received capability advertisement (ID: cap_no_ai_id) with no 'ai_id'" in caplog.text
         assert not sdm.known_capabilities
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_get_capability_by_id(self, mock_trust_manager: MagicMock):
         sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
         cap_id = "get_cap_001"
@@ -159,24 +157,24 @@ class TestServiceDiscoveryModule:
             sdm.process_capability_advertisement(payload, payload['ai_id'], MagicMock(spec=HSPMessageEnvelope))
         return sdm
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_find_capabilities_no_filters(self, populated_sdm: ServiceDiscoveryModule):
         results = populated_sdm.find_capabilities()
         assert len(results) == 4
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_find_capabilities_by_id(self, populated_sdm: ServiceDiscoveryModule):
         results = populated_sdm.find_capabilities(capability_id_filter="c1")
         assert len(results) == 1
         assert results[0].get('capability_id') == "c1"
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_find_capabilities_by_name(self, populated_sdm: ServiceDiscoveryModule):
         results = populated_sdm.find_capabilities(capability_name_filter="CapAlpha")
         assert len(results) == 2
         assert {res.get('capability_id') for res in results} == {"c1", "c3"}
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_find_capabilities_by_tags(self, populated_sdm: ServiceDiscoveryModule):
         results_nlp = populated_sdm.find_capabilities(tags_filter=["nlp"])
         assert len(results_nlp) == 2
@@ -192,7 +190,7 @@ class TestServiceDiscoveryModule:
         results_mixed_tags = populated_sdm.find_capabilities(tags_filter=["nlp", "storage"])
         assert len(results_mixed_tags) == 0
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_find_capabilities_by_min_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
         results_min_trust_0_7 = populated_sdm.find_capabilities(min_trust_score=0.7)
         assert len(results_min_trust_0_7) == 2
@@ -205,7 +203,7 @@ class TestServiceDiscoveryModule:
         results_min_trust_1_0 = populated_sdm.find_capabilities(min_trust_score=1.0)
         assert len(results_min_trust_1_0) == 0
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_find_capabilities_sort_by_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
         results = populated_sdm.find_capabilities(sort_by_trust=True)
         assert len(results) == 4
@@ -218,7 +216,7 @@ class TestServiceDiscoveryModule:
         assert results[2].get('capability_id') == "c2"
         assert results[3].get('capability_id') == "c3"
 
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_find_capabilities_combined_filters_and_sort(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
         results = populated_sdm.find_capabilities(tags_filter=["nlp"], min_trust_score=0.5, sort_by_trust=True)
         assert len(results) == 2
@@ -256,8 +254,7 @@ class TestServiceDiscoveryModule:
             )
             sdm.process_capability_advertisement(full_cap_payload, full_cap_payload['ai_id'], MagicMock(spec=HSPMessageEnvelope))
 
-
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_staleness_checks(self, mock_trust_manager: MagicMock, caplog):
         """Combined test for find_capabilities and get_capability_by_id staleness."""
         caplog.set_level(logging.DEBUG, logger="src.core_ai.service_discovery.service_discovery_module")
@@ -302,8 +299,7 @@ class TestServiceDiscoveryModule:
             assert "found but is stale" in "".join(r.message for r in caplog.records if r.levelname == "INFO")
             assert "stale_cap" in "".join(r.message for r in caplog.records if r.levelname == "INFO")
 
-
-@pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_get_capability_by_id_staleness_direct_variant(self, mock_trust_manager: MagicMock, caplog):
         """More focused test for get_capability_by_id staleness with INFO log level."""
         caplog.set_level(logging.INFO, logger="src.core_ai.service_discovery.service_discovery_module")

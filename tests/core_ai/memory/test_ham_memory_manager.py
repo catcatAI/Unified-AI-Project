@@ -458,9 +458,9 @@ async def test_19_disk_full_handling(ham_manager_fixture, monkeypatch):
     ham_manager_no_res, _, _, _ = ham_manager_fixture
     print("\nRunning test_19_disk_full_handling...")
     
-    # 模擬_get_current_disk_usage_gb返回高使用率
+    # 模擬_get_current_disk_usage_gb返回高使用率（超過10GB閾值）
     def mock_get_disk_usage():
-        return 9.9  # 假設磁盤空間不足
+        return 10.5  # 超過10GB閾值，觸發磁盤空間不足
     
     monkeypatch.setattr(ham_manager_no_res, '_get_current_disk_usage_gb', mock_get_disk_usage)
     
@@ -495,8 +495,8 @@ async def test_20_delete_old_experiences(ham_manager_fixture, monkeypatch):
     # 替換 personality_manager
     ham_manager_no_res.personality_manager = MockPersonalityManager()
     
-    # 手動觸發清理
-    await ham_manager_no_res._delete_old_experiences()
+    # Manually trigger cleanup
+    ham_manager_no_res._perform_deletion_check()
     
     # 驗證部分記憶已被清理
     final_count = len(ham_manager_no_res.core_memory_store)
@@ -526,7 +526,7 @@ async def test_21_concurrent_access(ham_manager_fixture):
     for mem_id, i in results:
         result = ham_manager_no_res.recall_gist(mem_id)
         assert result is not None, f"Memory {i} was not stored correctly"
-        assert f"Concurrent test {i}" in str(result.rehydrated_gist), f"Incorrect content for memory {i}"
+        assert f"Concurrent test {i}" in str(result['rehydrated_gist']), f"Incorrect content for memory {i}"
     
     # 驗證查詢功能正常工作
     query_results = ham_manager_no_res.query_core_memory(
