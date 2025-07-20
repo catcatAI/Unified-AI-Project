@@ -176,3 +176,8 @@ installation:
     description: "AI and ML focused installation"
     packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain"]
     features: ["ai_models", "nlp", "machine_learning"] # Added features
+
+  game:
+    description: "Installation with game client"
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pygame"]
+    features: ["game_client"]
