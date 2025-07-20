@@ -76,6 +76,8 @@ class DialogueManager:
         self.hsp_connector = hsp_connector
         self.agent_manager = agent_manager
         self.pending_hsp_task_requests: Dict[str, PendingHSPTaskInfo] = {}
+        self.task_completion_events: Dict[str, asyncio.Event] = {}
+        self.task_results: Dict[str, Any] = {}
 
         self.personality_manager = personality_manager if personality_manager else PersonalityManager()
         self.evaluator = evaluator if evaluator else Evaluator()
@@ -293,6 +295,17 @@ class DialogueManager:
 
         status = result_payload.get("status")
         service_payload = result_payload.get("payload", {})
+
+        # Store the result for the waiting task
+        if status == "success":
+            self.task_results[correlation_id] = service_payload
+        else:
+            self.task_results[correlation_id] = {"error": result_payload.get("error_details", "Unknown error")}
+
+        # Signal that the task is complete
+        if correlation_id in self.task_completion_events:
+            self.task_completion_events[correlation_id].set()
+
         ai_name = self.personality_manager.get_current_personality_trait("display_name", self.ai_id)
         result_message_to_user: str = ""
 
@@ -783,23 +796,21 @@ class DialogueManager:
         if not correlation_id:
             return {"error": f"Failed to dispatch task for capability '{capability_name}'."}
 
-        # Simplified polling mechanism for PoC
-        for _ in range(10): # Poll for 30 seconds max
-            if correlation_id not in self.pending_hsp_task_requests:
-                result_record_list = self.memory_manager.query_core_memory(
-                    metadata_filters={"hsp_correlation_id": correlation_id},
-                    limit=1
-                )
-                if result_record_list:
-                    result_record = result_record_list[0]
-                    metadata = result_record.get("metadata", {})
-                    if metadata.get("source") == "hsp_task_result_success":
-                        return metadata.get("hsp_task_service_payload")
-                    elif metadata.get("source") == "hsp_task_result_error":
-                        return {"error": metadata.get("error_details")}
-            await asyncio.sleep(3)
+        # Use an event to wait for the result
+        completion_event = asyncio.Event()
+        self.task_completion_events[correlation_id] = completion_event
 
-        return {"error": f"Task for '{capability_name}' timed out."}
+        try:
+            # Wait for the event to be set, with a timeout
+            await asyncio.wait_for(completion_event.wait(), timeout=self.turn_timeout_seconds)
+            result = self.task_results.pop(correlation_id, {"error": "Result not found after event completion."})
+            return result
+        except asyncio.TimeoutError:
+            print(f"[{self.ai_id}] Task for '{capability_name}' (CorrID: {correlation_id}) timed out.")
+            return {"error": f"Task for '{capability_name}' timed out."}
+        finally:
+            # Clean up the event object
+            self.task_completion_events.pop(correlation_id, None)
 
     async def start_session(self, user_id: Optional[str] = None, session_id: Optional[str] = None) -> str:
         print(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}.")
