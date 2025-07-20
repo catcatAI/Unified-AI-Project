@@ -639,10 +639,35 @@ class DialogueManager:
         if not self.service_discovery_module or not self.hsp_connector:
             return f"{ai_name}: I can't access my specialist network to handle this project."
 
-        # --- First Draft: Decompose intent into subtasks ---
-        print(f"[{ai_name}] Phase 1: Decomposing project query...")
-        available_capabilities = self.service_discovery_module.get_all_capabilities()
-        subtasks = await self._decompose_user_intent_into_subtasks(project_query, available_capabilities)
+        # --- Strategy Retrieval Step ---
+        print(f"[{ai_name}] Phase 0: Searching for a known strategy...")
+        keywords = re.findall(r'\w+', project_query.lower())
+        strategy_records = self.memory_manager.query_core_memory(
+            data_type_filter="learned_collaboration_strategy",
+            keywords=keywords,
+            limit=1 # Find the best matching strategy
+        )
+
+        subtasks = []
+        if strategy_records:
+            strategy = strategy_records[0].get("raw_data", {}) # Assuming raw_data holds the strategy dict
+            print(f"[{ai_name}] Found matching strategy: '{strategy.get('strategy_name')}'")
+            # Here, we would implement logic to populate the template with data from the current project_query
+            # This is a complex task involving entity extraction from the query to fill in placeholders.
+            # For this PoC, we'll assume a simple placeholder replacement.
+            # This part needs significant future enhancement.
+            subtasks = strategy.get("subtask_template", [])
+            for task in subtasks:
+                if isinstance(task.get("task_parameters"), dict):
+                    for key, value in task["task_parameters"].items():
+                        if value == "<user_provided_data>":
+                            task["task_parameters"][key] = project_query # Simple replacement
+
+        # --- First Draft: Decompose intent into subtasks (if no strategy found) ---
+        if not subtasks:
+            print(f"[{ai_name}] No matching strategy found. Decomposing query from scratch...")
+            available_capabilities = self.service_discovery_module.get_all_capabilities()
+            subtasks = await self._decompose_user_intent_into_subtasks(project_query, available_capabilities)
 
         if not subtasks:
             return f"{ai_name}: I couldn't break down your request into a clear plan. Could you please rephrase it?"
