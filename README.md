@@ -21,8 +21,15 @@
 
 本項目整合並開發了多個核心 AI 組件：
 
+### 動態 AI 代理協作框架
+*   **元代理 (Angela)**: 由 `DialogueManager` 和新的 `ProjectCoordinator` 共同實現，扮演指揮官的角色。能夠理解複雜的用戶意圖，將其自動分解為一個帶有依賴關係的任務圖 (DAG)。
+*   **子代理 (Specialized Agents)**: 位於 `src/agents/` 的專門化 AI 代理，每個代理都擁有特定的能力（如數據分析、創意寫作）。它們作為獨立的 HSP 服務運行。
+*   **代理管理器 (Agent Manager)**: 能夠根據 `DialogueManager` 的請求，動態地啟動或關閉子代理進程，實現資源的按需使用。
+*   **學習閉環**: 框架能夠從完整的項目案例中學習，提煉出成功的協作策略並儲存於記憶中，用於指導未來的任務分解，實現自我優化。
+
 ### 對話管理系統
-*   **對話管理器 (`src/core_ai/dialogue/dialogue_manager.py`)**: 協調對話流程，整合其他 AI 組件並生成響應。利用個性配置、記憶系統和基於公式的邏輯。集成工具調度和 HSP 任務委派功能。
+*   **對話管理器 (`src/core_ai/dialogue/dialogue_manager.py`)**: 作為**元代理**的核心，協調對話流程，並將複雜項目委派給 `ProjectCoordinator`。利用個性配置、記憶系統和基於公式的邏輯。
+*   **項目協調器 (`src/core_ai/dialogue/project_coordinator.py`)**: 負責執行「四抽模型」，處理複雜項目的任務分解、DAG 執行、結果整合和學習。
 *   **個性管理器 (`src/core_ai/personality/personality_manager.py`)**: 管理不同的 AI 個性，影響語調、響應風格和核心價值觀。配置文件可自定義（見 `configs/personality_profiles/`）。
 *   **情感系統 (`src/core_ai/emotion/emotion_system.py`)**: 模擬和管理 AI 的情感狀態。
 *   **危機系統 (`src/core_ai/crisis/crisis_system.py`)**: 評估輸入的危機情況並觸發適當響應。
@@ -46,7 +53,7 @@
 ### 學習系統 (`src/core_ai/learning/`)
 *   **事實提取模組**: 從對話中提取結構化事實
 *   **自我批判模組**: 評估 AI 響應的質量和連貫性
-*   **學習管理器**: 協調學習過程並將新知識存儲到 HAM 中
+*   **學習管理器**: 協調學習過程，將新知識存儲到 HAM 中。現在包含一個**基於質量的資訊評估體系**，通過綜合評估來源可信度、證據支持度和資訊新穎性，來有效抵制錯誤資訊在網絡中的傳播（反「傻子共振」）。
 *   **內容分析模組**:
     - **目的**: 通過分析文本內容（如文檔、用戶輸入、HSP 事實）實現更深層的上下文理解，創建和維護結構化知識圖譜
     - **功能**: 提取命名實體，識別關係（包括語義三元組），並將此信息整合到 NetworkX 知識圖譜中。支援基本本體映射
@@ -436,6 +443,7 @@ python installer_cli.py
 - 跨平台桌面應用界面 (`main.js`, `renderer.js`)
 - 提供圖形化用戶界面和實時對話
 - 支持豐富的交互體驗和 HSP 服務管理
+- **內建遊戲客戶端**：集成了一個 GBA 風格的休閒遊戲，作為與 Angela 互動和放鬆的獨特方式。
 - 包含現代化的 UI 設計和響應式布局 (`styles.css`)
 - 集成 HSP 服務按鈕和狀態顯示功能
 - 啟動命令：`cd src/interfaces/electron_app && npm start`
