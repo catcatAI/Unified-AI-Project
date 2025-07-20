@@ -56,6 +56,7 @@ class DialogueManager:
                  ai_id: Optional[str] = None,
                  service_discovery_module: Optional[ServiceDiscoveryModule] = None,
                  hsp_connector: Optional[HSPConnector] = None,
+                 agent_manager: Optional['AgentManager'] = None,
                  config: Optional[OperationalConfig] = None,
                  trust_manager: Optional[TrustManager] = None,
                  evaluator: Optional[Evaluator] = None,
@@ -73,6 +74,7 @@ class DialogueManager:
 
         self.service_discovery_module = service_discovery_module
         self.hsp_connector = hsp_connector
+        self.agent_manager = agent_manager
         self.pending_hsp_task_requests: Dict[str, PendingHSPTaskInfo] = {}
 
         self.personality_manager = personality_manager if personality_manager else PersonalityManager()
@@ -673,6 +675,18 @@ class DialogueManager:
         print(f"[{ai_name}] Phase 4: Integrating results...")
         final_response = await self._integrate_subtask_results(project_query, results)
 
+        # --- Learning Loop ---
+        if self.learning_manager:
+            project_case = {
+                "user_query": project_query,
+                "decomposed_subtasks": subtasks,
+                "subtask_results": results,
+                "final_response": final_response,
+                "user_id": user_id,
+                "session_id": session_id
+            }
+            await self.learning_manager.learn_from_project_case(project_case)
+
         return f"{ai_name}: Here's the result of your project request:\n\n{final_response}"
 
     async def _dispatch_single_subtask(self, subtask: Dict[str, Any]) -> Any:
@@ -686,8 +700,25 @@ class DialogueManager:
             return {"error": "Missing capability name or HSP service."}
 
         found_caps = self.service_discovery_module.find_capabilities(capability_name_filter=capability_name)
+
+        # If no agent is found, try to launch one.
+        if not found_caps and self.agent_manager:
+            # This logic assumes a direct mapping from capability name to agent script name
+            # e.g., capability 'analyze_csv_data' -> agent 'data_analysis_agent'
+            # A more robust system would have a registry mapping capabilities to agents.
+            agent_to_launch = f"{capability_name.split('_v')[0]}_agent" # Simple heuristic
+            print(f"[{self.ai_id}] No active agent for '{capability_name}'. Attempting to launch '{agent_to_launch}'...")
+
+            pid = self.agent_manager.launch_agent(agent_to_launch)
+            if pid:
+                print(f"[{self.ai_id}] Agent '{agent_to_launch}' launched. Waiting for it to advertise capabilities...")
+                await asyncio.sleep(5) # Wait for agent to start and advertise
+                found_caps = self.service_discovery_module.find_capabilities(capability_name_filter=capability_name)
+            else:
+                print(f"[{self.ai_id}] Failed to launch agent '{agent_to_launch}'.")
+
         if not found_caps:
-            return {"error": f"Could not find an agent with capability '{capability_name}'."}
+            return {"error": f"Could not find or launch an agent with capability '{capability_name}'."}
 
         selected_cap = found_caps[0]
 
