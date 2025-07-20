@@ -600,6 +600,38 @@ class HAMMemoryManager:
         print(f"HAM: Query returned {len(results)} results (limit was {limit}).")
         return results
 
+    def increment_metadata_field(self, memory_id: str, field_name: str, increment_by: int = 1) -> bool:
+        """
+        Increments a numerical field in the metadata of a specific memory record.
+        This is more efficient than recalling, modifying, and re-storing the whole package.
+
+        Args:
+            memory_id (str): The ID of the memory record to update.
+            field_name (str): The name of the metadata field to increment.
+            increment_by (int): The amount to increment the field by.
+
+        Returns:
+            bool: True if the update was successful, False otherwise.
+        """
+        if memory_id in self.core_memory_store:
+            record = self.core_memory_store[memory_id]
+            if "metadata" not in record:
+                record["metadata"] = {}
+
+            current_value = record["metadata"].get(field_name, 0)
+            if isinstance(current_value, (int, float)):
+                record["metadata"][field_name] = current_value + increment_by
+                print(f"HAM: Incremented metadata field '{field_name}' for mem_id '{memory_id}'.")
+                # For simplicity, we trigger a full save. A more advanced implementation
+                # might use a more granular or delayed save mechanism.
+                return self._save_core_memory_to_file()
+            else:
+                print(f"HAM: Error: Metadata field '{field_name}' for mem_id '{memory_id}' is not a number.")
+                return False
+        else:
+            print(f"HAM: Error: Cannot increment metadata for non-existent mem_id '{memory_id}'.")
+            return False
+
 if __name__ == '__main__':
     print("--- HAMMemoryManager Test ---")
     # Ensure a clean state for testing if file exists from previous run
