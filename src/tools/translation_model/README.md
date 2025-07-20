@@ -51,12 +51,13 @@ To expand the v0.1 model's vocabulary:
 *   **No Phrase Segmentation**: It looks for exact matches in the dictionary. It cannot break down longer sentences into translatable parts.
 
 ## Future Enhancements (Conceptual - via Fragmenta)
-
 The `request_model_upgrade` function in `translation_tool.py` is a placeholder. The vision is that a higher-level system (conceptually "Fragmenta"):
 *   Monitors the performance and limitations of this v0.1 dictionary tool.
 *   When frequent "translation not available" messages occur or when more complex translation needs are detected, Fragmenta could:
     *   Trigger a process to expand the dictionary (e.g., by learning new pairs from user corrections or other sources).
     *   Orchestrate the integration of a more sophisticated, pre-trained neural translation model (e.g., a small MarianMT model) to replace or supplement this dictionary-based approach.
     *   Manage different translation models/tools for different language pairs or domains.
+
+**Current Status:** Tests currently show failures indicating instability in core model components. Work is ongoing to improve reliability and functionality.
 
 This v0.1 tool provides a basic but functional starting point for translation capabilities within MikoAI.

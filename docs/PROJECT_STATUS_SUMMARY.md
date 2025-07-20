@@ -145,21 +145,17 @@
 
 ### 測試失敗
 - ❌ **HSP 集成測試** (`tests/hsp/test_hsp_integration.py`)
-  - 任務代理通信問題
-  - DM 回退機制不穩定
+  - 任務代理、對話管理器 (DM) 回退機制以及任務結果處理存在問題
 - ❌ **HAM 日期範圍查詢** (`tests/core_ai/memory/test_ham_memory_manager.py`)
-  - `test_08_query_memory_date_range` 失敗
+  - `test_08_query_memory_date_range` 測試目前顯示失敗，表明日期範圍查詢功能存在問題
 - ❌ **工具模型測試**
-  - 邏輯模型測試不穩定
-  - 數學模型組件需要完善
+  - 邏輯模型和數學模型測試目前顯示失敗，表明核心模型組件存在不穩定或開發不完整
 
 ### 架構問題
 - ⚠️ **異步代碼警告**
-  - 部分 `async def` 方法未正確等待
-  - 需要改進異步模式實現
+  - 測試過程中發現 `async def` 測試方法產生 `RuntimeWarning: coroutine ... was never awaited` 警告，強調了正確實現和測試異步代碼的重要性
 - ⚠️ **模塊間數據同步**
-  - 並發處理需要同步機制
-  - 共享數據結構需要保護
+  - 數據完整性和並發性與同步至關重要，共享可變數據結構必須使用明確的同步機制進行保護
 
 ## 未來規劃功能
 

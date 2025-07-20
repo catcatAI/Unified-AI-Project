@@ -97,3 +97,4 @@ The `ArithmeticSeq2Seq` class implements an LSTM-based encoder-decoder architect
 -   More sophisticated NLP for problem extraction in `math_tool.py`.
 -   Optimization of the model architecture (e.g., adding attention, using different RNN types like GRU).
 -   More comprehensive error analysis in `evaluate.py`.
+-   **Current Status:** Tests currently show failures indicating instability in core model components. Work is ongoing to improve reliability and functionality.

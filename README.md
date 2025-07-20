@@ -505,22 +505,22 @@ python installer_cli.py
 ### 當前測試狀態與觀察
 
 *   **已知失敗測試：** 截至最後一次完整測試運行，幾個測試持續失敗，特別是與以下相關的測試：
-    *   **異構同步協議 (HSP)：** `tests/hsp/test_hsp_integration.py` 和 `tests/services/test_main_api_server_hsp.py` 中的集成測試失敗，表明任務代理、DM 回退和任務結果處理存在問題。
-    *   **分層關聯記憶 (HAM)：** `tests/core_ai/memory/test_ham_memory_manager.py` 中的 `test_08_query_memory_date_range` 失敗，表明日期範圍查詢存在問題。
-    *   **邏輯和數學模型：** `tests/tools/test_logic_model.py` 和 `tests/tools/test_math_model.py` 中的測試失敗，表明這些核心模型組件存在不穩定性或開發不完整。
-    *   **一般問題：** 其他失敗指向深度嵌套模塊調用的模擬 LLM 響應限制（例如，`TestCLI` 中的子模塊如 `FactExtractorModule` 期望來自模擬的特定 JSON），以及微妙的數據處理或字符串操作問題（例如，`TestFragmentaOrchestrator` 中的文本截斷，或 `TestTranslationModelComponents` 中的字典查找異常）。
+    *   **異構同步協議 (HSP)：** `tests/hsp/test_hsp_integration.py` 和 `tests/services/test_main_api_server_hsp.py` 中的集成測試目前顯示失敗，主要涉及任務代理、對話管理器 (DM) 回退機制以及任務結果的處理。這些問題正在積極調查中，以確保模塊間通信的穩定性和數據一致性。
+    *   **分層關聯記憶 (HAM)：** `tests/core_ai/memory/test_ham_memory_manager.py` 中的 `test_08_query_memory_date_range` 測試目前顯示失敗，表明日期範圍查詢功能存在問題。我們正在積極調查此問題，以確保記憶系統的穩定性和準確性。
+    *   **邏輯和數學模型：** `tests/tools/test_logic_model.py` 和 `tests/tools/test_math_model.py` 中的測試目前顯示失敗，表明這些核心模型組件存在不穩定性或開發不完整。我們正在持續改進這些模型，以提高其穩定性和功能性。
+    *   **一般問題：** 其他測試失敗指向深度嵌套模塊調用中模擬 LLM 響應的限制（例如，`TestCLI` 中的子模塊如 `FactExtractorModule` 期望來自模擬的特定 JSON），以及微妙的數據處理或字符串操作問題（例如，`TestFragmentaOrchestrator` 中的文本截斷，或 `TestTranslationModelComponents` 中的字典查找異常）。這些問題正在積極調查中，以確保系統的整體穩定性和數據處理的準確性。
 這些問題正在積極調查中。
-*   **異步代碼警告：** 測試發現了一些 `async def` 測試方法的 `RuntimeWarning: coroutine ... was never awaited`。開發人員應注意使用適當的 `async/await` 模式和異步感知測試庫（如果需要）正確實現和測試異步代碼。
+*   **異步代碼警告：** 測試過程中發現了一些 `async def` 測試方法產生 `RuntimeWarning: coroutine ... was never awaited` 警告。開發人員應注意使用適當的 `async/await` 模式和異步感知測試庫（如果需要），以確保異步代碼的正確實現和測試，避免潛在的運行時問題。
 
 ### 模塊間數據流與同步
 
-*   **數據完整性：** 在設計一個模塊（模塊 A）產生數據或狀態而另一個模塊（模塊 B）消費的交互時，確保模塊 B 僅在數據完整、一致且格式符合預期時才訪問這些數據至關重要。
-*   **未來並發性：** 對於系統中可能涉及並發處理的任何部分（例如，同時處理多個 API 請求、後台學習任務），共享可變數據結構（例如，全局緩存、共享知識圖譜、有狀態管理器）**必須使用明確的同步機制進行保護**（例如，Python 中的 `threading.Lock` 或等效機制）。這對於防止競爭條件和確保數據完整性至關重要。
+*   **數據完整性：** 在設計模塊間交互時，確保數據在模塊 A 產生並由模塊 B 消費時，模塊 B 僅在數據完整、一致且格式符合預期時才訪問這些數據至關重要。
+*   **並發性與同步：** 對於系統中涉及並發處理的部分（例如，同時處理多個 API 請求、後台學習任務），共享可變數據結構（例如，全局緩存、共享知識圖譜、有狀態管理器）**必須使用明確的同步機制進行保護**（例如，Python 中的 `threading.Lock` 或等效機制）。這對於防止競爭條件和確保數據完整性至關重要。
 
 ### 測試的 Mocking 策略
 
 *   **上下文感知模擬：** 在測試與 `LLMInterface` 等服務交互的模塊時，確保模擬配置為返回該服務的*直接客戶端*期望的精確格式的數據。例如，如果 `FactExtractorModule` 調用 `LLMInterface` 並期望 JSON 字符串，則 `LLMInterface` 的模擬應提供該格式，即使更高級別的測試斷言最終面向用戶的字符串。
-*   **複雜性：** 隨著系統的增長，模擬設置可能需要變得更加複雜，以準確模擬不同的場景和響應，特別是對於集成風格的測試。
+*   **複雜性：** 隨著系統的增長，模擬設置可能需要變得更加複雜，以準確模擬不同的場景和響應，特別是對於集成風格的測試。這要求開發者在設計測試時，充分考慮模擬的粒度和精確性。
 
 ### 環境與設置
-*   **PYTHONPATH：** 確保 `PYTHONPATH` 設置正確（如「開始使用」中所述），以避免導入錯誤，特別是在從子目錄或使用某些 IDE 配置運行腳本或測試時。
+*   **PYTHONPATH：** 確保 `PYTHONPATH` 設置正確（如「開始使用」中所述），以避免導入錯誤，特別是在從子目錄或使用某些 IDE 配置運行腳本或測試時。建議始終從項目根目錄運行 Python 腳本，以最大程度地減少此類問題。
