@@ -145,4 +145,26 @@ if __name__ == '__main__':
 
 
     print(f"\nFinal scores: {trust_manager.get_all_trust_scores()}")
+
+    print("\n--- Capability-Specific Trust Test ---")
+    trust_manager.update_trust_score("did:hsp:ai_specialist", new_absolute_score=0.9, capability_name="data_analysis")
+    trust_manager.update_trust_score("did:hsp:ai_specialist", new_absolute_score=0.6, capability_name="general")
+
+    print(f"Specialist scores: {trust_manager.get_all_trust_scores()['did:hsp:ai_specialist']}")
+
+    # Test getting specific capability score
+    data_analysis_score = trust_manager.get_trust_score("did:hsp:ai_specialist", capability_name="data_analysis")
+    print(f"Score for 'data_analysis': {data_analysis_score:.3f}")
+    assert data_analysis_score == 0.9
+
+    # Test getting another capability score (should fall back to general)
+    creative_writing_score = trust_manager.get_trust_score("did:hsp:ai_specialist", capability_name="creative_writing")
+    print(f"Score for 'creative_writing' (fallback): {creative_writing_score:.3f}")
+    assert creative_writing_score == 0.6
+
+    # Test getting general score explicitly
+    general_score = trust_manager.get_trust_score("did:hsp:ai_specialist")
+    print(f"Score for 'general': {general_score:.3f}")
+    assert general_score == 0.6
+
     print("\nTrustManager standalone test finished.")
