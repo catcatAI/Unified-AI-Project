@@ -21,6 +21,7 @@ from tools.tool_dispatcher import ToolDispatcher
 # Services
 from services.llm_interface import LLMInterface, LLMInterfaceConfig
 from hsp.connector import HSPConnector
+from mcp.connector import MCPConnector
 
 # --- Constants ---
 CAP_ADVERTISEMENT_TOPIC = "hsp/capabilities/advertisements/general"
@@ -37,6 +38,7 @@ trust_manager_instance: Optional[TrustManager] = None
 
 # HSP Related Services
 hsp_connector_instance: Optional[HSPConnector] = None
+mcp_connector_instance: Optional[MCPConnector] = None
 service_discovery_module_instance: Optional[ServiceDiscoveryModule] = None
 
 # Core AI Logic Modules that depend on foundational services
@@ -91,7 +93,7 @@ def initialize_services(
     This function should be called once at application startup.
     """
     global llm_interface_instance, ham_manager_instance, personality_manager_instance
-    global trust_manager_instance, hsp_connector_instance, service_discovery_module_instance
+    global trust_manager_instance, hsp_connector_instance, mcp_connector_instance, service_discovery_module_instance
     global fact_extractor_instance, content_analyzer_instance, learning_manager_instance
     global emotion_system_instance, crisis_system_instance, time_system_instance
     global formula_engine_instance, tool_dispatcher_instance, dialogue_manager_instance
@@ -132,6 +134,14 @@ def initialize_services(
 
     if not trust_manager_instance:
         trust_manager_instance = TrustManager()
+
+    if not mcp_connector_instance:
+        mcp_connector_instance = MCPConnector(
+            ai_id=ai_id,
+            mqtt_broker_address=hsp_broker_address,
+            mqtt_broker_port=hsp_broker_port
+        )
+        mcp_connector_instance.connect()
 
     # --- 2. HSP Related Services ---
     if not hsp_connector_instance:

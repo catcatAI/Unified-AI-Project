@@ -79,6 +79,14 @@ class TestLogicModelComponents(unittest.TestCase):
     @pytest.mark.timeout(10)
     def test_03_logic_model_nn_structure_and_helpers(self):
         print("\nRunning test_03_logic_model_nn_structure_and_helpers...")
+        
+        # Check if TensorFlow is available
+        from src.core_ai.dependency_manager import dependency_manager
+        if not dependency_manager.is_available('tensorflow'):
+            print("TensorFlow not available, skipping NN model tests")
+            self.skipTest("TensorFlow not available")
+            return
+        
         # Create a dummy dataset file for char_map generation
         dummy_data = [{"proposition": "true AND false", "answer": False}]
         with open(self.train_json_file, 'w') as f: # Use the class defined path
@@ -88,7 +96,14 @@ class TestLogicModelComponents(unittest.TestCase):
         original_char_map_path = logic_model_nn.CHAR_MAP_SAVE_PATH
         logic_model_nn.CHAR_MAP_SAVE_PATH = self.char_map_file
 
-        char_to_token, _, vocab_size, max_len = get_logic_char_token_maps(self.train_json_file)
+        self.assertTrue(os.path.exists(self.train_json_file))
+
+        result = get_logic_char_token_maps(self.train_json_file)
+        self.assertIsNotNone(result, "get_logic_char_token_maps should not return None")
+        char_to_token, _, vocab_size, max_len = result
+        self.assertIsNotNone(char_to_token, "char_to_token should not be None")
+        self.assertIsNotNone(vocab_size, "vocab_size should not be None")
+        self.assertIsNotNone(max_len, "max_len should not be None")
         self.assertGreater(vocab_size, 0)
         self.assertGreater(max_len, 0)
         # Check for individual characters from "true AND false" (dummy_data)

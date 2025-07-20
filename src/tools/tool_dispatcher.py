@@ -11,23 +11,27 @@ from src.core_ai.language_models.daily_language_model import DailyLanguageModel
 from src.services.llm_interface import LLMInterface
 from src.shared.types.common_types import ToolDispatcherResponse # Import new response type
 from typing import Literal # For literal status types
+from src.core_ai.rag.rag_manager import RAGManager
 
 class ToolDispatcher:
     def __init__(self, llm_interface: Optional[LLMInterface] = None):
         self.dlm = DailyLanguageModel(llm_interface=llm_interface)
         self.code_understanding_tool_instance = CodeUnderstandingTool()
+        self.rag_manager = RAGManager()
 
         self.tools: Dict[str, Callable[..., ToolDispatcherResponse]] = { # type: ignore
             "calculate": self._execute_math_calculation,
             "evaluate_logic": self._execute_logic_evaluation,
             "translate_text": self._execute_translation,
             "inspect_code": self._execute_code_inspection,
+            "rag_query": self._execute_rag_query,
         }
         self.tool_descriptions = {
             "calculate": "Performs arithmetic calculations. Example: 'calculate 10 + 5', or 'what is 20 / 4?'",
             "evaluate_logic": "Evaluates simple logical expressions (AND, OR, NOT, true, false, parentheses). Example: 'evaluate true AND (false OR NOT true)'",
             "translate_text": "Translates text between Chinese and English. Example: 'translate 你好 to English'",
             "inspect_code": "Describes the structure of available tools. Query examples: 'list_tools', or 'describe_tool math_tool'",
+            "rag_query": "Performs a retrieval-augmented generation query. Example: 'rag_query what is the main purpose of HAM?'",
         }
         self.models = []
         print("ToolDispatcher initialized.")
@@ -71,6 +75,31 @@ class ToolDispatcher:
                 status="failure_tool_error",
                 payload=None,
                 tool_name_attempted="inspect_code",
+                original_query_for_tool=query,
+                error_message=error_msg
+            )
+
+    def _execute_rag_query(self, query: str, **kwargs) -> ToolDispatcherResponse:
+        """
+        Wrapper for the RAGManager.search function.
+        """
+        try:
+            # Assuming the query is the text to search for.
+            # The RAGManager might evolve to take more complex parameters.
+            results = self.rag_manager.search(query)
+            return ToolDispatcherResponse(
+                status="success",
+                payload=results,
+                tool_name_attempted="rag_query",
+                original_query_for_tool=query
+            )
+        except Exception as e:
+            error_msg = f"Error in RAG query: {str(e)[:100]}"
+            print(f"ToolDispatcher: {error_msg}")
+            return ToolDispatcherResponse(
+                status="failure_tool_error",
+                payload=None,
+                tool_name_attempted="rag_query",
                 original_query_for_tool=query,
                 error_message=error_msg
             )
