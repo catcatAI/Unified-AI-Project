@@ -436,38 +436,88 @@ class LearningManager:
 
     async def learn_from_project_case(self, project_case: Dict[str, Any]):
         """
-        Analyzes a completed project case to learn from the outcome.
-        For now, this is a placeholder that stores the case in memory for future analysis.
+        Analyzes a completed project case, stores it, and attempts to distill a reusable strategy.
         """
         print(f"[{self.ai_id}] LearningManager: Processing project case for user query: '{project_case.get('user_query')}'")
 
         case_id = f"proj_case_{uuid.uuid4().hex}"
 
-        # In the future, this method would perform deep analysis:
-        # - Analyze which subtask decomposition strategies led to success.
-        # - Correlate user feedback with final outputs.
-        # - Identify bottlenecks or frequently failing sub-agents.
-        # - Generate new "formulas" or "heuristics" for project decomposition.
-
-        metadata = {
-            "record_id": case_id,
-            "timestamp": datetime.now().isoformat(),
-            "user_id": project_case.get("user_id"),
-            "session_id": project_case.get("session_id"),
+        # First, store the raw project case for auditing and deeper analysis later.
+        raw_case_metadata = {
+            "record_id": case_id, "timestamp": datetime.now().isoformat(),
+            "user_id": project_case.get("user_id"), "session_id": project_case.get("session_id"),
             "source": "agent_collaboration_project"
         }
+        self.ham_memory.store_experience(raw_data=project_case, data_type="project_execution_case", metadata=raw_case_metadata)
 
-        # Storing the entire project case for now.
-        stored_id = self.ham_memory.store_experience(
-            raw_data=project_case,
-            data_type="project_execution_case",
-            metadata=metadata
-        )
+        # Now, attempt to distill a reusable strategy from this successful case.
+        # This requires a powerful LLM.
+        if not self.fact_extractor.llm: # fact_extractor holds the llm_interface
+            print(f"[{self.ai_id}] No LLM interface available in FactExtractor, cannot distill strategy.")
+            return
 
-        if stored_id:
-            print(f"[{self.ai_id}] Successfully stored project case '{case_id}' in memory (HAM ID: {stored_id}).")
-        else:
-            print(f"[{self.ai_id}] Failed to store project case '{case_id}' in memory.")
+        distillation_prompt = self._create_strategy_distillation_prompt(project_case)
+        raw_strategy_output = self.fact_extractor.llm.generate_response(prompt=distillation_prompt, params={"temperature": 0.0})
+
+        try:
+            json_match = re.search(r"```json\s*([\s\S]*?)\s*```", raw_strategy_output)
+            strategy_json_str = json_match.group(1) if json_match else raw_strategy_output
+            distilled_strategy = json.loads(strategy_json_str)
+
+            # Basic validation of the distilled strategy
+            if "strategy_name" in distilled_strategy and "applicable_keywords" in distilled_strategy and "subtask_template" in distilled_strategy:
+                strategy_id = f"strat_{uuid.uuid4().hex}"
+                strategy_metadata = {
+                    "record_id": strategy_id, "timestamp": datetime.now().isoformat(),
+                    "source_case_id": case_id, "distilled_by": self.ai_id
+                }
+                self.ham_memory.store_experience(
+                    raw_data=distilled_strategy,
+                    data_type="learned_collaboration_strategy",
+                    metadata=strategy_metadata
+                )
+                print(f"[{self.ai_id}] Successfully distilled and stored collaboration strategy '{distilled_strategy['strategy_name']}' (ID: {strategy_id}).")
+            else:
+                print(f"[{self.ai_id}] Distilled strategy is missing required fields. Output: {distilled_strategy}")
+
+        except json.JSONDecodeError:
+            print(f"[{self.ai_id}] Failed to decode JSON from strategy distillation output. Raw: {raw_strategy_output}")
+
+    def _create_strategy_distillation_prompt(self, project_case: Dict[str, Any]) -> str:
+        """
+        Creates a prompt for an LLM to distill a reusable strategy from a successful project case.
+        """
+        # We need to remove large, raw data from the prompt to keep it concise.
+        cleaned_subtasks = []
+        for task in project_case.get("decomposed_subtasks", []):
+            cleaned_params = {k: v[:100] + '...' if isinstance(v, str) and len(v) > 100 else v for k, v in task.get("task_parameters", {}).items()}
+            cleaned_subtasks.append({
+                "capability_needed": task.get("capability_needed"),
+                "task_parameters_schema": cleaned_params,
+                "task_description": task.get("task_description")
+            })
+
+        prompt = f"""
+You are a brilliant AI strategist. Your goal is to analyze a successful project execution and generalize it into a reusable strategy template.
+From the following project case, identify the core user intent and the successful sequence of capabilities used. Then, create a generalized strategy as a valid JSON object.
+
+The JSON object MUST contain:
+1.  `strategy_name`: A concise, descriptive name for the strategy (e.g., "Summarize CSV Data and Identify Trends").
+2.  `applicable_keywords`: A list of lowercase keywords from a user's request that would trigger this strategy (e.g., ["analyze", "summarize", "csv", "report"]).
+3.  `subtask_template`: An array of subtask objects. This should be a template for future use.
+    - For parameters that should be filled in by the user's new request, use placeholders like `"<user_provided_data>"` or `"<user_specified_topic>"`.
+    - For parameters that are outputs of previous steps, use the placeholder `"<output_of_task_X>"`, where X is the 0-based index of the prerequisite task.
+
+---
+**PROJECT CASE TO ANALYZE:**
+- **User's Original Request:** "{project_case.get('user_query')}"
+- **Decomposition Plan Used:** {json.dumps(cleaned_subtasks, indent=2)}
+- **Final Response Summary:** "{project_case.get('final_response', '')[:200]}..."
+
+---
+**Distilled Strategy (JSON Object Only):**
+"""
+        return prompt
 
 if __name__ == '__main__':
     print("--- LearningManager Standalone Test ---")
