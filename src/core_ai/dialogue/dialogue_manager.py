@@ -439,6 +439,18 @@ class DialogueManager:
     async def get_simple_response(self, user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
         print(f"DialogueManager: Received input='{user_input}', session_id='{session_id}', user_id='{user_id}'")
         ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
+
+        # --- Stage 0: Intent Classification ---
+        # Decide if this is a simple query or a complex project requiring decomposition.
+        # This is a placeholder for a more sophisticated classifier. For now, we use a keyword.
+        is_complex_project = user_input.lower().startswith("project:")
+
+        if is_complex_project:
+            project_query = user_input[len("project:"):].strip()
+            print(f"DialogueManager: Detected complex project. Query: '{project_query}'")
+            return await self._handle_complex_project(project_query, session_id, user_id)
+
+        # --- Existing Simple Response Flow ---
         response_text: str = ""
         user_mem_id: Optional[str] = None
         if self.memory_manager:
@@ -615,6 +627,98 @@ class DialogueManager:
             self.active_sessions[session_id] = self.active_sessions[session_id][-self.max_history_per_session:]
 
         return response_text
+
+    async def _handle_complex_project(self, project_query: str, session_id: Optional[str], user_id: Optional[str]) -> str:
+        """
+        Orchestrates the handling of a complex project using the agent collaboration framework.
+        """
+        ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
+
+        if not self.service_discovery_module or not self.hsp_connector:
+            return f"{ai_name}: I can't access my specialist network to handle this project."
+
+        # --- First Draft: Decompose intent into subtasks ---
+        print(f"[{ai_name}] Phase 1: Decomposing project query...")
+        available_capabilities = self.service_discovery_module.get_all_capabilities()
+        subtasks = await self._decompose_user_intent_into_subtasks(project_query, available_capabilities)
+
+        if not subtasks:
+            return f"{ai_name}: I couldn't break down your request into a clear plan. Could you please rephrase it?"
+
+        print(f"[{ai_name}] Decomposed into {len(subtasks)} subtasks: {subtasks}")
+
+        # --- Second & Third Draft: Dispatch tasks and gather results ---
+        print(f"[{ai_name}] Phase 2 & 3: Dispatching subtasks...")
+        task_coroutines = []
+        for i, subtask in enumerate(subtasks):
+            # Placeholder replacement for simple sequential dependency
+            if isinstance(subtask.get("task_parameters"), dict):
+                for key, value in subtask["task_parameters"].items():
+                    if isinstance(value, str):
+                        match = re.match(r"<output_of_task_(\d+)>", value)
+                        if match:
+                            # This is a placeholder for a proper DAG execution engine.
+                            print(f"Dependency found in task {i} on task {match.group(1)}. This PoC doesn't support execution order yet.")
+
+            task_coroutines.append(
+                self._dispatch_single_subtask(subtask)
+            )
+
+        # Execute all tasks concurrently
+        results = await asyncio.gather(*task_coroutines)
+
+        print(f"[{ai_name}] All subtasks completed. Results: {results}")
+
+        # --- Fourth Draft: Integrate results ---
+        print(f"[{ai_name}] Phase 4: Integrating results...")
+        final_response = await self._integrate_subtask_results(project_query, results)
+
+        return f"{ai_name}: Here's the result of your project request:\n\n{final_response}"
+
+    async def _dispatch_single_subtask(self, subtask: Dict[str, Any]) -> Any:
+        """
+        Dispatches a single subtask and returns its result.
+        """
+        capability_name = subtask.get("capability_needed")
+        params = subtask.get("task_parameters", {})
+
+        if not capability_name or not self.service_discovery_module or not self.hsp_connector:
+            return {"error": "Missing capability name or HSP service."}
+
+        found_caps = self.service_discovery_module.find_capabilities(capability_name_filter=capability_name)
+        if not found_caps:
+            return {"error": f"Could not find an agent with capability '{capability_name}'."}
+
+        selected_cap = found_caps[0]
+
+        _user_msg, correlation_id = await self._dispatch_hsp_task_request(
+            capability_advertisement=selected_cap,
+            request_parameters=params,
+            original_user_query=subtask.get("task_description", ""),
+            user_id="project_subtask",
+            session_id="project_subtask"
+        )
+
+        if not correlation_id:
+            return {"error": f"Failed to dispatch task for capability '{capability_name}'."}
+
+        # Simplified polling mechanism for PoC
+        for _ in range(10): # Poll for 30 seconds max
+            if correlation_id not in self.pending_hsp_task_requests:
+                result_record_list = self.memory_manager.query_core_memory(
+                    metadata_filters={"hsp_correlation_id": correlation_id},
+                    limit=1
+                )
+                if result_record_list:
+                    result_record = result_record_list[0]
+                    metadata = result_record.get("metadata", {})
+                    if metadata.get("source") == "hsp_task_result_success":
+                        return metadata.get("hsp_task_service_payload")
+                    elif metadata.get("source") == "hsp_task_result_error":
+                        return {"error": metadata.get("error_details")}
+            await asyncio.sleep(3)
+
+        return {"error": f"Task for '{capability_name}' timed out."}
 
     async def start_session(self, user_id: Optional[str] = None, session_id: Optional[str] = None) -> str:
         print(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}.")
@@ -899,13 +1003,79 @@ if __name__ == '__main__':
         )
 
         print(f"\n--- Test: Basic Interaction & Formula (Ollama LLM where applicable) ---")
-        # ... (rest of the __main__ test block as before) ...
-        # (Ensure any part of __main__ that uses self.config directly is updated if self.config structure changed)
-        # For example, crisis_system and time_system take `config=dict(self.config)`.
-        # LLMInterface also takes `config=self.config`.
-        # If self.config is now `OperationalConfig`, these might need adjustment or
-        # OperationalConfig needs to be dict-like or provide a .get() method.
-        # `OperationalConfig` is a TypedDict, so it is dict-like.
+    async def _decompose_user_intent_into_subtasks(self, user_query: str, available_capabilities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Uses an LLM to decompose a complex user query into a structured list of subtasks.
+        This is the core of the "First Draft" in the agent collaboration framework.
+        """
+        # This prompt is crucial and will need significant refinement.
+        prompt = f"""
+You are a master project manager AI. Your task is to decompose a complex user request into a series of smaller, executable subtasks that can be delegated to specialized agents.
+You will be given the user's request and a list of available capabilities (tools) that your sub-agents possess.
+Your output MUST be a valid JSON array of objects, where each object represents a subtask.
+
+Each subtask object in the JSON array must contain:
+1.  `capability_needed`: A string matching the 'name' of one of the available capabilities.
+2.  `task_parameters`: A dictionary of parameters required by that capability.
+3.  `task_description`: A brief natural language description of what this subtask aims to achieve.
+
+Analyze the user's request and the available capabilities carefully. The subtasks may have dependencies. For a later task to use the output of an earlier task, use a placeholder string like `"<output_of_task_0>"` where 0 is the index of the prerequisite task in the array.
+
+---
+**Available Capabilities:**
+{json.dumps(available_capabilities, indent=2)}
+
+---
+**User Request:**
+"{user_query}"
+
+---
+**Decomposed Subtask Plan (JSON Array Only):**
+"""
+
+        raw_llm_output = self.llm_interface.generate_response(prompt=prompt, params={"temperature": 0.0})
+
+        try:
+            # Simple extraction of JSON from potential ```json ... ``` block
+            json_match = re.search(r"```json\s*([\s\S]*?)\s*```", raw_llm_output)
+            if json_match:
+                json_str = json_match.group(1)
+            else:
+                json_str = raw_llm_output
+
+            subtasks = json.loads(json_str)
+            if isinstance(subtasks, list):
+                return subtasks
+            else:
+                print(f"LLM output for subtask decomposition was not a list: {subtasks}")
+                return []
+        except json.JSONDecodeError as e:
+            print(f"Error decoding LLM JSON for subtask decomposition: {e}")
+            print(f"Raw LLM output was: {raw_llm_output}")
+            return []
+
+    async def _integrate_subtask_results(self, original_query: str, results: List[Any]) -> str:
+        """
+        Uses an LLM to integrate the results of multiple subtasks into a final, coherent response.
+        This is the core of the "Fourth Draft".
+        """
+        prompt = f"""
+You are a master editor AI. Your task is to synthesize the results from several specialized agents into a single, comprehensive, and well-written response that directly addresses the user's original request.
+
+---
+**User's Original Request:**
+"{original_query}"
+
+---
+**Collected Results from Sub-Agents:**
+{json.dumps(results, indent=2)}
+
+---
+**Final Synthesized Response:**
+"""
+
+        final_response = self.llm_interface.generate_response(prompt=prompt, params={"temperature": 0.5})
+        return final_response
 
         test_session_id_1 = "session_basic_001"
         test_user_id_1 = "user_basic_001"
