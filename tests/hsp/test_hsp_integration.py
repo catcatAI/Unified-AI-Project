@@ -582,15 +582,17 @@ class TestHSPTaskDelegation:
         
         # 1. Peer A advertises its capability
         cap_payload = HSPCapabilityAdvertisementPayload(
+            capability_id="advanced_weather_forecast",
             capability_name="advanced_weather_forecast",
             capability_description="Provides detailed 7-day weather forecasts for any location.",
+            ai_id=peer_a_hsp_connector.ai_id,
             input_schema={"type": "object", "properties": {"location": {"type": "string"}}},
             output_schema={"type": "object", "properties": {"forecast": {"type": "string"}}},
             version="1.0",
             tags=["weather", "forecast"]
         )  # type: ignore
         
-        peer_a_hsp_connector.publish_capability_advertisement(cap_payload, "general")
+        peer_a_hsp_connector.publish_capability_advertisement(cap_payload, f"{CAP_ADVERTISEMENT_TOPIC}/{peer_a_hsp_connector.ai_id}")
         await asyncio.sleep(0.5)
         
         # 2. Verify Main AI's SDM has registered the capability

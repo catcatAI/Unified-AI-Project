@@ -219,6 +219,19 @@ class ServiceDiscoveryModule:
         """Returns a list of all known, non-stale capabilities."""
         return self.find_capabilities()
 
+    def is_capability_available(self, capability_id: str) -> bool:
+        """
+        Checks if a capability with the given ID is available (registered and not stale).
+        
+        Args:
+            capability_id (str): The unique ID of the capability to check.
+            
+        Returns:
+            bool: True if the capability is available and not stale, False otherwise.
+        """
+        capability = self.get_capability_by_id(capability_id)
+        return capability is not None
+
 if __name__ == '__main__':
     # Basic test/example of instantiation (requires a mock TrustManager)
     class MockTrustManager(TrustManager):

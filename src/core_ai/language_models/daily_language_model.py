@@ -1,10 +1,10 @@
-import json
+import json # Added import for JSON parsing
 import re # Added import for regular expressions
 from typing import Dict, Any, Optional
 
 # Assuming 'src' is in PYTHONPATH, making 'services' and 'shared' top-level packages
-from services.llm_interface import LLMInterface
-from shared.types.common_types import LLMInterfaceConfig # For default config typing
+from src.services.llm_interface import LLMInterface
+from src.shared.types.common_types import LLMInterfaceConfig # For default config typing
 
 
 class DailyLanguageModel:
