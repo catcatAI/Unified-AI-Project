@@ -110,3 +110,4 @@ For the defined scope of simple Boolean expressions, the **parser-based evaluato
 *   Training the `LogicNNModel` on a larger and more diverse dataset, including slightly malformed inputs.
 *   Extending the supported logical operators and functions.
 *   Improving error reporting for invalid expressions.
+*   **Current Status:** Tests currently show failures indicating instability in core model components. Work is ongoing to improve reliability and functionality.
