@@ -57,6 +57,13 @@ class DialogueManager:
         self.learning_manager = learning_manager
         self.config = config or {}
 
+        # Load command triggers from config with defaults
+        self.triggers = self.config.get("command_triggers", {
+            "complex_project": "project:",
+            "manual_delegation": "!delegate_to",
+            "context_analysis": "!analyze:"
+        })
+
         self.active_sessions: Dict[str, List[DialogueTurn]] = {}
         
         # Initialize ProjectCoordinator
@@ -87,11 +94,9 @@ class DialogueManager:
         ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
 
         # --- Intent Classification ---
-        # A simple keyword-based trigger for activating the project coordinator.
-        # In a real system, this could be a more sophisticated classifier model.
-        trigger_word = self.config.get("project_trigger_word", "project:")
-        if user_input.lower().startswith(trigger_word):
-            project_query = user_input[len(trigger_word):].strip()
+        # Use triggers from config to activate special handlers
+        if user_input.lower().startswith(self.triggers["complex_project"]):
+            project_query = user_input[len(self.triggers["complex_project"]):].strip()
             print(f"[{self.ai_id}] Complex project detected. Delegating to ProjectCoordinator...")
             return await self.project_coordinator.handle_project(project_query, session_id, user_id)
 
