@@ -106,6 +106,18 @@ dependencies:
       fallbacks: ["pytest", "unittest"]
       features: ["async_testing"]
 
+    - name: "PyQt5"
+      description: "GUI toolkit for the graphical installer"
+      essential: false
+      fallbacks: ["installer_cli.py"]
+      features: ["gui_installer"]
+
+    - name: "pyshortcuts"
+      description: "Cross-platform shortcut creation"
+      essential: false
+      fallbacks: ["manual_shortcut_creation_instructions"]
+      features: ["desktop_shortcut"]
+
 # Fallback strategies for different scenarios
 fallback_strategies:
   # When TensorFlow is not available
@@ -136,6 +148,22 @@ fallback_strategies:
     - disable_features: ["hsp_communication", "distributed_ai"]
     - fallback_message: "HSP communication disabled. Running in standalone mode."
 
+  # When NetworkX is not available
+  networkx_unavailable:
+    - disable_features: ["knowledge_graph", "content_analysis_kg"]
+    - fallback_message: "Knowledge Graph features disabled. Context analysis will be limited."
+
+  # When PyQt5 is not available
+  pyqt5_unavailable:
+    - disable_features: ["gui_installer"]
+    - use_alternatives: ["installer_cli.py"]
+    - fallback_message: "PyQt5 not found. GUI installer is unavailable. Please use the command-line installer."
+
+  # When pyshortcuts is not available
+  pyshortcuts_unavailable:
+    - disable_features: ["desktop_shortcut"]
+    - fallback_message: "pyshortcuts not found. Automatic desktop shortcut creation is disabled."
+
 # Environment-specific configurations
 environments:
   development:
@@ -160,24 +188,29 @@ installation:
   minimal:
     description: "Minimal installation for basic functionality"
     packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil"]
-    features: ["basic_web", "core_ai"] # Added features
+    features: ["basic_web", "core_ai"]
     
   standard:
     description: "Standard installation with common optional features"
     packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "fastapi", "uvicorn", "pydantic", "httpx"]
-    features: ["web_api", "hsp_communication", "core_ai"] # Added features
+    features: ["web_api", "hsp_communication", "core_ai"]
     
   full:
-    description: "Full installation with all features"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain", "fastapi", "uvicorn", "pydantic", "httpx", "pytest-asyncio"]
-    features: ["web_api", "hsp_communication", "ai_models", "nlp", "knowledge_graph"] # Added features
+    description: "Full installation with all features, including game and GUI installer"
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain", "fastapi", "uvicorn", "pydantic", "httpx", "pytest-asyncio", "pygame", "PyQt5", "pyshortcuts"]
+    features: ["web_api", "hsp_communication", "ai_models", "nlp", "knowledge_graph", "game_client", "gui_installer"]
     
   ai_focused:
     description: "AI and ML focused installation"
     packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain"]
-    features: ["ai_models", "nlp", "machine_learning"] # Added features
+    features: ["ai_models", "nlp", "machine_learning"]
 
   game:
     description: "Installation with game client"
     packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pygame"]
     features: ["game_client"]
+
+  installer:
+    description: "Dependencies for the GUI installer and shortcut creation"
+    packages: ["PyQt5", "pyshortcuts"]
+    features: ["gui_installer", "desktop_shortcut"]
