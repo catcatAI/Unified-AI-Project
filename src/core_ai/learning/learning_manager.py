@@ -429,13 +429,45 @@ class LearningManager:
 
         if stored_id:
             print(f"  Stored HSP fact '{record_id}' (original HSP ID: '{original_hsp_fact_id}') with HAM ID '{stored_id}'")
-            # ContentAnalyzerModule was already called before conflict checks that might use its output.
-            # No need to call it again here unless we want it to process the potentially *merged* fact,
-            # but its internal graph update was based on the original incoming fact.
             return stored_id
         else:
             print(f"  Failed to store HSP fact '{record_id}' in HAM.")
             return None
+
+    async def learn_from_project_case(self, project_case: Dict[str, Any]):
+        """
+        Analyzes a completed project case to learn from the outcome.
+        For now, this is a placeholder that stores the case in memory for future analysis.
+        """
+        print(f"[{self.ai_id}] LearningManager: Processing project case for user query: '{project_case.get('user_query')}'")
+
+        case_id = f"proj_case_{uuid.uuid4().hex}"
+
+        # In the future, this method would perform deep analysis:
+        # - Analyze which subtask decomposition strategies led to success.
+        # - Correlate user feedback with final outputs.
+        # - Identify bottlenecks or frequently failing sub-agents.
+        # - Generate new "formulas" or "heuristics" for project decomposition.
+
+        metadata = {
+            "record_id": case_id,
+            "timestamp": datetime.now().isoformat(),
+            "user_id": project_case.get("user_id"),
+            "session_id": project_case.get("session_id"),
+            "source": "agent_collaboration_project"
+        }
+
+        # Storing the entire project case for now.
+        stored_id = self.ham_memory.store_experience(
+            raw_data=project_case,
+            data_type="project_execution_case",
+            metadata=metadata
+        )
+
+        if stored_id:
+            print(f"[{self.ai_id}] Successfully stored project case '{case_id}' in memory (HAM ID: {stored_id}).")
+        else:
+            print(f"[{self.ai_id}] Failed to store project case '{case_id}' in memory.")
 
 if __name__ == '__main__':
     print("--- LearningManager Standalone Test ---")
