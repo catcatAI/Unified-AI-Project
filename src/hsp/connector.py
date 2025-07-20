@@ -199,6 +199,36 @@ class HSPConnector:
     def _on_mqtt_message(self, client, userdata, msg):
         """Handles incoming MQTT messages and forwards them to HSP message handler."""
         try:
+            payload_str = msg.payload.decode('utf-8')
+            envelope_data = json.loads(payload_str)
+            envelope = HSPMessageEnvelope(**envelope_data)
+
+            # Generic message callback
+            if self._on_generic_message_callback:
+                self._on_generic_message_callback(envelope, msg.topic)
+
+            # Specific message type callbacks
+            message_type = envelope.get("message_type")
+            payload = envelope.get("payload")
+            sender_ai_id = envelope.get("sender_ai_id")
+
+            if message_type == "HSP::Fact_v0.1" and self._on_fact_received_callback:
+                self._on_fact_received_callback(HSPFactPayload(**payload), sender_ai_id, envelope)
+            elif message_type == "HSP::CapabilityAdvertisement_v0.1" and self._on_capability_advertisement_callback:
+                self._on_capability_advertisement_callback(HSPCapabilityAdvertisementPayload(**payload), sender_ai_id, envelope)
+            elif message_type == "HSP::TaskRequest_v0.1" and self._on_task_request_callback:
+                self._on_task_request_callback(HSPTaskRequestPayload(**payload), sender_ai_id, envelope)
+            elif message_type == "HSP::TaskResult_v0.1" and self._on_task_result_callback:
+                self._on_task_result_callback(HSPTaskResultPayload(**payload), sender_ai_id, envelope)
+
+            # Handle ACK requests
+            qos_params = envelope.get("qos_parameters")
+            if qos_params and qos_params.get("requires_ack"):
+                self._send_acknowledgement(envelope.get("message_id"), sender_ai_id)
+
+        except (json.JSONDecodeError, UnicodeDecodeError, TypeError) as e:
+            logger.error(f"HSPConnector ({self.ai_id}): Failed to decode or process message on topic '{msg.topic}': {e}")
+        try:
             logger.debug(f"HSPConnector ({self.ai_id}): Raw MQTT message received on topic '{msg.topic}' with payload: {msg.payload.decode('utf-8')[:100]}...")
             message_str = msg.payload.decode('utf-8')
             self._handle_hsp_message_str(message_str, msg.topic)
