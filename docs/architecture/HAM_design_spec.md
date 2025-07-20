@@ -56,6 +56,9 @@ The HAM model consists of two primary layers:
     *   `return_multiple_candidates`: If True, returns a list of top N candidate gists (for Fragmenta).
 *   (New) `compare_rehydrated_memory(self, memory_id_or_gist: any, reference_context: str) -> float`:
     *   A conceptual method for the SL to perform verification. Takes a recalled gist (or its ID) and a reference context, returns a similarity/relevance score. Implementation details depend on the chosen comparison technique.
+*   (New) `increment_metadata_field(self, memory_id: str, field_name: str, increment_by: int = 1) -> bool`:
+    *   Efficiently increments a numerical value in a record's metadata without requiring a full recall-modify-store cycle.
+    *   Primarily used by `LearningManager` to increase the `corroboration_count` for a fact when a duplicate is received, as part of the anti-resonance mechanism.
 
 ## 5. Core Layer Storage (v0.2)
 
@@ -78,7 +81,8 @@ The HAM model consists of two primary layers:
 ## 7. Error Handling & Data Integrity (v0.2)
 
 *   Log errors during encryption, decryption, compression, decompression, abstraction.
-*   For data integrity, when storing a package in CL, a **SHA256 checksum** of the original abstracted data (before compression/encryption) is computed and stored within the package's metadata. Upon retrieval and full de-processing (after decryption and decompression), the checksum is recomputed and compared against the stored value to detect potential corruption. A mismatch will result in a critical warning.
+*   **Data Integrity**: For data integrity, when storing a package in CL, a **SHA256 checksum** of the original abstracted data (before compression/encryption) is computed and stored within the package's metadata. Upon retrieval and full de-processing (after decryption and decompression), the checksum is recomputed and compared against the stored value to detect potential corruption. A mismatch will result in a critical warning.
+*   **Anti-Resonance and Information Quality Verification**: To combat "idiot resonance" where popularity is mistaken for accuracy, the HAM system supports a quality-based verification model implemented in the `LearningManager`. When a duplicate fact is detected, its confidence is **not** increased. Instead, its `corroboration_count` metadata field is incremented via the `increment_metadata_field` method. This explicitly separates the measure of a fact's prevalence from its assessed quality, preventing the amplification of potentially incorrect information.
 *   The comparison mechanism in `compare_rehydrated_memory` (or similar logic in SL) will help identify incomplete or erroneous recall, triggering potential re-querying or clarification dialogues.
 
 ## 8. Support for Translation Model
