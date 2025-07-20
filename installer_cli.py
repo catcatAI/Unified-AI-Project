@@ -93,6 +93,16 @@ def main():
     from pyshortcuts import make_shortcut
     make_shortcut("installer_cli.py", name="Unified AI Project")
 
+    # Save Python executable path to .env file
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    env_path = os.path.join(project_root, '.env')
+    try:
+        with open(env_path, 'a') as f:
+            f.write(f"\nPYTHON_EXECUTABLE={sys.executable}\n")
+        print(f"Python executable path saved to {env_path}")
+    except Exception as e:
+        print(f"Error saving Python executable path: {e}", file=sys.stderr)
+
     print("Installation complete.")
 
 if __name__ == "__main__":

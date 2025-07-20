@@ -207,11 +207,27 @@ class FinishedPage(QWizardPage):
         super().__init__()
         self.setTitle("Finished")
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("The installation is complete."))
+        self.finished_label = QLabel("The installation is complete.")
+        layout.addWidget(self.finished_label)
         self.reconfigure_button = QPushButton("Reconfigure")
         self.reconfigure_button.clicked.connect(self.reconfigure)
         layout.addWidget(self.reconfigure_button)
         self.setLayout(layout)
+
+    def initializePage(self):
+        self.save_python_path()
+
+    def save_python_path(self):
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        env_path = os.path.join(project_root, '.env')
+        try:
+            with open(env_path, 'a') as f:
+                f.write(f"\nPYTHON_EXECUTABLE={sys.executable}\n")
+            print(f"Python executable path saved to {env_path}")
+            self.finished_label.setText("The installation is complete.\nPython path saved.")
+        except Exception as e:
+            print(f"Error saving Python executable path: {e}", file=sys.stderr)
+            self.finished_label.setText(f"The installation is complete.\nCould not save Python path: {e}")
 
     def reconfigure(self):
         self.wizard().restart()
