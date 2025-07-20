@@ -22,41 +22,44 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from src.core_ai.dependency_manager import (
-        get_dependency_info,
-        get_available_dependencies,
-        get_unavailable_dependencies,
-        get_disabled_features,
-        is_dependency_available
-    )
-    from src.tools.dependency_checker import DependencyChecker
+    from src.core_ai.dependency_manager import DependencyManager
+    dependency_manager_instance = DependencyManager()
+
+    def is_dependency_available(name: str) -> bool:
+        return dependency_manager_instance.is_available(name)
+
+    def get_available_dependencies() -> List[str]:
+        status = dependency_manager_instance.get_all_status()
+        return [name for name, s in status.items() if s.is_available or s.fallback_available]
+
+    def get_unavailable_dependencies() -> List[str]:
+        status = dependency_manager_instance.get_all_status()
+        return [name for name, s in status.items() if not s.is_available and not s.fallback_available]
+
+    class DependencyChecker:
+        def print_status_report(self, detailed=False):
+            print(dependency_manager_instance.get_dependency_report())
+
 except ImportError as e:
     print(f"Warning: Could not import dependency management modules: {e}")
     print("Some features may not be available.")
-    
-    # Fallback implementations
-    def get_dependency_info(name: str) -> Dict[str, Any]:
-        return {'name': name, 'available': False}
-    
-    def get_available_dependencies() -> List[str]:
-        return []
-    
-    def get_unavailable_dependencies() -> List[str]:
-        return []
-    
-    def get_disabled_features() -> List[str]:
-        return []
-    
+
     def is_dependency_available(name: str) -> bool:
         try:
-            __import__(name)
+            __import__(name.replace('-', '_'))
             return True
         except ImportError:
             return False
-    
+
+    def get_available_dependencies() -> List[str]:
+        return []
+
+    def get_unavailable_dependencies() -> List[str]:
+        return []
+
     class DependencyChecker:
         def print_status_report(self, detailed=False):
-            print("Dependency checker not available")
+            print("Dependency checker not available due to import error.")
 
 
 class StartupManager:
@@ -276,6 +279,11 @@ class StartupManager:
         # Set environment variables for the application
         os.environ['UNIFIED_AI_MODE'] = mode
         os.environ['UNIFIED_AI_FALLBACK_CONFIG'] = str(fallback_config)
+
+        # Ensure src path is in sys.path before starting servers
+        src_path = project_root / 'src'
+        if str(src_path) not in sys.path:
+            sys.path.insert(0, str(src_path))
         
         # Start the appropriate server based on available dependencies
         web_config = fallback_config.get('web_server', {})
@@ -291,9 +299,13 @@ class StartupManager:
         """Start FastAPI server."""
         try:
             print(f"\n🌐 Starting FastAPI server on http://{host}:{port}")
-            # Import and start FastAPI app
-            # This would be implemented based on your actual FastAPI app structure
-            print("FastAPI server startup would be implemented here")
+            import uvicorn
+            from src.services.main_api_server import app  # Assuming your FastAPI app is here
+            uvicorn.run(app, host=host, port=port, reload=debug)
+        except ImportError as e:
+            print(f"❌ Failed to import FastAPI components: {e}")
+            print("🔄 Falling back to Flask...")
+            self._start_flask_server(host, port, debug)
         except Exception as e:
             print(f"❌ Failed to start FastAPI server: {e}")
             print("🔄 Falling back to Flask...")
@@ -303,9 +315,11 @@ class StartupManager:
         """Start Flask server."""
         try:
             print(f"\n🌐 Starting Flask server on http://{host}:{port}")
-            # Import and start Flask app
-            # This would be implemented based on your actual Flask app structure
-            print("Flask server startup would be implemented here")
+            from src.services.main_api_server import app as flask_app # Assuming you have a fallback Flask app
+            flask_app.run(host=host, port=port, debug=debug)
+        except ImportError as e:
+            print(f"❌ Failed to import Flask components: {e}")
+            self._start_cli_mode()
         except Exception as e:
             print(f"❌ Failed to start Flask server: {e}")
             self._start_cli_mode()
