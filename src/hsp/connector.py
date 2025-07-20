@@ -600,7 +600,7 @@ class HSPConnector:
     def start_heartbeat(self, interval: int = 60):
         """Starts the heartbeat mechanism."""
         if self._heartbeat_task is None:
-            # self._heartbeat_task = asyncio.create_task(self._send_heartbeat(interval))
+            self._heartbeat_task = asyncio.create_task(self._send_heartbeat(interval))
             logger.info(f"HSPConnector ({self.ai_id}): Heartbeat started with interval {interval}s.")
 
     def stop_heartbeat(self):
