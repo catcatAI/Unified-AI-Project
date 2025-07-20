@@ -649,27 +649,52 @@ class DialogueManager:
 
         print(f"[{ai_name}] Decomposed into {len(subtasks)} subtasks: {subtasks}")
 
-        # --- Second & Third Draft: Dispatch tasks and gather results ---
-        print(f"[{ai_name}] Phase 2 & 3: Dispatching subtasks...")
-        task_coroutines = []
+        # --- Build Task Dependency Graph (DAG) ---
+        task_graph = nx.DiGraph()
         for i, subtask in enumerate(subtasks):
-            # Placeholder replacement for simple sequential dependency
+            task_graph.add_node(i, data=subtask)
+
+            # Check for dependencies in parameters
             if isinstance(subtask.get("task_parameters"), dict):
-                for key, value in subtask["task_parameters"].items():
+                for param_value in subtask["task_parameters"].values():
+                    if isinstance(param_value, str):
+                        # Find all dependency placeholders like "<output_of_task_X>"
+                        dependencies = re.findall(r"<output_of_task_(\d+)>", param_value)
+                        for dep_index_str in dependencies:
+                            dep_index = int(dep_index_str)
+                            if dep_index < i:
+                                print(f"Found dependency: Task {i} depends on Task {dep_index}")
+                                task_graph.add_edge(dep_index, i)
+                            else:
+                                return f"{ai_name}: I created a plan with a logical error (a task depends on a future task). Please try rephrasing your request."
+
+        if not nx.is_directed_acyclic_graph(task_graph):
+            return f"{ai_name}: I created a plan with a circular dependency. Please try rephrasing your request."
+
+        # --- Execute tasks in topological order ---
+        execution_order = list(nx.topological_sort(task_graph))
+        print(f"[{ai_name}] Determined task execution order: {execution_order}")
+
+        task_results = {}
+        for task_index in execution_order:
+            subtask_data = task_graph.nodes[task_index]['data']
+
+            # Substitute parameters with outputs from previous tasks
+            if isinstance(subtask_data.get("task_parameters"), dict):
+                for key, value in subtask_data["task_parameters"].items():
                     if isinstance(value, str):
-                        match = re.match(r"<output_of_task_(\d+)>", value)
-                        if match:
-                            # This is a placeholder for a proper DAG execution engine.
-                            print(f"Dependency found in task {i} on task {match.group(1)}. This PoC doesn't support execution order yet.")
+                        def replace_dependency(match):
+                            dep_idx = int(match.group(1))
+                            return str(task_results.get(dep_idx, ""))
 
-            task_coroutines.append(
-                self._dispatch_single_subtask(subtask)
-            )
+                        # Replace all placeholders in the string
+                        subtask_data["task_parameters"][key] = re.sub(r"<output_of_task_(\d+)>", replace_dependency, value)
 
-        # Execute all tasks concurrently
-        results = await asyncio.gather(*task_coroutines)
+            print(f"[{ai_name}] Executing Task {task_index}: {subtask_data}")
+            result = await self._dispatch_single_subtask(subtask_data)
+            task_results[task_index] = result
 
-        print(f"[{ai_name}] All subtasks completed. Results: {results}")
+        print(f"[{ai_name}] All subtasks completed. Results: {task_results}")
 
         # --- Fourth Draft: Integrate results ---
         print(f"[{ai_name}] Phase 4: Integrating results...")
