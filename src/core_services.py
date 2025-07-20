@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any
 import uuid
 
 # Core AI Modules
+from core_ai.agent_manager import AgentManager
 from core_ai.dialogue.dialogue_manager import DialogueManager
 from core_ai.learning.learning_manager import LearningManager
 from core_ai.learning.fact_extractor_module import FactExtractorModule
@@ -32,9 +33,10 @@ FACT_TOPIC_GENERAL = "hsp/knowledge/facts/general"
 
 # Foundational Services
 llm_interface_instance: Optional[LLMInterface] = None
-ham_manager_instance: Optional[HAMMemoryManager] = None # Using MockHAM in CLI for now
+ham_manager_instance: Optional[HAMMemoryManager] = None
 personality_manager_instance: Optional[PersonalityManager] = None
 trust_manager_instance: Optional[TrustManager] = None
+agent_manager_instance: Optional[AgentManager] = None
 
 # HSP Related Services
 hsp_connector_instance: Optional[HSPConnector] = None
@@ -96,7 +98,7 @@ def initialize_services(
     global trust_manager_instance, hsp_connector_instance, mcp_connector_instance, service_discovery_module_instance
     global fact_extractor_instance, content_analyzer_instance, learning_manager_instance
     global emotion_system_instance, crisis_system_instance, time_system_instance
-    global formula_engine_instance, tool_dispatcher_instance, dialogue_manager_instance
+    global formula_engine_instance, tool_dispatcher_instance, dialogue_manager_instance, agent_manager_instance
 
     print(f"Core Services: Initializing for AI ID: {ai_id}")
 
@@ -209,6 +211,11 @@ def initialize_services(
     if not tool_dispatcher_instance:
         tool_dispatcher_instance = ToolDispatcher(llm_interface=llm_interface_instance)
 
+    if not agent_manager_instance:
+        # AgentManager needs the python executable path. We assume it's the same one running this script.
+        import sys
+        agent_manager_instance = AgentManager(python_executable=sys.executable)
+
     if not dialogue_manager_instance:
         dialogue_manager_instance = DialogueManager(
             ai_id=ai_id,
@@ -225,6 +232,7 @@ def initialize_services(
             content_analyzer=content_analyzer_instance,
             service_discovery_module=service_discovery_module_instance,
             hsp_connector=hsp_connector_instance,
+            agent_manager=agent_manager_instance, # Add AgentManager
             config=main_config_dict # Pass the main config dict
         )
         # DM's __init__ now registers its own task result callback with hsp_connector_instance
@@ -250,14 +258,21 @@ def get_services() -> Dict[str, Any]:
         "formula_engine": formula_engine_instance,
         "tool_dispatcher": tool_dispatcher_instance,
         "dialogue_manager": dialogue_manager_instance,
+        "agent_manager": agent_manager_instance,
     }
 
 def shutdown_services():
-    """Gracefully shuts down services, e.g., HSPConnector."""
-    global hsp_connector_instance
+    """Gracefully shuts down services, e.g., AgentManager and HSPConnector."""
+    global hsp_connector_instance, agent_manager_instance
+
+    if agent_manager_instance:
+        print("Core Services: Shutting down all active agents...")
+        agent_manager_instance.shutdown_all_agents()
+
     if hsp_connector_instance and hsp_connector_instance.is_connected:
         print("Core Services: Shutting down HSPConnector...")
         hsp_connector_instance.disconnect()
+
     print("Core Services: Shutdown process complete.")
 
 if __name__ == '__main__':
