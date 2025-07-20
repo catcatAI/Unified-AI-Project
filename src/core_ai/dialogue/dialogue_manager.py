@@ -474,6 +474,35 @@ class DialogueManager:
                         response_text = f"{ai_name}: From context regarding {entity_label.capitalize()}: {answer_from_kg.capitalize()}."
                     print(f"DialogueManager: Answered from KG: '{response_text}'")
 
+        # --- Manual Agent Delegation Trigger ---
+        delegate_trigger = "!delegate_to "
+        if not response_text and user_input.lower().startswith(delegate_trigger):
+            command_part = user_input[len(delegate_trigger):]
+            # Example: "data_analysis_agent task: 'summarize csv' with params {\"csv_content\": \"a,b\\n1,2\"}"
+            agent_match = re.match(r"(\S+)\s+task:\s*['\"](.+?)['\"](?:\s+with params\s+(.+))?", command_part, re.DOTALL)
+            if agent_match and self.service_discovery_module and self.hsp_connector:
+                agent_name_query, task_description, params_json_str = agent_match.groups()
+                try:
+                    request_params = json.loads(params_json_str) if params_json_str else {"query": task_description}
+
+                    # For this manual trigger, we assume agent_name_query is a capability name
+                    found_caps = self.service_discovery_module.find_capabilities(capability_name_filter=agent_name_query, sort_by_trust=True)
+
+                    if found_caps:
+                        selected_cap = found_caps[0]
+                        user_facing_msg, _ = await self._dispatch_hsp_task_request(selected_cap, request_params, task_description, user_id, session_id, request_type="manual_delegation")
+                        response_text = f"{ai_name}: {user_facing_msg}" if user_facing_msg else f"{ai_name}: Issue delegating task to '{agent_name_query}'."
+                    else:
+                        response_text = f"{ai_name}: Couldn't find an agent with capability matching '{agent_name_query}'."
+
+                except json.JSONDecodeError:
+                    response_text = f"{ai_name}: Invalid JSON parameters for delegation."
+                except Exception as e:
+                    response_text = f"{ai_name}: Error during delegation: {e}"
+            else:
+                response_text = f"{ai_name}: Delegation command seems malformed."
+
+
         # --- HSP Task Dispatch Trigger (if no response yet) ---
         hsp_task_trigger = "hsp_task: "
         if not response_text and user_input.lower().startswith(hsp_task_trigger) and self.service_discovery_module and self.hsp_connector:
