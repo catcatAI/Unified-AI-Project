@@ -6,8 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // View switching
     const chatViewButton = document.getElementById('chatViewButton');
     const hspViewButton = document.getElementById('hspViewButton');
+    const gameViewButton = document.getElementById('gameViewButton');
     const chatView = document.getElementById('chatView');
     const hspServicesView = document.getElementById('hspServicesView');
+    const gameView = document.getElementById('gameView');
+    const startGameButton = document.getElementById('startGameButton');
 
     // HSP Services elements
     const refreshHspServicesButton = document.getElementById('refreshHspServicesButton');
@@ -24,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hide all views
         chatView.style.display = 'none';
         hspServicesView.style.display = 'none';
+        gameView.style.display = 'none';
         
         // Show selected view
         document.getElementById(viewId).style.display = 'flex';
@@ -31,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update navigation buttons
         chatViewButton.classList.remove('active');
         hspViewButton.classList.remove('active');
+        gameViewButton.classList.remove('active');
         
         if (viewId === 'chatView') {
             chatViewButton.classList.add('active');
@@ -40,11 +45,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (hspServiceListDiv.children.length <= 1 && hspServiceListDiv.children[0]?.tagName === 'P') {
                 loadHspServices();
             }
+        } else if (viewId === 'gameView') {
+            gameViewButton.classList.add('active');
         }
     }
 
     chatViewButton.addEventListener('click', () => showView('chatView'));
     hspViewButton.addEventListener('click', () => showView('hspServicesView'));
+    gameViewButton.addEventListener('click', () => showView('gameView'));
+
+    startGameButton.addEventListener('click', () => {
+        if (window.electronAPI && window.electronAPI.invoke) {
+            window.electronAPI.invoke('game:start');
+        }
+    });
 
 
     function appendMessage(text, sender) {

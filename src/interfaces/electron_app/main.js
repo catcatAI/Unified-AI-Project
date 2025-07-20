@@ -1,6 +1,7 @@
 // Placeholder for Electron main process (main.js)
 const { app, BrowserWindow, ipcMain, net } = require('electron'); // Added ipcMain and net
 const path = require('path');
+const { spawn } = require('child_process');
 
 const API_BASE_URL = "http://localhost:8000/api/v1"; // Assuming FastAPI runs here
 
@@ -170,5 +171,22 @@ ipcMain.handle('hsp:get-task-status', async (event, correlationId) => {
   });
 });
 
+
+ipcMain.handle('game:start', async () => {
+  console.log("Main Process: Received 'game:start' request from renderer.");
+  const gameProcess = spawn('python', [path.join(__dirname, '..', '..', 'game', 'main.py')]);
+
+  gameProcess.stdout.on('data', (data) => {
+    console.log(`Game stdout: ${data}`);
+  });
+
+  gameProcess.stderr.on('data', (data) => {
+    console.error(`Game stderr: ${data}`);
+  });
+
+  gameProcess.on('close', (code) => {
+    console.log(`Game process exited with code ${code}`);
+  });
+});
 
 console.log("Electron main.js placeholder script loaded. IPC handlers for HSP services and tasks set up.");

@@ -68,7 +68,7 @@ def main():
     for install_type, details in config.get('installation', {}).items():
         print(f"  - {install_type}: {details.get('description', 'No description provided.')}")
 
-    selected_type = input("Please choose an installation type (e.g., minimal, standard, full, ai_focused): ").strip().lower()
+    selected_type = input("Please choose an installation type (e.g., minimal, standard, full, ai_focused, game): ").strip().lower()
 
     install_packages = config.get('installation', {}).get(selected_type, {}).get('packages', [])
 
