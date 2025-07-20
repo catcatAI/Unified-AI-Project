@@ -76,12 +76,26 @@ class TestMathModelComponents(unittest.TestCase):
     @pytest.mark.timeout(10)
     def test_model_build_and_char_maps(self):
         print("\nRunning test_model_build_and_char_maps...")
+        
+        # Check if TensorFlow is available
+        from src.core_ai.dependency_manager import dependency_manager
+        if not dependency_manager.is_available('tensorflow'):
+            print("TensorFlow not available, skipping model build tests")
+            self.skipTest("TensorFlow not available")
+            return
+        
         # Dummy data for testing structure
         dummy_problems = [{'problem': '1+1'}, {'problem': '2*3'}]
         dummy_answers = [{'answer': '2'}, {'answer': '6'}]
 
         char_to_token, token_to_char, n_token, max_enc, max_dec = \
             get_char_token_maps(dummy_problems, dummy_answers)
+
+        self.assertIsNotNone(char_to_token, "char_to_token should not be None")
+        self.assertIsNotNone(token_to_char, "token_to_char should not be None")
+        self.assertIsNotNone(n_token, "n_token should not be None")
+        self.assertIsNotNone(max_enc, "max_enc should not be None")
+        self.assertIsNotNone(max_dec, "max_dec should not be None")
 
         self.assertGreater(n_token, 0)
         self.assertGreater(max_enc, 0)

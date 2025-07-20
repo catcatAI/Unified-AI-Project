@@ -155,6 +155,20 @@ class DialogueManager:
         if self.hsp_connector:
             self.hsp_connector.register_on_task_result_callback(self._handle_incoming_hsp_task_result)
 
+    def _handle_incoming_hsp_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+        correlation_id = envelope.get('correlation_id')
+        if not correlation_id:
+            print(f"[DM] Warning: Received HSP task result without a correlation_id from {sender_ai_id}.")
+            return
+
+        if correlation_id in self.pending_hsp_task_requests:
+            print(f"[DM] Received HSP result for correlation_id: {correlation_id}")
+            # Potentially process the result further, e.g., store it, pass to a user session, etc.
+            # For now, just remove it from the pending list.
+            del self.pending_hsp_task_requests[correlation_id]
+        else:
+            print(f"[DM] Warning: Received an unsolicited or timed-out HSP task result with correlation_id: {correlation_id}")
+
         
 
     async def _start_assessment_loop(self):
@@ -450,13 +464,13 @@ class DialogueManager:
                 entity_label, rel_query_keyword = kg_query_parts
                 answer_from_kg = self._query_session_kg(session_id, entity_label, rel_query_keyword)
                 if answer_from_kg:
-                    if rel_query_keyword.startswith("has_"):
+                    if rel_query_keyword.startswith("has_"): 
                         response_text = f"{ai_name}: From context, the {rel_query_keyword.split('has_')[1].replace('_', ' ')} of {entity_label.capitalize()} is {answer_from_kg.capitalize()}."
-                    elif rel_query_keyword == "located_in":
+                    elif rel_query_keyword == "located_in": 
                         response_text = f"{ai_name}: From context, {entity_label.capitalize()} is located in {answer_from_kg.capitalize()}."
-                    elif rel_query_keyword == "acquire":
+                    elif rel_query_keyword == "acquire": 
                         response_text = f"{ai_name}: From context, {entity_label.capitalize()} acquired {answer_from_kg.capitalize()}."
-                    else:
+                    else: 
                         response_text = f"{ai_name}: From context regarding {entity_label.capitalize()}: {answer_from_kg.capitalize()}."
                     print(f"DialogueManager: Answered from KG: '{response_text}'")
 

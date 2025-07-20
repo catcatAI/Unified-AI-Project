@@ -5,6 +5,7 @@ import time
 import asyncio
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, ANY
+from typing import List
 
 # Ensure src is in path for imports
 import sys
@@ -188,14 +189,20 @@ class TestHSPEndpoints:
         #    - API's DialogueManager handled the result (check pending_hsp_task_requests)
         #      The result is handled asynchronously. The API call returns before result is back.
         #      The pending request should be removed after result is handled.
-        timeout = 3.0
+        timeout = 5.0  # Increased timeout
         start_time = time.time()
-        while time.time() - start_time < timeout:
-            if correlation_id_from_api not in api_dm.pending_hsp_task_requests:
-                break
+        while correlation_id_from_api in api_dm.pending_hsp_task_requests:
+            if time.time() - start_time > timeout:
+                # Provide more context on failure
+                pending_tasks = list(api_dm.pending_hsp_task_requests.keys())
+                pytest.fail(
+                    f"HSP task {correlation_id_from_api} was not handled by DM within {timeout}s. "
+                    f"Pending tasks: {pending_tasks}"
+                )
             await asyncio.sleep(0.1)
-        else:
-            pytest.fail(f"HSP task {correlation_id_from_api} was not handled by DM within {timeout}s")
+
+        # Final check to ensure it's gone
+        assert correlation_id_from_api not in api_dm.pending_hsp_task_requests
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)

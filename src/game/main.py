@@ -1,8 +1,10 @@
 import pygame
 import os
-from .scenes import GameStateManager
-from .player import Player
-from .angela import Angela
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from src.game.scenes import GameStateManager
+from src.game.player import Player
+from src.game.angela import Angela
 
 class Game:
     def __init__(self):

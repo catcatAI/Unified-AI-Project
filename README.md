@@ -199,7 +199,7 @@ python src/tools/dependency_checker.py --json dependency_status.json
     ```
 
 4.  **環境變量：**
-    項目使用 `.env` 文件進行敏感配置，如 API 密鑰。
+    項目使用 `.env` 文件進行敏感配置，如 API 密鑰和加密密鑰。
     複製示例文件並填入您的詳細信息：
     ```bash
     # 在 Windows 上（命令提示符）
@@ -210,6 +210,17 @@ python src/tools/dependency_checker.py --json dependency_status.json
     cp .env.example .env
     ```
     現在，使用您的特定密鑰和設置編輯 `.env`。
+    
+    **重要環境變數：**
+    - `MIKO_HAM_KEY`: HAM記憶管理器的加密密鑰（Base64編碼的Fernet密鑰）
+    - `GEMINI_API_KEY`: Google Gemini API密鑰
+    - `OPENAI_API_KEY`: OpenAI API密鑰
+    - `FIREBASE_CREDENTIALS_PATH`: Firebase服務帳戶密鑰文件路徑
+    
+    生成HAM加密密鑰：
+    ```bash
+    python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    ```
 
 5.  **PYTHONPATH（通常不需要設置腳本）：**
     項目使用來自 `src` 目錄的絕對導入（例如，`from core_ai...`）。如果您使用 `setup_env` 腳本，虛擬環境激活應該自動處理這個問題。如果您在直接運行腳本時遇到導入錯誤（不是通過激活的 venv），請確保您的 `PYTHONPATH` 包含項目根目錄或 `src` 目錄。許多 IDE 會自動處理這個問題。或者，您可以在 shell 中臨時設置它：

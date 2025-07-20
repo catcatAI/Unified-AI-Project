@@ -35,23 +35,42 @@ def _ensure_tensorflow_is_imported():
     
     # Use dependency manager to get TensorFlow
     tf_module = dependency_manager.get_dependency('tensorflow')
-    if tf_module is not None:
-        try:
-            tf = tf_module
-            Model = tf.keras.models.Model
-            Input = tf.keras.layers.Input
-            Embedding = tf.keras.layers.Embedding
-            LSTM = tf.keras.layers.LSTM
-            Dense = tf.keras.layers.Dense
-            Dropout = tf.keras.layers.Dropout
-            pad_sequences = tf.keras.preprocessing.sequence.pad_sequences
-            to_categorical = tf.keras.utils.to_categorical
-            return True
-        except Exception as e:
-            print(f"Warning: Error accessing TensorFlow components: {e}")
-            return False
-    else:
-        print("Warning: TensorFlow not available. Logic model functionality will be disabled.")
+    if tf is not None:
+        return True
+
+    try:
+        import tensorflow as tf_direct
+        tf = tf_direct
+        Model = tf.keras.models.Model
+        Input = tf.keras.layers.Input
+        Embedding = tf.keras.layers.Embedding
+        LSTM = tf.keras.layers.LSTM
+        Dense = tf.keras.layers.Dense
+        Dropout = tf.keras.layers.Dropout
+        pad_sequences = tf.keras.preprocessing.sequence.pad_sequences
+        to_categorical = tf.keras.utils.to_categorical
+        # Also update the dependency manager if it was loaded directly
+        if not dependency_manager.is_available('tensorflow'):
+            # This is a workaround as there is no public method to update a dependency
+            status = dependency_manager.get_status('tensorflow')
+            if status:
+                status.is_available = True
+                status.module = tf
+        return True
+    except ImportError:
+        print("Critical: TensorFlow is not installed. Logic model functionality is disabled.")
+        # Update dependency manager to reflect unavailability
+        status = dependency_manager.get_status('tensorflow')
+        if status:
+            status.is_available = False
+            status.module = None
+        return False
+    except AttributeError as e:
+        print(f"Critical: TensorFlow is installed, but a component is missing: {e}")
+        status = dependency_manager.get_status('tensorflow')
+        if status:
+            status.is_available = False
+            status.module = None
         return False
 
 def _tensorflow_is_available():
@@ -152,7 +171,7 @@ class LogicNNModel:
 def get_logic_char_token_maps(dataset_path):
     if not _tensorflow_is_available():
         print("Cannot get char maps: TensorFlow not available.")
-        return {}, {}, 0, 0
+        return None, None, None, None
     propositions = []
     with open(dataset_path, 'r') as f:
         data = json.load(f)
@@ -185,8 +204,8 @@ def get_logic_char_token_maps(dataset_path):
     return char_to_token, token_to_char, vocab_size, max_seq_len
 
 def preprocess_logic_data(dataset_path, char_to_token, max_seq_len, num_classes=2):
-    if not _tensorflow_is_available():
-        print("Cannot preprocess data: TensorFlow not available.")
+    if not _tensorflow_is_available() or char_to_token is None or max_seq_len is None:
+        print("Cannot preprocess data: TensorFlow not available or invalid char_to_token/max_seq_len.")
         return None, None
     propositions = []
     answers = []

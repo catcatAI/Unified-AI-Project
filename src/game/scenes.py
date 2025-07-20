@@ -56,6 +56,7 @@ class OpeningScene(Scene):
             self.angela_appeared = True
             self.dialogue_active = True
             self.dialogue_box.show("What did you drop?")
+            self.game.game_state_manager.current_state = 'play'
 
 
     def render(self, surface):
