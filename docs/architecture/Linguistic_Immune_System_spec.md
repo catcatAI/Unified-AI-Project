@@ -64,9 +64,16 @@ The LIS is comprised of several interconnected components. Some may be new, whil
 *   **Inputs:** AI linguistic output, recent output history, incoming HSP messages (especially `SymbolicPulse`).
 *   **Internal Logic (Conceptual):** Repetition tracking, `SymbolicPulse` signature analysis, linguistic diversity checks.
 *   **Outputs:** `EchoPollutionWarningEvent`, potential control signals.
-*   **Relation to Existing Functionalities:**
-    *   **`LearningManager` (Trust-based filtering of HSP facts):** This is a form of "shielding" the knowledge base from unreliable external data, a principle aligned with `ECHO-SHIELD`'s goal of managing external semantic influence.
-    *   Currently, no direct system actively monitors or prevents linguistic repetition in the AI's *own generated output* or from HSP echoes at the linguistic level. This component would largely be new functionality, though it would interact with HSP data.
+*   **Relation to Existing Functionalities & Implementation Strategy:**
+    *   **`LearningManager` (Trust-based filtering of HSP facts):** This is a form of "shielding" the knowledge base from unreliable external data, a principle aligned with `ECHO-SHIELD`'s goal of managing external semantic influence. `ECHO-SHIELD` will be implemented by deeply enhancing this existing logic.
+    *   Currently, no direct system actively monitors or prevents linguistic repetition in the AI's *own generated output*. This remains a future goal for `ECHO-SHIELD`. The immediate focus is on external information validation.
+    *   **Quality-Based Information Assessment Model:** To combat "Idiot Resonance" (where incorrect information is amplified through repetition), `ECHO-SHIELD`'s core logic will be a "fact scorecard" implemented within `LearningManager`. When processing an external fact (e.g., from HSP), it will be evaluated on the following, instead of being accepted at face value:
+        1.  **Source Credibility**: The fact's initial confidence is weighted by the sender's score from `TrustManager`. A low-trust source cannot inject high-confidence facts.
+        2.  **Evidence Support**: `LearningManager` will perform a broader query in HAM to find corroborating or conflicting evidence. Facts that align with the existing knowledge graph receive a higher score.
+        3.  **Information Novelty (Anti-Resonance Mechanism)**:
+            - **Handling Repetition**: When an identical or semantically identical fact is received, its confidence is **not** increased. Instead, a `corroboration_count` metadata field on the *existing* fact is incremented. This explicitly prevents repeated information from being mistaken for more accurate information.
+            - **Rewarding Novelty**: Facts that introduce new entities or relationships to the knowledge graph (as determined by `ContentAnalyzerModule`) receive a novelty bonus, encouraging the AI to expand its understanding.
+    *   **Decision Threshold**: Only facts that pass a final, weighted score threshold will be fully integrated into the main memory. Others may be discarded or stored in a "pending verification" state.
 
 ### 3.3. `SYNTAX-INFLAMMATION DETECTOR`
 *   **Role:** Identifies unstable/degenerative structural patterns in language (syntax, local coherence).

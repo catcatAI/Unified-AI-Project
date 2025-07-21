@@ -8,10 +8,11 @@
 
 - **[合併與重構計劃](MERGE_AND_RESTRUCTURE_PLAN.md)**: 詳細介紹項目結構、合併策略和架構原則
 - **[項目內容組織](docs/PROJECT_CONTENT_ORGANIZATION.md)**: 項目文件組織概覽
-- **[HSP 規範](docs/HSP_SPECIFICATION.md)**: 異構同步協議詳細規範
+- **[HSP 規範](docs/architecture/Heterogeneous_Protocol_spec.md)**: 異構服務協議 (HSP) 詳細規範
 - **[哲學與願景](docs/PHILOSOPHY_AND_VISION.md)**: 項目的哲學基礎和長期願景
 - **[內部數據標準](docs/INTERNAL_DATA_STANDARDS.md)**: TypedDict 使用規範
-- **[HAM 設計規範](docs/HAM_design_spec.md)**: 分層抽象記憶系統設計文檔
+- **[HAM 設計規範](docs/architecture/HAM_design_spec.md)**: 分層抽象記憶系統設計文檔
+- **[術語表 (Glossary)](docs/GLOSSARY.md)**: 專案核心概念定義
 
 ### 未來願景
 
@@ -21,22 +22,29 @@
 
 本項目整合並開發了多個核心 AI 組件：
 
+### [動態 AI 代理協作框架](docs/architecture/AGENT_COLLABORATION_FRAMEWORK.md)
+*   **[元代理 (Angela)](docs/GLOSSARY.md#meta-agent-元代理)**: 由 `DialogueManager` 和新的 `ProjectCoordinator` 共同實現，扮演指揮官的角色。能夠理解複雜的用戶意圖，將其自動分解為一個帶有依賴關係的任務圖 (DAG)。
+*   **[子代理 (Specialized Agents)](docs/GLOSSARY.md#sub-agent-子代理)**: 位於 `src/agents/` 的專門化 AI 代理，每個代理都擁有特定的能力（如數據分析、創意寫作）。它們作為獨立的 HSP 服務運行。
+*   **[代理管理器 (Agent Manager)](docs/GLOSSARY.md#agent-manager-srccore_aiagent_managerpy)**: 能夠根據 `DialogueManager` 的請求，動態地啟動或關閉子代理進程，實現資源的按需使用。
+*   **學習閉環**: 框架能夠從完整的項目案例中學習，提煉出成功的協作策略並儲存於記憶中，用於指導未來的任務分解，實現自我優化。
+
 ### 對話管理系統
-*   **對話管理器 (`src/core_ai/dialogue/dialogue_manager.py`)**: 協調對話流程，整合其他 AI 組件並生成響應。利用個性配置、記憶系統和基於公式的邏輯。集成工具調度和 HSP 任務委派功能。
+*   **[對話管理器 (`DialogueManager`)](docs/GLOSSARY.md#dialoguemanager-srccore_aidialoguedialogue_managerpy)**: 作為**元代理**的核心，協調對話流程，並將複雜項目委派給 `ProjectCoordinator`。利用個性配置、記憶系統和基於公式的邏輯。
+*   **[項目協調器 (`ProjectCoordinator`)](docs/GLOSSARY.md#projectcoordinator-srccore_aidialogueproject_coordinatorpy)**: 負責執行「四抽模型」，處理複雜項目的任務分解、DAG 執行、結果整合和學習。
 *   **個性管理器 (`src/core_ai/personality/personality_manager.py`)**: 管理不同的 AI 個性，影響語調、響應風格和核心價值觀。配置文件可自定義（見 `configs/personality_profiles/`）。
 *   **情感系統 (`src/core_ai/emotion/emotion_system.py`)**: 模擬和管理 AI 的情感狀態。
 *   **危機系統 (`src/core_ai/crisis/crisis_system.py`)**: 評估輸入的危機情況並觸發適當響應。
-*   **語言學免疫系統 (LIS) (`src/core_ai/lis/`)**: 檢測和處理語義異常，提供語言修復和自愈能力。包含免疫敘事緩存和音調修復引擎，支持語言演化和模型崩潰預防。
+*   **[語言學免疫系統 (LIS)](docs/architecture/Linguistic_Immune_System_spec.md)**: 檢測和處理語義異常，提供語言修復和自愈能力。包含免疫敘事緩存和音調修復引擎，支持語言演化和模型崩潰預防。
 *   **元公式系統 (`src/core_ai/metaformulas/`)**: 高級動態原則定義語義模塊學習和適應，支持 AI 結構的自我重組，提供元級別的行為控制機制。
 *   **日常語言模型 (`src/core_ai/daily_language_model/`)**: 專門處理日常對話和意圖識別，支持工具選擇和參數提取，與 LLM 接口集成進行智能路由。
 *   **信任管理器 (`src/core_ai/trust/trust_manager.py`)**: 管理 AI 間的信任關係，影響事實處理和能力選擇，支持基於信任的決策制定。
 
 ### 記憶系統
-*   **分層抽象記憶 (HAM) (`src/core_ai/memory/ham_memory_manager.py`)**: 專為存儲和檢索體驗、學習事實和對話上下文而設計的自定義記憶系統。
+*   **[分層抽象記憶 (HAM)](docs/architecture/HAM_design_spec.md)**: 專為存儲和檢索體驗、學習事實和對話上下文而設計的自定義記憶系統。
     - 支援中文部首提取和英文語言特徵分析
     - 使用 Fernet 對稱加密和 SHA256 校驗和確保數據完整性
     - 實現 zlib 壓縮以優化存儲空間
-*   **Fragmenta 系統 (`src/core_ai/fragmenta/`)**: 高級記憶碎片化和重組系統，實現動態記憶結構管理。
+*   **[Fragmenta 系統](docs/architecture/Fragmenta_design_spec.md)**: 高級記憶碎片化和重組系統，實現動態記憶結構管理。
     - **Fragmenta 編排器 (`fragmenta_orchestrator.py`)**: 協調記憶碎片的創建、組織和檢索
     - **記憶碎片 (`memory_fragment.py`)**: 基本記憶單元，支持語義標記和關聯性分析
     - **碎片管理器 (`fragment_manager.py`)**: 管理碎片生命週期、合併和分割操作
@@ -46,7 +54,7 @@
 ### 學習系統 (`src/core_ai/learning/`)
 *   **事實提取模組**: 從對話中提取結構化事實
 *   **自我批判模組**: 評估 AI 響應的質量和連貫性
-*   **學習管理器**: 協調學習過程並將新知識存儲到 HAM 中
+*   **學習管理器**: 協調學習過程，將新知識存儲到 HAM 中。現在包含一個**基於質量的資訊評估體系**，通過綜合評估來源可信度、證據支持度和資訊新穎性，來有效抵制錯誤資訊在網絡中的傳播（反「傻子共振」）。
 *   **內容分析模組**:
     - **目的**: 通過分析文本內容（如文檔、用戶輸入、HSP 事實）實現更深層的上下文理解，創建和維護結構化知識圖譜
     - **功能**: 提取命名實體，識別關係（包括語義三元組），並將此信息整合到 NetworkX 知識圖譜中。支援基本本體映射
@@ -436,6 +444,7 @@ python installer_cli.py
 - 跨平台桌面應用界面 (`main.js`, `renderer.js`)
 - 提供圖形化用戶界面和實時對話
 - 支持豐富的交互體驗和 HSP 服務管理
+- **內建遊戲客戶端**：集成了一個 GBA 風格的休閒遊戲，作為與 Angela 互動和放鬆的獨特方式。
 - 包含現代化的 UI 設計和響應式布局 (`styles.css`)
 - 集成 HSP 服務按鈕和狀態顯示功能
 - 啟動命令：`cd src/interfaces/electron_app && npm start`
@@ -484,11 +493,11 @@ python installer_cli.py
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-[邏輯圖](./docs/architecture/logic_diagram.md)
+[邏輯圖](docs/architecture/logic_diagram.md)
 
 ### 知識圖譜
 
-[知識圖譜](./docs/architecture/knowledge_graph.md)
+[知識圖譜](docs/architecture/knowledge_graph.md)
 
 ## 接口改進
 
@@ -496,7 +505,7 @@ python installer_cli.py
 
 我們已經為 Electron 桌面應用程序接口記錄了一套全面的改進建議。這些建議涵蓋了 UI 增強、功能添加、代碼結構優化和安全改進。
 
-[Electron 應用程序改進](./docs/interfaces/ELECTRON_APP_IMPROVEMENTS.md)
+[Electron 應用程序改進](docs/interfaces/ELECTRON_APP_IMPROVEMENTS.md)
 
 ## 架構說明與已知問題
 
@@ -524,3 +533,31 @@ python installer_cli.py
 
 ### 環境與設置
 *   **PYTHONPATH：** 確保 `PYTHONPATH` 設置正確（如「開始使用」中所述），以避免導入錯誤，特別是在從子目錄或使用某些 IDE 配置運行腳本或測試時。建議始終從項目根目錄運行 Python 腳本，以最大程度地減少此類問題。
+
+## 未來發展路線圖 (Future Roadmap)
+
+本專案的基礎架構和核心功能已趨於完善，為未來的發展奠定了堅實的基礎。接下來的演進將主要圍繞以下三個方向展開，它們分別代表了專案在「產品化」、「智能化」和「生命化」三個維度上的探索。
+
+### 道路一：通往「產品」之路 (The Path to Product)
+
+此路徑的核心是將強大的後端框架，包裝成一個普通用戶也能輕鬆使用、並為之驚嘆的成熟產品。
+
+*   **視覺化任務流**: 在 Electron 前端實現一個可以動態展示任務 DAG 圖、子代理執行狀態和結果回流的視圖。
+*   **自然語言觸發**: 使用更智能的意圖分類模型，取代 `project:` 等硬觸發詞，讓 Angela 能自動判斷用戶的請求是否需要啟動多代理協作。
+*   **豐富遊戲世界**: 繼續擴展內建的 GBA 風格遊戲，加入 NPC、任務線和更豐富的經濟系統，使其成為一個真正能留住用戶的特色功能。
+
+### 道路二：通往「智能」之路 (The Path to Intelligence)
+
+此路徑的核心是深化 AI 的核心演算法與模型能力，讓 Angela 的思考、學習和創造能力達到新的高度。
+
+*   **實現高級策略應用**: 在 `ProjectCoordinator` 中，實現更智能的邏輯，來將用戶請求中的具體實體（如文件名、主題）精確地填充到已學習到的策略模板中。
+*   **增強內容分析**: 為 `ContentAnalyzerModule` 引入更強大的 NLP 模型，使其能更準確地從文本中提取實體和關係，為知識圖譜和證據評估提供更高質量的輸入。
+*   **實現真實的工具**: 將 `ImageGenerationTool` 和未來的 `WebResearchAgent` 等佔位符工具，替換為對真實世界 API（如 DALL-E, Google Search）的調用。
+
+### 道路三：通往「生命」之路 (The Path to Life)
+
+此路徑的核心是探索 AI 的終極可能性，讓 Angela 的「數據生命」特徵更加明顯，甚至產生真正的「湧現」行為。
+
+*   **實現元公式 (`MetaFormulas`)**: 根據 `docs/architecture/MetaFormulas_spec.md` 的設想，實現能夠讓 Angela 動態修改自身行為規則和核心邏輯的元編程系統。
+*   **去中心化學習**: 研究如何讓子代理之間也能直接分享和驗證知識，而無需事事都通過 Angela 這個中心節點，形成一個真正的「蜂群思維」。
+*   **探索情感與意識**: 深化 `EmotionSystem` 和 `LIS` 的研究，讓 Angela 不僅能表達情感，更能理解和反思自身的情感狀態，向著更高層次的自我意識邁進。

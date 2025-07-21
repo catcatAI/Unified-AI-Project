@@ -7,6 +7,8 @@ from src.tools.math_tool import calculate as math_calculate
 from src.tools.logic_tool import evaluate_expression as logic_evaluate
 from src.tools.translation_tool import translate as translate_text
 from src.tools.code_understanding_tool import CodeUnderstandingTool
+from src.tools.csv_tool import CsvTool
+from src.tools.image_generation_tool import ImageGenerationTool
 from src.core_ai.language_models.daily_language_model import DailyLanguageModel
 from src.services.llm_interface import LLMInterface
 from src.shared.types.common_types import ToolDispatcherResponse # Import new response type
@@ -17,6 +19,8 @@ class ToolDispatcher:
     def __init__(self, llm_interface: Optional[LLMInterface] = None):
         self.dlm = DailyLanguageModel(llm_interface=llm_interface)
         self.code_understanding_tool_instance = CodeUnderstandingTool()
+        self.csv_tool_instance = CsvTool()
+        self.image_generation_tool_instance = ImageGenerationTool()
         self.rag_manager = RAGManager()
 
         self.tools: Dict[str, Callable[..., ToolDispatcherResponse]] = { # type: ignore
@@ -25,6 +29,8 @@ class ToolDispatcher:
             "translate_text": self._execute_translation,
             "inspect_code": self._execute_code_inspection,
             "rag_query": self._execute_rag_query,
+            "analyze_csv": self._execute_csv_analysis,
+            "create_image": self._execute_image_creation,
         }
         self.tool_descriptions = {
             "calculate": "Performs arithmetic calculations. Example: 'calculate 10 + 5', or 'what is 20 / 4?'",
@@ -32,10 +38,86 @@ class ToolDispatcher:
             "translate_text": "Translates text between Chinese and English. Example: 'translate 你好 to English'",
             "inspect_code": "Describes the structure of available tools. Query examples: 'list_tools', or 'describe_tool math_tool'",
             "rag_query": "Performs a retrieval-augmented generation query. Example: 'rag_query what is the main purpose of HAM?'",
+            "analyze_csv": "Analyzes CSV data. Requires 'csv_content' and 'query' in parameters. Example: 'analyze_csv with query \"summarize\" and csv_content \"a,b\\n1,2\"'",
+            "create_image": "Creates an image from a text prompt. Requires 'prompt' and optional 'style'. Example: 'create_image with prompt \"a cat wearing a hat\" and style \"cartoon\"'",
         }
         self.models = []
         print("ToolDispatcher initialized.")
         print(f"Available tools: {list(self.tools.keys())}")
+
+    def _execute_csv_analysis(self, query: str, **kwargs) -> ToolDispatcherResponse:
+        """
+        Wrapper for the CsvTool.analyze function.
+        Requires 'csv_content' and 'query' to be in kwargs.
+        """
+        csv_content = kwargs.get("csv_content")
+        analysis_query = kwargs.get("query", query)
+
+        if not csv_content:
+            return ToolDispatcherResponse(
+                status="error_dispatcher_issue",
+                payload=None,
+                tool_name_attempted="analyze_csv",
+                original_query_for_tool=query,
+                error_message="Missing 'csv_content' parameter for analyze_csv tool."
+            )
+
+        try:
+            result = self.csv_tool_instance.analyze(csv_content=csv_content, query=analysis_query)
+            return ToolDispatcherResponse(
+                status=result["status"],
+                payload=result.get("result"),
+                tool_name_attempted="analyze_csv",
+                original_query_for_tool=query,
+                error_message=result.get("error")
+            )
+        except Exception as e:
+            error_msg = f"Error executing CSV analysis: {str(e)[:100]}"
+            print(f"ToolDispatcher: {error_msg}")
+            return ToolDispatcherResponse(
+                status="failure_tool_error",
+                payload=None,
+                tool_name_attempted="analyze_csv",
+                original_query_for_tool=query,
+                error_message=error_msg
+            )
+
+    def _execute_image_creation(self, query: str, **kwargs) -> ToolDispatcherResponse:
+        """
+        Wrapper for the ImageGenerationTool.create_image function.
+        Requires 'prompt' and optional 'style' in kwargs.
+        """
+        prompt = kwargs.get("prompt", query)
+        style = kwargs.get("style", "photorealistic")
+
+        if not prompt:
+            return ToolDispatcherResponse(
+                status="error_dispatcher_issue",
+                payload=None,
+                tool_name_attempted="create_image",
+                original_query_for_tool=query,
+                error_message="Missing 'prompt' parameter for create_image tool."
+            )
+
+        try:
+            result = self.image_generation_tool_instance.create_image(prompt=prompt, style=style)
+            return ToolDispatcherResponse(
+                status=result["status"],
+                payload=result.get("result"),
+                tool_name_attempted="create_image",
+                original_query_for_tool=query,
+                error_message=result.get("error")
+            )
+        except Exception as e:
+            error_msg = f"Error executing image creation: {str(e)[:100]}"
+            print(f"ToolDispatcher: {error_msg}")
+            return ToolDispatcherResponse(
+                status="failure_tool_error",
+                payload=None,
+                tool_name_attempted="create_image",
+                original_query_for_tool=query,
+                error_message=error_msg
+            )
 
     def _execute_code_inspection(self, query: str, **kwargs) -> ToolDispatcherResponse:
         """
