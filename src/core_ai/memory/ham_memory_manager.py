@@ -93,7 +93,14 @@ class HAMMemoryManager:
         self._load_core_memory_from_file()
         print(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
 
-        asyncio.create_task(self._delete_old_experiences())
+        # Start background cleanup task only if there's a running event loop
+        try:
+            loop = asyncio.get_running_loop()
+            asyncio.create_task(self._delete_old_experiences())
+        except RuntimeError:
+            # No running event loop, skip background task
+            print("HAM: No running event loop, background cleanup task not started.")
+            pass
 
     def _generate_memory_id(self) -> str:
         mem_id = f"mem_{self.next_memory_id:06d}"

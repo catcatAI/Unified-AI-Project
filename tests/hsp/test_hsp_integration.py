@@ -7,6 +7,9 @@ from unittest.mock import MagicMock, patch
 from typing import Dict, Any, Optional, List, Callable
 import json
 
+# Configure pytest-asyncio
+pytest_plugins = ('pytest_asyncio',)
+
 from src.hsp.connector import HSPConnector
 from src.hsp.types import (
 
@@ -199,7 +202,8 @@ async def broker(): # Make the fixture async
 
 
 @pytest.fixture
-def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker):
+async def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker):
+    await broker  # Ensure broker is ready
     connector = HSPConnector(
         TEST_AI_ID_MAIN,
         MQTT_BROKER_ADDRESS,
@@ -213,7 +217,8 @@ def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker):
 
 
 @pytest.fixture
-def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker):
+async def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker):
+    await broker  # Ensure broker is ready
     connector = HSPConnector(
         TEST_AI_ID_PEER_A,
         MQTT_BROKER_ADDRESS,
@@ -226,7 +231,8 @@ def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker):
 
 
 @pytest.fixture
-def peer_b_hsp_connector(trust_manager_fixture: TrustManager, broker):
+async def peer_b_hsp_connector(trust_manager_fixture: TrustManager, broker):
+    await broker  # Ensure broker is ready
     connector = HSPConnector(
         TEST_AI_ID_PEER_B,
         MQTT_BROKER_ADDRESS,

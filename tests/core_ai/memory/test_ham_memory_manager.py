@@ -17,12 +17,15 @@ import hashlib
 from unittest.mock import patch, MagicMock
 import time
 
+# Configure pytest-asyncio
+pytest_plugins = ('pytest_asyncio',)
+
 # Define a consistent test output directory (relative to project root)
 PROJECT_ROOT_FOR_TEST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 TEST_STORAGE_DIR = os.path.join(PROJECT_ROOT_FOR_TEST, "tests", "test_output_data", "ham_memory")
 
 @pytest.fixture(scope="function")
-async def ham_manager_fixture(): # Make the fixture async
+def ham_manager_fixture(): # Remove async from fixture
     test_filename = "test_ham_core_memory.json"
     os.makedirs(TEST_STORAGE_DIR, exist_ok=True)
 
