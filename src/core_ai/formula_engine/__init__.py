@@ -78,7 +78,7 @@ class FormulaEngine:
                 self.formulas = active_formulas
                 # Sort by priority (lower number means higher priority).
                 # Defaults to a high number (e.g. 999) if 'priority' is missing, to make them lowest priority.
-                self.formulas.sort(key=lambda f: f.get("priority", 999))
+                self.formulas.sort(key=lambda f: f.get("priority", 999), reverse=True)
 
         except json.JSONDecodeError as e:
             print(f"FormulaEngine: Error decoding JSON from {self.formulas_file_path}: {e}")
@@ -104,23 +104,27 @@ class FormulaEngine:
         normalized_input = text_input.lower()
 
         for formula in self.formulas:
-            if not formula.get("enabled", False):
-                continue
-
             conditions = formula.get("conditions", [])
             if not isinstance(conditions, list):
                 continue
 
             for condition in conditions:
-                if not isinstance(condition, str):
+                # Ensure condition is a string and not empty
+                if not isinstance(condition, str) or not condition:
                     continue
 
-                cond_lower = str(condition.lower())
-                current_normalized_input = str(normalized_input)
+                # We are looking for the whole word or phrase.
+                # For example, we want to match "how are you" but not "how" in "how does this work".
+                # A simple way to do this is to check for the phrase with word boundaries.
+                # The regex `\b` matches the empty string, but only at the beginning or end of a word.
+                # Using raw string `r"..."` is important for regex patterns.
+                import re
 
-                match_found = cond_lower in current_normalized_input
+                # Normalize both the input and the condition for case-insensitive matching
+                normalized_condition = condition.lower()
 
-                if match_found:
+                # Check if the whole word/phrase exists in the input
+                if re.search(r'\b' + re.escape(normalized_condition) + r'\b', normalized_input):
                     return formula # type: ignore
         return None
 
@@ -213,7 +217,8 @@ if __name__ == '__main__':
         "How are you today?": "test_question",
         "This input has no formula.": None,
         "Tell me about hi.": "test_greeting_high_priority", # Should match "hi"
-        "never match this input please": None                # Should not match "test_disabled"
+        "never match this input please": None,                # Should not match "test_disabled"
+        "This is a test of the thesaurus, not the word 'the'": None # Should not match 'the'
     }
 
     for text_in, expected_formula_name in test_inputs.items():
