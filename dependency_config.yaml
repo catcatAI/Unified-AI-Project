@@ -130,6 +130,12 @@ dependencies:
       fallbacks: ["text_display"]
       features: ["genesis_backup_gui"]
 
+    - name: "pytest-cov"
+      description: "Pytest plugin for coverage reporting"
+      essential: false
+      fallbacks: []
+      features: ["testing"]
+
 # Fallback strategies for different scenarios
 fallback_strategies:
   # When TensorFlow is not available
@@ -209,8 +215,8 @@ installation:
     
   full:
     description: "Full installation with all features, including game and GUI installer"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain", "fastapi", "uvicorn", "pydantic", "httpx", "pytest-asyncio", "pygame", "PyQt5", "pyshortcuts", "secret-sharing", "qrcode"]
-    features: ["web_api", "hsp_communication", "ai_models", "nlp", "knowledge_graph", "game_client", "gui_installer", "genesis_backup"]
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain", "fastapi", "uvicorn", "pydantic", "httpx", "pytest-asyncio", "pygame", "PyQt5", "pyshortcuts", "secret-sharing", "qrcode", "pytest-cov"]
+    features: ["web_api", "hsp_communication", "ai_models", "nlp", "knowledge_graph", "game_client", "gui_installer", "genesis_backup", "testing"]
     
   ai_focused:
     description: "AI and ML focused installation"
