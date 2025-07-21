@@ -36,6 +36,12 @@ core_systems:
   # safety_system:
   #   api_key: ${API_KEY} # API keys should be managed via .env
 
+# Command triggers for special functionalities
+command_triggers:
+  complex_project: "project:"
+  manual_delegation: "!delegate_to"
+  context_analysis: "!analyze:"
+
 # Settings from Fragmenta's config.yaml
 fragmenta_settings:
   modules: # Controls for Fragmenta-specific modules

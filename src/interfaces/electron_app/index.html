@@ -2,181 +2,219 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Unified AI Chat</title>
+    <title>Unified AI Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 95vh; }
+        :root {
+            --main-bg-color: #202020;
+            --text-color: #E0E0E0;
+            --window-bg-color: #333344;
+            --border-color: #707080;
+            --highlight-color: #8899FF;
+            --highlight-text-color: #101020;
+            --user-msg-bg: #405070;
+            --ai-msg-bg: #504060;
+            --system-msg-bg: #306050;
+            --error-msg-bg: #703030;
+            --font-family: 'Press Start 2P', cursive;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--main-bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 95vh;
+            image-rendering: pixelated; /* Ensures sharp pixels */
+        }
+
+        h1 {
+            font-size: 1.5em;
+            color: var(--highlight-color);
+            text-shadow: 2px 2px #000;
+            margin-bottom: 15px;
+        }
+
         #nav {
             display: flex;
-            margin-bottom: 15px;
-            background-color: #f0f0f0;
-            padding: 10px;
-            border-radius: 5px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
         }
+
         #nav button {
-            padding: 8px 15px;
+            font-family: var(--font-family);
+            background-color: var(--window-bg-color);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            padding: 8px 12px;
             margin-right: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 3px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            box-shadow: 2px 2px #000;
         }
+
         #nav button:hover {
-            background-color: #0056b3;
+            background-color: var(--highlight-color);
+            color: var(--highlight-text-color);
         }
-        #nav button.active {
-            background-color: #0056b3;
+
+        #nav button:active, #nav button.active {
+            box-shadow: none;
+            transform: translate(2px, 2px);
+            background-color: var(--highlight-color);
+            color: var(--highlight-text-color);
         }
+
+        #mainContent > div {
+            display: none; /* Hide all views by default */
+            flex-direction: column;
+            flex-grow: 1;
+            background-color: var(--window-bg-color);
+            border: 2px solid var(--border-color);
+            padding: 15px;
+            box-shadow: inset 0 0 10px #000;
+        }
+
+        #mainContent > div.active-view {
+            display: flex; /* Show the active view */
+        }
+
         #chatDisplay {
             flex-grow: 1;
-            border: 1px solid #ccc;
-            padding: 10px;
             overflow-y: scroll;
-            margin-bottom: 10px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
+            margin-bottom: 15px;
+            background-color: #181828;
+            border: 2px solid var(--border-color);
+            padding: 10px;
+            scrollbar-width: none; /* Firefox */
         }
-        .message { margin-bottom: 5px; padding: 8px; border-radius: 5px; }
-        .user-message { background-color: #e1f5fe; text-align: right; margin-left: auto; max-width: 70%; }
-        .ai-message { background-color: #fff9c4; text-align: left; margin-right: auto; max-width: 70%; }
-        .system-message { background-color: #e8eaf6; text-align: center; margin: 5px auto; font-style: italic; }
-        .system-error { background-color: #ffebee; text-align: center; margin: 5px auto; color: #d32f2f; font-weight: bold; }
+        #chatDisplay::-webkit-scrollbar {
+            display: none;  /* Safari and Chrome */
+        }
+
+        .message { margin-bottom: 10px; padding: 10px; border: 2px solid var(--border-color); max-width: 85%; }
+        .user-message { background-color: var(--user-msg-bg); text-align: left; margin-right: auto; }
+        .ai-message { background-color: var(--ai-msg-bg); text-align: left; margin-right: auto; }
+        .system-message { background-color: var(--system-msg-bg); font-style: italic; }
+        .system-error { background-color: var(--error-msg-bg); color: #FFDDDD; }
+        
         #inputContainer { display: flex; }
-        #userInput { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 3px; }
-        #sendButton { padding: 8px 15px; margin-left: 10px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
-        #sendButton:hover { background-color: #0056b3; }
-        
-        /* HSP Services View Styles */
-        #mainContent { flex-grow: 1; display: flex; flex-direction: column; }
-        #chatView, #hspServicesView { flex-grow: 1; display: flex; flex-direction: column; }
-        .hsp-section { margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; }
-        .hsp-header { background-color: #f0f0f0; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .hsp-header h3 { margin: 0; }
-        .hsp-content { padding: 15px; background-color: #fff; }
+        #userInput {
+            font-family: var(--font-family);
+            flex-grow: 1;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            background-color: #181828;
+            color: var(--text-color);
+        }
+        #userInput:focus {
+            outline: 2px solid var(--highlight-color);
+        }
+
+        #sendButton, .action-button {
+            font-family: var(--font-family);
+            padding: 10px 15px;
+            margin-left: 10px;
+            background-color: var(--highlight-color);
+            color: var(--highlight-text-color);
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            box-shadow: 2px 2px #000;
+        }
+        #sendButton:active, .action-button:active {
+            box-shadow: none;
+            transform: translate(2px, 2px);
+        }
+
+        /* HSP & Game View Styles */
+        .hsp-section, #gameView > div {
+             margin-bottom: 20px;
+             border: 2px solid var(--border-color);
+             background-color: #282838;
+        }
+        .hsp-header {
+            background-color: #181828;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .hsp-header h3 { margin: 0; font-size: 1em; }
+        .hsp-content { padding: 15px; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-control { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 3px; }
-        .action-button { padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
-        .action-button:hover { background-color: #0056b3; }
-        .response-display { max-height: 300px; overflow-y: auto; }
-        #hspTaskResponseDisplay { background-color: #f8f9fa; }
-        #hspTaskResponseDisplay pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; margin: 10px 0; font-family: monospace; }
-        #hspTaskResponseDisplay strong { color: #333; }
-        #hspTaskResponseDisplay em { color: #666; font-style: italic; }
-        
-        /* Task Status Styles */
-        .task-status-container { margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 5px; background-color: white; }
-        .task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .task-id { font-family: monospace; background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px; margin-right: 10px; }
-        .task-timestamp { font-size: 0.8em; color: #757575; }
-        .task-message { margin-bottom: 10px; }
-        
-        .status-badge { padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
-        .status-badge-success { background-color: #e8f5e9; color: #2e7d32; }
-        .status-badge-error { background-color: #ffebee; color: #c62828; }
-        .status-badge-pending { background-color: #e3f2fd; color: #1565c0; }
-        .status-badge-progress { background-color: #fff8e1; color: #f57f17; }
-        .status-badge-unknown { background-color: #f5f5f5; color: #757575; }
-        .status-badge-default { background-color: #f5f5f5; color: #424242; }
-        
-        .task-result, .task-error { margin-top: 10px; }
-        .result-header, .error-header { font-weight: bold; margin-bottom: 5px; }
-        .error-header { color: #c62828; }
-        .result-header { color: #2e7d32; }
-        
-        /* Loading Indicator */
-        .loading-indicator { display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .loading-spinner { width: 40px; height: 40px; border: 4px solid rgba(0, 123, 255, 0.1); border-radius: 50%; border-top: 4px solid #007bff; animation: spin 1s linear infinite; margin-bottom: 15px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* Initial Response */
-        .initial-response { padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: white; margin-bottom: 15px; }
-        .response-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .response-header h4 { margin: 0; color: #333; }
-        .response-details { margin-top: 10px; }
-        .response-details > div { margin-bottom: 5px; }
-        .polling-message { margin-top: 10px; font-style: italic; color: #666; }
-        /* HSP Service List Styles */
-        .service-list { list-style-type: none; padding: 0; margin: 0; }
-        .service-item { padding: 15px; border-bottom: 1px solid #eee; }
-        .service-item:last-child { border-bottom: none; }
-        .service-item:hover { background-color: #f8f9fa; }
-        
-        .service-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .service-header h4 { margin: 0; color: #333; }
-        .service-version { font-size: 0.8em; color: #666; font-weight: normal; margin-left: 5px; }
-        
-        .service-status { padding: 3px 8px; border-radius: 12px; font-size: 0.8em; }
-        .status-available { background-color: #e8f5e9; color: #2e7d32; }
-        .status-unavailable { background-color: #ffebee; color: #c62828; }
-        
-        .service-details { margin-bottom: 15px; }
-        .detail-row { margin-bottom: 5px; }
-        .service-id { font-family: monospace; background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px; }
-        
-        .service-actions { display: flex; justify-content: flex-end; }
-        
-        .loading-message, .empty-message, .error-message { text-align: center; padding: 20px; }
-        .error-message { color: #c62828; }
-        .empty-message { color: #757575; font-style: italic; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: normal; }
+        .form-control {
+            width: calc(100% - 20px);
+            padding: 8px;
+            border: 2px solid var(--border-color);
+            background-color: #181828;
+            color: var(--text-color);
+            font-family: var(--font-family);
+        }
+        pre { background-color: #181828; padding: 10px; border: 2px solid var(--border-color); overflow-x: auto; }
     </style>
 </head>
 <body>
     <div id="nav">
         <button id="chatViewButton">Chat</button>
-        <button id="hspViewButton">HSP Services</button>
+        <button id="hspViewButton">HSP</button>
+        <button id="gameViewButton">Game</button>
     </div>
 
     <div id="mainContent">
-        <div id="chatView">
-            <h1>Unified AI Chat</h1>
-            <div id="chatDisplay">
-                <!-- Chat messages will appear here -->
-            </div>
+        <div id="chatView" class="active-view">
+            <h1>Unified AI Console</h1>
+            <div id="chatDisplay"></div>
             <div id="inputContainer">
                 <input type="text" id="userInput" placeholder="Type your message...">
                 <button id="sendButton">Send</button>
             </div>
         </div>
 
-        <div id="hspServicesView" style="display:none;">
+        <div id="gameView">
+            <h1>Angela's World</h1>
+            <button id="startGameButton" class="action-button">Start Game</button>
+            <div id="gameContainer">
+                <!-- Game will be launched as a separate process -->
+            </div>
+        </div>
+
+        <div id="hspServicesView">
             <h1>HSP Network Services</h1>
             <div class="hsp-section">
                 <div class="hsp-header">
                     <h3>Discovered Services</h3>
-                    <button id="refreshHspServicesButton" class="action-button">Refresh Services</button>
+                    <button id="refreshHspServicesButton" class="action-button">Refresh</button>
                 </div>
-                <div id="hspServiceList" class="hsp-content">
-                    <p>Click "Refresh" to load services...</p>
-                    <!-- Discovered services will be listed here -->
-                </div>
+                <div id="hspServiceList" class="hsp-content"></div>
             </div>
-            
             <div class="hsp-section">
-                <div class="hsp-header">
+                <div class.hsp-header">
                     <h3>Request HSP Task</h3>
                 </div>
                 <div class="hsp-content">
                     <div class="form-group">
                         <label for="hspTaskCapId">Target Capability ID:</label>
-                        <input type="text" id="hspTaskCapId" class="form-control" placeholder="e.g., did:hsp:peer_X_echo_v1.0">
+                        <input type="text" id="hspTaskCapId" class="form-control">
                     </div>
                     <div class="form-group">
                         <label for="hspTaskParams">Parameters (JSON):</label>
-                        <textarea id="hspTaskParams" rows="3" class="form-control" placeholder='{ "data_to_echo": "hello from Electron" }'></textarea>
+                        <textarea id="hspTaskParams" rows="3" class="form-control"></textarea>
                     </div>
-                    <button id="sendHspTaskButton" class="action-button">Send HSP Task Request</button>
+                    <button id="sendHspTaskButton" class="action-button">Send Task</button>
                 </div>
             </div>
-            
             <div class="hsp-section">
                 <div class="hsp-header">
                     <h3>Task Responses</h3>
                 </div>
-                <div id="hspTaskResponseDisplay" class="hsp-content response-display">
-                    <p>Task request responses will appear here...</p>
-                </div>
+                <div id="hspTaskResponseDisplay" class="hsp-content"></div>
             </div>
         </div>
     </div>

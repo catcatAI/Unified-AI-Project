@@ -1,6 +1,8 @@
 // Placeholder for Electron main process (main.js)
 const { app, BrowserWindow, ipcMain, net } = require('electron'); // Added ipcMain and net
 const path = require('path');
+const { spawn } = require('child_process');
+const fs = require('fs');
 
 const API_BASE_URL = "http://localhost:8000/api/v1"; // Assuming FastAPI runs here
 
@@ -170,5 +172,51 @@ ipcMain.handle('hsp:get-task-status', async (event, correlationId) => {
   });
 });
 
+
+let pythonExecutable = 'python'; // Default to 'python'
+
+function loadPythonPath() {
+    const envPath = path.join(__dirname, '..', '..', '..', '.env');
+    if (fs.existsSync(envPath)) {
+        const envFileContent = fs.readFileSync(envPath, 'utf8');
+        const match = envFileContent.match(/^PYTHON_EXECUTABLE=(.*)$/m);
+        if (match && match[1]) {
+            pythonExecutable = match[1].trim();
+            console.log(`Main Process: Found Python executable path: ${pythonExecutable}`);
+        } else {
+            console.log("Main Process: .env file found, but PYTHON_EXECUTABLE not set. Using default 'python'.");
+        }
+    } else {
+        console.log("Main Process: .env file not found. Using default 'python'.");
+    }
+}
+
+app.whenReady().then(() => {
+  loadPythonPath();
+  createWindow();
+
+  app.on('activate', function () {
+    // On macOS it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+ipcMain.handle('game:start', async () => {
+  console.log("Main Process: Received 'game:start' request from renderer.");
+  const gameProcess = spawn(pythonExecutable, [path.join(__dirname, '..', '..', 'game', 'main.py')]);
+
+  gameProcess.stdout.on('data', (data) => {
+    console.log(`Game stdout: ${data}`);
+  });
+
+  gameProcess.stderr.on('data', (data) => {
+    console.error(`Game stderr: ${data}`);
+  });
+
+  gameProcess.on('close', (code) => {
+    console.log(`Game process exited with code ${code}`);
+  });
+});
 
 console.log("Electron main.js placeholder script loaded. IPC handlers for HSP services and tasks set up.");

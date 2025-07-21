@@ -6,8 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // View switching
     const chatViewButton = document.getElementById('chatViewButton');
     const hspViewButton = document.getElementById('hspViewButton');
+    const gameViewButton = document.getElementById('gameViewButton');
     const chatView = document.getElementById('chatView');
     const hspServicesView = document.getElementById('hspServicesView');
+    const gameView = document.getElementById('gameView');
+    const startGameButton = document.getElementById('startGameButton');
 
     // HSP Services elements
     const refreshHspServicesButton = document.getElementById('refreshHspServicesButton');
@@ -21,30 +24,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiBaseUrl = 'http://localhost:8000/api/v1';
 
     function showView(viewId) {
-        // Hide all views
-        chatView.style.display = 'none';
-        hspServicesView.style.display = 'none';
+        // Remove active class from all main views and nav buttons
+        document.querySelectorAll('#mainContent > div').forEach(view => view.classList.remove('active-view'));
+        document.querySelectorAll('#nav button').forEach(button => button.classList.remove('active'));
+
+        // Add active class to the selected view and its corresponding button
+        const viewToShow = document.getElementById(viewId);
+        const buttonToActivate = document.getElementById(viewId + 'Button');
         
-        // Show selected view
-        document.getElementById(viewId).style.display = 'flex';
-        
-        // Update navigation buttons
-        chatViewButton.classList.remove('active');
-        hspViewButton.classList.remove('active');
-        
-        if (viewId === 'chatView') {
-            chatViewButton.classList.add('active');
-        } else if (viewId === 'hspServicesView') {
-            hspViewButton.classList.add('active');
-            // Auto-refresh if switching to HSP view and list is empty
-            if (hspServiceListDiv.children.length <= 1 && hspServiceListDiv.children[0]?.tagName === 'P') {
-                loadHspServices();
-            }
+        if (viewToShow) {
+            viewToShow.classList.add('active-view');
+        }
+        if (buttonToActivate) {
+            buttonToActivate.classList.add('active');
+        }
+
+        // Special logic for HSP view
+        if (viewId === 'hspServicesView' && hspServiceListDiv.children.length === 0) {
+            loadHspServices();
         }
     }
 
     chatViewButton.addEventListener('click', () => showView('chatView'));
     hspViewButton.addEventListener('click', () => showView('hspServicesView'));
+    gameViewButton.addEventListener('click', () => showView('gameView'));
+
+    startGameButton.addEventListener('click', () => {
+        if (window.electronAPI && window.electronAPI.invoke) {
+            window.electronAPI.invoke('game:start');
+        }
+    });
 
 
     function appendMessage(text, sender) {

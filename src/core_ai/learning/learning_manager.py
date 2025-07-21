@@ -102,340 +102,175 @@ class LearningManager:
     def process_and_store_hsp_fact(
         self, hsp_fact_payload: HSPFactPayload, hsp_sender_ai_id: str, hsp_envelope: HSPMessageEnvelope
     ) -> Optional[str]:
-        print(f"LearningManager (AI ID: {self.ai_id}): Processing HSP fact '{hsp_fact_payload.get('id')}' from sender '{hsp_sender_ai_id}'.")
-
-        current_time_iso_for_processing = datetime.now().isoformat() # Timestamp for this processing event
-
-        original_confidence = hsp_fact_payload.get('confidence_score', 0.0)
-        if not isinstance(original_confidence, (float, int)):
-            try: original_confidence = float(original_confidence)
-            except (ValueError, TypeError): original_confidence = 0.0
-
-        effective_confidence = original_confidence
-        sender_trust_score = TrustManager.DEFAULT_TRUST_SCORE
-        if self.trust_manager:
-            sender_trust_score = self.trust_manager.get_trust_score(hsp_sender_ai_id)
-            effective_confidence = original_confidence * sender_trust_score
-            print(f"  Sender '{hsp_sender_ai_id}' Trust: {sender_trust_score:.2f}. Original Fact Confidence: {original_confidence:.2f} -> Effective Confidence: {effective_confidence:.2f}")
-
-        if effective_confidence < self.min_hsp_fact_confidence_to_store:
-            print(f"  Effective confidence {effective_confidence:.2f} is below threshold {self.min_hsp_fact_confidence_to_store}. Not storing HSP fact.")
-            return None
-
-        # --- Conflict Detection (PoC for Conflict Type 1) ---
+        """
+        Processes an incoming fact from the HSP network using a quality-based assessment
+        to prevent "idiot resonance".
+        """
         original_hsp_fact_id = hsp_fact_payload.get('id')
-        original_hsp_fact_originator = hsp_fact_payload.get('source_ai_id')
-        conflict_metadata_update: Dict[str, Any] = {}
+        print(f"LearningManager: Starting quality assessment for HSP fact '{original_hsp_fact_id}' from '{hsp_sender_ai_id}'.")
 
-        if original_hsp_fact_id and original_hsp_fact_originator:
-            conflict_query_filters = {
-                "hsp_fact_id": original_hsp_fact_id,
-                "hsp_originator_ai_id": original_hsp_fact_originator
-            }
-            existing_facts = self.ham_memory.query_core_memory(
-                metadata_filters=conflict_query_filters, data_type_filter="hsp_learned_fact_", limit=1 )
-
-            if existing_facts:
-                existing_ham_record = existing_facts[0]
-                existing_ham_id = existing_ham_record.get('id') # This is HAM's internal mem_id
-                existing_metadata = existing_ham_record.get("metadata", {})
-                existing_stored_confidence = existing_metadata.get("confidence", 0.0)
-                existing_value_for_conflict_check = existing_metadata.get("source_text", "") # Fallback to source_text
-                if existing_metadata.get("hsp_semantic_object") is not None: # Prefer semantic object for comparison
-                    existing_value_for_conflict_check = existing_metadata.get("hsp_semantic_object")
-
-                print(f"  Conflict Check (Type 1 - Same ID): Incoming HSP fact '{original_hsp_fact_id}' (orig AI: '{original_hsp_fact_originator}') matches existing HAM record '{existing_ham_id}'.")
-
-                # Value comparison for Type 1
-                incoming_value_for_conflict_check = hsp_fact_payload.get('statement_nl', "")
-                if hsp_fact_payload.get('statement_type') == "semantic_triple" and hsp_fact_payload.get('statement_structured'):
-                    s_struct = hsp_fact_payload.get('statement_structured', {})
-                    incoming_value_for_conflict_check = s_struct.get('object_literal') or s_struct.get('object_uri')
-
-
-                if effective_confidence > existing_stored_confidence + self.hsp_fact_conflict_confidence_delta:
-                    print(f"    New fact more confident ({effective_confidence:.2f} vs stored {existing_stored_confidence:.2f}). Storing new.")
-                    conflict_metadata_update = {"supersedes_ham_records": [existing_ham_id], "resolution_strategy": "confidence_supersede_type1", "superseded_reason": "higher_confidence"}
-                elif effective_confidence < existing_stored_confidence - self.hsp_fact_conflict_confidence_delta:
-                    print(f"    Existing fact more confident ({existing_stored_confidence:.2f} vs new {effective_confidence:.2f}). Ignoring new fact.")
-                    return None
-                elif incoming_value_for_conflict_check == existing_value_for_conflict_check:
-                    print(f"    Similar confidence and same value ('{str(incoming_value_for_conflict_check)[:50]}...'). Likely redundant. Ignoring new fact.")
-                    # Optionally, update timestamp of existing fact if that's desired behavior
-                    return None
-                else: # Similar confidence, different values
-                    print(f"    Similar confidence ({effective_confidence:.2f} vs stored {existing_stored_confidence:.2f}) but different values. Logging conflict.")
-                    conflict_metadata_update = {"conflicts_with_ham_records": [existing_ham_id], "resolution_strategy": "log_contradiction_type1", "conflicting_values": [str(existing_value_for_conflict_check)[:100], str(incoming_value_for_conflict_check)[:100]]}
-
-        # Semantic Identifiers from Content Analyzer will be added to learned_record_metadata later
-        # This is placeholder before CA call
-        ca_processed_triple_info: Optional[Dict[str, Any]] = None
-
-        # --- Call ContentAnalyzerModule ---
-        # This is done *before* semantic conflict check, as CA might extract the semantic URIs needed for it.
-        hsp_semantic_subject, hsp_semantic_predicate, hsp_semantic_object = None, None, None
-        if self.content_analyzer:
-            try:
-                print(f"  Passing HSP fact content (ID: '{original_hsp_fact_id}') to ContentAnalyzerModule before semantic conflict check.")
-                ca_analysis_result = self.content_analyzer.process_hsp_fact_content(hsp_fact_payload, hsp_sender_ai_id) # type: ignore
-                if ca_analysis_result.get("updated_graph"):
-                     print(f"  ContentAnalyzerModule reported graph updates for HSP fact '{original_hsp_fact_id}'.")
-                if ca_analysis_result.get("processed_triple"):
-                    ca_processed_triple_info = ca_analysis_result["processed_triple"]
-                    hsp_semantic_subject = ca_processed_triple_info.get("original_subject_uri")
-                    hsp_semantic_predicate = ca_processed_triple_info.get("original_predicate_uri")
-                    hsp_semantic_object = ca_processed_triple_info.get("original_object_uri_or_literal")
-                    print(f"    CA extracted: S='{hsp_semantic_subject}', P='{hsp_semantic_predicate}', O='{hsp_semantic_object}'")
-            except Exception as e:
-                print(f"  Error calling ContentAnalyzerModule for HSP fact '{original_hsp_fact_id}': {e}")
-
-        # --- Conflict Detection (Type 2 - Semantic Conflict) ---
-        # This runs only if no Type 1 conflict already decided to ignore the fact or created a specific Type 1 resolution.
-        # And if we have semantic identifiers for the incoming fact.
-        if not conflict_metadata_update.get("resolution_strategy", "").endswith("_type1") and \
-           not conflict_metadata_update.get("resolution_strategy") == "confidence_supersede_type1" and \
-           hsp_semantic_subject and hsp_semantic_predicate:
-
-            semantic_conflict_query_filters = {
-                "hsp_semantic_subject": hsp_semantic_subject,
-                "hsp_semantic_predicate": hsp_semantic_predicate,
-                # We are looking for facts about the same subject/predicate but potentially different object/value
-                # And ensure it's not the *exact same* HSP fact ID if it somehow got here without Type 1 conflict handling
-                # (e.g. if original_hsp_fact_id was None for incoming, but then CA produced S/P that matches another)
-            }
-            if original_hsp_fact_id: # Exclude the current fact if it was already stored (e.g. during a re-processing test)
-                 # This is tricky. We need to ensure we don't match the *exact same fact instance* if it has these S/P.
-                 # A proper way would be to exclude by HAM record ID if we knew it.
-                 # For now, this primarily targets different original HSP facts that map to same S/P.
-                 pass
-
-
-            existing_semantic_matches = self.ham_memory.query_core_memory(
-                metadata_filters=semantic_conflict_query_filters, data_type_filter="hsp_learned_fact_", limit=5 # Check a few
-            )
-
-            conflicting_semantic_records = []
-            for record in existing_semantic_matches:
-                # Ensure it's not the same original fact if IDs are present and match (safeguard)
-                if original_hsp_fact_id and record.get("metadata", {}).get("hsp_fact_id") == original_hsp_fact_id and \
-                   original_hsp_fact_originator and record.get("metadata", {}).get("hsp_originator_ai_id") == original_hsp_fact_originator:
-                    continue # This is the same fact, handled by Type 1 if it's an update.
-
-                # Check if the object/value is different
-                existing_obj = record.get("metadata", {}).get("hsp_semantic_object")
-                if existing_obj != hsp_semantic_object: # Values differ for the same S/P
-                    conflicting_semantic_records.append(record)
-
-            if conflicting_semantic_records:
-                # For PoC, consider the first conflicting record for detailed comparison.
-                # A real system might need to handle multiple conflicts.
-                first_conflicting_record = conflicting_semantic_records[0]
-                existing_ham_id = first_conflicting_record.get('id')
-                existing_metadata = first_conflicting_record.get("metadata", {})
-                existing_stored_confidence = existing_metadata.get("confidence", 0.0)
-                existing_value = existing_metadata.get("hsp_semantic_object", existing_metadata.get("source_text",""))
-
-                print(f"  Conflict Check (Type 2 - Semantic): Incoming fact S/P '{hsp_semantic_subject}/{hsp_semantic_predicate}' with O '{hsp_semantic_object}' conflicts with HAM record '{existing_ham_id}' (O '{existing_value}').")
-
-                # Attempt Resolution Strategies for Type 2 conflict
-                # B. Log Explicit Conflict (default if other strategies don't apply or are not enabled)
-                resolution_strategy = "log_contradiction_type2"
-                current_conflict_meta = {"conflicts_with_ham_records": [existing_ham_id], "resolution_strategy": resolution_strategy, "conflicting_values": [str(existing_value)[:100], str(hsp_semantic_object)[:100]]}
-
-                # A. Supersede/Ignore by confidence (for semantic conflict)
-                if effective_confidence > existing_stored_confidence + self.hsp_fact_conflict_confidence_delta:
-                    print(f"    New semantically conflicting fact more confident ({effective_confidence:.2f} vs stored {existing_stored_confidence:.2f}). Storing new, superseding.")
-                    current_conflict_meta = {"supersedes_ham_records": [existing_ham_id], "resolution_strategy": "confidence_supersede_type2", "superseded_reason": "higher_confidence_semantic"}
-                    conflict_metadata_update.update(current_conflict_meta)
-                elif effective_confidence < existing_stored_confidence - self.hsp_fact_conflict_confidence_delta:
-                    print(f"    Existing semantically conflicting fact more confident ({existing_stored_confidence:.2f} vs new {effective_confidence:.2f}). Ignoring new fact.")
-                    return None # Ignore the new fact
-
-                # C. Trust/Recency Tie-Breaking (if confidences are similar)
-                # C. Trust/Recency Tie-Breaking (if confidences are similar)
-                elif abs(effective_confidence - existing_stored_confidence) <= self.hsp_fact_conflict_confidence_delta:
-                    # D. Value Merging/Averaging (Numerical - PoC)
-                    # Attempt if the current strategy is still "log_contradiction_type2" (i.e., not superseded by confidence or tie-breaking)
-                    # This is a simplified check and needs robust type checking.
-                    can_average = False
-                    val_new_num, val_old_num = None, None
-                    try:
-                        val_new_num = float(hsp_semantic_object) # type: ignore
-                        val_old_num = float(existing_value)     # type: ignore
-                        can_average = True
-                        print(f"    Values appear numerical ({val_new_num}, {val_old_num}). Attempting merge.")
-                    except (ValueError, TypeError):
-                        print(f"    Values ('{hsp_semantic_object}', '{existing_value}') not both numerical for averaging.")
-                        pass # Not numerical
-
-                    if can_average and val_new_num is not None and val_old_num is not None:
-                        # Trust-weighted average for value
-                        merged_value = (val_new_num * effective_confidence + val_old_num * existing_stored_confidence) / (effective_confidence + existing_stored_confidence)
-                        # Average confidence for the new merged fact (could be max, or average, etc.)
-                        merged_confidence = (effective_confidence + existing_stored_confidence) / 2
-
-                        # The new fact payload's object/value needs to be updated to merged_value
-                        # And its confidence to merged_confidence
-                        # This is a significant change: we are modifying the incoming fact's interpretation.
-                        hsp_semantic_object = str(merged_value) # Update for storing
-                        confidence_to_store = merged_confidence # Update for storing
-
-                        # Update fact_content_for_ham if it was based on the structured part
-                        if hsp_fact_payload.get('statement_type') == "semantic_triple" and \
-                           isinstance(hsp_fact_payload.get('statement_structured'), dict):
-                            hsp_fact_payload['statement_structured']['object_literal'] = hsp_semantic_object
-                            if 'object_uri' in hsp_fact_payload['statement_structured']: # clear URI if we used literal
-                                del hsp_fact_payload['statement_structured']['object_uri']
-                            # Also update statement_nl if it's going to be derived from structured, or make a new one.
-                            # For PoC, assume source_text_for_ham might need regeneration if it showed old value.
-                            # This part is tricky as source_text_for_ham might be the original NL.
-                            # The actual update to learned_record_metadata['source_text'] to note the merge
-                            # happens later, after learned_record_metadata is initially constructed.
-                            # No direct action on learned_record_metadata needed here.
-                            pass
-
-                        current_conflict_meta = {
-                            "merged_from_ham_records": [existing_ham_id],
-                            "resolution_strategy": "numerical_merge_type2",
-                            "original_values": [str(val_old_num), str(val_new_num)],
-                                "merged_value": merged_value, # The float value
-                                "merged_confidence": merged_confidence # Store it here
-                        }
-                        print(f"    Numerically merged: old_val={val_old_num}, new_val={val_new_num} -> merged_val={merged_value:.2f} with conf={merged_confidence:.2f}")
-                        conflict_metadata_update.update(current_conflict_meta) # This now contains merged_confidence if merge happened
-                    else:
-                        print(f"    Semantically conflicting facts have similar confidence. Applying Trust/Recency tie-breaking.")
-                        new_beats_existing = False
-                        # Trust
-                        existing_sender_ai_id = existing_metadata.get("hsp_sender_ai_id")
-                        existing_sender_trust = self.trust_manager.get_trust_score(existing_sender_ai_id) if self.trust_manager and existing_sender_ai_id else TrustManager.DEFAULT_TRUST_SCORE
-
-                        if sender_trust_score > existing_sender_trust + 0.05: # Needs a delta for trust comparison
-                            new_beats_existing = True
-                            print(f"      Tie-break: New fact preferred due to higher sender trust ({sender_trust_score:.2f} vs {existing_sender_trust:.2f}).")
-                        elif existing_sender_trust > sender_trust_score + 0.05:
-                            new_beats_existing = False # Assume new does not beat existing initially for this block
-                            print(f"      Tie-break: Existing fact preferred due to higher sender trust ({existing_sender_trust:.2f} vs {sender_trust_score:.2f}). New fact will not supersede based on trust.")
-                            # Let current_conflict_meta remain "log_contradiction_type2" or whatever it was.
-                            # Do not return None here, to allow other strategies (like merge if applicable) or default logging for the new fact.
-                            # However, for numerical merge test, we want it to proceed if trust doesn't make new win.
-                            # If existing is more trusted, the new fact should generally be ignored unless it's a merge candidate that improves things.
-                            # For now, if existing is more trusted, let's assume the new one is not stored unless numerical merge explicitly creates a *new* merged fact.
-                            # This means the "new_beats_existing" flag from trust determines if current_conflict_meta is updated to supersede.
-                            # If new_beats_existing is false after trust, it remains false.
-
-                        # Only proceed to recency if trust didn't yield a "new_beats_existing = True"
-                        if not new_beats_existing: # This means either trust was similar, or new lost on trust.
-                            new_timestamp_str = hsp_fact_payload.get('timestamp_created', current_time_iso_for_processing)
-                            existing_timestamp_str = existing_metadata.get("hsp_fact_timestamp_created", existing_metadata.get("timestamp"))
-                            try:
-                                new_dt = datetime.fromisoformat(new_timestamp_str.replace('Z', '+00:00')) if isinstance(new_timestamp_str, str) else datetime.min
-                                existing_dt = datetime.fromisoformat(existing_timestamp_str.replace('Z', '+00:00')) if isinstance(existing_timestamp_str, str) else datetime.min
-                                if new_dt > existing_dt:
-                                    new_beats_existing = True # New wins by recency
-                                    print(f"      Tie-break: New fact preferred due to recency ({new_dt} vs {existing_dt}).")
-                                else:
-                                    # New is older or same age. new_beats_existing remains False.
-                                    print(f"      Tie-break: Existing fact preferred or same by recency. New fact will not supersede based on recency.")
-                            except ValueError:
-                                print(f"      Tie-break: Could not compare timestamps for recency ('{new_timestamp_str}', '{existing_timestamp_str}'). Defaulting to current strategy.")
-                                # new_beats_existing remains False.
-
-                        if new_beats_existing: # If new won by either trust or recency
-                             current_conflict_meta = {"supersedes_ham_records": [existing_ham_id], "resolution_strategy": "tie_break_trust_recency_type2"}
-                        # If new_beats_existing is still False, current_conflict_meta remains as "log_contradiction_type2" (or whatever it was before this block)
-                        conflict_metadata_update.update(current_conflict_meta)
-
-        # Proceed to store
-        record_id = f"lfact_hsp_{uuid.uuid4().hex}"
-        # `timestamp` for the record will be defined when learned_record_metadata is built
-
-        # Determine the final confidence for storage
-        if conflict_metadata_update.get("resolution_strategy") == "numerical_merge_type2" and \
-           "merged_confidence" in conflict_metadata_update:
-            confidence_to_store = conflict_metadata_update["merged_confidence"]
-        else:
-            confidence_to_store = effective_confidence # Default if not merged, or if merge metadata is incomplete
-
-        timestamp_for_record = datetime.now().isoformat() # Timestamp for the new HAM record
-
-        fact_content_for_ham: Any
-        source_text_for_ham: str
-        if hsp_fact_payload.get('statement_structured'):
-            fact_content_for_ham = hsp_fact_payload['statement_structured']
-            source_text_for_ham = hsp_fact_payload.get('statement_nl', json.dumps(fact_content_for_ham))
-        elif hsp_fact_payload.get('statement_nl'):
-            fact_content_for_ham = {"text": hsp_fact_payload['statement_nl']}
-            source_text_for_ham = hsp_fact_payload['statement_nl']
-        else:
-            print(f"  HSP fact '{original_hsp_fact_id}' has no statement_structured or statement_nl. Cannot process.")
+        # 1. Check for Duplicates (Anti-Resonance)
+        conflict_query_filters = {
+            "hsp_fact_id": original_hsp_fact_id,
+            "hsp_originator_ai_id": hsp_fact_payload.get('source_ai_id')
+        }
+        existing_facts = self.ham_memory.query_core_memory(
+            metadata_filters=conflict_query_filters, data_type_filter="hsp_learned_fact_", limit=1
+        )
+        if existing_facts:
+            existing_ham_id = existing_facts[0].get('id')
+            print(f"  Fact is a duplicate of existing HAM record '{existing_ham_id}'. Incrementing corroboration count.")
+            self.ham_memory.increment_metadata_field(existing_ham_id, "corroboration_count")
             return None
 
-        fact_type_from_hsp = "hsp_derived_fact"
-        if hsp_fact_payload.get('tags') and len(hsp_fact_payload['tags']) > 0: # type: ignore
-            fact_type_from_hsp = hsp_fact_payload['tags'][0] # type: ignore
+        # 2. Assess Source Credibility
+        capability_name = hsp_fact_payload.get('tags', [None])[0] if hsp_fact_payload.get('tags') else None
+        sender_trust_score = self.trust_manager.get_trust_score(hsp_sender_ai_id, capability_name) if self.trust_manager else TrustManager.DEFAULT_TRUST_SCORE
+        original_confidence = hsp_fact_payload.get('confidence_score', 0.0)
+        effective_confidence = original_confidence * sender_trust_score
+        print(f"  Source Credibility: Trust={sender_trust_score:.2f}, OriginalConf={original_confidence:.2f} -> EffectiveConf={effective_confidence:.2f}")
 
-        print(f"  DEBUG: Final confidence_to_store before metadata construction: {confidence_to_store}")
-        learned_record_metadata = {
-            "record_id": record_id, "timestamp": timestamp_for_record,
-            "user_id": None, "session_id": None,
-            "source_interaction_ref": hsp_envelope.get('message_id'),
-            "fact_type": fact_type_from_hsp, "confidence": confidence_to_store,
-            "source_text": source_text_for_ham,
-            "hsp_originator_ai_id": original_hsp_fact_originator,
-            "hsp_sender_ai_id": hsp_sender_ai_id,
+        # 3. Assess Novelty & Evidence (Simplified for PoC)
+        novelty_score = 0.5
+        evidence_score = 0.5
+
+        if self.content_analyzer:
+            analysis_result = self.content_analyzer.process_hsp_fact_content(hsp_fact_payload, hsp_sender_ai_id)
+            if analysis_result.get("updated_graph"):
+                novelty_score = 0.8
+
+        keywords = re.findall(r'\w+', hsp_fact_payload.get('statement_nl', ''))
+        if keywords:
+            related_facts = self.ham_memory.query_core_memory(keywords=keywords, limit=5)
+            if related_facts:
+                evidence_score = min(1.0, 0.5 + (0.1 * len(related_facts)))
+
+        print(f"  Novelty Score: {novelty_score:.2f}, Evidence Score: {evidence_score:.2f}")
+
+        # 4. Final Scoring and Decision
+        final_score = (effective_confidence * 0.7) + (novelty_score * 0.15) + (evidence_score * 0.15)
+        storage_threshold = self.min_hsp_fact_confidence_to_store
+        print(f"  Final Score: {final_score:.2f}, Storage Threshold: {storage_threshold:.2f}")
+
+        if final_score < storage_threshold:
+            print("  Final score below threshold. Discarding fact.")
+            return None
+
+        # 5. Store the Fact
+        record_id = f"lfact_hsp_{uuid.uuid4().hex}"
+        fact_content_for_ham = hsp_fact_payload.get('statement_structured') or {"text": hsp_fact_payload.get('statement_nl')}
+
+        metadata = {
+            "record_id": record_id, "timestamp": datetime.now().isoformat(),
+            "confidence": final_score,
+            "original_confidence": original_confidence,
+            "trust_score_at_storage": sender_trust_score,
+            "novelty_score": novelty_score,
+            "evidence_score": evidence_score,
+            "corroboration_count": 1,
             "hsp_fact_id": original_hsp_fact_id,
-            "hsp_fact_timestamp_created": hsp_fact_payload.get('timestamp_created', current_time_iso_for_processing), # Store original creation time
-            **conflict_metadata_update # Add conflict resolution info
+            "hsp_originator_ai_id": hsp_fact_payload.get('source_ai_id'),
+            "hsp_sender_ai_id": hsp_sender_ai_id,
         }
 
-        # Add semantic URIs from CA to metadata if available
-        # Default to CA's extracted object, but override if numerical merge occurred.
-        final_hsp_semantic_object = None
-        if ca_processed_triple_info:
-            learned_record_metadata["hsp_semantic_subject"] = ca_processed_triple_info.get("original_subject_uri")
-            learned_record_metadata["hsp_semantic_predicate"] = ca_processed_triple_info.get("original_predicate_uri")
-            final_hsp_semantic_object = ca_processed_triple_info.get("original_object_uri_or_literal") # Default
-            learned_record_metadata["ca_subject_id"] = ca_processed_triple_info.get("subject_id")
-            learned_record_metadata["ca_predicate_type"] = ca_processed_triple_info.get("predicate_type")
-            learned_record_metadata["ca_object_id"] = ca_processed_triple_info.get("object_id")
-
-        if conflict_metadata_update.get("resolution_strategy") == "numerical_merge_type2":
-            merged_val = conflict_metadata_update.get("merged_value") # Already a float/int
-            if merged_val is not None:
-                final_hsp_semantic_object = str(merged_val) # Override with string representation of merged value
-                # Update fact_content_for_ham if it was based on the structured part that got merged
-                if hsp_fact_payload.get('statement_type') == "semantic_triple" and \
-                   isinstance(fact_content_for_ham, dict) and 'object_literal' in fact_content_for_ham:
-                    fact_content_for_ham['object_literal'] = str(merged_val)
-
-            # Update source_text to reflect merge for clarity
-            # The original source_text_for_ham (which could be NL or JSON dump of original structured) is used in the note.
-            learned_record_metadata["source_text"] = f"Numerically merged value for S='{learned_record_metadata.get('hsp_semantic_subject')}', P='{learned_record_metadata.get('hsp_semantic_predicate')}' is '{final_hsp_semantic_object}'. Original source text was: {source_text_for_ham}"
-            # Confidence is already set to confidence_to_store which would be merged_confidence
-
-        if final_hsp_semantic_object is not None:
-             learned_record_metadata["hsp_semantic_object"] = final_hsp_semantic_object
-
-
-        ham_data_type = f"hsp_learned_fact_{fact_type_from_hsp.lower().replace(' ', '_')}"
-        print(f"  Storing HSP-derived fact - Type: {ham_data_type}, Content: {fact_content_for_ham}, Meta: {learned_record_metadata}")
-
-        # Before final store, if this fact is superseding others, we might want to mark those old records in HAM.
-        # This is an advanced step (updating existing records). For PoC, metadata on new fact is primary.
-        # Example: self.ham_memory.update_metadata(ham_id_to_update, {"superseded_by": record_id})
-
-        stored_id = self.ham_memory.store_experience(raw_data=fact_content_for_ham, data_type=ham_data_type, metadata=learned_record_metadata)
+        ham_data_type = f"hsp_learned_fact_{hsp_fact_payload.get('tags', ['unknown'])[0]}"
+        stored_id = self.ham_memory.store_experience(
+            raw_data=fact_content_for_ham,
+            data_type=ham_data_type,
+            metadata=metadata
+        )
 
         if stored_id:
-            print(f"  Stored HSP fact '{record_id}' (original HSP ID: '{original_hsp_fact_id}') with HAM ID '{stored_id}'")
-            # ContentAnalyzerModule was already called before conflict checks that might use its output.
-            # No need to call it again here unless we want it to process the potentially *merged* fact,
-            # but its internal graph update was based on the original incoming fact.
-            return stored_id
+            print(f"  Fact passed quality assessment and stored with HAM ID '{stored_id}'.")
         else:
-            print(f"  Failed to store HSP fact '{record_id}' in HAM.")
-            return None
+            print("  Fact passed quality assessment but failed to store in HAM.")
+
+        return stored_id
+
+    async def learn_from_project_case(self, project_case: Dict[str, Any]):
+        """
+        Analyzes a completed project case, stores it, and attempts to distill a reusable strategy.
+        """
+        print(f"[{self.ai_id}] LearningManager: Processing project case for user query: '{project_case.get('user_query')}'")
+
+        case_id = f"proj_case_{uuid.uuid4().hex}"
+
+        # First, store the raw project case for auditing and deeper analysis later.
+        raw_case_metadata = {
+            "record_id": case_id, "timestamp": datetime.now().isoformat(),
+            "user_id": project_case.get("user_id"), "session_id": project_case.get("session_id"),
+            "source": "agent_collaboration_project"
+        }
+        self.ham_memory.store_experience(raw_data=project_case, data_type="project_execution_case", metadata=raw_case_metadata)
+
+        # Now, attempt to distill a reusable strategy from this successful case.
+        # This requires a powerful LLM.
+        if not self.fact_extractor.llm: # fact_extractor holds the llm_interface
+            print(f"[{self.ai_id}] No LLM interface available in FactExtractor, cannot distill strategy.")
+            return
+
+        distillation_prompt = self._create_strategy_distillation_prompt(project_case)
+        raw_strategy_output = self.fact_extractor.llm.generate_response(prompt=distillation_prompt, params={"temperature": 0.0})
+
+        try:
+            json_match = re.search(r"```json\s*([\s\S]*?)\s*```", raw_strategy_output)
+            strategy_json_str = json_match.group(1) if json_match else raw_strategy_output
+            distilled_strategy = json.loads(strategy_json_str)
+
+            # Basic validation of the distilled strategy
+            if "strategy_name" in distilled_strategy and "applicable_keywords" in distilled_strategy and "subtask_template" in distilled_strategy:
+                strategy_id = f"strat_{uuid.uuid4().hex}"
+                strategy_metadata = {
+                    "record_id": strategy_id, "timestamp": datetime.now().isoformat(),
+                    "source_case_id": case_id, "distilled_by": self.ai_id
+                }
+                self.ham_memory.store_experience(
+                    raw_data=distilled_strategy,
+                    data_type="learned_collaboration_strategy",
+                    metadata=strategy_metadata
+                )
+                print(f"[{self.ai_id}] Successfully distilled and stored collaboration strategy '{distilled_strategy['strategy_name']}' (ID: {strategy_id}).")
+            else:
+                print(f"[{self.ai_id}] Distilled strategy is missing required fields. Output: {distilled_strategy}")
+
+        except json.JSONDecodeError:
+            print(f"[{self.ai_id}] Failed to decode JSON from strategy distillation output. Raw: {raw_strategy_output}")
+
+    def _create_strategy_distillation_prompt(self, project_case: Dict[str, Any]) -> str:
+        """
+        Creates a prompt for an LLM to distill a reusable strategy from a successful project case.
+        """
+        # We need to remove large, raw data from the prompt to keep it concise.
+        cleaned_subtasks = []
+        for task in project_case.get("decomposed_subtasks", []):
+            cleaned_params = {k: v[:100] + '...' if isinstance(v, str) and len(v) > 100 else v for k, v in task.get("task_parameters", {}).items()}
+            cleaned_subtasks.append({
+                "capability_needed": task.get("capability_needed"),
+                "task_parameters_schema": cleaned_params,
+                "task_description": task.get("task_description")
+            })
+
+        prompt = f"""
+You are a brilliant AI strategist. Your goal is to analyze a successful project execution and generalize it into a reusable strategy template.
+From the following project case, identify the core user intent and the successful sequence of capabilities used. Then, create a generalized strategy as a valid JSON object.
+
+The JSON object MUST contain:
+1.  `strategy_name`: A concise, descriptive name for the strategy (e.g., "Summarize CSV Data and Identify Trends").
+2.  `applicable_keywords`: A list of lowercase keywords from a user's request that would trigger this strategy (e.g., ["analyze", "summarize", "csv", "report"]).
+3.  `subtask_template`: An array of subtask objects. This should be a template for future use.
+    - For parameters that should be filled in by the user's new request, use placeholders like `"<user_provided_data>"` or `"<user_specified_topic>"`.
+    - For parameters that are outputs of previous steps, use the placeholder `"<output_of_task_X>"`, where X is the 0-based index of the prerequisite task.
+
+---
+**PROJECT CASE TO ANALYZE:**
+- **User's Original Request:** "{project_case.get('user_query')}"
+- **Decomposition Plan Used:** {json.dumps(cleaned_subtasks, indent=2)}
+- **Final Response Summary:** "{project_case.get('final_response', '')[:200]}..."
+
+---
+**Distilled Strategy (JSON Object Only):**
+"""
+        return prompt
 
 if __name__ == '__main__':
     print("--- LearningManager Standalone Test ---")

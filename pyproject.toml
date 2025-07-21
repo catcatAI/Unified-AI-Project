@@ -103,7 +103,6 @@ package-dir = {"" = "src"}
 packages = ["core_ai", "services", "tools", "interfaces", "hsp"]
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
 pythonpath = [
   ".",
   "src",
@@ -118,4 +117,3 @@ markers = [
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
-addopts = "-p no:warnings"

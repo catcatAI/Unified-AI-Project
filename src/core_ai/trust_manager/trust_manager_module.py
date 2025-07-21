@@ -9,18 +9,21 @@ class TrustManager:
     MIN_TRUST_SCORE = 0.0
     MAX_TRUST_SCORE = 1.0
 
-    def __init__(self, initial_trust_scores: Optional[Dict[str, float]] = None):
+    def __init__(self, initial_trust_scores: Optional[Dict[str, Union[float, Dict[str, float]]]] = None):
         """
         Initializes the TrustManager.
 
         Args:
-            initial_trust_scores (Optional[Dict[str, float]]):
-                Predefined trust scores for specific AI IDs.
+            initial_trust_scores: Predefined trust scores.
+                e.g., {"ai_1": 0.8, "ai_2": {"general": 0.7, "data_analysis": 0.9}}
         """
-        self.trust_scores: Dict[str, float] = {}
+        self.trust_scores: Dict[str, Dict[str, float]] = {}
         if initial_trust_scores:
-            for ai_id, score in initial_trust_scores.items():
-                self.trust_scores[ai_id] = self._clamp_score(score)
+            for ai_id, score_data in initial_trust_scores.items():
+                if isinstance(score_data, dict):
+                    self.trust_scores[ai_id] = {k: self._clamp_score(v) for k, v in score_data.items()}
+                else:
+                    self.trust_scores[ai_id] = {'general': self._clamp_score(score_data)}
 
         print(f"TrustManager initialized. Default score for new AIs: {self.DEFAULT_TRUST_SCORE}")
 
@@ -28,48 +31,49 @@ class TrustManager:
         """Ensures score is within [MIN_TRUST_SCORE, MAX_TRUST_SCORE]."""
         return max(self.MIN_TRUST_SCORE, min(self.MAX_TRUST_SCORE, score))
 
-    def get_trust_score(self, ai_id: str) -> float:
+    def get_trust_score(self, ai_id: str, capability_name: Optional[str] = None) -> float:
         """
-        Retrieves the trust score for a given AI ID.
-        Returns the default trust score if the AI ID is not found.
+        Retrieves the trust score for a given AI ID and optional capability.
+        If capability_name is provided and a specific score exists, it's returned.
+        Otherwise, it falls back to the 'general' score for that AI.
+        If the AI is unknown, returns the default trust score.
         """
-        score = self.trust_scores.get(ai_id, self.DEFAULT_TRUST_SCORE)
-        # print(f"TrustManager: Trust score for '{ai_id}': {score}") # Can be verbose
-        return score
+        ai_scores = self.trust_scores.get(ai_id)
+        if not ai_scores:
+            return self.DEFAULT_TRUST_SCORE
+
+        if capability_name and capability_name in ai_scores:
+            return ai_scores[capability_name]
+
+        return ai_scores.get('general', self.DEFAULT_TRUST_SCORE)
 
     def update_trust_score(
         self,
         ai_id: str,
         adjustment: Optional[float] = None,
-        new_absolute_score: Optional[float] = None
+        new_absolute_score: Optional[float] = None,
+        capability_name: Optional[str] = None
     ) -> float:
         """
-        Updates the trust score for a given AI ID.
-        Either an adjustment (e.g., +0.1, -0.05) or a new_absolute_score can be provided.
-        If both are provided, new_absolute_score takes precedence.
-        The score is always clamped between MIN_TRUST_SCORE and MAX_TRUST_SCORE.
-
-        Args:
-            ai_id (str): The identifier of the AI whose trust score is to be updated.
-            adjustment (Optional[float]): A positive or negative value to add to the current score.
-            new_absolute_score (Optional[float]): A specific new score to set.
-
-        Returns:
-            float: The new, clamped trust score for the AI ID.
+        Updates the trust score for a given AI ID, optionally for a specific capability.
         """
-        current_score = self.trust_scores.get(ai_id, self.DEFAULT_TRUST_SCORE)
+        scope = capability_name if capability_name else 'general'
+
+        # Ensure the AI has a score dictionary
+        if ai_id not in self.trust_scores:
+            self.trust_scores[ai_id] = {}
+
+        current_score = self.get_trust_score(ai_id, capability_name)
 
         if new_absolute_score is not None:
             updated_score = self._clamp_score(new_absolute_score)
-            self.trust_scores[ai_id] = updated_score
-            print(f"TrustManager: Trust score for '{ai_id}' SET to {updated_score:.3f} (was {current_score:.3f}).")
+            self.trust_scores[ai_id][scope] = updated_score
+            print(f"TrustManager: Trust score for '{ai_id}' (scope: {scope}) SET to {updated_score:.3f}.")
         elif adjustment is not None:
             updated_score = self._clamp_score(current_score + adjustment)
-            self.trust_scores[ai_id] = updated_score
-            print(f"TrustManager: Trust score for '{ai_id}' ADJUSTED by {adjustment:+.3f} to {updated_score:.3f} (was {current_score:.3f}).")
+            self.trust_scores[ai_id][scope] = updated_score
+            print(f"TrustManager: Trust score for '{ai_id}' (scope: {scope}) ADJUSTED by {adjustment:+.3f} to {updated_score:.3f}.")
         else:
-            # No change requested, return current score
-            print(f"TrustManager: No trust update specified for '{ai_id}'. Score remains {current_score:.3f}.")
             return current_score
 
         return updated_score
@@ -141,4 +145,26 @@ if __name__ == '__main__':
 
 
     print(f"\nFinal scores: {trust_manager.get_all_trust_scores()}")
+
+    print("\n--- Capability-Specific Trust Test ---")
+    trust_manager.update_trust_score("did:hsp:ai_specialist", new_absolute_score=0.9, capability_name="data_analysis")
+    trust_manager.update_trust_score("did:hsp:ai_specialist", new_absolute_score=0.6, capability_name="general")
+
+    print(f"Specialist scores: {trust_manager.get_all_trust_scores()['did:hsp:ai_specialist']}")
+
+    # Test getting specific capability score
+    data_analysis_score = trust_manager.get_trust_score("did:hsp:ai_specialist", capability_name="data_analysis")
+    print(f"Score for 'data_analysis': {data_analysis_score:.3f}")
+    assert data_analysis_score == 0.9
+
+    # Test getting another capability score (should fall back to general)
+    creative_writing_score = trust_manager.get_trust_score("did:hsp:ai_specialist", capability_name="creative_writing")
+    print(f"Score for 'creative_writing' (fallback): {creative_writing_score:.3f}")
+    assert creative_writing_score == 0.6
+
+    # Test getting general score explicitly
+    general_score = trust_manager.get_trust_score("did:hsp:ai_specialist")
+    print(f"Score for 'general': {general_score:.3f}")
+    assert general_score == 0.6
+
     print("\nTrustManager standalone test finished.")
