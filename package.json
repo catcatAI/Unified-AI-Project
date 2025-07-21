@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A unified AI project consolidating MikoAI, Fragmenta, and other CatAI initiatives.",
   "scripts": {
-    "test": "python -c "import platform; print('scripts\setup_env.bat' if platform.system() == 'Windows' else 'bash ./scripts/setup_env.sh')" | xargs -I {} bash -c "{} && pytest""
+    "test": "python -c \"import platform; print('scripts/setup_env.bat' if platform.system() == 'Windows' else 'bash ./scripts/setup_env.sh')\" | xargs -I {} bash -c \"{} && pytest\""
   },
   "keywords": [
     "ai",
