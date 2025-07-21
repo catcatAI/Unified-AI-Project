@@ -97,5 +97,45 @@ The HAM model consists of two primary layers:
 *   **Generative Reconstruction in SL:** Use LLMs to elaborate on abstract gists.
 *   **Multi-Modal Data Abstraction:** Define specific abstraction methods for images (e.g., object tags, scene descriptions, embeddings) and audio (e.g., transcript, audio fingerprints, speaker ID).
 
-This document will be updated as the HAM system evolves.tool_code
-plan_step_complete("Created the `HAM_design_spec.md` document in `docs/architecture/`. This specification outlines the Hierarchical Abstractive Memory model, including its two-layer architecture (Surface Layer and Core Layer), data flow for storage and retrieval, initial choices for abstraction/compression/encryption mechanisms for v0.1, the provisional API for `HAMMemoryManager`, and considerations for Core Layer storage, error handling, and future enhancements.")
+This document will be updated as the HAM system evolves.
+
+## 10. Redundancy and Recovery: The "Trinity" Model (v0.3)
+
+To ensure the resilience and persistence of an AI's "digital life," the system implements a "Trinity" model for backup and recovery, safeguarding against single points of failure. This model treats the AI's core existence as a combination of three essential components: **UID (Identity), HAM Key (Key), and Data Core (Memory)**.
+
+The recovery mechanism is based on a **(2, 3) Shamir's Secret Sharing scheme**, which allows for the complete reconstruction of all three components from any two of the three resulting **Shards**.
+
+### 10.1. The Genesis Process
+
+During the initial creation of an AI instance (the "Genesis" process), the system performs the following steps:
+
+1.  **Generate Core Components**:
+    *   A unique **UID** is generated to serve as the AI's permanent, public identifier.
+    *   A cryptographically secure **HAM Key** (a Fernet key) is generated for memory encryption.
+    *   An initial **Data Core Seed** (a random value to initialize the memory state) is generated.
+
+2.  **Consolidate the Genesis Secret**: These three pieces of information are concatenated into a single, master "Genesis Secret" string.
+
+3.  **Create Shards**: The `(2, 3)` Shamir's Secret Sharing algorithm is applied to the Genesis Secret, producing three mathematically-linked but distinct **Shards**.
+
+### 10.2. User Backup Strategy
+
+The user is presented with these three Shards, typically encoded as QR codes or mnemonic phrases, and is instructed to back them up in separate, secure locations. A recommended strategy is:
+
+-   **Shard 1 (Active Shard)**: Stored locally on the user's primary device for daily application use.
+-   **Shard 2 (Physical Backup)**: Printed as a QR code and stored in a secure physical location (e.g., a safe).
+-   **Shard 3 (Remote/Social Backup)**: Encrypted and stored in a personal cloud drive, or entrusted to a designated "guardian."
+
+Crucially, any single Shard is useless on its own, providing a high level of security.
+
+### 10.3. Recovery Process
+
+When a user needs to restore their AI on a new device or after data loss, the process is as follows:
+
+1.  The user is prompted to provide any **two** of their three backed-up Shards.
+2.  The system uses the two provided Shards to mathematically reconstruct the third, missing Shard.
+3.  With all three Shards now present, the original **Genesis Secret** is reassembled.
+4.  The system parses the Genesis Secret to retrieve the **UID**, the **HAM Key**, and the **Data Core Seed**.
+5.  With the UID and HAM Key, the system can now locate and decrypt the AI's memory (Data Core), restoring the AI to its last backed-up state.
+
+This model ensures that the loss of any single backup (e.g., phone loss, physical document destruction, or cloud account compromise) does not result in the permanent loss of the AI's identity or memory.

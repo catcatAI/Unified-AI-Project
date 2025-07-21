@@ -118,6 +118,18 @@ dependencies:
       fallbacks: ["manual_shortcut_creation_instructions"]
       features: ["desktop_shortcut"]
 
+    - name: "secret-sharing"
+      description: "Shamir's Secret Sharing for creating redundant backups"
+      essential: false
+      fallbacks: []
+      features: ["genesis_backup"]
+
+    - name: "qrcode"
+      description: "QR code generation for displaying backup shards"
+      essential: false
+      fallbacks: ["text_display"]
+      features: ["genesis_backup_gui"]
+
 # Fallback strategies for different scenarios
 fallback_strategies:
   # When TensorFlow is not available
@@ -197,8 +209,8 @@ installation:
     
   full:
     description: "Full installation with all features, including game and GUI installer"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain", "fastapi", "uvicorn", "pydantic", "httpx", "pytest-asyncio", "pygame", "PyQt5", "pyshortcuts"]
-    features: ["web_api", "hsp_communication", "ai_models", "nlp", "knowledge_graph", "game_client", "gui_installer"]
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain", "fastapi", "uvicorn", "pydantic", "httpx", "pytest-asyncio", "pygame", "PyQt5", "pyshortcuts", "secret-sharing", "qrcode"]
+    features: ["web_api", "hsp_communication", "ai_models", "nlp", "knowledge_graph", "game_client", "gui_installer", "genesis_backup"]
     
   ai_focused:
     description: "AI and ML focused installation"
@@ -211,6 +223,6 @@ installation:
     features: ["game_client"]
 
   installer:
-    description: "Dependencies for the GUI installer and shortcut creation"
-    packages: ["PyQt5", "pyshortcuts"]
-    features: ["gui_installer", "desktop_shortcut"]
+    description: "Dependencies for the GUI installer, shortcuts, and secure backup features"
+    packages: ["PyQt5", "pyshortcuts", "secret-sharing", "qrcode"]
+    features: ["gui_installer", "desktop_shortcut", "genesis_backup_gui"]
