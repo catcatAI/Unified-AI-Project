@@ -583,12 +583,13 @@ class TestHSPTaskDelegation:
         # 1. Peer A advertises its capability
         cap_payload = HSPCapabilityAdvertisementPayload(
             capability_id="advanced_weather_forecast",
-            capability_name="advanced_weather_forecast",
-            capability_description="Provides detailed 7-day weather forecasts for any location.",
+            name="advanced_weather_forecast",
+            description="Provides detailed 7-day weather forecasts for any location.",
             ai_id=peer_a_hsp_connector.ai_id,
-            input_schema={"type": "object", "properties": {"location": {"type": "string"}}},
-            output_schema={"type": "object", "properties": {"forecast": {"type": "string"}}},
+            input_schema_example={"type": "object", "properties": {"location": {"type": "string"}}},
+            output_schema_example={"type": "object", "properties": {"forecast": {"type": "string"}}},
             version="1.0",
+            availability_status="online",
             tags=["weather", "forecast"]
         )  # type: ignore
         
@@ -603,10 +604,11 @@ class TestHSPTaskDelegation:
         
         # Mock ToolDispatcher to return no local tool, forcing HSP delegation
         mock_td = MagicMock(spec=ToolDispatcher)
-        mock_td.dispatch_tool.return_value = ToolDispatcherResponse(
-            tool_name=None,
-            tool_params=None,
-            tool_output=None,
+        mock_td.dispatch.return_value = ToolDispatcherResponse(
+            status="unhandled_by_local_tool",
+            payload=None,
+            tool_name_attempted=None,
+            original_query_for_tool=None,
             error_message="No local tool found for weather forecast."
         )
         dm.tool_dispatcher = mock_td
@@ -615,14 +617,16 @@ class TestHSPTaskDelegation:
         task_received_event = asyncio.Event()
         
         async def peer_a_task_handler(task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
-            assert task_payload.capability_name == "advanced_weather_forecast"
-            assert task_payload.input_data.get("location") == "London"
+            assert task_payload.get("capability_id_filter") == "advanced_weather_forecast"
+            assert task_payload.get("parameters", {}).get("location") == "London"
             
             # Peer A processes the task and sends a result
             result_payload = HSPTaskResultPayload(
-                task_id=task_payload.task_id,
-                status="completed",
-                result_data={"forecast": "Sunny with a chance of rain on Tuesday."},
+                result_id=f"result_{uuid.uuid4().hex}",
+                request_id=task_payload.get("request_id", ""),
+                executing_ai_id=peer_a_hsp_connector.ai_id,
+                status="success",
+                payload={"forecast": "Sunny with a chance of rain on Tuesday."},
                 timestamp_completed=datetime.now(timezone.utc).isoformat()
             )  # type: ignore
             
@@ -660,17 +664,18 @@ class TestHSPTaskDelegation:
         capability_id = f"failing_service_{uuid.uuid4().hex}"  # Generate a unique capability ID
         cap_payload = HSPCapabilityAdvertisementPayload(
             capability_id=capability_id,
-            capability_name="failing_service",
-            capability_description="A service that always fails.",
+            name="failing_service",
+            description="A service that always fails.",
             ai_id=peer_a_hsp_connector.ai_id,  # Make sure to set the AI ID
-            input_schema={"type": "object", "properties": {"query": {"type": "string"}}},
-            output_schema={"type": "object", "properties": {"result": {"type": "string"}}},
+            input_schema_example={"type": "object", "properties": {"query": {"type": "string"}}},
+            output_schema_example={"type": "object", "properties": {"result": {"type": "string"}}},
             version="1.0",
+            availability_status="online",
             tags=["test", "failing"]
         )
 
         # Publish the capability advertisement to the correct topic
-        topic = f"hsp/capabilities/advertisements/general/{peer_a_hsp_connector.ai_id}"
+        topic = f"{CAP_ADVERTISEMENT_TOPIC}/{peer_a_hsp_connector.ai_id}"
         peer_a_hsp_connector.publish_capability_advertisement(cap_payload, topic)
         
         # Give some time for the message to be processed
@@ -684,6 +689,8 @@ class TestHSPTaskDelegation:
             capabilities = sdm.find_capabilities(capability_name_filter="failing_service")
         
         # Log the current state for debugging
+        import logging
+        logger = logging.getLogger(__name__)
         logger.info(f"Known capabilities in SDM: {sdm.known_capabilities}")
         logger.info(f"Found capabilities: {capabilities}")
         
@@ -693,13 +700,15 @@ class TestHSPTaskDelegation:
         task_received_event = asyncio.Event()
         
         async def peer_a_failing_handler(task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
-            assert task_payload.capability_name == "failing_service"
+            assert task_payload.get("capability_id_filter") == capability_id
             
             # Peer A fails to process the task
             result_payload = HSPTaskResultPayload(
-                task_id=task_payload.task_id,
-                status="failed",
-                error_message="Service unavailable due to maintenance.",
+                result_id=f"result_{uuid.uuid4().hex}",
+                request_id=task_payload.get("request_id", ""),
+                executing_ai_id=peer_a_hsp_connector.ai_id,
+                status="failure",
+                error_details={"message": "Service unavailable due to maintenance."},
                 timestamp_completed=datetime.now(timezone.utc).isoformat()
             )  # type: ignore
             
