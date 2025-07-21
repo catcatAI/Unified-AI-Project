@@ -3,7 +3,7 @@ import json
 import re
 import uuid
 import networkx as nx
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 
 from src.services.llm_interface import LLMInterface
 from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule

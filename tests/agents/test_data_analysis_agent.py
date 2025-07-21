@@ -82,8 +82,7 @@ class TestDataAnalysisAgent(unittest.TestCase):
         self.mock_tool_dispatcher_instance.dispatch.assert_called_once_with(
             query="summarize",
             explicit_tool_name="analyze_csv",
-            csv_content="a,b\n1,2",
-            query="summarize"
+            csv_content="a,b\n1,2"
         )
 
         # 5. Assert that the HSP connector sent the correct result

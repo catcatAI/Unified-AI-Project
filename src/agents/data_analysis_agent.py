@@ -42,8 +42,7 @@ class DataAnalysisAgent(BaseAgent):
         tool_response = self.tool_dispatcher.dispatch(
             query=params.get("query", ""), # The query for the tool
             explicit_tool_name="analyze_csv",
-            csv_content=params.get("csv_content"),
-            query=params.get("query")
+            csv_content=params.get("csv_content")
         )
 
         if tool_response:
