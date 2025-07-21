@@ -59,6 +59,36 @@ def main():
     gemini_api_key = input("Gemini API Key: ")
     openai_api_key = input("OpenAI API Key: ")
 
+    # --- Genesis Process for First Time Setup ---
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    env_path = os.path.join(project_root, '.env')
+    if not os.path.exists(env_path) or "MIKO_HAM_KEY" not in open(env_path).read():
+        print("\n--- First Time Setup: Generating AI Identity ---")
+        from src.core_ai.genesis import GenesisManager
+        genesis_secret, uid = GenesisManager.create_genesis_secret()
+        shards = GenesisManager.split_secret_into_shards(genesis_secret)
+
+        print("A unique identity (UID and Encryption Key) has been generated for your AI.")
+        print("This identity is split into 3 'Shards'. You must back up AT LEAST TWO of them to a safe, separate location.")
+        print("Losing two or more shards will result in PERMANENT data loss.\n")
+
+        for i, shard in enumerate(shards):
+            print(f"--- SHARD {i+1} (Save this!) ---")
+            print(shard)
+            print("-" * (len(shard)))
+
+        input("\nPlease confirm you have backed up at least two shards, then press Enter to continue...")
+
+        # Save UID and HAM Key to .env file
+        recovered_secret = GenesisManager.recover_secret_from_shards(shards)
+        parsed_uid, ham_key = GenesisManager.parse_genesis_secret(recovered_secret)
+
+        with open(env_path, 'a') as f:
+            f.write(f"\nUID={parsed_uid}")
+            f.write(f"\nMIKO_HAM_KEY={ham_key}\n")
+        print("Identity saved to .env file.")
+
+
     # Install dependencies
     print("Installing dependencies...")
     import subprocess
