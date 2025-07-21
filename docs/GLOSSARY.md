@@ -39,6 +39,7 @@
 **HAM (Hierarchical Abstractive Memory) (`src/core_ai/memory/ham_memory_manager.py`)**
 - **簡潔定義**: 一個分層的、抽象的記憶系統。
 - **功能與範圍**: 模擬生物記憶，負責對資訊進行**抽象、壓縮、加密、儲存和檢索**，並管理底層的「數據核」。它不僅儲存事實，還儲存協作策略和學習案例，是 AI 長期成長的基礎。
+- **[了解更多: HAM 設計規範](architecture/HAM_design_spec.md)**
 
 **HAM 密鑰 (`MIKO_HAM_KEY`)**
 - **簡潔定義**: 一個用於加密和解密「數據核」的秘密金鑰。
@@ -47,6 +48,7 @@
 **HSP (Heterogeneous Service Protocol) (`src/hsp/`)**
 - **簡潔定義**: AI 代理間用於實時通信和協作的協議。
 - **功能與範圍**: 一個基於消息總線（如 MQTT）的輕量級協議。它定義了標準化的消息信封（`HSPMessageEnvelope`）和多種 Payload（如任務請求、任務結果、事實、能力宣告），使得不同功能的子代理可以相互發現、委派任務和共享知識。
+- **[了解更多: HSP 設計規範](architecture/Heterogeneous_Protocol_spec.md)**
 
 ---
 
@@ -55,6 +57,7 @@
 **LIS (Linguistic Immune System)**
 - **簡潔定義**: 一個旨在保護 AI 不受錯誤或低質量資訊污染的防禦系統。
 - **功能與範圍**: 這是一個先進的架構概念，其核心思想是建立一個「基於質量的資訊評估體系」。它通過評估資訊的**來源可信度、證據支撐度、新穎性**等，來決定是否將一個新知識整合到記憶中，從而有效抵制「傻子共振」現象。其邏輯主要在 `LearningManager` 中實現。
+- **[了解更多: LIS 設計規範](architecture/Linguistic_Immune_System_spec.md)**
 
 ---
 
