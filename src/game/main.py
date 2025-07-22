@@ -24,18 +24,23 @@ class Game:
         self.game_state_manager = GameStateManager(self)
 
     def load_assets(self):
-        self.assets['images'] = self.load_images(os.path.join('src', 'game', 'assets', 'images'))
-        self.assets['sprites'] = self.load_images(os.path.join('src', 'game', 'assets', 'sprites'))
-
-    def load_images(self, path):
-        images = {}
-        if not os.path.exists(path):
-            os.makedirs(path)
-        for filename in os.listdir(path):
-            if filename.endswith('.png'):
-                image = pygame.image.load(os.path.join(path, filename)).convert_alpha()
-                images[filename.split('.')[0]] = image
-        return images
+        self.assets['images'] = {}
+        self.assets['sprites'] = {}
+        for root, dirs, files in os.walk(os.path.join('src', 'game', 'assets')):
+            for file in files:
+                if file.endswith('.png'):
+                    path = os.path.join(root, file)
+                    asset_type = os.path.basename(os.path.dirname(path))
+                    asset_name = os.path.splitext(file)[0]
+                    image = pygame.image.load(path).convert_alpha()
+                    if 'images' in root:
+                        if asset_type not in self.assets['images']:
+                            self.assets['images'][asset_type] = {}
+                        self.assets['images'][asset_type][asset_name] = image
+                    elif 'sprites' in root:
+                        if asset_type not in self.assets['sprites']:
+                            self.assets['sprites'][asset_type] = {}
+                        self.assets['sprites'][asset_type][asset_name] = image
 
     async def run(self):
         print("Starting game loop")
