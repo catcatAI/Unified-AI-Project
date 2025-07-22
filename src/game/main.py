@@ -9,19 +9,30 @@ from src.game.angela import Angela
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Game constants
+SCREEN_WIDTH = 960
+SCREEN_HEIGHT = 540
+GAME_TITLE = "Angela's World"
+
 class Game:
     def __init__(self):
         os.environ['SDL_VIDEODRIVER'] = 'dummy'
         os.environ['SDL_AUDIODRIVER'] = 'dummy'
         pygame.init()
-        self.screen_width = 960
-        self.screen_height = 540
+        self.screen_width = SCREEN_WIDTH
+        self.screen_height = SCREEN_HEIGHT
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
-        pygame.display.set_caption("Angela's World")
+        pygame.display.set_caption(GAME_TITLE)
         self.clock = pygame.time.Clock()
         self.is_running = True
         self.assets = {'images': {}, 'sprites': {}}
         self.load_assets()
+
+        if 'characters' not in self.assets['sprites'] or 'player_walk_cycle' not in self.assets['sprites']['characters']:
+            logging.critical("Player sprite not found! Exiting.")
+            self.is_running = False
+            return
+
         self.player = Player(self)
         self.angela = Angela(self)
         self.game_state_manager = GameStateManager(self)
@@ -50,6 +61,9 @@ class Game:
                             logging.error(f"Failed to load asset: {path} - {e}")
 
     async def run(self):
+        if not self.is_running:
+            return
+
         logging.info("Starting game loop")
         frameCount = 0
         while self.is_running:
@@ -81,5 +95,6 @@ if __name__ == "__main__":
     async def main():
         game = Game()
         await game.run()
-        print(f"Angela's favorability: {game.angela.favorability}")
+        if hasattr(game, 'angela'):
+            print(f"Angela's favorability: {game.angela.favorability}")
     asyncio.run(main())
