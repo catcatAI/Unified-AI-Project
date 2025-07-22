@@ -69,8 +69,8 @@ class TestCreativeWritingAgent(unittest.TestCase):
         # 4. Assert LLM was called with the correct prompt
         self.mock_llm_interface.generate_response.assert_called_once()
         call_args = self.mock_llm_interface.generate_response.call_args
-        self.assertIn("Generate marketing copy", call_args.kwargs['prompt'])
-        self.assertIn("A new amazing product", call_args.kwargs['prompt'])
+        self.assertIn("Generate marketing copy", call_args.args[0])
+        self.assertIn("A new amazing product", call_args.args[0])
 
         # 5. Assert HSP connector sent the correct success result
         self.agent.hsp_connector.send_task_result.assert_called_once()
@@ -100,7 +100,7 @@ class TestCreativeWritingAgent(unittest.TestCase):
 
         # 4. Assert LLM was called correctly
         self.mock_llm_interface.generate_response.assert_called_once_with(
-            prompt="Please proofread and polish the following text for grammar, style, and clarity. Return only the improved text:\n\n---\nthis is a polished sentence\n---"
+            "Please proofread and polish the following text for grammar, style, and clarity. Return only the improved text:\n\n---\nthis is a polished sentence\n---"
         )
 
         # 5. Assert HSP connector sent the correct success result
