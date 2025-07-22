@@ -1,10 +1,13 @@
 import pygame
 import os
 import sys
+import logging
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from src.game.scenes import GameStateManager
 from src.game.player import Player
 from src.game.angela import Angela
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class Game:
     def __init__(self):
@@ -17,33 +20,37 @@ class Game:
         pygame.display.set_caption("Angela's World")
         self.clock = pygame.time.Clock()
         self.is_running = True
-        self.assets = {}
+        self.assets = {'images': {}, 'sprites': {}}
         self.load_assets()
         self.player = Player(self)
         self.angela = Angela(self)
         self.game_state_manager = GameStateManager(self)
 
     def load_assets(self):
-        self.assets['images'] = {}
-        self.assets['sprites'] = {}
-        for root, dirs, files in os.walk(os.path.join('src', 'game', 'assets')):
-            for file in files:
-                if file.endswith('.png'):
-                    path = os.path.join(root, file)
-                    asset_type = os.path.basename(os.path.dirname(path))
-                    asset_name = os.path.splitext(file)[0]
-                    image = pygame.image.load(path).convert_alpha()
-                    if 'images' in root:
-                        if asset_type not in self.assets['images']:
-                            self.assets['images'][asset_type] = {}
-                        self.assets['images'][asset_type][asset_name] = image
-                    elif 'sprites' in root:
-                        if asset_type not in self.assets['sprites']:
-                            self.assets['sprites'][asset_type] = {}
-                        self.assets['sprites'][asset_type][asset_name] = image
+        base_path = os.path.join('src', 'game', 'assets')
+        for asset_type in ['images', 'sprites']:
+            asset_path = os.path.join(base_path, asset_type)
+            if not os.path.exists(asset_path):
+                logging.warning(f"Asset directory not found: {asset_path}")
+                continue
+            for root, dirs, files in os.walk(asset_path):
+                for file in files:
+                    if file.endswith('.png'):
+                        try:
+                            path = os.path.join(root, file)
+                            category = os.path.basename(root)
+                            asset_name = os.path.splitext(file)[0]
+                            image = pygame.image.load(path).convert_alpha()
+
+                            if category not in self.assets[asset_type]:
+                                self.assets[asset_type][category] = {}
+                            self.assets[asset_type][category][asset_name] = image
+                            logging.info(f"Loaded asset: {path}")
+                        except pygame.error as e:
+                            logging.error(f"Failed to load asset: {path} - {e}")
 
     async def run(self):
-        print("Starting game loop")
+        logging.info("Starting game loop")
         frameCount = 0
         while self.is_running:
             await self.handle_events()
@@ -52,6 +59,7 @@ class Game:
             self.clock.tick(60)
             frameCount += 1
             if frameCount > 300: # 5 seconds
+                logging.info("Game loop finished")
                 self.is_running = False
 
     async def handle_events(self):
