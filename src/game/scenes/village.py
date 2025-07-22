@@ -1,21 +1,6 @@
 import pygame
-from .player import Player
-from .angela import Angela
-from .ui import DialogueBox
-from .npcs import create_npc
-
-class Scene:
-    def __init__(self, game):
-        self.game = game
-
-    async def handle_events(self, event):
-        pass
-
-    async def update(self):
-        pass
-
-    def render(self, surface):
-        pass
+from .base import Scene
+from ..npcs import create_npc
 
 class VillageScene(Scene):
     def __init__(self, game):
@@ -24,7 +9,7 @@ class VillageScene(Scene):
         self.player = self.game.player
         self.npcs = []
         self.load_npcs()
-        self.dialogue_box = DialogueBox(self.game)
+        self.dialogue_box = self.game.dialogue_box
 
     def load_npcs(self):
         self.npcs.append(create_npc(self.game, "murakami"))
@@ -39,12 +24,19 @@ class VillageScene(Scene):
                 self.dialogue_box.hide()
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
+                # NPC interaction
                 for npc in self.npcs:
                     if self.player.rect.colliderect(npc.rect.inflate(20, 20)):
                         await npc.interact()
                         dialogue_text = npc.dialogue[npc.dialogue_index - 1] if npc.dialogue_index > 0 else npc.dialogue[0]
                         self.dialogue_box.show(dialogue_text, npc.name, npc.portrait)
-                        break
+                        return
+
+                # Resource interaction (placeholder)
+                # In a real implementation, we would check for proximity to resource nodes
+                # and the player's equipped tool.
+                print("Interacting with resource (placeholder)")
+
 
     async def update(self):
         await super().update()
@@ -65,21 +57,3 @@ class VillageScene(Scene):
 
         self.dialogue_box.render(surface)
         super().render(surface)
-
-
-class GameStateManager:
-    def __init__(self, game):
-        self.game = game
-        self.states = {
-            'village': VillageScene(game),
-        }
-        self.current_state = 'village'
-
-    async def handle_events(self, event):
-        await self.states[self.current_state].handle_events(event)
-
-    async def update(self):
-        await self.states[self.current_state].update()
-
-    def render(self, surface):
-        self.states[self.current_state].render(surface)

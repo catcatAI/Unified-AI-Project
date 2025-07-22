@@ -4,7 +4,7 @@ from ..core_ai.dialogue.dialogue_manager import DialogueManager
 class Angela:
     def __init__(self, game):
         self.game = game
-        self.image = self.game.assets['images']['angela']
+        self.image = self.game.assets['images']['portraits']['angela']
         self.rect = self.image.get_rect()
         self.rect.x = 400
         self.rect.y = 500
@@ -21,6 +21,9 @@ class Angela:
             self.rect.y -= self.appear_speed
             if self.rect.y < 400:
                 self.is_appearing = False
+
+        # Placeholder for proactive interaction logic
+        self.check_for_proactive_interaction()
 
     def render(self, surface):
         if self.is_appearing:
@@ -39,4 +42,15 @@ class Angela:
             self.increase_favorability(1)
 
     async def get_dialogue(self, player_message):
+        # This will eventually be replaced with a more complex interaction
+        # that takes into account the game state, player status, etc.
         return await self.dialogue_manager.get_simple_response(player_message)
+
+    def check_for_proactive_interaction(self):
+        # This method will be called periodically to check if Angela should
+        # proactively interact with the player.
+        #
+        # Example logic:
+        # if self.game.player.is_tired() and self.favorability > 50:
+        #     self.game.dialogue_box.show("You look tired. Remember to rest.", "Angela", self.portrait)
+        pass
