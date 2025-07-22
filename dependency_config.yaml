@@ -136,6 +136,12 @@ dependencies:
       fallbacks: []
       features: ["testing"]
 
+    - name: "pygame"
+      description: "Library for making multimedia applications like games"
+      essential: false
+      fallbacks: []
+      features: ["game_client"]
+
 # Fallback strategies for different scenarios
 fallback_strategies:
   # When TensorFlow is not available
