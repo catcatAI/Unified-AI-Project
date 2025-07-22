@@ -14,6 +14,7 @@ class Player:
         self.inventory = Inventory()
         self.covenant_unlocked = False
         self.uid = None
+        self.current_action = None
 
     def default_appearance(self):
         return {
@@ -27,6 +28,10 @@ class Player:
         pass
 
     def update(self):
+        if self.current_action:
+            # Placeholder for handling actions like mining, fishing, etc.
+            return
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.rect.x -= self.speed

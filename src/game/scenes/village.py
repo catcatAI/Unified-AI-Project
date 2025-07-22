@@ -5,24 +5,38 @@ from ..npcs import create_npc
 class VillageScene(Scene):
     def __init__(self, game):
         super().__init__(game)
-        self.background = self.game.assets['sprites']['terrains-grassland_tiles']
+        self.background = self.game.assets['sprites'].get('terrains-grassland_tiles')
         self.player = self.game.player
         self.npcs = []
         self.load_npcs()
+        self.dialogue_box = self.game.dialogue_box
 
     def load_npcs(self):
         self.npcs.append(create_npc(self.game, "murakami"))
         self.npcs.append(create_npc(self.game, "lina"))
+        self.npcs.append(create_npc(self.game, "tanaka"))
+        self.npcs.append(create_npc(self.game, "hibiki"))
 
     async def handle_events(self, event):
         await super().handle_events(event)
-        if event.type == pygame.KEYDOWN:
+        if self.dialogue_box.is_active:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
+                self.dialogue_box.hide()
+        elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
+                # NPC interaction
                 for npc in self.npcs:
-                    if self.player.rect.colliderect(npc.rect.inflate(20, 20)) and not self.game.dialogue_box.is_active:
+                    if self.player.rect.colliderect(npc.rect.inflate(20, 20)):
                         await npc.interact()
-                        self.game.dialogue_box.show(npc.dialogue[npc.dialogue_index-1], npc.name, npc.portrait)
-                        break
+                        dialogue_text = npc.dialogue[npc.dialogue_index - 1] if npc.dialogue_index > 0 else npc.dialogue[0]
+                        self.dialogue_box.show(dialogue_text, npc.name, npc.portrait)
+                        return
+
+                # Resource interaction (placeholder)
+                # In a real implementation, we would check for proximity to resource nodes
+                # and the player's equipped tool.
+                print("Interacting with resource (placeholder)")
+
 
     async def update(self):
         await super().update()
@@ -32,8 +46,14 @@ class VillageScene(Scene):
             pass
 
     def render(self, surface):
-        surface.blit(self.background, (0, 0))
+        if self.background:
+            surface.blit(self.background, (0, 0))
+        else:
+            surface.fill((100, 150, 100)) # Green fallback
+
         self.player.render(surface)
         for npc in self.npcs:
             npc.render(surface)
+
+        self.dialogue_box.render(surface)
         super().render(surface)
