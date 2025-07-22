@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import os
 import json
 import sys
@@ -50,6 +51,7 @@ class TestPersonalityManager(unittest.TestCase):
         self.pm_test_dir = PersonalityManager(personality_profiles_dir=str(self.test_profiles_dir))
 
 
+    @pytest.mark.timeout(5)
     def test_01_initialization_default_path(self):
         self.assertIsNotNone(self.pm_default)
         self.assertTrue(any(p["name"] == "miko_base" for p in self.pm_default.list_available_profiles()))
@@ -57,6 +59,7 @@ class TestPersonalityManager(unittest.TestCase):
         self.assertEqual(self.pm_default.current_personality["profile_name"], "miko_base")
         print("TestPersonalityManager.test_01_initialization_default_path PASSED")
 
+    @pytest.mark.timeout(5)
     def test_02_initialization_custom_path(self):
         self.assertIsNotNone(self.pm_test_dir)
         available_test_profiles = self.pm_test_dir.list_available_profiles()
@@ -80,6 +83,7 @@ class TestPersonalityManager(unittest.TestCase):
         print("TestPersonalityManager.test_02_initialization_custom_path PASSED")
 
 
+    @pytest.mark.timeout(5)
     def test_03_load_personality(self):
         loaded = self.pm_test_dir.load_personality("dummy_test_profile")
         self.assertTrue(loaded)
@@ -88,6 +92,7 @@ class TestPersonalityManager(unittest.TestCase):
         self.assertEqual(self.pm_test_dir.get_initial_prompt(), "Dummy says hi!")
         print("TestPersonalityManager.test_03_load_personality PASSED")
 
+    @pytest.mark.timeout(5)
     def test_04_load_non_existent_profile(self):
         # pm_default uses the actual configs/ dir. "non_existent" shouldn't be there.
         # It will try to load "miko_base" if "non_existent" fails.
@@ -96,6 +101,7 @@ class TestPersonalityManager(unittest.TestCase):
         self.assertEqual(self.pm_default.current_personality["profile_name"], "miko_base")
         print("TestPersonalityManager.test_04_load_non_existent_profile PASSED")
 
+    @pytest.mark.timeout(5)
     def test_05_get_trait(self):
         # Uses pm_default which has miko_base loaded
         prompt = self.pm_default.get_current_personality_trait("initial_prompt")

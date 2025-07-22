@@ -11,6 +11,7 @@ def mock_mqtt_client():
         mock_client_class.return_value = mock_client_instance
         yield mock_client_instance
 
+@pytest.mark.timeout(5)
 def test_mcp_connector_initialization(mock_mqtt_client):
     """Test that MCPConnector initializes correctly."""
     connector = MCPConnector('test_ai', 'localhost', 1883)
@@ -18,6 +19,7 @@ def test_mcp_connector_initialization(mock_mqtt_client):
     assert mock_mqtt_client.on_connect is not None
     assert mock_mqtt_client.on_message is not None
 
+@pytest.mark.timeout(5)
 def test_connect_and_disconnect(mock_mqtt_client):
     """Test the connect and disconnect methods."""
     connector = MCPConnector('test_ai', 'localhost', 1883)
@@ -30,6 +32,7 @@ def test_connect_and_disconnect(mock_mqtt_client):
     mock_mqtt_client.loop_stop.assert_called_once()
     mock_mqtt_client.disconnect.assert_called_once()
 
+@pytest.mark.timeout(5)
 def test_send_command(mock_mqtt_client):
     """Test sending a command."""
     connector = MCPConnector('test_ai', 'localhost', 1883)
@@ -51,6 +54,7 @@ def test_send_command(mock_mqtt_client):
     # We don't check the exact payload here because the envelope adds dynamic info
     assert '"command_name": "test_command"' in str(args[1])
 
+@pytest.mark.timeout(5)
 def test_on_message_callback(mock_mqtt_client):
     """Test the on_message callback handling."""
     callback = MagicMock()

@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from src.search.search_engine import SearchEngine
 
 class TestSearchEngine(unittest.TestCase):
@@ -6,6 +7,7 @@ class TestSearchEngine(unittest.TestCase):
     A class for testing the SearchEngine class.
     """
 
+    @pytest.mark.timeout(5)
     def test_search(self):
         """
         Tests the search method.

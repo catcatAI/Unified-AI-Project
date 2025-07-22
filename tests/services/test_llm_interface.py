@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import os
 import sys
 
@@ -6,11 +7,13 @@ from src.services.llm_interface import LLMInterface
 
 class TestLLMInterface(unittest.TestCase):
 
+    @pytest.mark.timeout(15)
     def test_01_initialization_placeholder(self):
         interface = LLMInterface()
         self.assertIsNotNone(interface)
         print("TestLLMInterface.test_01_initialization_placeholder PASSED")
 
+    @pytest.mark.timeout(15)
     def test_02_generate_response_placeholder(self):
         interface = LLMInterface()
         response = interface.generate_response("test prompt")
@@ -19,6 +22,7 @@ class TestLLMInterface(unittest.TestCase):
         self.assertIn("test prompt", response) # This part should still be true
         print("TestLLMInterface.test_02_generate_response_placeholder PASSED")
 
+    @pytest.mark.timeout(15)
     def test_03_list_models_placeholder(self):
         interface = LLMInterface()
         models = interface.list_available_models()

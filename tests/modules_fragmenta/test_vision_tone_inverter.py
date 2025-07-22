@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import os
 import sys
 
@@ -6,11 +7,13 @@ from src.modules_fragmenta.vision_tone_inverter import VisionToneInverter
 
 class TestVisionToneInverter(unittest.TestCase):
 
+    @pytest.mark.timeout(5)
     def test_01_initialization(self):
         inverter = VisionToneInverter()
         self.assertIsNotNone(inverter)
         print("TestVisionToneInverter.test_01_initialization PASSED")
 
+    @pytest.mark.timeout(5)
     def test_02_invert_visual_tone_placeholder(self):
         inverter = VisionToneInverter()
         sample_visuals = {"color": "blue"}
