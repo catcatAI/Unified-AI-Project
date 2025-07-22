@@ -1,6 +1,8 @@
 import pygame
 from .inventory import Inventory
 
+PLAYER_SPEED = 5
+
 class Player:
     def __init__(self, game, name="Player", appearance=None):
         self.game = game
@@ -10,7 +12,7 @@ class Player:
         self.rect = self.image.get_rect()
         self.rect.x = 100
         self.rect.y = 100
-        self.speed = 5
+        self.speed = PLAYER_SPEED
         self.inventory = Inventory()
         self.covenant_unlocked = False
         self.uid = None
