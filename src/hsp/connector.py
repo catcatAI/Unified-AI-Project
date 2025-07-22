@@ -255,7 +255,25 @@ class HSPConnector:
                 logger.info(f"HSPConnector ({self.ai_id}): Attempting to connect to MQTT Broker at {broker['address']}:{self.broker_port}...")
                 self.mqtt_client.connect(broker['address'], self.broker_port, keepalive=60)
                 self.mqtt_client.loop_start() # Starts a background thread for network operations, callbacks
-                return True
+                
+                # Wait for connection to be established
+                import time
+                max_wait_time = 5.0  # Maximum wait time in seconds
+                wait_interval = 0.1  # Check interval in seconds
+                elapsed_time = 0.0
+                
+                while not self.is_connected and elapsed_time < max_wait_time:
+                    time.sleep(wait_interval)
+                    elapsed_time += wait_interval
+                
+                if self.is_connected:
+                    logger.info(f"HSPConnector ({self.ai_id}): Successfully connected to broker {broker['address']}")
+                    return True
+                else:
+                    logger.warning(f"HSPConnector ({self.ai_id}): Connection timeout to broker {broker['address']}")
+                    self.mqtt_client.loop_stop()
+                    continue
+                    
             except Exception as e:
                 logger.warning(f"HSPConnector ({self.ai_id}): Failed to connect to broker {broker['address']}: {e}")
                 continue

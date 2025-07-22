@@ -1,5 +1,6 @@
 # src/core_ai/learning/learning_manager.py
 import uuid
+import re
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 import json
