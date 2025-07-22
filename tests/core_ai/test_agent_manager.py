@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import sys
 import time
 import os
@@ -35,6 +36,7 @@ class TestAgentManager(unittest.TestCase):
         """Clean up after each test."""
         self.manager.shutdown_all_agents()
 
+    @pytest.mark.timeout(5)
     def test_initialization(self):
         """Test that the AgentManager initializes correctly."""
         self.assertEqual(self.manager.python_executable, self.python_executable)
@@ -42,6 +44,7 @@ class TestAgentManager(unittest.TestCase):
         self.assertEqual(len(self.manager.active_agents), 0)
         self.assertEqual(self.manager.agent_script_map, self.mock_agent_scripts)
 
+    @pytest.mark.timeout(5)
     def test_launch_agent_success(self):
         """Test launching a valid agent."""
         agent_name = 'data_analysis_agent'
@@ -52,6 +55,7 @@ class TestAgentManager(unittest.TestCase):
         process = self.manager.active_agents[agent_name]
         self.assertIsNone(process.poll(), "Process should be running")
 
+    @pytest.mark.timeout(5)
     def test_launch_agent_not_found(self):
         """Test launching a non-existent agent."""
         agent_name = 'non_existent_agent'
@@ -59,6 +63,7 @@ class TestAgentManager(unittest.TestCase):
         self.assertIsNone(pid)
         self.assertNotIn(agent_name, self.manager.active_agents)
 
+    @pytest.mark.timeout(5)
     def test_launch_agent_already_running(self):
         """Test launching an agent that is already running."""
         agent_name = 'data_analysis_agent'
@@ -71,6 +76,7 @@ class TestAgentManager(unittest.TestCase):
         second_pid = self.manager.launch_agent(agent_name)
         self.assertEqual(first_pid, second_pid, "Should return the same PID if already running")
 
+    @pytest.mark.timeout(5)
     def test_shutdown_agent_success(self):
         """Test shutting down a running agent."""
         agent_name = 'data_analysis_agent'
@@ -81,12 +87,14 @@ class TestAgentManager(unittest.TestCase):
         self.assertTrue(success)
         self.assertNotIn(agent_name, self.manager.active_agents)
 
+    @pytest.mark.timeout(5)
     def test_shutdown_agent_not_running(self):
         """Test shutting down an agent that is not running."""
         agent_name = 'data_analysis_agent'
         success = self.manager.shutdown_agent(agent_name)
         self.assertFalse(success)
 
+    @pytest.mark.timeout(5)
     def test_shutdown_all_agents(self):
         """Test shutting down all running agents."""
         agent1 = 'data_analysis_agent'

@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import os
 import sys
 from io import StringIO
@@ -8,6 +9,7 @@ from src.interfaces.cli import main as cli_main
 
 class TestCLI(unittest.TestCase):
 
+    @pytest.mark.timeout(5)
     def test_01_cli_no_args(self):
         """Test CLI response when no arguments are provided."""
         with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
@@ -19,6 +21,7 @@ class TestCLI(unittest.TestCase):
     @patch('src.interfaces.cli.main.get_services')
     @patch('src.interfaces.cli.main.shutdown_services')
     @patch('asyncio.run')
+    @pytest.mark.timeout(5)
     def test_02_cli_query_with_emotion(self, mock_async_run, mock_shutdown, mock_get, mock_init):
         """Test the 'query' command with LLM and Emotion integration."""
         mock_dm = MagicMock()
@@ -47,6 +50,7 @@ class TestCLI(unittest.TestCase):
     @patch('src.interfaces.cli.main.get_services')
     @patch('src.interfaces.cli.main.shutdown_services')
     @patch('asyncio.run')
+    @pytest.mark.timeout(5)
     def test_05_cli_query_crisis_response(self, mock_async_run, mock_shutdown, mock_get, mock_init):
         """Test the 'query' command for crisis response."""
         mock_dm = MagicMock()

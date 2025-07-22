@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import json
 from pathlib import Path
 import shutil # For cleaning up test directories
@@ -75,6 +76,7 @@ class TestFormulaEngine(unittest.TestCase):
         if self.test_dir.exists():
             shutil.rmtree(self.test_dir)
 
+    @pytest.mark.timeout(5)
     def test_load_formulas_valid_file(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
         expected_active_formulas_count = sum(1 for f in self.valid_formulas_data if f.get("enabled", True))
@@ -83,30 +85,36 @@ class TestFormulaEngine(unittest.TestCase):
         self.assertIn("response_template", engine.formulas[0]) # Check new field loaded
         self.assertEqual(engine.formulas[0]["response_template"], "Greetings, {user_name}! It's a pleasure to see you.")
 
+    @pytest.mark.timeout(5)
     def test_load_formulas_file_not_found(self):
         engine = FormulaEngine(formulas_filepath=str(self.test_dir / "non_existent.json"))
         self.assertEqual(len(engine.formulas), 0)
 
+    @pytest.mark.timeout(5)
     def test_load_formulas_malformed_json(self):
         engine = FormulaEngine(formulas_filepath=str(self.malformed_json_path))
         self.assertEqual(len(engine.formulas), 0)
 
+    @pytest.mark.timeout(5)
     def test_load_formulas_empty_list(self):
         engine = FormulaEngine(formulas_filepath=str(self.empty_list_path))
         self.assertEqual(len(engine.formulas), 0)
 
+    @pytest.mark.timeout(5)
     def test_match_input_simple_match(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
         matched = engine.match_input("Hello world")
         self.assertIsNotNone(matched)
         self.assertEqual(matched["name"], "greeting_high") # type: ignore
 
+    @pytest.mark.timeout(5)
     def test_match_input_case_insensitive(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
         matched = engine.match_input("HI THERE, friend!")
         self.assertIsNotNone(matched)
         self.assertEqual(matched["name"], "greeting_high") # type: ignore
 
+    @pytest.mark.timeout(5)
     def test_match_input_priority(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
         # "hello" is in "greeting_high" (prio 20)
@@ -122,21 +130,25 @@ class TestFormulaEngine(unittest.TestCase):
         self.assertEqual(matched_only_hey["name"], "greeting_low") # type: ignore
 
 
+    @pytest.mark.timeout(5)
     def test_match_input_no_match(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
         matched = engine.match_input("Some random text without keywords.")
         self.assertIsNone(matched)
 
+    @pytest.mark.timeout(5)
     def test_match_input_disabled_formula(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
         matched = engine.match_input("secret word") # Condition of a disabled formula
         self.assertIsNone(matched)
 
+    @pytest.mark.timeout(5)
     def test_match_input_empty_input(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
         matched = engine.match_input("")
         self.assertIsNone(matched)
 
+    @pytest.mark.timeout(5)
     def test_execute_formula(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
         formula_to_execute = self.valid_formulas_data[0] # "greeting_high"
@@ -148,6 +160,7 @@ class TestFormulaEngine(unittest.TestCase):
         }
         self.assertEqual(result, expected_result)
 
+    @pytest.mark.timeout(5)
     def test_execute_formula_no_params(self):
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path))
         # Find the "farewell" formula which has no explicit parameters in the dummy data

@@ -1,4 +1,5 @@
 import aiounittest
+import pytest
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
 
 class TestKnowledgeUpdate(aiounittest.AsyncTestCase):
@@ -6,6 +7,7 @@ class TestKnowledgeUpdate(aiounittest.AsyncTestCase):
     A class for testing the knowledge update capabilities of the system.
     """
 
+    @pytest.mark.timeout(10)
     async def test_knowledge_update(self):
         """
         Tests the knowledge update capabilities of the system.

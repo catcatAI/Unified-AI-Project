@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from unittest.mock import patch, MagicMock
 
 # This test file is a placeholder for future tests of the Node.js backend services'
@@ -13,6 +14,7 @@ from unittest.mock import patch, MagicMock
 
 class TestNodeServicesIntegration(unittest.TestCase):
 
+    @pytest.mark.timeout(15)
     def test_placeholder_node_services_integration(self):
         """Placeholder test for Node.js services integration with Python backend."""
         # Example: Mocking a successful API call from a Node.js service to the Python backend

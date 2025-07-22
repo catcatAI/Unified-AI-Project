@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from unittest.mock import patch, mock_open
 import os
 import glob
@@ -25,6 +26,7 @@ class TestLightweightCodeModel(unittest.TestCase):
         self.temp_dir_obj.cleanup()
         # self.logger_patcher.stop()
 
+    @pytest.mark.timeout(5)
     def test_list_tool_files(self):
         # Create dummy files and a subdirectory in the temp_tools_dir
         self._create_dummy_tool_file("tool_one.py")
@@ -53,6 +55,7 @@ class TestLightweightCodeModel(unittest.TestCase):
         self.assertCountEqual(tool_files, expected_files,
                               "Should list correct tool files, excluding __init__ and dispatcher, and include those in subdirs.")
 
+    @pytest.mark.timeout(5)
     def test_list_tool_files_non_existent_dir(self):
         # This test now implicitly uses the logger due to changes in __init__
         with self.assertLogs(logger='src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
@@ -62,6 +65,7 @@ class TestLightweightCodeModel(unittest.TestCase):
         tool_files = model.list_tool_files() # Should return empty list as dir doesn't exist
         self.assertEqual(tool_files, [])
 
+    @pytest.mark.timeout(5)
     def test_analyze_tool_file_simple_class_and_function(self):
         sample_code = """
 import typing
@@ -151,6 +155,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
         self.assertEqual(module_func["returns"], "List[float]")
 
 
+    @pytest.mark.timeout(5)
     def test_analyze_tool_file_no_classes_or_functions(self):
         sample_code = "# Just comments and variables\nPI = 3.14"
         m = mock_open(read_data=sample_code)
@@ -162,6 +167,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
         self.assertEqual(len(analysis_result["classes"]), 0)
         self.assertEqual(len(analysis_result["functions"]), 0)
 
+    @pytest.mark.timeout(5)
     def test_analyze_tool_file_parsing_error(self):
         sample_code = "def func(a: int -> str:" # Syntax error
         m = mock_open(read_data=sample_code)
@@ -170,6 +176,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
             analysis_result = self.model.analyze_tool_file("dummy_path/error_tool.py")
         self.assertIsNone(analysis_result, "Should return None on parsing error.")
 
+    @pytest.mark.timeout(5)
     def test_analyze_tool_file_not_found(self):
         with patch('os.path.isfile', return_value=False):
             analysis_result = self.model.analyze_tool_file("non_existent_file.py")
@@ -183,6 +190,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
             f.write(content)
         return filepath
 
+    @pytest.mark.timeout(5)
     def test_get_tool_structure_direct_valid_path(self):
         dummy_tool_path = self._create_dummy_tool_file("actual_tool.py")
         # We mock analyze_tool_file to isolate testing of path resolution logic
@@ -191,6 +199,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
             mock_analyze.assert_called_once_with(dummy_tool_path)
             self.assertEqual(result, {"analysis": "done"})
 
+    @pytest.mark.timeout(5)
     def test_get_tool_structure_direct_invalid_path(self):
         invalid_path = os.path.join(self.temp_tools_dir, "non_existent_tool.py")
         with self.assertLogs(logger='src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
@@ -198,6 +207,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
             self.assertIsNone(result)
         self.assertTrue(any(f"appears to be a path but was not found" in record.getMessage() for record in cm.records))
 
+    @pytest.mark.timeout(5)
     def test_get_tool_structure_path_looks_like_path_but_not_found(self):
         # This tests the case where the input string contains path separators but doesn't exist
         path_like_non_existent = "some_dir/non_existent_tool.py"
@@ -209,6 +219,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
         self.assertIsNone(result)
         self.assertTrue(any(f"appears to be a path but was not found" in record.getMessage() for record in cm.records))
 
+    @pytest.mark.timeout(5)
     def test_get_tool_structure_resolve_exact_name_dot_py(self):
         self._create_dummy_tool_file("exact_match.py")
         with patch.object(self.model, 'analyze_tool_file', return_value={"analyzed": "exact_match.py"}) as mock_analyze:
@@ -223,6 +234,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
             mock_analyze.assert_called_with(os.path.join(self.temp_tools_dir, "exact_match.py"))
             self.assertEqual(result_without_ext, {"analyzed": "exact_match.py"})
 
+    @pytest.mark.timeout(5)
     def test_get_tool_structure_resolve_tool_prefix_pattern(self):
         self._create_dummy_tool_file("tool_sample_prefix.py")
         with patch.object(self.model, 'analyze_tool_file', return_value={"analyzed": "tool_sample_prefix.py"}) as mock_analyze:
@@ -230,6 +242,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
             mock_analyze.assert_called_once_with(os.path.join(self.temp_tools_dir, "tool_sample_prefix.py"))
             self.assertEqual(result, {"analyzed": "tool_sample_prefix.py"})
 
+    @pytest.mark.timeout(5)
     def test_get_tool_structure_resolve_suffix_tool_pattern(self):
         self._create_dummy_tool_file("sample_suffix_tool.py")
         with patch.object(self.model, 'analyze_tool_file', return_value={"analyzed": "sample_suffix_tool.py"}) as mock_analyze:
@@ -237,6 +250,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
             mock_analyze.assert_called_once_with(os.path.join(self.temp_tools_dir, "sample_suffix_tool.py"))
             self.assertEqual(result, {"analyzed": "sample_suffix_tool.py"})
 
+    @pytest.mark.timeout(5)
     def test_get_tool_structure_prefers_exact_over_pattern(self):
         self._create_dummy_tool_file("pref_exact.py", content="# exact content")
         self._create_dummy_tool_file("tool_pref_exact.py", content="# tool_prefix content")
@@ -249,6 +263,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
             mock_analyze.assert_called_once_with(os.path.join(self.temp_tools_dir, "pref_exact.py"))
             self.assertEqual(result, {"path": os.path.join(self.temp_tools_dir, "pref_exact.py")})
 
+    @pytest.mark.timeout(5)
     def test_get_tool_structure_ambiguous_patterns(self):
         self._create_dummy_tool_file("tool_ambiguous_pattern.py")
         self._create_dummy_tool_file("ambiguous_pattern_tool.py")
@@ -257,12 +272,14 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
         self.assertIsNone(result)
         self.assertTrue(any("Ambiguous tool name 'ambiguous_pattern'" in record.getMessage() for record in cm.records))
 
+    @pytest.mark.timeout(5)
     def test_get_tool_structure_name_not_found(self):
         with self.assertLogs(logger='src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
             result = self.model.get_tool_structure("completely_non_existent_tool_name")
         self.assertIsNone(result)
         self.assertTrue(any("Could not resolve tool 'completely_non_existent_tool_name'" in record.getMessage() for record in cm.records))
 
+    @pytest.mark.timeout(5)
     def test_get_tool_structure_invalid_tools_directory(self):
         bad_dir_path = "path_that_does_not_exist_at_all_xyz"
 

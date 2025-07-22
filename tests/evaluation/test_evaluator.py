@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from src.evaluation.evaluator import Evaluator
 
 class TestEvaluator(unittest.TestCase):
@@ -6,6 +7,7 @@ class TestEvaluator(unittest.TestCase):
     A class for testing the Evaluator class.
     """
 
+    @pytest.mark.timeout(5)
     def test_evaluate(self):
         """
         Tests the evaluate method.

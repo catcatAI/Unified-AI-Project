@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import asyncio
 import sys
 import os
@@ -24,6 +25,7 @@ class TestAgentCollaboration(unittest.TestCase):
         """Shutdown services after all tests."""
         shutdown_services()
 
+    @pytest.mark.timeout(10)
     def test_handle_complex_project_with_dag(self):
         """
         End-to-end test for a complex project involving a DAG of tasks.

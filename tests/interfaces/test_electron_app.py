@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from unittest.mock import patch, MagicMock
 
 # This test file is a placeholder for future tests of the Electron application's
@@ -13,6 +14,7 @@ from unittest.mock import patch, MagicMock
 
 class TestElectronAppIntegration(unittest.TestCase):
 
+    @pytest.mark.timeout(5)
     def test_placeholder_electron_app_integration(self):
         """Placeholder test for Electron app integration with Python backend."""
         # Example: Mocking a successful API call from the Electron app to the Python backend

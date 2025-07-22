@@ -1,5 +1,6 @@
 # tests/services/test_resource_awareness_service.py
 import unittest
+import pytest
 import os
 import yaml
 from pathlib import Path
@@ -68,6 +69,7 @@ class TestResourceAwarenessService(unittest.TestCase):
         except OSError:
             pass # Ignore if dir removal fails (e.g. other test files present)
 
+    @pytest.mark.timeout(15)
     def test_load_valid_config(self):
         service = ResourceAwarenessService(config_filepath=str(self.valid_config_path))
         self.assertIsNotNone(service.profile)
@@ -88,6 +90,7 @@ class TestResourceAwarenessService(unittest.TestCase):
 
         self.assertTrue(service.profile.get("gpu_available"))
 
+    @pytest.mark.timeout(15)
     def test_load_non_existent_config_falls_back_to_default(self):
         # Ensure the default path doesn't accidentally exist from other tests or real config
         # For a truly isolated test of non-existent, we use a unique path.
@@ -102,11 +105,13 @@ class TestResourceAwarenessService(unittest.TestCase):
         self.assertIsNotNone(disk_config)
         self.assertEqual(disk_config.get("space_gb"), 1.0) # Check against safe default value
 
+    @pytest.mark.timeout(15)
     def test_load_malformed_yaml_falls_back_to_default(self):
         service = ResourceAwarenessService(config_filepath=str(self.malformed_config_path))
         self.assertIsNotNone(service.profile)
         self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorLoading")
 
+    @pytest.mark.timeout(15)
     def test_load_incomplete_yaml_falls_back_to_default(self):
         # Tests if the profile data is missing required keys after YAML parsing.
         service = ResourceAwarenessService(config_filepath=str(self.incomplete_config_path))
@@ -115,6 +120,7 @@ class TestResourceAwarenessService(unittest.TestCase):
                          f"Profile loaded: {service.profile}")
 
 
+    @pytest.mark.timeout(15)
     def test_default_config_path_loading_if_file_exists(self):
         # This test depends on whether the actual default config file exists and is valid.
         # For controlled testing, we can create a dummy default file.

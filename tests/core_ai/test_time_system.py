@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import os
 import sys
 from datetime import datetime, timedelta
@@ -18,10 +19,12 @@ class TestTimeSystem(unittest.TestCase):
     def setUp(self):
         self.time_sys = TimeSystem()
 
+    @pytest.mark.timeout(5)
     def test_01_initialization(self):
         self.assertIsNotNone(self.time_sys)
         print("TestTimeSystem.test_01_initialization PASSED")
 
+    @pytest.mark.timeout(5)
     def test_02_get_current_time(self):
         current_time = self.time_sys.get_current_time()
         self.assertIsInstance(current_time, datetime)
@@ -29,6 +32,7 @@ class TestTimeSystem(unittest.TestCase):
         self.assertLess(abs((datetime.now() - current_time).total_seconds()), 1)
         print("TestTimeSystem.test_02_get_current_time PASSED")
 
+    @pytest.mark.timeout(5)
     def test_03_get_formatted_current_time(self):
         formatted_time = self.time_sys.get_formatted_current_time()
         # Default format is "%Y-%m-%d %H:%M:%S"
@@ -41,18 +45,21 @@ class TestTimeSystem(unittest.TestCase):
         self.assertTrue(parsed_ok)
         print("TestTimeSystem.test_03_get_formatted_current_time PASSED")
 
+    @pytest.mark.timeout(5)
     def test_04_set_reminder_placeholder(self):
         # Placeholder just returns True
         result = self.time_sys.set_reminder("in 5 minutes", "test reminder")
         self.assertTrue(result)
         print("TestTimeSystem.test_04_set_reminder_placeholder PASSED")
 
+    @pytest.mark.timeout(5)
     def test_05_check_due_reminders_placeholder(self):
         # Placeholder just returns empty list
         reminders = self.time_sys.check_due_reminders()
         self.assertEqual(reminders, [])
         print("TestTimeSystem.test_05_check_due_reminders_placeholder PASSED")
 
+    @pytest.mark.timeout(5)
     def test_06_get_time_of_day_segment(self):
         print("\nRunning test_06_get_time_of_day_segment...")
         test_cases = [

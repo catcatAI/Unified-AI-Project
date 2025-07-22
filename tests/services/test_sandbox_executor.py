@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from unittest.mock import patch, MagicMock, mock_open, call
 import subprocess
 import json
@@ -20,6 +21,7 @@ class TestSandboxExecutor(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.join')
     @patch('subprocess.run')
+    @pytest.mark.timeout(15)
     def test_run_successful_execution(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir):
         # --- Setup Mocks ---
         mock_temp_dir_path = "/tmp/fake_temp_dir"
@@ -78,6 +80,7 @@ class TestSandboxExecutor(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.join')
     @patch('subprocess.run')
+    @pytest.mark.timeout(15)
     def test_run_execution_error_in_tool(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir):
         mock_temp_dir_path = "/tmp/fake_temp_dir_error"
         mock_temp_dir_context_manager = MagicMock()
@@ -103,6 +106,7 @@ class TestSandboxExecutor(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.join')
     @patch('subprocess.run')
+    @pytest.mark.timeout(15)
     def test_run_timeout_expired(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir):
         mock_temp_dir_path = "/tmp/fake_temp_dir_timeout"
         # ... (similar setup for temp_dir and os.path.join mocks) ...
@@ -123,6 +127,7 @@ class TestSandboxExecutor(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.join')
     @patch('subprocess.run')
+    @pytest.mark.timeout(15)
     def test_run_non_json_output(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir):
         mock_temp_dir_path = "/tmp/fake_temp_dir_nonjson"
         # ... (similar setup for temp_dir and os.path.join mocks) ...
@@ -147,6 +152,7 @@ class TestSandboxExecutor(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.join')
     @patch('subprocess.run')
+    @pytest.mark.timeout(15)
     def test_run_stderr_output(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir):
         mock_temp_dir_path = "/tmp/fake_temp_dir_stderr"
         # ... (similar setup for temp_dir and os.path.join mocks) ...

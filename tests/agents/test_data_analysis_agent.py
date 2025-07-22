@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import asyncio
 import uuid
 import os
@@ -44,6 +45,7 @@ class TestDataAnalysisAgent(unittest.TestCase):
         self.agent = DataAnalysisAgent(agent_id=self.agent_id)
         self.agent.hsp_connector = self.mock_services["hsp_connector"]
 
+    @pytest.mark.timeout(10)
     def test_initialization(self):
         """Test that the agent initializes correctly and advertises its capabilities."""
         self.assertEqual(self.agent.agent_id, self.agent_id)
@@ -53,6 +55,7 @@ class TestDataAnalysisAgent(unittest.TestCase):
         self.assertTrue(len(self.agent.capabilities) > 0)
         self.assertEqual(self.agent.capabilities[0]['name'], 'CSV Data Analyzer')
 
+    @pytest.mark.timeout(10)
     def test_handle_task_request_success(self):
         """Test the agent's handling of a successful task request."""
         # 1. Configure the mock ToolDispatcher to return a successful response
@@ -96,6 +99,7 @@ class TestDataAnalysisAgent(unittest.TestCase):
         self.assertEqual(sent_payload['payload'], "Analysis complete: 2 rows, 2 columns.")
         self.assertIsNone(sent_payload['error_details'])
 
+    @pytest.mark.timeout(10)
     def test_handle_task_request_tool_failure(self):
         """Test the agent's handling of a task where the tool fails."""
         # 1. Configure the mock ToolDispatcher to return a failure response

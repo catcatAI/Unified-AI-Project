@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import os
 import sys
 import yaml
@@ -42,6 +43,7 @@ class TestStartupManager(unittest.TestCase):
             yaml.dump(config_data, f)
 
     @patch('startup_with_fallbacks.is_dependency_available')
+    @pytest.mark.timeout(5)
     def test_load_startup_modes_from_config(self, mock_is_dependency_available):
         mock_is_dependency_available.return_value = True # Assume all dependencies are available for this test
 
@@ -73,6 +75,7 @@ class TestStartupManager(unittest.TestCase):
         self.assertEqual(manager.startup_modes['test_full']['features'], ['basic_web', 'core_ai'])
 
     @patch('startup_with_fallbacks.is_dependency_available')
+    @pytest.mark.timeout(5)
     def test_check_mode_compatibility(self, mock_is_dependency_available):
         test_config = {
             'installation': {
@@ -111,6 +114,7 @@ class TestStartupManager(unittest.TestCase):
         self.assertEqual(compatibility['disabled_features'], ['basic_web'])
 
     @patch('startup_with_fallbacks.is_dependency_available')
+    @pytest.mark.timeout(5)
     def test_suggest_best_mode(self, mock_is_dependency_available):
         test_config = {
             'installation': {

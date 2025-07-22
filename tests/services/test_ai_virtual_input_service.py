@@ -1,5 +1,6 @@
 # tests/services/test_ai_virtual_input_service.py
 import unittest
+import pytest
 from typing import Tuple, Optional, List, Dict, Any
 
 from src.services.ai_virtual_input_service import AIVirtualInputService, VirtualInputElementDescription
@@ -18,12 +19,14 @@ class TestAIVirtualInputService(unittest.TestCase):
         """Clean up after each test method."""
         self.avis.clear_action_log()
 
+    @pytest.mark.timeout(15)
     def test_initialization_defaults(self):
         self.assertEqual(self.avis.mode, "simulation_only")
         self.assertEqual(self.avis.virtual_cursor_position, (0.5, 0.5))
         self.assertIsNone(self.avis.virtual_focused_element_id)
         self.assertEqual(len(self.avis.get_action_log()), 0)
 
+    @pytest.mark.timeout(15)
     def test_process_mouse_command_move_relative_to_window(self):
         command: VirtualMouseCommand = { # type: ignore
             "action_type": "move_relative_to_window",
@@ -43,6 +46,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(log[0]["command_details"], command)
         self.assertEqual(log[0]["outcome"], response)
 
+    @pytest.mark.timeout(15)
     def test_process_mouse_command_move_clamps_coordinates(self):
         command: VirtualMouseCommand = { # type: ignore
             "action_type": "move_relative_to_window",
@@ -52,6 +56,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.avis.process_mouse_command(command)
         self.assertEqual(self.avis.virtual_cursor_position, (1.0, 0.0)) # Should be clamped
 
+    @pytest.mark.timeout(15)
     def test_process_mouse_command_click_simulation(self):
         command: VirtualMouseCommand = { # type: ignore
             "action_type": "click",
@@ -75,6 +80,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(len(log), 1)
         self.assertEqual(log[0]["command_details"], command)
 
+    @pytest.mark.timeout(15)
     def test_process_mouse_command_unimplemented_action_logs(self):
         command: VirtualMouseCommand = {"action_type": "drag_start"} # type: ignore Changed from "scroll"
         response = self.avis.process_mouse_command(command)
@@ -82,6 +88,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(response["action"], "drag_start") # Ensure action reflects the command
         self.assertEqual(len(self.avis.get_action_log()), 1)
 
+    @pytest.mark.timeout(15)
     def test_process_keyboard_command_type_string(self):
         command: VirtualKeyboardCommand = { # type: ignore
             "action_type": "type_string",
@@ -122,6 +129,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(typed_element.get("value"), "hello world")
 
 
+    @pytest.mark.timeout(15)
     def test_process_keyboard_command_type_string_no_target(self):
         # Setup: Load a UI with a focusable element and focus it
         mock_ui_structure: List[VirtualInputElementDescription] = [
@@ -146,6 +154,7 @@ class TestAIVirtualInputService(unittest.TestCase):
     # The `else` branch in process_keyboard_command would only be hit by an
     # undefined action_type string, which is not a valid test of defined types.
 
+    @pytest.mark.timeout(15)
     def test_get_action_log_and_clear(self):
         self.assertEqual(len(self.avis.get_action_log()), 0)
         mouse_cmd: VirtualMouseCommand = {"action_type": "hover"} # type: ignore
@@ -161,6 +170,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(len(log_copy), 1)
 
 
+    @pytest.mark.timeout(15)
     def test_get_virtual_state(self):
         self.avis.virtual_cursor_position = (0.1, 0.2)
         self.avis.virtual_focused_element_id = "elem123"
@@ -173,6 +183,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(state["virtual_focused_element_id"], "elem123") # type_string doesn't change focus if no target_element_id
         self.assertEqual(state["action_log_count"], 1)
 
+    @pytest.mark.timeout(15)
     def test_load_and_get_virtual_ui(self):
         self.assertEqual(len(self.avis.get_current_virtual_ui()), 0, "Initial virtual UI should be empty.")
 
@@ -200,6 +211,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         original_internal_label = self.avis.virtual_ui_elements[0].get("children", [])[0].get("label_text")
         self.assertEqual(original_internal_label, "OK", "Modifying copy from get_current_virtual_ui should not alter internal state.")
 
+    @pytest.mark.timeout(15)
     def test_find_element_by_id(self):
         child_button: VirtualInputElementDescription = {"element_id": "btn_child", "element_type": "button"} # type: ignore
         parent_panel: VirtualInputElementDescription = {"element_id": "panel_parent", "element_type": "panel", "children": [child_button]} # type: ignore
@@ -222,6 +234,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         not_found = self.avis._find_element_by_id("non_existent_id")
         self.assertIsNone(not_found)
 
+    @pytest.mark.timeout(15)
     def test_process_mouse_command_hover(self):
         command: VirtualMouseCommand = { # type: ignore
             "action_type": "hover",
@@ -238,6 +251,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(len(log), 1)
         self.assertEqual(log[0]["command_details"], command)
 
+    @pytest.mark.timeout(15)
     def test_process_mouse_command_scroll(self):
         command: VirtualMouseCommand = { # type: ignore
             "action_type": "scroll",
@@ -255,6 +269,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(len(log), 1)
         self.assertEqual(log[0]["command_details"], command)
 
+    @pytest.mark.timeout(15)
     def test_process_keyboard_command_press_keys_with_target(self):
         command: VirtualKeyboardCommand = { # type: ignore
             "action_type": "press_keys",
@@ -271,6 +286,7 @@ class TestAIVirtualInputService(unittest.TestCase):
         self.assertEqual(len(log), 1)
         self.assertEqual(log[0]["command_details"], command)
 
+    @pytest.mark.timeout(15)
     def test_process_keyboard_command_special_key_with_target(self):
         command: VirtualKeyboardCommand = { # type: ignore
             "action_type": "special_key",

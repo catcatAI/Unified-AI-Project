@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import os
 import sys
 from unittest.mock import patch # Import patch
@@ -27,6 +28,7 @@ class TestCrisisSystem(unittest.TestCase):
         self.crisis_sys_default_config = CrisisSystem() # Test with its internal defaults
         self.crisis_sys_custom_config = CrisisSystem(config=self.test_config)
 
+    @pytest.mark.timeout(5)
     def test_01_initialization(self):
         self.assertIsNotNone(self.crisis_sys_default_config)
         self.assertEqual(self.crisis_sys_default_config.get_current_crisis_level(), 0)
@@ -38,12 +40,14 @@ class TestCrisisSystem(unittest.TestCase):
         self.assertEqual(self.crisis_sys_custom_config.default_crisis_level, self.test_config["default_crisis_level_on_keyword"])
         print("TestCrisisSystem.test_01_initialization PASSED")
 
+    @pytest.mark.timeout(5)
     def test_02_assess_normal_input(self):
         level = self.crisis_sys_custom_config.assess_input_for_crisis({"text": "Tell me a story."})
         self.assertEqual(level, 0)
         self.assertEqual(self.crisis_sys_custom_config.get_current_crisis_level(), 0)
         print("TestCrisisSystem.test_02_assess_normal_input PASSED")
 
+    @pytest.mark.timeout(5)
     def test_03_assess_crisis_input_escalation(self):
         # Test with custom config keywords
         level = self.crisis_sys_custom_config.assess_input_for_crisis({"text": "This is an emergency!"})
@@ -58,6 +62,7 @@ class TestCrisisSystem(unittest.TestCase):
         print("TestCrisisSystem.test_03_assess_crisis_input_escalation PASSED")
         self.crisis_sys_custom_config.resolve_crisis("Test cleanup") # Cleanup for next tests
 
+    @pytest.mark.timeout(5)
     def test_04_resolve_crisis(self):
         self.crisis_sys_custom_config.assess_input_for_crisis({"text": "I feel unsafe."})
         self.assertNotEqual(self.crisis_sys_custom_config.get_current_crisis_level(), 0, "Crisis level should have been raised.")
@@ -66,6 +71,7 @@ class TestCrisisSystem(unittest.TestCase):
         self.assertEqual(self.crisis_sys_custom_config.get_current_crisis_level(), 0)
         print("TestCrisisSystem.test_04_resolve_crisis PASSED")
 
+    @pytest.mark.timeout(5)
     def test_05_trigger_protocol(self):
         # This test is more about checking if the _trigger_protocol is called and logs something.
         # We can use unittest.mock.patch to spy on print or a logging mechanism if implemented.

@@ -32,6 +32,7 @@ def rag_manager():
     
     return RAGManager()
 
+@pytest.mark.timeout(5)
 def test_rag_manager_initialization(rag_manager):
     """Test that RAGManager initializes correctly."""
     assert rag_manager is not None
@@ -41,6 +42,7 @@ def test_rag_manager_initialization(rag_manager):
     rag_manager.model.get_sentence_embedding_dimension.assert_called_once()
     mock_faiss_index.assert_called_with(768)
 
+@pytest.mark.timeout(5)
 def test_add_document(rag_manager):
     """Test adding a document to the RAGManager."""
     text = 'This is a test document.'
@@ -53,6 +55,7 @@ def test_add_document(rag_manager):
     # Check that the document is stored
     assert rag_manager.documents[rag_manager.index.ntotal - 1] == text
 
+@pytest.mark.timeout(5)
 def test_search(rag_manager):
     """Test searching for a document."""
     rag_manager.add_document('This is a test document.')

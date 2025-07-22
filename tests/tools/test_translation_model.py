@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import os
 import json
 import sys
@@ -56,6 +57,7 @@ class TestTranslationModelComponents(unittest.TestCase):
         translation_tool._translation_dictionary = None
         _load_dictionary() # This will now load DUMMY_DICTIONARY_PATH
 
+    @pytest.mark.timeout(5)
     def test_01_load_dictionary(self):
         print("\nRunning test_01_load_dictionary...")
         dictionary = _load_dictionary() # Should use the dummy dictionary
@@ -65,6 +67,7 @@ class TestTranslationModelComponents(unittest.TestCase):
         self.assertEqual(dictionary["zh_to_en"]["你好"], "Hello")
         print("test_01_load_dictionary PASSED")
 
+    @pytest.mark.timeout(5)
     def test_02_detect_language(self):
         print("\nRunning test_02_detect_language...")
         self.assertEqual(_detect_language("你好世界"), "zh")
@@ -74,6 +77,7 @@ class TestTranslationModelComponents(unittest.TestCase):
         self.assertEqual(_detect_language(""), None)
         print("test_02_detect_language PASSED")
 
+    @pytest.mark.timeout(5)
     def test_03_translate_function(self):
         print("\nRunning test_03_translate_function...")
         # Test with dummy dictionary
@@ -96,6 +100,7 @@ class TestTranslationModelComponents(unittest.TestCase):
         self.assertEqual(translate("你好", "zh"), "你好")
         print("test_03_translate_function PASSED")
 
+    @pytest.mark.timeout(5)
     def test_04_request_model_upgrade_hook(self):
         print("\nRunning test_04_request_model_upgrade_hook...")
         # This test just ensures the function can be called without error
@@ -106,6 +111,7 @@ class TestTranslationModelComponents(unittest.TestCase):
         except Exception as e:
             self.fail(f"request_model_upgrade raised an exception: {e}")
 
+    @pytest.mark.timeout(5)
     def test_05_tool_dispatcher_translation_routing(self):
         print("\nRunning test_05_tool_dispatcher_translation_routing...")
         dispatcher = ToolDispatcher()
@@ -145,6 +151,7 @@ class TestTranslationModelComponents(unittest.TestCase):
 
         print("test_05_tool_dispatcher_translation_routing PASSED")
 
+    @pytest.mark.timeout(5)
     def test_06_dictionary_load_failure(self):
         print("\nRunning test_06_dictionary_load_failure...")
         original_path = translation_tool.DICTIONARY_PATH

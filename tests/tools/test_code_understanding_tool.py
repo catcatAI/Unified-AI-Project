@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from unittest.mock import patch, MagicMock
 import os
 
@@ -20,6 +21,7 @@ class TestCodeUnderstandingTool(unittest.TestCase):
         # Instantiate the tool, which will now use self.mock_lwm_instance
         self.tool = CodeUnderstandingTool()
 
+    @pytest.mark.timeout(5)
     def test_list_tools_success(self):
         # Configure the mock_lwm_instance (which is self.tool.code_model)
         mock_tool_files = [
@@ -35,6 +37,7 @@ class TestCodeUnderstandingTool(unittest.TestCase):
         self.assertEqual(result, expected_output)
         self.mock_lwm_instance.list_tool_files.assert_called_once()
 
+    @pytest.mark.timeout(5)
     def test_list_tools_no_tools_found(self):
         self.mock_lwm_instance.list_tool_files.return_value = []
 
@@ -43,6 +46,7 @@ class TestCodeUnderstandingTool(unittest.TestCase):
 
         self.assertEqual(result, expected_output)
 
+    @pytest.mark.timeout(5)
     def test_describe_tool_found(self): # Removed @patch('os.path.isfile')
         tool_name = "math_tool"
 
@@ -79,6 +83,7 @@ class TestCodeUnderstandingTool(unittest.TestCase):
         self.assertIn("Docstring:\n        Runs calculation.", result)
         self.mock_lwm_instance.get_tool_structure.assert_called_once_with(tool_name)
 
+    @pytest.mark.timeout(5)
     def test_describe_tool_structure_with_no_docstrings_or_params(self): # Removed @patch
         tool_name = "minimal_tool"
         mock_structure = {
@@ -96,6 +101,7 @@ class TestCodeUnderstandingTool(unittest.TestCase):
         self.assertNotIn("->", result.split("- run()")[1].split("\n")[0]) # No return type
         self.assertNotIn("Docstring:", result.split("- run()")[1]) # No method docstring
 
+    @pytest.mark.timeout(5)
     def test_describe_tool_not_found(self):
         tool_name = "unknown_tool"
         self.mock_lwm_instance.get_tool_structure.return_value = None # LWM returns None if not found
@@ -106,12 +112,14 @@ class TestCodeUnderstandingTool(unittest.TestCase):
         self.assertEqual(result, expected_output)
         self.mock_lwm_instance.get_tool_structure.assert_called_once_with(tool_name)
 
+    @pytest.mark.timeout(5)
     def test_execute_unknown_action(self):
         action = "non_existent_action"
         expected_output = f"Error: Unknown action '{action}' for CodeUnderstandingTool. Available actions: list_tools, describe_tool."
         result = self.tool.execute(action)
         self.assertEqual(result, expected_output)
 
+    @pytest.mark.timeout(5)
     def test_execute_describe_tool_missing_tool_name(self):
         expected_output = "Error: 'tool_name' parameter is required for the 'describe_tool' action."
         result = self.tool.execute("describe_tool") # tool_name is None

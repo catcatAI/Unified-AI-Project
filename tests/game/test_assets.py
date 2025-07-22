@@ -5,6 +5,7 @@ from src.game.main import Game
 def game():
     return Game()
 
+@pytest.mark.timeout(5)
 def test_asset_loading(game):
     assert 'images' in game.assets
     assert 'sprites' in game.assets
@@ -14,6 +15,7 @@ def test_asset_loading(game):
     assert 'icons' in game.assets['sprites']
     assert 'portraits' in game.assets['sprites']
 
+@pytest.mark.timeout(5)
 def test_specific_assets_loaded(game):
     assert 'station' in game.assets['images']['backgrounds']
     assert 'angela' in game.assets['images']['portraits']
