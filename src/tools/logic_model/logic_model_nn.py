@@ -26,17 +26,29 @@ to_categorical = None
 def _ensure_tensorflow_is_imported():
     """
     Lazily imports TensorFlow and its Keras components using dependency manager.
+    Catches a broader range of exceptions, including potential fatal errors on import.
     Returns True if successful, False otherwise.
     """
     global tf, Model, Input, Embedding, LSTM, Dense, Dropout, pad_sequences, to_categorical
-    
+
     if tf is not None:
         return True
-    
-    # Use dependency manager to get TensorFlow
-    tf_module = dependency_manager.get_dependency('tensorflow')
-    if tf is not None:
-        return True
+
+    # Check dependency manager first without triggering import
+    if dependency_manager.is_available('tensorflow'):
+        tf_module = dependency_manager.get_dependency('tensorflow')
+        if tf_module:
+            tf = tf_module
+            # Populate globals if successful
+            Model = getattr(tf.keras.models, 'Model', None)
+            Input = getattr(tf.keras.layers, 'Input', None)
+            Embedding = getattr(tf.keras.layers, 'Embedding', None)
+            LSTM = getattr(tf.keras.layers, 'LSTM', None)
+            Dense = getattr(tf.keras.layers, 'Dense', None)
+            Dropout = getattr(tf.keras.layers, 'Dropout', None)
+            pad_sequences = getattr(tf.keras.preprocessing.sequence, 'pad_sequences', None)
+            to_categorical = getattr(tf.keras.utils, 'to_categorical', None)
+            return True
 
     try:
         import tensorflow as tf_direct
@@ -49,36 +61,32 @@ def _ensure_tensorflow_is_imported():
         Dropout = tf.keras.layers.Dropout
         pad_sequences = tf.keras.preprocessing.sequence.pad_sequences
         to_categorical = tf.keras.utils.to_categorical
-        # Also update the dependency manager if it was loaded directly
-        if not dependency_manager.is_available('tensorflow'):
-            # This is a workaround as there is no public method to update a dependency
-            status = dependency_manager.get_status('tensorflow')
-            if status:
-                status.is_available = True
-                status.module = tf
+        
+        # Update dependency manager
+        status = dependency_manager.get_status('tensorflow')
+        if status:
+            status.is_available = True
+            status.module = tf
         return True
-    except ImportError:
-        print("Critical: TensorFlow is not installed. Logic model functionality is disabled.")
-        # Update dependency manager to reflect unavailability
+    except Exception as e:
+        # Catch any exception during import, including fatal ones if possible.
+        print(f"CRITICAL: Failed to import TensorFlow. Logic model NN functionality will be disabled. Error: {e}")
         status = dependency_manager.get_status('tensorflow')
         if status:
             status.is_available = False
             status.module = None
-        return False
-    except AttributeError as e:
-        print(f"Critical: TensorFlow is installed, but a component is missing: {e}")
-        status = dependency_manager.get_status('tensorflow')
-        if status:
-            status.is_available = False
-            status.module = None
+        # Set globals to None to ensure checks fail cleanly
+        tf = None
         return False
 
 def _tensorflow_is_available():
-    """Check if TensorFlow is available."""
-    return dependency_manager.is_available('tensorflow')
+    """Check if TensorFlow is available without triggering an import."""
+    # This function now relies on the lazy-loading mechanism.
+    # It returns true only if _ensure_tensorflow_is_imported has been successfully called.
+    return tf is not None
 
-# Attempt to import TensorFlow on module load
-_ensure_tensorflow_is_imported()
+# DO NOT attempt to import TensorFlow on module load. It will be loaded lazily.
+# _ensure_tensorflow_is_imported()
 
 # Define paths (relative to project root, assuming this script is in src/tools/logic_model)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -89,7 +97,7 @@ TRAIN_DATA_PATH = os.path.join(PROJECT_ROOT, "data/raw_datasets/logic_train.json
 
 class LogicNNModel:
     def __init__(self, max_seq_len, vocab_size, embedding_dim=32, lstm_units=64):
-        if not dependency_manager.is_available('tensorflow'):
+        if not _ensure_tensorflow_is_imported():
             print("LogicNNModel: TensorFlow not available. This instance will be non-functional.")
             self.model = None
             return
@@ -100,7 +108,7 @@ class LogicNNModel:
         self.model = None # Build lazily
 
     def _build_model(self):
-        if not dependency_manager.is_available('tensorflow'):
+        if not _tensorflow_is_available():
             print("Cannot build model: TensorFlow not available.")
             return
         input_layer = Input(shape=(self.max_seq_len,), name="input_proposition")
@@ -149,7 +157,7 @@ class LogicNNModel:
 
     @classmethod
     def load_model(cls, model_path, char_maps_path):
-        if not dependency_manager.is_available('tensorflow'):
+        if not _ensure_tensorflow_is_imported():
             print("Cannot load model: TensorFlow not available.")
             return None
         with open(char_maps_path, 'r') as f:

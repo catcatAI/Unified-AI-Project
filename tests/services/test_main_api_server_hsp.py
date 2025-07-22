@@ -37,20 +37,56 @@ logging.getLogger("src.core_ai.dialogue.dialogue_manager").setLevel(logging.DEBU
 def client_with_overrides():
     """
     Provides a TestClient for the FastAPI app and the instances used for dependency overrides.
+    This fixture is updated to provide all necessary mocks for DialogueManager.
     """
+    from unittest.mock import MagicMock
     from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
     from src.core_ai.trust_manager.trust_manager_module import TrustManager
     from src.core_ai.dialogue.dialogue_manager import DialogueManager
-    from src.core_ai.memory.ham_memory_manager import HAMMemoryManager # Import HAMMemoryManager
-    
+    from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+    from src.core_ai.personality.personality_manager import PersonalityManager
+    from src.services.llm_interface import LLMInterface
+    from src.core_ai.emotion_system import EmotionSystem
+    from src.core_ai.crisis_system import CrisisSystem
+    from src.core_ai.time_system import TimeSystem
+    from src.core_ai.formula_engine import FormulaEngine
+    from src.tools.tool_dispatcher import ToolDispatcher
+    from src.core_ai.learning.learning_manager import LearningManager
+    from src.hsp.connector import HSPConnector
+    from src.core_ai.agent_manager import AgentManager
+
     # Create instances that will be shared and controlled by the tests
     trust_manager_for_test = TrustManager()
     sdm_for_test = ServiceDiscoveryModule(trust_manager=trust_manager_for_test)
-    # A mock HAM is sufficient for these API tests
-    ham_for_test = MagicMock(spec=HAMMemoryManager) # Corrected spec
+    ham_for_test = MagicMock(spec=HAMMemoryManager)
+    
+    # Create mocks for all other DialogueManager dependencies
+    mock_personality_manager = MagicMock(spec=PersonalityManager)
+    mock_llm_interface = MagicMock(spec=LLMInterface)
+    mock_emotion_system = MagicMock(spec=EmotionSystem)
+    mock_crisis_system = MagicMock(spec=CrisisSystem)
+    mock_time_system = MagicMock(spec=TimeSystem)
+    mock_formula_engine = MagicMock(spec=FormulaEngine)
+    mock_tool_dispatcher = MagicMock(spec=ToolDispatcher)
+    mock_learning_manager = MagicMock(spec=LearningManager)
+    mock_hsp_connector = MagicMock(spec=HSPConnector)
+    mock_hsp_connector.ai_id = "test_hsp_connector_id" # Set the ai_id attribute on the mock
+    mock_agent_manager = MagicMock(spec=AgentManager)
+
     dm_for_test = DialogueManager(
-        service_discovery_module=sdm_for_test, 
-        memory_manager=ham_for_test
+        ai_id="test_api_dm_id",
+        personality_manager=mock_personality_manager,
+        memory_manager=ham_for_test,
+        llm_interface=mock_llm_interface,
+        emotion_system=mock_emotion_system,
+        crisis_system=mock_crisis_system,
+        time_system=mock_time_system,
+        formula_engine=mock_formula_engine,
+        tool_dispatcher=mock_tool_dispatcher,
+        learning_manager=mock_learning_manager,
+        service_discovery_module=sdm_for_test,
+        hsp_connector=mock_hsp_connector,
+        agent_manager=mock_agent_manager
     )
 
     # Override the dependencies in the FastAPI app
@@ -59,6 +95,17 @@ def client_with_overrides():
         "trust_manager": trust_manager_for_test,
         "dialogue_manager": dm_for_test,
         "ham_manager": ham_for_test,
+        # Add other mocked services if the API endpoints need them
+        "personality_manager": mock_personality_manager,
+        "llm_interface": mock_llm_interface,
+        "emotion_system": mock_emotion_system,
+        "crisis_system": mock_crisis_system,
+        "time_system": mock_time_system,
+        "formula_engine": mock_formula_engine,
+        "tool_dispatcher": mock_tool_dispatcher,
+        "learning_manager": mock_learning_manager,
+        "hsp_connector": mock_hsp_connector,
+        "agent_manager": mock_agent_manager
     }
 
     with TestClient(app) as test_client:
