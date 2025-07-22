@@ -11,8 +11,8 @@ class Game:
         os.environ['SDL_VIDEODRIVER'] = 'dummy'
         os.environ['SDL_AUDIODRIVER'] = 'dummy'
         pygame.init()
-        self.screen_width = 800
-        self.screen_height = 600
+        self.screen_width = 960
+        self.screen_height = 540
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("Angela's World")
         self.clock = pygame.time.Clock()
@@ -24,16 +24,16 @@ class Game:
         self.game_state_manager = GameStateManager(self)
 
     def load_assets(self):
-        self.assets['images'] = self.load_images()
+        self.assets['images'] = self.load_images(os.path.join('src', 'game', 'assets', 'images'))
+        self.assets['sprites'] = self.load_images(os.path.join('src', 'game', 'assets', 'sprites'))
 
-    def load_images(self):
+    def load_images(self, path):
         images = {}
-        images_path = os.path.join('src', 'game', 'assets', 'images')
-        if not os.path.exists(images_path):
-            os.makedirs(images_path)
-        for filename in os.listdir(images_path):
+        if not os.path.exists(path):
+            os.makedirs(path)
+        for filename in os.listdir(path):
             if filename.endswith('.png'):
-                image = pygame.image.load(os.path.join(images_path, filename)).convert_alpha()
+                image = pygame.image.load(os.path.join(path, filename)).convert_alpha()
                 images[filename.split('.')[0]] = image
         return images
 
