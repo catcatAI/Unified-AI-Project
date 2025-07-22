@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import asyncio
 import uuid
 import os
@@ -36,6 +37,7 @@ class TestCreativeWritingAgent(unittest.TestCase):
         self.agent.hsp_connector = self.mock_services["hsp_connector"]
         self.agent.llm_interface = self.mock_services["llm_interface"]
 
+    @pytest.mark.timeout(10)
     def test_initialization(self):
         """Test that the agent initializes correctly."""
         self.assertEqual(self.agent.agent_id, self.agent_id)
@@ -43,6 +45,7 @@ class TestCreativeWritingAgent(unittest.TestCase):
         self.assertEqual(len(self.agent.capabilities), 2)
         self.assertEqual(self.agent.capabilities[0]['name'], 'generate_marketing_copy')
 
+    @pytest.mark.timeout(10)
     def test_handle_marketing_copy_request(self):
         """Test handling a 'generate_marketing_copy' task."""
         # 1. Configure mock LLM to return a predefined response
@@ -79,6 +82,7 @@ class TestCreativeWritingAgent(unittest.TestCase):
         self.assertEqual(sent_payload['status'], "success")
         self.assertEqual(sent_payload['payload'], expected_copy)
 
+    @pytest.mark.timeout(10)
     def test_handle_polish_text_request(self):
         """Test handling a 'polish_text' task."""
         # 1. Configure mock LLM
@@ -110,6 +114,7 @@ class TestCreativeWritingAgent(unittest.TestCase):
         self.assertEqual(sent_payload['status'], "success")
         self.assertEqual(sent_payload['payload'], expected_polished_text)
 
+    @pytest.mark.timeout(10)
     def test_unsupported_capability(self):
         """Test that the agent correctly handles a request for a capability it doesn't support."""
         request_id = "creative_req_003"

@@ -1,7 +1,9 @@
 import unittest
+import pytest
 from src.core_ai.lis.tonal_repair_engine import TonalRepairEngine
 
 class TestTonalRepairEngine(unittest.TestCase):
+    @pytest.mark.timeout(5)
     def test_repair_output(self):
         engine = TonalRepairEngine()
         original_text = "This is a test."

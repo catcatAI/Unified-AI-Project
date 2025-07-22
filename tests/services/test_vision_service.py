@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import os
 import sys
 
@@ -6,11 +7,13 @@ from src.services.vision_service import VisionService
 
 class TestVisionService(unittest.TestCase):
 
+    @pytest.mark.timeout(15)
     def test_01_initialization_placeholder(self):
         service = VisionService()
         self.assertIsNotNone(service)
         print("TestVisionService.test_01_initialization_placeholder PASSED")
 
+    @pytest.mark.timeout(15)
     def test_02_analyze_image_placeholder(self):
         service = VisionService()
         dummy_image = b"dummy_image_bytes"
@@ -22,6 +25,7 @@ class TestVisionService(unittest.TestCase):
         self.assertIsNone(analysis_none)
         print("TestVisionService.test_02_analyze_image_placeholder PASSED")
 
+    @pytest.mark.timeout(15)
     def test_03_compare_images_placeholder(self):
         service = VisionService()
         dummy_image1 = b"dummy1"

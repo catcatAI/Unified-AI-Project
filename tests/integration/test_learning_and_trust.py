@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import asyncio
 import sys
 import os
@@ -41,6 +42,7 @@ class TestLearningAndTrustIntegration(unittest.TestCase):
             operational_config={"learning_thresholds": {"min_hsp_fact_confidence_to_store": 0.5}}
         )
 
+    @pytest.mark.timeout(10)
     def test_duplicate_fact_increments_corroboration(self):
         """
         Tests that receiving a duplicate fact increments corroboration_count
@@ -77,6 +79,7 @@ class TestLearningAndTrustIntegration(unittest.TestCase):
         # It SHOULD have incremented the metadata field of the existing record
         self.ham_memory.increment_metadata_field.assert_called_once_with(existing_ham_id, "corroboration_count")
 
+    @pytest.mark.timeout(10)
     def test_fact_from_low_trust_source_is_discarded(self):
         """
         Tests that a fact with high original confidence is discarded if the source has very low trust.
@@ -97,6 +100,7 @@ class TestLearningAndTrustIntegration(unittest.TestCase):
         # Ensure it didn't get stored
         self.ham_memory.store_experience.assert_not_called()
 
+    @pytest.mark.timeout(10)
     def test_fact_from_high_trust_source_is_accepted(self):
         """
         Tests that a fact with medium original confidence is accepted if the source has high trust.

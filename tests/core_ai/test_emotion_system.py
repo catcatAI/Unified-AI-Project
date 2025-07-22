@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import os
 import sys
 
@@ -20,12 +21,14 @@ class TestEmotionSystem(unittest.TestCase):
         }
         self.emotion_sys = EmotionSystem(personality_profile=self.example_personality)
 
+    @pytest.mark.timeout(5)
     def test_01_initialization(self):
         self.assertIsNotNone(self.emotion_sys)
         self.assertEqual(self.emotion_sys.current_emotion, "neutral")
         self.assertIn("neutral", self.emotion_sys.emotion_expressions) # Check default map
         print("TestEmotionSystem.test_01_initialization PASSED")
 
+    @pytest.mark.timeout(5)
     def test_02_update_emotion_based_on_input(self):
         # Test sad input
         sad_input = {"text": "I am so sad today."}
@@ -53,6 +56,7 @@ class TestEmotionSystem(unittest.TestCase):
 
         print("TestEmotionSystem.test_02_update_emotion_based_on_input PASSED")
 
+    @pytest.mark.timeout(5)
     def test_03_get_current_emotion_expression(self):
         # Neutral (default from setUp personality)
         expression_neutral = self.emotion_sys.get_current_emotion_expression()

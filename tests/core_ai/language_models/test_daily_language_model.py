@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import os
 import sys
 
@@ -67,10 +68,12 @@ class TestDailyLanguageModel(unittest.TestCase):
         self.dlm.llm_interface.generate_response = mock_generate_response
 
 
+    @pytest.mark.timeout(5)
     def test_01_initialization(self):
         self.assertIsNotNone(self.dlm)
         print("TestDailyLanguageModel.test_01_initialization PASSED")
 
+    @pytest.mark.timeout(5)
     def test_02_recognize_intent_calculate(self):
         queries = {
             "calculate 2 + 2": {"tool_name": "calculate", "query": "2 + 2"},
@@ -88,6 +91,7 @@ class TestDailyLanguageModel(unittest.TestCase):
             self.assertEqual(intent["parameters"]["original_query"], query_text)
         print("TestDailyLanguageModel.test_02_recognize_intent_calculate PASSED")
 
+    @pytest.mark.timeout(5)
     def test_03_recognize_intent_evaluate_logic(self):
         queries = {
             "evaluate true AND false": {"tool_name": "evaluate_logic", "query": "true AND false"},
@@ -101,6 +105,7 @@ class TestDailyLanguageModel(unittest.TestCase):
             self.assertEqual(intent["parameters"]["query"], expected_params["query"])
         print("TestDailyLanguageModel.test_03_recognize_intent_evaluate_logic PASSED")
 
+    @pytest.mark.timeout(5)
     def test_04_recognize_intent_translate_text(self):
         queries = {
             "translate hello to chinese": {"tool_name": "translate_text", "text_hint": "hello", "lang_hint": "chinese"},
@@ -124,6 +129,7 @@ class TestDailyLanguageModel(unittest.TestCase):
 
         print("TestDailyLanguageModel.test_04_recognize_intent_translate_text PASSED")
 
+    @pytest.mark.timeout(5)
     def test_05_no_intent_recognized(self):
         query_text = "this is a general statement without clear tool triggers"
         intent = self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools)

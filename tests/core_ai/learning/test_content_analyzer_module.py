@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import networkx as nx
 from typing import Dict, Any, Optional # Added Optional
 
@@ -46,11 +47,13 @@ class TestContentAnalyzerModule(unittest.TestCase):
         self.assertIsNotNone(found_node, msg or f"Node with label '{label}' (type: {node_type}) containing ID part '{node_id_part}' not found in NetworkX graph.")
         return found_node # Return the actual node_id for further checks if needed
 
+    @pytest.mark.timeout(5)
     def test_01_initialization(self):
         """Test if the analyzer initializes correctly."""
         self.assertIsNotNone(self.analyzer, "Analyzer should not be None")
         self.assertIsNotNone(self.analyzer.nlp, "spaCy NLP model should be loaded")
 
+    @pytest.mark.timeout(5)
     def test_02_simple_entity_extraction(self):
         """Test basic entity extraction."""
         text = "Apple Inc. is a company. Steve Jobs was a person."
@@ -68,6 +71,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
 
         self.assertEqual(nx_graph.number_of_nodes(), len(kg_data["entities"]))
 
+    @pytest.mark.timeout(5)
     def test_03_no_entities_extraction(self):
         """Test text with no clear named entities for the small model."""
         text = "The sky is blue and the grass is green."
@@ -77,6 +81,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
         self.assertIsNotNone(kg_data["entities"], "Entities dict should exist even if empty.")
         self.assertIsNotNone(nx_graph, "NetworkX graph should be created even if empty.")
 
+    @pytest.mark.timeout(5)
     def test_04_simple_svo_relationship(self):
         """Test a simple Subject-Verb-Object relationship."""
         text = "Google develops Android." # Google (ORG), Android (PRODUCT or ORG by sm model)
@@ -112,6 +117,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
                  self.assertEqual(edge_data.get("type"), "develop", "NX Edge type incorrect")
 
 
+    @pytest.mark.timeout(5)
     def test_05_prep_object_relationship(self):
         """Test a relationship involving a prepositional object."""
         # "cat sat on the mat" -> mat might not be an entity with sm model.
@@ -162,6 +168,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
                 self.assertEqual(edge_data.get("type"), found_rel_object["type"])
 
 
+    @pytest.mark.timeout(5)
     def test_06_noun_prep_noun_relationship_of(self):
         """Test Noun-of-Noun relationship (e.g., CEO of Microsoft)."""
         text = "The CEO of Microsoft visited." # CEO (PERSON or TITLE), Microsoft (ORG)
@@ -285,6 +292,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
         self.assertEqual(final_edge_data.get("type"), expected_rel_type, "NX Edge type incorrect.")
 
 
+    @pytest.mark.timeout(5)
     def test_07_noun_of_noun_org_has_attribute(self):
         """Test 'CEO of Microsoft' -> Microsoft has_ceo CEO_Entity."""
         text = "Sundar Pichai is the CEO of Google."
@@ -297,6 +305,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
                                          expected_tgt_label="Sundar Pichai", tgt_type="PERSON",
                                          expected_rel_type="has_ceo")
 
+    @pytest.mark.timeout(5)
     def test_08_noun_of_noun_attribute_of(self):
         """Test 'capital of France' -> capital attribute_of France (or France has_capital capital)."""
         text = "Paris is the capital of France." # Paris (GPE), capital (NOUN concept), France (GPE)
@@ -359,6 +368,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
         self.assertTrue(found_has_capital_to_paris_or_concept,
                         f"Expected France to have a 'has_capital' relationship to Paris or a capital concept. Found target: {target_label_for_has_capital}")
 
+    @pytest.mark.timeout(5)
     def test_08a_entity_is_a_concept(self):
         """Test 'Google is a company' -> Google (ORG) is_a company (CONCEPT)."""
         text = "Google is a company."
@@ -372,6 +382,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
                                          expected_tgt_label="company", tgt_type="CONCEPT",
                                          expected_rel_type="is_a")
 
+    @pytest.mark.timeout(5)
     def test_09_possessive_relationship_entity_to_entity(self):
         """Test 'Google's CEO' -> Google has_poss_attr CEO_Entity."""
         text = "Google's CEO Sundar Pichai announced a new product."
@@ -386,6 +397,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
                                          expected_rel_type="has_poss_attr")
 
 
+    @pytest.mark.timeout(5)
     def test_10_possessive_relationship_entity_to_concept(self):
         """Test 'Apple's revenue' -> Apple has_revenue concept_revenue."""
         text = "Apple's revenue increased this quarter."
@@ -428,6 +440,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
                         break
         self.assertTrue(found_rel_to_concept, "Expected Apple to have 'has_revenue' relationship to a revenue concept.")
 
+    @pytest.mark.timeout(5)
     def test_11_matcher_located_in(self):
         """Test 'ORG located in GPE' using Matcher."""
         text = "Innovate Corp is located in Silicon Valley."
@@ -456,6 +469,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
         self.assertEqual(found_rel_details["attributes"]["pattern"], "LOCATED_IN", "Pattern attribute for located_in is incorrect.")
 
 
+    @pytest.mark.timeout(5)
     def test_12_matcher_works_for(self):
         """Test 'PERSON works for ORG' using Matcher."""
         text = "John Doe works for Acme Corp."
@@ -491,6 +505,7 @@ if __name__ == '__main__':
 # Need to create tests/__init__.py if it doesn't exist
 
 
+    @pytest.mark.timeout(5)
     def test_13_matcher_person_is_ceo_of_org(self):
         """Test 'PERSON is CEO of ORG' using Matcher."""
         text = "Satya Nadella is CEO of Microsoft."
@@ -517,6 +532,7 @@ if __name__ == '__main__':
         self.assertEqual(found_rel_details["attributes"]["pattern"], "PERSON_IS_TITLE_OF_ORG",
                          "Pattern attribute for has_ceo is incorrect.")
 
+    @pytest.mark.timeout(5)
     def test_14_matcher_person_is_founder_of_org(self):
         """Test 'PERSON is Founder of ORG' using Matcher."""
         text = "Jane Doe is Founder of ExampleCorp."
@@ -543,6 +559,7 @@ if __name__ == '__main__':
         self.assertEqual(found_rel_details["attributes"]["pattern"], "PERSON_IS_TITLE_OF_ORG",
                          "Pattern attribute for has_founder is incorrect.")
 
+    @pytest.mark.timeout(5)
     def test_15_process_hsp_fact_content_nl(self):
         """Test processing an HSP fact with natural language content."""
         self.analyzer.graph.clear() # Ensure clean graph for this test
@@ -579,6 +596,7 @@ if __name__ == '__main__':
             self.assertEqual(self.analyzer.graph.nodes[sirius_node_id]["hsp_source_info"]["origin_fact_id"], hsp_payload["id"])
 
 
+    @pytest.mark.timeout(5)
     def test_16_process_hsp_fact_content_semantic_triple_with_mapping(self):
         """Test processing an HSP fact with a semantic triple that involves ontology mapping."""
         self.analyzer.graph.clear()
@@ -647,6 +665,7 @@ if __name__ == '__main__':
         self.assertEqual(edge_data.get("type"), expected_p_type) # type: ignore
         self.assertEqual(edge_data.get("original_predicate_uri"), predicate_uri) # type: ignore
 
+    @pytest.mark.timeout(5)
     def test_17_process_hsp_fact_content_semantic_triple_no_mapping(self):
         """Test processing an HSP fact with a semantic triple that does not involve ontology mapping."""
         self.analyzer.graph.clear()
