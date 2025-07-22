@@ -7,11 +7,15 @@
 *   **格式**：所有圖片資源建議使用 `.png` 格式，以支持透明背景。
 *   **命名**：文件名應使用小寫字母和下劃線，並清晰地描述資源內容。例如：`player_walk_cycle.png`, `item_shizuku.png`。
 
-## II. 解析度
+## II. 第三方資源授權
+
+*   **[16x16 grassland tileset with winter tiles](https://chuckiecatt.itch.io/16x16-grassland-tileset)** by chuckiecatt, licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+## III. 解析度
 
 *   **遊戲基礎解析度**：`960x540` 像素 (16:9)。這個解析度能在保留像素風格的同時，為 UI 和立繪提供足夠的顯示空間，並能更好地適應現代顯示器。
 
-## III. 尺寸規格
+## IV. 尺寸規格
 
 ### 1. 精美關鍵畫面 (Key Visuals)
 
