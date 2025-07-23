@@ -189,7 +189,7 @@ class HSPConnector:
             except Exception as e:
                 logger.error(f"HSPConnector ({self.ai_id}): Error in external on_connect callback: {e}", exc_info=True)
 
-    async def on_disconnect(self, client, packet, rc):
+    async def on_disconnect(self, client, packet, rc=None):
         """Callback for when the client disconnects from the broker."""
         self.is_connected = False
         if rc == 0:
