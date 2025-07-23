@@ -12,7 +12,22 @@ class TestSelfImprovement(aiounittest.AsyncTestCase):
         """
         Tests the self-improvement capabilities of the system.
         """
-        dialogue_manager = DialogueManager()
+        dialogue_manager = DialogueManager(
+            ai_id="test_ai",
+            personality_manager=MagicMock(),
+            memory_manager=MagicMock(),
+            llm_interface=MagicMock(),
+            emotion_system=MagicMock(),
+            crisis_system=MagicMock(),
+            time_system=MagicMock(),
+            formula_engine=MagicMock(),
+            tool_dispatcher=MagicMock(),
+            learning_manager=MagicMock(),
+            service_discovery_module=MagicMock(),
+            hsp_connector=None,
+            agent_manager=None,
+            config={}
+        )
 
         class DummyModel:
             def __init__(self):
