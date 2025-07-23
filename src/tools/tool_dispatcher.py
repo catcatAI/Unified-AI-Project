@@ -13,7 +13,7 @@ from src.core_ai.language_models.daily_language_model import DailyLanguageModel
 from src.services.llm_interface import LLMInterface
 from src.shared.types.common_types import ToolDispatcherResponse # Import new response type
 from typing import Literal # For literal status types
-from src.core_ai.rag.rag_manager import RAGManager
+# from src.core_ai.rag.rag_manager import RAGManager
 
 class ToolDispatcher:
     def __init__(self, llm_interface: Optional[LLMInterface] = None):
@@ -21,7 +21,6 @@ class ToolDispatcher:
         self.code_understanding_tool_instance = CodeUnderstandingTool()
         self.csv_tool_instance = CsvTool()
         self.image_generation_tool_instance = ImageGenerationTool()
-        self.rag_manager = RAGManager()
 
         self.tools: Dict[str, Callable[..., ToolDispatcherResponse]] = { # type: ignore
             "calculate": self._execute_math_calculation,

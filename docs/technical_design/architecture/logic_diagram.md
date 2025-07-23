@@ -20,6 +20,7 @@ graph TD
         N[Trust Manager]
         LM[Logic Model]
         MM[Math Model]
+        GAME[Game]
     end
 
     subgraph Services
@@ -36,6 +37,7 @@ graph TD
 
     A --> C
     B --> C
+    B --> GAME
 
     C --> D
     C --> E
@@ -80,4 +82,5 @@ graph TD
 
     T --> E
     T --> L
+    T --> GAME
 ```
