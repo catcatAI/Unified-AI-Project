@@ -21,8 +21,11 @@ class UserService {
   }
 
   static async getByEmail(email) {
+    if (typeof email !== 'string') {
+      throw new Error('Invalid email format');
+    }
     try {
-      return User.findOne({ email }).exec();
+      return User.findOne({ email: { $eq: email } }).exec();
     } catch (err) {
       throw new Error(`Database error while getting the user by their email: ${err}`);
     }
