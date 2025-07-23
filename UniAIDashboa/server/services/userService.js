@@ -51,9 +51,12 @@ class UserService {
   static async authenticateWithPassword(email, password) {
     if (!email) throw new Error('Email is required');
     if (!password) throw new Error('Password is required');
+    if (typeof email !== 'string' || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      throw new Error('Invalid email format');
+    }
 
     try {
-      const user = await User.findOne({email}).exec();
+      const user = await User.findOne({ email: { $eq: email } }).exec();
       if (!user) return null;
 
       const passwordValid = await validatePassword(password, user.password);
