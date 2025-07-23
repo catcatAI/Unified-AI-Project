@@ -61,40 +61,40 @@ async def dialogue_manager_helper_fixture():
         "crisis_response_text": "Crisis response."
     }
 
+
     # Patch the modules that DialogueManager initializes internally
-    with patch('src.core_ai.personality.personality_manager.PersonalityManager', return_value=mock_personality_manager),         patch('src.core_ai.memory.ham_memory_manager.HAMMemoryManager', return_value=mock_memory_manager),         patch('src.services.llm_interface.LLMInterface', return_value=mock_llm_interface),         patch('src.core_ai.emotion_system.EmotionSystem', return_value=mock_emotion_system),         patch('src.core_ai.crisis_system.CrisisSystem', return_value=mock_crisis_system),         patch('src.core_ai.formula_engine.FormulaEngine', return_value=mock_formula_engine),         patch('src.core_ai.learning.content_analyzer_module.ContentAnalyzerModule', return_value=mock_content_analyzer),         patch('src.tools.tool_dispatcher.ToolDispatcher', return_value=mock_tool_dispatcher),         patch('src.core_ai.learning.self_critique_module.SelfCritiqueModule', return_value=mock_self_critique_module),         patch('src.core_ai.learning.learning_manager.LearningManager', return_value=mock_learning_manager),         patch('src.services.sandbox_executor.SandboxExecutor', return_value=mock_sandbox_executor),         patch('src.core_ai.time_system.TimeSystem', return_value=mock_time_system):
+    # 補齊 DialogueManager 所有必填參數
+    dm = DialogueManager(
+        ai_id="test_ai",
+        personality_manager=mock_personality_manager,
+        memory_manager=mock_memory_manager,
+        llm_interface=mock_llm_interface,
+        emotion_system=mock_emotion_system,
+        crisis_system=mock_crisis_system,
+        time_system=mock_time_system,
+        formula_engine=mock_formula_engine,
+        tool_dispatcher=mock_tool_dispatcher,
+        learning_manager=mock_learning_manager,
+        service_discovery_module=MagicMock(),
+        hsp_connector=None,
+        agent_manager=None,
+        config=test_config
+    )
 
-        dm = DialogueManager(
-            personality_manager=mock_personality_manager,
-            memory_manager=mock_memory_manager,
-            llm_interface=mock_llm_interface,
-            emotion_system=mock_emotion_system,
-            crisis_system=mock_crisis_system,
-            formula_engine=mock_formula_engine,
-            content_analyzer=mock_content_analyzer,
-            tool_dispatcher=mock_tool_dispatcher,
-            self_critique_module=mock_self_critique_module,
-            learning_manager=mock_learning_manager,
-            # repair_engine=mock_repair_engine, # Removed this line
-            sandbox_executor=mock_sandbox_executor,
-            time_system=mock_time_system,
-            config=test_config
-        )
+    # Create a sample graph for testing _find_entity_node_id_in_kg and _query_session_kg
+    sample_graph = nx.DiGraph()
+    sample_graph.add_node("ent_google_org", label="Google", type="ORG")
+    sample_graph.add_node("ent_microsoft_org", label="Microsoft", type="ORG")
+    sample_graph.add_node("ent_sundar_person", label="Sundar Pichai", type="PERSON")
+    sample_graph.add_node("ent_satya_person", label="Satya Nadella", type="PERSON")
+    sample_graph.add_node("ent_redmond_gpe", label="Redmond", type="GPE")
 
-        # Create a sample graph for testing _find_entity_node_id_in_kg and _query_session_kg
-        sample_graph = nx.DiGraph()
-        sample_graph.add_node("ent_google_org", label="Google", type="ORG")
-        sample_graph.add_node("ent_microsoft_org", label="Microsoft", type="ORG")
-        sample_graph.add_node("ent_sundar_person", label="Sundar Pichai", type="PERSON")
-        sample_graph.add_node("ent_satya_person", label="Satya Nadella", type="PERSON")
-        sample_graph.add_node("ent_redmond_gpe", label="Redmond", type="GPE")
+    sample_graph.add_edge("ent_google_org", "ent_sundar_person", type="has_ceo")
+    sample_graph.add_edge("ent_microsoft_org", "ent_satya_person", type="has_ceo")
+    sample_graph.add_edge("ent_microsoft_org", "ent_redmond_gpe", type="located_in")
+    sample_graph.add_edge("ent_google_org", "ent_redmond_gpe", type="competes_with_org_in_same_place_as_msft_hq")
 
-        sample_graph.add_edge("ent_google_org", "ent_sundar_person", type="has_ceo")
-        sample_graph.add_edge("ent_microsoft_org", "ent_satya_person", type="has_ceo")
-        sample_graph.add_edge("ent_microsoft_org", "ent_redmond_gpe", type="located_in")
-        sample_graph.add_edge("ent_google_org", "ent_redmond_gpe", type="competes_with_org_in_same_place_as_msft_hq")
-
-        return dm, sample_graph, mock_llm_interface, mock_personality_manager, mock_content_analyzer, mock_sandbox_executor, mock_self_critique_module, mock_learning_manager
+    return dm, sample_graph, mock_llm_interface, mock_personality_manager, mock_content_analyzer, mock_sandbox_executor, mock_self_critique_module, mock_learning_manager
 
 # Helper Methods Tests
 @pytest.mark.asyncio
@@ -402,8 +402,19 @@ async def dialogue_manager_tool_drafting_fixture():
     # No need for addCleanup with pytest fixtures, teardown is handled by fixture scope
 
     dm = DialogueManager(
-        llm_interface=mock_llm_interface,
+        ai_id="test_ai",
         personality_manager=mock_personality_manager,
+        memory_manager=MagicMock(),
+        llm_interface=mock_llm_interface,
+        emotion_system=MagicMock(),
+        crisis_system=MagicMock(),
+        time_system=MagicMock(),
+        formula_engine=MagicMock(),
+        tool_dispatcher=MagicMock(),
+        learning_manager=MagicMock(),
+        service_discovery_module=MagicMock(),
+        hsp_connector=None,
+        agent_manager=None,
         config=test_config
     )
     dm.personality_manager = mock_personality_manager # Ensure the mock is used

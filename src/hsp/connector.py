@@ -167,35 +167,44 @@ class HSPConnector:
             logger.warning(f"Could not parse TypeName and Version from message_type '{message_type}' (processed: '{processed_type}'). Expected format like 'TypeName_vVersion'. No schema URI generated.")
             return None
 
-    def _on_mqtt_connect(self, client, flags, rc, properties):
+    async def on_connect(self, client, flags):
         """Callback for when the client receives a CONNACK response from the server."""
-        if rc == 0:
-            self.is_connected = True
-            logger.info(f"HSPConnector ({self.ai_id}): Successfully connected to MQTT Broker.")
-            # Resubscribe to topics upon successful reconnection
-            if self.subscribed_topics:
-                logger.info(f"HSPConnector ({self.ai_id}): Resubscribing to {len(self.subscribed_topics)} topics...")
-                for topic in list(self.subscribed_topics):
-                    self.subscribe(topic, self.default_qos)
-            if self._external_on_connect_callback:
-                try:
-                    self._external_on_connect_callback()
-                except Exception as e:
-                    logger.error(f"HSPConnector ({self.ai_id}): Error in external on_connect callback: {e}", exc_info=True)
+        self.is_connected = True
+        if self._was_unexpectedly_disconnected:
+            logger.info(f"HSPConnector ({self.ai_id}): Successfully reconnected to MQTT Broker")
+            self._was_unexpectedly_disconnected = False
         else:
-            self.is_connected = False
-            logger.error(f"HSPConnector ({self.ai_id}): Failed to connect to MQTT Broker, return code {rc}\n")
+            logger.info(f"HSPConnector ({self.ai_id}): Successfully connected to MQTT Broker")
 
-    def _on_mqtt_disconnect(self, client, packet, exc=None):
+        # Resubscribe to topics upon successful reconnection
+        if self.subscribed_topics:
+            logger.info(f"HSPConnector ({self.ai_id}): Resubscribing to {len(self.subscribed_topics)} topics...")
+            for topic in list(self.subscribed_topics):
+                await self.subscribe(topic, self.default_qos)
+
+        if self._external_on_connect_callback:
+            try:
+                await self._external_on_connect_callback()
+            except Exception as e:
+                logger.error(f"HSPConnector ({self.ai_id}): Error in external on_connect callback: {e}", exc_info=True)
+
+    async def on_disconnect(self, client, packet, rc):
         """Callback for when the client disconnects from the broker."""
         self.is_connected = False
-        logger.warning(f"HSPConnector ({self.ai_id}): Disconnected from MQTT Broker. Will attempt to reconnect automatically.")
+        if rc == 0:
+            logger.info(f"HSPConnector ({self.ai_id}): Cleanly disconnected from MQTT Broker (reason code {rc})")
+            self._was_unexpectedly_disconnected = False
+        else:
+            logger.warning(f"HSPConnector ({self.ai_id}): Unexpectedly disconnected from MQTT Broker (reason code {rc})")
+            logger.info("Client will attempt to reconnect automatically")
+            self._was_unexpectedly_disconnected = True
+
         if self._external_on_disconnect_callback:
             try:
-                self._external_on_disconnect_callback()
+                await self._external_on_disconnect_callback()
             except Exception as e:
                 logger.error(f"HSPConnector ({self.ai_id}): Error in external on_disconnect callback: {e}", exc_info=True)
-    def on_message(self, client, topic, payload, qos, properties):
+    async def on_message(self, client, topic, payload, qos, properties):
         """Callback for when a PUBLISH message is received from the server."""
         logger.debug(f"HSPConnector ({self.ai_id}): Received raw message on topic '{topic}'")
         try:
@@ -208,7 +217,7 @@ class HSPConnector:
                 return
 
             # For all other topics, handle as a standard HSP message
-            self._handle_hsp_message_str(message_str, topic)
+            await self._handle_hsp_message_str(message_str, topic)
 
         except UnicodeDecodeError:
             logger.error(f"HSPConnector ({self.ai_id}): Could not decode message payload on topic '{topic}' as UTF-8.")
@@ -218,9 +227,18 @@ class HSPConnector:
     async def connect(self) -> bool:
         """Establishes a connection to the MQTT broker(s)."""
         if self.mock_mode:
-            self.is_connected = True
-            logger.info(f"HSPConnector ({self.ai_id}): Running in MOCK mode. Connection is simulated.")
-            return True
+            # In mock mode, we still want to simulate the connection process
+            # by calling the mock client's connect method
+            try:
+                await self.mqtt_client.connect(host=self.broker_address, port=self.broker_port)
+                self.is_connected = True
+                logger.info(f"HSPConnector ({self.ai_id}): Running in MOCK mode. Connection is simulated.")
+                return True
+            except Exception as e:
+                logger.error(f"HSPConnector ({self.ai_id}): Mock connection failed: {e}")
+                self.is_connected = False
+                return False
+
         if self.is_connected:
             logger.info(f"HSPConnector ({self.ai_id}): Already connected.")
             return True
@@ -233,7 +251,7 @@ class HSPConnector:
             port = broker_info.get('port', self.broker_port)
             logger.info(f"HSPConnector ({self.ai_id}): Attempting to connect to {address}:{port}...")
             try:
-                await self.mqtt_client.connect(host=address, port=port, version=gmqtt.MQTTv5)
+                await self.mqtt_client.connect(host=address, port=port)
                 # The on_connect callback will set is_connected to True
                 # gmqtt handles the connection in the background, we just need to wait for the on_connect callback.
                 # A short sleep can be useful, but a more robust solution would use an asyncio.Event
@@ -330,7 +348,7 @@ class HSPConnector:
         )
         return await self._send_hsp_message(envelope, mqtt_topic=topic)
 
-    def subscribe(self, topic: str, mqtt_qos: Optional[int] = None) -> bool:
+    async def subscribe(self, topic: str, mqtt_qos: Optional[int] = None) -> bool:
         """Subscribes to an MQTT topic to receive HSP messages."""
         if self.mock_mode:
             self.subscribed_topics.add(topic)
@@ -340,7 +358,7 @@ class HSPConnector:
             return False
         try:
             effective_mqtt_qos = mqtt_qos if mqtt_qos is not None else self.default_qos
-            self.mqtt_client.subscribe(topic, qos=effective_mqtt_qos)
+            await self.mqtt_client.subscribe(topic, qos=effective_mqtt_qos)
             self.subscribed_topics.add(topic)
             logger.info(f"HSPConnector ({self.ai_id}): Successfully subscribed to topic '{topic}' with QoS {effective_mqtt_qos}")
             return True
@@ -348,7 +366,7 @@ class HSPConnector:
             logger.error(f"HSPConnector ({self.ai_id}): Error subscribing to topic '{topic}': {e}", exc_info=True)
             return False
 
-    def unsubscribe(self, topic: str) -> bool:
+    async def unsubscribe(self, topic: str) -> bool:
         """Unsubscribes from an MQTT topic."""
         if self.mock_mode:
             if topic in self.subscribed_topics:
@@ -360,7 +378,7 @@ class HSPConnector:
                 self.subscribed_topics.remove(topic)
             return False
         try:
-            self.mqtt_client.unsubscribe(topic)
+            await self.mqtt_client.unsubscribe(topic)
             if topic in self.subscribed_topics:
                 self.subscribed_topics.remove(topic)
             logger.info(f"HSPConnector ({self.ai_id}): Successfully unsubscribed from topic '{topic}'")
@@ -369,7 +387,7 @@ class HSPConnector:
             logger.error(f"HSPConnector ({self.ai_id}): Error unsubscribing from topic '{topic}': {e}", exc_info=True)
             return False
 
-    def _handle_hsp_message_str(self, message_str: str, received_on_topic: str):
+    async def _handle_hsp_message_str(self, message_str: str, received_on_topic: str):
         """Deserializes and processes an incoming HSP message string."""
         try:
             envelope: HSPMessageEnvelope = json.loads(message_str)
@@ -410,7 +428,7 @@ class HSPConnector:
 
             qos_params = envelope.get("qos_parameters", {})
             if isinstance(qos_params, dict) and qos_params.get("requires_ack"):
-                self._send_acknowledgement(
+                await self._send_acknowledgement(
                     target_ai_id=envelope["sender_ai_id"],
                     acknowledged_message_id=envelope["message_id"],
                     status="received", # "processed" might be too strong if specific_handler_error occurred
@@ -422,7 +440,7 @@ class HSPConnector:
         except Exception as e:
             logger.error(f"HSPConnector ({self.ai_id}): Unhandled error processing HSP message from topic '{received_on_topic}': {e}", exc_info=True)
 
-    def _send_acknowledgement(self, target_ai_id: str, acknowledged_message_id: str, status: Literal["received", "processed"], ack_topic: str, version: str = "0.1"):
+    async def _send_acknowledgement(self, target_ai_id: str, acknowledged_message_id: str, status: Literal["received", "processed"], ack_topic: str, version: str = "0.1"):
         """Helper method to construct and send an HSP Acknowledgement message."""
         ack_payload: HSPAcknowledgementPayload = {
             "status": status,
@@ -439,7 +457,7 @@ class HSPConnector:
             correlation_id=acknowledged_message_id
         )
         logger.info(f"HSPConnector ({self.ai_id}): Sending ACK for message '{acknowledged_message_id}' to '{target_ai_id}' on topic '{ack_topic}'. Status: {status}")
-        if not self._send_hsp_message(envelope, mqtt_topic=ack_topic):
+        if not await self._send_hsp_message(envelope, mqtt_topic=ack_topic):
             logger.warning(f"HSPConnector ({self.ai_id}): Failed to send ACK for message '{acknowledged_message_id}'.")
 
 
