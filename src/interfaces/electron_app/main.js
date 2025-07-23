@@ -6,6 +6,32 @@ const fs = require('fs');
 
 const API_BASE_URL = "http://localhost:8000/api/v1"; // Assuming FastAPI runs here
 
+function createCodeInspectWindow() {
+  const codeInspectWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  codeInspectWindow.loadFile(path.join(__dirname, 'views', 'code_inspect', 'index.html'));
+}
+
+function createUniAIDashboardWindow() {
+  const uniAIDashboardWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  uniAIDashboardWindow.loadFile(path.join(__dirname, 'views', 'uni_ai_dashboard', 'index.html'));
+}
+
 function createWindow () {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -29,6 +55,14 @@ function createWindow () {
 
 app.whenReady().then(() => {
   createWindow();
+
+  ipcMain.on('open-code-inspect', () => {
+    createCodeInspectWindow();
+  });
+
+  ipcMain.on('open-uni-ai-dashboard', () => {
+    createUniAIDashboardWindow();
+  });
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
