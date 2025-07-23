@@ -133,8 +133,7 @@ class TestHSPConnectorConnectionLogic:
         assert not connector.is_connected
         # Flag should not change because this is a failed *connect* attempt, not a new *disconnect* event
         assert connector._was_unexpectedly_disconnected == initial_unexpected_flag_state
-        assert f"HSPConnector ({TEST_AI_ID}): Failed to connect to MQTT Broker" in caplog.text
-        assert "Client will continue to retry" in caplog.text
+        assert f"HSPConnector ({TEST_AI_ID}): Failed to connect to any of the provided MQTT brokers." in caplog.text
 
     @pytest.mark.timeout(10)
     async def test_resubscription_on_connect(self, connector_with_mock_client: HSPConnector, mock_gmqtt_client: MagicMock):

@@ -34,6 +34,14 @@ This document defines the success criteria for the models and tools in the Unifi
 *   **Coherence:** The model should generate text that is coherent and makes sense in the context of the prompt.
 *   **Relevance:** The model should generate text that is relevant to the prompt.
 
+### Game
+
+*   **Player Immersion:** Players should feel like they are part of the game world.
+*   **Emotional Connection:** Players should feel an emotional connection to Angela.
+*   **Edutainment Value:** The game should be both fun and educational.
+*   **Core Loop Engagement:** The core gameplay loop should be engaging and rewarding.
+*   **Brand Philosophy Delivery:** The game should successfully communicate the project's core philosophy of "human-AI symbiosis".
+
 ## Tools
 
 ### Math Tool
