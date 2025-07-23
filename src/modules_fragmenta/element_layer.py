@@ -16,15 +16,17 @@ class ElementLayer:
         # Example processing:
         # processed_elements = []
         # for element in data_elements:
-        #     # Apply some transformation based on element type or context
-        #     transformed_element = self._transform_element(element, context)
-        #     processed_elements.append(transformed_element)
-        # return processed_elements
-        return data_elements
+        processed_elements = []
+        for element in data_elements:
+            # Apply some transformation based on element type or context
+            transformed_element = self._transform_element(element, context)
+            processed_elements.append(transformed_element)
+        return processed_elements
 
     def _transform_element(self, element: any, context: dict = None) -> any:
-        """Placeholder for transforming a single element."""
-        print(f"ElementLayer: Transforming element: {str(element)[:50]} (Placeholder).")
+        """Mock for transforming a single element."""
+        if isinstance(element, dict):
+            element['processed_by_element_layer'] = True
         return element
 
 if __name__ == '__main__':
