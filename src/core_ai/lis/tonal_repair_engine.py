@@ -3,6 +3,10 @@ class TonalRepairEngine:
         """
         Repairs the text based on the detected issues.
         """
-        # This is a placeholder implementation.
-        # In a real implementation, this would use an LLM or other techniques to fix the text.
-        return f"Repaired: {original_text}"
+        repaired_text = original_text
+        for issue in issues:
+            if issue == "repetitive":
+                repaired_text = " ".join(sorted(set(repaired_text.split()), key=repaired_text.split().index))
+            elif issue == "negative_sentiment":
+                repaired_text = f"I'm sorry to hear that. It sounds like you're saying: {repaired_text}"
+        return f"Repaired: {repaired_text}"
