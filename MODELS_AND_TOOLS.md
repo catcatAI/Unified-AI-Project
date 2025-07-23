@@ -42,6 +42,14 @@ This document provides an overview of the models and tools used in the Unified A
     *   **Status:** Downloadable
     *   **Usage:** The natural language generation model can be used through the `natural_language_generation_tool` tool.
 
+### Game
+
+*   **Game**
+    *   **Description:** A GBA-style life simulation game.
+    *   **Location:** `src/game/`
+    *   **Status:** Built-in
+    *   **Usage:** The game can be played through the Electron app.
+
 ## Tools
 
 ### Mathematics

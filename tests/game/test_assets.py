@@ -13,11 +13,12 @@ def test_asset_loading(game):
     assert 'portraits' in game.assets['images']
     assert 'characters' in game.assets['sprites']
     assert 'icons' in game.assets['sprites']
-    assert 'portraits' in game.assets['sprites']
+    # 'portraits' are images, not sprites
+    assert 'portraits' not in game.assets['sprites']
 
 @pytest.mark.timeout(5)
 def test_specific_assets_loaded(game):
     assert 'station' in game.assets['images']['backgrounds']
     assert 'angela' in game.assets['images']['portraits']
-    assert 'player_walk_cycle' in game.assets['sprites']['characters']
-    assert 'item_shizuku' in game.assets['sprites']['icons']
+    assert 'player' in game.assets['sprites']['characters']
+    assert 'schoolbag' in game.assets['sprites']['icons']
