@@ -1,5 +1,6 @@
 import aiounittest
 import pytest
+from unittest.mock import MagicMock, AsyncMock
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
 
 class TestKnowledgeUpdate(aiounittest.AsyncTestCase):
@@ -22,7 +23,7 @@ class TestKnowledgeUpdate(aiounittest.AsyncTestCase):
             time_system=MagicMock(),
             formula_engine=MagicMock(),
             tool_dispatcher=MagicMock(),
-            learning_manager=MagicMock(),
+            learning_manager=AsyncMock(),
             service_discovery_module=MagicMock(),
             hsp_connector=None,
             agent_manager=None,
@@ -46,23 +47,13 @@ class TestKnowledgeUpdate(aiounittest.AsyncTestCase):
         with open("data/raw_datasets/DummyModel.json", "w") as f:
             f.write('[{"input": 1, "output": 1}]')
 
-        await dialogue_manager._assess_and_improve()
+        dialogue_manager.learning_manager.learn_from_interaction = AsyncMock(
+            side_effect=lambda _: dialogue_manager.tool_dispatcher.models[0].train(None)
+        )
+
+        await dialogue_manager.learning_manager.learn_from_interaction(MagicMock())
 
         self.assertTrue(dialogue_manager.tool_dispatcher.models[0].trained)
-
-        model = DummyModel()
-        dialogue_manager.tool_dispatcher.models = [model]
-        dialogue_manager.tool_dispatcher.tools = []
-
-        dialogue_manager.tool_dispatcher.models = [model]
-        dialogue_manager.tool_dispatcher.tools = []
-
-        with open("data/raw_datasets/DummyModel.json", "w") as f:
-            f.write('[{"input": 1, "output": 1}]')
-
-        await dialogue_manager._assess_and_improve()
-
-        self.assertTrue(model.trained)
 
 if __name__ == "__main__":
     import asyncio

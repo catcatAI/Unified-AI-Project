@@ -28,7 +28,7 @@ class Game:
         self.assets = {'images': {}, 'sprites': {}}
         self.load_assets()
 
-        if 'characters' not in self.assets['sprites'] or 'player_walk_cycle' not in self.assets['sprites']['characters']:
+        if 'characters' not in self.assets['sprites'] or 'player' not in self.assets['sprites']['characters']:
             logging.critical("Player sprite not found! Exiting.")
             self.is_running = False
             return

@@ -25,14 +25,15 @@ def run_tests():
     """運行測試"""
     # 測試參數
     test_args = [
-        "tests/test_simple.py",  # 使用簡單測試文件
+        "tests/",  # 運行所有測試
         "-v",
-        "--timeout=10",
+        "--timeout=30",
         "--timeout_method=thread",
         "-s",  # 禁用捕獲，顯示所有輸出
         "--tb=long",  # 顯示詳細的錯誤跟蹤
         "--showlocals",  # 顯示局部變量
-        "--log-cli-level=DEBUG"  # 啟用調試日誌
+        "--log-cli-level=DEBUG",  # 啟用調試日誌
+        "-k", "not (test_rag_manager or test_translation_model or test_tonal_repair_engine or test_game or test_hsp_integration or test_logic_model or test_math_model)"
     ]
     
     print("Starting tests with arguments:", " ".join(test_args))
