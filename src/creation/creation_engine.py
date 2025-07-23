@@ -65,8 +65,7 @@ class {model_name}:
         Returns:
             The output of the model.
         \"\"\"
-        # TODO: Implement the evaluation logic here.
-        pass
+        return f"Evaluated input: {{input}}"
 """
         return model_code
 
@@ -92,7 +91,6 @@ def {tool_name}(input):
     Returns:
         The output of the tool.
     \"\"\"
-    # TODO: Implement the tool logic here.
-    pass
+    return f"Executed tool {tool_name} with input: {{input}}"
 """
         return tool_code

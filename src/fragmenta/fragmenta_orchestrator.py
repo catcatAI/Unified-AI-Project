@@ -18,6 +18,14 @@ class FragmentaOrchestrator:
             **query_params
         )
 
-        # In a real implementation, we would process these candidate memories.
-        # For now, we'll just return them.
-        return candidate_memories
+        processed_results = []
+        for memory in candidate_memories:
+            # Simple summarization for text-based gists
+            gist = memory.get('rehydrated_gist', '')
+            summary = ' '.join(gist.split()[:10]) + '...' if len(gist.split()) > 10 else gist
+            processed_results.append({
+                "memory_id": memory.get('id'),
+                "summary": summary
+            })
+
+        return {"status": "success", "processed_results": processed_results}
