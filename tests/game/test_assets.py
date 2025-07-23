@@ -1,9 +1,12 @@
 import pytest
 from src.game.main import Game
+from unittest.mock import MagicMock
 
 @pytest.fixture
 def game():
-    return Game()
+    with pytest.MonkeyPatch.context() as m:
+        m.setattr("src.game.angela.DialogueManager", MagicMock())
+        yield Game()
 
 @pytest.mark.timeout(5)
 def test_asset_loading(game):
