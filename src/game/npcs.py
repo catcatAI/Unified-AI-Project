@@ -41,7 +41,7 @@ def create_npc(game, npc_id):
         return None
 
     npc_data['id'] = npc_id
-    portrait = game.assets['sprites']['portraits'].get(npc_data['portrait'])
+    portrait = game.assets['images']['portraits'].get(npc_data['portrait'])
     sprite = game.assets['sprites']['characters'].get(npc_data['sprite'])
 
     return NPC(game, npc_data, portrait, sprite)

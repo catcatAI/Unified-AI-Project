@@ -93,7 +93,8 @@ class HSPConnector:
         self._loop_task: Optional[asyncio.Task] = None
         if not self.mock_mode:
             self.mqtt_client = gmqtt.Client(self.mqtt_client_id)
-            self.mqtt_client.set_auth_credentials(username, password)
+            if username:
+                self.mqtt_client.set_auth_credentials(username, password)
             self.mqtt_client.on_connect = self.on_connect
             self.mqtt_client.on_disconnect = self.on_disconnect
             self.mqtt_client.on_message = self.on_message

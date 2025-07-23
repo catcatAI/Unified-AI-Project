@@ -12,7 +12,7 @@ def test_npc_creation(game):
         npc = create_npc(game, npc_id)
         assert npc is not None
         assert npc.name == NPC_DATA[npc_id]['name']
-        assert npc.dialogue == NPC_DATA[npc_id]['dialogue']
+        assert npc.dialogue_tree == NPC_DATA[npc_id]['dialogue_tree']
 
 @pytest.mark.timeout(5)
 def test_npc_creation_invalid_id(game):
