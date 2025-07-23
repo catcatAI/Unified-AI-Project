@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const UserService = require('../services/userService.js');
 const { requireUser } = require('./middleware/auth.js');
 const User = require('../models/User.js');
@@ -124,7 +125,13 @@ router.post('/refresh', async (req, res) => {
   }
 });
 
-router.get('/me', requireUser, async (req, res) => {
+const meRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { message: 'Too many requests, please try again later.' }
+});
+
+router.get('/me', meRateLimiter, requireUser, async (req, res) => {
   return res.status(200).json(req.user);
 });
 
