@@ -46,7 +46,11 @@ router.post('/register', async (req, res, next) => {
 router.post('/logout', async (req, res) => {
   const { email } = req.body;
 
-  const user = await User.findOne({ email });
+  if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ message: 'Invalid email format' });
+  }
+
+  const user = await User.findOne({ email: { $eq: email } });
   if (user) {
     user.refreshToken = null;
     await user.save();
