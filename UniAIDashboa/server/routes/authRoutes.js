@@ -44,7 +44,13 @@ router.post('/register', async (req, res, next) => {
   }
 });
 
-router.post('/logout', async (req, res) => {
+const logoutRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { message: 'Too many logout requests, please try again later.' }
+});
+
+router.post('/logout', logoutRateLimiter, async (req, res) => {
   const { email } = req.body;
 
   if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
