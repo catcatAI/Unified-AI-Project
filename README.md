@@ -449,6 +449,11 @@ python installer_cli.py
 - 集成 HSP 服務按鈕和狀態顯示功能
 - 啟動命令：`cd src/interfaces/electron_app && npm start`
 
+### 遊戲客戶端 (`src/game/`)
+- **GBA 風格休閒養成遊戲**：作為與 Angela 互動和放鬆的獨特方式。
+- **核心玩法**：種植、釣魚、挖礦、發明等。
+- **設計文檔**：詳細設計請參閱 [遊戲設計文檔](docs/game/README.md)。
+
 ## 項目架構
 
 項目的邏輯圖和知識圖譜可在 `docs/architecture` 目錄中找到。
