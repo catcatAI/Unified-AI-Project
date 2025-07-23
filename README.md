@@ -106,12 +106,12 @@
 ### 異構同步協議 (HSP) (`src/hsp/`)
 *   **目的**: 使不同的 AI 實例（對等體）能夠通信、共享知識並協作執行任務
 *   **功能**: 定義消息類型（事實、能力廣告、任務請求/結果等）和通信模式（發布/訂閱、請求/回復）用於 AI 間交互
-*   **傳輸**: 目前使用 MQTT 進行消息傳輸。有關 MQTT 代理替代方案的詳細分析，請參見 [MQTT 代理替代方案分析](docs/architecture/MQTT_BROKER_ALTERNATIVES_ANALYSIS.md)
+*   **傳輸**: 使用 MQTT 進行消息傳輸，基於 gmqtt 實現異步通信。有關 MQTT 代理替代方案的詳細分析，請參見 [MQTT 代理替代方案分析](docs/architecture/MQTT_BROKER_ALTERNATIVES_ANALYSIS.md)
 *   **關鍵特性**: 包括服務發現機制、對等體間的基本信任管理，以及處理來自不同 AI 的衝突信息的策略
 *   **規範**: 詳見 `docs/HSP_SPECIFICATION.md`
 
 #### HSP 核心組件
-*   **HSP 連接器 (`src/hsp/connector.py`)**: 實現 AI 間的通信協議和 WebSocket 連接管理，支持異構系統間的數據同步和消息路由，提供分散式 AI 協作能力和任務委派，包含重連策略和錯誤處理機制
+*   **HSP 連接器 (`src/hsp/connector.py`)**: 實現基於 gmqtt 的異步 MQTT 通信，支持異構系統間的數據同步和消息路由，提供分散式 AI 協作能力和任務委派，包含重連策略和錯誤處理機制
 *   **服務發現模塊 (`src/hsp/service_discovery_module.py`)**: 自動發現網絡中的其他 AI 系統，管理服務註冊和註銷，支持能力廣告，提供動態服務路由功能和能力過期處理，集成信任評估和能力匹配算法
 *   **HSP 消息處理器 (`src/hsp/message_processor.py`)**: 處理 HSP 協議消息的序列化和反序列化，支持多種消息類型（事實、信念、任務請求等），提供消息驗證和格式檢查功能
 *   **HSP 任務管理器 (`src/hsp/task_manager.py`)**: 管理分散式任務的分配和執行，協調多 AI 系統間的任務協作，提供任務狀態追蹤和結果聚合

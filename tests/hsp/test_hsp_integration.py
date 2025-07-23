@@ -223,7 +223,7 @@ async def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker):
         MQTT_BROKER_PORT,
     )
     # connector.connect() is now synchronous and returns bool
-    if not connector.connect():
+    if not await connector.connect():
         pytest.fail("Failed to connect main_ai_hsp_connector")
     yield connector
     connector.disconnect()
@@ -237,7 +237,7 @@ async def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker):
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
     )
-    if not connector.connect():
+    if not await connector.connect():
         pytest.fail("Failed to connect peer_a_hsp_connector")
     yield connector
     connector.disconnect()
@@ -251,7 +251,7 @@ async def peer_b_hsp_connector(trust_manager_fixture: TrustManager, broker):
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
     )
-    if not connector.connect():
+    if not await connector.connect():
         pytest.fail("Failed to connect peer_b_hsp_connector")
     yield connector
     connector.disconnect()
@@ -360,26 +360,27 @@ class TestHSPFactPublishing:
         configured_learning_manager: LearningManager,
         peer_a_hsp_connector: HSPConnector
     ):
-        # ... (test body as previously defined) ...
         received_facts_on_peer: List[Dict[str, Any]] = []
-        
+
         def peer_fact_handler(fact_payload: HSPFactPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+            print(f"Peer A received fact: {fact_payload}")
             if sender_ai_id == TEST_AI_ID_MAIN:
                 received_facts_on_peer.append({"payload": fact_payload, "envelope": envelope})
-                
+
         peer_a_hsp_connector.register_on_fact_callback(peer_fact_handler)
         assert peer_a_hsp_connector.subscribe(FACT_TOPIC_GENERAL)
-        time.sleep(0.2)
-        
+        await asyncio.sleep(0.2)
+
         await configured_learning_manager.process_and_store_learnables(
             text="Berlin is the capital of Germany.",
             user_id="test_user_pub",
             session_id="test_session_pub",
             source_interaction_ref="test_interaction_pub_01"
         )
-        
-        time.sleep(1.0)
-        assert len(received_facts_on_peer) > 0
+
+        await asyncio.sleep(1.0)
+        print(f"Final received facts on peer A: {received_facts_on_peer}")
+        assert len(received_facts_on_peer) > 0, "Peer A did not receive any facts."
         rp = received_facts_on_peer[0]["payload"]
         assert rp.get("source_ai_id") == TEST_AI_ID_MAIN
         assert rp.get("statement_structured", {}).get("subject") == "Berlin"
