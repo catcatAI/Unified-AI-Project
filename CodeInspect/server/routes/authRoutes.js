@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const UserService = require('../services/userService.js');
 const { requireUser } = require('./middleware/auth.js');
 const User = require('../models/User.js');
@@ -6,6 +7,13 @@ const { generateAccessToken, generateRefreshToken } = require('../utils/auth.js'
 const jwt = require('jsonwebtoken');
 
 const router = express.Router();
+
+// Define rate limiter: maximum of 100 requests per 15 minutes
+const logoutRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { message: 'Too many requests, please try again later.' }
+});
 
 router.post('/login', async (req, res) => {
   const sendError = msg => res.status(400).json({ message: msg });
@@ -43,7 +51,7 @@ router.post('/register', async (req, res, next) => {
   }
 });
 
-router.post('/logout', async (req, res) => {
+router.post('/logout', logoutRateLimiter, async (req, res) => {
   const { email } = req.body;
 
   const user = await User.findOne({ email });
