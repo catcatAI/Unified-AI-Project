@@ -37,7 +37,8 @@ contextBridge.exposeInMainWorld(
             'handle-action',
             'hsp:get-discovered-services',
             'hsp:request-task',
-            'hsp:get-task-status' // Added for polling task status
+            'hsp:get-task-status', // Added for polling task status
+            'game:start'
         ];
         if (validChannels.includes(channel)) {
             console.log(`Preload: Invoking main process handler on channel '${channel}' with args:`, args);
@@ -45,7 +46,9 @@ contextBridge.exposeInMainWorld(
         }
         console.warn(`Preload: Attempted to invoke on invalid channel '${channel}'`);
         return null;
-    }
+    },
+    openCodeInspect: () => ipcRenderer.send('open-code-inspect'),
+    openUniAIDashboard: () => ipcRenderer.send('open-uni-ai-dashboard')
     // You can add more functions here to expose specific IPC functionalities
   }
 );
