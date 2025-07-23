@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatViewButton = document.getElementById('chatViewButton');
     const hspViewButton = document.getElementById('hspViewButton');
     const gameViewButton = document.getElementById('gameViewButton');
+    const openCodeInspectBtn = document.getElementById('open-code-inspect');
+    const openUniAIDashboardBtn = document.getElementById('open-uni-ai-dashboard');
     const chatView = document.getElementById('chatView');
     const hspServicesView = document.getElementById('hspServicesView');
     const gameView = document.getElementById('gameView');
@@ -48,6 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
     chatViewButton.addEventListener('click', () => showView('chatView'));
     hspViewButton.addEventListener('click', () => showView('hspServicesView'));
     gameViewButton.addEventListener('click', () => showView('gameView'));
+    openCodeInspectBtn.addEventListener('click', () => window.electronAPI.openCodeInspect());
+    openUniAIDashboardBtn.addEventListener('click', () => window.electronAPI.openUniAIDashboard());
+
 
     startGameButton.addEventListener('click', () => {
         if (window.electronAPI && window.electronAPI.invoke) {
