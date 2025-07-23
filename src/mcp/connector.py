@@ -37,11 +37,24 @@ class MCPConnector:
 
     def _on_message(self, client, userdata, msg):
         print(f"MCP message received on topic {msg.topic}: {msg.payload.decode()}")
-        # Message processing logic will be added here
-        pass
+        try:
+            data = json.loads(msg.payload)
+            topic_parts = msg.topic.split('/')
+            if len(topic_parts) == 4 and topic_parts[0] == 'mcp' and topic_parts[1] == 'cmd':
+                # Topic format: mcp/cmd/{ai_id}/{command_name}
+                command_name = topic_parts[3]
+                if command_name in self.command_handlers:
+                    self.command_handlers[command_name](data.get('args'))
+        except json.JSONDecodeError:
+            print("Failed to decode MCP message payload as JSON.")
+        except Exception as e:
+            print(f"Error processing MCP message: {e}")
 
     def register_command_handler(self, command_name: str, handler: Callable):
         self.command_handlers[command_name] = handler
+        topic = f"mcp/cmd/{self.ai_id}/{command_name}"
+        self.client.subscribe(topic)
+        print(f"Registered handler for command '{command_name}' on topic '{topic}'")
 
     def send_command(self, target_id: str, command_name: str, parameters: dict) -> str:
         request_id = str(uuid.uuid4())
@@ -60,7 +73,7 @@ class MCPConnector:
             "payload": payload,
             "correlation_id": None
         }
-        topic = f"mcp/unicast/{target_id}"
+        topic = f"mcp/cmd/{target_id}/{command_name}"
         self.client.publish(topic, json.dumps(envelope))
         print(f"Sent command '{command_name}' to {target_id} with request_id {request_id}")
         return request_id

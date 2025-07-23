@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
+import json
 
 from src.mcp.connector import MCPConnector
 from src.mcp.types import MCPCommandRequest
@@ -39,34 +40,32 @@ def test_send_command(mock_mqtt_client):
     connector.connect()
 
     target_ai_id = 'target_ai'
-    command: MCPCommandRequest = {
-        'command_name': 'test_command',
-        'args': {'arg1': 'value1'},
-        'transaction_id': '12345'
-    }
+    command_name = 'test_command'
+    params = {'arg1': 'value1'}
 
-    connector.send_command(target_ai_id, command)
+    connector.send_command(target_ai_id, command_name, params)
 
-    expected_topic = f"mcp/cmd/{target_ai_id}"
+    expected_topic = f"mcp/cmd/{target_ai_id}/{command_name}"
     mock_mqtt_client.publish.assert_called_once()
     args, kwargs = mock_mqtt_client.publish.call_args
     assert args[0] == expected_topic
-    # We don't check the exact payload here because the envelope adds dynamic info
-    assert '"command_name": "test_command"' in str(args[1])
+    payload = json.loads(args[1])
+    assert payload['payload']['command_name'] == command_name
+    assert payload['payload']['parameters'] == params
 
 @pytest.mark.timeout(5)
 def test_on_message_callback(mock_mqtt_client):
     """Test the on_message callback handling."""
     callback = MagicMock()
     connector = MCPConnector('test_ai', 'localhost', 1883)
-    connector.register_command_callback(callback)
+    connector.register_command_handler("test_cmd", callback)
 
     # Simulate receiving a message
     msg = MagicMock()
-    msg.topic = "mcp/cmd/test_ai"
-    msg.payload = b'{"envelope": {}, "payload": {"command_name": "test_cmd"}}'
+    msg.topic = "mcp/cmd/test_ai/test_cmd"
+    msg.payload = b'{"args": {"arg1": "value1"}}'
 
     # Directly call the internal on_message handler
     connector._on_message(mock_mqtt_client, None, msg)
 
-    callback.assert_called_once()
+    callback.assert_called_once_with({'arg1': 'value1'})

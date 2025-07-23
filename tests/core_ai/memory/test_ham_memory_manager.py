@@ -498,12 +498,17 @@ async def test_20_delete_old_experiences(ham_manager_fixture, monkeypatch):
     # 替換 personality_manager
     ham_manager_no_res.personality_manager = MockPersonalityManager()
     
-    # Manually trigger cleanup
-    ham_manager_no_res._perform_deletion_check()
+    # 模擬高內存使用率
+    with patch('psutil.virtual_memory') as mock_virtual_memory:
+        mock_virtual_memory.return_value.total = 100
+        mock_virtual_memory.return_value.available = 10 # 90% usage
+
+        # Manually trigger cleanup
+        ham_manager_no_res._perform_deletion_check()
     
     # 驗證部分記憶已被清理
     final_count = len(ham_manager_no_res.core_memory_store)
-    assert final_count < initial_count, "Expected some memories to be deleted"
+    assert final_count < initial_count, f"Expected some memories to be deleted, but count remained at {final_count}"
     print("test_20_delete_old_experiences PASSED")
 
 @pytest.mark.timeout(10)  # 10秒超時，因為這個測試涉及並發操作

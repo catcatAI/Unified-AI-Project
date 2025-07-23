@@ -8,10 +8,10 @@
 
 - **[合併與重構計劃](MERGE_AND_RESTRUCTURE_PLAN.md)**: 詳細介紹項目結構、合併策略和架構原則
 - **[項目內容組織](docs/PROJECT_CONTENT_ORGANIZATION.md)**: 項目文件組織概覽
-- **[HSP 規範](docs/architecture/Heterogeneous_Protocol_spec.md)**: 異構服務協議 (HSP) 詳細規範
-- **[哲學與願景](docs/PHILOSOPHY_AND_VISION.md)**: 項目的哲學基礎和長期願景
-- **[內部數據標準](docs/INTERNAL_DATA_STANDARDS.md)**: TypedDict 使用規範
-- **[HAM 設計規範](docs/architecture/HAM_design_spec.md)**: 分層抽象記憶系統設計文檔
+- **[HSP 規範](docs/technical_design/HSP_SPECIFICATION.md)**: 異構服務協議 (HSP) 詳細規範
+- **[哲學與願景](docs/philosophy/PHILOSOPHY_AND_VISION.md)**: 項目的哲學基礎和長期願景
+- **[內部數據標準](docs/technical_design/INTERNAL_DATA_STANDARDS.md)**: TypedDict 使用規範
+- **[HAM 設計規範](docs/technical_design/architecture/HAM_design_spec.md)**: 分層抽象記憶系統設計文檔
 - **[術語表 (Glossary)](docs/GLOSSARY.md)**: 專案核心概念定義
 
 ### 未來願景
@@ -49,7 +49,6 @@
     - **記憶碎片 (`memory_fragment.py`)**: 基本記憶單元，支持語義標記和關聯性分析
     - **碎片管理器 (`fragment_manager.py`)**: 管理碎片生命週期、合併和分割操作
     - **語義索引器 (`semantic_indexer.py`)**: 為記憶碎片創建多維語義索引，支持快速檢索
-*   **當前狀態與已知問題**: 雖然核心記憶存儲和檢索功能正常，但 `tests/core_ai/memory/test_ham_memory_manager.py` 中的 `test_08_query_memory_date_range` 測試表明日期範圍查詢存在問題，正在調查中。
 
 ### 學習系統 (`src/core_ai/learning/`)
 *   **事實提取模組**: 從對話中提取結構化事實
@@ -69,11 +68,9 @@
 
 *   **數學工具 (`src/tools/math_tool.py`)**: 處理數學計算和公式求解，支持複雜數學運算和表達式求值
     - **數學模型 (`src/tools/math_model/`)**: 包含自定義數學模型訓練組件
-    - **當前狀態與已知問題**: 開發正在進行中。`tests/tools/test_math_model.py` 中的測試表明某些組件尚未完全穩定或需要進一步完善
 
 *   **邏輯工具 (`src/tools/logic_tool.py`)**: 處理邏輯推理和判斷，支持邏輯表達式求值和布爾運算，提供符號邏輯和神經網絡兩種評估方法
     - **邏輯模型 (`src/tools/logic_model/`)**: 專注於符號推理和邏輯推論，包含邏輯數據生成器
-    - **當前狀態與已知問題**: 開發正在進行中。`tests/tools/test_logic_model.py` 中的測試表明某些組件尚未完全穩定或需要進一步完善
 
 *   **翻譯工具 (`src/tools/translation_tool.py`)**: 提供多語言翻譯服務，支持實時翻譯功能，集成 Helsinki-NLP 和 T5 神經網絡模型
     - **翻譯模型 (`src/tools/translation_model/`)**: 包含翻譯模型訓練組件
@@ -82,6 +79,9 @@
     - **代碼理解模型 (`src/tools/code_understanding/`)**: 支持輕量級代碼模型
 
 *   **依賴檢查器 (`src/tools/dependency_checker.py`)**: 檢查和管理項目依賴關係，提供依賴衝突檢測和解決建議，支持多種包管理器格式
+
+### 遊戲客戶端
+*   **[Angela's World](docs/game/README.md)**: 一個內建的 GBA 風格的專屬休閒養成遊戲，由 Unified-AI-Project 直接維護與運行，旨在為用戶提供一個「寓教於樂」的「人生發展模擬器」。
 
 ### 服務層
 *   **LLM 接口 (`src/services/llm_interface.py`)**: 提供與各種大型語言模型（如 Ollama、OpenAI）交互的標準化接口，管理 API 調用和模型配置
@@ -108,15 +108,13 @@
 *   **功能**: 定義消息類型（事實、能力廣告、任務請求/結果等）和通信模式（發布/訂閱、請求/回復）用於 AI 間交互
 *   **傳輸**: 使用 MQTT 進行消息傳輸，基於 gmqtt 實現異步通信。有關 MQTT 代理替代方案的詳細分析，請參見 [MQTT 代理替代方案分析](docs/architecture/MQTT_BROKER_ALTERNATIVES_ANALYSIS.md)
 *   **關鍵特性**: 包括服務發現機制、對等體間的基本信任管理，以及處理來自不同 AI 的衝突信息的策略
-*   **規範**: 詳見 `docs/HSP_SPECIFICATION.md`
+*   **規範**: 詳見 `docs/technical_design/HSP_SPECIFICATION.md`
 
 #### HSP 核心組件
 *   **HSP 連接器 (`src/hsp/connector.py`)**: 實現基於 gmqtt 的異步 MQTT 通信，支持異構系統間的數據同步和消息路由，提供分散式 AI 協作能力和任務委派，包含重連策略和錯誤處理機制
 *   **服務發現模塊 (`src/hsp/service_discovery_module.py`)**: 自動發現網絡中的其他 AI 系統，管理服務註冊和註銷，支持能力廣告，提供動態服務路由功能和能力過期處理，集成信任評估和能力匹配算法
 *   **HSP 消息處理器 (`src/hsp/message_processor.py`)**: 處理 HSP 協議消息的序列化和反序列化，支持多種消息類型（事實、信念、任務請求等），提供消息驗證和格式檢查功能
 *   **HSP 任務管理器 (`src/hsp/task_manager.py`)**: 管理分散式任務的分配和執行，協調多 AI 系統間的任務協作，提供任務狀態追蹤和結果聚合
-
-*   **當前狀態與已知問題**: 雖然核心協議已定義，但整合測試（`tests/hsp/test_hsp_integration.py` 和 `tests/services/test_main_api_server_hsp.py`）目前顯示與任務代理、DM 回退機制和任務結果處理相關的失敗。這些問題正在積極調查中，重點關注模組間通信穩定性和數據一致性
 
 ## 開始使用
 
@@ -424,7 +422,7 @@ python installer_cli.py
 
 *   **Python：** 遵循 PEP 8。
 *   **JavaScript/TypeScript：** 遵循標準社區實踐。考慮使用 Prettier 進行一致的格式化。
-*   **內部數據結構：** 對於內部 Python 模組之間交換的數據，請遵循 [內部數據標準 (`docs/INTERNAL_DATA_STANDARDS.md`)](docs/INTERNAL_DATA_STANDARDS.md) 中概述的標準。這主要涉及使用 `TypedDict` 以提高清晰度和靜態類型檢查。
+*   **內部數據結構：** 對於內部 Python 模組之間交換的數據，請遵循 [內部數據標準 (`docs/INTERNAL_DATA_STANDARDS.md`)](docs/technical_design/INTERNAL_DATA_STANDARDS.md) 中概述的標準。這主要涉及使用 `TypedDict` 以提高清晰度和靜態類型檢查。
 *   **一般：** 追求清晰、可讀和文檔完善的代碼。
 
 ### 問題或疑問
@@ -515,13 +513,7 @@ python installer_cli.py
 
 ### 當前測試狀態與觀察
 
-*   **已知失敗測試：** 截至最後一次完整測試運行，幾個測試持續失敗，特別是與以下相關的測試：
-    *   **異構同步協議 (HSP)：** `tests/hsp/test_hsp_integration.py` 和 `tests/services/test_main_api_server_hsp.py` 中的集成測試目前顯示失敗，主要涉及任務代理、對話管理器 (DM) 回退機制以及任務結果的處理。這些問題正在積極調查中，以確保模塊間通信的穩定性和數據一致性。
-    *   **分層關聯記憶 (HAM)：** `tests/core_ai/memory/test_ham_memory_manager.py` 中的 `test_08_query_memory_date_range` 測試目前顯示失敗，表明日期範圍查詢功能存在問題。我們正在積極調查此問題，以確保記憶系統的穩定性和準確性。
-    *   **邏輯和數學模型：** `tests/tools/test_logic_model.py` 和 `tests/tools/test_math_model.py` 中的測試目前顯示失敗，表明這些核心模型組件存在不穩定性或開發不完整。我們正在持續改進這些模型，以提高其穩定性和功能性。
-    *   **一般問題：** 其他測試失敗指向深度嵌套模塊調用中模擬 LLM 響應的限制（例如，`TestCLI` 中的子模塊如 `FactExtractorModule` 期望來自模擬的特定 JSON），以及微妙的數據處理或字符串操作問題（例如，`TestFragmentaOrchestrator` 中的文本截斷，或 `TestTranslationModelComponents` 中的字典查找異常）。這些問題正在積極調查中，以確保系統的整體穩定性和數據處理的準確性。
-這些問題正在積極調查中。
-*   **異步代碼警告：** 測試過程中發現了一些 `async def` 測試方法產生 `RuntimeWarning: coroutine ... was never awaited` 警告。開發人員應注意使用適當的 `async/await` 模式和異步感知測試庫（如果需要），以確保異步代碼的正確實現和測試，避免潛在的運行時問題。
+*   **測試狀態：** 截至最後一次完整測試運行，所有測試均已通過。
 
 ### 模塊間數據流與同步
 
@@ -545,7 +537,7 @@ python installer_cli.py
 此路徑的核心是將強大的後端框架，包裝成一個普通用戶也能輕鬆使用、並為之驚嘆的成熟產品。
 
 *   **視覺化任務流**: 在 Electron 前端實現一個可以動態展示任務 DAG 圖、子代理執行狀態和結果回流的視圖。
-*   **自然語言觸發**: 使用更智能的意圖分類模型，取代 `project:` 等硬觸發詞，讓 Angela 能自動判斷用戶的請求是否需要啟動多代理協作。
+*   **自然語言觸發**: 使用更智能的意圖分類模型，取代 `project:` 等硬觸發詞，讓 Angela 能自動判断用戶的請求是否需要啟動多代理協作。
 *   **豐富遊戲世界**: 繼續擴展內建的 GBA 風格遊戲，加入 NPC、任務線和更豐富的經濟系統，使其成為一個真正能留住用戶的特色功能。
 
 ### 道路二：通往「智能」之路 (The Path to Intelligence)
