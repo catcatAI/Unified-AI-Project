@@ -441,13 +441,15 @@ python installer_cli.py
 - 支持直接查詢命令：`python src/interfaces/cli/main.py query "Hello AI"`
 
 ### Electron 應用 (`src/interfaces/electron_app/`)
-- 跨平台桌面應用界面 (`main.js`, `renderer.js`)
-- 提供圖形化用戶界面和實時對話
-- 支持豐富的交互體驗和 HSP 服務管理
-- **內建遊戲客戶端**：集成了一個 GBA 風格的休閒遊戲，作為與 Angela 互動和放鬆的獨特方式。
-- 包含現代化的 UI 設計和響應式布局 (`styles.css`)
-- 集成 HSP 服務按鈕和狀態顯示功能
-- 啟動命令：`cd src/interfaces/electron_app && npm start`
+- **統一前端界面**：一個基於 React 和 Vite 的單體應用程式，整合了所有用戶交互功能。
+- **核心視圖**：
+    - **聊天 (Chat)**：與 AI 進行對話的核心界面。
+    - **HSP 網絡 (HSP Network)**：查看和與異構服務協議網絡中的其他 AI 代理互動。
+    - **遊戲 (Game)**：啟動和遊玩內建的 GBA 風格休閒養成遊戲。
+    - **程式碼檢查器 (Code Inspector)**：一個用於分析程式碼專案的工具（開發中）。
+    - **儀表板 (Dashboard)**：顯示 AI 狀態和項目指標的儀表板（開發中）。
+- **技術棧**：Electron, React, TypeScript, Vite, Tailwind CSS。
+- **啟動命令**：`cd src/interfaces/electron_app && npm install && npm run dev`
 
 ## 項目架構
 
