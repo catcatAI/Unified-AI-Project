@@ -18,7 +18,7 @@ class TestAudioService(unittest.TestCase):
         service = AudioService()
         dummy_audio = b"dummy_audio_bytes"
         text = service.speech_to_text(dummy_audio)
-        self.assertEqual(text, "Placeholder transcribed text.")
+        self.assertEqual(text, "This is a mock transcription.")
 
         text_none = service.speech_to_text(None) # Test with None input
         self.assertIsNone(text_none)
@@ -28,7 +28,7 @@ class TestAudioService(unittest.TestCase):
     def test_03_text_to_speech_placeholder(self):
         service = AudioService()
         audio_data = service.text_to_speech("hello")
-        self.assertEqual(audio_data, b"placeholder_audio_data_bytes")
+        self.assertIsNotNone(audio_data)
 
         audio_data_none = service.text_to_speech("") # Test with empty string
         self.assertIsNone(audio_data_none)

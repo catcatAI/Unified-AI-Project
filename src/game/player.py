@@ -8,7 +8,7 @@ class Player:
         self.game = game
         self.name = name
         self.appearance = appearance if appearance else self.default_appearance()
-        self.image = self.game.assets['sprites']['characters']['player_walk_cycle']  # This will need to be animated
+        self.image = self.game.assets['sprites']['characters']['player']  # This will need to be animated
         self.rect = self.image.get_rect()
         self.rect.x = 100
         self.rect.y = 100

@@ -193,8 +193,8 @@ def personality_manager_fixture() -> PersonalityManager:
 
 import threading
 
-@pytest.fixture
-async def broker(): # Make the fixture async
+@pytest.fixture(scope="module")
+async def broker(event_loop):
     config = {
         "listeners": {
             "default": {
@@ -208,10 +208,10 @@ async def broker(): # Make the fixture async
         },
         "topic-check": {"enabled": False},
     }
-    b = Broker(config)
-    await b.start() # Await the broker startup
-    yield b
-    await b.shutdown() # Await the broker shutdown
+    broker = Broker(config, loop=event_loop)
+    await broker.start()
+    yield broker
+    await broker.shutdown()
 
 
 @pytest.fixture
