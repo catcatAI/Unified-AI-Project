@@ -15,7 +15,7 @@ sys.path.insert(0, str(project_root))
 sys.modules['src.core_ai.dependency_manager'] = MagicMock()
 sys.modules['src.tools.dependency_checker'] = MagicMock()
 
-from startup_with_fallbacks import StartupManager, is_dependency_available
+from src.core_ai.dependency_manager import DependencyManager as StartupManager, dependency_manager
 
 # Restore original modules after tests
 def tearDownModule():
@@ -42,7 +42,7 @@ class TestStartupManager(unittest.TestCase):
         with open(self.temp_config_path, 'w') as f:
             yaml.dump(config_data, f)
 
-    @patch('startup_with_fallbacks.is_dependency_available')
+    @patch('src.core_ai.dependency_manager.dependency_manager.is_available')
     @pytest.mark.timeout(5)
     def test_load_startup_modes_from_config(self, mock_is_dependency_available):
         mock_is_dependency_available.return_value = True # Assume all dependencies are available for this test
@@ -74,7 +74,7 @@ class TestStartupManager(unittest.TestCase):
         self.assertEqual(manager.startup_modes['test_full']['required_deps'], ['dep_a', 'dep_b', 'dep_c'])
         self.assertEqual(manager.startup_modes['test_full']['features'], ['basic_web', 'core_ai'])
 
-    @patch('startup_with_fallbacks.is_dependency_available')
+    @patch('src.core_ai.dependency_manager.dependency_manager.is_available')
     @pytest.mark.timeout(5)
     def test_check_mode_compatibility(self, mock_is_dependency_available):
         test_config = {
@@ -113,7 +113,7 @@ class TestStartupManager(unittest.TestCase):
         self.assertEqual(compatibility['available_features'], [])
         self.assertEqual(compatibility['disabled_features'], ['basic_web'])
 
-    @patch('startup_with_fallbacks.is_dependency_available')
+    @patch('src.core_ai.dependency_manager.dependency_manager.is_available')
     @pytest.mark.timeout(5)
     def test_suggest_best_mode(self, mock_is_dependency_available):
         test_config = {

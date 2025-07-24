@@ -95,7 +95,7 @@ class DialogueManager:
 
         # --- Intent Classification ---
         # Use triggers from config to activate special handlers
-        if user_input.lower().startswith(self.triggers["complex_project"]):
+        if self.project_coordinator and user_input.lower().startswith(self.triggers["complex_project"]):
             project_query = user_input[len(self.triggers["complex_project"]):].strip()
             print(f"[{self.ai_id}] Complex project detected. Delegating to ProjectCoordinator...")
             return await self.project_coordinator.handle_project(project_query, session_id, user_id)

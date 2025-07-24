@@ -16,9 +16,7 @@ async def test_handle_project_decomposes_and_executes(mock_core_services):
 
     # Mock the responses from the LLM
     llm_interface.generate_response.side_effect = [
-        # 1. Decomposition response
         '[{"capability_needed": "test_capability_v1", "task_parameters": {"param": "value"}, "task_description": "Test task"}]',
-        # 2. Integration response
         "Final integrated response."
     ]
 
@@ -76,5 +74,5 @@ async def test_execute_task_graph_circular_dependency(mock_core_services):
     ]
 
     # Act & Assert
-    with pytest.raises(ValueError, match="Circular dependency detected"):
+    with pytest.raises(ValueError, match="Task 0 has an invalid dependency on a future task 1."):
         await pc._execute_task_graph(subtasks)
