@@ -8,139 +8,166 @@ dependencies:
       description: "Web framework for basic HTTP services"
       essential: true
       fallbacks: ["fastapi", "tornado"]
-      
     - name: "numpy"
       description: "Numerical computing library"
       essential: true
       fallbacks: ["array", "math"]
-      
     - name: "cryptography"
       description: "Cryptographic functions for security"
       essential: true
       fallbacks: ["pycryptodome", "hashlib"]
-      
     - name: "requests"
       description: "HTTP library for API calls"
       essential: true
       fallbacks: ["urllib3", "httpx"]
-      
     - name: "python-dotenv"
+      import_name: "dotenv"
       description: "Environment variable management"
       essential: true
       fallbacks: ["os.environ"]
-      
     - name: "PyYAML"
+      import_name: "yaml"
       description: "YAML configuration file parsing"
       essential: true
       fallbacks: ["json", "configparser"]
-      
     - name: "typing-extensions"
       description: "Extended type hints"
       essential: true
       fallbacks: ["typing"]
-      
     - name: "paho-mqtt"
+      import_name: "paho"
       description: "MQTT client for HSP communication"
       essential: true
       fallbacks: ["asyncio-mqtt", "gmqtt"]
-      
     - name: "networkx"
       description: "Graph analysis library for knowledge graphs"
       essential: true
       fallbacks: ["igraph", "graph-tool"]
-      
     - name: "psutil"
       description: "System and process utilities"
       essential: true
       fallbacks: ["os", "platform"]
+    - name: "pandas"
+      description: "Data analysis library"
+      essential: true
+    - name: "scikit-learn"
+      import_name: "sklearn"
+      description: "Machine learning library"
+      essential: true
 
   # Optional Dependencies - Enhanced functionality
   optional:
-    # TensorFlow and scikit-learn are not available in the current environment.
-    # The project uses lightweight models as an alternative.
     - name: "tensorflow"
       description: "Machine learning framework for neural network models"
       essential: false
       fallbacks: ["numpy", "tensorflow-cpu", "scikit-learn"]
       features: ["math_model", "logic_model_nn"]
-      
     - name: "spacy"
       description: "Advanced natural language processing"
       essential: false
       fallbacks: ["nltk", "textblob", "re"]
       features: ["advanced_nlp", "entity_recognition"]
-      
-    - name: "langchain"
-      description: "LLM integration framework"
-      essential: false
-      fallbacks: ["openai", "anthropic", "requests"]
-      features: ["llm_integration", "chain_operations"]
-      
     - name: "fastapi"
       description: "Modern web framework for APIs"
       essential: false
       fallbacks: ["Flask", "tornado"]
       features: ["modern_api", "async_web"]
-      
     - name: "uvicorn"
       description: "ASGI server for FastAPI"
       essential: false
       fallbacks: ["gunicorn", "waitress", "werkzeug"]
       features: ["asgi_server", "high_performance"]
-      
     - name: "pydantic"
       description: "Data validation using Python type annotations"
       essential: false
       fallbacks: ["dataclasses", "typing"]
       features: ["data_validation", "serialization"]
-      
     - name: "httpx"
       description: "Async HTTP client"
       essential: false
       fallbacks: ["requests", "urllib3"]
       features: ["async_http", "http2_support"]
-      
+    - name: "pytest"
+      description: "Testing framework"
+      essential: false
+      features: ["testing"]
     - name: "pytest-asyncio"
+      import_name: "pytest_asyncio"
       description: "Async testing support"
       essential: false
       fallbacks: ["pytest", "unittest"]
-      features: ["async_testing"]
-
+      features: ["testing"]
+    - name: "pytest-cov"
+      description: "Pytest plugin for coverage reporting"
+      essential: false
+      features: ["testing"]
+    - name: "aiounittest"
+      description: "Async testing support for unittest"
+      essential: false
+      features: ["testing"]
     - name: "PyQt5"
       description: "GUI toolkit for the graphical installer"
       essential: false
       fallbacks: ["installer_cli.py"]
       features: ["gui_installer"]
-
     - name: "pyshortcuts"
       description: "Cross-platform shortcut creation"
       essential: false
       fallbacks: ["manual_shortcut_creation_instructions"]
       features: ["desktop_shortcut"]
-
     - name: "secret-sharing"
+      import_name: "secretsharing"
       description: "Shamir's Secret Sharing for creating redundant backups"
       essential: false
       fallbacks: []
       features: ["genesis_backup"]
-
     - name: "qrcode"
       description: "QR code generation for displaying backup shards"
       essential: false
       fallbacks: ["text_display"]
       features: ["genesis_backup_gui"]
-
-    - name: "pytest-cov"
-      description: "Pytest plugin for coverage reporting"
-      essential: false
-      fallbacks: []
-      features: ["testing"]
-
     - name: "pygame"
       description: "Library for making multimedia applications like games"
       essential: false
-      fallbacks: []
       features: ["game_client"]
+    - name: "beautifulsoup4"
+      import_name: "bs4"
+      description: "Web scraping library"
+      essential: false
+      features: ["web_scraping"]
+    - name: "github3.py"
+      import_name: "github"
+      description: "GitHub API wrapper"
+      essential: false
+      features: ["integrations"]
+    - name: "scikit-image"
+      import_name: "skimage"
+      description: "Image processing library"
+      essential: false
+      features: ["image_processing"]
+    - name: "SpeechRecognition"
+      import_name: "speech_recognition"
+      description: "Speech recognition library"
+      essential: false
+      features: ["audio"]
+    - name: "faiss-cpu"
+      import_name: "faiss"
+      description: "Vector similarity search library"
+      essential: false
+      features: ["vector_search"]
+    - name: "sentence-transformers"
+      description: "Sentence embedding library"
+      essential: false
+      features: ["nlp"]
+    - name: "huggingface-hub"
+      description: "Hugging Face Hub client library"
+      essential: false
+      features: ["nlp"]
+    - name: "transformers"
+      description: "Hugging Face Transformers library"
+      essential: false
+      features: ["nlp"]
+
 
 # Fallback strategies for different scenarios
 fallback_strategies:
@@ -149,40 +176,28 @@ fallback_strategies:
     - disable_features: ["neural_network_models", "deep_learning"]
     - use_alternatives: ["scikit-learn", "numpy"]
     - fallback_message: "Neural network features disabled. Using basic mathematical operations."
-    
   # When spaCy is not available
   spacy_unavailable:
     - disable_features: ["advanced_nlp", "named_entity_recognition"]
     - use_alternatives: ["nltk", "re", "string"]
     - fallback_message: "Advanced NLP features disabled. Using basic text processing."
-    
-  # When LangChain is not available
-  langchain_unavailable:
-    - disable_features: ["llm_chains", "advanced_prompting"]
-    - use_alternatives: ["direct_api_calls"]
-    - fallback_message: "LLM chain features disabled. Using direct API calls."
-    
   # When FastAPI is not available
   fastapi_unavailable:
     - use_alternatives: ["Flask"]
     - fallback_message: "Using Flask instead of FastAPI for web services."
-    
   # When MQTT client is not available
   mqtt_unavailable:
     - disable_features: ["hsp_communication", "distributed_ai"]
     - fallback_message: "HSP communication disabled. Running in standalone mode."
-
   # When NetworkX is not available
   networkx_unavailable:
     - disable_features: ["knowledge_graph", "content_analysis_kg"]
     - fallback_message: "Knowledge Graph features disabled. Context analysis will be limited."
-
   # When PyQt5 is not available
   pyqt5_unavailable:
     - disable_features: ["gui_installer"]
     - use_alternatives: ["installer_cli.py"]
     - fallback_message: "PyQt5 not found. GUI installer is unavailable. Please use the command-line installer."
-
   # When pyshortcuts is not available
   pyshortcuts_unavailable:
     - disable_features: ["desktop_shortcut"]
@@ -194,13 +209,11 @@ environments:
     allow_fallbacks: true
     warn_on_fallback: true
     strict_mode: false
-    
   production:
     allow_fallbacks: true
     warn_on_fallback: true
     strict_mode: false
     log_fallbacks: true
-    
   testing:
     allow_fallbacks: true
     warn_on_fallback: false
@@ -211,30 +224,29 @@ environments:
 installation:
   minimal:
     description: "Minimal installation for basic functionality"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil"]
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn"]
     features: ["basic_web", "core_ai"]
-    
   standard:
     description: "Standard installation with common optional features"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "fastapi", "uvicorn", "pydantic", "httpx"]
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn", "fastapi", "uvicorn", "pydantic", "httpx"]
     features: ["web_api", "hsp_communication", "core_ai"]
-    
   full:
     description: "Full installation with all features, including game and GUI installer"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain", "fastapi", "uvicorn", "pydantic", "httpx", "pytest-asyncio", "pygame", "PyQt5", "pyshortcuts", "secret-sharing", "qrcode", "pytest-cov"]
-    features: ["web_api", "hsp_communication", "ai_models", "nlp", "knowledge_graph", "game_client", "gui_installer", "genesis_backup", "testing"]
-    
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn", "tensorflow", "spacy", "fastapi", "uvicorn", "pydantic", "httpx", "pytest", "pytest-asyncio", "pytest-cov", "aiounittest", "pygame", "PyQt5", "pyshortcuts", "secret-sharing", "qrcode", "beautifulsoup4", "github3.py", "scikit-image", "SpeechRecognition", "faiss-cpu", "sentence-transformers", "huggingface-hub", "transformers"]
+    features: ["web_api", "hsp_communication", "ai_models", "nlp", "knowledge_graph", "game_client", "gui_installer", "genesis_backup", "testing", "web_scraping", "integrations", "image_processing", "audio", "vector_search"]
   ai_focused:
     description: "AI and ML focused installation"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain"]
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn", "tensorflow", "spacy", "sentence-transformers", "huggingface-hub", "transformers"]
     features: ["ai_models", "nlp", "machine_learning"]
-
   game:
     description: "Installation with game client"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pygame"]
+    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pygame", "pandas", "scikit-learn"]
     features: ["game_client"]
-
   installer:
     description: "Dependencies for the GUI installer, shortcuts, and secure backup features"
     packages: ["PyQt5", "pyshortcuts", "secret-sharing", "qrcode"]
     features: ["gui_installer", "desktop_shortcut", "genesis_backup_gui"]
+  testing:
+    description: "Dependencies for running tests"
+    packages: ["pytest", "pytest-asyncio", "pytest-cov", "aiounittest"]
+    features: ["testing"]
