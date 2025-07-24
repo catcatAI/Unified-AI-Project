@@ -51,9 +51,6 @@ def mock_core_services():
     mock_formula_engine = MagicMock(spec=FormulaEngine)
     mock_tool_dispatcher = MagicMock(spec=ToolDispatcher)
 
-    # --- Mock Coordinator ---
-    mock_project_coordinator = MagicMock(spec=ProjectCoordinator)
-
     # --- Default Behaviors & Return Values ---
     # Example: Personality Manager should return a default name
     mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
@@ -76,6 +73,19 @@ def mock_core_services():
         },
         "crisis_response_text": "Crisis response."
     }
+
+    # --- Mock Coordinator ---
+    # Instantiate ProjectCoordinator with its mocked dependencies
+    mock_project_coordinator = ProjectCoordinator(
+        llm_interface=mock_llm_interface,
+        service_discovery=mock_service_discovery,
+        hsp_connector=mock_hsp_connector,
+        agent_manager=mock_agent_manager,
+        memory_manager=mock_ham_manager,
+        learning_manager=mock_learning_manager,
+        personality_manager=mock_personality_manager,
+        dialogue_manager_config=test_config
+    )
 
     # --- Instantiate DialogueManager with Mocks ---
     # The DialogueManager often sits at the center, so we instantiate it

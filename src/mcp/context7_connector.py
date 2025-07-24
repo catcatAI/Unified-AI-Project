@@ -13,7 +13,7 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 
 from .types import MCPMessage, MCPCapability, MCPResponse
-from ..shared.types.common_types import AIServiceConfig
+
 
 
 logger = logging.getLogger(__name__)

@@ -48,7 +48,7 @@ class ProjectCoordinator:
 
     def _load_prompts(self):
         """Loads prompts from the YAML file."""
-        prompts_path = os.path.join(os.path.dirname(__file__), '..', '..', 'configs', 'prompts.yaml')
+        prompts_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'configs', 'prompts.yaml')
         with open(prompts_path, 'r') as f:
             self.prompts = yaml.safe_load(f)
 
@@ -200,7 +200,7 @@ class ProjectCoordinator:
             capabilities=json.dumps(available_capabilities, indent=2),
             user_query=user_query
         )
-        raw_llm_output = self.llm_interface.generate_response(prompt=prompt)
+        raw_llm_output = await self.llm_interface.generate_response(prompt=prompt)
         try:
             return json.loads(raw_llm_output)
         except json.JSONDecodeError:
@@ -211,4 +211,4 @@ class ProjectCoordinator:
             original_query=original_query,
             results=json.dumps(results, indent=2)
         )
-        return self.llm_interface.generate_response(prompt=prompt)
+        return await self.llm_interface.generate_response(prompt=prompt)
