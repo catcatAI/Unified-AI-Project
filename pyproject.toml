@@ -23,16 +23,18 @@ classifiers = [
 
 # Core dependencies - essential for basic functionality
 dependencies = [
-    "Flask",
-    "numpy",
-    "cryptography",
-    "requests",
-    "python-dotenv",
-    "PyYAML",
-    "typing-extensions",
-    "paho-mqtt",
-    "networkx",
-    "psutil",
+    "Flask>=2.0.0",
+    "numpy>=1.21.0",
+    "cryptography>=3.4.0",
+    "requests>=2.25.0",
+    "python-dotenv>=0.19.0",
+    "PyYAML>=6.0",
+    "typing-extensions>=4.0.0",
+    "paho-mqtt>=1.6.0",
+    "networkx>=2.6.0",
+    "psutil>=5.8.0",
+    "faiss-cpu>=1.7.0",
+    "sentence-transformers>=2.2.0",
 ]
 
 # Optional dependencies for enhanced features
@@ -63,10 +65,14 @@ ml = [
     "pandas",
 ]
 dev = [
-    "black",
-    "flake8",
-    "mypy",
-    "pre-commit",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+    "isort>=5.12.0",
+    "pylint>=2.17.0",
+    "bandit>=1.7.0",
+    "safety>=2.3.0",
 ]
 # Convenience groups
 standard = [
@@ -113,9 +119,92 @@ testpaths = [
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "online: marks tests that require an internet connection",
+    "mcp: marks tests related to MCP functionality",
+    "context7: marks tests related to Context7 integration",
+    "ai_core: marks tests for core AI functionality",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
 ]
 asyncio_mode = "auto"
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --strict-markers"
+
+# Black code formatting
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | data
+)/
+'''
+
+# isort import sorting
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["src", "tests"]
+known_third_party = ["numpy", "pandas", "flask", "fastapi", "pydantic"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+# MyPy type checking
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "paho.mqtt.*",
+    "spacy.*",
+    "tensorflow.*",
+    "faiss.*",
+    "sentence_transformers.*",
+]
+ignore_missing_imports = true
+
+# Pylint configuration
+[tool.pylint.messages_control]
+disable = [
+    "C0103",  # Invalid name
+    "C0114",  # Missing module docstring
+    "R0903",  # Too few public methods
+    "R0913",  # Too many arguments
+    "W0613",  # Unused argument
+]
+
+[tool.pylint.format]
+max-line-length = 88
+
+[tool.pylint.design]
+max-args = 8
+max-locals = 20
+max-branches = 15
+max-statements = 60
+
+# Bandit security linting
+[tool.bandit]
+exclude_dirs = ["tests", "data"]
+skips = ["B101", "B601"]

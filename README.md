@@ -167,6 +167,45 @@ python src/tools/dependency_checker.py --detailed
 python src/tools/dependency_checker.py --json dependency_status.json
 ```
 
+### 快速開始
+
+#### 環境要求
+- Python 3.8+
+- Node.js 16+ (用於前端組件)
+
+#### 安裝步驟
+
+1. **克隆專案**
+```bash
+git clone <repository-url>
+cd unified-ai-project
+```
+
+2. **安裝Python依賴**
+```bash
+# 基本安裝
+pip install -e .
+
+# 完整功能安裝 (推薦)
+pip install -e .[full]
+
+# 開發環境安裝
+pip install -e .[dev]
+```
+
+3. **環境配置**
+```bash
+# 複製環境變量模板
+cp .env.example .env
+
+# 編輯 .env 文件，設置必要的API密鑰
+```
+
+4. **運行測試**
+```bash
+pytest
+```
+
 ### 設置
 
 1.  **克隆存儲庫：**
