@@ -1,7 +1,19 @@
 import os
 import uuid
-from cryptography.fernet import Fernet
-from secretsharing import SecretSharer
+try:
+    from cryptography.fernet import Fernet
+except ImportError:
+    import subprocess
+    import sys
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "cryptography"])
+    from cryptography.fernet import Fernet
+try:
+    from secretsharing import SecretSharer
+except ImportError:
+    import subprocess
+    import sys
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "secret-sharing"])
+    from secretsharing import SecretSharer
 from typing import List, Tuple, Optional
 
 class GenesisManager:
@@ -37,7 +49,8 @@ class GenesisManager:
             A list of three hex-encoded secret shards.
         """
         # The hex format is more robust for copy-pasting and QR codes.
-        return SecretSharer.split_secret(secret, 2, 3)
+        secret_hex = secret.encode('utf-8').hex()
+        return SecretSharer.split_secret(secret_hex, 2, 3)
 
     @staticmethod
     def recover_secret_from_shards(shards: List[str]) -> Optional[str]:
@@ -53,7 +66,8 @@ class GenesisManager:
         if len(shards) < 2:
             return None
         try:
-            return SecretSharer.recover_secret(shards[:2])
+            recovered_hex = SecretSharer.recover_secret(shards[:2])
+            return bytes.fromhex(recovered_hex).decode('utf-8')
         except Exception as e:
             print(f"[GenesisManager] Error recovering secret: {e}")
             return None
