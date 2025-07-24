@@ -75,10 +75,10 @@ skips = [ "B101", "B601",]
 [tool.pytest.ini_options]
 pythonpath = [ ".", "src",]
 testpaths = [ "tests",]
-markers = [ "slow: marks tests as slow (deselect with '-m \"not slow\"')", "online: marks tests that require an internet connection", "mcp: marks tests related to MCP functionality", "context7: marks tests related to Context7 integration", "ai_core: marks tests for core AI functionality",]
+markers = [ "slow: marks tests as slow (deselect with '-m \"not slow\"')", "online: marks tests that require an internet connection", "mcp: marks tests related to MCP functionality", "context7: marks tests related to Context7 integration", "ai_core: marks tests for core AI functionality", "timeout: marks tests with a timeout",]
 filterwarnings = [ "ignore::DeprecationWarning", "ignore::PendingDeprecationWarning",]
 asyncio_mode = "auto"
-addopts = "-v --tb=short --strict-markers"
+addopts = "-v --tb=short --strict-markers --timeout=600"
 
 [tool.pylint.messages_control]
 disable = [ "C0103", "C0114", "R0903", "R0913", "W0613",]
