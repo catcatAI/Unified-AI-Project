@@ -1,165 +1,50 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = [ "setuptools>=61.0",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "unified-ai-project"
 version = "0.1.0"
-authors = [{name = "Unified AI Project Team"}]
 description = "A unified AI project with modular architecture and optional dependencies"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-]
+classifiers = [ "Development Status :: 3 - Alpha", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.8", "Programming Language :: Python :: 3.9", "Programming Language :: Python :: 3.10", "Programming Language :: Python :: 3.11",]
+dependencies = [ "Flask>=2.0.0", "numpy>=1.21.0", "cryptography>=3.4.0", "requests>=2.25.0", "python-dotenv>=0.19.0", "PyYAML>=6.0", "typing-extensions>=4.0.0", "paho-mqtt>=1.6.0", "networkx>=2.6.0", "psutil>=5.8.0", "faiss-cpu>=1.7.0", "sentence-transformers>=2.2.0",]
+[[project.authors]]
+name = "Unified AI Project Team"
 
-# Core dependencies - essential for basic functionality
-dependencies = [
-    "Flask>=2.0.0",
-    "numpy>=1.21.0",
-    "cryptography>=3.4.0",
-    "requests>=2.25.0",
-    "python-dotenv>=0.19.0",
-    "PyYAML>=6.0",
-    "typing-extensions>=4.0.0",
-    "paho-mqtt>=1.6.0",
-    "networkx>=2.6.0",
-    "psutil>=5.8.0",
-    "faiss-cpu>=1.7.0",
-    "sentence-transformers>=2.2.0",
-]
+[project.license]
+text = "MIT"
 
-# Optional dependencies for enhanced features
 [project.optional-dependencies]
-ai = [
-    "tensorflow>=2.15.0",
-    "spacy>=3.4.0",
-    "langchain",
-]
-web = [
-    "fastapi",
-    "uvicorn[standard]",
-    "pydantic",
-    "httpx",
-]
-testing = [
-    "pytest-asyncio",
-    "pytest>=6.0",
-]
-nlp = [
-    "spacy>=3.4.0",
-    "nltk",
-    "textblob",
-]
-ml = [
-    "tensorflow>=2.15.0",
-    "scikit-learn",
-    "pandas",
-]
-dev = [
-    "black>=23.0.0",
-    "flake8>=6.0.0",
-    "mypy>=1.0.0",
-    "pre-commit>=3.0.0",
-    "isort>=5.12.0",
-    "pylint>=2.17.0",
-    "bandit>=1.7.0",
-    "safety>=2.3.0",
-]
-# Convenience groups
-standard = [
-    "fastapi",
-    "uvicorn[standard]",
-    "pydantic",
-    "httpx",
-    "pytest-asyncio",
-    "pytest>=6.0",
-]
-full = [
-    "tensorflow>=2.15.0",
-    "spacy>=3.4.0",
-    "langchain",
-    "fastapi",
-    "uvicorn[standard]",
-    "pydantic",
-    "httpx",
-    "pytest-asyncio",
-    "pytest>=6.0",
-    "nltk",
-    "textblob",
-    "scikit-learn",
-    "pandas",
-]
-minimal = []  # Only core requirements
+minimal = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil",]
+standard = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "fastapi", "uvicorn", "pydantic", "httpx",]
+full = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain", "fastapi", "uvicorn", "pydantic", "httpx", "pytest-asyncio", "pygame", "PyQt5", "pyshortcuts", "secret-sharing", "qrcode", "pytest-cov",]
+ai_focused = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain",]
+game = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pygame",]
+installer = [ "PyQt5", "pyshortcuts", "secret-sharing", "qrcode",]
 
 [project.urls]
-"Homepage" = "https://github.com/pypa/sampleproject"
+Homepage = "https://github.com/pypa/sampleproject"
 "Bug Tracker" = "https://github.com/pypa/sampleproject/issues"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
-packages = ["core_ai", "services", "tools", "interfaces", "hsp"]
+packages = [ "core_ai", "services", "tools", "interfaces", "hsp",]
 
-[tool.pytest.ini_options]
-pythonpath = [
-  ".",
-  "src",
-]
-testpaths = [
-    "tests",
-]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "online: marks tests that require an internet connection",
-    "mcp: marks tests related to MCP functionality",
-    "context7: marks tests related to Context7 integration",
-    "ai_core: marks tests for core AI functionality",
-]
-filterwarnings = [
-    "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning",
-]
-asyncio_mode = "auto"
-addopts = "-v --tb=short --strict-markers"
-
-# Black code formatting
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-  | data
-)/
-'''
+target-version = [ "py38", "py39", "py310", "py311",]
+include = "\\.pyi?$"
+extend-exclude = "/(\n  # directories\n  \\.eggs\n  | \\.git\n  | \\.hg\n  | \\.mypy_cache\n  | \\.tox\n  | \\.venv\n  | build\n  | dist\n  | data\n)/\n"
 
-# isort import sorting
 [tool.isort]
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["src", "tests"]
-known_third_party = ["numpy", "pandas", "flask", "fastapi", "pydantic"]
-sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+known_first_party = [ "src", "tests",]
+known_third_party = [ "numpy", "pandas", "flask", "fastapi", "pydantic",]
+sections = [ "FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER",]
 
-# MyPy type checking
 [tool.mypy]
 python_version = "3.8"
 warn_return_any = true
@@ -174,26 +59,27 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
-
 [[tool.mypy.overrides]]
-module = [
-    "paho.mqtt.*",
-    "spacy.*",
-    "tensorflow.*",
-    "faiss.*",
-    "sentence_transformers.*",
-]
+module = [ "paho.mqtt.*", "spacy.*", "tensorflow.*", "faiss.*", "sentence_transformers.*",]
 ignore_missing_imports = true
 
-# Pylint configuration
+[tool.bandit]
+exclude_dirs = [ "tests", "data",]
+skips = [ "B101", "B601",]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.pytest.ini_options]
+pythonpath = [ ".", "src",]
+testpaths = [ "tests",]
+markers = [ "slow: marks tests as slow (deselect with '-m \"not slow\"')", "online: marks tests that require an internet connection", "mcp: marks tests related to MCP functionality", "context7: marks tests related to Context7 integration", "ai_core: marks tests for core AI functionality",]
+filterwarnings = [ "ignore::DeprecationWarning", "ignore::PendingDeprecationWarning",]
+asyncio_mode = "auto"
+addopts = "-v --tb=short --strict-markers"
+
 [tool.pylint.messages_control]
-disable = [
-    "C0103",  # Invalid name
-    "C0114",  # Missing module docstring
-    "R0903",  # Too few public methods
-    "R0913",  # Too many arguments
-    "W0613",  # Unused argument
-]
+disable = [ "C0103", "C0114", "R0903", "R0913", "W0613",]
 
 [tool.pylint.format]
 max-line-length = 88
@@ -203,8 +89,3 @@ max-args = 8
 max-locals = 20
 max-branches = 15
 max-statements = 60
-
-# Bandit security linting
-[tool.bandit]
-exclude_dirs = ["tests", "data"]
-skips = ["B101", "B601"]

@@ -94,6 +94,16 @@ This module is the heart of the application's backend. It uses a singleton patte
 -   **`src/core_ai/memory/ham_memory_manager.py`**: The `HAMMemoryManager` provides a Hierarchical Abstractive Memory for storing and retrieving experiences, facts, and dialogue context.
 -   **`src/core_ai/learning/learning_manager.py`**: The `LearningManager` is responsible for learning from completed projects to improve future performance. It can analyze successful and failed project executions to refine its strategies.
 
+### Backup and Recovery: The "Trinity" Model
+
+The project includes a "Trinity" model for backup and recovery, ensuring the resilience and persistence of the AI's "digital life". This model is based on a (2, 3) Shamir's Secret Sharing scheme, which allows for the complete reconstruction of the AI's identity and memory from any two of three "Shards". The three core components are:
+
+-   **UID (Unique Identifier)**: The AI's permanent, public identifier.
+-   **HAM Key**: The encryption key for the HAM memory.
+-   **Data Core Seed**: A random value to initialize the memory state.
+
+This system provides a high level of security and redundancy, protecting against data loss.
+
 ## Key Workflows
 
 This section illustrates the key workflows of the Unified AI Project.
