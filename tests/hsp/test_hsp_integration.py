@@ -76,8 +76,9 @@ class MockLLMInterface(LLMInterface):
     def add_mock_response(self, prompt_contains: str, response: str):
         self.mock_responses[prompt_contains] = response
 
-    def generate_response(self, prompt: str, model_name: Optional[str] = None, params: Optional[Dict[str, Any]] = None) -> str:
+    async def generate_response(self, prompt: str, model_name: Optional[str] = None, params: Optional[Dict[str, Any]] = None) -> str:
         self.generate_response_history.append({"prompt": prompt, "model_name": model_name, "params": params})
+        await asyncio.sleep(0.01) # Simulate async operation
         for key, resp in self.mock_responses.items():
             if key in prompt:
                 return resp

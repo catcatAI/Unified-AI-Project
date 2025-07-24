@@ -41,6 +41,7 @@ class Evaluator:
         correct = 0
         for input, expected_output in dataset:
             output = model_or_tool.evaluate(input)
+            print(f"Input: {input}, Output: {output}, Expected: {expected_output}")
             if output == expected_output:
                 correct += 1
         if len(dataset) == 0:
