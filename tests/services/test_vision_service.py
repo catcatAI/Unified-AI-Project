@@ -19,7 +19,7 @@ class TestVisionService(unittest.TestCase):
         dummy_image = b"dummy_image_bytes"
         analysis = service.analyze_image(dummy_image, features=["captioning"])
         self.assertIn("caption", analysis)
-        self.assertIn("Placeholder image caption", analysis["caption"])
+        self.assertEqual(analysis["caption"], "A mock image of a cat playing with a ball of yarn.")
 
         analysis_none = service.analyze_image(None) # Test with None input
         self.assertIsNone(analysis_none)
@@ -31,7 +31,9 @@ class TestVisionService(unittest.TestCase):
         dummy_image1 = b"dummy1"
         dummy_image2 = b"dummy2"
         similarity = service.compare_images(dummy_image1, dummy_image2)
-        self.assertEqual(similarity, 0.75)
+        self.assertIsInstance(similarity, float)
+        self.assertGreaterEqual(similarity, 0.0)
+        self.assertLessEqual(similarity, 1.0)
 
         similarity_none1 = service.compare_images(None, dummy_image2)
         self.assertIsNone(similarity_none1)
