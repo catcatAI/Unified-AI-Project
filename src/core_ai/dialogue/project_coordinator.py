@@ -4,6 +4,8 @@ import re
 import uuid
 import networkx as nx
 from typing import Dict, Any, Optional, List, Tuple
+import yaml
+import os
 
 from src.services.llm_interface import LLMInterface
 from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
@@ -41,7 +43,14 @@ class ProjectCoordinator:
         self.task_completion_events: Dict[str, asyncio.Event] = {}
         self.task_results: Dict[str, Any] = {}
         self.ai_id = self.hsp_connector.ai_id if self.hsp_connector else "project_coordinator"
+        self._load_prompts()
         print("ProjectCoordinator initialized.")
+
+    def _load_prompts(self):
+        """Loads prompts from the YAML file."""
+        prompts_path = os.path.join(os.path.dirname(__file__), '..', '..', 'configs', 'prompts.yaml')
+        with open(prompts_path, 'r') as f:
+            self.prompts = yaml.safe_load(f)
 
     def handle_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         correlation_id = envelope.get('correlation_id')
@@ -121,7 +130,10 @@ class ProjectCoordinator:
             if isinstance(value, str):
                 def replace_func(match):
                     dep_idx = int(match.group(1))
-                    return json.dumps(results.get(dep_idx, ""))
+                    try:
+                        return json.dumps(results.get(dep_idx, ""))
+                    except TypeError:
+                        return str(results.get(dep_idx, ""))
                 substituted_params[key] = re.sub(r"<output_of_task_(\d+)>", replace_func, value)
         return substituted_params
 
@@ -133,7 +145,7 @@ class ProjectCoordinator:
         if not found_caps and self.agent_manager:
             agent_to_launch = f"{capability_name.split('_v')[0]}_agent"
             if self.agent_manager.launch_agent(agent_to_launch):
-                await asyncio.sleep(5)
+                await self.agent_manager.wait_for_agent_ready(agent_to_launch)
                 found_caps = self.service_discovery.find_capabilities(capability_name_filter=capability_name)
 
         if not found_caps:
@@ -184,7 +196,10 @@ class ProjectCoordinator:
             self.task_completion_events.pop(correlation_id, None)
 
     async def _decompose_user_intent_into_subtasks(self, user_query: str, available_capabilities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        prompt = "..." # Placeholder
+        prompt = self.prompts['decompose_user_intent'].format(
+            capabilities=json.dumps(available_capabilities, indent=2),
+            user_query=user_query
+        )
         raw_llm_output = self.llm_interface.generate_response(prompt=prompt)
         try:
             return json.loads(raw_llm_output)
@@ -192,5 +207,8 @@ class ProjectCoordinator:
             return []
 
     async def _integrate_subtask_results(self, original_query: str, results: Dict[int, Any]) -> str:
-        prompt = "..." # Placeholder
+        prompt = self.prompts['integrate_subtask_results'].format(
+            original_query=original_query,
+            results=json.dumps(results, indent=2)
+        )
         return self.llm_interface.generate_response(prompt=prompt)

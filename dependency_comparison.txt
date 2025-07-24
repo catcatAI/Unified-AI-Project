@@ -1,0 +1,39 @@
+Missing dependencies (imported but not defined):
+All imported packages:
+abc
+aiounittest
+amqtt
+base64
+bs4
+copy
+csv
+dataclasses
+faiss
+github
+gmqtt
+huggingface_hub
+paho
+pandas
+pytest
+secretsharing
+skimage
+sklearn
+speech_recognition
+transformers
+typing
+yaml
+
+Unused dependencies (defined but not imported):
+faiss_cpu
+flask
+httpx
+langchain
+paho_mqtt
+pyqt5
+pyshortcuts
+pytest_asyncio
+pytest_cov
+python_dotenv
+pyyaml
+qrcode
+secret_sharing

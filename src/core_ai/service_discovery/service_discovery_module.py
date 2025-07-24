@@ -2,6 +2,7 @@
 
 import logging
 import threading
+import time
 from datetime import datetime, timezone
 from typing import Dict, Optional, List, Tuple
 
@@ -42,10 +43,51 @@ class ServiceDiscoveryModule:
         else:
             self.staleness_threshold_seconds: int = staleness_threshold_seconds
 
+        self._cleanup_thread = None
+        self._stop_event = threading.Event()
+
         logger.info(
             "HSP ServiceDiscoveryModule initialized. Staleness threshold: %d seconds.",
             self.staleness_threshold_seconds
         )
+
+    def start_cleanup_task(self, cleanup_interval_seconds: int = 60):
+        """Starts the periodic cleanup task in a background thread."""
+        if self._cleanup_thread is None:
+            self._stop_event.clear()
+            self._cleanup_thread = threading.Thread(
+                target=self._periodic_cleanup,
+                args=(cleanup_interval_seconds,),
+                daemon=True
+            )
+            self._cleanup_thread.start()
+            logger.info(f"ServiceDiscoveryModule cleanup task started with interval {cleanup_interval_seconds}s.")
+
+    def stop_cleanup_task(self):
+        """Stops the periodic cleanup task."""
+        if self._cleanup_thread is not None:
+            self._stop_event.set()
+            self._cleanup_thread.join()
+            self._cleanup_thread = None
+            logger.info("ServiceDiscoveryModule cleanup task stopped.")
+
+    def _periodic_cleanup(self, cleanup_interval_seconds: int):
+        """The target function for the cleanup thread."""
+        while not self._stop_event.is_set():
+            self.remove_stale_capabilities()
+            time.sleep(cleanup_interval_seconds)
+
+    def remove_stale_capabilities(self):
+        """Removes capabilities that have exceeded the staleness threshold."""
+        with self.lock:
+            current_time = datetime.now(timezone.utc)
+            stale_keys = [
+                key for key, (_, last_seen) in self.known_capabilities.items()
+                if (current_time - last_seen).total_seconds() > self.staleness_threshold_seconds
+            ]
+            for key in stale_keys:
+                del self.known_capabilities[key]
+                logger.info(f"Removed stale capability: {key}")
 
     def process_capability_advertisement(
         self,
