@@ -7,6 +7,16 @@ import traceback # For the runner script's exception formatting
 from typing import Tuple, Optional, Dict, Any
 import sys # For sys.executable
 
+# 整合執行監控系統
+try:
+    from ..core_ai.execution_manager import (
+        ExecutionManager, ExecutionManagerConfig, 
+        execute_with_smart_monitoring, ExecutionResult, ExecutionStatus
+    )
+    EXECUTION_MONITORING_AVAILABLE = True
+except ImportError:
+    EXECUTION_MONITORING_AVAILABLE = False
+
 # Default timeout for sandbox execution in seconds
 DEFAULT_SANDBOX_TIMEOUT = 10
 
@@ -98,8 +108,19 @@ class SandboxExecutor:
     using a separate subprocess.
     """
 
-    def __init__(self, timeout_seconds: int = DEFAULT_SANDBOX_TIMEOUT):
+    def __init__(self, timeout_seconds: int = DEFAULT_SANDBOX_TIMEOUT, use_execution_monitoring: bool = True):
         self.timeout_seconds = timeout_seconds
+        self.use_execution_monitoring = use_execution_monitoring and EXECUTION_MONITORING_AVAILABLE
+        
+        # 初始化執行管理器（如果可用）
+        if self.use_execution_monitoring:
+            self.execution_manager = ExecutionManager(ExecutionManagerConfig(
+                default_timeout=timeout_seconds,
+                adaptive_timeout=True,
+                terminal_monitoring=True,
+                resource_monitoring=True,
+                auto_recovery=True
+            ))
 
     def run(self,
             code_string: str,
@@ -140,14 +161,38 @@ class SandboxExecutor:
 
                 python_executable = sys.executable or 'python' # Prefer sys.executable
 
-                process_result = subprocess.run(
-                    [python_executable, '-u', runner_script_filepath, tool_module_filepath, class_name, method_name, params_json_string],
-                    capture_output=True,
-                    text=True,
-                    cwd=temp_dir, # Run script from within temp_dir for relative imports if any
-                    timeout=self.timeout_seconds,
-                    check=False
-                )
+                # 使用執行監控系統（如果可用）
+                if self.use_execution_monitoring:
+                    command = [python_executable, '-u', runner_script_filepath, tool_module_filepath, class_name, method_name, params_json_string]
+                    exec_result = self.execution_manager.execute_command(
+                        command,
+                        timeout=self.timeout_seconds,
+                        cwd=temp_dir,
+                        shell=False
+                    )
+                    
+                    # 轉換執行結果為subprocess格式
+                    class ProcessResult:
+                        def __init__(self, exec_result: ExecutionResult):
+                            self.stdout = exec_result.stdout
+                            self.stderr = exec_result.stderr
+                            self.returncode = exec_result.return_code or 0
+                    
+                    process_result = ProcessResult(exec_result)
+                    
+                    # 處理超時情況
+                    if exec_result.status == ExecutionStatus.TIMEOUT:
+                        raise subprocess.TimeoutExpired(command, self.timeout_seconds)
+                else:
+                    # 使用原始subprocess執行
+                    process_result = subprocess.run(
+                        [python_executable, '-u', runner_script_filepath, tool_module_filepath, class_name, method_name, params_json_string],
+                        capture_output=True,
+                        text=True,
+                        cwd=temp_dir, # Run script from within temp_dir for relative imports if any
+                        timeout=self.timeout_seconds,
+                        check=False
+                    )
 
                 # Debugging output from subprocess
                 # print(f"Sandbox STDOUT:\n{process_result.stdout}")

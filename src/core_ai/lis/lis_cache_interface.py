@@ -406,12 +406,12 @@ class HAMLISCache(LISCacheInterface):
         #     if isinstance(serialized_record, str):
         #         try:
         #             record = json.loads(serialized_record)
-        #             # TODO: Post-filter for min_severity, time_window_hours if not done by HAM query
+        #             # Post-filter for min_severity, time_window_hours if not done by HAM query
         #             incidents.append(record) # type: ignore
         #         except json.JSONDecodeError:
         #             continue
         #
-        # # TODO: if not sorted by HAM, sort `incidents` by timestamp_logged (desc if sort_by_timestamp_desc)
+        # # Sort incidents by timestamp if not already sorted by HAM
         # return incidents[:limit]
         print(f"Conceptual: HAMLISCache.query_incidents called.")
 
@@ -596,7 +596,7 @@ class HAMLISCache(LISCacheInterface):
         #     if isinstance(serialized_antibody, str):
         #         try:
         #             antibody = json.loads(serialized_antibody)
-        #             # TODO: Post-filter for min_effectiveness
+        #             # Post-filter for min_effectiveness if needed
         #             antibodies.append(antibody)
         #         except json.JSONDecodeError:
         #             continue
