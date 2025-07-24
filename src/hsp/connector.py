@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 # For now, we'll assume pytest's caplog might set a lower level or we can set it in tests.
 
 class HSPConnector:
-    """Manages HSP communication over an MQTT transport for a single AI agent using gmqtt."""
     """
     Manages communication with the HSP network using MQTT as the transport.
     Handles message serialization/deserialization, topic subscription, and publishing.
@@ -209,21 +208,31 @@ class HSPConnector:
         """Callback for when a PUBLISH message is received from the server."""
         logger.debug(f"HSPConnector ({self.ai_id}): Received raw message on topic '{topic}'")
         try:
-            # gmqtt payload is bytes, decode to string
-            message_str = payload.decode("utf-8")
-
-            if topic.startswith("hsp/acks/"):
-                logger.info(f"HSPConnector ({self.ai_id}): Received acknowledgement on topic {topic}")
-                # Potentially process the ACK, e.g., update a message status
+            message_str = self._decode_payload(payload)
+            if message_str is None:
+                logger.error(f"HSPConnector ({self.ai_id}): Could not decode message payload on topic '{topic}' as UTF-8.")
                 return
 
-            # For all other topics, handle as a standard HSP message
+            if topic.startswith("hsp/acks/"):
+                self._handle_ack(topic)
+                return
+
             await self._handle_hsp_message_str(message_str, topic)
 
-        except UnicodeDecodeError:
-            logger.error(f"HSPConnector ({self.ai_id}): Could not decode message payload on topic '{topic}' as UTF-8.")
         except Exception as e:
             logger.error(f"HSPConnector ({self.ai_id}): Error processing message on topic '{topic}': {e}", exc_info=True)
+
+    def _decode_payload(self, payload: bytes) -> Optional[str]:
+        """Decodes the message payload from bytes to a UTF-8 string."""
+        try:
+            return payload.decode("utf-8")
+        except UnicodeDecodeError:
+            return None
+
+    def _handle_ack(self, topic: str):
+        """Handles incoming acknowledgement messages."""
+        logger.info(f"HSPConnector ({self.ai_id}): Received acknowledgement on topic {topic}")
+        # Potentially process the ACK, e.g., update a message status
 
     async def connect(self) -> bool:
         """Establishes a connection to the MQTT broker(s)."""
@@ -486,6 +495,14 @@ class HSPConnector:
     def register_on_task_result_callback(self, callback: Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]):
         """Registers a callback for HSP TaskResult messages."""
         self._on_task_result_callback = callback
+
+    def advertise_capability(self, capability: Dict[str, Any]):
+        """Advertises a capability to the HSP network."""
+        if not self.hsp_connector:
+            print(f"[{self.ai_id}] Error: HSPConnector not available.")
+            return
+        topic = "hsp/capabilities/advertisements/general"
+        self.publish_capability_advertisement(capability, topic)
 
     # --- New methods for publishing/sending Tasking and Capabilities ---
     def publish_capability_advertisement(self, payload: HSPCapabilityAdvertisementPayload, topic: str, version: str = "0.1") -> bool:
