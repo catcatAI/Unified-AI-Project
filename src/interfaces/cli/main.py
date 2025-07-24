@@ -152,6 +152,10 @@ def main_cli_logic():
         llm_config=DEFAULT_LLM_CONFIG, # Use mock LLM for CLI
         operational_configs=DEFAULT_OPERATIONAL_CONFIGS
     )
+    services = get_services()
+    service_discovery_module = services.get("service_discovery")
+    if service_discovery_module:
+        service_discovery_module.start_cleanup_task()
     setup_cli_hsp_callbacks() # Register any CLI-specific callbacks if needed
 
     try:
@@ -179,6 +183,8 @@ def main_cli_logic():
         print(f"\nCLI Error: An unexpected error occurred: {e}")
     finally:
         print("CLI: Initiating service shutdown...")
+        if service_discovery_module:
+            service_discovery_module.stop_cleanup_task()
         shutdown_services() # From core_services
         print("CLI: Exiting.")
 

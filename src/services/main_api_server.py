@@ -40,8 +40,14 @@ async def lifespan(app: FastAPI):
         print("MainAPIServer: Warning - HSPConnector did not connect successfully during init.")
 
     print("MainAPIServer: Core services initialized.")
+    services = get_services()
+    service_discovery_module = services.get("service_discovery")
+    if service_discovery_module:
+        service_discovery_module.start_cleanup_task()
     yield
     print("MainAPIServer: Shutting down core services...")
+    if service_discovery_module:
+        service_discovery_module.stop_cleanup_task()
     shutdown_services()
     print("MainAPIServer: Core services shut down.")
 
