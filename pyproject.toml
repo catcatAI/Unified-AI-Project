@@ -17,12 +17,13 @@ name = "Unified AI Project Team"
 text = "MIT"
 
 [project.optional-dependencies]
-minimal = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil",]
-standard = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "fastapi", "uvicorn", "pydantic", "httpx",]
-full = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain", "fastapi", "uvicorn", "pydantic", "httpx", "pytest-asyncio", "pygame", "PyQt5", "pyshortcuts", "secret-sharing", "qrcode", "pytest-cov",]
-ai_focused = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "tensorflow", "spacy", "langchain",]
-game = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pygame",]
+minimal = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn",]
+standard = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn", "fastapi", "uvicorn", "pydantic", "httpx",]
+full = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn", "tensorflow", "spacy", "fastapi", "uvicorn", "pydantic", "httpx", "pytest", "pytest-asyncio", "pytest-cov", "aiounittest", "pygame", "PyQt5", "pyshortcuts", "secret-sharing", "qrcode", "beautifulsoup4", "github3.py", "scikit-image", "SpeechRecognition", "faiss-cpu", "sentence-transformers", "huggingface-hub", "transformers",]
+ai_focused = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn", "tensorflow", "spacy", "sentence-transformers", "huggingface-hub", "transformers",]
+game = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pygame", "pandas", "scikit-learn",]
 installer = [ "PyQt5", "pyshortcuts", "secret-sharing", "qrcode",]
+testing = [ "pytest", "pytest-asyncio", "pytest-cov", "aiounittest",]
 
 [project.urls]
 Homepage = "https://github.com/pypa/sampleproject"
