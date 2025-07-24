@@ -41,12 +41,13 @@ class AgentManager:
         except FileNotFoundError:
             return {}
 
-    def launch_agent(self, agent_name: str) -> Optional[str]:
+    def launch_agent(self, agent_name: str, args: Optional[List[str]] = None) -> Optional[str]:
         """
         Launches a sub-agent in a new process.
 
         Args:
             agent_name (str): The name of the agent to launch (e.g., 'data_analysis_agent').
+            args (Optional[List[str]]): A list of command-line arguments to pass to the agent script.
 
         Returns:
             Optional[str]: The agent's process ID (PID) as a string if successful, else None.
@@ -60,17 +61,31 @@ class AgentManager:
             return str(self.active_agents[agent_name].pid)
 
         script_path = self.agent_script_map[agent_name]
+        command = [self.python_executable, script_path]
+        if args:
+            command.extend(args)
 
         try:
-            print(f"[AgentManager] Launching '{agent_name}' from '{script_path}' using '{self.python_executable}'...")
+            print(f"[AgentManager] Launching '{agent_name}' with command: {' '.join(command)}")
             # Using Popen to run the agent as a non-blocking background process
-            process = subprocess.Popen([self.python_executable, script_path])
+            process = subprocess.Popen(command)
             self.active_agents[agent_name] = process
             print(f"[AgentManager] Successfully launched '{agent_name}' with PID {process.pid}.")
             return str(process.pid)
         except Exception as e:
             print(f"[AgentManager] Failed to launch agent '{agent_name}': {e}")
             return None
+
+    def check_agent_health(self, agent_name: str) -> bool:
+        """
+        Checks if an agent is healthy.
+        This is a placeholder for a more robust health check mechanism.
+        """
+        if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
+            # In a real implementation, this would involve sending a health check
+            # message to the agent and waiting for a response.
+            return True
+        return False
 
     def shutdown_agent(self, agent_name: str) -> bool:
         """
@@ -106,6 +121,26 @@ class AgentManager:
         # Create a copy of keys to iterate over, as the dictionary will be modified
         for agent_name in list(self.active_agents.keys()):
             self.shutdown_agent(agent_name)
+
+    async def wait_for_agent_ready(self, agent_name: str, timeout: int = 10):
+        """
+        Waits for an agent to be ready by checking for its capability advertisement.
+        This is a placeholder for a more robust solution.
+        """
+        from src.core_services import get_services
+        service_discovery = get_services().get("service_discovery")
+        if not service_discovery:
+            print("[AgentManager] Error: ServiceDiscoveryModule not available.")
+            return
+
+        for _ in range(timeout):
+            capabilities = service_discovery.get_all_capabilities()
+            for cap in capabilities:
+                if agent_name in cap.get("capability_id", ""):
+                    print(f"[AgentManager] Agent '{agent_name}' is ready.")
+                    return
+            await asyncio.sleep(1)
+        print(f"[AgentManager] Warning: Timed out waiting for agent '{agent_name}' to be ready.")
 
 if __name__ == '__main__':
     # A simple test for the AgentManager
