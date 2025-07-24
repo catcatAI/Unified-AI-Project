@@ -1,28 +1,37 @@
 import requests
 from bs4 import BeautifulSoup
 
-def search_web(query):
-    """
-    Searches the web for a given query.
+class WebSearchTool:
+    async def search(self, query: str, num_results: int = 5):
+        """
+        Searches the web for a given query using DuckDuckGo and returns a list of search results.
+        """
+        try:
+            # DuckDuckGo search URL
+            url = f"https://duckduckgo.com/html/?q={query}"
 
-    Args:
-        query: The query to search for.
-
-    Returns:
-        A list of search results.
-    """
-    url = f"https://www.google.com/search?q={query}"
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, "html.parser")
-    results = []
-    for g in soup.find_all('div', class_='r'):
-        anchors = g.find_all('a')
-        if anchors:
-            link = anchors[0]['href']
-            title = g.find('h3').text
-            item = {
-                "title": title,
-                "link": link
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
             }
-            results.append(item)
-    return results
+
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            results = []
+            for result in soup.find_all("div", class_="result__body"):
+                title_tag = result.find("a", class_="result__a")
+                snippet_tag = result.find("a", class_="result__snippet")
+                if title_tag and snippet_tag:
+                    results.append({
+                        "title": title_tag.text,
+                        "snippet": snippet_tag.text,
+                        "url": title_tag["href"]
+                    })
+                if len(results) >= num_results:
+                    break
+
+            return results
+        except requests.exceptions.RequestException as e:
+            return {"error": f"An error occurred: {e}"}
