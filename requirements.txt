@@ -1,2 +1,6 @@
-faiss-cpu
-sentence-transformers
+# Core AI dependencies
+faiss-cpu>=1.7.0
+sentence-transformers>=2.2.0
+
+# Additional dependencies managed in pyproject.toml
+# Run: pip install -e .[full] for complete installation
