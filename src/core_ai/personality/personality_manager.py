@@ -89,6 +89,23 @@ class PersonalityManager:
             for name, info in self.available_profiles.items()
         ]
 
+    def apply_personality_adjustment(self, adjustment: dict):
+        """
+        Applies a personality adjustment to the current personality.
+
+        Args:
+            adjustment (dict): The personality adjustment to apply.
+        """
+        if not self.current_personality:
+            return
+
+        for key, value in adjustment.items():
+            keys = key.split('.')
+            target = self.current_personality
+            for k in keys[:-1]:
+                target = target.setdefault(k, {})
+            target[keys[-1]] = value
+
 if __name__ == '__main__':
     pm = PersonalityManager()
 
