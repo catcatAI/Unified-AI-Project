@@ -1,13 +1,15 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 import socket
+import os
 
 # Import the necessary classes from your project
 from src.core_ai.agent_manager import AgentManager
-from src.core_ai.dialogue.dialogue_manager import DialogueManager
-from src.core_ai.learning.learning_manager import LearningManager
+if os.environ.get("TEST_LEVEL") != "simple":
+    from src.core_ai.dialogue.dialogue_manager import DialogueManager
+    from src.core_ai.learning.learning_manager import LearningManager
+    from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
 from src.core_ai.learning.fact_extractor_module import FactExtractorModule
-from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
 from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
 from src.core_ai.trust_manager.trust_manager_module import TrustManager
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
@@ -16,11 +18,12 @@ from src.core_ai.emotion_system import EmotionSystem
 from src.core_ai.crisis_system import CrisisSystem
 from src.core_ai.time_system import TimeSystem
 from src.core_ai.formula_engine import FormulaEngine
-from src.tools.tool_dispatcher import ToolDispatcher
+if os.environ.get("TEST_LEVEL") != "simple":
+    from src.tools.tool_dispatcher import ToolDispatcher
+    from src.hsp.connector import HSPConnector
+    from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 from src.services.llm_interface import LLMInterface
-from src.hsp.connector import HSPConnector
 from src.mcp.connector import MCPConnector
-from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 from src.shared.types.common_types import OperationalConfig
 
 @pytest.fixture(scope="function")
@@ -36,20 +39,30 @@ def mock_core_services():
     mock_personality_manager = MagicMock(spec=PersonalityManager)
     mock_trust_manager = MagicMock(spec=TrustManager)
     mock_agent_manager = MagicMock(spec=AgentManager)
-    mock_hsp_connector = MagicMock(spec=HSPConnector)
-    mock_hsp_connector.ai_id = "test_ai_id"
+    if os.environ.get("TEST_LEVEL") != "simple":
+        mock_hsp_connector = MagicMock(spec=HSPConnector)
+        mock_hsp_connector.ai_id = "test_ai_id"
+    else:
+        mock_hsp_connector = MagicMock()
     mock_mcp_connector = MagicMock(spec=MCPConnector)
     mock_service_discovery = MagicMock(spec=ServiceDiscoveryModule)
 
     # --- Mock Core AI Logic Modules ---
     mock_fact_extractor = MagicMock(spec=FactExtractorModule)
-    mock_content_analyzer = MagicMock(spec=ContentAnalyzerModule)
-    mock_learning_manager = AsyncMock(spec=LearningManager)
+    if os.environ.get("TEST_LEVEL") != "simple":
+        mock_content_analyzer = MagicMock(spec=ContentAnalyzerModule)
+        mock_learning_manager = AsyncMock(spec=LearningManager)
+    else:
+        mock_content_analyzer = MagicMock()
+        mock_learning_manager = AsyncMock()
     mock_emotion_system = MagicMock(spec=EmotionSystem)
     mock_crisis_system = MagicMock(spec=CrisisSystem)
     mock_time_system = MagicMock(spec=TimeSystem)
     mock_formula_engine = MagicMock(spec=FormulaEngine)
-    mock_tool_dispatcher = MagicMock(spec=ToolDispatcher)
+    if os.environ.get("TEST_LEVEL") != "simple":
+        mock_tool_dispatcher = MagicMock(spec=ToolDispatcher)
+    else:
+        mock_tool_dispatcher = MagicMock()
 
     # --- Default Behaviors & Return Values ---
     # Example: Personality Manager should return a default name
@@ -75,42 +88,48 @@ def mock_core_services():
     }
 
     # --- Mock Coordinator ---
-    # Instantiate ProjectCoordinator with its mocked dependencies
-    mock_project_coordinator = ProjectCoordinator(
-        llm_interface=mock_llm_interface,
-        service_discovery=mock_service_discovery,
-        hsp_connector=mock_hsp_connector,
-        agent_manager=mock_agent_manager,
-        memory_manager=mock_ham_manager,
-        learning_manager=mock_learning_manager,
-        personality_manager=mock_personality_manager,
-        dialogue_manager_config=test_config
-    )
+    if os.environ.get("TEST_LEVEL") != "simple":
+        # Instantiate ProjectCoordinator with its mocked dependencies
+        mock_project_coordinator = ProjectCoordinator(
+            llm_interface=mock_llm_interface,
+            service_discovery=mock_service_discovery,
+            hsp_connector=mock_hsp_connector,
+            agent_manager=mock_agent_manager,
+            memory_manager=mock_ham_manager,
+            learning_manager=mock_learning_manager,
+            personality_manager=mock_personality_manager,
+            dialogue_manager_config=test_config
+        )
+    else:
+        mock_project_coordinator = MagicMock()
 
     # --- Instantiate DialogueManager with Mocks ---
     # The DialogueManager often sits at the center, so we instantiate it
     # with all the other mocks to ensure it's wired correctly.
-    mock_dialogue_manager = DialogueManager(
-        ai_id="test_ai_01",
-        personality_manager=mock_personality_manager,
-        memory_manager=mock_ham_manager,
-        llm_interface=mock_llm_interface,
-        emotion_system=mock_emotion_system,
-        crisis_system=mock_crisis_system,
-        time_system=mock_time_system,
-        formula_engine=mock_formula_engine,
-        tool_dispatcher=mock_tool_dispatcher,
-        learning_manager=mock_learning_manager,
-        service_discovery_module=mock_service_discovery,
-        hsp_connector=mock_hsp_connector,
-        agent_manager=mock_agent_manager,
-        config=test_config
-    )
+    if os.environ.get("TEST_LEVEL") != "simple":
+        mock_dialogue_manager = DialogueManager(
+            ai_id="test_ai_01",
+            personality_manager=mock_personality_manager,
+            memory_manager=mock_ham_manager,
+            llm_interface=mock_llm_interface,
+            emotion_system=mock_emotion_system,
+            crisis_system=mock_crisis_system,
+            time_system=mock_time_system,
+            formula_engine=mock_formula_engine,
+            tool_dispatcher=mock_tool_dispatcher,
+            learning_manager=mock_learning_manager,
+            service_discovery_module=mock_service_discovery,
+            hsp_connector=mock_hsp_connector,
+            agent_manager=mock_agent_manager,
+            config=test_config
+        )
+        # --- Override Internal Components with Mocks if necessary ---
+        # The DM constructor already assigns these, but this makes it explicit
+        # that the ProjectCoordinator inside the DM is also a mock.
+        mock_dialogue_manager.project_coordinator = mock_project_coordinator
+    else:
+        mock_dialogue_manager = MagicMock()
 
-    # --- Override Internal Components with Mocks if necessary ---
-    # The DM constructor already assigns these, but this makes it explicit
-    # that the ProjectCoordinator inside the DM is also a mock.
-    mock_dialogue_manager.project_coordinator = mock_project_coordinator
 
     services = {
         "llm_interface": mock_llm_interface,
