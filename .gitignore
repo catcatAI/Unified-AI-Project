@@ -734,3 +734,6 @@ ENV/
 .tox/
 .webpack/
 .firebase/
+
+# model cache
+model_cache/
