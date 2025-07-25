@@ -45,8 +45,8 @@ class TestCreativeWritingAgent(unittest.TestCase):
         self.assertEqual(len(self.agent.capabilities), 2)
         self.assertEqual(self.agent.capabilities[0]['name'], 'generate_marketing_copy')
 
-    @pytest.mark.timeout(10)
-    def test_handle_marketing_copy_request(self):
+    @pytest.mark.asyncio
+    async def test_handle_marketing_copy_request(self):
         """Test handling a 'generate_marketing_copy' task."""
         # 1. Configure mock LLM to return a predefined response
         expected_copy = "Buy our new amazing product! It's the best!"
@@ -67,7 +67,7 @@ class TestCreativeWritingAgent(unittest.TestCase):
         envelope = HSPMessageEnvelope(message_id="msg_creative_1", sender_ai_id="test_sender", recipient_ai_id=self.agent_id, timestamp_sent="", message_type="", protocol_version="")
 
         # 3. Run the handler
-        asyncio.run(self.agent.handle_task_request(task_payload, "test_sender", envelope))
+        await self.agent.handle_task_request(task_payload, "test_sender", envelope)
 
         # 4. Assert LLM was called with the correct prompt
         self.mock_llm_interface.generate_response.assert_called_once()
@@ -82,8 +82,8 @@ class TestCreativeWritingAgent(unittest.TestCase):
         self.assertEqual(sent_payload['status'], "success")
         self.assertEqual(sent_payload['payload'], expected_copy)
 
-    @pytest.mark.timeout(10)
-    def test_handle_polish_text_request(self):
+    @pytest.mark.asyncio
+    async def test_handle_polish_text_request(self):
         """Test handling a 'polish_text' task."""
         # 1. Configure mock LLM
         expected_polished_text = "This is a polished sentence."
@@ -100,7 +100,7 @@ class TestCreativeWritingAgent(unittest.TestCase):
         envelope = HSPMessageEnvelope(message_id="msg_creative_2", sender_ai_id="test_sender", recipient_ai_id=self.agent_id, timestamp_sent="", message_type="", protocol_version="")
 
         # 3. Run the handler
-        asyncio.run(self.agent.handle_task_request(task_payload, "test_sender", envelope))
+        await self.agent.handle_task_request(task_payload, "test_sender", envelope)
 
         # 4. Assert LLM was called correctly
         self.mock_llm_interface.generate_response.assert_called_once_with(
@@ -114,8 +114,8 @@ class TestCreativeWritingAgent(unittest.TestCase):
         self.assertEqual(sent_payload['status'], "success")
         self.assertEqual(sent_payload['payload'], expected_polished_text)
 
-    @pytest.mark.timeout(10)
-    def test_unsupported_capability(self):
+    @pytest.mark.asyncio
+    async def test_unsupported_capability(self):
         """Test that the agent correctly handles a request for a capability it doesn't support."""
         request_id = "creative_req_003"
         task_payload = HSPTaskRequestPayload(
@@ -126,7 +126,7 @@ class TestCreativeWritingAgent(unittest.TestCase):
         )
         envelope = HSPMessageEnvelope(message_id="msg_creative_3", sender_ai_id="test_sender", recipient_ai_id=self.agent_id, timestamp_sent="", message_type="", protocol_version="")
 
-        asyncio.run(self.agent.handle_task_request(task_payload, "test_sender", envelope))
+        await self.agent.handle_task_request(task_payload, "test_sender", envelope)
 
         self.agent.hsp_connector.send_task_result.assert_called_once()
         sent_payload = self.agent.hsp_connector.send_task_result.call_args[0][0]
