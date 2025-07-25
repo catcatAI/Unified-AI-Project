@@ -9,15 +9,14 @@ class CrisisSystem:
         self.memory_system = memory_system_ref   # Reference to a MemoryManager instance
         self.crisis_level = 0 # 0 = No crisis, higher numbers indicate severity
 
-        # Default crisis keywords if not provided in config
-        self.crisis_keywords = self.config.get("crisis_keywords",
-                                             ["emergency", "danger", "unsafe", "help me please", "i'm in trouble"])
-        self.default_crisis_level = self.config.get("default_crisis_level_on_keyword", 1) # Default to level 1 for any keyword match
+        # Load configuration from file if not provided
+        if not self.config:
+            self._load_config_from_file()
 
-        self.crisis_protocols = self.config.get("crisis_protocols", {
-            "1": "log_and_monitor_basic_crisis_response",
-            "default": "log_only"
-        })
+        # Default crisis keywords if not provided in config
+        self.crisis_keywords = self.config.get("crisis_keywords", [])
+        self.default_crisis_level = self.config.get("default_crisis_level_on_keyword", 1)
+        self.crisis_protocols = self.config.get("crisis_protocols", {})
         print(f"CrisisSystem initialized. Keywords: {self.crisis_keywords}")
 
     def assess_input_for_crisis(self, input_data: dict, context: dict = None) -> int:
@@ -87,6 +86,19 @@ class CrisisSystem:
         """Manually or automatically resolves/de-escalates a crisis."""
         print(f"CrisisSystem: Crisis level {self.crisis_level} resolved. Details: {resolution_details}")
         self.crisis_level = 0
+
+    def _load_config_from_file(self):
+        """Loads configuration from a JSON file."""
+        import json
+        import os
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            config_path = os.path.join(current_dir, '..', '..', 'configs', 'crisis_system_config.json')
+            with open(config_path, 'r') as f:
+                self.config = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Error loading crisis system config: {e}")
+            self.config = {}
 
 
 if __name__ == '__main__':

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sendMessage, startSession } from '../api/chat';
+import { useToast } from "@/components/ui/use-toast"
 
 const Chat = () => {
+  const { toast } = useToast()
   const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -14,11 +16,15 @@ const Chat = () => {
         setSessionId(data.session_id);
         setMessages([{ sender: 'ai', text: data.greeting }]);
       } catch (error) {
-        setMessages([{ sender: 'system-error', text: 'Failed to start session.' }]);
+        toast({
+          variant: "destructive",
+          title: "Failed to start session",
+          description: "Could not connect to the server. Please try again later.",
+        })
       }
     };
     initSession();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (chatDisplayRef.current) {
@@ -38,8 +44,11 @@ const Chat = () => {
       const aiMessage = { sender: 'ai', text: data.response_text };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
-      const errorMessage = { sender: 'system-error', text: 'Failed to get response from AI.' };
-      setMessages((prev) => [...prev, errorMessage]);
+      toast({
+        variant: "destructive",
+        title: "Failed to get response from AI",
+        description: "Could not connect to the AI service. Please try again later.",
+      })
     }
   };
 
