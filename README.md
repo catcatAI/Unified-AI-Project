@@ -26,8 +26,17 @@ git clone <repository-url>
 cd unified-ai-project
 ```
 
-2. **安裝依賴**
-   建議使用專案提供的安裝程式來管理依賴。它會讀取 `dependency_config.yaml` 中的配置，並引導您完成安裝。
+2. **快速安裝** ⚡
+   ```bash
+   # 一键安装 (推荐)
+   pip install -e .
+   
+   # 验证安装
+   python -c "import src.core_ai; print('✅ 安装成功!')"
+   ```
+
+3. **自定义安装** (可选)
+   使用專案提供的安裝程式來管理依賴：
    ```bash
    python installer_cli.py
    ```
@@ -52,3 +61,17 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 ## 未來發展路線圖
 
 本專案的未來發展路線圖已整理至 **[ROADMAP.md](docs/ROADMAP.md)**。
+
+## ❓ 常見問題
+
+**Q: 安裝失敗怎麼辦？**  
+A: 確保 Python 3.8+ 並運行 `pip install --upgrade pip`
+
+**Q: API 服務器啟動失敗？**  
+A: 檢查端口 8000 是否被占用，或使用 `uvicorn src.services.main_api_server:app --port 8001`
+
+**Q: 如何快速測試系統？**  
+A: 運行 `python src/interfaces/cli/main.py query "Hello Angela"`
+
+**Q: 如何查看更多文檔？**  
+A: 訪問 [文檔中心](docs/README.md) 獲取完整指南

@@ -1,5 +1,8 @@
 import uvicorn # For running the app
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+from datetime import datetime
+import logging
 from datetime import datetime
 import uuid # For generating session IDs
 from typing import List # Added to resolve NameError
