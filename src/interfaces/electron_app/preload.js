@@ -37,7 +37,8 @@ contextBridge.exposeInMainWorld(
             'handle-action',
             'hsp:get-discovered-services',
             'hsp:request-task',
-            'hsp:get-task-status' // Added for polling task status
+            'hsp:get-task-status', // Added for polling task status
+            'game:start' // Added for starting the game
         ];
         if (validChannels.includes(channel)) {
             console.log(`Preload: Invoking main process handler on channel '${channel}' with args:`, args);
