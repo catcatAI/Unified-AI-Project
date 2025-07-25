@@ -23,6 +23,7 @@ from src.mcp.types import MCPMessage, MCPResponse, MCPCapability
 class TestContext7Config:
     """Test Context7 configuration."""
     
+    @pytest.mark.timeout(5)
     def test_config_creation(self):
         """Test basic config creation."""
         config = Context7Config(
@@ -36,6 +37,7 @@ class TestContext7Config:
         assert config.timeout == 30
         assert config.enable_context_caching is True
     
+    @pytest.mark.timeout(5)
     def test_config_defaults(self):
         """Test default configuration values."""
         config = Context7Config(endpoint="https://test.com")
@@ -66,6 +68,7 @@ class TestContext7MCPConnector:
         """Create test connector."""
         return Context7MCPConnector(config)
     
+    @pytest.mark.timeout(5)
     async def test_connector_initialization(self, connector):
         """Test connector initialization."""
         assert connector.config.endpoint == "https://test-mcp.context7.com"
@@ -73,6 +76,7 @@ class TestContext7MCPConnector:
         assert not connector._connected
         assert len(connector.capabilities) == 0
     
+    @pytest.mark.timeout(5)
     async def test_connect_success(self, connector):
         """Test successful connection."""
         result = await connector.connect()
@@ -83,6 +87,7 @@ class TestContext7MCPConnector:
         assert connector.session_id.startswith("unified-ai-")
         assert len(connector.capabilities) > 0
     
+    @pytest.mark.timeout(5)
     async def test_disconnect(self, connector):
         """Test disconnection."""
         await connector.connect()
@@ -93,6 +98,7 @@ class TestContext7MCPConnector:
         assert connector.session_id is None
         assert len(connector.context_cache) == 0
     
+    @pytest.mark.timeout(5)
     async def test_send_context(self, connector):
         """Test sending context data."""
         await connector.connect()
@@ -112,6 +118,7 @@ class TestContext7MCPConnector:
         assert response["success"] is True
         assert "context_id" in response["data"]
     
+    @pytest.mark.timeout(5)
     async def test_request_context(self, connector):
         """Test requesting context."""
         await connector.connect()
@@ -129,6 +136,7 @@ class TestContext7MCPConnector:
             assert "content" in item
             assert "relevance" in item
     
+    @pytest.mark.timeout(5)
     async def test_collaborate_with_model(self, connector):
         """Test model collaboration."""
         await connector.connect()
@@ -148,6 +156,7 @@ class TestContext7MCPConnector:
         assert response["success"] is True
         assert response["data"]["status"] == "processed"
     
+    @pytest.mark.timeout(5)
     async def test_compress_context(self, connector):
         """Test context compression."""
         await connector.connect()
@@ -162,6 +171,7 @@ class TestContext7MCPConnector:
         # Should return compressed data for large contexts
         assert isinstance(compressed, dict)
     
+    @pytest.mark.timeout(5)
     async def test_connection_required_error(self, connector):
         """Test operations requiring connection."""
         # Should raise error when not connected
@@ -171,6 +181,7 @@ class TestContext7MCPConnector:
         with pytest.raises(RuntimeError, match="Not connected to Context7 MCP"):
             await connector.request_context("test query")
     
+    @pytest.mark.timeout(5)
     async def test_capabilities_discovery(self, connector):
         """Test capability discovery."""
         await connector.connect()
@@ -202,6 +213,7 @@ class TestUnifiedAIMCPIntegration:
         """Create MCP integration instance."""
         return UnifiedAIMCPIntegration(mcp_connector)
     
+    @pytest.mark.timeout(5)
     async def test_dialogue_manager_integration(self, integration):
         """Test integration with DialogueManager."""
         dialogue_context = {
@@ -219,6 +231,8 @@ class TestUnifiedAIMCPIntegration:
         assert "mcp_historical_context" in enhanced_context
         assert enhanced_context["user_message"] == "What's the weather like?"
     
+
+    @pytest.mark.timeout(5)
     async def test_ham_memory_integration(self, integration):
         """Test integration with HAM Memory."""
         memory_data = {
@@ -237,6 +251,7 @@ class TestUnifiedAIMCPIntegration:
         assert "memory_type" in enhanced_memory
         assert "content" in enhanced_memory
     
+    @pytest.mark.timeout(5)
     async def test_context_mapping(self, integration):
         """Test context mapping functionality."""
         # Test that context mappings are maintained
@@ -251,6 +266,8 @@ class TestUnifiedAIMCPIntegration:
 class TestMCPTypeValidation:
     """Test MCP type validation."""
     
+
+    @pytest.mark.timeout(5)
     def test_mcp_message_structure(self):
         """Test MCPMessage type structure."""
         message: MCPMessage = {
@@ -265,6 +282,8 @@ class TestMCPTypeValidation:
         assert message["session_id"] == "session_123"
         assert isinstance(message["payload"], dict)
     
+
+    @pytest.mark.timeout(5)
     def test_mcp_response_structure(self):
         """Test MCPResponse type structure."""
         response: MCPResponse = {
@@ -279,6 +298,8 @@ class TestMCPTypeValidation:
         assert response["message_id"] == "msg_123"
         assert isinstance(response["data"], dict)
     
+
+    @pytest.mark.timeout(5)
     def test_mcp_capability_structure(self):
         """Test MCPCapability type structure."""
         capability: MCPCapability = {
@@ -310,6 +331,7 @@ class TestContext7Performance:
         await connector.connect()
         return connector
     
+    @pytest.mark.timeout(5)
     async def test_concurrent_context_requests(self, connector):
         """Test concurrent context operations."""
         # Create multiple concurrent requests
@@ -329,7 +351,8 @@ class TestContext7Performance:
         assert len(responses) == 10
         for response in responses:
             assert response["success"] is True
-    
+
+    @pytest.mark.timeout(5)
     async def test_large_context_handling(self, connector):
         """Test handling of large context data."""
         # Create large context data

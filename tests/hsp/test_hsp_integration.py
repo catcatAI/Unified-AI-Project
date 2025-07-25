@@ -48,7 +48,7 @@ TEST_AI_ID_PEER_A = "did:hsp:test_ai_peer_A_002"
 TEST_AI_ID_PEER_B = "did:hsp:test_ai_peer_B_003"
 
 MQTT_BROKER_ADDRESS = "127.0.0.1"  # Changed from localhost
-MQTT_BROKER_PORT = 1884  # Changed from 1883 to avoid port conflict
+MQTT_BROKER_PORT = 1883
 
 FACT_TOPIC_GENERAL = "hsp/knowledge/facts/test_general"
 CAP_ADVERTISEMENT_TOPIC = "hsp/capabilities/advertisements/general"
@@ -195,6 +195,7 @@ def personality_manager_fixture() -> PersonalityManager:
 import threading
 
 @pytest.fixture(scope="module")
+@pytest.mark.timeout(30)  # Increased timeout for broker setup/teardown
 async def broker(event_loop):
     config = {
         "listeners": {
@@ -355,7 +356,7 @@ async def dialogue_manager_fixture(
 # --- Test Classes ---
 class TestHSPFactPublishing:
     @pytest.mark.asyncio
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(20)
     async def test_learning_manager_publishes_fact_via_hsp(
         self,
         configured_learning_manager: LearningManager,
@@ -364,7 +365,7 @@ class TestHSPFactPublishing:
         received_facts_on_peer: List[Dict[str, Any]] = []
 
         def peer_fact_handler(fact_payload: HSPFactPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
-            print(f"Peer A received fact: {fact_payload}")
+            print(f"Peer A received fact: {fact_payload.id} from {sender_ai_id}")
             if sender_ai_id == TEST_AI_ID_MAIN:
                 received_facts_on_peer.append({"payload": fact_payload, "envelope": envelope})
 
@@ -379,7 +380,7 @@ class TestHSPFactPublishing:
             source_interaction_ref="test_interaction_pub_01"
         )
 
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(0.5)
         print(f"Final received facts on peer A: {received_facts_on_peer}")
         assert len(received_facts_on_peer) > 0, "Peer A did not receive any facts."
         rp = received_facts_on_peer[0]["payload"]

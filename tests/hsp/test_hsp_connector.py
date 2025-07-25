@@ -12,7 +12,7 @@ from src.hsp.types import HSPMessageEnvelope
 
 TEST_AI_ID = "test_ai_connector_001"
 TEST_BROKER_ADDRESS = "localhost"
-TEST_BROKER_PORT = 1883
+TEST_BROKER_PORT = 1884
 
 @pytest.fixture
 def mock_gmqtt_client():

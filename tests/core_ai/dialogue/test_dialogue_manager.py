@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock
 # Test cases for the DialogueManager using the centralized mock_core_services fixture
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(10)
 async def test_get_simple_response_project_trigger(mock_core_services):
     """
     Tests that a user input starting with the project trigger
@@ -34,6 +35,7 @@ async def test_get_simple_response_project_trigger(mock_core_services):
 import pytest
 from unittest.mock import AsyncMock, call
 @pytest.mark.asyncio
+@pytest.mark.timeout(10)
 async def test_get_simple_response_standard_flow(mock_core_services):
     """
     Tests the standard dialogue flow that results in a simple response
@@ -74,6 +76,7 @@ async def test_get_simple_response_standard_flow(mock_core_services):
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(10)
 async def test_start_session_greeting(mock_core_services):
     """
     Tests that starting a new session returns the correct greeting
@@ -97,6 +100,7 @@ async def test_start_session_greeting(mock_core_services):
     personality_manager.get_initial_prompt.assert_called_once()
 
 
+@pytest.mark.timeout(10)
 def test_handle_incoming_hsp_task_result(mock_core_services):
     """
     Tests that an incoming HSP task result is correctly delegated
@@ -121,6 +125,7 @@ def test_handle_incoming_hsp_task_result(mock_core_services):
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(10)
 async def test_get_simple_response_no_project_trigger(mock_core_services):
     """
     Ensures that if the input does NOT start with the project trigger,

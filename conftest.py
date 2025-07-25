@@ -1,6 +1,16 @@
 import os
 import pytest
+import os
+import asyncio
+import pytest
 from cryptography.fernet import Fernet
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an instance of the default event loop for each test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_environment():
@@ -10,7 +20,6 @@ def setup_test_environment():
         # 生成一個測試用的密鑰
         test_key = Fernet.generate_key().decode()
         os.environ['MIKO_HAM_KEY'] = test_key
-        print(f"Test MIKO_HAM_KEY set: {test_key[:20]}...")
     
     # 設置其他測試環境變量
     os.environ['TESTING'] = 'true'

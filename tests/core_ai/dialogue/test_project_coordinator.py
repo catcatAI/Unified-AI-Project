@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 # Test cases for the ProjectCoordinator using the centralized mock_core_services fixture
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)
 async def test_handle_project_decomposes_and_executes(mock_core_services):
     """
     Tests that handle_project correctly decomposes the user query,
@@ -34,6 +35,7 @@ async def test_handle_project_decomposes_and_executes(mock_core_services):
 
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)
 async def test_execute_task_graph_with_dependencies(mock_core_services):
     """
     Tests that _execute_task_graph correctly handles dependencies between tasks.
@@ -62,6 +64,7 @@ async def test_execute_task_graph_with_dependencies(mock_core_services):
     })
 
 @pytest.mark.asyncio
+@pytest.mark.timeout(5)
 async def test_execute_task_graph_circular_dependency(mock_core_services):
     """
     Tests that _execute_task_graph raises a ValueError for circular dependencies.
