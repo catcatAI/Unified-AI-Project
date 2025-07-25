@@ -80,6 +80,7 @@ pytest tests/ -v
 - [x] 添加了參數提取器，能夠提取公開的 AI 大模型參數並將參數深層映射後建立或加入內部相關模型。
 - [x] 更新了 `docs/technical_design/architecture/frontend_backend_flow.md`，以更詳細、更準確地描述前端和後端之間的連接。
 - [x] 將危機系統的配置外部化，使其更易於維護。
+- [x] 集成了 `PersonalityManager` 和 `LearningManager`，使 Angela 能夠根據用戶反饋動態調整其人格。
 
 ### 未完成的任務
 - [ ] 修复 5 个 NotImplementedError (已檢查，未發現)
