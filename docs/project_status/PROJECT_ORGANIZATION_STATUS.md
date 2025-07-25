@@ -126,19 +126,19 @@ npm start
 ## 📚 文檔導航
 
 ### 核心文檔
-- **[README.md](README.md)** - 專案總覽
+- **[README.md](../../README.md)** - 專案總覽
 - **[成功標準](SUCCESS_CRITERIA.md)** - 質量指標
-- **[故障排除](TROUBLESHOOTING.md)** - 常見問題
+- **[故障排除](../technical_specs/TROUBLESHOOTING.md)** - 常見問題
 
 ### 技術文檔
-- **[HSP規範](docs/technical_design/HSP_SPECIFICATION.md)** - 通信協議
-- **[HAM設計](docs/technical_design/architecture/HAM_design_spec.md)** - 記憶系統
-- **[代理協作](docs/technical_design/architecture/AGENT_COLLABORATION_FRAMEWORK.md)** - 協作框架
+- **[HSP規範](../technical_design/HSP_SPECIFICATION.md)** - 通信協議
+- **[HAM設計](../technical_design/architecture/HAM_design_spec.md)** - 記憶系統
+- **[代理協作](../technical_design/architecture/AGENT_COLLABORATION_FRAMEWORK.md)** - 協作框架
 
 ### 專案管理
-- **[內容組織](docs/project_management/PROJECT_CONTENT_ORGANIZATION.md)** - 文件結構
-- **[狀態總結](docs/project_management/PROJECT_STATUS_SUMMARY.md)** - 實現狀態
-- **[整理總結](docs/CLEANUP_SUMMARY.md)** - 最新整理報告
+- **[內容組織](../project_management/PROJECT_CONTENT_ORGANIZATION.md)** - 文件結構
+- **[狀態總結](../project_management/PROJECT_STATUS_SUMMARY.md)** - 實現狀態
+- **[整理總結](../CLEANUP_SUMMARY.md)** - 最新整理報告
 
 ## 🎮 特色功能
 
