@@ -18,45 +18,37 @@
 - Python 3.8+
 - Node.js 16+ (用於前端組件)
 
-### 安裝步驟
+### 安裝與運行
 
 1. **克隆專案**
-```bash
-git clone <repository-url>
-cd unified-ai-project
-```
-
-2. **快速安裝** ⚡
    ```bash
-   # 一键安装 (推荐)
+   git clone <repository-url>
+   cd unified-ai-project
+   ```
+
+2. **安裝依賴**
+   ```bash
+   # 安裝核心依賴
    pip install -e .
-   
-   # 验证安装
-   python -c "import src.core_ai; print('✅ 安装成功!')"
+
+   # 如果需要運行 UI 或其他擴展功能，請安裝完整依賴
+   # pip install -e .[full]
    ```
 
-3. **自定义安装** (可选)
-   使用專案提供的安裝程式來管理依賴：
+3. **配置環境**
    ```bash
-   python installer_cli.py
+   # 複製環境變量模板
+   cp .env.example .env
+
+   # 編輯 .env 文件，至少需要設置 HAM_ENCRYPTION_KEY
+   # 可以使用以下命令生成一個新的密鑰：
+   # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
    ```
-   您將被提示選擇所需的安裝類型（例如 `minimal`, `standard`, `full` 等）。
 
-3. **環境配置**
-```bash
-# 複製環境變量模板
-cp .env.example .env
-
-# 編輯 .env 文件，設置必要的API密鑰
-# 您可以使用以下命令生成 HAM 加密密鑰
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-```
-
-4. **運行應用**
-   本專案提供多種運行方式，詳細資訊請參閱 **[項目章程](docs/PROJECT_CHARTER.md)** 中的「運行應用程序」一節。
+4. **運行**
    - **API 服務器**: `uvicorn src.services.main_api_server:app --reload`
-   - **命令行接口 (CLI)**: `python src/interfaces/cli/main.py query "Your query"`
-   - **Electron 桌面應用**: `cd src/interfaces/electron_app && npm start`
+   - **命令行接口 (CLI)**: `python src/interfaces/cli/main.py query "Hello Angela"`
+   - **桌面應用**: `cd src/interfaces/electron_app && npm install && npm start`
 
 ## 未來發展路線圖
 

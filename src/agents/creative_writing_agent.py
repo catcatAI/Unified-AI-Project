@@ -54,11 +54,11 @@ class CreativeWritingAgent(BaseAgent):
             try:
                 if "generate_marketing_copy" in capability_id:
                     prompt = self._create_marketing_copy_prompt(params)
-                    llm_response = self.llm_interface.generate_response(prompt)
+                    llm_response = await self.llm_interface.generate_response(prompt)
                     result_payload = self._create_success_payload(request_id, llm_response)
                 elif "polish_text" in capability_id:
                     prompt = self._create_polish_text_prompt(params)
-                    llm_response = self.llm_interface.generate_response(prompt)
+                    llm_response = await self.llm_interface.generate_response(prompt)
                     result_payload = self._create_success_payload(request_id, llm_response)
                 else:
                     result_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
