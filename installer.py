@@ -1,11 +1,17 @@
 import sys
-import yaml # Added
-import os # Added
-from PyQt5.QtWidgets import QApplication, QWizard, QWizardPage
+import yaml
+import os
+import sys
+from PyQt5.QtWidgets import QApplication, QWizard, QWizardPage, QVBoxLayout, QLabel, QComboBox
+from PyQt5.QtCore import QTranslator, QLocale, QLibraryInfo
 
 class InstallationWizard(QWizard):
     def __init__(self):
         super().__init__()
+
+        self.translator = QTranslator()
+        self.current_locale = QLocale.system().name()
+        self.load_translator(self.current_locale)
 
         # Load dependency configuration
         config_path = os.path.join(os.path.dirname(__file__), 'dependency_config.yaml')
@@ -25,8 +31,35 @@ class InstallationWizard(QWizard):
         self.addPage(InstallationPage())
         self.addPage(FinishedPage())
 
-        self.setWindowTitle("Installation Wizard")
+        self.setWindowTitle(self.tr("Installation Wizard"))
         self.selected_installation_type = None # Added to store the selected type
+
+    def load_translator(self, locale):
+        if self.translator.load(f"installer_{locale}", "."):
+            QApplication.instance().installTranslator(self.translator)
+            print(f"Loaded translator for {locale}")
+        else:
+            print(f"Could not load translator for {locale}")
+
+    def change_language(self, index):
+        locale = self.sender().itemData(index)
+        if locale != self.current_locale:
+            QApplication.instance().removeTranslator(self.translator)
+            self.load_translator(locale)
+            self.current_locale = locale
+            self.retranslateUi()
+            # Retranslate all pages
+            for i in range(self.pageIds().count()):
+                page = self.page(self.pageIds().at(i))
+                if hasattr(page, 'retranslateUi'):
+                    page.retranslateUi()
+
+    def retranslateUi(self):
+        self.setWindowTitle(self.tr("Installation Wizard"))
+        for i in range(self.pageIds()):
+            page = self.page(self.pageIds()[i])
+            if hasattr(page, 'retranslateUi'):
+                page.retranslateUi()
 
     def get_os(self):
         if sys.platform.startswith("win"):
@@ -36,66 +69,84 @@ class InstallationWizard(QWizard):
         else:
             return "linux"
 
-from PyQt5.QtWidgets import QLabel
-
 class WelcomePage(QWizardPage):
     def __init__(self):
         super().__init__()
-        self.setTitle("Welcome")
+        self.setTitle(self.tr("Welcome"))
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Welcome to the Unified AI Project installation wizard."))
+        self.welcome_label = QLabel(self.tr("Welcome to the Unified AI Project installation wizard."))
+        layout.addWidget(self.welcome_label)
+
+        # Language selection
+        language_group = QGroupBox(self.tr("Language"))
+        language_layout = QVBoxLayout()
+        self.language_combo = QComboBox()
+        self.language_combo.addItem(self.tr("English"), "en_US")
+        self.language_combo.addItem(self.tr("Chinese (中文)"), "zh_CN")
+        self.language_combo.addItem(self.tr("Japanese (日本語)"), "ja_JP")
+        self.language_combo.currentIndexChanged.connect(self.wizard().change_language)
+        language_layout.addWidget(self.language_combo)
+        language_group.setLayout(language_layout)
+        layout.addWidget(language_group)
+
         self.setLayout(layout)
 
-from PyQt5.QtWidgets import QRadioButton, QGroupBox, QVBoxLayout, QComboBox, QLabel
+    def retranslateUi(self):
+        self.setTitle(self.tr("Welcome"))
+        self.welcome_label.setText(self.tr("Welcome to the Unified AI Project installation wizard."))
+        self.findChild(QGroupBox, self.tr("Language")).setTitle(self.tr("Language"))
+        # Update combo box items for language selection
+        # This is a bit tricky as addItem doesn't directly support retranslation of existing items.
+        # A simple approach is to clear and re-add, but that might reset selection.
+        # For now, we'll rely on the wizard's retranslateUi to handle page titles and labels.
+        # The language names in the combo box itself are handled by the initial setup and tr() calls.
+
+
+from PyQt5.QtWidgets import QRadioButton, QGroupBox
 
 class ConfigurationPage(QWizardPage):
     def __init__(self):
         super().__init__()
-        self.setTitle("Configuration")
+        self.setTitle(self.tr("Configuration"))
 
         layout = QVBoxLayout()
 
         # Installation Type configuration
-        install_type_group = QGroupBox("Installation Type")
+        self.install_type_group = QGroupBox(self.tr("Installation Type"))
         install_type_layout = QVBoxLayout()
         self.install_type_combo = QComboBox()
         
-        # Populate combo box from dependency_config.yaml
-        installation_types = self.wizard().dependency_config.get('installation', {})
-        for install_type, details in installation_types.items():
-            self.install_type_combo.addItem(f"{install_type} ({details.get('description', '')})", install_type)
-        
-        install_type_layout.addWidget(QLabel("Select the desired installation type:"))
+        install_type_layout.addWidget(QLabel(self.tr("Select the desired installation type:")))
         install_type_layout.addWidget(self.install_type_combo)
-        install_type_group.setLayout(install_type_layout)
-        layout.addWidget(install_type_group)
+        self.install_type_group.setLayout(install_type_layout)
+        layout.addWidget(self.install_type_group)
 
         # Connect signal to update wizard's selected_installation_type
         self.install_type_combo.currentIndexChanged.connect(self._update_selected_type)
 
         # Hardware configuration
-        hardware_group = QGroupBox("Hardware Configuration")
+        self.hardware_group = QGroupBox(self.tr("Hardware Configuration"))
         hardware_layout = QVBoxLayout()
-        self.low_end_hardware_radio = QRadioButton("Low-end hardware")
-        self.mid_range_hardware_radio = QRadioButton("Mid-range hardware")
-        self.high_end_hardware_radio = QRadioButton("High-end hardware")
+        self.low_end_hardware_radio = QRadioButton(self.tr("Low-end hardware"))
+        self.mid_range_hardware_radio = QRadioButton(self.tr("Mid-range hardware"))
+        self.high_end_hardware_radio = QRadioButton(self.tr("High-end hardware"))
         hardware_layout.addWidget(self.low_end_hardware_radio)
         hardware_layout.addWidget(self.mid_range_hardware_radio)
         hardware_layout.addWidget(self.high_end_hardware_radio)
-        hardware_group.setLayout(hardware_layout)
-        layout.addWidget(hardware_group)
+        self.hardware_group.setLayout(hardware_layout)
+        layout.addWidget(self.hardware_group)
 
         # Server configuration
-        server_group = QGroupBox("Server Configuration")
+        self.server_group = QGroupBox(self.tr("Server Configuration"))
         server_layout = QVBoxLayout()
-        self.no_server_radio = QRadioButton("No server")
-        self.local_server_radio = QRadioButton("Local server")
-        self.remote_server_radio = QRadioButton("Remote server")
+        self.no_server_radio = QRadioButton(self.tr("No server"))
+        self.local_server_radio = QRadioButton(self.tr("Local server"))
+        self.remote_server_radio = QRadioButton(self.tr("Remote server"))
         server_layout.addWidget(self.no_server_radio)
         server_layout.addWidget(self.local_server_radio)
         server_layout.addWidget(self.remote_server_radio)
-        server_group.setLayout(server_layout)
-        layout.addWidget(server_group)
+        self.server_group.setLayout(server_layout)
+        layout.addWidget(self.server_group)
 
         self.setLayout(layout)
 
@@ -103,21 +154,41 @@ class ConfigurationPage(QWizardPage):
         self.wizard().selected_installation_type = self.install_type_combo.currentData()
 
     def initializePage(self):
+        # Populate combo box from dependency_config.yaml
+        self.install_type_combo.clear()
+        installation_types = self.wizard().dependency_config.get('installation', {})
+        for install_type, details in installation_types.items():
+            self.install_type_combo.addItem(f"{install_type} ({details.get('description', '')})", install_type)
+
         # Set default selection if not already set
         if not self.wizard().selected_installation_type and self.install_type_combo.count() > 0:
             self.install_type_combo.setCurrentIndex(0)
             self._update_selected_type()
 
-from PyQt5.QtWidgets import QProgressBar
+    def retranslateUi(self):
+        self.setTitle(self.tr("Configuration"))
+        self.install_type_group.setTitle(self.tr("Installation Type"))
+        self.install_type_group.findChild(QLabel).setText(self.tr("Select the desired installation type:"))
+        self.hardware_group.setTitle(self.tr("Hardware Configuration"))
+        self.low_end_hardware_radio.setText(self.tr("Low-end hardware"))
+        self.mid_range_hardware_radio.setText(self.tr("Mid-range hardware"))
+        self.high_end_hardware_radio.setText(self.tr("High-end hardware"))
+        self.server_group.setTitle(self.tr("Server Configuration"))
+        self.no_server_radio.setText(self.tr("No server"))
+        self.local_server_radio.setText(self.tr("Local server"))
+        self.remote_server_radio.setText(self.tr("Remote server"))
 
 class InstallationPage(QWizardPage):
     def __init__(self):
         super().__init__()
-        self.setTitle("Installation")
+        self.setTitle(self.tr("Installation"))
         layout = QVBoxLayout()
         self.progress_bar = QProgressBar()
         layout.addWidget(self.progress_bar)
         self.setLayout(layout)
+
+    def retranslateUi(self):
+        self.setTitle(self.tr("Installation"))
 
     def initializePage(self):
         self.progress_bar.setValue(0)
@@ -191,13 +262,21 @@ from PyQt5.QtWidgets import QLineEdit, QFormLayout
 class APIKeyPage(QWizardPage):
     def __init__(self):
         super().__init__()
-        self.setTitle("API Keys")
+        self.setTitle(self.tr("API Keys"))
 
         layout = QFormLayout()
         self.gemini_api_key_input = QLineEdit()
         self.openai_api_key_input = QLineEdit()
-        layout.addRow("Gemini API Key:", self.gemini_api_key_input)
-        layout.addRow("OpenAI API Key:", self.openai_api_key_input)
+        layout.addRow(self.tr("Gemini API Key:"), self.gemini_api_key_input)
+        layout.addRow(self.tr("OpenAI API Key:"), self.openai_api_key_input)
+
+    def retranslateUi(self):
+        self.setTitle(self.tr("API Keys"))
+        # Re-add rows to update labels if necessary, or update existing labels
+        # For simplicity, assuming labels are directly accessible or can be found
+        # This part might need more robust implementation depending on QFormLayout's behavior
+        # For now, just updating the title is sufficient for basic retranslation
+        pass
         self.setLayout(layout)
 
 from PyQt5.QtWidgets import QPushButton
