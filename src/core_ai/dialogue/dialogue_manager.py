@@ -113,6 +113,12 @@ class DialogueManager:
             ai_metadata: DialogueMemoryEntryMetadata = {"speaker": "ai", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id, "user_input_ref": user_mem_id} # type: ignore
             self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata)
 
+        # Analyze for personality adjustment
+        if self.learning_manager:
+            adjustment = self.learning_manager.analyze_for_personality_adjustment(user_input)
+            if adjustment and self.personality_manager:
+                self.personality_manager.apply_personality_adjustment(adjustment)
+
         return response_text
 
     async def start_session(self, user_id: Optional[str] = None, session_id: Optional[str] = None) -> str:
