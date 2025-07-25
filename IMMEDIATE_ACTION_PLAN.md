@@ -70,16 +70,25 @@ pytest tests/ -v
 
 ## 📅 本周具体任务清单
 
-### 周一-周二: 代码修复
-- [ ] 修复 5 个 NotImplementedError
-- [ ] 完善 HSP 连接器的 TODO 项目
-- [x] 运行测试套件并修复失败项
-- [x] 添加了运行简单测试的功能，以方便在依賴項不完整的情況下進行測試。運行 `bash run_simple_tests.sh` 來執行簡單測試。
+### 已完成的任務
+- [x] 修复了 `src/hsp/connector.py` 中的 TODO，包括改進 `payload_schema_uri` 的生成、增強重連機制的日誌記錄，以及添加更完善的錯誤處理。
+- [x] 建立了基礎監控，創建了 `scripts/health_check.py` 腳本。
+- [x] 改進了測試覆蓋，成功運行了 `tests/test_simple.py`、`tests/agents/test_creative_writing_agent.py`、`tests/agents/test_data_analysis_agent.py` 和 `tests/core_ai/test_agent_manager.py`，並修復了其中的問題。
+- [x] 添加了運行簡單測試的功能，以方便在依賴項不完整的情況下進行測試。運行 `bash run_simple_tests.sh` 來執行簡單測試。
+- [x] 簡化了 `README.md` 的安裝說明。
+- [x] 改進了 Electron 應用的界面，包括創建 `Layout.tsx` 組件、重構 `Sidebar.tsx`、統一應用樣式和在 API 調用中添加錯誤處理。
+- [x] 添加了參數提取器，能夠提取公開的 AI 大模型參數並將參數深層映射後建立或加入內部相關模型。
+- [x] 更新了 `docs/technical_design/architecture/frontend_backend_flow.md`，以更詳細、更準確地描述前端和後端之間的連接。
+- [x] 將危機系統的配置外部化，使其更易於維護。
+- [x] 集成了 `PersonalityManager` 和 `LearningManager`，使 Angela 能夠根據用戶反饋動態調整其人格。
 
-### 周三-周四: 系统改进  
-- [ ] 建立基础监控
-- [ ] 改进错误处理和日志
-- [ ] 优化用户界面
+### 未完成的任務
+- [ ] 修复 5 个 NotImplementedError (已檢查，未發現)
+- [ ] 改进错误处理和日志 (部分完成)
+- [ ] 添加更好的錯誤提示 (部分完成)
+- [ ] 准备演示材料
+- [ ] 安全基础
+- [ ] 性能优化
 
 ### 周五: 文档和演示
 - [ ] 更新项目状态文档

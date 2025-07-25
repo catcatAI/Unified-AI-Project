@@ -524,3 +524,22 @@ if __name__ == '__main__':
 
 
     print("\nLearningManager standalone test finished.")
+
+    def analyze_for_personality_adjustment(self, text: str) -> Optional[Dict[str, Any]]:
+        """
+        Analyzes text for potential personality adjustments.
+
+        Args:
+            text (str): The text to analyze.
+
+        Returns:
+            Optional[Dict[str, Any]]: A dictionary of personality adjustments, or None if no adjustments are needed.
+        """
+        # This is a simplified implementation. A real-world scenario would
+        # involve a more sophisticated analysis.
+        if "be more formal" in text.lower():
+            return {"communication_style.tone_presets.default": "formal"}
+        elif "be more friendly" in text.lower():
+            return {"communication_style.tone_presets.default": "friendly"}
+        else:
+            return None
