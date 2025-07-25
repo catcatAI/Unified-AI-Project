@@ -24,6 +24,48 @@ from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 from src.shared.types.common_types import OperationalConfig
 
 @pytest.fixture(scope="function")
+def trust_manager_fixture():
+    return TrustManager()
+
+@pytest.fixture(scope="function")
+def service_discovery_module_fixture(trust_manager_fixture):
+    sdm = ServiceDiscoveryModule(trust_manager=trust_manager_fixture)
+    sdm.start_cleanup_task(cleanup_interval_seconds=1) # Shorter interval for tests
+    yield sdm
+    sdm.stop_cleanup_task()
+
+@pytest.fixture(scope="function")
+async def hsp_connector_fixture():
+    # Check if MQTT broker is available before attempting to connect
+    if not is_mqtt_broker_available():
+        pytest.skip("MQTT broker not available")
+
+    connector = HSPConnector(
+        ai_id="test_ai_id",
+        broker_address="127.0.0.1",
+        broker_port=1883,
+        client_id_suffix="test_hsp_connector"
+    )
+    await connector.connect()
+    yield connector
+    await connector.disconnect()
+
+def is_mqtt_broker_available():
+    """
+    Checks if the MQTT broker is available by attempting to create a socket connection.
+    """
+    try:
+        # Use a non-blocking socket with a short timeout
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.5)
+            s.connect(("127.0.0.1", 1883))
+        return True
+    except (socket.timeout, ConnectionRefusedError):
+        return False
+    except Exception:
+        return False
+
+@pytest.fixture(scope="function")
 def mock_core_services():
     """
     Provides a dictionary of mocked core services for use in tests.
@@ -56,7 +98,7 @@ def mock_core_services():
     mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
     # Example: Formula Engine finds no match by default
     mock_formula_engine.match_input.return_value = None
-    # Example: Crisis system reports no crisis by default
+    # Example: Crisis system reports no Crisis by default
     mock_crisis_system.assess_input_for_crisis.return_value = 0
 
     # --- Minimal Configuration ---
@@ -135,20 +177,3 @@ def mock_core_services():
     }
 
     return services
-
-def is_mqtt_broker_available():
-    """
-    Checks if the MQTT broker is available by attempting to create a socket connection.
-    """
-    try:
-        # Use a non-blocking socket with a short timeout
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(0.5)
-            s.connect(("127.0.0.1", 1883))
-        return True
-    except (socket.timeout, ConnectionRefusedError):
-        return False
-    except Exception:
-        return False
-
-# You can add markers or other pytest configurations here if needed

@@ -90,7 +90,14 @@ class HSPConnector:
 
         self.is_connected: bool = False
         self._loop_task: Optional[asyncio.Task] = None
-        if not self.mock_mode:
+
+        if self.mock_mode:
+            self.mqtt_client = MagicMock()
+            self.mqtt_client.on_connect = MagicMock()
+            self.mqtt_client.on_disconnect = MagicMock()
+            self.mqtt_client.on_message = MagicMock()
+            self.is_connected = True
+        else:
             self.mqtt_client = gmqtt.Client(self.mqtt_client_id)
             if username:
                 self.mqtt_client.set_auth_credentials(username, password)
@@ -110,9 +117,6 @@ class HSPConnector:
 
             if username and password:
                 logger.info(f"HSPConnector ({self.ai_id}): Username and password configured.")
-        else:
-            self.mqtt_client = MagicMock()
-            self.is_connected = True
 
         # Callbacks for different types of HSP messages
         self._on_generic_message_callback: Optional[Callable[[HSPMessageEnvelope, str], None]] = None
@@ -166,8 +170,110 @@ class HSPConnector:
         logger.warning(f"Could not parse TypeName and Version from message_type '{message_type}'. No schema URI generated.")
         return None
 
-    def on_connect(self, client, flags, rc, properties):
+    async def connect(self):
+        """Connects the MQTT client to the broker."""
+        if self.mock_mode:
+            logger.info(f"HSPConnector ({self.ai_id}): Running in mock mode. Not connecting to broker.")
+            self.is_connected = True
+            return
+
+        logger.info(f"HSPConnector ({self.ai_id}): Attempting to connect to MQTT broker at {self.broker_address}:{self.broker_port}")
+        try:
+            await self.mqtt_client.connect(self.broker_address, self.broker_port)
+            # Connection status is updated by on_connect callback
+        except Exception as e:
+            logger.error(f"HSPConnector ({self.ai_id}): Failed to initiate connection: {e}", exc_info=True)
+
+    async def disconnect(self):
+        """Disconnects the MQTT client from the broker."""
+        if self.mock_mode:
+            logger.info(f"HSPConnector ({self.ai_id}): Running in mock mode. Not disconnecting from broker.")
+            self.is_connected = False
+            return
+
+        logger.info(f"HSPConnector ({self.ai_id}): Disconnecting from MQTT broker.")
+        try:
+            await self.mqtt_client.disconnect()
+        except Exception as e:
+            logger.error(f"HSPConnector ({self.ai_id}): Error during disconnection: {e}", exc_info=True)
+
+    async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: Optional[int] = None):
+        """Publishes an HSP message to the specified topic."""
+        if not self.is_connected:
+            logger.warning(f"HSPConnector ({self.ai_id}): Not connected. Message to {topic} not published.")
+            return
+
+        if qos is None:
+            qos = self.default_qos
+
+        try:
+            # Serialize the envelope to a JSON string
+            message_json = json.dumps(envelope)
+            await self.mqtt_client.publish(topic, message_json, qos=qos)
+            logger.info(f"HSPConnector ({self.ai_id}): Published message to {topic} (QoS: {qos})")
+        except Exception as e:
+            logger.error(f"HSPConnector ({self.ai_id}): Failed to publish message to {topic}: {e}", exc_info=True)
+
+    async def subscribe(self, topic: str, qos: Optional[int] = None):
+        """Subscribes to an MQTT topic."""
+        if not self.is_connected:
+            logger.warning(f"HSPConnector ({self.ai_id}): Not connected. Cannot subscribe to {topic}.")
+            return
+
+        if qos is None:
+            qos = self.default_qos
+
+        try:
+            await self.mqtt_client.subscribe(topic, qos=qos)
+            self.subscribed_topics.add(topic)
+            logger.info(f"HSPConnector ({self.ai_id}): Subscribed to topic: {topic} (QoS: {qos})")
+        except Exception as e:
+            logger.error(f"HSPConnector ({self.ai_id}): Failed to subscribe to {topic}: {e}", exc_info=True)
+
+    async def unsubscribe(self, topic: str):
+        """Unsubscribes from an MQTT topic."""
+        if not self.is_connected:
+            logger.warning(f"HSPConnector ({self.ai_id}): Not connected. Cannot unsubscribe from {topic}.")
+            return
+
+        try:
+            await self.mqtt_client.unsubscribe(topic)
+            self.subscribed_topics.discard(topic)
+            logger.info(f"HSPConnector ({self.ai_id}): Unsubscribed from topic: {topic}")
+        except Exception as e:
+            logger.error(f"HSPConnector ({self.ai_id}): Failed to unsubscribe from {topic}: {e}", exc_info=True)
+
+    def register_on_connect_callback(self, callback: Callable[[], None]):
+        """Registers an external callback to be called upon successful connection."""
+        self._external_on_connect_callback = callback
+
+    def register_on_disconnect_callback(self, callback: Callable[[], None]):
+        """Registers an external callback to be called upon disconnection."""
+        self._external_on_disconnect_callback = callback
+
+    def on_fact_received(self, callback: Callable[[HSPFactPayload, str, HSPMessageEnvelope], None]):
+        """Registers a callback for when an HSP Fact message is received."""
+        self._on_fact_received_callback = callback
+
+    def on_capability_advertisement_received(self, callback: Callable[[HSPCapabilityAdvertisementPayload, str, HSPMessageEnvelope], None]):
+        """Registers a callback for when an HSP Capability Advertisement message is received."""
+        self._on_capability_advertisement_callback = callback
+
+    def on_task_request_received(self, callback: Callable[[HSPTaskRequestPayload, str, HSPMessageEnvelope], None]):
+        """Registers a callback for when an HSP Task Request message is received."""
+        self._on_task_request_callback = callback
+
+    def on_task_result_received(self, callback: Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]):
+        """Registers a callback for when an HSP Task Result message is received."""
+        self._on_task_result_callback = callback
+
+    def on_generic_message(self, callback: Callable[[HSPMessageEnvelope, str], None]):
+        """Registers a callback for all incoming HSP messages, regardless of type."""
+        self._on_generic_message_callback = callback
+
+    def on_connect(self, client, flags, rc, properties): # gmqtt's on_connect signature
         """Callback for when the client receives a CONNACK response from the server."""
+        # rc = 0 for successful connection
         if rc == 0:
             self.is_connected = True
             if self._was_unexpectedly_disconnected:
@@ -192,15 +298,134 @@ class HSPConnector:
         else:
             logger.error(f"HSPConnector ({self.ai_id}): Failed to connect to MQTT Broker. Return code: {rc}")
 
-    def on_disconnect(self, client, packet, rc=None):
+    def on_disconnect(self, client, packet, exc):
         """Callback for when the client disconnects from the broker."""
         self.is_connected = False
-        if rc == 0:
-            logger.info(f"HSPConnector ({self.ai_id}): Cleanly disconnected from MQTT Broker.")
+        if exc is None:
+            logger.info(f"HSPConnector ({self.ai_id}): Cleanly disconnected from MQTT Broker. Exception: {exc}")
             self._was_unexpectedly_disconnected = False
         else:
-            logger.warning(f"HSPConnector ({self.ai_id}): Unexpectedly disconnected. RC: {rc}. The client will attempt to reconnect automatically.")
+            logger.warning(f"HSPConnector ({self.ai_id}): Disconnected unexpectedly from MQTT Broker. Exception: {exc}")
             self._was_unexpectedly_disconnected = True
+
+        if self._external_on_disconnect_callback:
+            try:
+                if asyncio.iscoroutinefunction(self._external_on_disconnect_callback):
+                    asyncio.create_task(self._external_on_disconnect_callback())
+                else:
+                    self._external_on_disconnect_callback()
+            except Exception as e:
+                logger.error(f"HSPConnector ({self.ai_id}): Error in external on_disconnect callback: {e}", exc_info=True)
+
+    async def on_message(self, client, topic, payload, qos, properties):
+        """Callback for when a message is received from the broker."""
+        try:
+            # Decode topic and payload
+            decoded_topic = topic.decode('utf-8')
+            decoded_payload = payload.decode('utf-8')
+            logger.debug(f"HSPConnector ({self.ai_id}): Message received on topic '{decoded_topic}': {decoded_payload}")
+
+            # Attempt to parse the message as an HSPMessageEnvelope
+            envelope: HSPMessageEnvelope = json.loads(decoded_payload)
+
+            # Call generic message callback if registered
+            if self._on_generic_message_callback:
+                try:
+                    if asyncio.iscoroutinefunction(self._on_generic_message_callback):
+                        await self._on_generic_message_callback(envelope, decoded_topic)
+                    else:
+                        self._on_generic_message_callback(envelope, decoded_topic)
+                except Exception as e:
+                    logger.error(f"HSPConnector ({self.ai_id}): Error in generic message callback: {e}", exc_info=True)
+
+            # Dispatch to specific callbacks based on message_type
+            message_type = envelope.get("message_type")
+            if message_type == "HSP::Fact_v0.1" and self._on_fact_received_callback:
+                try:
+                    fact_payload: HSPFactPayload = envelope["payload"]
+                    if asyncio.iscoroutinefunction(self._on_fact_received_callback):
+                        await self._on_fact_received_callback(fact_payload, decoded_topic, envelope)
+                    else:
+                        self._on_fact_received_callback(fact_payload, decoded_topic, envelope)
+                except Exception as e:
+                    logger.error(f"HSPConnector ({self.ai_id}): Error in Fact message callback: {e}", exc_info=True)
+            elif message_type == "HSP::CapabilityAdvertisement_v0.1" and self._on_capability_advertisement_callback:
+                try:
+                    cap_payload: HSPCapabilityAdvertisementPayload = envelope["payload"]
+                    if asyncio.iscoroutinefunction(self._on_capability_advertisement_callback):
+                        await self._on_capability_advertisement_callback(cap_payload, decoded_topic, envelope)
+                    else:
+                        self._on_capability_advertisement_callback(cap_payload, decoded_topic, envelope)
+                except Exception as e:
+                    logger.error(f"HSPConnector ({self.ai_id}): Error in Capability Advertisement message callback: {e}", exc_info=True)
+            elif message_type == "HSP::TaskRequest_v0.1" and self._on_task_request_callback:
+                try:
+                    task_req_payload: HSPTaskRequestPayload = envelope["payload"]
+                    if asyncio.iscoroutinefunction(self._on_task_request_callback):
+                        await self._on_task_request_callback(task_req_payload, decoded_topic, envelope)
+                    else:
+                        self._on_task_request_callback(task_req_payload, decoded_topic, envelope)
+                except Exception as e:
+                    logger.error(f"HSPConnector ({self.ai_id}): Error in Task Request message callback: {e}", exc_info=True)
+            elif message_type == "HSP::TaskResult_v0.1" and self._on_task_result_callback:
+                try:
+                    task_res_payload: HSPTaskResultPayload = envelope["payload"]
+                    if asyncio.iscoroutinefunction(self._on_task_result_callback):
+                        await self._on_task_result_callback(task_res_payload, decoded_topic, envelope)
+                    else:
+                        self._on_task_result_callback(task_res_payload, decoded_topic, envelope)
+                except Exception as e:
+                    logger.error(f"HSPConnector ({self.ai_id}): Error in Task Result message callback: {e}", exc_info=True)
+            # ... handle other message types
+
+            # Handle ACK sending if required
+            qos_params: Optional[HSPQoSParameters] = envelope.get("qos_parameters")
+            if qos_params and qos_params.get("requires_ack"):
+                await self._send_acknowledgement(envelope)
+
+        except json.JSONDecodeError:
+            logger.error(f"HSPConnector ({self.ai_id}): Received non-JSON message on topic '{decoded_topic}'.")
+        except KeyError as e:
+            logger.error(f"HSPConnector ({self.ai_id}): Missing key in HSP message envelope: {e}", exc_info=True)
+        except Exception as e:
+            logger.error(f"HSPConnector ({self.ai_id}): Error processing incoming message: {e}", exc_info=True)
+
+    async def _send_acknowledgement(self, original_envelope: HSPMessageEnvelope):
+        """Sends an acknowledgement message for a received message."""
+        sender_ai_id = original_envelope.get("sender_ai_id")
+        original_message_id = original_envelope.get("message_id")
+
+        if not sender_ai_id or not original_message_id:
+            logger.warning(f"HSPConnector ({self.ai_id}): Cannot send ACK. Missing sender_ai_id or message_id in original envelope.")
+            return
+
+        ack_payload: HSPAcknowledgementPayload = {
+            "acknowledged_message_id": original_message_id,
+            "status": "received",
+            "timestamp_acknowledged": datetime.now(timezone.utc).isoformat()
+        }
+
+        ack_envelope: HSPMessageEnvelope = {
+            "hsp_envelope_version": "0.1",
+            "message_id": str(uuid.uuid4()),
+            "correlation_id": original_message_id, # Correlate ACK with the original message
+            "sender_ai_id": self.ai_id,
+            "recipient_ai_id": sender_ai_id,
+            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "message_type": "HSP::Acknowledgement_v0.1",
+            "protocol_version": "0.1",
+            "communication_pattern": "response",
+            "security_parameters": None,
+            "qos_parameters": {"requires_ack": False, "priority": "low"},
+            "routing_info": None,
+            "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
+            "payload": ack_payload
+        }
+
+        ack_topic = f"hsp/acks/{sender_ai_id}"
+        await self.publish_message(ack_topic, ack_envelope)
+        logger.info(f"HSPConnector ({self.ai_id}): Sent ACK for message {original_message_id} to {sender_ai_id} on topic {ack_topic}")
+
 
         if self._external_on_disconnect_callback:
             try:
@@ -219,7 +444,8 @@ class HSPConnector:
                 logger.error(f"HSPConnector ({self.ai_id}): Could not decode message payload on topic '{topic}' as UTF-8.")
                 return
 
-            if topic.startswith("hsp/acks/"):
+            decoded_topic = topic.decode("utf-8")
+            if decoded_topic.startswith("hsp/acks/"):
                 self._handle_ack(topic)
                 return
 
