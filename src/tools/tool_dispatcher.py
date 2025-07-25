@@ -237,13 +237,22 @@ class ToolDispatcher:
 
             print(f"ToolDispatcher DEBUG (_execute_logic_evaluation): expression_to_evaluate='{expression_to_evaluate}'")
             result = logic_evaluate(expression_to_evaluate)
-            # The logic_evaluate tool already returns a string like "Result: True"
-            return ToolDispatcherResponse(
-                status="success",
-                payload=result,
-                tool_name_attempted="evaluate_logic",
-                original_query_for_tool=query # Or expression_to_evaluate, depending on desired granularity
-            )
+            # The logic_evaluate tool returns a boolean, or a string error message.
+            if isinstance(result, bool):
+                return ToolDispatcherResponse(
+                    status="success",
+                    payload=result,
+                    tool_name_attempted="evaluate_logic",
+                    original_query_for_tool=query
+                )
+            else: # It's an error string
+                return ToolDispatcherResponse(
+                    status="failure_tool_error",
+                    payload=None,
+                    tool_name_attempted="evaluate_logic",
+                    original_query_for_tool=query,
+                    error_message=result # The error message from logic_tool
+                )
         except Exception as e:
             error_msg = f"Error in logic evaluation: {str(e)[:100]}"
             print(f"ToolDispatcher: {error_msg}")
@@ -365,7 +374,7 @@ class ToolDispatcher:
                 error_message=error_msg
             )
 
-    def dispatch(self, query: str, explicit_tool_name: Optional[str] = None, **kwargs) -> Optional[ToolDispatcherResponse]:
+    def dispatch(self, query: str, explicit_tool_name: Optional[str] = None, **kwargs) -> ToolDispatcherResponse:
         """
         Dispatches a query to the appropriate tool.
         If explicit_tool_name is provided, it uses that tool.
@@ -419,7 +428,13 @@ class ToolDispatcher:
 
         # This is the case where DLM returns "NO_TOOL"
         print(f"No specific local tool inferred by DLM for query: '{query}'")
-        return None
+        return ToolDispatcherResponse(
+            status="no_tool_inferred",
+            payload=None,
+            tool_name_attempted=None,
+            original_query_for_tool=query,
+            error_message="No specific tool could be inferred from the query."
+        )
 
     def get_available_tools(self):
         """Returns a dictionary of available tools and their descriptions."""

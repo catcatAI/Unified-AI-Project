@@ -67,7 +67,7 @@ class ServiceDiscoveryModule:
         """Stops the periodic cleanup task."""
         if self._cleanup_thread is not None:
             self._stop_event.set()
-            self._cleanup_thread.join()
+            self._cleanup_thread.join(timeout=5) # Add a timeout to prevent indefinite blocking
             self._cleanup_thread = None
             logger.info("ServiceDiscoveryModule cleanup task stopped.")
 
@@ -75,7 +75,8 @@ class ServiceDiscoveryModule:
         """The target function for the cleanup thread."""
         while not self._stop_event.is_set():
             self.remove_stale_capabilities()
-            time.sleep(cleanup_interval_seconds)
+            # Use wait instead of sleep to allow earlier exit on stop event
+            self._stop_event.wait(cleanup_interval_seconds)
 
     def remove_stale_capabilities(self):
         """Removes capabilities that have exceeded the staleness threshold."""
