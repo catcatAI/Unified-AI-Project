@@ -5,19 +5,29 @@ This document illustrates the data flow from a user interaction in the Electron/
 ```mermaid
 sequenceDiagram
     participant User
-    participant ReactUI as React UI Component (e.g., Chat.tsx)
-    participant APIModule as Frontend API Module (e.g., api/chat.ts)
-    participant ElectronMain as Electron Main Process (main.js)
-    participant FastAPI as FastAPI Backend (main_api_server.py)
-    participant CoreServices as Core AI Services (e.g., DialogueManager)
+    participant ReactUI as React UI (e.g., Chat.tsx)
+    participant WebSocketClient as Frontend WebSocket Client
+    participant APIClient as Frontend API Client
+    participant FastAPIBackend as FastAPI Backend
+    participant WebSocketManager as Backend WebSocket Manager
+    participant DialogueManager as Core Dialogue Manager
+    participant Database
+    participant MessageQueue as RabbitMQ/Redis
 
-    User->>ReactUI: Types message and clicks "Send"
-    ReactUI->>APIModule: Calls sendMessage(text, sessionId)
-    APIModule->>FastAPI: POST /api/v1/chat with JSON body
-    Note over FastAPI: The HTTP request is received by the FastAPI server.
-    FastAPI->>CoreServices: Gets DialogueManager instance and calls get_simple_response(text, ...)
-    CoreServices->>FastAPI: Returns AI response text
-    FastAPI->>APIModule: Responds with 200 OK and JSON payload containing AI response
-    APIModule->>ReactUI: Returns AI response data to the component
-    ReactUI->>User: Updates state, displaying the AI's message in the chat window
+    User->>ReactUI: Enters message and clicks "Send"
+    ReactUI->>APIClient: POST /api/v1/chat/message (text, sessionId)
+    APIClient->>FastAPIBackend: HTTP Request
+    FastAPIBackend->>DialogueManager: Processes message
+    DialogueManager->>Database: Stores message history
+    DialogueManager-->>FastAPIBackend: Returns initial acknowledgement
+    FastAPIBackend-->>APIClient: HTTP 202 Accepted
+
+    alt Asynchronous AI Response
+        DialogueManager->>MessageQueue: Enqueues task for full response
+        MessageQueue-->>DialogueManager: (Worker) Processes task
+        DialogueManager->>WebSocketManager: Sends response to user's channel
+        WebSocketManager->>WebSocketClient: Pushes response via WebSocket
+        WebSocketClient->>ReactUI: Updates UI with AI response
+        ReactUI->>User: Displays new message
+    end
 ```
