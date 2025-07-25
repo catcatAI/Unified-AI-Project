@@ -167,7 +167,7 @@ class HSPConnector:
             logger.warning(f"Could not parse TypeName and Version from message_type '{message_type}' (processed: '{processed_type}'). Expected format like 'TypeName_vVersion'. No schema URI generated.")
             return None
 
-    async def on_connect(self, client, flags):
+    def on_connect(self, client, flags, rc, properties):
         """Callback for when the client receives a CONNACK response from the server."""
         self.is_connected = True
         if self._was_unexpectedly_disconnected:
@@ -180,15 +180,18 @@ class HSPConnector:
         if self.subscribed_topics:
             logger.info(f"HSPConnector ({self.ai_id}): Resubscribing to {len(self.subscribed_topics)} topics...")
             for topic in list(self.subscribed_topics):
-                await self.subscribe(topic, self.default_qos)
+                asyncio.create_task(self.subscribe(topic, self.default_qos))
 
         if self._external_on_connect_callback:
             try:
-                await self._external_on_connect_callback()
+                if asyncio.iscoroutinefunction(self._external_on_connect_callback):
+                    asyncio.create_task(self._external_on_connect_callback())
+                else:
+                    self._external_on_connect_callback()
             except Exception as e:
                 logger.error(f"HSPConnector ({self.ai_id}): Error in external on_connect callback: {e}", exc_info=True)
 
-    async def on_disconnect(self, client, packet, rc=None):
+    def on_disconnect(self, client, packet, rc=None):
         """Callback for when the client disconnects from the broker."""
         self.is_connected = False
         if rc == 0:
@@ -201,7 +204,10 @@ class HSPConnector:
 
         if self._external_on_disconnect_callback:
             try:
-                await self._external_on_disconnect_callback()
+                if asyncio.iscoroutinefunction(self._external_on_disconnect_callback):
+                    asyncio.create_task(self._external_on_disconnect_callback())
+                else:
+                    self._external_on_disconnect_callback()
             except Exception as e:
                 logger.error(f"HSPConnector ({self.ai_id}): Error in external on_disconnect callback: {e}", exc_info=True)
     async def on_message(self, client, topic, payload, qos, properties):
@@ -285,7 +291,7 @@ class HSPConnector:
             logger.info(f"HSPConnector ({self.ai_id}): MOCK mode disconnect.")
             return
 
-        if self.mqtt_client.is_connected():
+        if self.mqtt_client.is_connected:
             logger.info(f"HSPConnector ({self.ai_id}): Disconnecting from MQTT broker.")
             await self.mqtt_client.disconnect()
         else:

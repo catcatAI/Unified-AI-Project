@@ -52,8 +52,6 @@ unified-ai-project/
 ├── configs/                # 配置文件
 ├── data/                   # 數據存儲
 ├── scripts/                # 工具腳本
-├── CodeInspect/           # 代碼檢查工具
-├── UniAIDashboa/          # 統一AI儀表板
 └── 配置文件 (pyproject.toml, requirements.txt, etc.)
 ```
 
