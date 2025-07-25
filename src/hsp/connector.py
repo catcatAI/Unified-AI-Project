@@ -139,6 +139,8 @@ class HSPConnector:
         The convention is `hsp:schema:payload/{TypeName}/{Version}`.
         Parses TypeName and Version from message_type string like "HSP::TypeName_vVersion".
 
+        TODO: Replace this with a proper schema registry lookup.
+
         Args:
             message_type: The HSP message type string.
 
@@ -146,7 +148,7 @@ class HSPConnector:
             A placeholder schema URI string, or None if parsing fails.
         """
         if not message_type:
-            # logger.debug("Cannot generate schema URI for empty message_type.") # Use logger from class or module
+            logger.debug("Cannot generate schema URI for empty message_type.")
             return None
 
         processed_type = message_type
@@ -155,51 +157,49 @@ class HSPConnector:
 
         parts = processed_type.rsplit("_v", 1)
         if len(parts) == 2:
-            type_name = parts[0]
-            version = parts[1]
-            if type_name and version:  # Ensure neither part is empty
-                return f"hsp:schema:payload/{type_name}/{version}"
-            else:
-                logger.warning(f"Parsed empty TypeName or Version from message_type '{message_type}' (processed: '{processed_type}'). No schema URI generated.")
-                return None
-        else:
-            # Log this case as it's an unexpected format if we expect all types to be versioned this way.
-            logger.warning(f"Could not parse TypeName and Version from message_type '{message_type}' (processed: '{processed_type}'). Expected format like 'TypeName_vVersion'. No schema URI generated.")
-            return None
+            type_name, version = parts
+            if type_name and version:
+                uri = f"hsp:schema:payload/{type_name}/{version}"
+                logger.debug(f"Generated placeholder schema URI: {uri}")
+                return uri
+
+        logger.warning(f"Could not parse TypeName and Version from message_type '{message_type}'. No schema URI generated.")
+        return None
 
     def on_connect(self, client, flags, rc, properties):
         """Callback for when the client receives a CONNACK response from the server."""
-        self.is_connected = True
-        if self._was_unexpectedly_disconnected:
-            logger.info(f"HSPConnector ({self.ai_id}): Successfully reconnected to MQTT Broker")
-            self._was_unexpectedly_disconnected = False
+        if rc == 0:
+            self.is_connected = True
+            if self._was_unexpectedly_disconnected:
+                logger.info(f"HSPConnector ({self.ai_id}): Successfully reconnected to MQTT Broker.")
+                self._was_unexpectedly_disconnected = False
+            else:
+                logger.info(f"HSPConnector ({self.ai_id}): Successfully connected to MQTT Broker.")
+
+            if self.subscribed_topics:
+                logger.info(f"HSPConnector ({self.ai_id}): Resubscribing to {len(self.subscribed_topics)} topics...")
+                for topic in list(self.subscribed_topics):
+                    asyncio.create_task(self.subscribe(topic, self.default_qos))
+
+            if self._external_on_connect_callback:
+                try:
+                    if asyncio.iscoroutinefunction(self._external_on_connect_callback):
+                        asyncio.create_task(self._external_on_connect_callback())
+                    else:
+                        self._external_on_connect_callback()
+                except Exception as e:
+                    logger.error(f"HSPConnector ({self.ai_id}): Error in external on_connect callback: {e}", exc_info=True)
         else:
-            logger.info(f"HSPConnector ({self.ai_id}): Successfully connected to MQTT Broker")
-
-        # Resubscribe to topics upon successful reconnection
-        if self.subscribed_topics:
-            logger.info(f"HSPConnector ({self.ai_id}): Resubscribing to {len(self.subscribed_topics)} topics...")
-            for topic in list(self.subscribed_topics):
-                asyncio.create_task(self.subscribe(topic, self.default_qos))
-
-        if self._external_on_connect_callback:
-            try:
-                if asyncio.iscoroutinefunction(self._external_on_connect_callback):
-                    asyncio.create_task(self._external_on_connect_callback())
-                else:
-                    self._external_on_connect_callback()
-            except Exception as e:
-                logger.error(f"HSPConnector ({self.ai_id}): Error in external on_connect callback: {e}", exc_info=True)
+            logger.error(f"HSPConnector ({self.ai_id}): Failed to connect to MQTT Broker. Return code: {rc}")
 
     def on_disconnect(self, client, packet, rc=None):
         """Callback for when the client disconnects from the broker."""
         self.is_connected = False
         if rc == 0:
-            logger.info(f"HSPConnector ({self.ai_id}): Cleanly disconnected from MQTT Broker (reason code {rc})")
+            logger.info(f"HSPConnector ({self.ai_id}): Cleanly disconnected from MQTT Broker.")
             self._was_unexpectedly_disconnected = False
         else:
-            logger.warning(f"HSPConnector ({self.ai_id}): Unexpectedly disconnected from MQTT Broker (reason code {rc})")
-            logger.info("Client will attempt to reconnect automatically")
+            logger.warning(f"HSPConnector ({self.ai_id}): Unexpectedly disconnected. RC: {rc}. The client will attempt to reconnect automatically.")
             self._was_unexpectedly_disconnected = True
 
         if self._external_on_disconnect_callback:
@@ -349,8 +349,11 @@ class HSPConnector:
             self.mqtt_client.publish(mqtt_topic, payload=message_str, qos=effective_mqtt_qos)
             logger.info(f"HSPConnector ({self.ai_id}): Message {envelope.get('message_id')} published to topic '{mqtt_topic}' (QoS: {effective_mqtt_qos}).")
             return True
+        except gmqtt.GmqttException as e:
+            logger.error(f"HSPConnector ({self.ai_id}): MQTT-specific error sending message to topic '{mqtt_topic}': {e}", exc_info=True)
+            return False
         except Exception as e:
-            logger.error(f"HSPConnector ({self.ai_id}): Error sending MQTT message to topic '{mqtt_topic}': {e}", exc_info=True)
+            logger.error(f"HSPConnector ({self.ai_id}): Generic error sending MQTT message to topic '{mqtt_topic}': {e}", exc_info=True)
             return False
 
     async def publish_fact(self, fact_payload: HSPFactPayload, topic: str, fact_payload_version: str = "0.1") -> bool:
