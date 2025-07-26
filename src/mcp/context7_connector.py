@@ -273,12 +273,16 @@ class Context7MCPConnector:
                     ]
                 }
             )
-        else:
+        elif message.type in ["model_collaboration", "context_compression"]:
             return MCPResponse(
                 success=True,
                 message_id=message.session_id,
                 data={"status": "processed"}
             )
+        else:
+            logger.warning(f"Received unmocked MCP message type: {message.type}")
+            # For unhandled types, it's better to be explicit about the lack of implementation.
+            raise NotImplementedError(f"Mock response for message type '{message.type}' is not implemented.")
     
     def is_connected(self) -> bool:
         """Check if connector is connected to Context7 MCP."""
