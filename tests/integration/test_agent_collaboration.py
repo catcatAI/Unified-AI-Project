@@ -48,13 +48,35 @@ class TestAgentCollaboration(unittest.TestCase):
         mock_integration_response = "Based on the data summary, our new product is revolutionary for data scientists."
 
         # We need to patch the llm_interface used by the dialogue_manager
-        llm_interface_mock = self.dialogue_manager.llm_interface
-        llm_interface_mock.generate_response.side_effect = [
-            # First call is for decomposition
-            str(mock_decomposed_plan).replace("'", '"'),
-            # Second call is for integration
-            mock_integration_response
-        ]
+        with patch('src.services.llm_interface.LLMInterface.generate_response', new_callable=AsyncMock) as mock_generate_response:
+            mock_generate_response.side_effect = [
+                str(mock_decomposed_plan).replace("'", '"'),
+                mock_integration_response
+            ]
+            # The rest of the test logic that uses self.dialogue_manager.llm_interface
+            # will now use the patched mock_generate_response.
+            final_response = asyncio.run(self.dialogue_manager.get_simple_response(user_query))
+
+        # Check that the LLM was called twice (decomposition and integration)
+        self.assertEqual(mock_generate_response.call_count, 2)
+
+        # Check the integration prompt
+        integration_call_args = mock_generate_response.call_args_list[1]
+        self.assertIn("User's Original Request", integration_call_args.kwargs['prompt'])
+        self.assertIn("Collected Results from Sub-Agents", integration_call_args.kwargs['prompt'])
+        self.assertIn("CSV has 2 columns", integration_call_args.kwargs['prompt'])
+
+        # 5. Assertions
+        # Check that the final response contains the integrated text
+        self.assertIn("Based on the data summary", final_response)
+        self.assertIn("revolutionary for data scientists", final_response)
+
+        # Remove the original assertions that are now part of the patch block
+        # self.assertEqual(llm_interface_mock.generate_response.call_count, 2)
+        # integration_call_args = llm_interface_mock.generate_response.call_args_list[1]
+        # self.assertIn("User's Original Request", integration_call_args.kwargs['prompt'])
+        # self.assertIn("Collected Results from Sub-Agents", integration_call_args.kwargs['prompt'])
+        # self.assertIn("CSV has 2 columns", integration_call_args.kwargs['prompt'])
 
         # 3. Mock the sub-agent responses (via _dispatch_single_subtask)
         # This is tricky as it's an internal async method. We can patch it.
@@ -102,29 +124,29 @@ class TestAgentCollaboration(unittest.TestCase):
         # 2. Mock the LLM's integration response
         mock_integration_response = "Both tasks completed."
 
-        llm_interface_mock = self.dialogue_manager.llm_interface
-        llm_interface_mock.generate_response.side_effect = [
-            str(mock_decomposed_plan).replace("'", '"'),
-            mock_integration_response
-        ]
+        with patch('src.services.llm_interface.LLMInterface.generate_response', new_callable=AsyncMock) as mock_generate_response:
+            mock_generate_response.side_effect = [
+                str(mock_decomposed_plan).replace("'", '"'),
+                mock_integration_response
+            ]
 
-        # 3. Mock the sub-agent responses
-        async def mock_dispatch_subtask(subtask):
-            if subtask['capability_needed'] == 'task_a_v1':
-                return {"result_a": "A"}
-            elif subtask['capability_needed'] == 'task_b_v1':
-                return {"result_b": "B"}
-            return {}
+            # 3. Mock the sub-agent responses
+            async def mock_dispatch_subtask(subtask):
+                if subtask['capability_needed'] == 'task_a_v1':
+                    return {"result_a": "A"}
+                elif subtask['capability_needed'] == 'task_b_v1':
+                    return {"result_b": "B"}
+                return {}
 
-        patcher_dispatch = patch.object(self.dialogue_manager.project_coordinator, '_dispatch_single_subtask', new=AsyncMock(side_effect=mock_dispatch_subtask))
+            patcher_dispatch = patch.object(self.dialogue_manager.project_coordinator, '_dispatch_single_subtask', new=AsyncMock(side_effect=mock_dispatch_subtask))
 
-        # 4. Run the project
-        with patcher_dispatch:
-            final_response = asyncio.run(self.dialogue_manager.get_simple_response("project: two tasks"))
+            # 4. Run the project
+            with patcher_dispatch:
+                final_response = asyncio.run(self.dialogue_manager.get_simple_response("project: two tasks"))
 
-        # 5. Assertions
-        self.assertIn("Both tasks completed", final_response)
-        self.assertEqual(llm_interface_mock.generate_response.call_count, 2)
+            # 5. Assertions
+            self.assertIn("Both tasks completed", final_response)
+            self.assertEqual(mock_generate_response.call_count, 2)
 
     @pytest.mark.timeout(10)
     def test_handle_project_failing_subtask(self):
@@ -136,25 +158,25 @@ class TestAgentCollaboration(unittest.TestCase):
         # 2. Mock the LLM's integration
         mock_integration_response = "The project failed."
 
-        llm_interface_mock = self.dialogue_manager.llm_interface
-        llm_interface_mock.generate_response.side_effect = [
-            str(mock_decomposed_plan).replace("'", '"'),
-            mock_integration_response
-        ]
+        with patch('src.services.llm_interface.LLMInterface.generate_response', new_callable=AsyncMock) as mock_generate_response:
+            mock_generate_response.side_effect = [
+                str(mock_decomposed_plan).replace("'", '"'),
+                mock_integration_response
+            ]
 
-        # 3. Mock a failing sub-agent
-        patcher_dispatch = patch.object(self.dialogue_manager.project_coordinator, '_dispatch_single_subtask', new=AsyncMock(return_value={"error": "Task failed"}))
+            # 3. Mock a failing sub-agent
+            patcher_dispatch = patch.object(self.dialogue_manager.project_coordinator, '_dispatch_single_subtask', new=AsyncMock(return_value={"error": "Task failed"}))
 
-        # 4. Run the project
-        with patcher_dispatch:
-            final_response = asyncio.run(self.dialogue_manager.get_simple_response("project: failing task"))
+            # 4. Run the project
+            with patcher_dispatch:
+                final_response = asyncio.run(self.dialogue_manager.get_simple_response("project: failing task"))
 
-        # 5. Assertions
-        self.assertIn("The project failed", final_response)
-        # Check that the integration prompt contains the error
-        integration_call_args = llm_interface_mock.generate_response.call_args_list[1]
-        self.assertIn("failing_task_v1", integration_call_args.kwargs['prompt'])
-        self.assertIn("Task failed", integration_call_args.kwargs['prompt'])
+            # 5. Assertions
+            self.assertIn("The project failed", final_response)
+            # Check that the integration prompt contains the error
+            integration_call_args = mock_generate_response.call_args_list[1]
+            self.assertIn("failing_task_v1", integration_call_args.kwargs['prompt'])
+            self.assertIn("Task failed", integration_call_args.kwargs['prompt'])
 
     @pytest.mark.timeout(15)
     def test_handle_project_dynamic_agent_launch(self):
@@ -166,36 +188,36 @@ class TestAgentCollaboration(unittest.TestCase):
         # 2. Mock the LLM's integration
         mock_integration_response = "Dynamically launched agent and it worked."
 
-        llm_interface_mock = self.dialogue_manager.llm_interface
-        llm_interface_mock.generate_response.side_effect = [
-            str(mock_decomposed_plan).replace("'", '"'),
-            mock_integration_response
-        ]
+        with patch('src.services.llm_interface.LLMInterface.generate_response', new_callable=AsyncMock) as mock_generate_response:
+            mock_generate_response.side_effect = [
+                str(mock_decomposed_plan).replace("'", '"'),
+                mock_integration_response
+            ]
 
-        # 3. Mock service discovery to initially find nothing, then find the capability
-        service_discovery_mock = self.dialogue_manager.project_coordinator.service_discovery
-        service_discovery_mock.find_capabilities.side_effect = [
-            [], # First call finds nothing
-            [{"capability_id": "new_agent_v1_cap", "ai_id": "did:hsp:new_agent"}] # Second call finds it
-        ]
+            # 3. Mock service discovery to initially find nothing, then find the capability
+            service_discovery_mock = self.dialogue_manager.project_coordinator.service_discovery
+            service_discovery_mock.find_capabilities.side_effect = [
+                [], # First call finds nothing
+                [{"capability_id": "new_agent_v1_cap", "ai_id": "did:hsp:new_agent"}] # Second call finds it
+            ]
 
-        # 4. Mock the agent manager
-        agent_manager_mock = self.dialogue_manager.project_coordinator.agent_manager
-        agent_manager_mock.launch_agent.return_value = "pid_123"
-        agent_manager_mock.wait_for_agent_ready = AsyncMock()
+            # 4. Mock the agent manager
+            agent_manager_mock = self.dialogue_manager.project_coordinator.agent_manager
+            agent_manager_mock.launch_agent.return_value = "pid_123"
+            agent_manager_mock.wait_for_agent_ready = AsyncMock()
 
-        # 5. Mock the dispatch
-        patcher_dispatch = patch.object(self.dialogue_manager.project_coordinator, '_dispatch_single_subtask', new=AsyncMock(return_value={"result": "ok"}))
+            # 5. Mock the dispatch
+            patcher_dispatch = patch.object(self.dialogue_manager.project_coordinator, '_dispatch_single_subtask', new=AsyncMock(return_value={"result": "ok"}))
 
 
-        # 6. Run the project
-        with patcher_dispatch:
-            final_response = asyncio.run(self.dialogue_manager.get_simple_response("project: new agent"))
+            # 6. Run the project
+            with patcher_dispatch:
+                final_response = asyncio.run(self.dialogue_manager.get_simple_response("project: new agent"))
 
-        # 7. Assertions
-        self.assertIn("Dynamically launched agent", final_response)
-        agent_manager_mock.launch_agent.assert_called_once_with("new_agent_agent")
-        agent_manager_mock.wait_for_agent_ready.assert_awaited_once_with("new_agent_agent")
+            # 7. Assertions
+            self.assertIn("Dynamically launched agent", final_response)
+            agent_manager_mock.launch_agent.assert_called_once_with("new_agent_agent")
+            agent_manager_mock.wait_for_agent_ready.assert_awaited_once_with("new_agent_agent")
 
 
 if __name__ == '__main__':

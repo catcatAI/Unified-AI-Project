@@ -34,6 +34,7 @@ async def test_get_simple_response_project_trigger(mock_core_services):
 
 import pytest
 from unittest.mock import AsyncMock, call
+from src.shared.types.common_types import ToolDispatcherResponse
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 async def test_get_simple_response_standard_flow(mock_core_services):
@@ -44,6 +45,14 @@ async def test_get_simple_response_standard_flow(mock_core_services):
     # Arrange
     dm = mock_core_services["dialogue_manager"]
     memory_manager = mock_core_services["ham_manager"]
+    tool_dispatcher = mock_core_services["tool_dispatcher"]
+    tool_dispatcher.dispatch.return_value = AsyncMock(return_value=ToolDispatcherResponse(
+        status="no_tool_found",
+        payload="Mocked tool response",
+        tool_name_attempted="none",
+        original_query_for_tool="mock query",
+        error_message=None
+    ))
 
     user_input = "Hello, how are you?"
     expected_response = "TestAI: You said 'Hello, how are you?'. This is a simple response."
@@ -100,8 +109,9 @@ async def test_start_session_greeting(mock_core_services):
     personality_manager.get_initial_prompt.assert_called_once()
 
 
+@pytest.mark.asyncio
 @pytest.mark.timeout(10)
-def test_handle_incoming_hsp_task_result(mock_core_services):
+async def test_handle_incoming_hsp_task_result(mock_core_services):
     """
     Tests that an incoming HSP task result is correctly delegated
     to the ProjectCoordinator.
@@ -109,6 +119,7 @@ def test_handle_incoming_hsp_task_result(mock_core_services):
     # Arrange
     dm = mock_core_services["dialogue_manager"]
     project_coordinator = mock_core_services["project_coordinator"]
+    project_coordinator.handle_task_result = AsyncMock()
 
     # Create dummy payload and envelope
     result_payload = {"status": "success", "result": {"data": "some_result"}}
@@ -116,10 +127,10 @@ def test_handle_incoming_hsp_task_result(mock_core_services):
     sender_ai_id = "did:hsp:sender_ai"
 
     # Act
-    dm._handle_incoming_hsp_task_result(result_payload, sender_ai_id, envelope) # type: ignore
+    await dm._handle_incoming_hsp_task_result(result_payload, sender_ai_id, envelope) # type: ignore
 
     # Assert
-    project_coordinator.handle_task_result.assert_called_once_with(
+    project_coordinator.handle_task_result.assert_awaited_once_with(
         result_payload, sender_ai_id, envelope
     )
 
@@ -134,6 +145,15 @@ async def test_get_simple_response_no_project_trigger(mock_core_services):
     # Arrange
     dm = mock_core_services["dialogue_manager"]
     project_coordinator = mock_core_services["project_coordinator"]
+    project_coordinator.handle_project = AsyncMock() # Mock handle_project
+    tool_dispatcher = mock_core_services["tool_dispatcher"]
+    tool_dispatcher.dispatch.return_value = AsyncMock(return_value=ToolDispatcherResponse(
+        status="no_tool_found",
+        payload="Mocked tool response",
+        tool_name_attempted="none",
+        original_query_for_tool="mock query",
+        error_message=None
+    ))
 
     user_input = "A project is what I want to discuss." # "project:" is not at the start
 

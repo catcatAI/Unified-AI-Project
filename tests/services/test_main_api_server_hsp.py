@@ -19,6 +19,7 @@ from src.hsp.connector import HSPConnector
 from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
+from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 from tests.conftest import is_mqtt_broker_available
 
 import logging
@@ -137,6 +138,14 @@ async def client_with_overrides(api_test_peer_connector):
     mock_hsp_connector.register_on_task_result_callback.side_effect = mock_register_on_task_result_callback
     mock_agent_manager = MagicMock(spec=AgentManager)
 
+    # Define mock_project_coordinator here
+    mock_project_coordinator = MagicMock(spec=ProjectCoordinator)
+    mock_project_coordinator.handle_project.return_value = "Mocked project response"
+    mock_project_coordinator.handle_task_result.return_value = None # Or a more specific mock if needed
+    mock_project_coordinator.pending_hsp_task_requests = {}
+    mock_project_coordinator.task_results = {}
+    mock_project_coordinator.task_completion_events = {}
+
 
 
     dm_for_test = DialogueManager(
@@ -237,7 +246,7 @@ async def wait_for_event(event: asyncio.Event, timeout: float = 2.0):
 class TestHSPEndpoints:
 
     @pytest.mark.timeout(10)
-    def test_list_hsp_services_empty(self, client_with_overrides):
+    async def test_list_hsp_services_empty(self, client_with_overrides):
         client, sdm, dm, ham, mock_hsp_connector = client_with_overrides
 
         response = client.get("/api/v1/hsp/services")
@@ -246,7 +255,7 @@ class TestHSPEndpoints:
         await sdm.find_capabilities.assert_called_once_with()
 
     @pytest.mark.timeout(10)
-    def test_list_hsp_services_with_advertisements(self, client_with_overrides):
+    async def test_list_hsp_services_with_advertisements(self, client_with_overrides):
         client, sdm, dm, ham, mock_hsp_connector = client_with_overrides
 
         # Simulate a capability advertisement being processed

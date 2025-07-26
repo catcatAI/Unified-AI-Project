@@ -1,4 +1,4 @@
-"""from typing import Callable, Dict, List, Any
+from typing import Callable, Dict, List, Any
 
 class InternalBus:
     def __init__(self):
@@ -17,4 +17,3 @@ class InternalBus:
     def unsubscribe(self, channel: str, callback: Callable[[Any], None]):
         if channel in self.subscriptions:
             self.subscriptions[channel].remove(callback)
-"""

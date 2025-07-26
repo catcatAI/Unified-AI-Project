@@ -88,12 +88,12 @@ class DialogueManager:
         if self.hsp_connector:
             self.hsp_connector.register_on_task_result_callback(self._handle_incoming_hsp_task_result)
 
-    def _handle_incoming_hsp_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope) -> None:
+    async def _handle_incoming_hsp_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope) -> None:
         """
         Receives all task results and delegates them to the ProjectCoordinator.
         """
         if self.project_coordinator:
-            self.project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
+            await self.project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
         else:
             print(f"[{self.ai_id}] Warning: Received HSP task result but ProjectCoordinator is not available.")
 
@@ -132,7 +132,7 @@ class DialogueManager:
 
         # Analyze for personality adjustment
         if self.learning_manager:
-            adjustment = self.learning_manager.analyze_for_personality_adjustment(user_input)
+            adjustment = await self.learning_manager.analyze_for_personality_adjustment(user_input)
             if adjustment and self.personality_manager:
                 self.personality_manager.apply_personality_adjustment(adjustment)
 
