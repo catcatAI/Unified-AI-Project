@@ -1,8 +1,9 @@
+from __future__ import annotations
 # src/core_ai/learning/learning_manager.py
 import uuid
 import re
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, TYPE_CHECKING
 import json
 
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager # Corrected
@@ -10,9 +11,12 @@ from src.core_ai.learning.fact_extractor_module import FactExtractorModule # Cor
 from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule # Corrected
 from src.core_ai.trust_manager.trust_manager_module import TrustManager # Corrected
 from src.shared.types.common_types import LearnedFactRecord # Corrected
-from src.hsp.connector import HSPConnector # Corrected
+
 from src.hsp.types import HSPFactPayload, HSPMessageEnvelope # Corrected
 from src.core_ai.personality.personality_manager import PersonalityManager
+
+if TYPE_CHECKING:
+    from src.hsp.connector import HSPConnector # Corrected
 
 
 class LearningManager:
