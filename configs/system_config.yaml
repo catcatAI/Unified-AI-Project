@@ -131,3 +131,7 @@ operational_configs:
       log_execution_details: true    # 記錄執行詳情
       log_resource_usage: false      # 記錄資源使用情況
       log_terminal_status: false     # 記錄終端機狀態
+
+  api_server:
+    host: "127.0.0.1"
+    port: 8000
