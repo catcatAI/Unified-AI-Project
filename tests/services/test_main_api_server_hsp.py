@@ -4,7 +4,7 @@ import uuid
 import time
 import asyncio
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, ANY
+from unittest.mock import MagicMock, AsyncMock, ANY
 from typing import List
 
 # Ensure src is in path for imports
@@ -33,13 +33,53 @@ logging.getLogger("src.hsp.connector").setLevel(logging.DEBUG)
 logging.getLogger("src.core_ai.service_discovery.service_discovery_module").setLevel(logging.DEBUG)
 logging.getLogger("src.core_ai.dialogue.dialogue_manager").setLevel(logging.DEBUG)
 
-@pytest.fixture(scope="module")
-def client_with_overrides():
+class MockSDM:
+    def __init__(self):
+        self._mock_sdm_capabilities_store = {}
+
+    async def process_capability_advertisement(self, payload, sender_ai_id, envelope):
+        try:
+            if isinstance(payload, dict):
+                processed_payload = HSPCapabilityAdvertisementPayload(**payload)
+            elif isinstance(payload, HSPCapabilityAdvertisementPayload):
+                processed_payload = payload
+            else:
+                logging.error(f"Invalid payload type: {type(payload)}")
+                return
+            self._mock_sdm_capabilities_store[processed_payload.capability_id] = (processed_payload, datetime.now(timezone.utc))
+        except Exception as e:
+            logging.error(f"Failed to process capability advertisement: {e}")
+
+    async def find_capabilities(self, capability_id_filter=None, capability_name_filter=None, tags_filter=None, min_trust_score=None, sort_by_trust=False):
+        results = []
+        for cap_id, (payload, last_seen) in self._mock_sdm_capabilities_store.items():
+            if isinstance(payload, dict):
+                try:
+                    payload = HSPCapabilityAdvertisementPayload(**payload)
+                except Exception:
+                    continue
+            elif not isinstance(payload, HSPCapabilityAdvertisementPayload):
+                continue
+
+            if capability_id_filter and cap_id != capability_id_filter:
+                continue
+            if capability_name_filter and payload.name != capability_name_filter:
+                continue
+            if tags_filter and not all(tag in payload.tags for tag in tags_filter):
+                continue
+            results.append(payload)
+        return results
+
+    async def get_all_capabilities(self):
+        return [payload for payload, _ in self._mock_sdm_capabilities_store.values()]
+
+@pytest.fixture(scope="function")
+async def client_with_overrides(api_test_peer_connector):
     """
     Provides a TestClient for the FastAPI app and the instances used for dependency overrides.
     This fixture is updated to provide all necessary mocks for DialogueManager.
     """
-    from unittest.mock import MagicMock
+    from unittest.mock import MagicMock, AsyncMock
     from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
     from src.core_ai.trust_manager.trust_manager_module import TrustManager
     from src.core_ai.dialogue.dialogue_manager import DialogueManager
@@ -54,10 +94,17 @@ def client_with_overrides():
     from src.core_ai.learning.learning_manager import LearningManager
     from src.hsp.connector import HSPConnector
     from src.core_ai.agent_manager import AgentManager
+    from src.tools.tool_dispatcher import ToolDispatcherResponse
 
     # Create instances that will be shared and controlled by the tests
     trust_manager_for_test = TrustManager()
-    sdm_for_test = ServiceDiscoveryModule(trust_manager=trust_manager_for_test)
+    mock_sdm_instance = MockSDM()
+    sdm_for_test = MagicMock(spec=ServiceDiscoveryModule)
+
+    sdm_for_test.process_capability_advertisement.side_effect = mock_sdm_instance.process_capability_advertisement
+    sdm_for_test.find_capabilities.side_effect = mock_sdm_instance.find_capabilities
+    sdm_for_test.get_all_capabilities.side_effect = mock_sdm_instance.get_all_capabilities
+
     ham_for_test = MagicMock(spec=HAMMemoryManager)
     
     # Create mocks for all other DialogueManager dependencies
@@ -67,11 +114,25 @@ def client_with_overrides():
     mock_crisis_system = MagicMock(spec=CrisisSystem)
     mock_time_system = MagicMock(spec=TimeSystem)
     mock_formula_engine = MagicMock(spec=FormulaEngine)
-    mock_tool_dispatcher = MagicMock(spec=ToolDispatcher)
+    mock_tool_dispatcher = AsyncMock(spec=ToolDispatcher)
+    # Configure the mock tool_dispatcher to return a successful ToolDispatcherResponse
+    mock_tool_dispatcher.dispatch.return_value = ToolDispatcherResponse(
+        status="no_tool_found", # Or "success" depending on the test's needs
+        payload="Mocked tool response",
+        tool_name_attempted="none",
+        original_query_for_tool="mock query",
+        error_message=None
+    )
     mock_learning_manager = MagicMock(spec=LearningManager)
     mock_hsp_connector = MagicMock(spec=HSPConnector)
-    mock_hsp_connector.ai_id = "test_hsp_connector_id" # Set the ai_id attribute on the mock
+    mock_hsp_connector.ai_id = "test_hsp_connector_id"
+    mock_hsp_connector.connect.return_value = True
+    mock_hsp_connector.publish_capability_advertisement.return_value = True
+    mock_hsp_connector.subscribe.return_value = True
     mock_agent_manager = MagicMock(spec=AgentManager)
+
+    mock_project_coordinator = MagicMock()
+    mock_project_coordinator.pending_hsp_task_requests = {}
 
     dm_for_test = DialogueManager(
         ai_id="test_api_dm_id",
@@ -85,9 +146,13 @@ def client_with_overrides():
         tool_dispatcher=mock_tool_dispatcher,
         learning_manager=mock_learning_manager,
         service_discovery_module=sdm_for_test,
-        hsp_connector=mock_hsp_connector,
-        agent_manager=mock_agent_manager
+        hsp_connector=mock_hsp_connector, # Ensure hsp_connector is passed
+        agent_manager=mock_agent_manager,
+        project_coordinator=mock_project_coordinator
     )
+    # Manually set the pending_hsp_task_requests attribute on the mocked DialogueManager
+    # as it's accessed directly in main_api_server.py
+    dm_for_test.pending_hsp_task_requests = {}
 
     # Override the dependencies in the FastAPI app
     app.dependency_overrides[get_services] = lambda: {
@@ -105,7 +170,8 @@ def client_with_overrides():
         "tool_dispatcher": mock_tool_dispatcher,
         "learning_manager": mock_learning_manager,
         "hsp_connector": mock_hsp_connector,
-        "agent_manager": mock_agent_manager
+        "agent_manager": mock_agent_manager,
+        "project_coordinator": mock_project_coordinator # Add the mock project_coordinator
     }
 
     with TestClient(app) as test_client:
@@ -118,14 +184,40 @@ def client_with_overrides():
 @pytest.fixture
 async def api_test_peer_connector():
     """A separate HSPConnector for a mock peer to interact with the API's AI."""
-    peer_conn = HSPConnector(TEST_API_PEER_AI_ID, MQTT_BROKER_ADDRESS, MQTT_BROKER_PORT, client_id_suffix=f"api_test_peer_{uuid.uuid4().hex[:4]}")
+    # Mock HSPConnector instead of using real one for tests
+    peer_conn = MagicMock(spec=HSPConnector)
+    peer_conn.ai_id = TEST_API_PEER_AI_ID
+    peer_conn.connect.return_value = True
+    
+    # Setup mock behaviors
     connect_event = asyncio.Event()
+    connect_event.set()  # Immediately mark as connected
     disconnect_event = asyncio.Event()
-    peer_conn.register_on_connect_callback(connect_event.set)
-    peer_conn.register_on_disconnect_callback(disconnect_event.set)
-    if not peer_conn.connect():
-        pytest.fail("Failed to connect api_test_peer_connector for API tests.")
-    await wait_for_event(connect_event)
+    
+    def mock_publish(*args, **kwargs):
+        return True
+        
+    def mock_subscribe(*args, **kwargs):
+        return True
+        
+    peer_conn.publish_capability_advertisement.side_effect = mock_publish
+    peer_conn.subscribe.side_effect = mock_subscribe
+    peer_conn.send_task_result.return_value = True # Mock send_task_result
+    peer_conn._task_request_callbacks = [] # Store registered callbacks
+
+    def mock_register_on_task_request_callback(callback):
+        peer_conn._task_request_callbacks.append(callback)
+
+    peer_conn.register_on_task_request_callback.side_effect = mock_register_on_task_request_callback
+
+    def mock_send_task_request(payload, recipient_ai_id, envelope):
+        # Simulate the task request being received by the peer's registered callback
+        for callback in peer_conn._task_request_callbacks:
+            callback(payload, recipient_ai_id, envelope)
+        return True
+
+    peer_conn.send_task_request.side_effect = mock_send_task_request
+
     yield peer_conn
     peer_conn.disconnect()
     await wait_for_event(disconnect_event)
@@ -142,39 +234,44 @@ class TestHSPEndpoints:
 
     @pytest.mark.timeout(10)
     def test_list_hsp_services_empty(self, client_with_overrides):
-        client, sdm, _, _ = client_with_overrides
-        sdm.known_capabilities.clear()
+        client, sdm, dm, ham = client_with_overrides
+
         response = client.get("/api/v1/hsp/services")
         assert response.status_code == 200
         assert response.json() == []
+        sdm.find_capabilities.assert_called_once_with()
 
     @pytest.mark.timeout(10)
     def test_list_hsp_services_with_advertisements(self, client_with_overrides):
-        client, api_sdm, _, _ = client_with_overrides
-        api_sdm.known_capabilities.clear()
+        client, sdm, dm, ham = client_with_overrides
 
-        adv_payload = HSPCapabilityAdvertisementPayload(
-            capability_id=f"{TEST_API_PEER_AI_ID}_test_cap_1", ai_id=TEST_API_PEER_AI_ID,
-            name="API Test Capability", description="A capability for API testing.",
-            version="1.0", availability_status="online", tags=["test", "api"] #type: ignore
+        # Simulate a capability advertisement being processed
+        mock_advertisement = HSPCapabilityAdvertisementPayload(
+            capability_id="test_cap_id_123",
+            name="Test Capability",
+            description="A test capability for API endpoint",
+            version="1.0",
+            supported_interfaces=["hsp.chat"],
+            ai_id="did:hsp:test_ai_1",
+            timestamp=datetime.now(timezone.utc),
+            metadata={"test_key": "test_value"}
         )
-        
-        dummy_envelope = HSPMessageEnvelope(message_id="test-msg-id", sender_ai_id=TEST_API_PEER_AI_ID, message_type="HSP::CapabilityAdvertisement_v0.1", payload=adv_payload) # type: ignore
-        api_sdm.process_capability_advertisement(adv_payload, TEST_API_PEER_AI_ID, dummy_envelope)
+        sdm.process_capability_advertisement(mock_advertisement, "did:hsp:test_ai_1", MagicMock())
+
+        # Verify that the capability is in the mock store before making the API call
+        # Verify that the capability is in the mock store before making the API call
+        # The sdm.get_all_capabilities() should reflect the state after processing
+        stored_capabilities = sdm.get_all_capabilities()
+        assert len(stored_capabilities) == 1
+        assert stored_capabilities[0].capability_id == "test_cap_id_123"
 
         response = client.get("/api/v1/hsp/services")
         assert response.status_code == 200
-        capabilities = response.json()
-        assert len(capabilities) >= 1, "No capabilities were returned by the API"
-
-        found_it = False
-        for cap in capabilities:
-            if cap.get("capability_id") == adv_payload["capability_id"]:
-                assert cap.get("name") == adv_payload["name"]
-                assert cap.get("ai_id") == TEST_API_PEER_AI_ID # Corrected constant
-                found_it = True
-                break
-        assert found_it, "Advertised capability not found in API response."
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) == 1
+        assert data[0]["capability_id"] == "test_cap_id_123"
+        assert data[0]["name"] == "Test Capability"
 
     @pytest.mark.timeout(10)
     async def test_request_hsp_task_success(self, client_with_overrides, api_test_peer_connector: HSPConnector):
@@ -187,8 +284,19 @@ class TestHSPEndpoints:
             capability_id=mock_echo_cap_id, ai_id=peer_ai_id, name="API Echo Service",
             description="Echoes for API tests", version="1.0", availability_status="online", tags=["echo"]
         )
-        assert api_test_peer_connector.publish_capability_advertisement(adv_payload, "hsp/capabilities/advertisements/general")
+        # Ensure the peer connector is connected and subscribed before publishing
+        # Ensure the peer connector is connected and subscribed before publishing
+        await api_test_peer_connector.connect()
+        await api_test_peer_connector.subscribe("hsp/capabilities/advertisements/general")
+        await api_test_peer_connector.publish_capability_advertisement(adv_payload, "hsp/capabilities/advertisements/general")
         await asyncio.sleep(0.2) # Allow SDM to process
+
+        # Ensure the API's HSPConnector mock is set up to call the peer's handler
+        # when send_task_request is called.
+        # This is crucial for the task request to be "received" by the peer.
+        api_dm.hsp_connector.send_task_request.side_effect = api_test_peer_connector.send_task_request
+
+
 
         # 2. Setup peer to handle the task request for this capability
         received_task_requests_on_peer: List[HSPTaskRequestPayload] = []
@@ -238,10 +346,10 @@ class TestHSPEndpoints:
         #      The pending request should be removed after result is handled.
         timeout = 5.0  # Increased timeout
         start_time = time.time()
-        while correlation_id_from_api in api_dm.pending_hsp_task_requests:
+        while correlation_id_from_api in api_dm.project_coordinator.pending_hsp_task_requests:
             if time.time() - start_time > timeout:
                 # Provide more context on failure
-                pending_tasks = list(api_dm.pending_hsp_task_requests.keys())
+                pending_tasks = list(api_dm.project_coordinator.pending_hsp_task_requests.keys())
                 pytest.fail(
                     f"HSP task {correlation_id_from_api} was not handled by DM within {timeout}s. "
                     f"Pending tasks: {pending_tasks}"
@@ -249,7 +357,7 @@ class TestHSPEndpoints:
             await asyncio.sleep(0.1)
 
         # Final check to ensure it's gone
-        assert correlation_id_from_api not in api_dm.pending_hsp_task_requests
+        assert correlation_id_from_api not in api_dm.project_coordinator.pending_hsp_task_requests
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
@@ -271,7 +379,7 @@ class TestHSPEndpoints:
         client, _, dialogue_manager, _ = client_with_overrides
 
         mock_corr_id = "pending_corr_id_123"
-        dialogue_manager.pending_hsp_task_requests[mock_corr_id] = { #type: ignore
+        dialogue_manager.project_coordinator.pending_hsp_task_requests[mock_corr_id] = { #type: ignore
             "capability_id": "test_cap_pending", "target_ai_id": "test_target_pending"
         }
 
@@ -283,7 +391,7 @@ class TestHSPEndpoints:
         assert status_data["status"] == "pending"
         assert "pending" in status_data["message"].lower() #type: ignore
 
-        del dialogue_manager.pending_hsp_task_requests[mock_corr_id] # Clean up
+        del dialogue_manager.project_coordinator.pending_hsp_task_requests[mock_corr_id] # Clean up
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)

@@ -55,6 +55,8 @@ class DialogueManager:
         self.formula_engine = formula_engine
         self.tool_dispatcher = tool_dispatcher
         self.learning_manager = learning_manager
+        self.service_discovery = service_discovery_module # Store service_discovery_module
+        self.hsp_connector = hsp_connector # Store hsp_connector
         self.config = config or {}
 
         # Load command triggers from config with defaults
@@ -65,12 +67,13 @@ class DialogueManager:
         })
 
         self.active_sessions: Dict[str, List[DialogueTurn]] = {}
+        self.pending_hsp_task_requests: Dict[str, Dict[str, Any]] = {} # Initialize pending_hsp_task_requests
         
         # Initialize ProjectCoordinator
         self.project_coordinator = ProjectCoordinator(
             llm_interface=self.llm_interface,
-            service_discovery=service_discovery_module,
-            hsp_connector=hsp_connector,
+            service_discovery=self.service_discovery,
+            hsp_connector=self.hsp_connector,
             agent_manager=agent_manager,
             memory_manager=self.memory_manager,
             learning_manager=self.learning_manager,
@@ -78,8 +81,8 @@ class DialogueManager:
             dialogue_manager_config=self.config
         )
 
-        if hsp_connector:
-            hsp_connector.register_on_task_result_callback(self._handle_incoming_hsp_task_result)
+        if self.hsp_connector:
+            self.hsp_connector.register_on_task_result_callback(self._handle_incoming_hsp_task_result)
 
     def _handle_incoming_hsp_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope) -> None:
         """
@@ -103,7 +106,17 @@ class DialogueManager:
         # --- Existing Simple Response Flow ---
         # This is a simplified version of the original extensive logic.
         # A full implementation would include formula matching, single tool dispatch, etc.
-        response_text = f"{ai_name}: You said '{user_input}'. This is a simple response."
+        
+        # Attempt to dispatch a tool based on user input
+        tool_response = await self.tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id)
+
+        response_text = ""
+        if tool_response.status == "success":
+            response_text = tool_response.payload
+        elif tool_response.status == "no_tool_found" or tool_response.status == "no_tool_inferred":
+            response_text = f"{ai_name}: You said '{user_input}'. This is a simple response."
+        else:
+            response_text = f"{ai_name}: An error occurred while processing your request: {tool_response.error_message}"
 
         # Store user and AI turns in memory
         if self.memory_manager:

@@ -400,15 +400,6 @@ class ToolDispatcher:
 
         if intent and intent.get("tool_name") in self.tools:
             tool_name_from_dlm = intent["tool_name"]
-        # If no tool was dispatched by explicit name or DLM intent
-        else:
-            return ToolDispatcherResponse(
-                status="no_tool_found",
-                payload=None,
-                tool_name_attempted="none",
-                original_query_for_tool=query,
-                error_message="No suitable tool found for the given query."
-            )
             tool_params = intent.get("parameters", {})
             # The 'query' in parameters is the specific data for the tool
             # The top-level 'query' is the user's original full query
@@ -431,16 +422,17 @@ class ToolDispatcher:
             tool_params.pop('query', None)
             tool_params.pop('original_query', None)
             return self.tools[tool_name_from_dlm](tool_specific_query, **tool_params)
-
-        # This is the case where DLM returns "NO_TOOL"
-        print(f"No specific local tool inferred by DLM for query: '{query}'")
-        return ToolDispatcherResponse(
-            status="no_tool_inferred",
-            payload=None,
-            tool_name_attempted=None,
-            original_query_for_tool=query,
-            error_message="No specific tool could be inferred from the query."
-        )
+        # If no tool was dispatched by explicit name or DLM intent
+        else:
+            # This is the case where DLM returns "NO_TOOL" or tool not found
+            print(f"No specific local tool inferred by DLM for query: '{query}'")
+            return ToolDispatcherResponse(
+                status="no_tool_inferred",
+                payload=None,
+                tool_name_attempted=None,
+                original_query_for_tool=query,
+                error_message="No specific tool could be inferred from the query."
+            )
 
     def get_available_tools(self):
         """Returns a dictionary of available tools and their descriptions."""

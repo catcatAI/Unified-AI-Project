@@ -14,12 +14,6 @@ from services.api_models import UserInput, AIOutput, SessionStartRequest, Sessio
 from src.hsp.types import HSPCapabilityAdvertisementPayload
 
 
-app = FastAPI(
-    title="Unified AI Project API",
-    description="API endpoints for interacting with the Unified AI.",
-    version="0.1.0"
-)
-
 from contextlib import asynccontextmanager # For lifespan events
 from src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID, DEFAULT_LLM_CONFIG, DEFAULT_OPERATIONAL_CONFIGS
 
