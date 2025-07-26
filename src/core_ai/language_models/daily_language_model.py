@@ -42,7 +42,7 @@ class DailyLanguageModel:
         prompt += "Only include parameters relevant to the selected tool.\n"
         return prompt
 
-    def recognize_intent(self, text: str, available_tools: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    async def recognize_intent(self, text: str, available_tools: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         """
         Recognizes intent (primarily for tool dispatching) from input text using an LLM.
         Returns a dictionary like {"tool_name": "...", "parameters": {"query": "...", ...}}
@@ -58,7 +58,7 @@ class DailyLanguageModel:
 
         # Use the LLMInterface to generate the response
         # For mock testing, the mock LLM should be configured to respond in the expected JSON format for some inputs.
-        llm_response_str = self.llm_interface.generate_response(prompt)
+        llm_response_str = await self.llm_interface.generate_response(prompt)
 
         print(f"DLM: Received raw response from LLM:\n---\n{llm_response_str}\n---")
 

@@ -1,4 +1,4 @@
-"""import asyncio
+import asyncio
 import logging
 import ssl
 from typing import Callable, Optional
@@ -68,4 +68,3 @@ class ExternalConnector:
     async def on_message(self, client, topic, payload, qos, properties):
         if self.on_message_callback:
             await self.on_message_callback(topic.decode(), payload.decode())
-"""

@@ -1,6 +1,6 @@
-"""from ..hsp.bridge.data_aligner import DataAligner
-from ..hsp.external.external_connector import ExternalConnector
-from ..hsp.internal.internal_bus import InternalBus
+from .data_aligner import DataAligner
+from ..external.external_connector import ExternalConnector
+from ..internal.internal_bus import InternalBus
 
 class MessageBridge:
     def __init__(self, external_connector: ExternalConnector, internal_bus: InternalBus, data_aligner: DataAligner):
@@ -25,4 +25,3 @@ class MessageBridge:
         # In a real application, you might want to do more processing here
         # For now, we'll just publish it to the external connector
         self.external_connector.publish(message["topic"], message["payload"])
-"""

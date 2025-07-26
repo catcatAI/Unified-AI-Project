@@ -1,6 +1,6 @@
 from __future__ import annotations
 import pytest
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock, AsyncMock, patch
 import socket
 from typing import TYPE_CHECKING
 
@@ -22,10 +22,12 @@ from src.tools.tool_dispatcher import ToolDispatcher
 from src.services.llm_interface import LLMInterface
 from src.mcp.connector import MCPConnector
 from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
-from src.shared.types.common_types import OperationalConfig
+from src.shared.types.common_types import OperationalConfig, ToolDispatcherResponse
+
+from src.hsp.connector import HSPConnector
 
 if TYPE_CHECKING:
-    from src.hsp.connector import HSPConnector
+    pass
 
 @pytest.fixture(scope="function")
 def trust_manager_fixture():
@@ -85,6 +87,12 @@ def mock_core_services():
     mock_agent_manager = MagicMock(spec=AgentManager)
     mock_hsp_connector = MagicMock(spec=HSPConnector)
     mock_hsp_connector.ai_id = "test_ai_id"
+    mock_hsp_connector.register_on_fact_callback = MagicMock()
+    mock_hsp_connector.register_on_capability_advertisement_callback = MagicMock()
+    mock_hsp_connector.register_on_task_request_callback = MagicMock()
+    mock_hsp_connector.register_on_task_result_callback = MagicMock()
+    mock_hsp_connector.register_on_connect_callback = MagicMock()
+    mock_hsp_connector.register_on_disconnect_callback = MagicMock()
     mock_mcp_connector = MagicMock(spec=MCPConnector)
     mock_service_discovery = MagicMock(spec=ServiceDiscoveryModule)
 
@@ -92,11 +100,19 @@ def mock_core_services():
     mock_fact_extractor = MagicMock(spec=FactExtractorModule)
     mock_content_analyzer = MagicMock(spec=ContentAnalyzerModule)
     mock_learning_manager = AsyncMock(spec=LearningManager)
+    mock_learning_manager.analyze_for_personality_adjustment = AsyncMock(return_value=None)
     mock_emotion_system = MagicMock(spec=EmotionSystem)
     mock_crisis_system = MagicMock(spec=CrisisSystem)
     mock_time_system = MagicMock(spec=TimeSystem)
     mock_formula_engine = MagicMock(spec=FormulaEngine)
-    mock_tool_dispatcher = MagicMock(spec=ToolDispatcher)
+    mock_tool_dispatcher = AsyncMock(spec=ToolDispatcher)
+    mock_tool_dispatcher.dispatch.return_value = AsyncMock(return_value=ToolDispatcherResponse(
+        status="no_tool_found", # Or "success" depending on the test's needs
+        payload="Mocked tool response",
+        tool_name_attempted="none",
+        original_query_for_tool="mock query",
+        error_message=None
+    ))
 
     # --- Default Behaviors & Return Values ---
     mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
@@ -119,36 +135,31 @@ def mock_core_services():
     }
 
     # --- Mock Coordinator ---
-    mock_project_coordinator = ProjectCoordinator(
-        llm_interface=mock_llm_interface,
-        service_discovery=mock_service_discovery,
-        hsp_connector=mock_hsp_connector,
-        agent_manager=mock_agent_manager,
-        memory_manager=mock_ham_manager,
-        learning_manager=mock_learning_manager,
-        personality_manager=mock_personality_manager,
-        dialogue_manager_config=test_config
-    )
+    # Patch ProjectCoordinator directly to ensure DialogueManager uses the mock
+    with patch('src.core_ai.dialogue.project_coordinator.ProjectCoordinator', autospec=True) as MockProjectCoordinatorClass:
+        mock_project_coordinator = MockProjectCoordinatorClass.return_value
+        mock_project_coordinator.handle_project = AsyncMock(return_value="Project handled.")
+        # The DialogueManager will now receive this mocked instance when it initializes ProjectCoordinator
 
-    # --- Instantiate DialogueManager with Mocks ---
-    mock_dialogue_manager = DialogueManager(
-        ai_id="test_ai_01",
-        personality_manager=mock_personality_manager,
-        memory_manager=mock_ham_manager,
-        llm_interface=mock_llm_interface,
-        emotion_system=mock_emotion_system,
-        crisis_system=mock_crisis_system,
-        time_system=mock_time_system,
-        formula_engine=mock_formula_engine,
-        tool_dispatcher=mock_tool_dispatcher,
-        learning_manager=mock_learning_manager,
-        service_discovery_module=mock_service_discovery,
-        hsp_connector=mock_hsp_connector,
-        agent_manager=mock_agent_manager,
-        config=test_config
-    )
+        # --- Instantiate DialogueManager with Mocks ---
+        mock_dialogue_manager = DialogueManager(
+            ai_id="test_ai_01",
+            personality_manager=mock_personality_manager,
+            memory_manager=mock_ham_manager,
+            llm_interface=mock_llm_interface,
+            emotion_system=mock_emotion_system,
+            crisis_system=mock_crisis_system,
+            time_system=mock_time_system,
+            formula_engine=mock_formula_engine,
+            tool_dispatcher=mock_tool_dispatcher,
+            learning_manager=mock_learning_manager,
+            service_discovery_module=mock_service_discovery,
+            hsp_connector=mock_hsp_connector,
+            agent_manager=mock_agent_manager,
+            config=test_config
+        )
 
-    mock_dialogue_manager.project_coordinator = mock_project_coordinator
+        mock_dialogue_manager.project_coordinator = mock_project_coordinator
 
     services = {
         "llm_interface": mock_llm_interface,

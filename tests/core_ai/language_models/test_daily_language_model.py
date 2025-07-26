@@ -74,7 +74,7 @@ class TestDailyLanguageModel(unittest.TestCase):
         print("TestDailyLanguageModel.test_01_initialization PASSED")
 
     @pytest.mark.timeout(5)
-    def test_02_recognize_intent_calculate(self):
+    async def test_02_recognize_intent_calculate(self):
         queries = {
             "calculate 2 + 2": {"tool_name": "calculate", "query": "2 + 2"},
             "what is 10 * 5": {"tool_name": "calculate", "query": "10 * 5"},
@@ -83,7 +83,7 @@ class TestDailyLanguageModel(unittest.TestCase):
             "3+3": {"tool_name": "calculate", "query": "3+3"} # Direct expression
         }
         for query_text, expected_params in queries.items():
-            intent = self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools)
+            intent = await self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools)
             self.assertIsNotNone(intent, f"Intent not recognized for: {query_text}")
             self.assertEqual(intent["tool_name"], expected_params["tool_name"])
             self.assertEqual(intent["parameters"]["query"], expected_params["query"])
@@ -92,21 +92,21 @@ class TestDailyLanguageModel(unittest.TestCase):
         print("TestDailyLanguageModel.test_02_recognize_intent_calculate PASSED")
 
     @pytest.mark.timeout(5)
-    def test_03_recognize_intent_evaluate_logic(self):
+    async def test_03_recognize_intent_evaluate_logic(self):
         queries = {
             "evaluate true AND false": {"tool_name": "evaluate_logic", "query": "true AND false"},
             "logic of (NOT true OR false)": {"tool_name": "evaluate_logic", "query": "(NOT true OR false)"},
             "true or false": {"tool_name": "evaluate_logic", "query": "true or false"} # No prefix
         }
         for query_text, expected_params in queries.items():
-            intent = self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools)
+            intent = await self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools)
             self.assertIsNotNone(intent, f"Intent not recognized for: {query_text}")
             self.assertEqual(intent["tool_name"], expected_params["tool_name"])
             self.assertEqual(intent["parameters"]["query"], expected_params["query"])
         print("TestDailyLanguageModel.test_03_recognize_intent_evaluate_logic PASSED")
 
     @pytest.mark.timeout(5)
-    def test_04_recognize_intent_translate_text(self):
+    async def test_04_recognize_intent_translate_text(self):
         queries = {
             "translate hello to chinese": {"tool_name": "translate_text", "text_hint": "hello", "lang_hint": "chinese"},
             "translate 'good morning' to french": {"tool_name": "translate_text", "text_hint": "good morning", "lang_hint": "french"},
@@ -114,7 +114,7 @@ class TestDailyLanguageModel(unittest.TestCase):
             "meaning of bonjour": {"tool_name": "translate_text"} # More complex, tool itself will parse further from full query
         }
         for query_text, expected_details in queries.items():
-            intent = self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools)
+            intent = await self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools)
             self.assertIsNotNone(intent, f"Intent not recognized for: {query_text}")
             self.assertEqual(intent["tool_name"], expected_details["tool_name"])
             self.assertEqual(intent["parameters"]["original_query"], query_text)
@@ -130,9 +130,9 @@ class TestDailyLanguageModel(unittest.TestCase):
         print("TestDailyLanguageModel.test_04_recognize_intent_translate_text PASSED")
 
     @pytest.mark.timeout(5)
-    def test_05_no_intent_recognized(self):
+    async def test_05_no_intent_recognized(self):
         query_text = "this is a general statement without clear tool triggers"
-        intent = self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools)
+        intent = await self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools)
         # The mock generate_response for this input returns:
         # json.dumps({"tool_name": "NO_TOOL", "parameters": None})
         # The recognize_intent method then translates "NO_TOOL" to tool_name=None.
@@ -140,6 +140,7 @@ class TestDailyLanguageModel(unittest.TestCase):
         self.assertIsNone(intent["tool_name"]) # tool_name should be None
         self.assertIsNone(intent["parameters"]) # parameters should be None
         print("TestDailyLanguageModel.test_05_no_intent_recognized PASSED")
+        
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
