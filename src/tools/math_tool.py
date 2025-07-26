@@ -65,7 +65,10 @@ def extract_arithmetic_problem(text: str) -> str | None:
             return None
     return None
 
-def calculate(input_string: str) -> str:
+from src.shared.types.common_types import ToolDispatcherResponse
+import os
+
+def calculate(input_string: str) -> ToolDispatcherResponse:
     """
     Takes a natural language string, extracts an arithmetic problem,
     and returns the calculated answer using the trained model.
@@ -75,12 +78,24 @@ def calculate(input_string: str) -> str:
         error_msg = "Error: Math model is not available."
         if _tensorflow_import_error:
             error_msg += f" Reason: {_tensorflow_import_error}"
-        return error_msg
+        return ToolDispatcherResponse(
+            status="failure_tool_error",
+            payload=None,
+            tool_name_attempted="calculate",
+            original_query_for_tool=input_string,
+            error_message=error_msg
+        )
 
     problem_to_solve = extract_arithmetic_problem(input_string)
 
     if problem_to_solve is None:
-        return "Could not understand the math problem from the input."
+        return ToolDispatcherResponse(
+            status="failure_tool_error",
+            payload=None,
+            tool_name_attempted="calculate",
+            original_query_for_tool=input_string,
+            error_message="Could not understand the math problem from the input."
+        )
 
     print(f"Extracted problem: '{problem_to_solve}' for model.")
 
@@ -88,13 +103,31 @@ def calculate(input_string: str) -> str:
         predicted_answer = model.predict_sequence(problem_to_solve)
         try:
             val = float(predicted_answer)
-            return str(int(val)) if val.is_integer() else str(val)
+            result_str = str(int(val)) if val.is_integer() else str(val)
+            return ToolDispatcherResponse(
+                status="success",
+                payload=result_str,
+                tool_name_attempted="calculate",
+                original_query_for_tool=input_string
+            )
         except (ValueError, TypeError):
-            return f"Model returned a non-numeric answer: {predicted_answer}"
+            return ToolDispatcherResponse(
+                status="failure_tool_error",
+                payload=None,
+                tool_name_attempted="calculate",
+                original_query_for_tool=input_string,
+                error_message=f"Model returned a non-numeric answer: {predicted_answer}"
+            )
 
     except Exception as e:
         print(f"Error during model prediction: {e}")
-        return "Error: Failed to get a prediction from the math model."
+        return ToolDispatcherResponse(
+            status="failure_tool_error",
+            payload=None,
+            tool_name_attempted="calculate",
+            original_query_for_tool=input_string,
+            error_message="Error: Failed to get a prediction from the math model."
+        )
 
 if __name__ == '__main__':
     print("Math Tool Example Usage:")
