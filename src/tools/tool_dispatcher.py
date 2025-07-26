@@ -197,13 +197,9 @@ class ToolDispatcher:
         # it should work. If DLM provides the original text, `math_calculate` will parse.
         print(f"ToolDispatcher._execute_math_calculation: query='{query}', kwargs={kwargs}")
         try:
-            result_payload = math_calculate(query)
-            return ToolDispatcherResponse(
-                status="success",
-                payload=result_payload, # math_calculate already returns a string like "Result: X"
-                tool_name_attempted="calculate",
-                original_query_for_tool=query
-            )
+            response = math_calculate(query)
+            return response
+
         except Exception as e:
             error_msg = f"Error in math calculation: {str(e)[:100]}"
             print(f"ToolDispatcher: {error_msg}")
@@ -386,8 +382,9 @@ class ToolDispatcher:
                 print(f"Dispatching to explicitly named tool: {explicit_tool_name}")
                 kwargs_with_orig_query = {"original_query": query, **kwargs}
                 # Explicit calls to translation need kwargs passed differently
-                if explicit_tool_name == 'translate_text':
-                    return self._execute_translation(query, **kwargs_with_orig_query)
+                # All _execute_* methods now return ToolDispatcherResponse
+                # So we can directly return the result of the tool call.
+                # The kwargs_with_orig_query already contains the original query.
                 return self.tools[explicit_tool_name](query, **kwargs_with_orig_query)
             else:
                 return ToolDispatcherResponse(
@@ -403,6 +400,15 @@ class ToolDispatcher:
 
         if intent and intent.get("tool_name") in self.tools:
             tool_name_from_dlm = intent["tool_name"]
+        # If no tool was dispatched by explicit name or DLM intent
+        else:
+            return ToolDispatcherResponse(
+                status="no_tool_found",
+                payload=None,
+                tool_name_attempted="none",
+                original_query_for_tool=query,
+                error_message="No suitable tool found for the given query."
+            )
             tool_params = intent.get("parameters", {})
             # The 'query' in parameters is the specific data for the tool
             # The top-level 'query' is the user's original full query

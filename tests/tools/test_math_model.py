@@ -177,7 +177,8 @@ class TestMathModelComponents(unittest.TestCase):
         # This is complex for a simple test. We'll assume it tries to load.
 
         result = calculate_via_tool("what is 1+1?")
-        self.assertIn("Error: Math model is not available.", result) # Or specific load error
+        self.assertEqual(result.status, "failure_tool_error")
+        self.assertIn("Error: Math model is not available.", result.error_message)
 
         # Restore env vars and files
         if original_model_path: os.environ["ARITHMETIC_MODEL_PATH_OVERRIDE"] = original_model_path
@@ -197,10 +198,12 @@ class TestMathModelComponents(unittest.TestCase):
         # This test assumes math_tool.calculate will return the model unavailable error
         # as we are not providing a trained model.
         result = dispatcher.dispatch("calculate 2 + 2")
-        self.assertIn("Error: Math model is not available.", result['payload'])
+        self.assertEqual(result.status, "failure_tool_error")
+        self.assertIn("Error: Math model is not available.", result.error_message)
 
         result_explicit = dispatcher.dispatch("what is 3*3?", explicit_tool_name="calculate")
-        self.assertIn("Error: Math model is not available.", result_explicit['payload'])
+        self.assertEqual(result_explicit.status, "failure_tool_error")
+        self.assertIn("Error: Math model is not available.", result_explicit.error_message)
 
         result_no_tool = dispatcher.dispatch("hello world")
         self.assertIsNone(result_no_tool)

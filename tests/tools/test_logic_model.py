@@ -181,12 +181,9 @@ class TestLogicModelComponents(unittest.TestCase):
 
         result_parser_implicit = dispatcher.dispatch("NOT (true OR false)")
         self.assertIsNotNone(result_parser_implicit)
-        if result_parser_implicit.status == "success":
-            self.assertEqual(result_parser_implicit.payload, False)
-        else:
-            self.assertEqual(result_parser_implicit.status, "failure_tool_error")
-            self.assertIsNone(result_parser_implicit.payload)
-            self.assertIn("Error", result_parser_implicit.error_message)
+        # Assuming the dispatcher returns a ToolResponse object or similar
+        # Adjust assertions based on the actual structure of dispatcher's return
+        self.assertEqual(result_parser_implicit['payload'], False)
 
         # Test NN routing (will also likely hit "NN model not available")
         # Ensure char_map file is available for _get_nn_model_evaluator in logic_tool
@@ -198,6 +195,7 @@ class TestLogicModelComponents(unittest.TestCase):
         result_nn = dispatcher.dispatch("evaluate true OR false using nn")
         # Based on current LLMInterface mock, "evaluate true OR false using nn"
         # will result in NO_TOOL from DLM, so dispatcher returns None.
+        # We expect a ToolResponse object with a failure status due to NN model not being available
         self.assertIsNotNone(result_nn)
         self.assertEqual(result_nn.status, "failure_tool_error")
         self.assertIn("NN model not available", result_nn.error_message)
