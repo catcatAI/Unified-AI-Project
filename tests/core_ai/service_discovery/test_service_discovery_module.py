@@ -223,11 +223,7 @@ class TestServiceDiscoveryModule:
         assert results[0].get('capability_id') == "c1"
         assert results[1].get('capability_id') == "c2"
 
-    # TODO: Add tests for staleness once that logic is implemented
-    # def test_find_capabilities_filters_stale_entries(self, populated_sdm_with_stale: ServiceDiscoveryModule):
-    #     pass
-    # def test_get_capability_by_id_returns_none_for_stale(self, populated_sdm_with_stale: ServiceDiscoveryModule):
-    #     pass
+    
 
     def _add_capability_at_time(self, sdm: ServiceDiscoveryModule, cap_payload: HSPCapabilityAdvertisementPayload, mock_now_time: datetime):
         # Helper to add/update a capability as if it was processed at a specific time
