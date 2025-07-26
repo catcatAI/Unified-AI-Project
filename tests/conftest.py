@@ -1,6 +1,8 @@
+from __future__ import annotations
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 import socket
+from typing import TYPE_CHECKING
 
 # Import the necessary classes from your project
 from src.core_ai.agent_manager import AgentManager
@@ -18,10 +20,12 @@ from src.core_ai.time_system import TimeSystem
 from src.core_ai.formula_engine import FormulaEngine
 from src.tools.tool_dispatcher import ToolDispatcher
 from src.services.llm_interface import LLMInterface
-from src.hsp.connector import HSPConnector
 from src.mcp.connector import MCPConnector
 from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 from src.shared.types.common_types import OperationalConfig
+
+if TYPE_CHECKING:
+    from src.hsp.connector import HSPConnector
 
 @pytest.fixture(scope="function")
 def trust_manager_fixture():
@@ -36,6 +40,7 @@ def service_discovery_module_fixture(trust_manager_fixture):
 
 @pytest.fixture(scope="function")
 async def hsp_connector_fixture():
+    from src.hsp.connector import HSPConnector
     # Check if MQTT broker is available before attempting to connect
     if not is_mqtt_broker_available():
         pytest.skip("MQTT broker not available")
@@ -94,11 +99,8 @@ def mock_core_services():
     mock_tool_dispatcher = MagicMock(spec=ToolDispatcher)
 
     # --- Default Behaviors & Return Values ---
-    # Example: Personality Manager should return a default name
     mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
-    # Example: Formula Engine finds no match by default
     mock_formula_engine.match_input.return_value = None
-    # Example: Crisis system reports no Crisis by default
     mock_crisis_system.assess_input_for_crisis.return_value = 0
 
     # --- Minimal Configuration ---
@@ -117,7 +119,6 @@ def mock_core_services():
     }
 
     # --- Mock Coordinator ---
-    # Instantiate ProjectCoordinator with its mocked dependencies
     mock_project_coordinator = ProjectCoordinator(
         llm_interface=mock_llm_interface,
         service_discovery=mock_service_discovery,
@@ -130,8 +131,6 @@ def mock_core_services():
     )
 
     # --- Instantiate DialogueManager with Mocks ---
-    # The DialogueManager often sits at the center, so we instantiate it
-    # with all the other mocks to ensure it's wired correctly.
     mock_dialogue_manager = DialogueManager(
         ai_id="test_ai_01",
         personality_manager=mock_personality_manager,
@@ -149,9 +148,6 @@ def mock_core_services():
         config=test_config
     )
 
-    # --- Override Internal Components with Mocks if necessary ---
-    # The DM constructor already assigns these, but this makes it explicit
-    # that the ProjectCoordinator inside the DM is also a mock.
     mock_dialogue_manager.project_coordinator = mock_project_coordinator
 
     services = {

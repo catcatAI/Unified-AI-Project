@@ -1,7 +1,8 @@
+from __future__ import annotations
 import asyncio
 import json
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, List, Tuple, TYPE_CHECKING
 import uuid
 import os
 import re
@@ -22,10 +23,13 @@ import networkx as nx
 from src.shared.types.common_types import (
     OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
 )
-from src.hsp.connector import HSPConnector
+
 from src.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
 from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 from src.core_ai.agent_manager import AgentManager
+
+if TYPE_CHECKING:
+    from src.hsp.connector import HSPConnector
 
 class DialogueManager:
     def __init__(self,
