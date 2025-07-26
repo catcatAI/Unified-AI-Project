@@ -737,3 +737,6 @@ ENV/
 
 # model cache
 model_cache/
+
+# Non-project files
+non_project_files/
