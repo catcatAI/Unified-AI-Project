@@ -31,7 +31,8 @@
 | 数据标准 | `docs/technical_design/INTERNAL_DATA_STANDARDS.md` | 内部数据格式 | 🟡 中 |
 | 代理协作 | `docs/technical_design/architecture/AGENT_COLLABORATION_FRAMEWORK.md` | 代理协作框架 | 🔴 高 |
 | AVIS 规范 | `docs/technical_design/architecture/AI_Virtual_Input_System_spec.md` | AI 虚拟输入系统 | 🔴 高 |
-| LIS 规范 | `docs/technical_design/architecture/Linguistic_Immune_System_spec.md` | 语言免疫系统 | 🔴 高 |
+| LIS 規範 | `docs/technical_design/architecture/Linguistic_Immune_System_spec.md` | 語言免疫系統 | 🔴 高 |
+| 核心服務概述 | `docs/technical_design/CORE_SERVICES_OVERVIEW.md` | 核心服務初始化與管理 | 🟢 高 |
 
 ### 🔧 技术规范文档
 | 文档名称 | 位置 | 描述 | 实用性 |

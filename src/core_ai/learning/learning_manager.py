@@ -529,7 +529,7 @@ if __name__ == '__main__':
 
     print("\nLearningManager standalone test finished.")
 
-    def analyze_for_personality_adjustment(self, text: str) -> Optional[Dict[str, Any]]:
+    async def analyze_for_personality_adjustment(self, text: str) -> Optional[Dict[str, Any]]:
         """
         Analyzes text for potential personality adjustments.
 

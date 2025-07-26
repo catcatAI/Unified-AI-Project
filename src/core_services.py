@@ -158,9 +158,9 @@ def initialize_services(
         else:
             print(f"Core Services: HSPConnector for {ai_id} connected.")
             # Basic subscriptions needed by multiple modules
-            hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#")
-            hsp_connector_instance.subscribe(f"hsp/results/{ai_id}/#") # For DM task results
-            hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL}/#") # For general facts
+            hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#", lambda p, s, e: None) # Placeholder callback
+            hsp_connector_instance.subscribe(f"hsp/results/{ai_id}/#", lambda p, s, e: None) # Placeholder callback
+            hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL}/#", lambda p, s, e: None) # Placeholder callback
 
     if not service_discovery_module_instance:
         service_discovery_module_instance = ServiceDiscoveryModule(trust_manager=trust_manager_instance)

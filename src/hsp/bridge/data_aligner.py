@@ -1,5 +1,5 @@
-"""from typing import Any, Dict, Literal, Optional, Union
-from ..hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPErrorDetails, HSPTaskRequestPayload, HSPTaskResultPayload, HSPCapabilityAdvertisementPayload
+from typing import Any, Dict, Literal, Optional, Union
+from ..types import HSPMessageEnvelope, HSPFactPayload, HSPErrorDetails, HSPTaskRequestPayload, HSPTaskResultPayload, HSPCapabilityAdvertisementPayload
 
 class DataAligner:
     def __init__(self, schema_registry: Optional[Dict[str, Any]] = None):
@@ -73,4 +73,3 @@ class DataAligner:
                 "location": location
             }
         }
-""

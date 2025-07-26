@@ -370,7 +370,7 @@ class ToolDispatcher:
                 error_message=error_msg
             )
 
-    def dispatch(self, query: str, explicit_tool_name: Optional[str] = None, **kwargs) -> ToolDispatcherResponse:
+    async def dispatch(self, query: str, explicit_tool_name: Optional[str] = None, **kwargs) -> ToolDispatcherResponse:
         """
         Dispatches a query to the appropriate tool.
         If explicit_tool_name is provided, it uses that tool.
@@ -396,7 +396,7 @@ class ToolDispatcher:
                 )
 
         # Use DLM for intent recognition
-        intent = self.dlm.recognize_intent(query, available_tools=self.get_available_tools())
+        intent = await self.dlm.recognize_intent(query, available_tools=self.get_available_tools())
 
         if intent and intent.get("tool_name") in self.tools:
             tool_name_from_dlm = intent["tool_name"]
