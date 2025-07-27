@@ -8,9 +8,10 @@ from unittest.mock import MagicMock, AsyncMock # Added for mock_mode
 from src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPAcknowledgementPayload
 import uuid # Added for UUID generation
 from datetime import datetime, timezone # Added for timestamp generation
+import asyncio # Added for asyncio.iscoroutinefunction
 
 class HSPConnector:
-    def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False, mock_mqtt_client: Optional[MagicMock] = None, **kwargs):
+    def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False, mock_mqtt_client: Optional[MagicMock] = None, internal_bus: Optional[Any] = None, message_bridge: Optional[Any] = None, **kwargs):
         self.ai_id = ai_id
         self.mock_mode = mock_mode
         self.broker_address = broker_address
@@ -31,7 +32,9 @@ class HSPConnector:
             if mock_mqtt_client:
                 self.external_connector.mqtt_client = mock_mqtt_client
             else:
-                self.external_connector.mqtt_client = MagicMock()
+                mock_mqtt_client_instance = MagicMock()
+                mock_mqtt_client_instance.publish = AsyncMock(return_value=True)
+                self.external_connector.mqtt_client = mock_mqtt_client_instance
             
             self.is_connected = True # Considered connected in mock mode
         else:
@@ -42,13 +45,21 @@ class HSPConnector:
                 )
             self.is_connected = False # Actual connection status
 
-        self.internal_bus = InternalBus()
-        self.data_aligner = DataAligner()
-        self.message_bridge = MessageBridge(
-            self.external_connector,
-            self.internal_bus,
-            self.data_aligner
-        )
+        if internal_bus is None:
+            self.internal_bus = InternalBus()
+        else:
+            self.internal_bus = internal_bus
+
+        self.data_aligner = DataAligner() # DataAligner can be unique per connector
+
+        if message_bridge is None:
+            self.message_bridge = MessageBridge(
+                self.external_connector,
+                self.internal_bus,
+                self.data_aligner
+            )
+        else:
+            self.message_bridge = message_bridge
 
         # Callbacks for different message types
         self._fact_callbacks = []
@@ -77,6 +88,11 @@ class HSPConnector:
         if self.mock_mode:
             print("HSPConnector: Mock connect successful.")
             self.is_connected = True
+            # In mock mode, explicitly subscribe to relevant topics on the mock MQTT client
+            await self.external_connector.subscribe("hsp/knowledge/facts/#", self.external_connector.on_message_callback)
+            await self.external_connector.subscribe("hsp/capabilities/advertisements/#", self.external_connector.on_message_callback)
+            await self.external_connector.subscribe(f"hsp/requests/{self.ai_id}", self.external_connector.on_message_callback)
+            await self.external_connector.subscribe(f"hsp/results/{self.ai_id}", self.external_connector.on_message_callback)
         else:
             await self.external_connector.connect()
             self.is_connected = self.external_connector.is_connected
@@ -109,11 +125,12 @@ class HSPConnector:
         # The payload for the internal bus is the full envelope.
         try:
             if self.mock_mode:
-                # In mock mode, simulate the external connector publishing the message
-                # This will allow us to assert on mqtt_client.publish calls for outgoing messages
-                await self.external_connector.mqtt_client.publish(topic, json.dumps(envelope).encode('utf-8'), qos=qos)
+                # In mock mode, simulate the external connector receiving the message
+                # This will trigger the on_message_callback which routes through the message_bridge
+                await self.external_connector.on_message_callback(topic, json.dumps(envelope).encode('utf-8'))
                 return True
             else:
+                print(f"HSPConnector: Not in mock_mode. Type of self.external_connector.publish: {type(self.external_connector.publish)}")
                 await self.external_connector.publish(topic, json.dumps(envelope).encode('utf-8'), qos=qos)
                 return True
         except Exception as e:
@@ -206,7 +223,7 @@ class HSPConnector:
         }
         return await self.publish_message(topic, envelope, qos)
 
-    def subscribe(self, topic: str, callback: Callable):
+    async def subscribe(self, topic: str, callback: Callable):
         # This subscribe is for internal bus subscriptions, not direct MQTT
         # MQTT subscriptions are handled by ExternalConnector
         self.internal_bus.subscribe(f"hsp.external.{topic}", callback)
@@ -220,7 +237,9 @@ class HSPConnector:
         self._fact_callbacks.append(callback)
 
     def register_on_capability_advertisement_callback(self, callback: Callable[[HSPCapabilityAdvertisementPayload, str, HSPMessageEnvelope], None]):
+        print(f"DEBUG: register_on_capability_advertisement_callback - Before append: {len(self._capability_advertisement_callbacks)}")
         self._capability_advertisement_callbacks.append(callback)
+        print(f"DEBUG: register_on_capability_advertisement_callback - After append: {len(self._capability_advertisement_callbacks)}")
 
     def register_on_task_request_callback(self, callback: Callable[[HSPTaskRequestPayload, str, HSPMessageEnvelope], None]):
         self._task_request_callbacks.append(callback)
@@ -245,9 +264,15 @@ class HSPConnector:
         print(f"DEBUG: _dispatch_fact_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
 
         if payload and sender_ai_id:
+            fact_payload = HSPFactPayload(**payload)
+            print(f"DEBUG: _dispatch_fact_to_callbacks - Type of fact_payload before callback: {type(fact_payload)}")
+            print(f"DEBUG: _dispatch_fact_to_callbacks - Content of fact_payload before callback: {fact_payload}")
             for callback in self._fact_callbacks:
                 print(f"DEBUG: _dispatch_fact_to_callbacks - calling callback {callback}, type: {type(callback)}")
-                await callback(payload, sender_ai_id, message)
+                if asyncio.iscoroutinefunction(callback):
+                    await callback(fact_payload, sender_ai_id, message)
+                else:
+                    callback(fact_payload, sender_ai_id, message)
 
             # Check if ACK is required and send it
             qos_params = message.get("qos_parameters")
@@ -286,9 +311,14 @@ class HSPConnector:
         print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
 
         if payload and sender_ai_id:
+            cap_payload = HSPCapabilityAdvertisementPayload(**payload)
+            print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - Number of callbacks: {len(self._capability_advertisement_callbacks)}")
             for callback in self._capability_advertisement_callbacks:
                 print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - calling callback {callback}, type: {type(callback)}")
-                await callback(payload, sender_ai_id, message)
+                if asyncio.iscoroutinefunction(callback):
+                    await callback(cap_payload, sender_ai_id, message)
+                else:
+                    callback(cap_payload, sender_ai_id, message)
 
             # Check if ACK is required and send it
             qos_params = message.get("qos_parameters")
@@ -327,9 +357,13 @@ class HSPConnector:
         print(f"DEBUG: _dispatch_task_request_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
 
         if payload and sender_ai_id:
+            task_request_payload = HSPTaskRequestPayload(**payload)
             for callback in self._task_request_callbacks:
                 print(f"DEBUG: _dispatch_task_request_to_callbacks - calling callback {callback}")
-                await callback(payload, sender_ai_id, message)
+                if asyncio.iscoroutinefunction(callback):
+                    await callback(task_request_payload, sender_ai_id, message)
+                else:
+                    callback(task_request_payload, sender_ai_id, message)
 
             # Check if ACK is required and send it
             qos_params = message.get("qos_parameters")
@@ -368,9 +402,10 @@ class HSPConnector:
         print(f"DEBUG: _dispatch_task_result_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
 
         if payload and sender_ai_id:
+            task_result_payload = HSPTaskResultPayload(**payload)
             for callback in self._task_result_callbacks:
                 print(f"DEBUG: _dispatch_task_result_to_callbacks - calling callback {callback}")
-                await callback(payload, sender_ai_id, message)
+                await callback(task_result_payload, sender_ai_id, message)
 
             # Check if ACK is required and send it
             qos_params = message.get("qos_parameters")

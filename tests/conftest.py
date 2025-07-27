@@ -134,32 +134,40 @@ def mock_core_services():
         "crisis_response_text": "Crisis response."
     }
 
-    # --- Mock Coordinator ---
-    # Patch ProjectCoordinator directly to ensure DialogueManager uses the mock
-    with patch('src.core_ai.dialogue.project_coordinator.ProjectCoordinator', autospec=True) as MockProjectCoordinatorClass:
-        mock_project_coordinator = MockProjectCoordinatorClass.return_value
-        mock_project_coordinator.handle_project = AsyncMock(return_value="Project handled.")
-        # The DialogueManager will now receive this mocked instance when it initializes ProjectCoordinator
+    # --- Instantiate ProjectCoordinator with Mocks (real instance with mocked dependencies) ---
+    mock_project_coordinator = ProjectCoordinator(
+        llm_interface=mock_llm_interface,
+        service_discovery=mock_service_discovery,
+        hsp_connector=mock_hsp_connector,
+        agent_manager=mock_agent_manager,
+        memory_manager=mock_ham_manager,
+        learning_manager=mock_learning_manager,
+        personality_manager=mock_personality_manager,
+        dialogue_manager_config=test_config
+    )
+    # Manually load prompts for the real ProjectCoordinator instance for testing
+    mock_project_coordinator._load_prompts()
 
-        # --- Instantiate DialogueManager with Mocks ---
-        mock_dialogue_manager = DialogueManager(
-            ai_id="test_ai_01",
-            personality_manager=mock_personality_manager,
-            memory_manager=mock_ham_manager,
-            llm_interface=mock_llm_interface,
-            emotion_system=mock_emotion_system,
-            crisis_system=mock_crisis_system,
-            time_system=mock_time_system,
-            formula_engine=mock_formula_engine,
-            tool_dispatcher=mock_tool_dispatcher,
-            learning_manager=mock_learning_manager,
-            service_discovery_module=mock_service_discovery,
-            hsp_connector=mock_hsp_connector,
-            agent_manager=mock_agent_manager,
-            config=test_config
-        )
+    # --- Instantiate DialogueManager with Mocks ---
+    mock_dialogue_manager = DialogueManager(
+        ai_id="test_ai_01",
+        personality_manager=mock_personality_manager,
+        memory_manager=mock_ham_manager,
+        llm_interface=mock_llm_interface,
+        emotion_system=mock_emotion_system,
+        crisis_system=mock_crisis_system,
+        time_system=mock_time_system,
+        formula_engine=mock_formula_engine,
+        tool_dispatcher=mock_tool_dispatcher,
+        learning_manager=mock_learning_manager,
+        service_discovery_module=mock_service_discovery,
+        hsp_connector=mock_hsp_connector,
+        agent_manager=mock_agent_manager,
+        config=test_config
+    )
 
-        mock_dialogue_manager.project_coordinator = mock_project_coordinator
+    # Ensure DialogueManager uses the instantiated ProjectCoordinator
+    mock_dialogue_manager.project_coordinator = mock_project_coordinator
 
     services = {
         "llm_interface": mock_llm_interface,
