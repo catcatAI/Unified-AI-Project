@@ -46,13 +46,13 @@ async def test_get_simple_response_standard_flow(mock_core_services):
     dm = mock_core_services["dialogue_manager"]
     memory_manager = mock_core_services["ham_manager"]
     tool_dispatcher = mock_core_services["tool_dispatcher"]
-    tool_dispatcher.dispatch.return_value = AsyncMock(return_value=ToolDispatcherResponse(
+    tool_dispatcher.dispatch.return_value = ToolDispatcherResponse(
         status="no_tool_found",
         payload="Mocked tool response",
         tool_name_attempted="none",
         original_query_for_tool="mock query",
         error_message=None
-    ))
+    )
 
     user_input = "Hello, how are you?"
     expected_response = "TestAI: You said 'Hello, how are you?'. This is a simple response."
@@ -147,13 +147,13 @@ async def test_get_simple_response_no_project_trigger(mock_core_services):
     project_coordinator = mock_core_services["project_coordinator"]
     project_coordinator.handle_project = AsyncMock() # Mock handle_project
     tool_dispatcher = mock_core_services["tool_dispatcher"]
-    tool_dispatcher.dispatch.return_value = AsyncMock(return_value=ToolDispatcherResponse(
+    tool_dispatcher.dispatch.return_value = ToolDispatcherResponse(
         status="no_tool_found",
         payload="Mocked tool response",
         tool_name_attempted="none",
         original_query_for_tool="mock query",
         error_message=None
-    ))
+    )
 
     user_input = "A project is what I want to discuss." # "project:" is not at the start
 
@@ -162,4 +162,3 @@ async def test_get_simple_response_no_project_trigger(mock_core_services):
 
     # Assert
     project_coordinator.handle_project.assert_not_called()
-
