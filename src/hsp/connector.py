@@ -1,10 +1,13 @@
+import json # Added for JSON serialization
 from typing import Callable, Dict, Any, Optional # Added Optional
 from .external.external_connector import ExternalConnector
 from .internal.internal_bus import InternalBus
 from .bridge.data_aligner import DataAligner
 from .bridge.message_bridge import MessageBridge
-from unittest.mock import MagicMock # Added for mock_mode
-from src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload
+from unittest.mock import MagicMock, AsyncMock # Added for mock_mode
+from src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPAcknowledgementPayload
+import uuid # Added for UUID generation
+from datetime import datetime, timezone # Added for timestamp generation
 
 class HSPConnector:
     def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False, **kwargs):
@@ -20,7 +23,7 @@ class HSPConnector:
             self.external_connector.ai_id = ai_id # Ensure mock has ai_id
             self.external_connector.connect.return_value = True
             self.external_connector.disconnect.return_value = True
-            self.external_connector.publish.return_value = True
+            self.external_connector.publish = AsyncMock(return_value=True)
             self.external_connector.subscribe.return_value = True
             self.external_connector.unsubscribe.return_value = True
             self.is_connected = True # Considered connected in mock mode
@@ -29,8 +32,7 @@ class HSPConnector:
                 ai_id=ai_id,
                 broker_address=broker_address,
                 broker_port=broker_port,
-                **kwargs
-            )
+                )
             self.is_connected = False # Actual connection status
 
         self.internal_bus = InternalBus()
@@ -219,30 +221,158 @@ class HSPConnector:
         # message here is the full envelope from the internal bus
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
+
+        print(f"_dispatch_fact_to_callbacks: self._fact_callbacks = {self._fact_callbacks}")
+
         if payload and sender_ai_id:
             for callback in self._fact_callbacks:
+                print(f"_dispatch_fact_to_callbacks: calling callback {callback}")
                 await callback(payload, sender_ai_id, message)
+
+            # Check if ACK is required and send it
+            qos_params = message.get("qos_parameters")
+            if qos_params and qos_params.get("requires_ack"):
+                ack_payload: HSPAcknowledgementPayload = {
+                    "status": "received",
+                    "ack_timestamp": datetime.now(timezone.utc).isoformat(),
+                    "target_message_id": message.get("message_id", "")
+                }
+                ack_envelope: HSPMessageEnvelope = {
+                    "hsp_envelope_version": "0.1",
+                    "message_id": str(uuid.uuid4()),
+                    "correlation_id": message.get("correlation_id"),
+                    "sender_ai_id": self.ai_id,
+                    "recipient_ai_id": sender_ai_id,
+                    "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+                    "message_type": "HSP::Acknowledgement_v0.1",
+                    "protocol_version": "0.1",
+                    "communication_pattern": "acknowledgement",
+                    "security_parameters": None,
+                    "qos_parameters": None,
+                    "routing_info": None,
+                    "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
+                    "payload": ack_payload
+                }
+                # Publish ACK to the sender's ACK topic
+                ack_topic = f"hsp/acks/{sender_ai_id}"
+                await self.publish_message(ack_topic, ack_envelope)
 
     async def _dispatch_capability_advertisement_to_callbacks(self, message: Dict[str, Any]):
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
+
+        print(f"_dispatch_capability_advertisement_to_callbacks: self._capability_advertisement_callbacks = {self._capability_advertisement_callbacks}")
+
         if payload and sender_ai_id:
             for callback in self._capability_advertisement_callbacks:
+                print(f"_dispatch_capability_advertisement_to_callbacks: calling callback {callback}")
                 await callback(payload, sender_ai_id, message)
+
+            # Check if ACK is required and send it
+            qos_params = message.get("qos_parameters")
+            if qos_params and qos_params.get("requires_ack"):
+                ack_payload: HSPAcknowledgementPayload = {
+                    "status": "received",
+                    "ack_timestamp": datetime.now(timezone.utc).isoformat(),
+                    "target_message_id": message.get("message_id", "")
+                }
+                ack_envelope: HSPMessageEnvelope = {
+                    "hsp_envelope_version": "0.1",
+                    "message_id": str(uuid.uuid4()),
+                    "correlation_id": message.get("correlation_id"),
+                    "sender_ai_id": self.ai_id,
+                    "recipient_ai_id": sender_ai_id,
+                    "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+                    "message_type": "HSP::Acknowledgement_v0.1",
+                    "protocol_version": "0.1",
+                    "communication_pattern": "acknowledgement",
+                    "security_parameters": None,
+                    "qos_parameters": None,
+                    "routing_info": None,
+                    "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
+                    "payload": ack_payload
+                }
+                # Publish ACK to the sender's ACK topic
+                ack_topic = f"hsp/acks/{sender_ai_id}"
+                await self.publish_message(ack_topic, ack_envelope)
 
     async def _dispatch_task_request_to_callbacks(self, message: Dict[str, Any]):
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
+
+        print(f"_dispatch_task_request_to_callbacks: self._task_request_callbacks = {self._task_request_callbacks}")
+
         if payload and sender_ai_id:
             for callback in self._task_request_callbacks:
+                print(f"_dispatch_task_request_to_callbacks: calling callback {callback}")
                 await callback(payload, sender_ai_id, message)
+
+            # Check if ACK is required and send it
+            qos_params = message.get("qos_parameters")
+            if qos_params and qos_params.get("requires_ack"):
+                ack_payload: HSPAcknowledgementPayload = {
+                    "status": "received",
+                    "ack_timestamp": datetime.now(timezone.utc).isoformat(),
+                    "target_message_id": message.get("message_id", "")
+                }
+                ack_envelope: HSPMessageEnvelope = {
+                    "hsp_envelope_version": "0.1",
+                    "message_id": str(uuid.uuid4()),
+                    "correlation_id": message.get("correlation_id"),
+                    "sender_ai_id": self.ai_id,
+                    "recipient_ai_id": sender_ai_id,
+                    "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+                    "message_type": "HSP::Acknowledgement_v0.1",
+                    "protocol_version": "0.1",
+                    "communication_pattern": "acknowledgement",
+                    "security_parameters": None,
+                    "qos_parameters": None,
+                    "routing_info": None,
+                    "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
+                    "payload": ack_payload
+                }
+                # Publish ACK to the sender's ACK topic
+                ack_topic = f"hsp/acks/{sender_ai_id}"
+                await self.publish_message(ack_topic, ack_envelope)
 
     async def _dispatch_task_result_to_callbacks(self, message: Dict[str, Any]):
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
+
+        print(f"_dispatch_task_result_to_callbacks: self._task_result_callbacks = {self._task_result_callbacks}")
+
         if payload and sender_ai_id:
             for callback in self._task_result_callbacks:
+                print(f"_dispatch_task_result_to_callbacks: calling callback {callback}")
                 await callback(payload, sender_ai_id, message)
+
+            # Check if ACK is required and send it
+            qos_params = message.get("qos_parameters")
+            if qos_params and qos_params.get("requires_ack"):
+                ack_payload: HSPAcknowledgementPayload = {
+                    "status": "received",
+                    "ack_timestamp": datetime.now(timezone.utc).isoformat(),
+                    "target_message_id": message.get("message_id", "")
+                }
+                ack_envelope: HSPMessageEnvelope = {
+                    "hsp_envelope_version": "0.1",
+                    "message_id": str(uuid.uuid4()),
+                    "correlation_id": message.get("correlation_id"),
+                    "sender_ai_id": self.ai_id,
+                    "recipient_ai_id": sender_ai_id,
+                    "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+                    "message_type": "HSP::Acknowledgement_v0.1",
+                    "protocol_version": "0.1",
+                    "communication_pattern": "acknowledgement",
+                    "security_parameters": None,
+                    "qos_parameters": None,
+                    "routing_info": None,
+                    "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
+                    "payload": ack_payload
+                }
+                # Publish ACK to the sender's ACK topic
+                ack_topic = f"hsp/acks/{sender_ai_id}"
+                await self.publish_message(ack_topic, ack_envelope)
 
     # --- Properties ---
     @property
@@ -253,30 +383,4 @@ class HSPConnector:
     def is_connected(self, value: bool):
         self._is_connected = value
 
-        self.internal_bus = InternalBus()
-        self.data_aligner = DataAligner()
-        self.message_bridge = MessageBridge(
-            self.external_connector,
-            self.internal_bus,
-            self.data_aligner
-        )
-
-    async def connect(self):
-        await self.external_connector.connect()
-
-    async def disconnect(self):
-        await self.external_connector.disconnect()
-
-    def subscribe(self, topic: str, callback):
-        self.internal_bus.subscribe(f"hsp.external.{topic}", callback)
-
-    def unsubscribe(self, topic: str, callback):
-        self.internal_bus.unsubscribe(f"hsp.external.{topic}", callback)
-
-    def publish(self, topic: str, message: dict):
-        self.internal_bus.publish("hsp.internal.message", {"topic": topic, "payload": message})
-
-    def publish_fact(self, fact_payload: dict, topic: str):
-        # This is a simplified version for now.
-        # In a real implementation, you would want to build a proper HSP envelope.
-        self.publish(topic, fact_payload)
+        

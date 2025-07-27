@@ -5,15 +5,15 @@ class DataAligner:
     def __init__(self, schema_registry: Optional[Dict[str, Any]] = None):
         self.schema_registry = schema_registry or {}
 
-    def align_message(self, message: Dict[str, Any]) -> Union[HSPMessageEnvelope, HSPErrorDetails]:
+    def align_message(self, message: Dict[str, Any]) -> (Optional[HSPMessageEnvelope], Optional[HSPErrorDetails]):
         # Basic validation
         if not isinstance(message, dict):
-            return self._create_error_details("Invalid message format", "root", "Message must be a dictionary")
+            return None, self._create_error_details("Invalid message format", "root", "Message must be a dictionary")
         
         # Align and validate the envelope
         aligned_message, error = self._align_envelope(message)
         if error:
-            return error
+            return None, error
 
         # Align and validate the payload based on message_type
         message_type = aligned_message.get("message_type")
@@ -21,10 +21,10 @@ class DataAligner:
             payload = aligned_message.get("payload", {})
             aligned_payload, payload_error = self._align_payload(payload, message_type)
             if payload_error:
-                return payload_error
+                return None, payload_error
             aligned_message["payload"] = aligned_payload
 
-        return aligned_message
+        return aligned_message, None
 
     def _align_envelope(self, message: Dict[str, Any]) -> (Optional[HSPMessageEnvelope], Optional[HSPErrorDetails]):
         # In a real implementation, this would involve more sophisticated validation

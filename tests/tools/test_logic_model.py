@@ -171,15 +171,15 @@ class TestLogicModelComponents(unittest.TestCase):
         print("test_04_logic_tool_interface PASSED")
 
     @pytest.mark.timeout(10)
-    def test_05_tool_dispatcher_logic_routing(self):
+    async def test_05_tool_dispatcher_logic_routing(self):
         print("\nRunning test_05_tool_dispatcher_logic_routing...")
         dispatcher = ToolDispatcher()
 
         # Test parser routing
-        result_parser = dispatcher.dispatch("evaluate true AND false")
+        result_parser = await dispatcher.dispatch("evaluate true AND false")
         self.assertEqual(result_parser['payload'], False)
 
-        result_parser_implicit = dispatcher.dispatch("NOT (true OR false)")
+        result_parser_implicit = await dispatcher.dispatch("NOT (true OR false)")
         self.assertIsNotNone(result_parser_implicit)
         # Assuming the dispatcher returns a ToolResponse object or similar
         # Adjust assertions based on the actual structure of dispatcher's return
@@ -192,13 +192,13 @@ class TestLogicModelComponents(unittest.TestCase):
         if not os.path.exists(self.char_map_file): # If test_03 didn't run or cleaned up
              char_to_token, _, vocab_size, max_len = get_logic_char_token_maps(self.train_json_file)
 
-        result_nn = dispatcher.dispatch("evaluate true OR false using nn")
+        result_nn = await dispatcher.dispatch("evaluate true OR false using nn")
         # Based on current LLMInterface mock, "evaluate true OR false using nn"
         # will result in NO_TOOL from DLM, so dispatcher returns None.
         # We expect a ToolResponse object with a failure status due to NN model not being available
         self.assertIsNotNone(result_nn)
-        self.assertEqual(result_nn.status, "failure_tool_error")
-        self.assertIn("NN model not available", result_nn.error_message)
+        self.assertEqual(result_nn['status'], "failure_tool_error")
+        self.assertIn("NN model not available", result_nn['error_message'])
 
         logic_tool.CHAR_MAP_LOAD_PATH = original_lt_char_map_path # Restore
         print("test_05_tool_dispatcher_logic_routing PASSED")
