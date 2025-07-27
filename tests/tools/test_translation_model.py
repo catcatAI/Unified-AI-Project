@@ -112,7 +112,7 @@ class TestTranslationModelComponents(unittest.TestCase):
             self.fail(f"request_model_upgrade raised an exception: {e}")
 
     @pytest.mark.timeout(5)
-    def test_05_tool_dispatcher_translation_routing(self):
+    async def test_05_tool_dispatcher_translation_routing(self):
         print("\nRunning test_05_tool_dispatcher_translation_routing...")
         dispatcher = ToolDispatcher()
 
@@ -132,21 +132,21 @@ class TestTranslationModelComponents(unittest.TestCase):
         dispatcher.dlm.recognize_intent = mock_recognize_intent
 
         # Test inference scenarios
-        response1 = dispatcher.dispatch("translate '你好' to English")
+        response1 = await dispatcher.dispatch("translate '你好' to English")
         self.assertEqual(response1['payload'], "Hello")
-        response2 = dispatcher.dispatch("translate 'Hello' to Chinese")
+        response2 = await dispatcher.dispatch("translate 'Hello' to Chinese")
         self.assertEqual(response2['payload'], "你好")
-        response3 = dispatcher.dispatch("'Dog' in Chinese")
+        response3 = await dispatcher.dispatch("'Dog' in Chinese")
         self.assertEqual(response3['payload'], "狗")
-        response4 = dispatcher.dispatch("translate '未知词' to English")
+        response4 = await dispatcher.dispatch("translate '未知词' to English")
         self.assertEqual(response4['status'], 'failure_tool_error')
         self.assertIn("not available", response4['error_message'])
-        response5 = dispatcher.dispatch("translate '你好' to Spanish")
+        response5 = await dispatcher.dispatch("translate '你好' to Spanish")
         self.assertEqual(response5['status'], 'failure_tool_error')
         self.assertIn("not supported", response5['error_message'])
 
         # Test explicit call (bypassing DLM)
-        response_explicit = dispatcher.dispatch("猫", explicit_tool_name="translate_text", target_language="en")
+        response_explicit = await dispatcher.dispatch("猫", explicit_tool_name="translate_text", target_language="en")
         self.assertEqual(response_explicit['payload'], "Cat")
 
         print("test_05_tool_dispatcher_translation_routing PASSED")

@@ -30,7 +30,7 @@ class FactExtractorModule:
         prompt += "Focus only on information explicitly stated by the user about themselves or their direct preferences.\n"
         return prompt
 
-    def extract_facts(self, text: str, user_id: Optional[str] = None) -> List[ExtractedFact]:
+    async def extract_facts(self, text: str, user_id: Optional[str] = None) -> List[ExtractedFact]:
         """
         Uses an LLM to extract a list of facts/preferences from the user's text.
         Returns a list of ExtractedFact objects.
@@ -44,7 +44,7 @@ class FactExtractorModule:
         print(f"FactExtractorModule: Sending prompt to LLM for fact extraction:\n---\n{prompt}\n---")
 
         # Suggesting a specific model or parameters might be useful for fact extraction
-        llm_response_str = self.llm_interface.generate_response(
+        llm_response_str = await self.llm_interface.generate_response(
             prompt,
             model_name="fact_extraction_model_placeholder"
             # params={"temperature": 0.3} # Lower temperature for more factual output

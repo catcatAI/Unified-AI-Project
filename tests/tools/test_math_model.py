@@ -140,7 +140,7 @@ class TestMathModelComponents(unittest.TestCase):
         print("test_extract_arithmetic_problem PASSED")
 
     @pytest.mark.timeout(10)
-    def test_math_tool_calculate_model_unavailable(self):
+    async def test_math_tool_calculate_model_unavailable(self):
         print("\nRunning test_math_tool_calculate_model_unavailable...")
         # Ensure no model is "pre-loaded" by other tests or available
         # For this test, we assume the model path is invalid or model not trained
@@ -176,9 +176,9 @@ class TestMathModelComponents(unittest.TestCase):
         # To truly reset: import importlib; importlib.reload(tools.math_tool)
         # This is complex for a simple test. We'll assume it tries to load.
 
-        result = calculate_via_tool("what is 1+1?")
-        self.assertEqual(result.status, "failure_tool_error")
-        self.assertIn("Error: Math model is not available.", result.error_message)
+        result = await calculate_via_tool("what is 1+1?")
+        self.assertEqual(result['status'], "failure_tool_error")
+        self.assertIn("Error: Math model is not available.", result['error_message'])
 
         # Restore env vars and files
         if original_model_path: os.environ["ARITHMETIC_MODEL_PATH_OVERRIDE"] = original_model_path
@@ -192,18 +192,18 @@ class TestMathModelComponents(unittest.TestCase):
         print("test_math_tool_calculate_model_unavailable PASSED")
 
     @pytest.mark.timeout(10)
-    def test_tool_dispatcher_math_routing(self):
+    async def test_tool_dispatcher_math_routing(self):
         print("\nRunning test_tool_dispatcher_math_routing...")
         dispatcher = ToolDispatcher()
         # This test assumes math_tool.calculate will return the model unavailable error
         # as we are not providing a trained model.
-        result = dispatcher.dispatch("calculate 2 + 2")
-        self.assertEqual(result.status, "failure_tool_error")
-        self.assertIn("Error: Math model is not available.", result.error_message)
+        result = await dispatcher.dispatch("calculate 2 + 2")
+        self.assertEqual(result['status'], "failure_tool_error")
+        self.assertIn("Error: Math model is not available.", result['error_message'])
 
-        result_explicit = dispatcher.dispatch("what is 3*3?", explicit_tool_name="calculate")
-        self.assertEqual(result_explicit.status, "failure_tool_error")
-        self.assertIn("Error: Math model is not available.", result_explicit.error_message)
+        result_explicit = await dispatcher.dispatch("what is 3*3?", explicit_tool_name="calculate")
+        self.assertEqual(result_explicit['status'], "failure_tool_error")
+        self.assertIn("Error: Math model is not available.", result_explicit['error_message'])
 
         result_no_tool = dispatcher.dispatch("hello world")
         self.assertIsNone(result_no_tool)

@@ -1,3 +1,4 @@
+import asyncio
 from typing import Callable, Dict, List, Any
 
 class InternalBus:
@@ -7,7 +8,10 @@ class InternalBus:
     def publish(self, channel: str, message: Any):
         if channel in self.subscriptions:
             for callback in self.subscriptions[channel]:
-                callback(message)
+                if asyncio.iscoroutinefunction(callback):
+                    asyncio.create_task(callback(message))
+                else:
+                    callback(message)
 
     def subscribe(self, channel: str, callback: Callable[[Any], None]):
         if channel not in self.subscriptions:

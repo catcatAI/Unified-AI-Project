@@ -47,6 +47,19 @@
 
 **結果**: ✅ 所有相關測試通過
 
+### 5. HSPConnector 和 MessageBridge 相關測試修復
+**問題**: 
+- `TypeError: cannot unpack non-iterable NoneType object` 在 `test_hsp_connector_ack_sending` 中，因為斷言目標不正確。
+- `AssertionError: Expected 'mock' to be called once. Called 0 times.` 在 `test_hsp_connector_register_specific_callbacks` 中，因為 `asyncio.create_task` 任務沒有足夠時間完成，並且 `MessageBridge` 錯誤地將 `message_type` 映射到內部匯流排主題（例如，`capabilityadvertisement` 而不是 `capability_advertisement`）。
+
+**修復方案**:
+- 在 `test_hsp_connector.py` 中，在 `on_message_callback` 呼叫後新增 `await asyncio.sleep(0.1)`，以允許異步任務完成。
+- 修正 `test_hsp_connector_ack_sending` 中的斷言目標，從 `mock_mqtt_client.publish` 更改為 `hsp_connector_instance.external_connector.publish`。
+- 修改 `src/hsp/bridge/message_bridge.py`，使用明確的映射將 `message_type` 映射到內部主題後綴，確保正確的命名（例如，`capability_advertisement`）。
+- 在 `src/hsp/connector.py` 中的 `_dispatch_capability_advertisement_to_callbacks`、`_dispatch_task_request_to_callbacks` 和 `_dispatch_task_result_to_callbacks` 中新增偵錯列印語句，以進行更好的偵錯。
+
+**結果**: ✅ `tests/hsp/test_hsp_connector.py` 中的所有測試通過。
+
 ## 環境配置修復
 
 ### 1. 環境變量配置
@@ -87,6 +100,7 @@
 - `test_19_disk_full_handling`: ✅ PASSED  
 - `test_20_delete_old_experiences`: ✅ PASSED
 - `test_dialogue_manager.py` 中的所有測試: ✅ PASSED
+- `test_hsp_connector.py` 中的所有測試: ✅ PASSED
 
 ### 完整測試套件結果
 ```
@@ -113,20 +127,30 @@
 4. `tests/core_ai/dialogue/test_dialogue_manager.py`
    - 修正 `tool_dispatcher.dispatch` 的模擬方式。
 
-5. `.env` (新建)
+5. `src/hsp/connector.py`
+   - 在 `_dispatch_..._to_callbacks` 方法中新增偵錯列印語句。
+
+6. `src/hsp/bridge/message_bridge.py`
+   - 修改 `handle_external_message` 以使用明確的 `message_type` 到內部主題後綴的映射。
+
+7. `tests/hsp/test_hsp_connector.py`
+   - 在 `on_message_callback` 呼叫後新增 `await asyncio.sleep(0.1)`。
+   - 修正 `test_hsp_connector_ack_sending` 中的斷言目標。
+
+8. `.env` (新建)
    - 設置 `MIKO_HAM_KEY` 和其他環境變量
 
-6. `.env.example`
+9. `.env.example`
    - 添加 `MIKO_HAM_KEY` 說明
 
-7. `README.md`
-   - 更新環境變量配置說明
+10. `README.md`
+    - 更新環境變量配置說明
 
-8. `conftest.py` (新建)
-   - 統一測試環境設置
+11. `conftest.py` (新建)
+    - 統一測試環境設置
 
-9. `test_fixes.py` (新建)
-   - 快速驗證腳本
+12. `test_fixes.py` (新建)
+    - 快速驗證腳本
 
 ## 步驟記錄
 總共執行了 30 個步驟，包括：
