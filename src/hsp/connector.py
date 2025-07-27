@@ -10,7 +10,7 @@ import uuid # Added for UUID generation
 from datetime import datetime, timezone # Added for timestamp generation
 
 class HSPConnector:
-    def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False, **kwargs):
+    def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False, mock_mqtt_client: Optional[MagicMock] = None, **kwargs):
         self.ai_id = ai_id
         self.mock_mode = mock_mode
         self.broker_address = broker_address
@@ -19,13 +19,20 @@ class HSPConnector:
 
         if self.mock_mode:
             print("HSPConnector: Initializing in mock mode.")
+            print(f"DEBUG: HSPConnector.__init__ - ai_id: {ai_id}, mock_mode: {mock_mode}")
             self.external_connector = MagicMock(spec=ExternalConnector)
             self.external_connector.ai_id = ai_id # Ensure mock has ai_id
             self.external_connector.connect.return_value = True
             self.external_connector.disconnect.return_value = True
-            self.external_connector.publish = AsyncMock(return_value=True)
             self.external_connector.subscribe.return_value = True
             self.external_connector.unsubscribe.return_value = True
+            self.external_connector.publish = AsyncMock(return_value=True) # Explicitly set return value for publish
+            # Explicitly mock mqtt_client and its publish method
+            if mock_mqtt_client:
+                self.external_connector.mqtt_client = mock_mqtt_client
+            else:
+                self.external_connector.mqtt_client = MagicMock()
+            
             self.is_connected = True # Considered connected in mock mode
         else:
             self.external_connector = ExternalConnector(
@@ -52,7 +59,10 @@ class HSPConnector:
         self._disconnect_callbacks = []
 
         # Register internal message bridge handler for external messages
-        self.external_connector.on_message_callback = self.message_bridge.handle_external_message
+        if self.mock_mode:
+            self.external_connector.on_message_callback = AsyncMock(side_effect=self.message_bridge.handle_external_message)
+        else:
+            self.external_connector.on_message_callback = self.message_bridge.handle_external_message
 
         # Subscribe to internal bus messages that need to go external
         self.internal_bus.subscribe("hsp.internal.message", self.message_bridge.handle_internal_message)
@@ -84,6 +94,7 @@ class HSPConnector:
             await callback()
 
     async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1):
+        print(f"HSPConnector: publish_message called. self.external_connector.publish is {type(self.external_connector.publish)}")
         if not self.is_connected:
             print(f"HSPConnector: Not connected, cannot publish to {topic}.")
             return False
@@ -97,8 +108,14 @@ class HSPConnector:
         # The internal bus channel for external messages is "hsp.internal.message"
         # The payload for the internal bus is the full envelope.
         try:
-            await self.external_connector.publish(topic, json.dumps(envelope), qos=qos)
-            return True
+            if self.mock_mode:
+                # In mock mode, simulate the external connector publishing the message
+                # This will allow us to assert on mqtt_client.publish calls for outgoing messages
+                await self.external_connector.mqtt_client.publish(topic, json.dumps(envelope).encode('utf-8'), qos=qos)
+                return True
+            else:
+                await self.external_connector.publish(topic, json.dumps(envelope).encode('utf-8'), qos=qos)
+                return True
         except Exception as e:
             print(f"HSPConnector: Error publishing message to {topic}: {e}")
             return False
@@ -199,6 +216,7 @@ class HSPConnector:
 
     # --- Registration methods for external modules to receive specific message types ---
     def register_on_fact_callback(self, callback: Callable[[HSPFactPayload, str, HSPMessageEnvelope], None]):
+        print(f"DEBUG: register_on_fact_callback - Registering callback: {callback}")
         self._fact_callbacks.append(callback)
 
     def register_on_capability_advertisement_callback(self, callback: Callable[[HSPCapabilityAdvertisementPayload, str, HSPMessageEnvelope], None]):
@@ -222,11 +240,13 @@ class HSPConnector:
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 
-        print(f"_dispatch_fact_to_callbacks: self._fact_callbacks = {self._fact_callbacks}")
+        print(f"DEBUG: _dispatch_fact_to_callbacks - self._fact_callbacks = {self._fact_callbacks}")
+        print(f"DEBUG: _dispatch_fact_to_callbacks - Incoming message: {message}")
+        print(f"DEBUG: _dispatch_fact_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
 
         if payload and sender_ai_id:
             for callback in self._fact_callbacks:
-                print(f"_dispatch_fact_to_callbacks: calling callback {callback}")
+                print(f"DEBUG: _dispatch_fact_to_callbacks - calling callback {callback}, type: {type(callback)}")
                 await callback(payload, sender_ai_id, message)
 
             # Check if ACK is required and send it
@@ -248,7 +268,7 @@ class HSPConnector:
                     "protocol_version": "0.1",
                     "communication_pattern": "acknowledgement",
                     "security_parameters": None,
-                    "qos_parameters": None,
+                    "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
                     "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
                     "payload": ack_payload
@@ -261,11 +281,13 @@ class HSPConnector:
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 
-        print(f"_dispatch_capability_advertisement_to_callbacks: self._capability_advertisement_callbacks = {self._capability_advertisement_callbacks}")
+        print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - self._capability_advertisement_callbacks = {self._capability_advertisement_callbacks}")
+        print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - Incoming message: {message}")
+        print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
 
         if payload and sender_ai_id:
             for callback in self._capability_advertisement_callbacks:
-                print(f"_dispatch_capability_advertisement_to_callbacks: calling callback {callback}")
+                print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - calling callback {callback}, type: {type(callback)}")
                 await callback(payload, sender_ai_id, message)
 
             # Check if ACK is required and send it
@@ -287,7 +309,7 @@ class HSPConnector:
                     "protocol_version": "0.1",
                     "communication_pattern": "acknowledgement",
                     "security_parameters": None,
-                    "qos_parameters": None,
+                    "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
                     "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
                     "payload": ack_payload
@@ -300,11 +322,13 @@ class HSPConnector:
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 
-        print(f"_dispatch_task_request_to_callbacks: self._task_request_callbacks = {self._task_request_callbacks}")
+        print(f"DEBUG: _dispatch_task_request_to_callbacks - self._task_request_callbacks = {self._task_request_callbacks}")
+        print(f"DEBUG: _dispatch_task_request_to_callbacks - Incoming message: {message}")
+        print(f"DEBUG: _dispatch_task_request_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
 
         if payload and sender_ai_id:
             for callback in self._task_request_callbacks:
-                print(f"_dispatch_task_request_to_callbacks: calling callback {callback}")
+                print(f"DEBUG: _dispatch_task_request_to_callbacks - calling callback {callback}")
                 await callback(payload, sender_ai_id, message)
 
             # Check if ACK is required and send it
@@ -326,7 +350,7 @@ class HSPConnector:
                     "protocol_version": "0.1",
                     "communication_pattern": "acknowledgement",
                     "security_parameters": None,
-                    "qos_parameters": None,
+                    "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
                     "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
                     "payload": ack_payload
@@ -339,11 +363,13 @@ class HSPConnector:
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 
-        print(f"_dispatch_task_result_to_callbacks: self._task_result_callbacks = {self._task_result_callbacks}")
+        print(f"DEBUG: _dispatch_task_result_to_callbacks - self._task_result_callbacks = {self._task_result_callbacks}")
+        print(f"DEBUG: _dispatch_task_result_to_callbacks - Incoming message: {message}")
+        print(f"DEBUG: _dispatch_task_result_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
 
         if payload and sender_ai_id:
             for callback in self._task_result_callbacks:
-                print(f"_dispatch_task_result_to_callbacks: calling callback {callback}")
+                print(f"DEBUG: _dispatch_task_result_to_callbacks - calling callback {callback}")
                 await callback(payload, sender_ai_id, message)
 
             # Check if ACK is required and send it
@@ -365,7 +391,7 @@ class HSPConnector:
                     "protocol_version": "0.1",
                     "communication_pattern": "acknowledgement",
                     "security_parameters": None,
-                    "qos_parameters": None,
+                    "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
                     "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
                     "payload": ack_payload

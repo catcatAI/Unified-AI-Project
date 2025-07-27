@@ -24,6 +24,7 @@ class DataAligner:
                 return None, payload_error
             aligned_message["payload"] = aligned_payload
 
+        print(f"DEBUG: DataAligner.align_message - Aligned message: {aligned_message}")
         return aligned_message, None
 
     def _align_envelope(self, message: Dict[str, Any]) -> (Optional[HSPMessageEnvelope], Optional[HSPErrorDetails]):

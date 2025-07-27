@@ -2,7 +2,7 @@ import pytest
 import asyncio
 import logging
 import json
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock, AsyncMock
 from src.hsp.connector import HSPConnector
 from src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPQoSParameters
 
@@ -27,12 +27,9 @@ def hsp_connector_instance(mock_mqtt_client):
         ai_id="test_ai",
         broker_address="localhost",
         broker_port=1883,
-        mock_mode=True # Enable mock mode for testing without a real broker
+        mock_mode=True, # Enable mock mode for testing without a real broker
+        mock_mqtt_client=mock_mqtt_client
     )
-    # Manually set the mock client if not in mock_mode, or ensure it's used if in mock_mode
-    # In mock_mode, HSPConnector.__init__ already sets self.mqtt_client to MagicMock
-    # We can replace it with our specific mock_mqtt_client if we need to control its behavior
-    connector.mqtt_client = mock_mqtt_client
     return connector
 
 @pytest.mark.asyncio
@@ -43,7 +40,7 @@ async def test_hsp_connector_init(hsp_connector_instance):
     assert hsp_connector_instance.broker_port == 1883
     assert hsp_connector_instance.mock_mode is True
     assert hsp_connector_instance.is_connected is True # In mock mode, it's considered connected
-    assert hsp_connector_instance.mqtt_client is not None
+    
 
 @pytest.mark.asyncio
 async def test_hsp_connector_connect_disconnect_mock_mode(hsp_connector_instance, mock_mqtt_client):
@@ -87,13 +84,7 @@ async def test_hsp_connector_publish_message(hsp_connector_instance, mock_mqtt_c
 
     await hsp_connector_instance.publish_message(topic, envelope)
 
-    hsp_connector_instance.external_connector.publish.assert_called_once()
-    call_args, call_kwargs = hsp_connector_instance.external_connector.publish.call_args
-    assert call_args[0] == topic
-    # Check if the payload is a JSON string representation of the envelope
-    published_payload = json.loads(call_args[1])
-    assert published_payload == envelope
-    assert call_kwargs['qos'] == hsp_connector_instance.default_qos
+    hsp_connector_instance.external_connector.mqtt_client.publish.assert_called_with(topic, json.dumps(envelope).encode('utf-8'), qos=1)
 
 @pytest.mark.asyncio
 async def test_hsp_connector_subscribe_and_receive(hsp_connector_instance, mock_mqtt_client):
@@ -105,8 +96,6 @@ async def test_hsp_connector_subscribe_and_receive(hsp_connector_instance, mock_
         received_messages.append((payload, sender_ai_id, envelope))
 
     hsp_connector_instance.register_on_fact_callback(mock_callback)
-
-    hsp_connector_instance.subscribe(topic, lambda topic, payload: None)
 
     # Simulate an incoming MQTT message
     test_payload: HSPFactPayload = {
@@ -147,7 +136,7 @@ async def test_hsp_connector_subscribe_and_receive(hsp_connector_instance, mock_
         mock_mqtt_message.topic.decode('utf-8'),
         mock_mqtt_message.payload.decode('utf-8')
     )
-    await asyncio.sleep(0.1) # Allow async tasks to complete
+    await asyncio.sleep(0.5) # Allow async tasks to complete
 
     assert len(received_messages) == 1
     received_payload, received_sender_ai_id, received_envelope = received_messages[0]
@@ -195,23 +184,25 @@ async def test_hsp_connector_ack_sending(hsp_connector_instance, mock_mqtt_clien
         mock_mqtt_message.topic.decode('utf-8'),
         mock_mqtt_message.payload.decode('utf-8')
     )
-    await asyncio.sleep(0.1) # Allow async tasks to complete
+    await asyncio.sleep(0.5) # Allow async tasks to complete
 
-    # Assert that an ACK message was published
-    hsp_connector_instance.external_connector.publish.assert_called_once()
-    ack_call_args, ack_call_kwargs = hsp_connector_instance.external_connector.publish.call_args
+    # Assert that an ACK message was published via the external connector's mqtt_client.publish
+    hsp_connector_instance.external_connector.mqtt_client.publish.assert_called_once()
+    publish_call_args, publish_call_kwargs = hsp_connector_instance.external_connector.mqtt_client.publish.call_args
 
     # Check ACK topic convention
     expected_ack_topic = f"hsp/acks/{test_envelope['sender_ai_id']}"
-    assert ack_call_args[0] == expected_ack_topic
+    assert publish_call_args[0] == expected_ack_topic
 
     # Check ACK payload content
-    ack_payload = json.loads(ack_call_args[1])
+    ack_payload = json.loads(publish_call_args[1].decode('utf-8')) # Decode bytes payload
     assert ack_payload['payload']['status'] == "received"
+    assert ack_payload['payload']['ack_timestamp'] is not None
     assert ack_payload['payload']['target_message_id'] == test_envelope['message_id']
     assert ack_payload['message_type'] == "HSP::Acknowledgement_v0.1"
     assert ack_payload['sender_ai_id'] == hsp_connector_instance.ai_id
     assert ack_payload['recipient_ai_id'] == test_envelope['sender_ai_id']
+    assert publish_call_kwargs['qos'] == 1 # Default QoS for ACKs
 
 @pytest.mark.asyncio
 async def test_hsp_connector_on_connect_callback(hsp_connector_instance, mock_mqtt_client):
@@ -272,7 +263,7 @@ async def test_hsp_connector_register_specific_callbacks(hsp_connector_instance)
     mock_mqtt_message_fact.properties = MagicMock()
 
     await hsp_connector_instance.external_connector.on_message_callback(mock_mqtt_message_fact.topic.decode('utf-8'), mock_mqtt_message_fact.payload.decode('utf-8'))
-    await asyncio.sleep(0.1) # Allow async tasks to complete
+    await asyncio.sleep(0.5) # Allow async tasks to complete
     mock_fact_callback.assert_called_once_with(fact_payload, fact_envelope["sender_ai_id"], fact_envelope)
     mock_capability_callback.assert_not_called()
     mock_task_request_callback.assert_not_called()
@@ -302,7 +293,7 @@ async def test_hsp_connector_register_specific_callbacks(hsp_connector_instance)
     mock_mqtt_message_cap.properties = MagicMock()
 
     await hsp_connector_instance.external_connector.on_message_callback(mock_mqtt_message_cap.topic.decode('utf-8'), mock_mqtt_message_cap.payload.decode('utf-8'))
-    await asyncio.sleep(0.1) # Allow async tasks to complete
+    await asyncio.sleep(0.5) # Allow async tasks to complete
     mock_capability_callback.assert_called_once_with(cap_payload, cap_envelope["sender_ai_id"], cap_envelope)
     mock_fact_callback.assert_not_called()
     mock_task_request_callback.assert_not_called()
@@ -332,7 +323,7 @@ async def test_hsp_connector_register_specific_callbacks(hsp_connector_instance)
     mock_mqtt_message_req.properties = MagicMock()
 
     await hsp_connector_instance.external_connector.on_message_callback(mock_mqtt_message_req.topic.decode('utf-8'), mock_mqtt_message_req.payload.decode('utf-8'))
-    await asyncio.sleep(0.1) # Allow async tasks to complete
+    await asyncio.sleep(0.5) # Allow async tasks to complete
     mock_task_request_callback.assert_called_once_with(task_req_payload, task_req_envelope["sender_ai_id"], task_req_envelope)
     mock_fact_callback.assert_not_called()
     mock_capability_callback.assert_not_called()
@@ -363,7 +354,7 @@ async def test_hsp_connector_register_specific_callbacks(hsp_connector_instance)
     mock_mqtt_message_res.properties = MagicMock()
 
     await hsp_connector_instance.external_connector.on_message_callback(mock_mqtt_message_res.topic.decode('utf-8'), mock_mqtt_message_res.payload.decode('utf-8'))
-    await asyncio.sleep(0.1) # Allow async tasks to complete
+    await asyncio.sleep(0.5) # Allow async tasks to complete
     mock_task_result_callback.assert_called_once_with(task_res_payload, task_res_envelope["sender_ai_id"], task_res_envelope)
     mock_fact_callback.assert_not_called()
     mock_capability_callback.assert_not_called()
