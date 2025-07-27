@@ -115,12 +115,12 @@ class DialogueManager:
         tool_response = await self.tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id)
 
         response_text = ""
-        if tool_response.status == "success":
-            response_text = tool_response.payload
-        elif tool_response.status == "no_tool_found" or tool_response.status == "no_tool_inferred":
+        if tool_response['status'] == "success":
+            response_text = tool_response['payload']
+        elif tool_response['status'] == "no_tool_found" or tool_response['status'] == "no_tool_inferred":
             response_text = f"{ai_name}: You said '{user_input}'. This is a simple response."
         else:
-            response_text = f"{ai_name}: An error occurred while processing your request: {tool_response.error_message}"
+            response_text = f"{ai_name}: An error occurred while processing your request: {tool_response['error_message']}"
 
         # Store user and AI turns in memory
         if self.memory_manager:
