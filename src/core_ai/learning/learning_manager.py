@@ -55,7 +55,7 @@ class LearningManager:
             source_text = text
 
         if not text: return []
-        extracted_fact_data_list = self.fact_extractor.extract_facts(text, user_id)
+        extracted_fact_data_list = await self.fact_extractor.extract_facts(text, user_id)
         stored_fact_ids: List[str] = []
 
         for fact_data in extracted_fact_data_list:
@@ -99,12 +99,12 @@ class LearningManager:
                     if "user_preference" in fact_type: topic = "hsp/knowledge/facts/user_preferences"
                     elif "user_statement" in fact_type: topic = "hsp/knowledge/facts/user_statements"
                     print(f"LearningManager: Publishing fact {hsp_fact_id} to HSP topic '{topic}'")
-                    self.hsp_connector.publish_fact(hsp_payload, topic=topic)
+                    await self.hsp_connector.publish_fact(hsp_payload, topic=topic)
             else:
                 print(f"LearningManager: Failed to store fact '{record_id}' in HAM.")
         return stored_fact_ids
 
-    def process_and_store_hsp_fact(
+    async def process_and_store_hsp_fact(
         self, hsp_fact_payload: HSPFactPayload, hsp_sender_ai_id: str, hsp_envelope: HSPMessageEnvelope
     ) -> Optional[str]:
         """
