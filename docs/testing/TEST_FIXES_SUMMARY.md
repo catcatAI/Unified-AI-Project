@@ -109,6 +109,17 @@
 
 **所有原本失敗的測試現在都已成功修復並通過。**
 
+### 6. DailyLanguageModel 相關測試修復
+**問題**: `test_daily_language_model.py` 中的測試失敗，原因如下：
+- `unittest.TestCase` 斷言語句未轉換為 `pytest` 樣式。
+- `mock_generate_response` 函數中 `translate 'good morning' to french` 查詢的字串包含不正確的轉義字元。
+
+**修復方案**:
+- 將 `tests/core_ai/language_models/test_daily_language_model.py` 中所有 `self.assertEqual` 和 `self.assertTrue` 呼叫替換為直接的 `assert` 語句。
+- 修正 `mock_generate_response` 函數中 `translate 'good morning' to french` 查詢的字串，移除不必要的轉義字元。
+
+**結果**: ✅ 所有相關測試通過
+
 ## 代碼修改總結
 
 ### 修改的文件
@@ -137,19 +148,23 @@
    - 在 `on_message_callback` 呼叫後新增 `await asyncio.sleep(0.1)`。
    - 修正 `test_hsp_connector_ack_sending` 中的斷言目標。
 
-8. `.env` (新建)
+8. `tests/core_ai/language_models/test_daily_language_model.py`
+   - 將 `unittest.TestCase` 斷言語句轉換為 `pytest` 樣式。
+   - 修正 `mock_generate_response` 函數中 `translate 'good morning' to french` 查詢的字串。
+
+9. `.env` (新建)
    - 設置 `MIKO_HAM_KEY` 和其他環境變量
 
-9. `.env.example`
-   - 添加 `MIKO_HAM_KEY` 說明
+10. `.env.example`
+    - 添加 `MIKO_HAM_KEY` 說明
 
-10. `README.md`
+11. `README.md`
     - 更新環境變量配置說明
 
-11. `conftest.py` (新建)
+12. `conftest.py` (新建)
     - 統一測試環境設置
 
-12. `test_fixes.py` (新建)
+13. `test_fixes.py` (新建)
     - 快速驗證腳本
 
 ## 步驟記錄

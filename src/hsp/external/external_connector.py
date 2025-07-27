@@ -42,6 +42,7 @@ class ExternalConnector:
         await self.mqtt_client.disconnect()
 
     async def publish(self, topic: str, payload: str, qos: int = 1):
+        logger.debug(f"ExternalConnector.publish: topic={topic}, payload_type={type(payload)}, qos={qos}")
         await self.mqtt_client.publish(topic, payload, qos=qos)
 
     async def subscribe(self, topic: str, qos: int = 1):
@@ -61,7 +62,7 @@ class ExternalConnector:
         else:
             logger.error(f"Failed to connect, return code {rc}")
 
-    def on_disconnect(self, client, packet, exc):
+    def on_disconnect(self, client, exc):
         self.is_connected = False
         logger.info("Disconnected from MQTT Broker.")
 

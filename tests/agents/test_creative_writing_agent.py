@@ -12,9 +12,10 @@ from src.agents.creative_writing_agent import CreativeWritingAgent
 from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 from src.services.llm_interface import LLMInterface
 
-class TestCreativeWritingAgent(unittest.TestCase):
+class TestCreativeWritingAgent:
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup_agent(self):
         self.agent_id = f"did:hsp:test_creative_writing_agent_{uuid.uuid4().hex[:6]}"
 
         # Mock the services that the agent's base class initializes
@@ -24,26 +25,23 @@ class TestCreativeWritingAgent(unittest.TestCase):
             "llm_interface": self.mock_llm_interface
         }
 
-        patcher_initialize = patch('src.agents.base_agent.initialize_services', return_value=None)
-        patcher_get = patch('src.agents.base_agent.get_services', return_value=self.mock_services)
+        with patch('src.agents.base_agent.initialize_services', return_value=None) as mock_initialize, \
+             patch('src.agents.base_agent.get_services', return_value=self.mock_services) as mock_get_services:
+            self.mock_initialize = mock_initialize
+            self.mock_get_services = mock_get_services
 
-        self.addCleanup(patcher_initialize.stop)
-        self.addCleanup(patcher_get.stop)
-
-        self.mock_initialize = patcher_initialize.start()
-        self.mock_get_services = patcher_get.start()
-
-        self.agent = CreativeWritingAgent(agent_id=self.agent_id)
-        self.agent.hsp_connector = self.mock_services["hsp_connector"]
-        self.agent.llm_interface = self.mock_services["llm_interface"]
+            self.agent = CreativeWritingAgent(agent_id=self.agent_id)
+            self.agent.hsp_connector = self.mock_services["hsp_connector"]
+            self.agent.llm_interface = self.mock_services["llm_interface"]
+            yield
 
     @pytest.mark.timeout(10)
     def test_initialization(self):
         """Test that the agent initializes correctly."""
-        self.assertEqual(self.agent.agent_id, self.agent_id)
-        self.assertIsNotNone(self.agent.llm_interface)
-        self.assertEqual(len(self.agent.capabilities), 2)
-        self.assertEqual(self.agent.capabilities[0]['name'], 'generate_marketing_copy')
+        assert self.agent.agent_id == self.agent_id
+        assert self.agent.llm_interface is not None
+        assert len(self.agent.capabilities) == 2
+        assert self.agent.capabilities[0]['name'] == 'generate_marketing_copy'
 
     @pytest.mark.asyncio
     async def test_handle_marketing_copy_request(self):
@@ -72,15 +70,15 @@ class TestCreativeWritingAgent(unittest.TestCase):
         # 4. Assert LLM was called with the correct prompt
         self.mock_llm_interface.generate_response.assert_called_once()
         call_args = self.mock_llm_interface.generate_response.call_args
-        self.assertIn("Generate marketing copy", call_args.args[0])
-        self.assertIn("A new amazing product", call_args.args[0])
+        assert "Generate marketing copy" in call_args.args[0]
+        assert "A new amazing product" in call_args.args[0]
 
         # 5. Assert HSP connector sent the correct success result
         self.agent.hsp_connector.send_task_result.assert_called_once()
         sent_payload = self.agent.hsp_connector.send_task_result.call_args[0][0]
 
-        self.assertEqual(sent_payload['status'], "success")
-        self.assertEqual(sent_payload['payload'], expected_copy)
+        assert sent_payload['status'] == "success"
+        assert sent_payload['payload'] == expected_copy
 
     @pytest.mark.asyncio
     async def test_handle_polish_text_request(self):
@@ -111,8 +109,8 @@ class TestCreativeWritingAgent(unittest.TestCase):
         self.agent.hsp_connector.send_task_result.assert_called_once()
         sent_payload = self.agent.hsp_connector.send_task_result.call_args[0][0]
 
-        self.assertEqual(sent_payload['status'], "success")
-        self.assertEqual(sent_payload['payload'], expected_polished_text)
+        assert sent_payload['status'] == "success"
+        assert sent_payload['payload'] == expected_polished_text
 
     @pytest.mark.asyncio
     async def test_unsupported_capability(self):
@@ -131,9 +129,8 @@ class TestCreativeWritingAgent(unittest.TestCase):
         self.agent.hsp_connector.send_task_result.assert_called_once()
         sent_payload = self.agent.hsp_connector.send_task_result.call_args[0][0]
 
-        self.assertEqual(sent_payload['status'], "failure")
-        self.assertIsNotNone(sent_payload['error_details'])
-        self.assertEqual(sent_payload['error_details']['error_code'], "CAPABILITY_NOT_SUPPORTED")
+        assert sent_payload['status'] == "failure"
+        assert sent_payload['error_details'] is not None
+        assert sent_payload['error_details']['error_code'] == "CAPABILITY_NOT_SUPPORTED"
 
-if __name__ == '__main__':
-    unittest.main()
+

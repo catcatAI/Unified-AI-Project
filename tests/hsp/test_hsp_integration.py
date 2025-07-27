@@ -3,7 +3,7 @@ import asyncio
 import uuid
 import time
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock, AsyncMock # Added for mock_mode
 from typing import Dict, Any, Optional, List, Callable
 import json
 
@@ -223,12 +223,13 @@ async def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker):
         TEST_AI_ID_MAIN,
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
+        mock_mode=True
     )
     await connector.connect()
     if not connector.is_connected:
         pytest.fail("Failed to connect main_ai_hsp_connector")
     yield connector
-    connector.disconnect()
+    await connector.disconnect()
 
 
 @pytest.fixture
@@ -238,12 +239,13 @@ async def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker):
         TEST_AI_ID_PEER_A,
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
+        mock_mode=True
     )
     await connector.connect()
     if not connector.is_connected:
         pytest.fail("Failed to connect peer_a_hsp_connector")
     yield connector
-    connector.disconnect()
+    await connector.disconnect()
 
 
 @pytest.fixture
@@ -253,12 +255,13 @@ async def peer_b_hsp_connector(trust_manager_fixture: TrustManager, broker):
         TEST_AI_ID_PEER_B,
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
+        mock_mode=True
     )
     await connector.connect()
     if not connector.is_connected:
         pytest.fail("Failed to connect peer_b_hsp_connector")
     yield connector
-    connector.disconnect()
+    await connector.disconnect()
 
 
 @pytest.fixture
@@ -366,12 +369,12 @@ class TestHSPFactPublishing:
     ):
         received_facts_on_peer: List[Dict[str, Any]] = []
 
-        def peer_fact_handler(fact_payload: HSPFactPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+        async def peer_fact_handler(fact_payload: HSPFactPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
             print(f"Peer A received fact: {fact_payload.id} from {sender_ai_id}")
             if sender_ai_id == TEST_AI_ID_MAIN:
                 received_facts_on_peer.append({"payload": fact_payload, "envelope": envelope})
 
-        peer_a_hsp_connector.register_on_fact_callback(peer_fact_handler)
+        peer_a_hsp_connector.register_on_fact_callback(AsyncMock(side_effect=peer_fact_handler))
         peer_a_hsp_connector.subscribe(FACT_TOPIC_GENERAL, lambda topic, payload: None)
         await asyncio.sleep(0.2)
 
@@ -429,7 +432,7 @@ class TestHSPFactConsumption:
             tags=["nl", "ht"]
         )  # type: ignore
         
-        peer_a_hsp_connector.publish_fact(fact_ht, FACT_TOPIC_GENERAL)
+        await peer_a_hsp_connector.publish_fact(fact_ht, FACT_TOPIC_GENERAL)
         await asyncio.sleep(1.5)
         
         assert len(ham_manager_fixture.memory_store) == 1
@@ -460,7 +463,7 @@ class TestHSPFactConsumption:
             tags=["nl", "lt"]
         )  # type: ignore
         
-        peer_b_hsp_connector.publish_fact(fact_lt, FACT_TOPIC_GENERAL)
+        await peer_b_hsp_connector.publish_fact(fact_lt, FACT_TOPIC_GENERAL)
         await asyncio.sleep(1.5)
         
         assert len(ham_manager_fixture.memory_store) == 0
@@ -510,7 +513,7 @@ class TestHSPFactConsumption:
             tags=["hsp_struct"]
         )  # type: ignore
         
-        peer_a_hsp_connector.publish_fact(fact, topic=FACT_TOPIC_GENERAL)
+        await peer_a_hsp_connector.publish_fact(fact, topic=FACT_TOPIC_GENERAL)
         await asyncio.sleep(1.5)
         
         assert ca_mock.called
@@ -567,7 +570,7 @@ class TestHSPFactConsumption:
             tags=["hsp_structured_map_test"]  # type: ignore
         )
         
-        peer_a_hsp_connector.publish_fact(fact_to_publish_for_mapping, topic=FACT_TOPIC_GENERAL)
+        await peer_a_hsp_connector.publish_fact(fact_to_publish_for_mapping, topic=FACT_TOPIC_GENERAL)
         await asyncio.sleep(1.5)
 
         assert ca_process_mock.called, "ContentAnalyzerModule.process_hsp_fact_content was not called for mapping test"
@@ -631,7 +634,7 @@ class TestHSPTaskDelegation:
             tags=["weather", "forecast"]
         )  # type: ignore
         
-        peer_a_hsp_connector.publish_capability_advertisement(cap_payload, f"{CAP_ADVERTISEMENT_TOPIC}/{peer_a_hsp_connector.ai_id}")
+        await peer_a_hsp_connector.publish_capability_advertisement(cap_payload)
         await asyncio.sleep(0.5)
         
         # 2. Verify Main AI's SDM has registered the capability
@@ -668,7 +671,7 @@ class TestHSPTaskDelegation:
                 timestamp_completed=datetime.now(timezone.utc).isoformat()
             )  # type: ignore
             
-            peer_a_hsp_connector.send_task_result(result_payload, sender_ai_id, envelope["correlation_id"])
+            await peer_a_hsp_connector.send_task_result(result_payload, sender_ai_id, envelope["correlation_id"])
             task_received_event.set()
             
         peer_a_hsp_connector.register_on_task_request_callback(peer_a_task_handler)
@@ -714,7 +717,7 @@ class TestHSPTaskDelegation:
 
         # Publish the capability advertisement to the correct topic
         topic = f"{CAP_ADVERTISEMENT_TOPIC}/{peer_a_hsp_connector.ai_id}"
-        peer_a_hsp_connector.publish_capability_advertisement(cap_payload, topic)
+        await peer_a_hsp_connector.publish_capability_advertisement(cap_payload)
         
         # Give some time for the message to be processed
         await asyncio.sleep(1.0)
@@ -750,7 +753,7 @@ class TestHSPTaskDelegation:
                 timestamp_completed=datetime.now(timezone.utc).isoformat()
             )  # type: ignore
             
-            peer_a_hsp_connector.send_task_result(result_payload, sender_ai_id, envelope["correlation_id"])
+            await peer_a_hsp_connector.send_task_result(result_payload, sender_ai_id, envelope["correlation_id"])
             task_received_event.set()
             
         peer_a_hsp_connector.register_on_task_request_callback(peer_a_failing_handler)
