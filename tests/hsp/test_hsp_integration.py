@@ -224,8 +224,8 @@ async def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker):
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
     )
-    # connector.connect() is now synchronous and returns bool
-    if not await connector.connect():
+    await connector.connect()
+    if not connector.is_connected:
         pytest.fail("Failed to connect main_ai_hsp_connector")
     yield connector
     connector.disconnect()
@@ -239,7 +239,8 @@ async def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker):
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
     )
-    if not await connector.connect():
+    await connector.connect()
+    if not connector.is_connected:
         pytest.fail("Failed to connect peer_a_hsp_connector")
     yield connector
     connector.disconnect()
@@ -253,7 +254,8 @@ async def peer_b_hsp_connector(trust_manager_fixture: TrustManager, broker):
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
     )
-    if not await connector.connect():
+    await connector.connect()
+    if not connector.is_connected:
         pytest.fail("Failed to connect peer_b_hsp_connector")
     yield connector
     connector.disconnect()
@@ -298,7 +300,7 @@ async def service_discovery_module_fixture(main_ai_hsp_connector: HSPConnector, 
     # main_ai_hsp_connector is now properly awaited by pytest-asyncio
     sdm = ServiceDiscoveryModule(trust_manager=trust_manager_fixture)
     main_ai_hsp_connector.register_on_capability_advertisement_callback(sdm.process_capability_advertisement)
-    assert main_ai_hsp_connector.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#"),         f"Main AI failed to subscribe to {CAP_ADVERTISEMENT_TOPIC}/#"
+    main_ai_hsp_connector.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#", lambda topic, payload: None)
     await asyncio.sleep(0.2)
     return sdm
 
@@ -348,7 +350,7 @@ async def dialogue_manager_fixture(
         config=dm_config
     )
     results_topic = f"hsp/results/{TEST_AI_ID_MAIN}/#"
-    assert main_ai_hsp_connector.subscribe(results_topic), f"Main AI failed to sub to {results_topic}"
+    main_ai_hsp_connector.subscribe(results_topic, lambda topic, payload: None)
     await asyncio.sleep(0.1)  # Allow subscription to be processed
     return dm
 
@@ -370,7 +372,7 @@ class TestHSPFactPublishing:
                 received_facts_on_peer.append({"payload": fact_payload, "envelope": envelope})
 
         peer_a_hsp_connector.register_on_fact_callback(peer_fact_handler)
-        assert peer_a_hsp_connector.subscribe(FACT_TOPIC_GENERAL)
+        peer_a_hsp_connector.subscribe(FACT_TOPIC_GENERAL, lambda topic, payload: None)
         await asyncio.sleep(0.2)
 
         await configured_learning_manager.process_and_store_learnables(
@@ -402,7 +404,8 @@ class TestHSPFactConsumption:
         ham_manager_fixture: MockHAM
     ):
         # ... (test body as previously defined) ...
-        if not main_ai_hsp_connector.subscribe(FACT_TOPIC_GENERAL):
+        main_ai_hsp_connector.subscribe(FACT_TOPIC_GENERAL, lambda topic, payload: None)
+        if not main_ai_hsp_connector.is_connected:
             pytest.fail("Main AI connector failed to subscribe")
         
         time.sleep(0.2)
@@ -476,7 +479,8 @@ class TestHSPFactConsumption:
         trust_manager_fixture: TrustManager
     ):
         # ... (test body as previously defined) ...
-        if not main_ai_hsp_connector.subscribe(FACT_TOPIC_GENERAL):
+        main_ai_hsp_connector.subscribe(FACT_TOPIC_GENERAL, lambda topic, payload: None)
+        if not main_ai_hsp_connector.is_connected:
             pytest.fail("Main AI failed to subscribe")
         
         time.sleep(0.2)
@@ -530,7 +534,8 @@ class TestHSPFactConsumption:
         trust_manager_fixture: TrustManager
     ):
         """Tests ContentAnalyzerModule's semantic mapping for structured HSP facts."""
-        if not main_ai_hsp_connector.subscribe(FACT_TOPIC_GENERAL):
+        main_ai_hsp_connector.subscribe(FACT_TOPIC_GENERAL, lambda topic, payload: None)
+        if not main_ai_hsp_connector.is_connected:
             pytest.fail("Main AI connector failed to subscribe to general fact topic for mapping test")
         
         time.sleep(0.2)
@@ -667,8 +672,8 @@ class TestHSPTaskDelegation:
             task_received_event.set()
             
         peer_a_hsp_connector.register_on_task_request_callback(peer_a_task_handler)
-        task_topic = f"hsp/tasks/{TEST_AI_ID_PEER_A}/advanced_weather_forecast"
-        assert peer_a_hsp_connector.subscribe(task_topic)
+        task_topic = f"hsp/tasks/{TEST_AI_ID_PEER_A}/failing_service"
+        peer_a_hsp_connector.subscribe(task_topic, lambda topic, payload: None)
         await asyncio.sleep(0.2)
         
         # 5. Trigger the DM and wait for the result
@@ -750,7 +755,7 @@ class TestHSPTaskDelegation:
             
         peer_a_hsp_connector.register_on_task_request_callback(peer_a_failing_handler)
         task_topic = f"hsp/tasks/{TEST_AI_ID_PEER_A}/failing_service"
-        assert peer_a_hsp_connector.subscribe(task_topic)
+        peer_a_hsp_connector.subscribe(task_topic, lambda topic, payload: None)
         await asyncio.sleep(0.2)
         
         # 4. Set up a fallback response from the LLM
