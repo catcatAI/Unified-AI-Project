@@ -4,7 +4,7 @@ import uuid
 import time
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch, AsyncMock, AsyncMock # Added for mock_mode
-from typing import Dict, Any, Optional, List, Callable
+from typing import Dict, Any, Optional, List, Callable, Tuple
 import json
 
 # Configure pytest-asyncio
@@ -37,10 +37,147 @@ from src.shared.types.common_types import ToolDispatcherResponse
 from src.core_ai.personality.personality_manager import PersonalityManager
 
 
-from amqtt.broker import Broker
+
 
 import logging
 import queue
+import re
+
+class MockMqttBroker:
+    def __init__(self):
+        self.subscriptions: Dict[str, List[Callable[[str, bytes], None]]] = {}
+        self.published_messages: List[Tuple[str, bytes]] = []
+        self.is_running = False
+
+    async def start(self):
+        logging.info("MockMqttBroker: Starting...")
+        self.is_running = True
+
+    async def shutdown(self):
+        logging.info("MockMqttBroker: Shutting down...")
+        self.is_running = False
+        self.subscriptions.clear()
+        self.published_messages.clear()
+
+    async def publish(self, topic: str, payload: bytes, qos: int = 0):
+        if not self.is_running:
+            logging.warning(f"MockMqttBroker: Attempted to publish to {topic} but broker is not running.")
+            return
+        self.published_messages.append((topic, payload))
+        logging.debug(f"MockMqttBroker: Published to {topic}: {payload.decode()}")
+        await self._dispatch_message(topic, payload)
+
+    async def subscribe(self, topic: str, callback: Callable[[str, bytes], None]):
+        if not self.is_running:
+            logging.warning(f"MockMqttBroker: Attempted to subscribe to {topic} but broker is not running.")
+            return
+        if topic not in self.subscriptions:
+            self.subscriptions[topic] = []
+        self.subscriptions[topic].append(callback)
+        logging.debug(f"MockMqttBroker: Subscribed to {topic} with callback {callback}")
+
+    async def _dispatch_message(self, topic: str, payload: bytes):
+        # Dispatch to all matching subscriptions, including wildcards
+        for sub_topic, callbacks in self.subscriptions.items():
+            if self._match_topic(sub_topic, topic):
+                for callback in callbacks:
+                    await self._safe_call_callback(callback, topic, payload)
+
+    async def _safe_call_callback(self, callback: Callable[[str, bytes], None], topic: str, payload: bytes):
+        try:
+            if asyncio.iscoroutinefunction(callback):
+                await callback(topic, payload)
+            else:
+                callback(topic, payload)
+        except Exception as e:
+            logging.error(f"Error in MQTT callback for topic {topic}: {e}")
+
+    def _match_topic(self, sub_topic: str, pub_topic: str) -> bool:
+        sub_parts = sub_topic.split('/')
+        pub_parts = pub_topic.split('/')
+
+        # Handle '#' wildcard
+        if sub_parts and sub_parts[-1] == '#':
+            # If '#' is the only part, it matches everything
+            if len(sub_parts) == 1:
+                return True
+            # If '#' is at the end, it matches if the preceding parts match
+            if len(pub_parts) >= len(sub_parts) - 1:
+                for i in range(len(sub_parts) - 1):
+                    if sub_parts[i] == '+':
+                        if i >= len(pub_parts):
+                            return False
+                        continue
+                    if sub_parts[i] != pub_parts[i]:
+                        return False
+                return True
+            return False
+
+        # For '+' and exact matches
+        if len(sub_parts) != len(pub_parts):
+            return False
+
+        for i in range(len(sub_parts)):
+            if sub_parts[i] == '+':
+                continue  # '+' matches any single level
+            if sub_parts[i] != pub_parts[i]:
+                return False
+        return True
+
+    def get_published_messages(self) -> List[Tuple[str, bytes]]:
+        return self.published_messages.copy()
+
+    def clear_published_messages(self):
+        self.published_messages.clear()
+
+# --- Pytest Fixtures ---
+from src.hsp.internal.internal_bus import InternalBus
+from src.hsp.bridge.message_bridge import MessageBridge
+from src.hsp.bridge.data_aligner import DataAligner
+
+@pytest.fixture(scope="module")
+def event_loop():
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+@pytest.fixture(scope="module")
+def shared_internal_bus():
+    return InternalBus()
+
+@pytest.fixture(scope="module")
+def shared_data_aligner():
+    return DataAligner()
+
+@pytest.fixture(scope="module")
+async def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: InternalBus, shared_data_aligner: DataAligner):
+    # The MessageBridge needs an external_connector, which is the mock_mqtt_client from the broker
+    # We'll create a dummy ExternalConnector for the MessageBridge to use,
+    # but its on_message_callback will be overridden by the MessageBridge itself.
+    # The key is that the mock_mqtt_client (broker) will call the MessageBridge's handler directly.
+    class DummyExternalConnector:
+        def __init__(self, mqtt_client):
+            self.mqtt_client = mqtt_client
+            self.on_message_callback = None # This will be set by MessageBridge
+
+        async def connect(self): pass
+        async def disconnect(self): pass
+        async def publish(self, topic, payload, qos):
+            # In this test setup, publish from the bridge should go to the mock broker
+            await self.mqtt_client.publish(topic, payload, qos)
+
+    dummy_external_connector = DummyExternalConnector(broker)
+    bridge = MessageBridge(dummy_external_connector, shared_internal_bus, shared_data_aligner)
+    yield bridge
+
+@pytest.fixture(scope="function") # Changed to function scope
+@pytest.mark.timeout(30)  # Increased timeout for broker setup/teardown
+async def broker():
+    mock_broker = MockMqttBroker()
+    await mock_broker.start()
+    yield mock_broker
+    await mock_broker.shutdown()
+
 
 # --- Constants for Testing ---
 TEST_AI_ID_MAIN = "did:hsp:test_ai_main_001"
@@ -196,34 +333,24 @@ import threading
 
 @pytest.fixture(scope="module")
 @pytest.mark.timeout(30)  # Increased timeout for broker setup/teardown
-async def broker(event_loop):
-    config = {
-        "listeners": {
-            "default": {
-                "type": "tcp",
-                "bind": "127.0.0.1:1884",
-            },
-        },
-        "sys_interval": 10,
-        "auth": {
-            "allow-anonymous": True
-        },
-        "topic-check": {"enabled": False},
-    }
-    broker = Broker(config, loop=event_loop)
-    await broker.start()
-    yield broker
-    await broker.shutdown()
+async def broker():
+    mock_broker = MockMqttBroker()
+    await mock_broker.start()
+    yield mock_broker
+    await mock_broker.shutdown()
 
 
 @pytest.fixture
-async def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker):
+async def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker: MockMqttBroker, shared_internal_bus: InternalBus, shared_message_bridge: MessageBridge):
     # broker is already started by the fixture
     connector = HSPConnector(
         TEST_AI_ID_MAIN,
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
-        mock_mode=True
+        mock_mode=True,
+        mock_mqtt_client=broker, # Pass the mock broker directly
+        internal_bus=shared_internal_bus,
+        message_bridge=shared_message_bridge
     )
     await connector.connect()
     if not connector.is_connected:
@@ -233,13 +360,16 @@ async def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker):
 
 
 @pytest.fixture
-async def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker):
+async def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker: MockMqttBroker, shared_internal_bus: InternalBus, shared_message_bridge: MessageBridge):
     # broker is already started by the fixture
     connector = HSPConnector(
         TEST_AI_ID_PEER_A,
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
-        mock_mode=True
+        mock_mode=True,
+        mock_mqtt_client=broker, # Pass the mock broker directly
+        internal_bus=shared_internal_bus,
+        message_bridge=shared_message_bridge
     )
     await connector.connect()
     if not connector.is_connected:
@@ -249,13 +379,16 @@ async def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker):
 
 
 @pytest.fixture
-async def peer_b_hsp_connector(trust_manager_fixture: TrustManager, broker):
+async def peer_b_hsp_connector(trust_manager_fixture: TrustManager, broker: MockMqttBroker, shared_internal_bus: InternalBus, shared_message_bridge: MessageBridge):
     # broker is already started by the fixture
     connector = HSPConnector(
         TEST_AI_ID_PEER_B,
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
-        mock_mode=True
+        mock_mode=True,
+        mock_mqtt_client=broker, # Pass the mock broker directly
+        internal_bus=shared_internal_bus,
+        message_bridge=shared_message_bridge
     )
     await connector.connect()
     if not connector.is_connected:
@@ -303,7 +436,6 @@ async def service_discovery_module_fixture(main_ai_hsp_connector: HSPConnector, 
     # main_ai_hsp_connector is now properly awaited by pytest-asyncio
     sdm = ServiceDiscoveryModule(trust_manager=trust_manager_fixture)
     main_ai_hsp_connector.register_on_capability_advertisement_callback(sdm.process_capability_advertisement)
-    main_ai_hsp_connector.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#", lambda topic, payload: None)
     await asyncio.sleep(0.2)
     return sdm
 
@@ -353,13 +485,22 @@ async def dialogue_manager_fixture(
         config=dm_config
     )
     results_topic = f"hsp/results/{TEST_AI_ID_MAIN}/#"
-    main_ai_hsp_connector.subscribe(results_topic, lambda topic, payload: None)
+    await main_ai_hsp_connector.subscribe(results_topic, lambda topic, payload: None)
     await asyncio.sleep(0.1)  # Allow subscription to be processed
     return dm
 
 
 # --- Test Classes ---
 class TestHSPFactPublishing:
+    received_facts_on_peer: List[Dict[str, Any]] = []
+
+    async def _peer_fact_handler(self, fact_payload: HSPFactPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+        print(f"DEBUG: _peer_fact_handler - Type of fact_payload: {type(fact_payload)}")
+        print(f"DEBUG: _peer_fact_handler - Content of fact_payload: {fact_payload}")
+        print(f"Peer A received fact: {fact_payload.id} from {sender_ai_id}")
+        if sender_ai_id == TEST_AI_ID_MAIN:
+            self.received_facts_on_peer.append({"payload": fact_payload, "envelope": envelope})
+
     @pytest.mark.asyncio
     @pytest.mark.timeout(20)
     async def test_learning_manager_publishes_fact_via_hsp(
@@ -367,15 +508,9 @@ class TestHSPFactPublishing:
         configured_learning_manager: LearningManager,
         peer_a_hsp_connector: HSPConnector
     ):
-        received_facts_on_peer: List[Dict[str, Any]] = []
+        self.received_facts_on_peer = [] # Reset for each test run
 
-        async def peer_fact_handler(fact_payload: HSPFactPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
-            print(f"Peer A received fact: {fact_payload.id} from {sender_ai_id}")
-            if sender_ai_id == TEST_AI_ID_MAIN:
-                received_facts_on_peer.append({"payload": fact_payload, "envelope": envelope})
-
-        peer_a_hsp_connector.register_on_fact_callback(AsyncMock(side_effect=peer_fact_handler))
-        peer_a_hsp_connector.subscribe(FACT_TOPIC_GENERAL, lambda topic, payload: None)
+        peer_a_hsp_connector.register_on_fact_callback(self._peer_fact_handler)
         await asyncio.sleep(0.2)
 
         await configured_learning_manager.process_and_store_learnables(
@@ -386,9 +521,9 @@ class TestHSPFactPublishing:
         )
 
         await asyncio.sleep(0.5)
-        print(f"Final received facts on peer A: {received_facts_on_peer}")
-        assert len(received_facts_on_peer) > 0, "Peer A did not receive any facts."
-        rp = received_facts_on_peer[0]["payload"]
+        print(f"Final received facts on peer A: {self.received_facts_on_peer}")
+        assert len(self.received_facts_on_peer) > 0, "Peer A did not receive any facts."
+        rp = self.received_facts_on_peer[0]["payload"]
         assert rp.get("source_ai_id") == TEST_AI_ID_MAIN
         assert rp.get("statement_structured", {}).get("subject") == "Berlin"
 
@@ -407,7 +542,6 @@ class TestHSPFactConsumption:
         ham_manager_fixture: MockHAM
     ):
         # ... (test body as previously defined) ...
-        main_ai_hsp_connector.subscribe(FACT_TOPIC_GENERAL, lambda topic, payload: None)
         if not main_ai_hsp_connector.is_connected:
             pytest.fail("Main AI connector failed to subscribe")
         
@@ -482,9 +616,8 @@ class TestHSPFactConsumption:
         trust_manager_fixture: TrustManager
     ):
         # ... (test body as previously defined) ...
-        main_ai_hsp_connector.subscribe(FACT_TOPIC_GENERAL, lambda topic, payload: None)
         if not main_ai_hsp_connector.is_connected:
-            pytest.fail("Main AI failed to subscribe")
+            pytest.fail("Main AI connector failed to subscribe")
         
         time.sleep(0.2)
         trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=0.9)
@@ -537,7 +670,7 @@ class TestHSPFactConsumption:
         trust_manager_fixture: TrustManager
     ):
         """Tests ContentAnalyzerModule's semantic mapping for structured HSP facts."""
-        main_ai_hsp_connector.subscribe(FACT_TOPIC_GENERAL, lambda topic, payload: None)
+        await main_ai_hsp_connector.subscribe("hsp.external.fact", lambda topic, payload: None)
         if not main_ai_hsp_connector.is_connected:
             pytest.fail("Main AI connector failed to subscribe to general fact topic for mapping test")
         
@@ -608,6 +741,39 @@ class TestHSPFactConsumption:
 
 
 class TestHSPTaskDelegation:
+    async def _peer_a_task_handler(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope, peer_a_hsp_connector: HSPConnector, task_received_event: asyncio.Event):
+        assert task_payload.get("capability_id_filter") == "advanced_weather_forecast"
+        assert task_payload.get("parameters", {}).get("location") == "London"
+
+        # Peer A processes the task and sends a result
+        result_payload = HSPTaskResultPayload(
+            result_id=f"result_{uuid.uuid4().hex}",
+            request_id=task_payload.get("request_id", ""),
+            executing_ai_id=peer_a_hsp_connector.ai_id,
+            status="success",
+            result_data={"forecast": "Sunny with a chance of rain for London."},
+            timestamp_completed=datetime.now(timezone.utc).isoformat()
+        ) # type: ignore
+
+        await peer_a_hsp_connector.send_task_result(result_payload, sender_ai_id, envelope["correlation_id"])
+        task_received_event.set()
+
+    async def _peer_a_failing_handler(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope, peer_a_hsp_connector: HSPConnector, task_received_event: asyncio.Event, capability_id: str):
+        assert task_payload.get("capability_id_filter") == capability_id
+        
+        # Peer A fails to process the task
+        result_payload = HSPTaskResultPayload(
+            result_id=f"result_{uuid.uuid4().hex}",
+            request_id=task_payload.get("request_id", ""),
+            executing_ai_id=peer_a_hsp_connector.ai_id,
+            status="failure",
+            error_details={"message": "Service unavailable due to maintenance."},
+            timestamp_completed=datetime.now(timezone.utc).isoformat()
+        )  # type: ignore
+        
+        await peer_a_hsp_connector.send_task_result(result_payload, sender_ai_id, envelope["correlation_id"])
+        task_received_event.set()
+
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
     async def test_dm_delegates_task_to_specialist_ai_and_gets_result(
@@ -634,8 +800,8 @@ class TestHSPTaskDelegation:
             tags=["weather", "forecast"]
         )  # type: ignore
         
+        # Publish the capability advertisement
         await peer_a_hsp_connector.publish_capability_advertisement(cap_payload)
-        await asyncio.sleep(0.5)
         
         # 2. Verify Main AI's SDM has registered the capability
         assert sdm.is_capability_available("advanced_weather_forecast")
@@ -657,26 +823,7 @@ class TestHSPTaskDelegation:
         # 4. Peer A needs to be ready to handle the task request
         task_received_event = asyncio.Event()
         
-        async def peer_a_task_handler(task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
-            assert task_payload.get("capability_id_filter") == "advanced_weather_forecast"
-            assert task_payload.get("parameters", {}).get("location") == "London"
-            
-            # Peer A processes the task and sends a result
-            result_payload = HSPTaskResultPayload(
-                result_id=f"result_{uuid.uuid4().hex}",
-                request_id=task_payload.get("request_id", ""),
-                executing_ai_id=peer_a_hsp_connector.ai_id,
-                status="success",
-                payload={"forecast": "Sunny with a chance of rain on Tuesday."},
-                timestamp_completed=datetime.now(timezone.utc).isoformat()
-            )  # type: ignore
-            
-            await peer_a_hsp_connector.send_task_result(result_payload, sender_ai_id, envelope["correlation_id"])
-            task_received_event.set()
-            
-        peer_a_hsp_connector.register_on_task_request_callback(peer_a_task_handler)
-        task_topic = f"hsp/tasks/{TEST_AI_ID_PEER_A}/failing_service"
-        peer_a_hsp_connector.subscribe(task_topic, lambda topic, payload: None)
+        peer_a_hsp_connector.register_on_task_request_callback(lambda tp, sai, env: self._peer_a_task_handler(tp, sai, env, peer_a_hsp_connector, task_received_event))
         await asyncio.sleep(0.2)
         
         # 5. Trigger the DM and wait for the result
@@ -715,8 +862,7 @@ class TestHSPTaskDelegation:
             tags=["test", "failing"]
         )
 
-        # Publish the capability advertisement to the correct topic
-        topic = f"{CAP_ADVERTISEMENT_TOPIC}/{peer_a_hsp_connector.ai_id}"
+        # Publish the capability advertisement
         await peer_a_hsp_connector.publish_capability_advertisement(cap_payload)
         
         # Give some time for the message to be processed
@@ -740,25 +886,7 @@ class TestHSPTaskDelegation:
         # 3. Set up Peer A to fail the task
         task_received_event = asyncio.Event()
         
-        async def peer_a_failing_handler(task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
-            assert task_payload.get("capability_id_filter") == capability_id
-            
-            # Peer A fails to process the task
-            result_payload = HSPTaskResultPayload(
-                result_id=f"result_{uuid.uuid4().hex}",
-                request_id=task_payload.get("request_id", ""),
-                executing_ai_id=peer_a_hsp_connector.ai_id,
-                status="failure",
-                error_details={"message": "Service unavailable due to maintenance."},
-                timestamp_completed=datetime.now(timezone.utc).isoformat()
-            )  # type: ignore
-            
-            await peer_a_hsp_connector.send_task_result(result_payload, sender_ai_id, envelope["correlation_id"])
-            task_received_event.set()
-            
-        peer_a_hsp_connector.register_on_task_request_callback(peer_a_failing_handler)
-        task_topic = f"hsp/tasks/{TEST_AI_ID_PEER_A}/failing_service"
-        peer_a_hsp_connector.subscribe(task_topic, lambda topic, payload: None)
+        peer_a_hsp_connector.register_on_task_request_callback(lambda tp, sai, env: self._peer_a_failing_handler(tp, sai, env, peer_a_hsp_connector, task_received_event, capability_id))
         await asyncio.sleep(0.2)
         
         # 4. Set up a fallback response from the LLM
@@ -772,3 +900,5 @@ class TestHSPTaskDelegation:
         await wait_for_event(task_received_event, timeout=5.0)
         assert fallback_response in final_response
         print("[Test Task Failure] Verified DM handled task failure and used fallback response.")
+
+        
