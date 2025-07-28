@@ -94,6 +94,7 @@ class HSPBeliefPayload(HSPFactPayload, total=False): # Inherits from HSPFactPayl
 class HSPCapabilityAdvertisementPayload(TypedDict, total=False):
     capability_id: str # Required, unique ID for this capability offering
     ai_id: str # Required, DID or URI of the AI offering
+    agent_name: str # The name of the agent script, e.g., 'data_analysis_agent'
     name: str # Required, human-readable name
     description: str # Required
     version: str # Required

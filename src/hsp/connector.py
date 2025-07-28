@@ -124,15 +124,8 @@ class HSPConnector:
         # The internal bus channel for external messages is "hsp.internal.message"
         # The payload for the internal bus is the full envelope.
         try:
-            if self.mock_mode:
-                # In mock mode, simulate the external connector receiving the message
-                # This will trigger the on_message_callback which routes through the message_bridge
-                await self.external_connector.on_message_callback(topic, json.dumps(envelope).encode('utf-8'))
-                return True
-            else:
-                print(f"HSPConnector: Not in mock_mode. Type of self.external_connector.publish: {type(self.external_connector.publish)}")
-                await self.external_connector.publish(topic, json.dumps(envelope).encode('utf-8'), qos=qos)
-                return True
+            await self.external_connector.publish(topic, json.dumps(envelope).encode('utf-8'), qos=qos)
+            return True
         except Exception as e:
             print(f"HSPConnector: Error publishing message to {topic}: {e}")
             return False
@@ -252,6 +245,10 @@ class HSPConnector:
 
     def register_on_disconnect_callback(self, callback: Callable[[], None]):
         self._disconnect_callbacks.append(callback)
+
+    async def advertise_capability(self, capability: HSPCapabilityAdvertisementPayload):
+        """Publishes a capability advertisement."""
+        await self.publish_capability_advertisement(capability)
 
     # --- Internal dispatch methods ---
     async def _dispatch_fact_to_callbacks(self, message: Dict[str, Any]):
