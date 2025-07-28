@@ -22,7 +22,6 @@ general:
   base_url: "BASE_URL_PLACEHOLDER" # Environment variable: BASE_URL
   # Add other general API keys or sensitive parameters here
   # another_service_api_key: "ANOTHER_SERVICE_API_KEY_PLACEHOLDER" # Environment variable: ANOTHER_SERVICE_API_KEY
-
 # Example for a service that might have multiple credentials
 # some_complex_service:
 #   client_id: "SOME_COMPLEX_SERVICE_CLIENT_ID_PLACEHOLDER"

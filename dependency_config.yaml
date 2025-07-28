@@ -168,7 +168,6 @@ dependencies:
       essential: false
       features: ["nlp"]
 
-
 # Fallback strategies for different scenarios
 fallback_strategies:
   # When TensorFlow is not available
@@ -224,23 +223,143 @@ environments:
 installation:
   minimal:
     description: "Minimal installation for basic functionality"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn"]
+    packages:
+      [
+        "Flask",
+        "numpy",
+        "cryptography",
+        "requests",
+        "python-dotenv",
+        "PyYAML",
+        "typing-extensions",
+        "paho-mqtt",
+        "networkx",
+        "psutil",
+        "pandas",
+        "scikit-learn",
+      ]
     features: ["basic_web", "core_ai"]
   standard:
     description: "Standard installation with common optional features"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn", "fastapi", "uvicorn", "pydantic", "httpx", "beautifulsoup4"]
+    packages:
+      [
+        "Flask",
+        "numpy",
+        "cryptography",
+        "requests",
+        "python-dotenv",
+        "PyYAML",
+        "typing-extensions",
+        "paho-mqtt",
+        "networkx",
+        "psutil",
+        "pandas",
+        "scikit-learn",
+        "fastapi",
+        "uvicorn",
+        "pydantic",
+        "httpx",
+        "beautifulsoup4",
+      ]
     features: ["web_api", "hsp_communication", "core_ai", "web_scraping"]
   full:
     description: "Full installation with all features, including game and GUI installer"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn", "tensorflow", "spacy", "fastapi", "uvicorn", "pydantic", "httpx", "pytest", "pytest-asyncio", "pytest-cov", "aiounittest", "pygame", "PyQt5", "pyshortcuts", "secret-sharing", "qrcode", "beautifulsoup4", "github3.py", "scikit-image", "SpeechRecognition", "faiss-cpu", "sentence-transformers", "huggingface-hub", "transformers"]
-    features: ["web_api", "hsp_communication", "ai_models", "nlp", "knowledge_graph", "game_client", "gui_installer", "genesis_backup", "testing", "web_scraping", "integrations", "image_processing", "audio", "vector_search"]
+    packages:
+      [
+        "Flask",
+        "numpy",
+        "cryptography",
+        "requests",
+        "python-dotenv",
+        "PyYAML",
+        "typing-extensions",
+        "paho-mqtt",
+        "networkx",
+        "psutil",
+        "pandas",
+        "scikit-learn",
+        "tensorflow",
+        "spacy",
+        "fastapi",
+        "uvicorn",
+        "pydantic",
+        "httpx",
+        "pytest",
+        "pytest-asyncio",
+        "pytest-cov",
+        "aiounittest",
+        "pygame",
+        "PyQt5",
+        "pyshortcuts",
+        "secret-sharing",
+        "qrcode",
+        "beautifulsoup4",
+        "github3.py",
+        "scikit-image",
+        "SpeechRecognition",
+        "faiss-cpu",
+        "sentence-transformers",
+        "huggingface-hub",
+        "transformers",
+      ]
+    features:
+      [
+        "web_api",
+        "hsp_communication",
+        "ai_models",
+        "nlp",
+        "knowledge_graph",
+        "game_client",
+        "gui_installer",
+        "genesis_backup",
+        "testing",
+        "web_scraping",
+        "integrations",
+        "image_processing",
+        "audio",
+        "vector_search",
+      ]
   ai_focused:
     description: "AI and ML focused installation"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn", "tensorflow", "spacy", "sentence-transformers", "huggingface-hub", "transformers"]
+    packages:
+      [
+        "Flask",
+        "numpy",
+        "cryptography",
+        "requests",
+        "python-dotenv",
+        "PyYAML",
+        "typing-extensions",
+        "paho-mqtt",
+        "networkx",
+        "psutil",
+        "pandas",
+        "scikit-learn",
+        "tensorflow",
+        "spacy",
+        "sentence-transformers",
+        "huggingface-hub",
+        "transformers",
+      ]
     features: ["ai_models", "nlp", "machine_learning"]
   game:
     description: "Installation with game client"
-    packages: ["Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pygame", "pandas", "scikit-learn"]
+    packages:
+      [
+        "Flask",
+        "numpy",
+        "cryptography",
+        "requests",
+        "python-dotenv",
+        "PyYAML",
+        "typing-extensions",
+        "paho-mqtt",
+        "networkx",
+        "psutil",
+        "pygame",
+        "pandas",
+        "scikit-learn",
+      ]
     features: ["game_client"]
   installer:
     description: "Dependencies for the GUI installer, shortcuts, and secure backup features"
@@ -252,5 +371,29 @@ installation:
     features: ["testing"]
   test_essentials:
     description: "Essential dependencies for running tests"
-    packages: ["pytest", "pytest-asyncio", "pytest-cov", "aiounittest", "cryptography", "pyyaml", "psutil", "requests", "python-dotenv", "paho-mqtt", "networkx", "pandas", "scikit-learn", "fastapi", "uvicorn", "pydantic", "httpx", "beautifulsoup4", "aiohttp", "typing-extensions", "gmqtt", "amqtt"]
+    packages:
+      [
+        "pytest",
+        "pytest-asyncio",
+        "pytest-cov",
+        "aiounittest",
+        "cryptography",
+        "pyyaml",
+        "psutil",
+        "requests",
+        "python-dotenv",
+        "paho-mqtt",
+        "networkx",
+        "pandas",
+        "scikit-learn",
+        "fastapi",
+        "uvicorn",
+        "pydantic",
+        "httpx",
+        "beautifulsoup4",
+        "aiohttp",
+        "typing-extensions",
+        "gmqtt",
+        "amqtt",
+      ]
     features: ["testing"]

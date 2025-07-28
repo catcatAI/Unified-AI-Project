@@ -1,10 +1,10 @@
 {
-    "nodes": {
-        "person": "character",
-        "place": "location"
-    },
-    "edges": {
-        "knows": "friends_with",
-        "located_in": "is_at"
-    }
+  "nodes": {
+    "person": "character",
+    "place": "location"
+  },
+  "edges": {
+    "knows": "friends_with",
+    "located_in": "is_at"
+  }
 }

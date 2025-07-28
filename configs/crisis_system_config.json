@@ -1,14 +1,14 @@
 {
-    "crisis_keywords": [
-        "emergency",
-        "danger",
-        "unsafe",
-        "help me please",
-        "i'm in trouble"
-    ],
-    "default_crisis_level_on_keyword": 1,
-    "crisis_protocols": {
-        "1": "log_and_monitor_basic_crisis_response",
-        "default": "log_only"
-    }
+  "crisis_keywords": [
+    "emergency",
+    "danger",
+    "unsafe",
+    "help me please",
+    "i'm in trouble"
+  ],
+  "default_crisis_level_on_keyword": 1,
+  "crisis_protocols": {
+    "1": "log_and_monitor_basic_crisis_response",
+    "default": "log_only"
+  }
 }
