@@ -1,77 +1,104 @@
 # Test Plan
 
-This document outlines a plan for testing the Unified AI Project, starting with the smallest units and gradually moving to more complex integration tests.
+This document outlines a plan for testing the Unified AI Project, starting with
+the smallest units and gradually moving to more complex integration tests.
 
 ## Phase 1: Unit Tests
 
 ### Core AI
 
 - **`AgentManager`**:
-  - **Test Initialization**: Test that the `AgentManager` can be initialized correctly.
+  - **Test Initialization**: Test that the `AgentManager` can be initialized
+    correctly.
     - `tests/core_ai/test_agent_manager.py::test_initialization`
-  - **Test Launch Agent Success**: Test that the `AgentManager` can launch a single agent successfully.
+  - **Test Launch Agent Success**: Test that the `AgentManager` can launch a
+    single agent successfully.
     - `tests/core_ai/test_agent_manager.py::test_launch_agent_success`
-  - **Test Launch Agent Not Found**: Test that the `AgentManager` can handle the case where an agent is not found.
+  - **Test Launch Agent Not Found**: Test that the `AgentManager` can handle the
+    case where an agent is not found.
     - `tests/core_ai/test_agent_manager.py::test_launch_agent_not_found`
-  - **Test Launch Agent Already Running**: Test that the `AgentManager` can handle the case where an agent is already running.
+  - **Test Launch Agent Already Running**: Test that the `AgentManager` can
+    handle the case where an agent is already running.
     - `tests/core_ai/test_agent_manager.py::test_launch_agent_already_running`
-  - **Test Shutdown Agent Success**: Test that the `AgentManager` can shut down a single agent successfully.
+  - **Test Shutdown Agent Success**: Test that the `AgentManager` can shut down
+    a single agent successfully.
     - `tests/core_ai/test_agent_manager.py::test_shutdown_agent_success`
-  - **Test Shutdown Agent Not Running**: Test that the `AgentManager` can handle the case where an agent is not running.
+  - **Test Shutdown Agent Not Running**: Test that the `AgentManager` can handle
+    the case where an agent is not running.
     - `tests/core_ai/test_agent_manager.py::test_shutdown_agent_not_running`
-  - **Test Shutdown All Agents**: Test that the `AgentManager` can shut down all running agents.
+  - **Test Shutdown All Agents**: Test that the `AgentManager` can shut down all
+    running agents.
     - `tests/core_ai/test_agent_manager.py::test_shutdown_all_agents`
 
 - **`ProjectCoordinator`**:
-  - **Test Handle Project**: Test that the `ProjectCoordinator` can decompose a simple user query into a single subtask, execute it, and integrate the result.
+  - **Test Handle Project**: Test that the `ProjectCoordinator` can decompose a
+    simple user query into a single subtask, execute it, and integrate the
+    result.
     - `tests/core_ai/dialogue/test_project_coordinator.py::test_handle_project_decomposes_and_executes`
-  - **Test Execute Task Graph with Dependencies**: Test that the `ProjectCoordinator` can correctly handle dependencies between tasks.
+  - **Test Execute Task Graph with Dependencies**: Test that the
+    `ProjectCoordinator` can correctly handle dependencies between tasks.
     - `tests/core_ai/dialogue/test_project_coordinator.py::test_execute_task_graph_with_dependencies`
-  - **Test Execute Task Graph with Circular Dependency**: Test that the `ProjectCoordinator` raises a `ValueError` for circular dependencies.
+  - **Test Execute Task Graph with Circular Dependency**: Test that the
+    `ProjectCoordinator` raises a `ValueError` for circular dependencies.
     - `tests/core_ai/dialogue/test_project_coordinator.py::test_execute_task_graph_circular_dependency`
 
 - **`HSPConnector`**:
-  - **Test Initialization**: Test that the `HSPConnector` can be initialized in mock mode.
+  - **Test Initialization**: Test that the `HSPConnector` can be initialized in
+    mock mode.
     - `tests/hsp/test_hsp_connector.py::test_hsp_connector_init`
-  - **Test Connect and Disconnect**: Test that the `HSPConnector` can connect and disconnect in mock mode.
+  - **Test Connect and Disconnect**: Test that the `HSPConnector` can connect
+    and disconnect in mock mode.
     - `tests/hsp/test_hsp_connector.py::test_hsp_connector_connect_disconnect_mock_mode`
-  - **Test Publish Message**: Test that the `HSPConnector` can publish a message in mock mode.
+  - **Test Publish Message**: Test that the `HSPConnector` can publish a message
+    in mock mode.
     - `tests/hsp/test_hsp_connector.py::test_hsp_connector_publish_message`
-  - **Test Subscribe and Receive**: Test that the `HSPConnector` can subscribe to a topic and receive a message in mock mode.
+  - **Test Subscribe and Receive**: Test that the `HSPConnector` can subscribe
+    to a topic and receive a message in mock mode.
     - `tests/hsp/test_hsp_connector.py::test_hsp_connector_subscribe_and_receive`
   - **Test ACK Sending**: Test that the `HSPConnector` can send an ACK message.
     - `tests/hsp/test_hsp_connector.py::test_hsp_connector_ack_sending`
   - **Test On Connect Callback**: Test that the `on_connect` callback is called.
     - `tests/hsp/test_hsp_connector.py::test_hsp_connector_on_connect_callback`
-  - **Test On Disconnect Callback**: Test that the `on_disconnect` callback is called.
+  - **Test On Disconnect Callback**: Test that the `on_disconnect` callback is
+    called.
     - `tests/hsp/test_hsp_connector.py::test_hsp_connector_on_disconnect_callback`
-  - **Test Register Specific Callbacks**: Test that the `HSPConnector` can register and trigger specific message type callbacks.
+  - **Test Register Specific Callbacks**: Test that the `HSPConnector` can
+    register and trigger specific message type callbacks.
     - `tests/hsp/test_hsp_connector.py::test_hsp_connector_register_specific_callbacks`
 
 ### Agents
 
 - **`BaseAgent`**:
-  - **Test Initialization**: Test that a `BaseAgent` can be initialized correctly.
+  - **Test Initialization**: Test that a `BaseAgent` can be initialized
+    correctly.
     - `tests/agents/test_base_agent.py::test_base_agent_init`
-  - **Test Start and Stop**: Test that a `BaseAgent` can start and stop correctly.
+  - **Test Start and Stop**: Test that a `BaseAgent` can start and stop
+    correctly.
     - `tests/agents/test_base_agent.py::test_base_agent_start_stop`
   - **Test Handle Task Request**: Test the default `handle_task_request` method.
     - `tests/agents/test_base_agent.py::test_base_agent_handle_task_request`
 
 ## Phase 2: Integration Tests
 
-- **Test Project Execution**: Test the full project execution workflow, from a user query to the final response. This includes:
+- **Test Project Execution**: Test the full project execution workflow, from a
+  user query to the final response. This includes:
   - Decomposing the query into subtasks.
   - Launching agents.
   - Sending tasks to agents.
   - Receiving results from agents.
   - Integrating the results into a final response.
-- **Test Dynamic Agent Launch**: Test that the `ProjectCoordinator` can dynamically launch an agent when a required capability is not available.
-- **Test Failing Subtask**: Test that the `ProjectCoordinator` can handle the case where a subtask fails.
-- **Test No Dependencies**: Test that the `ProjectCoordinator` can handle a project with no dependencies between subtasks.
-- **Test Knowledge Update**: Test that the `LearningManager` can learn from a completed project and update its knowledge base.
-- **Test Trust Management**: Test that the `TrustManager` can update the trust score of an agent based on its performance.
-- **Test Self-Improvement**: Test that the AI can improve its performance over time by learning from its mistakes.
+- **Test Dynamic Agent Launch**: Test that the `ProjectCoordinator` can
+  dynamically launch an agent when a required capability is not available.
+- **Test Failing Subtask**: Test that the `ProjectCoordinator` can handle the
+  case where a subtask fails.
+- **Test No Dependencies**: Test that the `ProjectCoordinator` can handle a
+  project with no dependencies between subtasks.
+- **Test Knowledge Update**: Test that the `LearningManager` can learn from a
+  completed project and update its knowledge base.
+- **Test Trust Management**: Test that the `TrustManager` can update the trust
+  score of an agent based on its performance.
+- **Test Self-Improvement**: Test that the AI can improve its performance over
+  time by learning from its mistakes.
 - **Test CLI**: Test the command-line interface.
 - **Test Electron App**: Test the Electron desktop application.
 - **Test MCP Connector**: Test the MCP connector.
@@ -79,15 +106,27 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Fragmenta**: Test the Fragmenta module.
 - **Test Vision Tone Inverter**: Test the Vision Tone Inverter module.
 - **Test Search Engine**: Test the search engine.
-- **Test Services**: Test the various services, including the AI Virtual Input Service, Audio Service, LLM Interface, Main API Server, Node Services, Resource Awareness Service, Sandbox Executor, and Vision Service.
-- **Test Tools**: Test the various tools, including the Calculator Tool, Code Understanding Tool, CSV Tool, Dependency Checker, File System Tool, Image Generation Tool, Image Recognition Tool, JS Tool Dispatcher, Logic Model, Math Model, Parameter Extractor, Speech to Text Tool, Tool Dispatcher, and Translation Model.
+- **Test Services**: Test the various services, including the AI Virtual Input
+  Service, Audio Service, LLM Interface, Main API Server, Node Services,
+  Resource Awareness Service, Sandbox Executor, and Vision Service.
+- **Test Tools**: Test the various tools, including the Calculator Tool, Code
+  Understanding Tool, CSV Tool, Dependency Checker, File System Tool, Image
+  Generation Tool, Image Recognition Tool, JS Tool Dispatcher, Logic Model, Math
+  Model, Parameter Extractor, Speech to Text Tool, Tool Dispatcher, and
+  Translation Model.
 - **Test Game**: Test the game module.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
-- **Test MCP Integration**: Test the integration of the MCP connector with the other components.
-- **Test Context7 Integration**: Test the integration of the Context7 connector with the other components.
-- **Test Learning and Trust Integration**: Test the integration of the learning and trust management systems.
-- **Test Self-Improvement Integration**: Test the integration of the self-improvement system.
-- **Test Node Services Integration**: Test the integration of the Node.js services.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
+- **Test MCP Integration**: Test the integration of the MCP connector with the
+  other components.
+- **Test Context7 Integration**: Test the integration of the Context7 connector
+  with the other components.
+- **Test Learning and Trust Integration**: Test the integration of the learning
+  and trust management systems.
+- **Test Self-Improvement Integration**: Test the integration of the
+  self-improvement system.
+- **Test Node Services Integration**: Test the integration of the Node.js
+  services.
 - **Test Simple Test**: Test the simple test.
 - **Test Translation Model**: Test the translation model.
 - **Test Parameter Extractor**: Test the parameter extractor.
@@ -138,7 +177,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -171,7 +211,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -204,7 +245,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -237,7 +279,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -270,7 +313,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -303,7 +347,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -337,7 +382,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -370,7 +416,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -403,7 +450,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -436,7 +484,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -469,7 +518,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -502,7 +552,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -535,7 +586,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -568,7 +620,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -601,7 +654,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -634,7 +688,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -667,7 +722,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -700,7 +756,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -733,7 +790,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -766,7 +824,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -799,7 +858,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -832,7 +892,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -865,7 +926,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -898,7 +960,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -931,7 +994,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -964,7 +1028,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -997,7 +1062,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1030,7 +1096,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1063,7 +1130,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1096,7 +1164,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1129,7 +1198,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1162,7 +1232,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1195,7 +1266,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1228,7 +1300,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1261,7 +1334,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1294,7 +1368,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1327,7 +1402,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1360,7 +1436,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1393,7 +1470,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1426,7 +1504,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1459,7 +1538,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1492,7 +1572,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1525,7 +1606,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1558,7 +1640,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1591,7 +1674,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1624,7 +1708,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1657,7 +1742,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1690,7 +1776,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1723,7 +1810,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1756,7 +1844,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1789,7 +1878,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1822,7 +1912,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1855,7 +1946,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1888,7 +1980,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1921,7 +2014,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1954,7 +2048,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -1987,7 +2082,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2020,7 +2116,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2053,7 +2150,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2086,7 +2184,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2119,7 +2218,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2152,7 +2252,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2185,7 +2286,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2218,7 +2320,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2251,7 +2354,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2284,7 +2388,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2317,7 +2422,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2350,7 +2456,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2384,7 +2491,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2417,7 +2525,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2450,7 +2559,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2483,7 +2593,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2516,7 +2627,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2549,7 +2661,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2582,7 +2695,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2615,7 +2729,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2648,7 +2763,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2681,7 +2797,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2714,7 +2831,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2747,7 +2865,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2780,7 +2899,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2813,7 +2933,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2846,7 +2967,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2879,7 +3001,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2912,7 +3035,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2945,7 +3069,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -2978,7 +3103,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3011,7 +3137,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3044,7 +3171,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3077,7 +3205,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3110,7 +3239,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3143,7 +3273,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3176,7 +3307,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3209,7 +3341,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3242,7 +3375,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3275,7 +3409,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3308,7 +3443,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3341,7 +3477,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3374,7 +3511,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3407,7 +3545,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3440,7 +3579,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3473,7 +3613,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3506,7 +3647,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3539,7 +3681,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3572,7 +3715,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3605,7 +3749,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3638,7 +3783,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3671,7 +3817,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3704,7 +3851,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3737,7 +3885,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3770,7 +3919,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3803,7 +3953,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3836,7 +3987,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3869,7 +4021,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3902,7 +4055,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3935,7 +4089,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -3968,7 +4123,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4001,7 +4157,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4034,7 +4191,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4067,7 +4225,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4100,7 +4259,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4133,7 +4293,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4166,7 +4327,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4199,7 +4361,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4232,7 +4395,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4265,7 +4429,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4298,7 +4463,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4331,7 +4497,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4364,7 +4531,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4397,7 +4565,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4430,7 +4599,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4463,7 +4633,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4496,7 +4667,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4529,7 +4701,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4562,7 +4735,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4595,7 +4769,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4628,7 +4803,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4661,7 +4837,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4694,7 +4871,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4727,7 +4905,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4760,7 +4939,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4793,7 +4973,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4826,7 +5007,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4859,7 +5041,8 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**: Test the MQTT broker startup.
 - **Test Agent Collaboration**: Test the agent collaboration.
 - **Test Knowledge Update**: Test the knowledge update.
@@ -4892,5 +5075,6 @@ This document outlines a plan for testing the Unified AI Project, starting with 
 - **Test Assets**: Test the assets.
 - **Test Main**: Test the main game loop.
 - **Test HSP Refactored**: Test the refactored HSP connector.
-- **Test HSP Integration**: Test the integration of the HSP connector with the other components.
+- **Test HSP Integration**: Test the integration of the HSP connector with the
+  other components.
 - **Test MQTT Broker Startup**:

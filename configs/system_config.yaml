@@ -2,7 +2,16 @@ system:
   log_path: logs # To be placed under data/logs/ eventually
   log_level: INFO
   crisis_system: # Added CrisisSystem configuration
-    crisis_keywords: ["emergency", "danger", "unsafe", "help me please", "i'm in trouble", "suicide", "harm myself"]
+    crisis_keywords:
+      [
+        "emergency",
+        "danger",
+        "unsafe",
+        "help me please",
+        "i'm in trouble",
+        "suicide",
+        "harm myself",
+      ]
     default_crisis_level_on_keyword: 1
     crisis_protocols:
       "1": "log_and_monitor_basic_crisis_response"
@@ -10,10 +19,10 @@ system:
       "default": "log_only"
   emotion_system: # Added EmotionSystem configuration
     emotion_map:
-      neutral: {"text_ending": ""}
-      empathetic: {"text_ending": " (gently)"}
-      playful: {"text_ending": " (playfully) ✨"}
-      sad_response: {"text_ending": " (with a sigh)"}
+      neutral: { "text_ending": "" }
+      empathetic: { "text_ending": " (gently)" }
+      playful: { "text_ending": " (playfully) ✨" }
+      sad_response: { "text_ending": " (with a sigh)" }
 
 ai_name: Miko # Or a new unified name, TBD
 
@@ -78,59 +87,59 @@ fragmenta_settings:
 
 operational_configs:
   timeouts:
-    llm_general_request: 60      # Default timeout for general LLM requests in seconds
-    llm_critique_request: 45     # Timeout for LLM requests by SelfCritiqueModule
+    llm_general_request: 60 # Default timeout for general LLM requests in seconds
+    llm_critique_request: 45 # Timeout for LLM requests by SelfCritiqueModule
     llm_fact_extraction_request: 45 # Timeout for LLM requests by FactExtractorModule
     dialogue_manager_turn: 120 # Overall timeout for processing a single turn in DialogueManager
     # 執行監控超時配置 - Execution Monitor Timeout Configuration
-    command_execution_default: 30    # 預設命令執行超時（秒）
-    command_execution_max: 300       # 最大命令執行超時（秒）
-    command_execution_min: 5         # 最小命令執行超時（秒）
-    terminal_responsiveness_check: 5  # 終端機響應性檢查超時（秒）
-    process_health_check: 10         # 進程健康檢查間隔（秒）
-    system_resource_check: 1         # 系統資源檢查間隔（秒）
+    command_execution_default: 30 # 預設命令執行超時（秒）
+    command_execution_max: 300 # 最大命令執行超時（秒）
+    command_execution_min: 5 # 最小命令執行超時（秒）
+    terminal_responsiveness_check: 5 # 終端機響應性檢查超時（秒）
+    process_health_check: 10 # 進程健康檢查間隔（秒）
+    system_resource_check: 1 # 系統資源檢查間隔（秒）
   learning_thresholds:
     min_fact_confidence_to_store: 0.70 # Minimum confidence from FactExtractor to store a fact
-    min_critique_score_to_store: 0.3  # Minimum critique score to bother storing the critique object
-  
+    min_critique_score_to_store: 0.3 # Minimum critique score to bother storing the critique object
+
   # 執行監控配置 - Execution Monitoring Configuration
   execution_monitor:
-    enabled: true                    # 啟用執行監控
-    adaptive_timeout: true           # 啟用自適應超時
-    terminal_monitoring: true        # 啟用終端機監控
-    resource_monitoring: true        # 啟用資源監控
-    auto_recovery: true              # 啟用自動恢復
-    
+    enabled: true # 啟用執行監控
+    adaptive_timeout: true # 啟用自適應超時
+    terminal_monitoring: true # 啟用終端機監控
+    resource_monitoring: true # 啟用資源監控
+    auto_recovery: true # 啟用自動恢復
+
     # 資源閾值 - Resource Thresholds
     thresholds:
-      cpu_warning: 80.0              # CPU使用率警告閾值（%）
-      cpu_critical: 90.0             # CPU使用率危險閾值（%）
-      memory_warning: 75.0           # 記憶體使用率警告閾值（%）
-      memory_critical: 85.0          # 記憶體使用率危險閾值（%）
-      disk_warning: 80.0             # 磁碟使用率警告閾值（%）
-      disk_critical: 90.0            # 磁碟使用率危險閾值（%）
-    
+      cpu_warning: 80.0 # CPU使用率警告閾值（%）
+      cpu_critical: 90.0 # CPU使用率危險閾值（%）
+      memory_warning: 75.0 # 記憶體使用率警告閾值（%）
+      memory_critical: 85.0 # 記憶體使用率危險閾值（%）
+      disk_warning: 80.0 # 磁碟使用率警告閾值（%）
+      disk_critical: 90.0 # 磁碟使用率危險閾值（%）
+
     # 自適應超時參數 - Adaptive Timeout Parameters
     adaptive_timeout_config:
-      history_size: 50               # 執行歷史記錄大小
-      timeout_multiplier: 2.5        # 超時倍數（基於平均執行時間）
-      slow_terminal_multiplier: 1.5  # 慢速終端機超時倍數
+      history_size: 50 # 執行歷史記錄大小
+      timeout_multiplier: 2.5 # 超時倍數（基於平均執行時間）
+      slow_terminal_multiplier: 1.5 # 慢速終端機超時倍數
       stuck_terminal_multiplier: 2.0 # 卡住終端機超時倍數
-      cache_size: 100                # 超時緩存大小
-    
+      cache_size: 100 # 超時緩存大小
+
     # 恢復策略 - Recovery Strategies
     recovery_strategies:
-      stuck_process_timeout: 30      # 卡住進程檢測超時（秒）
-      max_retry_attempts: 3          # 最大重試次數
-      retry_delay: 5                 # 重試延遲（秒）
-      escalation_enabled: true       # 啟用問題升級
-      
+      stuck_process_timeout: 30 # 卡住進程檢測超時（秒）
+      max_retry_attempts: 3 # 最大重試次數
+      retry_delay: 5 # 重試延遲（秒）
+      escalation_enabled: true # 啟用問題升級
+
     # 日誌配置 - Logging Configuration
     logging:
-      level: INFO                    # 日誌級別
-      log_execution_details: true    # 記錄執行詳情
-      log_resource_usage: false      # 記錄資源使用情況
-      log_terminal_status: false     # 記錄終端機狀態
+      level: INFO # 日誌級別
+      log_execution_details: true # 記錄執行詳情
+      log_resource_usage: false # 記錄資源使用情況
+      log_terminal_status: false # 記錄終端機狀態
 
   api_server:
     host: "127.0.0.1"
