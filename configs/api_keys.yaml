@@ -10,6 +10,27 @@ gemini:
 openai:
   api_key: "OPENAI_API_KEY_PLACEHOLDER" # Environment variable: OPENAI_API_KEY
 
+# Anthropic Claude API
+anthropic:
+  api_key: "ANTHROPIC_API_KEY_PLACEHOLDER" # Environment variable: ANTHROPIC_API_KEY
+
+# Azure OpenAI API
+azure_openai:
+  api_key: "AZURE_OPENAI_API_KEY_PLACEHOLDER" # Environment variable: AZURE_OPENAI_API_KEY
+  endpoint: "AZURE_OPENAI_ENDPOINT_PLACEHOLDER" # Environment variable: AZURE_OPENAI_ENDPOINT
+
+# Cohere API
+cohere:
+  api_key: "COHERE_API_KEY_PLACEHOLDER" # Environment variable: COHERE_API_KEY
+
+# Hugging Face API
+huggingface:
+  api_key: "HUGGINGFACE_API_KEY_PLACEHOLDER" # Environment variable: HUGGINGFACE_API_KEY
+
+# Ollama Local API
+ollama:
+  base_url: "OLLAMA_BASE_URL_PLACEHOLDER" # Environment variable: OLLAMA_BASE_URL (default: http://localhost:11434)
+
 # Firebase
 firebase:
   # Path to the Firebase Admin SDK JSON credentials file

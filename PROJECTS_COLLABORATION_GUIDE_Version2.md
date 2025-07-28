@@ -2,12 +2,13 @@
 
 ## 專案總覽
 
-catcatAI 組織下目前主要有兩個相關專案：
+catcatAI 組織下目前主要有三個相關專案：
 
 | 專案名稱             | 主要方向              | 主要語言   | 次要語言                       | 專案描述                   |
 | -------------------- | --------------------- | ---------- | ------------------------------ | -------------------------- |
 | Unified-AI-Project   | AI平台/後端服務集成   | Python 94% | TypeScript, JavaScript, HTML等 | AI 能力統一整合平台        |
 | github-connect-quest | GitHub集成/自動化工具 | Python 81% | TypeScript, JavaScript, HTML等 | 與 GitHub 互動的自動化工具 |
+| Rovo Dev Agents      | Atlassian生態集成     | Python/API | REST API, Atlassian SDK       | 智能開發協作與文檔管理     |
 
 ---
 
@@ -37,6 +38,18 @@ catcatAI 組織下目前主要有兩個相關專案：
   - `frontend/`：可視化界面或用戶交互部分。
   - `integrations/`：第三方服務集成模組。
 
+### Rovo Dev Agents
+
+- **定位**：Atlassian 生態系統智能開發助手，專注於開發協作與文檔管理。
+- **技術棧**：
+  - Python 為主，用於 AI 代理邏輯和 API 集成。
+  - Atlassian REST API 用於 Confluence、Jira、Bitbucket 集成。
+  - 支持多種開發工具和平台的 API 接口。
+- **推薦模組/結構**：
+  - `agents/`：智能開發代理實現。
+  - `atlassian_bridge/`：Atlassian 服務橋接層。
+  - `integrations/`：與 Unified-AI-Project 的集成接口。
+
 ---
 
 ## 協作分工與整合建議
@@ -44,10 +57,12 @@ catcatAI 組織下目前主要有兩個相關專案：
 1. **分工明確**
    - Unified-AI-Project 專注於 AI 能力和服務端 API 實現。
    - github-connect-quest 專注於 GitHub 連接、自動化與用戶操作界面。
+   - Rovo Dev Agents 專注於 Atlassian 生態系統集成和智能開發協作。
 
 2. **API 對接**
    - Unified-AI-Project 將 AI 能力封裝為 RESTful API 或 gRPC 服務。
    - github-connect-quest 做為客戶端，通過 HTTP 調用 Unified-AI-Project 的 API 實現各種自動化與智能功能。
+   - Rovo Dev Agents 通過 HSP 協議與 Unified-AI-Project 集成，提供 Atlassian 服務的智能代理能力。
 
 3. **前後端協作**
    - 前端統一使用 TypeScript/React，提升維護性和互操作性。
