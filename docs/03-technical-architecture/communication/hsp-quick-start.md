@@ -37,20 +37,30 @@
 
 ## 🛠️ 快速使用
 
-### 发送请求
+### 基本使用
 
 ```python
-from src.hsp import HSPConnector
+from src.hsp.connector import HSPConnector
 
-# 创建连接
-connector = HSPConnector()
+# 創建連接（啟用fallback協議）
+connector = HSPConnector(
+    ai_id="my_ai_agent",
+    broker_address="127.0.0.1",
+    broker_port=1883,
+    enable_fallback=True  # 啟用備用協議
+)
 await connector.connect()
 
-# 发送请求
-response = await connector.send_request(
-    receiver="math_agent",
-    payload={"operation": "add", "numbers": [1, 2, 3]}
-)
+# 發送事實
+fact_payload = {
+    "id": "fact_001",
+    "statement_type": "natural_language",
+    "statement_nl": "這是一個測試事實",
+    "source_ai_id": "my_ai_agent",
+    "timestamp_created": "2024-01-01T00:00:00Z",
+    "confidence_score": 0.9
+}
+success = await connector.publish_fact(fact_payload, "hsp/knowledge/facts/test")
 ```
 
 ### 接收消息
@@ -92,14 +102,38 @@ async def handle_message(message):
 - **[代理协作框架](./architecture/AGENT_COLLABORATION_FRAMEWORK.md)** - 代理如何协作
 - **[消息传输机制](../technical_specs/MESSAGE_TRANSPORT.md)** - 底层传输实现
 
-## ❓ 常见问题
+## 🛡️ 容錯和備用機制
 
-**Q: HSP 和 HTTP API 有什么区别？** A:
-HSP 是异步消息传递，支持事件驱动；HTTP 是同步请求-响应模式。
+### Fallback協議支持
+HSP現在支持多層級的備用協議，確保通訊不中斷：
 
-**Q: 如何调试 HSP 消息？** A: 使用内置的消息日志功能，所有消息都会被记录。
+```python
+# 檢查通訊狀態
+status = connector.get_communication_status()
+print(f"HSP可用: {status['hsp_available']}")
+print(f"活動協議: {status['fallback_status']['active_protocol']}")
 
-**Q: HSP 支持哪些传输方式？** A: 目前主要支持 MQTT，未来会支持更多传输协议。
+# 健康檢查
+health = await connector.health_check()
+print(f"系統健康: {health['overall_healthy']}")
+```
+
+### 協議層級
+1. **MQTT (主協議)** - 正常網絡環境
+2. **HTTP協議** - 網絡受限環境  
+3. **文件協議** - 本地環境
+4. **內存協議** - 同進程通訊
+
+## ❓ 常見問題
+
+**Q: HSP 和 HTTP API 有什麼區別？** A:
+HSP 是異步消息傳遞，支持事件驅動；HTTP 是同步請求-響應模式。
+
+**Q: 如何調試 HSP 消息？** A: 使用內置的消息日誌功能，所有消息都會被記錄。
+
+**Q: HSP 支持哪些傳輸方式？** A: 主要支持 MQTT，並提供 HTTP、文件、內存等備用協議。
+
+**Q: 如果MQTT連接失敗怎麼辦？** A: 系統會自動切換到備用協議，保證通訊不中斷。
 
 ---
 

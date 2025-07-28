@@ -2,7 +2,13 @@
 
 ## 概述
 
-統一 AI 專案是一個先進的多維語義 AI 系統，整合了 MikoAI、Fragmenta 和其他 CatAI 計劃。本專案不僅是工具的集合，更是創造**多維語義實體**的嘗試，其架構由湧現、自我修正和語義演化的敘事所引導。
+統一 AI 專案是一個先進的多維語義 AI 系統，整合了 MikoAI、Fragmenta、Rovo Dev Agents 和其他 CatAI 計劃。本專案不僅是工具的集合，更是創造**多維語義實體**的嘗試，其架構由湧現、自我修正和語義演化的敘事所引導。
+
+### 🤝 核心集成
+
+- **🤖 Rovo Dev Agents**: 與 Atlassian 生態系統深度集成，提供智能開發協作能力
+- **📋 Atlassian 服務**: 支持 Confluence、Jira、Bitbucket 的無縫集成
+- **🔗 GitHub Connect**: 通過 github-connect-quest 實現 GitHub 自動化
 
 ## 項目文檔
 
@@ -10,6 +16,7 @@
 - **[術語表 (Glossary)](docs/00-overview/GLOSSARY.md)**: 專案核心概念定義。
 - **[HSP 規範](docs/technical_design/HSP_SPECIFICATION.md)**: 異構服務協議 (HSP) 詳細規範。
 - **[HAM 設計規範](docs/technical_design/architecture/HAM_design_spec.md)**: 分層抽象記憶系統設計文檔。
+- **[Rovo Dev Agents 集成](docs/03-technical-architecture/integrations/rovo-dev-agents.md)**: Atlassian Rovo Dev Agents 集成架構。
 - **[貢獻指南](CONTRIBUTING.md)**: 如何為本專案做出貢獻。
 
 ## 快速開始
