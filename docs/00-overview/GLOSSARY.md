@@ -20,6 +20,11 @@
   `PersonalityManager` 管理。在技術架構上，她的智能是由 `DialogueManager` 和
   `ProjectCoordinator` 共同實現的。她是「誰」，而不是「什麼」。
 
+**Atlassian Bridge (`src/integrations/atlassian_bridge.py`)**
+
+- **簡潔定義**: 連接 Unified AI Project 與 Atlassian 服務的統一橋接層。
+- **功能與範圍**: 提供對 Confluence、Jira、Bitbucket 等 Atlassian 服務的統一 API 接口，處理認證、數據格式轉換和錯誤處理。是 Rovo Dev Agents 與 Atlassian 生態系統集成的核心組件。
+
 ### U
 
 **UID (Unique Identifier / 共生印記)**
@@ -96,6 +101,15 @@
 - **簡潔定義**: 實現 Angela **複雜項目協調與多代理管理**的核心技術模組。
 - **功能與範圍**: 當 `DialogueManager`
   判斷一個任務需要多代理協作時，這個模組將被激活。它負責執行「四抽模型」的完整流程：任務分解、構建 DAG、按拓撲順序執行任務、動態傳遞結果，以及最終的結果整合。
+
+---
+
+### R
+
+**Rovo Dev Agents**
+
+- **簡潔定義**: Atlassian 生態系統中的智能開發助手，專門協助軟件開發任務。
+- **功能與範圍**: 在 Unified AI Project 中作為專門的開發協作代理，負責代碼分析、文檔生成、問題追蹤、項目管理等功能。通過 HSP 協議與 Angela 集成，提供 Confluence、Jira、Bitbucket 的智能自動化能力。
 
 ---
 

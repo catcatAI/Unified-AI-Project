@@ -33,24 +33,46 @@ a connection between the AI and the MQTT broker.
 The command-line interface (CLI) in `src/interfaces/cli/main.py` uses standard
 input and output to communicate with the user.
 
+## Fallback Protocol System
+
+### Overview
+To address the error handling and reliability issues mentioned above, we have implemented a comprehensive fallback protocol system.
+
+### Protocol Architecture
+```
+┌─────────────┐    失敗    ┌─────────────┐
+│ MQTT (HSP)  │ ────────→  │ HTTP協議    │
+└─────────────┘            └─────────────┘
+                                 │ 失敗
+                                 ▼
+                           ┌─────────────┐
+                           │ 文件協議    │
+                           └─────────────┘
+                                 │ 失敗
+                                 ▼
+                           ┌─────────────┐
+                           │ 內存協議    │
+                           └─────────────┘
+```
+
+### Error Handling Improvements
+- ✅ Automatic failure detection and protocol switching
+- ✅ Connection retry with exponential backoff
+- ✅ Message retransmission and deduplication
+- ✅ Comprehensive error logging and monitoring
+
 ## Follow-up Development and Implementation Plan
 
-Based on the analysis of the message transport mechanism, the following areas
-for improvement have been identified:
+### Error Handling (IMPLEMENTED)
 
-### Error Handling
+The HSP protocol now has robust error handling through the fallback system:
 
-The current implementation of the HSP protocol does not have robust error
-handling. This could lead to problems if one of the AI instances goes offline or
-if there is a problem with the MQTT broker.
+**Implemented Features:**
 
-**Recommendations:**
-
-- Implement a mechanism for detecting when an AI instance has gone offline.
-- Implement a mechanism for re-establishing a connection to the MQTT broker if
-  the connection is lost.
-- Implement a mechanism for handling errors that occur during message
-  processing.
+- ✅ Automatic detection when an AI instance goes offline
+- ✅ Automatic re-establishment of connections with fallback protocols
+- ✅ Comprehensive error handling during message processing
+- ✅ Health monitoring and status reporting
 
 ### Security
 
@@ -65,13 +87,26 @@ the messages and learn sensitive information about the AI.
 - Implement a mechanism for authenticating AI instances to ensure that only
   authorized instances can connect to the network.
 
-### Scalability
+### Security (ENHANCED)
 
-The current implementation of the HSP protocol is not very scalable. It would be
-difficult to add a large number of AI instances to the network without running
-into performance problems.
+Communication security has been improved with the fallback system:
 
-**Recommendations:**
+**Implemented Features:**
+- ✅ Message integrity verification
+- ✅ Secure protocol selection
+- 🔄 Planned: TLS encryption for all protocols
+- 🔄 Planned: Authentication mechanisms
 
-- Use a more scalable message broker, such as RabbitMQ or Kafka.
-- Implement a mechanism for load balancing the traffic between the AI instances.
+### Scalability (IMPROVED)
+
+The fallback protocol system improves scalability:
+
+**Implemented Features:**
+- ✅ Multi-protocol load distribution
+- ✅ Dynamic protocol selection based on load
+- ✅ Configuration-driven protocol management
+- ✅ Horizontal scaling support through HTTP protocol
+
+**Future Recommendations:**
+- Use more scalable message brokers (RabbitMQ, Kafka) as additional protocols
+- Implement advanced load balancing across protocol instances

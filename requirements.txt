@@ -11,3 +11,19 @@ pandas
 scikit-learn
 spacy
 gmqtt
+
+# AI 模型相关依赖
+openai>=1.0.0
+anthropic>=0.7.0
+google-generativeai>=0.3.0
+cohere>=4.0.0
+azure-ai-inference>=1.0.0
+azure-identity>=1.0.0
+transformers>=4.0.0
+torch>=2.0.0
+huggingface-hub>=0.16.0
+
+# 额外的实用工具
+rich>=13.0.0
+click>=8.0.0
+tqdm>=4.64.0
