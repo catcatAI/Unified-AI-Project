@@ -15,17 +15,17 @@
           "required": true
         },
         {
-            "name": "count",
-            "type": "number",
-            "description": "A count value.",
-            "required": false
+          "name": "count",
+          "type": "number",
+          "description": "A count value.",
+          "required": false
         }
       ],
       "returns": {
         "type": "object",
         "properties": {
-            "result": {"type": "string"},
-            "inputParams": {"type": "object"}
+          "result": { "type": "string" },
+          "inputParams": { "type": "object" }
         }
       }
     },
@@ -36,7 +36,7 @@
       "handlerFunction": "run",
       "enabled": false,
       "parameters": [],
-      "returns": {"type": "object"}
+      "returns": { "type": "object" }
     }
   ]
 }

@@ -1,5 +1,5 @@
-import { useNavigate, useLocation } from "react-router-dom"
-import { Sparkles } from "lucide-react"
+import { useNavigate, useLocation } from "react-router-dom";
+import { Sparkles } from "lucide-react";
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -11,22 +11,26 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
-} from "./ui/sidebar"
-import { Badge } from "./ui/badge"
-import { navigationItems, aiCategories } from "../config/sidebar"
+} from "./ui/sidebar";
+import { Badge } from "./ui/badge";
+import { navigationItems, aiCategories } from "../config/sidebar";
 
 export function Sidebar() {
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-500'
-      case 'maintenance': return 'bg-yellow-500'
-      case 'beta': return 'bg-blue-500'
-      default: return 'bg-gray-500'
+      case "active":
+        return "bg-green-500";
+      case "maintenance":
+        return "bg-yellow-500";
+      case "beta":
+        return "bg-blue-500";
+      default:
+        return "bg-gray-500";
     }
-  }
+  };
 
   return (
     <SidebarComponent className="border-r bg-background/50 backdrop-blur-sm">
@@ -73,10 +77,14 @@ export function Sidebar() {
                       isActive={location.pathname === `/service/${service.id}`}
                       className="hover:bg-accent/50 transition-colors"
                     >
-                      <div className={`h-2 w-2 rounded-full ${getStatusColor(service.status)}`} />
+                      <div
+                        className={`h-2 w-2 rounded-full ${getStatusColor(service.status)}`}
+                      />
                       <span className="flex-1">{service.name}</span>
-                      {service.status === 'beta' && (
-                        <Badge variant="secondary" className="text-xs">Beta</Badge>
+                      {service.status === "beta" && (
+                        <Badge variant="secondary" className="text-xs">
+                          Beta
+                        </Badge>
                       )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -91,10 +99,13 @@ export function Sidebar() {
         <div className="text-xs text-muted-foreground">
           <div>API Usage: 1,234 / 10,000</div>
           <div className="w-full bg-secondary rounded-full h-1 mt-1">
-            <div className="bg-blue-600 h-1 rounded-full" style={{ width: '12.34%' }} />
+            <div
+              className="bg-blue-600 h-1 rounded-full"
+              style={{ width: "12.34%" }}
+            />
           </div>
         </div>
       </SidebarFooter>
     </SidebarComponent>
-  )
+  );
 }

@@ -4,10 +4,10 @@
 
 catcatAI 組織下目前主要有兩個相關專案：
 
-| 專案名稱                        | 主要方向               | 主要語言    | 次要語言                        | 專案描述             |
-|---------------------------------|------------------------|-------------|---------------------------------|----------------------|
-| Unified-AI-Project              | AI平台/後端服務集成    | Python 94%  | TypeScript, JavaScript, HTML等  | AI 能力統一整合平台  |
-| github-connect-quest            | GitHub集成/自動化工具  | Python 81%  | TypeScript, JavaScript, HTML等  | 與 GitHub 互動的自動化工具 |
+| 專案名稱             | 主要方向              | 主要語言   | 次要語言                       | 專案描述                   |
+| -------------------- | --------------------- | ---------- | ------------------------------ | -------------------------- |
+| Unified-AI-Project   | AI平台/後端服務集成   | Python 94% | TypeScript, JavaScript, HTML等 | AI 能力統一整合平台        |
+| github-connect-quest | GitHub集成/自動化工具 | Python 81% | TypeScript, JavaScript, HTML等 | 與 GitHub 互動的自動化工具 |
 
 ---
 

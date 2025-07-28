@@ -1,7 +1,7 @@
 # Default prefixes for internal ontology terms
 internal_uri_prefixes:
-  entity_type: "cai_type:"       # CoreAI internal type
-  property: "cai_prop:"       # CoreAI internal property
+  entity_type: "cai_type:" # CoreAI internal type
+  property: "cai_prop:" # CoreAI internal property
   entity_instance: "cai_instance:" # For specific instances
 
 # Mappings from external URIs to internal terms
@@ -16,11 +16,11 @@ class_mappings:
 property_mappings:
   "http://example.com/ontology#locatedIn": "cai_prop:locatedIn"
   "http://example.com/ontology#hasName": "cai_prop:name"
-  "http://xmlns.com/foaf/0.1/name": "cai_prop:name"         # FOAF name
+  "http://xmlns.com/foaf/0.1/name": "cai_prop:name" # FOAF name
   "http://xmlns.com/foaf/0.1/firstName": "cai_prop:firstName"
   "http://xmlns.com/foaf/0.1/lastName": "cai_prop:lastName"
   "http://schema.org/name": "cai_prop:name"
-  "http://schema.org/location": "cai_prop:location"       # Could map to locatedIn or a generic location property
+  "http://schema.org/location": "cai_prop:location" # Could map to locatedIn or a generic location property
   "http://schema.org/address": "cai_prop:address"
   "http://www.w3.org/2000/01/rdf-schema#label": "cai_prop:label" # rdfs:label
 

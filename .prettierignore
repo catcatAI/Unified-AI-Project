@@ -1,0 +1,12 @@
+# Ignore third-party dependencies
+/venv/
+
+# Ignore what appears to be a nested, duplicated project
+/github-connect-quest/Unified-AI-Project-main/
+
+# Ignore node modules
+/node_modules/
+
+# Ignore files with syntax errors or that are not meant to be formatted
+*.ts
+/src/interfaces/electron_app/index.html

@@ -15,18 +15,21 @@
 ## 快速開始
 
 ### 環境要求
+
 - Python 3.8+
 - Node.js 16+ (用於前端組件)
 
 ### 安裝與運行
 
 1. **克隆專案**
+
    ```bash
    git clone <repository-url>
    cd unified-ai-project
    ```
 
 2. **安裝依賴**
+
    ```bash
    # 安裝核心依賴
    pip install -e .
@@ -36,6 +39,7 @@
    ```
 
 3. **配置環境**
+
    ```bash
    # 複製環境變量模板
    cp .env.example .env
@@ -47,7 +51,8 @@
 
 4. **運行**
    - **API 服務器**: `uvicorn src.services.main_api_server:app --reload`
-   - **命令行接口 (CLI)**: `python src/interfaces/cli/main.py query "Hello Angela"`
+   - **命令行接口 (CLI)**:
+     `python src/interfaces/cli/main.py query "Hello Angela"`
    - **桌面應用**: `cd src/interfaces/electron_app && npm install && npm start`
 
 ## 未來發展路線圖

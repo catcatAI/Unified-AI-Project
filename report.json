@@ -1,1 +1,1516 @@
-{"created": 1753496073.0848908, "duration": 21.124637603759766, "exitcode": 1, "root": "D:\\Projects\\Unified-AI-Project", "environment": {}, "summary": {"passed": 1, "failed": 6, "error": 1, "total": 8, "collected": 8}, "collectors": [{"nodeid": "", "outcome": "passed", "result": [{"nodeid": "tests/services/test_main_api_server_hsp.py", "type": "Module"}]}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestClient", "outcome": "passed", "result": []}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints", "outcome": "passed", "result": [{"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_empty", "type": "Function", "lineno": 156}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_with_advertisements", "type": "Function", "lineno": 164}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_request_hsp_task_success", "type": "Coroutine", "lineno": 192}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_request_hsp_task_capability_not_found", "type": "Coroutine", "lineno": 269}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_pending", "type": "Coroutine", "lineno": 284}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_completed_from_ham", "type": "Coroutine", "lineno": 303}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_failed_from_ham", "type": "Coroutine", "lineno": 339}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_unknown", "type": "Coroutine", "lineno": 367}]}, {"nodeid": "tests/services/test_main_api_server_hsp.py", "outcome": "passed", "result": [{"nodeid": "tests/services/test_main_api_server_hsp.py::TestClient", "type": "Class"}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints", "type": "Class"}]}], "tests": [{"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_empty", "lineno": 156, "outcome": "passed", "keywords": ["test_list_hsp_services_empty", "timeout", "pytestmark", "TestHSPEndpoints", "skipif", "test_main_api_server_hsp.py", "services", "tests", "Unified-AI-Project", ""], "setup": {"duration": 0.40320559999963734, "outcome": "passed", "stdout": "TrustManager initialized. Default score for new AIs: 0.5\nProjectCoordinator initialized.\nMainAPIServer: Initializing core services...\nCore Services: Initializing for AI ID: did:hsp:api_server_ai_943d6b\nLLMInterface: Initialized MOCK client.\nLLMInterface: Initialized. Active provider: mock\nCore memory file not found. Initializing an empty store and saving.\nHAMMemoryManager initialized. Core memory file: D:\\Projects\\Unified-AI-Project\\data\\processed_data\\ham_core_did_hsp_api_server_ai_943d6b.json. Encryption enabled: True\nPersonalityManager: Successfully loaded personality 'miko_base'.\nPersonalityManager initialized. Profiles dir: D:\\Projects\\Unified-AI-Project\\configs\\personality_profiles\nTrustManager initialized. Default score for new AIs: 0.5\nMCPConnector for did:hsp:api_server_ai_943d6b connecting to localhost:1883\nCore Services: HSPConnector for did:hsp:api_server_ai_943d6b connected.\nFactExtractorModule initialized.\nMCPConnector connected successfully.\nContentAnalyzerModule: Loaded 14 ontology mappings and 3 prefix definitions from 'D:\\Projects\\Unified-AI-Project\\configs\\ontology_mappings.yaml'.\nContentAnalyzerModule initialized with spaCy model: core_web_sm. Internal graph created. Ontology mappings loaded: 14 entries.\nLearningManager initialized for AI ID 'did:hsp:api_server_ai_943d6b'. Min fact store conf: 0.6, share conf: 0.75, HSP store conf: 0.5\nEmotionSystem initialized. Default emotion: neutral\nCrisisSystem initialized. Keywords: []\nTimeSystem initialized.\nFormulaEngine initialized. Attempted to load formulas from D:\\Projects\\Unified-AI-Project\\configs\\formula_configs\\default_formulas.json. Loaded 7 formulas.\nDailyLanguageModel: Initialized with LLMInterface.\nCsvTool initialized.\nImageGenerationTool initialized.\nToolDispatcher initialized.\nAvailable tools: ['calculate', 'evaluate_logic', 'translate_text', 'inspect_code', 'rag_query', 'analyze_csv', 'create_image']\nAgentManager initialized. Found agent scripts: ['creative_writing_agent', 'data_analysis_agent', 'image_generation_agent', 'web_search_agent']\nProjectCoordinator initialized.\nCore Services: All services initialized (or attempted).\nMainAPIServer: Warning - HSPConnector did not connect successfully during init.\nMainAPIServer: Core services initialized.\n", "stderr": "INFO:src.core_ai.service_discovery.service_discovery_module:HSP ServiceDiscoveryModule initialized. Staleness threshold: 600 seconds.\nINFO:core_ai.service_discovery.service_discovery_module:HSP ServiceDiscoveryModule initialized. Staleness threshold: 600 seconds.\nINFO:core_ai.service_discovery.service_discovery_module:ServiceDiscoveryModule cleanup task started with interval 60s.\n", "log": [{"name": "src.core_ai.service_discovery.service_discovery_module", "msg": "HSP ServiceDiscoveryModule initialized. Staleness threshold: 600 seconds.", "args": null, "levelname": "INFO", "levelno": 20, "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py", "filename": "service_discovery_module.py", "module": "service_discovery_module", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 49, "funcName": "__init__", "created": 1753496058.8540242, "msecs": 854.0, "relativeCreated": 441873.7680912018, "thread": 11860, "threadName": "MainThread", "processName": "MainProcess", "process": 13680, "taskName": null}, {"name": "core_ai.service_discovery.service_discovery_module", "msg": "HSP ServiceDiscoveryModule initialized. Staleness threshold: 600 seconds.", "args": null, "levelname": "INFO", "levelno": 20, "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py", "filename": "service_discovery_module.py", "module": "service_discovery_module", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 49, "funcName": "__init__", "created": 1753496059.1958754, "msecs": 195.0, "relativeCreated": 442215.6193256378, "thread": 12924, "threadName": "Thread-2 (run_blocking_portal)", "processName": "MainProcess", "process": 13680, "taskName": "anyio.from_thread.BlockingPortal._call_func"}, {"name": "core_ai.service_discovery.service_discovery_module", "msg": "ServiceDiscoveryModule cleanup task started with interval 60s.", "args": null, "levelname": "INFO", "levelno": 20, "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py", "filename": "service_discovery_module.py", "module": "service_discovery_module", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 64, "funcName": "start_cleanup_task", "created": 1753496059.2458513, "msecs": 245.0, "relativeCreated": 442265.5951976776, "thread": 12924, "threadName": "Thread-2 (run_blocking_portal)", "processName": "MainProcess", "process": 13680, "taskName": "anyio.from_thread.BlockingPortal._call_func"}]}, "call": {"duration": 0.02316180000343593, "outcome": "passed", "stderr": "INFO:core_ai.service_discovery.service_discovery_module:Found 0 capabilities matching criteria. ID_filter: None, Name_filter: None, Tags_filter: None, Min_trust: None\nINFO:httpx:HTTP Request: GET http://testserver/api/v1/hsp/services \"HTTP/1.1 200 OK\"\n", "log": [{"name": "core_ai.service_discovery.service_discovery_module", "msg": "Found 0 capabilities matching criteria. ID_filter: None, Name_filter: None, Tags_filter: None, Min_trust: None", "args": null, "levelname": "INFO", "levelno": 20, "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py", "filename": "service_discovery_module.py", "module": "service_discovery_module", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 224, "funcName": "find_capabilities", "created": 1753496059.263854, "msecs": 263.0, "relativeCreated": 442283.597946167, "thread": 12924, "threadName": "Thread-2 (run_blocking_portal)", "processName": "MainProcess", "process": 13680, "taskName": "anyio.from_thread.BlockingPortal._call_func"}, {"name": "httpx", "msg": "HTTP Request: GET http://testserver/api/v1/hsp/services \"HTTP/1.1 200 OK\"", "args": null, "levelname": "INFO", "levelno": 20, "pathname": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "filename": "_client.py", "module": "_client", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 1025, "funcName": "_send_single_request", "created": 1753496059.2679577, "msecs": 267.0, "relativeCreated": 442287.7016067505, "thread": 11860, "threadName": "MainThread", "processName": "MainProcess", "process": 13680, "taskName": null}]}, "teardown": {"duration": 0.0019335999968461692, "outcome": "passed"}}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_with_advertisements", "lineno": 164, "outcome": "failed", "keywords": ["test_list_hsp_services_with_advertisements", "timeout", "pytestmark", "TestHSPEndpoints", "skipif", "test_main_api_server_hsp.py", "services", "tests", "Unified-AI-Project", ""], "setup": {"duration": 0.0026346000013290904, "outcome": "passed"}, "call": {"duration": 0.020300500000303145, "outcome": "failed", "crash": {"path": "d:\\Projects\\Unified-AI-Project\\tests\\services\\test_main_api_server_hsp.py", "lineno": 182, "message": "AssertionError: No capabilities were returned by the API\nassert 0 >= 1\n +  where 0 = len([])"}, "traceback": [{"path": "tests\\services\\test_main_api_server_hsp.py", "lineno": 182, "message": "in test_list_hsp_services_with_advertisements"}], "stderr": "DEBUG:src.core_ai.service_discovery.service_discovery_module:Entering process_capability_advertisement. Payload: {'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}, Sender: did:hsp:test_api_peer_007, Envelope: {'message_id': 'test-msg-id', 'sender_ai_id': 'did:hsp:test_api_peer_007', 'message_type': 'HSP::CapabilityAdvertisement_v0.1', 'payload': {'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}}\nDEBUG:src.core_ai.service_discovery.service_discovery_module:Processing capability advertisement: ID=did:hsp:test_api_peer_007_test_cap_1, AI=did:hsp:test_api_peer_007, Sender=did:hsp:test_api_peer_007\nINFO:src.core_ai.service_discovery.service_discovery_module:Processed capability advertisement for ID: did:hsp:test_api_peer_007_test_cap_1 from AI: did:hsp:test_api_peer_007 (Sender: did:hsp:test_api_peer_007). Last seen updated to: 2025-07-26T02:14:19.319696+00:00.\nDEBUG:src.core_ai.service_discovery.service_discovery_module:Stored capability: did:hsp:test_api_peer_007_test_cap_1, Last seen: 2025-07-26T02:14:19.319696+00:00\nDEBUG:src.core_ai.service_discovery.service_discovery_module:Current known_capabilities state after update: {'did:hsp:test_api_peer_007_test_cap_1': ({'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}, datetime.datetime(2025, 7, 26, 2, 14, 19, 319696, tzinfo=datetime.timezone.utc))}\nINFO:core_ai.service_discovery.service_discovery_module:Found 0 capabilities matching criteria. ID_filter: None, Name_filter: None, Tags_filter: None, Min_trust: None\nINFO:httpx:HTTP Request: GET http://testserver/api/v1/hsp/services \"HTTP/1.1 200 OK\"\n", "log": [{"name": "src.core_ai.service_discovery.service_discovery_module", "msg": "Entering process_capability_advertisement. Payload: {'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}, Sender: did:hsp:test_api_peer_007, Envelope: {'message_id': 'test-msg-id', 'sender_ai_id': 'did:hsp:test_api_peer_007', 'message_type': 'HSP::CapabilityAdvertisement_v0.1', 'payload': {'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}}", "args": null, "levelname": "DEBUG", "levelno": 10, "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py", "filename": "service_discovery_module.py", "module": "service_discovery_module", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 99, "funcName": "process_capability_advertisement", "created": 1753496059.3176627, "msecs": 317.0, "relativeCreated": 442337.4066352844, "thread": 11860, "threadName": "MainThread", "processName": "MainProcess", "process": 13680, "taskName": null}, {"name": "src.core_ai.service_discovery.service_discovery_module", "msg": "Processing capability advertisement: ID=did:hsp:test_api_peer_007_test_cap_1, AI=did:hsp:test_api_peer_007, Sender=did:hsp:test_api_peer_007", "args": null, "levelname": "DEBUG", "levelno": 10, "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py", "filename": "service_discovery_module.py", "module": "service_discovery_module", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 121, "funcName": "process_capability_advertisement", "created": 1753496059.3176627, "msecs": 317.0, "relativeCreated": 442337.4066352844, "thread": 11860, "threadName": "MainThread", "processName": "MainProcess", "process": 13680, "taskName": null}, {"name": "src.core_ai.service_discovery.service_discovery_module", "msg": "Processed capability advertisement for ID: did:hsp:test_api_peer_007_test_cap_1 from AI: did:hsp:test_api_peer_007 (Sender: did:hsp:test_api_peer_007). Last seen updated to: 2025-07-26T02:14:19.319696+00:00.", "args": null, "levelname": "INFO", "levelno": 20, "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py", "filename": "service_discovery_module.py", "module": "service_discovery_module", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 129, "funcName": "process_capability_advertisement", "created": 1753496059.3196964, "msecs": 319.0, "relativeCreated": 442339.44034576416, "thread": 11860, "threadName": "MainThread", "processName": "MainProcess", "process": 13680, "taskName": null}, {"name": "src.core_ai.service_discovery.service_discovery_module", "msg": "Stored capability: did:hsp:test_api_peer_007_test_cap_1, Last seen: 2025-07-26T02:14:19.319696+00:00", "args": null, "levelname": "DEBUG", "levelno": 10, "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py", "filename": "service_discovery_module.py", "module": "service_discovery_module", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 133, "funcName": "process_capability_advertisement", "created": 1753496059.3196964, "msecs": 319.0, "relativeCreated": 442339.44034576416, "thread": 11860, "threadName": "MainThread", "processName": "MainProcess", "process": 13680, "taskName": null}, {"name": "src.core_ai.service_discovery.service_discovery_module", "msg": "Current known_capabilities state after update: {'did:hsp:test_api_peer_007_test_cap_1': ({'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}, datetime.datetime(2025, 7, 26, 2, 14, 19, 319696, tzinfo=datetime.timezone.utc))}", "args": null, "levelname": "DEBUG", "levelno": 10, "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py", "filename": "service_discovery_module.py", "module": "service_discovery_module", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 134, "funcName": "process_capability_advertisement", "created": 1753496059.3196964, "msecs": 319.0, "relativeCreated": 442339.44034576416, "thread": 11860, "threadName": "MainThread", "processName": "MainProcess", "process": 13680, "taskName": null}, {"name": "core_ai.service_discovery.service_discovery_module", "msg": "Found 0 capabilities matching criteria. ID_filter: None, Name_filter: None, Tags_filter: None, Min_trust: None", "args": null, "levelname": "INFO", "levelno": 20, "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py", "filename": "service_discovery_module.py", "module": "service_discovery_module", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 224, "funcName": "find_capabilities", "created": 1753496059.3296263, "msecs": 329.0, "relativeCreated": 442349.37024116516, "thread": 12924, "threadName": "Thread-2 (run_blocking_portal)", "processName": "MainProcess", "process": 13680, "taskName": "anyio.from_thread.BlockingPortal._call_func"}, {"name": "httpx", "msg": "HTTP Request: GET http://testserver/api/v1/hsp/services \"HTTP/1.1 200 OK\"", "args": null, "levelname": "INFO", "levelno": 20, "pathname": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "filename": "_client.py", "module": "_client", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 1025, "funcName": "_send_single_request", "created": 1753496059.331668, "msecs": 331.0, "relativeCreated": 442351.411819458, "thread": 11860, "threadName": "MainThread", "processName": "MainProcess", "process": 13680, "taskName": null}], "longrepr": "tests\\services\\test_main_api_server_hsp.py:182: in test_list_hsp_services_with_advertisements\n    assert len(capabilities) >= 1, \"No capabilities were returned by the API\"\nE   AssertionError: No capabilities were returned by the API\nE   assert 0 >= 1\nE    +  where 0 = len([])"}, "teardown": {"duration": 0.0020963999995728955, "outcome": "passed"}}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_request_hsp_task_success", "lineno": 192, "outcome": "error", "keywords": ["test_request_hsp_task_success", "timeout", "pytestmark", "asyncio", "TestHSPEndpoints", "skipif", "test_main_api_server_hsp.py", "services", "tests", "Unified-AI-Project", ""], "setup": {"duration": 2.050325200005318, "outcome": "failed", "crash": {"path": "d:\\Projects\\Unified-AI-Project\\tests\\services\\test_main_api_server_hsp.py", "lineno": 152, "message": "Failed: Event was not set within the 2.0s timeout."}, "traceback": [{"path": "tests\\services\\test_main_api_server_hsp.py", "lineno": 142, "message": "in api_test_peer_connector"}, {"path": "tests\\services\\test_main_api_server_hsp.py", "lineno": 152, "message": "in wait_for_event"}], "longrepr": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\tasks.py:520: in wait_for\n    return await fut\n           ^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\locks.py:212: in wait\n    await fut\nE   asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\ntests\\services\\test_main_api_server_hsp.py:150: in wait_for_event\n    await asyncio.wait_for(event.wait(), timeout=timeout)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\tasks.py:519: in wait_for\n    async with timeouts.timeout(timeout):\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py:115: in __aexit__\n    raise TimeoutError from exc_val\nE   TimeoutError\n\nDuring handling of the above exception, another exception occurred:\ntests\\services\\test_main_api_server_hsp.py:142: in api_test_peer_connector\n    await wait_for_event(connect_event)\ntests\\services\\test_main_api_server_hsp.py:152: in wait_for_event\n    pytest.fail(f\"Event was not set within the {timeout}s timeout.\")\nE   Failed: Event was not set within the 2.0s timeout."}, "teardown": {"duration": 0.0033114000034402125, "outcome": "passed"}}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_request_hsp_task_capability_not_found", "lineno": 269, "outcome": "failed", "keywords": ["test_request_hsp_task_capability_not_found", "timeout", "asyncio", "pytestmark", "TestHSPEndpoints", "skipif", "test_main_api_server_hsp.py", "services", "tests", "Unified-AI-Project", ""], "setup": {"duration": 0.005169099997146986, "outcome": "passed"}, "call": {"duration": 0.009914299997035414, "outcome": "failed", "crash": {"path": "D:\\Projects\\Unified-AI-Project\\src\\services\\main_api_server.py", "lineno": 174, "message": "AttributeError: 'DialogueManager' object has no attribute 'hsp_connector'"}, "traceback": [{"path": "tests\\services\\test_main_api_server_hsp.py", "lineno": 274, "message": "in test_request_hsp_task_capability_not_found"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 552, "message": "in post"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 1144, "message": "in post"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 451, "message": "in request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 825, "message": "in request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 914, "message": "in send"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 942, "message": "in _send_handling_auth"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 979, "message": "in _send_handling_redirects"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 1014, "message": "in _send_single_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 354, "message": "in handle_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 351, "message": "in handle_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py", "lineno": 290, "message": "in call"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py", "lineno": 456, "message": "in result"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py", "lineno": 401, "message": "in __get_result"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py", "lineno": 221, "message": "in _call_func"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py", "lineno": 1054, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py", "lineno": 113, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py", "lineno": 186, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py", "lineno": 164, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py", "lineno": 63, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 53, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 42, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 716, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 736, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 290, "message": "in handle"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 78, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 53, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 42, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 75, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py", "lineno": 302, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py", "lineno": 213, "message": "in run_endpoint_function"}, {"path": "src\\services\\main_api_server.py", "lineno": 174, "message": "in request_hsp_task"}], "longrepr": "tests\\services\\test_main_api_server_hsp.py:274: in test_request_hsp_task_capability_not_found\n    response = client.post(\"/api/v1/hsp/tasks\", json={\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:552: in post\n    return super().post(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1144: in post\n    return self.request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:451: in request\n    return super().request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:825: in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:914: in send\n    response = self._send_handling_auth(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:942: in _send_handling_auth\n    response = self._send_handling_redirects(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:979: in _send_handling_redirects\n    response = self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1014: in _send_single_request\n    response = transport.handle_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:354: in handle_request\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:351: in handle_request\n    portal.call(self.app, scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:290: in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:456: in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:401: in __get_result\n    raise self._exception\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:221: in _call_func\n    retval = await retval_or_awaitable\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py:1054: in __call__\n    await super().__call__(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py:113: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:186: in __call__\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:164: in __call__\n    await self.app(scope, receive, _send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py:63: in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:716: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:736: in app\n    await route.handle(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:290: in handle\n    await self.app(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:78: in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:75: in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:302: in app\n    raw_response = await run_endpoint_function(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:213: in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc\\services\\main_api_server.py:174: in request_hsp_task\n    if not dialogue_manager or not service_discovery or not dialogue_manager.hsp_connector:\n                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'DialogueManager' object has no attribute 'hsp_connector'"}, "teardown": {"duration": 0.0033123999965027906, "outcome": "passed"}}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_pending", "lineno": 284, "outcome": "failed", "keywords": ["test_get_hsp_task_status_pending", "timeout", "pytestmark", "asyncio", "TestHSPEndpoints", "skipif", "test_main_api_server_hsp.py", "services", "tests", "Unified-AI-Project", ""], "setup": {"duration": 0.00748359999852255, "outcome": "passed"}, "call": {"duration": 0.13337279999541352, "outcome": "failed", "crash": {"path": "D:\\Projects\\Unified-AI-Project\\src\\services\\main_api_server.py", "lineno": 247, "message": "AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"}, "traceback": [{"path": "tests\\services\\test_main_api_server_hsp.py", "lineno": 295, "message": "in test_get_hsp_task_status_pending"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 479, "message": "in get"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 1053, "message": "in get"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 451, "message": "in request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 825, "message": "in request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 914, "message": "in send"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 942, "message": "in _send_handling_auth"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 979, "message": "in _send_handling_redirects"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 1014, "message": "in _send_single_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 354, "message": "in handle_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 351, "message": "in handle_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py", "lineno": 290, "message": "in call"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py", "lineno": 456, "message": "in result"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py", "lineno": 401, "message": "in __get_result"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py", "lineno": 221, "message": "in _call_func"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py", "lineno": 1054, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py", "lineno": 113, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py", "lineno": 186, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py", "lineno": 164, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py", "lineno": 63, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 53, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 42, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 716, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 736, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 290, "message": "in handle"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 78, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 53, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 42, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 75, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py", "lineno": 302, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py", "lineno": 213, "message": "in run_endpoint_function"}, {"path": "src\\services\\main_api_server.py", "lineno": 247, "message": "in get_hsp_task_status"}], "longrepr": "tests\\services\\test_main_api_server_hsp.py:295: in test_get_hsp_task_status_pending\n    response = client.get(f\"/api/v1/hsp/tasks/{mock_corr_id}\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:479: in get\n    return super().get(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1053: in get\n    return self.request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:451: in request\n    return super().request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:825: in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:914: in send\n    response = self._send_handling_auth(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:942: in _send_handling_auth\n    response = self._send_handling_redirects(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:979: in _send_handling_redirects\n    response = self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1014: in _send_single_request\n    response = transport.handle_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:354: in handle_request\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:351: in handle_request\n    portal.call(self.app, scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:290: in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:456: in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:401: in __get_result\n    raise self._exception\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:221: in _call_func\n    retval = await retval_or_awaitable\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py:1054: in __call__\n    await super().__call__(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py:113: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:186: in __call__\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:164: in __call__\n    await self.app(scope, receive, _send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py:63: in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:716: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:736: in app\n    await route.handle(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:290: in handle\n    await self.app(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:78: in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:75: in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:302: in app\n    raw_response = await run_endpoint_function(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:213: in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc\\services\\main_api_server.py:247: in get_hsp_task_status\n    if correlation_id in dialogue_manager.pending_hsp_task_requests:\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"}, "teardown": {"duration": 0.0054136999970069155, "outcome": "passed"}}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_completed_from_ham", "lineno": 303, "outcome": "failed", "keywords": ["test_get_hsp_task_status_completed_from_ham", "timeout", "asyncio", "pytestmark", "TestHSPEndpoints", "skipif", "test_main_api_server_hsp.py", "services", "tests", "Unified-AI-Project", ""], "setup": {"duration": 0.01212130000203615, "outcome": "passed"}, "call": {"duration": 0.11695440000039525, "outcome": "failed", "crash": {"path": "D:\\Projects\\Unified-AI-Project\\src\\services\\main_api_server.py", "lineno": 247, "message": "AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"}, "traceback": [{"path": "tests\\services\\test_main_api_server_hsp.py", "lineno": 328, "message": "in test_get_hsp_task_status_completed_from_ham"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 479, "message": "in get"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 1053, "message": "in get"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 451, "message": "in request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 825, "message": "in request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 914, "message": "in send"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 942, "message": "in _send_handling_auth"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 979, "message": "in _send_handling_redirects"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 1014, "message": "in _send_single_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 354, "message": "in handle_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 351, "message": "in handle_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py", "lineno": 290, "message": "in call"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py", "lineno": 456, "message": "in result"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py", "lineno": 401, "message": "in __get_result"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py", "lineno": 221, "message": "in _call_func"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py", "lineno": 1054, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py", "lineno": 113, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py", "lineno": 186, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py", "lineno": 164, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py", "lineno": 63, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 53, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 42, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 716, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 736, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 290, "message": "in handle"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 78, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 53, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 42, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 75, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py", "lineno": 302, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py", "lineno": 213, "message": "in run_endpoint_function"}, {"path": "src\\services\\main_api_server.py", "lineno": 247, "message": "in get_hsp_task_status"}], "longrepr": "tests\\services\\test_main_api_server_hsp.py:328: in test_get_hsp_task_status_completed_from_ham\n    response = client.get(f\"/api/v1/hsp/tasks/{mock_corr_id}\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:479: in get\n    return super().get(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1053: in get\n    return self.request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:451: in request\n    return super().request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:825: in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:914: in send\n    response = self._send_handling_auth(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:942: in _send_handling_auth\n    response = self._send_handling_redirects(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:979: in _send_handling_redirects\n    response = self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1014: in _send_single_request\n    response = transport.handle_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:354: in handle_request\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:351: in handle_request\n    portal.call(self.app, scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:290: in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:456: in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:401: in __get_result\n    raise self._exception\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:221: in _call_func\n    retval = await retval_or_awaitable\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py:1054: in __call__\n    await super().__call__(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py:113: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:186: in __call__\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:164: in __call__\n    await self.app(scope, receive, _send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py:63: in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:716: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:736: in app\n    await route.handle(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:290: in handle\n    await self.app(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:78: in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:75: in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:302: in app\n    raw_response = await run_endpoint_function(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:213: in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc\\services\\main_api_server.py:247: in get_hsp_task_status\n    if correlation_id in dialogue_manager.pending_hsp_task_requests:\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"}, "teardown": {"duration": 0.004325999994762242, "outcome": "passed"}}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_failed_from_ham", "lineno": 339, "outcome": "failed", "keywords": ["test_get_hsp_task_status_failed_from_ham", "timeout", "asyncio", "pytestmark", "TestHSPEndpoints", "skipif", "test_main_api_server_hsp.py", "services", "tests", "Unified-AI-Project", ""], "setup": {"duration": 0.007030799999483861, "outcome": "passed"}, "call": {"duration": 0.12188579999929061, "outcome": "failed", "crash": {"path": "D:\\Projects\\Unified-AI-Project\\src\\services\\main_api_server.py", "lineno": 247, "message": "AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"}, "traceback": [{"path": "tests\\services\\test_main_api_server_hsp.py", "lineno": 358, "message": "in test_get_hsp_task_status_failed_from_ham"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 479, "message": "in get"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 1053, "message": "in get"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 451, "message": "in request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 825, "message": "in request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 914, "message": "in send"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 942, "message": "in _send_handling_auth"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 979, "message": "in _send_handling_redirects"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 1014, "message": "in _send_single_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 354, "message": "in handle_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 351, "message": "in handle_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py", "lineno": 290, "message": "in call"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py", "lineno": 456, "message": "in result"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py", "lineno": 401, "message": "in __get_result"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py", "lineno": 221, "message": "in _call_func"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py", "lineno": 1054, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py", "lineno": 113, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py", "lineno": 186, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py", "lineno": 164, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py", "lineno": 63, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 53, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 42, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 716, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 736, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 290, "message": "in handle"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 78, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 53, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 42, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 75, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py", "lineno": 302, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py", "lineno": 213, "message": "in run_endpoint_function"}, {"path": "src\\services\\main_api_server.py", "lineno": 247, "message": "in get_hsp_task_status"}], "longrepr": "tests\\services\\test_main_api_server_hsp.py:358: in test_get_hsp_task_status_failed_from_ham\n    response = client.get(f\"/api/v1/hsp/tasks/{mock_corr_id}\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:479: in get\n    return super().get(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1053: in get\n    return self.request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:451: in request\n    return super().request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:825: in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:914: in send\n    response = self._send_handling_auth(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:942: in _send_handling_auth\n    response = self._send_handling_redirects(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:979: in _send_handling_redirects\n    response = self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1014: in _send_single_request\n    response = transport.handle_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:354: in handle_request\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:351: in handle_request\n    portal.call(self.app, scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:290: in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:456: in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:401: in __get_result\n    raise self._exception\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:221: in _call_func\n    retval = await retval_or_awaitable\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py:1054: in __call__\n    await super().__call__(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py:113: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:186: in __call__\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:164: in __call__\n    await self.app(scope, receive, _send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py:63: in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:716: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:736: in app\n    await route.handle(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:290: in handle\n    await self.app(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:78: in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:75: in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:302: in app\n    raw_response = await run_endpoint_function(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:213: in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc\\services\\main_api_server.py:247: in get_hsp_task_status\n    if correlation_id in dialogue_manager.pending_hsp_task_requests:\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"}, "teardown": {"duration": 0.002505000004020985, "outcome": "passed"}}, {"nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_unknown", "lineno": 367, "outcome": "failed", "keywords": ["test_get_hsp_task_status_unknown", "timeout", "asyncio", "pytestmark", "TestHSPEndpoints", "skipif", "test_main_api_server_hsp.py", "services", "tests", "Unified-AI-Project", ""], "setup": {"duration": 0.005029199994169176, "outcome": "passed"}, "call": {"duration": 0.005910200001380872, "outcome": "failed", "crash": {"path": "D:\\Projects\\Unified-AI-Project\\src\\services\\main_api_server.py", "lineno": 247, "message": "AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"}, "traceback": [{"path": "tests\\services\\test_main_api_server_hsp.py", "lineno": 373, "message": "in test_get_hsp_task_status_unknown"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 479, "message": "in get"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 1053, "message": "in get"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 451, "message": "in request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 825, "message": "in request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 914, "message": "in send"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 942, "message": "in _send_handling_auth"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 979, "message": "in _send_handling_redirects"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py", "lineno": 1014, "message": "in _send_single_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 354, "message": "in handle_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py", "lineno": 351, "message": "in handle_request"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py", "lineno": 290, "message": "in call"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py", "lineno": 456, "message": "in result"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py", "lineno": 401, "message": "in __get_result"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py", "lineno": 221, "message": "in _call_func"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py", "lineno": 1054, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py", "lineno": 113, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py", "lineno": 186, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py", "lineno": 164, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py", "lineno": 63, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 53, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 42, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 716, "message": "in __call__"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 736, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 290, "message": "in handle"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 78, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 53, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py", "lineno": 42, "message": "in wrapped_app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py", "lineno": 75, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py", "lineno": 302, "message": "in app"}, {"path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py", "lineno": 213, "message": "in run_endpoint_function"}, {"path": "src\\services\\main_api_server.py", "lineno": 247, "message": "in get_hsp_task_status"}], "longrepr": "tests\\services\\test_main_api_server_hsp.py:373: in test_get_hsp_task_status_unknown\n    response = client.get(f\"/api/v1/hsp/tasks/{mock_corr_id}\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:479: in get\n    return super().get(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1053: in get\n    return self.request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:451: in request\n    return super().request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:825: in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:914: in send\n    response = self._send_handling_auth(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:942: in _send_handling_auth\n    response = self._send_handling_redirects(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:979: in _send_handling_redirects\n    response = self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1014: in _send_single_request\n    response = transport.handle_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:354: in handle_request\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:351: in handle_request\n    portal.call(self.app, scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:290: in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:456: in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:401: in __get_result\n    raise self._exception\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:221: in _call_func\n    retval = await retval_or_awaitable\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py:1054: in __call__\n    await super().__call__(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py:113: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:186: in __call__\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:164: in __call__\n    await self.app(scope, receive, _send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py:63: in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:716: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:736: in app\n    await route.handle(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:290: in handle\n    await self.app(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:78: in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:75: in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:302: in app\n    raw_response = await run_endpoint_function(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:213: in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc\\services\\main_api_server.py:247: in get_hsp_task_status\n    if correlation_id in dialogue_manager.pending_hsp_task_requests:\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"}, "teardown": {"duration": 0.019889299997885246, "outcome": "passed", "stdout": "MainAPIServer: Shutting down core services...\nCore Services: Shutting down all active agents...\n[AgentManager] Shutting down all active agents...\nCore Services: Shutdown process complete.\nMainAPIServer: Core services shut down.\n", "stderr": "INFO:core_ai.service_discovery.service_discovery_module:ServiceDiscoveryModule cleanup task stopped.\n", "log": [{"name": "core_ai.service_discovery.service_discovery_module", "msg": "ServiceDiscoveryModule cleanup task stopped.", "args": null, "levelname": "INFO", "levelno": 20, "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py", "filename": "service_discovery_module.py", "module": "service_discovery_module", "exc_info": null, "exc_text": null, "stack_info": null, "lineno": 72, "funcName": "stop_cleanup_task", "created": 1753496073.0692544, "msecs": 69.0, "relativeCreated": 456088.9983177185, "thread": 12924, "threadName": "Thread-2 (run_blocking_portal)", "processName": "MainProcess", "process": 13680, "taskName": "anyio.from_thread.BlockingPortal._call_func"}]}}], "warnings": [{"message": "pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.", "category": "UserWarning", "when": "config", "filename": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pygame\\pkgdata.py", "lineno": 25}, {"message": "coroutine 'HSPConnector.connect' was never awaited", "category": "RuntimeWarning", "when": "runtest", "filename": "D:\\Projects\\Unified-AI-Project\\src\\core_services.py", "lineno": 155}, {"message": "coroutine 'HSPConnector.subscribe' was never awaited", "category": "RuntimeWarning", "when": "runtest", "filename": "D:\\Projects\\Unified-AI-Project\\src\\core_services.py", "lineno": 161}, {"message": "coroutine 'HSPConnector.subscribe' was never awaited", "category": "RuntimeWarning", "when": "runtest", "filename": "D:\\Projects\\Unified-AI-Project\\src\\core_services.py", "lineno": 162}, {"message": "coroutine 'HSPConnector.subscribe' was never awaited", "category": "RuntimeWarning", "when": "runtest", "filename": "D:\\Projects\\Unified-AI-Project\\src\\core_services.py", "lineno": 163}, {"message": "coroutine 'HSPConnector.connect' was never awaited", "category": "RuntimeWarning", "when": "runtest", "filename": "d:\\Projects\\Unified-AI-Project\\tests\\services\\test_main_api_server_hsp.py", "lineno": 140}]}
+{
+  "created": 1753496073.0848908,
+  "duration": 21.124637603759766,
+  "exitcode": 1,
+  "root": "D:\\Projects\\Unified-AI-Project",
+  "environment": {},
+  "summary": {
+    "passed": 1,
+    "failed": 6,
+    "error": 1,
+    "total": 8,
+    "collected": 8
+  },
+  "collectors": [
+    {
+      "nodeid": "",
+      "outcome": "passed",
+      "result": [
+        {
+          "nodeid": "tests/services/test_main_api_server_hsp.py",
+          "type": "Module"
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/services/test_main_api_server_hsp.py::TestClient",
+      "outcome": "passed",
+      "result": []
+    },
+    {
+      "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints",
+      "outcome": "passed",
+      "result": [
+        {
+          "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_empty",
+          "type": "Function",
+          "lineno": 156
+        },
+        {
+          "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_with_advertisements",
+          "type": "Function",
+          "lineno": 164
+        },
+        {
+          "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_request_hsp_task_success",
+          "type": "Coroutine",
+          "lineno": 192
+        },
+        {
+          "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_request_hsp_task_capability_not_found",
+          "type": "Coroutine",
+          "lineno": 269
+        },
+        {
+          "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_pending",
+          "type": "Coroutine",
+          "lineno": 284
+        },
+        {
+          "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_completed_from_ham",
+          "type": "Coroutine",
+          "lineno": 303
+        },
+        {
+          "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_failed_from_ham",
+          "type": "Coroutine",
+          "lineno": 339
+        },
+        {
+          "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_unknown",
+          "type": "Coroutine",
+          "lineno": 367
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/services/test_main_api_server_hsp.py",
+      "outcome": "passed",
+      "result": [
+        {
+          "nodeid": "tests/services/test_main_api_server_hsp.py::TestClient",
+          "type": "Class"
+        },
+        {
+          "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints",
+          "type": "Class"
+        }
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_empty",
+      "lineno": 156,
+      "outcome": "passed",
+      "keywords": [
+        "test_list_hsp_services_empty",
+        "timeout",
+        "pytestmark",
+        "TestHSPEndpoints",
+        "skipif",
+        "test_main_api_server_hsp.py",
+        "services",
+        "tests",
+        "Unified-AI-Project",
+        ""
+      ],
+      "setup": {
+        "duration": 0.40320559999963734,
+        "outcome": "passed",
+        "stdout": "TrustManager initialized. Default score for new AIs: 0.5\nProjectCoordinator initialized.\nMainAPIServer: Initializing core services...\nCore Services: Initializing for AI ID: did:hsp:api_server_ai_943d6b\nLLMInterface: Initialized MOCK client.\nLLMInterface: Initialized. Active provider: mock\nCore memory file not found. Initializing an empty store and saving.\nHAMMemoryManager initialized. Core memory file: D:\\Projects\\Unified-AI-Project\\data\\processed_data\\ham_core_did_hsp_api_server_ai_943d6b.json. Encryption enabled: True\nPersonalityManager: Successfully loaded personality 'miko_base'.\nPersonalityManager initialized. Profiles dir: D:\\Projects\\Unified-AI-Project\\configs\\personality_profiles\nTrustManager initialized. Default score for new AIs: 0.5\nMCPConnector for did:hsp:api_server_ai_943d6b connecting to localhost:1883\nCore Services: HSPConnector for did:hsp:api_server_ai_943d6b connected.\nFactExtractorModule initialized.\nMCPConnector connected successfully.\nContentAnalyzerModule: Loaded 14 ontology mappings and 3 prefix definitions from 'D:\\Projects\\Unified-AI-Project\\configs\\ontology_mappings.yaml'.\nContentAnalyzerModule initialized with spaCy model: core_web_sm. Internal graph created. Ontology mappings loaded: 14 entries.\nLearningManager initialized for AI ID 'did:hsp:api_server_ai_943d6b'. Min fact store conf: 0.6, share conf: 0.75, HSP store conf: 0.5\nEmotionSystem initialized. Default emotion: neutral\nCrisisSystem initialized. Keywords: []\nTimeSystem initialized.\nFormulaEngine initialized. Attempted to load formulas from D:\\Projects\\Unified-AI-Project\\configs\\formula_configs\\default_formulas.json. Loaded 7 formulas.\nDailyLanguageModel: Initialized with LLMInterface.\nCsvTool initialized.\nImageGenerationTool initialized.\nToolDispatcher initialized.\nAvailable tools: ['calculate', 'evaluate_logic', 'translate_text', 'inspect_code', 'rag_query', 'analyze_csv', 'create_image']\nAgentManager initialized. Found agent scripts: ['creative_writing_agent', 'data_analysis_agent', 'image_generation_agent', 'web_search_agent']\nProjectCoordinator initialized.\nCore Services: All services initialized (or attempted).\nMainAPIServer: Warning - HSPConnector did not connect successfully during init.\nMainAPIServer: Core services initialized.\n",
+        "stderr": "INFO:src.core_ai.service_discovery.service_discovery_module:HSP ServiceDiscoveryModule initialized. Staleness threshold: 600 seconds.\nINFO:core_ai.service_discovery.service_discovery_module:HSP ServiceDiscoveryModule initialized. Staleness threshold: 600 seconds.\nINFO:core_ai.service_discovery.service_discovery_module:ServiceDiscoveryModule cleanup task started with interval 60s.\n",
+        "log": [
+          {
+            "name": "src.core_ai.service_discovery.service_discovery_module",
+            "msg": "HSP ServiceDiscoveryModule initialized. Staleness threshold: 600 seconds.",
+            "args": null,
+            "levelname": "INFO",
+            "levelno": 20,
+            "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py",
+            "filename": "service_discovery_module.py",
+            "module": "service_discovery_module",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 49,
+            "funcName": "__init__",
+            "created": 1753496058.8540242,
+            "msecs": 854.0,
+            "relativeCreated": 441873.7680912018,
+            "thread": 11860,
+            "threadName": "MainThread",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": null
+          },
+          {
+            "name": "core_ai.service_discovery.service_discovery_module",
+            "msg": "HSP ServiceDiscoveryModule initialized. Staleness threshold: 600 seconds.",
+            "args": null,
+            "levelname": "INFO",
+            "levelno": 20,
+            "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py",
+            "filename": "service_discovery_module.py",
+            "module": "service_discovery_module",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 49,
+            "funcName": "__init__",
+            "created": 1753496059.1958754,
+            "msecs": 195.0,
+            "relativeCreated": 442215.6193256378,
+            "thread": 12924,
+            "threadName": "Thread-2 (run_blocking_portal)",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": "anyio.from_thread.BlockingPortal._call_func"
+          },
+          {
+            "name": "core_ai.service_discovery.service_discovery_module",
+            "msg": "ServiceDiscoveryModule cleanup task started with interval 60s.",
+            "args": null,
+            "levelname": "INFO",
+            "levelno": 20,
+            "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py",
+            "filename": "service_discovery_module.py",
+            "module": "service_discovery_module",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 64,
+            "funcName": "start_cleanup_task",
+            "created": 1753496059.2458513,
+            "msecs": 245.0,
+            "relativeCreated": 442265.5951976776,
+            "thread": 12924,
+            "threadName": "Thread-2 (run_blocking_portal)",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": "anyio.from_thread.BlockingPortal._call_func"
+          }
+        ]
+      },
+      "call": {
+        "duration": 0.02316180000343593,
+        "outcome": "passed",
+        "stderr": "INFO:core_ai.service_discovery.service_discovery_module:Found 0 capabilities matching criteria. ID_filter: None, Name_filter: None, Tags_filter: None, Min_trust: None\nINFO:httpx:HTTP Request: GET http://testserver/api/v1/hsp/services \"HTTP/1.1 200 OK\"\n",
+        "log": [
+          {
+            "name": "core_ai.service_discovery.service_discovery_module",
+            "msg": "Found 0 capabilities matching criteria. ID_filter: None, Name_filter: None, Tags_filter: None, Min_trust: None",
+            "args": null,
+            "levelname": "INFO",
+            "levelno": 20,
+            "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py",
+            "filename": "service_discovery_module.py",
+            "module": "service_discovery_module",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 224,
+            "funcName": "find_capabilities",
+            "created": 1753496059.263854,
+            "msecs": 263.0,
+            "relativeCreated": 442283.597946167,
+            "thread": 12924,
+            "threadName": "Thread-2 (run_blocking_portal)",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": "anyio.from_thread.BlockingPortal._call_func"
+          },
+          {
+            "name": "httpx",
+            "msg": "HTTP Request: GET http://testserver/api/v1/hsp/services \"HTTP/1.1 200 OK\"",
+            "args": null,
+            "levelname": "INFO",
+            "levelno": 20,
+            "pathname": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "filename": "_client.py",
+            "module": "_client",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 1025,
+            "funcName": "_send_single_request",
+            "created": 1753496059.2679577,
+            "msecs": 267.0,
+            "relativeCreated": 442287.7016067505,
+            "thread": 11860,
+            "threadName": "MainThread",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": null
+          }
+        ]
+      },
+      "teardown": { "duration": 0.0019335999968461692, "outcome": "passed" }
+    },
+    {
+      "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_with_advertisements",
+      "lineno": 164,
+      "outcome": "failed",
+      "keywords": [
+        "test_list_hsp_services_with_advertisements",
+        "timeout",
+        "pytestmark",
+        "TestHSPEndpoints",
+        "skipif",
+        "test_main_api_server_hsp.py",
+        "services",
+        "tests",
+        "Unified-AI-Project",
+        ""
+      ],
+      "setup": { "duration": 0.0026346000013290904, "outcome": "passed" },
+      "call": {
+        "duration": 0.020300500000303145,
+        "outcome": "failed",
+        "crash": {
+          "path": "d:\\Projects\\Unified-AI-Project\\tests\\services\\test_main_api_server_hsp.py",
+          "lineno": 182,
+          "message": "AssertionError: No capabilities were returned by the API\nassert 0 >= 1\n +  where 0 = len([])"
+        },
+        "traceback": [
+          {
+            "path": "tests\\services\\test_main_api_server_hsp.py",
+            "lineno": 182,
+            "message": "in test_list_hsp_services_with_advertisements"
+          }
+        ],
+        "stderr": "DEBUG:src.core_ai.service_discovery.service_discovery_module:Entering process_capability_advertisement. Payload: {'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}, Sender: did:hsp:test_api_peer_007, Envelope: {'message_id': 'test-msg-id', 'sender_ai_id': 'did:hsp:test_api_peer_007', 'message_type': 'HSP::CapabilityAdvertisement_v0.1', 'payload': {'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}}\nDEBUG:src.core_ai.service_discovery.service_discovery_module:Processing capability advertisement: ID=did:hsp:test_api_peer_007_test_cap_1, AI=did:hsp:test_api_peer_007, Sender=did:hsp:test_api_peer_007\nINFO:src.core_ai.service_discovery.service_discovery_module:Processed capability advertisement for ID: did:hsp:test_api_peer_007_test_cap_1 from AI: did:hsp:test_api_peer_007 (Sender: did:hsp:test_api_peer_007). Last seen updated to: 2025-07-26T02:14:19.319696+00:00.\nDEBUG:src.core_ai.service_discovery.service_discovery_module:Stored capability: did:hsp:test_api_peer_007_test_cap_1, Last seen: 2025-07-26T02:14:19.319696+00:00\nDEBUG:src.core_ai.service_discovery.service_discovery_module:Current known_capabilities state after update: {'did:hsp:test_api_peer_007_test_cap_1': ({'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}, datetime.datetime(2025, 7, 26, 2, 14, 19, 319696, tzinfo=datetime.timezone.utc))}\nINFO:core_ai.service_discovery.service_discovery_module:Found 0 capabilities matching criteria. ID_filter: None, Name_filter: None, Tags_filter: None, Min_trust: None\nINFO:httpx:HTTP Request: GET http://testserver/api/v1/hsp/services \"HTTP/1.1 200 OK\"\n",
+        "log": [
+          {
+            "name": "src.core_ai.service_discovery.service_discovery_module",
+            "msg": "Entering process_capability_advertisement. Payload: {'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}, Sender: did:hsp:test_api_peer_007, Envelope: {'message_id': 'test-msg-id', 'sender_ai_id': 'did:hsp:test_api_peer_007', 'message_type': 'HSP::CapabilityAdvertisement_v0.1', 'payload': {'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}}",
+            "args": null,
+            "levelname": "DEBUG",
+            "levelno": 10,
+            "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py",
+            "filename": "service_discovery_module.py",
+            "module": "service_discovery_module",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 99,
+            "funcName": "process_capability_advertisement",
+            "created": 1753496059.3176627,
+            "msecs": 317.0,
+            "relativeCreated": 442337.4066352844,
+            "thread": 11860,
+            "threadName": "MainThread",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": null
+          },
+          {
+            "name": "src.core_ai.service_discovery.service_discovery_module",
+            "msg": "Processing capability advertisement: ID=did:hsp:test_api_peer_007_test_cap_1, AI=did:hsp:test_api_peer_007, Sender=did:hsp:test_api_peer_007",
+            "args": null,
+            "levelname": "DEBUG",
+            "levelno": 10,
+            "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py",
+            "filename": "service_discovery_module.py",
+            "module": "service_discovery_module",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 121,
+            "funcName": "process_capability_advertisement",
+            "created": 1753496059.3176627,
+            "msecs": 317.0,
+            "relativeCreated": 442337.4066352844,
+            "thread": 11860,
+            "threadName": "MainThread",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": null
+          },
+          {
+            "name": "src.core_ai.service_discovery.service_discovery_module",
+            "msg": "Processed capability advertisement for ID: did:hsp:test_api_peer_007_test_cap_1 from AI: did:hsp:test_api_peer_007 (Sender: did:hsp:test_api_peer_007). Last seen updated to: 2025-07-26T02:14:19.319696+00:00.",
+            "args": null,
+            "levelname": "INFO",
+            "levelno": 20,
+            "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py",
+            "filename": "service_discovery_module.py",
+            "module": "service_discovery_module",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 129,
+            "funcName": "process_capability_advertisement",
+            "created": 1753496059.3196964,
+            "msecs": 319.0,
+            "relativeCreated": 442339.44034576416,
+            "thread": 11860,
+            "threadName": "MainThread",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": null
+          },
+          {
+            "name": "src.core_ai.service_discovery.service_discovery_module",
+            "msg": "Stored capability: did:hsp:test_api_peer_007_test_cap_1, Last seen: 2025-07-26T02:14:19.319696+00:00",
+            "args": null,
+            "levelname": "DEBUG",
+            "levelno": 10,
+            "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py",
+            "filename": "service_discovery_module.py",
+            "module": "service_discovery_module",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 133,
+            "funcName": "process_capability_advertisement",
+            "created": 1753496059.3196964,
+            "msecs": 319.0,
+            "relativeCreated": 442339.44034576416,
+            "thread": 11860,
+            "threadName": "MainThread",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": null
+          },
+          {
+            "name": "src.core_ai.service_discovery.service_discovery_module",
+            "msg": "Current known_capabilities state after update: {'did:hsp:test_api_peer_007_test_cap_1': ({'capability_id': 'did:hsp:test_api_peer_007_test_cap_1', 'ai_id': 'did:hsp:test_api_peer_007', 'name': 'API Test Capability', 'description': 'A capability for API testing.', 'version': '1.0', 'availability_status': 'online', 'tags': ['test', 'api']}, datetime.datetime(2025, 7, 26, 2, 14, 19, 319696, tzinfo=datetime.timezone.utc))}",
+            "args": null,
+            "levelname": "DEBUG",
+            "levelno": 10,
+            "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py",
+            "filename": "service_discovery_module.py",
+            "module": "service_discovery_module",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 134,
+            "funcName": "process_capability_advertisement",
+            "created": 1753496059.3196964,
+            "msecs": 319.0,
+            "relativeCreated": 442339.44034576416,
+            "thread": 11860,
+            "threadName": "MainThread",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": null
+          },
+          {
+            "name": "core_ai.service_discovery.service_discovery_module",
+            "msg": "Found 0 capabilities matching criteria. ID_filter: None, Name_filter: None, Tags_filter: None, Min_trust: None",
+            "args": null,
+            "levelname": "INFO",
+            "levelno": 20,
+            "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py",
+            "filename": "service_discovery_module.py",
+            "module": "service_discovery_module",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 224,
+            "funcName": "find_capabilities",
+            "created": 1753496059.3296263,
+            "msecs": 329.0,
+            "relativeCreated": 442349.37024116516,
+            "thread": 12924,
+            "threadName": "Thread-2 (run_blocking_portal)",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": "anyio.from_thread.BlockingPortal._call_func"
+          },
+          {
+            "name": "httpx",
+            "msg": "HTTP Request: GET http://testserver/api/v1/hsp/services \"HTTP/1.1 200 OK\"",
+            "args": null,
+            "levelname": "INFO",
+            "levelno": 20,
+            "pathname": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "filename": "_client.py",
+            "module": "_client",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 1025,
+            "funcName": "_send_single_request",
+            "created": 1753496059.331668,
+            "msecs": 331.0,
+            "relativeCreated": 442351.411819458,
+            "thread": 11860,
+            "threadName": "MainThread",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": null
+          }
+        ],
+        "longrepr": "tests\\services\\test_main_api_server_hsp.py:182: in test_list_hsp_services_with_advertisements\n    assert len(capabilities) >= 1, \"No capabilities were returned by the API\"\nE   AssertionError: No capabilities were returned by the API\nE   assert 0 >= 1\nE    +  where 0 = len([])"
+      },
+      "teardown": { "duration": 0.0020963999995728955, "outcome": "passed" }
+    },
+    {
+      "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_request_hsp_task_success",
+      "lineno": 192,
+      "outcome": "error",
+      "keywords": [
+        "test_request_hsp_task_success",
+        "timeout",
+        "pytestmark",
+        "asyncio",
+        "TestHSPEndpoints",
+        "skipif",
+        "test_main_api_server_hsp.py",
+        "services",
+        "tests",
+        "Unified-AI-Project",
+        ""
+      ],
+      "setup": {
+        "duration": 2.050325200005318,
+        "outcome": "failed",
+        "crash": {
+          "path": "d:\\Projects\\Unified-AI-Project\\tests\\services\\test_main_api_server_hsp.py",
+          "lineno": 152,
+          "message": "Failed: Event was not set within the 2.0s timeout."
+        },
+        "traceback": [
+          {
+            "path": "tests\\services\\test_main_api_server_hsp.py",
+            "lineno": 142,
+            "message": "in api_test_peer_connector"
+          },
+          {
+            "path": "tests\\services\\test_main_api_server_hsp.py",
+            "lineno": 152,
+            "message": "in wait_for_event"
+          }
+        ],
+        "longrepr": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\tasks.py:520: in wait_for\n    return await fut\n           ^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\locks.py:212: in wait\n    await fut\nE   asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\ntests\\services\\test_main_api_server_hsp.py:150: in wait_for_event\n    await asyncio.wait_for(event.wait(), timeout=timeout)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\tasks.py:519: in wait_for\n    async with timeouts.timeout(timeout):\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py:115: in __aexit__\n    raise TimeoutError from exc_val\nE   TimeoutError\n\nDuring handling of the above exception, another exception occurred:\ntests\\services\\test_main_api_server_hsp.py:142: in api_test_peer_connector\n    await wait_for_event(connect_event)\ntests\\services\\test_main_api_server_hsp.py:152: in wait_for_event\n    pytest.fail(f\"Event was not set within the {timeout}s timeout.\")\nE   Failed: Event was not set within the 2.0s timeout."
+      },
+      "teardown": { "duration": 0.0033114000034402125, "outcome": "passed" }
+    },
+    {
+      "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_request_hsp_task_capability_not_found",
+      "lineno": 269,
+      "outcome": "failed",
+      "keywords": [
+        "test_request_hsp_task_capability_not_found",
+        "timeout",
+        "asyncio",
+        "pytestmark",
+        "TestHSPEndpoints",
+        "skipif",
+        "test_main_api_server_hsp.py",
+        "services",
+        "tests",
+        "Unified-AI-Project",
+        ""
+      ],
+      "setup": { "duration": 0.005169099997146986, "outcome": "passed" },
+      "call": {
+        "duration": 0.009914299997035414,
+        "outcome": "failed",
+        "crash": {
+          "path": "D:\\Projects\\Unified-AI-Project\\src\\services\\main_api_server.py",
+          "lineno": 174,
+          "message": "AttributeError: 'DialogueManager' object has no attribute 'hsp_connector'"
+        },
+        "traceback": [
+          {
+            "path": "tests\\services\\test_main_api_server_hsp.py",
+            "lineno": 274,
+            "message": "in test_request_hsp_task_capability_not_found"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 552,
+            "message": "in post"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 1144,
+            "message": "in post"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 451,
+            "message": "in request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 825,
+            "message": "in request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 914,
+            "message": "in send"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 942,
+            "message": "in _send_handling_auth"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 979,
+            "message": "in _send_handling_redirects"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 1014,
+            "message": "in _send_single_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 354,
+            "message": "in handle_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 351,
+            "message": "in handle_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py",
+            "lineno": 290,
+            "message": "in call"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py",
+            "lineno": 456,
+            "message": "in result"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py",
+            "lineno": 401,
+            "message": "in __get_result"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py",
+            "lineno": 221,
+            "message": "in _call_func"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py",
+            "lineno": 1054,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py",
+            "lineno": 113,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py",
+            "lineno": 186,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py",
+            "lineno": 164,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py",
+            "lineno": 63,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 53,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 42,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 716,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 736,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 290,
+            "message": "in handle"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 78,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 53,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 42,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 75,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py",
+            "lineno": 302,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py",
+            "lineno": 213,
+            "message": "in run_endpoint_function"
+          },
+          {
+            "path": "src\\services\\main_api_server.py",
+            "lineno": 174,
+            "message": "in request_hsp_task"
+          }
+        ],
+        "longrepr": "tests\\services\\test_main_api_server_hsp.py:274: in test_request_hsp_task_capability_not_found\n    response = client.post(\"/api/v1/hsp/tasks\", json={\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:552: in post\n    return super().post(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1144: in post\n    return self.request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:451: in request\n    return super().request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:825: in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:914: in send\n    response = self._send_handling_auth(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:942: in _send_handling_auth\n    response = self._send_handling_redirects(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:979: in _send_handling_redirects\n    response = self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1014: in _send_single_request\n    response = transport.handle_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:354: in handle_request\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:351: in handle_request\n    portal.call(self.app, scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:290: in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:456: in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:401: in __get_result\n    raise self._exception\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:221: in _call_func\n    retval = await retval_or_awaitable\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py:1054: in __call__\n    await super().__call__(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py:113: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:186: in __call__\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:164: in __call__\n    await self.app(scope, receive, _send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py:63: in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:716: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:736: in app\n    await route.handle(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:290: in handle\n    await self.app(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:78: in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:75: in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:302: in app\n    raw_response = await run_endpoint_function(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:213: in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc\\services\\main_api_server.py:174: in request_hsp_task\n    if not dialogue_manager or not service_discovery or not dialogue_manager.hsp_connector:\n                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'DialogueManager' object has no attribute 'hsp_connector'"
+      },
+      "teardown": { "duration": 0.0033123999965027906, "outcome": "passed" }
+    },
+    {
+      "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_pending",
+      "lineno": 284,
+      "outcome": "failed",
+      "keywords": [
+        "test_get_hsp_task_status_pending",
+        "timeout",
+        "pytestmark",
+        "asyncio",
+        "TestHSPEndpoints",
+        "skipif",
+        "test_main_api_server_hsp.py",
+        "services",
+        "tests",
+        "Unified-AI-Project",
+        ""
+      ],
+      "setup": { "duration": 0.00748359999852255, "outcome": "passed" },
+      "call": {
+        "duration": 0.13337279999541352,
+        "outcome": "failed",
+        "crash": {
+          "path": "D:\\Projects\\Unified-AI-Project\\src\\services\\main_api_server.py",
+          "lineno": 247,
+          "message": "AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"
+        },
+        "traceback": [
+          {
+            "path": "tests\\services\\test_main_api_server_hsp.py",
+            "lineno": 295,
+            "message": "in test_get_hsp_task_status_pending"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 479,
+            "message": "in get"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 1053,
+            "message": "in get"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 451,
+            "message": "in request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 825,
+            "message": "in request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 914,
+            "message": "in send"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 942,
+            "message": "in _send_handling_auth"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 979,
+            "message": "in _send_handling_redirects"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 1014,
+            "message": "in _send_single_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 354,
+            "message": "in handle_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 351,
+            "message": "in handle_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py",
+            "lineno": 290,
+            "message": "in call"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py",
+            "lineno": 456,
+            "message": "in result"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py",
+            "lineno": 401,
+            "message": "in __get_result"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py",
+            "lineno": 221,
+            "message": "in _call_func"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py",
+            "lineno": 1054,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py",
+            "lineno": 113,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py",
+            "lineno": 186,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py",
+            "lineno": 164,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py",
+            "lineno": 63,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 53,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 42,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 716,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 736,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 290,
+            "message": "in handle"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 78,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 53,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 42,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 75,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py",
+            "lineno": 302,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py",
+            "lineno": 213,
+            "message": "in run_endpoint_function"
+          },
+          {
+            "path": "src\\services\\main_api_server.py",
+            "lineno": 247,
+            "message": "in get_hsp_task_status"
+          }
+        ],
+        "longrepr": "tests\\services\\test_main_api_server_hsp.py:295: in test_get_hsp_task_status_pending\n    response = client.get(f\"/api/v1/hsp/tasks/{mock_corr_id}\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:479: in get\n    return super().get(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1053: in get\n    return self.request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:451: in request\n    return super().request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:825: in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:914: in send\n    response = self._send_handling_auth(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:942: in _send_handling_auth\n    response = self._send_handling_redirects(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:979: in _send_handling_redirects\n    response = self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1014: in _send_single_request\n    response = transport.handle_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:354: in handle_request\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:351: in handle_request\n    portal.call(self.app, scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:290: in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:456: in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:401: in __get_result\n    raise self._exception\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:221: in _call_func\n    retval = await retval_or_awaitable\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py:1054: in __call__\n    await super().__call__(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py:113: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:186: in __call__\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:164: in __call__\n    await self.app(scope, receive, _send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py:63: in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:716: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:736: in app\n    await route.handle(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:290: in handle\n    await self.app(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:78: in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:75: in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:302: in app\n    raw_response = await run_endpoint_function(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:213: in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc\\services\\main_api_server.py:247: in get_hsp_task_status\n    if correlation_id in dialogue_manager.pending_hsp_task_requests:\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"
+      },
+      "teardown": { "duration": 0.0054136999970069155, "outcome": "passed" }
+    },
+    {
+      "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_completed_from_ham",
+      "lineno": 303,
+      "outcome": "failed",
+      "keywords": [
+        "test_get_hsp_task_status_completed_from_ham",
+        "timeout",
+        "asyncio",
+        "pytestmark",
+        "TestHSPEndpoints",
+        "skipif",
+        "test_main_api_server_hsp.py",
+        "services",
+        "tests",
+        "Unified-AI-Project",
+        ""
+      ],
+      "setup": { "duration": 0.01212130000203615, "outcome": "passed" },
+      "call": {
+        "duration": 0.11695440000039525,
+        "outcome": "failed",
+        "crash": {
+          "path": "D:\\Projects\\Unified-AI-Project\\src\\services\\main_api_server.py",
+          "lineno": 247,
+          "message": "AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"
+        },
+        "traceback": [
+          {
+            "path": "tests\\services\\test_main_api_server_hsp.py",
+            "lineno": 328,
+            "message": "in test_get_hsp_task_status_completed_from_ham"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 479,
+            "message": "in get"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 1053,
+            "message": "in get"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 451,
+            "message": "in request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 825,
+            "message": "in request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 914,
+            "message": "in send"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 942,
+            "message": "in _send_handling_auth"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 979,
+            "message": "in _send_handling_redirects"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 1014,
+            "message": "in _send_single_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 354,
+            "message": "in handle_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 351,
+            "message": "in handle_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py",
+            "lineno": 290,
+            "message": "in call"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py",
+            "lineno": 456,
+            "message": "in result"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py",
+            "lineno": 401,
+            "message": "in __get_result"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py",
+            "lineno": 221,
+            "message": "in _call_func"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py",
+            "lineno": 1054,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py",
+            "lineno": 113,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py",
+            "lineno": 186,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py",
+            "lineno": 164,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py",
+            "lineno": 63,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 53,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 42,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 716,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 736,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 290,
+            "message": "in handle"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 78,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 53,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 42,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 75,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py",
+            "lineno": 302,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py",
+            "lineno": 213,
+            "message": "in run_endpoint_function"
+          },
+          {
+            "path": "src\\services\\main_api_server.py",
+            "lineno": 247,
+            "message": "in get_hsp_task_status"
+          }
+        ],
+        "longrepr": "tests\\services\\test_main_api_server_hsp.py:328: in test_get_hsp_task_status_completed_from_ham\n    response = client.get(f\"/api/v1/hsp/tasks/{mock_corr_id}\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:479: in get\n    return super().get(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1053: in get\n    return self.request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:451: in request\n    return super().request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:825: in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:914: in send\n    response = self._send_handling_auth(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:942: in _send_handling_auth\n    response = self._send_handling_redirects(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:979: in _send_handling_redirects\n    response = self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1014: in _send_single_request\n    response = transport.handle_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:354: in handle_request\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:351: in handle_request\n    portal.call(self.app, scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:290: in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:456: in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:401: in __get_result\n    raise self._exception\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:221: in _call_func\n    retval = await retval_or_awaitable\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py:1054: in __call__\n    await super().__call__(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py:113: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:186: in __call__\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:164: in __call__\n    await self.app(scope, receive, _send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py:63: in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:716: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:736: in app\n    await route.handle(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:290: in handle\n    await self.app(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:78: in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:75: in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:302: in app\n    raw_response = await run_endpoint_function(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:213: in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc\\services\\main_api_server.py:247: in get_hsp_task_status\n    if correlation_id in dialogue_manager.pending_hsp_task_requests:\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"
+      },
+      "teardown": { "duration": 0.004325999994762242, "outcome": "passed" }
+    },
+    {
+      "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_failed_from_ham",
+      "lineno": 339,
+      "outcome": "failed",
+      "keywords": [
+        "test_get_hsp_task_status_failed_from_ham",
+        "timeout",
+        "asyncio",
+        "pytestmark",
+        "TestHSPEndpoints",
+        "skipif",
+        "test_main_api_server_hsp.py",
+        "services",
+        "tests",
+        "Unified-AI-Project",
+        ""
+      ],
+      "setup": { "duration": 0.007030799999483861, "outcome": "passed" },
+      "call": {
+        "duration": 0.12188579999929061,
+        "outcome": "failed",
+        "crash": {
+          "path": "D:\\Projects\\Unified-AI-Project\\src\\services\\main_api_server.py",
+          "lineno": 247,
+          "message": "AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"
+        },
+        "traceback": [
+          {
+            "path": "tests\\services\\test_main_api_server_hsp.py",
+            "lineno": 358,
+            "message": "in test_get_hsp_task_status_failed_from_ham"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 479,
+            "message": "in get"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 1053,
+            "message": "in get"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 451,
+            "message": "in request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 825,
+            "message": "in request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 914,
+            "message": "in send"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 942,
+            "message": "in _send_handling_auth"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 979,
+            "message": "in _send_handling_redirects"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 1014,
+            "message": "in _send_single_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 354,
+            "message": "in handle_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 351,
+            "message": "in handle_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py",
+            "lineno": 290,
+            "message": "in call"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py",
+            "lineno": 456,
+            "message": "in result"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py",
+            "lineno": 401,
+            "message": "in __get_result"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py",
+            "lineno": 221,
+            "message": "in _call_func"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py",
+            "lineno": 1054,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py",
+            "lineno": 113,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py",
+            "lineno": 186,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py",
+            "lineno": 164,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py",
+            "lineno": 63,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 53,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 42,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 716,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 736,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 290,
+            "message": "in handle"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 78,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 53,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 42,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 75,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py",
+            "lineno": 302,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py",
+            "lineno": 213,
+            "message": "in run_endpoint_function"
+          },
+          {
+            "path": "src\\services\\main_api_server.py",
+            "lineno": 247,
+            "message": "in get_hsp_task_status"
+          }
+        ],
+        "longrepr": "tests\\services\\test_main_api_server_hsp.py:358: in test_get_hsp_task_status_failed_from_ham\n    response = client.get(f\"/api/v1/hsp/tasks/{mock_corr_id}\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:479: in get\n    return super().get(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1053: in get\n    return self.request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:451: in request\n    return super().request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:825: in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:914: in send\n    response = self._send_handling_auth(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:942: in _send_handling_auth\n    response = self._send_handling_redirects(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:979: in _send_handling_redirects\n    response = self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1014: in _send_single_request\n    response = transport.handle_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:354: in handle_request\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:351: in handle_request\n    portal.call(self.app, scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:290: in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:456: in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:401: in __get_result\n    raise self._exception\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:221: in _call_func\n    retval = await retval_or_awaitable\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py:1054: in __call__\n    await super().__call__(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py:113: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:186: in __call__\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:164: in __call__\n    await self.app(scope, receive, _send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py:63: in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:716: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:736: in app\n    await route.handle(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:290: in handle\n    await self.app(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:78: in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:75: in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:302: in app\n    raw_response = await run_endpoint_function(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:213: in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc\\services\\main_api_server.py:247: in get_hsp_task_status\n    if correlation_id in dialogue_manager.pending_hsp_task_requests:\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"
+      },
+      "teardown": { "duration": 0.002505000004020985, "outcome": "passed" }
+    },
+    {
+      "nodeid": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_unknown",
+      "lineno": 367,
+      "outcome": "failed",
+      "keywords": [
+        "test_get_hsp_task_status_unknown",
+        "timeout",
+        "asyncio",
+        "pytestmark",
+        "TestHSPEndpoints",
+        "skipif",
+        "test_main_api_server_hsp.py",
+        "services",
+        "tests",
+        "Unified-AI-Project",
+        ""
+      ],
+      "setup": { "duration": 0.005029199994169176, "outcome": "passed" },
+      "call": {
+        "duration": 0.005910200001380872,
+        "outcome": "failed",
+        "crash": {
+          "path": "D:\\Projects\\Unified-AI-Project\\src\\services\\main_api_server.py",
+          "lineno": 247,
+          "message": "AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"
+        },
+        "traceback": [
+          {
+            "path": "tests\\services\\test_main_api_server_hsp.py",
+            "lineno": 373,
+            "message": "in test_get_hsp_task_status_unknown"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 479,
+            "message": "in get"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 1053,
+            "message": "in get"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 451,
+            "message": "in request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 825,
+            "message": "in request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 914,
+            "message": "in send"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 942,
+            "message": "in _send_handling_auth"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 979,
+            "message": "in _send_handling_redirects"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py",
+            "lineno": 1014,
+            "message": "in _send_single_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 354,
+            "message": "in handle_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py",
+            "lineno": 351,
+            "message": "in handle_request"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py",
+            "lineno": 290,
+            "message": "in call"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py",
+            "lineno": 456,
+            "message": "in result"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py",
+            "lineno": 401,
+            "message": "in __get_result"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py",
+            "lineno": 221,
+            "message": "in _call_func"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py",
+            "lineno": 1054,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py",
+            "lineno": 113,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py",
+            "lineno": 186,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py",
+            "lineno": 164,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py",
+            "lineno": 63,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 53,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 42,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 716,
+            "message": "in __call__"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 736,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 290,
+            "message": "in handle"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 78,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 53,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py",
+            "lineno": 42,
+            "message": "in wrapped_app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py",
+            "lineno": 75,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py",
+            "lineno": 302,
+            "message": "in app"
+          },
+          {
+            "path": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py",
+            "lineno": 213,
+            "message": "in run_endpoint_function"
+          },
+          {
+            "path": "src\\services\\main_api_server.py",
+            "lineno": 247,
+            "message": "in get_hsp_task_status"
+          }
+        ],
+        "longrepr": "tests\\services\\test_main_api_server_hsp.py:373: in test_get_hsp_task_status_unknown\n    response = client.get(f\"/api/v1/hsp/tasks/{mock_corr_id}\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:479: in get\n    return super().get(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1053: in get\n    return self.request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:451: in request\n    return super().request(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:825: in request\n    return self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:914: in send\n    response = self._send_handling_auth(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:942: in _send_handling_auth\n    response = self._send_handling_redirects(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:979: in _send_handling_redirects\n    response = self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httpx\\_client.py:1014: in _send_single_request\n    response = transport.handle_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:354: in handle_request\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\testclient.py:351: in handle_request\n    portal.call(self.app, scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:290: in call\n    return cast(T_Retval, self.start_task_soon(func, *args).result())\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:456: in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\concurrent\\futures\\_base.py:401: in __get_result\n    raise self._exception\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\anyio\\from_thread.py:221: in _call_func\n    retval = await retval_or_awaitable\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py:1054: in __call__\n    await super().__call__(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\applications.py:113: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:186: in __call__\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\errors.py:164: in __call__\n    await self.app(scope, receive, _send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\middleware\\exceptions.py:63: in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:716: in __call__\n    await self.middleware_stack(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:736: in app\n    await route.handle(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:290: in handle\n    await self.app(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:78: in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:53: in wrapped_app\n    raise exc\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\_exception_handler.py:42: in wrapped_app\n    await app(scope, receive, sender)\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\starlette\\routing.py:75: in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:302: in app\n    raw_response = await run_endpoint_function(\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\routing.py:213: in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsrc\\services\\main_api_server.py:247: in get_hsp_task_status\n    if correlation_id in dialogue_manager.pending_hsp_task_requests:\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'DialogueManager' object has no attribute 'pending_hsp_task_requests'"
+      },
+      "teardown": {
+        "duration": 0.019889299997885246,
+        "outcome": "passed",
+        "stdout": "MainAPIServer: Shutting down core services...\nCore Services: Shutting down all active agents...\n[AgentManager] Shutting down all active agents...\nCore Services: Shutdown process complete.\nMainAPIServer: Core services shut down.\n",
+        "stderr": "INFO:core_ai.service_discovery.service_discovery_module:ServiceDiscoveryModule cleanup task stopped.\n",
+        "log": [
+          {
+            "name": "core_ai.service_discovery.service_discovery_module",
+            "msg": "ServiceDiscoveryModule cleanup task stopped.",
+            "args": null,
+            "levelname": "INFO",
+            "levelno": 20,
+            "pathname": "D:\\Projects\\Unified-AI-Project\\src\\core_ai\\service_discovery\\service_discovery_module.py",
+            "filename": "service_discovery_module.py",
+            "module": "service_discovery_module",
+            "exc_info": null,
+            "exc_text": null,
+            "stack_info": null,
+            "lineno": 72,
+            "funcName": "stop_cleanup_task",
+            "created": 1753496073.0692544,
+            "msecs": 69.0,
+            "relativeCreated": 456088.9983177185,
+            "thread": 12924,
+            "threadName": "Thread-2 (run_blocking_portal)",
+            "processName": "MainProcess",
+            "process": 13680,
+            "taskName": "anyio.from_thread.BlockingPortal._call_func"
+          }
+        ]
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "message": "pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.",
+      "category": "UserWarning",
+      "when": "config",
+      "filename": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pygame\\pkgdata.py",
+      "lineno": 25
+    },
+    {
+      "message": "coroutine 'HSPConnector.connect' was never awaited",
+      "category": "RuntimeWarning",
+      "when": "runtest",
+      "filename": "D:\\Projects\\Unified-AI-Project\\src\\core_services.py",
+      "lineno": 155
+    },
+    {
+      "message": "coroutine 'HSPConnector.subscribe' was never awaited",
+      "category": "RuntimeWarning",
+      "when": "runtest",
+      "filename": "D:\\Projects\\Unified-AI-Project\\src\\core_services.py",
+      "lineno": 161
+    },
+    {
+      "message": "coroutine 'HSPConnector.subscribe' was never awaited",
+      "category": "RuntimeWarning",
+      "when": "runtest",
+      "filename": "D:\\Projects\\Unified-AI-Project\\src\\core_services.py",
+      "lineno": 162
+    },
+    {
+      "message": "coroutine 'HSPConnector.subscribe' was never awaited",
+      "category": "RuntimeWarning",
+      "when": "runtest",
+      "filename": "D:\\Projects\\Unified-AI-Project\\src\\core_services.py",
+      "lineno": 163
+    },
+    {
+      "message": "coroutine 'HSPConnector.connect' was never awaited",
+      "category": "RuntimeWarning",
+      "when": "runtest",
+      "filename": "d:\\Projects\\Unified-AI-Project\\tests\\services\\test_main_api_server_hsp.py",
+      "lineno": 140
+    }
+  ]
+}

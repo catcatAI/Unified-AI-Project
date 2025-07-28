@@ -9,8 +9,8 @@ simulated_hardware_profile:
     space_gb: 10.0
     warning_threshold_percent: 80 # Start slowdowns when disk is 80% full (e.g., at 8GB usage for a 10GB disk)
     critical_threshold_percent: 95 # More severe slowdowns when disk is 95% full (e.g., at 9.5GB usage)
-    lag_factor_warning: 1.5       # Operations become 1.5x slower in warning state
-    lag_factor_critical: 3.0      # Operations become 3.0x slower in critical state
+    lag_factor_warning: 1.5 # Operations become 1.5x slower in warning state
+    lag_factor_critical: 3.0 # Operations become 3.0x slower in critical state
 
   cpu:
     cores: 2

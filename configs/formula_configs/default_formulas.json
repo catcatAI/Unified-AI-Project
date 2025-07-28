@@ -1,89 +1,94 @@
 [
-    {
-        "name": "greeting_formula",
-        "conditions": ["hello", "hi", "你好"],
-        "action": "greet_user",
-        "description": "Responds to common user greetings.",
-        "parameters": {},
-        "priority": 10,
-        "enabled": true,
-        "version": "1.0",
-        "response_template": "Hello! I am {ai_name}. How can I help you today?"
+  {
+    "name": "greeting_formula",
+    "conditions": ["hello", "hi", "你好"],
+    "action": "greet_user",
+    "description": "Responds to common user greetings.",
+    "parameters": {},
+    "priority": 10,
+    "enabled": true,
+    "version": "1.0",
+    "response_template": "Hello! I am {ai_name}. How can I help you today?"
+  },
+  {
+    "name": "weather_formula",
+    "conditions": ["weather", "天氣", "forecast"],
+    "action": "get_weather_forecast",
+    "description": "Provides weather forecast based on user query or default location.",
+    "parameters": {
+      "location_required": false,
+      "default_timeframe": "today"
     },
-    {
-        "name": "weather_formula",
-        "conditions": ["weather", "天氣", "forecast"],
-        "action": "get_weather_forecast",
-        "description": "Provides weather forecast based on user query or default location.",
-        "parameters": {
-            "location_required": false,
-            "default_timeframe": "today"
-        },
-        "priority": 20,
-        "enabled": true,
-        "version": "1.0"
+    "priority": 20,
+    "enabled": true,
+    "version": "1.0"
+  },
+  {
+    "name": "time_query_formula",
+    "conditions": ["time", "時間", "current time"],
+    "action": "get_current_time",
+    "description": "Provides the current time.",
+    "parameters": {},
+    "priority": 15,
+    "enabled": true,
+    "version": "1.0"
+  },
+  {
+    "name": "help_formula",
+    "conditions": ["help", "幫助", "what can you do"],
+    "action": "provide_help_summary",
+    "description": "Offers a summary of capabilities or available commands.",
+    "parameters": {},
+    "priority": 5,
+    "enabled": true,
+    "version": "1.0"
+  },
+  {
+    "name": "formula_trigger_calculation",
+    "conditions": ["calculate for me", "compute the result of"],
+    "action": "dispatch_tool",
+    "description": "Triggers the calculator tool with a predefined query or one extracted from context.",
+    "parameters": {
+      "tool_name": "calculate",
+      "tool_query": "25 * 4"
     },
-    {
-        "name": "time_query_formula",
-        "conditions": ["time", "時間", "current time"],
-        "action": "get_current_time",
-        "description": "Provides the current time.",
-        "parameters": {},
-        "priority": 15,
-        "enabled": true,
-        "version": "1.0"
+    "priority": 25,
+    "enabled": true,
+    "version": "1.0",
+    "response_template": null
+  },
+  {
+    "name": "list_tools_formula",
+    "conditions": [
+      "list tools",
+      "what tools do you have",
+      "show available tools",
+      "tool list"
+    ],
+    "action": "dispatch_tool",
+    "description": "Lists the available Python tools the AI can describe or use.",
+    "parameters": {
+      "tool_name": "inspect_code",
+      "tool_query": "list_tools"
     },
-    {
-        "name": "help_formula",
-        "conditions": ["help", "幫助", "what can you do"],
-        "action": "provide_help_summary",
-        "description": "Offers a summary of capabilities or available commands.",
-        "parameters": {},
-        "priority": 5,
-        "enabled": true,
-        "version": "1.0"
-    },
-    {
-        "name": "formula_trigger_calculation",
-        "conditions": ["calculate for me", "compute the result of"],
-        "action": "dispatch_tool",
-        "description": "Triggers the calculator tool with a predefined query or one extracted from context.",
-        "parameters": {
-            "tool_name": "calculate",
-            "tool_query": "25 * 4"
-        },
-        "priority": 25,
-        "enabled": true,
-        "version": "1.0",
-        "response_template": null
-    },
-    {
-        "name": "list_tools_formula",
-        "conditions": ["list tools", "what tools do you have", "show available tools", "tool list"],
-        "action": "dispatch_tool",
-        "description": "Lists the available Python tools the AI can describe or use.",
-        "parameters": {
-            "tool_name": "inspect_code",
-            "tool_query": "list_tools"
-        },
-        "priority": 20,
-        "enabled": true,
-        "version": "1.0",
-        "response_template": null
-    },
-    {
-        "name": "draft_tool_formula",
-        "conditions": [
-            "draft(?: a)?(?: python)? tool (?:called |named )?(?P<tool_name>[a-zA-Z_][a-zA-Z0-9_]*) that (?P<description_for_llm>.+)",
-            "create(?: a)?(?: python)? tool (?:called |named )?(?P<tool_name>[a-zA-Z_][a-zA-Z0-9_]*) to (?P<description_for_llm>.+)",
-            "make a tool (?:called |named )?(?P<tool_name>[a-zA-Z_][a-zA-Z0-9_]*) which (?P<description_for_llm>.+)"
-        ],
-        "action": "initiate_tool_draft",
-        "description": "Initiates the drafting of a new Python tool skeleton based on user description.",
-        "parameters": {},
-        "priority": 30,
-        "enabled": true,
-        "version": "1.0",
-        "response_template": null
-    }
+    "priority": 20,
+    "enabled": true,
+    "version": "1.0",
+    "response_template": null
+  },
+  {
+    "name": "draft_tool_formula",
+    "conditions": [
+      "draft(?: a)?(?: python)? tool (?:called |named )?(?P<tool_name>[a-zA-Z_][a-zA-Z0-9_]*) that (?P<description_for_llm>.+)",
+      "create(?: a)?(?: python)? tool (?:called |named )?(?P<tool_name>[a-zA-Z_][a-zA-Z0-9_]*) to (?P<description_for_llm>.+)",
+      "make a tool (?:called |named )?(?P<tool_name>[a-zA-Z_][a-zA-Z0-9_]*) which (?P<description_for_llm>.+)"
+    ],
+    "action": "initiate_tool_draft",
+    "description": "Initiates the drafting of a new Python tool skeleton based on user description.",
+    "parameters": {},
+    "priority": 30,
+    "enabled": true,
+    "version": "1.0",
+    "response_template": null
+  }
 ]

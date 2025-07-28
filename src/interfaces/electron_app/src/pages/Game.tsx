@@ -1,11 +1,11 @@
-import React from 'react';
+import React from "react";
 
 const Game = () => {
   const startGame = () => {
     // This would need to call the Electron main process to launch the game.
     // The IPC logic would be set up in preload.js and main.js.
     if (window.electronAPI) {
-      window.electronAPI.invoke('game:start');
+      window.electronAPI.invoke("game:start");
     }
   };
 
