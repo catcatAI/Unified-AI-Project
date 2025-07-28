@@ -30,6 +30,7 @@ def hsp_connector_instance(mock_mqtt_client):
         mock_mode=True, # Enable mock mode for testing without a real broker
         mock_mqtt_client=mock_mqtt_client
     )
+    connector.external_connector.publish = mock_mqtt_client.publish
     return connector
 
 @pytest.mark.asyncio
