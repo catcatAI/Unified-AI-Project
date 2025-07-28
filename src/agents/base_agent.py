@@ -11,7 +11,7 @@ class BaseAgent:
     Handles the boilerplate of service initialization, HSP connection,
     and listening for tasks.
     """
-    def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]]):
+    def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]], agent_name: str = "BaseAgent"):
         """
         Initializes the BaseAgent.
 
@@ -19,9 +19,11 @@ class BaseAgent:
             agent_id (str): The unique identifier for this agent instance.
             capabilities (List[Dict[str, Any]]): A list of capability dictionaries
                                                   that this agent will advertise.
+            agent_name (str, optional): The name of the agent. Defaults to "BaseAgent".
         """
         self.agent_id = agent_id
         self.capabilities = capabilities
+        self.agent_name = agent_name
         self.hsp_connector = None
         self.is_running = False
 
@@ -39,19 +41,22 @@ class BaseAgent:
         """
         Starts the agent's main loop and connects to the HSP network.
         """
+        print(f"[{self.agent_id}] Setting is_running to True")
+        self.is_running = True
         if not self.hsp_connector:
             print(f"[{self.agent_id}] Error: HSPConnector not available.")
             return
 
         print(f"[{self.agent_id}] Starting...")
-        self.is_running = True
 
         # Register the task request handler
-        self.hsp_connector.register_on_task_request_callback(self.handle_task_request)
+        if self.hsp_connector:
+            self.hsp_connector.register_on_task_request_callback(self.handle_task_request)
 
         # Advertise capabilities
-        for cap in self.capabilities:
-            self.hsp_connector.advertise_capability(cap)
+        if self.hsp_connector:
+            for cap in self.capabilities:
+                await self.hsp_connector.advertise_capability(cap)
 
         print(f"[{self.agent_id}] is running and listening for tasks.")
 

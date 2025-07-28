@@ -24,7 +24,7 @@ full = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML"
 ai_focused = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn", "tensorflow", "spacy", "sentence-transformers", "huggingface-hub", "transformers",]
 game = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pygame", "pandas", "scikit-learn",]
 installer = [ "PyQt5", "pyshortcuts", "secret-sharing", "qrcode",]
-testing = [ "pytest", "pytest-asyncio", "pytest-cov", "aiounittest",]
+testing = [ "pytest", "pytest-asyncio", "pytest-cov", "aiounittest", "cryptography", "aiohttp", "Flask", "python-dotenv", "paho-mqtt", "pandas", "scikit-learn", "spacy", "gmqtt", "pygame", "amqtt", "fastapi", "httpx", "uvicorn",]
 
 [project.urls]
 Homepage = "https://github.com/pypa/sampleproject"
@@ -77,8 +77,8 @@ pythonpath = [ ".", "src",]
 testpaths = [ "tests",]
 markers = [ "slow: marks tests as slow (deselect with '-m \"not slow\"')", "online: marks tests that require an internet connection", "mcp: marks tests related to MCP functionality", "context7: marks tests related to Context7 integration", "ai_core: marks tests for core AI functionality", "timeout: marks tests with a timeout",]
 filterwarnings = [ "ignore::DeprecationWarning", "ignore::PendingDeprecationWarning",]
+addopts = "-v --tb=short --strict-markers"
 asyncio_mode = "auto"
-addopts = "-v --tb=short --strict-markers --timeout=600"
 
 [tool.pylint.messages_control]
 disable = [ "C0103", "C0114", "R0903", "R0913", "W0613",]

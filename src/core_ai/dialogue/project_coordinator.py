@@ -147,9 +147,13 @@ class ProjectCoordinator:
 
         if not found_caps and self.agent_manager:
             agent_to_launch = f"{capability_name.split('_v')[0]}_agent"
-            if self.agent_manager.launch_agent(agent_to_launch):
-                await self.agent_manager.wait_for_agent_ready(agent_to_launch)
-                found_caps = self.service_discovery.find_capabilities(capability_name_filter=capability_name)
+            launch_future = self.agent_manager.launch_agent(agent_to_launch)
+            if launch_future:
+                try:
+                    await asyncio.wait_for(launch_future, timeout=10)
+                    found_caps = self.service_discovery.find_capabilities(capability_name_filter=capability_name)
+                except asyncio.TimeoutError:
+                    print(f"[ProjectCoordinator] Warning: Timed out waiting for agent '{agent_to_launch}' to become ready.")
 
         if not found_caps:
             return {"error": f"Could not find or launch an agent with capability '{capability_name}'."}
