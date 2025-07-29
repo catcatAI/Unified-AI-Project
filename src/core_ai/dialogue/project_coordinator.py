@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 class ProjectCoordinator:
     def __init__(self,
-                 llm_interface: LLMInterface,
+                 llm_interface: MultiLLMService,
                  service_discovery: ServiceDiscoveryModule,
                  hsp_connector: HSPConnector,
                  agent_manager: AgentManager,

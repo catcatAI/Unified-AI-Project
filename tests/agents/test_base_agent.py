@@ -34,14 +34,10 @@ async def test_base_agent_init(base_agent):
 @pytest.mark.asyncio
 async def test_base_agent_start_stop(base_agent, mock_hsp_connector):
     """Test that the BaseAgent can start and stop correctly."""
-    with patch('asyncio.sleep', new_callable=AsyncMock):
-        task = asyncio.create_task(base_agent.start())
-        while not base_agent.is_running:
-            await asyncio.sleep(0.1)
-        assert base_agent.is_running is True
-        mock_hsp_connector.advertise_capability.assert_called_once()
-        base_agent.is_running = False  # to stop the loop
-        await task
+    await base_agent.start()
+    assert base_agent.is_running is True
+    mock_hsp_connector.advertise_capability.assert_called_once()
+    await base_agent.stop()
 
 @pytest.mark.asyncio
 async def test_base_agent_handle_task_request(base_agent, mock_hsp_connector):

@@ -10,7 +10,7 @@ import ast
 
 from src.core_ai.personality.personality_manager import PersonalityManager
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from src.services.llm_interface import LLMInterface
+from src.services.multi_llm_service import MultiLLMService
 from src.core_ai.emotion_system import EmotionSystem
 from src.core_ai.crisis_system import CrisisSystem
 from src.core_ai.time_system import TimeSystem
@@ -36,7 +36,7 @@ class DialogueManager:
                  ai_id: str,
                  personality_manager: PersonalityManager,
                  memory_manager: HAMMemoryManager,
-                 llm_interface: LLMInterface,
+                 llm_interface: MultiLLMService,
                  emotion_system: EmotionSystem,
                  crisis_system: CrisisSystem,
                  time_system: TimeSystem,

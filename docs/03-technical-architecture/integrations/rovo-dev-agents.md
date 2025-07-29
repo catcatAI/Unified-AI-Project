@@ -37,11 +37,12 @@ graph TB
 ### 核心組件
 
 #### 1. Rovo Dev Agent Connector
-- **位置**: `src/integrations/rovo_dev_connector.py`
+- **位置**: `src/integrations/enhanced_rovo_dev_connector.py`
 - **功能**: 
   - 與 Rovo Dev Agents 建立連接
   - 處理 API 認證和授權
   - 管理請求和響應的序列化/反序列化
+  - **增強功能**: 內置容錯機制、重試邏輯和備用端點支持，並提供異步上下文管理器 (`async with`)。
 
 #### 2. Atlassian Service Bridge
 - **位置**: `src/integrations/atlassian_bridge.py`

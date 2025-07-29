@@ -50,7 +50,7 @@ class TestRovoDevAgent:
     @pytest.fixture
     def agent(self, mock_config):
         """创建测试代理实例"""
-        with patch('src.integrations.rovo_dev_agent.RovoDevConnector'):
+        with patch('src.integrations.enhanced_rovo_dev_connector.EnhancedRovoDevConnector'):
             with patch('src.integrations.rovo_dev_agent.AtlassianBridge'):
                 return RovoDevAgent(mock_config)
     

@@ -28,20 +28,37 @@ class NPC:
     def render(self, surface):
         surface.blit(self.image, self.rect)
 
-def load_npc_data():
-    path = os.path.join('data', 'game_data', 'npcs.json')
-    with open(path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+_NPC_DATA = {}
 
-NPC_DATA = load_npc_data()
+def load_npc_data():
+    global _NPC_DATA
+    path = os.path.join('data', 'game_data', 'npcs.json')
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            _NPC_DATA = json.load(f)
+    except FileNotFoundError:
+        print(f"Warning: npcs.json not found at {path}. Initializing with empty data.")
+        _NPC_DATA = {}
+    except json.JSONDecodeError:
+        print(f"Warning: npcs.json at {path} is malformed. Initializing with empty data.")
+        _NPC_DATA = {}
 
 def create_npc(game, npc_id):
-    npc_data = NPC_DATA.get(npc_id)
+    if not _NPC_DATA:
+        load_npc_data() # Ensure data is loaded if not already
+
+    npc_data = _NPC_DATA.get(npc_id)
     if not npc_data:
         return None
 
-    npc_data['id'] = npc_id
-    portrait = game.assets['images']['portraits'].get(npc_data['portrait'])
-    sprite = game.assets['sprites']['characters'].get(npc_data['sprite'])
+    # Create a mutable copy to add 'id' if it's not already present
+    npc_data_copy = npc_data.copy()
+    npc_data_copy['id'] = npc_id
+    
+    portrait = game.assets['images']['portraits'].get(npc_data_copy.get('portrait'))
+    sprite = game.assets['sprites']['characters'].get(npc_data_copy.get('sprite'))
 
-    return NPC(game, npc_data, portrait, sprite)
+    return NPC(game, npc_data_copy, portrait, sprite)
+
+# Load data on module import
+load_npc_data()

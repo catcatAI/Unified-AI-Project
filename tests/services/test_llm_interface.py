@@ -6,7 +6,7 @@ import unittest
 import asyncio
 import pytest_asyncio
 
-from src.services.llm_interface import LLMInterface
+from src.services.multi_llm_service import MultiLLMService
 
 class TestLLMInterface(unittest.TestCase):
 
@@ -33,7 +33,7 @@ class TestLLMInterface(unittest.TestCase):
         if models: # If list is not empty
             # Assuming LLMModelInfo is a dict-like object or has 'id' attribute
             self.assertIn("id", models[0].__dict__ if hasattr(models[0], '__dict__') else models[0]) # Check for expected key in first model dict
-        print("TestLLMInterface.test_03_list_models_placeholder PASSED")
+        print("TestMultiLLMService.test_03_list_models_placeholder PASSED")
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

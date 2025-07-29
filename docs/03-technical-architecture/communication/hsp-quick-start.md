@@ -40,27 +40,25 @@
 ### 基本使用
 
 ```python
-from src.hsp.connector import HSPConnector
+from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 # 創建連接（啟用fallback協議）
-connector = HSPConnector(
-    ai_id="my_ai_agent",
-    broker_address="127.0.0.1",
-    broker_port=1883,
-    enable_fallback=True  # 啟用備用協議
+connector = EnhancedRovoDevConnector(
+    config={'atlassian': {'api_token': 'your_token', 'user_email': 'your_email', 'domain': 'your_domain'}},
+    retry_config=None, # 使用默認重試配置
+    endpoint_configs=None # 使用默認端點配置
 )
-await connector.connect()
-
-# 發送事實
-fact_payload = {
-    "id": "fact_001",
-    "statement_type": "natural_language",
-    "statement_nl": "這是一個測試事實",
-    "source_ai_id": "my_ai_agent",
-    "timestamp_created": "2024-01-01T00:00:00Z",
-    "confidence_score": 0.9
-}
-success = await connector.publish_fact(fact_payload, "hsp/knowledge/facts/test")
+async with connector: # 使用異步上下文管理器
+    # 發送事實
+    fact_payload = {
+        "id": "fact_001",
+        "statement_type": "natural_language",
+        "statement_nl": "這是一個測試事實",
+        "source_ai_id": "my_ai_agent",
+        "timestamp_created": "2024-01-01T00:00:00Z",
+        "confidence_score": 0.9
+    }
+    success = await connector.publish_fact(fact_payload, "hsp/knowledge/facts/test")
 ```
 
 ### 接收消息

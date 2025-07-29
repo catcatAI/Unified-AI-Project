@@ -6,6 +6,8 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "pyyaml"])
     import yaml
 import os
+from pathlib import Path
+from src.shared.utils.env_utils import setup_env_file, add_env_variable
 
 def get_os():
     if sys.platform.startswith("win"):
@@ -36,9 +38,14 @@ def main():
         sys.exit(1)
 
     # --- Genesis Process for First Time Setup ---
-    project_root = os.path.abspath(os.path.dirname(__file__))
-    env_path = os.path.join(project_root, '.env')
-    if not os.path.exists(env_path) or "MIKO_HAM_KEY" not in open(env_path).read():
+    project_root = Path(os.path.abspath(os.path.dirname(__file__)))
+    
+    # Ensure .env file exists
+    setup_env_file(project_root)
+
+    # Check if MIKO_HAM_KEY is already in .env
+    env_path = project_root / ".env"
+    if not env_path.exists() or "MIKO_HAM_KEY" not in env_path.read_text():
         print("\n--- First Time Setup: Generating AI Identity ---")
         from src.core_ai.genesis import GenesisManager
         genesis_secret, uid = GenesisManager.create_genesis_secret()
@@ -53,14 +60,13 @@ def main():
             print(shard)
             print("-" * (len(shard)))
 
-        # Save UID and HAM Key to .env file
+        # Save UID and HAM Key to .env file using env_utils
         recovered_secret = GenesisManager.recover_secret_from_shards(shards)
         if recovered_secret:
             parsed_uid, ham_key = GenesisManager.parse_genesis_secret(recovered_secret)
 
-            with open(env_path, 'a') as f:
-                f.write(f"\nUID={parsed_uid}")
-                f.write(f"\nMIKO_HAM_KEY={ham_key}\n")
+            add_env_variable("UID", parsed_uid, project_root)
+            add_env_variable("MIKO_HAM_KEY", ham_key, project_root)
             print("Identity saved to .env file.")
 
     # Install dependencies
@@ -109,12 +115,7 @@ def main():
 
 
     # Save Python executable path to .env file
-    try:
-        with open(env_path, 'a') as f:
-            f.write(f"\nPYTHON_EXECUTABLE={sys.executable}\n")
-        print(f"Python executable path saved to {env_path}")
-    except Exception as e:
-        print(f"Error saving Python executable path: {e}", file=sys.stderr)
+    add_env_variable("PYTHON_EXECUTABLE", sys.executable, project_root)
 
     print("Installation complete.")
 

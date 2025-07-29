@@ -2,6 +2,10 @@ import unittest
 import yaml
 from pathlib import Path
 from unittest.mock import patch, mock_open, MagicMock
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.core_ai.dependency_manager import DependencyManager, DependencyStatus
 

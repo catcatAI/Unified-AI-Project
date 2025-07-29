@@ -1,5 +1,5 @@
 system:
-  log_path: logs # To be placed under data/logs/ eventually
+  log_path: data/logs # To be placed under data/logs/ eventually
   log_level: INFO
   crisis_system: # Added CrisisSystem configuration
     crisis_keywords:

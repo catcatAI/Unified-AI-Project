@@ -5,17 +5,41 @@ Rovo Dev Agent 核心实现
 
 import asyncio
 import logging
+import pickle
+import time
 from typing import Dict, Any, Optional, List, Union
-from datetime import datetime
+from datetime import datetime, timedelta
+from dataclasses import dataclass
 import json
 from pathlib import Path
 
-from .rovo_dev_connector import RovoDevConnector
+from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 from .atlassian_bridge import AtlassianBridge
 from ..hsp.types import HSPMessage, HSPCapability, HSPTask
 from ..core_ai.agent_manager import AgentManager
 
 logger = logging.getLogger(__name__)
+
+@dataclass
+class TaskState:
+    """任務狀態"""
+    task_id: str
+    task: HSPTask
+    status: str  # 'pending', 'processing', 'completed', 'failed', 'retrying'
+    start_time: datetime
+    retry_count: int = 0
+    last_error: Optional[str] = None
+    result: Optional[Dict[str, Any]] = None
+
+@dataclass
+class AgentRecoveryState:
+    """代理恢復狀態"""
+    agent_id: str
+    last_checkpoint: datetime
+    active_tasks: List[str]
+    completed_tasks: int
+    failed_tasks: int
+    recovery_mode: bool = False
 
 class RovoDevAgent:
     """Rovo Dev Agent 主要实现类"""
@@ -29,7 +53,7 @@ class RovoDevAgent:
         """
         self.config = config
         self.agent_manager = agent_manager
-        self.connector = RovoDevConnector(config)
+        self.connector = EnhancedRovoDevConnector(config)
         self.bridge = AtlassianBridge(self.connector)
         
         # 代理状态
@@ -41,14 +65,45 @@ class RovoDevAgent:
         self.task_queue = asyncio.Queue()
         self.active_tasks = {}
         self.task_history = []
+        self.task_states = {}  # 任務狀態追蹤
+        
+        # 錯誤恢復配置
+        self.recovery_config = config.get('hsp_integration', {}).get('task_persistence', {})
+        self.recovery_enabled = self.recovery_config.get('enabled', True)
+        self.max_retry_attempts = self.recovery_config.get('max_retry_attempts', 5)
+        self.retry_delay = self.recovery_config.get('retry_delay', 60)
+        self.auto_recovery = self.recovery_config.get('auto_recovery', True)
+        
+        # 持久化存儲
+        self.storage_path = Path(self.recovery_config.get('storage_path', 'data/task_queue'))
+        self.storage_path.mkdir(parents=True, exist_ok=True)
+        self.state_file = self.storage_path / f"{self.agent_id}_state.pkl"
+        self.tasks_file = self.storage_path / f"{self.agent_id}_tasks.pkl"
+        
+        # 降級模式配置
+        self.degraded_mode = False
+        self.degraded_capabilities = set()
+        self.critical_capabilities = {'issue_tracking', 'documentation_generation'}
         
         # 性能指标
         self.metrics = {
             'tasks_completed': 0,
             'tasks_failed': 0,
+            'tasks_retried': 0,
             'average_response_time': 0.0,
-            'last_activity': None
+            'last_activity': None,
+            'recovery_events': 0,
+            'degraded_mode_activations': 0
         }
+        
+        # 恢復狀態
+        self.recovery_state = AgentRecoveryState(
+            agent_id=self.agent_id,
+            last_checkpoint=datetime.now(),
+            active_tasks=[],
+            completed_tasks=0,
+            failed_tasks=0
+        )
         
     def _load_capabilities(self) -> List[HSPCapability]:
         """加载代理能力配置
@@ -61,12 +116,12 @@ class RovoDevAgent:
         
         for cap_config in capabilities_config:
             if cap_config.get('enabled', False):
-                capability = HSPCapability(
-                    name=cap_config['name'],
-                    description=cap_config['description'],
-                    version="1.0.0",
-                    parameters=self._get_capability_parameters(cap_config['name'])
-                )
+                capability = {
+                    'name': cap_config['name'],
+                    'description': cap_config['description'],
+                    'version': "1.0.0",
+                    'parameters': self._get_capability_parameters(cap_config['name'])
+                }
                 capabilities.append(capability)
                 
         return capabilities
@@ -118,18 +173,35 @@ class RovoDevAgent:
             await self.connector.start()
             self.is_active = True
             
+            # 恢復之前的狀態
+            if self.recovery_enabled:
+                await self._recover_state()
+            
             # 启动任务处理循环
             asyncio.create_task(self._task_processing_loop())
+            
+            # 啟動恢復監控
+            if self.auto_recovery:
+                asyncio.create_task(self._recovery_monitoring_loop())
+            
+            # 啟動狀態檢查點
+            asyncio.create_task(self._checkpoint_loop())
             
             logger.info(f"Rovo Dev Agent {self.agent_id} 启动成功")
             
         except Exception as e:
             logger.error(f"启动 Rovo Dev Agent 失败: {e}")
+            await self._handle_startup_failure(e)
             raise
             
     async def stop(self):
         """停止 Rovo Dev Agent"""
         self.is_active = False
+        
+        # 保存當前狀態
+        if self.recovery_enabled:
+            await self._save_state()
+        
         await self.connector.close()
         logger.info(f"Rovo Dev Agent {self.agent_id} 已停止")
         
@@ -154,7 +226,7 @@ class RovoDevAgent:
             task: HSP 任务对象
         """
         start_time = datetime.now()
-        task_id = task.task_id
+        task_id = task['task_id']
         
         try:
             self.active_tasks[task_id] = {
@@ -175,7 +247,7 @@ class RovoDevAgent:
             # 记录任务历史
             self.task_history.append({
                 'task_id': task_id,
-                'capability': task.capability,
+                'capability': task['capability'],
                 'status': 'completed',
                 'processing_time': processing_time,
                 'timestamp': datetime.now().isoformat(),
@@ -200,7 +272,7 @@ class RovoDevAgent:
             
             self.task_history.append({
                 'task_id': task_id,
-                'capability': task.capability,
+                'capability': task['capability'],
                 'status': 'failed',
                 'processing_time': processing_time,
                 'timestamp': datetime.now().isoformat(),
@@ -226,8 +298,8 @@ class RovoDevAgent:
         Returns:
             Dict: 任务处理结果
         """
-        capability = task.capability
-        parameters = task.parameters
+        capability = task['capability']
+        parameters = task['parameters']
         
         if capability == 'code_analysis':
             return await self._handle_code_analysis(parameters)
@@ -607,7 +679,7 @@ class RovoDevAgent:
         return {
             'agent_id': self.agent_id,
             'is_active': self.is_active,
-            'capabilities': [cap.name for cap in self.capabilities],
+            'capabilities': [cap['name'] for cap in self.capabilities],
             'queue_size': self.task_queue.qsize(),
             'active_tasks': len(self.active_tasks),
             'metrics': self.metrics,
@@ -624,3 +696,259 @@ class RovoDevAgent:
             List: 任务历史记录
         """
         return self.task_history[-limit:] if self.task_history else []
+    
+    # ==================== 錯誤恢復機制 ====================
+    
+    async def _recover_state(self):
+        """恢復代理狀態"""
+        try:
+            # 恢復代理狀態
+            if self.state_file.exists():
+                with open(self.state_file, 'rb') as f:
+                    saved_state = pickle.load(f)
+                    self.recovery_state = saved_state
+                    self.metrics.update(saved_state.__dict__)
+                    logger.info(f"恢復代理狀態: {self.agent_id}")
+            
+            # 恢復未完成的任務
+            if self.tasks_file.exists():
+                with open(self.tasks_file, 'rb') as f:
+                    saved_tasks = pickle.load(f)
+                    for task_state in saved_tasks:
+                        if task_state.status in ['pending', 'processing', 'retrying']:
+                            # 重新提交任務
+                            await self.task_queue.put(task_state.task)
+                            self.task_states[task_state.task_id] = task_state
+                            logger.info(f"恢復任務: {task_state.task_id}")
+                    
+                    self.metrics['recovery_events'] += 1
+                    
+        except Exception as e:
+            logger.error(f"狀態恢復失敗: {e}")
+    
+    async def _save_state(self):
+        """保存代理狀態"""
+        try:
+            # 更新恢復狀態
+            self.recovery_state.last_checkpoint = datetime.now()
+            self.recovery_state.active_tasks = list(self.active_tasks.keys())
+            self.recovery_state.completed_tasks = self.metrics['tasks_completed']
+            self.recovery_state.failed_tasks = self.metrics['tasks_failed']
+            
+            # 保存代理狀態
+            with open(self.state_file, 'wb') as f:
+                pickle.dump(self.recovery_state, f)
+            
+            # 保存任務狀態
+            task_states_list = list(self.task_states.values())
+            with open(self.tasks_file, 'wb') as f:
+                pickle.dump(task_states_list, f)
+                
+            logger.debug(f"保存代理狀態: {self.agent_id}")
+            
+        except Exception as e:
+            logger.error(f"狀態保存失敗: {e}")
+    
+    async def _checkpoint_loop(self):
+        """定期檢查點循環"""
+        while self.is_active:
+            try:
+                await asyncio.sleep(300)  # 每5分鐘保存一次
+                await self._save_state()
+            except Exception as e:
+                logger.error(f"檢查點錯誤: {e}")
+    
+    async def _recovery_monitoring_loop(self):
+        """恢復監控循環"""
+        while self.is_active:
+            try:
+                await asyncio.sleep(60)  # 每分鐘檢查一次
+                await self._check_task_health()
+                await self._check_system_health()
+            except Exception as e:
+                logger.error(f"恢復監控錯誤: {e}")
+    
+    async def _check_task_health(self):
+        """檢查任務健康狀態"""
+        current_time = datetime.now()
+        
+        for task_id, task_info in list(self.active_tasks.items()):
+            # 檢查任務是否超時
+            if (current_time - task_info['start_time']).seconds > 600:  # 10分鐘超時
+                logger.warning(f"任務超時: {task_id}")
+                await self._handle_task_timeout(task_id)
+        
+        # 檢查失敗任務重試
+        for task_id, task_state in list(self.task_states.items()):
+            if (task_state.status == 'failed' and 
+                task_state.retry_count < self.max_retry_attempts and
+                (current_time - task_state.start_time).seconds > self.retry_delay):
+                
+                logger.info(f"重試失敗任務: {task_id} (第 {task_state.retry_count + 1} 次)")
+                await self._retry_task(task_state)
+    
+    async def _check_system_health(self):
+        """檢查系統健康狀態"""
+        # 檢查連接器健康狀態
+        try:
+            health = await self.connector.health_check()
+            if not health.get('healthy', False):
+                logger.warning("連接器不健康，啟動降級模式")
+                await self._enter_degraded_mode()
+        except Exception as e:
+            logger.error(f"健康檢查失敗: {e}")
+            await self._enter_degraded_mode()
+        
+        # 檢查錯誤率
+        total_tasks = self.metrics['tasks_completed'] + self.metrics['tasks_failed']
+        if total_tasks > 10:  # 至少處理10個任務後才檢查
+            error_rate = self.metrics['tasks_failed'] / total_tasks
+            if error_rate > 0.3:  # 錯誤率超過30%
+                logger.warning(f"錯誤率過高: {error_rate:.2%}")
+                await self._enter_degraded_mode()
+    
+    async def _handle_task_timeout(self, task_id: str):
+        """處理任務超時"""
+        if task_id in self.active_tasks:
+            task_info = self.active_tasks[task_id]
+            task_state = self.task_states.get(task_id)
+            
+            if task_state:
+                task_state.status = 'failed'
+                task_state.last_error = 'Task timeout'
+                
+                # 如果還有重試機會，標記為重試
+                if task_state.retry_count < self.max_retry_attempts:
+                    task_state.status = 'retrying'
+                    logger.info(f"任務超時，將重試: {task_id}")
+                else:
+                    logger.error(f"任務最終超時失敗: {task_id}")
+                    self.metrics['tasks_failed'] += 1
+            
+            # 清理活動任務
+            del self.active_tasks[task_id]
+    
+    async def _retry_task(self, task_state: TaskState):
+        """重試任務"""
+        task_state.retry_count += 1
+        task_state.status = 'retrying'
+        task_state.start_time = datetime.now()
+        
+        # 重新提交任務
+        await self.task_queue.put(task_state.task)
+        self.metrics['tasks_retried'] += 1
+        
+        logger.info(f"重試任務: {task_state.task_id} (第 {task_state.retry_count} 次)")
+    
+    async def _enter_degraded_mode(self):
+        """進入降級模式"""
+        if not self.degraded_mode:
+            self.degraded_mode = True
+            self.metrics['degraded_mode_activations'] += 1
+            
+            # 禁用非關鍵能力
+            for capability in self.capabilities:
+                if capability['name'] not in self.critical_capabilities:
+                    self.degraded_capabilities.add(capability.name)
+            
+            logger.warning(f"進入降級模式，禁用能力: {self.degraded_capabilities}")
+    
+    async def _exit_degraded_mode(self):
+        """退出降級模式"""
+        if self.degraded_mode:
+            self.degraded_mode = False
+            self.degraded_capabilities.clear()
+            logger.info("退出降級模式，恢復所有能力")
+    
+    async def _handle_startup_failure(self, error: Exception):
+        """處理啟動失敗"""
+        logger.error(f"代理啟動失敗: {error}")
+        
+        # 嘗試降級啟動
+        try:
+            logger.info("嘗試降級模式啟動")
+            await self._enter_degraded_mode()
+            
+            # 只啟動基本功能
+            self.is_active = True
+            asyncio.create_task(self._task_processing_loop())
+            
+            logger.info("降級模式啟動成功")
+            
+        except Exception as e:
+            logger.error(f"降級模式啟動也失敗: {e}")
+            raise
+    
+    def handle_task_error(self, task_id: str, error: Exception) -> bool:
+        """處理任務錯誤
+        
+        Args:
+            task_id: 任務ID
+            error: 錯誤信息
+            
+        Returns:
+            bool: 是否應該重試
+        """
+        task_state = self.task_states.get(task_id)
+        if not task_state:
+            return False
+        
+        task_state.last_error = str(error)
+        task_state.status = 'failed'
+        
+        # 判斷是否應該重試
+        if task_state.retry_count < self.max_retry_attempts:
+            # 檢查錯誤類型
+            if self._is_retryable_error(error):
+                task_state.status = 'retrying'
+                logger.info(f"任務錯誤可重試: {task_id} - {error}")
+                return True
+        
+        # 不重試，標記為最終失敗
+        logger.error(f"任務最終失敗: {task_id} - {error}")
+        self.metrics['tasks_failed'] += 1
+        return False
+    
+    def _is_retryable_error(self, error: Exception) -> bool:
+        """判斷錯誤是否可重試"""
+        retryable_errors = [
+            'ConnectionError',
+            'TimeoutError',
+            'HTTPError',
+            'NetworkError',
+            'ServiceUnavailable'
+        ]
+        
+        error_type = type(error).__name__
+        error_message = str(error).lower()
+        
+        # 檢查錯誤類型
+        if error_type in retryable_errors:
+            return True
+        
+        # 檢查錯誤消息
+        retryable_keywords = ['timeout', 'connection', 'network', 'unavailable', '503', '502', '504']
+        return any(keyword in error_message for keyword in retryable_keywords)
+    
+    def get_recovery_status(self) -> Dict[str, Any]:
+        """獲取恢復狀態"""
+        return {
+            'recovery_enabled': self.recovery_enabled,
+            'degraded_mode': self.degraded_mode,
+            'degraded_capabilities': list(self.degraded_capabilities),
+            'active_tasks_count': len(self.active_tasks),
+            'pending_tasks_count': self.task_queue.qsize(),
+            'recovery_state': {
+                'last_checkpoint': self.recovery_state.last_checkpoint.isoformat(),
+                'recovery_events': self.metrics['recovery_events'],
+                'degraded_mode_activations': self.metrics['degraded_mode_activations']
+            },
+            'task_states': {
+                task_id: {
+                    'status': state.status,
+                    'retry_count': state.retry_count,
+                    'last_error': state.last_error
+                }
+                for task_id, state in self.task_states.items()
+            }
+        }

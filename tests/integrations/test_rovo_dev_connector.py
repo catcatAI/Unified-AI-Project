@@ -7,7 +7,7 @@ import aiohttp
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
 
-from src.integrations.rovo_dev_connector import RovoDevConnector
+from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 
 class TestRovoDevConnector:
@@ -32,7 +32,7 @@ class TestRovoDevConnector:
     @pytest.fixture
     def connector(self, mock_config):
         """创建测试连接器实例"""
-        return RovoDevConnector(mock_config)
+        return EnhancedRovoDevConnector(mock_config)
     
     def test_connector_initialization(self, connector, mock_config):
         """测试连接器初始化"""
@@ -45,12 +45,10 @@ class TestRovoDevConnector:
     
     def test_auth_headers(self, connector):
         """测试认证头生成"""
-        headers = connector._get_auth_headers()
-        
-        assert 'Authorization' in headers
-        assert headers['Authorization'].startswith('Basic ')
-        assert headers['Accept'] == 'application/json'
-        assert headers['Content-Type'] == 'application/json'
+        auth_header_value = connector._get_auth_header()
+        import base64
+        decoded_credentials = base64.b64decode(auth_header_value).decode()
+        assert decoded_credentials == f"{connector.user_email}:{connector.api_token}"
     
     @pytest.mark.asyncio
     async def test_context_manager(self, connector):
@@ -71,7 +69,8 @@ class TestRovoDevConnector:
         mock_response.json = AsyncMock(return_value={'displayName': 'Test User'})
         
         with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session = Mock()
+            mock_session = AsyncMock()
+            mock_session.get.return_value = AsyncMock(spec_set=aiohttp.ClientResponse)
             mock_session.get.return_value.__aenter__.return_value = mock_response
             mock_session_class.return_value = mock_session
             
@@ -88,7 +87,8 @@ class TestRovoDevConnector:
         mock_response.status = 401
         
         with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session = Mock()
+            mock_session = AsyncMock()
+            mock_session.get.return_value = AsyncMock(spec_set=aiohttp.ClientResponse)
             mock_session.get.return_value.__aenter__.return_value = mock_response
             mock_session_class.return_value = mock_session
             
@@ -107,12 +107,13 @@ class TestRovoDevConnector:
         mock_response.json = AsyncMock(return_value=mock_response_data)
         
         with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session = Mock()
+            mock_session = AsyncMock()
+            mock_session.request.return_value = AsyncMock(spec_set=aiohttp.ClientResponse)
             mock_session.request.return_value.__aenter__.return_value = mock_response
             mock_session_class.return_value = mock_session
             
             connector.session = mock_session
-            result = await connector._make_request('GET', 'https://test.com/api')
+            result = await connector._make_request_with_retry('GET', 'https://test.com/api')
             
             assert result == mock_response_data
     
@@ -151,10 +152,7 @@ class TestRovoDevConnector:
         assert cached == test_data
         
         # Test cache expiration
-        connector.cache[cache_key] = (
-            datetime.now() - timedelta(seconds=400),  # Expired
-            test_data
-        )
+        connector.cache_timestamps[cache_key] = datetime.now() - timedelta(seconds=400)  # Expired
         cached = await connector.get_cached_response(cache_key)
         assert cached is None
         assert cache_key not in connector.cache  # Should be cleaned up
@@ -163,7 +161,7 @@ class TestRovoDevConnector:
     async def test_connection_testing(self, connector):
         """测试连接测试功能"""
         # Mock successful responses
-        with patch.object(connector, '_make_request') as mock_request:
+        with patch.object(connector, '_make_request_with_retry') as mock_request:
             mock_request.return_value = {'success': True}
             
             results = await connector.test_connection()
@@ -177,7 +175,7 @@ class TestRovoDevConnector:
     @pytest.mark.asyncio
     async def test_connection_testing_with_failures(self, connector):
         """测试连接测试失败情况"""
-        with patch.object(connector, '_make_request') as mock_request:
+        with patch.object(connector, '_make_request_with_retry') as mock_request:
             # First call (Jira) succeeds, second call (Confluence) fails
             mock_request.side_effect = [{'success': True}, Exception('Connection failed')]
             
@@ -195,7 +193,7 @@ class TestRovoDevConnector:
             'emailAddress': 'test@example.com'
         }
         
-        with patch.object(connector, '_make_request') as mock_request:
+        with patch.object(connector, '_make_request_with_retry') as mock_request:
             mock_request.return_value = user_data
             
             # First call should hit the API
@@ -268,6 +266,6 @@ class TestRovoDevConnector:
             }
         }
         
-        connector = RovoDevConnector(config)
+        connector = EnhancedRovoDevConnector(config)
         assert connector.api_token is None
         assert connector.user_email is None

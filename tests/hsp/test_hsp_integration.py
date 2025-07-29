@@ -4,7 +4,7 @@ import uuid
 import time
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch, AsyncMock, AsyncMock # Added for mock_mode
-from typing import Dict, Any, Optional, List, Callable, Tuple
+from typing import Dict, Any, Optional, List, Callable, Tuple, AsyncGenerator
 import json
 
 # Configure pytest-asyncio
@@ -29,7 +29,7 @@ from src.core_ai.service_discovery.service_discovery_module import (
 )
 from src.core_ai.trust_manager.trust_manager_module import TrustManager
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from src.services.llm_interface import LLMInterface, LLMInterfaceConfig
+from src.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, ChatMessage, LLMResponse
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
 from src.tools.tool_dispatcher import ToolDispatcher
 from src.core_ai.formula_engine import FormulaEngine
@@ -198,15 +198,20 @@ logging.getLogger("src.core_ai.dialogue.dialogue_manager").setLevel(logging.DEBU
 
 
 # --- Mock Classes ---
-class MockLLMInterface(LLMInterface):
-    def __init__(self, config: Optional[LLMInterfaceConfig] = None):
-        base_config = config or LLMInterfaceConfig(
-            default_provider="mock", 
-            default_model="mock-model", 
-            providers={},
-            default_generation_params={}
-        )
-        super().__init__(config=base_config)
+class MockLLMInterface(MultiLLMService):
+    def __init__(self):
+        # Initialize attributes that MultiLLMService would normally set
+        self.providers: Dict[str, BaseLLMProvider] = {}
+        self.model_configs: Dict[str, ModelConfig] = {
+            "mock-model": ModelConfig(
+                provider=ModelProvider.OPENAI, # Use a valid provider for ModelConfig
+                model_name="mock-model",
+                enabled=True
+            )
+        }
+        self.default_model: Optional[str] = "mock-model"
+        self.usage_stats: Dict[str, Dict[str, Any]] = {}
+
         self.mock_responses: Dict[str, str] = {}
         self.generate_response_history: List[Dict[str, Any]] = []
 
@@ -224,6 +229,44 @@ class MockLLMInterface(LLMInterface):
         if "hsp_task_failed_what_now" in prompt:
             return "It seems the specialist AI couldn't help with that. Let me try to answer directly using my own knowledge."
         return "[]"
+
+    # Override chat_completion and stream_completion for mock behavior
+    async def chat_completion(
+        self,
+        messages: List[ChatMessage],
+        model_id: Optional[str] = None,
+        **kwargs
+    ) -> LLMResponse:
+        # This mock implementation will just return a predefined response
+        # based on the prompt, similar to the old generate_response.
+        # For more complex tests, this might need to be expanded.
+        prompt_content = messages[0].content if messages else ""
+        response_content = self.mock_responses.get(prompt_content, "Mocked LLM response.")
+        
+        # Simulate usage and cost
+        usage = {"prompt_tokens": len(prompt_content) // 4, "completion_tokens": len(response_content) // 4, "total_tokens": (len(prompt_content) + len(response_content)) // 4}
+        cost = 0.0 # Mocked cost
+        latency = 0.01 # Mocked latency
+
+        return LLMResponse(
+            content=response_content,
+            model=model_id or self.default_model,
+            provider=ModelProvider.OPENAI, # Or any other mock provider
+            usage=usage,
+            cost=cost,
+            latency=latency,
+            timestamp=datetime.now(),
+            metadata={}
+        )
+
+    async def stream_completion(
+        self,
+        messages: List[ChatMessage],
+        model_id: Optional[str] = None,
+        **kwargs
+    ) -> AsyncGenerator[str, None]:
+        response_content = await self.chat_completion(messages, model_id, **kwargs)
+        yield response_content.content
 
 
 class MockHAM(HAMMemoryManager):
@@ -300,7 +343,7 @@ def mock_llm_fixture():
 
 @pytest.fixture
 def fact_extractor_fixture(mock_llm_fixture: MockLLMInterface):
-    return FactExtractorModule(llm_interface=mock_llm_fixture)
+    return FactExtractorModule(llm_service=mock_llm_fixture)
 
 
 @pytest.fixture
@@ -459,7 +502,7 @@ async def dialogue_manager_fixture(
     }
     
     # 使用真實的 ToolDispatcher 而不是 Mock
-    tool_dispatcher = ToolDispatcher(llm_interface=mock_llm_fixture)
+    tool_dispatcher = ToolDispatcher(llm_service=mock_llm_fixture)
     
     # Create mock objects for missing dependencies
     emotion_system = MagicMock()
