@@ -7,6 +7,7 @@ from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 
 from src.integrations.atlassian_bridge import AtlassianBridge
+from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 
 class TestAtlassianBridge:
@@ -71,7 +72,7 @@ class TestAtlassianBridge:
         
         assert result['id'] == '123456'
         assert result['title'] == 'Test Page'
-        mock_connector._make_request.assert_called_once()
+        mock_connector._make_request_with_retry.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_create_jira_issue(self, bridge, mock_connector):
@@ -92,7 +93,7 @@ class TestAtlassianBridge:
         
         assert result['id'] == '10001'
         assert result['key'] == 'TEST-123'
-        mock_connector._make_request.assert_called_once()
+        mock_connector._make_request_with_retry.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_search_jira_issues(self, bridge, mock_connector):

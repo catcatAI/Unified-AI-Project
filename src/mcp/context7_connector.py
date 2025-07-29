@@ -238,19 +238,19 @@ class Context7MCPConnector:
         # Simulate MCP communication for now
         # In real implementation, this would use HTTP/WebSocket/gRPC
         
-        logger.debug(f"Sending MCP message: {message.type}")
+        logger.debug(f"Sending MCP message: {message['type']}")
         
         # Simulate processing delay
         await asyncio.sleep(0.1)
         
         # Mock response based on message type
-        if message.type == "context_update":
+        if message['type'] == "context_update":
             return MCPResponse(
                 success=True,
                 message_id=message.session_id,
                 data={"status": "context_updated", "context_id": "ctx_123"}
             )
-        elif message.type == "context_query":
+        elif message['type'] == "context_query":
             return MCPResponse(
                 success=True,
                 message_id=message.session_id,
@@ -261,7 +261,7 @@ class Context7MCPConnector:
                     ]
                 }
             )
-        elif message.type == "capability_discovery":
+        elif message['type'] == "capability_discovery":
             return MCPResponse(
                 success=True,
                 message_id=message.session_id,
