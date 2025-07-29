@@ -59,8 +59,8 @@ class TestRovoDevAgent:
         assert agent.agent_id == 'test-rovo-agent'
         assert not agent.is_active
         assert len(agent.capabilities) == 2
-        assert agent.capabilities[0].name == 'code_analysis'
-        assert agent.capabilities[1].name == 'documentation_generation'
+        assert agent.capabilities[0]['name'] == 'code_analysis'
+        assert agent.capabilities[1]['name'] == 'documentation_generation'
     
     def test_capability_parameters(self, agent):
         """测试能力参数定义"""

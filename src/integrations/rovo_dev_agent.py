@@ -60,6 +60,7 @@ class RovoDevAgent:
         self.agent_id = config.get('hsp_integration', {}).get('agent_id', 'rovo-dev-agent')
         self.is_active = False
         self.capabilities = self._load_capabilities()
+        self.capabilities_dict = {cap['name']: cap for cap in self.capabilities}
         
         # 任务队列和处理状态
         self.task_queue = asyncio.Queue()
@@ -849,7 +850,7 @@ class RovoDevAgent:
             # 禁用非關鍵能力
             for capability in self.capabilities:
                 if capability['name'] not in self.critical_capabilities:
-                    self.degraded_capabilities.add(capability.name)
+                    self.degraded_capabilities.add(capability['name'])
             
             logger.warning(f"進入降級模式，禁用能力: {self.degraded_capabilities}")
     

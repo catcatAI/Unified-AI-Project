@@ -12,10 +12,11 @@ def mock_mqtt_client():
         mock_client_class.return_value = mock_client_instance
         yield mock_client_instance
 
+@pytest.mark.asyncio
 @pytest.mark.timeout(5)
-def test_mcp_connector_initialization(mock_mqtt_client):
+async def test_mcp_connector_initialization(mock_mqtt_client):
     """Test that MCPConnector initializes correctly."""
-    connector = MCPConnector('test_ai', 'localhost', 1883)
+    connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_running_loop())
     assert connector.ai_id == 'test_ai'
     assert mock_mqtt_client.on_connect is not None
     assert mock_mqtt_client.on_message is not None
@@ -23,7 +24,7 @@ def test_mcp_connector_initialization(mock_mqtt_client):
 @pytest.mark.timeout(5)
 def test_connect_and_disconnect(mock_mqtt_client):
     """Test the connect and disconnect methods."""
-    connector = MCPConnector('test_ai', 'localhost', 1883)
+    connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_event_loop())
     
     connector.connect()
     mock_mqtt_client.connect.assert_called_once_with('localhost', 1883, 60)
@@ -36,7 +37,7 @@ def test_connect_and_disconnect(mock_mqtt_client):
 @pytest.mark.timeout(5)
 def test_send_command(mock_mqtt_client):
     """Test sending a command."""
-    connector = MCPConnector('test_ai', 'localhost', 1883)
+    connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_event_loop())
     connector.connect()
 
     target_ai_id = 'target_ai'
@@ -57,7 +58,7 @@ def test_send_command(mock_mqtt_client):
 def test_on_message_callback(mock_mqtt_client):
     """Test the on_message callback handling."""
     callback = MagicMock()
-    connector = MCPConnector('test_ai', 'localhost', 1883)
+    connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_event_loop())
     connector.register_command_handler("test_cmd", callback)
 
     # Simulate receiving a message

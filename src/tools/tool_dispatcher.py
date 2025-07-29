@@ -27,7 +27,7 @@ class ToolDispatcher:
             "evaluate_logic": self._execute_logic_evaluation,
             "translate_text": self._execute_translation,
             "inspect_code": self._execute_code_inspection,
-            "rag_query": self._execute_rag_query,
+            
             "analyze_csv": self._execute_csv_analysis,
             "create_image": self._execute_image_creation,
         }

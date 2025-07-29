@@ -10,7 +10,7 @@ from src.mcp.types import MCPEnvelope, MCPCommandRequest, MCPCommandResponse
 
 class MCPConnector:
     def __init__(self, ai_id: str, mqtt_broker_address: str, mqtt_broker_port: int, 
-                 enable_fallback: bool = True, fallback_config: Optional[Dict[str, Any]] = None):
+                 enable_fallback: bool = True, fallback_config: Optional[Dict[str, Any]] = None, loop: Optional[asyncio.AbstractEventLoop] = None):
         self.ai_id = ai_id
         self.client = mqtt.Client(client_id=f"mcp-client-{ai_id}-{uuid.uuid4()}")
         self.broker_address = mqtt_broker_address
@@ -27,9 +27,7 @@ class MCPConnector:
         self.mcp_available = False
         self.is_connected = False
         self.logger = logging.getLogger(__name__)
-        
-        # 初始化fallback協議
-        # Moved to connect() method to ensure event loop is running
+        self.loop = loop if loop else asyncio.get_event_loop() # Store the event loop
 
     async def connect(self):
         print(f"MCPConnector for {self.ai_id} connecting to {self.broker_address}:{self.broker_port}")
@@ -77,14 +75,19 @@ class MCPConnector:
                 # Topic format: mcp/cmd/{ai_id}/{command_name}
                 command_name = topic_parts[3]
                 if command_name in self.command_handlers:
-                    self.command_handlers[command_name](data.get('args'))
+                    handler = self.command_handlers[command_name]
+                    # Schedule the coroutine in the main event loop
+                    if asyncio.iscoroutinefunction(handler):
+                        asyncio.run_coroutine_threadsafe(handler(data.get('args')), self.loop)
+                    else:
+                        handler(data.get('args'))
         except json.JSONDecodeError:
             print("Failed to decode MCP message payload as JSON.")
         except Exception as e:
             print(f"Error processing MCP message: {e}")
 
 
-    def send_command(self, target_id: str, command_name: str, parameters: dict) -> str:
+    async def send_command(self, target_id: str, command_name: str, parameters: dict) -> str:
         request_id = str(uuid.uuid4())
         
         # 嘗試使用MQTT發送
@@ -116,7 +119,7 @@ class MCPConnector:
         # 使用fallback協議發送
         if self.enable_fallback and self.fallback_manager:
             try:
-                asyncio.create_task(self._send_via_fallback(target_id, command_name, parameters, request_id))
+                await self._send_via_fallback(target_id, command_name, parameters, request_id)
                 print(f"Sent MCP command '{command_name}' to {target_id} via fallback with request_id {request_id}")
                 return request_id
             except Exception as e:

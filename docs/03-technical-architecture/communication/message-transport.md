@@ -23,10 +23,7 @@ communicate with an MQTT broker.
 
 The HSP implementation is located in the `src/hsp/` directory.
 
-## WebSockets
 
-The `HSPConnector` class in `src/hsp/connector.py` uses WebSockets to establish
-a connection between the AI and the MQTT broker.
 
 ## Standard Input/Output
 

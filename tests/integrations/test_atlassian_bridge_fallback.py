@@ -57,7 +57,7 @@ class TestAtlassianBridgeFallback:
         """模擬連接器"""
         connector = Mock(spec=EnhancedRovoDevConnector)
         connector.config = mock_config
-        connector._make_request = AsyncMock()
+        connector._make_request_with_retry = AsyncMock()
         return connector
 
     @pytest.fixture
@@ -86,14 +86,14 @@ class TestAtlassianBridgeFallback:
     async def test_successful_primary_endpoint(self, bridge):
         """測試主端點成功請求"""
         expected_result = {'id': '123', 'title': 'Test Page'}
-        bridge.connector._make_request.return_value = expected_result
+        bridge.connector._make_request_with_retry.return_value = expected_result
 
         result = await bridge._make_request_with_fallback(
             'confluence', 'GET', 'rest/api/content/123'
         )
 
         assert result == expected_result
-        bridge.connector._make_request.assert_called_once()
+        bridge.connector._make_request_with_retry.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_fallback_to_backup_endpoint(self, bridge):
@@ -101,7 +101,7 @@ class TestAtlassianBridgeFallback:
         expected_result = {'id': '123', 'title': 'Test Page'}
         
         # 主端點失敗，備用端點成功
-        bridge.connector._make_request.side_effect = [
+        bridge.connector._make_request_with_retry.side_effect = [
             aiohttp.ClientError("Primary failed"),
             expected_result
         ]
@@ -111,7 +111,7 @@ class TestAtlassianBridgeFallback:
         )
 
         assert result == expected_result
-        assert bridge.connector._make_request.call_count == 2
+        assert bridge.connector._make_request_with_retry.call_count == 2
 
     @pytest.mark.asyncio
     async def test_all_endpoints_fail(self, bridge):
@@ -228,7 +228,7 @@ class TestAtlassianBridgeFallback:
     async def test_confluence_operations_with_fallback(self, bridge):
         """測試 Confluence 操作使用備用機制"""
         expected_result = {'id': '123', 'title': 'Test Page'}
-        bridge.connector._make_request.return_value = expected_result
+        bridge.connector._make_request_with_retry.return_value = expected_result
 
         # 測試創建頁面
         result = await bridge.create_confluence_page(
@@ -243,7 +243,7 @@ class TestAtlassianBridgeFallback:
         expected_result = {'id': '10001', 'key': 'TEST-1'}
         
         # 模擬備用機制：主端點失敗，備用端點成功
-        bridge.connector._make_request.side_effect = [
+        bridge.connector._make_request_with_retry.side_effect = [
             aiohttp.ClientError("Primary failed"),
             expected_result
         ]
@@ -253,7 +253,7 @@ class TestAtlassianBridgeFallback:
         )
 
         assert result == expected_result
-        assert bridge.connector._make_request.call_count == 2
+        assert bridge.connector._make_request_with_retry.call_count == 2
 
     @pytest.mark.asyncio
     async def test_cache_with_get_requests(self, bridge):
@@ -275,7 +275,7 @@ class TestAtlassianBridgeFallback:
         assert result1 == test_data
         assert result2 == test_data
         # API只應該被調用一次
-        bridge.connector._make_request.assert_called_once()
+        bridge.connector._make_request_with_retry.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_offline_mode_with_expired_cache(self, bridge):

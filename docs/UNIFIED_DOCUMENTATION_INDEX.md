@@ -66,8 +66,7 @@ catcatAI 組織
 | HAM 設計規範 | (英) | `docs/03-technical-architecture/memory-systems/ham-design.md` | 分層抽象記憶系統 | 🔴 極高 | 🔴 高 |
 | 多模型 LLM 服务 | (中) | `docs/03-technical-architecture/ai-components/multi-llm-service.md` | 统一 AI 模型接口 | 🟡 中 | 🟢 高 |
 | Fragmenta 設計 | (英) | `docs/04-advanced-concepts/fragmenta-design.md` | Fragmenta 架構規範 | 🔴 極高 | 🟡 中 |
-| 深度映射器 | (英) | `docs/03-technical-architecture/ai-components/deep-mapper.md` | 深度映射系統 | 🔴 高 | 🟡 中 |
-| 參數提取器 | (英) | `docs/03-technical-architecture/ai-components/parameter-extractor.md` | 參數提取系統 | 🟡 中 | 🟢 高 |
+
 
 #### 🔧 專業技術規範文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 實用性 | 維護狀態 |

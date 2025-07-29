@@ -35,21 +35,19 @@ AI Project.
 
 ### Natural Language Processing
 
+- **Multi-LLM Service**
+  - **Description:** A unified interface for various large language models (LLMs) like OpenAI, Google Gemini, Anthropic Claude, etc.
+  - **Location:** `src/services/multi_llm_service.py`
+  - **Status:** Integrated
+  - **Usage:** Used by `DialogueManager` and `ToolDispatcher` for natural language understanding and generation.
+
 - **Speech-to-Text Model**
   - **Description:** The speech-to-text model can be used to recognize speech
     from an audio file.
   - **Location:** `src/tools/speech_to_text_tool.py`
-  - **Status:** Downloadable
+  - **Status:** Integrated
   - **Usage:** The speech-to-text model can be used through the
     `speech_to_text_tool` tool.
-
-- **Natural Language Generation Model**
-  - **Description:** The natural language generation model can be used to
-    generate text from a prompt.
-  - **Location:** `src/tools/natural_language_generation_tool.py`
-  - **Status:** Downloadable
-  - **Usage:** The natural language generation model can be used through the
-    `natural_language_generation_tool` tool.
 
 ### Game
 
@@ -99,13 +97,7 @@ AI Project.
   - **Status:** Completed
   - **Usage:** The speech-to-text tool can be used through the `ToolDispatcher`.
 
-- **Natural Language Generation Tool**
-  - **Description:** The natural language generation tool can be used to
-    generate text from a prompt.
-  - **Location:** `src/tools/natural_language_generation_tool.py`
-  - **Status:** Completed
-  - **Usage:** The natural language generation tool can be used through the
-    `ToolDispatcher`.
+
 
 ### Web
 

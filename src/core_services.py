@@ -173,8 +173,11 @@ async def initialize_services(
     if not mcp_connector_instance:
         mcp_connector_instance = MCPConnector(
             ai_id=ai_id,
-            mqtt_broker_address=hsp_broker_address,
-            mqtt_broker_port=hsp_broker_port
+            mqtt_broker_address=config['mcp']['mqtt_broker_address'],
+            mqtt_broker_port=config['mcp']['mqtt_broker_port'],
+            enable_fallback=config['mcp'].get('enable_fallback', True),
+            fallback_config=config['mcp'].get('fallback_config'),
+            loop=asyncio.get_event_loop() # Pass the current event loop
         )
         mcp_connector_instance.connect()
 
