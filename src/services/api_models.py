@@ -1,46 +1,65 @@
-from typing import Optional, Literal # Added Literal
 from pydantic import BaseModel
+from typing import Optional, Dict, Any, List
 
 class UserInput(BaseModel):
+    user_id: str
+    session_id: str
     text: str
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
 
 class AIOutput(BaseModel):
     response_text: str
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
+    user_id: str
+    session_id: str
     timestamp: str
 
 class SessionStartRequest(BaseModel):
-    user_id: Optional[str] = None
-
-from typing import Optional, Dict, Any # Added Dict, Any
-from pydantic import BaseModel, Field # Added Field
+    user_id: str
 
 class SessionStartResponse(BaseModel):
     greeting: str
     session_id: str
     timestamp: str
 
-# --- HSP Task Brokering API Models ---
-
 class HSPTaskRequestInput(BaseModel):
-    target_capability_id: str = Field(..., description="The unique ID of the capability to be invoked on the target HSP peer.")
-    parameters: Dict[str, Any] = Field(default_factory=dict, description="A dictionary of parameters to be sent to the target capability.")
-    # Optional: could add user_id, session_id if the API needs to pass this context for the task
-    # user_id: Optional[str] = None
-    # session_id: Optional[str] = None
+    target_capability_id: str
+    parameters: Dict[str, Any]
 
 class HSPTaskRequestOutput(BaseModel):
-    status_message: str # e.g., "Request sent" or "Error: Capability not found"
+    status_message: str
     correlation_id: Optional[str] = None
     target_capability_id: str
     error: Optional[str] = None
 
 class HSPTaskStatusOutput(BaseModel):
     correlation_id: str
-    status: Literal["pending", "completed", "failed", "unknown_or_expired"]
-    result_payload: Optional[Dict[str, Any]] = None # Actual payload if status is "completed"
-    error_details: Optional[Dict[str, Any]] = None  # Error details if status is "failed"
-    message: Optional[str] = None # Optional message, e.g. for unknown status
+    status: str # pending, completed, failed, unknown_or_expired
+    message: Optional[str] = None
+    result_payload: Optional[Dict[str, Any]] = None
+    error_details: Optional[Dict[str, Any]] = None
+
+# --- Atlassian API Models ---
+class AtlassianConfigModel(BaseModel):
+    domain: str
+    userEmail: str
+    apiToken: str
+    cloudId: str
+
+class ConfluencePageModel(BaseModel):
+    spaceKey: str
+    title: str
+    content: str
+    parentId: Optional[str] = None
+
+class JiraIssueModel(BaseModel):
+    projectKey: str
+    summary: str
+    description: str
+    issueType: str = "Task"
+    priority: str = "Medium"
+
+class RovoDevTaskModel(BaseModel):
+    capability: str
+    parameters: Dict[str, Any]
+
+class JQLSearchModel(BaseModel):
+    jql: str

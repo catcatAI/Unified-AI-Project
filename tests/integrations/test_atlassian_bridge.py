@@ -14,15 +14,40 @@ class TestAtlassianBridge:
     
     @pytest.fixture
     def mock_connector(self):
-        """模拟连接器"""
-        connector = Mock()
-        connector._make_request = AsyncMock()
+        """模擬連接器"""
+        connector = Mock(spec=EnhancedRovoDevConnector)
+        connector._make_request_with_retry = AsyncMock()
+        connector.config = {
+            'atlassian': {
+                'confluence': {
+                    'base_url': 'https://primary.atlassian.net/wiki',
+                    'backup_urls': [
+                        'https://backup1.atlassian.net/wiki',
+                        'https://backup2.atlassian.net/wiki'
+                    ],
+                },
+                'jira': {
+                    'base_url': 'https://primary.atlassian.net',
+                    'backup_urls': [
+                        'https://backup1.atlassian.net',
+                        'https://backup2.atlassian.net'
+                    ],
+                },
+                'rovo_dev': {
+                    'fallback': {
+                        'enabled': True,
+                    }
+                }
+            }
+        }
         return connector
     
     @pytest.fixture
-    def bridge(self, mock_connector):
-        """创建测试桥接器实例"""
-        return AtlassianBridge(mock_connector)
+    async def bridge(self, mock_connector):
+        """創建測試橋接器實例"""
+        bridge = AtlassianBridge(mock_connector)
+        await bridge.start()
+        return bridge
     
     @pytest.mark.asyncio
     async def test_create_confluence_page(self, bridge, mock_connector):
@@ -36,7 +61,7 @@ class TestAtlassianBridge:
                 'webui': '/spaces/TEST/pages/123456'
             }
         }
-        mock_connector._make_request.return_value = mock_response
+        mock_connector._make_request_with_retry.return_value = mock_response
         
         result = await bridge.create_confluence_page(
             space_key='TEST',
@@ -56,7 +81,7 @@ class TestAtlassianBridge:
             'key': 'TEST-123',
             'self': 'https://test.atlassian.net/rest/api/3/issue/10001'
         }
-        mock_connector._make_request.return_value = mock_response
+        mock_connector._make_request_with_retry.return_value = mock_response
         
         result = await bridge.create_jira_issue(
             project_key='TEST',
@@ -93,7 +118,7 @@ class TestAtlassianBridge:
             ],
             'total': 2
         }
-        mock_connector._make_request.return_value = mock_response
+        mock_connector._make_request_with_retry.return_value = mock_response
         
         result = await bridge.search_jira_issues('project = TEST')
         
@@ -109,7 +134,7 @@ class TestAtlassianBridge:
             'version': {'number': 2},
             'title': 'Updated Test Page'
         }
-        mock_connector._make_request.return_value = mock_response
+        mock_connector._make_request_with_retry.return_value = mock_response
         
         result = await bridge.update_confluence_page(
             page_id='123456',
@@ -140,7 +165,7 @@ class TestAtlassianBridge:
                 }
             ]
         }
-        mock_connector._make_request.return_value = mock_response
+        mock_connector._make_request_with_retry.return_value = mock_response
         
         result = await bridge.get_confluence_spaces()
         
@@ -165,7 +190,7 @@ class TestAtlassianBridge:
                 'projectTypeKey': 'software'
             }
         ]
-        mock_connector._make_request.return_value = mock_response
+        mock_connector._make_request_with_retry.return_value = mock_response
         
         result = await bridge.get_jira_projects()
         

@@ -1,6 +1,6 @@
 import pytest
 from src.game.main import Game
-from src.game.npcs import create_npc, NPC_DATA
+from src.game.npcs import create_npc, load_npc_data
 from unittest.mock import MagicMock
 
 @pytest.fixture
@@ -11,11 +11,13 @@ def game():
 
 @pytest.mark.timeout(5)
 def test_npc_creation(game):
-    for npc_id in NPC_DATA.keys():
+    import src.game.npcs
+    src.game.npcs.load_npc_data() # Ensure data is loaded
+    for npc_id in src.game.npcs._NPC_DATA.keys():
         npc = create_npc(game, npc_id)
         assert npc is not None
-        assert npc.name == NPC_DATA[npc_id]['name']
-        assert npc.dialogue_tree == NPC_DATA[npc_id].get('dialogue_tree', {})
+        assert npc.name == src.game.npcs._NPC_DATA[npc_id]['name']
+        assert npc.dialogue_tree == src.game.npcs._NPC_DATA[npc_id].get('dialogue_tree', {})
 
 @pytest.mark.timeout(5)
 def test_npc_creation_invalid_id(game):

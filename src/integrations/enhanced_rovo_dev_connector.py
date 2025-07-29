@@ -50,7 +50,7 @@ class CircuitBreaker:
         self.last_failure_time = None
         self.state = 'closed'  # closed, open, half-open
     
-    def call(self, func):
+    async def call(self, func):
         """執行函數調用"""
         if self.state == 'open':
             if time.time() - self.last_failure_time > self.recovery_timeout:
@@ -59,7 +59,7 @@ class CircuitBreaker:
                 raise Exception("Circuit breaker is open")
         
         try:
-            result = func()
+            result = await func()
             if self.state == 'half-open':
                 self.reset()
             return result
@@ -182,11 +182,18 @@ class EnhancedRovoDevConnector:
         # 測試認證
         await self._authenticate()
     
-    async def stop(self):
-        """停止連接器"""
+    async def close(self):
+        """關閉會話"""
         if self.session:
             await self.session.close()
             self.session = None
+
+    async def __aenter__(self):
+        await self.start()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
     
     async def _authenticate(self):
         """認證"""
@@ -205,10 +212,10 @@ class EnhancedRovoDevConnector:
                 self.stats['requests_total'] += 1
                 
                 # 使用斷路器
-                def make_request():
-                    return self._make_single_request(method, url, **kwargs)
+                async def make_request_async():
+                    return await self._make_single_request(method, url, **kwargs)
                 
-                result = await self.circuit_breakers[service].call(make_request)
+                result = await self.circuit_breakers[service].call(make_request_async)
                 self.stats['requests_success'] += 1
                 return result
                 

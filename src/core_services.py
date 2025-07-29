@@ -18,11 +18,16 @@ from core_ai.crisis_system import CrisisSystem
 from core_ai.time_system import TimeSystem
 from core_ai.formula_engine import FormulaEngine
 from tools.tool_dispatcher import ToolDispatcher
+from core_ai.demo_learning_manager import DemoLearningManager, demo_learning_manager
 
 # Services
-from services.llm_interface import LLMInterface, LLMInterfaceConfig
+from services.multi_llm_service import MultiLLMService, get_multi_llm_service
 from hsp.connector import HSPConnector
 from mcp.connector import MCPConnector
+from services.ai_virtual_input_service import AIVirtualInputService
+from services.audio_service import AudioService
+from services.vision_service import VisionService
+from services.resource_awareness_service import ResourceAwarenessService
 
 # --- Constants ---
 CAP_ADVERTISEMENT_TOPIC = "hsp/capabilities/advertisements/general"
@@ -32,7 +37,11 @@ FACT_TOPIC_GENERAL = "hsp/knowledge/facts/general"
 # These will be initialized by `initialize_services`
 
 # Foundational Services
-llm_interface_instance: Optional[LLMInterface] = None
+llm_interface_instance: Optional[MultiLLMService] = None
+ai_virtual_input_service_instance: Optional[AIVirtualInputService] = None
+audio_service_instance: Optional[AudioService] = None
+vision_service_instance: Optional[VisionService] = None
+resource_awareness_service_instance: Optional[ResourceAwarenessService] = None
 ham_manager_instance: Optional[HAMMemoryManager] = None
 personality_manager_instance: Optional[PersonalityManager] = None
 trust_manager_instance: Optional[TrustManager] = None
@@ -73,22 +82,16 @@ DEFAULT_OPERATIONAL_CONFIGS: Dict[str, Any] = {
     # Add other operational configs like timeouts if needed by modules here
 }
 
-DEFAULT_LLM_CONFIG: LLMInterfaceConfig = { #type: ignore
-    "default_provider": "mock",
-    "default_model": "core_services_mock_v1",
-    "providers": {},
-    "default_generation_params": {},
-    "operational_configs": DEFAULT_OPERATIONAL_CONFIGS # Pass operational configs to LLM if it needs them
-}
 
 
-def initialize_services(
+
+async def initialize_services(
     ai_id: str = DEFAULT_AI_ID,
     hsp_broker_address: str = DEFAULT_MQTT_BROKER,
     hsp_broker_port: int = DEFAULT_MQTT_PORT,
-    llm_config: Optional[LLMInterfaceConfig] = None,
     operational_configs: Optional[Dict[str, Any]] = None,
-    use_mock_ham: bool = False # Flag to use MockHAM for CLI/testing ease
+    use_mock_ham: bool = False, # Flag to use MockHAM for CLI/testing ease
+    llm_config: Optional[Dict[str, Any]] = None # Added llm_config
 ):
     """
     Initializes and holds singleton instances of all core services and modules.
@@ -99,11 +102,41 @@ def initialize_services(
     global fact_extractor_instance, content_analyzer_instance, learning_manager_instance
     global emotion_system_instance, crisis_system_instance, time_system_instance
     global formula_engine_instance, tool_dispatcher_instance, dialogue_manager_instance, agent_manager_instance
+    global ai_virtual_input_service_instance, audio_service_instance, vision_service_instance, resource_awareness_service_instance
 
     print(f"Core Services: Initializing for AI ID: {ai_id}")
 
-    # --- 0. Configurations ---
-    effective_llm_config = llm_config if llm_config else DEFAULT_LLM_CONFIG
+    # --- 0. Demo Mode and Key Detection ---
+    import os
+    import yaml
+
+    # Collect all potential credentials for demo detection
+    all_credentials = {}
+
+    # From environment variables
+    env_vars_to_check = [
+        "ATLASSIAN_API_TOKEN", "ATLASSIAN_CLOUD_ID", "ATLASSIAN_USER_EMAIL", "ATLASSIAN_DOMAIN",
+        "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "AZURE_OPENAI_API_KEY",
+        "AZURE_OPENAI_ENDPOINT", "COHERE_API_KEY", "HUGGINGFACE_API_KEY", "OLLAMA_BASE_URL",
+        "FIREBASE_CREDENTIALS_PATH", "MIKO_HAM_KEY", "BASE_URL"
+    ]
+    for env_var in env_vars_to_check:
+        if os.getenv(env_var):
+            all_credentials[env_var] = os.getenv(env_var)
+
+    # From LLM config if provided
+    if llm_config:
+        for provider, provider_config in llm_config.get("providers", {}).items():
+            if isinstance(provider_config, dict):
+                for key, value in provider_config.items():
+                    # Avoid overwriting with placeholder values if actual env var exists
+                    if "PLACEHOLDER" not in str(value):
+                        all_credentials[f"{provider.upper()}_{key.upper()}"] = value
+
+    # Activate demo mode if demo credentials are detected
+    await demo_learning_manager.activate_demo_mode(all_credentials)
+
+    # --- 1. Configurations ---
     effective_op_configs = operational_configs if operational_configs else DEFAULT_OPERATIONAL_CONFIGS
 
     # Ensure operational_configs are part of the main config dict for modules that expect it at top level
@@ -113,8 +146,8 @@ def initialize_services(
     }
 
     # --- 1. Foundational Services ---
-    if not llm_interface_instance:
-        llm_interface_instance = LLMInterface(config=effective_llm_config)
+    if llm_interface_instance is None:
+        llm_interface_instance = get_multi_llm_service()
 
     if not ham_manager_instance:
         if use_mock_ham:
@@ -145,6 +178,18 @@ def initialize_services(
         )
         mcp_connector_instance.connect()
 
+    if not ai_virtual_input_service_instance:
+        ai_virtual_input_service_instance = AIVirtualInputService()
+
+    if not audio_service_instance:
+        audio_service_instance = AudioService()
+
+    if not vision_service_instance:
+        vision_service_instance = VisionService()
+
+    if not resource_awareness_service_instance:
+        resource_awareness_service_instance = ResourceAwarenessService()
+
     # --- 2. HSP Related Services ---
     if not hsp_connector_instance:
         hsp_connector_instance = HSPConnector(
@@ -173,7 +218,7 @@ def initialize_services(
 
     # --- 3. Core AI Logic Modules ---
     if not fact_extractor_instance:
-        fact_extractor_instance = FactExtractorModule(llm_interface=llm_interface_instance)
+        fact_extractor_instance = FactExtractorModule(llm_service=llm_interface_instance)
 
     if not content_analyzer_instance:
         try:
@@ -209,7 +254,7 @@ def initialize_services(
         formula_engine_instance = FormulaEngine() # Uses default formulas path
 
     if not tool_dispatcher_instance:
-        tool_dispatcher_instance = ToolDispatcher(llm_interface=llm_interface_instance)
+        tool_dispatcher_instance = ToolDispatcher(llm_service=llm_interface_instance)
 
     if not agent_manager_instance:
         # AgentManager needs the python executable path. We assume it's the same one running this script.
@@ -259,11 +304,15 @@ def get_services() -> Dict[str, Any]:
         "tool_dispatcher": tool_dispatcher_instance,
         "dialogue_manager": dialogue_manager_instance,
         "agent_manager": agent_manager_instance,
+        "ai_virtual_input_service": ai_virtual_input_service_instance,
+        "audio_service": audio_service_instance,
+        "vision_service": vision_service_instance,
+        "resource_awareness_service": resource_awareness_service_instance,
     }
 
-def shutdown_services():
+async def shutdown_services():
     """Gracefully shuts down services, e.g., AgentManager and HSPConnector."""
-    global hsp_connector_instance, agent_manager_instance
+    global hsp_connector_instance, agent_manager_instance, llm_interface_instance
 
     if agent_manager_instance:
         print("Core Services: Shutting down all active agents...")
@@ -273,31 +322,42 @@ def shutdown_services():
         print("Core Services: Shutting down HSPConnector...")
         hsp_connector_instance.disconnect()
 
+    if llm_interface_instance:
+        print("Core Services: Shutting down LLM Interface...")
+        await llm_interface_instance.close()
+
+    await demo_learning_manager.shutdown()
+
     print("Core Services: Shutdown process complete.")
 
 if __name__ == '__main__':
-    print("--- Core Services Initialization Test ---")
-    initialize_services(ai_id="did:hsp:coreservice_test_ai_001", use_mock_ham=True)
+    import asyncio
 
-    services = get_services()
-    for name, service_instance in services.items():
-        print(f"Service '{name}': {'Initialized' if service_instance else 'NOT Initialized'}")
+    async def main_test():
+        print("--- Core Services Initialization Test ---")
+        await initialize_services(ai_id="did:hsp:coreservice_test_ai_001", use_mock_ham=True)
 
-    assert services["dialogue_manager"] is not None
-    assert services["hsp_connector"] is not None
-    # Add more assertions here if needed
+        services = get_services()
+        for name, service_instance in services.items():
+            print(f"Service '{name}': {'Initialized' if service_instance else 'NOT Initialized'}")
 
-    print("\n--- Verifying service references ---")
-    dm = services["dialogue_manager"]
-    lm = services["learning_manager"]
-    sdm = services["service_discovery"]
+        assert services["dialogue_manager"] is not None
+        assert services["hsp_connector"] is not None
+        # Add more assertions here if needed
 
-    if dm and lm: assert dm.learning_manager == lm, "DM not using shared LM"
-    if dm and sdm : assert dm.service_discovery_module == sdm, "DM not using shared SDM"
-    if lm and services["trust_manager"]: assert lm.trust_manager == services["trust_manager"], "LM not using shared TrustManager"
-    if sdm and services["trust_manager"]: assert sdm.trust_manager == services["trust_manager"], "SDM not using shared TrustManager"
+        print("\n--- Verifying service references ---")
+        dm = services["dialogue_manager"]
+        lm = services["learning_manager"]
+        sdm = services["service_discovery"]
 
-    print("Service reference checks seem okay.")
+        if dm and lm: assert dm.learning_manager == lm, "DM not using shared LM"
+        if dm and sdm : assert dm.service_discovery_module == sdm, "DM not using shared SDM"
+        if lm and services["trust_manager"]: assert lm.trust_manager == services["trust_manager"], "LM not using shared TrustManager"
+        if sdm and services["trust_manager"]: assert sdm.trust_manager == services["trust_manager"], "SDM not using shared TrustManager"
 
-    shutdown_services()
-    print("--- Core Services Initialization Test Finished ---")
+        print("Service reference checks seem okay.")
+
+        await shutdown_services()
+        print("--- Core Services Initialization Test Finished ---")
+
+    asyncio.run(main_test())

@@ -288,4 +288,5 @@ async def test_hsp_connector_register_specific_callbacks(hsp_connector_instance)
     # Simulate a command message
     command_payload = {
         "command": "do_something",
-        "parameters": {"param1": "value1"}}}]}}}
+        "parameters": {"param1": "value1"}
+    }

@@ -4,7 +4,7 @@ from typing import Dict, Any, List
 
 from src.agents.base_agent import BaseAgent
 from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from src.services.llm_interface import LLMInterface
+from src.services.multi_llm_service import MultiLLMService
 
 class CreativeWritingAgent(BaseAgent):
     """
@@ -39,7 +39,7 @@ class CreativeWritingAgent(BaseAgent):
         super().__init__(agent_id=agent_id, capabilities=capabilities)
 
         # This agent directly uses the LLMInterface initialized in its services.
-        self.llm_interface: LLMInterface = self.services.get("llm_interface")
+        self.llm_interface: MultiLLMService = self.services.get("llm_interface")
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id")
@@ -49,7 +49,7 @@ class CreativeWritingAgent(BaseAgent):
         print(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
 
         if not self.llm_interface:
-            result_payload = self._create_failure_payload(request_id, "INTERNAL_ERROR", "LLMInterface is not available.")
+            result_payload = self._create_failure_payload(request_id, "INTERNAL_ERROR", "MultiLLMService is not available.")
         else:
             try:
                 if "generate_marketing_copy" in capability_id:

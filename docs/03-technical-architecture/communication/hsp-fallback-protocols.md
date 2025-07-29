@@ -39,30 +39,28 @@ HSP Fallback協議系統為HSP（Heterogeneous Semantic Protocol）提供了強�
 ### 基本使用
 
 ```python
-from src.hsp.connector import HSPConnector
+from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 # 創建啟用fallback的HSP連接器
-connector = HSPConnector(
-    ai_id="my_ai_agent",
-    broker_address="127.0.0.1",
-    broker_port=1883,
-    enable_fallback=True  # 啟用fallback協議
+connector = EnhancedRovoDevConnector(
+    config={'atlassian': {'api_token': 'your_token', 'user_email': 'your_email', 'domain': 'your_domain'}},
+    retry_config=None, # 使用默認重試配置
+    endpoint_configs=None # 使用默認端點配置
 )
 
 # 連接（如果HSP失敗，會自動使用fallback）
-await connector.connect()
+async with connector:
+    # 發送消息（自動選擇最佳協議）
+    fact_payload = {
+        "id": "fact_001",
+        "statement_type": "natural_language",
+        "statement_nl": "這是一個測試事實",
+        "source_ai_id": "my_ai_agent",
+        "timestamp_created": "2024-01-01T00:00:00Z",
+        "confidence_score": 0.9
+    }
 
-# 發送消息（自動選擇最佳協議）
-fact_payload = {
-    "id": "fact_001",
-    "statement_type": "natural_language",
-    "statement_nl": "這是一個測試事實",
-    "source_ai_id": "my_ai_agent",
-    "timestamp_created": "2024-01-01T00:00:00Z",
-    "confidence_score": 0.9
-}
-
-success = await connector.publish_fact(fact_payload, "hsp/knowledge/facts/test")
+    success = await connector.publish_fact(fact_payload, "hsp/knowledge/facts/test")
 ```
 
 ### 狀態監控

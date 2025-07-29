@@ -32,10 +32,7 @@ including:
 - A standardized message envelope.
 - Initial concepts for AI discovery, capability advertisement, and trust.
 
-**Note on Implementation Status:** While these concepts are defined, their full
-implementation and integration are ongoing. Specifically, the
-`ServiceDiscoveryModule` requires significant refactoring to align with the
-intended HSP role, and related integration tests are currently failing.
+**Note on Implementation Status:** The concepts defined here are actively being implemented and refined. The `ServiceDiscoveryModule` is undergoing continuous improvement to fully align with the intended HSP role.
 
 ### 1.1.4. Guiding Principles
 

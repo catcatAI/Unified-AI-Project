@@ -60,13 +60,8 @@ class BaseAgent:
 
         print(f"[{self.agent_id}] is running and listening for tasks.")
 
-        try:
-            while self.is_running:
-                await asyncio.sleep(1)
-        except KeyboardInterrupt:
-            print(f"[{self.agent_id}] Shutdown signal received.")
-        finally:
-            await self.stop()
+        # Agent is now running, return control to the caller
+        # The main loop (if any) should be managed externally or by a dedicated task
 
     async def stop(self):
         """

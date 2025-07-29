@@ -13,6 +13,11 @@
 - **健康检查**: 实时模型可用性监控
 - **负载均衡**: 多模型故障转移机制
 
+### 2. 增强型 Rovo Dev 连接器 (`src/integrations/enhanced_rovo_dev_connector.py`)
+- **异步上下文管理器**: 支持 `async with` 语法，确保资源正确管理
+- **重试机制**: 内部请求使用 `_make_request_with_retry`，增强鲁棒性
+- **连接关闭**: `stop` 方法已更名为 `close`，语义更清晰
+
 ### 2. 支持的 AI 模型
 
 #### 商业模型

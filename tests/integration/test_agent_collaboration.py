@@ -48,7 +48,7 @@ class TestAgentCollaboration(unittest.TestCase):
         mock_integration_response = "Based on the data summary, our new product is revolutionary for data scientists."
 
         # We need to patch the llm_interface used by the dialogue_manager
-        with patch('src.services.llm_interface.LLMInterface.generate_response', new_callable=AsyncMock) as mock_generate_response:
+        with patch('src.services.multi_llm_service.MultiLLMService.generate_response', new_callable=AsyncMock) as mock_generate_response:
             mock_generate_response.side_effect = [
                 str(mock_decomposed_plan).replace("'", '"'),
                 mock_integration_response
@@ -124,7 +124,7 @@ class TestAgentCollaboration(unittest.TestCase):
         # 2. Mock the LLM's integration response
         mock_integration_response = "Both tasks completed."
 
-        with patch('src.services.llm_interface.LLMInterface.generate_response', new_callable=AsyncMock) as mock_generate_response:
+        with patch('src.services.multi_llm_service.MultiLLMService.generate_response', new_callable=AsyncMock) as mock_generate_response:
             mock_generate_response.side_effect = [
                 str(mock_decomposed_plan).replace("'", '"'),
                 mock_integration_response
@@ -158,7 +158,7 @@ class TestAgentCollaboration(unittest.TestCase):
         # 2. Mock the LLM's integration
         mock_integration_response = "The project failed."
 
-        with patch('src.services.llm_interface.LLMInterface.generate_response', new_callable=AsyncMock) as mock_generate_response:
+        with patch('src.services.multi_llm_service.MultiLLMService.generate_response', new_callable=AsyncMock) as mock_generate_response:
             mock_generate_response.side_effect = [
                 str(mock_decomposed_plan).replace("'", '"'),
                 mock_integration_response
@@ -188,7 +188,7 @@ class TestAgentCollaboration(unittest.TestCase):
         # 2. Mock the LLM's integration
         mock_integration_response = "Dynamically launched agent and it worked."
 
-        with patch('src.services.llm_interface.LLMInterface.generate_response', new_callable=AsyncMock) as mock_generate_response:
+        with patch('src.services.multi_llm_service.MultiLLMService.generate_response', new_callable=AsyncMock) as mock_generate_response:
             mock_generate_response.side_effect = [
                 str(mock_decomposed_plan).replace("'", '"'),
                 mock_integration_response

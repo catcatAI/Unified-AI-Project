@@ -1,0 +1,43 @@
+cleanup_config:
+  retention:
+    cache_data: 1
+    demo_data: 30
+    important_logs: 7
+  targets:
+  - temporary_files
+  - cache_data
+  - log_files
+  - demo_artifacts
+  triggers:
+  - session_end
+  - daily_cleanup
+  - storage_limit
+demo_mode:
+  auto_actions:
+    cleanup: true
+    initialization: true
+    learning: true
+    mock_services: true
+  auto_detect: true
+  detection_patterns:
+  - DEMO_.*_2025
+  - demo-.*
+  - .*@catcatai.dev
+  enabled: true
+  fixed_keys:
+    ANTHROPIC_API_KEY: DEMO_ANTHROPIC_KEY_2025
+    ATLASSIAN_API_TOKEN: DEMO_ATLASSIAN_TOKEN_2025
+    ATLASSIAN_CLOUD_ID: demo-cloud-12345
+    ATLASSIAN_DOMAIN: catcatai-demo
+    ATLASSIAN_USER_EMAIL: demo@catcatai.dev
+    GEMINI_API_KEY: DEMO_GEMINI_KEY_2025
+    MIKO_HAM_KEY: DEMO_HAM_FIXED_KEY_2025_aGVsbG93b3JsZA==
+    OPENAI_API_KEY: DEMO_OPENAI_KEY_2025
+learning_config:
+  max_size_mb: 100
+  modes:
+  - basic_operations
+  - error_patterns
+  - user_preferences
+  retention_days: 30
+  storage_path: data/demo_learning

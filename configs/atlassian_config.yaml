@@ -6,22 +6,42 @@ atlassian:
   api_token: "${ATLASSIAN_API_TOKEN}"
   cloud_id: "${ATLASSIAN_CLOUD_ID}"
   user_email: "${ATLASSIAN_USER_EMAIL}"
+  domain: "${ATLASSIAN_DOMAIN}"
   
-  # Confluence 配置
+  # 演示模式檢測
+  demo_detection:
+    enabled: true
+    auto_activate: true
+  
+  # Confluence 配置（增強版）
   confluence:
     base_url: "https://${ATLASSIAN_DOMAIN}.atlassian.net/wiki"
+    backup_urls:
+      - "https://${ATLASSIAN_DOMAIN}-backup.atlassian.net/wiki"
+      - "https://api.atlassian.com/ex/confluence/${ATLASSIAN_CLOUD_ID}/wiki"
     default_space: "DEV"
     api_version: "v2"
+    timeout: 30.0
+    max_retries: 3
+    retry_delay: 1.0
+    health_check_interval: 60
     page_templates:
       technical_doc: "technical-documentation-template"
       api_doc: "api-documentation-template"
       meeting_notes: "meeting-notes-template"
     
-  # Jira 配置  
+  # Jira 配置（增強版）
   jira:
     base_url: "https://${ATLASSIAN_DOMAIN}.atlassian.net"
+    backup_urls:
+      - "https://${ATLASSIAN_DOMAIN}-backup.atlassian.net"
+      - "https://api.atlassian.com/ex/jira/${ATLASSIAN_CLOUD_ID}"
     default_project: "UAI"
     api_version: "3"
+    timeout: 30.0
+    max_retries: 3
+    retry_delay: 1.0
+    health_check_interval: 60
     issue_types:
       task: "Task"
       bug: "Bug"
@@ -34,19 +54,34 @@ atlassian:
       low: "Low"
       lowest: "Lowest"
       
-  # Bitbucket 配置
+  # Bitbucket 配置（增強版）
   bitbucket:
     base_url: "https://api.bitbucket.org/2.0"
+    backup_urls:
+      - "https://api-backup.bitbucket.org/2.0"
     workspace: "${BITBUCKET_WORKSPACE}"
     default_repo: "unified-ai-project"
+    timeout: 30.0
+    max_retries: 3
+    retry_delay: 1.0
+    health_check_interval: 60
     
-  # Rovo Dev Agents 配置
+  # Rovo Dev Agents 配置（增強版）
   rovo_dev:
     enabled: true
     max_concurrent_requests: 5
     timeout: 30
     retry_attempts: 3
     cache_ttl: 300  # 5 分鐘
+    
+    # 備用機制配置
+    fallback:
+      enabled: true
+      max_fallback_attempts: 5
+      fallback_delay: 2.0
+      offline_mode: true
+      local_cache_enabled: true
+      task_persistence: true
     
     # 代理能力配置
     capabilities:
@@ -77,12 +112,46 @@ atlassian:
         - type: "jira"
           project: "UAI"
           
-# HSP 集成配置
+# 備用協議集成配置
+fallback_integration:
+  # HSP 備用協議
+  hsp_fallback:
+    enabled: true
+    priority: 1
+    protocols: ["http", "file", "memory"]
+    
+  # MCP 備用協議
+  mcp_fallback:
+    enabled: true
+    priority: 2
+    protocols: ["http", "file", "memory"]
+    
+  # 本地緩存備用
+  local_cache:
+    enabled: true
+    priority: 3
+    storage_path: "data/fallback_storage"
+    max_size: "1GB"
+
+# HSP 集成配置（增強版）
 hsp_integration:
   agent_id: "rovo-dev-agent"
   capabilities_topic: "hsp/capabilities/rovo-dev"
   task_request_topic: "hsp/tasks/rovo-dev"
   task_result_topic: "hsp/results/rovo-dev"
+  
+  # 備用通訊配置
+  fallback_communication:
+    enabled: true
+    protocols: ["hsp_fallback", "mcp_fallback", "local_queue"]
+    
+  # 任務持久化配置
+  task_persistence:
+    enabled: true
+    storage_path: "data/task_queue"
+    auto_recovery: true
+    max_retry_attempts: 5
+    retry_delay: 60  # 秒
   
   # 任務類型映射
   task_mappings:
@@ -132,7 +201,7 @@ monitoring:
   logging:
     level: "INFO"
     format: "json"
-    file: "logs/atlassian_integration.log"
+    file: "data/logs/atlassian_integration.log"
     max_size: "100MB"
     backup_count: 5
     

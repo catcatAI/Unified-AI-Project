@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from src.agents.creative_writing_agent import CreativeWritingAgent
 from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from src.services.llm_interface import LLMInterface
+from src.services.multi_llm_service import MultiLLMService, ChatMessage, LLMResponse
 
 class TestCreativeWritingAgent:
 
@@ -19,7 +19,7 @@ class TestCreativeWritingAgent:
         self.agent_id = f"did:hsp:test_creative_writing_agent_{uuid.uuid4().hex[:6]}"
 
         # Mock the services that the agent's base class initializes
-        self.mock_llm_interface = MagicMock(spec=LLMInterface)
+        self.mock_llm_interface = MagicMock(spec=MultiLLMService)
         self.mock_services = {
             "hsp_connector": MagicMock(),
             "llm_interface": self.mock_llm_interface
@@ -48,7 +48,9 @@ class TestCreativeWritingAgent:
         """Test handling a 'generate_marketing_copy' task."""
         # 1. Configure mock LLM to return a predefined response
         expected_copy = "Buy our new amazing product! It's the best!"
-        self.mock_llm_interface.generate_response.return_value = expected_copy
+        mock_llm_response = MagicMock(spec=LLMResponse)
+        mock_llm_response.content = expected_copy
+        self.mock_llm_interface.chat_completion.return_value = mock_llm_response
 
         # 2. Create mock HSP task payload
         request_id = "creative_req_001"
@@ -68,10 +70,15 @@ class TestCreativeWritingAgent:
         await self.agent.handle_task_request(task_payload, "test_sender", envelope)
 
         # 4. Assert LLM was called with the correct prompt
-        self.mock_llm_interface.generate_response.assert_called_once()
-        call_args = self.mock_llm_interface.generate_response.call_args
-        assert "Generate marketing copy" in call_args.args[0]
-        assert "A new amazing product" in call_args.args[0]
+        self.mock_llm_interface.chat_completion.assert_called_once()
+        call_args = self.mock_llm_interface.chat_completion.call_args
+        # Check the messages argument, which should be a list of ChatMessage objects
+        messages_arg = call_args.args[0]
+        assert isinstance(messages_arg, list)
+        assert len(messages_arg) > 0
+        assert isinstance(messages_arg[0], ChatMessage)
+        assert "Generate marketing copy" in messages_arg[0].content
+        assert "A new amazing product" in messages_arg[0].content
 
         # 5. Assert HSP connector sent the correct success result
         self.agent.hsp_connector.send_task_result.assert_called_once()
@@ -85,7 +92,9 @@ class TestCreativeWritingAgent:
         """Test handling a 'polish_text' task."""
         # 1. Configure mock LLM
         expected_polished_text = "This is a polished sentence."
-        self.mock_llm_interface.generate_response.return_value = expected_polished_text
+        mock_llm_response = MagicMock(spec=LLMResponse)
+        mock_llm_response.content = expected_polished_text
+        self.mock_llm_interface.chat_completion.return_value = mock_llm_response
 
         # 2. Create mock HSP task payload
         request_id = "creative_req_002"
@@ -101,9 +110,14 @@ class TestCreativeWritingAgent:
         await self.agent.handle_task_request(task_payload, "test_sender", envelope)
 
         # 4. Assert LLM was called correctly
-        self.mock_llm_interface.generate_response.assert_called_once_with(
-            "Please proofread and polish the following text for grammar, style, and clarity. Return only the improved text:\n\n---\nthis is a polished sentence\n---"
-        )
+        self.mock_llm_interface.chat_completion.assert_called_once()
+        call_args = self.mock_llm_interface.chat_completion.call_args
+        messages_arg = call_args.args[0]
+        assert isinstance(messages_arg, list)
+        assert len(messages_arg) > 0
+        assert isinstance(messages_arg[0], ChatMessage)
+        assert "Please proofread and polish the following text for grammar, style, and clarity. Return only the improved text:" in messages_arg[0].content
+        assert "this is a polished sentence" in messages_arg[0].content
 
         # 5. Assert HSP connector sent the correct success result
         self.agent.hsp_connector.send_task_result.assert_called_once()

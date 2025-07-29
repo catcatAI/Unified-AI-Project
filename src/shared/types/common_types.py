@@ -233,12 +233,7 @@ class LLMModelInfo(TypedDict, total=False):
     size_bytes: Optional[int]
     # Future: capabilities (e.g., ["chat", "completion", "embedding"]), context_length, etc.
 
-class LLMInterfaceConfig(TypedDict, total=False):
-    default_provider: Required[str]
-    default_model: Required[str]
-    providers: Required[Dict[str, Union[LLMProviderOllamaConfig, LLMProviderOpenAIConfig, Dict[str, Any]]]] # Extensible for other providers
-    default_generation_params: Optional[Dict[str, Any]] # e.g., temperature, max_tokens for all models
-    operational_configs: Optional[Dict[str, Any]] # For operational settings like timeouts specific to LLMInterface
+
 
 # --- Knowledge Graph Types (for ContentAnalyzerModule) ---
 class KGEntityAttributes(TypedDict, total=False):

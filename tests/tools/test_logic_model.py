@@ -193,7 +193,7 @@ class TestLogicModelComponents(unittest.TestCase):
              char_to_token, _, vocab_size, max_len = get_logic_char_token_maps(self.train_json_file)
 
         result_nn = await dispatcher.dispatch("evaluate true OR false using nn")
-        # Based on current LLMInterface mock, "evaluate true OR false using nn"
+        # Based on current MultiLLMService mock, "evaluate true OR false using nn"
         # will result in NO_TOOL from DLM, so dispatcher returns None.
         # We expect a ToolResponse object with a failure status due to NN model not being available
         self.assertIsNotNone(result_nn)

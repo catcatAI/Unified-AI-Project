@@ -70,12 +70,7 @@ AI Project.
   - **Status:** Completed
   - **Usage:** The math tool can be used through the `ToolDispatcher`.
 
-- **Calculator Tool**
-  - **Description:** The calculator tool can be used to calculate the result of
-    a mathematical expression.
-  - **Location:** `src/tools/calculator_tool.py`
-  - **Status:** Completed
-  - **Usage:** The calculator tool can be used through the `ToolDispatcher`.
+
 
 ### Logic
 

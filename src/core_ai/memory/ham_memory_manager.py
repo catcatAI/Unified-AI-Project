@@ -8,6 +8,7 @@ from cryptography.fernet import Fernet, InvalidToken
 import hashlib
 import asyncio # Added for asyncio.to_thread
 from typing import Optional, List, Dict, Any, Tuple, Union # Added Union for recall_gist return
+from src.shared.key_manager import key_manager
 from src.shared.types.common_types import DialogueMemoryEntryMetadata, HAMDataPackageInternal, HAMRecallResult # Import new types, changed to src.
 
 # Placeholder for actual stopword list and NLP tools if not available
