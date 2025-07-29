@@ -13,26 +13,21 @@ class TestDailyLanguageModel:
 
     @pytest.fixture(autouse=True)
     def setup_dlm(self):
-        self.dlm = DailyLanguageModel()
-        # Mocking available tools as ToolDispatcher would provide them
-        self.mock_available_tools = {
-            "calculate": "Performs arithmetic calculations.",
-            "evaluate_logic": "Evaluates simple logical expressions.",
-            "translate_text": "Translates text between languages.",
-            "inspect_code": "Describes the structure of available tools."
-        }
+        # Create a mock for MultiLLMService
+        mock_llm_service = AsyncMock(spec=MultiLLMService)
 
-        async def mock_chat_completion(messages, model_id=None, **kwargs):
+        # Define the behavior of the mocked chat_completion
+        async def mock_chat_completion_behavior(messages, model_id=None, **kwargs):
             prompt = messages[0].content # Assuming single user message for prompt
-            if "calculate" in prompt.lower() and "User Query: \"calculate 2 + 2\"" in prompt :
+            if "calculate" in prompt.lower() and "User Query: \"calculate 2 + 2\"" in prompt:
                  return LLMResponse(content=json.dumps({"tool_name": "calculate", "parameters": {"query": "2 + 2", "original_query": "calculate 2 + 2"}}), model="mock", provider=ModelProvider.OPENAI, usage={}, cost=0.0, latency=0.0, timestamp=datetime.now())
-            if "calculate" in prompt.lower() and "User Query: \"what is 10 * 5\"" in prompt :
+            if "calculate" in prompt.lower() and "User Query: \"what is 10 * 5\"" in prompt:
                  return LLMResponse(content=json.dumps({"tool_name": "calculate", "parameters": {"query": "10 * 5", "original_query": "what is 10 * 5"}}), model="mock", provider=ModelProvider.OPENAI, usage={}, cost=0.0, latency=0.0, timestamp=datetime.now())
-            if "calculate" in prompt.lower() and "User Query: \"compute 100 / 20\"" in prompt :
+            if "calculate" in prompt.lower() and "User Query: \"compute 100 / 20\"" in prompt:
                  return LLMResponse(content=json.dumps({"tool_name": "calculate", "parameters": {"query": "100 / 20", "original_query": "compute 100 / 20"}}), model="mock", provider=ModelProvider.OPENAI, usage={}, cost=0.0, latency=0.0, timestamp=datetime.now())
-            if "calculate" in prompt.lower() and "User Query: \"solve for 7 - 3\"" in prompt :
+            if "calculate" in prompt.lower() and "User Query: \"solve for 7 - 3\"" in prompt:
                  return LLMResponse(content=json.dumps({"tool_name": "calculate", "parameters": {"query": "7 - 3", "original_query": "solve for 7 - 3"}}), model="mock", provider=ModelProvider.OPENAI, usage={}, cost=0.0, latency=0.0, timestamp=datetime.now())
-            if "calculate" in prompt.lower() and "User Query: \"3+3\"" in prompt :
+            if "calculate" in prompt.lower() and "User Query: \"3+3\"" in prompt:
                  return LLMResponse(content=json.dumps({"tool_name": "calculate", "parameters": {"query": "3+3", "original_query": "3+3"}}), model="mock", provider=ModelProvider.OPENAI, usage={}, cost=0.0, latency=0.0, timestamp=datetime.now())
 
             if "evaluate_logic" in prompt.lower() and "User Query: \"evaluate true AND false\"" in prompt:
@@ -54,7 +49,15 @@ class TestDailyLanguageModel:
 
             if "User Query: \"this is a general statement without clear tool triggers\"" in prompt:
                  return LLMResponse(content=json.dumps({"tool_name": "NO_TOOL", "parameters": None}), model="mock", provider=ModelProvider.OPENAI, usage={}, cost=0.0, latency=0.0, timestamp=datetime.now()) # Default fallback
-            self.dlm.llm_service.chat_completion.side_effect = mock_chat_completion
+
+            # Default response if no specific match
+            return LLMResponse(content=json.dumps({"tool_name": "NO_TOOL", "parameters": None}), model="mock", provider=ModelProvider.OPENAI, usage={}, cost=0.0, latency=0.0, timestamp=datetime.now())
+
+
+        mock_llm_service.chat_completion.side_effect = mock_chat_completion_behavior
+
+        # Pass the mocked LLM service to DailyLanguageModel
+        self.dlm = DailyLanguageModel(llm_service=mock_llm_service)
         yield
 
 

@@ -1,23 +1,17 @@
-import unittest
 import pytest
-import asyncio
-import sys
-import os
 import uuid
 from datetime import datetime
 from unittest.mock import MagicMock, patch
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from src.core_ai.learning.learning_manager import LearningManager
 from src.core_ai.trust_manager.trust_manager_module import TrustManager
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
 from src.hsp.types import HSPFactPayload, HSPMessageEnvelope
 
-class TestLearningAndTrustIntegration(unittest.TestCase):
+class TestLearningAndTrustIntegration:
 
-    def setUp(self):
-        """Set up a fresh LearningManager with mocked dependencies for each test."""
+    @pytest.fixture(autouse=True)
+    def learning_manager_setup(self):
         self.ai_id = "test_host_ai"
         self.trust_manager = TrustManager()
 
@@ -42,8 +36,9 @@ class TestLearningAndTrustIntegration(unittest.TestCase):
             operational_config={"learning_thresholds": {"min_hsp_fact_confidence_to_store": 0.5}}
         )
 
+    @pytest.mark.asyncio
     @pytest.mark.timeout(10)
-    def test_duplicate_fact_increments_corroboration(self):
+    async def test_duplicate_fact_increments_corroboration(self):
         """
         Tests that receiving a duplicate fact increments corroboration_count
         and does not store a new fact.
@@ -67,11 +62,11 @@ class TestLearningAndTrustIntegration(unittest.TestCase):
         duplicate_fact_payload = HSPFactPayload(id=fact_id, source_ai_id=originator_id, statement_nl="This is a test fact.", confidence_score=0.9)
         envelope = HSPMessageEnvelope(message_id="msg2", sender_ai_id="did:hsp:sender_2", recipient_ai_id=self.ai_id, timestamp_sent="", message_type="", protocol_version="")
 
-        result = self.learning_manager.process_and_store_hsp_fact(duplicate_fact_payload, "did:hsp:sender_2", envelope)
+        result = await self.learning_manager.process_and_store_hsp_fact(duplicate_fact_payload, "did:hsp:sender_2", envelope)
 
         # 3. Assertions
         # It should not store a new fact
-        self.assertIsNone(result)
+        assert result is None
         # It should have queried memory to find the duplicate
         self.ham_memory.query_core_memory.assert_called_once()
         # It should NOT have tried to store a new experience
@@ -79,8 +74,9 @@ class TestLearningAndTrustIntegration(unittest.TestCase):
         # It SHOULD have incremented the metadata field of the existing record
         self.ham_memory.increment_metadata_field.assert_called_once_with(existing_ham_id, "corroboration_count")
 
+    @pytest.mark.asyncio
     @pytest.mark.timeout(10)
-    def test_fact_from_low_trust_source_is_discarded(self):
+    async def test_fact_from_low_trust_source_is_discarded(self):
         """
         Tests that a fact with high original confidence is discarded if the source has very low trust.
         """
@@ -92,16 +88,17 @@ class TestLearningAndTrustIntegration(unittest.TestCase):
         fact_payload = HSPFactPayload(id="hsp_fact_low_trust", source_ai_id="originator_2", statement_nl="This is a highly confident but untrusted fact.", confidence_score=0.95)
         envelope = HSPMessageEnvelope(message_id="msg3", sender_ai_id=low_trust_sender_id, recipient_ai_id=self.ai_id, timestamp_sent="", message_type="", protocol_version="")
 
-        result = self.learning_manager.process_and_store_hsp_fact(fact_payload, low_trust_sender_id, envelope)
+        result = await self.learning_manager.process_and_store_hsp_fact(fact_payload, low_trust_sender_id, envelope)
 
         # 3. Assertions
         # The effective confidence (0.95 * 0.1 = 0.095) should be below the threshold (0.5)
-        self.assertIsNone(result, "Fact from low-trust source should be discarded")
+        assert result is None, "Fact from low-trust source should be discarded"
         # Ensure it didn't get stored
         self.ham_memory.store_experience.assert_not_called()
 
+    @pytest.mark.asyncio
     @pytest.mark.timeout(10)
-    def test_fact_from_high_trust_source_is_accepted(self):
+    async def test_fact_from_high_trust_source_is_accepted(self):
         """
         Tests that a fact with medium original confidence is accepted if the source has high trust.
         """
@@ -116,16 +113,15 @@ class TestLearningAndTrustIntegration(unittest.TestCase):
         # Effective confidence = 0.6 * 0.9 = 0.54, which is above the 0.5 threshold.
         envelope = HSPMessageEnvelope(message_id="msg4", sender_ai_id=high_trust_sender_id, recipient_ai_id=self.ai_id, timestamp_sent="", message_type="", protocol_version="")
 
-        result = self.learning_manager.process_and_store_hsp_fact(fact_payload, high_trust_sender_id, envelope)
+        result = await self.learning_manager.process_and_store_hsp_fact(fact_payload, high_trust_sender_id, envelope)
 
         # 3. Assertions
-        self.assertIsNotNone(result, "Fact from high-trust source should be accepted")
+        assert result is not None, "Fact from high-trust source should be accepted"
         # Ensure it was stored
         self.ham_memory.store_experience.assert_called_once()
         # Check that the stored confidence is the final calculated score
         call_args = self.ham_memory.store_experience.call_args
         stored_metadata = call_args.kwargs['metadata']
-        self.assertAlmostEqual(stored_metadata['confidence'], (0.6 * 0.9 * 0.7) + (0.5 * 0.15) + (0.5 * 0.15))
+        assert stored_metadata['confidence'] == pytest.approx((0.6 * 0.9 * 0.7) + (0.5 * 0.15) + (0.5 * 0.15))
 
-if __name__ == '__main__':
-    unittest.main()
+
