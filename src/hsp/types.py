@@ -15,6 +15,14 @@ from typing_extensions import Required, NotRequired # For Required/NotRequired f
 
 # Let's use `total=False` for payloads where many fields are optional, and `total=True` (default) for envelope parts that are mostly required.
 
+class HSPMessage(TypedDict, total=False):
+    payload: Dict[str, Any]
+    message_type: str
+    sender_ai_id: str
+    recipient_ai_id: str
+    timestamp_sent: str
+    correlation_id: Optional[str]
+
 class HSPFactStatementStructured(TypedDict, total=False):
     subject_uri: str # Required if this structure is used
     predicate_uri: str # Required if this structure is used
@@ -91,6 +99,12 @@ class HSPBeliefPayload(HSPFactPayload, total=False): # Inherits from HSPFactPayl
     justification_type: Optional[Literal["text", "inference_chain_id", "evidence_ids_list"]]
     justification: Optional[str | List[str]] # Text, or ID, or list of IDs
 
+class HSPCapability(TypedDict, total=False):
+    name: str
+    description: str
+    version: str
+    parameters: Dict[str, Any]
+
 class HSPCapabilityAdvertisementPayload(TypedDict, total=False):
     capability_id: str # Required, unique ID for this capability offering
     ai_id: str # Required, DID or URI of the AI offering
@@ -136,6 +150,14 @@ class HSPTaskResultPayload(TypedDict, total=False):
     error_details: Optional[HSPErrorDetails] # If status is "failure" or "rejected"
     timestamp_completed: Optional[str] # ISO 8601 UTC
     execution_metadata: Optional[Dict[str, Any]] # e.g., {"time_taken_ms": 150}
+
+class HSPTask(TypedDict, total=False):
+    task_id: str
+    capability: str
+    parameters: Dict[str, Any]
+    requester_id: str
+    priority: Optional[int]
+    timeout: Optional[int]
 
 class HSPEnvironmentalStatePayload(TypedDict, total=False): # Also known as ContextUpdate
     update_id: str # Required, UUID

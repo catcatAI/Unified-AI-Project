@@ -2,7 +2,7 @@ import json
 from typing import List, Dict, Optional, Any
 
 # Assuming 'src' is in PYTHONPATH, making 'services' and 'shared' top-level packages
-from services.llm_interface import LLMInterface, LLMInterfaceConfig
+from services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider
 from shared.types.common_types import CritiqueResult
 from core_ai.lis.tonal_repair_engine import TonalRepairEngine
 
@@ -132,7 +132,7 @@ if __name__ == '__main__':
         "providers": {},
         "default_generation_params": {}
     }
-    patched_llm_interface = PatchedLLMInterfaceForCritique(config=mock_llm_config_for_critique)
+    patched_llm_interface = PatchedLLMInterfaceForCritique(llm_config=mock_llm_config_for_critique)
 
     critique_module = SelfCritiqueModule(llm_interface=patched_llm_interface)
 

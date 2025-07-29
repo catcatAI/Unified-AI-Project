@@ -29,16 +29,20 @@ class MCPConnector:
         self.logger = logging.getLogger(__name__)
         
         # 初始化fallback協議
-        if self.enable_fallback:
-            asyncio.create_task(self._initialize_fallback_protocols())
+        # Moved to connect() method to ensure event loop is running
 
-    def connect(self):
+    async def connect(self):
         print(f"MCPConnector for {self.ai_id} connecting to {self.broker_address}:{self.broker_port}")
         try:
+            # Connect and start the loop in a separate thread to avoid blocking the event loop
+            # For testing purposes, we might mock this or ensure it runs in a dedicated thread/process
+            # In a real application, you'd typically use an async MQTT client library
             self.client.connect(self.broker_address, self.broker_port, 60)
             self.client.loop_start()
             self.is_connected = True
             self.mcp_available = True
+            if self.enable_fallback:
+                await self._initialize_fallback_protocols()
         except Exception as e:
             self.logger.error(f"MCP MQTT connection failed: {e}")
             self.is_connected = False

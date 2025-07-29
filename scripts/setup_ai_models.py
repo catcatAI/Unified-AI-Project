@@ -9,6 +9,7 @@ import sys
 import subprocess
 import json
 from pathlib import Path
+from src.shared.utils.env_utils import setup_env_file
 
 def check_python_version():
     """检查 Python 版本"""
@@ -32,31 +33,7 @@ def install_dependencies():
     
     return True
 
-def setup_env_file():
-    """设置环境变量文件"""
-    print("🔧 设置环境变量...")
-    
-    env_example = Path(".env.example")
-    env_file = Path(".env")
-    
-    if not env_example.exists():
-        print("❌ .env.example 文件不存在")
-        return False
-    
-    if not env_file.exists():
-        # 复制示例文件
-        with open(env_example, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        with open(env_file, 'w', encoding='utf-8') as f:
-            f.write(content)
-        
-        print("✅ 已创建 .env 文件")
-        print("⚠️  请编辑 .env 文件，添加你的 API 密钥")
-    else:
-        print("✅ .env 文件已存在")
-    
-    return True
+
 
 def check_config_files():
     """检查配置文件"""
@@ -186,7 +163,7 @@ def main():
         sys.exit(1)
     
     # 设置环境文件
-    if not setup_env_file():
+    if not setup_env_file(Path.cwd()):
         sys.exit(1)
     
     # 检查配置文件

@@ -44,26 +44,32 @@ Unified-AI-Project 是一个多代理协作的 AI 系统，采用分布式、服
 - **作用**: 所有组件间的通信标准
 - **特点**: 异步消息传递、事件驱动
 - **传输**: 基于 MQTT 消息代理
-- **文档**: [HSP 快速入门](./HSP_QUICK_START.md)
+- **文档**: [HSP 快速入門](./communication/hsp-quick-start.md)
 
 ### 2. 记忆系统 - HAM
 
 - **全称**: Hierarchical Abstractive Memory (分层抽象记忆)
 - **作用**: 智能数据存储和检索
 - **特点**: 多层次、语义化、可扩展
-- **文档**: [HAM 设计规范](./architecture/HAM_design_spec.md)
+- **文档**: [HAM 设计规范](./memory-systems/ham-design.md)
 
 ### 3. 代理框架 - Fragmenta
 
 - **作用**: 代理的创建、管理和协作框架
 - **特点**: 模块化、可插拔、自适应
-- **文档**: [Fragmenta 设计规范](./architecture/Fragmenta_design_spec.md)
+- **文档**: [Fragmenta 设计规范](../../04-advanced-concepts/fragmenta-design.md)
 
 ### 4. 对话管理 - DialogueManager
 
 - **作用**: 处理用户输入，协调系统响应
 - **特点**: 智能路由、上下文管理
 - **位置**: `src/core_ai/dialogue/dialogue_manager.py`
+
+### 5. 多模型 LLM 服务
+
+- **作用**: 统一的 AI 大模型接口，支持多种主流 LLM
+- **特点**: 流式响应、成本追踪、健康检查、负载均衡
+- **文档**: [多模型 LLM 服务](./ai-components/multi-llm-service.md)
 
 ## 🔄 工作流程
 
@@ -156,9 +162,9 @@ Unified-AI-Project 是一个多代理协作的 AI 系统，采用分布式、服
 
 ### 🏗️ 架构级
 
-1. [HAM 设计规范](./architecture/HAM_design_spec.md)
-2. [HSP 完整规范](./HSP_SPECIFICATION.md)
-3. [Fragmenta 设计规范](./architecture/Fragmenta_design_spec.md)
+1. [HAM 設計規範](./memory-systems/ham-design.md)
+2. [HSP 完整規範](./communication/hsp-specification/01-overview-and-concepts.md)
+3. [Fragmenta 設計規範](../../04-advanced-concepts/fragmenta-design.md)
 
 ## ❓ 常见问题
 

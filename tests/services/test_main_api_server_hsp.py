@@ -20,7 +20,8 @@ from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPaylo
 from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
 from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
-from tests.conftest import is_mqtt_broker_available
+from tests.conftest import mqtt_broker_available
+
 
 import logging
 
@@ -86,7 +87,7 @@ async def client_with_overrides(api_test_peer_connector):
     from src.core_ai.dialogue.dialogue_manager import DialogueManager
     from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
     from src.core_ai.personality.personality_manager import PersonalityManager
-    from src.services.llm_interface import LLMInterface
+    from src.services.multi_llm_service import MultiLLMService
     from src.core_ai.emotion_system import EmotionSystem
     from src.core_ai.crisis_system import CrisisSystem
     from src.core_ai.time_system import TimeSystem
@@ -110,7 +111,8 @@ async def client_with_overrides(api_test_peer_connector):
     
     # Create mocks for all other DialogueManager dependencies
     mock_personality_manager = MagicMock(spec=PersonalityManager)
-    mock_llm_interface = MagicMock(spec=LLMInterface)
+    mock_llm_service = MagicMock(spec=MultiLLMService)
+    mock_llm_interface = mock_llm_service
     mock_emotion_system = MagicMock(spec=EmotionSystem)
     mock_crisis_system = MagicMock(spec=CrisisSystem)
     mock_time_system = MagicMock(spec=TimeSystem)
@@ -242,7 +244,7 @@ async def wait_for_event(event: asyncio.Event, timeout: float = 2.0):
     except asyncio.TimeoutError:
         pytest.fail(f"Event was not set within the {timeout}s timeout.")
 
-@pytest.mark.skipif(not is_mqtt_broker_available(), reason="MQTT broker not available for API HSP tests")
+@pytest.mark.skipif(not mqtt_broker_available, reason="MQTT broker not available for API HSP tests")
 class TestHSPEndpoints:
 
     @pytest.mark.timeout(10)
@@ -430,7 +432,32 @@ class TestHSPEndpoints:
 
         # Simulate a task request that remains pending
         mock_corr_id = "pending_corr_id_123"
-        mock_hsp_connector.on_task_request_callback.return_value = None # Simulate no immediate response
+        # Instead of setting return_value on a non-existent attribute,
+        # we ensure the mock_hsp_connector's register_on_task_request_callback
+        # is properly set up to capture the callback.
+        # The client_with_overrides fixture already sets up mock_hsp_connector
+        # with a side_effect for register_on_task_request_callback.
+        # We just need to ensure the DM registers its callback.
+
+        # Trigger a task request from the API, which will cause the DM to register
+        # a callback with the mock_hsp_connector.
+        # We need to ensure the mock_hsp_connector's send_task_request is mocked
+        # to simulate the task being sent and then the result being received.
+
+        # Simulate the HSPConnector receiving a task request and the DM registering its callback
+        # The DM's internal logic will register a callback with mock_hsp_connector.
+        # We need to ensure that when the API calls request_hsp_task, it triggers
+        # the DM's internal logic, which then uses the mock_hsp_connector.
+
+        # The `client_with_overrides` fixture already sets up `mock_hsp_connector`
+        # with a `register_on_task_request_callback` side effect that captures the callback.
+        # We need to ensure that the `DialogueManager` (dm) registers its callback.
+        # This happens during the `initialize_services` call within the FastAPI lifespan.
+
+        # To simulate a pending task, we need to prevent the peer from immediately responding.
+        # We can temporarily disable the peer's task handling for this specific test.
+        original_peer_task_handler = api_test_peer_connector.send_task_request.side_effect
+        api_test_peer_connector.send_task_request.side_effect = AsyncMock(return_value=True) # Prevent peer from responding
 
         # Make an initial request to trigger the pending state
         response = client.post("/api/v1/hsp/tasks", json={
@@ -441,6 +468,9 @@ class TestHSPEndpoints:
         initial_response_data = response.json()
         assert initial_response_data["status"] == "pending"
         assert initial_response_data["correlation_id"] is not None
+
+        # Restore the original side_effect for other tests
+        api_test_peer_connector.send_task_request.side_effect = original_peer_task_handler
 
         # Now check the status of the pending task
         response = client.get(f"/api/v1/hsp/tasks/{initial_response_data['correlation_id']}")

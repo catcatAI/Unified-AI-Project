@@ -81,8 +81,7 @@ class HSPConnector:
         self._disconnect_callbacks = []
         
         # Initialize fallback protocols if enabled
-        if self.enable_fallback:
-            asyncio.create_task(self._initialize_fallback_protocols())
+        # Moved to connect() method to ensure event loop is running
 
         # Register internal message bridge handler for external messages
         if self.mock_mode:
@@ -104,6 +103,8 @@ class HSPConnector:
             print("HSPConnector: Mock connect successful.")
             self.is_connected = True
             self.hsp_available = True
+            if self.enable_fallback:
+                await self._initialize_fallback_protocols()
             # In mock mode, explicitly subscribe to relevant topics on the mock MQTT client
             await self.external_connector.subscribe("hsp/knowledge/facts/#", self.external_connector.on_message_callback)
             await self.external_connector.subscribe("hsp/capabilities/advertisements/#", self.external_connector.on_message_callback)
@@ -116,6 +117,8 @@ class HSPConnector:
                 self.hsp_available = self.is_connected
                 if not self.hsp_available:
                     self.logger.warning("HSP connection failed, fallback protocols will be used")
+                if self.enable_fallback:
+                    await self._initialize_fallback_protocols()
             except Exception as e:
                 self.logger.error(f"HSP connection error: {e}, using fallback protocols")
                 self.is_connected = False

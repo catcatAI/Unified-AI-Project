@@ -39,10 +39,7 @@ cp .env.example .env
 # ANTHROPIC_API_KEY=sk-ant-your-anthropic-key
 ```
 
-### 3. 测试安装
-```bash
-python tmp_rovodev_test_multi_llm.py
-```
+
 
 ## 🔧 使用方法
 

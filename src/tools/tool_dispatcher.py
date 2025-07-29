@@ -10,14 +10,14 @@ from src.tools.code_understanding_tool import CodeUnderstandingTool
 from src.tools.csv_tool import CsvTool
 from src.tools.image_generation_tool import ImageGenerationTool
 from src.core_ai.language_models.daily_language_model import DailyLanguageModel
-from src.services.llm_interface import LLMInterface
+from src.services.multi_llm_service import MultiLLMService
 from src.shared.types.common_types import ToolDispatcherResponse # Import new response type
 from typing import Literal # For literal status types
 # from src.core_ai.rag.rag_manager import RAGManager
 
 class ToolDispatcher:
-    def __init__(self, llm_interface: Optional[LLMInterface] = None):
-        self.dlm = DailyLanguageModel(llm_interface=llm_interface)
+    def __init__(self, llm_service: Optional[MultiLLMService] = None):
+        self.dlm = DailyLanguageModel(llm_service=llm_service)
         self.code_understanding_tool_instance = CodeUnderstandingTool()
         self.csv_tool_instance = CsvTool()
         self.image_generation_tool_instance = ImageGenerationTool()
@@ -466,46 +466,48 @@ class ToolDispatcher:
 
 # Example Usage
 if __name__ == '__main__':
-    # For ToolDispatcher __main__ test, we can use the PatchedLLMInterface from DLM's test
-    # This requires some path adjustments or making PatchedLLMInterface more accessible.
-    # For simplicity here, we'll rely on DLM using its default LLMInterface (which is mock).
-    # The DLM's __main__ has a more sophisticated mock for testing intent recognition.
-    # This ToolDispatcher __main__ will test the flow with whatever the default DLM->LLMInterface provides.
+    import asyncio
+    from src.services.multi_llm_service import MultiLLMService
 
-    print("--- ToolDispatcher Test ---")
-    dispatcher = ToolDispatcher() # This will use default LLMInterface (mock) for its DLM
+    async def main_test():
+        print("--- ToolDispatcher Test ---")
+        # Initialize MultiLLMService (it will use its default config or load from file)
+        llm_service_instance = MultiLLMService()
+        dispatcher = ToolDispatcher(llm_service=llm_service_instance)
 
-    print("\nAvailable tools:")
-    for name, desc in dispatcher.get_available_tools().items():
-        print(f"- {name}: {desc}")
+        print("\nAvailable tools:")
+        for name, desc in dispatcher.get_available_tools().items():
+            print(f"- {name}: {desc}")
 
-    queries = [
-        "calculate 123 + 456",
-        "what is 7 * 6?",
-        "compute 100 / 4",
-        "What is the weather like?", # Should not be handled by math
-        "Solve 2x + 5 = 10", # More complex, current math tool won't solve algebra
-        "10 - 3"
-    ]
+        queries = [
+            "calculate 123 + 456",
+            "what is 7 * 6?",
+            "compute 100 / 4",
+            "What is the weather like?", # Should not be handled by math
+            "Solve 2x + 5 = 10", # More complex, current math tool won't solve algebra
+            "10 - 3"
+        ]
 
-    for q in queries:
-        print(f"\nQuery: \"{q}\"")
-        result = dispatcher.dispatch(q)
+        for q in queries:
+            print(f"\nQuery: \"{q}\"")
+            result = await dispatcher.dispatch(q)
+            if result:
+                print(f"Tool Dispatcher Result: {result}")
+            else:
+                print("Tool Dispatcher: No tool could handle this query or no specific tool inferred.")
+
+        print("\nTesting explicit tool dispatch:")
+        explicit_query = "what is 50 + 50"
+        print(f"Query: \"{explicit_query}\", Tool: calculate")
+        result = await dispatcher.dispatch(explicit_query, explicit_tool_name="calculate")
+        print(f"Tool Dispatcher Result: {result}")
+
+        non_tool_query = "hello world"
+        print(f"\nQuery: \"{non_tool_query}\"")
+        result = await dispatcher.dispatch(non_tool_query)
         if result:
             print(f"Tool Dispatcher Result: {result}")
         else:
             print("Tool Dispatcher: No tool could handle this query or no specific tool inferred.")
 
-    print("\nTesting explicit tool dispatch:")
-    explicit_query = "what is 50 + 50"
-    print(f"Query: \"{explicit_query}\", Tool: calculate")
-    result = dispatcher.dispatch(explicit_query, explicit_tool_name="calculate")
-    print(f"Tool Dispatcher Result: {result}")
-
-    non_tool_query = "hello world"
-    print(f"\nQuery: \"{non_tool_query}\"")
-    result = dispatcher.dispatch(non_tool_query)
-    if result:
-        print(f"Tool Dispatcher Result: {result}")
-    else:
-        print("Tool Dispatcher: No tool could handle this query or no specific tool inferred.")
+    asyncio.run(main_test())

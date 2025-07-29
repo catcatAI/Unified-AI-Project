@@ -1,156 +1,113 @@
-from __future__ import annotations
+import os
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
-import socket
-from typing import TYPE_CHECKING
+import os
+import asyncio
+import pytest
+from cryptography.fernet import Fernet
 
-# Import the necessary classes from your project
-from src.core_ai.agent_manager import AgentManager
-from src.core_ai.dialogue.dialogue_manager import DialogueManager
-from src.core_ai.learning.learning_manager import LearningManager
-from src.core_ai.learning.fact_extractor_module import FactExtractorModule
-from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from src.core_ai.trust_manager.trust_manager_module import TrustManager
-from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from src.core_ai.personality.personality_manager import PersonalityManager
-from src.core_ai.emotion_system import EmotionSystem
-from src.core_ai.crisis_system import CrisisSystem
-from src.core_ai.time_system import TimeSystem
-from src.core_ai.formula_engine import FormulaEngine
-from src.tools.tool_dispatcher import ToolDispatcher
-from src.services.llm_interface import LLMInterface
-from src.mcp.connector import MCPConnector
-from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
-from src.shared.types.common_types import OperationalConfig, ToolDispatcherResponse
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an instance of the default event loop for each test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
-from src.hsp.connector import HSPConnector
-
-if TYPE_CHECKING:
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_environment():
+    """設置測試環境變量"""
+    # 設置測試用的 MIKO_HAM_KEY
+    if not os.environ.get('MIKO_HAM_KEY'):
+        # 生成一個測試用的密鑰
+        test_key = Fernet.generate_key().decode()
+        os.environ['MIKO_HAM_KEY'] = test_key
+    
+    # 設置其他測試環境變量
+    os.environ['TESTING'] = 'true'
+    
+    yield
+    
+    # 清理（如果需要）
     pass
 
-@pytest.fixture(scope="function")
-def trust_manager_fixture():
-    return TrustManager()
+@pytest.fixture(scope="session")
+def mqtt_broker_available():
+    # Placeholder for actual MQTT broker availability check
+    # In a real scenario, this would attempt to connect to the broker
+    # or check a configuration flag.
+    return True
 
 @pytest.fixture(scope="function")
-def service_discovery_module_fixture(trust_manager_fixture):
-    sdm = ServiceDiscoveryModule(trust_manager=trust_manager_fixture)
-    sdm.start_cleanup_task(cleanup_interval_seconds=1) # Shorter interval for tests
-    yield sdm
-    sdm.stop_cleanup_task()
+def clean_test_files():
+    """清理測試文件"""
+    import glob
+    
+    # 在測試前清理
+    test_files = glob.glob("data/processed_data/test_*.json")
+    for file in test_files:
+        try:
+            os.remove(file)
+        except FileNotFoundError:
+            pass
+    
+    yield
+    
+    # 在測試後清理
+    test_files = glob.glob("data/processed_data/test_*.json")
+    for file in test_files:
+        try:
+            os.remove(file)
+        except FileNotFoundError:
+            pass
 
-@pytest.fixture(scope="function")
-async def hsp_connector_fixture():
-    from src.hsp.connector import HSPConnector
-    # Check if MQTT broker is available before attempting to connect
-    if not is_mqtt_broker_available():
-        pytest.skip("MQTT broker not available")
-
-    connector = HSPConnector(
-        ai_id="test_ai_id",
-        broker_address="127.0.0.1",
-        broker_port=1883,
-        client_id_suffix="test_hsp_connector"
-    )
-    await connector.connect()
-    yield connector
-    await connector.disconnect()
-
-def is_mqtt_broker_available():
-    """
-    Checks if the MQTT broker is available by attempting to create a socket connection.
-    """
-    try:
-        # Use a non-blocking socket with a short timeout
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(0.5)
-            s.connect(("127.0.0.1", 1883))
-        return True
-    except (socket.timeout, ConnectionRefusedError):
-        return False
-    except Exception:
-        return False
-
-@pytest.fixture(scope="function")
+@pytest.fixture
 def mock_core_services():
-    """
-    Provides a dictionary of mocked core services for use in tests.
-    This fixture initializes all major components with MagicMock or AsyncMock
-    and wires them together as they would be in `core_services.py`.
-    """
-    # --- Mock Foundational Services ---
-    mock_llm_interface = AsyncMock(spec=LLMInterface)
-    mock_ham_manager = AsyncMock(spec=HAMMemoryManager)
-    mock_personality_manager = MagicMock(spec=PersonalityManager)
-    mock_trust_manager = MagicMock(spec=TrustManager)
-    mock_agent_manager = MagicMock(spec=AgentManager)
-    mock_hsp_connector = MagicMock(spec=HSPConnector)
-    mock_hsp_connector.ai_id = "test_ai_id"
-    mock_hsp_connector.register_on_fact_callback = MagicMock()
-    mock_hsp_connector.register_on_capability_advertisement_callback = MagicMock()
-    mock_hsp_connector.register_on_task_request_callback = MagicMock()
-    mock_hsp_connector.register_on_task_result_callback = MagicMock()
-    mock_hsp_connector.register_on_connect_callback = MagicMock()
-    mock_hsp_connector.register_on_disconnect_callback = MagicMock()
-    mock_mcp_connector = MagicMock(spec=MCPConnector)
-    mock_service_discovery = MagicMock(spec=ServiceDiscoveryModule)
+    from unittest.mock import MagicMock, AsyncMock
+    from src.core_ai.dialogue.dialogue_manager import DialogueManager
+    from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+    from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+    from src.core_ai.trust_manager.trust_manager_module import TrustManager
+    from src.core_ai.personality.personality_manager import PersonalityManager
+    from src.services.multi_llm_service import MultiLLMService
+    from src.core_ai.emotion_system import EmotionSystem
+    from src.core_ai.crisis_system import CrisisSystem
+    from src.core_ai.time_system import TimeSystem
+    from src.core_ai.formula_engine import FormulaEngine
+    from src.tools.tool_dispatcher import ToolDispatcher
+    from src.core_ai.learning.learning_manager import LearningManager
+    from src.hsp.connector import HSPConnector
+    from src.core_ai.agent_manager import AgentManager
+    from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 
-    # --- Mock Core AI Logic Modules ---
-    mock_fact_extractor = MagicMock(spec=FactExtractorModule)
-    mock_content_analyzer = MagicMock(spec=ContentAnalyzerModule)
-    mock_learning_manager = AsyncMock(spec=LearningManager)
-    mock_learning_manager.analyze_for_personality_adjustment = AsyncMock(return_value=None)
+    # Mock individual services
+    mock_ham_manager = MagicMock(spec=HAMMemoryManager)
+    mock_llm_interface = MagicMock(spec=MultiLLMService)
+    mock_service_discovery = MagicMock(spec=ServiceDiscoveryModule)
+    mock_trust_manager = MagicMock(spec=TrustManager)
+    mock_personality_manager = MagicMock(spec=PersonalityManager)
     mock_emotion_system = MagicMock(spec=EmotionSystem)
     mock_crisis_system = MagicMock(spec=CrisisSystem)
     mock_time_system = MagicMock(spec=TimeSystem)
     mock_formula_engine = MagicMock(spec=FormulaEngine)
-    mock_tool_dispatcher = AsyncMock(spec=ToolDispatcher)
-    mock_tool_dispatcher.dispatch.return_value = AsyncMock(return_value=ToolDispatcherResponse(
-        status="no_tool_found", # Or "success" depending on the test's needs
-        payload="Mocked tool response",
-        tool_name_attempted="none",
-        original_query_for_tool="mock query",
-        error_message=None
-    ))
+    mock_tool_dispatcher = MagicMock(spec=ToolDispatcher)
+    mock_learning_manager = MagicMock(spec=LearningManager)
+    mock_hsp_connector = MagicMock(spec=HSPConnector)
+    mock_hsp_connector.ai_id = "mock_ai_id"
+    mock_agent_manager = MagicMock(spec=AgentManager)
+    mock_project_coordinator = MagicMock(spec=ProjectCoordinator)
 
-    # --- Default Behaviors & Return Values ---
-    mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
-    mock_formula_engine.match_input.return_value = None
-    mock_crisis_system.assess_input_for_crisis.return_value = 0
+    # Configure mocks as needed for common scenarios
+    mock_llm_interface.generate_response = AsyncMock(return_value="Mocked LLM response.")
+    mock_ham_manager.store_experience = AsyncMock()
+    mock_service_discovery.find_capabilities = AsyncMock(return_value=[])
+    mock_hsp_connector.advertise_capability = AsyncMock()
+    mock_hsp_connector.send_task_result = AsyncMock()
+    mock_hsp_connector.send_task_request = AsyncMock(return_value="mock_correlation_id")
+    mock_project_coordinator.handle_project = AsyncMock(return_value="Mocked project response.")
+    mock_project_coordinator.handle_task_result = AsyncMock()
 
-    # --- Minimal Configuration ---
-    test_config: OperationalConfig = { # type: ignore
-        "max_dialogue_history": 6,
-        "operational_configs": {
-            "timeouts": {"dialogue_manager_turn": 120},
-            "learning_thresholds": {"min_critique_score_to_store": 0.0}
-        },
-        "command_triggers": {
-            "complex_project": "project:",
-            "manual_delegation": "!delegate_to",
-            "context_analysis": "!analyze:"
-        },
-        "crisis_response_text": "Crisis response."
-    }
-
-    # --- Instantiate ProjectCoordinator with Mocks (real instance with mocked dependencies) ---
-    mock_project_coordinator = ProjectCoordinator(
-        llm_interface=mock_llm_interface,
-        service_discovery=mock_service_discovery,
-        hsp_connector=mock_hsp_connector,
-        agent_manager=mock_agent_manager,
-        memory_manager=mock_ham_manager,
-        learning_manager=mock_learning_manager,
-        personality_manager=mock_personality_manager,
-        dialogue_manager_config=test_config
-    )
-    # Manually load prompts for the real ProjectCoordinator instance for testing
-    mock_project_coordinator._load_prompts()
-
-    # --- Instantiate DialogueManager with Mocks ---
+    # Create a mock DialogueManager instance that uses these mocks
     mock_dialogue_manager = DialogueManager(
-        ai_id="test_ai_01",
+        ai_id="test_ai_id",
         personality_manager=mock_personality_manager,
         memory_manager=mock_ham_manager,
         llm_interface=mock_llm_interface,
@@ -163,32 +120,24 @@ def mock_core_services():
         service_discovery_module=mock_service_discovery,
         hsp_connector=mock_hsp_connector,
         agent_manager=mock_agent_manager,
-        config=test_config
+        project_coordinator=mock_project_coordinator
     )
 
-    # Ensure DialogueManager uses the instantiated ProjectCoordinator
-    mock_dialogue_manager.project_coordinator = mock_project_coordinator
-
-    services = {
-        "llm_interface": mock_llm_interface,
+    # Return a dictionary mimicking the structure of get_services()
+    return {
         "ham_manager": mock_ham_manager,
-        "personality_manager": mock_personality_manager,
-        "trust_manager": mock_trust_manager,
-        "agent_manager": mock_agent_manager,
-        "hsp_connector": mock_hsp_connector,
-        "mcp_connector": mock_mcp_connector,
+        "llm_interface": mock_llm_interface,
         "service_discovery": mock_service_discovery,
-        "fact_extractor": mock_fact_extractor,
-        "content_analyzer": mock_content_analyzer,
-        "learning_manager": mock_learning_manager,
+        "trust_manager": mock_trust_manager,
+        "personality_manager": mock_personality_manager,
         "emotion_system": mock_emotion_system,
         "crisis_system": mock_crisis_system,
         "time_system": mock_time_system,
         "formula_engine": mock_formula_engine,
         "tool_dispatcher": mock_tool_dispatcher,
-        "dialogue_manager": mock_dialogue_manager,
+        "learning_manager": mock_learning_manager,
+        "hsp_connector": mock_hsp_connector,
+        "agent_manager": mock_agent_manager,
         "project_coordinator": mock_project_coordinator,
-        "config": test_config
+        "dialogue_manager": mock_dialogue_manager,
     }
-
-    return services
