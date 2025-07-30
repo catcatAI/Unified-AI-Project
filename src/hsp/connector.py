@@ -134,6 +134,11 @@ class HSPConnector:
         else:
             await self.external_connector.disconnect()
             self.is_connected = self.external_connector.is_connected
+
+        if self.fallback_manager and self.fallback_initialized:
+            await self.fallback_manager.shutdown()
+            self.fallback_initialized = False
+
         for callback in self._disconnect_callbacks:
             await callback()
 
@@ -497,7 +502,8 @@ class HSPConnector:
             if success:
                 self.fallback_initialized = True
                 # 註冊消息處理器
-                self.fallback_manager.register_handler("hsp_message", self._handle_fallback_message)
+                for _, protocol in self.fallback_manager.protocols:
+                    protocol.register_handler("hsp_message", self._handle_fallback_message)
                 
                 # 設置健康檢查間隔
                 health_interval = message_config.get("health_check_interval", 30)

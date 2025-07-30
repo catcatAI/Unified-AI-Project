@@ -550,7 +550,7 @@ class FallbackProtocolManager:
         self.manager_task = asyncio.create_task(self._health_monitor())
         logger.info("备用协议管理器启动")
     
-    async def stop(self):
+    async def shutdown(self):
         """停止管理器"""
         self.running = False
         
