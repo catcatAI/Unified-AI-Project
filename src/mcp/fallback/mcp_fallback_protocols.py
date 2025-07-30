@@ -605,10 +605,29 @@ class MCPFallbackManager:
     
     def add_protocol(self, protocol: BaseMCPFallbackProtocol, priority: int):
         """添加協議"""
+        if any(p.protocol_name == protocol.protocol_name for _, p in self.protocols):
+            logger.warning(f"協議 {protocol.protocol_name} 已存在，無法重複添加。")
+            return
         self.protocols.append((priority, protocol))
         # 按優先級排序（高優先級在前）
         self.protocols.sort(key=lambda x: x[0], reverse=True)
         logger.info(f"添加MCP協議: {protocol.protocol_name} (優先級: {priority})")
+
+    async def remove_protocol(self, protocol_name: str):
+        """移除協議"""
+        protocol_to_remove = None
+        for i, (priority, protocol) in enumerate(self.protocols):
+            if protocol.protocol_name == protocol_name:
+                protocol_to_remove = protocol
+                del self.protocols[i]
+                break
+
+        if protocol_to_remove:
+            await protocol_to_remove.stop_listening()
+            logger.info(f"協議 {protocol_name} 已移除。")
+            if self.active_protocol and self.active_protocol.protocol_name == protocol_name:
+                self.active_protocol = None
+                await self._select_active_protocol()
     
     async def initialize(self) -> bool:
         """初始化所有協議"""
