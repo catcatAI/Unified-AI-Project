@@ -19,6 +19,7 @@ from core_ai.time_system import TimeSystem
 from core_ai.formula_engine import FormulaEngine
 from tools.tool_dispatcher import ToolDispatcher
 from core_ai.demo_learning_manager import DemoLearningManager, demo_learning_manager
+from src.shared.error import ProjectError, project_error_handler
 
 # Services
 from services.multi_llm_service import MultiLLMService, get_multi_llm_service
@@ -233,9 +234,9 @@ async def initialize_services(
     if not content_analyzer_instance:
         try:
             content_analyzer_instance = ContentAnalyzerModule()
-        except Exception as e: # Catch potential spaCy model loading issues
-            print(f"Core Services: WARNING - ContentAnalyzerModule failed to initialize: {e}. Some KG features may be unavailable.")
-            content_analyzer_instance = None # Ensure it's None if failed
+        except Exception as e:
+            project_error_handler(ProjectError(f"ContentAnalyzerModule failed to initialize: {e}", code=500))
+            content_analyzer_instance = None
 
     if not learning_manager_instance:
         learning_manager_instance = LearningManager(
