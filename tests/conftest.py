@@ -1,7 +1,25 @@
 import os
 import pytest
 import asyncio
+import sys
+import threading
+import time
+from pathlib import Path
 from cryptography.fernet import Fernet
+
+# 添加 src 目錄到路徑
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+try:
+    from core_ai.test_utils.deadlock_detector import (
+        deadlock_detection, 
+        timeout_with_detection,
+        ResourceLeakDetector,
+        AsyncLoopDetector
+    )
+    DEADLOCK_DETECTION_AVAILABLE = True
+except ImportError:
+    DEADLOCK_DETECTION_AVAILABLE = False
 
 
 @pytest.fixture(scope="session")
@@ -57,6 +75,69 @@ def clean_test_files():
             os.remove(file)
         except FileNotFoundError:
             pass
+
+@pytest.fixture(scope="function")
+def deadlock_detector():
+    """死鎖檢測 fixture"""
+    if not DEADLOCK_DETECTION_AVAILABLE:
+        pytest.skip("Deadlock detection not available")
+    
+    resource_detector = ResourceLeakDetector()
+    async_detector = AsyncLoopDetector()
+    
+    # 開始監控
+    resource_detector.start_monitoring()
+    async_detector.start_monitoring()
+    
+    yield {
+        'resource_detector': resource_detector,
+        'async_detector': async_detector
+    }
+    
+    # 檢查洩漏
+    leaks = resource_detector.check_leaks()
+    async_leaks = async_detector.check_async_leaks()
+    
+    for leak in leaks + async_leaks:
+        if leak.detected:
+            pytest.fail(f"Resource leak detected: {leak.details}")
+
+@pytest.fixture(scope="function")
+def timeout_protection():
+    """超時保護 fixture"""
+    start_time = time.time()
+    initial_thread_count = threading.active_count()
+    
+    yield
+    
+    # 檢查測試是否運行過長時間
+    execution_time = time.time() - start_time
+    if execution_time > 60:  # 60秒警告閾值
+        pytest.fail(f"Test took too long: {execution_time:.2f}s")
+    
+    # 檢查線程洩漏
+    final_thread_count = threading.active_count()
+    if final_thread_count > initial_thread_count + 2:  # 允許一些容差
+        pytest.fail(f"Thread leak detected: {final_thread_count} vs {initial_thread_count}")
+
+@pytest.fixture(scope="function", autouse=True)
+def test_timeout_and_monitoring(request):
+    """自動應用的測試超時和監控"""
+    # 檢查測試是否標記為需要特殊處理
+    timeout_marker = request.node.get_closest_marker("timeout")
+    deadlock_marker = request.node.get_closest_marker("deadlock_detection")
+    
+    # 設置默認超時
+    timeout = 30.0
+    if timeout_marker:
+        timeout = timeout_marker.args[0] if timeout_marker.args else 30.0
+    
+    # 如果需要死鎖檢測
+    if deadlock_marker and DEADLOCK_DETECTION_AVAILABLE:
+        with deadlock_detection(timeout=timeout):
+            yield
+    else:
+        yield
 
 @pytest.fixture
 def mock_core_services():
