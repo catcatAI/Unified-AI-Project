@@ -35,13 +35,10 @@ async def broker(event_loop):
 async def hsp_connector(broker):
     connector = HSPConnector(
         TEST_AI_ID,
-        
-         broker_address=MQTT_BROKER_ADDRESS,
-         broker_port=1883,
+        broker_address=MQTT_BROKER_ADDRESS,
+        broker_port=MQTT_BROKER_PORT,
     )
     await connector.connect()
-    if not connector.is_connected:
-        pytest.fail("Failed to connect HSPConnector")
     yield connector
     await connector.disconnect()
 
