@@ -9,7 +9,8 @@ description = "A unified AI project with modular architecture and optional depen
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [ "Development Status :: 3 - Alpha", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.8", "Programming Language :: Python :: 3.9", "Programming Language :: Python :: 3.10", "Programming Language :: Python :: 3.11",]
-dependencies = [ "Flask>=2.0.0", "numpy>=1.21.0", "cryptography>=3.4.0", "requests>=2.25.0", "python-dotenv>=0.19.0", "PyYAML>=6.0", "typing-extensions>=4.0.0", "paho-mqtt>=1.6.0", "networkx>=2.6.0", "psutil>=5.8.0", "faiss-cpu>=1.7.0", "sentence-transformers>=2.2.0", "gmqtt>=0.7.0", "rich>=13.0.0", "click>=8.0.0", "tqdm>=4.64.0",]
+dependencies = [ "Flask>=2.0.0", "numpy>=1.21.0", "cryptography>=3.4.0", "requests>=2.25.0", "python-dotenv>=0.19.0", "PyYAML>=6.0", "typing-extensions>=4.0.0", "paho-mqtt>=1.6.0", "networkx>=2.6.0", "psutil>=5.8.0", "faiss-cpu>=1.7.0", "sentence-transformers>=2.2.0",
+ "gmqtt>=0.7.0",]
 [[project.authors]]
 name = "Unified AI Project Team"
 
@@ -23,7 +24,7 @@ full = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML"
 ai_focused = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pandas", "scikit-learn", "tensorflow", "spacy", "sentence-transformers", "huggingface-hub", "transformers",]
 game = [ "Flask", "numpy", "cryptography", "requests", "python-dotenv", "PyYAML", "typing-extensions", "paho-mqtt", "networkx", "psutil", "pygame", "pandas", "scikit-learn",]
 installer = [ "PyQt5", "pyshortcuts", "secret-sharing", "qrcode",]
-testing = [ "pytest", "pytest-asyncio", "pytest-cov", "pytest-timeout", "aiounittest", "astunparse", "cryptography", "aiohttp", "Flask", "python-dotenv", "paho-mqtt", "pandas", "scikit-learn", "spacy", "gmqtt", "pygame", "amqtt", "fastapi", "httpx", "uvicorn",]
+testing = [ "pytest", "pytest-asyncio", "pytest-cov", "aiounittest", "cryptography", "aiohttp", "Flask", "python-dotenv", "paho-mqtt", "pandas", "scikit-learn", "spacy", "gmqtt", "pygame", "amqtt", "fastapi", "httpx", "uvicorn",]
 
 [project.urls]
 Homepage = "https://github.com/pypa/sampleproject"
@@ -36,7 +37,7 @@ packages = [ "core_ai", "services", "tools", "interfaces", "hsp",]
 line-length = 88
 target-version = [ "py38", "py39", "py310", "py311",]
 include = "\\.pyi?$"
-extend-exclude = "/(\\n  # directories\\n  \\\\.eggs\\n  | \\\\.git\\n  | \\\\.hg\\n  | \\\\.mypy_cache\\n  | \\\\.tox\\n  | \\\\.venv\\n  | build\\n  | dist\\n  | data/runtime_data\\n  | docs/09-archive\\n)/\\n"
+extend-exclude = "/(\n  # directories\n  \\.eggs\n  | \\.git\n  | \\.hg\n  | \\.mypy_cache\n  | \\.tox\n  | \\.venv\n  | build\n  | dist\n  | data\n)/\n"
 
 [tool.isort]
 profile = "black"
@@ -65,7 +66,7 @@ module = [ "paho.mqtt.*", "spacy.*", "tensorflow.*", "faiss.*", "sentence_transf
 ignore_missing_imports = true
 
 [tool.bandit]
-exclude_dirs = [ "tests", "data/runtime_data", "docs/09-archive",]
+exclude_dirs = [ "tests", "data",]
 skips = [ "B101", "B601",]
 
 [tool.setuptools.package-dir]
@@ -74,15 +75,7 @@ skips = [ "B101", "B601",]
 [tool.pytest.ini_options]
 pythonpath = [ ".", "src",]
 testpaths = [ "tests",]
-markers = [
-    "slow: marks tests as slow (deselect with '-m not slow')",
-    "online: marks tests that require an internet connection",
-    "mcp: marks tests related to MCP functionality",
-    "context7: marks tests related to Context7 integration",
-    "ai_core: marks tests for core AI functionality",
-    "timeout: marks tests with a timeout",
-    "integration: marks tests that require external services or integration setup",
-]
+markers = [ "slow: marks tests as slow (deselect with '-m \"not slow\"')", "online: marks tests that require an internet connection", "mcp: marks tests related to MCP functionality", "context7: marks tests related to Context7 integration", "ai_core: marks tests for core AI functionality", "timeout: marks tests with a timeout",]
 filterwarnings = [ "ignore::DeprecationWarning", "ignore::PendingDeprecationWarning",]
 addopts = "-v --tb=short --strict-markers"
 asyncio_mode = "auto"

@@ -26,7 +26,7 @@ def main():
     print("")
 
     # Load dependency configuration
-    config_path = os.path.join(os.path.dirname(__file__), 'dependency_config.yaml')
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'configs', 'dependency_config.yaml')
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
@@ -38,7 +38,7 @@ def main():
         sys.exit(1)
 
     # --- Genesis Process for First Time Setup ---
-    project_root = Path(os.path.abspath(os.path.dirname(__file__)))
+    project_root = Path(os.path.abspath(os.path.dirname(__file__))).parent
     
     # Ensure .env file exists
     setup_env_file(project_root)
