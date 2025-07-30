@@ -6,7 +6,8 @@ import logging
 import asyncio
 from datetime import datetime, timezone
 
-from src.mcp.types import MCPEnvelope, MCPCommandRequest, MCPCommandResponse, MCPError, mcp_error_handler
+from src.mcp.types import MCPEnvelope, MCPCommandRequest, MCPCommandResponse
+from src.shared.error import ProjectError, project_error_handler
 
 class MCPConnector:
     def __init__(self, ai_id: str, mqtt_broker_address: str, mqtt_broker_port: int, 
@@ -42,7 +43,7 @@ class MCPConnector:
             if self.enable_fallback:
                 await self._initialize_fallback_protocols()
         except Exception as e:
-            mcp_error_handler(MCPError(f"MCP MQTT connection failed: {e}", code=503))
+            project_error_handler(ProjectError(f"MCP MQTT connection failed: {e}", code=503))
             self.is_connected = False
             self.mcp_available = False
             if self.enable_fallback:
@@ -82,9 +83,9 @@ class MCPConnector:
                     else:
                         handler(data.get('args'))
         except json.JSONDecodeError:
-            mcp_error_handler(MCPError("Failed to decode MCP message payload as JSON.", code=400))
+            project_error_handler(ProjectError("Failed to decode MCP message payload as JSON.", code=400))
         except Exception as e:
-            mcp_error_handler(MCPError(f"Error processing MCP message: {e}", code=500))
+            project_error_handler(ProjectError(f"Error processing MCP message: {e}", code=500))
 
 
     async def send_command(self, target_id: str, command_name: str, parameters: dict) -> str:
@@ -155,7 +156,7 @@ class MCPConnector:
                 self.logger.error("Failed to initialize MCP fallback protocols")
                 self.fallback_initialized = False
         except Exception as e:
-            mcp_error_handler(MCPError(f"Error initializing MCP fallback protocols: {e}", code=500))
+            project_error_handler(ProjectError(f"Error initializing MCP fallback protocols: {e}", code=500))
             self.fallback_initialized = False
 
     async def _send_via_fallback(self, target_id: str, command_name: str, parameters: dict, request_id: str):
