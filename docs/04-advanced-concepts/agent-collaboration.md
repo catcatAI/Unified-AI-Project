@@ -52,7 +52,7 @@ graph TD
      - **市場分析任務** -> 數據分析子代理
      - **文案撰寫任務** -> 創意寫作子代理
      - **設計任務** -> 圖像生成子代理
-  3. 使用 **[HSP (異構服務協議)](Heterogeneous_Protocol_spec.md)**
+  3. 使用 **[HSP (異構服務協議)](../03-technical-architecture/communication/hsp-specification/01-overview-and-concepts.md)**
      作為任務發布的標準化通道，將 `HSPTaskRequestPayload` 發送給目標子代理。
 - **技術實現**: 子代理作為獨立的 HSP 服務節點存在。Angela 通過 `HSPConnector`
   進行任務分派。
@@ -84,7 +84,7 @@ graph TD
 - **[`DialogueManager`](../GLOSSARY.md#dialoguemanager-srccore_aidialoguedialogue_managerpy)**: 其職責已被重構，現在主要負責初步的意圖識別，並將複雜項目委派給
   `ProjectCoordinator`。
 - **[`ProjectCoordinator`](../GLOSSARY.md#projectcoordinator-srccore_aidialogueproject_coordinatorpy)**: 一個新的類，專門負責執行「四抽模型」的完整協作流程。
-- **[HSP](Heterogeneous_Protocol_spec.md)**: 作為代理間通信的神經網絡，其定義在
+- **[HSP](../03-technical-architecture/communication/hsp-specification/01-overview-and-concepts.md)**: 作為代理間通信的神經網絡，其定義在
   `src/hsp/types.py` 中，並在 `HSPConnector` 中實現。
 - **[子代理 (Sub-Agents)](../GLOSSARY.md#sub-agent-子代理)**: 已在 `src/agents/`
   目錄下實現了多個範例，如 `DataAnalysisAgent` 和 `CreativeWritingAgent`。

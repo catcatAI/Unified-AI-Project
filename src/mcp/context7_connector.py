@@ -71,6 +71,7 @@ class Context7MCPConnector:
             
             self._connected = True
             logger.info("Successfully connected to Context7 MCP")
+            print("Context7MCPConnector: Connected successfully.")
             return True
             
         except Exception as e:
@@ -147,7 +148,7 @@ class Context7MCPConnector:
         )
         
         response = await self._send_message(message)
-        return response.data.get("context_items", [])
+        return response['data'].get("context_items", [])
     
     async def collaborate_with_model(
         self,
@@ -206,7 +207,7 @@ class Context7MCPConnector:
         )
         
         response = await self._send_message(message)
-        return response.data.get("compressed_context", context_data)
+        return response['data'].get("compressed_context", context_data)
     
     async def _discover_capabilities(self) -> None:
         """Discover available capabilities from Context7 MCP."""
@@ -217,7 +218,7 @@ class Context7MCPConnector:
         )
         
         response = await self._send_message(message)
-        capabilities_data = response.data.get("capabilities", [])
+        capabilities_data = response['data'].get("capabilities", [])
         
         self.capabilities = [
             MCPCapability(**cap) for cap in capabilities_data
@@ -247,13 +248,13 @@ class Context7MCPConnector:
         if message['type'] == "context_update":
             return MCPResponse(
                 success=True,
-                message_id=message.session_id,
+                message_id=message['session_id'],
                 data={"status": "context_updated", "context_id": "ctx_123"}
             )
         elif message['type'] == "context_query":
             return MCPResponse(
                 success=True,
-                message_id=message.session_id,
+                message_id=message['session_id'],
                 data={
                     "context_items": [
                         {"id": "ctx_1", "content": "Sample context 1", "relevance": 0.9},
@@ -264,7 +265,7 @@ class Context7MCPConnector:
         elif message['type'] == "capability_discovery":
             return MCPResponse(
                 success=True,
-                message_id=message.session_id,
+                message_id=message['session_id'],
                 data={
                     "capabilities": [
                         {"name": "context_management", "version": "1.0"},
@@ -273,16 +274,16 @@ class Context7MCPConnector:
                     ]
                 }
             )
-        elif message.type in ["model_collaboration", "context_compression"]:
+        elif message['type'] in ["model_collaboration", "context_compression"]:
             return MCPResponse(
                 success=True,
-                message_id=message.session_id,
+                message_id=message['session_id'],
                 data={"status": "processed"}
             )
         else:
-            logger.warning(f"Received unmocked MCP message type: {message.type}")
+            logger.warning(f"Received unmocked MCP message type: {message['type']}")
             # For unhandled types, it's better to be explicit about the lack of implementation.
-            raise NotImplementedError(f"Mock response for message type '{message.type}' is not implemented.")
+            raise NotImplementedError(f"Mock response for message type '{message['type']}' is not implemented.")
     
     def is_connected(self) -> bool:
         """Check if connector is connected to Context7 MCP."""

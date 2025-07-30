@@ -56,7 +56,7 @@
 
 - **簡潔定義**: 一個分層的、抽象的記憶系統。
 - **功能與範圍**: 模擬生物記憶，負責對資訊進行**抽象、壓縮、加密、儲存和檢索**，並管理底層的「數據核」。它不僅儲存事實，還儲存協作策略和學習案例，是 AI 長期成長的基礎。
-- **[了解更多: HAM 設計規範](architecture/HAM_design_spec.md)**
+- **[了解更多: HAM 設計規範](../03-technical-architecture/memory-systems/ham-design.md)**
 
 **HAM 密鑰 (`MIKO_HAM_KEY`)**
 
@@ -67,7 +67,7 @@
 
 - **簡潔定義**: AI 代理間用於實時通信和協作的協議。
 - **功能與範圍**: 一個基於消息總線（如 MQTT）的輕量級協議。它定義了標準化的消息信封（`HSPMessageEnvelope`）和多種 Payload（如任務請求、任務結果、事實、能力宣告），使得不同功能的子代理可以相互發現、委派任務和共享知識。
-- **[了解更多: HSP 設計規範](architecture/Heterogeneous_Protocol_spec.md)**
+- **[了解更多: HSP 設計規範](../03-technical-architecture/communication/hsp-specification/01-overview-and-concepts.md)**
 
 ---
 

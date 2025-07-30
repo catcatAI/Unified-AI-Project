@@ -218,31 +218,29 @@ class MockLLMInterface(MultiLLMService):
     def add_mock_response(self, prompt_contains: str, response: str):
         self.mock_responses[prompt_contains] = response
 
-    async def generate_response(self, prompt: str, model_name: Optional[str] = None, params: Optional[Dict[str, Any]] = None) -> str:
-        self.generate_response_history.append({"prompt": prompt, "model_name": model_name, "params": params})
-        await asyncio.sleep(0.01) # Simulate async operation
-        for key, resp in self.mock_responses.items():
-            if key in prompt:
-                return resp
-        if "completely_unhandled_query_for_llm" in prompt:
-            return "I'm not sure how to help with that, but I can process this with LLM."
-        if "hsp_task_failed_what_now" in prompt:
-            return "It seems the specialist AI couldn't help with that. Let me try to answer directly using my own knowledge."
-        return "[]"
-
-    # Override chat_completion and stream_completion for mock behavior
     async def chat_completion(
         self,
         messages: List[ChatMessage],
         model_id: Optional[str] = None,
         **kwargs
     ) -> LLMResponse:
-        # This mock implementation will just return a predefined response
-        # based on the prompt, similar to the old generate_response.
-        # For more complex tests, this might need to be expanded.
-        prompt_content = messages[0].content if messages else ""
-        response_content = self.mock_responses.get(prompt_content, "Mocked LLM response.")
+        self.generate_response_history.append({"messages": messages, "model_id": model_id, "kwargs": kwargs})
+        await asyncio.sleep(0.01) # Simulate async operation
         
+        prompt_content = messages[0].content if messages and messages[0].content else ""
+        
+        for key, resp in self.mock_responses.items():
+            if key in prompt_content:
+                response_content = resp
+                break
+        else:
+            if "completely_unhandled_query_for_llm" in prompt_content:
+                response_content = "I'm not sure how to help with that, but I can process this with LLM."
+            elif "hsp_task_failed_what_now" in prompt_content:
+                response_content = "It seems the specialist AI couldn't help with that. Let me try to answer directly using my own knowledge."
+            else:
+                response_content = "[]" # Default response if no mock matches
+
         # Simulate usage and cost
         usage = {"prompt_tokens": len(prompt_content) // 4, "completion_tokens": len(response_content) // 4, "total_tokens": (len(prompt_content) + len(response_content)) // 4}
         cost = 0.0 # Mocked cost
