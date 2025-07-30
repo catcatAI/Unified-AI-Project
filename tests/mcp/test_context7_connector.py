@@ -319,7 +319,7 @@ class TestContext7Performance:
     """Test Context7 MCP performance characteristics."""
     
     @pytest.fixture
-    async def connector(self):
+    def connector(self):
         """Create performance test connector."""
         config = Context7Config(
             endpoint="https://test.com",
@@ -332,7 +332,7 @@ class TestContext7Performance:
     @pytest.mark.asyncio
     async def test_concurrent_context_requests(self, connector):
         """Test concurrent context operations."""
-        connector_instance = await connector
+        connector_instance = connector
         await connector_instance.connect()
         # Create multiple concurrent requests
         tasks = []
@@ -356,7 +356,7 @@ class TestContext7Performance:
     @pytest.mark.asyncio
     async def test_large_context_handling(self, connector):
         """Test handling of large context data."""
-        connector_instance = await connector
+        connector_instance = connector
         await connector_instance.connect()
         # Create large context data
         large_context = {
