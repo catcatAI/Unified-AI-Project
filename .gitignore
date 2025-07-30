@@ -104,7 +104,8 @@ firebase-debug.log
 firebase-debug.*.log
 
 # Project Specific
-model_cache/
+data/model_cache/
+data/runtime_data/
 non_project_files/
 *.bak
 report.json
