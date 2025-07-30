@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 # Test cases for the ProjectCoordinator using the centralized mock_core_services fixture
 
@@ -78,4 +78,6 @@ async def test_execute_task_graph_circular_dependency(mock_core_services):
 
     # Act & Assert
     with pytest.raises(ValueError, match="Task 0 has an invalid dependency on a future task 1."):
-        await pc._execute_task_graph(subtasks)
+        with patch('networkx.is_directed_acyclic_graph', return_value=False):
+            with patch('networkx.topological_sort', side_effect=Exception("Should not be called for circular dependency")):
+                await pc._execute_task_graph(subtasks)

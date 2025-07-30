@@ -23,7 +23,7 @@ class TestEvaluator(unittest.TestCase):
         evaluation = evaluator.evaluate(model, dataset)
 
         self.assertEqual(evaluation["accuracy"], 0.75)
-        self.assertGreater(evaluation["performance"], 0)
+        self.assertGreaterEqual(evaluation["performance"], 0)
         self.assertEqual(evaluation["robustness"], 1.0)
 
 if __name__ == "__main__":

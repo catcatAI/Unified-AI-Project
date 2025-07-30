@@ -5,6 +5,9 @@ import sys
 from amqtt.broker import Broker
 from src.hsp.connector import HSPConnector
 
+# Configure pytest-asyncio
+pytest_plugins = ('pytest_asyncio',)
+
 MQTT_BROKER_ADDRESS = "127.0.0.1"
 MQTT_BROKER_PORT = 1883
 TEST_AI_ID = "did:hsp:test_ai_001"

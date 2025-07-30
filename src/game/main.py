@@ -38,7 +38,7 @@ class Game:
         self.game_state_manager = GameStateManager(self)
 
     def load_assets(self):
-        base_path = os.path.join('src', 'game', 'assets')
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'assets'))
         for asset_type in ['images', 'sprites']:
             asset_path = os.path.join(base_path, asset_type)
             if not os.path.exists(asset_path):

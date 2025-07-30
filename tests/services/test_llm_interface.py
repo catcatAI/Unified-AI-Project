@@ -12,13 +12,13 @@ class TestLLMInterface(unittest.TestCase):
 
     @pytest.mark.timeout(15)
     def test_01_initialization_placeholder(self):
-        interface = LLMInterface()
+        interface = MultiLLMService()
         self.assertIsNotNone(interface)
         print("TestLLMInterface.test_01_initialization_placeholder PASSED")
 
     @pytest.mark.timeout(15)
     async def test_02_generate_response_placeholder(self):
-        interface = LLMInterface()
+        interface = MultiLLMService()
         response = await interface.generate_response("test prompt")
         # The default mock response is "This is a generic mock response from mock-generic-v1 to the prompt: \"{prompt}\""
         self.assertIn("generic mock response from mock-generic-v1", response)
@@ -27,7 +27,7 @@ class TestLLMInterface(unittest.TestCase):
 
     @pytest.mark.timeout(15)
     async def test_03_list_models_placeholder(self):
-        interface = LLMInterface()
+        interface = MultiLLMService()
         models = await interface.list_available_models()
         self.assertIsInstance(models, list)
         if models: # If list is not empty

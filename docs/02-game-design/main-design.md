@@ -8,7 +8,7 @@
 
 ## II. 角色設計
 
-詳細內容請參閱：[角色設計文檔](./character_design.md)
+詳細內容請參閱：[角色設計文檔](./character-design/general-characters.md)
 
 ## III. 美術風格與視覺呈現
 
@@ -19,11 +19,11 @@
 
 ## IV. 遊戲玩法機制
 
-詳細內容請參閱：[遊戲系統文檔](./game_systems.md)
+詳細內容請參閱：[遊戲系統文檔](./game-systems.md)
 
 ## V. 地圖設計
 
-詳細內容請參閱：[地圖設計文檔](./map_design.md)
+詳細內容請參閱：[地圖設計文檔](./map-design.md)
 
 ## VI. 玩家的旅程
 
@@ -83,7 +83,7 @@
 
 ### 2. 社交與成長
 
-詳細內容請參閱：[角色設計文檔](./character_design.md#npc-具體設定範例)
+詳細內容請參閱：[角色設計文檔](./character-design/general-characters.md#npc-具體設定範例)
 
 ### 3. 與 Angela 的連結：真實的「共生」
 

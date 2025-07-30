@@ -755,7 +755,7 @@ class AtlassianBridge:
         """
         try:
             # 在 Jira 问题中添加 Confluence 页面链接
-            comment = f"相关文档: [Confluence 页面|{self.connector.base_urls['confluence']}/content/{confluence_page_id}]"
+            comment = f"相关文档: [Confluence 页面|{self.endpoints['confluence'].primary_url}/content/{confluence_page_id}]"
             
             await self._make_request_with_fallback(
                 'jira', 'POST',

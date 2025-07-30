@@ -8,6 +8,9 @@ import aiohttp
 from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime, timedelta
 
+# Configure pytest-asyncio
+pytest_plugins = ('pytest_asyncio',)
+
 from src.integrations.atlassian_bridge import AtlassianBridge, EndpointConfig, CacheEntry
 from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 

@@ -5,8 +5,10 @@ import sys
 from unittest.mock import AsyncMock # Added for AsyncMock
 
 import json
+from unittest.mock import AsyncMock, MagicMock
+from src.services.multi_llm_service import LLMResponse, ChatMessage
 from src.core_ai.language_models.daily_language_model import DailyLanguageModel
-from src.services.multi_llm_service import LLMResponse, ModelProvider, ChatMessage
+from src.services.multi_llm_service import MultiLLMService, ModelProvider
 from datetime import datetime
 
 class TestDailyLanguageModel:

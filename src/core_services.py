@@ -86,6 +86,7 @@ DEFAULT_OPERATIONAL_CONFIGS: Dict[str, Any] = {
 
 
 async def initialize_services(
+    config: Dict[str, Any],
     ai_id: str = DEFAULT_AI_ID,
     hsp_broker_address: str = DEFAULT_MQTT_BROKER,
     hsp_broker_port: int = DEFAULT_MQTT_PORT,

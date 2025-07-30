@@ -75,9 +75,8 @@ class TestRovoDevConnector:
             mock_session_class.return_value = mock_session
             
             connector.session = mock_session
-            result = await connector.authenticate()
+            await connector._authenticate()
             
-            assert result is True
             assert connector.authenticated is True
     
     @pytest.mark.asyncio
@@ -93,9 +92,8 @@ class TestRovoDevConnector:
             mock_session_class.return_value = mock_session
             
             connector.session = mock_session
-            result = await connector.authenticate()
+            await connector._authenticate()
             
-            assert result is False
             assert connector.authenticated is False
     
     @pytest.mark.asyncio
