@@ -14,6 +14,7 @@ from enum import Enum
 from dataclasses import dataclass, asdict
 from datetime import datetime
 import socket
+import fcntl
 
 logger = logging.getLogger(__name__)
 
@@ -326,7 +327,13 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
             filepath = os.path.join(self.outbox_path, filename)
             
             with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(message.to_dict(), f, ensure_ascii=False, indent=2)
+                try:
+                    fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    json.dump(message.to_dict(), f, ensure_ascii=False, indent=2)
+                except (IOError, BlockingIOError):
+                    logger.warning(f"無法鎖定文件: {filepath}")
+                finally:
+                    fcntl.flock(f, fcntl.LOCK_UN)
             
             self.stats['commands_sent'] += 1
             self.stats['last_activity'] = time.time()
@@ -369,14 +376,20 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
                 
                 for filepath in files:
                     try:
-                        with open(filepath, 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                        
-                        message = MCPFallbackMessage.from_dict(data)
-                        await self.handle_command(message)
-                        
-                        # 刪除已處理的文件
-                        os.remove(filepath)
+                        with open(filepath, 'r+', encoding='utf-8') as f:
+                            try:
+                                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                                data = json.load(f)
+
+                                message = MCPFallbackMessage.from_dict(data)
+                                await self.handle_command(message)
+
+                                # 刪除已處理的文件
+                                os.remove(filepath)
+                            except (IOError, BlockingIOError):
+                                continue  # 文件已被鎖定，跳過
+                            finally:
+                                fcntl.flock(f, fcntl.LOCK_UN)
                         
                     except Exception as e:
                         logger.error(f"處理MCP文件命令失敗 {filepath}: {e}")
