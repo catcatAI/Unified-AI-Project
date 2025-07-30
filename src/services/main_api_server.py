@@ -19,15 +19,19 @@ from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnecto
 
 from contextlib import asynccontextmanager # For lifespan events
 from src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID, DEFAULT_OPERATIONAL_CONFIGS
+from src.config_loader import load_config
 
 # --- Service Initialization using Lifespan ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("MainAPIServer: Initializing core services...")
+    # Load configuration
+    config = load_config()
     # Initialize services with potentially API-specific configurations
     # For example, API might use a different AI ID or specific LLM config than CLI.
     api_ai_id = f"did:hsp:api_server_ai_{uuid.uuid4().hex[:6]}"
     await initialize_services(
+        config=config,
         ai_id=api_ai_id,
         use_mock_ham=False, # API server should use real HAM, ensure MIKO_HAM_KEY is set
         operational_configs=None # Or specific operational configs

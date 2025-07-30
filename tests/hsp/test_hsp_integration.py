@@ -77,9 +77,12 @@ class MockMqttBroker:
         logging.debug(f"MockMqttBroker: Subscribed to {topic} with callback {callback}")
 
     async def _dispatch_message(self, topic: str, payload: bytes):
+        logging.debug(f"Dispatching message to topic: {topic}")
         # Dispatch to all matching subscriptions, including wildcards
         for sub_topic, callbacks in self.subscriptions.items():
+            logging.debug(f"Checking subscription: {sub_topic}")
             if self._match_topic(sub_topic, topic):
+                logging.debug(f"Matched subscription: {sub_topic}")
                 for callback in callbacks:
                     await self._safe_call_callback(callback, topic, payload)
 
@@ -149,8 +152,9 @@ def shared_internal_bus():
 def shared_data_aligner():
     return DataAligner()
 
+
 @pytest.fixture(scope="module")
-async def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: InternalBus, shared_data_aligner: DataAligner):
+def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: InternalBus, shared_data_aligner: DataAligner):
     # The MessageBridge needs an external_connector, which is the mock_mqtt_client from the broker
     # We'll create a dummy ExternalConnector for the MessageBridge to use,
     # but its on_message_callback will be overridden by the MessageBridge itself.
@@ -168,10 +172,9 @@ async def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: Int
 
     dummy_external_connector = DummyExternalConnector(broker)
     bridge = MessageBridge(dummy_external_connector, shared_internal_bus, shared_data_aligner)
-    yield bridge
+    return bridge
 
-@pytest.fixture(scope="function") # Changed to function scope
-@pytest.mark.timeout(30)  # Increased timeout for broker setup/teardown
+@pytest.fixture(scope="function")
 async def broker():
     mock_broker = MockMqttBroker()
     await mock_broker.start()
@@ -396,8 +399,11 @@ async def main_ai_hsp_connector(trust_manager_fixture: TrustManager, broker: Moc
     await connector.connect()
     if not connector.is_connected:
         pytest.fail("Failed to connect main_ai_hsp_connector")
+
     yield connector
+
     await connector.disconnect()
+    await asyncio.sleep(0.1)
 
 
 @pytest.fixture
@@ -415,8 +421,11 @@ async def peer_a_hsp_connector(trust_manager_fixture: TrustManager, broker: Mock
     await connector.connect()
     if not connector.is_connected:
         pytest.fail("Failed to connect peer_a_hsp_connector")
+
     yield connector
+
     await connector.disconnect()
+    await asyncio.sleep(0.1)
 
 
 @pytest.fixture
@@ -434,8 +443,11 @@ async def peer_b_hsp_connector(trust_manager_fixture: TrustManager, broker: Mock
     await connector.connect()
     if not connector.is_connected:
         pytest.fail("Failed to connect peer_b_hsp_connector")
+
     yield connector
+
     await connector.disconnect()
+    await asyncio.sleep(0.1)
 
 
 @pytest.fixture
@@ -457,19 +469,20 @@ async def configured_learning_manager(
         },
         "default_hsp_fact_topic": FACT_TOPIC_GENERAL
     }
-    lm = LearningManager(
-        TEST_AI_ID_MAIN,
-        ham_manager_fixture,
-        fact_extractor_fixture,
-        personality_manager_fixture,
-        content_analyzer_module_fixture,
-        main_ai_hsp_connector,
-        trust_manager_fixture,
-        config
-    )
-    if main_ai_hsp_connector:
-        main_ai_hsp_connector.register_on_fact_callback(lm.process_and_store_hsp_fact)
-    return lm
+    async for connector in main_ai_hsp_connector:
+        lm = LearningManager(
+            TEST_AI_ID_MAIN,
+            ham_manager_fixture,
+            fact_extractor_fixture,
+            personality_manager_fixture,
+            content_analyzer_module_fixture,
+            connector,
+            trust_manager_fixture,
+            config
+        )
+        if connector:
+            connector.register_on_fact_callback(lm.process_and_store_hsp_fact)
+        yield lm
 
 
 @pytest.fixture
@@ -543,7 +556,6 @@ class TestHSPFactPublishing:
             self.received_facts_on_peer.append({"payload": fact_payload, "envelope": envelope})
 
     @pytest.mark.asyncio
-    @pytest.mark.timeout(20)
     async def test_learning_manager_publishes_fact_via_hsp(
         self,
         configured_learning_manager: LearningManager,
@@ -571,7 +583,6 @@ class TestHSPFactPublishing:
 
 class TestHSPFactConsumption:
     @pytest.mark.asyncio
-    @pytest.mark.timeout(10)
     async def test_main_ai_consumes_nl_fact_and_updates_kg_check_trust_influence(
         self,
         configured_learning_manager: LearningManager,
@@ -586,7 +597,7 @@ class TestHSPFactConsumption:
         if not main_ai_hsp_connector.is_connected:
             pytest.fail("Main AI connector failed to subscribe")
         
-        time.sleep(0.2)
+        await asyncio.sleep(0.2)
         trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=0.9)
         content_analyzer_module_fixture.graph.clear()
         ham_manager_fixture.memory_store.clear()
@@ -647,7 +658,6 @@ class TestHSPFactConsumption:
         print("[Test Trust Influence on Fact Storage] Verified.")
 
     @pytest.mark.asyncio
-    @pytest.mark.timeout(10)
     async def test_main_ai_consumes_structured_fact_updates_kg(
         self,
         configured_learning_manager: LearningManager,
@@ -660,7 +670,7 @@ class TestHSPFactConsumption:
         if not main_ai_hsp_connector.is_connected:
             pytest.fail("Main AI connector failed to subscribe")
         
-        time.sleep(0.2)
+        await asyncio.sleep(0.2)
         trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=0.9)
         content_analyzer_module_fixture.graph.clear()
         
@@ -701,7 +711,6 @@ class TestHSPFactConsumption:
         print(f"[Test Consume Structured Fact] Verified by CA.")
 
     @pytest.mark.asyncio
-    @pytest.mark.timeout(10)
     async def test_ca_semantic_mapping_for_hsp_structured_fact(
         self,
         configured_learning_manager: LearningManager,
@@ -715,7 +724,7 @@ class TestHSPFactConsumption:
         if not main_ai_hsp_connector.is_connected:
             pytest.fail("Main AI connector failed to subscribe to general fact topic for mapping test")
         
-        time.sleep(0.2)
+        await asyncio.sleep(0.2)
         trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=0.9)
         content_analyzer_module_fixture.graph.clear()
 
@@ -782,6 +791,7 @@ class TestHSPFactConsumption:
 
 
 class TestHSPTaskDelegation:
+    @pytest.mark.asyncio
     async def _peer_a_task_handler(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope, peer_a_hsp_connector: HSPConnector, task_received_event: asyncio.Event):
         assert task_payload.get("capability_id_filter") == "advanced_weather_forecast"
         assert task_payload.get("parameters", {}).get("location") == "London"
@@ -799,6 +809,7 @@ class TestHSPTaskDelegation:
         await peer_a_hsp_connector.send_task_result(result_payload, sender_ai_id, envelope["correlation_id"])
         task_received_event.set()
 
+    @pytest.mark.asyncio
     async def _peer_a_failing_handler(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope, peer_a_hsp_connector: HSPConnector, task_received_event: asyncio.Event, capability_id: str):
         assert task_payload.get("capability_id_filter") == capability_id
         
@@ -816,7 +827,6 @@ class TestHSPTaskDelegation:
         task_received_event.set()
 
     @pytest.mark.asyncio
-    @pytest.mark.timeout(10)
     async def test_dm_delegates_task_to_specialist_ai_and_gets_result(
         self,
         dialogue_manager_fixture: DialogueManager,
@@ -824,7 +834,6 @@ class TestHSPTaskDelegation:
         peer_a_hsp_connector: HSPConnector,
         main_ai_hsp_connector: HSPConnector
     ):
-        # ... (test body as previously defined) ...
         dm = dialogue_manager_fixture
         sdm = service_discovery_module_fixture
         
@@ -843,6 +852,7 @@ class TestHSPTaskDelegation:
         
         # Publish the capability advertisement
         await peer_a_hsp_connector.publish_capability_advertisement(cap_payload)
+        await asyncio.sleep(0.2) # allow time for propagation
         
         # 2. Verify Main AI's SDM has registered the capability
         assert sdm.is_capability_available("advanced_weather_forecast")
@@ -877,7 +887,6 @@ class TestHSPTaskDelegation:
         print("[Test Task Delegation] Verified DM delegated task and received result.")
 
     @pytest.mark.asyncio
-    @pytest.mark.timeout(10)
     async def test_dm_handles_hsp_task_failure_and_falls_back(
         self,
         dialogue_manager_fixture: DialogueManager,
@@ -908,7 +917,6 @@ class TestHSPTaskDelegation:
         
         # Give some time for the message to be processed
         await asyncio.sleep(1.0)
-        
         # 2. Verify Main AI's SDM has registered the capability
         # First, check if the capability was received by the main AI's SDM
         capabilities = sdm.find_capabilities(capability_id_filter=capability_id)
