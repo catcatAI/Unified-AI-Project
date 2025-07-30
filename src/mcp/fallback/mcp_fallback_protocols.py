@@ -135,7 +135,11 @@ class BaseMCPFallbackProtocol(ABC):
             self.stats['errors'] += 1
 
 class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
-    """MCP內存協議 - 同進程通訊"""
+    """
+    MCP內存協議 - 同進程通訊
+    警告: 此協議僅適用於單進程內的異步任務。
+    如果需要在多個進程之間進行通信，請使用MCPProcessSharedMemoryProtocol。
+    """
     
     def __init__(self):
         super().__init__("mcp_memory")
@@ -145,6 +149,7 @@ class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
     
     async def initialize(self) -> bool:
         """初始化內存協議"""
+        logger.warning("MCPInMemoryProtocol僅適用於單進程環境。")
         try:
             self.status = MCPProtocolStatus.ACTIVE
             logger.info("MCP內存協議初始化成功")
@@ -202,6 +207,86 @@ class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
                 logger.error(f"MCP內存協議監聽器錯誤: {e}")
                 await asyncio.sleep(1)
     
+    async def health_check(self) -> bool:
+        """健康檢查"""
+        return self.status == MCPProtocolStatus.ACTIVE
+
+# 新增
+class MCPProcessSharedMemoryProtocol(BaseMCPFallbackProtocol):
+    """MCP基於多進程共享內存的協議"""
+
+    def __init__(self, queue_name: str = "mcp_shared_queue", max_size: int = 100):
+        super().__init__("mcp_process_shared_memory")
+        self.queue_name = queue_name
+        self.max_size = max_size
+        self.queue: Optional[asyncio.Queue] = None
+        self.running = False
+        self.listener_task: Optional[asyncio.Task] = None
+
+    async def initialize(self) -> bool:
+        """初始化共享內存協議"""
+        try:
+            # 在異步環境中，我們仍然使用asyncio.Queue，
+            # 但需要確保所有進程共享相同的事件循環和隊列實例。
+            # 這通常通過在主進程中創建隊列並將其傳遞給子進程來實現。
+            self.queue = asyncio.Queue(maxsize=self.max_size)
+            self.status = MCPProtocolStatus.ACTIVE
+            logger.info(f"MCP共享內存協議初始化成功 (隊列: {self.queue_name})")
+            return True
+        except Exception as e:
+            logger.error(f"MCP共享內存協議初始化失敗: {e}")
+            self.status = MCPProtocolStatus.FAILED
+            return False
+
+    async def send_command(self, message: MCPFallbackMessage) -> bool:
+        """發送命令到共享隊列"""
+        if not self.queue:
+            return False
+        try:
+            await self.queue.put(message)
+            self.stats['commands_sent'] += 1
+            self.stats['last_activity'] = time.time()
+            return True
+        except Exception as e:
+            logger.error(f"發送命令到共享隊列失敗: {e}")
+            self.stats['errors'] += 1
+            return False
+
+    async def start_listening(self):
+        """開始監聽命令"""
+        if self.running:
+            return
+
+        self.running = True
+        self.listener_task = asyncio.create_task(self._command_listener())
+        logger.info("MCP共享內存協議開始監聽")
+
+    async def stop_listening(self):
+        """停止監聽命令"""
+        self.running = False
+        if self.listener_task:
+            self.listener_task.cancel()
+            try:
+                await self.listener_task
+            except asyncio.CancelledError:
+                pass
+        logger.info("MCP共享內存協議停止監聽")
+
+    async def _command_listener(self):
+        """命令監聽器"""
+        if not self.queue:
+            return
+
+        while self.running:
+            try:
+                message = await asyncio.wait_for(self.queue.get(), timeout=1.0)
+                await self.handle_command(message)
+            except asyncio.TimeoutError:
+                continue
+            except Exception as e:
+                logger.error(f"MCP共享內存協議監聽器錯誤: {e}")
+                await asyncio.sleep(1)
+
     async def health_check(self) -> bool:
         """健康檢查"""
         return self.status == MCPProtocolStatus.ACTIVE
@@ -575,12 +660,20 @@ def get_mcp_fallback_manager() -> MCPFallbackManager:
         _mcp_fallback_manager = MCPFallbackManager()
     return _mcp_fallback_manager
 
-async def initialize_mcp_fallback_protocols() -> bool:
+async def initialize_mcp_fallback_protocols(is_multiprocess: bool = False) -> bool:
     """初始化MCP備用協議"""
     manager = get_mcp_fallback_manager()
     
+    # 清空現有協議
+    manager.protocols.clear()
+
     # 添加協議（按優先級）
-    manager.add_protocol(MCPInMemoryProtocol(), priority=1)  # 最低優先級
+    if is_multiprocess:
+        manager.add_protocol(MCPProcessSharedMemoryProtocol(), priority=4)
+        logger.info("檢測到多進程環境，啟用MCPProcessSharedMemoryProtocol。")
+    else:
+        manager.add_protocol(MCPInMemoryProtocol(), priority=1)  # 最低優先級
+
     manager.add_protocol(MCPFileProtocol(), priority=2)  # 中等優先級
     manager.add_protocol(MCPHTTPProtocol(), priority=3)  # 最高優先級
     

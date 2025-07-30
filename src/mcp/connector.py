@@ -137,7 +137,12 @@ class MCPConnector:
             from .fallback.mcp_fallback_protocols import get_mcp_fallback_manager, initialize_mcp_fallback_protocols
             
             self.fallback_manager = get_mcp_fallback_manager()
-            success = await initialize_mcp_fallback_protocols()
+
+            # 檢查是否在多進程環境中運行
+            # 這裡我們使用一個簡單的標誌，實際應用中可能需要更複雜的檢測
+            is_multiprocess = self.fallback_config.get("is_multiprocess", False)
+
+            success = await initialize_mcp_fallback_protocols(is_multiprocess=is_multiprocess)
             
             if success:
                 self.fallback_initialized = True
