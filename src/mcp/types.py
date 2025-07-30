@@ -1,6 +1,9 @@
 from typing import TypedDict, Literal, Any, Optional, Dict, List
 from dataclasses import dataclass
 
+
+
+
 # Original MCP Types (Legacy)
 class MCPEnvelope(TypedDict):
     mcp_envelope_version: str
