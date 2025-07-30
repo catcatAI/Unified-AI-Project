@@ -1,5 +1,5 @@
 # src/core_services.py
-
+import asyncio
 from typing import Optional, Dict, Any
 import uuid
 
@@ -208,15 +208,15 @@ async def initialize_services(
             broker_address=hsp_broker_address,
             broker_port=hsp_broker_port
         )
-        if not hsp_connector_instance.connect(): # Attempt to connect
+        if not await hsp_connector_instance.connect(): # Attempt to connect
             print(f"Core Services: WARNING - HSPConnector for {ai_id} failed to connect to {hsp_broker_address}:{hsp_broker_port}")
             # Decide if this is a fatal error for the app context
         else:
             print(f"Core Services: HSPConnector for {ai_id} connected.")
             # Basic subscriptions needed by multiple modules
-            hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#", lambda p, s, e: None) # Placeholder callback
-            hsp_connector_instance.subscribe(f"hsp/results/{ai_id}/#", lambda p, s, e: None) # Placeholder callback
-            hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL}/#", lambda p, s, e: None) # Placeholder callback
+            await hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#", lambda p, s, e: None) # Placeholder callback
+            await hsp_connector_instance.subscribe(f"hsp/results/{ai_id}/#", lambda p, s, e: None) # Placeholder callback
+            await hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL}/#", lambda p, s, e: None) # Placeholder callback
 
     if not service_discovery_module_instance:
         service_discovery_module_instance = ServiceDiscoveryModule(trust_manager=trust_manager_instance)
@@ -331,7 +331,7 @@ async def shutdown_services():
 
     if hsp_connector_instance and hsp_connector_instance.is_connected:
         print("Core Services: Shutting down HSPConnector...")
-        hsp_connector_instance.disconnect()
+        await hsp_connector_instance.disconnect()
 
     if llm_interface_instance:
         print("Core Services: Shutting down LLM Interface...")

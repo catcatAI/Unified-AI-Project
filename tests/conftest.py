@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 from pathlib import Path
+from typing import Optional, Dict, Any
 from cryptography.fernet import Fernet
 
 # 添加 src 目錄到路徑
