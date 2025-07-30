@@ -26,7 +26,8 @@ async def test_mcp_connector_initialization(mock_mqtt_client):
 @pytest.mark.timeout(5)
 async def test_connect_and_disconnect(mock_mqtt_client):
     """Test the connect and disconnect methods."""
-    connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_event_loop())
+    loop = asyncio.get_event_loop()
+    connector = MCPConnector('test_ai', 'localhost', 1883, loop=loop)
     
     await connector.connect()
     mock_mqtt_client.connect.assert_called_once_with('localhost', 1883, 60)
@@ -40,7 +41,8 @@ async def test_connect_and_disconnect(mock_mqtt_client):
 @pytest.mark.timeout(5)
 async def test_send_command(mock_mqtt_client):
     """Test sending a command."""
-    connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_event_loop())
+    loop = asyncio.get_event_loop()
+    connector = MCPConnector('test_ai', 'localhost', 1883, loop=loop)
     await connector.connect()
 
     target_ai_id = 'target_ai'
