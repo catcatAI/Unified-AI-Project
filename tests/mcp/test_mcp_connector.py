@@ -22,12 +22,14 @@ async def test_mcp_connector_initialization(mock_mqtt_client):
     assert mock_mqtt_client.on_connect is not None
     assert mock_mqtt_client.on_message is not None
 
+@pytest.mark.asyncio
 @pytest.mark.timeout(5)
-def test_connect_and_disconnect(mock_mqtt_client):
+async def test_connect_and_disconnect(mock_mqtt_client):
     """Test the connect and disconnect methods."""
-    connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_event_loop())
+    loop = asyncio.get_event_loop()
+    connector = MCPConnector('test_ai', 'localhost', 1883, loop=loop)
     
-    connector.connect()
+    await connector.connect()
     mock_mqtt_client.connect.assert_called_once_with('localhost', 1883, 60)
     mock_mqtt_client.loop_start.assert_called_once()
 
@@ -35,17 +37,19 @@ def test_connect_and_disconnect(mock_mqtt_client):
     mock_mqtt_client.loop_stop.assert_called_once()
     mock_mqtt_client.disconnect.assert_called_once()
 
+@pytest.mark.asyncio
 @pytest.mark.timeout(5)
-def test_send_command(mock_mqtt_client):
+async def test_send_command(mock_mqtt_client):
     """Test sending a command."""
-    connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_event_loop())
-    connector.connect()
+    loop = asyncio.get_event_loop()
+    connector = MCPConnector('test_ai', 'localhost', 1883, loop=loop)
+    await connector.connect()
 
     target_ai_id = 'target_ai'
     command_name = 'test_command'
     params = {'arg1': 'value1'}
 
-    connector.send_command(target_ai_id, command_name, params)
+    await connector.send_command(target_ai_id, command_name, params)
 
     expected_topic = f"mcp/cmd/{target_ai_id}/{command_name}"
     mock_mqtt_client.publish.assert_called_once()
