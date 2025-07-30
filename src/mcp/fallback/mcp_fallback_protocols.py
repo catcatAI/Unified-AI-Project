@@ -13,6 +13,8 @@ from typing import Dict, Any, Optional, List, Callable
 from enum import Enum
 from dataclasses import dataclass, asdict
 from datetime import datetime
+import socket
+import fcntl
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +137,11 @@ class BaseMCPFallbackProtocol(ABC):
             self.stats['errors'] += 1
 
 class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
-    """MCP內存協議 - 同進程通訊"""
+    """
+    MCP內存協議 - 同進程通訊
+    警告: 此協議僅適用於單進程內的異步任務。
+    如果需要在多個進程之間進行通信，請使用MCPProcessSharedMemoryProtocol。
+    """
     
     def __init__(self):
         super().__init__("mcp_memory")
@@ -145,6 +151,7 @@ class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
     
     async def initialize(self) -> bool:
         """初始化內存協議"""
+        logger.warning("MCPInMemoryProtocol僅適用於單進程環境。")
         try:
             self.status = MCPProtocolStatus.ACTIVE
             logger.info("MCP內存協議初始化成功")
@@ -206,6 +213,86 @@ class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
         """健康檢查"""
         return self.status == MCPProtocolStatus.ACTIVE
 
+# 新增
+class MCPProcessSharedMemoryProtocol(BaseMCPFallbackProtocol):
+    """MCP基於多進程共享內存的協議"""
+
+    def __init__(self, queue_name: str = "mcp_shared_queue", max_size: int = 100):
+        super().__init__("mcp_process_shared_memory")
+        self.queue_name = queue_name
+        self.max_size = max_size
+        self.queue: Optional[asyncio.Queue] = None
+        self.running = False
+        self.listener_task: Optional[asyncio.Task] = None
+
+    async def initialize(self) -> bool:
+        """初始化共享內存協議"""
+        try:
+            # 在異步環境中，我們仍然使用asyncio.Queue，
+            # 但需要確保所有進程共享相同的事件循環和隊列實例。
+            # 這通常通過在主進程中創建隊列並將其傳遞給子進程來實現。
+            self.queue = asyncio.Queue(maxsize=self.max_size)
+            self.status = MCPProtocolStatus.ACTIVE
+            logger.info(f"MCP共享內存協議初始化成功 (隊列: {self.queue_name})")
+            return True
+        except Exception as e:
+            logger.error(f"MCP共享內存協議初始化失敗: {e}")
+            self.status = MCPProtocolStatus.FAILED
+            return False
+
+    async def send_command(self, message: MCPFallbackMessage) -> bool:
+        """發送命令到共享隊列"""
+        if not self.queue:
+            return False
+        try:
+            await self.queue.put(message)
+            self.stats['commands_sent'] += 1
+            self.stats['last_activity'] = time.time()
+            return True
+        except Exception as e:
+            logger.error(f"發送命令到共享隊列失敗: {e}")
+            self.stats['errors'] += 1
+            return False
+
+    async def start_listening(self):
+        """開始監聽命令"""
+        if self.running:
+            return
+
+        self.running = True
+        self.listener_task = asyncio.create_task(self._command_listener())
+        logger.info("MCP共享內存協議開始監聽")
+
+    async def stop_listening(self):
+        """停止監聽命令"""
+        self.running = False
+        if self.listener_task:
+            self.listener_task.cancel()
+            try:
+                await self.listener_task
+            except asyncio.CancelledError:
+                pass
+        logger.info("MCP共享內存協議停止監聽")
+
+    async def _command_listener(self):
+        """命令監聽器"""
+        if not self.queue:
+            return
+
+        while self.running:
+            try:
+                message = await asyncio.wait_for(self.queue.get(), timeout=1.0)
+                await self.handle_command(message)
+            except asyncio.TimeoutError:
+                continue
+            except Exception as e:
+                logger.error(f"MCP共享內存協議監聽器錯誤: {e}")
+                await asyncio.sleep(1)
+
+    async def health_check(self) -> bool:
+        """健康檢查"""
+        return self.status == MCPProtocolStatus.ACTIVE
+
 class MCPFileProtocol(BaseMCPFallbackProtocol):
     """MCP文件協議 - 跨進程通訊"""
     
@@ -240,7 +327,13 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
             filepath = os.path.join(self.outbox_path, filename)
             
             with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(message.to_dict(), f, ensure_ascii=False, indent=2)
+                try:
+                    fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    json.dump(message.to_dict(), f, ensure_ascii=False, indent=2)
+                except (IOError, BlockingIOError):
+                    logger.warning(f"無法鎖定文件: {filepath}")
+                finally:
+                    fcntl.flock(f, fcntl.LOCK_UN)
             
             self.stats['commands_sent'] += 1
             self.stats['last_activity'] = time.time()
@@ -283,14 +376,20 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
                 
                 for filepath in files:
                     try:
-                        with open(filepath, 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                        
-                        message = MCPFallbackMessage.from_dict(data)
-                        await self.handle_command(message)
-                        
-                        # 刪除已處理的文件
-                        os.remove(filepath)
+                        with open(filepath, 'r+', encoding='utf-8') as f:
+                            try:
+                                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                                data = json.load(f)
+
+                                message = MCPFallbackMessage.from_dict(data)
+                                await self.handle_command(message)
+
+                                # 刪除已處理的文件
+                                os.remove(filepath)
+                            except (IOError, BlockingIOError):
+                                continue  # 文件已被鎖定，跳過
+                            finally:
+                                fcntl.flock(f, fcntl.LOCK_UN)
                         
                     except Exception as e:
                         logger.error(f"處理MCP文件命令失敗 {filepath}: {e}")
@@ -314,13 +413,15 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
 class MCPHTTPProtocol(BaseMCPFallbackProtocol):
     """MCP基於HTTP的協議"""
     
-    def __init__(self, host: str = "127.0.0.1", port: int = 8766):
+    def __init__(self, host: str = "127.0.0.1", port: int = 8766, broadcast_port: int = 8767):
         super().__init__("mcp_http")
         self.host = host
         self.port = port
         self.server = None
         self.session = None
-        self.endpoints: Dict[str, str] = {}  # 其他節點的端點
+        self.node_registry: Dict[str, str] = {}
+        self.broadcast_port = broadcast_port
+        self.discovery_task: Optional[asyncio.Task] = None
     
     async def initialize(self) -> bool:
         """初始化HTTP協議"""
@@ -345,21 +446,62 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
             self.server = runner
             self.status = MCPProtocolStatus.ACTIVE
             logger.info(f"MCP HTTP協議服務器啟動: http://{self.host}:{self.port}")
+
+            # 啟動節點發現
+            await self.start_discovery()
+
             return True
             
         except Exception as e:
             logger.error(f"MCP HTTP協議初始化失敗: {e}")
             self.status = MCPProtocolStatus.FAILED
             return False
-    
+
+    async def discover_nodes(self):
+        """使用UDP廣播發現網絡中的其他節點"""
+        loop = asyncio.get_running_loop()
+        transport, _ = await loop.create_datagram_endpoint(
+            lambda: _DiscoveryProtocol(self.node_registry, self.host, self.port),
+            local_addr=('0.0.0.0', self.broadcast_port)
+        )
+
+        try:
+            broadcast_addr = ('<broadcast>', self.broadcast_port)
+            discovery_message = json.dumps({
+                "type": "mcp_discovery",
+                "node_id": self.protocol_name,
+                "address": f"http://{self.host}:{self.port}"
+            }).encode()
+
+            transport.sendto(discovery_message, broadcast_addr)
+            await asyncio.sleep(2)  # 等待響應
+        finally:
+            transport.close()
+
+    async def start_discovery(self):
+        """啟動節點發現的後台任務"""
+        if self.discovery_task and not self.discovery_task.done():
+            return
+
+        async def discovery_loop():
+            while True:
+                await self.discover_nodes()
+                await asyncio.sleep(60)  # 每60秒重新發現
+
+        self.discovery_task = asyncio.create_task(discovery_loop())
+
     async def send_command(self, message: MCPFallbackMessage) -> bool:
         """通過HTTP發送命令"""
         try:
             # 根據接收者ID查找端點
-            endpoint = self.endpoints.get(message.recipient_id)
+            endpoint = self.node_registry.get(message.recipient_id)
             if not endpoint:
-                logger.warning(f"未找到MCP接收者端點: {message.recipient_id}")
-                return False
+                logger.warning(f"未找到MCP接收者端點: {message.recipient_id}, 嘗試重新發現...")
+                await self.discover_nodes()
+                endpoint = self.node_registry.get(message.recipient_id)
+                if not endpoint:
+                    logger.error(f"無法發現MCP接收者: {message.recipient_id}")
+                    return False
             
             url = f"{endpoint}/mcp/command"
             async with self.session.post(url, json=message.to_dict()) as response:
@@ -403,6 +545,13 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
     
     async def stop_listening(self):
         """停止HTTP服務器"""
+        if self.discovery_task:
+            self.discovery_task.cancel()
+            try:
+                await self.discovery_task
+            except asyncio.CancelledError:
+                pass
+
         if self.server:
             await self.server.cleanup()
         if self.session:
@@ -411,6 +560,37 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
     async def health_check(self) -> bool:
         """健康檢查"""
         return self.status == MCPProtocolStatus.ACTIVE
+
+class _DiscoveryProtocol(asyncio.DatagramProtocol):
+    """用於節點發現的UDP協議"""
+    def __init__(self, registry: Dict[str, str], host: str, port: int):
+        self.registry = registry
+        self.host = host
+        self.port = port
+        self.transport = None
+
+    def connection_made(self, transport):
+        self.transport = transport
+        sock = transport.get_extra_info('socket')
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+    def datagram_received(self, data, addr):
+        try:
+            message = json.loads(data.decode())
+            if message.get("type") == "mcp_discovery":
+                node_id = message.get("node_id")
+                address = message.get("address")
+                if node_id and address and node_id != self.registry.get(node_id):
+                    self.registry[node_id] = address
+                    logger.info(f"發現MCP節點: {node_id} at {address}")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            pass
+
+    def error_received(self, exc):
+        logger.error(f"UDP發現錯誤: {exc}")
+
+    def connection_lost(self, exc):
+        pass
 
 class MCPFallbackManager:
     """MCP備用協議管理器"""
@@ -425,10 +605,29 @@ class MCPFallbackManager:
     
     def add_protocol(self, protocol: BaseMCPFallbackProtocol, priority: int):
         """添加協議"""
+        if any(p.protocol_name == protocol.protocol_name for _, p in self.protocols):
+            logger.warning(f"協議 {protocol.protocol_name} 已存在，無法重複添加。")
+            return
         self.protocols.append((priority, protocol))
         # 按優先級排序（高優先級在前）
         self.protocols.sort(key=lambda x: x[0], reverse=True)
         logger.info(f"添加MCP協議: {protocol.protocol_name} (優先級: {priority})")
+
+    async def remove_protocol(self, protocol_name: str):
+        """移除協議"""
+        protocol_to_remove = None
+        for i, (priority, protocol) in enumerate(self.protocols):
+            if protocol.protocol_name == protocol_name:
+                protocol_to_remove = protocol
+                del self.protocols[i]
+                break
+
+        if protocol_to_remove:
+            await protocol_to_remove.stop_listening()
+            logger.info(f"協議 {protocol_name} 已移除。")
+            if self.active_protocol and self.active_protocol.protocol_name == protocol_name:
+                self.active_protocol = None
+                await self._select_active_protocol()
     
     async def initialize(self) -> bool:
         """初始化所有協議"""
@@ -575,12 +774,20 @@ def get_mcp_fallback_manager() -> MCPFallbackManager:
         _mcp_fallback_manager = MCPFallbackManager()
     return _mcp_fallback_manager
 
-async def initialize_mcp_fallback_protocols() -> bool:
+async def initialize_mcp_fallback_protocols(is_multiprocess: bool = False) -> bool:
     """初始化MCP備用協議"""
     manager = get_mcp_fallback_manager()
     
+    # 清空現有協議
+    manager.protocols.clear()
+
     # 添加協議（按優先級）
-    manager.add_protocol(MCPInMemoryProtocol(), priority=1)  # 最低優先級
+    if is_multiprocess:
+        manager.add_protocol(MCPProcessSharedMemoryProtocol(), priority=4)
+        logger.info("檢測到多進程環境，啟用MCPProcessSharedMemoryProtocol。")
+    else:
+        manager.add_protocol(MCPInMemoryProtocol(), priority=1)  # 最低優先級
+
     manager.add_protocol(MCPFileProtocol(), priority=2)  # 中等優先級
     manager.add_protocol(MCPHTTPProtocol(), priority=3)  # 最高優先級
     
