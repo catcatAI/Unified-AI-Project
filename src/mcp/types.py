@@ -1,6 +1,20 @@
 from typing import TypedDict, Literal, Any, Optional, Dict, List
 from dataclasses import dataclass
 
+
+class MCPError(Exception):
+    """自定義MCP錯誤類"""
+    def __init__(self, message: str, code: int = 500):
+        self.message = message
+        self.code = code
+        super().__init__(f"[MCP Error {code}] {message}")
+
+def mcp_error_handler(error: MCPError):
+    """處理MCP錯誤的中央函數"""
+    # 在真實應用中，這裡可以集成日誌系統、監控和警報
+    print(f"Caught MCP Error: {error}")
+
+
 # Original MCP Types (Legacy)
 class MCPEnvelope(TypedDict):
     mcp_envelope_version: str
