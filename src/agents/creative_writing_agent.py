@@ -4,7 +4,7 @@ from typing import Dict, Any, List
 
 from src.agents.base_agent import BaseAgent
 from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from src.services.multi_llm_service import MultiLLMService
+from src.services.multi_llm_service import MultiLLMService, ChatMessage
 
 class CreativeWritingAgent(BaseAgent):
     """
@@ -54,12 +54,14 @@ class CreativeWritingAgent(BaseAgent):
             try:
                 if "generate_marketing_copy" in capability_id:
                     prompt = self._create_marketing_copy_prompt(params)
-                    llm_response = await self.llm_interface.generate_response(prompt)
-                    result_payload = self._create_success_payload(request_id, llm_response)
+                    messages = [ChatMessage(role="user", content=prompt)]
+                    llm_response = await self.llm_interface.chat_completion(messages)
+                    result_payload = self._create_success_payload(request_id, llm_response.content)
                 elif "polish_text" in capability_id:
                     prompt = self._create_polish_text_prompt(params)
-                    llm_response = await self.llm_interface.generate_response(prompt)
-                    result_payload = self._create_success_payload(request_id, llm_response)
+                    messages = [ChatMessage(role="user", content=prompt)]
+                    llm_response = await self.llm_interface.chat_completion(messages)
+                    result_payload = self._create_success_payload(request_id, llm_response.content)
                 else:
                     result_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
             except Exception as e:
