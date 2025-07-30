@@ -27,3 +27,7 @@ huggingface-hub>=0.16.0
 rich>=13.0.0
 click>=8.0.0
 tqdm>=4.64.0
+
+# 新增的測試工具依賴
+pytest-timeout>=2.1.0
+astunparse>=1.6.0
