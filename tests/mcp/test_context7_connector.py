@@ -236,9 +236,6 @@ class TestUnifiedAIMCPIntegration:
     @pytest.mark.timeout(5)
     async def test_ham_memory_integration(self, integration):
         """Test integration with HAM Memory."""
-        @pytest.mark.timeout(5)
-    async def test_ham_memory_integration(self, integration):
-        """Test integration with HAM Memory."""
         integration_instance = await integration
         memory_data = {
             "memory_type": "episodic",
@@ -329,18 +326,18 @@ class TestContext7Performance:
             timeout=5,  # Shorter timeout for performance tests
             compression_threshold=1024
         )
-        connector = Context7MCPConnector(config)
-        await connector.connect()
-        return connector
+        return Context7MCPConnector(config)
     
     @pytest.mark.timeout(5)
     @pytest.mark.asyncio
     async def test_concurrent_context_requests(self, connector):
         """Test concurrent context operations."""
+        connector_instance = await connector
+        await connector_instance.connect()
         # Create multiple concurrent requests
         tasks = []
         for i in range(10):
-            task = connector.send_context(
+            task = connector_instance.send_context(
                 context_data={"test_id": i, "data": f"test_data_{i}"},
                 context_type="test",
                 priority=1
@@ -356,9 +353,11 @@ class TestContext7Performance:
             assert response["success"] is True
 
     @pytest.mark.timeout(5)
+    @pytest.mark.asyncio
     async def test_large_context_handling(self, connector):
         """Test handling of large context data."""
         connector_instance = await connector
+        await connector_instance.connect()
         # Create large context data
         large_context = {
             "large_data": "x" * 10000,  # 10KB of data
