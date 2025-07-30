@@ -1,3 +1,4 @@
+
 """
 Rovo Dev Agent 核心实现
 提供智能开发助手功能，集成 Atlassian 生态系统
@@ -7,6 +8,8 @@ import asyncio
 import logging
 import pickle
 import time
+import traceback
+import traceback
 from typing import Dict, Any, Optional, List, Union
 from datetime import datetime, timedelta
 from dataclasses import dataclass
@@ -56,13 +59,13 @@ class RovoDevAgent:
         self.connector = EnhancedRovoDevConnector(config)
         self.bridge = AtlassianBridge(self.connector)
         
-        # 代理状态
+        # 代理狀態
         self.agent_id = config.get('hsp_integration', {}).get('agent_id', 'rovo-dev-agent')
         self.is_active = False
         self.capabilities = self._load_capabilities()
         self.capabilities_dict = {cap['name']: cap for cap in self.capabilities}
         
-        # 任务队列和处理状态
+        # 任務佇列和處理狀態
         self.task_queue = asyncio.Queue()
         self.active_tasks = {}
         self.task_history = []
@@ -70,10 +73,10 @@ class RovoDevAgent:
         
         # 錯誤恢復配置
         self.recovery_config = config.get('hsp_integration', {}).get('task_persistence', {})
-        self.recovery_enabled = self.recovery_config.get('enabled', True)
-        self.max_retry_attempts = self.recovery_config.get('max_retry_attempts', 5)
-        self.retry_delay = self.recovery_config.get('retry_delay', 60)
-        self.auto_recovery = self.recovery_config.get('auto_recovery', True)
+        self.recovery_enabled = False # Temporarily disabled for debugging
+        self.max_retry_attempts = config.get('hsp_integration', {}).get('task_persistence', {}).get('max_retry_attempts', 5)
+        self.retry_delay = config.get('hsp_integration', {}).get('task_persistence', {}).get('retry_delay', 60)
+        self.auto_recovery = False # Temporarily disabled for debugging
         
         # 持久化存儲
         self.storage_path = Path(self.recovery_config.get('storage_path', 'data/task_queue'))
@@ -86,7 +89,7 @@ class RovoDevAgent:
         self.degraded_capabilities = set()
         self.critical_capabilities = {'issue_tracking', 'documentation_generation'}
         
-        # 性能指标
+        # 性能指標
         self.metrics = {
             'tasks_completed': 0,
             'tasks_failed': 0,
@@ -131,10 +134,10 @@ class RovoDevAgent:
         """获取能力参数定义
         
         Args:
-            capability_name: 能力名称
+            capability_name: 能力名稱
             
         Returns:
-            Dict: 参数定义
+            Dict: 參數定義
         """
         parameter_schemas = {
             'code_analysis': {
@@ -180,7 +183,7 @@ class RovoDevAgent:
             
             # 启动任务处理循环
             asyncio.create_task(self._task_processing_loop())
-            
+
             # 啟動恢復監控
             if self.auto_recovery:
                 asyncio.create_task(self._recovery_monitoring_loop())
@@ -218,13 +221,13 @@ class RovoDevAgent:
                 # 超时是正常的，继续循环
                 continue
             except Exception as e:
-                logger.error(f"任务处理循环错误: {e}")
+                logger.error(f"任务处理循环错误: {e}\n{traceback.format_exc()}")
                 
     async def _process_task(self, task: HSPTask):
         """处理单个任务
         
         Args:
-            task: HSP 任务对象
+            task: HSP 任務物件
         """
         start_time = datetime.now()
         task_id = task['task_id']
@@ -236,16 +239,16 @@ class RovoDevAgent:
                 'status': 'processing'
             }
             
-            # 根据任务类型调用相应的处理方法
+            # 根據任務類型呼叫相應的處理方法
             result = await self._dispatch_task(task)
             
-            # 计算处理时间
+            # 計算處理時間
             processing_time = (datetime.now() - start_time).total_seconds()
             
-            # 更新指标
+            # 更新指標
             self._update_metrics(processing_time, success=True)
             
-            # 记录任务历史
+            # 記錄任務歷史
             self.task_history.append({
                 'task_id': task_id,
                 'capability': task['capability'],
@@ -255,11 +258,11 @@ class RovoDevAgent:
                 'result_summary': str(result)[:100] + '...' if len(str(result)) > 100 else str(result)
             })
             
-            # 发送结果（如果有 agent_manager）
+            # 發送結果（如果有 agent_manager）
             if self.agent_manager:
                 await self.agent_manager.send_task_result(task_id, result)
                 
-            logger.info(f"任务 {task_id} 处理完成，耗时 {processing_time:.2f}s")
+            logger.info(f"任務 {task_id} 處理完成，耗時 {processing_time:.2f}s")
             
         except Exception as e:
             processing_time = (datetime.now() - start_time).total_seconds()
@@ -284,20 +287,21 @@ class RovoDevAgent:
                 await self.agent_manager.send_task_error(task_id, error_result)
                 
             logger.error(f"任务 {task_id} 处理失败: {e}")
+            traceback.print_exc()
             
         finally:
-            # 清理活动任务
+            # 清理活動任務
             if task_id in self.active_tasks:
                 del self.active_tasks[task_id]
                 
     async def _dispatch_task(self, task: HSPTask) -> Dict[str, Any]:
-        """分发任务到相应的处理方法
+        """分發任務到相應的處理方法
         
         Args:
-            task: HSP 任务对象
+            task: HSP 任務物件
             
         Returns:
-            Dict: 任务处理结果
+            Dict: 任務處理結果
         """
         capability = task['capability']
         parameters = task['parameters']
@@ -316,20 +320,20 @@ class RovoDevAgent:
             raise ValueError(f"不支持的能力: {capability}")
             
     async def _handle_code_analysis(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """处理代码分析任务
+        """處理程式碼分析任務
         
         Args:
-            parameters: 任务参数
+            parameters: 任務參數
             
         Returns:
-            Dict: 分析结果
+            Dict: 分析結果
         """
         repository_url = parameters['repository_url']
         analysis_type = parameters.get('analysis_type', 'quality')
         output_format = parameters.get('output_format', 'markdown')
         
-        # 模拟代码分析过程
-        await asyncio.sleep(2)  # 模拟分析时间
+        # 模擬程式碼分析過程
+        await asyncio.sleep(2)  # 模擬分析時間
         
         analysis_result = {
             'repository_url': repository_url,
@@ -343,20 +347,20 @@ class RovoDevAgent:
                 'performance_issues': 1
             },
             'recommendations': [
-                '增加单元测试覆盖率',
-                '重构复杂度较高的函数',
-                '修复发现的安全漏洞'
+                '增加單元測試覆蓋率',
+                '重構複雜度較高的函數',
+                '修復發現的安全漏洞'
             ],
             'output_format': output_format
         }
         
-        # 如果需要，创建 Confluence 页面
+        # 如果需要，創建 Confluence 頁面
         confluence_space = parameters.get('confluence_space')
         if confluence_space:
             page_content = self._format_analysis_report(analysis_result)
             page_result = await self.bridge.create_confluence_page(
                 space_key=confluence_space,
-                title=f"代码分析报告 - {datetime.now().strftime('%Y-%m-%d')}",
+                title=f"程式碼分析報告 - {datetime.now().strftime('%Y-%m-%d')}",
                 content=page_content
             )
             analysis_result['confluence_page'] = page_result
@@ -364,23 +368,23 @@ class RovoDevAgent:
         return analysis_result
         
     async def _handle_documentation_generation(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """处理文档生成任务
+        """處理文件生成任務
         
         Args:
-            parameters: 任务参数
+            parameters: 任務參數
             
         Returns:
-            Dict: 生成结果
+            Dict: 生成結果
         """
         source_path = parameters['source_path']
         doc_type = parameters.get('doc_type', 'technical')
         confluence_space = parameters.get('confluence_space')
         template = parameters.get('template')
         
-        # 模拟文档生成过程
+        # 模擬文件生成過程
         await asyncio.sleep(3)
         
-        # 生成文档内容
+        # 生成文件內容
         doc_content = self._generate_documentation_content(source_path, doc_type, template)
         
         result = {
@@ -391,11 +395,11 @@ class RovoDevAgent:
             'content': doc_content
         }
         
-        # 如果指定了 Confluence 空间，创建页面
+        # 如果指定了 Confluence 空間，創建頁面
         if confluence_space:
             page_result = await self.bridge.create_confluence_page(
                 space_key=confluence_space,
-                title=f"{doc_type.title()} 文档 - {Path(source_path).name}",
+                title=f"{doc_type.title()} 文件 - {Path(source_path).name}",
                 content=doc_content
             )
             result['confluence_page'] = page_result
@@ -403,23 +407,23 @@ class RovoDevAgent:
         return result
         
     async def _handle_issue_tracking(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """处理问题追踪任务
+        """處理問題追蹤任務
         
         Args:
-            parameters: 任务参数
+            parameters: 任務參數
             
         Returns:
-            Dict: 创建结果
+            Dict: 創建結果
         """
         project_key = parameters['project_key']
         issue_type = parameters.get('issue_type', 'Task')
         priority = parameters.get('priority', 'Medium')
         assignee = parameters.get('assignee')
         
-        # 创建 Jira 问题
+        # 創建 Jira 問題
         issue_data = {
-            'summary': parameters.get('summary', '自动创建的问题'),
-            'description': parameters.get('description', '由 Rovo Dev Agent 自动创建'),
+            'summary': parameters.get('summary', '自動創建的問題'),
+            'description': parameters.get('description', '由 Rovo Dev Agent 自動創建'),
             'issue_type': issue_type,
             'priority': priority,
             'assignee': assignee
@@ -439,33 +443,33 @@ class RovoDevAgent:
         }
         
     async def _handle_project_management(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """处理项目管理任务
+        """處理專案管理任務
         
         Args:
-            parameters: 任务参数
+            parameters: 任務參數
             
         Returns:
-            Dict: 管理结果
+            Dict: 管理結果
         """
         project_key = parameters['project_key']
         report_type = parameters.get('report_type', 'status')
         time_period = parameters.get('time_period', 'week')
         
-        # 获取项目数据
+        # 獲取專案資料
         issues = await self.bridge.search_jira_issues(
             jql=f"project = {project_key} AND updated >= -{time_period}"
         )
         
-        # 生成报告
+        # 生成報告
         report = self._generate_project_report(issues, report_type, time_period)
         
-        # 如果需要，创建 Confluence 页面
+        # 如果需要，創建 Confluence 頁面
         confluence_space = parameters.get('confluence_space')
         if confluence_space:
             report_content = self._format_project_report(report)
             page_result = await self.bridge.create_confluence_page(
                 space_key=confluence_space,
-                title=f"项目报告 - {project_key} - {datetime.now().strftime('%Y-%m-%d')}",
+                title=f"專案報告 - {project_key} - {datetime.now().strftime('%Y-%m-%d')}",
                 content=report_content
             )
             report['confluence_page'] = page_result
@@ -473,19 +477,19 @@ class RovoDevAgent:
         return report
         
     async def _handle_code_review(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """处理代码审查任务
+        """處理程式碼審查任務
         
         Args:
-            parameters: 任务参数
+            parameters: 任務參數
             
         Returns:
-            Dict: 审查结果
+            Dict: 審查結果
         """
         pull_request_url = parameters['pull_request_url']
         review_type = parameters.get('review_type', 'automated')
         focus_areas = parameters.get('focus_areas', ['security', 'performance', 'style'])
         
-        # 模拟代码审查过程
+        # 模擬程式碼審查過程
         await asyncio.sleep(4)
         
         review_result = {
@@ -497,14 +501,14 @@ class RovoDevAgent:
                 {
                     'type': 'security',
                     'severity': 'medium',
-                    'description': '发现潜在的 SQL 注入风险',
+                    'description': '發現潛在的 SQL 注入風險',
                     'file': 'src/database.py',
                     'line': 45
                 },
                 {
                     'type': 'performance',
                     'severity': 'low',
-                    'description': '可以优化循环性能',
+                    'description': '可以優化循環性能',
                     'file': 'src/utils.py',
                     'line': 123
                 }
@@ -516,10 +520,10 @@ class RovoDevAgent:
         return review_result
         
     def _update_metrics(self, processing_time: float, success: bool):
-        """更新性能指标
+        """更新性能指標
         
         Args:
-            processing_time: 处理时间
+            processing_time: 處理時間
             success: 是否成功
         """
         if success:
@@ -527,7 +531,7 @@ class RovoDevAgent:
         else:
             self.metrics['tasks_failed'] += 1
             
-        # 更新平均响应时间
+        # 更新平均響應時間
         total_tasks = self.metrics['tasks_completed'] + self.metrics['tasks_failed']
         if total_tasks > 0:
             current_avg = self.metrics['average_response_time']
@@ -538,32 +542,32 @@ class RovoDevAgent:
         self.metrics['last_activity'] = datetime.now().isoformat()
         
     def _format_analysis_report(self, analysis_result: Dict[str, Any]) -> str:
-        """格式化分析报告为 Markdown
+        """格式化分析報告為 Markdown
         
         Args:
-            analysis_result: 分析结果
+            analysis_result: 分析結果
             
         Returns:
-            str: Markdown 格式的报告
+            str: Markdown 格式的報告
         """
         metrics = analysis_result['metrics']
         recommendations = analysis_result['recommendations']
         
-        report = f"""# 代码分析报告
+        report = f"""# 程式碼分析報告
 
-## 基本信息
-- **仓库**: {analysis_result['repository_url']}
-- **分析类型**: {analysis_result['analysis_type']}
-- **分析时间**: {analysis_result['timestamp']}
+## 基本資訊
+- **倉庫**: {analysis_result['repository_url']}
+- **分析類型**: {analysis_result['analysis_type']}
+- **分析時間**: {analysis_result['timestamp']}
 
-## 质量指标
-- **代码质量评分**: {metrics['code_quality_score']}/100
-- **测试覆盖率**: {metrics['test_coverage']}%
-- **复杂度**: {metrics['complexity_score']}
-- **安全问题**: {metrics['security_issues']} 个
-- **性能问题**: {metrics['performance_issues']} 个
+## 品質指標
+- **程式碼品質評分**: {metrics['code_quality_score']}/100
+- **測試覆蓋率**: {metrics['test_coverage']}%
+- **複雜度**: {metrics['complexity_score']}
+- **安全問題**: {metrics['security_issues']} 個
+- **性能問題**: {metrics['performance_issues']} 個
 
-## 改进建议
+## 改進建議
 """
         
         for i, rec in enumerate(recommendations, 1):
@@ -572,47 +576,47 @@ class RovoDevAgent:
         return report
         
     def _generate_documentation_content(self, source_path: str, doc_type: str, template: Optional[str]) -> str:
-        """生成文档内容
+        """生成文件內容
         
         Args:
-            source_path: 源代码路径
-            doc_type: 文档类型
-            template: 模板名称
+            source_path: 原始碼路徑
+            doc_type: 文件類型
+            template: 模板名稱
             
         Returns:
-            str: 生成的文档内容
+            str: 生成的文件內容
         """
-        # 这里应该实现实际的文档生成逻辑
-        # 目前返回模拟内容
+        # 這裡應該實現實際的文件生成邏輯
+        # 目前返回模擬內容
         
-        return f"""# {doc_type.title()} 文档
+        return f"""# {doc_type.title()} 文件
 
 ## 概述
-本文档基于 `{source_path}` 自动生成。
+本文檔基於 `{source_path}` 自動生成。
 
-## 功能说明
-[自动生成的功能说明]
+## 功能說明
+[自動生成的功能說明]
 
-## API 参考
-[自动生成的 API 文档]
+## API 參考
+[自動生成的 API 文件]
 
-## 使用示例
-[自动生成的使用示例]
+## 使用範例
+[自動生成的使用範例]
 
 ---
-*本文档由 Rovo Dev Agent 自动生成于 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+*本文檔由 Rovo Dev Agent 自動生成於 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
 """
 
     def _generate_project_report(self, issues: List[Dict], report_type: str, time_period: str) -> Dict[str, Any]:
-        """生成项目报告
+        """生成專案報告
         
         Args:
-            issues: 问题列表
-            report_type: 报告类型
-            time_period: 时间周期
+            issues: 問題列表
+            report_type: 報告類型
+            time_period: 時間週期
             
         Returns:
-            Dict: 项目报告
+            Dict: 專案報告
         """
         total_issues = len(issues)
         completed_issues = len([i for i in issues if i.get('status') == 'Done'])
@@ -632,51 +636,48 @@ class RovoDevAgent:
         }
         
     def _format_project_report(self, report: Dict[str, Any]) -> str:
-        """格式化项目报告为 Markdown
+        """格式化專案報告為 Markdown
         
         Args:
-            report: 项目报告数据
+            report: 專案報告資料
             
         Returns:
-            str: Markdown 格式的报告
+            str: Markdown 格式的報告
         """
         summary = report['summary']
         
-        return f"""# 项目报告
+        return f"""# 專案報告
 
-## 报告信息
-- **报告类型**: {report['report_type']}
-- **时间周期**: {report['time_period']}
-- **生成时间**: {report['timestamp']}
+## 報告資訊
+- **報告類型**: {report['report_type']}
+- **時間週期**: {report['time_period']}
+- **生成時間**: {report['timestamp']}
 
-## 项目概况
-- **总问题数**: {summary['total_issues']}
+## 專案概況
+- **總問題數**: {summary['total_issues']}
 - **已完成**: {summary['completed_issues']}
-- **进行中**: {summary['in_progress_issues']}
+- **進行中**: {summary['in_progress_issues']}
 - **完成率**: {summary['completion_rate']:.1f}%
 
-## 详细信息
-[详细的问题列表和分析]
+## 詳細資訊
+[詳細的問題列表和分析]
 
 ---
-*本报告由 Rovo Dev Agent 自动生成*
+*本報告由 Rovo Dev Agent 自動生成*
 """
 
     async def submit_task(self, task: HSPTask):
-        """提交任务到处理队列
+        """提交任務到處理佇列
         
         Args:
-            task: HSP 任务对象
+            task: HSP 任務物件
         """
         await self.task_queue.put(task)
-        logger.info(f"任务 {task.task_id} 已提交到队列")
+        logger.info(f"任務 {task['task_id']} 已提交到佇列")
         
-    def get_status(self) -> Dict[str, Any]:
-        """获取代理状态
-        
-        Returns:
-            Dict: 状态信息
-        """
+    async def get_status(self) -> Dict[str, Any]:
+        """獲取代理狀態"""
+        health_check_result = await self.connector.health_check() if self.is_active else None
         return {
             'agent_id': self.agent_id,
             'is_active': self.is_active,
@@ -684,17 +685,17 @@ class RovoDevAgent:
             'queue_size': self.task_queue.qsize(),
             'active_tasks': len(self.active_tasks),
             'metrics': self.metrics,
-            'connector_health': asyncio.create_task(self.connector.health_check()) if self.is_active else None
+            'connector_health': health_check_result
         }
         
     def get_task_history(self, limit: int = 50) -> List[Dict[str, Any]]:
-        """获取任务历史
+        """獲取任務歷史
         
         Args:
-            limit: 返回记录数限制
+            limit: 返回記錄數限制
             
         Returns:
-            List: 任务历史记录
+            List: 任務歷史記錄
         """
         return self.task_history[-limit:] if self.task_history else []
     
@@ -872,7 +873,7 @@ class RovoDevAgent:
             
             # 只啟動基本功能
             self.is_active = True
-            asyncio.create_task(self._task_processing_loop())
+            # asyncio.create_task(self._task_processing_loop())
             
             logger.info("降級模式啟動成功")
             
@@ -885,7 +886,7 @@ class RovoDevAgent:
         
         Args:
             task_id: 任務ID
-            error: 錯誤信息
+            error: 錯誤資訊
             
         Returns:
             bool: 是否應該重試

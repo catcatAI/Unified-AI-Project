@@ -172,6 +172,7 @@ class EnhancedRovoDevConnector:
         """初始化斷路器"""
         for service in self.base_urls.keys():
             self.circuit_breakers[service] = CircuitBreaker()
+        self.circuit_breakers['unknown'] = CircuitBreaker() # Add a circuit breaker for unknown services
     
     async def start(self):
         """啟動連接器"""
@@ -321,8 +322,8 @@ class EnhancedRovoDevConnector:
     async def get_cached_response(self, cache_key: str) -> Optional[Dict[str, Any]]:
         """獲取緩存響應"""
         if cache_key in self.cache:
-            timestamp = self.cache_timestamps.get(cache_key, 0)
-            if time.time() - timestamp < self.cache_ttl:
+            timestamp = self.cache_timestamps.get(cache_key, 0.0)
+            if (datetime.now().timestamp() - timestamp) < self.cache_ttl:
                 self.stats['cache_hits'] += 1
                 return self.cache[cache_key]
             else:

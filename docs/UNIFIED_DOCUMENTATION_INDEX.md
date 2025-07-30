@@ -122,6 +122,9 @@ catcatAI 組織
 | 待辦事項 | (中) | `docs/06-project-management/planning/todo-placeholders.md` | 開發待辦列表 | 🟢 活躍 | ✅ 維護中 |
 | 清理摘要 | (中) | `docs/06-project-management/reports/cleanup-summary.md` | 專案清理記錄 | 🟡 歷史 | ✅ 完成 |
 | 工作目錄整理總結 | (中) | `docs/06-project-management/reports/workspace-cleanup-summary.md` | 目錄整理與清理記錄 | ✅ 最新 | 🟢 高 |
+| 文檔連結審查報告 | (中) | `docs/06-project-management/reports/documentation-link-audit-report.md` | 文檔連結檢查與修復記錄 | ✅ 最新 | 🟢 高 |
+| 文檔連結審查更新 | (中) | `docs/06-project-management/reports/documentation-link-audit-update.md` | 連結修復進度更新報告 | ✅ 最新 | 🟢 高 |
+| 項目繼續任務總結 | (中) | `docs/06-project-management/reports/project-continuation-summary.md` | 繼續中斷任務完成總結 | ✅ 最新 | 🟢 高 |
 | 路線圖 | (中) | `docs/00-overview/ROADMAP.md` | 未來發展路線圖 | 🟢 重要 | ✅ 活躍 |
 
 #### 📖 哲學與願景文檔

@@ -29,6 +29,9 @@ class TestCLI(unittest.TestCase):
         ai_name = "Miko (Base)"
         llm_model_name = "generic-llm-placeholder"
 
+        # Mock the initialize_services call to accept a config
+        mock_init.return_value = None # initialize_services doesn't return anything
+
         test_cases = [
             {"input": "This is a neutral statement.", "dm_response": f"{ai_name}: Hello! I am {ai_name}. How can I help you today?", "expected_substring": "How can I help you today?"},
             {"input": "I am so sad today.", "dm_response": f"{ai_name}: Placeholder response from {llm_model_name} for: I am so sad today. (gently)", "expected_substring": "(gently)"},
@@ -55,6 +58,9 @@ class TestCLI(unittest.TestCase):
         """Test the 'query' command for crisis response."""
         mock_dm = MagicMock()
         mock_get.return_value = {"dialogue_manager": mock_dm}
+
+        # Mock the initialize_services call to accept a config
+        mock_init.return_value = None # initialize_services doesn't return anything
 
         test_query_crisis = "Help, this is an emergency!"
         ai_name = "Miko (Base)"

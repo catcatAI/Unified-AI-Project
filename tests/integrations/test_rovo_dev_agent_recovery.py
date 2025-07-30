@@ -52,6 +52,21 @@ class TestRovoDevAgentRecovery:
                             'name': 'documentation_generation',
                             'description': 'Documentation generation',
                             'enabled': True
+                        },
+                        {
+                            'name': 'code_analysis',
+                            'description': 'Code analysis',
+                            'enabled': True
+                        },
+                        {
+                            'name': 'project_management',
+                            'description': 'Project management',
+                            'enabled': True
+                        },
+                        {
+                            'name': 'code_review',
+                            'description': 'Code review',
+                            'enabled': True
                         }
                     ]
                 }
@@ -296,6 +311,7 @@ class TestRovoDevAgentRecovery:
         agent.degraded_mode = True
         agent.degraded_capabilities.add('code_analysis')
         agent.metrics['recovery_events'] = 3
+        agent.recovery_enabled = True # Set recovery_enabled to True for this test
 
         status = agent.get_recovery_status()
 

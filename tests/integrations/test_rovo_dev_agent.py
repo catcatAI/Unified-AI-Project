@@ -215,10 +215,11 @@ class TestRovoDevAgent:
         assert agent.metrics['tasks_failed'] == 1
         assert agent.metrics['average_response_time'] == 1.75  # (2.5 + 1.0) / 2
     
-    def test_status_reporting(self, agent):
+    @pytest.mark.asyncio
+    async def test_status_reporting(self, agent):
         """测试状态报告"""
         agent.is_active = True
-        status = agent.get_status()
+        status = await agent.get_status()
         
         assert status['agent_id'] == 'test-rovo-agent'
         assert status['is_active'] is True
@@ -270,7 +271,7 @@ class TestRovoDevAgent:
         
         report = agent._format_analysis_report(analysis_result)
         
-        assert '# 代码分析报告' in report
+        assert '# 程式碼分析報告' in report
         assert 'https://github.com/test/repo' in report
         assert '85/100' in report
         assert '78%' in report
