@@ -13,6 +13,7 @@ from typing import Dict, Any, Optional, List, Callable
 from enum import Enum
 from dataclasses import dataclass, asdict
 from datetime import datetime
+import socket
 
 logger = logging.getLogger(__name__)
 
@@ -399,13 +400,15 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
 class MCPHTTPProtocol(BaseMCPFallbackProtocol):
     """MCP基於HTTP的協議"""
     
-    def __init__(self, host: str = "127.0.0.1", port: int = 8766):
+    def __init__(self, host: str = "127.0.0.1", port: int = 8766, broadcast_port: int = 8767):
         super().__init__("mcp_http")
         self.host = host
         self.port = port
         self.server = None
         self.session = None
-        self.endpoints: Dict[str, str] = {}  # 其他節點的端點
+        self.node_registry: Dict[str, str] = {}
+        self.broadcast_port = broadcast_port
+        self.discovery_task: Optional[asyncio.Task] = None
     
     async def initialize(self) -> bool:
         """初始化HTTP協議"""
@@ -430,21 +433,62 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
             self.server = runner
             self.status = MCPProtocolStatus.ACTIVE
             logger.info(f"MCP HTTP協議服務器啟動: http://{self.host}:{self.port}")
+
+            # 啟動節點發現
+            await self.start_discovery()
+
             return True
             
         except Exception as e:
             logger.error(f"MCP HTTP協議初始化失敗: {e}")
             self.status = MCPProtocolStatus.FAILED
             return False
-    
+
+    async def discover_nodes(self):
+        """使用UDP廣播發現網絡中的其他節點"""
+        loop = asyncio.get_running_loop()
+        transport, _ = await loop.create_datagram_endpoint(
+            lambda: _DiscoveryProtocol(self.node_registry, self.host, self.port),
+            local_addr=('0.0.0.0', self.broadcast_port)
+        )
+
+        try:
+            broadcast_addr = ('<broadcast>', self.broadcast_port)
+            discovery_message = json.dumps({
+                "type": "mcp_discovery",
+                "node_id": self.protocol_name,
+                "address": f"http://{self.host}:{self.port}"
+            }).encode()
+
+            transport.sendto(discovery_message, broadcast_addr)
+            await asyncio.sleep(2)  # 等待響應
+        finally:
+            transport.close()
+
+    async def start_discovery(self):
+        """啟動節點發現的後台任務"""
+        if self.discovery_task and not self.discovery_task.done():
+            return
+
+        async def discovery_loop():
+            while True:
+                await self.discover_nodes()
+                await asyncio.sleep(60)  # 每60秒重新發現
+
+        self.discovery_task = asyncio.create_task(discovery_loop())
+
     async def send_command(self, message: MCPFallbackMessage) -> bool:
         """通過HTTP發送命令"""
         try:
             # 根據接收者ID查找端點
-            endpoint = self.endpoints.get(message.recipient_id)
+            endpoint = self.node_registry.get(message.recipient_id)
             if not endpoint:
-                logger.warning(f"未找到MCP接收者端點: {message.recipient_id}")
-                return False
+                logger.warning(f"未找到MCP接收者端點: {message.recipient_id}, 嘗試重新發現...")
+                await self.discover_nodes()
+                endpoint = self.node_registry.get(message.recipient_id)
+                if not endpoint:
+                    logger.error(f"無法發現MCP接收者: {message.recipient_id}")
+                    return False
             
             url = f"{endpoint}/mcp/command"
             async with self.session.post(url, json=message.to_dict()) as response:
@@ -488,6 +532,13 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
     
     async def stop_listening(self):
         """停止HTTP服務器"""
+        if self.discovery_task:
+            self.discovery_task.cancel()
+            try:
+                await self.discovery_task
+            except asyncio.CancelledError:
+                pass
+
         if self.server:
             await self.server.cleanup()
         if self.session:
@@ -496,6 +547,37 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
     async def health_check(self) -> bool:
         """健康檢查"""
         return self.status == MCPProtocolStatus.ACTIVE
+
+class _DiscoveryProtocol(asyncio.DatagramProtocol):
+    """用於節點發現的UDP協議"""
+    def __init__(self, registry: Dict[str, str], host: str, port: int):
+        self.registry = registry
+        self.host = host
+        self.port = port
+        self.transport = None
+
+    def connection_made(self, transport):
+        self.transport = transport
+        sock = transport.get_extra_info('socket')
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+    def datagram_received(self, data, addr):
+        try:
+            message = json.loads(data.decode())
+            if message.get("type") == "mcp_discovery":
+                node_id = message.get("node_id")
+                address = message.get("address")
+                if node_id and address and node_id != self.registry.get(node_id):
+                    self.registry[node_id] = address
+                    logger.info(f"發現MCP節點: {node_id} at {address}")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            pass
+
+    def error_received(self, exc):
+        logger.error(f"UDP發現錯誤: {exc}")
+
+    def connection_lost(self, exc):
+        pass
 
 class MCPFallbackManager:
     """MCP備用協議管理器"""
