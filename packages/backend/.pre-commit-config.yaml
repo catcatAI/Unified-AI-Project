@@ -1,0 +1,98 @@
+# Unified AI Project - Pre-commit Configuration
+# 統一AI專案 - 預提交配置
+
+repos:
+  # Black - Python代碼格式化
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=88]
+
+  # isort - 導入排序
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=88]
+
+  # flake8 - 代碼檢查
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=88, --extend-ignore=E203, W503]
+        additional_dependencies:
+          - flake8-docstrings
+          - flake8-bugbear
+          - flake8-comprehensions
+
+  # MyPy - 類型檢查
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-PyYAML, types-requests]
+        args: [--ignore-missing-imports]
+
+  # Bandit - 安全檢查
+  - repo: https://github.com/pycqa/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: [-r, src/, -f, json, -o, bandit-report.json]
+        exclude: tests/
+
+  # 通用檢查
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: debug-statements
+      - id: check-docstring-first
+
+  # Markdown檢查
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        args: [--fix]
+
+  # YAML格式化
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types: [yaml]
+
+  # 專案特定檢查
+  - repo: local
+    hooks:
+      - id: unified-ai-style-check
+        name: Unified AI Style Check
+        entry: python scripts/style_check.py
+        language: system
+        files: ^src/.*\.py$
+        pass_filenames: false
+
+      - id: mcp-protocol-validation
+        name: MCP Protocol Validation
+        entry: python scripts/validate_mcp_types.py
+        language: system
+        files: ^src/mcp/.*\.py$
+        pass_filenames: false
+
+      - id: ai-docstring-check
+        name: AI Component Docstring Check
+        entry: python scripts/check_ai_docstrings.py
+        language: system
+        files: ^src/core_ai/.*\.py$
+        pass_filenames: false

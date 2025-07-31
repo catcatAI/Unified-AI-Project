@@ -1,0 +1,29 @@
+pytest:
+  demo_environment:
+    ATLASSIAN_API_TOKEN: DEMO_ATLASSIAN_TOKEN_2025
+    ATLASSIAN_CLOUD_ID: demo-cloud-12345
+    MIKO_HAM_KEY: DEMO_HAM_FIXED_KEY_2025_aGVsbG93b3JsZA==
+    PYTHONPATH: .
+  markers:
+  - 'slow: marks tests as slow'
+  - 'online: marks tests that require internet'
+  - 'mcp: marks tests related to MCP functionality'
+  - 'context7: marks tests related to Context7 integration'
+  - 'ai_core: marks tests for core AI functionality'
+  - 'timeout: marks tests with a timeout'
+  - 'demo: marks tests that use demo credentials'
+  timeout_settings:
+    basic: 5
+    integration: 10
+    performance: 30
+test_categories:
+  core_ai:
+  - tests/core_ai/test_agent_manager.py
+  - tests/core_ai/test_emotion_system.py
+  - tests/core_ai/memory/test_ham_memory_manager.py
+  hsp:
+  - tests/hsp/test_hsp_connector.py
+  - tests/hsp/test_hsp_integration.py
+  integrations:
+  - tests/integrations/test_atlassian_bridge.py
+  - tests/integrations/test_rovo_dev_agent.py
