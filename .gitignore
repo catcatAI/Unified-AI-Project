@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.pnp.cjs
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Next.js
+.next/
+out/
+
+# Logs
+*.log
+
+# Temp files
+_temp_staging/
+commit_message.txt
