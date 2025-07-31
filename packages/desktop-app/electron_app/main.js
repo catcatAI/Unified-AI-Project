@@ -56,7 +56,7 @@ app.on("window-all-closed", function () {
 ipcMain.handle("game:start", async () => {
   console.log("Main Process: Received 'game:start' request from renderer.");
   const gameProcess = spawn(pythonExecutable, [
-    path.join(__dirname, "..", "..", "game", "main.py"),
+    path.join(__dirname, "..", "..", "..", "backend", "src", "game", "main.py"),
   ]);
 
   gameProcess.stdout.on("data", (data) => {
@@ -70,4 +70,56 @@ ipcMain.handle("game:start", async () => {
   gameProcess.on("close", (code) => {
     console.log(`Game process exited with code ${code}`);
   });
+});
+
+ipcMain.handle("api:start-session", async (event, args) => {
+  try {
+    const response = await fetch("http://localhost:8000/api/v1/session/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(args),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Main Process: Error in api:start-session:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("api:send-message", async (event, args) => {
+  try {
+    const response = await fetch("http://localhost:8000/api/v1/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(args),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Main Process: Error in api:send-message:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle(/^api:(get|post|put|delete):\/api\/(.*)$/, async (event, method, path, data) => {
+  const url = `http://localhost:8000/api/${path}`;
+  try {
+    const response = await fetch(url, {
+      method: method.toUpperCase(),
+      headers: { "Content-Type": "application/json" },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Main Process: Error in API call (${method.toUpperCase()} ${path}):`, error);
+    throw error;
+  }
 });

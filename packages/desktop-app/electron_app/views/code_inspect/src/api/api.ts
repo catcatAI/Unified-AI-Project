@@ -18,7 +18,10 @@ const localApi = axios.create({
 let accessToken: string | null = null;
 
 const getApiInstance = (url: string) => {
-  return localApi;
+  return async (config) => {
+    const channel = `api:${config.method || 'get'}:${url}`.toLowerCase();
+    return await window.electronAPI.invoke(channel, config.data || config.params);
+  };
 };
 
 const isAuthEndpoint = (url: string): boolean => {
@@ -105,25 +108,25 @@ setupInterceptors(localApi);
 
 
 const api = {
-  request: (config: AxiosRequestConfig) => {
-    const apiInstance = getApiInstance(config.url || '');
-    return apiInstance(config);
+  request: async (config: AxiosRequestConfig) => {
+    const channel = `api:${config.method || 'get'}:${config.url}`.toLowerCase();
+    return await window.electronAPI.invoke(channel, config.data || config.params);
   },
-  get: (url: string, config?: AxiosRequestConfig) => {
-    const apiInstance = getApiInstance(url);
-    return apiInstance.get(url, config);
+  get: async (url: string, config?: AxiosRequestConfig) => {
+    const channel = `api:get:${url}`.toLowerCase();
+    return await window.electronAPI.invoke(channel, config?.params);
   },
-  post: (url: string, data?: any, config?: AxiosRequestConfig) => {
-    const apiInstance = getApiInstance(url);
-    return apiInstance.post(url, data, config);
+  post: async (url: string, data?: any, config?: AxiosRequestConfig) => {
+    const channel = `api:post:${url}`.toLowerCase();
+    return await window.electronAPI.invoke(channel, data);
   },
-  put: (url: string, data?: any, config?: AxiosRequestConfig) => {
-    const apiInstance = getApiInstance(url);
-    return apiInstance.put(url, data, config);
+  put: async (url: string, data?: any, config?: AxiosRequestConfig) => {
+    const channel = `api:put:${url}`.toLowerCase();
+    return await window.electronAPI.invoke(channel, data);
   },
-  delete: (url: string, config?: AxiosRequestConfig) => {
-    const apiInstance = getApiInstance(url);
-    return apiInstance.delete(url, config);
+  delete: async (url: string, config?: AxiosRequestConfig) => {
+    const channel = `api:delete:${url}`.toLowerCase();
+    return await window.electronAPI.invoke(channel, config?.params);
   },
 };
 

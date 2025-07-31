@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   let currentSessionId = null;
-  const apiBaseUrl = "http://localhost:8000/api/v1";
+  
 
   function showView(viewId) {
     // Remove active class from all main views and nav buttons
@@ -84,11 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function startNewSession() {
     try {
       appendMessage("Starting new session...", "system"); // System message
-      const response = await fetch(`${apiBaseUrl}/session/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}), // Send empty JSON object for now, can add user_id if needed
-      });
+      const response = await window.electronAPI.invoke("api:start-session", {});
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -121,14 +117,9 @@ document.addEventListener("DOMContentLoaded", () => {
     userInputField.value = ""; // Clear input field
 
     try {
-      const response = await fetch(`${apiBaseUrl}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: text,
-          session_id: currentSessionId,
-          // user_id could be added here if available
-        }),
+      const response = await window.electronAPI.invoke("api:send-message", {
+        text: text,
+        session_id: currentSessionId,
       });
       if (!response.ok) {
         const errorData = await response.text(); // Try to get more error info
