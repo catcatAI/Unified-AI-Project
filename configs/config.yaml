@@ -1,4 +1,0 @@
-mcp:
-  fallback_config: {}
-  mqtt_broker_address: "localhost"
-  mqtt_broker_port: 1883

@@ -1,1 +1,0 @@
-# Miko Communication Protocol (MCP) Package
