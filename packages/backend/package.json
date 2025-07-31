@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "echo "Starting Python backend..." && pip install -r requirements.txt && uvicorn src.services.main_api_server:app --reload",
+    dev": "echo "Starting Python backend..." && pip install -r requirements.txt && uvicorn src.services.main_api_server:app --reload",",
     "test": "pytest",
     "test:coverage": "pytest --cov=src --cov-report=html --cov-report=term-missing"
   }
