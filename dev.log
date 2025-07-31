@@ -1,0 +1,159 @@
+[33m[nodemon] 3.1.10[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): server.ts src/**/*[39m
+[33m[nodemon] watching extensions: ts,tsx,js,jsx[39m
+[32m[nodemon] starting `npx tsx server.ts`[39m
+> Ready on http://0.0.0.0:3000
+> Socket.IO server running at ws://0.0.0.0:3000/api/socketio
+ ○ Compiling / ...
+ ✓ Compiled / in 4.9s (1065 modules)
+ GET /api/health 200 in 5416ms
+ GET / 200 in 5852ms
+ ✓ Compiled /api/integration/chat in 477ms (1057 modules)
+🔗 初始化整合橋接服務...
+AI chat failed: Error: No AI service available
+    at IntegrationBridge.sendAIChat (src/lib/integration-bridge.ts:354:12)
+    at POST (src/app/api/integration/chat/route.ts:19:36)
+  352 |       }
+  353 |
+> 354 |       throw new Error('No AI service available')
+      |            ^
+  355 |     } catch (error) {
+  356 |       console.error('AI chat failed:', error)
+  357 |       throw error
+Primary AI service failed, trying fallback: Error: No AI service available
+    at IntegrationBridge.sendAIChat (src/lib/integration-bridge.ts:354:12)
+    at POST (src/app/api/integration/chat/route.ts:19:36)
+  352 |       }
+  353 |
+> 354 |       throw new Error('No AI service available')
+      |            ^
+  355 |     } catch (error) {
+  356 |       console.error('AI chat failed:', error)
+  357 |       throw error
+🔄 服務狀態變化: aiDashboard -> error
+🔄 服務狀態變化: unifiedAI -> error
+🔄 服務狀態變化: githubConnect -> error
+Failed to make API request: TypeError: fetch failed
+    at async POST (src/app/api/integration/chat/route.ts:40:27)
+  38 |         })
+  39 |         
+> 40 |         const completion = await zai.createChatCompletion({
+     |                           ^
+  41 |           messages: [
+  42 |             {
+  43 |               role: 'system', {
+  [cause]: [AggregateError: ] { code: 'ECONNREFUSED' }
+}
+Fallback AI service also failed: TypeError: fetch failed
+    at async POST (src/app/api/integration/chat/route.ts:40:27)
+  38 |         })
+  39 |         
+> 40 |         const completion = await zai.createChatCompletion({
+     |                           ^
+  41 |           messages: [
+  42 |             {
+  43 |               role: 'system', {
+  [cause]: [AggregateError: ] { code: 'ECONNREFUSED' }
+}
+ POST /api/integration/chat 200 in 831ms
+ ✓ Compiled /api/integration/health in 491ms (1059 modules)
+ GET /api/health 200 in 565ms
+🔗 初始化整合橋接服務...
+🔄 服務狀態變化: aiDashboard -> error
+ GET /api/integration/health 200 in 608ms
+🔄 服務狀態變化: unifiedAI -> error
+🔄 服務狀態變化: githubConnect -> error
+ GET / 200 in 175ms
+ ✓ Compiled /api/integration/image in 366ms (1061 modules)
+🔗 初始化整合橋接服務...
+Image generation failed: Error: Image generation service not available
+    at IntegrationBridge.generateImage (src/lib/integration-bridge.ts:373:12)
+    at POST (src/app/api/integration/image/route.ts:18:36)
+  371 |       }
+  372 |
+> 373 |       throw new Error('Image generation service not available')
+      |            ^
+  374 |     } catch (error) {
+  375 |       console.error('Image generation failed:', error)
+  376 |       throw error
+Primary image service failed, trying fallback: Error: Image generation service not available
+    at IntegrationBridge.generateImage (src/lib/integration-bridge.ts:373:12)
+    at POST (src/app/api/integration/image/route.ts:18:36)
+  371 |       }
+  372 |
+> 373 |       throw new Error('Image generation service not available')
+      |            ^
+  374 |     } catch (error) {
+  375 |       console.error('Image generation failed:', error)
+  376 |       throw error
+Fallback image service also failed: TypeError: Cannot destructure property 'baseUrl' of 'this.config' as it is undefined.
+    at POST (src/app/api/integration/image/route.ts:35:40)
+  33 |         const zai = new ZAI.default()
+  34 |         
+> 35 |         const imageResponse = await zai.createImageGeneration({
+     |                                        ^
+  36 |           prompt,
+  37 |           size
+  38 |         })
+🔄 服務狀態變化: aiDashboard -> error
+ POST /api/integration/image 200 in 574ms
+🔄 服務狀態變化: unifiedAI -> error
+🔄 服務狀態變化: githubConnect -> error
+ ✓ Compiled /api/integration/search in 361ms (1063 modules)
+🔗 初始化整合橋接服務...
+Web search failed: Error: Web search service not available
+    at IntegrationBridge.webSearch (src/lib/integration-bridge.ts:392:12)
+    at POST (src/app/api/integration/search/route.ts:18:36)
+  390 |       }
+  391 |
+> 392 |       throw new Error('Web search service not available')
+      |            ^
+  393 |     } catch (error) {
+  394 |       console.error('Web search failed:', error)
+  395 |       throw error
+Primary search service failed, trying fallback: Error: Web search service not available
+    at IntegrationBridge.webSearch (src/lib/integration-bridge.ts:392:12)
+    at POST (src/app/api/integration/search/route.ts:18:36)
+  390 |       }
+  391 |
+> 392 |       throw new Error('Web search service not available')
+      |            ^
+  393 |     } catch (error) {
+  394 |       console.error('Web search failed:', error)
+  395 |       throw error
+Fallback search service also failed: TypeError: Cannot destructure property 'baseUrl' of 'this.config' as it is undefined.
+    at POST (src/app/api/integration/search/route.ts:35:39)
+  33 |         const zai = new ZAI.default()
+  34 |         
+> 35 |         const searchResult = await zai.invokeFunction("web_search", {
+     |                                       ^
+  36 |           query,
+  37 |           num
+  38 |         })
+🔄 服務狀態變化: aiDashboard -> error
+ POST /api/integration/search 200 in 625ms
+🔄 服務狀態變化: unifiedAI -> error
+🔄 服務狀態變化: githubConnect -> error
+ GET /api/health 200 in 42ms
+ GET /api/integration/health 200 in 68ms
+ GET / 200 in 133ms
+ ✓ Compiled /api/integration/github in 372ms (1065 modules)
+🔗 初始化整合橋接服務...
+GitHub repos fetch failed: Error: GitHub Connect service not available
+    at IntegrationBridge.getGitHubRepos (src/lib/integration-bridge.ts:408:12)
+    at GET (src/app/api/integration/github/route.ts:15:37)
+  406 |       }
+  407 |
+> 408 |       throw new Error('GitHub Connect service not available')
+      |            ^
+  409 |     } catch (error) {
+  410 |       console.error('GitHub repos fetch failed:', error)
+  411 |       throw error
+🔄 服務狀態變化: aiDashboard -> error
+ GET /api/integration/github?action=repos 200 in 511ms
+🔄 服務狀態變化: unifiedAI -> error
+🔄 服務狀態變化: githubConnect -> error
+ GET /api/health 200 in 30ms
+ GET /api/integration/health 200 in 51ms
+ GET / 200 in 119ms
