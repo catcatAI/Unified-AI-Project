@@ -1,81 +1,35 @@
-# Unified AI Project
+# Unified AI Project Documentation
 
-## 概述
+This directory contains the comprehensive documentation for the Unified AI Project monorepo. It covers various aspects of the project, including architecture, development guidelines, and specific details for each package.
 
-統一 AI 專案是一個先進的多維語義 AI 系統，整合了 MikoAI、Fragmenta、Rovo Dev Agents 和其他 CatAI 計劃。本專案不僅是工具的集合，更是創造**多維語義實體**的嘗試，其架構由湧現、自我修正和語義演化的敘事所引導。
+## Documentation Structure
 
-### 🤝 核心集成
+- **[Overview](00-overview/README.md)**: High-level project vision, goals, and roadmap.
+- **[Game Design](02-game-design/README.md)**: Details about the integrated game components.
+- **[Technical Architecture](03-technical-architecture/README.md)**: In-depth documentation on the system's architecture, communication protocols (HSP), memory systems (HAM), and AI components.
+- **[Advanced Concepts](04-advanced-concepts/README.md)**: Explores advanced topics like agent collaboration, meta-formulas, and linguistic immune system.
+- **[Development Guidelines](05-development/debugging/execution-monitor.md)**: Information on debugging, testing, and development workflows.
+- **[Project Management](06-project-management/planning/content-organization.md)**: Project planning, status reports, and management insights.
+- **[Archived Documents](09-archive/README.md)**: Older or deprecated documentation for historical reference.
 
-- **🤖 Rovo Dev Agents**: 與 Atlassian 生態系統深度集成，提供智能開發協作能力，現已使用 `EnhancedRovoDevConnector` 增強連接器
-- **📋 Atlassian 服務**: 支持 Confluence、Jira、Bitbucket 的無縫集成
-- **🔗 GitHub Connect**: 通過 github-connect-quest 實現 GitHub 自動化
+## Key Documents
 
-## 項目文檔
+- **[Project Charter](00-overview/PROJECT_CHARTER.md)**: The foundational document outlining the project's scope and objectives.
+- **[Glossary](00-overview/GLOSSARY.md)**: Definitions of key terms and concepts used throughout the project.
+- **[HSP Specification](03-technical-architecture/communication/hsp-specification/01-overview-and-concepts.md)**: Detailed specification of the Heterogeneous Service Protocol.
+- **[HAM Design Specification](03-technical-architecture/memory-systems/ham-design.md)**: Design document for the Hierarchical Abstract Memory system.
+- **[Rovo Dev Agents Integration](03-technical-architecture/integrations/rovo-dev-agents.md)**: Documentation on the integration with Atlassian Rovo Dev Agents.
+- **[Contributing Guide](CONTRIBUTING.md)**: Guidelines for contributing to the project.
 
-- **[項目章程 (Project Charter)](docs/00-overview/PROJECT_CHARTER.md)**: 這是主要的統一文檔，包含了專案的架構、核心元件、工作流程、以及未來的重構與開發計畫。
-- **[術語表 (Glossary)](docs/00-overview/GLOSSARY.md)**: 專案核心概念定義。
-- **[HSP 規範](docs/03-technical-architecture/communication/hsp-specification/01-overview-and-concepts.md)**: 異構服務協議 (HSP) 詳細規範。
-- **[HAM 設計規範](docs/03-technical-architecture/memory-systems/ham-design.md)**: 分層抽象記憶系統設計文檔。
-- **[Rovo Dev Agents 集成](docs/03-technical-architecture/integrations/rovo-dev-agents.md)**: Atlassian Rovo Dev Agents 集成架構。
-- **[貢獻指南](CONTRIBUTING.md)**: 如何為本專案做出貢獻。
+## How to Navigate
 
-## 快速開始
+This documentation is organized to provide a clear path for understanding the project. You can start from the [Overview](00-overview/README.md) and delve into specific sections as needed.
 
-### 環境要求
+## Quick Links to Packages
 
-- Python 3.8+
-- Node.js 16+ (用於前端組件)
+For documentation specific to each package within the monorepo, please refer to their respective README files:
 
-### 安裝與運行
-
-1. **克隆專案**
-
-   ```bash
-   git clone <repository-url>
-   cd unified-ai-project
-   ```
-
-2. **安裝依賴**
-
-   ```bash
-   # 安裝核心依賴
-   pip install -e .
-
-   # 如果需要運行 UI 或其他擴展功能，請安裝完整依賴
-   # pip install -e .[full]
-   ```
-
-3. **配置環境**
-
-   ```bash
-   # 複製環境變量模板
-   cp .env.example .env
-
-   # 編輯 .env 文件，至少需要設置 HAM_ENCRYPTION_KEY
-   # 可以使用以下命令生成一個新的密鑰：
-   # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-   ```
-
-4. **運行**
-   - **API 服務器**: `uvicorn src.services.main_api_server:app --reload`
-   - **命令行接口 (CLI)**:
-     `python src/interfaces/cli/main.py query "Hello Angela"`
-   - **桌面應用**: `cd src/interfaces/electron_app && npm install && npm start`
-
-## 未來發展路線圖
-
-本專案的未來發展路線圖已整理至 **[ROADMAP.md](docs/ROADMAP.md)**。
-
-## ❓ 常見問題
-
-**Q: 安裝失敗怎麼辦？**  
-A: 確保 Python 3.8+ 並運行 `pip install --upgrade pip`
-
-**Q: API 服務器啟動失敗？**  
-A: 檢查端口 8000 是否被占用，或使用 `uvicorn src.services.main_api_server:app --port 8001`
-
-**Q: 如何快速測試系統？**  
-A: 運行 `python src/interfaces/cli/main.py query "Hello Angela"`
-
-**Q: 如何查看更多文檔？**  
-A: 訪問 [文檔中心](docs/00-overview/README.md) 獲取完整指南
+- [Backend Package](packages/backend/README.md)
+- [Frontend Dashboard Package](packages/frontend-dashboard/README.md)
+- [Desktop App Package](packages/desktop-app/README.md)
+- [CLI Package](packages/cli/README.md)
