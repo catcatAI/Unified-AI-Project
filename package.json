@@ -4,7 +4,9 @@
   "scripts": {
     "dev:dashboard": "pnpm --filter frontend-dashboard dev",
     "dev:backend": "pnpm --filter backend dev",
-    "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:dashboard\""
+    "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:dashboard\"",
+    "test": "pnpm -r test",
+    "test:coverage": "pnpm -r test:coverage"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
