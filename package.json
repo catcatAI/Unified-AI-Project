@@ -1,23 +1,12 @@
 {
-  "name": "unified-ai-project",
-  "version": "0.1.0",
-  "description": "A unified AI project consolidating MikoAI, Fragmenta, and other CatAI initiatives.",
+  "name": "unified-ai-monorepo",
+  "private": true,
   "scripts": {
-    "test": "python -c \"import platform; print('scripts/setup_env.bat' if platform.system() == 'Windows' else 'bash ./scripts/setup_env.sh')\" | xargs -I {} bash -c \"{} && pytest\""
-  },
-  "keywords": [
-    "ai",
-    "mikoai",
-    "fragmenta",
-    "nlp",
-    "machine-learning"
-  ],
-  "author": "Unified AI Team",
-  "license": "MIT",
-  "dependencies": {
-    "js-yaml": "^4.1.0"
+    "dev:dashboard": "pnpm --filter frontend-dashboard dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:dashboard\""
   },
   "devDependencies": {
-    "prettier": "^3.6.2"
+    "concurrently": "^8.2.2"
   }
 }
