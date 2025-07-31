@@ -1,0 +1,105 @@
+{
+  "next_memory_id": 11,
+  "store": {
+    "mem_000001": {
+      "timestamp": "2025-07-19T06:29:25.200322+00:00",
+      "data_type": "test",
+      "encrypted_package_b64": "gAAAAABoeztFJLnPCWwwP1hqPiUKoONCNfgUZPKAMxuoqf1bJu7Z5fhOeF5-idBue3pUoBh-oMlCRsOAAgaH9tgXKcROZJSkuWh3nBwtNnsJWPSjS0q4WGo=",
+      "metadata": {
+        "test": true,
+        "index": 0,
+        "sha256_checksum": "014d82fc6825b4b2ca343134e7ca6297773a5e8779f6f9df16d2d8985c4052e9"
+      }
+    },
+    "mem_000002": {
+      "timestamp": "2025-07-19T06:29:25.234309+00:00",
+      "data_type": "test",
+      "encrypted_package_b64": "gAAAAABoeztFRRAkFeBkoCwzpyFGT6Z9BOTT-O-4KPXIqgwS1EJe60zk0QVOaXDqCZWwb9GqC7Tw8LYmVs38ni93v2NQvh6OKkbqe9J_aTtQ1wRF2vhpUmU=",
+      "metadata": {
+        "test": true,
+        "index": 1,
+        "sha256_checksum": "05e8fdb3598f91bcc3ce41a196e587b4592c8cdfc371c217274bfda2d24b1b4e"
+      }
+    },
+    "mem_000003": {
+      "timestamp": "2025-07-19T06:29:25.240144+00:00",
+      "data_type": "test",
+      "encrypted_package_b64": "gAAAAABoeztFAMnJVxsce_zJ7otm5oi1TxaoYPiz3YvzR80BvaRnX3m0wgP-QjizXQmjWa1zzWalfdEtH6cvx9WQq8slV75hZFtdLi4GwCfqYfe5cnVv7UE=",
+      "metadata": {
+        "test": true,
+        "index": 2,
+        "sha256_checksum": "26637da1bd793f9011a3d304372a9ec44e36cc677d2bbfba32a2f31f912358fe"
+      }
+    },
+    "mem_000004": {
+      "timestamp": "2025-07-19T06:29:25.304300+00:00",
+      "data_type": "test",
+      "encrypted_package_b64": "gAAAAABoeztF9HF6B8hwv58immZZ9j5spSpksCHt7g85EoseZIWbo3YdK_pap-TDqPazdd2lx0dRW9OuDygrVr30f9XFsaHNoELELIxGo9LfK1TsWlmxEh8=",
+      "metadata": {
+        "test": true,
+        "index": 3,
+        "sha256_checksum": "b2ce6625a947373fe8d578dca152cf152a5bd8aeca805b2d3b1fb4a340e1a123"
+      }
+    },
+    "mem_000005": {
+      "timestamp": "2025-07-19T06:29:25.404562+00:00",
+      "data_type": "test",
+      "encrypted_package_b64": "gAAAAABoeztFn2VXh1uKzOKwsQIINwEl4e7ooKMtuxNNIvTUFBwatu7nRPXDE8VLkzUCOlXGsVCrjjRMMGsd8GYxL7XDAcS6CTeZj7rziH8ZK9NsjsbVTCg=",
+      "metadata": {
+        "test": true,
+        "index": 4,
+        "sha256_checksum": "1e2b98ff6439d48d42ae71c0ea44f3c1e03665a34d1c368ac590aec5dadc48eb"
+      }
+    },
+    "mem_000006": {
+      "timestamp": "2025-07-19T06:41:50.249864+00:00",
+      "data_type": "test",
+      "encrypted_package_b64": "gAAAAABoez4uHjl1DuQQS3GXmZV7K4RAXLNzlwt8H0lm1apUqLhK8-5QfoG9jH-9QXiBa26gQMTdJkSyqVsc_mR68j21Sv4oTaUqnwM0ZLoxIQCSBzqFx3s=",
+      "metadata": {
+        "test": true,
+        "index": 0,
+        "sha256_checksum": "014d82fc6825b4b2ca343134e7ca6297773a5e8779f6f9df16d2d8985c4052e9"
+      }
+    },
+    "mem_000007": {
+      "timestamp": "2025-07-19T06:41:50.426377+00:00",
+      "data_type": "test",
+      "encrypted_package_b64": "gAAAAABoez4ubv24kj_R9aem6dw6M0BcgojOmi9tmqlTq3GVHgc4dWxoHfuqZR8Rb3yXh3ZCKxpB0SndJRr4obJAC5-aLtmvCY-2m2MdbY05KCUS3NXE7Co=",
+      "metadata": {
+        "test": true,
+        "index": 1,
+        "sha256_checksum": "05e8fdb3598f91bcc3ce41a196e587b4592c8cdfc371c217274bfda2d24b1b4e"
+      }
+    },
+    "mem_000008": {
+      "timestamp": "2025-07-19T06:41:50.500532+00:00",
+      "data_type": "test",
+      "encrypted_package_b64": "gAAAAABoez4uzYw4bUuoyl8oeM4iYOFvIawyvl1D1HrkIrzhiDEYOabjqoFbZPAfjJRLXujWrqIRkqM0mLUMpGuprDYHI2aXHANc-8Mm5EnhHdnJMsZGj08=",
+      "metadata": {
+        "test": true,
+        "index": 2,
+        "sha256_checksum": "26637da1bd793f9011a3d304372a9ec44e36cc677d2bbfba32a2f31f912358fe"
+      }
+    },
+    "mem_000009": {
+      "timestamp": "2025-07-19T06:41:50.529070+00:00",
+      "data_type": "test",
+      "encrypted_package_b64": "gAAAAABoez4u6vbvu8zGsY5p6Y-XnUwctLBRInJ1NHTntzohydsCLCeKKFbMY9p6Y16wIXPrFcQDgLFQnOjm8uyA-ApxQv8G_ONX0iRwwUhzCMXAAqMZX2c=",
+      "metadata": {
+        "test": true,
+        "index": 3,
+        "sha256_checksum": "b2ce6625a947373fe8d578dca152cf152a5bd8aeca805b2d3b1fb4a340e1a123"
+      }
+    },
+    "mem_000010": {
+      "timestamp": "2025-07-19T06:41:50.563776+00:00",
+      "data_type": "test",
+      "encrypted_package_b64": "gAAAAABoez4u2FzNCQjBMD8KSesN3JoYTyX0dJhER1zwo42AsQbxIo8fpajfLg8L_W_dkHGjSzcyxGkUIkvQ8gbfwelE-Rw5fmBW7zg7tdPol_8ewa8vm8I=",
+      "metadata": {
+        "test": true,
+        "index": 4,
+        "sha256_checksum": "1e2b98ff6439d48d42ae71c0ea44f3c1e03665a34d1c368ac590aec5dadc48eb"
+      }
+    }
+  }
+}

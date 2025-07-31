@@ -1,0 +1,17 @@
+{
+  "next_memory_id": 2,
+  "store": {
+    "mem_000001": {
+      "timestamp": "2025-07-04T12:47:11.158974",
+      "data_type": "user_dialogue_text",
+      "encrypted_package_b64": "gAAAAABoZ81P23e6sJIei7ArYVsHL8ExBqUz6NilPxGLeQWY0Do3em_aNe5aT5TT3atOyIXmJzPGilGeTt96VLYyZkdtRu5J_88ns9wbGyGnir2Fu9URKzIgnvQfRXr3GiJGbspWsYhRQYyS3qqjhTy2lvj-BVN3lN-tmCGB9pIXeY5j4ez1YgnAIkK66EJKwRSz8VAU_cq2Dv6f4mvwy-Jcy2-60WoZXAWr_XBUgCyTb5sPvJr5069lTmjdYwFwzkfI-42ewpxf",
+      "metadata": {
+        "speaker": "user",
+        "timestamp": "2025-07-04T12:47:11.155471",
+        "user_id": "user_basic_001",
+        "session_id": "session_basic_001",
+        "sha256_checksum": "8896cfbef4d278aab21243f5e796e9a8b53609add6da06f15dacccc9ae12cde6"
+      }
+    }
+  }
+}

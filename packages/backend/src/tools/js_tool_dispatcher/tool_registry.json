@@ -1,0 +1,42 @@
+{
+  "description": "Registry for JavaScript-based tools available to the JSToolDispatcher.",
+  "tools": [
+    {
+      "name": "exampleJSTool",
+      "description": "An example JavaScript tool that echoes parameters.",
+      "scriptPath": "./tools/example_js_tool.js",
+      "handlerFunction": "execute",
+      "enabled": true,
+      "parameters": [
+        {
+          "name": "data",
+          "type": "string",
+          "description": "Arbitrary data string.",
+          "required": true
+        },
+        {
+          "name": "count",
+          "type": "number",
+          "description": "A count value.",
+          "required": false
+        }
+      ],
+      "returns": {
+        "type": "object",
+        "properties": {
+          "result": { "type": "string" },
+          "inputParams": { "type": "object" }
+        }
+      }
+    },
+    {
+      "name": "anotherSampleTool",
+      "description": "Another sample tool, perhaps for a specific web API.",
+      "scriptPath": "./tools/another_sample_tool.js",
+      "handlerFunction": "run",
+      "enabled": false,
+      "parameters": [],
+      "returns": { "type": "object" }
+    }
+  ]
+}
