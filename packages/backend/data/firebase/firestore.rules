@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  // 允許所有已驗證用戶讀寫 chatHistories 集合中的自己資料
+    match /chatHistories/{userId} {
+    allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+  // 允許所有已驗證用戶讀取 catFormulas 集合
+  // 後端 Admin SDK 操作會自動繞過此處的寫入規則
+  match /catFormulas/{formulaId} {
+    allow read: if request.auth != null;
+    // 為了安全性，前端不允許直接寫入 catFormulas
+    allow write: if false;
+    }
+
+  // 如果您的應用程式有其他頂層集合或 artifacts/{appId}/users/{userId} 結構，請保留或新增相應規則
+  // 這裡假設您的用戶資料不再明確存儲在 artifacts/{appId}/users/{userId}，
+  // 而是直接由 Firebase Auth 管理用戶 ID，並將聊天歷史存儲在 chatHistories/{userId}。
+  // 如果需要 artifacts/{appId}/users/{userId}，請恢復或添加相關規則。
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "example_npc_001": {
+    "name": "Test NPC",
+    "type": "human",
+    "x": 100,
+    "y": 100,
+    "portrait": "default_portrait",
+    "sprite": "default_character_sprite",
+    "dialogue_tree": {
+      "default": ["Hello, adventurer!", "How can I help you?"],
+      "0": ["Welcome, stranger."],
+      "1": ["It's good to see you again, friend."],
+      "2": ["Ah, my trusted ally. What brings you here?"]
+    }
+  },
+  "example_npc_002": {
+    "name": "Another NPC",
+    "type": "robot",
+    "x": 200,
+    "y": 200,
+    "portrait": "robot_portrait",
+    "sprite": "robot_character_sprite",
+    "dialogue_tree": {
+      "default": ["Greetings. Processing query."],
+      "0": ["Unit online."],
+      "1": ["Query received. Awaiting input."],
+      "2": ["Affirmative. How may I assist?"]
+    }
+  }
+}
