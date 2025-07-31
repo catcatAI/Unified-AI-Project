@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "python main.py"
+    "start": "python main.py",
+    "test": "pytest tests"
   }
 }

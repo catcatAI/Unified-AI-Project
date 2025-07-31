@@ -5,7 +5,7 @@ import sys
 from io import StringIO
 from unittest.mock import patch, MagicMock
 
-from src.interfaces.cli import main as cli_main
+from cli import main as cli_main
 
 class TestCLI(unittest.TestCase):
 
