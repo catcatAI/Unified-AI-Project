@@ -157,3 +157,86 @@ GitHub repos fetch failed: Error: GitHub Connect service not available
  GET /api/health 200 in 30ms
  GET /api/integration/health 200 in 51ms
  GET / 200 in 119ms
+ GET /api/health 200 in 23ms
+ GET /api/integration/health 200 in 33ms
+ GET / 200 in 66ms
+ GET /api/health 200 in 19ms
+ GET /api/integration/health 200 in 26ms
+ GET / 200 in 61ms
+ GET /api/health 200 in 29ms
+ GET /api/integration/health 200 in 38ms
+ GET / 200 in 72ms
+ GET /api/health 200 in 23ms
+ GET /api/integration/health 200 in 30ms
+ GET / 200 in 66ms
+ GET /api/health 200 in 27ms
+ GET /api/integration/health 200 in 21ms
+ GET / 200 in 88ms
+ GET /api/health 200 in 33ms
+ GET /api/integration/health 200 in 33ms
+ GET / 200 in 84ms
+ GET /api/health 200 in 21ms
+ GET /api/integration/health 200 in 24ms
+ GET /api/health 200 in 26ms
+ GET /api/integration/health 200 in 29ms
+ GET /api/health 200 in 34ms
+ GET /api/integration/health 200 in 42ms
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `npx tsx server.ts`[39m
+> Ready on http://0.0.0.0:3000
+> Socket.IO server running at ws://0.0.0.0:3000/api/socketio
+ ○ Compiling /api/health ...
+ ✓ Compiled /api/health in 640ms (363 modules)
+ GET /api/health 200 in 1043ms
+ ○ Compiling /api/integration/health ...
+ ✓ Compiled /api/integration/health in 563ms (367 modules)
+🔗 初始化整合橋接服務...
+🔄 服務狀態變化: aiDashboard -> error
+ GET /api/integration/health 200 in 687ms
+🔄 服務狀態變化: unifiedAI -> error
+🔄 服務狀態變化: githubConnect -> error
+ GET /api/health 200 in 31ms
+ GET /api/integration/health 200 in 21ms
+ GET /api/health 200 in 28ms
+ GET /api/integration/health 200 in 28ms
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `npx tsx server.ts`[39m
+> Ready on http://0.0.0.0:3000
+> Socket.IO server running at ws://0.0.0.0:3000/api/socketio
+ ○ Compiling / ...
+ ✓ Compiled / in 5s (1058 modules)
+ GET / 200 in 6273ms
+ ○ Compiling /api/health ...
+ ✓ Compiled /api/health in 815ms (1066 modules)
+ GET /api/health 200 in 1069ms
+🔗 初始化整合橋接服務...
+🔄 服務狀態變化: aiDashboard -> error
+ GET /api/integration/health 200 in 1120ms
+🔄 服務狀態變化: unifiedAI -> error
+🔄 服務狀態變化: githubConnect -> error
+ GET /api/health 200 in 27ms
+ GET /api/health 200 in 25ms
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `npx tsx server.ts`[39m
+> Ready on http://0.0.0.0:3000
+> Socket.IO server running at ws://0.0.0.0:3000/api/socketio
+ ○ Compiling / ...
+ ✓ Compiled / in 4.6s (1068 modules)
+ GET / 200 in 5834ms
+ ○ Compiling /api/health ...
+ ✓ Compiled /api/health in 812ms (1076 modules)
+ GET /api/health 200 in 1091ms
+🔗 初始化整合橋接服務...
+🔄 服務狀態變化: aiDashboard -> error
+ GET /api/integration/health 200 in 1139ms
+🔄 服務狀態變化: unifiedAI -> error
+🔄 服務狀態變化: githubConnect -> error
+ GET /api/health 200 in 28ms
+ GET /api/health 200 in 34ms
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `npx tsx server.ts`[39m
+> Ready on http://0.0.0.0:3000
+> Socket.IO server running at ws://0.0.0.0:3000/api/socketio
+ ○ Compiling /api/health ...
+ ✓ Compiled /api/health in 1435ms (363 modules)
+ GET /api/health 200 in 1844ms
