@@ -1,0 +1,5 @@
+core_ai
+hsp
+interfaces
+services
+tools

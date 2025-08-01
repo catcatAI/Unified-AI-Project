@@ -11,7 +11,7 @@ def game():
 
 @pytest.mark.timeout(5)
 def test_npc_creation(game):
-    import src.game.npcs
+    from src.game import npcs
     src.game.npcs.load_npc_data() # Ensure data is loaded
     for npc_id in src.game.npcs._NPC_DATA.keys():
         npc = create_npc(game, npc_id)

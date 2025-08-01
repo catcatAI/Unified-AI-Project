@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { sendMessage, startSession } from "../api/chat";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "../components/ui/use-toast";
 
 const Chat = () => {
   const { toast } = useToast();
