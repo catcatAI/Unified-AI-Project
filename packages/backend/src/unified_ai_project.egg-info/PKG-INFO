@@ -1,0 +1,194 @@
+Metadata-Version: 2.4
+Name: unified-ai-project
+Version: 0.1.0
+Summary: A unified AI project with modular architecture and optional dependencies
+Author: Unified AI Project Team
+License: MIT
+Project-URL: Homepage, https://github.com/pypa/sampleproject
+Project-URL: Bug Tracker, https://github.com/pypa/sampleproject/issues
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: Flask>=2.0.0
+Requires-Dist: numpy>=1.21.0
+Requires-Dist: cryptography>=3.4.0
+Requires-Dist: requests>=2.25.0
+Requires-Dist: python-dotenv>=0.19.0
+Requires-Dist: PyYAML>=6.0
+Requires-Dist: typing-extensions>=4.0.0
+Requires-Dist: paho-mqtt>=1.6.0
+Requires-Dist: networkx>=2.6.0
+Requires-Dist: psutil>=5.8.0
+Requires-Dist: faiss-cpu>=1.7.0
+Requires-Dist: sentence-transformers>=2.2.0
+Requires-Dist: gmqtt>=0.7.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: click>=8.0.0
+Requires-Dist: tqdm>=4.64.0
+Provides-Extra: minimal
+Requires-Dist: Flask; extra == "minimal"
+Requires-Dist: numpy; extra == "minimal"
+Requires-Dist: cryptography; extra == "minimal"
+Requires-Dist: requests; extra == "minimal"
+Requires-Dist: python-dotenv; extra == "minimal"
+Requires-Dist: PyYAML; extra == "minimal"
+Requires-Dist: typing-extensions; extra == "minimal"
+Requires-Dist: paho-mqtt; extra == "minimal"
+Requires-Dist: networkx; extra == "minimal"
+Requires-Dist: psutil; extra == "minimal"
+Requires-Dist: pandas; extra == "minimal"
+Requires-Dist: scikit-learn; extra == "minimal"
+Provides-Extra: standard
+Requires-Dist: Flask; extra == "standard"
+Requires-Dist: numpy; extra == "standard"
+Requires-Dist: cryptography; extra == "standard"
+Requires-Dist: requests; extra == "standard"
+Requires-Dist: python-dotenv; extra == "standard"
+Requires-Dist: PyYAML; extra == "standard"
+Requires-Dist: typing-extensions; extra == "standard"
+Requires-Dist: paho-mqtt; extra == "standard"
+Requires-Dist: networkx; extra == "standard"
+Requires-Dist: psutil; extra == "standard"
+Requires-Dist: pandas; extra == "standard"
+Requires-Dist: scikit-learn; extra == "standard"
+Requires-Dist: fastapi; extra == "standard"
+Requires-Dist: uvicorn; extra == "standard"
+Requires-Dist: pydantic; extra == "standard"
+Requires-Dist: httpx; extra == "standard"
+Provides-Extra: full
+Requires-Dist: Flask; extra == "full"
+Requires-Dist: numpy; extra == "full"
+Requires-Dist: cryptography; extra == "full"
+Requires-Dist: requests; extra == "full"
+Requires-Dist: python-dotenv; extra == "full"
+Requires-Dist: PyYAML; extra == "full"
+Requires-Dist: typing-extensions; extra == "full"
+Requires-Dist: paho-mqtt; extra == "full"
+Requires-Dist: networkx; extra == "full"
+Requires-Dist: psutil; extra == "full"
+Requires-Dist: pandas; extra == "full"
+Requires-Dist: scikit-learn; extra == "full"
+Requires-Dist: tensorflow; extra == "full"
+Requires-Dist: ml-dtypes~=0.3.1; extra == "full"
+Requires-Dist: tensorboard<2.17,>=2.16; extra == "full"
+Requires-Dist: spacy; extra == "full"
+Requires-Dist: fastapi; extra == "full"
+Requires-Dist: uvicorn; extra == "full"
+Requires-Dist: pydantic; extra == "full"
+Requires-Dist: httpx; extra == "full"
+Requires-Dist: pytest; extra == "full"
+Requires-Dist: pytest-asyncio; extra == "full"
+Requires-Dist: pytest-cov; extra == "full"
+Requires-Dist: aiounittest; extra == "full"
+Requires-Dist: pygame; extra == "full"
+Requires-Dist: PyQt5; extra == "full"
+Requires-Dist: pyshortcuts; extra == "full"
+Requires-Dist: secret-sharing; extra == "full"
+Requires-Dist: qrcode; extra == "full"
+Requires-Dist: beautifulsoup4; extra == "full"
+Requires-Dist: github3.py; extra == "full"
+Requires-Dist: scikit-image; extra == "full"
+Requires-Dist: SpeechRecognition; extra == "full"
+Requires-Dist: faiss-cpu; extra == "full"
+Requires-Dist: sentence-transformers; extra == "full"
+Requires-Dist: huggingface-hub; extra == "full"
+Requires-Dist: transformers; extra == "full"
+Provides-Extra: ai-focused
+Requires-Dist: Flask; extra == "ai-focused"
+Requires-Dist: numpy; extra == "ai-focused"
+Requires-Dist: cryptography; extra == "ai-focused"
+Requires-Dist: requests; extra == "ai-focused"
+Requires-Dist: python-dotenv; extra == "ai-focused"
+Requires-Dist: PyYAML; extra == "ai-focused"
+Requires-Dist: typing-extensions; extra == "ai-focused"
+Requires-Dist: paho-mqtt; extra == "ai-focused"
+Requires-Dist: networkx; extra == "ai-focused"
+Requires-Dist: psutil; extra == "ai-focused"
+Requires-Dist: pandas; extra == "ai-focused"
+Requires-Dist: scikit-learn; extra == "ai-focused"
+Requires-Dist: tensorflow; extra == "ai-focused"
+Requires-Dist: spacy; extra == "ai-focused"
+Requires-Dist: sentence-transformers; extra == "ai-focused"
+Requires-Dist: huggingface-hub; extra == "ai-focused"
+Requires-Dist: transformers; extra == "ai-focused"
+Provides-Extra: game
+Requires-Dist: Flask; extra == "game"
+Requires-Dist: numpy; extra == "game"
+Requires-Dist: cryptography; extra == "game"
+Requires-Dist: requests; extra == "game"
+Requires-Dist: python-dotenv; extra == "game"
+Requires-Dist: PyYAML; extra == "game"
+Requires-Dist: typing-extensions; extra == "game"
+Requires-Dist: paho-mqtt; extra == "game"
+Requires-Dist: networkx; extra == "game"
+Requires-Dist: psutil; extra == "game"
+Requires-Dist: pygame; extra == "game"
+Requires-Dist: pandas; extra == "game"
+Requires-Dist: scikit-learn; extra == "game"
+Provides-Extra: installer
+Requires-Dist: PyQt5; extra == "installer"
+Requires-Dist: pyshortcuts; extra == "installer"
+Requires-Dist: secret-sharing; extra == "installer"
+Requires-Dist: qrcode; extra == "installer"
+Provides-Extra: testing
+Requires-Dist: pytest; extra == "testing"
+Requires-Dist: pytest-asyncio; extra == "testing"
+Requires-Dist: pytest-cov; extra == "testing"
+Requires-Dist: pytest-timeout; extra == "testing"
+Requires-Dist: aiounittest; extra == "testing"
+Requires-Dist: astunparse; extra == "testing"
+Requires-Dist: cryptography; extra == "testing"
+Requires-Dist: aiohttp; extra == "testing"
+Requires-Dist: Flask; extra == "testing"
+Requires-Dist: python-dotenv; extra == "testing"
+Requires-Dist: paho-mqtt; extra == "testing"
+Requires-Dist: pandas; extra == "testing"
+Requires-Dist: scikit-learn; extra == "testing"
+Requires-Dist: spacy; extra == "testing"
+Requires-Dist: gmqtt; extra == "testing"
+Requires-Dist: pygame; extra == "testing"
+Requires-Dist: amqtt; extra == "testing"
+Requires-Dist: fastapi; extra == "testing"
+Requires-Dist: httpx; extra == "testing"
+Requires-Dist: uvicorn; extra == "testing"
+Dynamic: requires-python
+
+# Backend Package
+
+This package contains the core Python backend services for the Unified AI Project.
+
+## Features
+
+- AI models and logic
+- API endpoints (FastAPI)
+- Integrations with external services
+- Data processing and management
+
+## Getting Started
+
+To run the backend development server:
+
+```bash
+pnpm --filter backend dev
+```
+
+## Running Tests
+
+To run tests for the backend:
+
+```bash
+pnpm --filter backend test
+```
+
+To run tests with coverage:
+
+```bash
+pnpm --filter backend test:coverage
+```
