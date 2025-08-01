@@ -74,18 +74,15 @@ async def test_hsp_connector_init(hsp_connector: HSPConnector):
     assert hsp_connector is not None
 
 @pytest.mark.asyncio
-async def test_publish_fact(hsp_connector: HSPConnector, broker: MockMqttBroker):
+async def test_publish_fact(hsp_connector: HSPConnector, broker: MockMqttBroker, internal_bus: InternalBus):
     received_facts = []
 
     async def fact_handler(message):
         print(f"Fact handler called with: {message}")
         received_facts.append(message['payload'])
 
-    # The callback for the mock connector needs to be set to the message bridge's handler
-    hsp_connector.external_connector.on_message_callback = hsp_connector.message_bridge.handle_external_message
-
     # Subscribe to the internal bus topic
-    await hsp_connector.subscribe("fact", fact_handler)
+    await internal_bus.subscribe("hsp.internal.fact", fact_handler)
 
     fact_payload = HSPFactPayload(
         id=f"fact_{uuid.uuid4().hex}",
@@ -101,18 +98,6 @@ async def test_publish_fact(hsp_connector: HSPConnector, broker: MockMqttBroker)
     await hsp_connector.publish_fact(fact_payload, "hsp/knowledge/facts/test")
 
     await asyncio.sleep(0.2)
-
-    # Simulate message reception by calling the on_message_callback
-    # This is a bit of a hack, but necessary for the mock setup
-    # In a real scenario, the MQTT client would do this.
-    envelope = {
-        "payload": fact_payload,
-        "sender_ai_id": "test_ai",
-        "message_type": "HSP::Fact_v0.1",
-        "qos_parameters": {"requires_ack": False}
-    }
-    await hsp_connector.message_bridge.handle_external_message("hsp/knowledge/facts/test", json.dumps(envelope).encode('utf-8'))
-
 
     assert len(received_facts) > 0, "No facts were received"
     assert received_facts[0]["id"] == fact_payload["id"]
