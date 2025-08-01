@@ -162,3 +162,66 @@ async def test_get_simple_response_no_project_trigger(mock_core_services):
 
     # Assert
     project_coordinator.handle_project.assert_not_called()
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(10)
+async def test_get_simple_response_tool_dispatch_success(mock_core_services):
+    """
+    Tests the flow where the ToolDispatcher successfully finds and runs a tool.
+    """
+    # Arrange
+    dm = mock_core_services["dialogue_manager"]
+    tool_dispatcher = mock_core_services["tool_dispatcher"]
+
+    success_payload = "The current time is 10:00 AM."
+    tool_dispatcher.dispatch.return_value = ToolDispatcherResponse(
+        status="success",
+        payload=success_payload,
+        tool_name_attempted="get_time_tool",
+        original_query_for_tool="what time is it?",
+        error_message=None
+    )
+
+    user_input = "what time is it?"
+
+    # Act
+    response = await dm.get_simple_response(user_input)
+
+    # Assert
+    # The final response should be the payload from the successful tool dispatch
+    assert response == success_payload
+    tool_dispatcher.dispatch.assert_awaited_once_with(user_input, session_id=None, user_id=None)
+    # Ensure the memory manager is still called
+    mock_core_services["ham_manager"].store_experience.assert_called()
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(10)
+async def test_get_simple_response_tool_dispatch_error(mock_core_services):
+    """
+    Tests the flow where the ToolDispatcher finds a tool, but it fails.
+    """
+    # Arrange
+    dm = mock_core_services["dialogue_manager"]
+    tool_dispatcher = mock_core_services["tool_dispatcher"]
+
+    error_message = "API key is invalid."
+    tool_dispatcher.dispatch.return_value = ToolDispatcherResponse(
+        status="error",
+        payload=None,
+        tool_name_attempted="weather_tool",
+        original_query_for_tool="weather in london",
+        error_message=error_message
+    )
+
+    user_input = "weather in london"
+    expected_response = f"TestAI: An error occurred while processing your request: {error_message}"
+
+    # Act
+    response = await dm.get_simple_response(user_input)
+
+    # Assert
+    # The final response should be the formatted error message
+    assert response == expected_response
+    tool_dispatcher.dispatch.assert_awaited_once_with(user_input, session_id=None, user_id=None)
+    # Ensure the memory manager is still called, even on error
+    mock_core_services["ham_manager"].store_experience.assert_called()
