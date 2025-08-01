@@ -317,11 +317,9 @@ tests, documentation, and configuration files.
   `TypeError` exceptions when calling `json.dumps` on non-serializable objects.
 
 - **Issue**: Fragile `asyncio.sleep(5)` after launching an agent.
-- **Status**: **Completed**
-- **Proposed Change**: Implement a more robust handshake mechanism. The
-  `AgentManager` could return a future that is completed when the agent has
-  successfully advertised its capabilities. The `ProjectCoordinator` would then
-  `await` this future before sending a task request.
+- **Status**: **In Progress**
+- **Implemented Change**: The hardcoded sleep was replaced with a loop that waits for the new agent's capabilities to appear in the `ServiceDiscoveryModule`. The `ProjectCoordinator`'s `_dispatch_single_subtask` method now attempts to launch the agent and then polls for its capabilities within a 10-second timeout.
+- **Remaining Issue**: This polling mechanism is an improvement but is still not a true event-driven handshake. A more robust solution would involve the `AgentManager` returning a future or event that is signaled directly by the new agent's advertisement, avoiding the need for polling. This logic also currently lacks any unit tests.
 
 #### `HSPConnector` (`src/hsp/connector.py`)
 
@@ -358,16 +356,18 @@ tests, documentation, and configuration files.
 ### 2.2. Tests (`/tests`)
 
 - **Issue**: No dedicated unit tests for `ProjectCoordinator`.
-- **Status**: **Completed**
+- **Status**: **In Progress**
 - **Proposed Change**: Create a new test file
   `tests/core_ai/dialogue/test_project_coordinator.py` with comprehensive unit
   tests for the `ProjectCoordinator`'s logic.
+- **Note**: While the file `test_project_coordinator.py` has been created, the existing tests are superficial, rely heavily on mocks, and do not adequately validate the core orchestration logic. They need to be rewritten to be more thorough.
 
 - **Issue**: Limited integration test scenarios.
-- **Status**: **Completed**
+- **Status**: **In Progress**
 - **Proposed Change**: Add more integration tests to
   `tests/integration/test_agent_collaboration.py` to cover edge cases and
   failure modes, such as failing subtasks and agent launch failures.
+- **Note**: The current integration tests are a starting point but do not cover the full end-to-end workflow as described in the "Lack of 'real' integration tests" issue.
 
 - **Issue**: Lack of "real" integration tests.
 - **Status**: **Not Completed**
