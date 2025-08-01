@@ -119,7 +119,7 @@ class TestAtlassianBridgeFallback:
     @pytest.mark.asyncio
     async def test_all_endpoints_fail(self, bridge):
         """測試所有端點都失敗"""
-        bridge.connector._make_request.side_effect = aiohttp.ClientError("All failed")
+        bridge.connector._make_request_with_retry.side_effect = aiohttp.ClientError("All failed")
 
         with pytest.raises(aiohttp.ClientError):
             await bridge._make_request_with_fallback(
@@ -264,7 +264,7 @@ class TestAtlassianBridgeFallback:
         test_data = {'id': '123', 'title': 'Cached Page'}
         
         # 第一次請求，應該調用API並緩存
-        bridge.connector._make_request.return_value = test_data
+        bridge.connector._make_request_with_retry.return_value = test_data
         
         result1 = await bridge._make_request_with_fallback(
             'confluence', 'GET', 'rest/api/content/123'
@@ -294,7 +294,7 @@ class TestAtlassianBridgeFallback:
         bridge.offline_mode = True
         
         # 模擬所有端點失敗
-        bridge.connector._make_request.side_effect = aiohttp.ClientError("All failed")
+        bridge.connector._make_request_with_retry.side_effect = aiohttp.ClientError("All failed")
         
         # 應該返回過期緩存
         result = await bridge._make_request_with_fallback(

@@ -12,12 +12,12 @@ def game():
 @pytest.mark.timeout(5)
 def test_npc_creation(game):
     from src.game import npcs
-    src.game.npcs.load_npc_data() # Ensure data is loaded
-    for npc_id in src.game.npcs._NPC_DATA.keys():
+    npcs.load_npc_data() # Ensure data is loaded
+    for npc_id in npcs._NPC_DATA.keys():
         npc = create_npc(game, npc_id)
         assert npc is not None
-        assert npc.name == src.game.npcs._NPC_DATA[npc_id]['name']
-        assert npc.dialogue_tree == src.game.npcs._NPC_DATA[npc_id].get('dialogue_tree', {})
+        assert npc.name == npcs._NPC_DATA[npc_id]['name']
+        assert npc.dialogue_tree == npcs._NPC_DATA[npc_id].get('dialogue_tree', {})
 
 @pytest.mark.timeout(5)
 def test_npc_creation_invalid_id(game):

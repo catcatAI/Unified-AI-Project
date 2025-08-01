@@ -1,5 +1,6 @@
 import pytest
 import asyncio
+pytest_plugins = ('pytest_asyncio',)
 import json
 from src.hsp.connector import HSPConnector
 from tests.hsp.test_hsp_integration import MockMqttBroker
@@ -39,7 +40,7 @@ def data_aligner():
     return DataAligner()
 
 @pytest.fixture
-def hsp_connector(broker, internal_bus, data_aligner):
+async def hsp_connector(broker, internal_bus, data_aligner):
     class DummyExternalConnector:
         def __init__(self, mqtt_client):
             self.mqtt_client = mqtt_client
@@ -58,7 +59,7 @@ def hsp_connector(broker, internal_bus, data_aligner):
         1883,
         mock_mode=True,
         mock_mqtt_client=broker,
-        internal_bus=internal_bus,
+        
         message_bridge=message_bridge
     )
     await connector.connect()
@@ -82,7 +83,7 @@ async def test_publish_fact(hsp_connector: HSPConnector, broker: MockMqttBroker,
         received_facts.append(message['payload'])
 
     # Subscribe to the internal bus topic
-    await internal_bus.subscribe("hsp.internal.fact", fact_handler)
+    internal_bus.subscribe("hsp.internal.fact", fact_handler)
 
     fact_payload = HSPFactPayload(
         id=f"fact_{uuid.uuid4().hex}",

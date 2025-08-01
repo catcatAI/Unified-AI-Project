@@ -32,6 +32,7 @@ async def broker(event_loop):
     await broker.shutdown()
 
 @pytest.fixture
+@pytest.mark.asyncio
 async def hsp_connector(broker):
     connector = HSPConnector(
         TEST_AI_ID,
