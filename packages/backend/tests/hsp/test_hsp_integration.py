@@ -1,5 +1,6 @@
 import pytest
 import asyncio
+pytestmark = pytest.mark.asyncio
 import uuid
 import time
 from datetime import datetime, timezone
@@ -144,16 +145,16 @@ def event_loop():
     yield loop
     loop.close()
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def shared_internal_bus():
     return InternalBus()
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def shared_data_aligner():
     return DataAligner()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: InternalBus, shared_data_aligner: DataAligner):
     # The MessageBridge needs an external_connector, which is the mock_mqtt_client from the broker
     # We'll create a dummy ExternalConnector for the MessageBridge to use,
@@ -375,7 +376,7 @@ def personality_manager_fixture() -> PersonalityManager:
 
 import threading
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 @pytest.mark.timeout(30)  # Increased timeout for broker setup/teardown
 async def broker():
     mock_broker = MockMqttBroker()
@@ -469,20 +470,19 @@ async def configured_learning_manager(
         },
         "default_hsp_fact_topic": FACT_TOPIC_GENERAL
     }
-    async for connector in main_ai_hsp_connector:
-        lm = LearningManager(
-            TEST_AI_ID_MAIN,
-            ham_manager_fixture,
-            fact_extractor_fixture,
-            personality_manager_fixture,
-            content_analyzer_module_fixture,
-            connector,
-            trust_manager_fixture,
-            config
-        )
-        if connector:
-            connector.register_on_fact_callback(lm.process_and_store_hsp_fact)
-        yield lm
+    lm = LearningManager(
+        TEST_AI_ID_MAIN,
+        ham_manager_fixture,
+        fact_extractor_fixture,
+        personality_manager_fixture,
+        content_analyzer_module_fixture,
+        main_ai_hsp_connector,
+        trust_manager_fixture,
+        config
+    )
+    if main_ai_hsp_connector:
+        main_ai_hsp_connector.register_on_fact_callback(lm.process_and_store_hsp_fact)
+    yield lm
 
 
 @pytest.fixture
@@ -491,7 +491,7 @@ async def service_discovery_module_fixture(main_ai_hsp_connector: HSPConnector, 
     sdm = ServiceDiscoveryModule(trust_manager=trust_manager_fixture)
     main_ai_hsp_connector.register_on_capability_advertisement_callback(sdm.process_capability_advertisement)
     await asyncio.sleep(0.2)
-    return sdm
+    yield sdm
 
 
 
@@ -541,7 +541,7 @@ async def dialogue_manager_fixture(
     results_topic = f"hsp/results/{TEST_AI_ID_MAIN}/#"
     await main_ai_hsp_connector.subscribe(results_topic, lambda topic, payload: None)
     await asyncio.sleep(0.1)  # Allow subscription to be processed
-    return dm
+    yield dm
 
 
 # --- Test Classes ---
@@ -850,9 +850,8 @@ class TestHSPTaskDelegation:
             tags=["weather", "forecast"]
         )  # type: ignore
         
-        # Publish the capability advertisement
         await peer_a_hsp_connector.publish_capability_advertisement(cap_payload)
-        await asyncio.sleep(0.2) # allow time for propagation
+        await asyncio.sleep(0.2)
         
         # 2. Verify Main AI's SDM has registered the capability
         assert sdm.is_capability_available("advanced_weather_forecast")
@@ -875,7 +874,6 @@ class TestHSPTaskDelegation:
         task_received_event = asyncio.Event()
         
         peer_a_hsp_connector.register_on_task_request_callback(lambda tp, sai, env: self._peer_a_task_handler(tp, sai, env, peer_a_hsp_connector, task_received_event))
-        await asyncio.sleep(0.2)
         
         # 5. Trigger the DM and wait for the result
         final_response = await dm.get_simple_response(query, "test_session_task", "test_user_task")
@@ -912,11 +910,9 @@ class TestHSPTaskDelegation:
             tags=["test", "failing"]
         )
 
-        # Publish the capability advertisement
         await peer_a_hsp_connector.publish_capability_advertisement(cap_payload)
-        
-        # Give some time for the message to be processed
         await asyncio.sleep(1.0)
+
         # 2. Verify Main AI's SDM has registered the capability
         # First, check if the capability was received by the main AI's SDM
         capabilities = sdm.find_capabilities(capability_id_filter=capability_id)
@@ -936,7 +932,6 @@ class TestHSPTaskDelegation:
         task_received_event = asyncio.Event()
         
         peer_a_hsp_connector.register_on_task_request_callback(lambda tp, sai, env: self._peer_a_failing_handler(tp, sai, env, peer_a_hsp_connector, task_received_event, capability_id))
-        await asyncio.sleep(0.2)
         
         # 4. Set up a fallback response from the LLM
         fallback_response = "I couldn't access the failing service, but here's a fallback response."

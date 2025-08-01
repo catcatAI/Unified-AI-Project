@@ -2,27 +2,27 @@ import unittest
 import pytest
 import os
 import sys
+import asyncio
 from io import StringIO
 from unittest.mock import patch, MagicMock
 
 from cli import main as cli_main
 
-class TestCLI(unittest.TestCase):
+class TestCLI:
 
     @pytest.mark.timeout(5)
-    def test_01_cli_no_args(self):
+    async def test_01_cli_no_args(self):
         """Test CLI response when no arguments are provided."""
         with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
             with patch('sys.argv', ['main.py']): # Simulate calling script with no arguments
-                with patch('asyncio.run') as mock_run:
-                    cli_main.main_cli_logic()
+                with patch('asyncio.sleep', return_value=None):
+                    await cli_main.main_cli_logic()
 
-    @patch('src.interfaces.cli.main.initialize_services')
-    @patch('src.interfaces.cli.main.get_services')
-    @patch('src.interfaces.cli.main.shutdown_services')
-    @patch('asyncio.run')
+    @patch('cli.main.initialize_services')
+    @patch('cli.main.get_services')
+    @patch('cli.main.shutdown_services')
     @pytest.mark.timeout(5)
-    def test_02_cli_query_with_emotion(self, mock_async_run, mock_shutdown, mock_get, mock_init):
+    async def test_02_cli_query_with_emotion(self, mock_shutdown, mock_get, mock_init):
         """Test the 'query' command with LLM and Emotion integration."""
         mock_dm = MagicMock()
         mock_get.return_value = {"dialogue_manager": mock_dm}
@@ -40,21 +40,22 @@ class TestCLI(unittest.TestCase):
 
         for case in test_cases:
             # The mock_dm.get_simple_response is now what's being awaited inside the new async wrapper
-            mock_async_run.return_value = case["dm_response"]
+            async def mock_get_simple_response(*args, **kwargs):
+                return case["dm_response"]
+            mock_dm.get_simple_response = MagicMock(side_effect=mock_get_simple_response)
 
             with patch('sys.argv', ['main.py', 'query', case["input"]]):
                 captured_output = StringIO()
                 with patch('sys.stdout', new=captured_output):
-                    cli_main.main_cli_logic()
+                    await cli_main.main_cli_logic()
                 output = captured_output.getvalue()
-                self.assertIn(case["expected_substring"], output)
+                assert case["expected_substring"] in output
 
-    @patch('src.interfaces.cli.main.initialize_services')
-    @patch('src.interfaces.cli.main.get_services')
-    @patch('src.interfaces.cli.main.shutdown_services')
-    @patch('asyncio.run')
+    @patch('cli.main.initialize_services')
+    @patch('cli.main.get_services')
+    @patch('cli.main.shutdown_services')
     @pytest.mark.timeout(5)
-    def test_05_cli_query_crisis_response(self, mock_async_run, mock_shutdown, mock_get, mock_init):
+    async def test_05_cli_query_crisis_response(self, mock_shutdown, mock_get, mock_init):
         """Test the 'query' command for crisis response."""
         mock_dm = MagicMock()
         mock_get.return_value = {"dialogue_manager": mock_dm}
@@ -68,15 +69,13 @@ class TestCLI(unittest.TestCase):
         expected_substring = "appropriate support channels"
 
         # Mock the return value of asyncio.run which wraps the DM call
-        mock_async_run.return_value = expected_crisis_output
+        async def mock_get_simple_response(*args, **kwargs):
+            return expected_crisis_output
+        mock_dm.get_simple_response = MagicMock(side_effect=mock_get_simple_response)
 
         with patch('sys.argv', ['main.py', 'query', test_query_crisis]):
             captured_output = StringIO()
             with patch('sys.stdout', new=captured_output):
-                cli_main.main_cli_logic()
+                await cli_main.main_cli_logic()
             output = captured_output.getvalue()
-            self.assertIn(expected_substring, output)
-
-
-if __name__ == '__main__':
-    unittest.main(verbosity=2)
+            assert expected_substring in output
