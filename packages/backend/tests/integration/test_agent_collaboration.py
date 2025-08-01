@@ -28,54 +28,49 @@ class TestAgentCollaboration(unittest.TestCase):
             },
             "mcp_connector": {
                 "enabled": False
+            },
+            "mcp": {
+                "mqtt_broker_address": "localhost",
+                "mqtt_broker_port": 1883,
+                "enable_fallback": False
             }
         }
-        initialize_services(config=mock_config, use_mock_ham=True)
-        cls.services = get_services()
-        cls.dialogue_manager = cls.services.get("dialogue_manager")
+        async def _async_setup():
+            await initialize_services(config=mock_config, use_mock_ham=True)
+            cls.services = get_services()
+            cls.dialogue_manager = cls.services.get("dialogue_manager")
+        asyncio.run(_async_setup())
 
     @classmethod
     def tearDownClass(cls):
         """Shutdown services after all tests."""
-        shutdown_services()
+        async def _async_teardown():
+            await shutdown_services()
+        asyncio.run(_async_teardown())
 
     @pytest.mark.timeout(10)
     def test_handle_complex_project_with_dag(self):
         """
         End-to-end test for a complex project involving a DAG of tasks.
         """
-        # 1. Mock the LLM's decomposition response to produce a plan with dependencies
-        mock_decomposed_plan = [
-            {
-                "capability_needed": "analyze_csv_data",
-                "task_parameters": { "query": "summarize", "csv_content": "header1,header2\nval1,val2" },
-                "task_description": "First, get a statistical summary of the provided data."
-            },
-            {
-                "capability_needed": "generate_marketing_copy",
-                "task_parameters": { "product_description": "<output_of_task_0>", "target_audience": "data scientists" },
-                "task_description": "Then, write marketing copy based on the data summary."
-            }
-        ]
+        
 
-        # 2. Mock the LLM's integration response
-        mock_integration_response = "Based on the data summary, our new product is revolutionary for data scientists."
-
-        # We need to patch the llm_interface used by the dialogue_manager
-        with patch('src.services.multi_llm_service.MultiLLMService.chat_completion', new_callable=AsyncMock) as mock_chat_completion:
-            mock_chat_completion.side_effect = [
+        
+        
+        with patch('src.services.multi_llm_service.MultiLLMService.generate_response', new_callable=AsyncMock) as mock_generate_response:
+            mock_generate_response.side_effect = [
                 str(mock_decomposed_plan).replace("'", '"'),
                 mock_integration_response
             ]
             # The rest of the test logic that uses self.dialogue_manager.llm_interface
-            # will now use the patched mock_chat_completion.
+            # will now use the patched mock_generate_response.
             final_response = asyncio.run(self.dialogue_manager.get_simple_response(user_query))
 
         # Check that the LLM was called twice (decomposition and integration)
-        self.assertEqual(mock_chat_completion.call_count, 2)
+        self.assertEqual(mock_generate_response.call_count, 2)
 
         # Check the integration prompt
-        integration_call_args = mock_chat_completion.call_args_list[1]
+        integration_call_args = mock_generate_response.call_args_list[1]
         self.assertIn("User's Original Request", integration_call_args.kwargs['prompt'])
         self.assertIn("Collected Results from Sub-Agents", integration_call_args.kwargs['prompt'])
         self.assertIn("CSV has 2 columns", integration_call_args.kwargs['prompt'])
@@ -84,13 +79,6 @@ class TestAgentCollaboration(unittest.TestCase):
         # Check that the final response contains the integrated text
         self.assertIn("Based on the data summary", final_response)
         self.assertIn("revolutionary for data scientists", final_response)
-
-        # Remove the original assertions that are now part of the patch block
-        # self.assertEqual(llm_interface_mock.generate_response.call_count, 2)
-        # integration_call_args = llm_interface_mock.generate_response.call_args_list[1]
-        # self.assertIn("User's Original Request", integration_call_args.kwargs['prompt'])
-        # self.assertIn("Collected Results from Sub-Agents", integration_call_args.kwargs['prompt'])
-        # self.assertIn("CSV has 2 columns", integration_call_args.kwargs['prompt'])
 
         # 3. Mock the sub-agent responses (via _dispatch_single_subtask)
         # This is tricky as it's an internal async method. We can patch it.
@@ -106,8 +94,6 @@ class TestAgentCollaboration(unittest.TestCase):
         patcher_dispatch = patch.object(self.dialogue_manager, '_dispatch_single_subtask', new=AsyncMock(side_effect=mock_dispatch_subtask))
 
         # 4. Run the complex project handler
-        user_query = "project: Analyze this CSV and write marketing copy."
-
         with patcher_dispatch:
             final_response = asyncio.run(self.dialogue_manager.get_simple_response(user_query))
 
@@ -139,7 +125,7 @@ class TestAgentCollaboration(unittest.TestCase):
         mock_integration_response = "Both tasks completed."
 
         with patch('src.services.multi_llm_service.MultiLLMService.chat_completion', new_callable=AsyncMock) as mock_chat_completion:
-            mock_generate_response.side_effect = [
+            mock_chat_completion.side_effect = [
                 str(mock_decomposed_plan).replace("'", '"'),
                 mock_integration_response
             ]
@@ -160,7 +146,7 @@ class TestAgentCollaboration(unittest.TestCase):
 
             # 5. Assertions
             self.assertIn("Both tasks completed", final_response)
-            self.assertEqual(mock_generate_response.call_count, 2)
+            self.assertEqual(mock_chat_completion.call_count, 2)
 
     @pytest.mark.timeout(10)
     def test_handle_project_failing_subtask(self):
@@ -173,7 +159,7 @@ class TestAgentCollaboration(unittest.TestCase):
         mock_integration_response = "The project failed."
 
         with patch('src.services.multi_llm_service.MultiLLMService.chat_completion', new_callable=AsyncMock) as mock_chat_completion:
-            mock_generate_response.side_effect = [
+            mock_chat_completion.side_effect = [
                 str(mock_decomposed_plan).replace("'", '"'),
                 mock_integration_response
             ]
@@ -188,7 +174,7 @@ class TestAgentCollaboration(unittest.TestCase):
             # 5. Assertions
             self.assertIn("The project failed", final_response)
             # Check that the integration prompt contains the error
-            integration_call_args = mock_generate_response.call_args_list[1]
+            integration_call_args = mock_chat_completion.call_args_list[1]
             self.assertIn("failing_task_v1", integration_call_args.kwargs['prompt'])
             self.assertIn("Task failed", integration_call_args.kwargs['prompt'])
 
@@ -203,7 +189,7 @@ class TestAgentCollaboration(unittest.TestCase):
         mock_integration_response = "Dynamically launched agent and it worked."
 
         with patch('src.services.multi_llm_service.MultiLLMService.chat_completion', new_callable=AsyncMock) as mock_chat_completion:
-            mock_generate_response.side_effect = [
+            mock_chat_completion.side_effect = [
                 str(mock_decomposed_plan).replace("'", '"'),
                 mock_integration_response
             ]
