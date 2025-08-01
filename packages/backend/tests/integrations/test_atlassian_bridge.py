@@ -57,6 +57,7 @@ class TestAtlassianBridge:
     @pytest.mark.asyncio
     async def test_create_confluence_page(self, bridge, mock_connector):
         """测试创建 Confluence 页面"""
+    bridge = await bridge
         # Mock response
         mock_response = {
             'id': '123456',
@@ -81,6 +82,7 @@ class TestAtlassianBridge:
     @pytest.mark.asyncio
     async def test_create_jira_issue(self, bridge, mock_connector):
         """测试创建 Jira 问题"""
+    bridge = await bridge
         mock_response = {
             'id': '10001',
             'key': 'TEST-123',
@@ -102,6 +104,7 @@ class TestAtlassianBridge:
     @pytest.mark.asyncio
     async def test_search_jira_issues(self, bridge, mock_connector):
         """测试搜索 Jira 问题"""
+    bridge = await bridge
         mock_response = {
             'issues': [
                 {
@@ -134,6 +137,7 @@ class TestAtlassianBridge:
     @pytest.mark.asyncio
     async def test_update_confluence_page(self, bridge, mock_connector):
         """测试更新 Confluence 页面"""
+    bridge = await bridge
         mock_response = {
             'id': '123456',
             'version': {'number': 2},
@@ -154,6 +158,7 @@ class TestAtlassianBridge:
     @pytest.mark.asyncio
     async def test_get_confluence_spaces(self, bridge, mock_connector):
         """测试获取 Confluence 空间"""
+    bridge = await bridge
         mock_response = {
             'results': [
                 {
@@ -181,6 +186,7 @@ class TestAtlassianBridge:
     @pytest.mark.asyncio
     async def test_get_jira_projects(self, bridge, mock_connector):
         """测试获取 Jira 项目"""
+    bridge = await bridge
         mock_response = [
             {
                 'id': '10000',
@@ -239,6 +245,7 @@ class TestAtlassianBridge:
     
     def test_jira_field_mapping(self, bridge):
         """测试 Jira 字段映射"""
+    bridge = asyncio.run(bridge)
         issue_data = {
             'summary': 'Test Summary',
             'description': 'Test Description',
