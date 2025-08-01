@@ -68,7 +68,7 @@ def setup_cli_hsp_callbacks():
         print("CLI App: HSPConnector not available from core_services. Cannot register CLI HSP callbacks.")
 
 
-def handle_query(args):
+async def handle_query(args):
     services = get_services()
     dialogue_manager = services.get("dialogue_manager")
     if not dialogue_manager:
@@ -77,11 +77,11 @@ def handle_query(args):
 
     print(f"CLI: Sending query to DialogueManager: '{args.query_text}'")
 
-    response_text = asyncio.run(dialogue_manager.get_simple_response(
+    response_text = await dialogue_manager.get_simple_response(
         user_input=args.query_text,
         user_id="cli_user",
         session_id=f"cli_session_{uuid.uuid4().hex[:6]}" # Unique session for each query
-    ))
+    )
     print(f"AI: {response_text}")
 
 
@@ -127,7 +127,7 @@ def handle_publish_fact(args):
         print(f"CLI: Failed to publish manual fact to topic '{topic}'.")
 
 
-def main_cli_logic():
+async def main_cli_logic():
     parser = argparse.ArgumentParser(description="Unified-AI-Project Command Line Interface")
     subparsers = parser.add_subparsers(dest="command", help="Available commands", required=False)
 
@@ -146,7 +146,16 @@ def main_cli_logic():
     # Initialize core services
     # For CLI, we might want to use MockHAM and MockLLM by default.
     # core_services.initialize_services can be extended to accept flags for this.
-    initialize_services(
+    config = {
+        "mcp": {
+            "mqtt_broker_address": "localhost",
+            "mqtt_broker_port": 1883,
+            "enable_fallback": True,
+            "fallback_config": {}
+        }
+    }
+    await initialize_services(
+        config=config,
         ai_id=cli_ai_id,
         use_mock_ham=True, # Use MockHAM for CLI
         
@@ -163,16 +172,19 @@ def main_cli_logic():
              parser.print_help(sys.stderr)
              # Keep CLI running to listen for HSP messages if no command is given
              print("\nCLI: No command provided. Listening for HSP messages for 60 seconds (Ctrl+C to exit)...")
-             asyncio.run(asyncio.sleep(60))
+             await asyncio.sleep(60)
              return # Exit the function gracefully
 
         args = parser.parse_args()
         if hasattr(args, 'func'):
-            args.func(args)
+            if asyncio.iscoroutinefunction(args.func):
+                await args.func(args)
+            else:
+                args.func(args)
             # If it was not a query, keep alive briefly for HSP messages
             if args.command != "query":
                  print("\nCLI: Task complete. Listening for HSP messages for a few seconds (Ctrl+C to exit)...")
-                 asyncio.run(asyncio.sleep(10))
+                 await asyncio.sleep(10)
         else: # Should be caught by len(sys.argv) check if truly no command
             parser.print_help(sys.stderr)
 
@@ -185,9 +197,9 @@ def main_cli_logic():
         print("CLI: Initiating service shutdown...")
         if service_discovery_module:
             service_discovery_module.stop_cleanup_task()
-        shutdown_services() # From core_services
+        await shutdown_services() # From core_services
         print("CLI: Exiting.")
 
 
 if __name__ == '__main__':
-    main_cli_logic()
+    asyncio.run(main_cli_logic())
