@@ -61,9 +61,9 @@ def hsp_connector(broker, internal_bus, data_aligner):
         internal_bus=internal_bus,
         message_bridge=message_bridge
     )
-    asyncio.run(connector.connect())
+    await connector.connect()
     yield connector
-    asyncio.run(connector.disconnect())
+    await connector.disconnect()
 
 from src.hsp.types import HSPFactPayload
 import uuid

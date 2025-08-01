@@ -6,7 +6,7 @@ import asyncio
 from io import StringIO
 from unittest.mock import patch, MagicMock
 
-from cli import main as cli_main
+from cli.main import *
 
 class TestCLI:
 
