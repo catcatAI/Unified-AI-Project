@@ -332,6 +332,12 @@ tests, documentation, and configuration files.
 - **Proposed Change**: Refactor the `on_message` method into smaller, more
   focused methods (e.g., `_decode_message`, `_handle_ack`, `_dispatch_payload`).
 
+##### Tests
+
+- **Issue**: The fallback communication mechanism is completely untested.
+- **Status**: **Not Completed**
+- **Proposed Change**: Add unit tests to `tests/hsp/test_hsp_connector.py` that specifically simulate an HSP connection failure and verify that the connector correctly attempts to send messages via the `FallbackProtocolManager`.
+
 #### `ServiceDiscoveryModule` (`src/core_ai/service_discovery/service_discovery_module.py`)
 
 - **Issue**: Stale capabilities are not removed from the `known_capabilities`

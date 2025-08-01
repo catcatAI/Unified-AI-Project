@@ -270,6 +270,51 @@ async def test_hsp_connector_register_specific_callbacks(hsp_connector_instance)
     mock_task_request_callback.assert_not_called()
     mock_task_result_callback.assert_not_called()
 
+@pytest.mark.asyncio
+async def test_hsp_connector_fallback_mechanism(hsp_connector_instance, mock_mqtt_client):
+    """
+    Tests that the HSPConnector correctly uses the fallback mechanism when
+    the primary MQTT publish fails.
+    """
+    # Arrange
+    connector = hsp_connector_instance
+    topic = "hsp/test/fallback"
+    envelope: HSPMessageEnvelope = {
+        "hsp_envelope_version": "0.1", "message_id": "msg_fallback", "sender_ai_id": "test_ai",
+        "recipient_ai_id": "any_ai", "timestamp_sent": "2024-07-05T19:00:00Z",
+        "message_type": "HSP::Fact_v0.1", "protocol_version": "0.1",
+        "communication_pattern": "publish", "payload": {"id": "fact_fallback"},
+        "correlation_id": None, "security_parameters": None, "qos_parameters": None,
+        "routing_info": None, "payload_schema_uri": None
+    }
+
+    # Simulate a failure in the primary publish method
+    connector.external_connector.publish = AsyncMock(side_effect=Exception("MQTT Broker is down"))
+
+    # Mock the fallback manager and its send method
+    mock_fallback_manager = MagicMock()
+    mock_fallback_manager.send_message = AsyncMock(return_value=True)
+    connector.fallback_manager = mock_fallback_manager
+    connector.enable_fallback = True
+
+    # Act
+    success = await connector.publish_message(topic, envelope)
+
+    # Assert
+    assert success is True
+
+    # Verify that the primary publish method was called
+    connector.external_connector.publish.assert_awaited_once_with(topic, json.dumps(envelope).encode('utf-8'), qos=1)
+
+    # Verify that the fallback manager's send_message was called as a result of the failure
+    mock_fallback_manager.send_message.assert_awaited_once()
+
+    # Check the details of the message passed to the fallback manager
+    fallback_call_args = mock_fallback_manager.send_message.call_args[0]
+    fallback_message = fallback_call_args[3] # The payload is the 4th argument
+    assert fallback_message['topic'] == topic
+    assert fallback_message['envelope'] == envelope
+
     # Reset mocks for next test
     mock_fact_callback.reset_mock()
 
