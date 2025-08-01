@@ -562,9 +562,7 @@ class TestHSPFactPublishing:
         configured_learning_manager: LearningManager,
         peer_a_hsp_connector: HSPConnector
     ):
-        # Fixtures are now directly awaited by pytest-asyncio, no need for anext()
-        # configured_learning_manager = await anext(configured_learning_manager)
-        # peer_a_hsp_connector = await anext(peer_a_hsp_connector)
+        
         self.received_facts_on_peer = [] # Reset for each test run
 
         peer_a_hsp_connector.register_on_fact_callback(self._peer_fact_handler)
@@ -601,7 +599,6 @@ class TestHSPFactConsumption:
         # peer_a_hsp_connector = await anext(peer_a_hsp_connector)
         # peer_b_hsp_connector = await anext(peer_b_hsp_connector)
         # main_ai_hsp_connector = await anext(main_ai_hsp_connector)
-        # ... (test body as previously defined) ...
         if not main_ai_hsp_connector.is_connected:
             pytest.fail("Main AI connector failed to subscribe")
         
@@ -674,11 +671,6 @@ class TestHSPFactConsumption:
         main_ai_hsp_connector: HSPConnector,
         trust_manager_fixture: TrustManager
     ):
-        # Fixtures are now directly awaited by pytest-asyncio, no need for anext()
-        # configured_learning_manager = await anext(configured_learning_manager)
-        # peer_a_hsp_connector = await anext(peer_a_hsp_connector)
-        # main_ai_hsp_connector = await anext(main_ai_hsp_connector)
-        # ... (test body as previously defined) ...
         if not main_ai_hsp_connector.is_connected:
             pytest.fail("Main AI connector failed to subscribe")
         
@@ -731,10 +723,6 @@ class TestHSPFactConsumption:
         main_ai_hsp_connector: HSPConnector,
         trust_manager_fixture: TrustManager
     ):
-        # Fixtures are now directly awaited by pytest-asyncio, no need for anext()
-        # configured_learning_manager = await anext(configured_learning_manager)
-        # peer_a_hsp_connector = await anext(peer_a_hsp_connector)
-        # main_ai_hsp_connector = await anext(main_ai_hsp_connector)
         """Tests ContentAnalyzerModule's semantic mapping for structured HSP facts."""
         await main_ai_hsp_connector.subscribe("hsp.external.fact", lambda topic, payload: None)
         if not main_ai_hsp_connector.is_connected:
@@ -808,7 +796,8 @@ class TestHSPFactConsumption:
 
 class TestHSPTaskDelegation:
     @pytest.mark.asyncio
-    async def _peer_a_task_handler(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope, peer_a_hsp_connector: HSPConnector, task_received_event: asyncio.Event):
+    async def _peer_fact_handler(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope, peer_a_hsp_connector_instance: HSPConnector, task_received_event: asyncio.Event):
+        peer_a_hsp_connector = peer_a_hsp_connector_instance
         assert task_payload.get("capability_id_filter") == "advanced_weather_forecast"
         assert task_payload.get("parameters", {}).get("location") == "London"
 
@@ -826,7 +815,8 @@ class TestHSPTaskDelegation:
         task_received_event.set()
 
     @pytest.mark.asyncio
-    async def _peer_a_failing_handler(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope, peer_a_hsp_connector: HSPConnector, task_received_event: asyncio.Event, capability_id: str):
+    async def _peer_a_failing_handler(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope, peer_a_hsp_connector_instance: HSPConnector, task_received_event: asyncio.Event, capability_id: str):
+        peer_a_hsp_connector = peer_a_hsp_connector_instance
         assert task_payload.get("capability_id_filter") == capability_id
         
         # Peer A fails to process the task
@@ -850,11 +840,6 @@ class TestHSPTaskDelegation:
         peer_a_hsp_connector: HSPConnector,
         main_ai_hsp_connector: HSPConnector
     ):
-        # Fixtures are now directly awaited by pytest-asyncio, no need for anext()
-        # dialogue_manager_fixture = await anext(dialogue_manager_fixture)
-        # service_discovery_module_fixture = await anext(service_discovery_module_fixture)
-        # peer_a_hsp_connector = await anext(peer_a_hsp_connector)
-        # main_ai_hsp_connector = await anext(main_ai_hsp_connector)
         dm = dialogue_manager_fixture
         sdm = service_discovery_module_fixture
         
@@ -906,7 +891,7 @@ class TestHSPTaskDelegation:
         print("[Test Task Delegation] Verified DM delegated task and received result.")
 
     @pytest.mark.asyncio
-async def test_dm_handles_hsp_task_failure_and_falls_back(
+    async def test_dm_handles_hsp_task_failure_and_falls_back(
         self,
         dialogue_manager_fixture: DialogueManager,
         service_discovery_module_fixture: ServiceDiscoveryModule,
@@ -914,11 +899,7 @@ async def test_dm_handles_hsp_task_failure_and_falls_back(
         main_ai_hsp_connector: HSPConnector,
         mock_llm_fixture: MockLLMInterface
     ):
-        # Fixtures are now directly awaited by pytest-asyncio, no need for anext()
-        # dialogue_manager_fixture = await anext(dialogue_manager_fixture)
-        # service_discovery_module_fixture = await anext(service_discovery_module_fixture)
-        # peer_a_hsp_connector = await anext(peer_a_hsp_connector)
-        # main_ai_hsp_connector = await anext(main_ai_hsp_connector)
+        
         dm = dialogue_manager_fixture
         sdm = service_discovery_module_fixture
         
