@@ -3,7 +3,7 @@ from typing import List, Dict, Optional, Any
 
 # Assuming 'src' is in PYTHONPATH, making 'services' a top-level package
 from services.multi_llm_service import MultiLLMService, ChatMessage
-from shared.types.common_types import ExtractedFact # Import the new type
+from .types import ExtractedFact
 # LearnedFactRecord content is what this module aims to extract, but the full record is assembled by LearningManager
 
 
