@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Any
 from pathlib import Path
 
 # Consistent import assuming 'src' is in PYTHONPATH, making 'shared' a top-level package.
-from src.shared.types.common_types import FormulaConfigEntry # Added src.
+from .types import FormulaConfigEntry
 
 
 class FormulaEngine:
