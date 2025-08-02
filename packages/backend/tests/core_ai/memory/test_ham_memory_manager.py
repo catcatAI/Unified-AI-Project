@@ -6,10 +6,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
 
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from src.core_ai.memory.types import HAMRecallResult
+from src.services.types import SimulatedDiskConfig
 from src.shared.types.common_types import (
     DialogueMemoryEntryMetadata,
-    HAMRecallResult,
-    SimulatedDiskConfig,
 )
 from src.services.resource_awareness_service import ResourceAwarenessService
 from cryptography.fernet import Fernet, InvalidToken

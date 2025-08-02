@@ -5,7 +5,7 @@ from pathlib import Path
 import shutil # For cleaning up test directories
 
 from src.core_ai.formula_engine import FormulaEngine
-from src.shared.types.common_types import FormulaConfigEntry
+from src.core_ai.formula_engine.types import FormulaConfigEntry
 
 class TestFormulaEngine(unittest.TestCase):
 
