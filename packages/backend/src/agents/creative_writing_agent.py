@@ -1,5 +1,8 @@
 import asyncio
 import uuid
+import yaml
+import os
+import logging
 from typing import Dict, Any, List
 
 from src.agents.base_agent import BaseAgent
@@ -40,13 +43,24 @@ class CreativeWritingAgent(BaseAgent):
 
         # This agent directly uses the LLMInterface initialized in its services.
         self.llm_interface: MultiLLMService = self.services.get("llm_interface")
+        self._load_prompts()
+
+    def _load_prompts(self):
+        """Loads prompts from the YAML file."""
+        prompts_path = os.path.join(os.path.dirname(__file__), '..', 'configs', 'prompts.yaml')
+        try:
+            with open(prompts_path, 'r', encoding='utf-8') as f:
+                all_prompts = yaml.safe_load(f)
+                self.prompts = all_prompts.get('creative_writing_agent', {})
+        except FileNotFoundError:
+            self.prompts = {}
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id")
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", {})
 
-        print(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
+        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
 
         if not self.llm_interface:
             result_payload = self._create_failure_payload(request_id, "INTERNAL_ERROR", "MultiLLMService is not available.")
@@ -69,18 +83,20 @@ class CreativeWritingAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            self.hsp_connector.send_task_result(result_payload, callback_topic)
-            print(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
+            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     def _create_marketing_copy_prompt(self, params: Dict[str, Any]) -> str:
         product = params.get('product_description', 'an unspecified product')
         audience = params.get('target_audience', 'a general audience')
         style = params.get('style', 'persuasive')
-        return f"Generate marketing copy in a {style} tone for the following product: '{product}'. The target audience is: {audience}."
+        prompt_template = self.prompts.get('generate_marketing_copy', "Generate marketing copy for {product}.")
+        return prompt_template.format(style=style, product=product, audience=audience)
 
     def _create_polish_text_prompt(self, params: Dict[str, Any]) -> str:
         text = params.get('text_to_polish', '')
-        return f"Please proofread and polish the following text for grammar, style, and clarity. Return only the improved text:\n\n---\n{text}\n---"
+        prompt_template = self.prompts.get('polish_text', "Polish the following text: {text}")
+        return prompt_template.format(text=text)
 
     def _create_success_payload(self, request_id: str, result: Any) -> HSPTaskResultPayload:
         return HSPTaskResultPayload(

@@ -6,11 +6,11 @@ import yaml
 from pathlib import Path
 
 from src.services.resource_awareness_service import ResourceAwarenessService, DEFAULT_CONFIG_PATH
-from src.shared.types.common_types import (
+from src.services.types import (
     SimulatedHardwareProfile,
     SimulatedDiskConfig,
     SimulatedCPUConfig,
-    SimulatedRAMConfig
+    SimulatedRAMConfig,
 )
 
 # Determine project root for test file paths

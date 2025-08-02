@@ -8,12 +8,12 @@ import os
 from typing import Optional, Dict, Any
 
 # Assuming 'src' is a top-level package for imports
-from src.shared.types.common_types import (
+from .types import (
     SimulatedHardwareProfile,
     SimulatedDiskConfig,
     SimulatedCPUConfig,
     SimulatedRAMConfig,
-    SimulatedResourcesRoot
+    SimulatedResourcesRoot,
 )
 
 DEFAULT_CONFIG_PATH = "configs/simulated_resources.yaml"

@@ -270,6 +270,161 @@ async def test_hsp_connector_register_specific_callbacks(hsp_connector_instance)
     mock_task_request_callback.assert_not_called()
     mock_task_result_callback.assert_not_called()
 
+
+# --- Instantiated Tests ---
+
+class MockMqttBroker:
+    """A simple in-memory MQTT broker for testing."""
+    def __init__(self):
+        self.subscriptions = {}
+        self.queue = asyncio.Queue()
+        self.is_running = False
+
+    async def start(self):
+        self.is_running = True
+
+    async def stop(self):
+        self.is_running = False
+
+    async def publish(self, topic, payload, qos=0, retain=False, **kwargs):
+        if self.is_running:
+            # Find matching subscribers and call their on_message callbacks
+            for sub_topic, callbacks in self.subscriptions.items():
+                if self._topic_matches(sub_topic, topic):
+                    for cb in callbacks:
+                        mock_gmqtt_msg = MagicMock()
+                        mock_gmqtt_msg.topic = topic.encode('utf-8')
+                        mock_gmqtt_msg.payload = payload
+                        mock_gmqtt_msg.qos = qos
+                        await cb(None, mock_gmqtt_msg.topic, mock_gmqtt_msg.payload, mock_gmqtt_msg.qos, {})
+
+    def subscribe(self, topic, qos=0):
+        if topic not in self.subscriptions:
+            self.subscriptions[topic] = []
+
+    def on_message(self, callback):
+        # Simplification: assume one callback per subscriber for all topics
+        for sub in self.subscriptions:
+            if callback not in self.subscriptions[sub]:
+                self.subscriptions[sub].append(callback)
+
+    def _topic_matches(self, sub, pub):
+        # Simplified for this test
+        return sub == "#" or sub == pub
+
+
+@pytest.fixture
+async def instantiated_connectors():
+    """Fixture to provide two real HSPConnectors connected via a mock broker."""
+    broker = MockMqttBroker()
+    await broker.start()
+
+    # Connector A
+    connector_a = HSPConnector("conn_a", "localhost", 1883, mock_mode=False)
+    connector_a.external_connector.mqtt_client.connect = AsyncMock()
+    connector_a.external_connector.mqtt_client.publish = broker.publish
+    connector_a.external_connector.mqtt_client.subscribe = broker.subscribe
+    connector_a.external_connector.mqtt_client.on_message = broker.on_message(connector_a.external_connector.on_message)
+
+    # Connector B
+    connector_b = HSPConnector("conn_b", "localhost", 1883, mock_mode=False)
+    connector_b.external_connector.mqtt_client.connect = AsyncMock()
+    connector_b.external_connector.mqtt_client.publish = broker.publish
+    connector_b.external_connector.mqtt_client.subscribe = broker.subscribe
+    connector_b.external_connector.mqtt_client.on_message = broker.on_message(connector_b.external_connector.on_message)
+
+    await connector_a.connect()
+    await connector_b.connect()
+
+    yield connector_a, connector_b
+
+    await connector_a.disconnect()
+    await connector_b.disconnect()
+    await broker.stop()
+
+
+@pytest.mark.asyncio
+async def test_instantiated_connector_communication(instantiated_connectors):
+    """
+    Tests communication between two non-mocked HSPConnectors via a mock broker.
+    """
+    # Arrange
+    connector_a, connector_b = instantiated_connectors
+    fact_topic = "hsp/knowledge/facts/instantiated"
+    received_event = asyncio.Event()
+    received_data = {}
+
+    async def fact_handler(payload, sender_ai_id, envelope):
+        received_data['payload'] = payload
+        received_data['sender'] = sender_ai_id
+        received_event.set()
+
+    # Connector B subscribes to the topic and registers the handler
+    await connector_b.external_connector.subscribe(fact_topic)
+    connector_b.register_on_fact_callback(fact_handler)
+
+    await asyncio.sleep(0.1) # allow subscription to register
+
+    # Connector A publishes a fact
+    fact_payload = HSPFactPayload(id="inst_fact_1", statement_type="natural_language", statement_nl="Testing instantiated connectors.")
+    await connector_a.publish_fact(fact_payload, fact_topic)
+
+    # Act
+    try:
+        await asyncio.wait_for(received_event.wait(), timeout=5)
+    except asyncio.TimeoutError:
+        pytest.fail("Test timed out waiting for fact to be received.")
+
+    # Assert
+    assert received_data.get('sender') == "conn_a"
+    assert received_data.get('payload')['id'] == "inst_fact_1"
+    assert received_data.get('payload')['statement_nl'] == "Testing instantiated connectors."
+
+@pytest.mark.asyncio
+async def test_hsp_connector_fallback_mechanism(hsp_connector_instance, mock_mqtt_client):
+    """
+    Tests that the HSPConnector correctly uses the fallback mechanism when
+    the primary MQTT publish fails.
+    """
+    # Arrange
+    connector = hsp_connector_instance
+    topic = "hsp/test/fallback"
+    envelope: HSPMessageEnvelope = {
+        "hsp_envelope_version": "0.1", "message_id": "msg_fallback", "sender_ai_id": "test_ai",
+        "recipient_ai_id": "any_ai", "timestamp_sent": "2024-07-05T19:00:00Z",
+        "message_type": "HSP::Fact_v0.1", "protocol_version": "0.1",
+        "communication_pattern": "publish", "payload": {"id": "fact_fallback"},
+        "correlation_id": None, "security_parameters": None, "qos_parameters": None,
+        "routing_info": None, "payload_schema_uri": None
+    }
+
+    # Simulate a failure in the primary publish method
+    connector.external_connector.publish = AsyncMock(side_effect=Exception("MQTT Broker is down"))
+
+    # Mock the fallback manager and its send method
+    mock_fallback_manager = MagicMock()
+    mock_fallback_manager.send_message = AsyncMock(return_value=True)
+    connector.fallback_manager = mock_fallback_manager
+    connector.enable_fallback = True
+
+    # Act
+    success = await connector.publish_message(topic, envelope)
+
+    # Assert
+    assert success is True
+
+    # Verify that the primary publish method was called
+    connector.external_connector.publish.assert_awaited_once_with(topic, json.dumps(envelope).encode('utf-8'), qos=1)
+
+    # Verify that the fallback manager's send_message was called as a result of the failure
+    mock_fallback_manager.send_message.assert_awaited_once()
+
+    # Check the details of the message passed to the fallback manager
+    fallback_call_args = mock_fallback_manager.send_message.call_args[0]
+    fallback_message = fallback_call_args[3] # The payload is the 4th argument
+    assert fallback_message['topic'] == topic
+    assert fallback_message['envelope'] == envelope
+
     # Reset mocks for next test
     mock_fact_callback.reset_mock()
 
