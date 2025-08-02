@@ -2,6 +2,7 @@ import json
 import zlib
 import base64
 import os
+import logging
 from datetime import datetime, timezone
 from collections import Counter
 from cryptography.fernet import Fernet, InvalidToken
@@ -9,7 +10,10 @@ import hashlib
 import asyncio # Added for asyncio.to_thread
 from typing import Optional, List, Dict, Any, Tuple, Union # Added Union for recall_gist return
 from src.shared.key_manager import key_manager
-from src.shared.types.common_types import DialogueMemoryEntryMetadata, HAMDataPackageInternal, HAMRecallResult # Import new types, changed to src.
+from src.shared.types.common_types import DialogueMemoryEntryMetadata
+from .types import HAMDataPackageInternal, HAMRecallResult
+
+logger = logging.getLogger(__name__)
 
 # Placeholder for actual stopword list and NLP tools if not available
 try:
@@ -78,21 +82,21 @@ class HAMMemoryManager:
             # Assuming the key in env is already a valid URL-safe base64 encoded Fernet key
             self.fernet_key = key_str.encode()
         else:
-            print("CRITICAL WARNING: MIKO_HAM_KEY environment variable not set.")
-            print("Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
-            print("DO NOT use this for any real data you want to keep, as it will be lost.")
+            logger.critical("MIKO_HAM_KEY environment variable not set.")
+            logger.warning("Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
+            logger.warning("DO NOT use this for any real data you want to keep, as it will be lost.")
             self.fernet_key = Fernet.generate_key()
-            print(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
+            logger.info(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
 
         try:
             self.fernet = Fernet(self.fernet_key)
         except Exception as e:
-            print(f"CRITICAL: Failed to initialize Fernet. Provided MIKO_HAM_KEY might be invalid. Error: {e}")
-            print("Encryption will be DISABLED for this session.")
+            logger.critical(f"Failed to initialize Fernet. Provided MIKO_HAM_KEY might be invalid. Error: {e}")
+            logger.error("Encryption will be DISABLED for this session.")
             self.fernet = None
 
         self._load_core_memory_from_file()
-        print(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
+        logger.info(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
 
         # Start background cleanup task only if there's a running event loop
         try:
@@ -100,7 +104,7 @@ class HAMMemoryManager:
             asyncio.create_task(self._delete_old_experiences())
         except RuntimeError:
             # No running event loop, skip background task
-            print("HAM: No running event loop, background cleanup task not started.")
+            logger.info("HAM: No running event loop, background cleanup task not started.")
             pass
 
     def _generate_memory_id(self) -> str:
@@ -114,7 +118,7 @@ class HAMMemoryManager:
         if self.fernet:
             return self.fernet.encrypt(data)
         # Fallback: If Fernet is not initialized, return data unencrypted (with a warning)
-        print("Warning: Fernet not initialized, data NOT encrypted.")
+        logger.warning("Fernet not initialized, data NOT encrypted.")
         return data
 
     def _decrypt(self, data: bytes) -> bytes:
@@ -123,13 +127,13 @@ class HAMMemoryManager:
             try:
                 return self.fernet.decrypt(data)
             except InvalidToken:
-                print("Error: Invalid token during Fernet decryption. Data might be corrupted or wrong key.")
+                logger.error("Invalid token during Fernet decryption. Data might be corrupted or wrong key.")
                 return b''
             except Exception as e:
-                print(f"Error during Fernet decryption: {e}")
+                logger.error(f"Error during Fernet decryption: {e}")
                 return b''
         # Fallback: If Fernet is not initialized, return data as is (with a warning)
-        print("Warning: Fernet not initialized, data NOT decrypted.")
+        logger.warning("Fernet not initialized, data NOT decrypted.")
         return data
 
     # --- Compression/Decompression ---
@@ -140,7 +144,7 @@ class HAMMemoryManager:
         try:
             return zlib.decompress(data)
         except zlib.error as e:
-            print(f"Error during decompression: {e}")
+            logger.error(f"Error during decompression: {e}")
             return b'' # Return empty bytes on error
 
     # --- Abstraction/Rehydration (Text specific for v0.1, with v0.2 placeholders) ---
@@ -177,14 +181,14 @@ class HAMMemoryManager:
             # For example, if text = "你好世界"
             # radicals_placeholder = extract_radicals(text) # -> e.g., ['女', '子', '口', '丿', 'Ｌ', '田'] (highly dependent on lib)
             radicals_placeholder = ["RadicalPlaceholder1", "RadicalPlaceholder2"] # Dummy
-            print(f"HAM: Placeholder: Detected Chinese-like text, conceptual radicals would be extracted.")
+            logger.debug(f"HAM: Placeholder: Detected Chinese-like text, conceptual radicals would be extracted.")
         else: # Assume English-like or other Latin script
             # Conceptual: In a real system, call POS tagging
             # For example, if text = "Hello world"
             # pos_tags_placeholder = extract_pos_tags(filtered_words) # -> e.g., [('hello', 'UH'), ('world', 'NN')]
             if keywords: # Only add if there are keywords, to simulate some processing
                 pos_tags_placeholder = [{kw: "NOUN_placeholder"} for kw in keywords[:2]] # Dummy POS for first 2 keywords
-            print(f"HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.")
+            logger.debug(f"HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.")
 
 
         return {
@@ -216,7 +220,7 @@ class HAMMemoryManager:
                 file_size_bytes = os.path.getsize(self.core_storage_filepath)
                 return file_size_bytes / (1024**3) # Bytes to GB
         except OSError as e:
-            print(f"HAM: Error getting file size for {self.core_storage_filepath}: {e}")
+            logger.error(f"HAM: Error getting file size for {self.core_storage_filepath}: {e}")
         return 0.0 # Default to 0 if file doesn't exist or error
 
     def _simulate_disk_lag_and_check_limit(self) -> bool:
@@ -240,7 +244,7 @@ class HAMMemoryManager:
         # If self.core_memory_store is large and not yet saved, current_usage_gb might be small.
         # This check is primarily for when the file already exists and is large.
         if current_usage_gb >= total_simulated_disk_gb:
-            print(f"HAM: CRITICAL - Simulated disk full! Usage: {current_usage_gb:.2f}GB, Limit: {total_simulated_disk_gb:.2f}GB. Save operation aborted.")
+            logger.critical(f"HAM: Simulated disk full! Usage: {current_usage_gb:.2f}GB, Limit: {total_simulated_disk_gb:.2f}GB. Save operation aborted.")
             return False # Prevent save
 
         # Lag Simulation:
@@ -253,11 +257,11 @@ class HAMMemoryManager:
         if current_usage_gb >= critical_thresh_gb:
             lag_factor = disk_config.get('lag_factor_critical', 1.0)
             lag_to_apply_seconds = base_delay * lag_factor
-            print(f"HAM: WARNING - Simulated disk usage ({current_usage_gb:.2f}GB) is at CRITICAL level (>{critical_thresh_gb:.2f}GB). Simulating {lag_to_apply_seconds:.2f}s lag.")
+            logger.warning(f"HAM: Simulated disk usage ({current_usage_gb:.2f}GB) is at CRITICAL level (>{critical_thresh_gb:.2f}GB). Simulating {lag_to_apply_seconds:.2f}s lag.")
         elif current_usage_gb >= warning_thresh_gb:
             lag_factor = disk_config.get('lag_factor_warning', 1.0)
             lag_to_apply_seconds = base_delay * lag_factor
-            print(f"HAM: INFO - Simulated disk usage ({current_usage_gb:.2f}GB) is at WARNING level (>{warning_thresh_gb:.2f}GB). Simulating {lag_to_apply_seconds:.2f}s lag.")
+            logger.info(f"HAM: Simulated disk usage ({current_usage_gb:.2f}GB) is at WARNING level (>{warning_thresh_gb:.2f}GB). Simulating {lag_to_apply_seconds:.2f}s lag.")
 
         if lag_to_apply_seconds > 0:
             # Instead of sleeping, we just indicate that the operation should be retried
@@ -295,12 +299,12 @@ class HAMMemoryManager:
                 json.dump({"next_memory_id": self.next_memory_id, "store": serializable_store}, f, indent=2)
             return True # Save successful
         except Exception as e:
-            print(f"Error saving core memory to file: {e}")
+            logger.error(f"Error saving core memory to file: {e}")
             return False # Save failed
 
     def _load_core_memory_from_file(self):
         if not os.path.exists(self.core_storage_filepath):
-            print("Core memory file not found. Initializing an empty store and saving.")
+            logger.info("Core memory file not found. Initializing an empty store and saving.")
             self.core_memory_store = {}
             self.next_memory_id = 1
             self._save_core_memory_to_file() # Create the file with an empty store
@@ -319,9 +323,9 @@ class HAMMemoryManager:
                         "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('latin-1'),
                         "metadata": data_pkg_b64.get("metadata", {})
                     }
-            print(f"Core memory loaded from {self.core_storage_filepath}. Next ID: {self.next_memory_id}")
+            logger.info(f"Core memory loaded from {self.core_storage_filepath}. Next ID: {self.next_memory_id}")
         except Exception as e:
-            print(f"Error loading core memory from file: {e}. Starting with an empty store.")
+            logger.error(f"Error loading core memory from file: {e}. Starting with an empty store.")
             self.core_memory_store = {}
             self.next_memory_id = 1
 
@@ -342,7 +346,7 @@ class HAMMemoryManager:
         Returns:
             Optional[str]: The generated memory ID if successful, otherwise None.
         """
-        print(f"HAM: Storing experience of type '{data_type}'")
+        logger.debug(f"HAM: Storing experience of type '{data_type}'")
 
         # Check disk space before processing (for test_19_disk_full_handling)
         current_usage_gb = self._get_current_disk_usage_gb()
@@ -357,7 +361,7 @@ class HAMMemoryManager:
 
         if "dialogue_text" in data_type: # More inclusive check for user_dialogue_text, ai_dialogue_text
             if not isinstance(raw_data, str):
-                print(f"Error: raw_data for {data_type} must be a string.")
+                logger.error(f"raw_data for {data_type} must be a string.")
                 return None
             abstracted_gist = self._abstract_text(raw_data)
             # Gist itself should be serializable (dict of strings/lists)
@@ -368,7 +372,7 @@ class HAMMemoryManager:
             try:
                 data_to_process = str(raw_data).encode('utf-8')
             except Exception as e:
-                print(f"Error encoding raw_data for type {data_type}: {e}")
+                logger.error(f"Error encoding raw_data for type {data_type}: {e}")
                 return None
 
         # Add checksum to metadata BEFORE compression/encryption
@@ -379,7 +383,7 @@ class HAMMemoryManager:
             compressed_data = self._compress(data_to_process)
             encrypted_data = self._encrypt(compressed_data)
         except Exception as e:
-            print(f"Error during SL processing (compress/encrypt/checksum): {e}")
+            logger.error(f"Error during SL processing (compress/encrypt/checksum): {e}")
             # For test compatibility, raise the exception as expected by test_18_encryption_failure
             raise Exception(f"Failed to store experience: {e}") from e
 
@@ -397,12 +401,12 @@ class HAMMemoryManager:
         save_successful = self._save_core_memory_to_file() # Persist after each store
 
         if save_successful:
-            print(f"HAM: Stored experience {memory_id}")
+            logger.info(f"HAM: Stored experience {memory_id}")
             return memory_id
         else:
             # If save failed (e.g., simulated disk full), revert adding to in-memory store
             # and potentially log that the experience was not truly stored due to simulated limit.
-            print(f"HAM: Failed to save core memory to file for experience {memory_id}. Reverting in-memory store for this item.")
+            logger.error(f"HAM: Failed to save core memory to file for experience {memory_id}. Reverting in-memory store for this item.")
             if memory_id in self.core_memory_store:
                 del self.core_memory_store[memory_id]
             # Note: self.next_memory_id was already incremented. This could lead to skipped IDs
@@ -423,10 +427,10 @@ class HAMMemoryManager:
             Optional[HAMRecallResult]: A HAMRecallResult object if successful,
                                        None if recall fails at any stage.
         """
-        print(f"HAM: Recalling gist for memory_id '{memory_id}'")
+        logger.debug(f"HAM: Recalling gist for memory_id '{memory_id}'")
         data_package = self.core_memory_store.get(memory_id)
         if not data_package:
-            print(f"Error: Memory ID {memory_id} not found.")
+            logger.error(f"Memory ID {memory_id} not found.")
             return None
 
         # Update the relevance score of the recalled experience.
@@ -435,12 +439,12 @@ class HAMMemoryManager:
         try:
             decrypted_data = self._decrypt(data_package["encrypted_package"])
             if not decrypted_data:
-                print("Error: Decryption failed.")
+                logger.error("Decryption failed for memory_id '%s'.", memory_id)
                 return None
 
             decompressed_data_bytes = self._decompress(decrypted_data)
             if not decompressed_data_bytes:
-                print("Error: Decompression failed.")
+                logger.error("Decompression failed for memory_id '%s'.", memory_id)
                 return None
 
             # Verify checksum AFTER decryption and decompression
@@ -448,17 +452,17 @@ class HAMMemoryManager:
             if stored_checksum:
                 current_checksum = hashlib.sha256(decompressed_data_bytes).hexdigest()
                 if current_checksum != stored_checksum:
-                    print(f"CRITICAL WARNING: Checksum mismatch for memory ID {memory_id}! Data may be corrupted.")
+                    logger.critical(f"Checksum mismatch for memory ID {memory_id}! Data may be corrupted.")
                     # Optionally, could return a specific error or flag instead of proceeding
                     # For now, we'll proceed but the warning is logged.
             else:
-                print(f"Warning: No checksum found in metadata for memory ID {memory_id}.")
+                logger.warning(f"No checksum found in metadata for memory ID {memory_id}.")
 
 
             decompressed_data_str = decompressed_data_bytes.decode('utf-8')
 
         except Exception as e:
-            print(f"Error during SL retrieval (decrypt/decompress/checksum): {e}")
+            logger.error(f"Error during SL retrieval (decrypt/decompress/checksum) for memory_id '%s': {e}", memory_id)
             # return f"Error processing memory {memory_id}." -> Changed to return None
             return None
 
@@ -468,10 +472,10 @@ class HAMMemoryManager:
                 abstracted_gist = json.loads(decompressed_data_str)
                 rehydrated_content = self._rehydrate_text_gist(abstracted_gist)
             except json.JSONDecodeError:
-                print("Error: Could not decode abstracted gist. Data might be corrupted or not text.")
+                logger.error("Could not decode abstracted gist for memory_id '%s'. Data might be corrupted or not text.", memory_id)
                 return None
             except Exception as e:
-                print(f"Error rehydrating text gist: {e}")
+                logger.error(f"Error rehydrating text gist for memory_id '%s': {e}", memory_id)
                 return None
         else:
             # For other data types, just return the decompressed string for now
@@ -513,7 +517,7 @@ class HAMMemoryManager:
                         else:
                             break
         except Exception as e:
-            print(f"Error during deletion check: {e}")
+            logger.error(f"Error during deletion check: {e}")
 
     async def _delete_old_experiences(self):
         """
@@ -540,7 +544,7 @@ class HAMMemoryManager:
         Optional keyword search on metadata string.
         Does NOT search encrypted content for keywords in this version.
         """
-        print(f"HAM: Querying core memory (type: {data_type_filter}, meta_filters: {metadata_filters}, keywords: {keywords})")
+        logger.debug(f"HAM: Querying core memory (type: {data_type_filter}, meta_filters: {metadata_filters}, keywords: {keywords})")
 
         # Candidate selection: Iterate through all memories. Could be optimized with indexing.
         # For now, iterate and then filter.
@@ -605,7 +609,7 @@ class HAMMemoryManager:
         if return_multiple_candidates:
             return results
 
-        print(f"HAM: Query returned {len(results)} results (limit was {limit}).")
+        logger.debug(f"HAM: Query returned {len(results)} results (limit was {limit}).")
         return results
 
     def increment_metadata_field(self, memory_id: str, field_name: str, increment_by: int = 1) -> bool:
@@ -629,15 +633,15 @@ class HAMMemoryManager:
             current_value = record["metadata"].get(field_name, 0)
             if isinstance(current_value, (int, float)):
                 record["metadata"][field_name] = current_value + increment_by
-                print(f"HAM: Incremented metadata field '{field_name}' for mem_id '{memory_id}'.")
+                logger.debug(f"HAM: Incremented metadata field '{field_name}' for mem_id '{memory_id}'.")
                 # For simplicity, we trigger a full save. A more advanced implementation
                 # might use a more granular or delayed save mechanism.
                 return self._save_core_memory_to_file()
             else:
-                print(f"HAM: Error: Metadata field '{field_name}' for mem_id '{memory_id}' is not a number.")
+                logger.error(f"HAM: Metadata field '{field_name}' for mem_id '{memory_id}' is not a number.")
                 return False
         else:
-            print(f"HAM: Error: Cannot increment metadata for non-existent mem_id '{memory_id}'.")
+            logger.error(f"HAM: Cannot increment metadata for non-existent mem_id '{memory_id}'.")
             return False
 
 if __name__ == '__main__':

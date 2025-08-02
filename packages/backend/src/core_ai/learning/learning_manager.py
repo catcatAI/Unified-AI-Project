@@ -10,7 +10,7 @@ from src.core_ai.memory.ham_memory_manager import HAMMemoryManager # Corrected
 from src.core_ai.learning.fact_extractor_module import FactExtractorModule # Corrected
 from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule # Corrected
 from src.core_ai.trust_manager.trust_manager_module import TrustManager # Corrected
-from src.shared.types.common_types import LearnedFactRecord # Corrected
+from .types import LearnedFactRecord
 
 from src.hsp.types import HSPFactPayload, HSPMessageEnvelope # Corrected
 from src.core_ai.personality.personality_manager import PersonalityManager

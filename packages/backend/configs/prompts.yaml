@@ -33,3 +33,8 @@ integrate_subtask_results: |
   {results}
 
   Please provide a final, integrated response that directly addresses the user's original request.
+
+# Prompts for the CreativeWritingAgent
+creative_writing_agent:
+  generate_marketing_copy: "Generate marketing copy in a {style} tone for the following product: '{product}'. The target audience is: {audience}."
+  polish_text: "Please proofread and polish the following text for grammar, style, and clarity. Return only the improved text:\n\n---\n{text}\n---"
