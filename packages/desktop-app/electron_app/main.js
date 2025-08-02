@@ -4,6 +4,27 @@ const { spawn } = require("child_process");
 const fs = require("fs");
 
 let pythonExecutable = "python";
+let backendApiUrl = "http://localhost:8000"; // Default value
+
+function loadDesktopAppConfig() {
+  const configPath = path.join(__dirname, "..", "desktop-app-config.json");
+  try {
+    if (fs.existsSync(configPath)) {
+      const configFileContent = fs.readFileSync(configPath, "utf8");
+      const config = JSON.parse(configFileContent);
+      if (config.backend_api_url) {
+        backendApiUrl = config.backend_api_url;
+        console.log(`Main Process: Loaded backend API URL: ${backendApiUrl}`);
+      } else {
+        console.log("Main Process: Config file found, but backend_api_url not set. Using default.");
+      }
+    } else {
+      console.log("Main Process: desktop-app-config.json not found. Using default backend API URL.");
+    }
+  } catch (error) {
+    console.error("Main Process: Error loading desktop app config:", error);
+  }
+}
 
 function loadPythonPath() {
   const envPath = path.join(__dirname, "..", "..", "..", ".env");
@@ -41,6 +62,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  loadDesktopAppConfig();
   loadPythonPath();
   createWindow();
 
@@ -72,42 +94,8 @@ ipcMain.handle("game:start", async () => {
   });
 });
 
-ipcMain.handle("api:start-session", async (event, args) => {
-  try {
-    const response = await fetch("http://localhost:8000/api/v1/session/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(args),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Main Process: Error in api:start-session:", error);
-    throw error;
-  }
-});
-
-ipcMain.handle("api:send-message", async (event, args) => {
-  try {
-    const response = await fetch("http://localhost:8000/api/v1/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(args),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Main Process: Error in api:send-message:", error);
-    throw error;
-  }
-});
-
-ipcMain.handle(/^api:(get|post|put|delete):\/api\/(.*)$/, async (event, method, path, data) => {
-  const url = `http://localhost:8000/api/${path}`;
+ipcMain.handle(/^api:(get|post|put|delete):(.*)$/, async (event, method, path, data) => {
+  const url = `${backendApiUrl}/api/${path}`;
   try {
     const response = await fetch(url, {
       method: method.toUpperCase(),
