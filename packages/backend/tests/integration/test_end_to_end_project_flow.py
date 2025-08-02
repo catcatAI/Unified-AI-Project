@@ -288,3 +288,34 @@ async def test_full_project_flow_with_real_agent(project_coordinator, agent_mana
         import os
         if os.path.exists(agent_script_path):
             os.remove(agent_script_path)
+
+@pytest.mark.asyncio
+async def test_mocked_end_to_end_flow(project_coordinator):
+    """
+    A fully mocked version of the end-to-end flow. This tests the
+    ProjectCoordinator's orchestration logic without the overhead of
+    subprocesses or networking.
+    """
+    # Arrange
+    pc = project_coordinator
+    user_query = "Build a website for me."
+
+    # Mock the LLM decomposition
+    pc._decompose_user_intent_into_subtasks = AsyncMock(return_value=[
+        {"capability_needed": "create_files_v1", "task_parameters": {"files": ["index.html"]}}
+    ])
+
+    # Mock the dispatch logic
+    pc._dispatch_single_subtask = AsyncMock(return_value={"status": "success", "result": "index.html created."})
+
+    # Mock the integration logic
+    pc._integrate_subtask_results = AsyncMock(return_value="The website is ready.")
+
+    # Act
+    response = await pc.handle_project(user_query, "session_mock", "user_mock")
+
+    # Assert
+    pc._decompose_user_intent_into_subtasks.assert_awaited_once()
+    pc._dispatch_single_subtask.assert_awaited_once() # In a single-task project
+    pc._integrate_subtask_results.assert_awaited_once()
+    assert "The website is ready." in response
