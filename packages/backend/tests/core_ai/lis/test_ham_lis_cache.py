@@ -19,7 +19,7 @@ from src.core_ai.lis.lis_cache_interface import (
     HAM_META_ANTIBODY_EFFECTIVENESS,
 )
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager, HAMRecallResult
-from src.shared.types.common_types import (
+from src.core_ai.lis.types import (
     LIS_IncidentRecord,
     LIS_SemanticAnomalyDetectedEvent,
     LIS_AnomalyType,

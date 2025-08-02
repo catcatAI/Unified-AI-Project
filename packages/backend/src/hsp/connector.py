@@ -28,8 +28,8 @@ class HSPConnector:
         self.hsp_available = False  # Track HSP availability
 
         if self.mock_mode:
-            print("HSPConnector: Initializing in mock mode.")
-            print(f"DEBUG: HSPConnector.__init__ - ai_id: {ai_id}, mock_mode: {mock_mode}")
+            self.logger.info("HSPConnector: Initializing in mock mode.")
+            self.logger.debug(f"HSPConnector.__init__ - ai_id: {ai_id}, mock_mode: {mock_mode}")
             self.external_connector = MagicMock(spec=ExternalConnector)
             self.external_connector.ai_id = ai_id # Ensure mock has ai_id
             self.external_connector.connect.return_value = True
@@ -100,7 +100,7 @@ class HSPConnector:
 
     async def connect(self):
         if self.mock_mode:
-            print("HSPConnector: Mock connect successful.")
+            self.logger.info("HSPConnector: Mock connect successful.")
             self.is_connected = True
             self.hsp_available = True
             if self.enable_fallback:
@@ -129,7 +129,7 @@ class HSPConnector:
 
     async def disconnect(self):
         if self.mock_mode:
-            print("HSPConnector: Mock disconnect successful.")
+            self.logger.info("HSPConnector: Mock disconnect successful.")
             self.is_connected = False
         else:
             await self.external_connector.disconnect()
@@ -257,13 +257,12 @@ class HSPConnector:
 
     # --- Registration methods for external modules to receive specific message types ---
     def register_on_fact_callback(self, callback: Callable[[HSPFactPayload, str, HSPMessageEnvelope], None]):
-        print(f"DEBUG: register_on_fact_callback - Registering callback: {callback}")
+        self.logger.debug(f"Registering on_fact_callback: {callback}")
         self._fact_callbacks.append(callback)
 
     def register_on_capability_advertisement_callback(self, callback: Callable[[HSPCapabilityAdvertisementPayload, str, HSPMessageEnvelope], None]):
-        print(f"DEBUG: register_on_capability_advertisement_callback - Before append: {len(self._capability_advertisement_callbacks)}")
+        self.logger.debug(f"Registering on_capability_advertisement_callback: {callback}")
         self._capability_advertisement_callbacks.append(callback)
-        print(f"DEBUG: register_on_capability_advertisement_callback - After append: {len(self._capability_advertisement_callbacks)}")
 
     def register_on_task_request_callback(self, callback: Callable[[HSPTaskRequestPayload, str, HSPMessageEnvelope], None]):
         self._task_request_callbacks.append(callback)
@@ -287,16 +286,12 @@ class HSPConnector:
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 
-        print(f"DEBUG: _dispatch_fact_to_callbacks - self._fact_callbacks = {self._fact_callbacks}")
-        print(f"DEBUG: _dispatch_fact_to_callbacks - Incoming message: {message}")
-        print(f"DEBUG: _dispatch_fact_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
+        self.logger.debug(f"Dispatching fact to {len(self._fact_callbacks)} callbacks. Message: {message}")
 
         if payload and sender_ai_id:
             fact_payload = HSPFactPayload(**payload)
-            print(f"DEBUG: _dispatch_fact_to_callbacks - Type of fact_payload before callback: {type(fact_payload)}")
-            print(f"DEBUG: _dispatch_fact_to_callbacks - Content of fact_payload before callback: {fact_payload}")
             for callback in self._fact_callbacks:
-                print(f"DEBUG: _dispatch_fact_to_callbacks - calling callback {callback}, type: {type(callback)}")
+                self.logger.debug(f"Calling on_fact_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
                     await callback(fact_payload, sender_ai_id, message)
                 else:
@@ -334,15 +329,12 @@ class HSPConnector:
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 
-        print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - self._capability_advertisement_callbacks = {self._capability_advertisement_callbacks}")
-        print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - Incoming message: {message}")
-        print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
+        self.logger.debug(f"Dispatching capability advertisement to {len(self._capability_advertisement_callbacks)} callbacks. Message: {message}")
 
         if payload and sender_ai_id:
             cap_payload = HSPCapabilityAdvertisementPayload(**payload)
-            print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - Number of callbacks: {len(self._capability_advertisement_callbacks)}")
             for callback in self._capability_advertisement_callbacks:
-                print(f"DEBUG: _dispatch_capability_advertisement_to_callbacks - calling callback {callback}, type: {type(callback)}")
+                self.logger.debug(f"Calling on_capability_advertisement_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
                     await callback(cap_payload, sender_ai_id, message)
                 else:
@@ -380,14 +372,12 @@ class HSPConnector:
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 
-        print(f"DEBUG: _dispatch_task_request_to_callbacks - self._task_request_callbacks = {self._task_request_callbacks}")
-        print(f"DEBUG: _dispatch_task_request_to_callbacks - Incoming message: {message}")
-        print(f"DEBUG: _dispatch_task_request_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
+        self.logger.debug(f"Dispatching task request to {len(self._task_request_callbacks)} callbacks. Message: {message}")
 
         if payload and sender_ai_id:
             task_request_payload = HSPTaskRequestPayload(**payload)
             for callback in self._task_request_callbacks:
-                print(f"DEBUG: _dispatch_task_request_to_callbacks - calling callback {callback}")
+                self.logger.debug(f"Calling on_task_request_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
                     await callback(task_request_payload, sender_ai_id, message)
                 else:
@@ -425,14 +415,12 @@ class HSPConnector:
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 
-        print(f"DEBUG: _dispatch_task_result_to_callbacks - self._task_result_callbacks = {self._task_result_callbacks}")
-        print(f"DEBUG: _dispatch_task_result_to_callbacks - Incoming message: {message}")
-        print(f"DEBUG: _dispatch_task_result_to_callbacks - qos_parameters: {message.get("qos_parameters")}")
+        self.logger.debug(f"Dispatching task result to {len(self._task_result_callbacks)} callbacks. Message: {message}")
 
         if payload and sender_ai_id:
             task_result_payload = HSPTaskResultPayload(**payload)
             for callback in self._task_result_callbacks:
-                print(f"DEBUG: _dispatch_task_result_to_callbacks - calling callback {callback}")
+                self.logger.debug(f"Calling on_task_result_callback: {callback}")
                 await callback(task_result_payload, sender_ai_id, message)
 
             # Check if ACK is required and send it

@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional # Added Optional
 # Assuming the module is in src.core_ai.learning.content_analyzer_module
 # Adjust path if necessary based on how tests are run and PYTHONPATH
 from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule, ProcessedTripleInfo, CAHSPFactProcessingResult
-from src.shared.types.common_types import KGEntity, KGRelationship, KnowledgeGraph
+from src.core_ai.knowledge_graph.types import KGEntity, KGRelationship, KnowledgeGraph
 from src.hsp.types import HSPFactPayload, HSPFactStatementStructured # Import HSP types
 import uuid # For generating unique fact IDs in tests
 

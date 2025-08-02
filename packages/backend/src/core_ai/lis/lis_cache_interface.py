@@ -15,14 +15,12 @@ import json # Added for HAMLISCache conceptual serialization
 from datetime import datetime, timezone # Added for timestamping in add_antibody
 
 # Assuming types will be imported from shared.types
-from src.shared.types.common_types import (
+from .types import (
     LIS_IncidentRecord,
     LIS_SemanticAnomalyDetectedEvent,
     LIS_AnomalyType,
     LIS_InterventionReport,
-    NarrativeAntibodyObject # Import the new TypedDict
-    # Constants like HAM_META_LIS_OBJECT_ID are defined below in this file
-    # and thus should not be imported from common_types here.
+    NarrativeAntibodyObject,
 )
 # Import HAMMemoryManager for type hinting in the concrete implementation.
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
