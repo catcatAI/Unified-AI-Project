@@ -13,12 +13,33 @@ from pathlib import Path
 # 測試文件的基本目錄
 TEST_DIR = Path(__file__).parent.parent / 'tests'
 
-# 不同類型測試的超時設置（秒）
-TIMEOUTS = {
-    'basic': 5,       # 基本單元測試
-    'integration': 10,  # 集成測試
-    'performance': 30,  # 性能測試
-}
+import json
+
+# Load configuration from JSON file
+CONFIG_PATH = Path(__file__).parent / 'timeout_config.json'
+with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+    config = json.load(f)
+
+TIMEOUTS = config['TIMEOUTS']
+SPECIAL_TIMEOUTS = config['SPECIAL_TIMEOUTS']
+
+def get_timeout_for_file(file_path):
+    """根據文件路徑返回適當的超時設置"""
+    file_name = os.path.basename(file_path)
+
+    # 檢查特殊文件設置
+    if file_name in SPECIAL_TIMEOUTS:
+        timeout_type = SPECIAL_TIMEOUTS[file_name]
+        return TIMEOUTS.get(timeout_type, 5)  # 默認5秒
+
+    # 根據路徑判斷
+    path_parts = Path(file_path).parts
+    if 'integration' in path_parts:
+        return TIMEOUTS['integration']
+    if 'performance' in path_parts:
+        return TIMEOUTS['performance']
+
+    return TIMEOUTS['basic']  # 默認基本超時
 
 def is_pytest_test(file_path):
     """檢查文件是否包含 pytest 風格的測試"""

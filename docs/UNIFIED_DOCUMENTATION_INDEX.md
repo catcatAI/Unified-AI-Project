@@ -112,6 +112,16 @@ catcatAI 組織
 | API 健康檢查 | (英) | `scripts/health_check.py` | API 服務健康狀態檢查 | 監控工具 | 🟢 高 |
 | 導入掃描工具 | (英) | `scripts/scan_imports.py` | 掃描專案中所有 Python 導入模塊 | 依賴分析 | 🟡 中 |
 
+#### 📑 總結與報告
+| 文檔名稱 | 語言 | 路徑 | 描述 | 狀態 | 實用性 |
+|---|---|---|---|---|---|
+| Rovo Dev AI 集成摘要 | (中) | `docs/01-summaries-and-reports/ROVO_DEV_AI_INTEGRATION_SUMMARY.md` | Rovo Dev AI 集成摘要 | ✅ 最新 | 🟢 高 |
+| AI 模型總結 | (英) | `docs/01-summaries-and-reports/README_AI_MODELS.md` | AI 模型總結 | ✅ 最新 | 🟢 高 |
+| HSP 備用機制總結 | (英) | `docs/01-summaries-and-reports/README_HSP_FALLBACK.md` | HSP 備用機制總結 | ✅ 最新 | 🟢 高 |
+| 除錯總結 | (英) | `docs/01-summaries-and-reports/debugging_summary.md` | 除錯總結 | ✅ 最新 | 🟢 高 |
+| 測試計畫 | (英) | `docs/01-summaries-and-reports/test_plan.md` | 測試計畫 | ✅ 最新 | 🟢 高 |
+| 工作區組織完成報告 | (英) | `docs/01-summaries-and-reports/WORKSPACE_ORGANIZATION_COMPLETE.md` | 工作區組織完成報告 | ✅ 最新 | 🟢 高 |
+
 #### 🛡️ 備用機制與容錯文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 狀態 | 實用性 |
 |---|---|---|---|---|---|

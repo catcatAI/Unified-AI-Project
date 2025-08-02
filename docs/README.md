@@ -25,6 +25,8 @@ This directory contains the comprehensive documentation for the Unified AI Proje
 
 This documentation is organized to provide a clear path for understanding the project. You can start from the [Overview](00-overview/README.md) and delve into specific sections as needed.
 
+**Note on Archived Documents:** The `09-archive` directory contains documents from previous versions of the project. While valuable for historical context, they may not reflect the current state of the architecture or implementation. Please refer to the documents in the other categories for up-to-date information.
+
 ## Quick Links to Packages
 
 For documentation specific to each package within the monorepo, please refer to their respective README files:
