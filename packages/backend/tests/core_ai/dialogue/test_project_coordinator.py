@@ -202,3 +202,99 @@ async def test_wait_for_task_result_timeout(project_coordinator):
 
     # Assert
     assert result == {"error": "Task for 'timeout_capability' timed out."}
+
+# --- Lightweight Instantiated Test ---
+
+@pytest.fixture
+def instantiated_pc_fixture():
+    """
+    Provides a ProjectCoordinator with some real child components
+    for lightweight integration testing.
+    """
+    from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+    from src.core_ai.trust_manager.trust_manager_module import TrustManager
+    from src.core_ai.agent_manager import AgentManager
+    import sys
+
+    # Real Components
+    trust_manager = TrustManager()
+    service_discovery = ServiceDiscoveryModule(trust_manager=trust_manager)
+    agent_manager = AgentManager(python_executable=sys.executable)
+
+    # Mocked Components
+    mock_llm = AsyncMock()
+    mock_hsp = MagicMock()
+    mock_ham = MagicMock()
+    mock_learning = AsyncMock()
+    mock_personality = MagicMock()
+    mock_personality.get_current_personality_trait.return_value = "TestAI_Instantiated"
+
+    pc = ProjectCoordinator(
+        llm_interface=mock_llm,
+        service_discovery=service_discovery,
+        hsp_connector=mock_hsp,
+        agent_manager=agent_manager,
+        memory_manager=mock_ham,
+        learning_manager=mock_learning,
+        personality_manager=mock_personality,
+        dialogue_manager_config={}
+    )
+
+    return pc, service_discovery, agent_manager
+
+@pytest.mark.asyncio
+async def test_dispatch_launches_and_discovers_with_real_components(instantiated_pc_fixture):
+    """
+    A lightweight integration test to verify the interaction between a real
+    ProjectCoordinator, ServiceDiscoveryModule, and AgentManager.
+    """
+    # Arrange
+    pc, sdm, am = instantiated_pc_fixture
+    capability_name = "new_capability_v1"
+    agent_name = "new_capability_agent"
+    subtask = {"capability_needed": capability_name, "task_parameters": {}}
+
+    # Mock the subprocess creation to avoid real processes
+    with patch("subprocess.Popen") as mock_popen:
+        mock_popen.return_value.pid = 12345
+
+        # Mock the HSP parts since we are not testing the broker here
+        pc._send_hsp_request = AsyncMock(return_value=("Request sent.", "corr_real_123"))
+        pc._wait_for_task_result = AsyncMock(return_value={"status": "success from real components"})
+
+        # --- Act ---
+        # 1. First dispatch fails, triggering agent launch
+        # To simulate this properly, we need to bypass the full handle_project
+        # and call the dispatch method directly.
+
+        # We need to manually simulate the agent advertising its capability after launch
+        async def delayed_advertisement():
+            await asyncio.sleep(0.1) # Simulate time for agent to "start"
+            from src.hsp.types import HSPCapabilityAdvertisementPayload
+            cap_payload = HSPCapabilityAdvertisementPayload(
+                capability_id=capability_name,
+                ai_id="launched_agent_id",
+                name="New Capability",
+                description="A dynamically launched capability.",
+                version="1.0",
+                availability_status="online",
+            )
+            sdm.process_capability_advertisement(cap_payload, "launched_agent_id", MagicMock())
+
+        # Run the advertisement in the background
+        advertisement_task = asyncio.create_task(delayed_advertisement())
+
+        # Call the dispatch method
+        result = await pc._dispatch_single_subtask(subtask)
+
+        # --- Assert ---
+        # Verify that launch_agent was called on the real AgentManager
+        mock_popen.assert_called_once()
+
+        # Verify that the capability is now in the real ServiceDiscoveryModule
+        assert sdm.is_capability_available(capability_name) is True
+
+        # Verify the final result
+        assert result == {"status": "success from real components"}
+
+        await advertisement_task # Ensure the background task completes
