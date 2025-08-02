@@ -112,6 +112,16 @@ catcatAI 組織
 | API 健康檢查 | (英) | `scripts/health_check.py` | API 服務健康狀態檢查 | 監控工具 | 🟢 高 |
 | 導入掃描工具 | (英) | `scripts/scan_imports.py` | 掃描專案中所有 Python 導入模塊 | 依賴分析 | 🟡 中 |
 
+#### 📑 總結與報告
+| 文檔名稱 | 語言 | 路徑 | 描述 | 狀態 | 實用性 |
+|---|---|---|---|---|---|
+| Rovo Dev AI 集成摘要 | (中) | `docs/01-summaries-and-reports/ROVO_DEV_AI_INTEGRATION_SUMMARY.md` | Rovo Dev AI 集成摘要 | ✅ 最新 | 🟢 高 |
+| AI 模型總結 | (英) | `docs/01-summaries-and-reports/README_AI_MODELS.md` | AI 模型總結 | ✅ 最新 | 🟢 高 |
+| HSP 備用機制總結 | (英) | `docs/01-summaries-and-reports/README_HSP_FALLBACK.md` | HSP 備用機制總結 | ✅ 最新 | 🟢 高 |
+| 除錯總結 | (英) | `docs/01-summaries-and-reports/debugging_summary.md` | 除錯總結 | ✅ 最新 | 🟢 高 |
+| 測試計畫 | (英) | `docs/01-summaries-and-reports/test_plan.md` | 測試計畫 | ✅ 最新 | 🟢 高 |
+| 工作區組織完成報告 | (英) | `docs/01-summaries-and-reports/WORKSPACE_ORGANIZATION_COMPLETE.md` | 工作區組織完成報告 | ✅ 最新 | 🟢 高 |
+
 #### 🛡️ 備用機制與容錯文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 狀態 | 實用性 |
 |---|---|---|---|---|---|
@@ -133,8 +143,10 @@ catcatAI 組織
 #### 🚧 開發與維護文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 時效性 | 維護狀態 |
 |---|---|---|---|---|---|
-| 重構計劃 | (中) | `docs/09-archive/merge-restructure-plan.md` | 專案重構計劃 | 🟡 歷史 | ✅ 完成 |
+| **舊版專案摘要** | (中) | `docs/06-project-management/reports/legacy-project-summary.md` | **描述專案早期狀態的歷史摘要** | 🟡 **歷史** | 🟢 **高** |
+| **合併與重構計畫** | (中) | `docs/06-project-management/reports/merge-restructure-plan.md` | **記錄了將專案遷移到 monorepo 的計畫** | 🟡 **歷史** | 🟢 **高** |
 | 待辦事項 | (中) | `docs/06-project-management/planning/todo-placeholders.md` | 開發待辦列表 | 🟢 活躍 | ✅ 維護中 |
+| **重構週期1總結** | (中) | `docs/06-project-management/reports/refactoring_sprint_1_summary.md` | **第一次文件-程式碼-測試同步週期的總結報告** | ✅ **最新** | 🟢 **高** |
 | 清理摘要 | (中) | `docs/06-project-management/reports/cleanup-summary.md` | 專案清理記錄 | 🟡 歷史 | ✅ 完成 |
 | 工作目錄整理總結 | (中) | `docs/06-project-management/reports/workspace-cleanup-summary.md` | 目錄整理與清理記錄 | ✅ 最新 | 🟢 高 |
 | 文檔連結審查報告 | (中) | `docs/06-project-management/reports/documentation-link-audit-report.md` | 文檔連結檢查與修復記錄 | ✅ 最新 | 🟢 高 |

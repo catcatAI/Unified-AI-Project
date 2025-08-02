@@ -1,9 +1,12 @@
 import asyncio
 import uuid
+import logging
 from typing import Dict, Any, Optional, List
 
 from src.core_services import initialize_services, get_services, shutdown_services
 from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+
+logger = logging.getLogger(__name__)
 
 class BaseAgent:
     """
@@ -26,6 +29,7 @@ class BaseAgent:
         self.agent_name = agent_name
         self.hsp_connector = None
         self.is_running = False
+        logging.basicConfig(level=logging.INFO)
 
         # Initialize core services required by the agent
         initialize_services(
@@ -41,13 +45,13 @@ class BaseAgent:
         """
         Starts the agent's main loop and connects to the HSP network.
         """
-        print(f"[{self.agent_id}] Setting is_running to True")
+        logger.info(f"[{self.agent_id}] Setting is_running to True")
         self.is_running = True
         if not self.hsp_connector:
-            print(f"[{self.agent_id}] Error: HSPConnector not available.")
+            logger.error(f"[{self.agent_id}] Error: HSPConnector not available.")
             return
 
-        print(f"[{self.agent_id}] Starting...")
+        logger.info(f"[{self.agent_id}] Starting...")
 
         # Register the task request handler
         if self.hsp_connector:
@@ -58,7 +62,7 @@ class BaseAgent:
             for cap in self.capabilities:
                 await self.hsp_connector.advertise_capability(cap)
 
-        print(f"[{self.agent_id}] is running and listening for tasks.")
+        logger.info(f"[{self.agent_id}] is running and listening for tasks.")
 
         # Agent is now running, return control to the caller
         # The main loop (if any) should be managed externally or by a dedicated task
@@ -67,10 +71,10 @@ class BaseAgent:
         """
         Stops the agent and shuts down its services.
         """
-        print(f"[{self.agent_id}] Stopping...")
+        logger.info(f"[{self.agent_id}] Stopping...")
         self.is_running = False
         shutdown_services()
-        print(f"[{self.agent_id}] Stopped.")
+        logger.info(f"[{self.agent_id}] Stopped.")
 
     def is_healthy(self) -> bool:
         """
@@ -84,7 +88,7 @@ class BaseAgent:
         The primary handler for incoming HSP task requests.
         This method should be overridden by subclasses to implement specific logic.
         """
-        print(f"[{self.agent_id}] Received task request: {task_payload.get('request_id')} for capability '{task_payload.get('capability_id_filter')}' from '{sender_ai_id}'.")
+        logger.info(f"[{self.agent_id}] Received task request: {task_payload.get('request_id')} for capability '{task_payload.get('capability_id_filter')}' from '{sender_ai_id}'.")
 
         # Default behavior: Acknowledge and report not implemented
         result_payload = HSPTaskResultPayload(
@@ -98,8 +102,8 @@ class BaseAgent:
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            self.hsp_connector.send_task_result(result_payload, callback_topic)
-            print(f"[{self.agent_id}] Sent NOT_IMPLEMENTED failure response to {callback_topic}")
+            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            logger.warning(f"[{self.agent_id}] Sent NOT_IMPLEMENTED failure response to {callback_topic}")
 
 if __name__ == '__main__':
     # Example of how a BaseAgent could be run.
