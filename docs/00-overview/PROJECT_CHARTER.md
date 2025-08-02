@@ -376,11 +376,9 @@ tests, documentation, and configuration files.
 - **Note**: The current integration tests are a starting point but do not cover the full end-to-end workflow as described in the "Lack of 'real' integration tests" issue.
 
 - **Issue**: Lack of "real" integration tests.
-- **Status**: **Not Completed**
-- **Proposed Change**: Create a new integration test file that uses a live (or
-  mock) MQTT broker and actual agent processes to test the full end-to-end
-  workflow. This would provide a higher level of confidence in the system's
-  correctness.
+- **Status**: **In Progress**
+- **Implemented Change**: A new integration test file, `tests/integration/test_end_to_end_project_flow.py`, has been created. This test uses a mock MQTT broker and launches a real agent in a subprocess to validate the full, end-to-end project execution flow.
+- **Remaining Issue**: The test cannot be executed due to a persistent `pytest` environment issue (`ModuleNotFoundError` for installed packages). The test is logically complete but blocked from running.
 
 ### 2.3. Documentation (`/docs`)
 
