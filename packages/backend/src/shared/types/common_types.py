@@ -146,4 +146,25 @@ class LLMModelInfo(TypedDict, total=False):
     # Future: capabilities (e.g., ["chat", "completion", "embedding"]), context_length, etc.
 
 
+# HAM Memory Types
+from dataclasses import dataclass
+
+@dataclass
+class HAMRecallResult:
+    """HAM記憶回憶結果"""
+    memories: List[Dict[str, Any]]
+    confidence_scores: List[float]
+    total_count: int
+    query_metadata: Dict[str, Any]
+
+class HAMDataPackageInternal(TypedDict):
+    """HAM內部數據包"""
+    package_id: str
+    data_type: str
+    content: Dict[str, Any]
+    metadata: Dict[str, Any]
+    timestamp: str
+    source_ai_id: str
+    confidence_score: float
+
 print("common_types.py (debug version) finished definitions.")
