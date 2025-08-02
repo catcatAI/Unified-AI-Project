@@ -12,13 +12,13 @@ control actual system input devices.
 
 from typing import List, Optional, Dict, Any, Tuple
 
-from src.shared.types.common_types import (
+from .types import (
     VirtualInputPermissionLevel,
     VirtualMouseCommand,
     VirtualKeyboardCommand,
     VirtualMouseEventType,
     VirtualKeyboardActionType,
-    VirtualInputElementDescription # Added this import
+    VirtualInputElementDescription,
 )
 
 # Further imports will be added as the class is implemented.

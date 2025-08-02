@@ -3,6 +3,7 @@ import asyncio
 import json
 import re
 import uuid
+import logging
 import networkx as nx
 from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
 import yaml
@@ -47,7 +48,7 @@ class ProjectCoordinator:
         self.task_results: Dict[str, Any] = {}
         self.ai_id = self.hsp_connector.ai_id if self.hsp_connector else "project_coordinator"
         self._load_prompts()
-        print("ProjectCoordinator initialized.")
+        logging.info("ProjectCoordinator initialized.")
 
     def _load_prompts(self):
         """Loads prompts from the YAML file."""
@@ -74,20 +75,20 @@ class ProjectCoordinator:
         if not self.service_discovery or not self.hsp_connector:
             return f"{ai_name}: I can't access my specialist network to handle this project."
 
-        print(f"[{ai_name}] Phase 0/1: Decomposing project query...")
+        logging.info(f"[{ai_name}] Phase 0/1: Decomposing project query...")
         available_capabilities = self.service_discovery.get_all_capabilities()
         subtasks = await self._decompose_user_intent_into_subtasks(project_query, available_capabilities)
 
         if not subtasks:
             return f"{ai_name}: I couldn't break down your request into a clear plan."
 
-        print(f"[{ai_name}] Phase 2/3: Executing task plan...")
+        logging.info(f"[{ai_name}] Phase 2/3: Executing task plan...")
         try:
             task_execution_results = await self._execute_task_graph(subtasks)
         except ValueError as e:
             return f"{ai_name}: I encountered a logical error in my plan: {e}"
 
-        print(f"[{ai_name}] Phase 4: Integrating results...")
+        logging.info(f"[{ai_name}] Phase 4: Integrating results...")
         final_response = await self._integrate_subtask_results(project_query, task_execution_results)
 
         if self.learning_manager:
@@ -153,7 +154,7 @@ class ProjectCoordinator:
                     await asyncio.wait_for(launch_future, timeout=10)
                     found_caps = self.service_discovery.find_capabilities(capability_name_filter=capability_name)
                 except asyncio.TimeoutError:
-                    print(f"[ProjectCoordinator] Warning: Timed out waiting for agent '{agent_to_launch}' to become ready.")
+                    logging.warning(f"[ProjectCoordinator] Warning: Timed out waiting for agent '{agent_to_launch}' to become ready.")
 
         if not found_caps:
             return {"error": f"Could not find or launch an agent with capability '{capability_name}'."}
