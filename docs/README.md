@@ -31,7 +31,7 @@ This documentation is organized to provide a clear path for understanding the pr
 
 For documentation specific to each package within the monorepo, please refer to their respective README files:
 
-- [Backend Package](packages/backend/README.md)
-- [Frontend Dashboard Package](packages/frontend-dashboard/README.md)
-- [Desktop App Package](packages/desktop-app/README.md)
+- [Backend Package](apps/backend/README.md)
+- [Frontend Dashboard Package](apps/frontend-dashboard/README.md)
+- [Desktop App Package](apps/desktop-app/README.md)
 - [CLI Package](packages/cli/README.md)

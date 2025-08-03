@@ -53,7 +53,7 @@ For detailed documentation on project architecture, development guidelines, and 
 
 For more specific information about each package, refer to their respective README files:
 
-- [Backend README](packages/backend/README.md)
-- [Frontend Dashboard README](packages/frontend-dashboard/README.md)
-- [Desktop App README](packages/desktop-app/README.md)
+- [Backend README](apps/backend/README.md)
+- [Frontend Dashboard README](apps/frontend-dashboard/README.md)
+- [Desktop App README](apps/desktop-app/README.md)
 - [CLI README](packages/cli/README.md)
