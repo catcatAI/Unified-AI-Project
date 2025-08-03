@@ -17,7 +17,9 @@ catcatAI 組織
 └── Unified-AI-Project/           # AI 平台與後端服務集成
     ├── 核心 AI 服務
     ├── 遊戲系統 (Angela's World)
-    └── 技術架構與文檔
+    ├── 技術架構與文檔
+    └── packages/
+        └── ui/                     # 共享 UI 組件庫
 ```
 
 ---
