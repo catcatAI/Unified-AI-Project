@@ -224,12 +224,23 @@ function showNotification(type, message) {
     }, 5000);
 }
 
+function renderSettings(settings) {
+    const themeSelect = document.getElementById("themeSelect");
+    const defaultModelInput = document.getElementById("defaultModelInput");
+
+    themeSelect.value = settings.theme;
+    defaultModelInput.value = settings.defaultModel;
+
+    document.body.className = `theme-${settings.theme}`;
+}
+
 function render() {
     const state = window.store.getState();
     showView(state.activeView);
     renderChatMessages(state.chat.messages);
     renderHspServices(state.hsp.services);
     renderHspTaskStatus(state.hsp.taskStatus);
+    renderSettings(state.settings);
 
     if (state.ui.errorMessage) {
         showNotification('error', state.ui.errorMessage);
