@@ -1,10 +1,5 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
-setup(
-    name='cli',
-    version='1.0.0',
-    packages=find_packages(),
-    install_requires=[
-        # Add any dependencies specific to the CLI here
-    ],
-)
+# All configuration is now in pyproject.toml.
+# This file is retained for compatibility with older tools.
+setup()

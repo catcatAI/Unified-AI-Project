@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { Chat } from './Chat'; // Assuming Chat is exported from Chat.tsx
+import Chat from './Chat';
 import { useToast } from '../components/ui/use-toast';
 
 // Mock the API functions that would be exposed via preload.js

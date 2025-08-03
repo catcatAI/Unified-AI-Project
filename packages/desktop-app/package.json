@@ -12,6 +12,8 @@
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.0.0",
     "electron": "^29.0.0",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "ts-jest": "^29.2.0",
