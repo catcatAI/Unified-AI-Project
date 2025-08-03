@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const gameContainer = document.getElementById("gameContainer");
     const hspServiceList = document.getElementById("hspServiceList").parentElement;
     const hspTaskForm = document.getElementById("hspTaskCapId").parentElement.parentElement;
+    const themeSelect = document.getElementById("themeSelect");
+    const defaultModelInput = document.getElementById("defaultModelInput");
 
     const CHANNELS = window.ipcChannels;
 
@@ -15,9 +17,11 @@ document.addEventListener("DOMContentLoaded", () => {
         loadHspServices();
     }});
     const gameViewButton = Button({ id: 'gameViewButton', text: 'Game', onClick: () => window.store.updateState(window.store.actions.setActiveView, "game") });
+    const settingsViewButton = Button({ id: 'settingsViewButton', text: 'Settings', onClick: () => window.store.updateState(window.store.actions.setActiveView, "settings") });
     nav.appendChild(chatViewButton);
     nav.appendChild(hspViewButton);
     nav.appendChild(gameViewButton);
+    nav.appendChild(settingsViewButton);
 
     const sendButton = Button({ id: 'sendButton', text: 'Send', onClick: sendMessage });
     inputContainer.appendChild(sendButton);
@@ -42,6 +46,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event.key === "Enter") {
             sendMessage();
         }
+    });
+
+    themeSelect.addEventListener("change", (event) => {
+        window.store.updateState(window.store.actions.setTheme, event.target.value);
+    });
+
+    defaultModelInput.addEventListener("change", (event) => {
+        window.store.updateState(window.store.actions.setDefaultModel, event.target.value);
     });
 
     // --- Logic ---

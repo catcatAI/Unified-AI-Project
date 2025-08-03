@@ -1,6 +1,6 @@
 const store = {
   // Application state
-  activeView: 'chat', // 'chat', 'hsp', 'game'
+  activeView: 'chat', // 'chat', 'hsp', 'game', 'settings'
   chat: {
     sessionId: null,
     messages: [], // { text: string, sender: 'user' | 'ai' | 'system' }
@@ -9,6 +9,10 @@ const store = {
     services: [], // { id: string, name: string, ... }
     taskStatus: {}, // { [correlationId]: { status: string, ... } }
     activePolls: {}, // { [correlationId]: intervalId }
+  },
+  settings: {
+    theme: 'dark',
+    defaultModel: 'gpt-4',
   },
 
   // UI state
@@ -78,6 +82,14 @@ function removeHspActivePoll(state, correlationId) {
             activePolls: newActivePolls,
         },
     };
+}
+
+function setTheme(state, theme) {
+    return { ...state, settings: { ...state.settings, theme: theme } };
+}
+
+function setDefaultModel(state, defaultModel) {
+    return { ...state, settings: { ...state.settings, defaultModel: defaultModel } };
 }
 
 function setLoading(state, isLoading) {
