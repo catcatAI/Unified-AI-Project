@@ -213,10 +213,26 @@ function renderHspTaskStatus(taskStatus) {
     }
 }
 
+function showNotification(type, message) {
+    const notificationCenter = document.getElementById('notificationCenter');
+    const notification = Notification({ type, message });
+    notificationCenter.appendChild(notification);
+
+    // Automatically remove the notification after a few seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
 function render() {
     const state = window.store.getState();
     showView(state.activeView);
     renderChatMessages(state.chat.messages);
     renderHspServices(state.hsp.services);
     renderHspTaskStatus(state.hsp.taskStatus);
+
+    if (state.ui.errorMessage) {
+        showNotification('error', state.ui.errorMessage);
+        window.store.updateState(window.store.actions.setErrorMessage, null);
+    }
 }
