@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { spawn } = require("child_process");
 const fs = require("fs");
+const CHANNELS = require("./src/ipc-channels");
 
 let pythonExecutable = "python";
 let backendApiUrl = "http://localhost:8000"; // Default value
@@ -75,7 +76,9 @@ app.on("window-all-closed", function () {
   if (process.platform !== "darwin") app.quit();
 });
 
-ipcMain.handle("game:start", async () => {
+// --- IPC Handlers ---
+
+ipcMain.handle(CHANNELS.GAME_START, async () => {
   console.log("Main Process: Received 'game:start' request from renderer.");
   const gameProcess = spawn(pythonExecutable, [
     path.join(__dirname, "..", "..", "..", "backend", "src", "game", "main.py"),
@@ -94,20 +97,66 @@ ipcMain.handle("game:start", async () => {
   });
 });
 
-ipcMain.handle(/^api:(get|post|put|delete):(.*)$/, async (event, method, path, data) => {
-  const url = `${backendApiUrl}/api/${path}`;
-  try {
-    const response = await fetch(url, {
-      method: method.toUpperCase(),
-      headers: { "Content-Type": "application/json" },
-      body: data ? JSON.stringify(data) : undefined,
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+async function handleApiCall(method, apiPath, data) {
+    const url = `${backendApiUrl}/api/${apiPath}`;
+    try {
+        const response = await fetch(url, {
+            method: method.toUpperCase(),
+            headers: { "Content-Type": "application/json" },
+            body: data ? JSON.stringify(data) : undefined,
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`Main Process: Error in API call (${method.toUpperCase()} ${apiPath}):`, error);
+        throw error;
     }
-    return await response.json();
-  } catch (error) {
-    console.error(`Main Process: Error in API call (${method.toUpperCase()} ${path}):`, error);
-    throw error;
-  }
+}
+
+ipcMain.handle(CHANNELS.API_START_SESSION, async (event, data) => {
+    return handleApiCall("post", "session/start", data);
+});
+
+ipcMain.handle(CHANNELS.API_SEND_MESSAGE, async (event, data) => {
+    return handleApiCall("post", "session/message", data);
+});
+
+ipcMain.handle(CHANNELS.HSP_GET_DISCOVERED_SERVICES, async (event, data) => {
+    // This would typically call a backend service, but for now we mock it
+    console.log("Main Process: Received 'hsp:get-discovered-services' request from renderer.");
+    return [
+        {
+            capability_id: "test-capability-1",
+            name: "Test Capability 1",
+            version: "1.0",
+            ai_id: "test-ai-1",
+            description: "This is a test capability.",
+            tags: ["test", "mock"],
+            availability_status: "available",
+        },
+    ];
+});
+
+ipcMain.handle(CHANNELS.HSP_REQUEST_TASK, async (event, data) => {
+    // This would typically call a backend service, but for now we mock it
+    console.log("Main Process: Received 'hsp:request-task' request from renderer.");
+    return {
+        status_message: "Task request sent.",
+        correlation_id: `mock-correlation-${Date.now()}`,
+    };
+});
+
+ipcMain.handle(CHANNELS.HSP_GET_TASK_STATUS, async (event, correlationId) => {
+    // This would typically call a backend service, but for now we mock it
+    console.log(`Main Process: Received 'hsp:get-task-status' request for ${correlationId}.`);
+    return {
+        correlation_id: correlationId,
+        status: "completed",
+        message: "The task completed successfully.",
+        result_payload: {
+            result: "This is a mock result.",
+        },
+    };
 });
