@@ -14,7 +14,7 @@ class InstallationWizard(QWizard):
         self.load_translator(self.current_locale)
 
         # Load dependency configuration
-        config_path = os.path.join(os.path.dirname(__file__), 'dependency_config.yaml')
+        config_path = os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'configs', 'dependency_config.yaml')
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 self.dependency_config = yaml.safe_load(f)

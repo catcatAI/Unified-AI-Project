@@ -5,7 +5,7 @@
     "dev:dashboard": "pnpm --filter frontend-dashboard dev",
     "dev:backend": "pnpm --filter backend dev",
     "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:dashboard\"",
-    "test": "cross-env PYTHONPATH=apps/backend pnpm -r test",
+    "test": "cross-env PYTHONPATH=apps/backend:apps/backend/src pnpm -r test",
     "test:coverage": "pnpm -r test:coverage"
   },
   "devDependencies": {
