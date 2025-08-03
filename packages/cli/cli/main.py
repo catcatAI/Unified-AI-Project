@@ -3,10 +3,14 @@ import sys
 import asyncio
 import uuid
 from typing import Dict, Any, Optional, List
+from pathlib import Path
 
-# Assuming src is in PYTHONPATH or this script is run from project root level
-from ..backend.src.hsp.types import HSPFactPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload, HSPTaskResultPayload # Added HSPTaskResultPayload
-from ..backend.src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID, DEFAULT_OPERATIONAL_CONFIGS # Import new service management
+# Add the project root to the path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from apps.backend.src.hsp.types import HSPFactPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload, HSPTaskResultPayload # Added HSPTaskResultPayload
+from apps.backend.src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID, DEFAULT_OPERATIONAL_CONFIGS # Import new service management
 
 # --- CLI Specific AI ID ---
 cli_ai_id = f"did:hsp:cli_ai_instance_{uuid.uuid4().hex[:6]}"
