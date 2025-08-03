@@ -11,8 +11,8 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
-} from "./ui/sidebar";
-import { Badge } from "./ui/badge";
+} from "@acme/ui";
+import { Badge } from "@acme/ui";
 import { navigationItems, aiCategories } from "../config/sidebar";
 
 export function Sidebar() {
