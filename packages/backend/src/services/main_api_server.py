@@ -133,6 +133,85 @@ async def get_status():
     }
 
 
+@app.get("/services/health")
+async def get_services_health():
+    """获取各个服务的健康状态和资源使用情况"""
+    services = get_services()
+    
+    # 检查各个服务
+    dialogue_manager = services.get("dialogue_manager")
+    ham_manager = services.get("ham_manager")
+    tool_dispatcher = services.get("tool_dispatcher")
+    agent_manager = services.get("agent_manager")
+    
+    # 模拟资源使用情况
+    import random
+    
+    service_health = []
+    
+    if ham_manager:
+        service_health.append({
+            "name": "HAM Memory Manager",
+            "status": "running",
+            "cpu": round(random.uniform(10, 20), 1),
+            "memory": round(random.uniform(200, 300), 1),
+            "uptime": "2d 14h 32m",
+            "last_check": datetime.now().isoformat()
+        })
+    
+    if dialogue_manager and hasattr(dialogue_manager, 'hsp_connector'):
+        service_health.append({
+            "name": "HSP Connector",
+            "status": "running",
+            "cpu": round(random.uniform(5, 15), 1),
+            "memory": round(random.uniform(100, 200), 1),
+            "uptime": "2d 14h 32m",
+            "last_check": datetime.now().isoformat()
+        })
+    
+    if tool_dispatcher:
+        service_health.append({
+            "name": "Multi-LLM Service",
+            "status": "running",
+            "cpu": round(random.uniform(30, 60), 1),
+            "memory": round(random.uniform(800, 1200), 1),
+            "uptime": "2d 14h 32m",
+            "last_check": datetime.now().isoformat()
+        })
+    
+    return service_health
+
+
+@app.get("/metrics")
+async def get_system_metrics():
+    """获取系统性能指标"""
+    import random
+    
+    # 返回模拟的系统指标
+    return {
+        "cpu": {
+            "value": round(random.uniform(20, 60), 1),
+            "max": 100,
+            "status": "normal"
+        },
+        "memory": {
+            "value": round(random.uniform(4, 8), 1),
+            "max": 16,
+            "status": "normal"
+        },
+        "disk": {
+            "value": round(random.uniform(100, 200), 1),
+            "max": 512,
+            "status": "normal"
+        },
+        "network": {
+            "value": round(random.uniform(1, 5), 1),
+            "max": 10,
+            "status": "normal"
+        }
+    }
+
+
 @app.post("/chat")
 async def simple_chat(request: dict):
     """简单的聊天端点，用于前端集成"""
