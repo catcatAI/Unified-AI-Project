@@ -9,7 +9,7 @@ import sys
 import subprocess
 import json
 from pathlib import Path
-from src.shared.utils.env_utils import setup_env_file
+from apps.backend.src.shared.utils.env_utils import setup_env_file
 
 def check_python_version():
     """检查 Python 版本"""
@@ -61,7 +61,7 @@ def test_basic_functionality():
     try:
         # 测试导入
         sys.path.insert(0, str(Path.cwd()))
-        from src.services.multi_llm_service import MultiLLMService
+        from apps.backend.src.services.multi_llm_service import MultiLLMService
         print("✅ 模块导入成功")
         
         # 测试配置加载

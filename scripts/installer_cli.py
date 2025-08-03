@@ -7,7 +7,7 @@ except ImportError:
     import yaml
 import os
 from pathlib import Path
-from src.shared.utils.env_utils import setup_env_file, add_env_variable
+from apps.backend.src.shared.utils.env_utils import setup_env_file, add_env_variable
 
 def get_os():
     if sys.platform.startswith("win"):
@@ -26,7 +26,7 @@ def main():
     print("")
 
     # Load dependency configuration
-    config_path = os.path.join(os.path.dirname(__file__), '..', 'configs', 'dependency_config.yaml')
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'configs', 'dependency_config.yaml')
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
