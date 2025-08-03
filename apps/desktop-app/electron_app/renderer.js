@@ -65,10 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Session started:", data.session_id);
         } catch (error) {
             console.error("Error starting session:", error);
-            window.store.updateState(window.store.actions.addChatMessage, {
-                text: `Error starting session: ${error.message}`,
-                sender: "system-error",
-            });
+            window.store.updateState(window.store.actions.setErrorMessage, `Error starting session: ${error.message}`);
         }
     }
 
@@ -78,10 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const sessionId = window.store.getState().chat.sessionId;
         if (!sessionId) {
-            window.store.updateState(window.store.actions.addChatMessage, {
-                text: "Session not started. Please wait or try restarting.",
-                sender: "system-error",
-            });
+            window.store.updateState(window.store.actions.setErrorMessage, "Session not started. Please wait or try restarting.");
             return;
         }
 
@@ -106,10 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         } catch (error) {
             console.error("Error sending message:", error);
-            window.store.updateState(window.store.actions.addChatMessage, {
-                text: `Error sending message: ${error.message}`,
-                sender: "system-error",
-            });
+            window.store.updateState(window.store.actions.setErrorMessage, `Error sending message: ${error.message}`);
         }
     }
 
@@ -216,14 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error(`Error polling status for task ${correlationId}:`, error);
-            window.store.updateState(window.store.actions.setHspTaskStatus, {
-                correlationId,
-                statusData: {
-                    correlation_id: correlationId,
-                    status: "unknown_or_expired",
-                    message: `Error polling status: ${error.message}`,
-                },
-            });
+            window.store.updateState(window.store.actions.setErrorMessage, `Error polling status for task ${correlationId}: ${error.message}`);
             const intervalId = window.store.getState().hsp.activePolls[correlationId];
             if (intervalId) {
                 clearInterval(intervalId);
