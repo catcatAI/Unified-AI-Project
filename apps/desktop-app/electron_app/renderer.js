@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     const sendHspTaskButton = document.getElementById("sendHspTaskButton");
 
+    const CHANNELS = window.ipcChannels;
+
     // --- Event Listeners ---
 
     chatViewButton.addEventListener("click", () => {
@@ -27,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     startGameButton.addEventListener("click", () => {
         if (window.electronAPI && window.electronAPI.invoke) {
-            window.electronAPI.invoke("game:start");
+            window.electronAPI.invoke(CHANNELS.GAME_START);
         }
     });
 
@@ -49,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 text: "Starting new session...",
                 sender: "system",
             });
-            const response = await window.electronAPI.invoke("api:start-session", {});
+            const response = await window.electronAPI.invoke(CHANNELS.API_START_SESSION, {});
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -86,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
         userInputField.value = ""; // Clear input field
 
         try {
-            const response = await window.electronAPI.invoke("api:send-message", {
+            const response = await window.electronAPI.invoke(CHANNELS.API_SEND_MESSAGE, {
                 text: text,
                 session_id: sessionId,
             });
@@ -116,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             if (window.electronAPI && window.electronAPI.invoke) {
                 const services = await window.electronAPI.invoke(
-                    "hsp:get-discovered-services",
+                    CHANNELS.HSP_GET_DISCOVERED_SERVICES,
                 );
                 window.store.updateState(window.store.actions.setHspServices, services);
             } else {
@@ -154,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.store.updateState(window.store.actions.setLoading, true);
         try {
             if (window.electronAPI && window.electronAPI.invoke) {
-                const response = await window.electronAPI.invoke("hsp:request-task", {
+                const response = await window.electronAPI.invoke(CHANNELS.HSP_REQUEST_TASK, {
                     targetCapabilityId,
                     parameters,
                 });
@@ -192,7 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             if (window.electronAPI && window.electronAPI.invoke) {
                 const statusData = await window.electronAPI.invoke(
-                    "hsp:get-task-status",
+                    CHANNELS.HSP_GET_TASK_STATUS,
                     correlationId,
                 );
                 window.store.updateState(window.store.actions.setHspTaskStatus, { correlationId, statusData });
