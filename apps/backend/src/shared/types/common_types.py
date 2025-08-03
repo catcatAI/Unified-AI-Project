@@ -121,12 +121,6 @@ class OverwriteDecision(Enum): # For HAMMemoryManager -> DialogueManager
     ASK_USER = "ask_user"
     MERGE_IF_APPLICABLE = "merge_if_applicable"
 
-class OverwriteDecision(Enum): # For HAMMemoryManager -> DialogueManager
-    PREVENT_OVERWRITE = "prevent_overwrite"
-    OVERWRITE_EXISTING = "overwrite_existing"
-    ASK_USER = "ask_user"
-    MERGE_IF_APPLICABLE = "merge_if_applicable"
-
 # --- LLM Interface Types ---
 class LLMProviderOllamaConfig(TypedDict):
     base_url: Required[str]
