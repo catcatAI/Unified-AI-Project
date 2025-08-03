@@ -15,6 +15,8 @@ from typing import List, Dict, Any
 # 添加項目根目錄到 Python 路徑
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "apps"))
+sys.path.insert(0, str(project_root / "apps" / "backend"))
 sys.path.insert(0, str(project_root / "apps" / "backend" / "src"))
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
