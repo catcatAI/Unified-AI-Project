@@ -1,0 +1,163 @@
+:root {
+    --main-bg-color: #202020;
+    --text-color: #E0E0E0;
+    --window-bg-color: #333344;
+    --border-color: #707080;
+    --highlight-color: #8899FF;
+    --highlight-text-color: #101020;
+    --user-msg-bg: #405070;
+    --ai-msg-bg: #504060;
+    --system-msg-bg: #306050;
+    --error-msg-bg: #703030;
+    --font-family: 'Press Start 2P', cursive;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--main-bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    height: 95vh;
+    image-rendering: pixelated; /* Ensures sharp pixels */
+}
+
+h1 {
+    font-size: 1.5em;
+    color: var(--highlight-color);
+    text-shadow: 2px 2px #000;
+    margin-bottom: 15px;
+}
+
+#nav {
+    display: flex;
+    margin-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+#nav button {
+    font-family: var(--font-family);
+    background-color: var(--window-bg-color);
+    color: var(--text-color);
+    border: 2px solid var(--border-color);
+    padding: 8px 12px;
+    margin-right: 10px;
+    cursor: pointer;
+    box-shadow: 2px 2px #000;
+}
+
+#nav button:hover {
+    background-color: var(--highlight-color);
+    color: var(--highlight-text-color);
+}
+
+#nav button:active, #nav button.active {
+    box-shadow: none;
+    transform: translate(2px, 2px);
+    background-color: var(--highlight-color);
+    color: var(--highlight-text-color);
+}
+
+#mainContent {
+    display: flex;
+    flex-grow: 1;
+}
+
+#mainContent > div {
+    display: none; /* Hide all views by default */
+    flex-direction: column;
+    flex-grow: 1;
+    background-color: var(--window-bg-color);
+    border: 2px solid var(--border-color);
+    padding: 15px;
+    box-shadow: inset 0 0 10px #000;
+}
+
+#mainContent > div.active-view {
+    display: flex; /* Show the active view */
+}
+
+#chatDisplay {
+    flex-grow: 1;
+    overflow-y: scroll;
+    margin-bottom: 15px;
+    background-color: #181828;
+    border: 2px solid var(--border-color);
+    padding: 10px;
+    scrollbar-width: none; /* Firefox */
+}
+#chatDisplay::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
+}
+
+.message { margin-bottom: 10px; padding: 10px; border: 2px solid var(--border-color); max-width: 85%; }
+.user-message { background-color: var(--user-msg-bg); text-align: left; margin-right: auto; }
+.ai-message { background-color: var(--ai-msg-bg); text-align: left; margin-right: auto; }
+.system-message { background-color: var(--system-msg-bg); font-style: italic; }
+.system-error { background-color: var(--error-msg-bg); color: #FFDDDD; }
+
+#inputContainer { display: flex; }
+#userInput {
+    font-family: var(--font-family);
+    flex-grow: 1;
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    background-color: #181828;
+    color: var(--text-color);
+}
+#userInput:focus {
+    outline: 2px solid var(--highlight-color);
+}
+
+#sendButton, .action-button {
+    font-family: var(--font-family);
+    padding: 10px 15px;
+    margin-left: 10px;
+    background-color: var(--highlight-color);
+    color: var(--highlight-text-color);
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    box-shadow: 2px 2px #000;
+}
+#sendButton:active, .action-button:active {
+    box-shadow: none;
+    transform: translate(2px, 2px);
+}
+
+/* HSP & Game View Styles */
+.hsp-section, #gameView > div {
+     margin-bottom: 20px;
+     border: 2px solid var(--border-color);
+     background-color: #282838;
+}
+.hsp-header {
+    background-color: #181828;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--border-color);
+}
+.hsp-header h3 { margin: 0; font-size: 1em; }
+.hsp-content { padding: 15px; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: normal; }
+.form-control {
+    width: calc(100% - 20px);
+    padding: 8px;
+    border: 2px solid var(--border-color);
+    background-color: #181828;
+    color: var(--text-color);
+    font-family: var(--font-family);
+}
+pre { background-color: #181828; padding: 10px; border: 2px solid var(--border-color); overflow-x: auto; }
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    #mainContent {
+        flex-direction: column;
+    }
+}
