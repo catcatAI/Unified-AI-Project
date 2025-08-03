@@ -1,7 +1,9 @@
-import requests
-from bs4 import BeautifulSoup
-import yaml
 import os
+
+import requests
+import yaml
+from bs4 import BeautifulSoup
+
 
 class WebSearchTool:
     def __init__(self):

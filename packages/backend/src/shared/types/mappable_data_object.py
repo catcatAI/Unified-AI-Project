@@ -1,6 +1,7 @@
-from typing import Dict, Any, Optional
-import zlib
 import json
+import zlib
+from typing import Any, Dict, Optional
+
 
 class MappableDataObject:
     """

@@ -1,5 +1,6 @@
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
 
+
 class FragmentaOrchestrator:
     def __init__(self, ham_manager: HAMMemoryManager):
         self.ham_manager = ham_manager

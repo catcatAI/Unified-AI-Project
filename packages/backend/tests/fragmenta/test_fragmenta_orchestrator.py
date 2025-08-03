@@ -1,8 +1,11 @@
 import unittest
-import pytest
 from unittest.mock import MagicMock
-from src.fragmenta.fragmenta_orchestrator import FragmentaOrchestrator
+
+import pytest
+
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from src.fragmenta.fragmenta_orchestrator import FragmentaOrchestrator
+
 
 class TestFragmentaOrchestrator(unittest.TestCase):
     @pytest.mark.timeout(5)

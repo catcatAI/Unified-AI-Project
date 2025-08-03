@@ -1,4 +1,5 @@
-from typing import TypedDict, Required, Optional, List, Dict, Any, Literal
+from typing import Any, Dict, List, Literal, Optional, Required, TypedDict
+
 
 # Virtual Input types
 class VirtualInputElementDescription(TypedDict, total=False):

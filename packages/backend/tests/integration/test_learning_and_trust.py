@@ -1,12 +1,14 @@
-import pytest
 import uuid
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from src.core_ai.learning.learning_manager import LearningManager
-from src.core_ai.trust_manager.trust_manager_module import TrustManager
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from src.core_ai.trust_manager.trust_manager_module import TrustManager
 from src.hsp.types import HSPFactPayload, HSPMessageEnvelope
+
 
 class TestLearningAndTrustIntegration:
 

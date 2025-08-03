@@ -1,16 +1,26 @@
-import json
-import zlib
+import asyncio  # Added for asyncio.to_thread
 import base64
-import os
-import logging
-from datetime import datetime, timezone
-from collections import Counter
-from cryptography.fernet import Fernet, InvalidToken
 import hashlib
-import asyncio # Added for asyncio.to_thread
-from typing import Optional, List, Dict, Any, Tuple, Union # Added Union for recall_gist return
+import json
+import logging
+import os
+import zlib
+from collections import Counter
+from datetime import datetime, timezone
+from typing import (  # Added Union for recall_gist return
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
+
+from cryptography.fernet import Fernet, InvalidToken
+
 from src.shared.key_manager import key_manager
 from src.shared.types.common_types import DialogueMemoryEntryMetadata
+
 from .types import HAMDataPackageInternal, HAMRecallResult
 
 logger = logging.getLogger(__name__)

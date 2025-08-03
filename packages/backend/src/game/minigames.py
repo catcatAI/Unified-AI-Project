@@ -1,5 +1,7 @@
-import pygame
 import random
+
+import pygame
+
 
 class FishingGame:
     def __init__(self, game):

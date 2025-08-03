@@ -1,6 +1,9 @@
-import pytest
-from src.game.main import Game
 from unittest.mock import MagicMock
+
+import pytest
+
+from src.game.main import Game
+
 
 @pytest.fixture
 def game():

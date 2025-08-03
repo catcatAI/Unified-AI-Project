@@ -1,20 +1,22 @@
-import pytest
 import asyncio
-import sys
 import json
-from unittest.mock import MagicMock, AsyncMock
+import sys
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 # Ensure the src directory is in the Python path
 sys.path.insert(0, 'packages/backend/src')
 
 from core_ai.agent_manager import AgentManager
 from core_ai.dialogue.project_coordinator import ProjectCoordinator
-from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from core_ai.trust_manager.trust_manager_module import TrustManager
 from core_ai.memory.ham_memory_manager import HAMMemoryManager
 from core_ai.personality.personality_manager import PersonalityManager
+from core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+from core_ai.trust_manager.trust_manager_module import TrustManager
 from hsp.connector import HSPConnector
 from services.multi_llm_service import MultiLLMService
+
 
 # A simplified mock MQTT broker for this test
 class MockMqttBroker:

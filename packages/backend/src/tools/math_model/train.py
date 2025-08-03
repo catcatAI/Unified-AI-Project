@@ -1,13 +1,14 @@
 import json
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-
-from model import ArithmeticSeq2Seq, get_char_token_maps, prepare_data
 
 # --- Configuration ---
 # Get absolute paths
 import os
+
+import numpy as np
+import tensorflow as tf
+from model import ArithmeticSeq2Seq, get_char_token_maps, prepare_data
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
 

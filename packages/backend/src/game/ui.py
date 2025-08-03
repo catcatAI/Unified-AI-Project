@@ -1,5 +1,6 @@
 import pygame
 
+
 class DialogueBox:
     def __init__(self, game):
         self.game = game

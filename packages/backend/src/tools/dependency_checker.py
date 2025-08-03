@@ -1,9 +1,10 @@
-import importlib
-import yaml
 import argparse
-import sys
+import importlib
 import os
-from typing import List, Dict, Any, Optional, Tuple
+import sys
+from typing import Any, Dict, List, Optional, Tuple
+
+import yaml
 
 # Ensure src directory is in path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,7 +14,10 @@ if src_path not in sys.path:
 
 try:
     # Import the dependency_manager instance and its print function
-    from src.core_ai.dependency_manager import dependency_manager, print_dependency_report
+    from src.core_ai.dependency_manager import (
+        dependency_manager,
+        print_dependency_report,
+    )
     DM_AVAILABLE = True
 except (ImportError, ModuleNotFoundError) as e:
     print(f"\nWarning: Could not import dependency manager: {e}", file=sys.stderr)

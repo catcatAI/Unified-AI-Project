@@ -1,8 +1,10 @@
 import pygame
-from .player import Player
+
 from .angela import Angela
-from .ui import DialogueBox
 from .npcs import create_npc
+from .player import Player
+from .ui import DialogueBox
+
 
 class Scene:
     def __init__(self, game):

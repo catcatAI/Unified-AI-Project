@@ -1,6 +1,7 @@
 import json
-import random
 import os
+import random
+
 
 def generate_simple_logic_dataset(num_samples=1000):
     """

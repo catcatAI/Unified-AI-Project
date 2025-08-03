@@ -10,21 +10,22 @@ Future extensions may allow this service (under strict permissions) to
 control actual system input devices.
 """
 
-from typing import List, Optional, Dict, Any, Tuple
-
-from .types import (
-    VirtualInputPermissionLevel,
-    VirtualMouseCommand,
-    VirtualKeyboardCommand,
-    VirtualMouseEventType,
-    VirtualKeyboardActionType,
-    VirtualInputElementDescription,
-)
+import copy  # For deepcopy
 
 # Further imports will be added as the class is implemented.
 # For example, datetime for logging timestamps.
 from datetime import datetime, timezone
-import copy # For deepcopy
+from typing import Any, Dict, List, Optional, Tuple
+
+from .types import (
+    VirtualInputElementDescription,
+    VirtualInputPermissionLevel,
+    VirtualKeyboardActionType,
+    VirtualKeyboardCommand,
+    VirtualMouseCommand,
+    VirtualMouseEventType,
+)
+
 
 class AIVirtualInputService:
     """

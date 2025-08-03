@@ -12,6 +12,7 @@ and other blocking conditions in tests.
 import asyncio
 import functools
 import inspect
+import logging
 import signal
 import sys
 import threading
@@ -21,7 +22,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Union
-import logging
 
 logger = logging.getLogger(__name__)
 

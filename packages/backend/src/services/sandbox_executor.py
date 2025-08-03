@@ -1,17 +1,20 @@
+import importlib.util  # For the runner script's dynamic import
 import json
 import os
 import subprocess
+import sys  # For sys.executable
 import tempfile
-import importlib.util # For the runner script's dynamic import
-import traceback # For the runner script's exception formatting
-from typing import Tuple, Optional, Dict, Any
-import sys # For sys.executable
+import traceback  # For the runner script's exception formatting
+from typing import Any, Dict, Optional, Tuple
 
 # 整合執行監控系統
 try:
     from ..core_ai.execution_manager import (
-        ExecutionManager, ExecutionManagerConfig, 
-        execute_with_smart_monitoring, ExecutionResult, ExecutionStatus
+        ExecutionManager,
+        ExecutionManagerConfig,
+        ExecutionResult,
+        ExecutionStatus,
+        execute_with_smart_monitoring,
     )
     EXECUTION_MONITORING_AVAILABLE = True
 except ImportError:

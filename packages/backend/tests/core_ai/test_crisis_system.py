@@ -1,8 +1,9 @@
-import unittest
-import pytest
 import os
 import sys
-from unittest.mock import patch # Import patch
+import unittest
+from unittest.mock import patch  # Import patch
+
+import pytest
 
 # Add src directory to sys.path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -12,6 +13,7 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 from core_ai.crisis_system import CrisisSystem
+
 
 class TestCrisisSystem(unittest.TestCase):
 

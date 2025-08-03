@@ -1,5 +1,6 @@
 from transformers import pipeline
 
+
 def generate_text(prompt):
     """
     Generates text from a prompt.

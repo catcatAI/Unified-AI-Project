@@ -1,13 +1,15 @@
-import uuid # For hsp_fact_id default in process_hsp_fact_content
-import spacy
-from spacy.tokens import Doc
-from typing import List, Dict, Any, Optional, Tuple, TypedDict # Added TypedDict
+import uuid  # For hsp_fact_id default in process_hsp_fact_content
+from typing import Any, Dict, List, Optional, Tuple, TypedDict  # Added TypedDict
+
 import networkx as nx
+import spacy
+from spacy.matcher import Matcher  # Added Matcher
+from spacy.tokens import Doc
+
+from hsp.types import HSPFactPayload  # Import HSPFactPayload
 
 from ..knowledge_graph.types import KGEntity, KGRelationship, KnowledgeGraph
-from hsp.types import HSPFactPayload # Import HSPFactPayload
 
-from spacy.matcher import Matcher # Added Matcher
 
 # --- Types for process_hsp_fact_content return value ---
 class ProcessedTripleInfo(TypedDict):
@@ -60,8 +62,9 @@ class ContentAnalyzerModule:
                     elif nlp is None:
                          raise RuntimeError(f"Could not load any spaCy model. Last error: {e}")
 
-import yaml # For loading config
-import os   # For path construction
+import os  # For path construction
+
+import yaml  # For loading config
 
 # ... (other imports)
 

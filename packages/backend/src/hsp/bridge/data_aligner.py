@@ -1,5 +1,14 @@
 from typing import Any, Dict, Literal, Optional, Union
-from ..types import HSPMessageEnvelope, HSPFactPayload, HSPErrorDetails, HSPTaskRequestPayload, HSPTaskResultPayload, HSPCapabilityAdvertisementPayload
+
+from ..types import (
+    HSPCapabilityAdvertisementPayload,
+    HSPErrorDetails,
+    HSPFactPayload,
+    HSPMessageEnvelope,
+    HSPTaskRequestPayload,
+    HSPTaskResultPayload,
+)
+
 
 class DataAligner:
     def __init__(self, schema_registry: Optional[Dict[str, Any]] = None):

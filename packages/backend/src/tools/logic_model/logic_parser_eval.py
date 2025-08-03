@@ -1,5 +1,6 @@
 import re
 
+
 class LogicParserEval:
     """
     A simple parser and evaluator for basic logical expressions.

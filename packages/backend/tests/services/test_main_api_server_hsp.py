@@ -1,29 +1,43 @@
-import pytest
-from fastapi.testclient import TestClient
-import uuid
-import time
 import asyncio
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, AsyncMock, ANY
-from typing import List
+import os
 
 # Ensure src is in path for imports
 import sys
-import os
+import time
+import uuid
+from datetime import datetime, timezone
+from typing import List
+from unittest.mock import ANY, AsyncMock, MagicMock
+
+import pytest
+from fastapi.testclient import TestClient
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-# Import the FastAPI app and core services
-from src.services.main_api_server import app # Main FastAPI app
-from src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID
-from src.hsp.connector import HSPConnector
-from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+import logging
+
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
 from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
+from src.core_ai.service_discovery.service_discovery_module import (
+    ServiceDiscoveryModule,
+)
+from src.core_services import (
+    DEFAULT_AI_ID,
+    get_services,
+    initialize_services,
+    shutdown_services,
+)
+from src.hsp.connector import HSPConnector
+from src.hsp.types import (
+    HSPCapabilityAdvertisementPayload,
+    HSPMessageEnvelope,
+    HSPTaskRequestPayload,
+    HSPTaskResultPayload,
+)
+
+# Import the FastAPI app and core services
+from src.services.main_api_server import app  # Main FastAPI app
 from tests.conftest import mqtt_broker_available
-
-
-import logging
 
 # --- Constants for API Tests ---
 TEST_API_PEER_AI_ID = "did:hsp:test_api_peer_007"
@@ -81,22 +95,24 @@ async def client_with_overrides(api_test_peer_connector):
     Provides a TestClient for the FastAPI app and the instances used for dependency overrides.
     This fixture is updated to provide all necessary mocks for DialogueManager.
     """
-    from unittest.mock import MagicMock, AsyncMock
-    from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-    from src.core_ai.trust_manager.trust_manager_module import TrustManager
+    from unittest.mock import AsyncMock, MagicMock
+
+    from src.core_ai.agent_manager import AgentManager
+    from src.core_ai.crisis_system import CrisisSystem
     from src.core_ai.dialogue.dialogue_manager import DialogueManager
+    from src.core_ai.emotion_system import EmotionSystem
+    from src.core_ai.formula_engine import FormulaEngine
+    from src.core_ai.learning.learning_manager import LearningManager
     from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
     from src.core_ai.personality.personality_manager import PersonalityManager
-    from src.services.multi_llm_service import MultiLLMService
-    from src.core_ai.emotion_system import EmotionSystem
-    from src.core_ai.crisis_system import CrisisSystem
+    from src.core_ai.service_discovery.service_discovery_module import (
+        ServiceDiscoveryModule,
+    )
     from src.core_ai.time_system import TimeSystem
-    from src.core_ai.formula_engine import FormulaEngine
-    from src.tools.tool_dispatcher import ToolDispatcher
-    from src.core_ai.learning.learning_manager import LearningManager
+    from src.core_ai.trust_manager.trust_manager_module import TrustManager
     from src.hsp.connector import HSPConnector
-    from src.core_ai.agent_manager import AgentManager
-    from src.tools.tool_dispatcher import ToolDispatcherResponse
+    from src.services.multi_llm_service import MultiLLMService
+    from src.tools.tool_dispatcher import ToolDispatcher, ToolDispatcherResponse
 
     # Create instances that will be shared and controlled by the tests
     trust_manager_for_test = TrustManager()

@@ -2,16 +2,21 @@
 測試 AtlassianBridge 備用機制
 """
 
-import pytest
 import asyncio
-import aiohttp
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, Mock, patch
+
+import aiohttp
+import pytest
 
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)
 
-from src.integrations.atlassian_bridge import AtlassianBridge, EndpointConfig, CacheEntry
+from src.integrations.atlassian_bridge import (
+    AtlassianBridge,
+    CacheEntry,
+    EndpointConfig,
+)
 from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 

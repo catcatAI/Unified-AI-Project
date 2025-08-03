@@ -1,26 +1,35 @@
 from __future__ import annotations
+
 import asyncio
 import json
+import logging
+import os
 import re
 import uuid
-import logging
-import networkx as nx
-from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
-import yaml
-import os
-
-from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload
-from src.shared.types.common_types import PendingHSPTaskInfo
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+import networkx as nx
+import yaml
+
+from src.hsp.types import (
+    HSPCapabilityAdvertisementPayload,
+    HSPMessageEnvelope,
+    HSPTaskRequestPayload,
+    HSPTaskResultPayload,
+)
+from src.shared.types.common_types import PendingHSPTaskInfo
 
 if TYPE_CHECKING:
-    from src.services.llm_interface import LLMInterface
-    from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-    from src.hsp.connector import HSPConnector
     from src.core_ai.agent_manager import AgentManager
-    from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
     from src.core_ai.learning.learning_manager import LearningManager
+    from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
     from src.core_ai.personality.personality_manager import PersonalityManager
+    from src.core_ai.service_discovery.service_discovery_module import (
+        ServiceDiscoveryModule,
+    )
+    from src.hsp.connector import HSPConnector
+    from src.services.llm_interface import LLMInterface
 
 class ProjectCoordinator:
     def __init__(self,

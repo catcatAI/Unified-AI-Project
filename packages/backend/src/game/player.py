@@ -1,4 +1,5 @@
 import pygame
+
 from .inventory import Inventory
 
 PLAYER_SPEED = 5

@@ -1,10 +1,15 @@
 import asyncio
 import uuid
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 from src.agents.base_agent import BaseAgent
-from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from src.hsp.types import (
+    HSPMessageEnvelope,
+    HSPTaskRequestPayload,
+    HSPTaskResultPayload,
+)
 from src.tools.tool_dispatcher import ToolDispatcher
+
 
 class ImageGenerationAgent(BaseAgent):
     """

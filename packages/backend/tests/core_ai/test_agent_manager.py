@@ -1,14 +1,16 @@
-import unittest
-import pytest
+import os
 import sys
 import time
-import os
-from unittest.mock import patch, MagicMock
+import unittest
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Adjust the path to import from the src directory
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from src.core_ai.agent_manager import AgentManager
+
 
 class TestAgentManager(unittest.TestCase):
 

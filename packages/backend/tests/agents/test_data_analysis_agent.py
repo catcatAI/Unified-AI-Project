@@ -1,16 +1,18 @@
-import unittest
-import pytest
 import asyncio
-import uuid
 import os
 import sys
-from unittest.mock import MagicMock, AsyncMock, patch
+import unittest
+import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from src.agents.data_analysis_agent import DataAnalysisAgent
-from src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+from src.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload
 from src.shared.types.common_types import ToolDispatcherResponse
+
 
 class TestDataAnalysisAgent(unittest.TestCase):
 

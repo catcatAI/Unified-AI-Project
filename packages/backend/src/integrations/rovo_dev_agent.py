@@ -5,21 +5,20 @@ Rovo Dev Agent 核心实现
 """
 
 import asyncio
+import json
 import logging
 import pickle
 import time
 import traceback
-import traceback
-from typing import Dict, Any, Optional, List, Union
-from datetime import datetime, timedelta
 from dataclasses import dataclass
-import json
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
-from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
-from .atlassian_bridge import AtlassianBridge
-from ..hsp.types import HSPMessage, HSPCapability, HSPTask
 from ..core_ai.agent_manager import AgentManager
+from ..hsp.types import HSPCapability, HSPMessage, HSPTask
+from .atlassian_bridge import AtlassianBridge
+from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 logger = logging.getLogger(__name__)
 

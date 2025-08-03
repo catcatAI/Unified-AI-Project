@@ -6,18 +6,19 @@ This module tests the Context7 MCP integration functionality
 including context management, model collaboration, and protocol validation.
 """
 
-import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.mcp.context7_connector import (
-    Context7MCPConnector,
     Context7Config,
-    UnifiedAIMCPIntegration
+    Context7MCPConnector,
+    UnifiedAIMCPIntegration,
 )
-from src.mcp.types import MCPMessage, MCPResponse, MCPCapability
+from src.mcp.types import MCPCapability, MCPMessage, MCPResponse
 
 
 class TestContext7Config:

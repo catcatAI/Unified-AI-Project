@@ -1,10 +1,12 @@
-import unittest
-import pytest
-from unittest.mock import patch, MagicMock
 import os
+import unittest
+from unittest.mock import MagicMock, patch
 
-from src.tools.code_understanding_tool import CodeUnderstandingTool
+import pytest
+
 from src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
+from src.tools.code_understanding_tool import CodeUnderstandingTool
+
 
 class TestCodeUnderstandingTool(unittest.TestCase):
 

@@ -1,9 +1,10 @@
 import json
 import os
 import sys
+
 import numpy as np
 import tensorflow as tf
-from sklearn.metrics import classification_report, accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 
 # Add src directory to sys.path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -13,7 +14,10 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 try:
-    from tools.logic_model.logic_model_nn import LogicNNModel, preprocess_logic_data # Assuming load_model is part of LogicNNModel
+    from tools.logic_model.logic_model_nn import (  # Assuming load_model is part of LogicNNModel
+        LogicNNModel,
+        preprocess_logic_data,
+    )
 except ImportError as e:
     print(f"Error importing from logic_model_nn: {e}")
     sys.exit(1)

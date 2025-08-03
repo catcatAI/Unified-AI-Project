@@ -1,7 +1,6 @@
 import sys
-import yaml
+import toml
 import os
-import sys
 from PyQt5.QtWidgets import QApplication, QWizard, QWizardPage, QVBoxLayout, QLabel, QComboBox
 from PyQt5.QtCore import QTranslator, QLocale, QLibraryInfo
 
@@ -13,17 +12,18 @@ class InstallationWizard(QWizard):
         self.current_locale = QLocale.system().name()
         self.load_translator(self.current_locale)
 
-        # Load dependency configuration
-        config_path = os.path.join(os.path.dirname(__file__), 'dependency_config.yaml')
+        # Load dependency configuration from pyproject.toml
+        self.pyproject_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'packages', 'backend', 'pyproject.toml'))
+        self.backend_path = os.path.dirname(self.pyproject_path)
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                self.dependency_config = yaml.safe_load(f)
+            with open(self.pyproject_path, 'r', encoding='utf-8') as f:
+                self.pyproject_data = toml.load(f)
         except FileNotFoundError:
-            print(f"Error: dependency_config.yaml not found at {config_path}", file=sys.stderr)
-            self.dependency_config = {} # Fallback to empty config
-        except yaml.YAMLError as e:
-            print(f"Error parsing dependency_config.yaml: {e}", file=sys.stderr)
-            self.dependency_config = {} # Fallback to empty config
+            print(f"Error: pyproject.toml not found at {self.pyproject_path}", file=sys.stderr)
+            self.pyproject_data = {} # Fallback to empty config
+        except toml.TomlDecodeError as e:
+            print(f"Error parsing pyproject.toml: {e}", file=sys.stderr)
+            self.pyproject_data = {} # Fallback to empty config
 
         self.addPage(WelcomePage())
         self.addPage(ConfigurationPage())
@@ -154,14 +154,25 @@ class ConfigurationPage(QWizardPage):
         self.wizard().selected_installation_type = self.install_type_combo.currentData()
 
     def initializePage(self):
-        # Populate combo box from dependency_config.yaml
+        # Populate combo box from pyproject.toml optional-dependencies
         self.install_type_combo.clear()
-        installation_types = self.wizard().dependency_config.get('installation', {})
-        for install_type, details in installation_types.items():
-            self.install_type_combo.addItem(f"{install_type} ({details.get('description', '')})", install_type)
+        optional_deps = self.wizard().pyproject_data.get('project', {}).get('optional-dependencies', {})
 
-        # Set default selection if not already set
-        if not self.wizard().selected_installation_type and self.install_type_combo.count() > 0:
+        # We will offer a curated list of installation profiles to the user.
+        # These profiles correspond to the optional-dependency groups in pyproject.toml.
+        install_groups = ['standard', 'ai', 'game', 'installer']
+
+        # Add 'full' as the recommended default
+        if 'full' in optional_deps:
+            install_groups.insert(0, 'full')
+
+        for group in install_groups:
+            if group in optional_deps:
+                # Capitalize for display
+                self.install_type_combo.addItem(f"{group.capitalize()} installation", group)
+
+        # Set default selection
+        if self.install_type_combo.count() > 0:
             self.install_type_combo.setCurrentIndex(0)
             self._update_selected_type()
 
@@ -201,33 +212,39 @@ class InstallationPage(QWizardPage):
         import subprocess
         import sys
 
-        def install(package):
+        def install(install_group):
+            # The command needs to point to the backend directory
+            backend_dir = self.wizard().backend_path
+            # We install the package in editable mode with the selected optional dependencies
+            install_target = f"{backend_dir}[{install_group}]"
             try:
-                subprocess.check_call([sys.executable, "-m", "pip", "install", package], timeout=300)
+                # Use -U to ensure dependencies are upgraded, and --no-cache-dir to avoid stale caches.
+                # Timeout is increased to 10 minutes to handle large downloads like PyTorch/TensorFlow.
+                print(f"Running installation command: pip install -U -e {install_target}")
+                subprocess.check_call(
+                    [sys.executable, "-m", "pip", "install", "-U", "-e", install_target],
+                    timeout=600
+                )
             except subprocess.CalledProcessError as e:
-                print(f"Error installing {package}: {e}")
+                print(f"Error installing dependency group {install_group}: {e}", file=sys.stderr)
             except subprocess.TimeoutExpired as e:
-                print(f"Timeout installing {package}: {e}")
+                print(f"Timeout installing dependency group {install_group}: {e}", file=sys.stderr)
 
-        selected_type = self.wizard().selected_installation_type
-        config = self.wizard().dependency_config
+        selected_group = self.wizard().selected_installation_type
 
-        if selected_type and config:
-            dependencies_to_install = config.get('installation', {}).get(selected_type, {}).get('packages', [])
-        else:
-            # Fallback to core dependencies if no type selected or config not loaded
-            dependencies_to_install = [dep['name'] for dep in config.get('dependencies', {}).get('core', [])]
-            print("Warning: No installation type selected or config not loaded. Installing core dependencies only.", file=sys.stderr)
-
-        if not dependencies_to_install:
-            print("No dependencies to install for the selected type.", file=sys.stderr)
-            self.progress_bar.setValue(100)
+        if not selected_group:
+            print("Error: No installation type selected.", file=sys.stderr)
+            self.progress_bar.setValue(100) # Mark as complete to not block the wizard
             self.wizard().nextButton.setEnabled(True)
             return
 
-        for i, dependency in enumerate(dependencies_to_install):
-            install(dependency)
-            self.progress_bar.setValue(int((i + 1) / len(dependencies_to_install) * 100))
+        self.progress_bar.setValue(0)
+
+        # We now run a single, comprehensive installation command.
+        install(selected_group)
+
+        # Since there's one main step, we just jump to 100% on completion.
+        self.progress_bar.setValue(100)
 
         self.create_shortcut()
         self.wizard().nextButton.setEnabled(True)

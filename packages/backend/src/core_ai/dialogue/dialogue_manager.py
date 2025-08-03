@@ -1,32 +1,37 @@
 from __future__ import annotations
+
+import ast
 import asyncio
 import json
-from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List, Tuple, TYPE_CHECKING
-import uuid
 import os
 import re
-import ast
+import uuid
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from src.core_ai.personality.personality_manager import PersonalityManager
-from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from src.services.multi_llm_service import MultiLLMService
-from src.core_ai.emotion_system import EmotionSystem
-from src.core_ai.crisis_system import CrisisSystem
-from src.core_ai.time_system import TimeSystem
-from src.core_ai.formula_engine import FormulaEngine
-from src.tools.tool_dispatcher import ToolDispatcher
-from src.core_ai.learning.learning_manager import LearningManager
-from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from src.services.sandbox_executor import SandboxExecutor
 import networkx as nx
-from src.shared.types.common_types import (
-    OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
-)
 
-from src.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
-from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 from src.core_ai.agent_manager import AgentManager
+from src.core_ai.crisis_system import CrisisSystem
+from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
+from src.core_ai.emotion_system import EmotionSystem
+from src.core_ai.formula_engine import FormulaEngine
+from src.core_ai.learning.learning_manager import LearningManager
+from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from src.core_ai.personality.personality_manager import PersonalityManager
+from src.core_ai.service_discovery.service_discovery_module import (
+    ServiceDiscoveryModule,
+)
+from src.core_ai.time_system import TimeSystem
+from src.hsp.types import HSPMessageEnvelope, HSPTaskResultPayload
+from src.services.multi_llm_service import MultiLLMService
+from src.services.sandbox_executor import SandboxExecutor
+from src.shared.types.common_types import (
+    DialogueMemoryEntryMetadata,
+    DialogueTurn,
+    OperationalConfig,
+)
+from src.tools.tool_dispatcher import ToolDispatcher
 
 if TYPE_CHECKING:
     from src.hsp.connector import HSPConnector

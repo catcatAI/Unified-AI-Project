@@ -1,15 +1,19 @@
 # tests/services/test_resource_awareness_service.py
-import unittest
-import pytest
 import os
-import yaml
+import unittest
 from pathlib import Path
 
-from src.services.resource_awareness_service import ResourceAwarenessService, DEFAULT_CONFIG_PATH
+import pytest
+import yaml
+
+from src.services.resource_awareness_service import (
+    DEFAULT_CONFIG_PATH,
+    ResourceAwarenessService,
+)
 from src.services.types import (
-    SimulatedHardwareProfile,
-    SimulatedDiskConfig,
     SimulatedCPUConfig,
+    SimulatedDiskConfig,
+    SimulatedHardwareProfile,
     SimulatedRAMConfig,
 )
 

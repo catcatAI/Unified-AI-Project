@@ -1,30 +1,32 @@
 # tests/core_ai/lis/test_ham_lis_cache.py
-import unittest
-import pytest
 import json
-from typing import Dict, Any, Optional, List, cast
-from datetime import datetime, timezone, timedelta # Added timedelta
+import unittest
+from datetime import datetime, timedelta, timezone  # Added timedelta
+from typing import Any, Dict, List, Optional, cast
+
+import pytest
 
 from src.core_ai.lis.lis_cache_interface import (
-    HAMLISCache,
-    LISCacheInterface,
-    HAM_META_LIS_OBJECT_ID,
+    HAM_META_ANTIBODY_EFFECTIVENESS,
+    HAM_META_ANTIBODY_FOR_ANOMALY,
     HAM_META_LIS_ANOMALY_TYPE,
+    HAM_META_LIS_OBJECT_ID,
     HAM_META_LIS_STATUS,
     HAM_META_LIS_TAGS,
     HAM_META_TIMESTAMP_LOGGED,
-    LIS_INCIDENT_DATA_TYPE_PREFIX,
     LIS_ANTIBODY_DATA_TYPE_PREFIX,
-    HAM_META_ANTIBODY_FOR_ANOMALY,
-    HAM_META_ANTIBODY_EFFECTIVENESS,
+    LIS_INCIDENT_DATA_TYPE_PREFIX,
+    HAMLISCache,
+    LISCacheInterface,
 )
-from src.core_ai.memory.ham_memory_manager import HAMMemoryManager, HAMRecallResult
 from src.core_ai.lis.types import (
+    LIS_AnomalyType,
     LIS_IncidentRecord,
     LIS_SemanticAnomalyDetectedEvent,
-    LIS_AnomalyType,
     NarrativeAntibodyObject,
 )
+from src.core_ai.memory.ham_memory_manager import HAMMemoryManager, HAMRecallResult
+
 
 class MockHAMMemoryManager(HAMMemoryManager):
     """
@@ -255,7 +257,7 @@ class TestHAMLISCache(unittest.TestCase):
         # Helper to populate mock HAM with diverse incidents
         # Timestamps are crucial for time window and sorting tests
         # Make them offset-aware (UTC) for consistency
-        from datetime import timezone, timedelta
+        from datetime import timedelta, timezone
 
         now = datetime.now(timezone.utc)
         self.incidents_data = [

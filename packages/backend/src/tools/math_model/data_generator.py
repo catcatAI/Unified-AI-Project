@@ -1,7 +1,8 @@
-import random
 import csv
 import json
-import os # Added os module
+import os  # Added os module
+import random
+
 
 def generate_problem(max_digits=3, operations=None):
     """Generates a random arithmetic problem."""

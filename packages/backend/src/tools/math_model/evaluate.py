@@ -1,8 +1,11 @@
+import csv
 import json
+
 import numpy as np
 import tensorflow as tf
-import csv
-from model import ArithmeticSeq2Seq # Assuming model.py is in the same directory or accessible
+from model import (
+    ArithmeticSeq2Seq,  # Assuming model.py is in the same directory or accessible
+)
 
 # --- Configuration ---
 TEST_DATASET_PATH = "data/raw_datasets/arithmetic_test_dataset.csv"

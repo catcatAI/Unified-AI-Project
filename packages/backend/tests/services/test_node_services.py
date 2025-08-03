@@ -1,6 +1,7 @@
 import unittest
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 # This test file is a placeholder for future tests of the Node.js backend services'
 # integration with the Python backend services. Since the Node.js services are primarily

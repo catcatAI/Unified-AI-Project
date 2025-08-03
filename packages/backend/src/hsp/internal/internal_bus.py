@@ -1,7 +1,8 @@
 import asyncio
-from typing import Callable, Dict, List, Any
-from unittest.mock import AsyncMock
 import inspect
+from typing import Any, Callable, Dict, List
+from unittest.mock import AsyncMock
+
 
 class InternalBus:
     def __init__(self):

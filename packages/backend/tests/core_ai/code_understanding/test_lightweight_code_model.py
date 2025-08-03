@@ -1,14 +1,16 @@
-import unittest
-import pytest
-from unittest.mock import patch, mock_open
-import os
+import ast  # Ensure ast is imported for any direct ast comparisons if needed, though unparse is main
 import glob
-import ast # Ensure ast is imported for any direct ast comparisons if needed, though unparse is main
-import tempfile # For temporary directory
-import logging # For self.assertLogs
+import logging  # For self.assertLogs
+import os
+import tempfile  # For temporary directory
+import unittest
+from unittest.mock import mock_open, patch
+
+import pytest
 
 # Assuming src is in PYTHONPATH for test execution
 from src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
+
 
 class TestLightweightCodeModel(unittest.TestCase):
 

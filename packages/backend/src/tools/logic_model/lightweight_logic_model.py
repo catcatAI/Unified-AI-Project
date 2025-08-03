@@ -1,7 +1,8 @@
-import re
 import json
 import os
+import re
 from typing import Dict, List, Optional, Union
+
 
 class LightweightLogicModel:
     """

@@ -1,4 +1,5 @@
-from typing import TypedDict, Dict, Any
+from typing import Any, Dict, TypedDict
+
 
 class HAMDataPackageInternal(TypedDict):
     timestamp: str  # ISO 8601 UTC string

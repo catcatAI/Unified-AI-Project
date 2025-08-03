@@ -1,5 +1,7 @@
-import pygame
 import random
+
+import pygame
+
 
 class Rock:
     def __init__(self, x, y):

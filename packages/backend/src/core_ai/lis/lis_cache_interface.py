@@ -9,22 +9,22 @@ It forms the memory component of the LIS, supporting its learning and
 adaptive capabilities.
 """
 
+import json  # Added for HAMLISCache conceptual serialization
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any, cast # Added cast
-import json # Added for HAMLISCache conceptual serialization
-from datetime import datetime, timezone # Added for timestamping in add_antibody
+from datetime import datetime, timezone  # Added for timestamping in add_antibody
+from typing import Any, Dict, List, Optional, cast  # Added cast
 
-# Assuming types will be imported from shared.types
-from .types import (
-    LIS_IncidentRecord,
-    LIS_SemanticAnomalyDetectedEvent,
-    LIS_AnomalyType,
-    LIS_InterventionReport,
-    NarrativeAntibodyObject,
-)
 # Import HAMMemoryManager for type hinting in the concrete implementation.
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
 
+# Assuming types will be imported from shared.types
+from .types import (
+    LIS_AnomalyType,
+    LIS_IncidentRecord,
+    LIS_InterventionReport,
+    LIS_SemanticAnomalyDetectedEvent,
+    NarrativeAntibodyObject,
+)
 
 # --- Constants for HAMLISCache ---
 # These constants are defined here as they are specific to the HAMLISCache implementation details
@@ -458,7 +458,11 @@ class HAMLISCache(LISCacheInterface):
                         record_timestamp_str = record.get("timestamp_logged")
                         if record_timestamp_str:
                             try:
-                                from datetime import datetime, timedelta, timezone # Local import for safety
+                                from datetime import (  # Local import for safety
+                                    datetime,
+                                    timedelta,
+                                    timezone,
+                                )
                                 record_dt = datetime.fromisoformat(record_timestamp_str)
                                 # Ensure record_dt is offset-aware for comparison with offset-aware now()
                                 if record_dt.tzinfo is None:
@@ -493,7 +497,11 @@ class HAMLISCache(LISCacheInterface):
                     record_timestamp_str = record.get("timestamp_logged")
                     if record_timestamp_str:
                         try:
-                            from datetime import datetime, timedelta, timezone # Local import
+                            from datetime import (  # Local import
+                                datetime,
+                                timedelta,
+                                timezone,
+                            )
                             record_dt = datetime.fromisoformat(record_timestamp_str)
                             if record_dt.tzinfo is None: record_dt = record_dt.replace(tzinfo=timezone.utc)
                             window_start_dt = datetime.now(timezone.utc) - timedelta(hours=time_window_hours)

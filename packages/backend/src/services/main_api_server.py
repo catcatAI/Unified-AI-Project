@@ -1,25 +1,47 @@
-import uvicorn # For running the app
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.responses import JSONResponse
-from datetime import datetime
 import logging
-import uuid # For generating session IDs
-from typing import List, Dict, Any, Optional # Updated from previous steps
-from fastapi.middleware.cors import CORSMiddleware # Import CORS middleware
+import uuid  # For generating session IDs
+from contextlib import asynccontextmanager  # For lifespan events
+from datetime import datetime
+from typing import Any, Dict, List, Optional  # Updated from previous steps
+
+import uvicorn  # For running the app
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware  # Import CORS middleware
+from fastapi.responses import JSONResponse
+
+from src.config_loader import load_config
 
 # Assuming src is in PYTHONPATH or this script is run from project root
 # Adjust paths as necessary if running from within services directory directly for testing
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
-from src.services.api_models import UserInput, AIOutput, SessionStartRequest, SessionStartResponse, HSPTaskRequestInput, HSPTaskRequestOutput, HSPTaskStatusOutput, AtlassianConfigModel, ConfluencePageModel, JiraIssueModel, RovoDevTaskModel, JQLSearchModel # Added Atlassian models
-from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTask # Added HSPTask
-from src.integrations.rovo_dev_agent import RovoDevAgent # Added RovoDevAgent
-from src.integrations.atlassian_bridge import AtlassianBridge # Added AtlassianBridge
-from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector # Added RovoDevConnector
+from src.core_services import (
+    DEFAULT_AI_ID,
+    DEFAULT_OPERATIONAL_CONFIGS,
+    get_services,
+    initialize_services,
+    shutdown_services,
+)
+from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTask  # Added HSPTask
+from src.integrations.atlassian_bridge import AtlassianBridge  # Added AtlassianBridge
+from src.integrations.enhanced_rovo_dev_connector import (
+    EnhancedRovoDevConnector,  # Added RovoDevConnector
+)
+from src.integrations.rovo_dev_agent import RovoDevAgent  # Added RovoDevAgent
+from src.services.api_models import (  # Added Atlassian models
+    AIOutput,
+    AtlassianConfigModel,
+    ConfluencePageModel,
+    HSPTaskRequestInput,
+    HSPTaskRequestOutput,
+    HSPTaskStatusOutput,
+    JiraIssueModel,
+    JQLSearchModel,
+    RovoDevTaskModel,
+    SessionStartRequest,
+    SessionStartResponse,
+    UserInput,
+)
 
-
-from contextlib import asynccontextmanager # For lifespan events
-from src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID, DEFAULT_OPERATIONAL_CONFIGS
-from src.config_loader import load_config
 
 # --- Service Initialization using Lifespan ---
 @asynccontextmanager
@@ -186,7 +208,7 @@ async def get_services_health():
 async def get_system_metrics():
     """获取系统性能指标"""
     import random
-    
+
     # 返回模拟的系统指标
     return {
         "cpu": {

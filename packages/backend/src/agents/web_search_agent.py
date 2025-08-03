@@ -1,6 +1,8 @@
 import asyncio
+
 from src.agents.base_agent import BaseAgent
 from src.tools.web_search_tool import WebSearchTool
+
 
 class WebSearchAgent(BaseAgent):
     def __init__(self, **kwargs):

@@ -1,5 +1,7 @@
 import pygame
+
 from ..core_ai.dialogue.dialogue_manager import DialogueManager
+
 
 class Angela:
     def __init__(self, game):

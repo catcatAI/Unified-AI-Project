@@ -1,5 +1,6 @@
 from typing import Dict, Optional, Union
 
+
 class TrustManager:
     """
     Manages trust scores for other AI entities interacting via HSP.

@@ -65,8 +65,10 @@ def extract_arithmetic_problem(text: str) -> str | None:
             return None
     return None
 
-from src.shared.types.common_types import ToolDispatcherResponse
 import os
+
+from src.shared.types.common_types import ToolDispatcherResponse
+
 
 def calculate(input_string: str) -> ToolDispatcherResponse:
     """

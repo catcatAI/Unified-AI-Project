@@ -1,6 +1,8 @@
 import unittest
+
 from src.core_ai.deep_mapper import DeepMapper
 from src.shared.types import MappableDataObject
+
 
 class TestDeepMapper(unittest.TestCase):
 

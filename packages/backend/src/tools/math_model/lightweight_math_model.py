@@ -1,8 +1,10 @@
-import numpy as np
 import json
 import os
 import re
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+
 
 class LightweightMathModel:
     """

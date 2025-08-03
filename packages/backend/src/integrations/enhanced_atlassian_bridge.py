@@ -4,10 +4,11 @@
 
 import asyncio
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+from ..core_ai.demo_learning_manager import demo_learning_manager
 from .atlassian_bridge import AtlassianBridge
 from .rovo_dev_connector import RovoDevConnector
-from ..core_ai.demo_learning_manager import demo_learning_manager
 
 logger = logging.getLogger(__name__)
 

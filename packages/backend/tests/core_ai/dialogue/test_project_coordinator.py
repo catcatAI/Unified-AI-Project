@@ -1,9 +1,11 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, call
 import asyncio
 import json
+from unittest.mock import AsyncMock, MagicMock, call, patch
+
+import pytest
 
 from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
+
 
 @pytest.fixture
 def project_coordinator():
@@ -211,10 +213,13 @@ def instantiated_pc_fixture():
     Provides a ProjectCoordinator with some real child components
     for lightweight integration testing.
     """
-    from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-    from src.core_ai.trust_manager.trust_manager_module import TrustManager
-    from src.core_ai.agent_manager import AgentManager
     import sys
+
+    from src.core_ai.agent_manager import AgentManager
+    from src.core_ai.service_discovery.service_discovery_module import (
+        ServiceDiscoveryModule,
+    )
+    from src.core_ai.trust_manager.trust_manager_module import TrustManager
 
     # Real Components
     trust_manager = TrustManager()

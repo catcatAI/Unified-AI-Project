@@ -1,7 +1,10 @@
+from unittest.mock import AsyncMock, MagicMock
+
 import aiounittest
 import pytest
-from unittest.mock import MagicMock, AsyncMock
+
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
+
 
 class TestKnowledgeUpdate(aiounittest.AsyncTestCase):
     """

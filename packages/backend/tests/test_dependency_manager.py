@@ -1,9 +1,10 @@
-import unittest
-import yaml
-from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock
-import sys
 import os
+import sys
+import unittest
+from pathlib import Path
+from unittest.mock import MagicMock, mock_open, patch
+
+import yaml
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 

@@ -1,15 +1,17 @@
-import unittest
 import os
 import shutil
-from pathlib import Path
-from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
 
 # Adjust the path to import from the src directory
 import sys
+import unittest
+from datetime import datetime, timedelta
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src')))
 
 from shared.utils import cleanup_utils
+
 
 class TestCleanupUtils(unittest.TestCase):
 

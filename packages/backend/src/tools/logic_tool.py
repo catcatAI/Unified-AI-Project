@@ -1,6 +1,6 @@
+import json
 import os
 import sys
-import json
 
 # Add src directory to sys.path to allow imports from sibling directories
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -9,8 +9,8 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from tools.logic_model.logic_parser_eval import LogicParserEval
 from core_ai.dependency_manager import dependency_manager
+from tools.logic_model.logic_parser_eval import LogicParserEval
 
 # --- Configuration for NN Model ---
 MODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")

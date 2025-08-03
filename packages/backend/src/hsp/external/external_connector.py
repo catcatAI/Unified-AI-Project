@@ -2,6 +2,7 @@ import asyncio
 import logging
 import ssl
 from typing import Callable, Optional
+
 import gmqtt
 
 logger = logging.getLogger(__name__)

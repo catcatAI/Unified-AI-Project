@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 
+
 class PersonalityManager:
     def __init__(self, personality_profiles_dir: str = None, default_profile_name: str = "miko_base"):
         if personality_profiles_dir:

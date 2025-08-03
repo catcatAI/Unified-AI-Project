@@ -1,5 +1,6 @@
 import os
 
+
 def list_files(path):
     """
     Lists the files in a directory.

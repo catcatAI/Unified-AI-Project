@@ -1,8 +1,9 @@
-import unittest
-import pytest
 import os
 import sys
+import unittest
 from datetime import datetime, timedelta
+
+import pytest
 
 # Add src directory to sys.path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -11,8 +12,10 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
+from unittest.mock import patch  # For mocking datetime
+
 from core_ai.time_system import TimeSystem
-from unittest.mock import patch # For mocking datetime
+
 
 class TestTimeSystem(unittest.TestCase):
 

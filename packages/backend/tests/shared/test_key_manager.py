@@ -1,14 +1,17 @@
-import unittest
 import os
-import yaml
-from pathlib import Path
-from unittest.mock import patch, mock_open
 
 # Adjust the path to import from the src directory
 import sys
+import unittest
+from pathlib import Path
+from unittest.mock import mock_open, patch
+
+import yaml
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src')))
 
 from shared.key_manager import UnifiedKeyManager
+
 
 class TestUnifiedKeyManager(unittest.TestCase):
 

@@ -1,9 +1,11 @@
-import unittest
-import pytest
 import os
 import sys
+import unittest
+
+import pytest
 
 from src.modules_fragmenta.vision_tone_inverter import VisionToneInverter
+
 
 class TestVisionToneInverter(unittest.TestCase):
 

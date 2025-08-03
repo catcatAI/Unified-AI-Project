@@ -4,17 +4,17 @@ MCP (Model Context Protocol) 備用協議系統
 """
 
 import asyncio
+import fcntl
 import json
 import logging
+import socket
 import time
 import uuid
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Callable
-from enum import Enum
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
-import socket
-import fcntl
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -368,8 +368,8 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
         """文件監聽器"""
         while self.running:
             try:
-                import os
                 import glob
+                import os
                 
                 pattern = os.path.join(self.inbox_path, "*.json")
                 files = glob.glob(pattern)
@@ -428,7 +428,7 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
         try:
             import aiohttp
             from aiohttp import web
-            
+
             # 創建HTTP會話
             self.session = aiohttp.ClientSession()
             

@@ -1,8 +1,10 @@
-import pytest
 import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.agents.base_agent import BaseAgent
+
 
 @pytest.fixture
 def mock_hsp_connector():

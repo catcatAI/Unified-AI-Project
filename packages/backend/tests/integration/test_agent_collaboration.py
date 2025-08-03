@@ -1,14 +1,16 @@
-import unittest
-import pytest
 import asyncio
-import sys
 import os
-from unittest.mock import MagicMock, AsyncMock, patch
+import sys
+import unittest
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from src.core_services import initialize_services, get_services, shutdown_services
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
+from src.core_services import get_services, initialize_services, shutdown_services
+
 
 class TestAgentCollaboration(unittest.TestCase):
 

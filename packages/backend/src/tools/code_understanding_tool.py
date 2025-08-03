@@ -1,9 +1,12 @@
 # src/tools/code_understanding_tool.py
+import json  # For potentially pretty-printing dicts if needed, though aiming for formatted string.
 import os
-import json # For potentially pretty-printing dicts if needed, though aiming for formatted string.
-from typing import List, Optional, Union, Dict, Any
+from typing import Any, Dict, List, Optional, Union
 
-from src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel # Corrected import
+from src.core_ai.code_understanding.lightweight_code_model import (
+    LightweightCodeModel,  # Corrected import
+)
+
 
 class CodeUnderstandingTool:
     """

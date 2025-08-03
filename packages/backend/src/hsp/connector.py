@@ -1,18 +1,33 @@
-import json # Added for JSON serialization
-from typing import Callable, Dict, Any, Optional # Added Optional
-from .external.external_connector import ExternalConnector
-from .internal.internal_bus import InternalBus
-from .bridge.data_aligner import DataAligner
-from .bridge.message_bridge import MessageBridge
-from unittest.mock import MagicMock, AsyncMock # Added for mock_mode
-from src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPAcknowledgementPayload
-import uuid # Added for UUID generation
-from datetime import datetime, timezone # Added for timestamp generation
-import asyncio # Added for asyncio.iscoroutinefunction
+import asyncio  # Added for asyncio.iscoroutinefunction
+import json  # Added for JSON serialization
 import logging
 import time
-from .fallback.fallback_protocols import get_fallback_manager, FallbackMessage, MessagePriority, initialize_fallback_protocols
+import uuid  # Added for UUID generation
+from datetime import datetime, timezone  # Added for timestamp generation
+from typing import Any, Callable, Dict, Optional  # Added Optional
+from unittest.mock import AsyncMock, MagicMock  # Added for mock_mode
+
+from src.hsp.types import (
+    HSPAcknowledgementPayload,
+    HSPCapabilityAdvertisementPayload,
+    HSPFactPayload,
+    HSPMessageEnvelope,
+    HSPTaskRequestPayload,
+    HSPTaskResultPayload,
+)
+
+from .bridge.data_aligner import DataAligner
+from .bridge.message_bridge import MessageBridge
+from .external.external_connector import ExternalConnector
+from .fallback.fallback_protocols import (
+    FallbackMessage,
+    MessagePriority,
+    get_fallback_manager,
+    initialize_fallback_protocols,
+)
+from .internal.internal_bus import InternalBus
 from .utils.fallback_config_loader import get_config_loader
+
 
 class HSPConnector:
     def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False, mock_mqtt_client: Optional[MagicMock] = None, internal_bus: Optional[Any] = None, message_bridge: Optional[Any] = None, enable_fallback: bool = True, **kwargs):
@@ -506,7 +521,11 @@ class HSPConnector:
     async def _initialize_protocols_with_config(self, config: Dict[str, Any]) -> bool:
         """使用配置初始化協議"""
         try:
-            from .fallback.fallback_protocols import InMemoryProtocol, FileBasedProtocol, HTTPProtocol
+            from .fallback.fallback_protocols import (
+                FileBasedProtocol,
+                HTTPProtocol,
+                InMemoryProtocol,
+            )
             
             protocols_config = config.get("protocols", {})
             

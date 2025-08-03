@@ -1,13 +1,15 @@
-import paho.mqtt.client as mqtt
-from typing import Optional, Callable, Dict, Any
-import json
-import uuid
-import logging
 import asyncio
+import json
+import logging
+import uuid
 from datetime import datetime, timezone
+from typing import Any, Callable, Dict, Optional
 
-from src.mcp.types import MCPEnvelope, MCPCommandRequest, MCPCommandResponse
+import paho.mqtt.client as mqtt
+
+from src.mcp.types import MCPCommandRequest, MCPCommandResponse, MCPEnvelope
 from src.shared.error import ProjectError, project_error_handler
+
 
 class MCPConnector:
     def __init__(self, ai_id: str, mqtt_broker_address: str, mqtt_broker_port: int, 
@@ -135,7 +137,10 @@ class MCPConnector:
             return
         
         try:
-            from .fallback.mcp_fallback_protocols import get_mcp_fallback_manager, initialize_mcp_fallback_protocols
+            from .fallback.mcp_fallback_protocols import (
+                get_mcp_fallback_manager,
+                initialize_mcp_fallback_protocols,
+            )
             
             self.fallback_manager = get_mcp_fallback_manager()
 

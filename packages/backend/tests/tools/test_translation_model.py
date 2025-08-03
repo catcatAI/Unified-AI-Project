@@ -1,18 +1,19 @@
-import unittest
-import pytest
-import os
 import json
-import sys
+import os
 import shutil
+import sys
+import unittest
+
+import pytest
 
 from src.tools import translation_tool
+from src.tools.tool_dispatcher import ToolDispatcher
 from src.tools.translation_tool import (
-    translate,
     _detect_language,
     _load_dictionary,
     request_model_upgrade,
+    translate,
 )
-from src.tools.tool_dispatcher import ToolDispatcher
 
 # Define a consistent test output directory for this test suite
 TEST_DATA_DIR = "tests/test_output_data/translation_model_data"

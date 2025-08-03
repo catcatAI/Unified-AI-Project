@@ -1,7 +1,9 @@
-import numpy as np
+from typing import Dict, List, Tuple
+
 import faiss
+import numpy as np
 from sentence_transformers import SentenceTransformer
-from typing import List, Tuple, Dict
+
 
 class RAGManager:
     """

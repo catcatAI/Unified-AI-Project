@@ -1,6 +1,9 @@
 import unittest
+
 import pytest
+
 from src.evaluation.evaluator import Evaluator
+
 
 class TestEvaluator(unittest.TestCase):
     """

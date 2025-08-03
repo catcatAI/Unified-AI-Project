@@ -1,4 +1,5 @@
-from typing import TypedDict, Required, Optional, List, Any, Union, Dict
+from typing import Any, Dict, List, Optional, Required, TypedDict, Union
+
 
 # Fact Extractor Types
 class UserPreferenceContent(TypedDict, total=False):

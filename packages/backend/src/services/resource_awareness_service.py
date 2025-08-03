@@ -3,15 +3,16 @@
 Service to provide information about the AI's simulated hardware resources.
 Loads configuration from a YAML file and makes it accessible to other modules.
 """
-import yaml
 import os
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
+import yaml
 
 # Assuming 'src' is a top-level package for imports
 from .types import (
-    SimulatedHardwareProfile,
-    SimulatedDiskConfig,
     SimulatedCPUConfig,
+    SimulatedDiskConfig,
+    SimulatedHardwareProfile,
     SimulatedRAMConfig,
     SimulatedResourcesRoot,
 )

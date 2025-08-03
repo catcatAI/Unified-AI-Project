@@ -1,8 +1,11 @@
 import unittest
+
 import pytest
-from src.core_ai.meta_formulas.meta_formula import MetaFormula
+
 from src.core_ai.meta_formulas.errx import ErrX
+from src.core_ai.meta_formulas.meta_formula import MetaFormula
 from src.core_ai.meta_formulas.undefined_field import UndefinedField
+
 
 class TestMetaFormulas(unittest.TestCase):
     @pytest.mark.timeout(5)

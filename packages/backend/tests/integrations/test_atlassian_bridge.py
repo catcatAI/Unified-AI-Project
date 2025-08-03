@@ -2,10 +2,11 @@
 Atlassian Bridge 测试用例
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)

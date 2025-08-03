@@ -1,5 +1,7 @@
+from typing import Any, Dict, Optional
+
 import pandas as pd
-from typing import Dict, Any, Optional
+
 
 class CsvTool:
     """

@@ -1,9 +1,11 @@
-import unittest
-import pytest
 import os
 import sys
+import unittest
+
+import pytest
 
 from src.services.audio_service import AudioService
+
 
 class TestAudioService(unittest.TestCase):
 

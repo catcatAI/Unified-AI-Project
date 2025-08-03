@@ -1,6 +1,9 @@
 import unittest
+
 import pytest
+
 from src.search.search_engine import SearchEngine
+
 
 class TestSearchEngine(unittest.TestCase):
     """

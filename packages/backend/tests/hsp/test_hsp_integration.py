@@ -1,48 +1,53 @@
-import pytest
 import asyncio
+
+import pytest
+
 pytestmark = pytest.mark.asyncio
-import uuid
-import time
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch, AsyncMock, AsyncMock # Added for mock_mode
-from typing import Dict, Any, Optional, List, Callable, Tuple, AsyncGenerator
 import json
+import time
+import uuid
+from datetime import datetime, timezone
+from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Tuple
+from unittest.mock import AsyncMock, MagicMock, patch  # Added for mock_mode
 
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)
 
-from src.hsp.connector import HSPConnector
-from src.hsp.types import (
+import logging
+import queue
+import re
 
-    HSPFactPayload,
-    HSPMessageEnvelope,
-    HSPCapabilityAdvertisementPayload,
-    HSPTaskRequestPayload,
-    HSPTaskResultPayload,
-    HSPErrorDetails,
-    HSPFactStatementStructured,
-)
-from src.core_ai.learning.learning_manager import LearningManager
-from src.core_ai.learning.fact_extractor_module import FactExtractorModule
+from src.core_ai.dialogue.dialogue_manager import DialogueManager
+from src.core_ai.formula_engine import FormulaEngine
 from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from src.core_ai.learning.fact_extractor_module import FactExtractorModule
+from src.core_ai.learning.learning_manager import LearningManager
+from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from src.core_ai.personality.personality_manager import PersonalityManager
 from src.core_ai.service_discovery.service_discovery_module import (
     ServiceDiscoveryModule,
 )
 from src.core_ai.trust_manager.trust_manager_module import TrustManager
-from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from src.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, ChatMessage, LLMResponse
-from src.core_ai.dialogue.dialogue_manager import DialogueManager
-from src.tools.tool_dispatcher import ToolDispatcher
-from src.core_ai.formula_engine import FormulaEngine
+from src.hsp.connector import HSPConnector
+from src.hsp.types import (
+    HSPCapabilityAdvertisementPayload,
+    HSPErrorDetails,
+    HSPFactPayload,
+    HSPFactStatementStructured,
+    HSPMessageEnvelope,
+    HSPTaskRequestPayload,
+    HSPTaskResultPayload,
+)
+from src.services.multi_llm_service import (
+    ChatMessage,
+    LLMResponse,
+    ModelConfig,
+    ModelProvider,
+    MultiLLMService,
+)
 from src.shared.types.common_types import ToolDispatcherResponse
-from src.core_ai.personality.personality_manager import PersonalityManager
+from src.tools.tool_dispatcher import ToolDispatcher
 
-
-
-
-import logging
-import queue
-import re
 
 class MockMqttBroker:
     def __init__(self):
@@ -134,10 +139,12 @@ class MockMqttBroker:
     def clear_published_messages():
         self.published_messages.clear()
 
+from src.hsp.bridge.data_aligner import DataAligner
+from src.hsp.bridge.message_bridge import MessageBridge
+
 # --- Pytest Fixtures ---
 from src.hsp.internal.internal_bus import InternalBus
-from src.hsp.bridge.message_bridge import MessageBridge
-from src.hsp.bridge.data_aligner import DataAligner
+
 
 @pytest.fixture(scope="module")
 def event_loop():
@@ -376,6 +383,7 @@ def personality_manager_fixture() -> PersonalityManager:
 
 
 import threading
+
 
 @pytest.fixture(scope="function")
 @pytest.mark.timeout(30)  # Increased timeout for broker setup/teardown

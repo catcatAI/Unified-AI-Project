@@ -1,21 +1,22 @@
 import asyncio
-import pytest
-import os
+import hashlib
 import json
+import os
+import time
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, patch
+
+import pytest
+from cryptography.fernet import Fernet, InvalidToken
 
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
 from src.core_ai.memory.types import HAMRecallResult
+from src.services.resource_awareness_service import ResourceAwarenessService
 from src.services.types import SimulatedDiskConfig
 from src.shared.types.common_types import (
     DialogueMemoryEntryMetadata,
 )
-from src.services.resource_awareness_service import ResourceAwarenessService
-from cryptography.fernet import Fernet, InvalidToken
-import hashlib
-from unittest.mock import patch, MagicMock
-import time
 
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)

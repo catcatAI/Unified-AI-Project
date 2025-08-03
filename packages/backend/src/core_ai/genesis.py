@@ -1,5 +1,6 @@
 import os
 import uuid
+
 try:
     from cryptography.fernet import Fernet
 except ImportError:
@@ -14,7 +15,9 @@ except ImportError:
     import sys
     subprocess.check_call([sys.executable, "-m", "pip", "install", "secret-sharing"])
     from secretsharing import SecretSharer
-from typing import List, Tuple, Optional
+
+from typing import List, Optional, Tuple
+
 
 class GenesisManager:
     """

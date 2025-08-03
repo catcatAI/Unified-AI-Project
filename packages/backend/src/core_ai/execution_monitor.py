@@ -11,8 +11,8 @@ and adaptive timeout management.
 """
 
 import asyncio
+import logging
 import os
-import psutil
 import signal
 import subprocess
 import sys
@@ -23,7 +23,8 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
-import logging
+
+import psutil
 
 
 class ExecutionStatus(Enum):

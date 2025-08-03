@@ -1,2 +1,7 @@
-from .common_types import DialogueMemoryEntryMetadata, HAMDataPackageInternal, HAMRecallResult, ServiceStatus
+from .common_types import (
+    DialogueMemoryEntryMetadata,
+    HAMDataPackageInternal,
+    HAMRecallResult,
+    ServiceStatus,
+)
 from .mappable_data_object import MappableDataObject

@@ -1,16 +1,22 @@
-import unittest
-import pytest
-from unittest.mock import patch, MagicMock, mock_open, call
-import subprocess
 import json
 import os
-import sys # For sys.executable
+import subprocess
+import sys  # For sys.executable
+import unittest
+from unittest.mock import MagicMock, call, mock_open, patch
+
+import pytest
 
 # Store original os.path.join before any patching might occur elsewhere or locally
 original_os_path_join = os.path.join
 
 # Assuming src is in PYTHONPATH
-from services.sandbox_executor import SandboxExecutor, SANDBOX_RUNNER_SCRIPT_TEMPLATE, DEFAULT_SANDBOX_TIMEOUT
+from services.sandbox_executor import (
+    DEFAULT_SANDBOX_TIMEOUT,
+    SANDBOX_RUNNER_SCRIPT_TEMPLATE,
+    SandboxExecutor,
+)
+
 
 class TestSandboxExecutor(unittest.TestCase):
 

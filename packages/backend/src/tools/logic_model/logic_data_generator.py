@@ -1,6 +1,6 @@
 import json
-import random
 import os
+import random
 
 # Define output directory and filenames
 # Assuming script is in src/tools/logic_model/

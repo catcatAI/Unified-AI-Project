@@ -1,4 +1,5 @@
-from typing import TypedDict, Required, Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional, Required, TypedDict
+
 
 class FormulaConfigEntry(TypedDict, total=False):
     name: Required[str]

@@ -1,15 +1,17 @@
-import unittest
-import os
-import json
 import csv
+import json
+import os
 import sys
-import pytest # Import pytest
+import unittest
+
+import pytest  # Import pytest
 
 from src.tools.math_model import data_generator
-from src.tools.math_tool import extract_arithmetic_problem, calculate as calculate_via_tool
-from src.tools.math_tool import MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH
-from src.tools.tool_dispatcher import ToolDispatcher
 from src.tools.math_model.model import ArithmeticSeq2Seq, get_char_token_maps
+from src.tools.math_tool import CHAR_MAPS_PATH, MODEL_WEIGHTS_PATH
+from src.tools.math_tool import calculate as calculate_via_tool
+from src.tools.math_tool import extract_arithmetic_problem
+from src.tools.tool_dispatcher import ToolDispatcher
 
 # Define a consistent test output directory
 TEST_OUTPUT_DIR = "tests/test_output_data"

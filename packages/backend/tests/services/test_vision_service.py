@@ -1,9 +1,11 @@
-import unittest
-import pytest
 import os
 import sys
+import unittest
+
+import pytest
 
 from src.services.vision_service import VisionService
+
 
 class TestVisionService(unittest.TestCase):
 

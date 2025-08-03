@@ -1,10 +1,12 @@
 import asyncio
-import pytest
-from unittest.mock import MagicMock, patch
 import json
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src.mcp.connector import MCPConnector
 from src.mcp.types import MCPCommandRequest
+
 
 @pytest.fixture
 def mock_mqtt_client():

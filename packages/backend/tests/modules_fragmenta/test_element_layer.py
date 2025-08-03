@@ -1,9 +1,11 @@
-import unittest
-import pytest
 import os
 import sys
+import unittest
+
+import pytest
 
 from src.modules_fragmenta.element_layer import ElementLayer
+
 
 class TestElementLayer(unittest.TestCase):
 

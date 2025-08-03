@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+
 import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
@@ -14,7 +15,11 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 try:
-    from tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
+    from tools.logic_model.logic_model_nn import (
+        LogicNNModel,
+        get_logic_char_token_maps,
+        preprocess_logic_data,
+    )
 except ImportError as e:
     print(f"Error importing from logic_model_nn: {e}")
     print("Ensure logic_model_nn.py is in the same directory and src is in sys.path.")

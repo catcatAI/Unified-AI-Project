@@ -1,6 +1,8 @@
-import numpy as np
-import wave
 import io
+import wave
+
+import numpy as np
+
 
 class AudioService:
     def __init__(self, config: dict = None):

@@ -1,6 +1,8 @@
-import pygame
 import json
 import os
+
+import pygame
+
 
 class NPC:
     def __init__(self, game, npc_data, portrait=None, sprite=None):

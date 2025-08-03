@@ -1,6 +1,8 @@
 import pygame
-from .base import Scene
+
 from ..npcs import create_npc
+from .base import Scene
+
 
 class VillageScene(Scene):
     def __init__(self, game):

@@ -1,6 +1,16 @@
 # src/shared/types/common_types.py
 from enum import Enum
-from typing import TypedDict, Optional, List, Any, Dict, Literal, Union, Callable # Added Literal, Union, Callable back for other types
+from typing import (  # Added Literal, Union, Callable back for other types
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    TypedDict,
+    Union,
+)
+
 from typing_extensions import Required
 
 print("common_types.py (debug version) is being imported and defining ServiceStatus...")
@@ -148,6 +158,7 @@ class LLMModelInfo(TypedDict, total=False):
 
 # HAM Memory Types
 from dataclasses import dataclass
+
 
 @dataclass
 class HAMRecallResult:

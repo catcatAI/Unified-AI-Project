@@ -1,7 +1,5 @@
-from typing import TypedDict, Literal, Any, Optional, Dict, List
 from dataclasses import dataclass
-
-
+from typing import Any, Dict, List, Literal, Optional, TypedDict
 
 
 # Original MCP Types (Legacy)

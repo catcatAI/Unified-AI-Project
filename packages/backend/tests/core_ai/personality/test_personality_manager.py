@@ -1,9 +1,10 @@
-import unittest
-import pytest
-import os
 import json
+import os
 import sys
+import unittest
 from pathlib import Path
+
+import pytest
 
 # Add src directory to sys.path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,6 +16,7 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 from core_ai.personality.personality_manager import PersonalityManager
+
 
 class TestPersonalityManager(unittest.TestCase):
 

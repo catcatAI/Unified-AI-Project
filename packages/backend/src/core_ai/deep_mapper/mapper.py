@@ -1,6 +1,8 @@
-from typing import Dict, Any, Optional
-from src.shared.types import MappableDataObject
 import json
+from typing import Any, Dict, Optional
+
+from src.shared.types import MappableDataObject
+
 
 class DeepMapper:
     """

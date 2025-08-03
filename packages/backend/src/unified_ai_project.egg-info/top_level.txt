@@ -1,5 +1,17 @@
+agents
 core_ai
+creation
+data
+docs
+evaluation
+fragmenta
+game
 hsp
+integrations
 interfaces
+mcp
+modules_fragmenta
+search
 services
+shared
 tools

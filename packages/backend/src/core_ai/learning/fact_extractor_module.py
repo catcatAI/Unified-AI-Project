@@ -1,9 +1,11 @@
 import json
-from typing import List, Dict, Optional, Any
+from typing import Any, Dict, List, Optional
 
 # Assuming 'src' is in PYTHONPATH, making 'services' a top-level package
-from services.multi_llm_service import MultiLLMService, ChatMessage
+from services.multi_llm_service import ChatMessage, MultiLLMService
+
 from .types import ExtractedFact
+
 # LearnedFactRecord content is what this module aims to extract, but the full record is assembled by LearningManager
 
 
@@ -97,7 +99,8 @@ class FactExtractorModule:
 
 if __name__ == '__main__':
     import asyncio
-    from services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider
+
+    from services.multi_llm_service import ModelConfig, ModelProvider, MultiLLMService
 
     async def main_test():
         print("--- FactExtractorModule Standalone Test ---")

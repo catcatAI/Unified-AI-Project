@@ -9,10 +9,10 @@ import logging
 import time
 import uuid
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Callable, Union
-from enum import Enum
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -337,7 +337,7 @@ class HTTPProtocol(BaseFallbackProtocol):
         try:
             import aiohttp
             from aiohttp import web
-            
+
             # 创建 HTTP 会话
             self.session = aiohttp.ClientSession()
             

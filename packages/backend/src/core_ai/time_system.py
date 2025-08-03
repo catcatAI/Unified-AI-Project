@@ -3,6 +3,7 @@
 
 import datetime
 
+
 class TimeSystem:
     def __init__(self, config: dict = None):
         self.config = config or {}

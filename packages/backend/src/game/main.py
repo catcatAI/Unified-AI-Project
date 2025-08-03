@@ -1,11 +1,13 @@
-import pygame
+import logging
 import os
 import sys
-import logging
+
+import pygame
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from src.game.scenes import GameStateManager
-from src.game.player import Player
 from src.game.angela import Angela
+from src.game.player import Player
+from src.game.scenes import GameStateManager
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 

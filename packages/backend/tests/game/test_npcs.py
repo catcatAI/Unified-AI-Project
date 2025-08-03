@@ -1,7 +1,10 @@
+from unittest.mock import MagicMock
+
 import pytest
+
 from src.game.main import Game
 from src.game.npcs import create_npc, load_npc_data
-from unittest.mock import MagicMock
+
 
 @pytest.fixture
 def game():

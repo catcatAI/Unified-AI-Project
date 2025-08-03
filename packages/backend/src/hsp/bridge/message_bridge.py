@@ -1,7 +1,9 @@
 import json
-from .data_aligner import DataAligner
+
 from ..external.external_connector import ExternalConnector
 from ..internal.internal_bus import InternalBus
+from .data_aligner import DataAligner
+
 
 class MessageBridge:
     _message_type_to_internal_topic_map = {
