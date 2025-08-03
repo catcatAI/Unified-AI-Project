@@ -1,47 +1,48 @@
 document.addEventListener("DOMContentLoaded", () => {
     const userInputField = document.getElementById("userInput");
-    const sendButton = document.getElementById("sendButton");
-    const chatViewButton = document.getElementById("chatViewButton");
-    const hspViewButton = document.getElementById("hspViewButton");
-    const gameViewButton = document.getElementById("gameViewButton");
-    const startGameButton = document.getElementById("startGameButton");
-    const refreshHspServicesButton = document.getElementById(
-        "refreshHspServicesButton",
-    );
-    const sendHspTaskButton = document.getElementById("sendHspTaskButton");
+    const nav = document.getElementById("nav");
+    const inputContainer = document.getElementById("inputContainer");
+    const gameContainer = document.getElementById("gameContainer");
+    const hspServiceList = document.getElementById("hspServiceList").parentElement;
+    const hspTaskForm = document.getElementById("hspTaskCapId").parentElement.parentElement;
 
     const CHANNELS = window.ipcChannels;
 
-    // --- Event Listeners ---
-
-    chatViewButton.addEventListener("click", () => {
-        window.store.updateState(window.store.actions.setActiveView, "chat");
-    });
-
-    hspViewButton.addEventListener("click", () => {
+    // --- Create UI ---
+    const chatViewButton = Button({ id: 'chatViewButton', text: 'Chat', onClick: () => window.store.updateState(window.store.actions.setActiveView, "chat") });
+    const hspViewButton = Button({ id: 'hspViewButton', text: 'HSP', onClick: () => {
         window.store.updateState(window.store.actions.setActiveView, "hsp");
         loadHspServices();
-    });
+    }});
+    const gameViewButton = Button({ id: 'gameViewButton', text: 'Game', onClick: () => window.store.updateState(window.store.actions.setActiveView, "game") });
+    nav.appendChild(chatViewButton);
+    nav.appendChild(hspViewButton);
+    nav.appendChild(gameViewButton);
 
-    gameViewButton.addEventListener("click", () => {
-        window.store.updateState(window.store.actions.setActiveView, "game");
-    });
+    const sendButton = Button({ id: 'sendButton', text: 'Send', onClick: sendMessage });
+    inputContainer.appendChild(sendButton);
 
-    startGameButton.addEventListener("click", () => {
+    const startGameButton = Button({ id: 'startGameButton', text: 'Start Game', onClick: () => {
         if (window.electronAPI && window.electronAPI.invoke) {
             window.electronAPI.invoke(CHANNELS.GAME_START);
         }
-    });
+    }});
+    gameContainer.prepend(startGameButton);
 
-    sendButton.addEventListener("click", sendMessage);
+    const refreshHspServicesButton = Button({ id: 'refreshHspServicesButton', text: 'Refresh', onClick: loadHspServices });
+    hspServiceList.querySelector(".hsp-header").appendChild(refreshHspServicesButton);
+
+    const sendHspTaskButton = Button({ id: 'sendHspTaskButton', text: 'Send Task', onClick: sendHspTaskIPC });
+    hspTaskForm.appendChild(sendHspTaskButton);
+
+
+    // --- Event Listeners ---
+
     userInputField.addEventListener("keypress", (event) => {
         if (event.key === "Enter") {
             sendMessage();
         }
     });
-
-    refreshHspServicesButton.addEventListener("click", loadHspServices);
-    sendHspTaskButton.addEventListener("click", sendHspTaskIPC);
 
     // --- Logic ---
 
