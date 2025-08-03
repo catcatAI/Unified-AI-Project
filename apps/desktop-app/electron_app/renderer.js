@@ -1,3 +1,8 @@
+const { ses } = require("ses");
+ses.enable();
+
+const DOMPurify = require("dompurify");
+
 document.addEventListener("DOMContentLoaded", () => {
     const userInputField = document.getElementById("userInput");
     const nav = document.getElementById("nav");
@@ -59,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Logic ---
 
     async function sendMessage() {
-        const text = userInputField.value.trim();
+        const text = DOMPurify.sanitize(userInputField.value.trim());
         if (!text) return;
 
         const sessionId = window.store.getState().chat.sessionId;
