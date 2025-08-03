@@ -12,3 +12,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
     return null;
   },
 });
+
+contextBridge.exposeInMainWorld('initialState', JSON.parse(process.argv.find(arg => arg.startsWith('{'))));

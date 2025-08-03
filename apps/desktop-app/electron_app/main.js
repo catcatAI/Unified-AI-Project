@@ -2,7 +2,10 @@ const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { spawn } = require("child_process");
 const fs = require("fs");
+const Store = require("electron-store");
 const CHANNELS = require("./src/ipc-channels");
+
+const store = new Store();
 
 let pythonExecutable = "python";
 let backendApiUrl = "http://localhost:8000"; // Default value
@@ -48,6 +51,7 @@ function loadPythonPath() {
 }
 
 function createWindow() {
+  const initialState = store.get();
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -55,6 +59,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
+      additionalArguments: [JSON.stringify(initialState)],
     },
   });
 
@@ -159,4 +164,8 @@ ipcMain.handle(CHANNELS.HSP_GET_TASK_STATUS, async (event, correlationId) => {
             result: "This is a mock result.",
         },
     };
+});
+
+ipcMain.handle('save-state', (event, state) => {
+  store.set(state);
 });

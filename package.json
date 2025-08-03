@@ -11,5 +11,8 @@
   "devDependencies": {
     "concurrently": "^8.2.2",
     "cross-env": "^10.0.0"
+  },
+  "dependencies": {
+    "electron-store": "^10.1.0"
   }
 }

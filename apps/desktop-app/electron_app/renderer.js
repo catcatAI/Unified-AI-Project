@@ -58,37 +58,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logic ---
 
-    async function startNewSession() {
-        try {
-            window.store.updateState(window.store.actions.addChatMessage, {
-                text: "Starting new session...",
-                sender: "system",
-            });
-            const response = await window.electronAPI.invoke(CHANNELS.API_START_SESSION, {});
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            window.store.updateState(window.store.actions.setSessionId, data.session_id);
-            window.store.updateState(window.store.actions.addChatMessage, {
-                text: data.greeting,
-                sender: "ai",
-            });
-            console.log("Session started:", data.session_id);
-        } catch (error) {
-            console.error("Error starting session:", error);
-            window.store.updateState(window.store.actions.setErrorMessage, `Error starting session: ${error.message}`);
-        }
-    }
-
     async function sendMessage() {
         const text = userInputField.value.trim();
         if (!text) return;
 
         const sessionId = window.store.getState().chat.sessionId;
         if (!sessionId) {
-            window.store.updateState(window.store.actions.setErrorMessage, "Session not started. Please wait or try restarting.");
-            return;
+            const response = await window.electronAPI.invoke(CHANNELS.API_START_SESSION, {});
+            if (!response.ok) {
+                window.store.updateState(window.store.actions.setErrorMessage, `HTTP error! status: ${response.status}`);
+                return;
+            }
+            const data = await response.json();
+            window.store.updateState(window.store.actions.setSessionId, data.session_id);
         }
 
         window.store.updateState(window.store.actions.addChatMessage, { text, sender: "user" });
@@ -97,7 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const response = await window.electronAPI.invoke(CHANNELS.API_SEND_MESSAGE, {
                 text: text,
-                session_id: sessionId,
+                session_id: window.store.getState().chat.sessionId,
             });
             if (!response.ok) {
                 const errorData = await response.text(); // Try to get more error info
@@ -229,6 +211,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Initial Load ---
-    startNewSession();
     window.store.updateState(window.store.actions.setActiveView, "chat");
 });

@@ -1,4 +1,4 @@
-const store = {
+const initialState = window.initialState || {
   // Application state
   activeView: 'chat', // 'chat', 'hsp', 'game', 'settings'
   chat: {
@@ -102,10 +102,29 @@ function setErrorMessage(state, errorMessage) {
 
 // --- Update Function ---
 
-let currentState = store;
+let currentState = initialState;
 
 function updateState(action, payload) {
   const newState = action(currentState, payload);
   currentState = newState;
   render(); // This will be defined in render.js
+  window.electronAPI.invoke('save-state', currentState);
 }
+
+window.store = {
+    getState: () => currentState,
+    updateState,
+    actions: {
+        setActiveView,
+        setSessionId,
+        addChatMessage,
+        setHspServices,
+        setHspTaskStatus,
+        addHspActivePoll,
+        removeHspActivePoll,
+        setTheme,
+        setDefaultModel,
+        setLoading,
+        setErrorMessage,
+    },
+};
