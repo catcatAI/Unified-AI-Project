@@ -1,0 +1,120 @@
+./venv/lib/python3.12/site-packages/pip/_internal/index/collector.py:        # TODO: In the future, it would be nice if pip supported PEP 691
+./venv/lib/python3.12/site-packages/pip/_internal/commands/inspect.py:            # TODO tags? scheme?
+./venv/lib/python3.12/site-packages/pip/_internal/models/installation_report.py:            # TODO: currently, the resolver uses the default environment to evaluate
+./venv/lib/python3.12/site-packages/pip/_internal/models/selection_prefs.py:# TODO: This needs Python 3.10's improved slots support for dataclasses
+./venv/lib/python3.12/site-packages/pip/_internal/metadata/base.py:from pip._internal.utils.compat import stdlib_pkgs  # TODO: Move definition here.
+./venv/lib/python3.12/site-packages/pip/_internal/metadata/base.py:        # TODO: this property is relatively costly to compute, memoize it ?
+./venv/lib/python3.12/site-packages/pip/_internal/metadata/base.py:                # TODO: get project location from second line of egg_link file
+./venv/lib/python3.12/site-packages/pip/_internal/cli/base_command.py:        # TODO: Try to get these passing down from the command?
+./venv/lib/python3.12/site-packages/pip/_internal/resolution/resolvelib/found_candidates.py:    # TODO: Remove this block after dropping Python 3.8 support.
+./venv/lib/python3.12/site-packages/pip/_internal/resolution/resolvelib/candidates.py:        # TODO performance: this means we iterate the dependencies at least twice,
+./venv/lib/python3.12/site-packages/pip/_internal/resolution/resolvelib/candidates.py:        # TODO: Supply reason based on force_reinstall and upgrade_strategy.
+./venv/lib/python3.12/site-packages/pip/_internal/resolution/resolvelib/factory.py:        # TODO: Check already installed candidate, and use it if the link and
+./venv/lib/python3.12/site-packages/pip/_internal/resolution/resolvelib/factory.py:        # TODO: Are there more cases this needs to return True? Editable?
+./venv/lib/python3.12/site-packages/pip/_internal/operations/prepare.py:        # TODO: separate this part out from RequirementPreparer when the v1
+./venv/lib/python3.12/site-packages/pip/_internal/network/lazy_wheel.py:        # TODO: Get range requests to be correctly cached
+./venv/lib/python3.12/site-packages/pip/_internal/cache.py:                # TODO: use DirectUrl.equivalent when
+./venv/lib/python3.12/site-packages/pip/_internal/req/req_set.py:        TODO remove this property together with the legacy resolver, since the new
+./venv/lib/python3.12/site-packages/pip/_internal/req/req_file.py:    # TODO: replace this with slots=True when dropping Python 3.9 support.
+./venv/lib/python3.12/site-packages/pip/_internal/req/req_file.py:    # TODO: handle space after '\'.
+./venv/lib/python3.12/site-packages/pip/_internal/req/constructors.py:        # TODO: The is_installable_dir test here might not be necessary
+./venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py:# TODO: Add Generic type annotations to initialized collections.
+./venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py:_ResourceStream = Any  # TODO / Incomplete: A readable file-like object
+./venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py:            # TODO: remove this except clause when python/cpython#103632 is fixed.
+./venv/lib/python3.12/site-packages/pip/_vendor/pkg_resources/__init__.py:        # TODO: Add a deadline?
+./venv/lib/python3.12/site-packages/pip/_vendor/typing_extensions.py:                # TODO: Use inspect.VALUE here, and make the annotations lazily evaluated
+./venv/lib/python3.12/site-packages/pip/_vendor/typing_extensions.py:                # TODO: Use inspect.VALUE here, and make the annotations lazily evaluated
+./venv/lib/python3.12/site-packages/pip/_vendor/pygments/lexer.py:    TODO: clean up the code here.
+./venv/lib/python3.12/site-packages/pip/_vendor/pygments/lexers/python.py:        # different tokens.  TODO: DelegatingLexer should support this
+./venv/lib/python3.12/site-packages/pip/_vendor/pygments/formatters/terminal256.py:# TODO:
+./venv/lib/python3.12/site-packages/pip/_vendor/pygments/formatters/img.py:            # TODO: make sure tab expansion happens earlier in the chain.  It
+./venv/lib/python3.12/site-packages/pip/_vendor/pygments/formatters/latex.py:        # TODO: add support for background colors
+./venv/lib/python3.12/site-packages/pip/_vendor/pygments/filters/__init__.py:       highlight ``XXX``, ``TODO``, ``FIXME``, ``BUG`` and ``NOTE``.
+./venv/lib/python3.12/site-packages/pip/_vendor/pygments/filters/__init__.py:                            ['XXX', 'TODO', 'FIXME', 'BUG', 'NOTE'])
+./venv/lib/python3.12/site-packages/pip/_vendor/distlib/util.py:        # TODO check k, v for valid values
+./venv/lib/python3.12/site-packages/pip/_vendor/distlib/wheel.py:            # TODO version verification
+./venv/lib/python3.12/site-packages/pip/_vendor/distlib/metadata.py:    # TODO document the mapping API and UNKNOWN default key
+./venv/lib/python3.12/site-packages/pip/_vendor/distlib/metadata.py:    # TODO could add iter* variants
+./venv/lib/python3.12/site-packages/pip/_vendor/distlib/metadata.py:        # TODO: any other fields wanted
+./venv/lib/python3.12/site-packages/pip/_vendor/distlib/version.py:        TODO: fill this out
+./venv/lib/python3.12/site-packages/pip/_vendor/distlib/version.py:    # TODO: unintended side-effect on, e.g., "2003.05.09"
+./venv/lib/python3.12/site-packages/pip/_vendor/distlib/locators.py:        XXX TODO Note: this cache is never actually cleared. It's assumed that
+./venv/lib/python3.12/site-packages/pip/_vendor/distlib/locators.py:                # TODO SHA256 digest
+./venv/lib/python3.12/site-packages/pip/_vendor/msgpack/fallback.py:        # TODO should we eliminate the recursion?
+./venv/lib/python3.12/site-packages/pip/_vendor/msgpack/fallback.py:                    # TODO check whether we need to call `list_hook`
+./venv/lib/python3.12/site-packages/pip/_vendor/msgpack/fallback.py:            # TODO is the interaction between `list_hook` and `use_list` ok?
+./venv/lib/python3.12/site-packages/pip/_vendor/msgpack/fallback.py:                    # TODO check whether we need to call hooks
+./venv/lib/python3.12/site-packages/pip/_vendor/rich/text.py:        # TODO: This is a little inefficient, it is only used by full justify
+./venv/lib/python3.12/site-packages/pip/_vendor/packaging/requirements.py:    # TODO: Can we test whether something is contained within a requirement?
+./venv/lib/python3.12/site-packages/pip/_vendor/packaging/requirements.py:    # TODO: Can we normalize the name and extra name?
+./venv/lib/python3.12/site-packages/pip/_vendor/packaging/metadata.py:        # TODO: The spec doesn't say anything about if the keys should be
+./venv/lib/python3.12/site-packages/pip/_vendor/packaging/metadata.py:    description: _Validator[str | None] = _Validator()  # TODO 2.1: can be in body
+./venv/lib/python3.12/site-packages/pip/_vendor/packaging/tags.py:        # TODO: Need to care about 32-bit PPC for ppc64 through 10.2?
+./venv/lib/python3.12/site-packages/pip/_vendor/requests/adapters.py:                # TODO: Remove this in 3.0.0: see #2811
+./venv/lib/python3.12/site-packages/pip/_vendor/requests/hooks.py:# TODO: response is the only one
+./venv/lib/python3.12/site-packages/pip/_vendor/cachecontrol/controller.py:        # TODO: There is an assumption that the result will be a
+./venv/lib/python3.12/site-packages/pip/_vendor/cachecontrol/filewrapper.py:        # TODO: Add some logging here...
+./venv/lib/python3.12/site-packages/pip/_vendor/truststore/_macos.py:            # TODO: Not sure if we need the SecTrustResultType for anything?
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/util/retry.py:# TODO: In v2 we can remove this sentinel and metaclass with deprecated options.
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/util/retry.py:        # TODO: Deprecated, remove in v2.0
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/util/retry.py:        # TODO: If already given in **kw we use what's given to us
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/util/retry.py:        # TODO: For now favor if the Retry implementation sets its own method_whitelist
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/util/retry.py:            # TODO: Remove this deprecated alias in v2.0
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/util/url.py:    # TODO: Remove this when we break backwards compatibility.
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/connectionpool.py:        # TODO: Add optional support for socket.gethostbyname checking.
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/contrib/securetransport.py:        # TODO: should I do clean shutdown here? Do I have to?
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/contrib/securetransport.py:        # TODO: Well, crap.
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/contrib/securetransport.py:        # TODO: Update in line with above.
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/exceptions.py:    # TODO(t-8ch): Stop inheriting from AssertionError in v2.0.
+./venv/lib/python3.12/site-packages/pip/_vendor/urllib3/connection.py:            # TODO: Fix tunnel so it doesn't depend on self.sock state.
+./scripts/fix_todos.py:TODO 修复脚本
+./scripts/fix_todos.py:系统性地识别和修复代码中的 TODO、FIXME 和 NotImplementedError
+./scripts/fix_todos.py:            r'#\s*TODO[:\s](.+)',
+./scripts/fix_todos.py:        """扫描单个文件中的 TODO 项目"""
+./scripts/fix_todos.py:        """确定 TODO 类型"""
+./scripts/fix_todos.py:            return 'TODO'
+./scripts/fix_todos.py:        print("🔍 开始扫描项目中的 TODO 项目...")
+./scripts/fix_todos.py:        """按类型和优先级分类 TODO"""
+./scripts/fix_todos.py:            'MEDIUM': [],        # TODO with specific implementation
+./scripts/fix_todos.py:            'LOW': [],           # General TODO
+./scripts/fix_todos.py:        """生成 TODO 修复报告"""
+./scripts/fix_todos.py:        report = "# 🔧 TODO 修复报告\n\n"
+./scripts/fix_todos.py:        """为常见 TODO 类型提供修复建议"""
+./scripts/fix_todos.py:    print("🚀 启动 TODO 修复工具...")
+./scripts/fix_todos.py:    report_file = "TODO_FIX_REPORT.md"
+./scripts/health_check.py:    # TODO: Add checks for other critical services (e.g., MQTT broker, database) if they are integrated.
+./scripts/style_check.py:            # Check for TODO/FIXME patterns
+./scripts/style_check.py:            if re.search(r'#\s*(TODO|FIXME|XXX|HACK)', line, re.IGNORECASE):
+./scripts/data_processing/process_copilot_logs.py:                if prompt.startswith("# TODO:") or prompt.startswith("// TODO:"):
+./scripts/data_processing/process_copilot_logs.py:                    # print(f"Skipping row {row_num+2}: Prompt is a TODO comment ('{prompt}').")
+./scripts/data_processing/process_copilot_logs.py:2024-05-20T10:10:00Z,"# TODO: Add more comprehensive error handling here","","","Python","utils.py","MyProject"
+./docs/06-project-management/planning/todo-placeholders.md:# Project Placeholders and TODOs Summary
+./docs/06-project-management/planning/todo-placeholders.md:This document outlines the placeholders and TODO items found within the
+./docs/06-project-management/planning/todo-placeholders.md:## 2. Missing Feature/Logic Implementation (TODOs)
+./docs/06-project-management/planning/todo-placeholders.md:  - **Line:** ~177 (Original TODO location in `get_tool_structure`)
+./docs/06-project-management/planning/todo-placeholders.md:  - **Line:** ~177 (Original TODO location in a previous version of the file)
+./docs/06-project-management/planning/todo-placeholders.md:    `"payload_schema_uri": None, # TODO: Add schema URIs when defined`
+./docs/06-project-management/planning/todo-placeholders.md:  - **Line:** ~260 (Original TODO location)
+./docs/06-project-management/planning/todo-placeholders.md:  - **Line:** ~128 (Original location of the TODO in `_build_hsp_envelope`)
+./docs/06-project-management/planning/todo-placeholders.md:  - **Line:** ~137 (Original location of TODO comment)
+./docs/06-project-management/planning/todo-placeholders.md:TODOs, commented-out debug lines, TODOs within example data, or general
+./docs/06-project-management/planning/todo-placeholders.md:  - Line ~46: `if prompt.startswith("# TODO:") or prompt.startswith("// TODO:")`
+./docs/06-project-management/planning/todo-placeholders.md:    `# print(f"Skipping row {row_num+2}: Prompt is a TODO comment ('{prompt}').")`
+./docs/06-project-management/planning/todo-placeholders.md:    `2024-05-20T10:10:00Z,"# TODO: Add more comprehensive error handling here",...`
+./docs/06-project-management/planning/todo-placeholders.md:    (Example TODO within a dummy CSV string in the script)
+./docs/06-project-management/planning/todo-placeholders.md:    `# TODO: Implement actual tool logic here`. These are found within a
+./docs/06-project-management/planning/todo-placeholders.md:    tool code. They are part of the _template's content_, not direct TODOs for
+./docs/06-project-management/planning/todo-placeholders.md:    `# TODO: Consider a transformation step if strict snake_case is required internally for these.`
+./docs/06-project-management/planning/todo-placeholders.md:interest related to placeholders and TODOs in the project.
+./docs/06-project-management/reports/cleanup-summary.md:### 3. 修復代碼中的TODO項目 ✅
+./docs/06-project-management/reports/cleanup-summary.md:- `src/core_ai/lis/lis_cache_interface.py`: 清理TODO註釋，改為描述性註釋
+./docs/06-project-management/reports/cleanup-summary.md:- 移除了未實現的TODO標記
+./docs/06-project-management/status/daily-wins.md:1. **代码质量**: 修复剩余的关键 TODO 项目
+./docs/06-project-management/status/progress-tracker.md:- **部分 TODO 项目**: 仍有一些功能需要完善
+./docs/06-project-management/status/progress-tracker.md:- **代码质量提升**: 预计本周完成主要 TODO 修复
+./docs/00-overview/README.md:| 待办事项 | `docs/development/TODO_PLACEHOLDERS.md`          | 开发待办列表 | 🟢 活跃 |
+./docs/00-overview/README.md:3. `docs/development/TODO_PLACEHOLDERS.md` - 待办事项
+./.git/hooks/sendemail-validate.sample:# Replace the TODO placeholders with appropriate checks according to your
+./.git/hooks/sendemail-validate.sample:	# TODO: Replace with appropriate checks (e.g. spell checking).
+./.git/hooks/sendemail-validate.sample:	# TODO: Replace with appropriate checks for this patch
+./.git/hooks/sendemail-validate.sample:	# TODO: Replace with appropriate checks for the whole series

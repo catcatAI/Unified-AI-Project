@@ -11,5 +11,10 @@
   "devDependencies": {
     "concurrently": "^8.2.2",
     "cross-env": "^10.0.0"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.6",
+    "electron-store": "^10.1.0",
+    "ses": "^1.14.0"
   }
 }
