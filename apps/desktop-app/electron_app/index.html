@@ -162,9 +162,6 @@
 </head>
 <body>
     <div id="nav">
-        <button id="chatViewButton">Chat</button>
-        <button id="hspViewButton">HSP</button>
-        <button id="gameViewButton">Game</button>
     </div>
 
     <div id="mainContent">
@@ -173,13 +170,11 @@
             <div id="chatDisplay"></div>
             <div id="inputContainer">
                 <input type="text" id="userInput" placeholder="Type your message...">
-                <button id="sendButton">Send</button>
             </div>
         </div>
 
         <div id="gameView">
             <h1>Angela's World</h1>
-            <button id="startGameButton" class="action-button">Start Game</button>
             <div id="gameContainer">
                 <!-- Game will be launched as a separate process -->
             </div>
@@ -190,7 +185,6 @@
             <div class="hsp-section">
                 <div class="hsp-header">
                     <h3>Discovered Services</h3>
-                    <button id="refreshHspServicesButton" class="action-button">Refresh</button>
                 </div>
                 <div id="hspServiceList" class="hsp-content"></div>
             </div>
@@ -207,7 +201,6 @@
                         <label for="hspTaskParams">Parameters (JSON):</label>
                         <textarea id="hspTaskParams" rows="3" class="form-control"></textarea>
                     </div>
-                    <button id="sendHspTaskButton" class="action-button">Send Task</button>
                 </div>
             </div>
             <div class="hsp-section">
@@ -222,6 +215,7 @@
     <script>
         window.ipcChannels = require('./src/ipc-channels');
     </script>
+    <script src="./src/components/Button.js"></script>
     <script src="./src/store.js"></script>
     <script src="./src/render.js"></script>
     <script src="./renderer.js"></script>
