@@ -15,7 +15,7 @@ from typing import List, Dict, Any
 # 添加項目根目錄到 Python 路徑
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(project_root / "packages" / "backend"))
+sys.path.insert(0, str(project_root / "apps" / "backend" / "src"))
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -148,36 +148,36 @@ class TestRunner:
         # 定義測試類別和對應的測試文件
         test_categories = {
             'Core AI': [
-                'packages/backend/tests/core_ai/test_agent_manager.py',
-                'packages/backend/tests/core_ai/test_emotion_system.py',
-                'packages/backend/tests/core_ai/test_time_system.py',
-                'packages/backend/tests/core_ai/memory/test_ham_memory_manager.py',
-                'packages/backend/tests/core_ai/dialogue/test_dialogue_manager.py'
+                'apps/backend/tests/core_ai/test_agent_manager.py',
+                'apps/backend/tests/core_ai/test_emotion_system.py',
+                'apps/backend/tests/core_ai/test_time_system.py',
+                'apps/backend/tests/core_ai/memory/test_ham_memory_manager.py',
+                'apps/backend/tests/core_ai/dialogue/test_dialogue_manager.py'
             ],
             'Integrations': [
-                'packages/backend/tests/integrations/test_atlassian_bridge.py',
-                'packages/backend/tests/integrations/test_atlassian_bridge_fallback.py',
-                'packages/backend/tests/integrations/test_rovo_dev_agent.py',
-                'packages/backend/tests/integrations/test_rovo_dev_agent_recovery.py',
-                'packages/backend/tests/integrations/test_rovo_dev_connector.py'
+                'apps/backend/tests/integrations/test_atlassian_bridge.py',
+                'apps/backend/tests/integrations/test_atlassian_bridge_fallback.py',
+                'apps/backend/tests/integrations/test_rovo_dev_agent.py',
+                'apps/backend/tests/integrations/test_rovo_dev_agent_recovery.py',
+                'apps/backend/tests/integrations/test_rovo_dev_connector.py'
             ],
             'HSP Protocol': [
-                'packages/backend/tests/hsp/test_hsp_connector.py',
-                'packages/backend/tests/hsp/test_hsp_integration.py'
+                'apps/backend/tests/hsp/test_hsp_connector.py',
+                'apps/backend/tests/hsp/test_hsp_integration.py'
             ],
             'Services': [
-                'packages/backend/tests/services/test_main_api_server.py',
-                'packages/backend/tests/services/test_llm_interface.py',
-                'packages/backend/tests/services/test_resource_awareness_service.py'
+                'apps/backend/tests/services/test_main_api_server.py',
+                'apps/backend/tests/services/test_llm_interface.py',
+                'apps/backend/tests/services/test_resource_awareness_service.py'
             ],
             'Tools': [
-                'packages/backend/tests/tools/test_math_model.py',
-                'packages/backend/tests/tools/test_logic_model.py',
-                'packages/backend/tests/tools/test_parameter_extractor.py'
+                'apps/backend/tests/tools/test_math_model.py',
+                'apps/backend/tests/tools/test_logic_model.py',
+                'apps/backend/tests/tools/test_parameter_extractor.py'
             ],
             'Game': [
-                'packages/backend/tests/game/test_main.py',
-                'packages/backend/tests/game/test_npcs.py'
+                'apps/backend/tests/game/test_main.py',
+                'apps/backend/tests/game/test_npcs.py'
             ]
         }
         
