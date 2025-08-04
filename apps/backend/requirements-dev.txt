@@ -36,3 +36,6 @@ pytest-timeout>=2.1.0
 astunparse>=1.6.0
 aiohttp
 amqtt
+
+# === Build/Dependency Tools ===
+pip-tools
