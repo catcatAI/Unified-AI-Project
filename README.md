@@ -4,12 +4,16 @@ This repository contains the unified AI project, structured as a monorepo to man
 
 ## Project Structure
 
-This monorepo is organized into the following packages:
+This monorepo is organized into applications and packages:
 
-- **`packages/backend`**: The core Python backend services, including AI models, APIs, and integrations.
-- **`packages/frontend-dashboard`**: The main web-based AI dashboard, built with Next.js and React.
-- **`packages/desktop-app`**: The Electron-based desktop application.
+### Applications (`apps/`)
+- **`apps/backend`**: The core Python backend services, including AI models, APIs, and integrations.
+- **`apps/frontend-dashboard`**: The main web-based AI dashboard, built with Next.js and React.
+- **`apps/desktop-app`**: The Electron-based desktop application.
+
+### Packages (`packages/`)
 - **`packages/cli`**: Command-line interface tools for interacting with the backend services.
+- **`packages/ui`**: Shared UI components and design system for the frontend applications.
 
 ## Getting Started
 

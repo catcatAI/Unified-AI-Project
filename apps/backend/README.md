@@ -1,6 +1,6 @@
-# Backend Package
+# Backend Application
 
-This package contains the core Python backend services for the Unified AI Project.
+This application contains the core Python backend services for the Unified AI Project.
 
 ## Features
 

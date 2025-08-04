@@ -1,6 +1,6 @@
 # 🤖 AI Unified Dashboard (Frontend)
 
-This package contains the main web-based AI dashboard for the Unified AI Project. It now integrates functionalities previously found in `frontend-quest`, providing a comprehensive interface for interacting with various AI services and tools.
+This application contains the main web-based AI dashboard for the Unified AI Project. It now integrates functionalities previously found in `frontend-quest`, providing a comprehensive interface for interacting with various AI services and tools.
 
 ## ✨ Features
 
