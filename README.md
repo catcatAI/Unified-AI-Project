@@ -1,15 +1,15 @@
 # Unified AI Project Monorepo
 
-This repository contains the unified AI project, structured as a monorepo to manage various interconnected applications and services.
+This repository contains the Unified AI Project, a hybrid AI ecosystem structured as a monorepo. It is designed not only to power its own internal AI systems (such as the game character, Angela) but also to integrate with and orchestrate various external AI agents and development tools (e.g., Rovo Dev Agent, Gemini).
 
 ## Project Structure
 
-This monorepo is organized into applications and packages:
+This monorepo is organized into applications and packages, centered around a unique AI-driven simulation game, "Angela's World".
 
 ### Applications (`apps/`)
-- **`apps/backend`**: The core Python backend services, including AI models, APIs, and integrations.
-- **`apps/frontend-dashboard`**: The main web-based AI dashboard, built with Next.js and React.
-- **`apps/desktop-app`**: The Electron-based desktop application.
+- **`apps/desktop-app`**: The game client for "Angela's World", built with Electron.
+- **`apps/backend`**: The core Python backend that powers the game's central AI character, Angela. It includes all AI models, APIs, and game logic.
+- **`apps/frontend-dashboard`**: A web-based dashboard for developers to manage, monitor, and debug the AI and game systems.
 
 ### Packages (`packages/`)
 - **`packages/cli`**: Command-line interface tools for interacting with the backend services.

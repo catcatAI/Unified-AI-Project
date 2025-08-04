@@ -1,6 +1,6 @@
-# Desktop App Application
+# Desktop App: Angela's World Game Client
 
-This application contains the Electron-based desktop application for the Unified AI Project.
+This application is the official game client for "Angela's World", the AI-driven simulation game at the heart of the Unified AI Project.
 
 ## Features
 
