@@ -17,13 +17,13 @@
       "type": "string"
     },
     "statement_structured": {
-      "type": "object"
+      "$ref": "#/$defs/HSPFactStatementStructured"
     },
     "source_ai_id": {
       "type": "string"
     },
     "original_source_info": {
-      "type": "object"
+      "$ref": "#/$defs/HSPOriginalSourceInfo"
     },
     "timestamp_created": {
       "type": "string",
@@ -68,5 +68,42 @@
     "source_ai_id",
     "timestamp_created",
     "confidence_score"
-  ]
+  ],
+  "$defs": {
+    "HSPFactStatementStructured": {
+      "type": "object",
+      "properties": {
+        "subject_uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "predicate_uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "object_literal": {},
+        "object_uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "object_datatype": {
+          "type": "string"
+        }
+      },
+      "required": ["subject_uri", "predicate_uri"]
+    },
+    "HSPOriginalSourceInfo": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["url", "document_id"]
+        },
+        "identifier": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "identifier"]
+    }
+  }
 }

@@ -27,7 +27,7 @@
       "type": "string"
     },
     "error_details": {
-      "type": "object"
+      "$ref": "#/$defs/HSPErrorDetails"
     },
     "timestamp_completed": {
       "type": "string",
@@ -42,5 +42,22 @@
     "request_id",
     "executing_ai_id",
     "status"
-  ]
+  ],
+  "$defs": {
+    "HSPErrorDetails": {
+      "type": "object",
+      "properties": {
+        "error_code": {
+          "type": "string"
+        },
+        "error_message": {
+          "type": "string"
+        },
+        "error_context": {
+          "type": "object"
+        }
+      },
+      "required": ["error_code", "error_message"]
+    }
+  }
 }
