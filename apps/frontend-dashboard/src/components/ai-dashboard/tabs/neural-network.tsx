@@ -1,9 +1,10 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui'
+import { Badge } from '@acme/ui'
+import { Button } from '@acme/ui'
+import { Progress } from '@acme/ui'
 import { 
   Brain, 
   Activity, 

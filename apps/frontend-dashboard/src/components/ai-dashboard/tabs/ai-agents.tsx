@@ -1,8 +1,8 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui'
+import { Badge } from '@acme/ui'
+import { Button } from '@acme/ui'
 import { 
   Bot, 
   Activity, 

@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Switch } from '@/components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui'
+import { Button } from '@acme/ui'
+import { Input } from '@acme/ui'
+import { Badge } from '@acme/ui'
+import { Switch } from '@acme/ui'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@acme/ui'
 import { 
   Settings as SettingsIcon, 
   Key, 
