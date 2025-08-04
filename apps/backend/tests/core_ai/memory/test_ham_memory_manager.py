@@ -549,3 +549,48 @@ async def test_21_concurrent_access(ham_manager_fixture):
     )
     assert len(query_results) == 10, "Expected 10 concurrent test memories"
     print("test_21_concurrent_access PASSED")
+
+@pytest.mark.timeout(5)
+@pytest.mark.asyncio
+async def test_22_recall_raw_gist(ham_manager_fixture):
+    """Tests the new recall_raw_gist method."""
+    ham_manager_no_res, _, _, _ = ham_manager_fixture
+    print("\nRunning test_22_recall_raw_gist...")
+
+    raw_text = "This is a test for the raw gist recall."
+    memory_id = ham_manager_no_res.store_experience(raw_text, "dialogue_text")
+    assert memory_id is not None
+
+    # Recall the raw gist
+    raw_gist = ham_manager_no_res.recall_raw_gist(memory_id)
+    assert raw_gist is not None
+    assert isinstance(raw_gist, dict)
+
+    # Check for expected keys from the _abstract_text method
+    assert "summary" in raw_gist
+    assert "keywords" in raw_gist
+    assert "relational_context" in raw_gist
+    assert raw_gist["summary"] == "This is a test for the raw gist recall."
+
+    # Check that it's not the rehydrated string
+    assert not isinstance(raw_gist, str)
+    print("test_22_recall_raw_gist PASSED")
+
+@pytest.mark.timeout(5)
+@pytest.mark.asyncio
+async def test_23_rehydrate_with_relational_context(ham_manager_fixture):
+    """Tests that the rehydrated gist string includes the new relational context."""
+    ham_manager_no_res, _, _, _ = ham_manager_fixture
+    print("\nRunning test_23_rehydrate_with_relational_context...")
+
+    raw_text = "Testing rehydration with new context."
+    memory_id = ham_manager_no_res.store_experience(raw_text, "dialogue_text")
+    assert memory_id is not None
+
+    recalled_data = ham_manager_no_res.recall_gist(memory_id)
+    assert recalled_data is not None
+
+    # Check that the new rehydration logic is working
+    assert "Relational Context (Placeholder):" in recalled_data["rehydrated_gist"]
+    assert "PlaceholderEntity1 -> is_related_to -> PlaceholderEntity2" in recalled_data["rehydrated_gist"]
+    print("test_23_rehydrate_with_relational_context PASSED")
