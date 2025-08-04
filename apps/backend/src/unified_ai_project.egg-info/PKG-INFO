@@ -32,6 +32,7 @@ Requires-Dist: gmqtt>=0.7.0
 Requires-Dist: rich>=13.0.0
 Requires-Dist: click>=8.0.0
 Requires-Dist: tqdm>=4.64.0
+Requires-Dist: firebase-admin>=6.0.0
 Provides-Extra: minimal
 Requires-Dist: Flask; extra == "minimal"
 Requires-Dist: numpy; extra == "minimal"
@@ -160,9 +161,9 @@ Requires-Dist: httpx; extra == "testing"
 Requires-Dist: uvicorn; extra == "testing"
 Dynamic: requires-python
 
-# Backend Package
+# Backend Application
 
-This package contains the core Python backend services for the Unified AI Project.
+This application contains the core Python backend services for the Unified AI Project.
 
 ## Features
 

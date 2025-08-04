@@ -8,8 +8,10 @@ from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Define base path to handle OS-specific path separators
-BASE_PATH = Path("D:/Projects/Unified-AI-Project")
+# Determine the project root directory, which is the parent of the directory containing this script.
+# This makes the script portable and independent of the current working directory.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+BASE_PATH = PROJECT_ROOT
 CONFIG_PATH = BASE_PATH / "apps" / "backend" / "configs" / "system_config.yaml"
 
 with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
