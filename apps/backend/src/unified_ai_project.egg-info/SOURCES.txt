@@ -30,6 +30,8 @@ src/core_ai/dialogue/__init__.py
 src/core_ai/dialogue/dialogue_manager.py
 src/core_ai/dialogue/project_coordinator.py
 src/core_ai/formula_engine/__init__.py
+src/core_ai/formula_engine/types.py
+src/core_ai/knowledge_graph/types.py
 src/core_ai/language_models/__init__.py
 src/core_ai/language_models/daily_language_model.py
 src/core_ai/learning/__init__.py
@@ -37,11 +39,14 @@ src/core_ai/learning/content_analyzer_module.py
 src/core_ai/learning/fact_extractor_module.py
 src/core_ai/learning/learning_manager.py
 src/core_ai/learning/self_critique_module.py
+src/core_ai/learning/types.py
 src/core_ai/lis/__init__.py
 src/core_ai/lis/lis_cache_interface.py
 src/core_ai/lis/tonal_repair_engine.py
+src/core_ai/lis/types.py
 src/core_ai/memory/__init__.py
 src/core_ai/memory/ham_memory_manager.py
+src/core_ai/memory/types.py
 src/core_ai/meta_formulas/__init__.py
 src/core_ai/meta_formulas/errx.py
 src/core_ai/meta_formulas/meta_formula.py
@@ -121,6 +126,7 @@ src/services/main_api_server.py
 src/services/multi_llm_service.py
 src/services/resource_awareness_service.py
 src/services/sandbox_executor.py
+src/services/types.py
 src/services/vision_service.py
 src/services/node_services/package.json
 src/services/node_services/server.js
@@ -226,6 +232,7 @@ tests/hsp/test_hsp_refactored.py
 tests/hsp/test_hsp_simple.py
 tests/hsp/test_mqtt_broker_startup.py
 tests/integration/test_agent_collaboration.py
+tests/integration/test_end_to_end_project_flow.py
 tests/integration/test_knowledge_update.py
 tests/integration/test_learning_and_trust.py
 tests/integration/test_self_improvement.py
@@ -251,6 +258,8 @@ tests/services/test_node_services.py
 tests/services/test_resource_awareness_service.py
 tests/services/test_sandbox_executor.py
 tests/services/test_vision_service.py
+tests/shared/test_key_manager.py
+tests/shared/utils/test_cleanup_utils.py
 tests/tools/__init__.py
 tests/tools/test_code_understanding_tool.py
 tests/tools/test_logic_model.py
