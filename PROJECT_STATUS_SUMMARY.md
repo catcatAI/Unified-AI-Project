@@ -16,26 +16,19 @@ The system is a multi-agent AI project with a distributed, service-oriented arch
 
 These items represent unfinished functionality or are pending future work.
 
-*   **HSP Schema URIs**:
-    *   **File**: `apps/backend/src/hsp/connector.py`
-    *   **Architectural Context**: The HSP specification (`docs/03-technical-architecture/communication/hsp-specification/02-message-envelope-and-patterns.md`) defines a `payload_schema_uri` field in the message envelope. This field is intended to link to a schema that defines the structure of the message payload.
-    *   **Description**: The `payload_schema_uri` field in outgoing HSP message envelopes is currently populated with hardcoded placeholder strings (e.g., `"hsp:schema:payload/Fact/0.1"`).
-    *   **Status**: This represents a gap in the implementation of the HSP specification. The functionality awaits the formal definition and hosting of message payload schemas. This is a significant architectural task.
-    *   **Analysis & Recommendation (as of 2025-08-04)**:
-        *   **Schema Definition**: JSON Schemas should be defined for each payload type (`Fact`, `TaskRequest`, `TaskResult`, `CapabilityAdvertisement`, etc.) to accurately describe their data structure and types.
-        *   **Schema Hosting**: It is recommended to create a `schemas` directory within the project to store these JSON Schema files, allowing them to be version-controlled alongside the code.
-        *   **URI Format**: The `payload_schema_uri` can then use a file-based URI (e.g., `file:///schemas/fact_v0.1.json`) or an HTTP-based URI if the schemas are to be hosted on a server in the future.
-        *   **Next Steps**: This task requires further architectural decisions on schema design and hosting strategy before implementation can proceed. It is currently blocked pending these decisions.
-
-*   **Incomprehensive Health Check**:
-    *   **File**: `scripts/health_check.py`
-    *   **Architectural Context**: The health check script is a standalone utility for verifying the status of the system's components.
-    *   **Description**: The script currently checks the main API server and the existence of the Firebase credentials file. It contains placeholder functions for checking the health of the MQTT broker and the database.
-    *   **Status**: The current health check is not comprehensive. The placeholder functions need to be implemented to provide a full picture of the system's health.
-
 ## 已完成 (Completed)
 
+*   **Comprehensive Health Check**:
+    *   **File**: `scripts/health_check.py`
+    *   **Description**: The health check script is a standalone utility for verifying the status of the system's core components. It checks the API server, Firebase credentials, MQTT broker, and Firestore database. The script was also updated to be portable by removing a hardcoded path.
+    *   **Status**: Completed.
+
 These components are implemented and functioning as expected, or have been investigated and clarified.
+
+*   **HSP Schema URIs**:
+    *   **File**: `apps/backend/src/hsp/connector.py`
+    *   **Description**: The `payload_schema_uri` field in outgoing HSP messages is now dynamically generated. A `get_schema_uri` helper function has been implemented in the `HSPConnector` module. This function constructs a proper `file:///` URI based on the project's file structure, pointing to the correct schema in the `apps/backend/schemas/` directory. This resolves the previous issue of using hardcoded placeholder strings.
+    *   **Status**: Completed.
 
 *   **Core Feature Implementations**: Several key TODOs outlined in `docs/06-project-management/planning/todo-placeholders.md` have been addressed.
 
