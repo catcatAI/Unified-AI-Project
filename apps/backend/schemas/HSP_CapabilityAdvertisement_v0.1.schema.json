@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://unified-ai-project.com/schemas/HSP_CapabilityAdvertisement_v0.1.schema.json",
+  "title": "HSP Capability Advertisement Payload",
+  "description": "Schema for the payload of an HSP Capability Advertisement message.",
+  "type": "object",
+  "properties": {
+    "capability_id": {
+      "type": "string"
+    },
+    "ai_id": {
+      "type": "string"
+    },
+    "agent_name": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "input_schema_uri": {
+      "type": "string",
+      "format": "uri"
+    },
+    "input_schema_example": {
+      "type": "object"
+    },
+    "output_schema_uri": {
+      "type": "string",
+      "format": "uri"
+    },
+    "output_schema_example": {
+      "type": "object"
+    },
+    "data_format_preferences": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hsp_protocol_requirements": {
+      "type": "object"
+    },
+    "cost_estimate_template": {
+      "type": "object"
+    },
+    "availability_status": {
+      "type": "string",
+      "enum": ["online", "offline", "degraded", "maintenance"]
+    },
+    "access_policy_id": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "capability_id",
+    "ai_id",
+    "name",
+    "description",
+    "version",
+    "availability_status"
+  ]
+}

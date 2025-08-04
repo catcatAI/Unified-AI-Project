@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://unified-ai-project.com/schemas/HSP_TaskResult_v0.1.schema.json",
+  "title": "HSP Task Result Payload",
+  "description": "Schema for the payload of an HSP Task Result message.",
+  "type": "object",
+  "properties": {
+    "result_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "executing_ai_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["success", "failure", "in_progress", "queued", "rejected"]
+    },
+    "payload": {
+      "type": "object"
+    },
+    "output_data_format": {
+      "type": "string"
+    },
+    "error_details": {
+      "type": "object"
+    },
+    "timestamp_completed": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "execution_metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "result_id",
+    "request_id",
+    "executing_ai_id",
+    "status"
+  ]
+}
