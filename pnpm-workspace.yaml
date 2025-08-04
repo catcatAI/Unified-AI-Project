@@ -1,3 +1,15 @@
 packages:
-  - 'packages/*'
-  - 'apps/*'
+  - packages/*
+  - apps/*
+
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@swc/core'
+  - '@tailwindcss/oxide'
+  - electron
+  - es5-ext
+  - esbuild
+  - prisma
+  - sharp
+  - unrs-resolver

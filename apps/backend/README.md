@@ -1,6 +1,6 @@
-# Backend Application
+# Backend: The Heart of Angela
 
-This application contains the core Python backend services for the Unified AI Project.
+This application contains the core Python backend services that power Angela, the central AI character in the "Angela's World" simulation game.
 
 ## Features
 
