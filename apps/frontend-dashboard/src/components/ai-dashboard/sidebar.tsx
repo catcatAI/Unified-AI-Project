@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { cn } from '@acme/ui'
+import { Button } from '@acme/ui'
+import { ScrollArea } from '@acme/ui'
 import { 
   MessageSquare, 
   Image, 

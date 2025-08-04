@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui'
+import { Button } from '@acme/ui'
+import { Input } from '@acme/ui'
+import { Badge } from '@acme/ui'
+import { ScrollArea } from '@acme/ui'
 import { useToast } from '@/hooks/use-toast'
 import { 
   Search, 

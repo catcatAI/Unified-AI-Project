@@ -21,6 +21,11 @@ These items represent unfinished functionality or are pending future work.
     *   **Architectural Context**: The HSP specification (`docs/03-technical-architecture/communication/hsp-specification/02-message-envelope-and-patterns.md`) defines a `payload_schema_uri` field in the message envelope. This field is intended to link to a schema that defines the structure of the message payload.
     *   **Description**: The `payload_schema_uri` field in outgoing HSP message envelopes is currently populated with hardcoded placeholder strings (e.g., `"hsp:schema:payload/Fact/0.1"`).
     *   **Status**: This represents a gap in the implementation of the HSP specification. The functionality awaits the formal definition and hosting of message payload schemas. This is a significant architectural task.
+    *   **Analysis & Recommendation (as of 2025-08-04)**:
+        *   **Schema Definition**: JSON Schemas should be defined for each payload type (`Fact`, `TaskRequest`, `TaskResult`, `CapabilityAdvertisement`, etc.) to accurately describe their data structure and types.
+        *   **Schema Hosting**: It is recommended to create a `schemas` directory within the project to store these JSON Schema files, allowing them to be version-controlled alongside the code.
+        *   **URI Format**: The `payload_schema_uri` can then use a file-based URI (e.g., `file:///schemas/fact_v0.1.json`) or an HTTP-based URI if the schemas are to be hosted on a server in the future.
+        *   **Next Steps**: This task requires further architectural decisions on schema design and hosting strategy before implementation can proceed. It is currently blocked pending these decisions.
 
 *   **Incomprehensive Health Check**:
     *   **File**: `scripts/health_check.py`

@@ -1,9 +1,9 @@
 'use client'
 
 import React from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui'
+import { Badge } from '@acme/ui'
+import { Button } from '@acme/ui'
 import { useSystemStatus, useHealthCheck } from '@/hooks/use-api-data'
 import { 
   Activity, 
