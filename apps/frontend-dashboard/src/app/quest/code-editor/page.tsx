@@ -1,19 +1,19 @@
 
 import React, { useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@acme/ui';
+import { Button } from '@acme/ui';
+import { Input } from '@acme/ui';
+import { Label } from '@acme/ui';
+import { Textarea } from '@acme/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@acme/ui';
+import { Badge } from '@acme/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@acme/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@acme/ui';
 import { 
   Plus, Edit, Trash2, Play, Save, Download, Upload, 
   FileText, Folder, Search, Settings, Terminal
 } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '@acme/ui';
 
 interface CodeFile {
   id: string;
@@ -51,8 +51,8 @@ const initialProjects: CodeProject[] = [
         path: '/src/components/ChatInterface.tsx',
         language: 'typescript',
         content: `import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@acme/ui';
+import { Input } from '@acme/ui';
 
 export interface Message {
   id: string;

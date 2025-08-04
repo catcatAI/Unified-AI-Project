@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui'
+import { Badge } from '@acme/ui'
+import { Button } from '@acme/ui'
+import { Progress } from '@acme/ui'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@acme/ui'
 import { 
   Activity, 
   Cpu, 

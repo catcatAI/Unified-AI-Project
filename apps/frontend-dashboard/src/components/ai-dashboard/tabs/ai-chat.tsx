@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react'
 import { useChat } from '@/hooks/use-api-data'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui'
+import { Button } from '@acme/ui'
+import { Input } from '@acme/ui'
+import { ScrollArea } from '@acme/ui'
+import { Badge } from '@acme/ui'
 import { useToast } from '@/hooks/use-toast'
 import { 
   Send, 

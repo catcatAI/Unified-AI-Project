@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui';
+import { Badge } from '@acme/ui';
+import { Button } from '@acme/ui';
+import { Input } from '@acme/ui';
+import { Label } from '@acme/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@acme/ui';
+import { Alert, AlertDescription } from '@acme/ui';
+import { Progress } from '@acme/ui';
+import { Textarea } from '@acme/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@acme/ui';
 import { 
   Settings, 
   CheckCircle, 

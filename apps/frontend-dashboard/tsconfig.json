@@ -21,7 +21,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@/quest-features/*": ["./src/quest-features/*"]
+      "@/quest-features/*": ["./src/quest-features/*"],
+      "@acme/ui": ["../../packages/ui"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
