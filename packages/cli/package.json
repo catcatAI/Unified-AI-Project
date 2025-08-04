@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "python cli/main.py",
+    "start": "cross-env PYTHONPATH=../../;../../apps/backend/src python cli/main.py",
     "test": "echo 'CLI tests skipped - requires backend dependencies'",
     "test:coverage": "echo 'CLI coverage skipped - requires backend dependencies'"
   }
