@@ -62,7 +62,31 @@ catcatAI 組織
 | Angela 設計 | (中) | `docs/02-game-design/character-design/angela-design.md` | AI 角色詳細設計 | ✅ 完整 | 🔴 高 |
 | 遊戲系統 | (中) | `docs/02-game-design/game-systems.md` | 遊戲機制設計 | ✅ 完整 | 🟡 中 |
 | 地圖設計 | (中) | `docs/02-game-design/map-design.md` | 遊戲世界設計 | ✅ 完整 | 🟡 中 |
+| 玩家角色 | (英) | `docs/02-game-design/player.md` | 遊戲玩家角色管理 | ✅ 完整 | 🟢 低 |
 | 成功標準 | (中) | `docs/02-game-design/success-criteria.md` | 遊戲成功指標 | ✅ 完整 | 🟢 低 |
+| 場景與遊戲狀態管理 | (英) | `docs/02-game-design/scenes.md` | 遊戲場景和狀態管理 | ✅ 完整 | 🟢 低 |
+| 庫存系統 | (英) | `docs/02-game-design/inventory.md` | 遊戲內物品管理 | ✅ 完整 | 🟢 低 |
+| 物品定義 | (英) | `docs/02-game-design/items.md` | 遊戲物品定義和管理 | ✅ 完整 | 🟢 低 |
+| 遊戲主模組 | (英) | `docs/02-game-design/game-main.md` | 遊戲核心循環和初始化 | ✅ 完整 | 🟢 低 |
+| 遊戲小遊戲 | (英) | `docs/02-game-design/minigames.md` | 遊戲內互動小遊戲 | ✅ 完整 | 🟢 低 |
+| NPC 系統 | (英) | `docs/02-game-design/npcs.md` | 遊戲非玩家角色管理 | ✅ 完整 | 🟢 低 |
+| 美術資源規範 | (英) | `docs/02-game-design/art-asset-specification.md` | 遊戲美術資源規格 | ✅ 完整 | 🟢 低 |
+| 遊戲工具 | (英) | `docs/02-game-design/game-utils.md` | 遊戲通用實用函數 | ✅ 完整 | 🟢 低 |
+| 主設計文檔 | (中) | `docs/02-game-design/main-design.md` | 核心遊戲設計理念 | ✅ 完整 | 🟡 中 |
+| 角色設計 | (中) | `docs/02-game-design/character-design/general-characters.md` | 遊戲角色設定 | ✅ 完整 | 🟡 中 |
+| Angela 設計 | (中) | `docs/02-game-design/character-design/angela-design.md` | AI 角色詳細設計 | ✅ 完整 | 🔴 高 |
+| 遊戲系統 | (中) | `docs/02-game-design/game-systems.md` | 遊戲機制設計 | ✅ 完整 | 🟡 中 |
+| 地圖設計 | (中) | `docs/02-game-design/map-design.md` | 遊戲世界設計 | ✅ 完整 | 🟡 中 |
+| 玩家角色 | (英) | `docs/02-game-design/player.md` | 遊戲玩家角色管理 | ✅ 完整 | 🟢 低 |
+| 成功標準 | (中) | `docs/02-game-design/success-criteria.md` | 遊戲成功指標 | ✅ 完整 | 🟢 低 |
+| 場景與遊戲狀態管理 | (英) | `docs/02-game-design/scenes.md` | 遊戲場景和狀態管理 | ✅ 完整 | 🟢 低 |
+| 庫存系統 | (英) | `docs/02-game-design/inventory.md` | 遊戲內物品管理 | ✅ 完整 | 🟢 低 |
+| 物品定義 | (英) | `docs/02-game-design/items.md` | 遊戲物品定義和管理 | ✅ 完整 | 🟢 低 |
+| 遊戲主模組 | (英) | `docs/02-game-design/game-main.md` | 遊戲核心循環和初始化 | ✅ 完整 | 🟢 低 |
+| 遊戲小遊戲 | (英) | `docs/02-game-design/minigames.md` | 遊戲內互動小遊戲 | ✅ 完整 | 🟢 低 |
+| UI 系統 | (英) | `docs/02-game-design/ui.md` | 遊戲對話框和 UI 元素 | ✅ 完整 | 🟢 低 |
+| NPC 系統 | (英) | `docs/02-game-design/npcs.md` | 遊戲非玩家角色管理 | ✅ 完整 | 🟢 低 |
+| 美術資源規範 | (英) | `docs/02-game-design/art-asset-specification.md` | 遊戲美術資源規格 | ✅ 完整 | 🟢 低 |
 
 #### 🏗️ 核心技術架構文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 複雜度 | 實用性 |
@@ -74,12 +98,16 @@ catcatAI 組織
 | HAM 設計規範 | (英) | `docs/03-technical-architecture/memory-systems/ham-design.md` | 分層抽象記憶系統 | 🔴 極高 | 🔴 高 |
 | 多模型 LLM 服务 | (中) | `docs/03-technical-architecture/ai-components/multi-llm-service.md` | 统一 AI 模型接口 | 🟡 中 | 🟢 高 |
 | Fragmenta 設計 | (英) | `docs/04-advanced-concepts/fragmenta-design.md` | Fragmenta 架構規範 | 🔴 極高 | 🟡 中 |
+| Project Coordinator | (英) | `docs/03-technical-architecture/core-services/project-coordinator.md` | 複雜任務協調器 | 🔴 高 | 🟢 高 |
+| HSP Connector | (英) | `docs/03-technical-architecture/communication/hsp-connector.md` | HSP 通訊連接器 | 🔴 高 | 🟢 高 |
+| 外部代理整合 | (英) | `docs/03-technical-architecture/integrations/external-agent-integration.md` | 外部 AI 工具整合架構 | 🔴 高 | 🟢 高 |
 
 
 #### 🔧 專業技術規範文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 實用性 | 維護狀態 |
 |---|---|---|---|---|---|
 | API 端點摘要 | (英) | `docs/08-api-reference/README.md` | API 接口總覽 | 🟢 高 | ✅ 最新 |
+| API 模型 | (英) | `docs/03-technical-architecture/api/api-models.md` | API 請求和響應的數據結構 | 🟢 高 | ✅ 最新 |
 | 消息傳輸 | (英) | `docs/03-technical-architecture/communication/message-transport.md` | 消息傳輸機制 | 🟢 高 | ✅ 最新 |
 | 模型和工具 | (英) | `docs/03-technical-architecture/ai-components/models-and-tools.md` | AI 模型工具集 | 🟢 高 | ✅ 最新 |
 | 內部數據標準 | (英) | `docs/03-technical-architecture/memory-systems/data-standards.md` | 內部數據格式規範 | 🟡 中 | ✅ 最新 |
@@ -97,6 +125,7 @@ catcatAI 組織
 | 知識圖譜 | (英) | `docs/04-advanced-concepts/knowledge-graph.md` | 知識圖譜設計 | 🔴 高 | 🟡 部分 |
 | 記憶系統 | (英) | `docs/03-technical-architecture/memory-systems/memory-overview.md` | 記憶系統概述 | 🔴 高 | 🟢 實現 |
 | 元公式規範 | (英) | `docs/04-advanced-concepts/meta-formulas.md` | 元公式系統 | 🔴 極高 | 🔴 概念 |
+
 
 #### 🧪 測試與品質保證文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 狀態 | 實用性 |
@@ -130,6 +159,7 @@ catcatAI 組織
 | Rovo Dev 實施最終報告 | (中) | `docs/06-project-management/reports/rovo-dev-implementation-final-report.md` | 備用機制完整實施報告 | ✅ 最新 | 🟢 高 |
 | HSP 備用協議 | (英) | `docs/03-technical-architecture/communication/hsp-fallback-protocols.md` | HSP 備用協議規範 | ✅ 最新 | 🟢 高 |
 | HSP 備用實施摘要 | (英) | `docs/03-technical-architecture/communication/hsp-fallback-implementation-summary.md` | HSP 備用實施細節 | ✅ 最新 | 🟡 中 |
+| MCP 備用協議 | (英) | `docs/03-technical-architecture/communication/mcp-fallback-protocols.md` | MCP 備用協議系統 | ✅ 最新 | 🟢 高 |
 
 #### 📊 專案管理與狀態文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 重要性 | 時效性 |
@@ -155,6 +185,9 @@ catcatAI 組織
 | 文檔連結審查更新 | (中) | `docs/06-project-management/reports/documentation-link-audit-update.md` | 連結修復進度更新報告 | ✅ 最新 | 🟢 高 |
 | 項目繼續任務總結 | (中) | `docs/06-project-management/reports/project-continuation-summary.md` | 繼續中斷任務完成總結 | ✅ 最新 | 🟢 高 |
 | 路線圖 | (中) | `docs/00-overview/ROADMAP.md` | 未來發展路線圖 | 🟢 重要 | ✅ 活躍 |
+| Electron 主進程 | (英) | `docs/05-development/electron-main-process.md` | Electron 應用程式主進程 | ✅ 完整 | 🟢 高 |
+| Electron 預載入腳本 | (英) | `docs/05-development/electron-preload-script.md` | Electron 應用程式預載入腳本 | ✅ 完整 | 🟢 高 |
+| Electron 渲染器進程 | (英) | `docs/05-development/electron-renderer-process.md` | Electron 應用程式渲染器進程 | ✅ 完整 | 🟢 高 |
 
 #### 📖 哲學與願景文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 性質 | 價值 |
