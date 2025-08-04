@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "echo \"Starting Python backend...\" && pip install -r requirements.txt && uvicorn src.services.main_api_server:app --reload",
-    "test": "echo 'Backend tests skipped - Python environment required'",
+    "test": "pip install -r requirements-dev.txt && pytest",
     "test:coverage": "pytest --cov=src --cov-report=html --cov-report=term-missing"
   }
 }
