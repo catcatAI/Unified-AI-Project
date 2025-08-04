@@ -2,20 +2,22 @@ import requests
 import time
 import logging
 import yaml
+import paho.mqtt.client as mqtt
 import os
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Load API endpoint from config
-CONFIG_PATH = "D:\Projects\Unified-AI-Project\configs\system_config.yaml"
+# Define base path to handle OS-specific path separators
+BASE_PATH = Path("D:/Projects/Unified-AI-Project")
+CONFIG_PATH = BASE_PATH / "apps" / "backend" / "configs" / "system_config.yaml"
 
 with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
     config = yaml.safe_load(f)
 
-API_HOST = config['system']['api_server']['host']
-API_PORT = config['system']['api_server']['port']
-API_ENDPOINT = f"http://{API_HOST}:{API_PORT}/api/v1/health"
+API_HOST = config['operational_configs']['api_server']['host']
+API_PORT = config['operational_configs']['api_server']['port']
+API_ENDPOINT = f"http://{API_HOST}:{API_PORT}/api/health"
 
 def check_api_health():
     """Checks the health of the main API server."""
@@ -57,36 +59,30 @@ def check_firebase_credentials():
         return False
 
 def check_mqtt_broker():
-    """Placeholder for checking MQTT broker health."""
-    logging.info("Checking MQTT broker health (placeholder)...")
-    # Example check: try to connect to the broker
-    # try:
-    #     # mqtt_client = mqtt.Client()
-    #     # mqtt_client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
-    #     # mqtt_client.disconnect()
-    #     logging.info("MQTT broker is HEALTHY (simulated).")
-    #     return True
-    # except Exception as e:
-    #     logging.error(f"MQTT broker is UNHEALTHY. Error: {e}")
-    #     return False
-    pass
+    """Checks the health of the MQTT broker."""
+    logging.info("Checking MQTT broker health...")
+    try:
+        hsp_config_path = BASE_PATH / "apps" / "backend" / "configs" / "hsp_fallback_config.yaml"
+        with open(hsp_config_path, 'r', encoding='utf-8') as f:
+            hsp_config = yaml.safe_load(f)
+        
+        broker_address = hsp_config['hsp_primary']['mqtt']['broker_address']
+        broker_port = hsp_config['hsp_primary']['mqtt']['broker_port']
+
+        mqtt_client = mqtt.Client()
+        mqtt_client.connect(broker_address, broker_port, 60)
+        mqtt_client.disconnect()
+        logging.info(f"MQTT broker is HEALTHY. Connected to {broker_address}:{broker_port}")
+        return True
+    except Exception as e:
+        logging.error(f"MQTT broker is UNHEALTHY. Error: {e}")
+        return False
+
 
 def check_database():
     """Placeholder for checking database health."""
     logging.info("Checking database health (placeholder)...")
-    # Example check: try to connect to the database and run a simple query
-    # try:
-    #     # db_connection = connect_to_database()
-    #     # cursor = db_connection.cursor()
-    #     # cursor.execute("SELECT 1")
-    #     # cursor.fetchone()
-    #     # db_connection.close()
-    #     logging.info("Database is HEALTHY (simulated).")
-    #     return True
-    # except Exception as e:
-    #     logging.error(f"Database is UNHEALTHY. Error: {e}")
-    #     return False
-    pass
+    logging.warning("No database configuration found. Skipping database health check.")
 
 def main():
     """Main function to run health checks."""
