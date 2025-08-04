@@ -16,13 +16,12 @@ The system is a multi-agent AI project with a distributed, service-oriented arch
 
 These items represent unfinished functionality or are pending future work.
 
-*   **Incomprehensive Health Check**:
-    *   **File**: `scripts/health_check.py`
-    *   **Architectural Context**: The health check script is a standalone utility for verifying the status of the system's components.
-    *   **Description**: The script currently checks the main API server and the existence of the Firebase credentials file. It contains placeholder functions for checking the health of the MQTT broker and the database.
-    *   **Status**: The current health check is not comprehensive. The placeholder functions need to be implemented to provide a full picture of the system's health.
-
 ## 已完成 (Completed)
+
+*   **Comprehensive Health Check**:
+    *   **File**: `scripts/health_check.py`
+    *   **Description**: The health check script is a standalone utility for verifying the status of the system's core components. It checks the API server, Firebase credentials, MQTT broker, and Firestore database. The script was also updated to be portable by removing a hardcoded path.
+    *   **Status**: Completed.
 
 These components are implemented and functioning as expected, or have been investigated and clarified.
 
