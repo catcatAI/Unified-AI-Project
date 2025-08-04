@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://unified-ai-project.com/schemas/HSP_TaskRequest_v0.1.schema.json",
+  "title": "HSP Task Request Payload",
+  "description": "Schema for the payload of an HSP Task Request message.",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "requester_ai_id": {
+      "type": "string"
+    },
+    "target_ai_id": {
+      "type": "string"
+    },
+    "capability_id_filter": {
+      "type": "string"
+    },
+    "capability_name_filter": {
+      "type": "string"
+    },
+    "parameters": {
+      "type": "object"
+    },
+    "requested_output_data_format": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "deadline_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "callback_address": {
+      "type": "string",
+      "format": "uri"
+    }
+  },
+  "required": [
+    "request_id",
+    "requester_ai_id",
+    "parameters"
+  ]
+}

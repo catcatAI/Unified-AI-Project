@@ -1,0 +1,7 @@
+# Dependencies for running the test suite
+pytest
+pytest-asyncio
+pytest-cov
+aiounittest
+pytest-timeout>=2.1.0
+astunparse>=1.6.0

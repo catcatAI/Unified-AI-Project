@@ -80,9 +80,35 @@ def check_mqtt_broker():
 
 
 def check_database():
-    """Placeholder for checking database health."""
-    logging.info("Checking database health (placeholder)...")
-    logging.warning("No database configuration found. Skipping database health check.")
+    """Checks the health of the Firestore database."""
+    logging.info("Checking Firestore database health...")
+    try:
+        import firebase_admin
+        from firebase_admin import credentials, firestore
+
+        if not firebase_admin._apps:
+            firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+            if not firebase_credentials_path:
+                logging.warning("FIREBASE_CREDENTIALS_PATH environment variable is not set. Cannot check Firestore health.")
+                return False
+
+            cred = credentials.Certificate(firebase_credentials_path)
+            firebase_admin.initialize_app(cred)
+
+        db = firestore.client()
+        # Perform a simple read operation to check the connection
+        doc_ref = db.collection('health_check').document('ping')
+        doc_ref.set({'timestamp': firestore.SERVER_TIMESTAMP})
+        doc = doc_ref.get()
+        if doc.exists:
+            logging.info("Firestore database is HEALTHY. Connection successful.")
+            return True
+        else:
+            logging.error("Firestore database is UNHEALTHY. Could not read from a test document.")
+            return False
+    except Exception as e:
+        logging.error(f"Firestore database is UNHEALTHY. Error: {e}")
+        return False
 
 def main():
     """Main function to run health checks."""

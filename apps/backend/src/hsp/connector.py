@@ -13,6 +13,27 @@ import logging
 import time
 from .fallback.fallback_protocols import get_fallback_manager, FallbackMessage, MessagePriority, initialize_fallback_protocols
 from .utils.fallback_config_loader import get_config_loader
+from pathlib import Path
+
+# Define the base path for schemas, ensuring cross-platform compatibility
+SCHEMA_BASE_PATH = Path(__file__).resolve().parent.parent.parent / "schemas"
+
+def get_schema_uri(schema_name: str) -> str:
+    """Constructs a file URI for a given schema name."""
+    schema_path = SCHEMA_BASE_PATH / schema_name
+    if not schema_path.is_file():
+        # Fallback for when running in a different environment (like tests)
+        # This makes the path relative to the current working directory
+        # In a real-world scenario, a more robust solution might be needed
+        # like using an environment variable or a configuration setting.
+        project_root = Path.cwd()
+        schema_path = project_root / "apps" / "backend" / "schemas" / schema_name
+        if not schema_path.is_file():
+             # As a last resort, return a placeholder if the file isn't found
+             # This prevents crashes but signals a configuration issue.
+             logging.warning(f"Schema file not found: {schema_name}. Path was: {schema_path}")
+             return f"file:///{schema_name}_not_found"
+    return schema_path.as_uri()
 
 class HSPConnector:
     def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False, mock_mqtt_client: Optional[MagicMock] = None, internal_bus: Optional[Any] = None, message_bridge: Optional[Any] = None, enable_fallback: bool = True, **kwargs):
@@ -176,7 +197,7 @@ class HSPConnector:
             "security_parameters": None,
             "qos_parameters": {"requires_ack": False, "priority": "medium"}, # Facts usually don't require ACK
             "routing_info": None,
-            "payload_schema_uri": "hsp:schema:payload/Fact/0.1",
+            "payload_schema_uri": get_schema_uri("HSP_Fact_v0.1.schema.json"),
             "payload": fact_payload
         }
         return await self.publish_message(topic, envelope, qos)
@@ -196,7 +217,7 @@ class HSPConnector:
             "security_parameters": None,
             "qos_parameters": {"requires_ack": True, "priority": "high"},
             "routing_info": None,
-            "payload_schema_uri": "hsp:schema:payload/TaskRequest/0.1",
+            "payload_schema_uri": get_schema_uri("HSP_TaskRequest_v0.1.schema.json"),
             "payload": payload
         }
         # The topic for task requests is usually hsp/requests/{recipient_ai_id}
@@ -221,7 +242,7 @@ class HSPConnector:
             "security_parameters": None,
             "qos_parameters": {"requires_ack": False, "priority": "high"},
             "routing_info": None,
-            "payload_schema_uri": "hsp:schema:payload/TaskResult/0.1",
+            "payload_schema_uri": get_schema_uri("HSP_TaskResult_v0.1.schema.json"),
             "payload": payload
         }
         mqtt_topic = target_ai_id_or_topic if "/" in target_ai_id_or_topic else f"hsp/results/{target_ai_id_or_topic}"
@@ -242,7 +263,7 @@ class HSPConnector:
             "security_parameters": None,
             "qos_parameters": {"requires_ack": False, "priority": "medium"},
             "routing_info": None,
-            "payload_schema_uri": "hsp:schema:payload/CapabilityAdvertisement/0.1",
+            "payload_schema_uri": get_schema_uri("HSP_CapabilityAdvertisement_v0.1.schema.json"),
             "payload": cap_payload
         }
         return await self.publish_message(topic, envelope, qos)
@@ -318,7 +339,7 @@ class HSPConnector:
                     "security_parameters": None,
                     "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
-                    "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
+                    "payload_schema_uri": get_schema_uri("HSP_Acknowledgement_v0.1.schema.json"),
                     "payload": ack_payload
                 }
                 # Publish ACK to the sender's ACK topic
@@ -361,7 +382,7 @@ class HSPConnector:
                     "security_parameters": None,
                     "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
-                    "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
+                    "payload_schema_uri": get_schema_uri("HSP_Acknowledgement_v0.1.schema.json"),
                     "payload": ack_payload
                 }
                 # Publish ACK to the sender's ACK topic
@@ -404,7 +425,7 @@ class HSPConnector:
                     "security_parameters": None,
                     "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
-                    "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
+                    "payload_schema_uri": get_schema_uri("HSP_Acknowledgement_v0.1.schema.json"),
                     "payload": ack_payload
                 }
                 # Publish ACK to the sender's ACK topic
@@ -444,7 +465,7 @@ class HSPConnector:
                     "security_parameters": None,
                     "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
-                    "payload_schema_uri": "hsp:schema:payload/Acknowledgement/0.1",
+                    "payload_schema_uri": get_schema_uri("HSP_Acknowledgement_v0.1.schema.json"),
                     "payload": ack_payload
                 }
                 # Publish ACK to the sender's ACK topic
@@ -557,12 +578,14 @@ class HSPConnector:
         try:
             # 確定優先級
             priority = MessagePriority.NORMAL
-            if qos >= 2:
-                priority = MessagePriority.HIGH
-            elif envelope.get("qos_parameters", {}).get("priority") == "high":
-                priority = MessagePriority.HIGH
-            elif envelope.get("qos_parameters", {}).get("priority") == "low":
-                priority = MessagePriority.LOW
+            qos_params = envelope.get("qos_parameters")
+            if qos_params:
+                if qos >= 2:
+                    priority = MessagePriority.HIGH
+                elif qos_params.get("priority") == "high":
+                    priority = MessagePriority.HIGH
+                elif qos_params.get("priority") == "low":
+                    priority = MessagePriority.LOW
             
             # 創建fallback消息
             fallback_msg = FallbackMessage(
