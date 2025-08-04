@@ -1,6 +1,6 @@
-# Desktop App Package
+# Desktop App Application
 
-This package contains the Electron-based desktop application for the Unified AI Project.
+This application contains the Electron-based desktop application for the Unified AI Project.
 
 ## Features
 
