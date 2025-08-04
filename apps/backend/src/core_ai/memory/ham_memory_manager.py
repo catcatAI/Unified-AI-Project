@@ -191,10 +191,17 @@ class HAMMemoryManager:
             logger.debug(f"HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.")
 
 
+        # Placeholder for relational context extraction (a key "deep mapping" enhancement)
+        relational_context = {
+            "entities": ["PlaceholderEntity1", "PlaceholderEntity2"],
+            "relationships": [{"subject": "PlaceholderEntity1", "verb": "is_related_to", "object": "PlaceholderEntity2"}]
+        }
+
         return {
             "summary": summary,
             "keywords": keywords,
             "original_length": len(text),
+            "relational_context": relational_context, # Add the new structure
             "radicals_placeholder": radicals_placeholder if is_likely_chinese else None,
             "pos_tags_placeholder": pos_tags_placeholder if not is_likely_chinese and keywords else None
         }
@@ -204,8 +211,14 @@ class HAMMemoryManager:
         Rehydrates an abstracted text gist into a human-readable string format.
         Includes summary, keywords, and any placeholder advanced features.
         """
-        # For v0.2, could include placeholder info
         base_rehydration = f"Summary: {gist.get('summary', 'N/A')}\nKeywords: {', '.join(gist.get('keywords', []))}"
+
+        # Handle the new relational_context structure
+        if "relational_context" in gist and gist["relational_context"]["entities"]:
+            base_rehydration += f"\nRelational Context (Placeholder):"
+            for rel in gist["relational_context"].get("relationships", []):
+                base_rehydration += f"\n  - {rel.get('subject')} -> {rel.get('verb')} -> {rel.get('object')}"
+
         if gist.get("radicals_placeholder"):
             base_rehydration += f"\nRadicals (Placeholder): {gist.get('radicals_placeholder')}"
         if gist.get("pos_tags_placeholder"):
@@ -416,16 +429,15 @@ class HAMMemoryManager:
 
     def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
         """
-        Recalls an abstracted gist of an experience by its memory ID.
-        The data is retrieved, decrypted, decompressed, and checksum verified.
-        The abstracted gist is then rehydrated (for text) or returned as is.
+        Recalls an abstracted gist of an experience by its memory ID and returns
+        a human-readable rehydrated version.
 
         Args:
             memory_id (str): The ID of the memory to recall.
 
         Returns:
-            Optional[HAMRecallResult]: A HAMRecallResult object if successful,
-                                       None if recall fails at any stage.
+            Optional[HAMRecallResult]: A HAMRecallResult object with a rehydrated string gist
+                                       if successful, None otherwise.
         """
         logger.debug(f"HAM: Recalling gist for memory_id '{memory_id}'")
         data_package = self.core_memory_store.get(memory_id)
@@ -488,6 +500,52 @@ class HAMMemoryManager:
             rehydrated_gist=rehydrated_content,
             metadata=data_package.get("metadata", {}) # type: ignore
         )
+
+    def recall_raw_gist(self, memory_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Recalls the raw, structured gist dictionary of an experience by its ID.
+        This method is for programmatic use by other AI components that need the
+        structured data, bypassing the human-readable rehydration step.
+
+        Args:
+            memory_id (str): The ID of the memory to recall.
+
+        Returns:
+            Optional[Dict[str, Any]]: The raw abstracted gist dictionary if successful,
+                                      None if recall fails.
+        """
+        logger.debug(f"HAM: Recalling raw gist for memory_id '{memory_id}'")
+        data_package = self.core_memory_store.get(memory_id)
+        if not data_package:
+            logger.error(f"Memory ID {memory_id} not found.")
+            return None
+
+        try:
+            decrypted_data = self._decrypt(data_package["encrypted_package"])
+            if not decrypted_data: return None
+
+            decompressed_data_bytes = self._decompress(decrypted_data)
+            if not decompressed_data_bytes: return None
+
+            stored_checksum = data_package.get("metadata", {}).get('sha256_checksum')
+            if stored_checksum:
+                current_checksum = hashlib.sha256(decompressed_data_bytes).hexdigest()
+                if current_checksum != stored_checksum:
+                    logger.critical(f"Checksum mismatch for memory ID {memory_id}! Data may be corrupted.")
+                    return None # Return None on checksum failure for raw recall
+
+            decompressed_data_str = decompressed_data_bytes.decode('utf-8')
+
+            if "dialogue_text" in data_package["data_type"]:
+                return json.loads(decompressed_data_str)
+            else:
+                # For non-text data, the "gist" is just the stringified data.
+                # Returning it in a dict to maintain a consistent return type structure.
+                return {"raw_content": decompressed_data_str}
+
+        except Exception as e:
+            logger.error(f"Error during raw gist retrieval for memory_id '%s': {e}", memory_id, exc_info=True)
+            return None
 
     def _perform_deletion_check(self):
         """Perform memory cleanup based on personality traits and memory usage."""
