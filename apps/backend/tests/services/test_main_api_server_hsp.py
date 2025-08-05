@@ -41,35 +41,36 @@ class MockSDM:
 
     async def process_capability_advertisement(self, payload, sender_ai_id, envelope):
         try:
+            print(f"DEBUG: Processing capability advertisement, payload type: {type(payload)}, payload: {payload}")
             if isinstance(payload, dict):
+                # Ensure all required fields are present
+                required_fields = ['capability_id', 'ai_id', 'name', 'description', 'version', 'availability_status']
+                missing_fields = [field for field in required_fields if field not in payload]
+                if missing_fields:
+                    raise ValueError(f"Missing required fields: {missing_fields}")
                 processed_payload = HSPCapabilityAdvertisementPayload(**payload)
             elif isinstance(payload, HSPCapabilityAdvertisementPayload):
                 processed_payload = payload
             else:
                 logging.error(f"Invalid payload type: {type(payload)}")
                 return
-            self._mock_sdm_capabilities_store[processed_payload.capability_id] = (processed_payload, datetime.now(timezone.utc))
-            print(f"DEBUG: Added capability {processed_payload.capability_id} to SDM store")
+            self._mock_sdm_capabilities_store[processed_payload['capability_id']] = (processed_payload, datetime.now(timezone.utc))
+            print(f"DEBUG: Added capability {processed_payload['capability_id']} to SDM store")
         except Exception as e:
             logging.error(f"Failed to process capability advertisement: {e}")
-            print(f"DEBUG: Failed to process capability advertisement: {e}, payload: {payload}")
+            print(f"DEBUG: Failed to process capability advertisement: {e}, payload: {payload}, payload type: {type(payload)}")
+            import traceback
+            traceback.print_exc()
 
     async def find_capabilities(self, capability_id_filter=None, capability_name_filter=None, tags_filter=None, min_trust_score=None, sort_by_trust=False):
         results = []
         for cap_id, (payload, last_seen) in self._mock_sdm_capabilities_store.items():
-            if isinstance(payload, dict):
-                try:
-                    payload = HSPCapabilityAdvertisementPayload(**payload)
-                except Exception:
-                    continue
-            elif not isinstance(payload, HSPCapabilityAdvertisementPayload):
-                continue
-
+            # payload is already processed as HSPCapabilityAdvertisementPayload in process_capability_advertisement
             if capability_id_filter and cap_id != capability_id_filter:
                 continue
-            if capability_name_filter and payload.name != capability_name_filter:
+            if capability_name_filter and payload.get('name') != capability_name_filter:
                 continue
-            if tags_filter and not all(tag in payload.tags for tag in tags_filter):
+            if tags_filter and not all(tag in payload.get('tags', []) for tag in tags_filter):
                 continue
             results.append(payload)
         return results
@@ -77,13 +78,7 @@ class MockSDM:
     async def get_all_capabilities(self):
         results = []
         for cap_id, (payload, _) in self._mock_sdm_capabilities_store.items():
-            if isinstance(payload, dict):
-                try:
-                    payload = HSPCapabilityAdvertisementPayload(**payload)
-                except Exception:
-                    continue
-            elif not isinstance(payload, HSPCapabilityAdvertisementPayload):
-                continue
+            # payload is already processed as HSPCapabilityAdvertisementPayload in process_capability_advertisement
             results.append(payload)
         return results
 
@@ -309,16 +304,16 @@ class TestHSPEndpoints:
         # Use the existing api_test_peer_connector fixture
         peer_conn = api_test_peer_connector
         
-        # Create a capability advertisement
+        # Create a capability advertisement with all required fields
         mock_cap_adv = HSPCapabilityAdvertisementPayload(
             capability_id=mock_echo_cap_id,
-            name="Echo capability for API test",
-            description="Echo capability for API test",
+            ai_id=peer_ai_id,  # Required field
+            agent_name="test_echo_agent",
+            name="Echo capability for API test",  # Required field
+            description="Echo capability for API test",  # Required field
+            version="1.0",  # Required field
+            availability_status="online",  # Required field
             tags=["echo", "test"],
-            parameters_schema={"type": "object", "properties": {"message": {"type": "string"}}},
-            result_schema={"type": "object", "properties": {"message": {"type": "string"}}},
-            trust_score=0.9,
-            provider_ai_id=peer_ai_id,
         )
         
         # Process the capability advertisement directly
@@ -326,11 +321,11 @@ class TestHSPEndpoints:
         
         # Debug: Print all capabilities in SDM
         all_caps = await sdm.get_all_capabilities()
-        print(f"\nAll capabilities in SDM: {[cap.capability_id for cap in all_caps]}")
+        print(f"\nAll capabilities in SDM: {[cap['capability_id'] for cap in all_caps]}")
         
         # Verify the capability is in SDM
         found_caps = await sdm.find_capabilities(capability_id_filter=mock_echo_cap_id)
-        print(f"\nFound capabilities with filter '{mock_echo_cap_id}': {[cap.capability_id for cap in found_caps]}")
+        print(f"\nFound capabilities with filter '{mock_echo_cap_id}': {[cap['capability_id'] for cap in found_caps]}")
         assert len(found_caps) == 1, f"Capability {mock_echo_cap_id} not found in SDM"
         
         # Set up the peer to handle the task request
@@ -374,6 +369,16 @@ class TestHSPEndpoints:
         
         # Debug: Print API response
         print(f"\nAPI response: {response.status_code} {response.json()}")
+        
+        if response.status_code != 202:
+            print(f"\nAPI request failed with status {response.status_code}")
+            print(f"Response content: {response.text}")
+            request_payload = {
+                'correlation_id': mock_corr_id,
+                'capability_id_filter': mock_echo_cap_id,
+                'parameters': {'message': 'Hello from API test'}
+            }
+            print(f"Request payload: {request_payload}")
         
         assert response.status_code == 202
         response_data = response.json()
