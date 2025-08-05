@@ -1,5 +1,7 @@
 # 调试总结
 
+**注意：本文档记录了特定调试会话的历史信息。有关项目最新状态和测试进展，请参阅 [项目章程](../00-overview/PROJECT_CHARTER.md)。**
+
 ## 当前问题
 
 在 `d:\Projects\Unified-AI-Project\tests\services\test_main_api_server_hsp.py`

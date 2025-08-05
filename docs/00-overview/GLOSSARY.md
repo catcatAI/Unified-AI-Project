@@ -78,7 +78,7 @@
 - **簡潔定義**: 一個旨在保護 AI 不受錯誤或低質量資訊污染的防禦系統。
 - **功能與範圍**: 這是一個先進的架構概念，其核心思想是建立一個「基於質量的資訊評估體系」。它通過評估資訊的**來源可信度、證據支撐度、新穎性**等，來決定是否將一個新知識整合到記憶中，從而有效抵制「傻子共振」現象。其邏輯主要在
   `LearningManager` 中實現。
-- **[了解更多: LIS 設計規範](architecture/Linguistic_Immune_System_spec.md)**
+- **[了解更多: LIS 設計規範](../04-advanced-concepts/linguistic-immune-system.md)**
 
 ---
 

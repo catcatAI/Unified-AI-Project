@@ -59,13 +59,13 @@ Unified-AI-Project 是一个多代理协作的 AI 系统，采用分布式、服
 - **具体实现 (AgentManager)**: `AgentManager` 是当前负责管理子代理生命周期的具体实现。它负责动态地发现、启动和停止各个专门的代理。
 - **特点**: 模块化、可插拔、基于子进程。
 - **实现位置**: `apps/backend/src/core_ai/agent_manager.py`
-- **设计文档**: [Fragmenta 设计规范](../../04-advanced-concepts/fragmenta-design.md)
+- **设计文档**: [Fragmenta 设计规范](../04-advanced-concepts/fragmenta-design.md)
 
 ### 4. 对话管理 - DialogueManager
 
 - **作用**: 处理用户输入，协调系统响应
 - **特点**: 智能路由、上下文管理
-- **位置**: `src/core_ai/dialogue/dialogue_manager.py`
+- **位置**: `apps/backend/src/core_ai/dialogue/dialogue_manager.py`
 
 ### 5. 多模型 LLM 服务
 
@@ -166,7 +166,7 @@ Unified-AI-Project 是一个多代理协作的 AI 系统，采用分布式、服
 
 1. [HAM 設計規範](./memory-systems/ham-design.md)
 2. [HSP 完整規範](./communication/hsp-specification/01-overview-and-concepts.md)
-3. [Fragmenta 設計規範](../../04-advanced-concepts/fragmenta-design.md)
+3. [Fragmenta 設計規範](../04-advanced-concepts/fragmenta-design.md)
 
 ## ❓ 常见问题
 

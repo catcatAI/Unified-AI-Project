@@ -35,3 +35,8 @@ For documentation specific to each package within the monorepo, please refer to 
 - [Frontend Dashboard Package](apps/frontend-dashboard/README.md)
 - [Desktop App Package](apps/desktop-app/README.md)
 - [CLI Package](packages/cli/README.md)
+
+---
+
+_Last Updated: August 5, 2025_
+_Maintained by: The Unified AI Project Documentation Team_

@@ -10,7 +10,7 @@ AI Project.
 - **Math Model**
   - **Description:** The math model is a lightweight model that can be used to
     solve basic arithmetic problems.
-  - **Location:** `src/tools/math_model/`
+  - **Location:** `apps/backend/src/tools/math_model/`
   - **Status:** Built-in
   - **Usage:** The math model can be used through the `math_tool` tool.
 
@@ -19,7 +19,7 @@ AI Project.
 - **Logic Model**
   - **Description:** The logic model is a lightweight model that can be used to
     solve basic logic problems.
-  - **Location:** `src/tools/logic_model/`
+  - **Location:** `apps/backend/src/tools/logic_model/`
   - **Status:** Built-in
   - **Usage:** The logic model can be used through the `logic_tool` tool.
 
@@ -28,7 +28,7 @@ AI Project.
 - **Image Recognition Model**
   - **Description:** The image recognition model can be used to recognize images
     using template matching.
-  - **Location:** `src/tools/image_recognition_tool.py`
+  - **Location:** `apps/backend/src/tools/image_recognition_tool.py`
   - **Status:** Downloadable
   - **Usage:** The image recognition model can be used through the
     `image_recognition_tool` tool.
@@ -37,14 +37,14 @@ AI Project.
 
 - **Multi-LLM Service**
   - **Description:** A unified interface for various large language models (LLMs) like OpenAI, Google Gemini, Anthropic Claude, etc.
-  - **Location:** `src/services/multi_llm_service.py`
+  - **Location:** `apps/backend/src/services/multi_llm_service.py`
   - **Status:** Integrated
   - **Usage:** Used by `DialogueManager` and `ToolDispatcher` for natural language understanding and generation.
 
 - **Speech-to-Text Model**
   - **Description:** The speech-to-text model can be used to recognize speech
     from an audio file.
-  - **Location:** `src/tools/speech_to_text_tool.py`
+  - **Location:** `apps/backend/src/tools/speech_to_text_tool.py`
   - **Status:** Integrated
   - **Usage:** The speech-to-text model can be used through the
     `speech_to_text_tool` tool.
@@ -53,7 +53,7 @@ AI Project.
 
 - **Game**
   - **Description:** A GBA-style life simulation game.
-  - **Location:** `src/game/`
+  - **Location:** `apps/backend/src/game/`
   - **Status:** Built-in
   - **Usage:** The game can be played through the Electron app.
 
@@ -64,7 +64,7 @@ AI Project.
 - **Math Tool**
   - **Description:** The math tool can be used to solve basic arithmetic
     problems.
-  - **Location:** `src/tools/math_tool.py`
+  - **Location:** `apps/backend/src/tools/math_tool.py`
   - **Status:** Completed
   - **Usage:** The math tool can be used through the `ToolDispatcher`.
 
@@ -74,7 +74,7 @@ AI Project.
 
 - **Logic Tool**
   - **Description:** The logic tool can be used to solve basic logic problems.
-  - **Location:** `src/tools/logic_tool.py`
+  - **Location:** `apps/backend/src/tools/logic_tool.py`
   - **Status:** Completed
   - **Usage:** The logic tool can be used through the `ToolDispatcher`.
 
@@ -83,7 +83,7 @@ AI Project.
 - **Image Recognition Tool**
   - **Description:** The image recognition tool can be used to recognize images
     using template matching.
-  - **Location:** `src/tools/image_recognition_tool.py`
+  - **Location:** `apps/backend/src/tools/image_recognition_tool.py`
   - **Status:** Completed
   - **Usage:** The image recognition tool can be used through the
     `ToolDispatcher`.
@@ -93,7 +93,7 @@ AI Project.
 - **Speech-to-Text Tool**
   - **Description:** The speech-to-text tool can be used to recognize speech
     from an audio file.
-  - **Location:** `src/tools/speech_to_text_tool.py`
+  - **Location:** `apps/backend/src/tools/speech_to_text_tool.py`
   - **Status:** Completed
   - **Usage:** The speech-to-text tool can be used through the `ToolDispatcher`.
 
@@ -104,7 +104,7 @@ AI Project.
 - **Web Search Tool**
   - **Description:** The web search tool can be used to search the web for a
     given query.
-  - **Location:** `src/tools/web_search_tool.py`
+  - **Location:** `apps/backend/src/tools/web_search_tool.py`
   - **Status:** Completed
   - **Usage:** The web search tool can be used through the `ToolDispatcher`.
 
@@ -113,6 +113,6 @@ AI Project.
 - **File System Tool**
   - **Description:** The file system tool can be used to perform file system
     operations, such as listing files, reading files, and writing files.
-  - **Location:** `src/tools/file_system_tool.py`
+  - **Location:** `apps/backend/src/tools/file_system_tool.py`
   - **Status:** Completed
   - **Usage:** The file system tool can be used through the `ToolDispatcher`.

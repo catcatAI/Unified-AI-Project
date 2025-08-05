@@ -40,7 +40,7 @@
 ### 基本使用
 
 ```python
-from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 # 創建連接（啟用fallback協議）
 connector = EnhancedRovoDevConnector(
@@ -96,7 +96,7 @@ async def handle_message(message):
 
 ## 📚 进一步学习
 
-- **[完整 HSP 规范](./hsp-specification/01-overview-and-concepts.md)** - 详细的技术规范
+- **[完整 HSP 规范](../hsp-specification/01-overview-and-concepts.md)** - 详细的技术规范
 - **[代理协作框架](../../04-advanced-concepts/agent-collaboration.md)** - 代理如何协作
 - **[消息传输机制](./message-transport.md)** - 底层传输实现
 
@@ -136,4 +136,4 @@ HSP 是異步消息傳遞，支持事件驅動；HTTP 是同步請求-響應模�
 ---
 
 _这是 HSP 的简化入门指南。完整技术细节请参考
-[HSP 规范](./hsp-specification/01-overview-and-concepts.md)。_
+[HSP 规范](../hsp-specification/01-overview-and-concepts.md)。_

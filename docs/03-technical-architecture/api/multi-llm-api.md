@@ -525,12 +525,12 @@ for await (const chunk of client.streamGenerate(
 ## 📚 相關文檔
 
 - [多模型 LLM 服務概述](../ai-components/multi-llm-service.md)
-- [配置指南](../configuration/llm-config.md)
-- [部署指南](../deployment/llm-deployment.md)
+- [配置指南](../ai-components/multi-llm-service.md)
+- [部署指南](../../README.md) <!-- 待更新为具体的部署文档 -->
 - [故障排除](../../05-development/debugging/troubleshooting.md)
 
 ---
 
 *文檔版本: 1.0*  
-*最後更新: 2025年1月*  
+*最後更新: 2025年8月*  
 *維護者: Unified AI Project 團隊*

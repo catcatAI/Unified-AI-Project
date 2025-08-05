@@ -213,8 +213,8 @@ python scripts/ai_models.py query "test" --model gpt-4 --verbose
 ## 📚 更多资源
 
 - [详细文档](docs/03-technical-architecture/ai-components/multi-llm-service.md)
-- [API 参考](docs/api/multi-llm-api.md)
-- [配置指南](configs/multi_llm_config.json)
+- [API 参考](docs/03-technical-architecture/api/multi-llm-api.md)
+- [配置指南](docs/03-technical-architecture/ai-components/multi-llm-service.md)
 
 ## 🤝 贡献
 

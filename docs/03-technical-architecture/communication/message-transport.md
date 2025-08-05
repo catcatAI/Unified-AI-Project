@@ -12,7 +12,7 @@ are used to create HTTP servers:
 - **Flask:** A lightweight web framework for Python.
 - **FastAPI:** A modern, fast (high-performance) web framework for Python.
 
-The main API server is located in `src/services/main_api_server.py`.
+The main API server is located in `apps/backend/src/services/main_api_server.py`.
 
 ## MQTT
 
@@ -21,13 +21,13 @@ Heterogeneous Synchronization Protocol (HSP), which allows different AI
 instances to communicate with each other. The `paho-mqtt` library is used to
 communicate with an MQTT broker.
 
-The HSP implementation is located in the `src/hsp/` directory.
+The HSP implementation is located in the `apps/backend/src/hsp/` directory.
 
 
 
 ## Standard Input/Output
 
-The command-line interface (CLI) in `src/interfaces/cli/main.py` uses standard
+The command-line interface (CLI) in `packages/cli/main.py` uses standard
 input and output to communicate with the user.
 
 ## Fallback Protocol System
