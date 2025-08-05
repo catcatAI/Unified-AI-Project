@@ -72,7 +72,25 @@ class AtlassianBridge:
 
     async def start(self):
         if self.fallback_enabled:
-            asyncio.create_task(self._start_health_monitoring())
+            self.health_monitoring_task = asyncio.create_task(self._start_health_monitoring())
+    
+    async def close(self):
+        """關閉橋接層，清理資源"""
+        # 停止健康監控任務（如果有的話）
+        if hasattr(self, 'health_monitoring_task') and not self.health_monitoring_task.done():
+            self.health_monitoring_task.cancel()
+            try:
+                await self.health_monitoring_task
+            except asyncio.CancelledError:
+                pass
+        # 注意：這裡不需要關閉 self.connector.session，因為它由 connector 自己管理
+    
+    async def __aenter__(self):
+        await self.start()
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
 
     def _load_endpoint_configs(self) -> Dict[str, EndpointConfig]:
         """加載端點配置"""
@@ -718,6 +736,17 @@ class AtlassianBridge:
         # 转换粗体和斜体
         content = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', content)
         content = re.sub(r'\*(.+?)\*', r'<em>\1</em>', content)
+        
+        # 转换列表项目
+        # 先检查是否有列表项目
+        list_items = re.findall(r'^- (.+)$', content, flags=re.MULTILINE)
+        if list_items:
+            # 将所有列表项目替换为 HTML 列表
+            list_content = '<ul>\n'
+            for item in list_items:
+                list_content += f'<li>{item}</li>\n'
+            list_content += '</ul>'
+            content = re.sub(r'(^- .+$\n?)+', list_content, content, flags=re.MULTILINE)
         
         # 转换代码块
         content = re.sub(r'```(\w+)?\n(.*?)\n```', r'<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">\1</ac:parameter><ac:plain-text-body><![CDATA[\2]]></ac:plain-text-body></ac:structured-macro>', content, flags=re.DOTALL)

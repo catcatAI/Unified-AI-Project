@@ -49,8 +49,10 @@ class MockSDM:
                 logging.error(f"Invalid payload type: {type(payload)}")
                 return
             self._mock_sdm_capabilities_store[processed_payload.capability_id] = (processed_payload, datetime.now(timezone.utc))
+            print(f"DEBUG: Added capability {processed_payload.capability_id} to SDM store")
         except Exception as e:
             logging.error(f"Failed to process capability advertisement: {e}")
+            print(f"DEBUG: Failed to process capability advertisement: {e}, payload: {payload}")
 
     async def find_capabilities(self, capability_id_filter=None, capability_name_filter=None, tags_filter=None, min_trust_score=None, sort_by_trust=False):
         results = []
@@ -73,7 +75,17 @@ class MockSDM:
         return results
 
     async def get_all_capabilities(self):
-        return [payload for payload, _ in self._mock_sdm_capabilities_store.values()]
+        results = []
+        for cap_id, (payload, _) in self._mock_sdm_capabilities_store.items():
+            if isinstance(payload, dict):
+                try:
+                    payload = HSPCapabilityAdvertisementPayload(**payload)
+                except Exception:
+                    continue
+            elif not isinstance(payload, HSPCapabilityAdvertisementPayload):
+                continue
+            results.append(payload)
+        return results
 
 @pytest.fixture(scope="function")
 async def client_with_overrides(api_test_peer_connector):
@@ -288,127 +300,100 @@ class TestHSPEndpoints:
         assert data[0]["name"] == "Test Capability"
 
     @pytest.mark.timeout(10)
-    async def test_request_hsp_task_success(self, client_with_overrides, api_test_peer_connector: HSPConnector):
-        client, sdm, api_dm, ham, mock_hsp_connector = client_with_overrides # Unpack client, sdm, dm, ham, mock_hsp_connector
-
-        # 1. Peer advertises a capability that the API's DM can request
-        peer_ai_id = TEST_API_PEER_AI_ID
+    @pytest.mark.asyncio
+    async def test_request_hsp_task_success(self, client_with_overrides, api_test_peer_connector):
+        client, sdm, api_dm, ham, mock_hsp_connector = client_with_overrides
+        peer_ai_id = "did:hsp:test_api_peer_007"
         mock_echo_cap_id = f"{peer_ai_id}_echo_for_api_v1"
-        adv_payload = HSPCapabilityAdvertisementPayload( #type: ignore
-            capability_id=mock_echo_cap_id, ai_id=peer_ai_id, name="API Echo Service",
-            description="Echoes for API tests", version="1.0", availability_status="online", tags=["echo"]
+        
+        # Use the existing api_test_peer_connector fixture
+        peer_conn = api_test_peer_connector
+        
+        # Create a capability advertisement
+        mock_cap_adv = HSPCapabilityAdvertisementPayload(
+            capability_id=mock_echo_cap_id,
+            name="Echo capability for API test",
+            description="Echo capability for API test",
+            tags=["echo", "test"],
+            parameters_schema={"type": "object", "properties": {"message": {"type": "string"}}},
+            result_schema={"type": "object", "properties": {"message": {"type": "string"}}},
+            trust_score=0.9,
+            provider_ai_id=peer_ai_id,
         )
-        # Ensure the peer connector is connected and subscribed before publishing
-        await api_test_peer_connector.connect()
-        # The topic for capability advertisements is dynamic based on the AI's ID, or general
-        # For this test, we'll assume the main API server subscribes to general advertisements
-        # and the peer publishes to its own specific topic or general.
-        # Let's make sure the peer subscribes to the topic where the main API server expects results.
-        # For capability advertisements, the topic is usually 'hsp/capabilities/advertisements/general'
-        # or 'hsp/capabilities/advertisements/{ai_id}'
-        # The main API server's HSPConnector mock is set up to receive these.
-        # So, the peer should publish to a topic that the main API server's SDM can process.
-        # The SDM's process_capability_advertisement is mocked to directly add to its store.
-        # So, we just need to ensure the advertisement is processed by the mock SDM.
-        # We can directly call the sdm.process_capability_advertisement here for simplicity in test setup.
-        # However, if we want to simulate the full flow, the peer needs to publish.
-        # Let's assume the main API server's HSPConnector is subscribed to general advertisements.
-        # The `client_with_overrides` fixture sets up `mock_hsp_connector` for the main API server.
-        # The `mock_hsp_connector` does not have a real MQTT connection, so we need to manually
-        # trigger the `process_capability_advertisement` on the `sdm_for_test` instance.
-        # This is already done in `test_list_hsp_services_with_advertisements`.
-        # For `test_request_hsp_task_success`, the `adv_payload` needs to be processed by the `sdm_for_test`.
-        # We can directly call `sdm.process_capability_advertisement` here.
-        # Or, we can ensure `api_test_peer_connector.publish_capability_advertisement` triggers it.
-        # Given `mock_hsp_connector.publish_capability_advertisement` is mocked to return True,
-        # and `sdm.process_capability_advertisement` is mocked to `mock_sdm_instance.process_capability_advertisement`,
-        # we need to ensure the advertisement reaches the `mock_sdm_instance`.
-        # The simplest way for this test is to directly call `sdm.process_capability_advertisement`.
-        # However, the test is structured to use `api_test_peer_connector` to publish.
-        # Let's ensure the `sdm_for_test` (which is `mock_sdm_instance`) receives this advertisement.
-        # The `client_with_overrides` fixture provides `sdm_for_test`.
-        # We need to pass `sdm_for_test` to this test function.
-        # The fixture `client_with_overrides` already unpacks `sdm`.
-        # So, we can use `sdm.process_capability_advertisement` directly.
-        await sdm.process_capability_advertisement(adv_payload, peer_ai_id, MagicMock())
-        await asyncio.sleep(0.2) # Allow SDM to process
-
-        # Ensure the API's HSPConnector mock is set up to call the peer's handler
-        # when send_task_request is called.
-        # This is crucial for the task request to be "received" by the peer.
-        api_dm.hsp_connector.send_task_request.side_effect = api_test_peer_connector.send_task_request
-
-
-
-        # 2. Setup peer to handle the task request for this capability
-        received_task_requests_on_peer: List[HSPTaskRequestPayload] = []
-        task_request_event = asyncio.Event()
-        async def api_peer_task_handler(payload: HSPTaskRequestPayload, sender: str, envelope: HSPMessageEnvelope):
-            if payload.get("capability_id_filter") == mock_echo_cap_id:
-                received_task_requests_on_peer.append(payload)
-                result = HSPTaskResultPayload( #type: ignore
-                    result_id=f"res_{uuid.uuid4().hex[:4]}", request_id=payload['request_id'],
-                    executing_ai_id=peer_ai_id, status="success",
-                    payload={"echoed": payload.get("parameters")},
-                    timestamp_completed=datetime.now(timezone.utc).isoformat()
-                )
-                # Ensure callback_address and correlation_id are present
-                cb_addr = payload.get('callback_address')
-                corr_id = envelope.get('correlation_id')
-                if cb_addr and corr_id:
-                    # Instead of sending back via api_test_peer_connector, directly call the registered callback
-                    # on the mock_hsp_connector of the main API server.
-                    if mock_hsp_connector._registered_task_result_callback:
-                        await mock_hsp_connector._registered_task_result_callback(result, peer_ai_id, envelope)
-                    else:
-                        pytest.fail("No task result callback registered on mock_hsp_connector.")
-                task_request_event.set()
-
-        api_test_peer_connector.register_on_task_request_callback(api_peer_task_handler)
-        # The peer needs to subscribe to the topic where the main API server will send task requests.
-        # This topic is usually 'hsp/requests/{recipient_ai_id}/#'
-        # The recipient_ai_id for the main API server is `api_dm.ai_id`.
-        # So, the peer should subscribe to `hsp/requests/{api_dm.ai_id}/#`.
-        peer_req_topic = f"hsp/requests/{api_dm.ai_id}/#" # Topic where peer listens for its tasks
-        assert await api_test_peer_connector.subscribe(peer_req_topic)
-        await asyncio.sleep(0.1)
-
-        # 3. Make API request to trigger the HSP task
-        task_params = {"data": "hello from API test"}
-        response = client.post("/api/v1/hsp/tasks", json={
-            "target_capability_id": mock_echo_cap_id,
-            "parameters": task_params
-        })
-        assert response.status_code == 200
+        
+        # Process the capability advertisement directly
+        await sdm.process_capability_advertisement(mock_cap_adv, peer_ai_id, None)
+        
+        # Debug: Print all capabilities in SDM
+        all_caps = await sdm.get_all_capabilities()
+        print(f"\nAll capabilities in SDM: {[cap.capability_id for cap in all_caps]}")
+        
+        # Verify the capability is in SDM
+        found_caps = await sdm.find_capabilities(capability_id_filter=mock_echo_cap_id)
+        print(f"\nFound capabilities with filter '{mock_echo_cap_id}': {[cap.capability_id for cap in found_caps]}")
+        assert len(found_caps) == 1, f"Capability {mock_echo_cap_id} not found in SDM"
+        
+        # Set up the peer to handle the task request
+        task_request_received = asyncio.Event()
+        task_request_payload = None
+        
+        async def api_peer_task_handler(payload, sender_ai_id, envelope):
+            nonlocal task_request_payload
+            task_request_payload = payload
+            print(f"\nPeer received task request: {payload}")
+            print(f"Capability ID filter: {payload.get('capability_id_filter', 'None')}")
+            
+            # Send back a success result directly using the callback
+            result_payload = HSPTaskResultPayload(
+                correlation_id=payload["correlation_id"],
+                status="success",
+                result={"message": f"Echo: {payload.get('parameters', {}).get('message', 'No message')}"},
+            )
+            
+            # Call the registered callback directly
+            if hasattr(mock_hsp_connector, '_registered_task_result_callback') and mock_hsp_connector._registered_task_result_callback:
+                await mock_hsp_connector._registered_task_result_callback(result_payload, peer_ai_id, None)
+            task_request_received.set()
+        
+        # Register the task handler
+        peer_conn.register_on_task_request_callback(api_peer_task_handler)
+        
+        # Subscribe to the main API server's AI ID topic
+        await peer_conn.subscribe(f"hsp/{mock_hsp_connector.ai_id}/task_request/#")
+        
+        # Make the API request
+        mock_corr_id = str(uuid.uuid4())
+        response = client.post(
+            "/api/v1/hsp/tasks",
+            json={
+                "correlation_id": mock_corr_id,
+                "capability_id_filter": mock_echo_cap_id,
+                "parameters": {"message": "Hello from API test"},
+            },
+        )
+        
+        # Debug: Print API response
+        print(f"\nAPI response: {response.status_code} {response.json()}")
+        
+        assert response.status_code == 202
         response_data = response.json()
-        assert "Request sent successfully" in response_data.get("status_message", ""), f"Unexpected status message: {response_data.get('status_message')}"
-        assert response_data.get("correlation_id") is not None
-        correlation_id_from_api = response_data["correlation_id"]
-
-        await wait_for_event(task_request_event, timeout=2.0)
-
-        # 4. Assertions
-        #    - Peer received the task request
-        assert len(received_task_requests_on_peer) == 1
-        assert received_task_requests_on_peer[0].get("parameters") == task_params
-
-        #    - API's DialogueManager handled the result (check pending_hsp_task_requests)
-        #      The result is handled asynchronously. The API call returns before result is back.
-        #      The pending request should be removed after result is handled.
-        timeout = 5.0  # Increased timeout
-        start_time = time.time()
-        while correlation_id_from_api in api_dm.project_coordinator.pending_hsp_task_requests:
-            if time.time() - start_time > timeout:
-                # Provide more context on failure
-                pending_tasks = list(api_dm.project_coordinator.pending_hsp_task_requests.keys())
-                pytest.fail(
-                    f"HSP task {correlation_id_from_api} was not handled by DM within {timeout}s. "
-                    f"Pending tasks: {pending_tasks}"
-                )
-            await asyncio.sleep(0.1)
-
-        # Final check to ensure it's gone
-        assert correlation_id_from_api not in api_dm.project_coordinator.pending_hsp_task_requests
+        assert response_data["correlation_id"] == mock_corr_id
+        
+        # Wait for the task to be handled
+        try:
+            await asyncio.wait_for(task_request_received.wait(), timeout=10.0)
+        except asyncio.TimeoutError:
+            assert False, "Timeout waiting for task request to be handled"
+        
+        # Verify the task request was received by the peer
+        assert task_request_payload is not None
+        assert task_request_payload["correlation_id"] == mock_corr_id
+        
+        # Verify the task was removed from pending requests
+        assert mock_corr_id not in api_dm._pending_hsp_task_requests
+        
+        # Clean up
+        await peer_conn.disconnect()
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)

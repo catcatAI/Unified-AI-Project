@@ -52,7 +52,9 @@ class TestAtlassianBridge:
         """創建測試橋接器實例"""
         bridge = AtlassianBridge(mock_connector)
         await bridge.start()
-        return bridge
+        yield bridge
+        # 確保在測試完成後關閉 bridge
+        await bridge.close()
     
     @pytest.mark.asyncio
     async def test_create_confluence_page(self, bridge, mock_connector):
