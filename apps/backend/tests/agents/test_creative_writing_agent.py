@@ -21,8 +21,14 @@ class TestCreativeWritingAgent:
         # Mock the services that the agent's base class initializes
         self.mock_llm_interface = MagicMock(spec=MultiLLMService)
         self.mock_llm_interface.chat_completion = AsyncMock()
+        
+        self.mock_hsp_connector = MagicMock()
+        self.mock_hsp_connector.send_task_result = AsyncMock()
+        self.mock_hsp_connector.register_on_task_request_callback = MagicMock()
+        self.mock_hsp_connector.advertise_capability = AsyncMock()
+        
         self.mock_services = {
-            "hsp_connector": MagicMock(),
+            "hsp_connector": self.mock_hsp_connector,
             "llm_interface": self.mock_llm_interface
         }
 

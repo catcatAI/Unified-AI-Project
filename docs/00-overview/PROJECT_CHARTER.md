@@ -92,16 +92,13 @@ The system provides two primary entry points for user interaction:
   RESTful API for interacting with the AI. It handles chat, session management,
   and HSP-related requests. It uses a `lifespan` event handler to initialize and
   shut down the core services.
-- **`src/interfaces/cli/main.py`**: A command-line interface that allows users
+- **`packages/cli/main.py`**: A command-line interface that allows users
   to interact with the AI from the terminal. It supports sending queries and
   publishing facts to the HSP network.
 
-#### Core Services (`src/core_services.py`)
+#### Core Services
 
-This module is the heart of the application's backend. It uses a singleton
-pattern to initialize and provide access to all major components. The
-`initialize_services` function is called by the entry points to set up the
-application's environment.
+These modules form the heart of the application's backend, providing core functionalities and managing the application's environment. They use a singleton pattern to initialize and provide access to all major components. The `initialize_services` function is called by the entry points to set up the application's environment.
 
 #### Dialogue and Project Management
 
@@ -266,7 +263,7 @@ based on the desired features.
 The recommended way to install the project is to use the command-line installer:
 
 ```bash
-python installer_cli.py
+python scripts/installer_cli.py
 ```
 
 This script guides the user through the installation process, including
@@ -289,7 +286,7 @@ The application can be run in several ways:
 
 - **API Server**:
   `uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000`
-- **CLI**: `python src/interfaces/cli/main.py query "Your query"`
+- **CLI**: `python packages/cli/main.py query "Your query"`
 - **Agents**: `python src/agents/data_analysis_agent.py`
 
 ---

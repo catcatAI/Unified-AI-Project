@@ -23,15 +23,14 @@ semantic evolution.
     to prevent "model collapse."
   - **Components:** Includes metaphorical modules like `ERR-INTROSPECTOR`,
     `ECHO-SHIELD`, and a `TONAL REPAIR ENGINE`.
-  - **Reference:** See draft
-    `docs/architecture/Linguistic_Immune_System_spec.md`.
+  - **Reference:** See `docs/04-advanced-concepts/linguistic-immune-system.md`.
 
 - **MetaFormulas:**
   - **Concept:** High-level, dynamic principles or schemata that define how
     semantic modules (personified as "Angela" or "Fragmenta") learn, adapt, and
     reorganize their own structures and narrative generation capabilities. They
     are the rules that govern the changing of rules.
-  - **Reference:** See draft `docs/architecture/MetaFormulas_spec.md`.
+  - **Reference:** See `docs/04-advanced-concepts/meta-formulas.md`.
 
 - **Unified Semantic Ontogenesis Scale (USOS+):**
   - **Concept:** A developmental scale for AI focusing on semantic evolution,
@@ -71,12 +70,12 @@ semantic evolution.
     一個先進的錯誤處理系統。在這裡，錯誤不僅是程式缺陷，更是語言演化和自我修復的催化劑，旨在防止「模型崩潰」。
   - **組成:** 包括 `ERR-INTROSPECTOR`（錯誤內省器）、`ECHO-SHIELD`（回聲護盾）和
     `TONAL REPAIR ENGINE`（音調修復引擎）等隱喻性模組。
-  - **參考:** 見草案 `docs/architecture/Linguistic_Immune_System_spec.md`。
+  - **參考:** 見 `docs/04-advanced-concepts/linguistic-immune-system.md`。
 
 - **元公式 (MetaFormulas):**
   - **概念:**
     高層次的、動態的原則或圖式，它們定義了語義模組（被賦予人格如「Angela」或「Fragmenta」）如何學習、適應和重組其自身結構與敘事生成能力。這是「改變規則的規則」。
-  - **參考:** 見草案 `docs/architecture/MetaFormulas_spec.md`。
+  - **參考:** 見 `docs/04-advanced-concepts/meta-formulas.md`。
 
 - **統一語義發生量表 (Unified Semantic Ontogenesis Scale, USOS+):**
   - **概念:**

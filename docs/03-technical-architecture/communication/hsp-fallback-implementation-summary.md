@@ -28,10 +28,9 @@ Unified-AI-Project/
 ├── src/hsp/
 │   ├── connector.py                    # 增強的HSP連接器
 │   ├── fallback/
-│   │   └── fallback_protocols.py      # 備用協議實現
+│   │   └── mcp_fallback_protocols.py      # 備用協議實現
 │   └── utils/
-│       ├── __init__.py
-│       └── fallback_config_loader.py  # 配置加載器
+│       └── __init__.py
 ├── configs/
 │   └── hsp_fallback_config.yaml       # 配置文件
 ├── docs/03-technical-architecture/communication/
@@ -47,7 +46,7 @@ Unified-AI-Project/
 
 1. **Fallback集成**:
    ```python
-   from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+   from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
    # 創建連接（啟用fallback協議）
    connector = EnhancedRovoDevConnector(

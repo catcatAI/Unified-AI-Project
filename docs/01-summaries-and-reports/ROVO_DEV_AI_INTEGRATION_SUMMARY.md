@@ -31,7 +31,7 @@
 - **Ollama**: Llama2, CodeLlama, Mistral 等本地模型
 - **Hugging Face**: 开源模型托管平台
 
-### 3. CLI 工具 (`src/interfaces/cli/ai_models_cli.py`)
+### 3. CLI 工具 (`packages/cli/ai_models_cli.py`)
 - **模型管理**: 列出、查看、健康检查
 - **交互聊天**: 支持流式和非流式聊天
 - **模型比较**: 同时测试多个模型的响应

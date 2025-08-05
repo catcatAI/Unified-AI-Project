@@ -9,6 +9,9 @@ def mock_hsp_connector():
     """Fixture to provide a mock HSPConnector."""
     mock = MagicMock()
     mock.advertise_capability = AsyncMock()
+    mock.send_task_result = AsyncMock()
+    mock.register_on_task_request_callback = MagicMock()
+    mock.is_connected = True
     return mock
 
 @pytest.fixture
