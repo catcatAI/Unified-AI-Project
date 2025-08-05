@@ -1090,6 +1090,22 @@ class MultiLLMService:
         
         return health_status
     
+    async def generate_response(self, prompt: str, model_id: Optional[str] = None, **kwargs) -> str:
+        """
+        Generate a response from a prompt (compatibility method for existing code)
+        
+        Args:
+            prompt: The input prompt
+            model_id: Optional model ID to use
+            **kwargs: Additional parameters
+            
+        Returns:
+            Generated response text
+        """
+        messages = [ChatMessage(role="user", content=prompt)]
+        response = await self.chat_completion(messages, model_id=model_id, **kwargs)
+        return response.content
+
     async def close(self):
         """关闭所有连接"""
         for provider in self.providers.values():

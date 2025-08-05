@@ -1,10 +1,6 @@
 # Core Services Overview
 
-`src/core_services.py` serves as the central initialization and management hub
-for various AI services and modules within the Unified-AI-Project. It
-orchestrates the setup and provides access to singleton instances of critical
-components, ensuring a consistent and controlled environment for the
-application's core functionalities.
+This document provides an overview of the core services within the Unified-AI-Project. The central initialization and management logic for these services is primarily handled by `apps/backend/src/core_ai/genesis.py` and orchestrated through `apps/backend/src/services/main_api_server.py`.
 
 ## 1. Purpose and Role
 
@@ -53,6 +49,7 @@ following steps:
 3.  **HSP Related Services Initialization:** Sets up components for Human-System
     Protocol (HSP) communication:
     - `HSPConnector`: Manages connections and message exchange over HSP.
+    - **Location:** `apps/backend/src/hsp/connector.py`
     - `ServiceDiscoveryModule`: Discovers and manages available capabilities
       within the HSP network.
     - _(Registers callbacks for capability advertisements and fact processing.)_
@@ -68,7 +65,10 @@ following steps:
     - `FormulaEngine`: Executes predefined formulas.
     - `ToolDispatcher`: Dispatches and manages AI tools.
     - `AgentManager`: Manages the lifecycle of various AI agents.
-    - `DialogueManager`: Orchestrates the overall dialogue flow.
+    - **`apps/backend/src/core_ai/dialogue/dialogue_manager.py`**: The `DialogueManager` is the
+  first point of contact for user queries. It identifies complex project
+  requests and delegates them to the `ProjectCoordinator`. For simpler queries,
+  it can provide a direct response.
 
 ### `get_services() -> Dict[str, Any]`
 
