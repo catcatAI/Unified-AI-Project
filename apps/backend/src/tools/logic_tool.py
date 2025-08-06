@@ -16,82 +16,89 @@ from core_ai.dependency_manager import dependency_manager
 MODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
 CHAR_MAP_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_maps.json")
 
-# Global instances for evaluators
-_parser_evaluator = None
-_nn_model_evaluator = None
-_nn_char_to_token = None
-_tensorflow_import_error = None
+class LogicTool:
+    def __init__(self):
+        self.parser_evaluator = None
+        self.nn_model_evaluator = None
+        self.nn_char_to_token = None
+        self.tensorflow_import_error = None
 
-def _get_parser_evaluator():
-    """Initializes and returns the LogicParserEval instance."""
-    global _parser_evaluator
-    if _parser_evaluator is None:
-        print("Initializing LogicParserEval for the first time...")
-        _parser_evaluator = LogicParserEval()
-    return _parser_evaluator
+    def _get_parser_evaluator(self):
+        """Initializes and returns the LogicParserEval instance."""
+        if self.parser_evaluator is None:
+            logging.info("Initializing LogicParserEval for the first time...")
+            self.parser_evaluator = LogicParserEval()
+        return self.parser_evaluator
 
-def _get_nn_model_evaluator():
-    """Loads the LogicNNModel, handling potential TensorFlow import errors."""
-    global _nn_model_evaluator, _nn_char_to_token, _tensorflow_import_error
-    if _nn_model_evaluator is not None or _tensorflow_import_error is not None:
-        return _nn_model_evaluator, _nn_char_to_token
+    def _get_nn_model_evaluator(self):
+        """Loads the LogicNNModel, handling potential TensorFlow import errors."""
+        if self.nn_model_evaluator is not None or self.tensorflow_import_error is not None:
+            return self.nn_model_evaluator, self.nn_char_to_token
 
-    # Check if TensorFlow is available through dependency manager
-    if not dependency_manager.is_available('tensorflow'):
-        _tensorflow_import_error = "TensorFlow not available through dependency manager"
-        print(f"CRITICAL: TensorFlow not available. Logic tool's NN features will be disabled.")
-        return _nn_model_evaluator, _nn_char_to_token
+        # Check if TensorFlow is available through dependency manager
+        if not dependency_manager.is_available('tensorflow'):
+            self.tensorflow_import_error = "TensorFlow not available through dependency manager"
+            logging.critical(f"CRITICAL: TensorFlow not available. Logic tool's NN features will be disabled.")
+            return self.nn_model_evaluator, self.nn_char_to_token
 
-    try:
-        from tools.logic_model.logic_model_nn import LogicNNModel
-        print("Loading LogicNNModel for the first time...")
-        if not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH):
-            raise FileNotFoundError("NN Model or Char Map not found.")
-
-        _nn_model_evaluator = LogicNNModel.load_model(MODEL_LOAD_PATH, CHAR_MAP_LOAD_PATH)
-        with open(CHAR_MAP_LOAD_PATH, 'r') as f:
-            _nn_char_to_token = json.load(f)['char_to_token']
-        print("LogicNNModel loaded successfully.")
-
-    except ImportError as e:
-        print(f"CRITICAL: TensorFlow could not be imported. Logic tool's NN features will be disabled. Error: {e}")
-        _tensorflow_import_error = str(e)
-    except FileNotFoundError as e:
-        print(f"Warning: Logic NN model files not found. NN features will be disabled. Error: {e}")
-        _tensorflow_import_error = str(e)
-    except Exception as e:
-        print(f"An unexpected error occurred while loading the LogicNNModel: {e}")
-        _tensorflow_import_error = str(e)
-
-    return _nn_model_evaluator, _nn_char_to_token
-
-def evaluate_expression(expression_string: str) -> bool | str | None:
-    """
-    Evaluates a logical expression string using the best available method.
-    It prioritizes the NN model and falls back to the parser if the NN is unavailable.
-    """
-    normalized_expression = expression_string.lower()
-    
-    # Try NN model first
-    nn_model, char_map = _get_nn_model_evaluator()
-    if nn_model and char_map:
-        print(f"LogicTool: Evaluating '{normalized_expression}' using 'nn' method.")
         try:
-            return nn_model.predict(normalized_expression, char_map)
+            from tools.logic_model.logic_model_nn import LogicNNModel
+            logging.info("Loading LogicNNModel for the first time...")
+            if not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH):
+                raise FileNotFoundError("NN Model or Char Map not found.")
+
+            self.nn_model_evaluator = LogicNNModel.load_model(MODEL_LOAD_PATH, CHAR_MAP_LOAD_PATH)
+            with open(CHAR_MAP_LOAD_PATH, 'r') as f:
+                self.nn_char_to_token = json.load(f)['char_to_token']
+            logging.info("LogicNNModel loaded successfully.")
+
+        except ImportError as e:
+            logging.critical(f"CRITICAL: TensorFlow could not be imported. Logic tool's NN features will be disabled. Error: {e}")
+            self.tensorflow_import_error = str(e)
+        except FileNotFoundError as e:
+            logging.warning(f"Warning: Logic NN model files not found. NN features will be disabled. Error: {e}")
+            self.tensorflow_import_error = str(e)
         except Exception as e:
-            print(f"Error during NN prediction for '{normalized_expression}': {e}")
-            # Fall through to parser on prediction error
-            print("LogicTool: NN prediction failed, falling back to parser.")
+            logging.error(f"An unexpected error occurred while loading the LogicNNModel: {e}")
+            self.tensorflow_import_error = str(e)
 
-    # Fallback to parser
-    print(f"LogicTool: Evaluating '{normalized_expression}' using 'parser' method.")
-    parser = _get_parser_evaluator()
-    result = parser.evaluate(normalized_expression)
-    return result if result is not None else "Error: Invalid expression for parser."
+        return self.nn_model_evaluator, self.nn_char_to_token
 
+    def evaluate_expression(self, expression_string: str) -> bool | str | None:
+        """
+        Evaluates a logical expression string using the best available method.
+        It prioritizes the NN model and falls back to the parser if the NN is unavailable.
+        """
+        normalized_expression = expression_string.lower()
+
+        # Try NN model first
+        nn_model, char_map = self._get_nn_model_evaluator()
+        if nn_model and char_map:
+            logging.info(f"LogicTool: Evaluating '{normalized_expression}' using 'nn' method.")
+            try:
+                return nn_model.predict(normalized_expression, char_map)
+            except Exception as e:
+                logging.error(f"Error during NN prediction for '{normalized_expression}': {e}")
+                # Fall through to parser on prediction error
+                logging.warning("LogicTool: NN prediction failed, falling back to parser.")
+
+        # Fallback to parser
+        logging.info(f"LogicTool: Evaluating '{normalized_expression}' using 'parser' method.")
+        try:
+            parser = self._get_parser_evaluator()
+            result = parser.evaluate(normalized_expression)
+            return result if result is not None else "Error: Invalid expression for parser."
+        except Exception as e:
+            logging.error(f"Error during parser evaluation for '{normalized_expression}': {e}")
+            return "Error: Invalid expression for parser."
+
+logic_tool_instance = LogicTool()
+evaluate_expression = logic_tool_instance.evaluate_expression
 
 if __name__ == '__main__':
-    print("--- Logic Tool Example Usage ---")
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logging.info("--- Logic Tool Example Usage ---")
 
     test_cases = [
         ("true AND false", False),
@@ -100,18 +107,18 @@ if __name__ == '__main__':
         ("invalid expression", "Error: Invalid expression for parser.")
     ]
 
-    print("\n--- Testing Unified evaluate_expression (NN fallback to Parser) ---")
+    logging.info("\n--- Testing Unified evaluate_expression (NN fallback to Parser) ---")
     for expr, expected in test_cases:
         result = evaluate_expression(expr)
-        print(f'Test: "{expr}" -> Got: {result}')
+        logging.info(f'Test: "{expr}" -> Got: {result}')
         # We can't assert expected result because it could come from NN or parser
         # A simple check for the correct type or non-error is suitable here.
         if isinstance(result, bool):
-            print(f'  (Result is a boolean, which is valid)')
+            logging.info(f'  (Result is a boolean, which is valid)')
         elif isinstance(result, str) and 'Error' in result:
-            print(f'  (Result is an error string, which is valid for invalid expressions)')
+            logging.info(f'  (Result is an error string, which is valid for invalid expressions)')
         else:
-            print(f'  (Result is of an unexpected type: {type(result)})')
+            logging.info(f'  (Result is of an unexpected type: {type(result)})')
         assert result is not None, f'FAIL: For "{expr}"'
     
-    print("\nLogic Tool script execution finished.")
+    logging.info("\nLogic Tool script execution finished.")
