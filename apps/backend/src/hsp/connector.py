@@ -36,7 +36,7 @@ def get_schema_uri(schema_name: str) -> str:
     return schema_path.as_uri()
 
 class HSPConnector:
-    def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False, mock_mqtt_client: Optional[MagicMock] = None, internal_bus: Optional[Any] = None, message_bridge: Optional[Any] = None, enable_fallback: bool = True, **kwargs):
+    def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False, mock_mqtt_client: Optional[MagicMock] = None, internal_bus: Optional[InternalBus] = None, message_bridge: Optional[MessageBridge] = None, enable_fallback: bool = True, **kwargs):
         self.ai_id = ai_id
         self.mock_mode = mock_mode
         self.broker_address = broker_address
@@ -164,7 +164,7 @@ class HSPConnector:
             await callback()
 
     async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1):
-        print(f"HSPConnector: publish_message called. self.external_connector.publish is {type(self.external_connector.publish)}")
+        logging.info(f"HSPConnector: publish_message called. self.external_connector.publish is {type(self.external_connector.publish)}")
         
         # Try HSP first if available
         if self.hsp_available and self.is_connected:
@@ -174,12 +174,15 @@ class HSPConnector:
             except Exception as e:
                 self.logger.error(f"HSP publish failed: {e}, trying fallback")
                 self.hsp_available = False
+                # Explicitly return False here, as the fallback will be tried next.
+                # This makes the logic clearer.
+                return False
         
         # Use fallback protocols if HSP is not available
         if self.enable_fallback and self.fallback_manager:
             return await self._send_via_fallback(topic, envelope, qos)
         
-        print(f"HSPConnector: No available communication method for {topic}.")
+        logging.error(f"HSPConnector: No available communication method for {topic}.")
         return False
 
     async def publish_fact(self, fact_payload: HSPFactPayload, topic: str, qos: int = 1):
@@ -483,12 +486,15 @@ class HSPConnector:
 
     # --- Fallback Protocol Methods ---
     async def _initialize_fallback_protocols(self):
-        """初始化備用協議"""
+        """
+        Initializes the fallback communication protocols based on the configuration.
+        This is called when the primary HSP connector fails to connect.
+        """
         if not self.enable_fallback:
             return
         
         try:
-            # 加載配置
+            # Load fallback configuration
             config_loader = get_config_loader()
             if not config_loader.is_fallback_enabled():
                 self.logger.info("Fallback protocols disabled in configuration")
@@ -497,7 +503,7 @@ class HSPConnector:
             fallback_config = config_loader.get_fallback_config()
             message_config = fallback_config.get("message", {})
             
-            # 設置日誌級別
+            # Set logging level for fallback protocols
             logging_config = fallback_config.get("logging", {})
             if logging_config.get("level"):
                 fallback_logger = logging.getLogger("src.hsp.fallback")
@@ -505,16 +511,16 @@ class HSPConnector:
             
             self.fallback_manager = get_fallback_manager()
             
-            # 使用配置初始化協議
+            # Initialize protocols with the loaded configuration
             success = await self._initialize_protocols_with_config(fallback_config)
             
             if success:
                 self.fallback_initialized = True
-                # 註冊消息處理器
+                # Register a handler for incoming fallback messages
                 for _, protocol in self.fallback_manager.protocols:
                     protocol.register_handler("hsp_message", self._handle_fallback_message)
                 
-                # 設置健康檢查間隔
+                # Set the health check interval for the fallback manager
                 health_interval = message_config.get("health_check_interval", 30)
                 self.fallback_manager.health_check_interval = health_interval
                 
@@ -525,22 +531,23 @@ class HSPConnector:
             self.logger.error(f"Error initializing fallback protocols: {e}")
 
     async def _initialize_protocols_with_config(self, config: Dict[str, Any]) -> bool:
-        """使用配置初始化協議"""
+        """
+        Initializes the individual fallback protocols based on the provided configuration.
+        """
         try:
             from .fallback.fallback_protocols import InMemoryProtocol, FileBasedProtocol, HTTPProtocol
             
             protocols_config = config.get("protocols", {})
             
-            # 初始化內存協議
+            # Initialize in-memory protocol
             memory_config = protocols_config.get("memory", {})
             if memory_config.get("enabled", True):
                 memory_protocol = InMemoryProtocol()
-                # 可以根據配置設置隊列大小等參數
                 priority = memory_config.get("priority", 1)
                 self.fallback_manager.add_protocol(memory_protocol, priority=priority)
                 self.logger.debug(f"Added memory protocol with priority {priority}")
             
-            # 初始化文件協議
+            # Initialize file-based protocol
             file_config = protocols_config.get("file", {})
             if file_config.get("enabled", True):
                 base_path = file_config.get("base_path", "data/fallback_comm")
@@ -549,7 +556,7 @@ class HSPConnector:
                 self.fallback_manager.add_protocol(file_protocol, priority=priority)
                 self.logger.debug(f"Added file protocol with priority {priority}")
             
-            # 初始化HTTP協議
+            # Initialize HTTP protocol
             http_config = protocols_config.get("http", {})
             if http_config.get("enabled", True):
                 host = http_config.get("host", "127.0.0.1")
@@ -559,7 +566,7 @@ class HSPConnector:
                 self.fallback_manager.add_protocol(http_protocol, priority=priority)
                 self.logger.debug(f"Added HTTP protocol with priority {priority}")
             
-            # 初始化並啟動管理器
+            # Initialize and start the fallback manager
             if await self.fallback_manager.initialize():
                 await self.fallback_manager.start()
                 return True
@@ -571,12 +578,14 @@ class HSPConnector:
             return False
 
     async def _send_via_fallback(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
-        """通過備用協議發送消息"""
+        """
+        Sends a message using the fallback communication protocols.
+        """
         if not self.fallback_manager:
             return False
         
         try:
-            # 確定優先級
+            # Determine the message priority
             priority = MessagePriority.NORMAL
             qos_params = envelope.get("qos_parameters")
             if qos_params:
@@ -587,7 +596,7 @@ class HSPConnector:
                 elif qos_params.get("priority") == "low":
                     priority = MessagePriority.LOW
             
-            # 創建fallback消息
+            # Create a fallback message
             fallback_msg = FallbackMessage(
                 id=envelope["message_id"],
                 sender_id=envelope["sender_ai_id"],
@@ -623,12 +632,14 @@ class HSPConnector:
             return False
 
     async def _handle_fallback_message(self, message: FallbackMessage):
-        """處理從備用協議接收的消息"""
+        """
+        Handles a message received from a fallback protocol.
+        """
         try:
             payload = message.payload
             if payload.get("envelope"):
                 envelope = payload["envelope"]
-                # 將消息路由到內部總線，就像從HSP接收的一樣
+                # Route the message to the internal bus, as if it was received from HSP
                 await self.message_bridge.handle_external_message(
                     payload.get("topic", ""), 
                     json.dumps(envelope).encode('utf-8')
@@ -638,7 +649,9 @@ class HSPConnector:
             self.logger.error(f"Error handling fallback message: {e}")
 
     def get_communication_status(self) -> Dict[str, Any]:
-        """獲取通訊狀態"""
+        """
+        Returns the current communication status.
+        """
         status = {
             "hsp_available": self.hsp_available,
             "is_connected": self.is_connected,
