@@ -1,4 +1,5 @@
 # This module will handle image understanding, object detection, OCR, etc.
+import random
 
 class VisionService:
     def __init__(self, config: dict = None):
@@ -19,14 +20,16 @@ class VisionService:
 
         analysis_results = {}
         if "captioning" in requested_features:
-            analysis_results["caption"] = "A mock image of a cat playing with a ball of yarn."
+            analysis_results["caption"] = f"A mock image of a {', '.join(requested_features)}."
         if "object_detection" in requested_features:
-            analysis_results["objects"] = [
-                {"label": "cat", "confidence": 0.95, "bounding_box": [15, 25, 55, 65]},
-                {"label": "yarn_ball", "confidence": 0.85, "bounding_box": [75, 85, 35, 35]},
+            mock_objects = [
+                [{"label": "dog", "confidence": 0.9, "bounding_box": [10, 20, 50, 60]}],
+                [{"label": "car", "confidence": 0.98, "bounding_box": [5, 15, 80, 90]}],
+                [{"label": "tree", "confidence": 0.8, "bounding_box": [30, 40, 60, 70]}]
             ]
+            analysis_results["objects"] = mock_objects[len(image_data) % len(mock_objects)]
         if "ocr" in requested_features:
-            analysis_results["ocr_text"] = "Mock OCR text."
+            analysis_results["ocr_text"] = f"Mock OCR text for image with length {len(image_data)}."
 
         return analysis_results
 
@@ -40,7 +43,7 @@ class VisionService:
             return None
         # Print after None check to avoid len() on None
         print(f"VisionService: Comparing images (data1 length: {len(image_data1)}, data2 length: {len(image_data2)}).")
-        return 0.8 # Mock similarity score
+        return random.random() # Mock similarity score
 
 if __name__ == '__main__':
     vision_config = {}

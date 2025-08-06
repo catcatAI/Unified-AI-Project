@@ -13,7 +13,7 @@ from src.core_ai.language_models.daily_language_model import DailyLanguageModel
 from src.services.multi_llm_service import MultiLLMService
 from src.shared.types.common_types import ToolDispatcherResponse # Import new response type
 from typing import Literal # For literal status types
-# from src.core_ai.rag.rag_manager import RAGManager
+from src.core_ai.rag.rag_manager import RAGManager
 
 class ToolDispatcher:
     def __init__(self, llm_service: Optional[MultiLLMService] = None):
@@ -21,6 +21,7 @@ class ToolDispatcher:
         self.code_understanding_tool_instance = CodeUnderstandingTool()
         self.csv_tool_instance = CsvTool()
         self.image_generation_tool_instance = ImageGenerationTool()
+        self.rag_manager = RAGManager()
 
         self.tools: Dict[str, Callable[..., ToolDispatcherResponse]] = { # type: ignore
             "calculate": self._execute_math_calculation,
@@ -41,8 +42,8 @@ class ToolDispatcher:
             "create_image": "Creates an image from a text prompt. Requires 'prompt' and optional 'style'. Example: 'create_image with prompt \"a cat wearing a hat\" and style \"cartoon\"'",
         }
         self.models = []
-        print("ToolDispatcher initialized.")
-        print(f"Available tools: {list(self.tools.keys())}")
+        logging.info("ToolDispatcher initialized.")
+        logging.info(f"Available tools: {list(self.tools.keys())}")
 
     def _execute_csv_analysis(self, query: str, **kwargs) -> ToolDispatcherResponse:
         """
@@ -72,7 +73,7 @@ class ToolDispatcher:
             )
         except Exception as e:
             error_msg = f"Error executing CSV analysis: {str(e)[:100]}"
-            print(f"ToolDispatcher: {error_msg}")
+            logging.error(f"ToolDispatcher: {error_msg}")
             return ToolDispatcherResponse(
                 status="failure_tool_error",
                 payload=None,
@@ -109,7 +110,7 @@ class ToolDispatcher:
             )
         except Exception as e:
             error_msg = f"Error executing image creation: {str(e)[:100]}"
-            print(f"ToolDispatcher: {error_msg}")
+            logging.error(f"ToolDispatcher: {error_msg}")
             return ToolDispatcherResponse(
                 status="failure_tool_error",
                 payload=None,
@@ -151,7 +152,7 @@ class ToolDispatcher:
             )
         except Exception as e:
             error_msg = f"Error executing code inspection: {str(e)[:100]}"
-            print(f"ToolDispatcher: {error_msg}")
+            logging.error(f"ToolDispatcher: {error_msg}")
             return ToolDispatcherResponse(
                 status="failure_tool_error",
                 payload=None,
@@ -176,7 +177,7 @@ class ToolDispatcher:
             )
         except Exception as e:
             error_msg = f"Error in RAG query: {str(e)[:100]}"
-            print(f"ToolDispatcher: {error_msg}")
+            logging.error(f"ToolDispatcher: {error_msg}")
             return ToolDispatcherResponse(
                 status="failure_tool_error",
                 payload=None,
@@ -195,14 +196,14 @@ class ToolDispatcher:
         # `math_calculate` expects the natural language query to parse itself,
         # or a direct expression. If DLM provides a clean expression in `query`,
         # it should work. If DLM provides the original text, `math_calculate` will parse.
-        print(f"ToolDispatcher._execute_math_calculation: query='{query}', kwargs={kwargs}")
+        logging.info(f"ToolDispatcher._execute_math_calculation: query='{query}', kwargs={kwargs}")
         try:
             response = math_calculate(query)
             return response
 
         except Exception as e:
             error_msg = f"Error in math calculation: {str(e)[:100]}"
-            print(f"ToolDispatcher: {error_msg}")
+            logging.error(f"ToolDispatcher: {error_msg}")
             return ToolDispatcherResponse(
                 status="failure_tool_error",
                 payload=None,
@@ -231,7 +232,7 @@ class ToolDispatcher:
             else:
                 expression_to_evaluate = query # Assume the query is the expression
 
-            print(f"ToolDispatcher DEBUG (_execute_logic_evaluation): expression_to_evaluate='{expression_to_evaluate}'")
+            logging.debug(f"ToolDispatcher DEBUG (_execute_logic_evaluation): expression_to_evaluate='{expression_to_evaluate}'")
             result = logic_evaluate(expression_to_evaluate)
             # The logic_evaluate tool returns a boolean, or a string error message.
             if isinstance(result, bool):
@@ -251,7 +252,7 @@ class ToolDispatcher:
                 )
         except Exception as e:
             error_msg = f"Error in logic evaluation: {str(e)[:100]}"
-            print(f"ToolDispatcher: {error_msg}")
+            logging.error(f"ToolDispatcher: {error_msg}")
             return ToolDispatcherResponse(
                 status="failure_tool_error",
                 payload=None,
@@ -361,7 +362,7 @@ class ToolDispatcher:
             )
         except Exception as e:
             error_msg = f"Error in translation tool: {str(e)[:100]}"
-            print(f"ToolDispatcher: {error_msg}")
+            logging.error(f"ToolDispatcher: {error_msg}")
             return ToolDispatcherResponse(
                 status="failure_tool_error",
                 payload=None,
@@ -379,7 +380,7 @@ class ToolDispatcher:
         """
         if explicit_tool_name:
             if explicit_tool_name in self.tools:
-                print(f"Dispatching to explicitly named tool: {explicit_tool_name}")
+                logging.info(f"Dispatching to explicitly named tool: {explicit_tool_name}")
                 kwargs_with_orig_query = {"original_query": query, **kwargs}
                 # Explicit calls to translation need kwargs passed differently
                 # All _execute_* methods now return ToolDispatcherResponse
@@ -405,7 +406,7 @@ class ToolDispatcher:
             # The top-level 'query' is the user's original full query
             tool_specific_query = tool_params.get("query", query)
 
-            print(f"Dispatching to '{tool_name_from_dlm}' tool based on DLM intent. Effective query for tool: '{tool_specific_query}'")
+            logging.info(f"Dispatching to '{tool_name_from_dlm}' tool based on DLM intent. Effective query for tool: '{tool_specific_query}'")
 
             if "original_query" not in tool_params:
                 tool_params["original_query"] = query
@@ -425,7 +426,7 @@ class ToolDispatcher:
         # If no tool was dispatched by explicit name or DLM intent
         else:
             # This is the case where DLM returns "NO_TOOL" or tool not found
-            print(f"No specific local tool inferred by DLM for query: '{query}'")
+            logging.info(f"No specific local tool inferred by DLM for query: '{query}'")
             return ToolDispatcherResponse(
                 status="no_tool_inferred",
                 payload=None,
@@ -470,14 +471,15 @@ if __name__ == '__main__':
     from src.services.multi_llm_service import MultiLLMService
 
     async def main_test():
-        print("--- ToolDispatcher Test ---")
+        logging.basicConfig(level=logging.INFO)
+        logging.info("--- ToolDispatcher Test ---")
         # Initialize MultiLLMService (it will use its default config or load from file)
         llm_service_instance = MultiLLMService()
         dispatcher = ToolDispatcher(llm_service=llm_service_instance)
 
-        print("\nAvailable tools:")
+        logging.info("\nAvailable tools:")
         for name, desc in dispatcher.get_available_tools().items():
-            print(f"- {name}: {desc}")
+            logging.info(f"- {name}: {desc}")
 
         queries = [
             "calculate 123 + 456",
@@ -489,25 +491,25 @@ if __name__ == '__main__':
         ]
 
         for q in queries:
-            print(f"\nQuery: \"{q}\"")
+            logging.info(f"\nQuery: \"{q}\"")
             result = await dispatcher.dispatch(q)
             if result:
-                print(f"Tool Dispatcher Result: {result}")
+                logging.info(f"Tool Dispatcher Result: {result}")
             else:
-                print("Tool Dispatcher: No tool could handle this query or no specific tool inferred.")
+                logging.info("Tool Dispatcher: No tool could handle this query or no specific tool inferred.")
 
-        print("\nTesting explicit tool dispatch:")
+        logging.info("\nTesting explicit tool dispatch:")
         explicit_query = "what is 50 + 50"
-        print(f"Query: \"{explicit_query}\", Tool: calculate")
+        logging.info(f"Query: \"{explicit_query}\", Tool: calculate")
         result = await dispatcher.dispatch(explicit_query, explicit_tool_name="calculate")
-        print(f"Tool Dispatcher Result: {result}")
+        logging.info(f"Tool Dispatcher Result: {result}")
 
         non_tool_query = "hello world"
-        print(f"\nQuery: \"{non_tool_query}\"")
+        logging.info(f"\nQuery: \"{non_tool_query}\"")
         result = await dispatcher.dispatch(non_tool_query)
         if result:
-            print(f"Tool Dispatcher Result: {result}")
+            logging.info(f"Tool Dispatcher Result: {result}")
         else:
-            print("Tool Dispatcher: No tool could handle this query or no specific tool inferred.")
+            logging.info("Tool Dispatcher: No tool could handle this query or no specific tool inferred.")
 
     asyncio.run(main_test())
