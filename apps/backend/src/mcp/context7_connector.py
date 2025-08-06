@@ -282,8 +282,12 @@ class Context7MCPConnector:
             )
         else:
             logger.warning(f"Received unmocked MCP message type: {message['type']}")
-            # For unhandled types, it's better to be explicit about the lack of implementation.
-            raise NotImplementedError(f"Mock response for message type '{message['type']}' is not implemented.")
+            return MCPResponse(
+                success=False,
+                message_id=message['session_id'],
+                error=f"Unknown or unhandled message type: {message['type']}",
+                data={}
+            )
     
     def is_connected(self) -> bool:
         """Check if connector is connected to Context7 MCP."""

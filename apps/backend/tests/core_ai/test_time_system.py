@@ -46,18 +46,31 @@ class TestTimeSystem(unittest.TestCase):
         print("TestTimeSystem.test_03_get_formatted_current_time PASSED")
 
     @pytest.mark.timeout(5)
-    def test_04_set_reminder_placeholder(self):
-        # Placeholder just returns True
+    def test_04_set_reminder(self):
         result = self.time_sys.set_reminder("in 5 minutes", "test reminder")
         self.assertTrue(result)
-        print("TestTimeSystem.test_04_set_reminder_placeholder PASSED")
+        self.assertEqual(len(self.time_sys.reminders), 1)
+        print("TestTimeSystem.test_04_set_reminder PASSED")
 
     @pytest.mark.timeout(5)
-    def test_05_check_due_reminders_placeholder(self):
-        # Placeholder just returns empty list
-        reminders = self.time_sys.check_due_reminders()
-        self.assertEqual(reminders, [])
-        print("TestTimeSystem.test_05_check_due_reminders_placeholder PASSED")
+    def test_05_check_due_reminders(self):
+        self.time_sys.set_reminder("in 1 minute", "test reminder 1")
+        self.time_sys.set_reminder("in 10 minutes", "test reminder 2")
+
+        # Immediately, no reminders should be due
+        self.assertEqual(self.time_sys.check_due_reminders(), [])
+
+        # Advance time by 2 minutes
+        self.time_sys.current_time_override = datetime.now() + timedelta(minutes=2)
+
+        due = self.time_sys.check_due_reminders()
+        self.assertEqual(len(due), 1)
+        self.assertEqual(due[0], "test reminder 1")
+
+        # The due reminder should be removed
+        self.assertEqual(len(self.time_sys.reminders), 1)
+
+        print("TestTimeSystem.test_05_check_due_reminders PASSED")
 
     @pytest.mark.timeout(5)
     def test_06_get_time_of_day_segment(self):
