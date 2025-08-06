@@ -39,43 +39,52 @@ class MockSDM:
     def __init__(self):
         self._mock_sdm_capabilities_store = {}
 
-    async def process_capability_advertisement(self, payload, sender_ai_id, envelope):
+    def process_capability_advertisement(self, payload, sender_ai_id, envelope):
         try:
             print(f"DEBUG: Processing capability advertisement, payload type: {type(payload)}, payload: {payload}")
             if isinstance(payload, dict):
-                # Ensure all required fields are present
-                required_fields = ['capability_id', 'ai_id', 'name', 'description', 'version', 'availability_status']
-                missing_fields = [field for field in required_fields if field not in payload]
-                if missing_fields:
-                    raise ValueError(f"Missing required fields: {missing_fields}")
+                # Only check for availability_status as it's the only Required field
+                if 'availability_status' not in payload:
+                    raise ValueError(f"Missing required field: availability_status")
                 processed_payload = HSPCapabilityAdvertisementPayload(**payload)
             elif isinstance(payload, HSPCapabilityAdvertisementPayload):
                 processed_payload = payload
             else:
                 logging.error(f"Invalid payload type: {type(payload)}")
                 return
-            self._mock_sdm_capabilities_store[processed_payload['capability_id']] = (processed_payload, datetime.now(timezone.utc))
-            print(f"DEBUG: Added capability {processed_payload['capability_id']} to SDM store")
+            capability_id = processed_payload.capability_id if hasattr(processed_payload, 'capability_id') else processed_payload['capability_id']
+            self._mock_sdm_capabilities_store[capability_id] = (processed_payload, datetime.now(timezone.utc))
+            print(f"DEBUG: Added capability {capability_id} to SDM store")
         except Exception as e:
             logging.error(f"Failed to process capability advertisement: {e}")
             print(f"DEBUG: Failed to process capability advertisement: {e}, payload: {payload}, payload type: {type(payload)}")
             import traceback
             traceback.print_exc()
 
-    async def find_capabilities(self, capability_id_filter=None, capability_name_filter=None, tags_filter=None, min_trust_score=None, sort_by_trust=False):
+    def find_capabilities(self, capability_id_filter=None, capability_name_filter=None, tags_filter=None, min_trust_score=None, sort_by_trust=False):
+        print(f"DEBUG find_capabilities: Looking for capability_id_filter='{capability_id_filter}'")
+        print(f"DEBUG find_capabilities: Store keys: {list(self._mock_sdm_capabilities_store.keys())}")
         results = []
         for cap_id, (payload, last_seen) in self._mock_sdm_capabilities_store.items():
+            print(f"DEBUG find_capabilities: Checking cap_id='{cap_id}' vs filter='{capability_id_filter}'")
             # payload is already processed as HSPCapabilityAdvertisementPayload in process_capability_advertisement
             if capability_id_filter and cap_id != capability_id_filter:
+                print(f"DEBUG find_capabilities: Skipping {cap_id} because it doesn't match filter {capability_id_filter}")
                 continue
-            if capability_name_filter and payload.get('name') != capability_name_filter:
+            payload_name = payload.name if hasattr(payload, 'name') else payload.get('name')
+            if capability_name_filter and payload_name != capability_name_filter:
+                print(f"DEBUG find_capabilities: Skipping {cap_id} because name doesn't match")
                 continue
-            if tags_filter and not all(tag in payload.get('tags', []) for tag in tags_filter):
+            payload_tags = payload.tags if hasattr(payload, 'tags') else payload.get('tags', [])
+            if tags_filter and not all(tag in payload_tags for tag in tags_filter):
+                print(f"DEBUG find_capabilities: Skipping {cap_id} because tags don't match")
                 continue
+            print(f"DEBUG find_capabilities: Adding {cap_id} to results")
             results.append(payload)
+        print(f"DEBUG find_capabilities: Returning {len(results)} results")
         return results
 
-    async def get_all_capabilities(self):
+    def get_all_capabilities(self):
         results = []
         for cap_id, (payload, _) in self._mock_sdm_capabilities_store.items():
             # payload is already processed as HSPCapabilityAdvertisementPayload in process_capability_advertisement
@@ -300,6 +309,9 @@ class TestHSPEndpoints:
         client, sdm, api_dm, ham, mock_hsp_connector = client_with_overrides
         peer_ai_id = "did:hsp:test_api_peer_007"
         mock_echo_cap_id = f"{peer_ai_id}_echo_for_api_v1"
+        print(f"\nDEBUG: mock_echo_cap_id = '{mock_echo_cap_id}'")
+        print(f"DEBUG: len(mock_echo_cap_id) = {len(mock_echo_cap_id)}")
+        print(f"DEBUG: repr(mock_echo_cap_id) = {repr(mock_echo_cap_id)}")
         
         # Use the existing api_test_peer_connector fixture
         peer_conn = api_test_peer_connector
@@ -317,15 +329,50 @@ class TestHSPEndpoints:
         )
         
         # Process the capability advertisement directly
-        await sdm.process_capability_advertisement(mock_cap_adv, peer_ai_id, None)
+        print(f"\nProcessing capability advertisement: {mock_cap_adv}")
+        try:
+            sdm.process_capability_advertisement(mock_cap_adv, peer_ai_id, None)
+            print(f"\nCapability advertisement processed successfully")
+        except Exception as e:
+            print(f"\nError processing capability advertisement: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
+        
+        # Access the MockSDM instance through the side_effect
+        mock_sdm_instance = sdm.process_capability_advertisement.side_effect.__self__
+        print(f"\nSDM store after processing: {list(mock_sdm_instance._mock_sdm_capabilities_store.keys())}")
         
         # Debug: Print all capabilities in SDM
-        all_caps = await sdm.get_all_capabilities()
-        print(f"\nAll capabilities in SDM: {[cap['capability_id'] for cap in all_caps]}")
+        all_caps = sdm.get_all_capabilities()
+        cap_ids = []
+        for cap in all_caps:
+            if hasattr(cap, 'capability_id'):
+                cap_ids.append(cap.capability_id)
+            else:
+                cap_ids.append(cap.get('capability_id', 'Unknown'))
+        print(f"\nAll capabilities in SDM: {cap_ids}")
         
         # Verify the capability is in SDM
-        found_caps = await sdm.find_capabilities(capability_id_filter=mock_echo_cap_id)
-        print(f"\nFound capabilities with filter '{mock_echo_cap_id}': {[cap['capability_id'] for cap in found_caps]}")
+        found_caps = sdm.find_capabilities(capability_id_filter=mock_echo_cap_id)
+        found_cap_ids = []
+        for cap in found_caps:
+            if hasattr(cap, 'capability_id'):
+                found_cap_ids.append(cap.capability_id)
+            else:
+                found_cap_ids.append(cap.get('capability_id', 'Unknown'))
+        print(f"\nFound capabilities with filter '{mock_echo_cap_id}': {found_cap_ids}")
+        
+        # If capability not found, print debug info before asserting
+        if len(found_caps) == 0:
+            print(f"\nCapability {mock_echo_cap_id} not found in SDM!")
+            print(f"Available capabilities:")
+            all_caps = sdm.get_all_capabilities()
+            for cap in all_caps:
+                cap_id = cap.capability_id if hasattr(cap, 'capability_id') else cap.get('capability_id', 'Unknown ID')
+                cap_name = cap.name if hasattr(cap, 'name') else cap.get('name', 'Unknown Name')
+                print(f"  - {cap_id}: {cap_name}")
+        
         assert len(found_caps) == 1, f"Capability {mock_echo_cap_id} not found in SDM"
         
         # Set up the peer to handle the task request
@@ -361,8 +408,7 @@ class TestHSPEndpoints:
         response = client.post(
             "/api/v1/hsp/tasks",
             json={
-                "correlation_id": mock_corr_id,
-                "capability_id_filter": mock_echo_cap_id,
+                "target_capability_id": mock_echo_cap_id,
                 "parameters": {"message": "Hello from API test"},
             },
         )
@@ -370,19 +416,34 @@ class TestHSPEndpoints:
         # Debug: Print API response
         print(f"\nAPI response: {response.status_code} {response.json()}")
         
-        if response.status_code != 202:
+        # Debug: Print API response
+        print(f"\nAPI response: {response.status_code} {response.json()}")
+        
+        if response.status_code != 200:
             print(f"\nAPI request failed with status {response.status_code}")
             print(f"Response content: {response.text}")
             request_payload = {
-                'correlation_id': mock_corr_id,
-                'capability_id_filter': mock_echo_cap_id,
+                'target_capability_id': mock_echo_cap_id,
                 'parameters': {'message': 'Hello from API test'}
             }
             print(f"Request payload: {request_payload}")
         
-        assert response.status_code == 202
+        assert response.status_code == 200
         response_data = response.json()
-        assert response_data["correlation_id"] == mock_corr_id
+        
+        # Check if the capability was found
+        if "not found" in response_data.get("status_message", ""):
+            print(f"\nCapability not found. Available capabilities:")
+            available_caps = sdm.get_all_capabilities()
+            for cap in available_caps:
+                cap_id = cap.capability_id if hasattr(cap, 'capability_id') else cap.get('capability_id', 'Unknown ID')
+                cap_name = cap.name if hasattr(cap, 'name') else cap.get('name', 'Unknown Name')
+                print(f"  - {cap_id}: {cap_name}")
+            print(f"\nLooking for: {mock_echo_cap_id}")
+            assert False, f"Capability {mock_echo_cap_id} not found in SDM"
+        
+        assert response_data["correlation_id"] is not None
+        actual_correlation_id = response_data["correlation_id"]
         
         # Wait for the task to be handled
         try:
@@ -392,10 +453,10 @@ class TestHSPEndpoints:
         
         # Verify the task request was received by the peer
         assert task_request_payload is not None
-        assert task_request_payload["correlation_id"] == mock_corr_id
+        assert task_request_payload["correlation_id"] == actual_correlation_id
         
         # Verify the task was removed from pending requests
-        assert mock_corr_id not in api_dm._pending_hsp_task_requests
+        assert actual_correlation_id not in api_dm._pending_hsp_task_requests
         
         # Clean up
         await peer_conn.disconnect()

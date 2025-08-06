@@ -89,7 +89,7 @@ function Counter() {
     setIsAnalyzing(true)
 
     try {
-      const response = await fetch('/api/code', {
+      const response = await fetch('/api/py/code', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

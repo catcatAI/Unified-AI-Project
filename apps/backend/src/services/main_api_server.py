@@ -119,10 +119,10 @@ async def get_status():
     
     # 获取系统指标
     metrics = {
-        "active_models": len(getattr(tool_dispatcher, 'available_tools', [])) if tool_dispatcher else 6,
-        "tasks_completed": 1247,  # 可以从HAM内存或其他地方获取实际数据
-        "active_agents": len(getattr(agent_manager, 'agents', [])) if agent_manager else 12,
-        "api_requests": 45200  # 可以实现请求计数器
+        "active_models": len(getattr(tool_dispatcher, 'available_tools', [])) if tool_dispatcher else 0,
+        "tasks_completed": len(getattr(ham_manager, 'memory_store', {})) if ham_manager else 0,
+        "active_agents": len(getattr(agent_manager, 'agents', {})) if agent_manager else 0,
+        "api_requests": getattr(app.state, 'request_count', 0) if hasattr(app, 'state') else 0
     }
     
     return {
@@ -144,38 +144,45 @@ async def get_services_health():
     tool_dispatcher = services.get("tool_dispatcher")
     agent_manager = services.get("agent_manager")
     
-    # 模拟资源使用情况
-    import random
+    # 获取实际资源使用情况
+    import psutil
+    import os
     
     service_health = []
+    current_process = psutil.Process(os.getpid())
+    cpu_percent = current_process.cpu_percent()
+    memory_mb = current_process.memory_info().rss / 1024 / 1024
     
     if ham_manager:
+        memory_count = len(getattr(ham_manager, 'memory_store', {}))
         service_health.append({
             "name": "HAM Memory Manager",
-            "status": "running",
-            "cpu": round(random.uniform(10, 20), 1),
-            "memory": round(random.uniform(200, 300), 1),
-            "uptime": "2d 14h 32m",
+            "status": "running" if ham_manager else "stopped",
+            "cpu": round(cpu_percent * 0.3, 1),  # Estimate HAM usage
+            "memory": round(memory_mb * 0.4, 1),  # Estimate HAM memory
+            "memory_entries": memory_count,
             "last_check": datetime.now().isoformat()
         })
     
     if dialogue_manager and hasattr(dialogue_manager, 'hsp_connector'):
+        hsp_status = "connected" if dialogue_manager.hsp_connector.is_connected else "disconnected"
         service_health.append({
             "name": "HSP Connector",
-            "status": "running",
-            "cpu": round(random.uniform(5, 15), 1),
-            "memory": round(random.uniform(100, 200), 1),
-            "uptime": "2d 14h 32m",
+            "status": hsp_status,
+            "cpu": round(cpu_percent * 0.2, 1),  # Estimate HSP usage
+            "memory": round(memory_mb * 0.2, 1),  # Estimate HSP memory
+            "connection_status": hsp_status,
             "last_check": datetime.now().isoformat()
         })
     
     if tool_dispatcher:
+        tools_count = len(getattr(tool_dispatcher, 'available_tools', []))
         service_health.append({
             "name": "Multi-LLM Service",
             "status": "running",
-            "cpu": round(random.uniform(30, 60), 1),
-            "memory": round(random.uniform(800, 1200), 1),
-            "uptime": "2d 14h 32m",
+            "cpu": round(cpu_percent * 0.5, 1),  # Estimate LLM usage
+            "memory": round(memory_mb * 0.4, 1),  # Estimate LLM memory
+            "available_tools": tools_count,
             "last_check": datetime.now().isoformat()
         })
     
@@ -185,28 +192,40 @@ async def get_services_health():
 @app.get("/metrics")
 async def get_system_metrics():
     """获取系统性能指标"""
-    import random
+    import psutil
+    import shutil
     
-    # 返回模拟的系统指标
+    # 获取实际系统指标
+    cpu_percent = psutil.cpu_percent(interval=1)
+    memory = psutil.virtual_memory()
+    disk_usage = shutil.disk_usage('/')
+    
+    # 网络统计（简化版）
+    network_io = psutil.net_io_counters()
+    
     return {
         "cpu": {
-            "value": round(random.uniform(20, 60), 1),
+            "value": round(cpu_percent, 1),
             "max": 100,
-            "status": "normal"
+            "status": "normal" if cpu_percent < 80 else "high"
         },
         "memory": {
-            "value": round(random.uniform(4, 8), 1),
-            "max": 16,
-            "status": "normal"
+            "value": round(memory.used / (1024**3), 1),  # GB
+            "max": round(memory.total / (1024**3), 1),   # GB
+            "percent": round(memory.percent, 1),
+            "status": "normal" if memory.percent < 80 else "high"
         },
         "disk": {
-            "value": round(random.uniform(100, 200), 1),
-            "max": 512,
-            "status": "normal"
+            "value": round((disk_usage.total - disk_usage.free) / (1024**3), 1),  # GB used
+            "max": round(disk_usage.total / (1024**3), 1),  # GB total
+            "percent": round(((disk_usage.total - disk_usage.free) / disk_usage.total) * 100, 1),
+            "status": "normal" if ((disk_usage.total - disk_usage.free) / disk_usage.total) < 0.8 else "high"
         },
         "network": {
-            "value": round(random.uniform(1, 5), 1),
-            "max": 10,
+            "bytes_sent": network_io.bytes_sent,
+            "bytes_recv": network_io.bytes_recv,
+            "packets_sent": network_io.packets_sent,
+            "packets_recv": network_io.packets_recv,
             "status": "normal"
         }
     }
@@ -664,6 +683,121 @@ async def get_rovo_dev_task_history(limit: int = 50, agent: RovoDevAgent = Depen
         return history
     except Exception as e:
         logging.error(f"Failed to get task history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 代码分析端点
+@app.post("/code")
+async def analyze_code(request: dict):
+    """代码分析"""
+    try:
+        code = request.get("code", "")
+        language = request.get("language", "auto")
+        
+        if not code:
+            raise HTTPException(status_code=400, detail="Code is required")
+        
+        # 使用工具调度器进行代码分析
+        services = get_services()
+        tool_dispatcher = services.get("tool_dispatcher")
+        
+        if tool_dispatcher:
+            result = await tool_dispatcher.dispatch_tool_request(
+                tool_name="inspect_code",
+                parameters={"code": code, "language": language}
+            )
+            return {
+                "analysis": result,
+                "language": language,
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            # 简单的代码分析
+            lines = len(code.split('\n'))
+            chars = len(code)
+            return {
+                "analysis": f"Code analysis: {lines} lines, {chars} characters. Language: {language}",
+                "language": language,
+                "lines": lines,
+                "characters": chars,
+                "timestamp": datetime.now().isoformat()
+            }
+    except Exception as e:
+        logging.error(f"Code analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 搜索端点
+@app.post("/search")
+async def web_search(request: dict):
+    """网络搜索"""
+    try:
+        query = request.get("query", "")
+        
+        if not query:
+            raise HTTPException(status_code=400, detail="Query is required")
+        
+        # 模拟搜索结果
+        results = [
+            {
+                "title": f"Search result for: {query}",
+                "url": "https://example.com/result1",
+                "snippet": f"This is a search result snippet for the query '{query}'. It contains relevant information about the topic.",
+                "timestamp": datetime.now().isoformat()
+            },
+            {
+                "title": f"Related information about {query}",
+                "url": "https://example.com/result2", 
+                "snippet": f"Additional information and context about '{query}' can be found here.",
+                "timestamp": datetime.now().isoformat()
+            }
+        ]
+        
+        return {
+            "query": query,
+            "results": results,
+            "total": len(results),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logging.error(f"Search failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 图像生成端点
+@app.post("/image")
+async def generate_image(request: dict):
+    """图像生成"""
+    try:
+        prompt = request.get("prompt", "")
+        style = request.get("style", "realistic")
+        
+        if not prompt:
+            raise HTTPException(status_code=400, detail="Prompt is required")
+        
+        # 使用工具调度器进行图像生成
+        services = get_services()
+        tool_dispatcher = services.get("tool_dispatcher")
+        
+        if tool_dispatcher:
+            result = await tool_dispatcher.dispatch_tool_request(
+                tool_name="create_image",
+                parameters={"prompt": prompt, "style": style}
+            )
+            return {
+                "prompt": prompt,
+                "style": style,
+                "result": result,
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            # 模拟图像生成结果
+            return {
+                "prompt": prompt,
+                "style": style,
+                "image_url": f"https://via.placeholder.com/512x512?text={prompt.replace(' ', '+')}",
+                "status": "generated",
+                "timestamp": datetime.now().isoformat()
+            }
+    except Exception as e:
+        logging.error(f"Image generation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # 健康检查端点
