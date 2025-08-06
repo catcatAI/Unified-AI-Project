@@ -94,181 +94,53 @@ def read_root():
     return {"message": "Welcome to the Unified AI Project API"}
 
 
-@app.get("/status")
-async def get_status():
-    """获取系统状态和指标"""
-    services = get_services()
-    
-    # 检查各个服务的状态
-    dialogue_manager = services.get("dialogue_manager")
-    ham_manager = services.get("ham_manager")
-    personality_manager = services.get("personality_manager")
-    emotion_system = services.get("emotion_system")
-    formula_engine = services.get("formula_engine")
-    tool_dispatcher = services.get("tool_dispatcher")
-    agent_manager = services.get("agent_manager")
-    
-    # 计算服务状态
-    services_status = {
-        "ham_memory": ham_manager is not None,
-        "hsp_protocol": dialogue_manager is not None and hasattr(dialogue_manager, 'hsp_connector'),
-        "neural_network": emotion_system is not None,
-        "agent_manager": agent_manager is not None,
-        "project_coordinator": dialogue_manager is not None and hasattr(dialogue_manager, 'project_coordinator')
-    }
-    
-    # 获取系统指标
-    metrics = {
-        "active_models": len(getattr(tool_dispatcher, 'available_tools', [])) if tool_dispatcher else 0,
-        "tasks_completed": len(getattr(ham_manager, 'memory_store', {})) if ham_manager else 0,
-        "active_agents": len(getattr(agent_manager, 'agents', {})) if agent_manager else 0,
-        "api_requests": getattr(app.state, 'request_count', 0) if hasattr(app, 'state') else 0
-    }
-    
-    return {
-        "status": "online",
-        "timestamp": datetime.now().isoformat(),
-        "services": services_status,
-        "metrics": metrics
-    }
-
-
-@app.get("/services/health")
-async def get_services_health():
-    """获取各个服务的健康状态和资源使用情况"""
-    services = get_services()
-    
-    # 检查各个服务
-    dialogue_manager = services.get("dialogue_manager")
-    ham_manager = services.get("ham_manager")
-    tool_dispatcher = services.get("tool_dispatcher")
-    agent_manager = services.get("agent_manager")
-    
-    # 获取实际资源使用情况
-    import psutil
-    import os
-    
-    service_health = []
-    current_process = psutil.Process(os.getpid())
-    cpu_percent = current_process.cpu_percent()
-    memory_mb = current_process.memory_info().rss / 1024 / 1024
-    
-    if ham_manager:
-        memory_count = len(getattr(ham_manager, 'memory_store', {}))
-        service_health.append({
-            "name": "HAM Memory Manager",
-            "status": "running" if ham_manager else "stopped",
-            "cpu": round(cpu_percent * 0.3, 1),  # Estimate HAM usage
-            "memory": round(memory_mb * 0.4, 1),  # Estimate HAM memory
-            "memory_entries": memory_count,
-            "last_check": datetime.now().isoformat()
-        })
-    
-    if dialogue_manager and hasattr(dialogue_manager, 'hsp_connector'):
-        hsp_status = "connected" if dialogue_manager.hsp_connector.is_connected else "disconnected"
-        service_health.append({
-            "name": "HSP Connector",
-            "status": hsp_status,
-            "cpu": round(cpu_percent * 0.2, 1),  # Estimate HSP usage
-            "memory": round(memory_mb * 0.2, 1),  # Estimate HSP memory
-            "connection_status": hsp_status,
-            "last_check": datetime.now().isoformat()
-        })
-    
-    if tool_dispatcher:
-        tools_count = len(getattr(tool_dispatcher, 'available_tools', []))
-        service_health.append({
-            "name": "Multi-LLM Service",
-            "status": "running",
-            "cpu": round(cpu_percent * 0.5, 1),  # Estimate LLM usage
-            "memory": round(memory_mb * 0.4, 1),  # Estimate LLM memory
-            "available_tools": tools_count,
-            "last_check": datetime.now().isoformat()
-        })
-    
-    return service_health
-
-
-@app.get("/metrics")
-async def get_system_metrics():
-    """获取系统性能指标"""
+@app.get("/api/v1/health")
+async def get_health_status():
+    """获取系统健康状态、服务状态和性能指标"""
     import psutil
     import shutil
+    import os
+
+    services = get_services()
+    dialogue_manager = services.get("dialogue_manager")
+    ham_manager = services.get("ham_manager")
+    tool_dispatcher = services.get("tool_dispatcher")
+    agent_manager = services.get("agent_manager")
+    atlassian_bridge = services.get("atlassian_bridge")
+    rovo_dev_agent = services.get("rovo_dev_agent")
     
-    # 获取实际系统指标
+    # Service Health
+    service_health = []
+    if ham_manager:
+        service_health.append({"name": "HAM Memory Manager", "status": "running"})
+    if dialogue_manager and hasattr(dialogue_manager, 'hsp_connector'):
+        service_health.append({"name": "HSP Connector", "status": "connected" if dialogue_manager.hsp_connector.is_connected else "disconnected"})
+    if tool_dispatcher:
+        service_health.append({"name": "Multi-LLM Service", "status": "running"})
+    if atlassian_bridge:
+        service_health.append({"name": "Atlassian Bridge", "status": "running"})
+    if rovo_dev_agent:
+        service_health.append({"name": "Rovo Dev Agent", "status": "active" if rovo_dev_agent.is_active else "inactive"})
+
+    # System Metrics
     cpu_percent = psutil.cpu_percent(interval=1)
     memory = psutil.virtual_memory()
     disk_usage = shutil.disk_usage('/')
     
-    # 网络统计（简化版）
-    network_io = psutil.net_io_counters()
-    
+    system_metrics = {
+        "cpu": {"value": round(cpu_percent, 1), "max": 100, "status": "normal" if cpu_percent < 80 else "high"},
+        "memory": {"value": round(memory.used / (1024**3), 1), "max": round(memory.total / (1024**3), 1), "percent": round(memory.percent, 1), "status": "normal" if memory.percent < 80 else "high"},
+        "disk": {"value": round((disk_usage.total - disk_usage.free) / (1024**3), 1), "max": round(disk_usage.total / (1024**3), 1), "percent": round(((disk_usage.total - disk_usage.free) / disk_usage.total) * 100, 1), "status": "normal" if ((disk_usage.total - disk_usage.free) / disk_usage.total) < 0.8 else "high"}
+    }
+
     return {
-        "cpu": {
-            "value": round(cpu_percent, 1),
-            "max": 100,
-            "status": "normal" if cpu_percent < 80 else "high"
-        },
-        "memory": {
-            "value": round(memory.used / (1024**3), 1),  # GB
-            "max": round(memory.total / (1024**3), 1),   # GB
-            "percent": round(memory.percent, 1),
-            "status": "normal" if memory.percent < 80 else "high"
-        },
-        "disk": {
-            "value": round((disk_usage.total - disk_usage.free) / (1024**3), 1),  # GB used
-            "max": round(disk_usage.total / (1024**3), 1),  # GB total
-            "percent": round(((disk_usage.total - disk_usage.free) / disk_usage.total) * 100, 1),
-            "status": "normal" if ((disk_usage.total - disk_usage.free) / disk_usage.total) < 0.8 else "high"
-        },
-        "network": {
-            "bytes_sent": network_io.bytes_sent,
-            "bytes_recv": network_io.bytes_recv,
-            "packets_sent": network_io.packets_sent,
-            "packets_recv": network_io.packets_recv,
-            "status": "normal"
-        }
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "services": service_health,
+        "metrics": system_metrics
     }
 
 
-@app.post("/chat")
-async def simple_chat(request: dict):
-    """简单的聊天端点，用于前端集成"""
-    message = request.get("message", "")
-    session_id = request.get("session_id")
-    
-    if not message:
-        return {"error": "Message is required"}, 400
-    
-    services = get_services()
-    dialogue_manager = services.get("dialogue_manager")
-    
-    if dialogue_manager:
-        try:
-            # 使用DialogueManager获取回复
-            response = await dialogue_manager.get_simple_response(
-                user_input=message,
-                session_id=session_id,
-                user_id="web_user"
-            )
-            return {
-                "response": response,
-                "model": "Backend AI",
-                "timestamp": datetime.now().isoformat()
-            }
-        except Exception as e:
-            print(f"Error in chat endpoint: {e}")
-            return {
-                "response": f"I'm sorry, I encountered an error: {str(e)}",
-                "model": "Backend AI",
-                "timestamp": datetime.now().isoformat()
-            }
-    else:
-        return {
-            "response": "Hello! I'm your AI assistant. The dialogue manager is currently initializing. Please try again in a moment.",
-            "model": "Backend AI",
-            "timestamp": datetime.now().isoformat()
-        }
 
 
 @app.post("/api/v1/chat", response_model=AIOutput, tags=["Chat"])
@@ -288,19 +160,22 @@ async def chat_endpoint(user_input: UserInput):
             timestamp=datetime.now().isoformat()
         )
 
-    # Pass user_id and session_id to DialogueManager
-    ai_response_text = await dialogue_manager.get_simple_response( # Added await
-        user_input.text,
-        session_id=user_input.session_id,
-        user_id=user_input.user_id
-    )
-
-    return AIOutput(
-        response_text=ai_response_text,
-        user_id=user_input.user_id,
-        session_id=user_input.session_id,
-        timestamp=datetime.now().isoformat()
-    )
+    try:
+        # Pass user_id and session_id to DialogueManager
+        ai_response_text = await dialogue_manager.get_simple_response(
+            user_input.text,
+            session_id=user_input.session_id,
+            user_id=user_input.user_id
+        )
+        return AIOutput(
+            response_text=ai_response_text,
+            user_id=user_input.user_id,
+            session_id=user_input.session_id,
+            timestamp=datetime.now().isoformat()
+        )
+    except Exception as e:
+        logging.error(f"Error in chat endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/v1/session/start", response_model=SessionStartResponse, tags=["Session"])
 async def start_session_endpoint(session_start_request: SessionStartRequest):
@@ -319,15 +194,19 @@ async def start_session_endpoint(session_start_request: SessionStartRequest):
             timestamp=datetime.now().isoformat()
         )
 
-    # dialogue_manager.start_session is async
-    greeting = await dialogue_manager.start_session(user_id=session_start_request.user_id)
-    session_id = uuid.uuid4().hex
+    try:
+        # dialogue_manager.start_session is async
+        greeting = await dialogue_manager.start_session(user_id=session_start_request.user_id)
+        session_id = uuid.uuid4().hex
 
-    return SessionStartResponse(
-        greeting=greeting,
-        session_id=session_id,
-        timestamp=datetime.now().isoformat()
-    )
+        return SessionStartResponse(
+            greeting=greeting,
+            session_id=session_id,
+            timestamp=datetime.now().isoformat()
+        )
+    except Exception as e:
+        logging.error(f"Error in session start endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # --- HSP Related Endpoints ---
 @app.get("/api/v1/hsp/services", response_model=List[HSPCapabilityAdvertisementPayload], tags=["HSP"])
@@ -382,17 +261,34 @@ async def request_hsp_task(task_input: HSPTaskRequestInput):
     api_session_id = f"api_session_hsp_{uuid.uuid4().hex[:6]}"
     original_query_context = f"API request for capability {task_input.target_capability_id}"
 
-    # _dispatch_hsp_task_request now returns -> (user_message, correlation_id)
-    user_message, correlation_id = await dialogue_manager._dispatch_hsp_task_request(
-        capability_advertisement=selected_capability_adv,
-        request_parameters=task_input.parameters,
-        original_user_query=original_query_context,
-        user_id=api_user_id,
-        session_id=api_session_id,
-        request_type="api_initiated_hsp_task"
-    )
+    try:
+        # _dispatch_hsp_task_request now returns -> (user_message, correlation_id)
+        user_message, correlation_id = await dialogue_manager._dispatch_hsp_task_request(
+            capability_advertisement=selected_capability_adv,
+            request_parameters=task_input.parameters,
+            original_user_query=original_query_context,
+            user_id=api_user_id,
+            session_id=api_session_id,
+            request_type="api_initiated_hsp_task"
+        )
 
-    if correlation_id: # Dispatch was successful if correlation_id is returned
+        if correlation_id: # Dispatch was successful if correlation_id is returned
+            return HSPTaskRequestOutput(
+                status_message=user_message or "HSP Task request sent successfully.",
+                correlation_id=correlation_id,
+                target_capability_id=task_input.target_capability_id,
+                error=None
+            )
+        else: # Dispatch failed
+            return HSPTaskRequestOutput(
+                status_message=user_message or "Error: Failed to dispatch HSP task request.",
+                correlation_id=None,
+                target_capability_id=task_input.target_capability_id,
+                error=user_message or "Unknown error during dispatch."
+            )
+    except Exception as e:
+        logging.error(f"Error in hsp task request endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
         return HSPTaskRequestOutput(
             status_message=user_message or "HSP Task request sent successfully.",
             correlation_id=correlation_id,
@@ -686,7 +582,7 @@ async def get_rovo_dev_task_history(limit: int = 50, agent: RovoDevAgent = Depen
         raise HTTPException(status_code=500, detail=str(e))
 
 # 代码分析端点
-@app.post("/code")
+@app.post("/api/v1/code")
 async def analyze_code(request: dict):
     """代码分析"""
     try:
@@ -726,7 +622,7 @@ async def analyze_code(request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 # 搜索端点
-@app.post("/search")
+@app.post("/api/v1/search")
 async def web_search(request: dict):
     """网络搜索"""
     try:
@@ -738,15 +634,15 @@ async def web_search(request: dict):
         # 模拟搜索结果
         results = [
             {
-                "title": f"Search result for: {query}",
-                "url": "https://example.com/result1",
-                "snippet": f"This is a search result snippet for the query '{query}'. It contains relevant information about the topic.",
+                "title": f"Dynamic Search Result for '{query}'",
+                "url": f"https://example.com/search?q={query.replace(' ', '+')}",
+                "snippet": f"This is a dynamic search result snippet for the query '{query}'.",
                 "timestamp": datetime.now().isoformat()
             },
             {
-                "title": f"Related information about {query}",
-                "url": "https://example.com/result2", 
-                "snippet": f"Additional information and context about '{query}' can be found here.",
+                "title": f"More about '{query}'",
+                "url": f"https://en.wikipedia.org/wiki/{query.replace(' ', '_')}",
+                "snippet": f"Wikipedia article about '{query}'.",
                 "timestamp": datetime.now().isoformat()
             }
         ]
@@ -762,7 +658,7 @@ async def web_search(request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 # 图像生成端点
-@app.post("/image")
+@app.post("/api/v1/image")
 async def generate_image(request: dict):
     """图像生成"""
     try:
@@ -800,22 +696,6 @@ async def generate_image(request: dict):
         logging.error(f"Image generation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# 健康检查端点
-@app.get("/api/health")
-async def health_check():
-    """健康检查"""
-    services = get_services()
-    atlassian_bridge = services.get("atlassian_bridge")
-    rovo_dev_agent = services.get("rovo_dev_agent")
-
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "services": {
-            "atlassian_bridge": atlassian_bridge is not None,
-            "rovo_dev_agent": rovo_dev_agent is not None and rovo_dev_agent.is_active
-        }
-    }
 
 if __name__ == "__main__":
     import uvicorn
