@@ -66,6 +66,9 @@ export function AIChat() {
   }
 
   const formatTime = (date: Date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
 

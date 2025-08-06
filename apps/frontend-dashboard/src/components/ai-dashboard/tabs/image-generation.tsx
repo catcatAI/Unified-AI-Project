@@ -60,7 +60,7 @@ export function ImageGeneration() {
     setIsGenerating(true)
 
     try {
-      const response = await fetch('/api/image', {
+      const response = await fetch('/api/py/image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

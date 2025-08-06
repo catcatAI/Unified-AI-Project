@@ -28,16 +28,47 @@ async function createCustomServer() {
       target: 'http://localhost:8000',
       changeOrigin: true,
       pathRewrite: { '^/api/py': '' },
+      logLevel: 'debug',
+      onProxyReq: (proxyReq, req, res) => {
+        console.log(`Proxying: ${req.method} ${req.url} -> http://localhost:8000${proxyReq.path}`);
+      },
+      onProxyRes: (proxyRes, req, res) => {
+        console.log(`Proxy response: ${proxyRes.statusCode} for ${req.url}`);
+      },
+      onError: (err, req, res) => {
+        console.error('Proxy error:', err);
+        if (!res.headersSent) {
+          res.writeHead(500, { 'Content-Type': 'text/plain' });
+          res.end('Proxy error occurred');
+        }
+      }
     });
 
     const server = createServer((req, res) => {
+      console.log(`Incoming request: ${req.method} ${req.url}`);
+      
+      // Handle proxy requests first
       if (req.url?.startsWith('/api/py')) {
-        return apiProxy(req, res);
-      }
-      // Skip socket.io requests from Next.js handler
-      if (req.url?.startsWith('/api/socketio')) {
+        console.log(`Routing to proxy: ${req.url}`);
+        apiProxy(req, res, (err) => {
+          if (err) {
+            console.error('Proxy callback error:', err);
+            if (!res.headersSent) {
+              res.statusCode = 502;
+              res.end('Proxy error');
+            }
+          }
+        });
         return;
       }
+      
+      // Skip socket.io requests from Next.js handler
+      if (req.url?.startsWith('/api/socketio')) {
+        console.log(`Socket.IO request: ${req.url}`);
+        return;
+      }
+      
+      console.log(`Routing to Next.js: ${req.url}`);
       handle(req, res);
     });
 
