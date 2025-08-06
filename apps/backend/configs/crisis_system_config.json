@@ -10,5 +10,12 @@
   "crisis_protocols": {
     "1": "log_and_monitor_basic_crisis_response",
     "default": "log_only"
-  }
+  },
+  "negative_words": [
+    "sad",
+    "angry",
+    "hate",
+    "kill",
+    "depressed"
+  ]
 }

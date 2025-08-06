@@ -1,14 +1,16 @@
 # Placeholder for Crisis Management System
 # This system will detect and manage crisis situations, potentially involving safety protocols,
 # user well-being checks, or handing off to other support systems.
+import logging
 from datetime import datetime
 
 class CrisisSystem:
-    def __init__(self, config: dict = None, emotion_system_ref=None, memory_system_ref=None):
+    def __init__(self, config: dict = None, emotion_system_ref=None, memory_system_ref=None, log_file: str = "crisis_log.txt"):
         self.config = config or {}
         self.emotion_system = emotion_system_ref # Reference to an EmotionSystem instance
         self.memory_system = memory_system_ref   # Reference to a MemoryManager instance
         self.crisis_level = 0 # 0 = No crisis, higher numbers indicate severity
+        self.log_file = log_file
 
         # Load configuration from file if not provided
         if not self.config:
@@ -16,9 +18,10 @@ class CrisisSystem:
 
         # Default crisis keywords if not provided in config
         self.crisis_keywords = self.config.get("crisis_keywords", [])
+        self.negative_words = self.config.get("negative_words", [])
         self.default_crisis_level = self.config.get("default_crisis_level_on_keyword", 1)
         self.crisis_protocols = self.config.get("crisis_protocols", {})
-        print(f"CrisisSystem initialized. Keywords: {self.crisis_keywords}")
+        logging.info(f"CrisisSystem initialized. Keywords: {self.crisis_keywords}")
 
     def assess_input_for_crisis(self, input_data: dict, context: dict = None) -> int:
         """
@@ -29,8 +32,7 @@ class CrisisSystem:
         text_input = input_data.get("text", "").lower()
 
         # Simple sentiment analysis
-        negative_words = ["sad", "angry", "hate", "kill", "depressed"]
-        sentiment_score = sum([1 for word in negative_words if word in text_input.split()])
+        sentiment_score = sum([1 for word in self.negative_words if word in text_input.split()])
 
         detected_level = 0
         if sentiment_score > 0:
@@ -69,25 +71,25 @@ class CrisisSystem:
         protocol_key = str(level)
         action_details = self.crisis_protocols.get(protocol_key, self.crisis_protocols.get("default", "log_only"))
 
-        print(f"CrisisSystem: Level {level} detected. Executing protocol: '{action_details}'. Input details: {details.get('input_text', 'N/A')[:50]}...")
+        logging.info(f"CrisisSystem: Level {level} detected. Executing protocol: '{action_details}'. Input details: {details.get('input_text', 'N/A')[:50]}...")
 
         if action_details == "log_and_monitor_basic_crisis_response":
-            with open("crisis_log.txt", "a") as f:
+            with open(self.log_file, "a") as f:
                 f.write(f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n")
-            print(f"CRISIS_LOG: Level {level} event. Details: {details}")
+            logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
         elif action_details == "notify_human_moderator": # Example from previous version
-            print(f"CRITICAL_ALERT: Human moderator notification required for crisis level {level}. Details: {details}")
+            logging.critical(f"CRITICAL_ALERT: Human moderator notification required for crisis level {level}. Details: {details}")
         elif action_details == "log_only":
-             print(f"CRISIS_INFO: Level {level} event logged. Details: {details}")
+             logging.info(f"CRISIS_INFO: Level {level} event logged. Details: {details}")
         else:
-            print(f"CRISIS_INFO: Protocol '{action_details}' executed for level {level}.")
+            logging.info(f"CRISIS_INFO: Protocol '{action_details}' executed for level {level}.")
 
     def get_current_crisis_level(self) -> int:
         return self.crisis_level
 
     def resolve_crisis(self, resolution_details: str):
         """Manually or automatically resolves/de-escalates a crisis."""
-        print(f"CrisisSystem: Crisis level {self.crisis_level} resolved. Details: {resolution_details}")
+        logging.info(f"CrisisSystem: Crisis level {self.crisis_level} resolved. Details: {resolution_details}")
         self.crisis_level = 0
 
     def _load_config_from_file(self):
@@ -100,13 +102,15 @@ class CrisisSystem:
             with open(config_path, 'r') as f:
                 self.config = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Error loading crisis system config: {e}")
+            logging.error(f"Error loading crisis system config: {e}")
             self.config = {}
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     example_config = {
         "crisis_keywords": ["emergency help", "i am scared"],
+        "negative_words": ["sad", "angry", "hate", "kill", "depressed"],
         "default_crisis_level_on_keyword": 2,
         "crisis_protocols": {
             "1": "monitor_closely",
@@ -117,15 +121,15 @@ if __name__ == '__main__':
     }
     crisis_sys = CrisisSystem(config=example_config)
 
-    print(f"Initial crisis level: {crisis_sys.get_current_crisis_level()}")
+    logging.info(f"Initial crisis level: {crisis_sys.get_current_crisis_level()}")
 
     sample_input_normal = {"text": "Tell me a joke."}
     crisis_sys.assess_input_for_crisis(sample_input_normal)
-    print(f"Crisis level after normal input: {crisis_sys.get_current_crisis_level()}")
+    logging.info(f"Crisis level after normal input: {crisis_sys.get_current_crisis_level()}")
 
     sample_input_crisis = {"text": "I need emergency help right now!"}
     crisis_sys.assess_input_for_crisis(sample_input_crisis)
-    print(f"Crisis level after crisis input: {crisis_sys.get_current_crisis_level()}")
+    logging.info(f"Crisis level after crisis input: {crisis_sys.get_current_crisis_level()}")
 
     crisis_sys.resolve_crisis("User confirmed they are okay, false alarm.")
-    print(f"Crisis level after resolution: {crisis_sys.get_current_crisis_level()}")
+    logging.info(f"Crisis level after resolution: {crisis_sys.get_current_crisis_level()}")

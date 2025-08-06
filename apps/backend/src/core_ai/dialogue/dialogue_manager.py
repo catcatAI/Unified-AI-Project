@@ -114,7 +114,8 @@ class DialogueManager:
         
         try:
             # Attempt to dispatch a tool based on user input
-            tool_response = await self.tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id)
+            history = self.active_sessions.get(session_id, [])
+            tool_response = await self.tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id, history=history)
 
             response_text = ""
             if tool_response['status'] == "success":
@@ -185,7 +186,7 @@ class DialogueManager:
     async def start_session(self, user_id: Optional[str] = None, session_id: Optional[str] = None) -> str:
         if not session_id:
             session_id = str(uuid.uuid4())
-        print(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}.")
+        logging.info(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}.")
         self.active_sessions[session_id] = []
         base_prompt = self.personality_manager.get_initial_prompt()
         time_segment = self.time_system.get_time_of_day_segment()
