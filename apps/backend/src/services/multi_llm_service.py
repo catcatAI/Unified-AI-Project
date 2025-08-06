@@ -127,7 +127,7 @@ class OpenAIProvider(BaseLLMProvider):
                 for msg in messages
             ]
             
-            response = await openai.ChatCompletion.acreate(
+            response = await openai.chat.completions.create(
                 model=self.config.model_name,
                 messages=openai_messages,
                 max_tokens=kwargs.get('max_tokens', self.config.max_tokens),
@@ -168,7 +168,7 @@ class OpenAIProvider(BaseLLMProvider):
         ]
         
         try:
-            stream = await openai.ChatCompletion.acreate(
+            stream = await openai.chat.completions.create(
                 model=self.config.model_name,
                 messages=openai_messages,
                 stream=True,

@@ -2,8 +2,8 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://localhost:8000' 
-  : 'http://localhost:8000';
+  ? 'http://localhost:3000' 
+  : 'http://localhost:3000';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -54,7 +54,7 @@ export const apiService = {
   // Health check
   async healthCheck(): Promise<{ status: string; message: string }> {
     try {
-      const response = await api.get('/health');
+      const response = await api.get('/api/py/api/health');
       return response.data;
     } catch (error) {
       console.error('Health check failed:', error);
@@ -68,10 +68,10 @@ export const apiService = {
       // Try multiple possible endpoints
       let response;
       try {
-        response = await api.get('/status');
+        response = await api.get('/api/py/status');
       } catch (statusError) {
         // Try alternative endpoint
-        response = await api.get('/health');
+        response = await api.get('/api/py/api/health');
       }
       
       // Handle different response structures
@@ -120,7 +120,7 @@ export const apiService = {
   // Chat with AI
   async sendChatMessage(message: string, sessionId?: string): Promise<ChatMessage> {
     try {
-      const response = await api.post('/chat', {
+      const response = await api.post('/api/py/chat', {
         message,
         session_id: sessionId,
       });
@@ -135,7 +135,7 @@ export const apiService = {
       console.error('Chat request failed:', error);
       // Fallback to frontend API route
       try {
-        const fallbackResponse = await fetch('/api/chat', {
+        const fallbackResponse = await fetch('/api/py/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message }),
@@ -158,7 +158,7 @@ export const apiService = {
   // Get service health
   async getServiceHealth(): Promise<ServiceHealth[]> {
     try {
-      const response = await api.get('/services/health');
+      const response = await api.get('/api/py/services/health');
       return response.data;
     } catch (error) {
       console.error('Failed to get service health:', error);
@@ -195,7 +195,7 @@ export const apiService = {
   // Get system metrics
   async getSystemMetrics(): Promise<any> {
     try {
-      const response = await api.get('/metrics');
+      const response = await api.get('/api/py/metrics');
       return response.data;
     } catch (error) {
       console.error('Failed to get system metrics:', error);
