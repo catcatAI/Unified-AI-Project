@@ -44,6 +44,15 @@ This document contains a comprehensive audit of the Unified AI Project, includin
 - **Potential for Unhandled Exceptions:** The `evaluate_expression` function has a `try...except` block for the NN model prediction, but it does not handle the case where the parser also raises an exception.
 - **Global Variables:** The code uses global variables to store the evaluator instances. This is not ideal, as it can lead to issues in a multi-threaded environment. It would be better to use a class to manage the state of the tool.
 
+- **Global Variables:** The code uses global variables to store the evaluator instances. This is not ideal, as it can lead to issues in a multi-threaded environment. It would be better to use a class to manage the state of the tool.
+
+#### `apps/backend/src/hsp/connector.py`
+- **Noisy `print` Statements:** The code uses `print` statements for logging in `publish_message` and in the `__main__` block. It would be better to use the `logging` module consistently.
+- **Hardcoded Schema Path:** The `get_schema_uri` function has a hardcoded fallback path to the schemas directory. This could be made more robust.
+- **Inconsistent Error Handling:** The `publish_message` method has a `try...except` block, but it only logs the error and then tries the fallback. It does not re-raise the exception or return a clear error message.
+- **Lack of Comments:** The fallback protocol implementation is not well-commented, making it difficult to understand.
+- **Type Hinting:** The type hints for `internal_bus` and `message_bridge` in the `__init__` method are `Optional[Any]`. They could be more specific.
+
 *This section will be populated as the audit progresses.*
 
 ## Identified Issues
