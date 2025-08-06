@@ -94,6 +94,20 @@ class TestCrisisSystem(unittest.TestCase):
         print("TestCrisisSystem.test_05_trigger_protocol PASSED")
         self.crisis_sys_custom_config.resolve_crisis("Test cleanup")
 
+    @pytest.mark.timeout(5)
+    def test_06_sentiment_analysis_and_logging(self):
+        # Test sentiment analysis
+        level = self.crisis_sys_custom_config.assess_input_for_crisis({"text": "I am so sad and depressed."})
+        self.assertEqual(level, 1)
+
+        # Test logging
+        with patch('builtins.open', unittest.mock.mock_open()) as mock_file:
+            self.crisis_sys_custom_config.assess_input_for_crisis({"text": "emergency"})
+            mock_file.assert_called_with('crisis_log.txt', 'a')
+            mock_file().write.assert_called()
+
+        print("TestCrisisSystem.test_06_sentiment_analysis_and_logging PASSED")
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
