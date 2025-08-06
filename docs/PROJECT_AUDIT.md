@@ -28,6 +28,15 @@ This document contains a comprehensive audit of the Unified AI Project, includin
 - **Noisy `print` Statements:** The code still uses a `print` statement in `start_session`. This should be replaced with a `logging` call.
 - **Lack of Context in Tool Dispatch:** The `tool_dispatcher.dispatch` call does not pass any conversation context. This means that the tools are stateless and cannot take the conversation history into account.
 
+- **Lack of Context in Tool Dispatch:** The `tool_dispatcher.dispatch` call does not pass any conversation context. This means that the tools are stateless and cannot take the conversation history into account.
+
+#### `apps/backend/src/tools/tool_dispatcher.py`
+- **Incomplete `rag_query` Implementation:** The `_execute_rag_query` method is defined, but the `rag_manager` is commented out and not initialized. This means the `rag_query` tool will not work.
+- **Noisy `print` Statements:** The code uses `print` statements for logging in several places. It would be better to use the `logging` module consistently.
+- **Complex `_execute_translation` Logic:** The `_execute_translation` method has a very complex and fragile logic for parsing the query to extract the text and target language. This could be simplified and made more robust.
+- **Potential for Unhandled Exceptions:** While some of the `_execute_*` methods have `try...except` blocks, others do not. For example, `_execute_rag_query` does not have one. This could lead to unhandled exceptions.
+- **Redundant `kwargs`:** The `dispatch` method accepts `**kwargs`, but it doesn't seem to be used when calling the tool.
+
 *This section will be populated as the audit progresses.*
 
 ## Identified Issues
