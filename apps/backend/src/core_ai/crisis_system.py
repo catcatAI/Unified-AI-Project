@@ -1,6 +1,7 @@
 # Placeholder for Crisis Management System
 # This system will detect and manage crisis situations, potentially involving safety protocols,
 # user well-being checks, or handing off to other support systems.
+from datetime import datetime
 
 class CrisisSystem:
     def __init__(self, config: dict = None, emotion_system_ref=None, memory_system_ref=None):
@@ -24,11 +25,17 @@ class CrisisSystem:
         Assesses input and context for potential crisis indicators.
         Updates self.crisis_level.
         Returns the current crisis level.
-        Placeholder logic.
         """
         text_input = input_data.get("text", "").lower()
 
+        # Simple sentiment analysis
+        negative_words = ["sad", "angry", "hate", "kill", "depressed"]
+        sentiment_score = sum([1 for word in negative_words if word in text_input.split()])
+
         detected_level = 0
+        if sentiment_score > 0:
+            detected_level = 1
+
         for keyword in self.crisis_keywords:
             if keyword in text_input:
                 detected_level = self.default_crisis_level
@@ -65,13 +72,9 @@ class CrisisSystem:
         print(f"CrisisSystem: Level {level} detected. Executing protocol: '{action_details}'. Input details: {details.get('input_text', 'N/A')[:50]}...")
 
         if action_details == "log_and_monitor_basic_crisis_response":
-            # This is a placeholder action name.
-            # In a real system, this might involve:
-            # 1. Logging the event with severity.
-            # 2. Alerting monitoring systems.
-            # 3. Preparing a specific type of response (handled by DialogueManager).
+            with open("crisis_log.txt", "a") as f:
+                f.write(f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n")
             print(f"CRISIS_LOG: Level {level} event. Details: {details}")
-            # The DialogueManager will be responsible for the actual "basic_crisis_response" text.
         elif action_details == "notify_human_moderator": # Example from previous version
             print(f"CRITICAL_ALERT: Human moderator notification required for crisis level {level}. Details: {details}")
         elif action_details == "log_only":
