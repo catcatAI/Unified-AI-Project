@@ -26,8 +26,9 @@ class ImageGenerationTool:
         print(f"ImageGenerationTool: Received prompt='{prompt}', style='{style}'")
 
         # In a real implementation, this would call an API like DALL-E or Stable Diffusion.
-        # For now, we return a placeholder URL.
-        placeholder_url = f"https://dummyimage.com/600x400/000/fff.png&text=Generated+image+for:+{prompt.replace(' ', '+')}"
+        # For now, we return a more realistic placeholder URL from picsum.photos.
+        seed = sum(ord(c) for c in prompt) # Simple seed from prompt
+        placeholder_url = f"https://picsum.photos/seed/{seed}/600/400"
 
         result = {
             "image_url": placeholder_url,
