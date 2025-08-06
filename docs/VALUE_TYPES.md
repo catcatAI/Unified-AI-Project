@@ -49,3 +49,15 @@ Placeholder values are markers in the code or configuration that indicate someth
 
 - **UI Placeholders:** In the React components, the `placeholder` attribute of input fields (e.g., `<Input placeholder="Search..." />`) is a placeholder for user input.
 - **Placeholder Comments:** In files like `apps/desktop-app/electron_app/src/api/codeAnalysis.ts`, comments like `// Placeholder for Code Analysis API service` indicate that the file contains a mock implementation.
+
+## 4. Implemented Placeholders and Mocks
+
+This section lists the placeholders and mock values that have been implemented or improved.
+
+### Backend (`apps/backend`)
+
+- **`TimeSystem` Reminders:** The placeholder logic in `apps/backend/src/core_ai/time_system.py` has been implemented with an in-memory reminder system.
+- **`Context7MCPConnector` Error Handling:** The `NotImplementedError` in `apps/backend/src/mcp/context7_connector.py` has been replaced with more graceful error handling for unknown message types.
+- **`CrisisSystem` Logic:** The placeholder logic in `apps/backend/src/core_ai/crisis_system.py` has been improved with a simple sentiment analysis and logging mechanism.
+- **`ImageGenerationTool` Mock URL:** The placeholder URL in `apps/backend/src/tools/image_generation_tool.py` has been replaced with a more realistic, dynamic URL from `picsum.photos`.
+- **`VisionService` Mock Values:** The mock values in `apps/backend/src/services/vision_service.py` have been improved to be more dynamic and realistic.
