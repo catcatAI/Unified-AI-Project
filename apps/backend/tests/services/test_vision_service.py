@@ -14,32 +14,46 @@ class TestVisionService(unittest.TestCase):
         print("TestVisionService.test_01_initialization_placeholder PASSED")
 
     @pytest.mark.timeout(15)
-    def test_02_analyze_image_placeholder(self):
+    def test_02_analyze_image(self):
         service = VisionService()
         dummy_image = b"dummy_image_bytes"
-        analysis = service.analyze_image(dummy_image, features=["captioning"])
+        features = ["captioning", "object_detection", "ocr"]
+        analysis = service.analyze_image(dummy_image, features=features)
+
         self.assertIn("caption", analysis)
-        self.assertEqual(analysis["caption"], "A mock image of a cat playing with a ball of yarn.")
+        self.assertIn("A mock image of a captioning, object_detection, ocr.", analysis["caption"])
+
+        self.assertIn("objects", analysis)
+        self.assertIsInstance(analysis["objects"], list)
+
+        self.assertIn("ocr_text", analysis)
+        self.assertIn("Mock OCR text for image with length", analysis["ocr_text"])
 
         analysis_none = service.analyze_image(None) # Test with None input
         self.assertIsNone(analysis_none)
-        print("TestVisionService.test_02_analyze_image_placeholder PASSED")
+        print("TestVisionService.test_02_analyze_image PASSED")
 
     @pytest.mark.timeout(15)
-    def test_03_compare_images_placeholder(self):
+    def test_03_compare_images(self):
         service = VisionService()
         dummy_image1 = b"dummy1"
         dummy_image2 = b"dummy2"
-        similarity = service.compare_images(dummy_image1, dummy_image2)
-        self.assertIsInstance(similarity, float)
-        self.assertGreaterEqual(similarity, 0.0)
-        self.assertLessEqual(similarity, 1.0)
+
+        results = set()
+        for _ in range(10):
+            similarity = service.compare_images(dummy_image1, dummy_image2)
+            self.assertIsInstance(similarity, float)
+            self.assertGreaterEqual(similarity, 0.0)
+            self.assertLessEqual(similarity, 1.0)
+            results.add(similarity)
+
+        self.assertGreater(len(results), 1, "Expected multiple different similarity scores.")
 
         similarity_none1 = service.compare_images(None, dummy_image2)
         self.assertIsNone(similarity_none1)
         similarity_none2 = service.compare_images(dummy_image1, None)
         self.assertIsNone(similarity_none2)
-        print("TestVisionService.test_03_compare_images_placeholder PASSED")
+        print("TestVisionService.test_03_compare_images PASSED")
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
