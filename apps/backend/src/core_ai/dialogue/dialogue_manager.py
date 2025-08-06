@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List, Tuple, TYPE_CHECKING
 import uuid
@@ -95,7 +96,7 @@ class DialogueManager:
         if self.project_coordinator:
             await self.project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
         else:
-            print(f"[{self.ai_id}] Warning: Received HSP task result but ProjectCoordinator is not available.")
+            logging.warning(f"[{self.ai_id}] Received HSP task result but ProjectCoordinator is not available.")
 
     async def get_simple_response(self, user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
         ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
@@ -104,25 +105,34 @@ class DialogueManager:
         # Use triggers from config to activate special handlers
         if self.project_coordinator and user_input.lower().startswith(self.triggers["complex_project"]):
             project_query = user_input[len(self.triggers["complex_project"]):].strip()
-            print(f"[{self.ai_id}] Complex project detected. Delegating to ProjectCoordinator...")
+            logging.info(f"[{self.ai_id}] Complex project detected. Delegating to ProjectCoordinator...")
             return await self.project_coordinator.handle_project(project_query, session_id, user_id)
 
         # --- Existing Simple Response Flow ---
         # This is a simplified version of the original extensive logic.
         # A full implementation would include formula matching, single tool dispatch, etc.
         
-        # Attempt to dispatch a tool based on user input
-        tool_response = await self.tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id)
+        try:
+            # Attempt to dispatch a tool based on user input
+            history = self.active_sessions.get(session_id, [])
+            tool_response = await self.tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id, history=history)
 
-        response_text = ""
-        if tool_response['status'] == "success":
-            response_text = tool_response['payload']
-        elif tool_response['status'] == "no_tool_found" or tool_response['status'] == "no_tool_inferred":
-            response_text = f"{ai_name}: You said '{user_input}'. This is a simple response."
-        else:
-            response_text = f"{ai_name}: An error occurred while processing your request: {tool_response['error_message']}"
+            response_text = ""
+            if tool_response['status'] == "success":
+                response_text = tool_response['payload']
+            elif tool_response['status'] == "no_tool_found" or tool_response['status'] == "no_tool_inferred":
+                response_text = f"{ai_name}: You said '{user_input}'. This is a simple response."
+            else:
+                response_text = f"{ai_name}: An error occurred while processing your request: {tool_response['error_message']}"
+        except Exception as e:
+            logging.error(f"Error dispatching tool: {e}")
+            response_text = f"{ai_name}: I'm sorry, I encountered an error while trying to understand your request."
 
-        # Store user and AI turns in memory
+        # Store user and AI turns in session and memory
+        if session_id and session_id in self.active_sessions:
+            self.active_sessions[session_id].append(DialogueTurn(speaker="user", text=user_input, timestamp=datetime.now(timezone.utc)))
+            self.active_sessions[session_id].append(DialogueTurn(speaker="ai", text=response_text, timestamp=datetime.now(timezone.utc)))
+
         if self.memory_manager:
             user_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id} # type: ignore
             user_mem_id = self.memory_manager.store_experience(user_input, "user_dialogue_text", user_metadata)
@@ -139,8 +149,45 @@ class DialogueManager:
         return response_text
 
     async def start_session(self, user_id: Optional[str] = None, session_id: Optional[str] = None) -> str:
-        print(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}.")
-        if session_id: self.active_sessions[session_id] = []
+        if not session_id:
+            session_id = str(uuid.uuid4())
+        logging.info(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}.")
+        self.active_sessions[session_id] = []
+        base_prompt = self.personality_manager.get_initial_prompt()
+        time_segment = self.time_system.get_time_of_day_segment()
+        greetings = {"morning": "Good morning!", "afternoon": "Good afternoon!", "evening": "Good evening!", "night": "Hello,"}
+        return f"{greetings.get(time_segment, '')} {base_prompt}".strip()
+            response_text = tool_response['payload']
+        elif tool_response['status'] == "no_tool_found" or tool_response['status'] == "no_tool_inferred":
+            response_text = f"{ai_name}: You said '{user_input}'. This is a simple response."
+        else:
+            response_text = f"{ai_name}: An error occurred while processing your request: {tool_response['error_message']}"
+
+        # Store user and AI turns in session and memory
+        if session_id and session_id in self.active_sessions:
+            self.active_sessions[session_id].append(DialogueTurn(speaker="user", text=user_input, timestamp=datetime.now(timezone.utc)))
+            self.active_sessions[session_id].append(DialogueTurn(speaker="ai", text=response_text, timestamp=datetime.now(timezone.utc)))
+
+        if self.memory_manager:
+            user_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id} # type: ignore
+            user_mem_id = self.memory_manager.store_experience(user_input, "user_dialogue_text", user_metadata)
+
+            ai_metadata: DialogueMemoryEntryMetadata = {"speaker": "ai", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id, "user_input_ref": user_mem_id} # type: ignore
+            self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata)
+
+        # Analyze for personality adjustment
+        if self.learning_manager:
+            adjustment = await self.learning_manager.analyze_for_personality_adjustment(user_input)
+            if adjustment and self.personality_manager:
+                self.personality_manager.apply_personality_adjustment(adjustment)
+
+        return response_text
+
+    async def start_session(self, user_id: Optional[str] = None, session_id: Optional[str] = None) -> str:
+        if not session_id:
+            session_id = str(uuid.uuid4())
+        logging.info(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}.")
+        self.active_sessions[session_id] = []
         base_prompt = self.personality_manager.get_initial_prompt()
         time_segment = self.time_system.get_time_of_day_segment()
         greetings = {"morning": "Good morning!", "afternoon": "Good afternoon!", "evening": "Good evening!", "night": "Hello,"}

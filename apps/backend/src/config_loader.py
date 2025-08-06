@@ -2,22 +2,64 @@ import os
 import yaml
 from typing import Dict, Any
 
-def load_config(config_path: str = None) -> Dict[str, Any]:
-    """
-    Loads the application configuration from a YAML file.
-    The default path is 'configs/config.yaml'.
-    """
-    if config_path is None:
-        config_path = os.path.join(os.path.dirname(__file__), '..', 'configs', 'config.yaml')
+_config = None
+_simulated_resources = None
 
-    try:
-        with open(config_path, 'r') as f:
-            return yaml.safe_load(f)
-    except FileNotFoundError:
-        # Handle the case where the config file doesn't exist
-        print(f"Warning: Configuration file not found at {config_path}. Using default empty config.")
-        return {}
-    except yaml.YAMLError as e:
-        # Handle errors during YAML parsing
-        print(f"Error parsing YAML file at {config_path}: {e}")
-        return {}
+def load_config(config_path: str = "configs/config.yaml") -> Dict[str, Any]:
+    """
+    Loads the main configuration file.
+    """
+    global _config
+    if _config is None:
+        backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        full_config_path = os.path.join(backend_root, config_path)
+        with open(full_config_path, 'r') as f:
+            _config = yaml.safe_load(f)
+    return _config
+
+def get_config() -> Dict[str, Any]:
+    """
+    Returns the loaded configuration.
+    """
+    if _config is None:
+        load_config()
+    return _config
+
+def load_simulated_resources(config_path: str = "configs/simulated_resources.yaml") -> Dict[str, Any]:
+    """
+    Loads the simulated resources configuration file.
+    """
+    global _simulated_resources
+    if _simulated_resources is None:
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        full_config_path = os.path.join(project_root, config_path)
+        with open(full_config_path, 'r') as f:
+            _simulated_resources = yaml.safe_load(f)
+    return _simulated_resources
+
+def get_simulated_resources() -> Dict[str, Any]:
+    """
+    Returns the loaded simulated resources.
+    """
+    if _simulated_resources is None:
+        load_simulated_resources()
+    return _simulated_resources
+
+def is_demo_mode() -> bool:
+    """
+    Checks if the application is running in demo mode.
+    """
+    config = get_config()
+    return config.get("use_simulated_resources", False)
+
+def get_mock_placeholder_value(placeholder_type: str, placeholder_key: str) -> Any:
+    """
+    Retrieves a mock value for a given placeholder type and key from the
+    simulated resources configuration.
+    """
+    if not is_demo_mode():
+        return None
+
+    sim_resources = get_simulated_resources()
+    placeholders = sim_resources.get("simulated_resources", {}).get("placeholders", {})
+    return placeholders.get(placeholder_type, {}).get(placeholder_key)
