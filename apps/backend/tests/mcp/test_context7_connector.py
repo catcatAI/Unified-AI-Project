@@ -194,6 +194,22 @@ class TestContext7MCPConnector:
         assert "context_management" in capability_names
         assert "model_collaboration" in capability_names
 
+    @pytest.mark.timeout(5)
+    async def test_unhandled_message_type(self, connector):
+        """Test handling of unhandled message types."""
+        await connector.connect()
+
+        unhandled_message = MCPMessage(
+            type="unhandled_test_type",
+            session_id=connector.session_id,
+            payload={"data": "test"}
+        )
+
+        response = await connector._send_message(unhandled_message)
+
+        assert response["success"] is False
+        assert "Unknown or unhandled message type" in response["error"]
+
 
 @pytest.mark.asyncio
 @pytest.mark.context7
