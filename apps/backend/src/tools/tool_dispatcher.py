@@ -1,4 +1,5 @@
 import re
+import logging
 from typing import Dict, Any, Optional, Callable # Added Callable
 
 # Assuming 'src' is in PYTHONPATH, making 'tools', 'core_ai', 'services' top-level packages
@@ -13,7 +14,13 @@ from src.core_ai.language_models.daily_language_model import DailyLanguageModel
 from src.services.multi_llm_service import MultiLLMService
 from src.shared.types.common_types import ToolDispatcherResponse # Import new response type
 from typing import Literal # For literal status types
-from src.core_ai.rag.rag_manager import RAGManager
+try:
+    from src.core_ai.rag.rag_manager import RAGManager
+    RAG_AVAILABLE = True
+except ImportError as e:
+    print(f"RAG Manager not available: {e}")
+    RAGManager = None
+    RAG_AVAILABLE = False
 
 class ToolDispatcher:
     def __init__(self, llm_service: Optional[MultiLLMService] = None):
@@ -21,29 +28,94 @@ class ToolDispatcher:
         self.code_understanding_tool_instance = CodeUnderstandingTool()
         self.csv_tool_instance = CsvTool()
         self.image_generation_tool_instance = ImageGenerationTool()
-        self.rag_manager = RAGManager()
+        self.rag_manager = RAGManager() if RAG_AVAILABLE else None
 
         self.tools: Dict[str, Callable[..., ToolDispatcherResponse]] = { # type: ignore
             "calculate": self._execute_math_calculation,
             "evaluate_logic": self._execute_logic_evaluation,
             "translate_text": self._execute_translation,
             "inspect_code": self._execute_code_inspection,
-            
             "analyze_csv": self._execute_csv_analysis,
             "create_image": self._execute_image_creation,
         }
+        
+        # Add RAG query tool if available
+        if RAG_AVAILABLE and self.rag_manager:
+            self.tools["rag_query"] = self._execute_rag_query
         self.tool_descriptions = {
             "calculate": "Performs arithmetic calculations. Example: 'calculate 10 + 5', or 'what is 20 / 4?'",
             "evaluate_logic": "Evaluates simple logical expressions (AND, OR, NOT, true, false, parentheses). Example: 'evaluate true AND (false OR NOT true)'",
             "translate_text": "Translates text between Chinese and English. Example: 'translate 你好 to English'",
             "inspect_code": "Describes the structure of available tools. Query examples: 'list_tools', or 'describe_tool math_tool'",
-            "rag_query": "Performs a retrieval-augmented generation query. Example: 'rag_query what is the main purpose of HAM?'",
             "analyze_csv": "Analyzes CSV data. Requires 'csv_content' and 'query' in parameters. Example: 'analyze_csv with query \"summarize\" and csv_content \"a,b\\n1,2\"'",
             "create_image": "Creates an image from a text prompt. Requires 'prompt' and optional 'style'. Example: 'create_image with prompt \"a cat wearing a hat\" and style \"cartoon\"'",
         }
+        
+        # Add RAG query description if available
+        if RAG_AVAILABLE and self.rag_manager:
+            self.tool_descriptions["rag_query"] = "Performs a retrieval-augmented generation query. Example: 'rag_query what is the main purpose of HAM?'"
         self.models = []
         logging.info("ToolDispatcher initialized.")
         logging.info(f"Available tools: {list(self.tools.keys())}")
+
+    async def dispatch_tool_request(self, tool_name: str, parameters: dict) -> dict:
+        """
+        Dispatch a tool request with the given tool name and parameters
+        """
+        try:
+            if tool_name not in self.tools:
+                return {
+                    "status": "error",
+                    "error_message": f"Tool '{tool_name}' not found. Available tools: {list(self.tools.keys())}"
+                }
+            
+            # Call the tool function with proper parameter handling
+            tool_function = self.tools[tool_name]
+            
+            # Handle different tool signatures
+            if tool_name == "inspect_code":
+                # Code inspection expects code and language parameters
+                code = parameters.get("code", "")
+                language = parameters.get("language", "auto")
+                result = tool_function(code, language=language)
+            elif tool_name == "analyze_csv":
+                # CSV analysis expects csv_content and query
+                csv_content = parameters.get("csv_content", "")
+                query = parameters.get("query", "")
+                result = tool_function(query, csv_content=csv_content)
+            elif tool_name == "create_image":
+                # Image creation expects prompt and style
+                prompt = parameters.get("prompt", "")
+                style = parameters.get("style", "realistic")
+                result = tool_function(prompt, style=style)
+            elif tool_name == "translate_text":
+                # Translation expects text and target language
+                text = parameters.get("text_to_translate", parameters.get("text", ""))
+                target_lang = parameters.get("target_language", "English")
+                source_lang = parameters.get("source_language", "auto")
+                result = tool_function(text, target_language=target_lang, source_language=source_lang)
+            else:
+                # Standard tools (calculate, evaluate_logic) expect a query parameter
+                query = parameters.get("query", parameters.get("code", ""))
+                result = tool_function(query, **{k: v for k, v in parameters.items() if k not in ["query", "code"]})
+            
+            # Handle both sync and async results
+            if hasattr(result, '__await__'):
+                result = await result
+            
+            return {
+                "status": "success",
+                "result": result,
+                "tool_name": tool_name
+            }
+            
+        except Exception as e:
+            logging.error(f"Error dispatching tool '{tool_name}': {e}")
+            return {
+                "status": "error",
+                "error_message": str(e),
+                "tool_name": tool_name
+            }
 
     def _execute_csv_analysis(self, query: str, **kwargs) -> ToolDispatcherResponse:
         """
