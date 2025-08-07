@@ -1,0 +1,30 @@
+{
+  "next_memory_id": 3,
+  "store": {
+    "mem_000001": {
+      "timestamp": "2025-08-07T00:53:37.878315+00:00",
+      "data_type": "user_dialogue_text",
+      "encrypted_package_b64": "gAAAAABok_kRWkWmlL-4iEnGSO680wc3amw9rDNoRbeQXcULJg7pfGYcHFZMdVl74BfE0uqYD813RlZjE99ruJuDkge92Zk47tXy8ZaUhGXZA2-Pet1QNyqjEzliQegch-CVsfqrFrLKE5jOxIigp3AqOzxBjwcxcEWBFeFkKDDSI2W_XFcCNkeRWWi6Q_bCI5mnLY28csGEAr13HCYwD2E2zPiQBGZZiH3NxbDjUnlwm-XFRkR6syZeLUS21azcGCCL8Zk4oeMcxd8w-fB5H43LFGFj-r8izB28izSoXtyParWHARgsRluGA-_WofMdcir6tWH9e1mHxKsPKYWzqwpLhzrtZFn0AQ==",
+      "metadata": {
+        "speaker": "user",
+        "timestamp": "2025-08-07T00:53:37.819981+00:00",
+        "user_id": "test_user",
+        "session_id": "test_session",
+        "sha256_checksum": "43542f59197681c6381dd642d1b08ea339cbdee2fdf4264065231f69d9bceafb"
+      }
+    },
+    "mem_000002": {
+      "timestamp": "2025-08-07T00:53:37.886244+00:00",
+      "data_type": "ai_dialogue_text",
+      "encrypted_package_b64": "gAAAAABok_kRYU3XoBuXSL8yLvLKMFsyi1z3Pd0LKbcIBl0nx0Nx0xfoa52D6ocZ_ph997aWndAxv_I2uElAPvjCxtfS7QCQR89g8pdVHJi22dEkfaXYTMQFWmILEAt295r8DpZOEb2zyVFtX62uafMbA6xubefIAnQPwHdtmI-3cvnk8gOdqV6r7LQ0sCOmkyA22TGTD9Gyi3pj4rGl2klspQEOoRuJxdlyvbkGZ3vz9SPX2K-5HpoPsHGMsanYzgi6Q9qiV1G4EmBoCD6ohNjNVoXGc01gaPu_AbFSBmOeTfYXPONSSPZKmcarkhQqUZ61jMygDP5sZ54GdvHOrA3MXxLzql_4pCioe1aECgawRjO0u7MCfp3E0FTCLIsLJYvZthKgVjxgfv1pNPodiWnGzmwEc5hhMNPGAVr8WInYKpVH6eklHT_0lGg5lOrpRR8XXukwMbq4",
+      "metadata": {
+        "speaker": "ai",
+        "timestamp": "2025-08-07T00:53:37.884194+00:00",
+        "user_id": "test_user",
+        "session_id": "test_session",
+        "user_input_ref": "mem_000001",
+        "sha256_checksum": "33efe5e2401c34904518d2384cf6ef28a4fc83c61def23e253c6542f739ab929"
+      }
+    }
+  }
+}

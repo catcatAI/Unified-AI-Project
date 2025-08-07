@@ -586,7 +586,8 @@ async def get_rovo_dev_task_history(limit: int = 50, agent: RovoDevAgent = Depen
 async def analyze_code(request: dict):
     """代码分析"""
     try:
-        code = request.get("code", "")
+        # Handle both 'code' and 'query' parameters for flexibility
+        code = request.get("code") or request.get("query", "")
         language = request.get("language", "auto")
         
         if not code:

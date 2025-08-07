@@ -76,7 +76,7 @@ export function WebSearch() {
     setIsSearching(true)
 
     try {
-      const response = await fetch('/api/py/search', {
+      const response = await fetch('/api/py/api/v1/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
