@@ -48,6 +48,37 @@ class LearningManager:
 
         print(f"LearningManager initialized for AI ID '{self.ai_id}'. Min fact store conf: {self.min_fact_confidence_to_store}, share conf: {self.min_fact_confidence_to_share_via_hsp}, HSP store conf: {self.min_hsp_fact_confidence_to_store}")
 
+    async def analyze_for_personality_adjustment(self, user_input: str) -> dict:
+        """
+        Analyze user input for potential personality adjustments
+        """
+        try:
+            # Simple personality adjustment analysis
+            # In a full implementation, this would use ML models
+            adjustments = {}
+            
+            # Basic sentiment analysis
+            positive_words = ["good", "great", "excellent", "amazing", "wonderful", "fantastic"]
+            negative_words = ["bad", "terrible", "awful", "horrible", "disappointing"]
+            
+            user_lower = user_input.lower()
+            
+            if any(word in user_lower for word in positive_words):
+                adjustments["friendliness"] = 0.1  # Increase friendliness
+            elif any(word in user_lower for word in negative_words):
+                adjustments["empathy"] = 0.1  # Increase empathy
+            
+            # Check for technical questions
+            if any(word in user_lower for word in ["code", "programming", "technical", "algorithm"]):
+                adjustments["technical_focus"] = 0.1
+            
+            return adjustments if adjustments else None
+            
+        except Exception as e:
+            import logging
+            logging.error(f"Error in personality adjustment analysis: {e}")
+            return None
+
     async def process_and_store_learnables(
         self, text: str, user_id: Optional[str], session_id: Optional[str], source_interaction_ref: Optional[str], source_text: Optional[str] = None
     ) -> List[str]:

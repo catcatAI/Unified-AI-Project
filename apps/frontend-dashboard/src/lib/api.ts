@@ -54,7 +54,7 @@ export const apiService = {
   // Health check
   async healthCheck(): Promise<{ status: string; message: string }> {
     try {
-      const response = await api.get('/api/py/api/health');
+      const response = await api.get('/api/py/api/v1/health');
       return response.data;
     } catch (error) {
       console.error('Health check failed:', error);
@@ -68,10 +68,10 @@ export const apiService = {
       // Try multiple possible endpoints
       let response;
       try {
-        response = await api.get('/api/py/status');
+        response = await api.get('/api/py/api/v1/health');
       } catch (statusError) {
         // Try alternative endpoint
-        response = await api.get('/api/py/api/health');
+        response = await api.get('/api/py/api/v1/health');
       }
       
       // Handle different response structures
@@ -120,7 +120,7 @@ export const apiService = {
   // Chat with AI
   async sendChatMessage(message: string, sessionId?: string): Promise<ChatMessage> {
     try {
-      const response = await api.post('/api/py/chat', {
+      const response = await api.post('/api/py/api/v1/chat', {
         message,
         session_id: sessionId,
       });
@@ -135,7 +135,7 @@ export const apiService = {
       console.error('Chat request failed:', error);
       // Fallback to frontend API route
       try {
-        const fallbackResponse = await fetch('/api/py/chat', {
+        const fallbackResponse = await fetch('/api/py/api/v1/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message }),
