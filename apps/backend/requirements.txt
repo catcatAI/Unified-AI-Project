@@ -29,3 +29,4 @@ pandas>=1.3.0
 PyYAML>=6.0
 requests>=2.25.0
 psutil>=5.8.0
+codecarbon

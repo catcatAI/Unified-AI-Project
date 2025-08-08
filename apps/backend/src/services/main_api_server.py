@@ -14,7 +14,16 @@ from src.services.api_models import UserInput, AIOutput, SessionStartRequest, Se
 from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTask # Added HSPTask
 from src.integrations.rovo_dev_agent import RovoDevAgent # Added RovoDevAgent
 from src.integrations.atlassian_bridge import AtlassianBridge # Added AtlassianBridge
-from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector # Added RovoDevConnector
+from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+
+# 导入Atlassian CLI Bridge
+try:
+    from src.integrations.atlassian_cli_bridge import AtlassianCLIBridge
+    ATLASSIAN_CLI_AVAILABLE = True
+except ImportError as e:
+    print(f"Atlassian CLI Bridge not available: {e}")
+    AtlassianCLIBridge = None
+    ATLASSIAN_CLI_AVAILABLE = False # Added RovoDevConnector
 
 
 from contextlib import asynccontextmanager # For lifespan events
@@ -92,6 +101,84 @@ async def get_rovo_dev_agent() -> RovoDevAgent:
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Unified AI Project API"}
+
+# Atlassian CLI集成端点
+@app.get("/api/v1/atlassian/status")
+async def get_atlassian_status():
+    """获取Atlassian CLI状态"""
+    try:
+        acli_bridge = AtlassianCLIBridge()
+        status = acli_bridge.get_status()
+        return status
+    except Exception as e:
+        logging.error(f"Atlassian status check failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/atlassian/jira/projects")
+async def get_jira_projects():
+    """获取Jira项目列表"""
+    try:
+        acli_bridge = AtlassianCLIBridge()
+        result = acli_bridge.get_jira_projects()
+        return result
+    except Exception as e:
+        logging.error(f"Get Jira projects failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/atlassian/jira/issues")
+async def get_jira_issues(jql: str = "", limit: int = 50):
+    """获取Jira问题列表"""
+    try:
+        acli_bridge = AtlassianCLIBridge()
+        result = acli_bridge.get_jira_issues(jql, limit)
+        return result
+    except Exception as e:
+        logging.error(f"Get Jira issues failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/atlassian/jira/issue")
+async def create_jira_issue(request: dict):
+    """创建Jira问题"""
+    try:
+        project_key = request.get("project_key")
+        summary = request.get("summary")
+        description = request.get("description", "")
+        issue_type = request.get("issue_type", "Task")
+        
+        if not project_key or not summary:
+            raise HTTPException(status_code=400, detail="project_key and summary are required")
+        
+        acli_bridge = AtlassianCLIBridge()
+        result = acli_bridge.create_jira_issue(project_key, summary, description, issue_type)
+        return result
+    except Exception as e:
+        logging.error(f"Create Jira issue failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/atlassian/confluence/spaces")
+async def get_confluence_spaces():
+    """获取Confluence空间列表"""
+    try:
+        acli_bridge = AtlassianCLIBridge()
+        result = acli_bridge.get_confluence_spaces()
+        return result
+    except Exception as e:
+        logging.error(f"Get Confluence spaces failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/atlassian/confluence/search")
+async def search_confluence_content(query: str, limit: int = 25):
+    """搜索Confluence内容"""
+    try:
+        if not query:
+            raise HTTPException(status_code=400, detail="query parameter is required")
+        
+        acli_bridge = AtlassianCLIBridge()
+        result = acli_bridge.search_confluence_content(query, limit)
+        return result
+    except Exception as e:
+        logging.error(f"Search Confluence content failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/v1/health")

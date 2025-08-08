@@ -81,6 +81,12 @@ const sidebarItems = [
     description: 'Real-time system monitoring'
   },
   {
+    title: 'Atlassian',
+    icon: Monitor,
+    tab: 'atlassian',
+    description: 'Jira & Confluence'
+  },
+  {
     title: 'Settings',
     icon: Settings,
     tab: 'settings',
