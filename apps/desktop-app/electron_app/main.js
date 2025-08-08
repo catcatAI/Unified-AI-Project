@@ -103,7 +103,7 @@ ipcMain.handle(CHANNELS.GAME_START, async () => {
 });
 
 async function handleApiCall(method, apiPath, data) {
-    const url = `${backendApiUrl}/api/${apiPath}`;
+    const url = `${backendApiUrl}/api/v1/${apiPath}`;
     try {
         const response = await fetch(url, {
             method: method.toUpperCase(),
@@ -125,7 +125,24 @@ ipcMain.handle(CHANNELS.API_START_SESSION, async (event, data) => {
 });
 
 ipcMain.handle(CHANNELS.API_SEND_MESSAGE, async (event, data) => {
-    return handleApiCall("post", "session/message", data);
+    return handleApiCall("post", "chat", data);
+});
+
+// 添加新的API处理器
+ipcMain.handle("api:code-analysis", async (event, data) => {
+    return handleApiCall("post", "code", data);
+});
+
+ipcMain.handle("api:search", async (event, data) => {
+    return handleApiCall("post", "search", data);
+});
+
+ipcMain.handle("api:image-generation", async (event, data) => {
+    return handleApiCall("post", "image", data);
+});
+
+ipcMain.handle("api:health", async (event) => {
+    return handleApiCall("get", "health");
 });
 
 ipcMain.handle(CHANNELS.HSP_GET_DISCOVERED_SERVICES, async (event, data) => {

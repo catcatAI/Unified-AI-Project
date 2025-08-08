@@ -12,6 +12,7 @@ import { NeuralNetwork } from './tabs/neural-network'
 import { GithubConnect } from './tabs/github-connect'
 import { SystemMonitor } from './tabs/system-monitor'
 import { Settings } from './tabs/settings'
+import AtlassianIntegration from './tabs/atlassian-integration'
 
 export function DashboardLayout() {
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -38,6 +39,8 @@ export function DashboardLayout() {
         return <SystemMonitor />
       case 'settings':
         return <Settings />
+      case 'atlassian':
+        return <AtlassianIntegration />
       default:
         return <DashboardOverview />
     }

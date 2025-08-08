@@ -1,3 +1,11 @@
 {
-  "backend_api_url": "http://localhost:8000"
+  "backend_api_url": "http://localhost:8000",
+  "api_version": "v1",
+  "features": {
+    "chat": true,
+    "code_analysis": true,
+    "search": true,
+    "image_generation": true,
+    "hsp": true
+  }
 }

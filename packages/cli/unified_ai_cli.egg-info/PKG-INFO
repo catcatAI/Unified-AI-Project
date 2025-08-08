@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: unified-ai-cli
+Version: 1.1.0
+Summary: Unified AI Project CLI
+Author: Unified AI Project
+Requires-Python: >=3.8
+Requires-Dist: requests>=2.25.0
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
