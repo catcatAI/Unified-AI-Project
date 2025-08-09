@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui'
 import { Badge } from '@acme/ui'
 import { Button } from '@acme/ui'
+import { useAIAgents } from '@/hooks/use-api-data'
 import { 
   Bot, 
   Activity, 
@@ -17,23 +18,16 @@ import {
   Image,
   Search,
   Code,
-  Database
+  Database,
+  Loader2,
+  RefreshCw
 } from 'lucide-react'
 
-interface Agent {
-  id: string
-  name: string
-  type: string
-  status: 'online' | 'offline' | 'busy' | 'error'
-  description: string
-  capabilities: string[]
-  lastActive: Date
-  tasksCompleted: number
-  icon: any
-}
-
 export function AIAgents() {
-  const agents: Agent[] = [
+  const { data: agents, loading, error, refresh, performAction } = useAIAgents()
+
+  // Mock agents for fallback (keeping original structure)
+  const mockAgents = [
     {
       id: '1',
       name: 'Chat Agent',
@@ -102,6 +96,15 @@ export function AIAgents() {
     }
   ]
 
+  const handleAgentAction = async (agentId: string, action: string) => {
+    try {
+      await performAction(agentId, action)
+      // performAction already refreshes the data
+    } catch (error) {
+      console.error('Failed to execute agent action:', error)
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'online':
@@ -143,8 +146,33 @@ export function AIAgents() {
     return `${Math.floor(minutes / 1440)}d ago`
   }
 
-  const totalTasks = agents.reduce((sum, agent) => sum + agent.tasksCompleted, 0)
-  const onlineAgents = agents.filter(agent => agent.status === 'online' || agent.status === 'busy').length
+  // Use real data when available, fallback to mock data
+  const currentAgents = agents || mockAgents
+  const totalTasks = currentAgents.reduce((sum, agent) => sum + (agent.tasks_completed || agent.tasksCompleted || 0), 0)
+  const onlineAgents = currentAgents.filter(agent => agent.status === 'online' || agent.status === 'busy').length
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading AI agents...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold mb-2">Failed to load AI agents</h3>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <Button onClick={refresh}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Retry
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -158,12 +186,16 @@ export function AIAgents() {
         <div className="flex gap-2">
           <Badge variant="outline">
             <Bot className="mr-2 h-4 w-4" />
-            {agents.length} agents
+            {currentAgents.length} agents
           </Badge>
           <Badge variant="outline">
             <Activity className="mr-2 h-4 w-4" />
             {onlineAgents} online
           </Badge>
+          <Button variant="outline" size="sm" onClick={refresh} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
       </div>
 
@@ -175,7 +207,7 @@ export function AIAgents() {
             <Bot className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{agents.length}</div>
+            <div className="text-2xl font-bold">{currentAgents.length}</div>
             <p className="text-xs text-muted-foreground">
               {onlineAgents} currently active
             </p>
@@ -211,8 +243,14 @@ export function AIAgents() {
 
       {/* Agents Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {agents.map((agent) => {
-          const Icon = agent.icon
+        {currentAgents.map((agent) => {
+          // Handle both API response format and mock data format
+          const agentIcon = agent.icon || MessageSquare
+          const Icon = agentIcon
+          const agentCapabilities = agent.capabilities || []
+          const agentTasksCompleted = agent.tasks_completed || agent.tasksCompleted || 0
+          const agentLastActive = agent.last_active ? new Date(agent.last_active) : (agent.lastActive || new Date())
+          
           return (
             <Card key={agent.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
@@ -232,7 +270,7 @@ export function AIAgents() {
                 <div>
                   <p className="text-sm font-medium mb-2">Capabilities</p>
                   <div className="flex flex-wrap gap-1">
-                    {agent.capabilities.map((capability, index) => (
+                    {agentCapabilities.map((capability, index) => (
                       <Badge key={index} variant="outline" className="text-xs">
                         {capability}
                       </Badge>
@@ -243,25 +281,32 @@ export function AIAgents() {
                 <div className="flex items-center justify-between text-sm">
                   <div>
                     <span className="text-muted-foreground">Tasks: </span>
-                    <span className="font-medium">{agent.tasksCompleted}</span>
+                    <span className="font-medium">{agentTasksCompleted}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Last: </span>
-                    <span className="font-medium">{formatTime(agent.lastActive)}</span>
+                    <span className="font-medium">{formatTime(agentLastActive)}</span>
                   </div>
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleAgentAction(agent.id, 'configure')}
+                    disabled={loading}
+                  >
                     <Settings className="mr-1 h-3 w-3" />
                     Configure
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
-                    disabled={agent.status === 'online' || agent.status === 'busy'}
+                    onClick={() => handleAgentAction(agent.id, agent.status === 'offline' ? 'start' : 'stop')}
+                    disabled={loading || agent.status === 'busy'}
                   >
-                    <Play className="h-3 w-3" />
+                    {agent.status === 'offline' ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
                   </Button>
                 </div>
               </CardContent>

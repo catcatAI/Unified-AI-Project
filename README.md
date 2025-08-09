@@ -37,6 +37,13 @@ To set up and run the entire monorepo, follow these steps:
 
 ## Running Tests
 
+### Export OpenAPI spec
+```bash
+python Unified-AI-Project/scripts/export_openapi.py
+# output: Unified-AI-Project/docs/api/openapi.json
+```
+
+
 To run all tests across the monorepo:
 
 ```bash

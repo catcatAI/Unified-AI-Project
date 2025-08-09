@@ -50,9 +50,19 @@ export const navigationItems = [
     icon: Workflow,
   },
   {
+    title: "Workflows",
+    url: "/workflows",
+    icon: Workflow,
+  },
+  {
     title: "Settings",
     url: "/settings",
     icon: Settings,
+  },
+  {
+    title: "Atlassian",
+    url: "/atlassian",
+    icon: Network,
   },
 ]
 
