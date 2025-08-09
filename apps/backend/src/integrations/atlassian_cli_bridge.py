@@ -115,7 +115,9 @@ class AtlassianCLIBridge:
             }
     
     def create_jira_issue(self, project_key: str, summary: str, 
-                         description: str = "", issue_type: str = "Task") -> Dict[str, Any]:
+                         description: str = "", issue_type: str = "Task",
+                         priority: Optional[str] = None,
+                         labels: Optional[list] = None) -> Dict[str, Any]:
         """创建Jira问题"""
         command = [
             "jira", "issue", "create",
@@ -124,9 +126,14 @@ class AtlassianCLIBridge:
             "--type", issue_type,
             "--output-format", "json"
         ]
-        
         if description:
             command.extend(["--description", description])
+        if priority:
+            command.extend(["--priority", priority])
+        if labels:
+            labels_str = ",".join([str(x).strip() for x in labels if str(x).strip()])
+            if labels_str:
+                command.extend(["--labels", labels_str])
         
         result = self._run_acli_command(command)
         

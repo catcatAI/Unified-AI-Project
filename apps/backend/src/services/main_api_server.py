@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from datetime import datetime
 import logging
 import uuid # For generating session IDs
+import time # For system uptime calculations
 from typing import List, Dict, Any, Optional # Updated from previous steps
 from fastapi.middleware.cors import CORSMiddleware # Import CORS middleware
 
@@ -144,12 +145,19 @@ async def create_jira_issue(request: dict):
         summary = request.get("summary")
         description = request.get("description", "")
         issue_type = request.get("issue_type", "Task")
+        priority = request.get("priority")
+        labels_raw = request.get("labels")  # comma separated string or list
+        labels_list = []
+        if isinstance(labels_raw, str):
+            labels_list = [x.strip() for x in labels_raw.split(",") if x.strip()]
+        elif isinstance(labels_raw, list):
+            labels_list = [str(x).strip() for x in labels_raw if str(x).strip()]
         
         if not project_key or not summary:
             raise HTTPException(status_code=400, detail="project_key and summary are required")
         
         acli_bridge = AtlassianCLIBridge()
-        result = acli_bridge.create_jira_issue(project_key, summary, description, issue_type)
+        result = acli_bridge.create_jira_issue(project_key, summary, description, issue_type, priority=priority, labels=labels_list)
         return result
     except Exception as e:
         logging.error(f"Create Jira issue failed: {e}")
@@ -180,6 +188,10 @@ async def search_confluence_content(query: str, limit: int = 25):
         logging.error(f"Search Confluence content failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.get("/api/v1/openapi")
+async def get_openapi_spec():
+    return app.openapi()
 
 @app.get("/api/v1/health")
 async def get_health_status():
@@ -228,6 +240,830 @@ async def get_health_status():
     }
 
 
+@app.get("/api/v1/system/services")
+async def get_system_services():
+    """获取所有系统服务的详细状态"""
+    services = get_services()
+    
+    service_details = []
+    
+    # Core AI Services
+    core_services = [
+        ("llm_interface", "LLM Interface", "AI語言模型接口服務"),
+        ("ham_manager", "HAM Memory Manager", "分層記憶管理系統"),
+        ("personality_manager", "Personality Manager", "AI個性管理系統"),
+        ("trust_manager", "Trust Manager", "信任評估系統"),
+        ("hsp_connector", "HSP Connector", "HSP協議連接器"),
+        ("service_discovery", "Service Discovery", "服務發現模組"),
+        ("fact_extractor", "Fact Extractor", "事實提取模組"),
+        ("content_analyzer", "Content Analyzer", "內容分析模組"),
+        ("learning_manager", "Learning Manager", "學習管理系統"),
+        ("emotion_system", "Emotion System", "情感系統"),
+        ("crisis_system", "Crisis System", "危機處理系統"),
+        ("time_system", "Time System", "時間管理系統"),
+        ("formula_engine", "Formula Engine", "公式引擎"),
+        ("tool_dispatcher", "Tool Dispatcher", "工具調度器"),
+        ("dialogue_manager", "Dialogue Manager", "對話管理系統"),
+        ("agent_manager", "Agent Manager", "代理管理系統"),
+        ("ai_virtual_input_service", "AI Virtual Input", "AI虛擬輸入服務"),
+        ("audio_service", "Audio Service", "音頻處理服務"),
+        ("vision_service", "Vision Service", "視覺處理服務"),
+        ("resource_awareness_service", "Resource Awareness", "資源感知服務")
+    ]
+    
+    for service_key, service_name, description in core_services:
+        service_instance = services.get(service_key)
+        if service_instance:
+            # Check if service has specific status methods
+            status = "running"
+            last_check = datetime.now().isoformat()
+            
+            # Special status checks for specific services
+            if service_key == "hsp_connector" and hasattr(service_instance, 'is_connected'):
+                status = "connected" if service_instance.is_connected else "disconnected"
+            elif service_key == "agent_manager" and hasattr(service_instance, 'get_active_agents'):
+                try:
+                    active_agents = service_instance.get_active_agents()
+                    status = f"running ({len(active_agents)} agents)"
+                except:
+                    status = "running"
+            
+            service_details.append({
+                "id": service_key,
+                "name": service_name,
+                "description": description,
+                "status": status,
+                "lastCheck": last_check,
+                "type": "core"
+            })
+        else:
+            service_details.append({
+                "id": service_key,
+                "name": service_name,
+                "description": description,
+                "status": "not_initialized",
+                "lastCheck": datetime.now().isoformat(),
+                "type": "core"
+            })
+    
+    return {
+        "services": service_details,
+        "timestamp": datetime.now().isoformat(),
+        "total_services": len(service_details),
+        "running_services": len([s for s in service_details if s["status"] not in ["not_initialized", "disconnected"]])
+    }
+
+
+@app.get("/api/v1/system/metrics/detailed")
+async def get_detailed_system_metrics():
+    """获取详细的系统性能指标"""
+    import psutil
+    import shutil
+    import os
+    from datetime import datetime
+    
+    try:
+        # CPU 詳細信息
+        cpu_info = {
+            "usage_percent": round(psutil.cpu_percent(interval=1), 1),
+            "core_count": psutil.cpu_count(logical=False),
+            "logical_count": psutil.cpu_count(logical=True),
+            "frequency": {
+                "current": round(psutil.cpu_freq().current, 1) if psutil.cpu_freq() else 0,
+                "min": round(psutil.cpu_freq().min, 1) if psutil.cpu_freq() else 0,
+                "max": round(psutil.cpu_freq().max, 1) if psutil.cpu_freq() else 0
+            },
+            "per_core_usage": [round(x, 1) for x in psutil.cpu_percent(percpu=True)]
+        }
+        
+        # 記憶體詳細信息
+        memory = psutil.virtual_memory()
+        swap = psutil.swap_memory()
+        memory_info = {
+            "total_gb": round(memory.total / (1024**3), 2),
+            "available_gb": round(memory.available / (1024**3), 2),
+            "used_gb": round(memory.used / (1024**3), 2),
+            "free_gb": round(memory.free / (1024**3), 2),
+            "percent": round(memory.percent, 1),
+            "swap": {
+                "total_gb": round(swap.total / (1024**3), 2),
+                "used_gb": round(swap.used / (1024**3), 2),
+                "free_gb": round(swap.free / (1024**3), 2),
+                "percent": round(swap.percent, 1)
+            }
+        }
+        
+        # 磁碟詳細信息
+        disk_info = []
+        for partition in psutil.disk_partitions():
+            try:
+                usage = psutil.disk_usage(partition.mountpoint)
+                disk_info.append({
+                    "device": partition.device,
+                    "mountpoint": partition.mountpoint,
+                    "fstype": partition.fstype,
+                    "total_gb": round(usage.total / (1024**3), 2),
+                    "used_gb": round(usage.used / (1024**3), 2),
+                    "free_gb": round(usage.free / (1024**3), 2),
+                    "percent": round((usage.used / usage.total) * 100, 1)
+                })
+            except PermissionError:
+                continue
+        
+        # 網路詳細信息
+        network_io = psutil.net_io_counters()
+        network_info = {
+            "bytes_sent": network_io.bytes_sent,
+            "bytes_recv": network_io.bytes_recv,
+            "packets_sent": network_io.packets_sent,
+            "packets_recv": network_io.packets_recv,
+            "errin": network_io.errin,
+            "errout": network_io.errout,
+            "dropin": network_io.dropin,
+            "dropout": network_io.dropout
+        }
+        
+        # 進程信息
+        process_info = {
+            "total_processes": len(psutil.pids()),
+            "running_processes": len([p for p in psutil.process_iter(['status']) if p.info['status'] == psutil.STATUS_RUNNING]),
+            "sleeping_processes": len([p for p in psutil.process_iter(['status']) if p.info['status'] == psutil.STATUS_SLEEPING])
+        }
+        
+        # 系統溫度（如果可用）
+        temperature_info = {}
+        try:
+            temps = psutil.sensors_temperatures()
+            if temps:
+                for name, entries in temps.items():
+                    temperature_info[name] = [{
+                        "label": entry.label or "Unknown",
+                        "current": entry.current,
+                        "high": entry.high,
+                        "critical": entry.critical
+                    } for entry in entries]
+        except:
+            temperature_info = {"note": "Temperature sensors not available"}
+        
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "cpu": cpu_info,
+            "memory": memory_info,
+            "disk": disk_info,
+            "network": network_info,
+            "processes": process_info,
+            "temperature": temperature_info,
+            "uptime_seconds": round(time.time() - psutil.boot_time(), 1)
+        }
+        
+    except Exception as e:
+        logging.error(f"Error getting detailed system metrics: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get system metrics: {str(e)}")
+
+
+@app.get("/api/v1/agents")
+async def get_agents():
+    """获取所有AI代理的状态"""
+    services = get_services()
+    agent_manager = services.get("agent_manager")
+    
+    if not agent_manager:
+        return {
+            "agents": [],
+            "timestamp": datetime.now().isoformat(),
+            "total_agents": 0,
+            "active_agents": 0
+        }
+    
+    try:
+        # Get active agents if method exists
+        active_agents = []
+        if hasattr(agent_manager, 'get_active_agents'):
+            active_agents = agent_manager.get_active_agents()
+        
+        # Create agent list with mock data for demonstration
+        agents = [
+            {
+                "id": "dialogue_agent",
+                "name": "對話代理",
+                "type": "dialogue",
+                "status": "active" if "dialogue_agent" in [a.get('id', '') for a in active_agents] else "idle",
+                "lastActivity": datetime.now().isoformat(),
+                "capabilities": ["natural_language", "conversation", "context_awareness"],
+                "performance": {
+                    "responseTime": 1.2,
+                    "accuracy": 0.95,
+                    "uptime": 99.8
+                }
+            },
+            {
+                "id": "code_agent",
+                "name": "代碼分析代理",
+                "type": "code_analysis",
+                "status": "active" if "code_agent" in [a.get('id', '') for a in active_agents] else "idle",
+                "lastActivity": datetime.now().isoformat(),
+                "capabilities": ["code_analysis", "debugging", "optimization"],
+                "performance": {
+                    "responseTime": 2.1,
+                    "accuracy": 0.92,
+                    "uptime": 98.5
+                }
+            },
+            {
+                "id": "vision_agent",
+                "name": "視覺處理代理",
+                "type": "vision",
+                "status": "active" if services.get("vision_service") else "inactive",
+                "lastActivity": datetime.now().isoformat(),
+                "capabilities": ["image_analysis", "object_detection", "ocr"],
+                "performance": {
+                    "responseTime": 3.5,
+                    "accuracy": 0.89,
+                    "uptime": 97.2
+                }
+            },
+            {
+                "id": "audio_agent",
+                "name": "音頻處理代理",
+                "type": "audio",
+                "status": "active" if services.get("audio_service") else "inactive",
+                "lastActivity": datetime.now().isoformat(),
+                "capabilities": ["speech_recognition", "audio_analysis", "tts"],
+                "performance": {
+                    "responseTime": 2.8,
+                    "accuracy": 0.91,
+                    "uptime": 96.8
+                }
+            }
+        ]
+        
+        active_count = len([a for a in agents if a["status"] == "active"])
+        
+        return {
+            "agents": agents,
+            "timestamp": datetime.now().isoformat(),
+            "total_agents": len(agents),
+            "active_agents": active_count
+        }
+        
+    except Exception as e:
+        logging.error(f"Error getting agents: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get agents: {str(e)}")
+
+
+@app.get("/api/v1/agents/{agent_id}")
+async def get_agent_details(agent_id: str):
+    """获取特定AI代理的详细信息"""
+    services = get_services()
+    agent_manager = services.get("agent_manager")
+    
+    # Mock agent details based on agent_id
+    agent_details = {
+        "dialogue_agent": {
+            "id": "dialogue_agent",
+            "name": "對話代理",
+            "type": "dialogue",
+            "status": "active",
+            "version": "2.1.0",
+            "created": "2024-01-15T10:30:00Z",
+            "lastActivity": datetime.now().isoformat(),
+            "capabilities": ["natural_language", "conversation", "context_awareness"],
+            "configuration": {
+                "max_context_length": 4096,
+                "temperature": 0.7,
+                "response_timeout": 30
+            },
+            "performance": {
+                "responseTime": 1.2,
+                "accuracy": 0.95,
+                "uptime": 99.8,
+                "totalRequests": 15420,
+                "successfulRequests": 14649,
+                "failedRequests": 771
+            },
+            "resources": {
+                "memoryUsage": 512.5,
+                "cpuUsage": 15.2,
+                "networkIO": 1024.8
+            }
+        },
+        "code_agent": {
+            "id": "code_agent",
+            "name": "代碼分析代理",
+            "type": "code_analysis",
+            "status": "active",
+            "version": "1.8.3",
+            "created": "2024-01-10T14:20:00Z",
+            "lastActivity": datetime.now().isoformat(),
+            "capabilities": ["code_analysis", "debugging", "optimization"],
+            "configuration": {
+                "supported_languages": ["python", "javascript", "typescript", "java"],
+                "max_file_size": 10485760,
+                "analysis_depth": "deep"
+            },
+            "performance": {
+                "responseTime": 2.1,
+                "accuracy": 0.92,
+                "uptime": 98.5,
+                "totalRequests": 8932,
+                "successfulRequests": 8214,
+                "failedRequests": 718
+            },
+            "resources": {
+                "memoryUsage": 1024.2,
+                "cpuUsage": 25.8,
+                "networkIO": 512.4
+            }
+        }
+    }
+    
+    if agent_id not in agent_details:
+        raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+    
+    return agent_details[agent_id]
+
+
+@app.post("/api/v1/agents/{agent_id}/action")
+async def perform_agent_action(agent_id: str, action: dict):
+    """对AI代理执行操作（启动、停止、重启等）"""
+    services = get_services()
+    agent_manager = services.get("agent_manager")
+    
+    action_type = action.get("type")
+    if not action_type:
+        raise HTTPException(status_code=400, detail="Action type is required")
+    
+    # Validate agent exists
+    valid_agents = ["dialogue_agent", "code_agent", "vision_agent", "audio_agent"]
+    if agent_id not in valid_agents:
+        raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+    
+    # Simulate action execution
+    if action_type == "start":
+        result = {"status": "success", "message": f"Agent {agent_id} started successfully"}
+    elif action_type == "stop":
+        result = {"status": "success", "message": f"Agent {agent_id} stopped successfully"}
+    elif action_type == "restart":
+        result = {"status": "success", "message": f"Agent {agent_id} restarted successfully"}
+    elif action_type == "configure":
+        config = action.get("config", {})
+        result = {"status": "success", "message": f"Agent {agent_id} configuration updated", "config": config}
+    else:
+        raise HTTPException(status_code=400, detail=f"Unknown action type: {action_type}")
+    
+    return {
+        "agentId": agent_id,
+        "action": action_type,
+        "result": result,
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.get("/api/v1/models")
+async def get_neural_network_models():
+    """获取所有神经网络模型的状态"""
+    services = get_services()
+    tool_dispatcher = services.get("tool_dispatcher")
+    
+    # Mock neural network models data
+    models = [
+        {
+            "id": "gpt-4-turbo",
+            "name": "GPT-4 Turbo",
+            "type": "language_model",
+            "status": "active",
+            "version": "2024.1",
+            "provider": "OpenAI",
+            "lastUsed": datetime.now().isoformat(),
+            "performance": {
+                "averageResponseTime": 2.1,
+                "tokensPerSecond": 45.2,
+                "accuracy": 0.94,
+                "uptime": 99.5
+            },
+            "usage": {
+                "totalRequests": 12450,
+                "successfulRequests": 11728,
+                "failedRequests": 722,
+                "totalTokens": 2847392
+            },
+            "configuration": {
+                "maxTokens": 4096,
+                "temperature": 0.7,
+                "topP": 0.9
+            }
+        },
+        {
+            "id": "claude-3-sonnet",
+            "name": "Claude 3 Sonnet",
+            "type": "language_model",
+            "status": "active",
+            "version": "3.0",
+            "provider": "Anthropic",
+            "lastUsed": datetime.now().isoformat(),
+            "performance": {
+                "averageResponseTime": 1.8,
+                "tokensPerSecond": 52.1,
+                "accuracy": 0.92,
+                "uptime": 98.8
+            },
+            "usage": {
+                "totalRequests": 8932,
+                "successfulRequests": 8456,
+                "failedRequests": 476,
+                "totalTokens": 1923847
+            },
+            "configuration": {
+                "maxTokens": 4096,
+                "temperature": 0.7,
+                "topP": 0.9
+            }
+        },
+        {
+            "id": "vision-transformer",
+            "name": "Vision Transformer",
+            "type": "vision_model",
+            "status": "active" if services.get("vision_service") else "inactive",
+            "version": "1.2.0",
+            "provider": "Custom",
+            "lastUsed": datetime.now().isoformat(),
+            "performance": {
+                "averageResponseTime": 3.2,
+                "imagesPerSecond": 12.5,
+                "accuracy": 0.89,
+                "uptime": 97.2
+            },
+            "usage": {
+                "totalRequests": 3421,
+                "successfulRequests": 3045,
+                "failedRequests": 376,
+                "totalImages": 3421
+            },
+            "configuration": {
+                "inputSize": "224x224",
+                "batchSize": 32,
+                "precision": "fp16"
+            }
+        },
+        {
+            "id": "whisper-large",
+            "name": "Whisper Large",
+            "type": "audio_model",
+            "status": "active" if services.get("audio_service") else "inactive",
+            "version": "3.0",
+            "provider": "OpenAI",
+            "lastUsed": datetime.now().isoformat(),
+            "performance": {
+                "averageResponseTime": 4.1,
+                "audioMinutesPerSecond": 2.8,
+                "accuracy": 0.91,
+                "uptime": 96.8
+            },
+            "usage": {
+                "totalRequests": 1847,
+                "successfulRequests": 1682,
+                "failedRequests": 165,
+                "totalAudioMinutes": 5234.7
+            },
+            "configuration": {
+                "language": "auto",
+                "task": "transcribe",
+                "temperature": 0.0
+            }
+        }
+    ]
+    
+    active_models = len([m for m in models if m["status"] == "active"])
+    
+    return {
+        "models": models,
+        "timestamp": datetime.now().isoformat(),
+        "total_models": len(models),
+        "active_models": active_models
+    }
+
+
+@app.get("/api/v1/models/{model_id}/metrics")
+async def get_model_metrics(model_id: str):
+    """获取特定模型的详细性能指标"""
+    import random
+    from datetime import datetime, timedelta
+    
+    # Generate mock time series data for the last 24 hours
+    now = datetime.now()
+    time_points = []
+    response_times = []
+    throughput = []
+    accuracy = []
+    error_rates = []
+    
+    for i in range(24):
+        time_point = now - timedelta(hours=23-i)
+        time_points.append(time_point.isoformat())
+        
+        # Generate realistic mock data with some variation
+        base_response_time = 2.0 if "gpt" in model_id else 1.8
+        response_times.append(round(base_response_time + random.uniform(-0.5, 0.5), 2))
+        
+        base_throughput = 45.0 if "gpt" in model_id else 52.0
+        throughput.append(round(base_throughput + random.uniform(-10, 10), 1))
+        
+        base_accuracy = 0.94 if "gpt" in model_id else 0.92
+        accuracy.append(round(base_accuracy + random.uniform(-0.02, 0.02), 3))
+        
+        error_rates.append(round(random.uniform(0.01, 0.05), 3))
+    
+    # Model-specific metrics
+    model_metrics = {
+        "gpt-4-turbo": {
+            "modelId": model_id,
+            "timeRange": "24h",
+            "metrics": {
+                "responseTime": {
+                    "current": response_times[-1],
+                    "average": round(sum(response_times) / len(response_times), 2),
+                    "min": min(response_times),
+                    "max": max(response_times),
+                    "timeSeries": list(zip(time_points, response_times))
+                },
+                "throughput": {
+                    "current": throughput[-1],
+                    "average": round(sum(throughput) / len(throughput), 1),
+                    "min": min(throughput),
+                    "max": max(throughput),
+                    "timeSeries": list(zip(time_points, throughput))
+                },
+                "accuracy": {
+                    "current": accuracy[-1],
+                    "average": round(sum(accuracy) / len(accuracy), 3),
+                    "min": min(accuracy),
+                    "max": max(accuracy),
+                    "timeSeries": list(zip(time_points, accuracy))
+                },
+                "errorRate": {
+                    "current": error_rates[-1],
+                    "average": round(sum(error_rates) / len(error_rates), 3),
+                    "min": min(error_rates),
+                    "max": max(error_rates),
+                    "timeSeries": list(zip(time_points, error_rates))
+                }
+            },
+            "resourceUsage": {
+                "gpuUtilization": round(random.uniform(60, 85), 1),
+                "memoryUsage": round(random.uniform(8, 12), 1),
+                "powerConsumption": round(random.uniform(200, 300), 1)
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+    }
+    
+    # Return default metrics if model not found
+    if model_id not in model_metrics:
+        return {
+            "modelId": model_id,
+            "timeRange": "24h",
+            "metrics": {
+                "responseTime": {"current": 0, "average": 0, "timeSeries": []},
+                "throughput": {"current": 0, "average": 0, "timeSeries": []},
+                "accuracy": {"current": 0, "average": 0, "timeSeries": []},
+                "errorRate": {"current": 0, "average": 0, "timeSeries": []}
+            },
+            "resourceUsage": {"gpuUtilization": 0, "memoryUsage": 0, "powerConsumption": 0},
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    return model_metrics[model_id]
+
+
+@app.get("/api/v1/models/{model_id}/training")
+async def get_model_training_status(model_id: str):
+    """获取模型训练状态和历史"""
+    import random
+    from datetime import datetime, timedelta
+    
+    # Mock training data
+    training_sessions = [
+        {
+            "id": "train_001",
+            "startTime": (datetime.now() - timedelta(days=7)).isoformat(),
+            "endTime": (datetime.now() - timedelta(days=6, hours=18)).isoformat(),
+            "status": "completed",
+            "dataset": "custom_dataset_v2",
+            "epochs": 10,
+            "batchSize": 32,
+            "learningRate": 0.001,
+            "finalLoss": 0.0234,
+            "finalAccuracy": 0.945,
+            "duration": "6h 12m"
+        },
+        {
+            "id": "train_002",
+            "startTime": (datetime.now() - timedelta(days=3)).isoformat(),
+            "endTime": None,
+            "status": "running",
+            "dataset": "custom_dataset_v3",
+            "epochs": 15,
+            "batchSize": 64,
+            "learningRate": 0.0005,
+            "currentEpoch": 8,
+            "currentLoss": 0.0189,
+            "currentAccuracy": 0.952,
+            "estimatedTimeRemaining": "2h 45m"
+        }
+    ]
+    
+    # Generate loss and accuracy curves for current training
+    current_training = next((t for t in training_sessions if t["status"] == "running"), None)
+    loss_curve = []
+    accuracy_curve = []
+    
+    if current_training:
+        for epoch in range(1, current_training["currentEpoch"] + 1):
+            # Simulate decreasing loss and increasing accuracy
+            loss = 0.1 * (1 / epoch) + random.uniform(-0.005, 0.005)
+            acc = 0.8 + (0.15 * (1 - 1/epoch)) + random.uniform(-0.01, 0.01)
+            loss_curve.append({"epoch": epoch, "loss": round(loss, 4)})
+            accuracy_curve.append({"epoch": epoch, "accuracy": round(acc, 3)})
+    
+    return {
+        "modelId": model_id,
+        "currentTraining": current_training,
+        "trainingHistory": training_sessions,
+        "curves": {
+            "loss": loss_curve,
+            "accuracy": accuracy_curve
+        },
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.get("/api/v1/images/history")
+async def get_image_generation_history():
+    """获取图像生成历史记录"""
+    import random
+    from datetime import datetime, timedelta
+    
+    # Mock image generation history
+    history = []
+    
+    # Generate mock history for the last 30 days
+    for i in range(50):  # 50 recent generations
+        created_time = datetime.now() - timedelta(days=random.randint(0, 30), hours=random.randint(0, 23))
+        
+        prompts = [
+            "A futuristic cityscape with flying cars",
+            "Abstract art with vibrant colors",
+            "Portrait of a robot in Renaissance style",
+            "Landscape with mountains and aurora",
+            "Steampunk mechanical device",
+            "Underwater scene with coral reef",
+            "Space station orbiting Earth",
+            "Medieval castle in the clouds",
+            "Cyberpunk street scene at night",
+            "Fantasy forest with magical creatures"
+        ]
+        
+        styles = ["realistic", "artistic", "cartoon", "photographic", "digital_art"]
+        statuses = ["completed", "completed", "completed", "failed", "processing"]
+        
+        image_entry = {
+            "id": f"img_{1000 + i}",
+            "prompt": random.choice(prompts),
+            "style": random.choice(styles),
+            "model": random.choice(["dall-e-3", "midjourney", "stable-diffusion"]),
+            "status": random.choice(statuses),
+            "createdAt": created_time.isoformat(),
+            "completedAt": (created_time + timedelta(seconds=random.randint(10, 120))).isoformat() if random.choice(statuses) == "completed" else None,
+            "imageUrl": f"https://picsum.photos/512/512?random={i}" if random.choice(statuses) == "completed" else None,
+            "thumbnailUrl": f"https://picsum.photos/256/256?random={i}" if random.choice(statuses) == "completed" else None,
+            "parameters": {
+                "width": 512,
+                "height": 512,
+                "steps": random.randint(20, 50),
+                "guidance": round(random.uniform(7.0, 15.0), 1),
+                "seed": random.randint(1000000, 9999999)
+            },
+            "metadata": {
+                "fileSize": random.randint(500000, 2000000),  # bytes
+                "format": "PNG",
+                "generationTime": round(random.uniform(5.0, 30.0), 1)  # seconds
+            }
+        }
+        
+        history.append(image_entry)
+    
+    # Sort by creation time (newest first)
+    history.sort(key=lambda x: x["createdAt"], reverse=True)
+    
+    # Calculate statistics
+    total_images = len(history)
+    completed_images = len([img for img in history if img["status"] == "completed"])
+    failed_images = len([img for img in history if img["status"] == "failed"])
+    processing_images = len([img for img in history if img["status"] == "processing"])
+    
+    return {
+        "images": history,
+        "statistics": {
+            "total": total_images,
+            "completed": completed_images,
+            "failed": failed_images,
+            "processing": processing_images,
+            "successRate": round((completed_images / total_images) * 100, 1) if total_images > 0 else 0
+        },
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.delete("/api/v1/images/{image_id}")
+async def delete_generated_image(image_id: str):
+    """删除生成的图像"""
+    # In a real implementation, this would:
+    # 1. Verify the image exists and belongs to the user
+    # 2. Delete the image file from storage
+    # 3. Remove the record from the database
+    
+    # Mock deletion
+    if not image_id.startswith("img_"):
+        raise HTTPException(status_code=404, detail=f"Image {image_id} not found")
+    
+    return {
+        "success": True,
+        "message": f"Image {image_id} deleted successfully",
+        "imageId": image_id,
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.post("/api/v1/images/batch-delete")
+async def batch_delete_images(image_ids: list[str]):
+    """批量删除生成的图像"""
+    if not image_ids:
+        raise HTTPException(status_code=400, detail="No image IDs provided")
+    
+    # Mock batch deletion
+    deleted_ids = []
+    failed_ids = []
+    
+    for image_id in image_ids:
+        if image_id.startswith("img_"):
+            deleted_ids.append(image_id)
+        else:
+            failed_ids.append(image_id)
+    
+    return {
+        "success": len(failed_ids) == 0,
+        "deletedCount": len(deleted_ids),
+        "failedCount": len(failed_ids),
+        "deletedIds": deleted_ids,
+        "failedIds": failed_ids,
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.get("/api/v1/images/statistics")
+async def get_image_generation_statistics():
+    """获取图像生成统计信息"""
+    import random
+    from datetime import datetime, timedelta
+    
+    # Mock statistics for the last 30 days
+    daily_stats = []
+    
+    for i in range(30):
+        date = datetime.now() - timedelta(days=29-i)
+        daily_count = random.randint(0, 15)
+        
+        daily_stats.append({
+            "date": date.strftime("%Y-%m-%d"),
+            "generated": daily_count,
+            "completed": random.randint(int(daily_count * 0.7), daily_count),
+            "failed": random.randint(0, int(daily_count * 0.3))
+        })
+    
+    # Model usage statistics
+    model_stats = [
+        {"model": "dall-e-3", "count": 156, "percentage": 45.2},
+        {"model": "stable-diffusion", "count": 134, "percentage": 38.8},
+        {"model": "midjourney", "count": 55, "percentage": 16.0}
+    ]
+    
+    # Style distribution
+    style_stats = [
+        {"style": "realistic", "count": 98, "percentage": 28.4},
+        {"style": "artistic", "count": 87, "percentage": 25.2},
+        {"style": "digital_art", "count": 76, "percentage": 22.0},
+        {"style": "photographic", "count": 54, "percentage": 15.7},
+        {"style": "cartoon", "count": 30, "percentage": 8.7}
+    ]
+    
+    return {
+        "dailyGeneration": daily_stats,
+        "modelUsage": model_stats,
+        "styleDistribution": style_stats,
+        "totalGenerated": sum(stat["count"] for stat in model_stats),
+        "averageGenerationTime": 18.5,  # seconds
+        "timestamp": datetime.now().isoformat()
+    }
 
 
 @app.post("/api/v1/chat", response_model=AIOutput, tags=["Chat"])

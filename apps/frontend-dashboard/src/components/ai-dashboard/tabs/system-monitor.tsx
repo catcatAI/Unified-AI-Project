@@ -6,6 +6,7 @@ import { Badge } from '@acme/ui'
 import { Button } from '@acme/ui'
 import { Progress } from '@acme/ui'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@acme/ui'
+import { useDetailedSystemMetrics, useServiceHealth } from '@/hooks/use-api-data'
 import { 
   Activity, 
   Cpu, 
@@ -22,121 +23,13 @@ import {
   Thermometer,
   Gauge,
   BarChart3,
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from 'lucide-react'
 
-interface SystemMetric {
-  name: string
-  value: number
-  max: number
-  unit: string
-  status: 'normal' | 'warning' | 'critical'
-  icon: any
-}
-
-interface ServiceStatus {
-  name: string
-  status: 'running' | 'stopped' | 'error'
-  cpu: number
-  memory: number
-  uptime: string
-  lastCheck: Date
-}
-
 export function SystemMonitor() {
-  const [systemMetrics, setSystemMetrics] = useState<SystemMetric[]>([
-    {
-      name: 'CPU Usage',
-      value: 45,
-      max: 100,
-      unit: '%',
-      status: 'normal',
-      icon: Cpu
-    },
-    {
-      name: 'Memory',
-      value: 67,
-      max: 100,
-      unit: '%',
-      status: 'normal',
-      icon: MemoryStick
-    },
-    {
-      name: 'Storage',
-      value: 82,
-      max: 100,
-      unit: '%',
-      status: 'warning',
-      icon: HardDrive
-    },
-    {
-      name: 'Network',
-      value: 23,
-      max: 100,
-      unit: '%',
-      status: 'normal',
-      icon: Wifi
-    },
-    {
-      name: 'Temperature',
-      value: 68,
-      max: 100,
-      unit: '°C',
-      status: 'normal',
-      icon: Thermometer
-    }
-  ])
-
-  const [services, setServices] = useState<ServiceStatus[]>([
-    {
-      name: 'HAM Memory System',
-      status: 'running',
-      cpu: 12,
-      memory: 34,
-      uptime: '5d 12h',
-      lastCheck: new Date(Date.now() - 30000)
-    },
-    {
-      name: 'HSP Protocol',
-      status: 'running',
-      cpu: 8,
-      memory: 22,
-      uptime: '5d 12h',
-      lastCheck: new Date(Date.now() - 30000)
-    },
-    {
-      name: 'Neural Network Core',
-      status: 'running',
-      cpu: 45,
-      memory: 67,
-      uptime: '3d 8h',
-      lastCheck: new Date(Date.now() - 30000)
-    },
-    {
-      name: 'Agent Manager',
-      status: 'running',
-      cpu: 5,
-      memory: 15,
-      uptime: '5d 12h',
-      lastCheck: new Date(Date.now() - 30000)
-    },
-    {
-      name: 'Learning Manager',
-      status: 'running',
-      cpu: 28,
-      memory: 42,
-      uptime: '2d 15h',
-      lastCheck: new Date(Date.now() - 30000)
-    },
-    {
-      name: 'API Server',
-      status: 'running',
-      cpu: 15,
-      memory: 28,
-      uptime: '5d 12h',
-      lastCheck: new Date(Date.now() - 30000)
-    }
-  ])
+  const { data: systemMetrics, loading: metricsLoading, error: metricsError, refresh: refreshMetrics } = useDetailedSystemMetrics()
+  const { data: services, loading: servicesLoading, error: servicesError, refresh: refreshServices } = useServiceHealth()
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -184,14 +77,65 @@ export function SystemMonitor() {
   }
 
   const handleRefresh = () => {
-    // Simulate refreshing metrics
-    setSystemMetrics(prev => prev.map(metric => ({
-      ...metric,
-      value: Math.min(metric.max, Math.max(0, metric.value + (Math.random() - 0.5) * 10))
-    })))
+    refreshMetrics()
+    refreshServices()
   }
 
-  const overallHealth = 92 // Calculate based on all services and metrics
+  // Calculate overall health based on real data
+  const calculateOverallHealth = () => {
+    if (!systemMetrics || !services) return 0
+    
+    const runningServices = services.filter(s => s.status === 'running').length
+    const serviceHealth = (runningServices / services.length) * 100
+    
+    const cpuHealth = systemMetrics.cpu.usage_percent < 80 ? 100 : (100 - systemMetrics.cpu.usage_percent)
+    const memoryHealth = systemMetrics.memory.percent < 80 ? 100 : (100 - systemMetrics.memory.percent)
+    const diskHealth = systemMetrics.disk.percent < 90 ? 100 : (100 - systemMetrics.disk.percent)
+    
+    return Math.round((serviceHealth + cpuHealth + memoryHealth + diskHealth) / 4)
+  }
+
+  const overallHealth = calculateOverallHealth()
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const formatUptime = (seconds: number) => {
+    const days = Math.floor(seconds / 86400)
+    const hours = Math.floor((seconds % 86400) / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    return `${days}d ${hours}h ${minutes}m`
+  }
+
+  if (metricsLoading || servicesLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading system metrics...</span>
+      </div>
+    )
+  }
+
+  if (metricsError || servicesError) {
+    return (
+      <div className="text-center py-8">
+        <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold mb-2">Failed to load system data</h3>
+        <p className="text-muted-foreground mb-4">
+          {metricsError || servicesError}
+        </p>
+        <Button onClick={handleRefresh}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Retry
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -253,10 +197,10 @@ export function SystemMonitor() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {systemMetrics.find(m => m.name === 'CPU Usage')?.value || 0}%
+              {systemMetrics?.cpu.usage_percent.toFixed(1)}%
             </div>
             <p className="text-xs text-muted-foreground">
-              Average load
+              {systemMetrics?.cpu.cores} cores @ {systemMetrics?.cpu.frequency.toFixed(1)} GHz
             </p>
           </CardContent>
         </Card>
@@ -268,10 +212,10 @@ export function SystemMonitor() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {systemMetrics.find(m => m.name === 'Memory')?.value || 0}%
+              {systemMetrics?.memory.percent.toFixed(1)}%
             </div>
             <p className="text-xs text-muted-foreground">
-              RAM utilization
+              {formatBytes(systemMetrics?.memory.used || 0)} / {formatBytes(systemMetrics?.memory.total || 0)}
             </p>
           </CardContent>
         </Card>
@@ -286,38 +230,156 @@ export function SystemMonitor() {
 
         <TabsContent value="metrics" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {systemMetrics.map((metric) => {
-              const Icon = metric.icon
-              return (
-                <Card key={metric.name}>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      {metric.name}
-                    </CardTitle>
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold">
-                          {metric.value}{metric.unit}
-                        </span>
-                        <div className={`flex items-center gap-1 ${getStatusColor(metric.status)}`}>
-                          {getStatusIcon(metric.status)}
-                        </div>
-                      </div>
-                      <Progress 
-                        value={(metric.value / metric.max) * 100} 
-                        className="h-2"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        {metric.max - metric.value}{metric.unit} available
-                      </p>
+            {/* CPU Metrics */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">CPU Usage</CardTitle>
+                <Cpu className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold">
+                      {systemMetrics?.cpu.usage_percent.toFixed(1)}%
+                    </span>
+                    <div className={`flex items-center gap-1 ${getStatusColor(systemMetrics?.cpu.usage_percent > 80 ? 'warning' : 'normal')}`}>
+                      {getStatusIcon(systemMetrics?.cpu.usage_percent > 80 ? 'warning' : 'normal')}
                     </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+                  </div>
+                  <Progress 
+                    value={systemMetrics?.cpu.usage_percent || 0} 
+                    className="h-2"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {systemMetrics?.cpu.cores} cores @ {systemMetrics?.cpu.frequency.toFixed(1)} GHz
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Memory Metrics */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Memory</CardTitle>
+                <MemoryStick className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold">
+                      {systemMetrics?.memory.percent.toFixed(1)}%
+                    </span>
+                    <div className={`flex items-center gap-1 ${getStatusColor(systemMetrics?.memory.percent > 80 ? 'warning' : 'normal')}`}>
+                      {getStatusIcon(systemMetrics?.memory.percent > 80 ? 'warning' : 'normal')}
+                    </div>
+                  </div>
+                  <Progress 
+                    value={systemMetrics?.memory.percent || 0} 
+                    className="h-2"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formatBytes(systemMetrics?.memory.available || 0)} available
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Disk Metrics */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Storage</CardTitle>
+                <HardDrive className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold">
+                      {systemMetrics?.disk.percent.toFixed(1)}%
+                    </span>
+                    <div className={`flex items-center gap-1 ${getStatusColor(systemMetrics?.disk.percent > 90 ? 'critical' : systemMetrics?.disk.percent > 80 ? 'warning' : 'normal')}`}>
+                      {getStatusIcon(systemMetrics?.disk.percent > 90 ? 'critical' : systemMetrics?.disk.percent > 80 ? 'warning' : 'normal')}
+                    </div>
+                  </div>
+                  <Progress 
+                    value={systemMetrics?.disk.percent || 0} 
+                    className="h-2"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formatBytes(systemMetrics?.disk.free || 0)} free
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Network Metrics */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Network</CardTitle>
+                <Wifi className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold">
+                      ↑{formatBytes(systemMetrics?.network.bytes_sent || 0)}
+                    </span>
+                    <span className="text-lg font-bold">
+                      ↓{formatBytes(systemMetrics?.network.bytes_recv || 0)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Packets: {systemMetrics?.network.packets_sent || 0} sent, {systemMetrics?.network.packets_recv || 0} received
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Process Metrics */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Processes</CardTitle>
+                <Server className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="text-2xl font-bold">
+                    {systemMetrics?.processes.total || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {systemMetrics?.processes.running || 0} running, {systemMetrics?.processes.sleeping || 0} sleeping
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Temperature Metrics */}
+            {systemMetrics?.temperature && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Temperature</CardTitle>
+                  <Thermometer className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-bold">
+                        {systemMetrics.temperature.cpu}°C
+                      </span>
+                      <div className={`flex items-center gap-1 ${getStatusColor(systemMetrics.temperature.cpu > 80 ? 'critical' : systemMetrics.temperature.cpu > 70 ? 'warning' : 'normal')}`}>
+                        {getStatusIcon(systemMetrics.temperature.cpu > 80 ? 'critical' : systemMetrics.temperature.cpu > 70 ? 'warning' : 'normal')}
+                      </div>
+                    </div>
+                    <Progress 
+                      value={(systemMetrics.temperature.cpu / 100) * 100} 
+                      className="h-2"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      CPU Temperature {systemMetrics.temperature.gpu && `• GPU: ${systemMetrics.temperature.gpu}°C`}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
 
@@ -346,16 +408,16 @@ export function SystemMonitor() {
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="text-center">
-                        <div className="text-sm font-medium">{service.cpu}%</div>
+                        <div className="text-sm font-medium">{service.cpu.toFixed(1)}%</div>
                         <div className="text-xs text-muted-foreground">CPU</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-sm font-medium">{service.memory}%</div>
+                        <div className="text-sm font-medium">{formatBytes(service.memory)}</div>
                         <div className="text-xs text-muted-foreground">Memory</div>
                       </div>
                       <div className="text-right">
                         <div className="text-xs text-muted-foreground">
-                          Last check: {formatTime(service.lastCheck)}
+                          Last check: {new Date(service.last_check).toLocaleTimeString()}
                         </div>
                         <Badge variant={service.status === 'running' ? 'default' : 'secondary'}>
                           {service.status}

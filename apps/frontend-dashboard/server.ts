@@ -27,7 +27,7 @@ async function createCustomServer() {
     const apiProxy = createProxyMiddleware({
       target: 'http://localhost:8000',
       changeOrigin: true,
-      pathRewrite: { '^/api/py': '' },
+      pathRewrite: {},
       logLevel: 'debug',
       onProxyReq: (proxyReq, req, res) => {
         console.log(`Proxying: ${req.method} ${req.url} -> http://localhost:8000${proxyReq.path}`);
@@ -48,7 +48,7 @@ async function createCustomServer() {
       console.log(`Incoming request: ${req.method} ${req.url}`);
       
       // Handle proxy requests first
-      if (req.url?.startsWith('/api/py')) {
+      if (req.url?.startsWith('/api/v1')) {
         console.log(`Routing to proxy: ${req.url}`);
         apiProxy(req, res, (err) => {
           if (err) {

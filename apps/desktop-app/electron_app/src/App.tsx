@@ -17,6 +17,7 @@ import { CodeAnalysis } from "./pages/CodeAnalysis";
 import { Game } from "./pages/Game";
 import { Chat } from "./pages/Chat";
 import { HSP } from "./pages/HSP";
+import Atlassian from "./pages/Atlassian";
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
               <Route path="history" element={<History />} />
               <Route path="workflows" element={<Workflows />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="atlassian" element={<Atlassian />} />
             </Route>
             <Route path="*" element={<BlankPage />} />
           </Routes>

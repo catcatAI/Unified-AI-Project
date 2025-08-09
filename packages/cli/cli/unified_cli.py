@@ -91,7 +91,10 @@ class LegacyClientShim:
 
 def main():
     parser = argparse.ArgumentParser(description="Unified AI Project CLI")
-    parser.add_argument("--url", default="http://localhost:8000", help="Backend API URL")
+    parser.add_argument("--url", default=os.environ.get("CLI_BASE_URL", "http://localhost:8000"), help="Backend API URL (or set CLI_BASE_URL)")
+    parser.add_argument("--token", default=os.environ.get("CLI_TOKEN"), help="Auth token (or set CLI_TOKEN)")
+    parser.add_argument("--timeout", type=int, default=int(os.environ.get("CLI_TIMEOUT", "10")), help="Request timeout in seconds (or set CLI_TIMEOUT)")
+    parser.add_argument("--json", action="store_true", help="Output JSON only")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
     # Health check command
@@ -158,24 +161,30 @@ def main():
         return
     
     # Initialize client
-    client = UnifiedAIClient(args.url)
+    client = UnifiedAIClient(base_url=args.url, token=args.token, timeout=args.timeout)
     
     if args.command == "health":
         print("🔍 Checking system health...")
         result = client.health_check()
-        if result:
-            print(f"✅ System Status: {result.get('status', 'unknown')}")
-            print(f"📅 Timestamp: {result.get('timestamp', 'unknown')}")
-            if 'services' in result:
-                print("🔧 Services:")
-                for service in result['services']:
-                    print(f"  - {service.get('name', 'Unknown')}: {service.get('status', 'unknown')}")
+        if args.json:
+            print(json.dumps(result or {}, ensure_ascii=False, indent=2))
+        else:
+            if result:
+                print(f"✅ System Status: {result.get('status', 'unknown')}")
+                print(f"📅 Timestamp: {result.get('timestamp', 'unknown')}")
+                if 'services' in result:
+                    print("🔧 Services:")
+                    for service in result['services']:
+                        print(f"  - {service.get('name', 'Unknown')}: {service.get('status', 'unknown')}")
         
     elif args.command == "chat":
         print(f"💬 Sending message: {args.message}")
         result = client.chat(args.message, args.user_id, args.session_id)
-        if result:
-            print(f"🤖 AI Response: {result.get('response_text', 'No response')}")
+        if args.json:
+            print(json.dumps(result or {}, ensure_ascii=False, indent=2))
+        else:
+            if result:
+                print(f"🤖 AI Response: {result.get('response_text', 'No response')}")
         
     elif args.command == "analyze":
         code_content = ""
@@ -195,38 +204,47 @@ def main():
             return
         
         result = client.analyze_code(code_content, args.language)
-        if result:
-            print(f"📊 Analysis Result:")
-            print(f"  Language: {result.get('language', 'unknown')}")
-            if 'analysis' in result:
-                analysis = result['analysis']
-                if isinstance(analysis, dict) and 'result' in analysis:
-                    print(f"  Result: {analysis['result']}")
-                else:
-                    print(f"  Analysis: {analysis}")
+        if args.json:
+            print(json.dumps(result or {}, ensure_ascii=False, indent=2))
+        else:
+            if result:
+                print(f"📊 Analysis Result:")
+                print(f"  Language: {result.get('language', 'unknown')}")
+                if 'analysis' in result:
+                    analysis = result['analysis']
+                    if isinstance(analysis, dict) and 'result' in analysis:
+                        print(f"  Result: {analysis['result']}")
+                    else:
+                        print(f"  Analysis: {analysis}")
         
     elif args.command == "search":
         print(f"🔎 Searching for: {args.query}")
         result = client.search(args.query)
-        if result:
-            print(f"📋 Found {result.get('total', 0)} results:")
-            for i, item in enumerate(result.get('results', []), 1):
-                print(f"  {i}. {item.get('title', 'No title')}")
-                print(f"     {item.get('snippet', 'No description')}")
-                print(f"     URL: {item.get('url', 'No URL')}")
-                print()
+        if args.json:
+            print(json.dumps(result or {}, ensure_ascii=False, indent=2))
+        else:
+            if result:
+                print(f"📋 Found {result.get('total', 0)} results:")
+                for i, item in enumerate(result.get('results', []), 1):
+                    print(f"  {i}. {item.get('title', 'No title')}")
+                    print(f"     {item.get('snippet', 'No description')}")
+                    print(f"     URL: {item.get('url', 'No URL')}")
+                    print()
         
     elif args.command == "image":
         print(f"🎨 Generating image: {args.prompt}")
         result = client.generate_image(args.prompt, args.style)
-        if result:
-            print(f"✅ Image generated successfully!")
-            print(f"  Prompt: {result.get('prompt', 'unknown')}")
-            print(f"  Style: {result.get('style', 'unknown')}")
-            if 'image_url' in result:
-                print(f"  URL: {result['image_url']}")
-            if 'result' in result:
-                print(f"  Result: {result['result']}")
+        if args.json:
+            print(json.dumps(result or {}, ensure_ascii=False, indent=2))
+        else:
+            if result:
+                print(f"✅ Image generated successfully!")
+                print(f"  Prompt: {result.get('prompt', 'unknown')}")
+                print(f"  Style: {result.get('style', 'unknown')}")
+                if 'image_url' in result:
+                    print(f"  URL: {result['image_url']}")
+                if 'result' in result:
+                    print(f"  Result: {result['result']}")
         
     elif args.command == "atlassian":
         if not args.atlassian_command:
@@ -236,10 +254,13 @@ def main():
         if args.atlassian_command == "status":
             print("🔍 Checking Atlassian CLI status...")
             result = client.get_atlassian_status()
-            if result:
-                print(f"✅ ACLI Available: {result.get('acli_available', False)}")
-                print(f"📋 Version: {result.get('version', 'unknown')}")
-                print(f"📁 Path: {result.get('path', 'unknown')}")
+            if args.json:
+                print(json.dumps(result or {}, ensure_ascii=False, indent=2))
+            else:
+                if result:
+                    print(f"✅ ACLI Available: {result.get('acli_available', False)}")
+                    print(f"📋 Version: {result.get('version', 'unknown')}")
+                    print(f"📁 Path: {result.get('path', 'unknown')}")
         
         elif args.atlassian_command == "jira":
             if args.jira_command == "projects":

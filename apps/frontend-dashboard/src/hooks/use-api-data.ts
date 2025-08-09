@@ -1,6 +1,6 @@
 // Custom hooks for API data management
 import { useState, useEffect, useCallback } from 'react';
-import { apiService, SystemStatus, ServiceHealth, withFallback } from '@/lib/api';
+import { apiService, SystemStatus, ServiceHealth, DetailedSystemMetrics, AIAgent, NeuralNetworkModel, ModelMetrics, TrainingStatus, GeneratedImage, ImageStatistics, withFallback } from '@/lib/api';
 
 // Hook for system status
 export function useSystemStatus() {
@@ -217,4 +217,269 @@ export function useChat() {
   }, []);
 
   return { messages, loading, error, sendMessage };
+}
+
+// Hook for detailed system metrics
+export function useDetailedSystemMetrics() {
+  const [data, setData] = useState<DetailedSystemMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const metrics = await apiService.getDetailedSystemMetrics();
+      setData(metrics);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch detailed system metrics');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    // Refresh every 5 seconds
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  return { data, loading, error, refresh: fetchData };
+}
+
+// Hook for AI agents
+export function useAIAgents() {
+  const [data, setData] = useState<AIAgent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const agents = await apiService.getAIAgents();
+      setData(agents);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch AI agents');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const performAction = useCallback(async (agentId: string, action: string, config?: any) => {
+    try {
+      const result = await apiService.performAgentAction(agentId, action, config);
+      // Refresh data after action
+      await fetchData();
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchData();
+    // Refresh every 15 seconds
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  return { data, loading, error, refresh: fetchData, performAction };
+}
+
+// Hook for specific AI agent
+export function useAIAgent(agentId: string) {
+  const [data, setData] = useState<AIAgent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!agentId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const agent = await apiService.getAIAgent(agentId);
+      setData(agent);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch AI agent');
+    } finally {
+      setLoading(false);
+    }
+  }, [agentId]);
+
+  useEffect(() => {
+    fetchData();
+    // Refresh every 10 seconds
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  return { data, loading, error, refresh: fetchData };
+}
+
+// Hook for neural network models
+export function useNeuralNetworkModels() {
+  const [data, setData] = useState<NeuralNetworkModel[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const models = await apiService.getNeuralNetworkModels();
+      setData(models);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch neural network models');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    // Refresh every 20 seconds
+    const interval = setInterval(fetchData, 20000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  return { data, loading, error, refresh: fetchData };
+}
+
+// Hook for model metrics
+export function useModelMetrics(modelId: string) {
+  const [data, setData] = useState<ModelMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!modelId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const metrics = await apiService.getModelMetrics(modelId);
+      setData(metrics);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch model metrics');
+    } finally {
+      setLoading(false);
+    }
+  }, [modelId]);
+
+  useEffect(() => {
+    fetchData();
+    // Refresh every 5 seconds
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  return { data, loading, error, refresh: fetchData };
+}
+
+// Hook for model training status
+export function useModelTrainingStatus(modelId: string) {
+  const [data, setData] = useState<TrainingStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!modelId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const status = await apiService.getModelTrainingStatus(modelId);
+      setData(status);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch training status');
+    } finally {
+      setLoading(false);
+    }
+  }, [modelId]);
+
+  useEffect(() => {
+    fetchData();
+    // Refresh every 3 seconds for training status
+    const interval = setInterval(fetchData, 3000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  return { data, loading, error, refresh: fetchData };
+}
+
+// Hook for image generation history
+export function useImageHistory(page: number = 1, limit: number = 20) {
+  const [data, setData] = useState<{ images: GeneratedImage[]; total: number; page: number; limit: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const history = await apiService.getImageHistory(page, limit);
+      setData(history);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch image history');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit]);
+
+  const deleteImage = useCallback(async (imageId: string) => {
+    try {
+      const result = await apiService.deleteImage(imageId);
+      // Refresh data after deletion
+      await fetchData();
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  }, [fetchData]);
+
+  const batchDeleteImages = useCallback(async (imageIds: string[]) => {
+    try {
+      const result = await apiService.batchDeleteImages(imageIds);
+      // Refresh data after deletion
+      await fetchData();
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, error, refresh: fetchData, deleteImage, batchDeleteImages };
+}
+
+// Hook for image statistics
+export function useImageStatistics() {
+  const [data, setData] = useState<ImageStatistics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const stats = await apiService.getImageStatistics();
+      setData(stats);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch image statistics');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  return { data, loading, error, refresh: fetchData };
 }
