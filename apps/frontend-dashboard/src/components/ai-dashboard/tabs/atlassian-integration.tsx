@@ -33,7 +33,9 @@ const AtlassianIntegration: React.FC = () => {
     project_key: '',
     summary: '',
     description: '',
-    issue_type: 'Task'
+    issue_type: 'Task',
+    priority: '',
+    labels: ''
   });
 
   const apiCall = async (endpoint: string, method: string = 'GET', body?: any) => {
@@ -88,6 +90,8 @@ const AtlassianIntegration: React.FC = () => {
   };
 
   const loadIssues = async () => {
+    // Quick JQL helpers can be provided as buttons below
+
     setLoading(true);
     setError(null);
     try {
@@ -163,10 +167,20 @@ const AtlassianIntegration: React.FC = () => {
               </div>
               <p><strong>版本:</strong> {status.version}</p>
               <p><strong>路径:</strong> {status.path}</p>
+              {!status.acli_available && (
+                <div className="mt-3 p-3 border rounded text-sm bg-yellow-50">
+                  <p className="font-semibold">提示：</p>
+                  <ul className="list-disc pl-5">
+                    <li>尚未偵測到 Atlassian CLI（acli.exe）。</li>
+                    <li>請依官方文件安裝並設定認證。</li>
+                    <li>Windows 環境可將 acli.exe 放在專案根目錄或加入 PATH。</li>
+                  </ul>
+                </div>
+              )}
             </div>
           ) : (
             <p>正在检查状态...</p>
-          )}
+          )
         </CardContent>
       </Card>
 
@@ -212,6 +226,11 @@ const AtlassianIntegration: React.FC = () => {
             <Button onClick={loadIssues} disabled={loading}>
               查询问题
             </Button>
+          </div>
+          <div className="flex gap-2 mt-2">
+            <Button variant="outline" onClick={() => { setJql('assignee = currentUser() AND resolution = Unresolved ORDER BY updated DESC'); loadIssues(); }}>我的未解決</Button>
+            <Button variant="outline" onClick={() => { setJql('resolution = Unresolved ORDER BY priority DESC'); loadIssues(); }}>全部未解決</Button>
+            <Button variant="outline" onClick={() => { setJql('ORDER BY created DESC'); loadIssues(); }}>最新建立</Button>
           </div>
 
           {issues.length > 0 && (
@@ -267,6 +286,18 @@ const AtlassianIntegration: React.FC = () => {
             onChange={(e) => setNewIssue({...newIssue, description: e.target.value})}
             rows={3}
           />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              placeholder="优先级 (可选，例如: High/Medium/Low)"
+              value={newIssue.priority}
+              onChange={(e) => setNewIssue({...newIssue, priority: e.target.value})}
+            />
+            <Input
+              placeholder="标签 (逗号分隔，可选)"
+              value={newIssue.labels}
+              onChange={(e) => setNewIssue({...newIssue, labels: e.target.value})}
+            />
+          </div>
           
           <Button 
             onClick={createIssue} 

@@ -2,8 +2,8 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://localhost:3000' 
-  : 'http://localhost:3000';
+  ? 'http://localhost:8000' 
+  : 'http://localhost:8000';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -49,12 +49,124 @@ export interface ServiceHealth {
   last_check: string;
 }
 
+export interface DetailedSystemMetrics {
+  cpu: {
+    usage_percent: number;
+    cores: number;
+    frequency: number;
+  };
+  memory: {
+    total: number;
+    available: number;
+    used: number;
+    percent: number;
+  };
+  disk: {
+    total: number;
+    used: number;
+    free: number;
+    percent: number;
+  };
+  network: {
+    bytes_sent: number;
+    bytes_recv: number;
+    packets_sent: number;
+    packets_recv: number;
+  };
+  processes: {
+    total: number;
+    running: number;
+    sleeping: number;
+  };
+  temperature?: {
+    cpu: number;
+    gpu?: number;
+  };
+  uptime: number;
+}
+
+export interface AIAgent {
+  id: string;
+  name: string;
+  type: string;
+  status: 'active' | 'idle' | 'error' | 'stopped';
+  cpu_usage: number;
+  memory_usage: number;
+  tasks_completed: number;
+  uptime: string;
+  last_activity: string;
+  capabilities: string[];
+}
+
+export interface NeuralNetworkModel {
+  id: string;
+  name: string;
+  type: string;
+  status: 'training' | 'inference' | 'idle' | 'error';
+  accuracy?: number;
+  loss?: number;
+  epochs?: number;
+  parameters: number;
+  memory_usage: number;
+  gpu_utilization?: number;
+  last_updated: string;
+}
+
+export interface ModelMetrics {
+  inference_time: number;
+  throughput: number;
+  accuracy: number;
+  loss: number;
+  memory_usage: number;
+  gpu_utilization: number;
+  batch_size: number;
+  requests_per_second: number;
+}
+
+export interface TrainingStatus {
+  status: 'training' | 'completed' | 'paused' | 'failed';
+  current_epoch: number;
+  total_epochs: number;
+  progress: number;
+  loss: number;
+  accuracy: number;
+  estimated_time_remaining: string;
+  history: {
+    epoch: number;
+    loss: number;
+    accuracy: number;
+    timestamp: string;
+  }[];
+}
+
+export interface GeneratedImage {
+  id: string;
+  prompt: string;
+  model: string;
+  resolution: string;
+  created_at: string;
+  file_size: number;
+  status: 'completed' | 'processing' | 'failed';
+  url?: string;
+}
+
+export interface ImageStatistics {
+  total_images: number;
+  images_today: number;
+  images_this_week: number;
+  images_this_month: number;
+  total_storage_used: number;
+  average_generation_time: number;
+  most_used_model: string;
+  popular_resolutions: { resolution: string; count: number }[];
+}
+
 // API functions
 export const apiService = {
   // Health check
   async healthCheck(): Promise<{ status: string; message: string }> {
     try {
-      const response = await api.get('/api/py/api/v1/health');
+      const response = await api.get('/api/v1/health');
       return response.data;
     } catch (error) {
       console.error('Health check failed:', error);
@@ -68,10 +180,10 @@ export const apiService = {
       // Try multiple possible endpoints
       let response;
       try {
-        response = await api.get('/api/py/api/v1/health');
+        response = await api.get('/api/v1/health');
       } catch (statusError) {
         // Try alternative endpoint
-        response = await api.get('/api/py/api/v1/health');
+        response = await api.get('/api/v1/health');
       }
       
       // Handle different response structures
@@ -120,7 +232,7 @@ export const apiService = {
   // Chat with AI
   async sendChatMessage(message: string, sessionId?: string): Promise<ChatMessage> {
     try {
-      const response = await api.post('/api/py/api/v1/chat', {
+      const response = await api.post('/api/v1/chat', {
         message,
         session_id: sessionId,
       });
@@ -135,7 +247,7 @@ export const apiService = {
       console.error('Chat request failed:', error);
       // Fallback to frontend API route
       try {
-        const fallbackResponse = await fetch('/api/py/api/v1/chat', {
+        const fallbackResponse = await fetch('/api/v1/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message }),
@@ -158,7 +270,7 @@ export const apiService = {
   // Get service health
   async getServiceHealth(): Promise<ServiceHealth[]> {
     try {
-      const response = await api.get('/api/py/services/health');
+      const response = await api.get('/api/v1/system/services');
       return response.data;
     } catch (error) {
       console.error('Failed to get service health:', error);
@@ -195,7 +307,7 @@ export const apiService = {
   // Get system metrics
   async getSystemMetrics(): Promise<any> {
     try {
-      const response = await api.get('/api/py/metrics');
+      const response = await api.get('/api/v1/system/metrics/detailed');
       return response.data;
     } catch (error) {
       console.error('Failed to get system metrics:', error);
@@ -206,6 +318,151 @@ export const apiService = {
         disk: { value: 128, max: 512, status: 'normal' },
         network: { value: 2.4, max: 10, status: 'normal' },
       };
+    }
+  },
+
+  // Get detailed system metrics
+  async getDetailedSystemMetrics(): Promise<DetailedSystemMetrics> {
+    try {
+      const response = await api.get('/api/v1/system/metrics/detailed');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get detailed system metrics:', error);
+      throw error;
+    }
+  },
+
+  // AI Agent Management
+  async getAIAgents(): Promise<AIAgent[]> {
+    try {
+      const response = await api.get('/api/v1/agents');
+      return response.data.agents || response.data;
+    } catch (error) {
+      console.error('Failed to get AI agents:', error);
+      // Return fallback data
+      return [
+        {
+          id: 'dialogue_agent',
+          name: '對話代理',
+          type: 'dialogue',
+          status: 'active',
+          cpu_usage: 15.2,
+          memory_usage: 512.5,
+          tasks_completed: 1542,
+          uptime: '2d 14h 32m',
+          last_activity: new Date().toISOString(),
+          capabilities: ['natural_language', 'conversation', 'context_awareness']
+        },
+        {
+          id: 'code_agent',
+          name: '代碼分析代理',
+          type: 'code_analysis',
+          status: 'active',
+          cpu_usage: 25.8,
+          memory_usage: 1024.2,
+          tasks_completed: 892,
+          uptime: '2d 14h 32m',
+          last_activity: new Date().toISOString(),
+          capabilities: ['code_analysis', 'debugging', 'optimization']
+        }
+      ];
+    }
+  },
+
+  async getAIAgent(agentId: string): Promise<AIAgent> {
+    try {
+      const response = await api.get(`/api/v1/agents/${agentId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to get AI agent ${agentId}:`, error);
+      throw error;
+    }
+  },
+
+  async performAgentAction(agentId: string, action: string, config?: any): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await api.post(`/api/v1/agents/${agentId}/action`, {
+        action,
+        config
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to perform action ${action} on agent ${agentId}:`, error);
+      throw error;
+    }
+  },
+
+  // Neural Network Model Monitoring
+  async getNeuralNetworkModels(): Promise<NeuralNetworkModel[]> {
+    try {
+      const response = await api.get('/api/v1/models');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get neural network models:', error);
+      throw error;
+    }
+  },
+
+  async getModelMetrics(modelId: string): Promise<ModelMetrics> {
+    try {
+      const response = await api.get(`/api/v1/models/${modelId}/metrics`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to get metrics for model ${modelId}:`, error);
+      throw error;
+    }
+  },
+
+  async getModelTrainingStatus(modelId: string): Promise<TrainingStatus> {
+    try {
+      const response = await api.get(`/api/v1/models/${modelId}/training`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to get training status for model ${modelId}:`, error);
+      throw error;
+    }
+  },
+
+  // Image Generation History
+  async getImageHistory(page: number = 1, limit: number = 20): Promise<{ images: GeneratedImage[]; total: number; page: number; limit: number }> {
+    try {
+      const response = await api.get(`/api/v1/images/history?page=${page}&limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get image history:', error);
+      throw error;
+    }
+  },
+
+  async deleteImage(imageId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await api.delete(`/api/v1/images/${imageId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to delete image ${imageId}:`, error);
+      throw error;
+    }
+  },
+
+  async batchDeleteImages(imageIds: string[]): Promise<{ success: boolean; message: string; deleted_count: number }> {
+    try {
+      const response = await api.post('/api/v1/images/batch-delete', {
+        image_ids: imageIds
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to batch delete images:', error);
+      throw error;
+    }
+  },
+
+  async getImageStatistics(): Promise<ImageStatistics> {
+    try {
+      const response = await api.get('/api/v1/images/statistics');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get image statistics:', error);
+      throw error;
     }
   },
 };

@@ -145,6 +145,14 @@ ipcMain.handle("api:health", async (event) => {
     return handleApiCall("get", "health");
 });
 
+// Atlassian handlers
+ipcMain.handle("api:atlassian-status", async () => handleApiCall("get", "atlassian/status"));
+ipcMain.handle("api:jira-projects", async () => handleApiCall("get", "atlassian/jira/projects"));
+ipcMain.handle("api:jira-issues", async (e, { jql, limit }) => handleApiCall("get", `atlassian/jira/issues${jql?`?jql=${encodeURIComponent(jql)}&limit=${limit||20}`:`?limit=${limit||20}`}`));
+ipcMain.handle("api:jira-create", async (e, data) => handleApiCall("post", "atlassian/jira/issue", data));
+ipcMain.handle("api:confluence-spaces", async () => handleApiCall("get", "atlassian/confluence/spaces"));
+ipcMain.handle("api:confluence-search", async (e, { query, limit }) => handleApiCall("get", `atlassian/confluence/search?query=${encodeURIComponent(query)}&limit=${limit||25}`));
+
 ipcMain.handle(CHANNELS.HSP_GET_DISCOVERED_SERVICES, async (event, data) => {
     // This would typically call a backend service, but for now we mock it
     console.log("Main Process: Received 'hsp:get-discovered-services' request from renderer.");
