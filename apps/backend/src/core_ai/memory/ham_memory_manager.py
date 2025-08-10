@@ -13,7 +13,29 @@ from src.shared.key_manager import key_manager
 from src.shared.types.common_types import DialogueMemoryEntryMetadata
 from .types import HAMDataPackageInternal, HAMRecallResult
 
+import chromadb # New: Import chromadb
+from chromadb.utils import embedding_functions # New: For default embedding function
+
 logger = logging.getLogger(__name__)
+
+# Mock embedding function for testing/development without full SentenceTransformer setup
+def _mock_embed_texts(input: List[str]) -> List[List[float]]:
+    """A simple mock embedding function for testing purposes."""
+    logger.debug(f"_mock_embed_texts called with input: {input}")
+    # Returns a dummy embedding (e.g., a list of zeros or ones)
+    # The size (384) should match the expected model output for 'all-MiniLM-L6-v2'
+    return [[0.1] * 384 for _ in input]
+
+class MockEmbeddingFunction:
+    """A mock embedding function class for ChromaDB."""
+    def __init__(self):
+        self._name = "mock-embedding-function"
+
+    def __call__(self, input: List[str]) -> List[List[float]]:
+        return _mock_embed_texts(input)
+
+    def name(self) -> str:
+        return self._name
 
 # Placeholder for actual stopword list and NLP tools if not available
 try:
@@ -52,7 +74,8 @@ class HAMMemoryManager:
     def __init__(self,
                  core_storage_filename="ham_core_memory.json",
                  resource_awareness_service: Optional[Any] = None, # Optional['ResourceAwarenessService']
-                 personality_manager: Optional[Any] = None): # Optional['PersonalityManager']
+                 personality_manager: Optional[Any] = None,
+                 storage_dir: Optional[str] = None): # New: Optional storage directory
         """
         Initializes the HAMMemoryManager.
 
@@ -60,18 +83,22 @@ class HAMMemoryManager:
             core_storage_filename (str): Filename for the persistent core memory store.
             resource_awareness_service (Optional[ResourceAwarenessService]): Service to get simulated resource limits.
             personality_manager (Optional[PersonalityManager]): The personality manager.
+            storage_dir (Optional[str]): Optional. Base directory for data storage. If None, defaults to PROJECT_ROOT/data/processed_data.
         """
         self.resource_awareness_service = resource_awareness_service
         self.personality_manager = personality_manager
         self.core_memory_store: Dict[str, HAMDataPackageInternal] = {}
         self.next_memory_id = 1
 
-        # Determine base path for data storage within the project structure
-        # Assuming this script is in src/core_ai/memory/
-        # PROJECT_ROOT/data/processed_data/
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
-        self.storage_dir = os.path.join(project_root, "data", "processed_data")
+        # Determine base path for data storage
+        if storage_dir:
+            self.storage_dir = storage_dir
+        else:
+            # Assuming this script is in src/core_ai/memory/
+            # PROJECT_ROOT/data/processed_data/
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
+            self.storage_dir = os.path.join(project_root, "data", "processed_data")
         os.makedirs(self.storage_dir, exist_ok=True)
 
         self.core_storage_filepath = os.path.join(self.storage_dir, core_storage_filename)
@@ -97,6 +124,16 @@ class HAMMemoryManager:
 
         self._load_core_memory_from_file()
         logger.info(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
+
+        # New: Initialize ChromaDB
+        self.chroma_client = chromadb.PersistentClient(path=os.path.join(self.storage_dir, "chroma_db"))
+        
+        # Use the mock embedding function directly
+        self.chroma_collection = self.chroma_client.get_or_create_collection(
+            name="ham_semantic_memories",
+            embedding_function=MockEmbeddingFunction() # Use an instance of the mock embedding function class
+        )
+        logger.info("ChromaDB initialized for semantic memory with mock embedding function.")
 
         # Start background cleanup task only if there's a running event loop
         try:
@@ -371,6 +408,7 @@ class HAMMemoryManager:
         # for flexibility if direct dicts are passed (though discouraged by type hint).
         current_metadata: Dict[str, Any] = dict(metadata) if metadata else {}
 
+        memory_id = self._generate_memory_id() # Moved to top to ensure it's always bound
 
         if "dialogue_text" in data_type: # More inclusive check for user_dialogue_text, ai_dialogue_text
             if not isinstance(raw_data, str):
@@ -391,6 +429,28 @@ class HAMMemoryManager:
         # Add checksum to metadata BEFORE compression/encryption
         sha256_checksum = hashlib.sha256(data_to_process).hexdigest()
         current_metadata['sha256_checksum'] = sha256_checksum
+
+        # New: Generate semantic vector and store in ChromaDB
+        if self.chroma_collection:
+            try:
+                text_for_embedding = raw_data if isinstance(raw_data, str) else json.dumps(raw_data)
+                # The embedding will be generated automatically by ChromaDB using the configured embedding_function
+                self.chroma_collection.add(
+                    documents=[text_for_embedding], # Store the original text for context in Chroma
+                    metadatas=[current_metadata], # Store metadata in Chroma as well
+                    ids=[memory_id]
+                )
+                logger.debug(f"HAM: Stored semantic vector for {memory_id} in ChromaDB.")
+            except Exception as e:
+                logger.error(f"Error storing semantic vector in ChromaDB for {memory_id}: {e}")
+        else:
+            logger.warning("ChromaDB collection not initialized. Semantic vector not stored.")
+
+        try:
+            compressed_data = self._compress(data_to_process)
+            encrypted_data = self._encrypt(compressed_data)
+        except Exception as e:
+            logger.error(f"Error storing semantic vector in ChromaDB for {memory_id}: {e}")
 
         try:
             compressed_data = self._compress(data_to_process)
@@ -594,7 +654,8 @@ class HAMMemoryManager:
                           user_id_for_facts: Optional[str] = None,
                           limit: int = 5,
                           sort_by_confidence: bool = False,
-                          return_multiple_candidates: bool = False
+                          return_multiple_candidates: bool = False,
+                          semantic_query: Optional[str] = None # New parameter
                           ) -> List[HAMRecallResult]:
         """
         Enhanced query function.
@@ -602,18 +663,43 @@ class HAMMemoryManager:
         Optional keyword search on metadata string.
         Does NOT search encrypted content for keywords in this version.
         """
-        logger.debug(f"HAM: Querying core memory (type: {data_type_filter}, meta_filters: {metadata_filters}, keywords: {keywords})")
+        logger.debug(f"HAM: Querying core memory (type: {data_type_filter}, meta_filters: {metadata_filters}, keywords: {keywords}, semantic_query: {semantic_query})")
 
-        # Candidate selection: Iterate through all memories. Could be optimized with indexing.
-        # For now, iterate and then filter.
+        candidate_mem_ids = []
 
+        if semantic_query:
+            if not self.chroma_collection:
+                logger.warning("ChromaDB collection not initialized. Cannot perform semantic search.")
+                # Fallback to iterating all memories if semantic search is not available
+                candidate_mem_ids = sorted(self.core_memory_store.keys(), reverse=True)
+            else:
+                try:
+                    # Generate embedding for the semantic query using the collection's embedding function
+                    chroma_results = self.chroma_collection.query(
+                        query_texts=[semantic_query],
+                        n_results=limit * 2, # Fetch more results from Chroma to allow for filtering
+                        include=['metadatas', 'documents']
+                    )
+                    # Extract memory_ids from Chroma results
+                    if chroma_results and chroma_results['ids']:
+                        candidate_mem_ids.extend(chroma_results['ids'][0])
+                    logger.debug(f"HAM: ChromaDB returned {len(candidate_mem_ids)} candidates for semantic query.")
+                except Exception as e:
+                    logger.error(f"Error querying ChromaDB: {e}")
+                    # Fallback to iterating all memories if ChromaDB query fails
+                    candidate_mem_ids = sorted(self.core_memory_store.keys(), reverse=True)
+        else:
+            # If no semantic query, iterate through all memories
+            candidate_mem_ids = sorted(self.core_memory_store.keys(), reverse=True)
+
+        # Candidate selection: Iterate through selected memory IDs
         candidate_items_with_id = []
-        # Sort by memory_id (which implies rough chronological order, newest first)
-        # This helps if limit is applied before full sorting by confidence, to get recent items.
-        sorted_memory_ids = sorted(self.core_memory_store.keys(), reverse=True)
 
-        for mem_id in sorted_memory_ids:
-            item = self.core_memory_store[mem_id]
+        for mem_id in candidate_mem_ids:
+            item = self.core_memory_store.get(mem_id)
+            if not item: # Skip if memory not found in core store (e.g., filtered by Chroma but not in JSON)
+                continue
+
             item_metadata = item.get("metadata", {})
             match = True
 
