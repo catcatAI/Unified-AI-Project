@@ -658,6 +658,68 @@ class HAMMemoryManager:
             logger.error(f"Error during raw gist retrieval for memory_id '%s': {e}", memory_id, exc_info=True)
             return None
 
+    def _deserialize_memory(self, memory_id: str, data_package: Dict[str, Any]) -> HAMMemory:
+        """反序列化內部數據包為 HAMMemory 物件。"""
+        timestamp = data_package.get("timestamp", "")
+        data_type = data_package.get("data_type", "")
+        metadata = data_package.get("metadata", {})
+        encrypted_package = data_package["encrypted_package"]
+
+        try:
+            decrypted_data = self._decrypt(encrypted_package)
+            decompressed_data_bytes = self._decompress(decrypted_data)
+            content = decompressed_data_bytes.decode('utf-8') # Assuming content is text for now
+
+            # Verify checksum (similar to recall_gist)
+            stored_checksum = metadata.get('sha256_checksum')
+            if stored_checksum:
+                current_checksum = hashlib.sha256(decompressed_data_bytes).hexdigest()
+                if current_checksum != stored_checksum:
+                    logger.critical(f"Checksum mismatch during deserialization for memory ID {memory_id}! Data may be corrupted.")
+
+            return HAMMemory(
+                id=memory_id,
+                content=content,
+                timestamp=timestamp,
+                metadata=metadata,
+                data_type=data_type
+            )
+        except Exception as e:
+            logger.error(f"Error deserializing memory {memory_id}: {e}")
+            raise HAMMemoryError(f"Failed to deserialize memory {memory_id}: {e}")
+
+    async def query_by_date_range(self, start_date: Any, end_date: Any, filters: Optional[Dict[str, Any]] = None) -> List[HAMMemory]:
+        """改進的日期範圍查詢，支持額外過濾器。"""
+        try:
+            start_dt_normalized = self._normalize_date(start_date)
+            end_dt_normalized = self._normalize_date(end_date)
+            
+            results = []
+            for mem_id, data_package in self.core_memory_store.items():
+                try:
+                    item_dt = self._normalize_date(data_package["timestamp"])
+                    if start_dt_normalized <= item_dt <= end_dt_normalized:
+                        match_filters = True
+                        if filters:
+                            item_metadata = data_package.get("metadata", {})
+                            for key, value in filters.items():
+                                if item_metadata.get(key) != value:
+                                    match_filters = False
+                                    break
+                        if match_filters:
+                            results.append(self._deserialize_memory(mem_id, data_package))
+                except (ValueError, TypeError) as e:
+                    self.logger.warning(f"Error processing timestamp for memory {mem_id}: {e}")
+                    continue # Skip this memory if timestamp cannot be parsed
+
+            # Sort results by timestamp
+            results.sort(key=lambda x: datetime.fromisoformat(x["timestamp"])) # type: ignore
+            
+            return results
+        except Exception as e:
+            self.logger.error(f"Date range query failed: {e}")
+            raise HAMQueryError(f"Failed to query date range: {e}")
+
     def _perform_deletion_check(self):
         """Perform memory cleanup based on personality traits and memory usage."""
         if not self.personality_manager:

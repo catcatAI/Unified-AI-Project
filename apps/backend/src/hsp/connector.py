@@ -11,6 +11,7 @@ from datetime import datetime, timezone # Added for timestamp generation
 import asyncio # Added for asyncio.iscoroutinefunction
 import logging
 import time
+from src.shared.error import HSPConnectionError # Added for unified error handling
 from .fallback.fallback_protocols import get_fallback_manager, FallbackMessage, MessagePriority, initialize_fallback_protocols
 from .utils.fallback_config_loader import get_config_loader
 from pathlib import Path
@@ -151,10 +152,9 @@ class HSPConnector:
                 except Exception as e:
                     self.logger.error(f"HSP connection attempt {attempt + 1} failed: {e}")
                     if attempt == 2:
-                        self.logger.error("All HSP connection attempts failed. Using fallback protocols.")
-                        self.is_connected = False
-                        self.hsp_available = False
+                        await self._handle_hsp_connection_error(e, attempt + 1)
                     else:
+                        self.logger.warning(f"HSP connection attempt {attempt + 1} failed: {e}. Retrying...")
                         await asyncio.sleep(2 ** attempt)  # Exponential backoff
             
             # If still not connected after retries, ensure fallback is initialized
@@ -832,4 +832,10 @@ class HSPConnector:
         # or a dedicated state synchronization module.
         self.logger.info("Post-connection synchronization complete.")
 
-        
+    async def _handle_hsp_connection_error(self, error: Exception, attempt: int):
+        """統一 HSP 連接錯誤處理機制"""
+        error_message = f"HSP connection error (attempt {attempt}): {error}"
+        self.logger.error(error_message)
+        raise HSPConnectionError(error_message)
+
+    
