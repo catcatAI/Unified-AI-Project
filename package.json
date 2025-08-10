@@ -5,7 +5,7 @@
     "dev:dashboard": "pnpm --filter frontend-dashboard dev",
     "dev:backend": "pnpm --filter backend dev",
     "dev": "concurrently --kill-others-on-fail --raw \"pnpm dev:backend\" \"pnpm dev:dashboard\"",
-    "test": "pnpm --filter '*' test",
+    "test": "pnpm --filter \"*\" test",
     "test:coverage": "pnpm -r test:coverage",
     "build": "pnpm --filter '*' build"
   },

@@ -140,18 +140,29 @@ class HSPConnector:
             await self.external_connector.subscribe(f"hsp/requests/{self.ai_id}", self.external_connector.on_message_callback)
             await self.external_connector.subscribe(f"hsp/results/{self.ai_id}", self.external_connector.on_message_callback)
         else:
-            try:
-                await self.external_connector.connect()
-                self.is_connected = self.external_connector.is_connected
-                self.hsp_available = self.is_connected
-                if not self.hsp_available:
-                    self.logger.warning("HSP connection failed, fallback protocols will be used")
-                if self.enable_fallback:
-                    await self._initialize_fallback_protocols()
-            except Exception as e:
-                self.logger.error(f"HSP connection error: {e}, using fallback protocols")
-                self.is_connected = False
-                self.hsp_available = False
+            for attempt in range(3):
+                try:
+                    self.logger.info(f"Attempting to connect to HSP... (Attempt {attempt + 1}/3)")
+                    await self.external_connector.connect()
+                    self.is_connected = self.external_connector.is_connected
+                    self.hsp_available = self.is_connected
+                    if self.is_connected:
+                        self.logger.info("HSP connection successful.")
+                        if self.enable_fallback:
+                            await self._initialize_fallback_protocols()
+                        break  # Exit loop on successful connection
+                except Exception as e:
+                    self.logger.error(f"HSP connection attempt {attempt + 1} failed: {e}")
+                    if attempt == 2:
+                        self.logger.error("All HSP connection attempts failed. Using fallback protocols.")
+                        self.is_connected = False
+                        self.hsp_available = False
+                    else:
+                        await asyncio.sleep(2 ** attempt)  # Exponential backoff
+            
+            # If still not connected after retries, ensure fallback is initialized
+            if not self.is_connected and self.enable_fallback:
+                 await self._initialize_fallback_protocols()
         
         for callback in self._connect_callbacks:
             await callback()
