@@ -5,6 +5,72 @@ import sys
 import threading
 import time
 from pathlib import Path
+import logging
+from typing import Optional, Dict, Any
+from cryptography.fernet import Fernet
+from src.shared.types.common_types import DialogueTurn, DialogueMemoryEntryMetadata
+from datetime import datetime, timezone
+import uuid
+
+async def mock_get_simple_response_side_effect(dm, project_coordinator, tool_dispatcher, ham_manager, learning_manager, personality_manager, user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
+    ai_name = personality_manager.get_current_personality_trait("display_name", "AI")
+
+    # Use triggers from config to activate special handlers
+    if project_coordinator and user_input.lower().startswith(dm.triggers["complex_project"]):
+        project_query = user_input[len(dm.triggers["complex_project"]):].strip()
+        logging.info(f"[{dm.ai_id}] Complex project detected. Delegating to ProjectCoordinator...")
+        return await project_coordinator.handle_project(project_query, session_id, user_id)
+
+    try:
+        # Attempt to dispatch a tool based on user input
+        history = dm.active_sessions.get(session_id, [])
+        tool_response = await tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id, history=history)
+
+        response_text = ""
+        if tool_response['status'] == "success":
+            response_text = tool_response['payload']
+        elif tool_response['status'] == "no_tool_found" or tool_response['status'] == "no_tool_inferred":
+            response_text = f"{ai_name}: You said '{user_input}'. This is a simple response."
+        else:
+            response_text = f"{ai_name}: An error occurred while processing your request: {tool_response['error_message']}"
+    except Exception as e:
+        logging.error(f"Error dispatching tool: {e}")
+        response_text = f"{ai_name}: I'm sorry, I encountered an error while trying to understand your request."
+
+    # Store user and AI turns in session and memory
+    if session_id and session_id in dm.active_sessions:
+        dm.active_sessions[session_id].append(DialogueTurn(speaker="user", text=user_input, timestamp=datetime.now(timezone.utc)))
+        dm.active_sessions[session_id].append(DialogueTurn(speaker="ai", text=response_text, timestamp=datetime.now(timezone.utc)))
+
+    if ham_manager:
+        user_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id} # type: ignore
+        user_mem_id = ham_manager.store_experience(user_input, "user_dialogue_text", user_metadata)
+
+        ai_metadata: DialogueMemoryEntryMetadata = {"speaker": "ai", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id, "user_input_ref": user_mem_id} # type: ignore
+        ham_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata)
+
+    # Analyze for personality adjustment
+    if learning_manager:
+        adjustment = await learning_manager.analyze_for_personality_adjustment(user_input)
+        if adjustment and personality_manager:
+            personality_manager.apply_personality_adjustment(adjustment)
+
+    return response_text
+
+async def mock_start_session_side_effect(dm, time_system, personality_manager, user_id: Optional[str] = None, session_id: Optional[str] = None) -> str:
+    if not session_id:
+        session_id = str(uuid.uuid4())
+    logging.info(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}.")
+    dm.active_sessions[session_id] = []
+    base_prompt = personality_manager.get_initial_prompt()
+    time_segment = time_system.get_time_of_day_segment()
+    greetings = {"morning": "Good morning!", "afternoon": "Good afternoon!", "evening": "Good evening!", "night": "Hello,"}
+    return f"{greetings.get(time_segment, '')} {base_prompt}".strip()
+
+async def mock_handle_incoming_hsp_task_result_side_effect(project_coordinator, result_payload: Dict[str, Any], sender_ai_id: str, envelope: Dict[str, Any]) -> None:
+    await project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
+
+
 from typing import Optional, Dict, Any
 from cryptography.fernet import Fernet
 
@@ -143,17 +209,27 @@ def test_timeout_and_monitoring(request):
 @pytest.fixture
 def mock_core_services():
     from unittest.mock import MagicMock, AsyncMock
+    import logging
+    from src.core_ai.dialogue.dialogue_manager import DialogueManager
+    from src.core_ai.dialogue.project_coordinator import ProjectCoordinator # Import ProjectCoordinator
+    from src.core_ai.personality.personality_manager import PersonalityManager # Import PersonalityManager
 
     # Mock individual services
     mock_ham_manager = MagicMock(spec='src.core_ai.memory.ham_memory_manager.HAMMemoryManager')
     mock_llm_interface = MagicMock(spec='src.services.multi_llm_service.MultiLLMService')
     mock_service_discovery = MagicMock(spec='src.core_ai.service_discovery.service_discovery_module.ServiceDiscoveryModule')
-    mock_service_discovery.get_all_capabilities = MagicMock()
+    mock_service_discovery.get_all_capabilities = AsyncMock()
+    mock_service_discovery.process_capability_advertisement = MagicMock()
     mock_trust_manager = MagicMock(spec='src.core_ai.trust_manager.trust_manager_module.TrustManager')
-    mock_personality_manager = MagicMock(spec='src.core_ai.personality.personality_manager.PersonalityManager')
-    mock_personality_manager.get_initial_prompt = MagicMock()
+    
+    # Explicitly mock PersonalityManager methods
+    mock_personality_manager = MagicMock(spec=PersonalityManager)
+    mock_personality_manager.get_initial_prompt = MagicMock(return_value="Hello from mock personality!")
+    mock_personality_manager.get_current_personality_trait = MagicMock(return_value="TestAI") # Explicitly mock and set return_value
+    mock_personality_manager.apply_personality_adjustment = MagicMock() # Mock this method as well if it's called
+
     mock_emotion_system = MagicMock(spec='src.core_ai.emotion_system.EmotionSystem')
-    mock_crisis_system = MagicMock(spec='src.core_ai.crisis_system.CrisisSystem')
+    mock_crisis_system = MagicMock(spec='src.core_ai.crisis.CrisisSystem')
     mock_time_system = MagicMock(spec='src.core_ai.time_system.TimeSystem')
     mock_time_system.get_time_of_day_segment = MagicMock()
     mock_formula_engine = MagicMock(spec='src.core_ai.formula_engine.FormulaEngine')
@@ -164,18 +240,17 @@ def mock_core_services():
     mock_hsp_connector = MagicMock(spec='src.hsp.connector.HSPConnector')
     mock_hsp_connector.ai_id = "mock_ai_id"
     mock_agent_manager = MagicMock(spec='src.core_ai.agent_manager.AgentManager')
-    from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
-
-    mock_project_coordinator = ProjectCoordinator(
-        llm_interface=mock_llm_interface,
-        service_discovery=mock_service_discovery,
-        hsp_connector=mock_hsp_connector,
-        agent_manager=mock_agent_manager,
-        memory_manager=mock_ham_manager,
-        learning_manager=mock_learning_manager,
-        personality_manager=mock_personality_manager,
-        dialogue_manager_config={} # Pass an empty dict or a mock config
-    )
+    
+    # Mock the ProjectCoordinator instance
+    mock_project_coordinator = MagicMock(spec=ProjectCoordinator)
+    mock_project_coordinator.llm_interface = mock_llm_interface
+    mock_project_coordinator.service_discovery = mock_service_discovery
+    mock_project_coordinator.hsp_connector = mock_hsp_connector
+    mock_project_coordinator.agent_manager = mock_agent_manager
+    mock_project_coordinator.memory_manager = mock_ham_manager
+    mock_project_coordinator.learning_manager = mock_learning_manager
+    mock_project_coordinator.personality_manager = mock_personality_manager
+    mock_project_coordinator.dialogue_manager_config = {} # Pass an empty dict or a mock config
 
     # Configure mocks as needed for common scenarios
     mock_llm_interface.generate_response = AsyncMock(return_value='[{"capability_needed": "test_capability_v1", "task_parameters": {"param": "value"}, "task_description": "Test task"}]')
@@ -186,59 +261,41 @@ def mock_core_services():
     mock_hsp_connector.send_task_request = AsyncMock(return_value="mock_correlation_id")
     mock_project_coordinator.handle_project = AsyncMock(return_value="Mocked project response.")
     mock_project_coordinator.handle_task_result = AsyncMock()
+    mock_project_coordinator._execute_task_graph = AsyncMock() # Added mock for _execute_task_graph
+    mock_project_coordinator._decompose_user_intent_into_subtasks = AsyncMock(return_value=[]) # Added mock for _decompose_user_intent_into_subtasks
 
-    # Directly mock DialogueManager
-    mock_dialogue_manager = MagicMock(spec='src.core_ai.dialogue.dialogue_manager.DialogueManager')
-    mock_dialogue_manager.get_simple_response = AsyncMock(return_value="Mocked simple response.")
-    mock_dialogue_manager.start_session = AsyncMock(return_value="Mocked session greeting.")
-    mock_dialogue_manager._handle_incoming_hsp_task_result = AsyncMock()
-    mock_dialogue_manager.project_coordinator = mock_project_coordinator # Ensure project_coordinator is accessible
-    mock_dialogue_manager.memory_manager = mock_ham_manager # Ensure memory_manager is accessible
-    mock_dialogue_manager.tool_dispatcher = mock_tool_dispatcher # Ensure tool_dispatcher is accessible
-    mock_dialogue_manager.personality_manager = mock_personality_manager # Ensure personality_manager is accessible
-    mock_dialogue_manager.learning_manager = mock_learning_manager # Ensure learning_manager is accessible
-    mock_dialogue_manager.triggers = {"complex_project": "project:", "manual_delegation": "!delegate_to", "context_analysis": "!analyze:"} # Ensure triggers are set
-
-    # Directly mock DialogueManager
-    mock_dialogue_manager = MagicMock(spec='src.core_ai.dialogue.dialogue_manager.DialogueManager')
-
-    async def mock_get_simple_response(user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
-        if user_input.lower().startswith("project:"):
-            project_query = user_input[len("project:"):].strip()
-            return await mock_project_coordinator.handle_project(project_query, session_id, user_id)
-        else:
-            # Simulate tool dispatch
-            tool_response = await mock_tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id)
-            if tool_response['status'] == "success":
-                response_text = tool_response['payload']
-            else:
-                response_text = f"TestAI: You said '{user_input}'. This is a simple response."
-
-            # Simulate memory storage
-            await mock_ham_manager.store_experience(user_input, "user_dialogue_text", {"speaker": "user", "session_id": session_id})
-            await mock_ham_manager.store_experience(response_text, "ai_dialogue_text", {"speaker": "ai", "session_id": session_id})
-
-            # Simulate personality adjustment
-            adjustment = await mock_learning_manager.analyze_for_personality_adjustment(user_input)
-            if adjustment:
-                mock_personality_manager.apply_personality_adjustment(adjustment)
-
-            return response_text
-
-    async def mock_start_session(user_id: Optional[str] = None, session_id: Optional[str] = None) -> str:
-        time_segment = mock_time_system.get_time_of_day_segment()
-        initial_prompt = mock_personality_manager.get_initial_prompt()
-        greetings = {"morning": "Good morning!", "afternoon": "Good afternoon!", "evening": "Good evening!", "night": "Hello,"}
-        return f"{greetings.get(time_segment, '')} {initial_prompt}".strip()
-
-    async def mock_handle_incoming_hsp_task_result(result_payload: Dict[str, Any], sender_ai_id: str, envelope: Dict[str, Any]) -> None:
-        await mock_project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
-
-    mock_dialogue_manager.get_simple_response = AsyncMock(side_effect=mock_get_simple_response)
-    mock_dialogue_manager.start_session = AsyncMock(side_effect=mock_start_session)
-    mock_dialogue_manager._handle_incoming_hsp_task_result = AsyncMock(side_effect=mock_handle_incoming_hsp_task_result)
+    # Mock the DialogueManager instance
+    mock_dialogue_manager = MagicMock(spec=DialogueManager)
+    mock_dialogue_manager.ai_id = "test_ai_id"
+    mock_dialogue_manager.personality_manager = mock_personality_manager
+    mock_dialogue_manager.memory_manager = mock_ham_manager
+    mock_dialogue_manager.llm_interface = mock_llm_interface
+    mock_dialogue_manager.emotion_system = mock_emotion_system
+    mock_dialogue_manager.crisis_system = mock_crisis_system
+    mock_dialogue_manager.time_system = mock_time_system
+    mock_dialogue_manager.formula_engine = mock_formula_engine
+    mock_dialogue_manager.tool_dispatcher = mock_tool_dispatcher
+    mock_dialogue_manager.learning_manager = mock_learning_manager
+    mock_dialogue_manager.service_discovery_module = mock_service_discovery
+    mock_dialogue_manager.hsp_connector = mock_hsp_connector
+    mock_dialogue_manager.agent_manager = mock_agent_manager
+    mock_dialogue_manager.config = {}
     mock_dialogue_manager.triggers = {"complex_project": "project:", "manual_delegation": "!delegate_to", "context_analysis": "!analyze:"}
-    mock_dialogue_manager.ai_id = "test_ai_id" # Set ai_id for the mock
+    mock_dialogue_manager.active_sessions = {} # Initialize active_sessions
+
+    # Define nested async functions for side_effects
+    async def _get_simple_response_side_effect_wrapper(user_input, session_id=None, user_id=None):
+        return await mock_get_simple_response_side_effect(mock_dialogue_manager, mock_project_coordinator, mock_tool_dispatcher, mock_ham_manager, mock_learning_manager, mock_personality_manager, user_input, session_id, user_id)
+
+    async def _start_session_side_effect_wrapper(user_id=None, session_id=None):
+        return await mock_start_session_side_effect(mock_dialogue_manager, mock_time_system, mock_personality_manager, user_id, session_id)
+
+    async def _handle_incoming_hsp_task_result_side_effect_wrapper(result_payload, sender_ai_id, envelope):
+        return await mock_handle_incoming_hsp_task_result_side_effect(mock_project_coordinator, result_payload, sender_ai_id, envelope)
+
+    mock_dialogue_manager.get_simple_response = AsyncMock(side_effect=_get_simple_response_side_effect_wrapper)
+    mock_dialogue_manager.start_session = AsyncMock(side_effect=_start_session_side_effect_wrapper)
+    mock_dialogue_manager._handle_incoming_hsp_task_result = AsyncMock(side_effect=_handle_incoming_hsp_task_result_side_effect_wrapper)
 
     # Return a dictionary mimicking the structure of get_services()
     return {
@@ -258,3 +315,35 @@ def mock_core_services():
         "project_coordinator": mock_project_coordinator,
         "dialogue_manager": mock_dialogue_manager,
     }
+
+@pytest.fixture(scope="function")
+def client_with_overrides(mock_core_services):
+    """
+    Provides a FastAPI TestClient with core services mocked out.
+    This allows for isolated testing of API endpoints.
+    """
+    from fastapi.testclient import TestClient
+    from src.services.main_api_server import app, get_services
+
+    # Backup original dependencies and overrides
+    original_get_services = app.dependency_overrides.get(get_services)
+
+    # Apply the mock overrides
+    app.dependency_overrides[get_services] = lambda: mock_core_services
+
+    with TestClient(app) as client:
+        yield (
+            client,
+            mock_core_services["service_discovery"],
+            mock_core_services["dialogue_manager"],
+            mock_core_services["ham_manager"],
+            mock_core_services["hsp_connector"],
+        )
+
+    # Restore original dependencies
+    if original_get_services:
+        app.dependency_overrides[get_services] = original_get_services
+    else:
+        # If there was no override before, clear it
+        if get_services in app.dependency_overrides:
+            del app.dependency_overrides[get_services]

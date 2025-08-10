@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import logging
 
 # Add src directory to sys.path to allow imports from sibling directories
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

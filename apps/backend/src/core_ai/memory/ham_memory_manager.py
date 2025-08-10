@@ -7,14 +7,20 @@ from datetime import datetime, timezone
 from collections import Counter
 from cryptography.fernet import Fernet, InvalidToken
 import hashlib
-import asyncio # Added for asyncio.to_thread
-from typing import Optional, List, Dict, Any, Tuple, Union # Added Union for recall_gist return
-from src.shared.key_manager import key_manager
-from src.shared.types.common_types import DialogueMemoryEntryMetadata
-from .types import HAMDataPackageInternal, HAMRecallResult
+import asyncio
+from typing import Dict, Any, Optional, List, Tuple
+from datetime import datetime, timezone
+import uuid
+import logging
+import numpy as np # For cosine similarity calculation
+from typing import Dict, Any
+import chromadb # Added for ChromaDB client
+from src.core_ai.memory.ham_types import DialogueMemoryEntryMetadata, HAMMemory, HAMRecallResult # Added for DialogueMemoryEntryMetadata, HAMMemory, and HAMRecallResult
 
-import chromadb # New: Import chromadb
-from chromadb.utils import embedding_functions # New: For default embedding function
+from src.core_ai.memory.ham_errors import HAMMemoryError, HAMQueryError, HAMStoreError
+from src.core_ai.memory.ham_utils import calculate_cosine_similarity, generate_embedding, get_current_utc_timestamp, is_valid_uuid
+from src.core_ai.memory.vector_store import VectorMemoryStore # New import
+from src.core_ai.memory.importance_scorer import ImportanceScorer # New import
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +81,8 @@ class HAMMemoryManager:
                  core_storage_filename="ham_core_memory.json",
                  resource_awareness_service: Optional[Any] = None, # Optional['ResourceAwarenessService']
                  personality_manager: Optional[Any] = None,
-                 storage_dir: Optional[str] = None): # New: Optional storage directory
+                 storage_dir: Optional[str] = None,
+                 chroma_client: Optional[chromadb.Client] = None): # New: Optional ChromaDB client
         """
         Initializes the HAMMemoryManager.
 
@@ -84,6 +91,7 @@ class HAMMemoryManager:
             resource_awareness_service (Optional[ResourceAwarenessService]): Service to get simulated resource limits.
             personality_manager (Optional[PersonalityManager]): The personality manager.
             storage_dir (Optional[str]): Optional. Base directory for data storage. If None, defaults to PROJECT_ROOT/data/processed_data.
+            chroma_client (Optional[chromadb.Client]): Optional. An existing ChromaDB client to use.
         """
         self.resource_awareness_service = resource_awareness_service
         self.personality_manager = personality_manager
@@ -125,15 +133,10 @@ class HAMMemoryManager:
         self._load_core_memory_from_file()
         logger.info(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
 
-        # New: Initialize ChromaDB
-        self.chroma_client = chromadb.PersistentClient(path=os.path.join(self.storage_dir, "chroma_db"))
-        
-        # Use the mock embedding function directly
-        self.chroma_collection = self.chroma_client.get_or_create_collection(
-            name="ham_semantic_memories",
-            embedding_function=MockEmbeddingFunction() # Use an instance of the mock embedding function class
-        )
-        logger.info("ChromaDB initialized for semantic memory with mock embedding function.")
+        # Initialize VectorMemoryStore and ImportanceScorer
+        self.vector_store = VectorMemoryStore(persist_directory=os.path.join(self.storage_dir, "chroma_db"))
+        self.importance_scorer = ImportanceScorer()
+        logger.info("VectorMemoryStore and ImportanceScorer initialized.")
 
         # Start background cleanup task only if there's a running event loop
         try:
@@ -262,6 +265,29 @@ class HAMMemoryManager:
             base_rehydration += f"\nPOS Tags (Placeholder): {gist.get('pos_tags_placeholder')}"
         return base_rehydration
 
+    def _normalize_date(self, date_input: Any) -> datetime:
+        """
+        Normalizes various date inputs into a timezone-aware datetime object (UTC).
+        """
+        if isinstance(date_input, datetime):
+            if date_input.tzinfo is None:
+                return date_input.replace(tzinfo=timezone.utc)
+            return date_input.astimezone(timezone.utc)
+        elif isinstance(date_input, (int, float)): # Unix timestamp
+            return datetime.fromtimestamp(date_input, tz=timezone.utc)
+        elif isinstance(date_input, str):
+            try:
+                # Try parsing as ISO format first
+                dt = datetime.fromisoformat(date_input)
+                if dt.tzinfo is None:
+                    return dt.replace(tzinfo=timezone.utc)
+                return dt.astimezone(timezone.utc)
+            except ValueError:
+                # Fallback for other common formats if necessary, or raise error
+                raise ValueError(f"Could not parse date string: {date_input}. Expected ISO format.")
+        else:
+            raise TypeError(f"Unsupported date input type: {type(date_input)}")
+
     # --- Core Layer File Operations ---
     def _get_current_disk_usage_gb(self) -> float:
         """Returns the current size of the core_storage_filepath in GB."""
@@ -380,7 +406,7 @@ class HAMMemoryManager:
             self.next_memory_id = 1
 
     # --- Public API Methods ---
-    def store_experience(self, raw_data: Any, data_type: str, metadata: Optional[DialogueMemoryEntryMetadata] = None) -> Optional[str]:
+    async def store_experience(self, raw_data: Any, data_type: str, metadata: Optional[DialogueMemoryEntryMetadata] = None) -> Optional[str]:
         """
         Stores a new experience into the HAM.
         The raw_data is processed (abstracted, checksummed, compressed, encrypted)
@@ -430,21 +456,25 @@ class HAMMemoryManager:
         sha256_checksum = hashlib.sha256(data_to_process).hexdigest()
         current_metadata['sha256_checksum'] = sha256_checksum
 
-        # New: Generate semantic vector and store in ChromaDB
-        if self.chroma_collection:
-            try:
-                text_for_embedding = raw_data if isinstance(raw_data, str) else json.dumps(raw_data)
-                # The embedding will be generated automatically by ChromaDB using the configured embedding_function
-                self.chroma_collection.add(
-                    documents=[text_for_embedding], # Store the original text for context in Chroma
-                    metadatas=[current_metadata], # Store metadata in Chroma as well
-                    ids=[memory_id]
-                )
-                logger.debug(f"HAM: Stored semantic vector for {memory_id} in ChromaDB.")
-            except Exception as e:
-                logger.error(f"Error storing semantic vector in ChromaDB for {memory_id}: {e}")
-        else:
-            logger.warning("ChromaDB collection not initialized. Semantic vector not stored.")
+        # Store in vector store as well
+        # Calculate importance score if not already set
+        if current_metadata.get("importance_score") is None:
+            # Assuming raw_data is the content for importance scoring
+            current_metadata["importance_score"] = await self.importance_scorer.calculate(
+                raw_data if isinstance(raw_data, str) else json.dumps(raw_data),
+                current_metadata
+            )
+        
+        try:
+            text_for_embedding = raw_data if isinstance(raw_data, str) else json.dumps(raw_data)
+            await self.vector_store.add_memory(
+                memory_id=memory_id,
+                content=text_for_embedding,
+                metadata=current_metadata # Pass the updated metadata
+            )
+            logger.debug(f"HAM: Stored semantic vector for {memory_id} in VectorMemoryStore.")
+        except Exception as e:
+            logger.error(f"Error storing semantic vector in VectorMemoryStore for {memory_id}: {e}")
 
         try:
             compressed_data = self._compress(data_to_process)
@@ -460,7 +490,6 @@ class HAMMemoryManager:
             # For test compatibility, raise the exception as expected by test_18_encryption_failure
             raise Exception(f"Failed to store experience: {e}") from e
 
-        memory_id = self._generate_memory_id()
         data_package: HAMDataPackageInternal = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "data_type": data_type,
@@ -486,6 +515,28 @@ class HAMMemoryManager:
             # if not handled, but for simulation, it might be acceptable or reset on reload.
             # Alternatively, decrement self.next_memory_id here if strict ID sequence is vital.
             return None
+
+    async def retrieve_relevant_memories(self, query: str, limit: int = 10) -> List[HAMMemory]:
+        """
+        Retrieves memories relevant to a given query using semantic search.
+        """
+        try:
+            semantic_results = await self.vector_store.semantic_search(query, limit)
+            
+            # Fetch full HAMMemory objects based on IDs from semantic search
+            relevant_memories = []
+            for res in semantic_results:
+                memory_id = res['id']
+                # Assuming db_interface has a method to get HAMMemory by ID
+                ham_memory = await self.db_interface.get_memory_by_id(memory_id)
+                if ham_memory:
+                    relevant_memories.append(ham_memory)
+            
+            self.logger.info(f"Retrieved {len(relevant_memories)} relevant memories for query: '{query}'")
+            return relevant_memories
+        except Exception as e:
+            self.logger.error(f"Failed to retrieve relevant memories for query '{query}': {e}")
+            raise HAMQueryError(f"Failed to retrieve relevant memories: {e}")
 
     def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
         """
@@ -710,16 +761,15 @@ class HAMMemoryManager:
 
             if match and date_range:
                 try:
-                    item_dt = datetime.fromisoformat(item["timestamp"])
-                    start_date, end_date = date_range
-                    # Ensure timezone consistency for comparison
-                    if item_dt.tzinfo is None:
-                        # If stored timestamp is naive, assume UTC for comparison
-                        item_dt = item_dt.replace(tzinfo=timezone.utc)
-                    if not (start_date <= item_dt <= end_date):
+                    item_dt = self._normalize_date(item["timestamp"])
+                    start_dt_normalized = self._normalize_date(date_range[0])
+                    end_dt_normalized = self._normalize_date(date_range[1])
+                    
+                    if not (start_dt_normalized <= item_dt <= end_dt_normalized):
                         match = False
-                except (ValueError, TypeError): # If timestamp is not valid ISO format or other error
-                    match = False # Or log error and continue
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"Error parsing date for memory {mem_id} or date_range {date_range}: {e}. Skipping this memory for date filter.")
+                    match = False # Treat as non-match if date parsing fails
 
             if match and metadata_filters:
                 for key, value in metadata_filters.items():

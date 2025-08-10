@@ -112,10 +112,7 @@ class HSPConnector:
         # Moved to connect() method to ensure event loop is running
 
         # Register internal message bridge handler for external messages
-        if self.mock_mode:
-            self.external_connector.on_message_callback = AsyncMock(side_effect=self.message_bridge.handle_external_message)
-        else:
-            self.external_connector.on_message_callback = self.message_bridge.handle_external_message
+        self.external_connector.on_message_callback = self.message_bridge.handle_external_message
 
         # Subscribe to internal bus messages that need to go external
         self.internal_bus.subscribe("hsp.internal.message", self.message_bridge.handle_internal_message)
@@ -735,11 +732,11 @@ class HSPConnector:
             )
             
             success = await self.fallback_manager.send_message(
-                fallback_msg.sender_id,
                 fallback_msg.recipient_id,
                 fallback_msg.message_type,
                 fallback_msg.payload,
-                priority=priority
+                priority=fallback_msg.priority,
+                correlation_id=fallback_msg.correlation_id
             )
             
             if success:

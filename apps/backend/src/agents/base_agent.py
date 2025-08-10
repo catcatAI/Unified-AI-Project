@@ -30,9 +30,25 @@ class BaseAgent:
         self.hsp_connector = None
         self.is_running = False
         logging.basicConfig(level=logging.INFO)
+        self.services = None
 
+    async def _ainit(self):
         # Initialize core services required by the agent
-        initialize_services(
+        # Construct a minimal config for initialize_services
+        # This is needed because initialize_services now requires a config dict
+        # and BaseAgent might not have a full one.
+        minimal_config = {
+            "is_multiprocess": False,
+            "mcp": {
+                "mqtt_broker_address": "localhost",
+                "mqtt_broker_port": 1883,
+                "enable_fallback": True,
+                "fallback_config": {}
+            }
+        }
+
+        await initialize_services(
+            config=minimal_config, # Pass the constructed config
             ai_id=self.agent_id,
             use_mock_ham=True, # Sub-agents typically don't need their own large memory
             llm_config=None, # Sub-agents use specific tools, may not need a full LLM
@@ -47,6 +63,10 @@ class BaseAgent:
         """
         logger.info(f"[{self.agent_id}] Setting is_running to True")
         self.is_running = True
+
+        # Perform async initialization
+        await self._ainit()
+
         if not self.hsp_connector:
             logger.error(f"[{self.agent_id}] Error: HSPConnector not available.")
             return
@@ -73,7 +93,7 @@ class BaseAgent:
         """
         logger.info(f"[{self.agent_id}] Stopping...")
         self.is_running = False
-        shutdown_services()
+        await shutdown_services()
         logger.info(f"[{self.agent_id}] Stopped.")
 
     def is_healthy(self) -> bool:
@@ -102,7 +122,7 @@ class BaseAgent:
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            await self.hsp_connector.send_task_result(result_payload, callback_topic, task_payload.get("request_id"))
             logger.warning(f"[{self.agent_id}] Sent NOT_IMPLEMENTED failure response to {callback_topic}")
 
 if __name__ == '__main__':

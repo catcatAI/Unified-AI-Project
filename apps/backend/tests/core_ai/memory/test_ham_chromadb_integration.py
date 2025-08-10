@@ -18,9 +18,9 @@ class MockSentenceTransformer:
         return [[0.1] * 384 for _ in texts]
 
 class MockEmbeddingFunction:
-    def __call__(self, texts: List[str]) -> List[List[float]]:
+    def __call__(self, input: List[str]) -> List[List[float]]:
         # Return dummy embeddings of the correct dimension
-        return [[0.1] * 384 for _ in texts]
+        return [[0.1] * 384 for _ in input]
 
     def name(self) -> str:
         return "mock_embedding_function"
@@ -46,48 +46,23 @@ import chromadb # Added for fixture
 
 @pytest.fixture(scope="function")
 def ham_chroma_manager_fixture():
-    test_filename = "test_ham_chroma_core_memory.json"
-    os.makedirs(TEST_STORAGE_DIR, exist_ok=True)
+    # Use EphemeralClient for in-memory testing, avoiding file locking issues
+    client = chromadb.EphemeralClient()
 
-    # Ensure ChromaDB directory is clean for each test
-    chroma_db_path = os.path.join(TEST_STORAGE_DIR, "chroma_db")
-    if os.path.exists(chroma_db_path):
-        import shutil
-        shutil.rmtree(chroma_db_path)
-
-    ham_manager = HAMMemoryManager(core_storage_filename=test_filename, storage_dir=TEST_STORAGE_DIR)
-    chroma_client = chromadb.PersistentClient(path=chroma_db_path)
-    ham_manager.chroma_client = chroma_client # Inject the client from the context manager
-    ham_manager.chroma_collection = chroma_client.get_or_create_collection(
-        name="ham_semantic_memories",
-        embedding_function=MockEmbeddingFunction() # Use an instance of the mock embedding function class
+    # Create the manager and inject the client
+    ham_manager = HAMMemoryManager(
+        core_storage_filename="test_ham_chroma_core_memory.json",
+        storage_dir=TEST_STORAGE_DIR, # Still provide a dummy storage_dir for HAMMemoryManager init
+        chroma_client=client  # Pass the initialized client here
     )
+
     yield ham_manager
 
-    # Teardown
-    del ham_manager.chroma_collection
-    del ham_manager.chroma_client
+    # Teardown: EphemeralClient does not require explicit reset or file cleanup
+    # The client will be garbage collected after the fixture scope ends.
+    del client
     gc.collect()
-    if os.path.exists(ham_manager.core_storage_filepath):
-        os.remove(ham_manager.core_storage_filepath)
-    if os.path.exists(chroma_db_path):
-        import shutil
-        time.sleep(0.5) # Give ChromaDB a moment to release files
-        # Retry deleting the directory a few times, as ChromaDB can sometimes hold onto the file
-        for i in range(10):
-            try:
-                shutil.rmtree(chroma_db_path)
-                break
-            except OSError as e:
-                if i < 9:
-                    time.sleep(0.1) # Wait a bit before retrying
-                else:
-                    raise e
-    try:
-        if os.path.exists(TEST_STORAGE_DIR) and not os.listdir(TEST_STORAGE_DIR):
-            os.rmdir(TEST_STORAGE_DIR)
-    except OSError:
-        pass
+    time.sleep(0.1) # Small delay to help with resource release
 
 @pytest.mark.asyncio
 async def test_01_store_experience_and_verify_chromadb_entry(ham_chroma_manager_fixture):

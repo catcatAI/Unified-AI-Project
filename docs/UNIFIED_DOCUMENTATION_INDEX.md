@@ -184,7 +184,7 @@ catcatAI 組織
 | 文檔連結審查報告 | (中) | `docs/06-project-management/reports/documentation-link-audit-report.md` | 文檔連結檢查與修復記錄 | ✅ 最新 | 🟢 高 |
 | 文檔連結審查更新 | (中) | `docs/06-project-management/reports/documentation-link-audit-update.md` | 連結修復進度更新報告 | ✅ 最新 | 🟢 高 |
 | 項目繼續任務總結 | (中) | `docs/06-project-management/reports/project-continuation-summary.md` | 繼續中斷任務完成總結 | ✅ 最新 | 🟢 高 |
-| 路線圖 | (中) | `docs/00-overview/ROADMAP.md` | 未來發展路線圖 | 🟢 重要 | ✅ 活躍 |
+| 路線圖 | (中) | `planning/core-development/technical-implementation-roadmap.md` | 未來發展路線圖 | 🟢 重要 | ✅ 活躍 |
 | Electron 主進程 | (英) | `docs/05-development/electron-main-process.md` | Electron 應用程式主進程 | ✅ 完整 | 🟢 高 |
 | Electron 預載入腳本 | (英) | `docs/05-development/electron-preload-script.md` | Electron 應用程式預載入腳本 | ✅ 完整 | 🟢 高 |
 | Electron 渲染器進程 | (英) | `docs/05-development/electron-renderer-process.md` | Electron 應用程式渲染器進程 | ✅ 完整 | 🟢 高 |
@@ -223,5 +223,5 @@ catcatAI 組織
 
 ---
 
-*本索引最後更新：2025年8月5日*
+*本索引最後更新：2025年8月10日*
 *維護者：Gemini*

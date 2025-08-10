@@ -24,7 +24,7 @@
 
 3.  **灵活的模型配置**:
     *   从外部 JSON 文件 (例如 `configs/multi_llm_config.json`) 加载模型配置。
-    *   配置包括 `model_name`、`api_key` (从环境变量加载)、`max_tokens`、`temperature`、`top_p`、`cost_per_1k_tokens` 和 `enabled` 状态。
+    *   配置包括 `model_name`、`api_key` (从环境变量加载)、`base_url` (可选，用于自定义端点)、`max_tokens`、`temperature`、`top_p`、`frequency_penalty`、`presence_penalty`、`timeout`、`cost_per_1k_tokens`、`context_window` 和 `enabled` 状态。
 
 4.  **使用统计和成本追踪**:
     *   跟踪每个模型的详细使用统计，包括 `total_requests`、`total_tokens` (提示和完成)、`total_cost`、`average_latency` 和 `error_count`。
@@ -109,6 +109,30 @@ python scripts/ai_models.py compare "解释量子计算" --models gpt-4 claude-3
 
 ## 编程接口
 
+### 数据结构
+
+#### ChatMessage
+
+表示聊天消息的结构。
+
+- `role` (str): 消息发送者的角色（例如："system", "user", "assistant"）。
+- `content` (str): 消息的文本内容。
+- `name` (Optional[str]): 可选。消息发送者的名称。
+- `timestamp` (Optional[datetime]): 可选。消息发送的时间戳。
+
+#### LLMResponse
+
+表示 LLM 响应的结构。
+
+- `content` (str): LLM 生成的文本内容。
+- `model` (str): 使用的模型 ID。
+- `provider` (ModelProvider): 模型提供商。
+- `usage` (Dict[str, int]): Token 使用统计（例如：`prompt_tokens`, `completion_tokens`, `total_tokens`）。
+- `cost` (float): 本次请求的估算成本。
+- `latency` (float): 请求的延迟（秒）。
+- `timestamp` (datetime): 响应生成的时间戳。
+- `metadata` (Dict[str, Any]): 其他元数据（例如：`finish_reason`）。
+
 ### 基本用法
 
 ```python
@@ -162,7 +186,8 @@ async def compare_models():
         messages = [ChatMessage(role="user", content=query)]
         response = await service.chat_completion(messages, model_id=model)
         
-        print(f"\n{model}:")
+        print(f"
+{model}:")
         print(response.content)
         print(f"成本: ${response.cost:.4f}, 延迟: {response.latency:.2f}s")
     
@@ -258,7 +283,7 @@ async def compare_models():
 
 2. **模型不可用**
    - 运行健康检查: `python scripts/ai_models.py health`
-   - 检查网络连接和防火墙设置
+   - 检查网络连接和防火牆設置
 
 3. **Ollama 连接失败**
    - 确认 Ollama 服务正在运行
@@ -301,3 +326,6 @@ python scripts/ai_models.py stats
 - [API 参考](../api/multi-llm-api.md)
 - [配置指南](../configuration/llm-config.md)
 - [部署指南](../deployment/llm-deployment.md)
+
+--- 
+*Last Updated: 2025-08-10*
