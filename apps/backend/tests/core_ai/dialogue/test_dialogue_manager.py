@@ -194,34 +194,31 @@ async def test_get_simple_response_tool_dispatch_success(mock_core_services):
     # Ensure the memory manager is still called
     mock_core_services["ham_manager"].store_experience.assert_called()
 
+import openai # Import openai for the specific error type
+
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 async def test_get_simple_response_tool_dispatch_error(mock_core_services):
     """
-    Tests the flow where the ToolDispatcher finds a tool, but it fails.
+    Tests the flow where the LLM (used by ToolDispatcher) fails,
+    and DialogueManager returns a generic error.
     """
     # Arrange
     dm = mock_core_services["dialogue_manager"]
-    tool_dispatcher = mock_core_services["tool_dispatcher"]
+    llm_interface = mock_core_services["llm_interface"]
 
-    error_message = "API key is invalid."
-    tool_dispatcher.dispatch.return_value = ToolDispatcherResponse(
-        status="error",
-        payload=None,
-        tool_name_attempted="weather_tool",
-        original_query_for_tool="weather in london",
-        error_message=error_message
-    )
+    # Mock the LLM to raise an OpenAIError when generate_response is called
+    llm_interface.generate_response.side_effect = openai.OpenAIError("The API key is invalid.")
 
     user_input = "weather in london"
-    expected_response = f"TestAI: An error occurred while processing your request: {error_message}"
+    ai_name = dm.personality_manager.get_current_personality_trait("display_name", "AI")
+    expected_response = f"{ai_name}: I'm sorry, I encountered an error while trying to understand your request."
 
     # Act
     response = await dm.get_simple_response(user_input)
 
     # Assert
-    # The final response should be the formatted error message
     assert response == expected_response
-    tool_dispatcher.dispatch.assert_awaited_once_with(user_input, session_id=None, user_id=None)
+    llm_interface.generate_response.assert_awaited_once()
     # Ensure the memory manager is still called, even on error
     mock_core_services["ham_manager"].store_experience.assert_called()

@@ -22,6 +22,7 @@ This module is critical for enabling seamless interaction between various AI com
 
 4.  **Robust Fallback Protocols**: 
     *   A cornerstone feature, the `HSPConnector` can initialize and leverage various fallback protocols (e.g., in-memory, file-based, HTTP) via the `FallbackManager` when the primary HSP connection (MQTT) is unavailable or unreliable.
+    *   It also incorporates a **connection retry mechanism with exponential backoff** for the primary HSP connection, attempting to re-establish connectivity multiple times before fully relying on fallbacks.
     *   This ensures continuous communication and operational resilience, critical for maintaining AI functionality in diverse environments.
 
 5.  **HSP Message Type Handling**: 
@@ -48,3 +49,6 @@ The `HSPConnector` establishes a connection to the configured message broker. It
 ## Code Location
 
 `src/hsp/connector.py`
+
+---
+*Last Updated: 2025-08-10*
