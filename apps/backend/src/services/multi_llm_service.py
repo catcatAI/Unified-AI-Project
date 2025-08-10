@@ -863,6 +863,8 @@ class HuggingFaceProvider(BaseLLMProvider):
         """Hugging Face Inference API 通常免费"""
         return 0.0
 
+LLM_ROUTER_ENABLED = os.getenv('LLM_ROUTER_ENABLED', 'true').lower() == 'true'
+
 class MultiLLMService:
     """多模型 LLM 服务"""
     
@@ -934,6 +936,16 @@ class MultiLLMService:
         else:
             raise ValueError(f"不支持的提供商: {config.provider}")
     
+    def _ensure_router(self):
+        try:
+            from src.core_ai.language_models.registry import ModelRegistry
+            from src.core_ai.language_models.router import PolicyRouter, RoutingPolicy
+        except Exception:
+            return None, None, None
+        registry = ModelRegistry(self.model_configs)
+        router = PolicyRouter(registry)
+        return registry, router, RoutingPolicy
+
     async def chat_completion(
         self, 
         messages: List[ChatMessage], 

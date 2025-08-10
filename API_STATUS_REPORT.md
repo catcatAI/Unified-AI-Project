@@ -9,6 +9,7 @@
 - `GET /api/v1/health` - 系統健康檢查 - **已完成**
 - `GET /api/v1/system/services` - 系統服務狀態 - **已完成**
 - `GET /api/v1/system/metrics/detailed` - 詳細系統指標 - **已完成**
+- `GET /api/v1/openapi` - OpenAPI 規格輸出 - **已完成**
 
 ### 🟢 AI代理管理API - 已完成
 - `GET /api/v1/agents` - 獲取所有AI代理狀態 - **已完成**

@@ -193,6 +193,32 @@ async def search_confluence_content(query: str, limit: int = 25):
 async def get_openapi_spec():
     return app.openapi()
 
+# ==== Models/Router Endpoints (Phase 1) ====
+from src.services.multi_llm_service import get_multi_llm_service
+from src.core_ai.language_models.registry import ModelRegistry
+from src.core_ai.language_models.router import PolicyRouter, RoutingPolicy
+
+@app.get("/api/v1/models/available")
+async def get_models_available():
+    m = get_multi_llm_service()
+    registry = ModelRegistry(m.model_configs)
+    return {"models": registry.profiles_dict()}
+
+@app.post("/api/v1/models/route")
+async def models_route(body: dict):
+    m = get_multi_llm_service()
+    registry = ModelRegistry(m.model_configs)
+    router = PolicyRouter(registry)
+    policy = RoutingPolicy(
+        task_type=body.get('task_type', 'general'),
+        input_chars=body.get('input_chars', 0),
+        needs_tools=body.get('needs_tools', False),
+        needs_vision=body.get('needs_vision', False),
+        latency_target=body.get('latency_target'),
+        cost_ceiling=body.get('cost_ceiling')
+    )
+    return router.route(policy)
+
 @app.get("/api/v1/health")
 async def get_health_status():
     """获取系统健康状态、服务状态和性能指标"""
