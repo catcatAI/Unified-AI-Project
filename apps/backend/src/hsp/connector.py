@@ -1,5 +1,5 @@
 import json # Added for JSON serialization
-from typing import Callable, Dict, Any, Optional # Added Optional
+from typing import Callable, Dict, Any, Optional, List # Added Optional, List
 from .external.external_connector import ExternalConnector
 from .internal.internal_bus import InternalBus
 from .bridge.data_aligner import DataAligner
@@ -98,8 +98,15 @@ class HSPConnector:
         self._capability_advertisement_callbacks = []
         self._task_request_callbacks = []
         self._task_result_callbacks = []
+        self._acknowledgement_callbacks = [] # New: for incoming ACKs
         self._connect_callbacks = []
         self._disconnect_callbacks = []
+
+        self._pending_acks: Dict[str, asyncio.Future] = {} # New: To track messages awaiting ACK
+        self._message_retry_counts: Dict[str, int] = {} # New: To track retry counts for messages
+        self.ack_timeout_sec = 10 # New: Default timeout for ACK
+        self.max_ack_retries = 3 # New: Max retries for messages requiring ACK
+        self._capability_provider_callback: Optional[Callable[[], List[HSPCapabilityAdvertisementPayload]]] = None # New: Callback to get capabilities
         
         # Initialize fallback protocols if enabled
         # Moved to connect() method to ensure event loop is running
@@ -118,6 +125,7 @@ class HSPConnector:
         self.internal_bus.subscribe("hsp.external.capability_advertisement", self._dispatch_capability_advertisement_to_callbacks)
         self.internal_bus.subscribe("hsp.external.task_request", self._dispatch_task_request_to_callbacks)
         self.internal_bus.subscribe("hsp.external.task_result", self._dispatch_task_result_to_callbacks)
+        self.internal_bus.subscribe("hsp.external.acknowledgement", self._dispatch_acknowledgement_to_callbacks) # New subscription
 
     async def connect(self):
         if self.mock_mode:
@@ -148,6 +156,9 @@ class HSPConnector:
         for callback in self._connect_callbacks:
             await callback()
 
+        # New: Perform post-connection synchronization
+        await self._post_connect_synchronization()
+
     async def disconnect(self):
         if self.mock_mode:
             self.logger.info("HSPConnector: Mock disconnect successful.")
@@ -163,26 +174,89 @@ class HSPConnector:
         for callback in self._disconnect_callbacks:
             await callback()
 
-    async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1):
+    async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
         logging.info(f"HSPConnector: publish_message called. self.external_connector.publish is {type(self.external_connector.publish)}")
         
-        # Try HSP first if available
-        if self.hsp_available and self.is_connected:
-            try:
-                await self.external_connector.publish(topic, json.dumps(envelope).encode('utf-8'), qos=qos)
-                return True
-            except Exception as e:
-                self.logger.error(f"HSP publish failed: {e}, trying fallback")
-                self.hsp_available = False
-                # Explicitly return False here, as the fallback will be tried next.
-                # This makes the logic clearer.
-                return False
+        message_id = envelope.get("message_id")
+        correlation_id = envelope.get("correlation_id") or message_id # Use message_id if correlation_id is not set
+        requires_ack = envelope.get("qos_parameters", {}).get("requires_ack", False)
         
-        # Use fallback protocols if HSP is not available
-        if self.enable_fallback and self.fallback_manager:
-            return await self._send_via_fallback(topic, envelope, qos)
-        
-        logging.error(f"HSPConnector: No available communication method for {topic}.")
+        # Initialize retry count for this message if it's new
+        if correlation_id not in self._message_retry_counts:
+            self._message_retry_counts[correlation_id] = 0
+
+        # Retry loop for messages requiring ACK
+        while self._message_retry_counts[correlation_id] <= self.max_ack_retries:
+            attempt = self._message_retry_counts[correlation_id]
+            if attempt > 0:
+                self.logger.info(f"Retrying message {correlation_id}, attempt {attempt}/{self.max_ack_retries}")
+                await asyncio.sleep(2 ** (attempt - 1)) # Exponential backoff
+
+            # Try HSP first if available
+            if self.hsp_available and self.is_connected:
+                try:
+                    await self.external_connector.publish(topic, json.dumps(envelope).encode('utf-8'), qos=qos)
+                    self.logger.debug(f"Message {correlation_id} published via HSP.")
+
+                    if requires_ack:
+                        ack_future = asyncio.Future()
+                        self._pending_acks[correlation_id] = ack_future
+                        try:
+                            await asyncio.wait_for(ack_future, timeout=self.ack_timeout_sec)
+                            self.logger.info(f"ACK received for message {correlation_id}.")
+                            del self._message_retry_counts[correlation_id] # Clear retry count on success
+                            return True
+                        except asyncio.TimeoutError:
+                            self.logger.warning(f"ACK timeout for message {correlation_id}. Attempt {attempt}/{self.max_ack_retries}.")
+                            self._message_retry_counts[correlation_id] += 1
+                            continue # Retry
+                        finally:
+                            # Ensure future is removed even if cancelled or exception
+                            if correlation_id in self._pending_acks:
+                                del self._pending_acks[correlation_id]
+                    else:
+                        self.logger.debug(f"Message {correlation_id} does not require ACK.")
+                        del self._message_retry_counts[correlation_id] # Clear retry count
+                        return True
+                except Exception as e:
+                    self.logger.error(f"HSP publish failed for {correlation_id}: {e}. Attempt {attempt}/{self.max_ack_retries}. Trying fallback or retrying.")
+                    self.hsp_available = False # Mark HSP as unavailable if publish fails
+                    self._message_retry_counts[correlation_id] += 1
+                    # If HSP fails, try fallback immediately, then retry loop continues
+                    if self.enable_fallback and self.fallback_manager:
+                        fallback_success = await self._send_via_fallback(topic, envelope, qos)
+                        if fallback_success:
+                            self.logger.info(f"Message {correlation_id} sent via fallback after HSP failure.")
+                            del self._message_retry_counts[correlation_id]
+                            return True
+                        else:
+                            self.logger.error(f"Fallback also failed for message {correlation_id}.")
+                            # Fallback failed, so loop will continue to next retry attempt or exit
+                            continue
+                    else:
+                        # No fallback or fallback failed, loop will continue to next retry attempt or exit
+                        continue
+            else: # HSP is not available or not connected
+                self.logger.warning(f"HSP not available for message {correlation_id}. Attempt {attempt}/{self.max_ack_retries}. Trying fallback.")
+                if self.enable_fallback and self.fallback_manager:
+                    fallback_success = await self._send_via_fallback(topic, envelope, qos)
+                    if fallback_success:
+                        self.logger.info(f"Message {correlation_id} sent via fallback.")
+                        del self._message_retry_counts[correlation_id]
+                        return True
+                    else:
+                        self.logger.error(f"Fallback also failed for message {correlation_id}.")
+                        self._message_retry_counts[correlation_id] += 1
+                        continue # Fallback failed, so loop will continue to next retry attempt or exit
+                else:
+                    self.logger.error(f"HSP not available and fallback disabled/failed for {correlation_id}.")
+                    self._message_retry_counts[correlation_id] += 1
+                    continue # No communication method, loop will continue to next retry attempt or exit
+
+        # If we exit the loop, it means max retries were exceeded
+        self.logger.error(f"HSPConnector: Max retries ({self.max_ack_retries}) exceeded for message {correlation_id}. Message failed to send.")
+        if correlation_id in self._message_retry_counts:
+            del self._message_retry_counts[correlation_id] # Clean up
         return False
 
     async def publish_fact(self, fact_payload: HSPFactPayload, topic: str, qos: int = 1):
@@ -299,6 +373,13 @@ class HSPConnector:
 
     def register_on_disconnect_callback(self, callback: Callable[[], None]):
         self._disconnect_callbacks.append(callback)
+
+    def register_on_acknowledgement_callback(self, callback: Callable[[HSPAcknowledgementPayload, str, HSPMessageEnvelope], None]):
+        self._acknowledgement_callbacks.append(callback)
+
+    def register_capability_provider(self, callback: Callable[[], List[HSPCapabilityAdvertisementPayload]]):
+        """Registers a callback function that provides the AI's current capabilities."""
+        self._capability_provider_callback = callback
 
     async def advertise_capability(self, capability: HSPCapabilityAdvertisementPayload):
         """Publishes a capability advertisement."""
@@ -474,6 +555,36 @@ class HSPConnector:
                 # Publish ACK to the sender's ACK topic
                 ack_topic = f"hsp/acks/{sender_ai_id}"
                 await self.publish_message(ack_topic, ack_envelope)
+
+    async def _dispatch_acknowledgement_to_callbacks(self, message: Dict[str, Any]):
+        payload = message.get("payload")
+        sender_ai_id = message.get("sender_ai_id")
+
+        self.logger.debug(f"Dispatching acknowledgement to {len(self._acknowledgement_callbacks)} callbacks. Message: {message}")
+
+        if payload and sender_ai_id:
+            ack_payload = HSPAcknowledgementPayload(**payload)
+            target_message_id = ack_payload.get("target_message_id")
+            correlation_id = message.get("correlation_id")
+
+            # Resolve pending ACK if any
+            if correlation_id and correlation_id in self._pending_acks:
+                future = self._pending_acks.pop(correlation_id)
+                if not future.done():
+                    future.set_result(ack_payload) # Signal that ACK was received
+                    self.logger.debug(f"Resolved pending ACK for correlation_id: {correlation_id}")
+            elif target_message_id and target_message_id in self._pending_acks: # Fallback to target_message_id if correlation_id not used for ACK tracking
+                future = self._pending_acks.pop(target_message_id)
+                if not future.done():
+                    future.set_result(ack_payload)
+                    self.logger.debug(f"Resolved pending ACK for target_message_id: {target_message_id}")
+
+            for callback in self._acknowledgement_callbacks:
+                self.logger.debug(f"Calling on_acknowledgement_callback: {callback}")
+                if asyncio.iscoroutinefunction(callback):
+                    await callback(ack_payload, sender_ai_id, message)
+                else:
+                    callback(ack_payload, sender_ai_id, message)
 
     # --- Properties ---
     @property
@@ -691,5 +802,26 @@ class HSPConnector:
         
         health["overall_healthy"] = health["hsp_healthy"] or health["fallback_healthy"]
         return health
+
+    async def _post_connect_synchronization(self):
+        """Performs synchronization tasks after a successful connection."""
+        self.logger.info("Performing post-connection synchronization...")
+        
+        # 1. Re-advertise Capabilities
+        if self._capability_provider_callback:
+            try:
+                capabilities = self._capability_provider_callback()
+                for cap in capabilities:
+                    await self.publish_capability_advertisement(cap)
+                self.logger.info(f"Re-advertised {len(capabilities)} capabilities.")
+            except Exception as e:
+                self.logger.error(f"Error re-advertising capabilities: {e}")
+        else:
+            self.logger.warning("No capability provider registered. Cannot re-advertise capabilities.")
+
+        # 2. (Future) Re-publish important facts or request state updates
+        # This would involve more complex logic, potentially interacting with the HAMMemoryManager
+        # or a dedicated state synchronization module.
+        self.logger.info("Post-connection synchronization complete.")
 
         

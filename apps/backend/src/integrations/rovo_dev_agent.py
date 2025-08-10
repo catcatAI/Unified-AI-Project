@@ -177,6 +177,9 @@ class RovoDevAgent:
             await self.connector.start()
             self.is_active = True
             
+            # Register capabilities with HSPConnector for post-connect synchronization
+            self.connector.hsp_connector.register_capability_provider(self._load_capabilities)
+
             # 恢復之前的狀態
             if self.recovery_enabled:
                 await self._recover_state()
