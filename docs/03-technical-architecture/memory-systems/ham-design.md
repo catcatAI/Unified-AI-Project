@@ -31,10 +31,11 @@ The HAM model consists of two primary layers:
 2.  **Preprocessing (SL):** Basic cleaning, normalization.
 3.  **Abstraction (SL):** Raw data is transformed into an abstract "gist."
     - **v0.2 Mechanism - Text:**
-      - **Chinese Text:** Extract **radicals** (e.g., using a library like
+      - **Current Implementation (Placeholders):** The `_abstract_text` method currently performs basic summarization and keyword extraction. Advanced features like radical extraction for Chinese text and detailed linguistic feature (e.g., Part-of-Speech tags, Named Entities) extraction for English text are **conceptual placeholders** for future development.
+      - **Chinese Text (Conceptual):** Extract **radicals** (e.g., using a library like
         `hanzidentifier` or a custom radical lookup). Store as a list or
         frequency map of radicals. Additional keywords can also be extracted.
-      - **English Text:** Extract **linguistic features** (e.g., Part-of-Speech
+      - **English Text (Conceptual):** Extract **linguistic features** (e.g., Part-of-Speech
         tags, Named Entities, keywords using TF-IDF or a lightweight NLP library
         like spaCy if feasible, or rule-based keyword extraction). Store as a
         structured dictionary of features.
@@ -86,29 +87,26 @@ The HAM model consists of two primary layers:
 
 ## 4. `HAMMemoryManager` API (Python Class) - v0.2 Updates
 
-- `store_experience(self, raw_data: any, data_type: str, language: str = None, metadata: dict = None) -> str`:
-  - Added `language` parameter for text data to guide abstraction.
-- `recall_gist(self, memory_id: str) -> dict | None`:
-  - Output dictionary will clearly distinguish between summary, keywords, and
-    language-specific abstracted features (radicals/linguistic features).
-- `query_core_memory(self, query_features: dict = None, keywords: list = None, language_filter: str = None, date_range: tuple = None, limit: int = 5, return_multiple_candidates: bool = False) -> list[dict]`:
-  - `query_features`: Allows querying based on specific abstracted features
-    (e.g., `{"radicals": ["水"]}` or `{"pos_tag": "NOUN"}`).
-  - `language_filter`: To retrieve memories in a specific language.
-  - `return_multiple_candidates`: If True, returns a list of top N candidate
-    gists (for Fragmenta).
-- (New)
-  `compare_rehydrated_memory(self, memory_id_or_gist: any, reference_context: str) -> float`:
-  - A conceptual method for the SL to perform verification. Takes a recalled
-    gist (or its ID) and a reference context, returns a similarity/relevance
-    score. Implementation details depend on the chosen comparison technique.
-- (New)
-  `increment_metadata_field(self, memory_id: str, field_name: str, increment_by: int = 1) -> bool`:
+- `store_experience(self, raw_data: Any, data_type: str, metadata: Optional[DialogueMemoryEntryMetadata] = None) -> Optional[str]`:
+  - Stores a new experience into the HAM. The raw_data is processed (abstracted, checksummed, compressed, encrypted) and then stored.
+  - Integrates with `VectorMemoryStore` for semantic indexing.
+- `recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]`:
+  - Recalls an abstracted gist of an experience by its memory ID and returns a human-readable rehydrated version.
+  - Returns a `HAMRecallResult` object, which includes the rehydrated string gist and metadata.
+- `recall_raw_gist(self, memory_id: str) -> Optional[Dict[str, Any]]`:
+  - Recalls the raw, structured gist dictionary of an experience by its ID.
+  - For programmatic use by other AI components that need the structured data, bypassing the human-readable rehydration step.
+- `query_core_memory(self, keywords: Optional[List[str]] = None, date_range: Optional[Tuple[datetime, datetime]] = None, data_type_filter: Optional[str] = None, metadata_filters: Optional[Dict[str, Any]] = None, user_id_for_facts: Optional[str] = None, limit: int = 5, sort_by_confidence: bool = False, return_multiple_candidates: bool = False, semantic_query: Optional[str] = None) -> List[HAMRecallResult]`:
+  - Enhanced query function supporting various filters: keywords, date range, data type, metadata, user ID.
+  - **New in v0.2:** `semantic_query`: Allows semantic search using the integrated `VectorMemoryStore` (ChromaDB).
+  - `return_multiple_candidates`: If True, returns a list of top N candidate gists.
+- `increment_metadata_field(self, memory_id: str, field_name: str, increment_by: int = 1) -> bool`:
   - Efficiently increments a numerical value in a record's metadata without
     requiring a full recall-modify-store cycle.
   - Primarily used by `LearningManager` to increase the `corroboration_count`
     for a fact when a duplicate is received, as part of the anti-resonance
     mechanism.
+
 
 ## 5. Core Layer Storage (v0.2)
 
@@ -169,12 +167,17 @@ The HAM model consists of two primary layers:
 - Translated text can itself be stored in HAM as a new experience, linked to the
   original, with its own language tag and abstracted features.
 
-## 9. Future Considerations (Post v0.2)
+## 9. Semantic Search and Vector Database Integration (Implemented in v0.2)
+
+The HAM system now integrates a vector memory store (`VectorMemoryStore`) using ChromaDB to enable semantic search capabilities. This significantly enhances the `query_core_memory` method, allowing for more nuanced and context-aware retrieval of memories.
+
+- **VectorMemoryStore (`src/core_ai/memory/vector_store.py`):** Encapsulates ChromaDB logic for storing and querying vector embeddings of memories.
+- **Semantic Search in `query_core_memory`:** The `query_core_memory` method now accepts a `semantic_query` parameter. When provided, it performs a vector similarity search against the stored embeddings to find relevant memories, complementing keyword and metadata-based filtering.
+- **Embedding Generation:** Memories are converted into vector embeddings (e.g., using Sentence Transformers or similar models) before being stored in the `VectorMemoryStore`.
+
+## 10. Future Considerations (Post v0.2)
 
 - **Key Management for Fernet:** More robust key rotation and storage.
-- **Semantic Embeddings for Abstraction:** Integrate Sentence Transformers or
-  similar for richer semantic gists and enabling vector similarity search in
-  `query_core_memory`.
 - **Generative Reconstruction in SL:** Use LLMs to elaborate on abstract gists.
 - **Multi-Modal Data Abstraction:** Define specific abstraction methods for
   images (e.g., object tags, scene descriptions, embeddings) and audio (e.g.,
@@ -183,3 +186,5 @@ The HAM model consists of two primary layers:
 This document will be updated as the HAM system evolves.
 
 
+--- 
+*Last Updated: 2025-08-10*

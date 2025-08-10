@@ -4,6 +4,7 @@ import yaml
 import os
 import logging
 from typing import Dict, Any, List
+from pathlib import Path # Import Path
 
 from src.agents.base_agent import BaseAgent
 from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
@@ -47,12 +48,20 @@ class CreativeWritingAgent(BaseAgent):
 
     def _load_prompts(self):
         """Loads prompts from the YAML file."""
-        prompts_path = os.path.join(os.path.dirname(__file__), '..', 'configs', 'prompts.yaml')
+        # Get the project root dynamically
+        current_dir = Path(__file__).parent
+        # Assuming 'configs' is directly under 'apps/backend'
+        project_root = current_dir.parent.parent # Go up from src/agents to apps/backend
+        prompts_path = project_root / "configs" / "prompts.yaml"
+
         try:
             with open(prompts_path, 'r', encoding='utf-8') as f:
                 all_prompts = yaml.safe_load(f)
                 self.prompts = all_prompts.get('creative_writing_agent', {})
         except FileNotFoundError:
+            self.prompts = {}
+        except Exception as e:
+            logging.error(f"Error loading prompts from {prompts_path}: {e}")
             self.prompts = {}
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
