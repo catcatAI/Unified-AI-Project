@@ -5,6 +5,8 @@ Flask
 python-dotenv
 paho-mqtt
 gmqtt
+aiolimiter
+chromadb
 
 # Utility packages
 rich>=13.0.0

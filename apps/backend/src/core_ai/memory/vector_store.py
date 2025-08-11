@@ -1,13 +1,19 @@
 import chromadb
 from chromadb.config import Settings
 
+class VectorStoreError(Exception):
+    """向量存儲錯誤"""
+    pass
+
 class VectorMemoryStore:
     """向量化記憶存儲"""
     
     def __init__(self, persist_directory="./chroma_db"):
-        self.client = chromadb.PersistentClient(
-            path=persist_directory,
-            settings=Settings(anonymized_telemetry=False)
+        # Use EphemeralClient to avoid persistence issues
+        self.client = chromadb.EphemeralClient(
+            settings=Settings(
+                anonymized_telemetry=False
+            )
         )
         self.collection = self.client.get_or_create_collection(
             name="ham_memories",

@@ -48,7 +48,6 @@ catcatAI 組織
 | 優先級 | 文檔名稱 | 語言 | 路徑 | 描述 | 完整度 |
 |---|---|---|---|---|---|
 | 🔴 必讀 | 專案概述 | (英) | `Unified-AI-Project/README.md` | 專案簡介與快速開始 | ✅ 完整 |
-| 🔴 必讀 | 專案章程 | (中) | `Unified-AI-Project/docs/00-overview/PROJECT_CHARTER.md` | 完整架構說明與技術規範 | ✅ 完整 |
 | 🟡 重要 | 術語表 | (中) | `Unified-AI-Project/docs/00-overview/GLOSSARY.md` | 關鍵概念定義 | ✅ 完整 |
 | 🟡 重要 | 貢獻指南 | (英) | `Unified-AI-Project/CONTRIBUTING.md` | 參與專案指南 | ✅ 完整 |
 | 🟢 參考 | 文檔索引 | (中) | `Unified-AI-Project/docs/00-overview/README.md` | 完整文檔導航 | ✅ 完整 |
@@ -102,7 +101,6 @@ catcatAI 組織
 | HSP Connector | (英) | `docs/03-technical-architecture/communication/hsp-connector.md` | HSP 通訊連接器 | 🔴 高 | 🟢 高 |
 | 外部代理整合 | (英) | `docs/03-technical-architecture/integrations/external-agent-integration.md` | 外部 AI 工具整合架構 | 🔴 高 | 🟢 高 |
 
-
 #### 🔧 專業技術規範文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 實用性 | 維護狀態 |
 |---|---|---|---|---|---|
@@ -125,7 +123,6 @@ catcatAI 組織
 | 知識圖譜 | (英) | `docs/04-advanced-concepts/knowledge-graph.md` | 知識圖譜設計 | 🔴 高 | 🟡 部分 |
 | 記憶系統 | (英) | `docs/03-technical-architecture/memory-systems/memory-overview.md` | 記憶系統概述 | 🔴 高 | 🟢 實現 |
 | 元公式規範 | (英) | `docs/04-advanced-concepts/meta-formulas.md` | 元公式系統 | 🔴 極高 | 🔴 概念 |
-
 
 #### 🧪 測試與品質保證文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 狀態 | 實用性 |
@@ -202,7 +199,6 @@ catcatAI 組織
 | 舊版文檔 | (混合) | `docs/09-archive/old_docs/` | 2025年7月前未重組的舊文檔 | 🗂️ 歸檔 | 🟡 中 |
 
 
-
 ---
 
 ## 🎯 按使用場景的文檔導航
@@ -211,8 +207,7 @@ catcatAI 組織
 1. **專案概述 (英)** → `Unified-AI-Project/README.md`
 2. **協作指南 (中)** → `Unified-AI-Project/PROJECTS_COLLABORATION_GUIDE_Version2.md`
 3. **術語表 (中)** → `docs/00-overview/GLOSSARY.md`
-4. **專案章程 (中)** → `docs/00-overview/PROJECT_CHARTER.md`
-5. **文檔索引 (中)** → `docs/00-overview/README.md`
+4. **文檔索引 (中)** → `docs/00-overview/README.md`
 
 ### 👨‍💻 開發者技術路徑
 1. **架構概述 (英)** → `docs/03-technical-architecture/README.md`

@@ -30,7 +30,7 @@ Not sure where to start? You can:
 - **JavaScript/TypeScript**: We follow standard community practices, and use
   `prettier` for consistent formatting.
 - **Internal Data Structures**: Please follow the standards outlined in
-  `docs/technical_design/INTERNAL_DATA_STANDARDS.md`.
+  `docs/03-technical-architecture/memory-systems/data-standards.md`.
 
 ## Game Module Contributions
 

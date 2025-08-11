@@ -90,8 +90,6 @@ const AtlassianIntegration: React.FC = () => {
   };
 
   const loadIssues = async () => {
-    // Quick JQL helpers can be provided as buttons below
-
     setLoading(true);
     setError(null);
     try {
@@ -120,7 +118,7 @@ const AtlassianIntegration: React.FC = () => {
     try {
       const result = await apiCall('jira/issue', 'POST', newIssue);
       if (result.success) {
-        setNewIssue({ project_key: '', summary: '', description: '', issue_type: 'Task' });
+        setNewIssue({ project_key: '', summary: '', description: '', issue_type: 'Task', priority: '', labels: '' });
         loadIssues(); // 重新加载问题列表
       } else {
         setError(result.error || 'Failed to create issue');
@@ -180,7 +178,7 @@ const AtlassianIntegration: React.FC = () => {
             </div>
           ) : (
             <p>正在检查状态...</p>
-          )
+          )}
         </CardContent>
       </Card>
 

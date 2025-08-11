@@ -158,9 +158,8 @@ Unified-AI-Project 是一个多代理协作的 AI 系统，采用分布式、服
 
 ### 🔧 开发级
 
-1. [项目章程](../00-overview/PROJECT_CHARTER.md)
-2. [代理协作框架](../04-advanced-concepts/agent-collaboration.md)
-3. [技术规范目录](./)
+1. [代理协作框架](../04-advanced-concepts/agent-collaboration.md)
+2. [技术规范目录](./)
 
 ### 🏗️ 架构级
 
