@@ -1,0 +1,37 @@
+{
+  "id": "bae5d870-808c-4453-9089-f48d1849cc04",
+  "sender_id": "system",
+  "recipient_id": "all",
+  "message_type": "hsp_message",
+  "payload": {
+    "topic": "hsp/capabilities/advertisements/did:hsp:test_agent_123",
+    "envelope": {
+      "hsp_envelope_version": "0.1",
+      "message_id": "91db6181-d35b-489b-83df-8708e9a95801",
+      "correlation_id": null,
+      "sender_ai_id": "did:hsp:test_agent_123",
+      "recipient_ai_id": "all",
+      "timestamp_sent": "2025-08-11T08:12:27.516117+00:00",
+      "message_type": "HSP::CapabilityAdvertisement_v0.1",
+      "protocol_version": "0.1",
+      "communication_pattern": "publish",
+      "security_parameters": null,
+      "qos_parameters": {
+        "requires_ack": false,
+        "priority": "medium"
+      },
+      "routing_info": null,
+      "payload_schema_uri": "file:///D:/Projects/Unified-AI-Project/apps/backend/schemas/HSP_CapabilityAdvertisement_v0.1.schema.json",
+      "payload": {
+        "name": "test_capability"
+      }
+    },
+    "qos": 1
+  },
+  "timestamp": 1754899954.5926688,
+  "priority": 2,
+  "correlation_id": null,
+  "retry_count": 0,
+  "max_retries": 3,
+  "ttl": null
+}
