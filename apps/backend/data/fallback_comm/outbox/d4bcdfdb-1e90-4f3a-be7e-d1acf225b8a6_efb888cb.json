@@ -1,0 +1,42 @@
+{
+  "id": "d4bcdfdb-1e90-4f3a-be7e-d1acf225b8a6",
+  "sender_id": "system",
+  "recipient_id": "test_callback",
+  "message_type": "hsp_message",
+  "payload": {
+    "topic": "hsp/results/test_callback",
+    "envelope": {
+      "hsp_envelope_version": "0.1",
+      "message_id": "ed9274f7-e8fc-49cb-947e-fb6ff98429f6",
+      "correlation_id": "test_request",
+      "sender_ai_id": "did:hsp:test_agent_123",
+      "recipient_ai_id": "test_callback",
+      "timestamp_sent": "2025-08-11T08:00:03.574742+00:00",
+      "message_type": "HSP::TaskResult_v0.1",
+      "protocol_version": "0.1",
+      "communication_pattern": "response",
+      "security_parameters": null,
+      "qos_parameters": {
+        "requires_ack": false,
+        "priority": "high"
+      },
+      "routing_info": null,
+      "payload_schema_uri": "file:///D:/Projects/Unified-AI-Project/apps/backend/schemas/HSP_TaskResult_v0.1.schema.json",
+      "payload": {
+        "request_id": "test_request",
+        "status": "failure",
+        "error_details": {
+          "error_code": "NOT_IMPLEMENTED",
+          "error_message": "The 'BaseAgent' has not implemented the 'handle_task_request' method."
+        }
+      }
+    },
+    "qos": 1
+  },
+  "timestamp": 1754899210.603739,
+  "priority": 3,
+  "correlation_id": "test_request",
+  "retry_count": 0,
+  "max_retries": 3,
+  "ttl": null
+}
