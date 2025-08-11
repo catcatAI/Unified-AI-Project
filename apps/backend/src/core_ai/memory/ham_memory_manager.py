@@ -518,25 +518,68 @@ class HAMMemoryManager:
 
     async def retrieve_relevant_memories(self, query: str, limit: int = 10) -> List[HAMMemory]:
         """
-        Retrieves memories relevant to a given query using semantic search.
+        Retrieves memories relevant to a given query using semantic search, and
+        merges with a keyword-based search for a comprehensive recall.
         """
+        self.logger.debug(f"HAM: Retrieving relevant memories for query: '{query}'")
+        
+        semantic_results_ids = set()
+        semantic_memories = []
+
+        # 1. Perform Semantic Search
         try:
-            semantic_results = await self.vector_store.semantic_search(query, limit)
-            
-            # Fetch full HAMMemory objects based on IDs from semantic search
-            relevant_memories = []
-            for res in semantic_results:
-                memory_id = res['id']
-                # Assuming db_interface has a method to get HAMMemory by ID
-                ham_memory = await self.db_interface.get_memory_by_id(memory_id)
-                if ham_memory:
-                    relevant_memories.append(ham_memory)
-            
-            self.logger.info(f"Retrieved {len(relevant_memories)} relevant memories for query: '{query}'")
-            return relevant_memories
+            # Fetch more results from Chroma to allow for filtering and merging
+            chroma_results = await self.vector_store.semantic_search(query, limit * 2)
+            if chroma_results and chroma_results.get('ids'):
+                for i, mem_id in enumerate(chroma_results['ids'][0]):
+                    if mem_id in self.core_memory_store:
+                        data_package = self.core_memory_store[mem_id]
+                        try:
+                            # Use the new _deserialize_memory method
+                            semantic_memories.append(self._deserialize_memory(mem_id, data_package))
+                            semantic_results_ids.add(mem_id)
+                        except HAMMemoryError as e:
+                            self.logger.warning(f"Skipping deserialization of memory {mem_id} from vector store due to error: {e}")
+                            
+            self.logger.debug(f"Retrieved {len(semantic_memories)} semantic memories for query: '{query}'")
         except Exception as e:
-            self.logger.error(f"Failed to retrieve relevant memories for query '{query}': {e}")
-            raise HAMQueryError(f"Failed to retrieve relevant memories: {e}")
+            self.logger.error(f"Error during semantic search for query '{query}': {e}")
+            # Fallback: if semantic search fails, proceed with only keyword search
+            semantic_memories = []
+            
+        # 2. Perform Keyword Search (and potential metadata filters)
+        # Re-using query_core_memory for keyword/metadata filtering, excluding already found semantic memories
+        keyword_memories = []
+        for mem_id, data_package in self.core_memory_store.items():
+            if mem_id in semantic_results_ids:
+                continue # Skip memories already found by semantic search
+
+            # Very basic keyword matching for now (e.g., in content or metadata if rehydrated/accessible)
+            # For this simple example, we'll just check a basic keyword match in metadata for non-semantic memories
+            # A more advanced implementation would rehydrate content for keyword search
+            item_metadata = data_package.get("metadata", {})
+            if any(kw.lower() in str(item_metadata).lower() for kw in query.lower().split() if len(kw) > 2): # Simple keyword check
+                try:
+                    keyword_memories.append(self._deserialize_memory(mem_id, data_package))
+                except HAMMemoryError as e:
+                    self.logger.warning(f"Skipping deserialization of memory {mem_id} from keyword search due to error: {e}")
+
+        self.logger.debug(f"Retrieved {len(keyword_memories)} keyword-based memories.")
+
+        # 3. Combine and Sort Results
+        combined_results = semantic_memories + keyword_memories
+
+        # Sort by relevance (semantic score from Chroma is implicitly higher for semantic memories,
+        # but we need a unified scoring or a simple time-based sort for combination)
+        # For simplicity, let's sort by timestamp (newest first) for combined results
+        # A more complex system would assign a combined relevance score
+        combined_results.sort(key=lambda x: datetime.fromisoformat(x["timestamp"]), reverse=True) # type: ignore
+
+        # Apply the final limit
+        final_results = combined_results[:limit]
+            
+        self.logger.info(f"Retrieved {len(final_results)} combined relevant memories for query: '{query}'")
+        return final_results
 
     def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
         """

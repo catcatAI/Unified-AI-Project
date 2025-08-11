@@ -12,6 +12,7 @@ import asyncio # Added for asyncio.iscoroutinefunction
 import logging
 import time
 from src.shared.error import HSPConnectionError # Added for unified error handling
+from src.shared.network_resilience import RetryPolicy, CircuitBreaker, NetworkError, ProtocolError, CircuitBreakerOpenError # New imports for resilience
 from .fallback.fallback_protocols import get_fallback_manager, FallbackMessage, MessagePriority, initialize_fallback_protocols
 from .utils.fallback_config_loader import get_config_loader
 from pathlib import Path
@@ -107,6 +108,8 @@ class HSPConnector:
         self._message_retry_counts: Dict[str, int] = {} # New: To track retry counts for messages
         self.ack_timeout_sec = 10 # New: Default timeout for ACK
         self.max_ack_retries = 3 # New: Max retries for messages requiring ACK
+        self.retry_policy = RetryPolicy(max_attempts=self.max_ack_retries, backoff_factor=2, max_delay=60) # Initialize retry policy
+        self.circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=300) # Initialize circuit breaker
         self._capability_provider_callback: Optional[Callable[[], List[HSPCapabilityAdvertisementPayload]]] = None # New: Callback to get capabilities
         
         # Initialize fallback protocols if enabled
@@ -189,83 +192,82 @@ class HSPConnector:
         correlation_id = envelope.get("correlation_id") or message_id # Use message_id if correlation_id is not set
         requires_ack = envelope.get("qos_parameters", {}).get("requires_ack", False)
         
-        # Initialize retry count for this message if it's new
+        # Initialize retry count for this message if it's new - still needed for fallback retry
         if correlation_id not in self._message_retry_counts:
             self._message_retry_counts[correlation_id] = 0
 
-        # Retry loop for messages requiring ACK
-        while self._message_retry_counts[correlation_id] <= self.max_ack_retries:
-            attempt = self._message_retry_counts[correlation_id]
-            if attempt > 0:
-                self.logger.info(f"Retrying message {correlation_id}, attempt {attempt}/{self.max_ack_retries}")
-                await asyncio.sleep(2 ** (attempt - 1)) # Exponential backoff
+        # Apply Circuit Breaker and Retry Policy to the raw publish attempt
+        # This ensures that external_connector.publish attempts are resilient
+        try:
+            # The decorated function will handle retries and circuit breaking for the direct publish
+            await self.circuit_breaker(self.retry_policy(self._raw_publish_message))(topic, envelope, qos)
+            self.logger.debug(f"Message {correlation_id} published via HSP (decorated).")
 
-            # Try HSP first if available
-            if self.hsp_available and self.is_connected:
+            if requires_ack:
+                ack_future = asyncio.Future()
+                self._pending_acks[correlation_id] = ack_future
                 try:
-                    await self.external_connector.publish(topic, json.dumps(envelope).encode('utf-8'), qos=qos)
-                    self.logger.debug(f"Message {correlation_id} published via HSP.")
-
-                    if requires_ack:
-                        ack_future = asyncio.Future()
-                        self._pending_acks[correlation_id] = ack_future
-                        try:
-                            await asyncio.wait_for(ack_future, timeout=self.ack_timeout_sec)
-                            self.logger.info(f"ACK received for message {correlation_id}.")
-                            del self._message_retry_counts[correlation_id] # Clear retry count on success
-                            return True
-                        except asyncio.TimeoutError:
-                            self.logger.warning(f"ACK timeout for message {correlation_id}. Attempt {attempt}/{self.max_ack_retries}.")
-                            self._message_retry_counts[correlation_id] += 1
-                            continue # Retry
-                        finally:
-                            # Ensure future is removed even if cancelled or exception
-                            if correlation_id in self._pending_acks:
-                                del self._pending_acks[correlation_id]
-                    else:
-                        self.logger.debug(f"Message {correlation_id} does not require ACK.")
-                        del self._message_retry_counts[correlation_id] # Clear retry count
-                        return True
-                except Exception as e:
-                    self.logger.error(f"HSP publish failed for {correlation_id}: {e}. Attempt {attempt}/{self.max_ack_retries}. Trying fallback or retrying.")
-                    self.hsp_available = False # Mark HSP as unavailable if publish fails
-                    self._message_retry_counts[correlation_id] += 1
-                    # If HSP fails, try fallback immediately, then retry loop continues
+                    await asyncio.wait_for(ack_future, timeout=self.ack_timeout_sec)
+                    self.logger.info(f"ACK received for message {correlation_id}.")
+                    del self._message_retry_counts[correlation_id] # Clear retry count on success
+                    return True
+                except asyncio.TimeoutError:
+                    self.logger.warning(f"ACK timeout for message {correlation_id}. Trying fallback if enabled.")
+                    # No retry here, as retry policy already handled the raw publish. Now try fallback.
                     if self.enable_fallback and self.fallback_manager:
                         fallback_success = await self._send_via_fallback(topic, envelope, qos)
                         if fallback_success:
-                            self.logger.info(f"Message {correlation_id} sent via fallback after HSP failure.")
+                            self.logger.info(f"Message {correlation_id} sent via fallback after ACK timeout.")
                             del self._message_retry_counts[correlation_id]
                             return True
                         else:
-                            self.logger.error(f"Fallback also failed for message {correlation_id}.")
-                            # Fallback failed, so loop will continue to next retry attempt or exit
-                            continue
+                            self.logger.error(f"Fallback also failed for message {correlation_id} after ACK timeout.")
+                            return False
                     else:
-                        # No fallback or fallback failed, loop will continue to next retry attempt or exit
-                        continue
-            else: # HSP is not available or not connected
-                self.logger.warning(f"HSP not available for message {correlation_id}. Attempt {attempt}/{self.max_ack_retries}. Trying fallback.")
-                if self.enable_fallback and self.fallback_manager:
-                    fallback_success = await self._send_via_fallback(topic, envelope, qos)
-                    if fallback_success:
-                        self.logger.info(f"Message {correlation_id} sent via fallback.")
-                        del self._message_retry_counts[correlation_id]
-                        return True
-                    else:
-                        self.logger.error(f"Fallback also failed for message {correlation_id}.")
-                        self._message_retry_counts[correlation_id] += 1
-                        continue # Fallback failed, so loop will continue to next retry attempt or exit
-                else:
-                    self.logger.error(f"HSP not available and fallback disabled/failed for {correlation_id}.")
-                    self._message_retry_counts[correlation_id] += 1
-                    continue # No communication method, loop will continue to next retry attempt or exit
+                        self.logger.error(f"No fallback or fallback disabled for message {correlation_id} after ACK timeout.")
+                        return False
+                finally:
+                    # Ensure future is removed even if cancelled or exception
+                    if correlation_id in self._pending_acks:
+                        del self._pending_acks[correlation_id]
+            else:
+                self.logger.debug(f"Message {correlation_id} does not require ACK.")
+                del self._message_retry_counts[correlation_id] # Clear retry count
+                return True
 
-        # If we exit the loop, it means max retries were exceeded
-        self.logger.error(f"HSPConnector: Max retries ({self.max_ack_retries}) exceeded for message {correlation_id}. Message failed to send.")
-        if correlation_id in self._message_retry_counts:
-            del self._message_retry_counts[correlation_id] # Clean up
-        return False
+        except (NetworkError, CircuitBreakerOpenError) as e:
+            self.logger.error(f"HSP publish failed for {correlation_id} due to network resilience policy: {e}. Trying fallback.")
+            if self.enable_fallback and self.fallback_manager:
+                fallback_success = await self._send_via_fallback(topic, envelope, qos)
+                if fallback_success:
+                    self.logger.info(f"Message {correlation_id} sent via fallback after HSP resilience failure.")
+                    del self._message_retry_counts[correlation_id]
+                    return True
+                else:
+                    self.logger.error(f"Fallback also failed for message {correlation_id} after HSP resilience failure.")
+                    return False
+            else:
+                self.logger.error(f"HSP not available and fallback disabled/failed for {correlation_id}.")
+                return False
+        except Exception as e:
+            self.logger.critical(f"Unhandled critical error during message publish for {correlation_id}: {e}")
+            # For any other unexpected errors, clean up and fail.
+            if correlation_id in self._message_retry_counts:
+                del self._message_retry_counts[correlation_id]
+            raise # Re-raise unexpected errors
+
+
+    async def _raw_publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
+        """Internal method for raw message publishing via external_connector, without retry/ACK logic."""
+        try:
+            await self.external_connector.publish(topic, json.dumps(envelope).encode('utf-8'), qos=qos)
+            self.logger.debug(f"Raw message {envelope.get('message_id')} published via HSP.")
+            return True
+        except Exception as e:
+            self.logger.error(f"Raw HSP publish failed for {envelope.get('message_id')}: {e}")
+            # This is where NetworkError or ProtocolError would be raised by the external_connector
+            # For now, re-raise as a generic exception, or as a specific NetworkError if needed.
+            raise NetworkError(f"Failed to publish message: {e}") from e
 
     async def publish_fact(self, fact_payload: HSPFactPayload, topic: str, qos: int = 1):
         # Construct a minimal envelope for the fact
