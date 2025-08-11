@@ -162,3 +162,22 @@ tmp_rovodev_test_cli_desktop.py
 # dependency_check.log
 # test_output.log
 # tmp_rovodev_test_timeout_detection.py
+
+# Model and data outputs
+*.pt # PyTorch model files
+*.h5 # Keras/TensorFlow model files
+*.onnx # ONNX model files
+*.pkl # Python pickle files (often used for serialized data/models)
+*.bin # Binary files (could be models or other compiled outputs)
+*.npy # NumPy array files (often used for data dumps)
+*.npz # Compressed NumPy array files
+
+# Evaluation and report outputs
+evaluations/ # Directory for evaluation results
+reports/ # Directory for various reports
+test_results/ # Directory for test results
+
+# Temporary files specific to machine learning/data processing
+data/processed_data/ # If processed data is not meant to be versioned
+data/temp_data/
+checkpoints/ # Model checkpoints
