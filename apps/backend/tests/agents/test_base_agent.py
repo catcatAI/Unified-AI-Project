@@ -22,19 +22,22 @@ async def base_agent(mock_hsp_connector):
         agent_id="did:hsp:test_agent_123",
         capabilities=[{"name": "test_capability"}]
     )
-    # Patch get_services to return our mock_hsp_connector
-    with patch('src.core_services.get_services') as mock_get_services:
-        mock_get_services.return_value = {'hsp_connector': mock_hsp_connector}
-        await agent._ainit() # This will call the mocked get_services
+    # Patch initialize_services and shutdown_services to prevent real service calls
+    with patch('src.core_services.initialize_services', new_callable=AsyncMock):
+        with patch('src.core_services.shutdown_services', new_callable=AsyncMock):
+            await agent._ainit() # This will call the mocked initialize_services
+    # After _ainit, explicitly set the agent's hsp_connector to our mock
+    agent.hsp_connector = mock_hsp_connector
     return agent
 
 @pytest.mark.asyncio
 async def test_base_agent_init(base_agent):
     """Test that the BaseAgent initializes correctly."""
+    # _ainit is now called by the fixture, so no explicit call here
     assert base_agent.agent_name == "test_agent"
     assert base_agent.agent_id == "did:hsp:test_agent_123"
     assert base_agent.capabilities == [{"name": "test_capability"}]
-    assert base_agent.is_running is False
+    assert base_agent.is_running is False # Should still be False at this point as start() hasn't been called
 
 @pytest.mark.asyncio
 async def test_base_agent_start_stop(base_agent, mock_hsp_connector):
