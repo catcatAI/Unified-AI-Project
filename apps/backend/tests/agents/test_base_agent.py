@@ -15,18 +15,21 @@ def mock_hsp_connector():
     return mock
 
 @pytest.fixture
-def base_agent():
-    """Fixture to provide a BaseAgent instance."""
+async def base_agent(mock_hsp_connector):
+    """Fixture to provide a BaseAgent instance with a mocked HSPConnector."""
     agent = BaseAgent(
         agent_name="test_agent",
         agent_id="did:hsp:test_agent_123",
         capabilities=[{"name": "test_capability"}]
     )
+    # Patch get_services to return our mock_hsp_connector
+    with patch('src.core_services.get_services') as mock_get_services:
+        mock_get_services.return_value = {'hsp_connector': mock_hsp_connector}
+        await agent._ainit() # This will call the mocked get_services
     return agent
 
 @pytest.mark.asyncio
 async def test_base_agent_init(base_agent):
-    await base_agent._ainit()
     """Test that the BaseAgent initializes correctly."""
     assert base_agent.agent_name == "test_agent"
     assert base_agent.agent_id == "did:hsp:test_agent_123"
@@ -35,7 +38,6 @@ async def test_base_agent_init(base_agent):
 
 @pytest.mark.asyncio
 async def test_base_agent_start_stop(base_agent, mock_hsp_connector):
-    await base_agent._ainit()
     """Test that the BaseAgent can start and stop correctly."""
     await base_agent.start()
     assert base_agent.is_running is True
@@ -44,7 +46,6 @@ async def test_base_agent_start_stop(base_agent, mock_hsp_connector):
 
 @pytest.mark.asyncio
 async def test_base_agent_handle_task_request(base_agent, mock_hsp_connector):
-    await base_agent._ainit()
     """Test the default handle_task_request method."""
     task_payload = {
         "request_id": "test_request",
