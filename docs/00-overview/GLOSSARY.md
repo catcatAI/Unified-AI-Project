@@ -20,7 +20,7 @@
   `PersonalityManager` 管理。在技術架構上，她的智能是由 `DialogueManager` 和
   `ProjectCoordinator` 共同實現的。她是「誰」，而不是「什麼」。
 
-**Atlassian Bridge (`src/integrations/atlassian_bridge.py`)**
+**Atlassian Bridge (`apps/backend/src/integrations/enhanced_atlassian_bridge.py`)**
 
 - **簡潔定義**: 連接 Unified AI Project 與 Atlassian 服務的統一橋接層。
 - **功能與範圍**: 提供對 Confluence、Jira、Bitbucket 等 Atlassian 服務的統一 API 接口，處理認證、數據格式轉換和錯誤處理。它現在使用 `EnhancedRovoDevConnector` 來實現更強大的容錯和重試機制。是 Rovo Dev Agents 與 Atlassian 生態系統集成的核心組件。

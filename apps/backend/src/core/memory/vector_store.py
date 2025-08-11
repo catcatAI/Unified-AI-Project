@@ -1,53 +1,114 @@
 import chromadb
-from chromadb.config import Settings
-from typing import Dict, Any, List
+from chromadb.types import Collection
+import logging
+from typing import List, Dict, Any, Optional
 
-class VectorStoreError(Exception):
-    """Custom exception for VectorMemoryStore errors."""
-    pass
+logger = logging.getLogger(__name__)
 
-class VectorMemoryStore:
-    """向量化記憶存儲"""
-    
-    def __init__(self, persist_directory="./chroma_db"):
-        self.client = chromadb.PersistentClient(
-            path=persist_directory,
-            settings=Settings(anonymized_telemetry=False)
-        )
-        self.collection = self.client.get_or_create_collection(
-            name="ham_memories",
-            metadata={"hnsw:space": "cosine"}
-        )
-    
-    async def add_memory(self, memory_id: str, content: str, metadata: Dict[str, Any]):
-        """添加記憶到向量存儲"""
+class VectorStore:
+    """A wrapper for a ChromaDB vector store."""
+
+    def __init__(self, path: str = ".chromadb/", collection_name: str = "main_collection"):
+        """
+        Initializes the VectorStore.
+
+        Args:
+            path (str): The path to the ChromaDB database directory.
+            collection_name (str): The name of the collection to use.
+        """
+        try:
+            self.client = chromadb.PersistentClient(path=path)
+            self.collection: Collection = self.client.get_or_create_collection(name=collection_name)
+            logger.info(f"VectorStore initialized with collection '{collection_name}' at path '{path}'.")
+        except Exception as e:
+            logger.error(f"Failed to initialize ChromaDB client: {e}")
+            raise
+
+    def add_documents(self, ids: List[str], embeddings: List[List[float]], metadatas: List[Dict[str, Any]], documents: Optional[List[str]] = None):
+        """
+        Adds documents to the vector store.
+
+        Args:
+            ids (List[str]): A list of unique IDs for the documents.
+            embeddings (List[List[float]]): A list of embeddings for the documents.
+            metadatas (List[Dict[str, Any]]): A list of metadata dictionaries for the documents.
+            documents (Optional[List[str]]): A list of the actual document content.
+        """
         try:
             self.collection.add(
-                documents=[content],
-                metadatas=[metadata],
-                ids=[memory_id]
+                ids=ids,
+                embeddings=embeddings,
+                metadatas=metadatas,
+                documents=documents
             )
+            logger.info(f"Added {len(ids)} documents to the collection.")
         except Exception as e:
-            raise VectorStoreError(f"Failed to add memory: {e}")
-    
-    async def semantic_search(self, query: str, n_results: int = 10) -> List[Dict[str, Any]]:
-        """語義搜索"""
+            logger.error(f"Failed to add documents to collection: {e}")
+            raise
+
+    def query(self, query_embeddings: List[List[float]], n_results: int = 5, where: Optional[Dict[str, Any]] = None) -> Dict[str, List[Any]]:
+        """
+        Queries the vector store.
+
+        Args:
+            query_embeddings (List[List[float]]): A list of query embeddings.
+            n_results (int): The number of results to return.
+            where (Optional[Dict[str, Any]]): A dictionary of metadata to filter by.
+
+        Returns:
+            Dict[str, List[Any]]: A dictionary of query results.
+        """
         try:
             results = self.collection.query(
-                query_texts=[query],
+                query_embeddings=query_embeddings,
                 n_results=n_results,
-                include=['documents', 'metadatas', 'distances']
+                where=where
             )
-            # Format results for consistency
-            formatted_results = []
-            if results and results['ids']:
-                for i in range(len(results['ids'][0])):
-                    formatted_results.append({
-                        'id': results['ids'][0][i],
-                        'document': results['documents'][0][i],
-                        'metadata': results['metadatas'][0][i],
-                        'distance': results['distances'][0][i]
-                    })
-            return formatted_results
+            logger.info(f"Query returned {len(results.get('ids', []))} results.")
+            return results
         except Exception as e:
-            raise VectorStoreError(f"Semantic search failed: {e}")
+            logger.error(f"Failed to query collection: {e}")
+            raise
+
+    def delete_documents(self, ids: List[str]):
+        """
+        Deletes documents from the vector store.
+
+        Args:
+            ids (List[str]): A list of document IDs to delete.
+        """
+        try:
+            self.collection.delete(ids=ids)
+            logger.info(f"Deleted {len(ids)} documents from the collection.")
+        except Exception as e:
+            logger.error(f"Failed to delete documents from collection: {e}")
+            raise
+
+    def update_document(self, id: str, embedding: Optional[List[float]] = None, metadata: Optional[Dict[str, Any]] = None, document: Optional[str] = None):
+        """
+        Updates a document in the vector store.
+
+        Args:
+            id (str): The ID of the document to update.
+            embedding (Optional[List[float]]): The new embedding for the document.
+            metadata (Optional[Dict[str, Any]]): The new metadata for the document.
+            document (Optional[str]): The new content of the document.
+        """
+        try:
+            update_data = {}
+            if embedding is not None:
+                update_data['embeddings'] = [embedding]
+            if metadata is not None:
+                update_data['metadatas'] = [metadata]
+            if document is not None:
+                update_data['documents'] = [document]
+
+            if not update_data:
+                logger.warning("Update called with no data to update.")
+                return
+
+            self.collection.update(ids=[id], **update_data)
+            logger.info(f"Updated document with ID '{id}'.")
+        except Exception as e:
+            logger.error(f"Failed to update document with ID '{id}': {e}")
+            raise
