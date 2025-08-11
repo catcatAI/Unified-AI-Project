@@ -4,13 +4,13 @@
 
 ## 文檔列表
 
-- **[主設計文檔](./game-main.md)**
+- **[主設計文檔](./main-design.md)**
   - 介紹遊戲的核心概念、哲學、美術風格和玩家旅程。是了解整個遊戲設計的起點。
 
 - **[角色設計](./character-design/general-characters.md)**
   - 詳細介紹核心 AI Angela 以及遊戲中所有 NPC 的背景故事、性格、外觀和互動任務。
 
-- **[遊戲系統](./game_systems.md)**
+- **[遊戲系統](./game-systems.md)**
   - 詳細介紹遊戲的核心玩法機制，包括「發明工坊」、經濟系統、技能樹、種植、煉金等。
 
 - **[地圖設計](./map_design.md)**

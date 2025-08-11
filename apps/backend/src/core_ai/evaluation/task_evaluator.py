@@ -1,7 +1,9 @@
 import asyncio
 import logging
+import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -32,12 +34,14 @@ class FeedbackAnalyzer:
 class TaskExecutionEvaluator:
     """任務執行評估器"""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], storage_path: str = "logs/evaluations"):
         self.config = config
         self.metrics_calculator = MetricsCalculator()
         self.feedback_analyzer = FeedbackAnalyzer()
         self.logger = logging.getLogger(__name__)
-    
+        self.storage_path = storage_path
+        os.makedirs(self.storage_path, exist_ok=True)
+
     async def evaluate_task_execution(self, task: Any, execution_result: Dict[str, Any]) -> Dict[str, Any]:
         """評估任務執行"""
         evaluation = {
@@ -64,7 +68,7 @@ class TaskExecutionEvaluator:
             task, execution_result, evaluation['metrics']
         )
         
-        # 存儲評估結果 (Placeholder)
+        # 存儲評估結果
         await self._store_evaluation(evaluation)
         
         self.logger.info(f"Task {task.get('id')} evaluated. Status: {evaluation['metrics'].get('success_rate')}")
@@ -76,19 +80,19 @@ class TaskExecutionEvaluator:
         
         # 基於錯誤分析
         if result.get("errors"):
-            # Conceptual: In a real system, a dedicated error analysis module would be called
-            suggestions.append({
-                'type': 'error_analysis',
-                'description': f'發現錯誤：{result["errors"]}. 建議詳細調試並解決根本原因。',
-                'priority': 'high'
-            })
+            for error in result["errors"]:
+                suggestions.append({
+                    'type': 'error_analysis',
+                    'description': f'發現錯誤：{error}. 建議詳細調試並解決根本原因。',
+                    'priority': 'high'
+                })
         
         # 基於性能指標
         time_threshold = self.config.get("time_threshold", 5.0) # Default 5 seconds
         if metrics['completion_time'] > time_threshold:
             suggestions.append({
                 'type': 'performance',
-                'description': '執行時間過長，建議優化算法或並行處理',
+                'description': f"執行時間 {metrics['completion_time']:.2f}s 超過閥值 {time_threshold}s，建議優化算法或並行處理。",
                 'priority': 'medium'
             })
         
@@ -97,17 +101,33 @@ class TaskExecutionEvaluator:
         if metrics['quality_score'] < quality_threshold:
             suggestions.append({
                 'type': 'quality',
-                'description': '輸出品質需要改進，建議增強模型或調整參數',
+                'description': f"輸出品質分數 {metrics['quality_score']} 低於閥值 {quality_threshold}，建議增強模型或調整參數。",
                 'priority': 'high'
+            })
+
+        if not suggestions:
+            suggestions.append({
+                'type': 'general',
+                'description': '任務執行符合預期，無立即的改進建議。',
+                'priority': 'low'
             })
         
         return suggestions
     
     async def _store_evaluation(self, evaluation: Dict[str, Any]):
-        """Placeholder for storing evaluation results."""
-        self.logger.debug(f"Storing evaluation for task {evaluation.get('task_id')} (conceptual)...")
-        await asyncio.sleep(0.005) # Simulate storage operation
-    
+        """將評估結果儲存為 JSON 檔案。"""
+        task_id = evaluation.get('task_id', 'unknown_task')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_path = os.path.join(self.storage_path, f"eval_{task_id}_{timestamp}.json")
+        
+        self.logger.debug(f"Storing evaluation for task {task_id} to {file_path}")
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(evaluation, f, ensure_ascii=False, indent=4)
+            await asyncio.sleep(0.005) # Simulate async write if needed
+        except IOError as e:
+            self.logger.error(f"Failed to store evaluation file {file_path}: {e}")
+
     async def _assess_output_quality(self, output: Any) -> float:
         """Placeholder for assessing output quality."""
         # This would be a complex component, potentially using other AI models

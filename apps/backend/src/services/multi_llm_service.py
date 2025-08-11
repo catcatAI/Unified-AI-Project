@@ -21,6 +21,7 @@ import cohere
 from azure.identity import DefaultAzureCredential
 from azure.ai.inference import ChatCompletionsClient
 from azure.ai.inference.models import SystemMessage, UserMessage
+from aiolimiter import AsyncLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -873,6 +874,7 @@ class MultiLLMService:
         self.model_configs: Dict[str, ModelConfig] = {}
         self.default_model: Optional[str] = None
         self.usage_stats: Dict[str, Dict[str, Any]] = {}
+        self.limiters: Dict[str, AsyncLimiter] = {}
         
         if config_path:
             self.load_config(config_path)
@@ -884,6 +886,13 @@ class MultiLLMService:
                 config = json.load(f)
             
             self.default_model = config.get('default_model')
+
+            # Load rate limiting config
+            rate_limit_config = config.get('rate_limiting', {})
+            if rate_limit_config.get('enabled', False):
+                rpm_map = rate_limit_config.get('requests_per_minute', {})
+                for provider_name, rpm in rpm_map.items():
+                    self.limiters[provider_name] = AsyncLimiter(rpm, 60)
             
             for model_id, model_config in config.get('models', {}).items():
                 provider = ModelProvider(model_config['provider'])
@@ -961,9 +970,23 @@ class MultiLLMService:
         if not config.enabled:
             raise ValueError(f"模型 {model_id} 已禁用")
         
+        # Rate limiting
+        provider_name = config.provider.value
+        if provider_name in self.limiters:
+            async with self.limiters[provider_name]:
+                return await self._execute_chat_completion(model_id, messages, **kwargs)
+        else:
+            return await self._execute_chat_completion(model_id, messages, **kwargs)
+
+    async def _execute_chat_completion(
+        self,
+        model_id: str,
+        messages: List[ChatMessage],
+        **kwargs
+    ) -> LLMResponse:
         # 获取或创建提供商
         if model_id not in self.providers:
-            self.providers[model_id] = self._create_provider(config)
+            self.providers[model_id] = self._create_provider(self.model_configs[model_id])
         
         provider = self.providers[model_id]
         
@@ -996,9 +1019,25 @@ class MultiLLMService:
         if not config.enabled:
             raise ValueError(f"模型 {model_id} 已禁用")
         
+        # Rate limiting
+        provider_name = config.provider.value
+        if provider_name in self.limiters:
+            async with self.limiters[provider_name]:
+                async for chunk in self._execute_stream_completion(model_id, messages, **kwargs):
+                    yield chunk
+        else:
+            async for chunk in self._execute_stream_completion(model_id, messages, **kwargs):
+                yield chunk
+
+    async def _execute_stream_completion(
+        self,
+        model_id: str,
+        messages: List[ChatMessage],
+        **kwargs
+    ) -> AsyncGenerator[str, None]:
         # 获取或创建提供商
         if model_id not in self.providers:
-            self.providers[model_id] = self._create_provider(config)
+            self.providers[model_id] = self._create_provider(self.model_configs[model_id])
         
         provider = self.providers[model_id]
         
