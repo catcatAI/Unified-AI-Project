@@ -22,12 +22,12 @@ async def base_agent(mock_hsp_connector):
         agent_id="did:hsp:test_agent_123",
         capabilities=[{"name": "test_capability"}]
     )
-    # Patch initialize_services and shutdown_services to prevent real service calls
-    with patch('src.core_services.initialize_services', new_callable=AsyncMock):
-        with patch('src.core_services.shutdown_services', new_callable=AsyncMock):
-            await agent._ainit() # This will call the mocked initialize_services
-    # After _ainit, explicitly set the agent's hsp_connector to our mock
-    agent.hsp_connector = mock_hsp_connector
+    # Patch initialize_services and get_services for controlled service setup
+    with patch('src.core_services.initialize_services', new_callable=AsyncMock) as mock_init_services:
+        with patch('src.core_services.get_services') as mock_get_services:
+            # Configure mock_get_services to return our mock_hsp_connector
+            mock_get_services.return_value = {'hsp_connector': mock_hsp_connector}
+            await agent._ainit() # This will call the mocked initialize_services and then get_services
     return agent
 
 @pytest.mark.asyncio
