@@ -17,9 +17,10 @@ class VectorStore:
             collection_name (str): The name of the collection to use.
         """
         try:
-            self.client = chromadb.PersistentClient(path=path)
+            # Use EphemeralClient to avoid persistence issues
+            self.client = chromadb.EphemeralClient()
             self.collection: Collection = self.client.get_or_create_collection(name=collection_name)
-            logger.info(f"VectorStore initialized with collection '{collection_name}' at path '{path}'.")
+            logger.info(f"VectorStore initialized with collection '{collection_name}' using EphemeralClient.")
         except Exception as e:
             logger.error(f"Failed to initialize ChromaDB client: {e}")
             raise
