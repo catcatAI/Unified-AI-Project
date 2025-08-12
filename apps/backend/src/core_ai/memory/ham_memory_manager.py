@@ -134,9 +134,11 @@ class HAMMemoryManager:
         logger.info(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
 
         # Initialize VectorMemoryStore and ImportanceScorer
-        self.vector_store = VectorMemoryStore(persist_directory=os.path.join(self.storage_dir, "chroma_db"))
+        # Temporarily disable VectorMemoryStore to avoid ChromaDB issues
+        # self.vector_store = VectorMemoryStore(persist_directory=os.path.join(self.storage_dir, "chroma_db"))
+        self.vector_store = None
         self.importance_scorer = ImportanceScorer()
-        logger.info("VectorMemoryStore and ImportanceScorer initialized.")
+        logger.info("ImportanceScorer initialized. VectorMemoryStore temporarily disabled.")
 
         # Start background cleanup task only if there's a running event loop
         try:
@@ -465,16 +467,20 @@ class HAMMemoryManager:
                 current_metadata
             )
         
-        try:
-            text_for_embedding = raw_data if isinstance(raw_data, str) else json.dumps(raw_data)
-            await self.vector_store.add_memory(
-                memory_id=memory_id,
-                content=text_for_embedding,
-                metadata=current_metadata # Pass the updated metadata
-            )
-            logger.debug(f"HAM: Stored semantic vector for {memory_id} in VectorMemoryStore.")
-        except Exception as e:
-            logger.error(f"Error storing semantic vector in VectorMemoryStore for {memory_id}: {e}")
+        # Store in vector store if available
+        if self.vector_store is not None:
+            try:
+                text_for_embedding = raw_data if isinstance(raw_data, str) else json.dumps(raw_data)
+                await self.vector_store.add_memory(
+                    memory_id=memory_id,
+                    content=text_for_embedding,
+                    metadata=current_metadata # Pass the updated metadata
+                )
+                logger.debug(f"HAM: Stored semantic vector for {memory_id} in VectorMemoryStore.")
+            except Exception as e:
+                logger.error(f"Error storing semantic vector in VectorMemoryStore for {memory_id}: {e}")
+        else:
+            logger.debug(f"HAM: VectorMemoryStore disabled, skipping semantic vector storage for {memory_id}.")
 
         try:
             compressed_data = self._compress(data_to_process)
@@ -527,24 +533,28 @@ class HAMMemoryManager:
         semantic_memories = []
 
         # 1. Perform Semantic Search
-        try:
-            # Fetch more results from Chroma to allow for filtering and merging
-            chroma_results = await self.vector_store.semantic_search(query, limit * 2)
-            if chroma_results and chroma_results.get('ids'):
-                for i, mem_id in enumerate(chroma_results['ids'][0]):
-                    if mem_id in self.core_memory_store:
-                        data_package = self.core_memory_store[mem_id]
-                        try:
-                            # Use the new _deserialize_memory method
-                            semantic_memories.append(self._deserialize_memory(mem_id, data_package))
-                            semantic_results_ids.add(mem_id)
-                        except HAMMemoryError as e:
-                            self.logger.warning(f"Skipping deserialization of memory {mem_id} from vector store due to error: {e}")
-                            
-            self.logger.debug(f"Retrieved {len(semantic_memories)} semantic memories for query: '{query}'")
-        except Exception as e:
-            self.logger.error(f"Error during semantic search for query '{query}': {e}")
-            # Fallback: if semantic search fails, proceed with only keyword search
+        if self.vector_store is not None:
+            try:
+                # Fetch more results from Chroma to allow for filtering and merging
+                chroma_results = await self.vector_store.semantic_search(query, limit * 2)
+                if chroma_results and chroma_results.get('ids'):
+                    for i, mem_id in enumerate(chroma_results['ids'][0]):
+                        if mem_id in self.core_memory_store:
+                            data_package = self.core_memory_store[mem_id]
+                            try:
+                                # Use the new _deserialize_memory method
+                                semantic_memories.append(self._deserialize_memory(mem_id, data_package))
+                                semantic_results_ids.add(mem_id)
+                            except HAMMemoryError as e:
+                                self.logger.warning(f"Skipping deserialization of memory {mem_id} from vector store due to error: {e}")
+                                
+                self.logger.debug(f"Retrieved {len(semantic_memories)} semantic memories for query: '{query}'")
+            except Exception as e:
+                self.logger.error(f"Error during semantic search for query '{query}': {e}")
+                # Fallback: if semantic search fails, proceed with only keyword search
+                semantic_memories = []
+        else:
+            self.logger.debug(f"VectorMemoryStore disabled, skipping semantic search for query: '{query}'")
             semantic_memories = []
             
         # 2. Perform Keyword Search (and potential metadata filters)
