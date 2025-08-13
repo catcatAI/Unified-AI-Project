@@ -1098,6 +1098,25 @@ async def batch_delete_images(image_ids: list[str]):
         "deletedCount": len(deleted_ids),
         "failedCount": len(failed_ids),
         "deletedIds": deleted_ids,
+    }
+
+
+@app.delete("/api/v1/images/{image_id}")
+async def delete_image(image_id: str):
+    """删除单个生成的图像"""
+    if not image_id:
+        raise HTTPException(status_code=400, detail="Image ID not provided")
+
+    # Mock deletion
+    if image_id.startswith("img_"):
+        return {
+            "success": True,
+            "message": f"Image {image_id} deleted successfully",
+            "imageId": image_id,
+            "timestamp": datetime.now().isoformat()
+        }
+    else:
+        raise HTTPException(status_code=404, detail=f"Image with ID {image_id} not found or cannot be deleted")
         "failedIds": failed_ids,
         "timestamp": datetime.now().isoformat()
     }
