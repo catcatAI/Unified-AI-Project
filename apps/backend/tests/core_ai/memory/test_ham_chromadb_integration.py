@@ -46,8 +46,11 @@ import chromadb # Added for fixture
 
 @pytest.fixture(scope="function")
 def ham_chroma_manager_fixture():
-    # Use EphemeralClient for in-memory testing, avoiding file locking issues
-    client = chromadb.EphemeralClient()
+    # Use PersistentClient to avoid HTTP-only mode issues
+    import tempfile
+    import shutil
+    temp_dir = tempfile.mkdtemp()
+    client = chromadb.PersistentClient(path=temp_dir)
 
     # Create the manager and inject the client
     ham_manager = HAMMemoryManager(
@@ -58,11 +61,14 @@ def ham_chroma_manager_fixture():
 
     yield ham_manager
 
-    # Teardown: EphemeralClient does not require explicit reset or file cleanup
-    # The client will be garbage collected after the fixture scope ends.
-    del client
-    gc.collect()
-    time.sleep(0.1) # Small delay to help with resource release
+    # Teardown: Clean up temporary directory
+    try:
+        del client
+        gc.collect()
+        time.sleep(0.1) # Small delay to help with resource release
+        shutil.rmtree(temp_dir, ignore_errors=True)
+    except Exception as e:
+        print(f"Warning: Failed to clean up temp directory {temp_dir}: {e}")
 
 @pytest.mark.asyncio
 async def test_01_store_experience_and_verify_chromadb_entry(ham_chroma_manager_fixture):

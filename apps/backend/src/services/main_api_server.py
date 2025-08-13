@@ -1,5 +1,6 @@
 import uvicorn # For running the app
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.routing import APIRouter
 from fastapi.responses import JSONResponse
 from datetime import datetime
 import logging
@@ -98,6 +99,62 @@ async def get_rovo_dev_agent() -> RovoDevAgent:
     return rovo_dev_agent
 
 # DialogueManager will be fetched from get_services() in endpoints
+
+# --- Hot Reload / Drain endpoints (minimal, non-breaking) ---
+from src.services.hot_reload_service import get_hot_reload_service
+
+async def reject_if_draining():
+    """Dependency to reject new task-creating requests while draining."""
+    svc = get_hot_reload_service()
+    st = await svc.status()
+    if st.get("draining"):
+        raise HTTPException(status_code=503, detail="Service is draining; try again later.")
+
+hot_router = APIRouter(prefix="/api/v1/hot", tags=["hot-reload"])
+@hot_router.post("/drain/start")
+async def hot_drain_start():
+    svc = get_hot_reload_service()
+    return await svc.begin_draining()
+
+@hot_router.post("/drain/stop")
+async def hot_drain_stop():
+    svc = get_hot_reload_service()
+    return await svc.end_draining()
+
+@hot_router.get("/status")
+async def hot_status():
+    svc = get_hot_reload_service()
+    return await svc.status()
+
+@hot_router.post("/reload/llm")
+async def hot_reload_llm():
+    svc = get_hot_reload_service()
+    return await svc.reload_llm()
+
+@hot_router.post("/reload/tools")
+async def hot_reload_tools(tool: Optional[str] = None):
+    """Reload tool implementations. Optionally specify a tool key to reload only one."""
+    from src.core_services import tool_dispatcher_instance
+    if tool_dispatcher_instance is None:
+        raise HTTPException(status_code=500, detail="ToolDispatcher not initialized")
+    try:
+        summary = tool_dispatcher_instance.reload_tools(only=tool)
+        return summary
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Tools reload failed: {e}")
+
+@hot_router.post("/reload/personality")
+async def hot_reload_personality(profile: Optional[str] = None):
+    svc = get_hot_reload_service()
+    return await svc.reload_personality(profile)
+
+@hot_router.post("/reload/hsp")
+async def hot_reload_hsp():
+    svc = get_hot_reload_service()
+    return await svc.reload_hsp()
+
+app.include_router(hot_router)
+
 
 @app.get("/")
 def read_root():
@@ -1127,7 +1184,7 @@ async def chat_endpoint(user_input: UserInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/v1/session/start", response_model=SessionStartResponse, tags=["Session"])
-async def start_session_endpoint(session_start_request: SessionStartRequest):
+async def start_session_endpoint(session_start_request: SessionStartRequest, _=Depends(reject_if_draining)):
     """
     Starts a new session and returns an initial greeting and session ID.
     """
@@ -1173,7 +1230,7 @@ async def list_hsp_services():
     return capabilities
 
 @app.post("/api/v1/hsp/tasks", response_model=HSPTaskRequestOutput, tags=["HSP"])
-async def request_hsp_task(task_input: HSPTaskRequestInput):
+async def request_hsp_task(task_input: HSPTaskRequestInput, _=Depends(reject_if_draining)):
     """
     Allows an external client to request the AI to dispatch a task to another AI on the HSP network.
     """

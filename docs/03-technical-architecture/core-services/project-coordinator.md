@@ -1,66 +1,46 @@
-# Project Coordinator Detailed Workflow
+# ProjectCoordinator: High-Level Task Decomposition and Execution
 
 ## Overview
 
-The `ProjectCoordinator` is a core component within the `DialogueManager`, responsible for handling complex, multi-step user requests that go beyond simple, single-turn interactions. It acts as the "brain" for project management, orchestrating various AI agents and services to achieve a user's goal.
+This document provides an overview of the `ProjectCoordinator` module (`src/core_ai/dialogue/project_coordinator.py`). This is a high-level coordinator responsible for decomposing complex user requests into a series of subtasks, executing them in a logical order, and integrating the results into a final, coherent response.
 
-## Core Responsibilities
+## Purpose
 
-1.  **Task Decomposition**: Breaking down a high-level user query into a structured plan of executable subtasks.
-2.  **Task Sequencing**: Organizing subtasks into a dependency graph to ensure correct execution order.
-3.  **Agent/Service Orchestration**: Dispatching subtasks to the appropriate specialized agents or services via the HSP network.
-4.  **Dynamic Agent Provisioning**: Automatically launching necessary agents if they are not currently available.
-5.  **Result Integration**: Synthesizing the results from all subtasks into a single, coherent, and user-friendly final response.
-6.  **Continuous Learning**: Recording the entire project lifecycle (from query to final response) and feeding it to the `LearningManager` for future improvement.
+The `ProjectCoordinator` enables the AI to handle multi-step, complex projects that require the coordination of multiple tools, services, or specialized agents. It acts as an autonomous project manager, creating a plan, dispatching tasks to the appropriate resources, and synthesizing the final result for the user.
 
-## Detailed Workflow
+## Key Responsibilities and Features
 
-The `ProjectCoordinator` follows a sophisticated, multi-phase process to handle a project:
+*   **Project Decomposition (`_decompose_user_intent_into_subtasks`)**: Utilizes a Large Language Model (LLM) to analyze a complex user query and break it down into a structured plan. This plan is represented as a list of dictionaries, where each dictionary defines a subtask with its required capability and parameters.
+*   **Task Graph Execution (`_execute_task_graph`)**:
+    *   Constructs a directed acyclic graph (DAG) of the subtasks using the `networkx` library. This graph represents the dependencies between tasks (e.g., the output of one task is required as the input for another).
+    *   Executes the tasks in a valid topological order, ensuring that all dependencies are met before a task is run.
+    *   Dynamically substitutes the outputs of completed tasks into the parameters of subsequent tasks.
+*   **Subtask Dispatch (`_dispatch_single_subtask`)**:
+    *   For each subtask, it uses the `ServiceDiscoveryModule` to find a suitable capability (a service or agent) that can fulfill the task's requirements.
+    *   If a required agent is not currently running, it attempts to launch it on demand using the `AgentManager`.
+    *   It sends the task request to the selected capability via the `HSPConnector`.
+*   **Result Integration (`_integrate_subtask_results`)**: After all subtasks have been successfully executed, it uses the LLM to synthesize the individual results into a single, comprehensive final response that directly addresses the user's original, high-level query.
+*   **HSP Result Handling (`handle_task_result`)**: Asynchronously receives and handles incoming HSP task results. It stores the results and uses `asyncio.Event` to notify the appropriate waiting task that its result is ready.
+*   **Learning from Projects**: After a project is completed, it has the capability to pass the entire case (including the user's query, the decomposed plan, the individual results, and the final response) to the `LearningManager`. This allows the AI to learn from its project management experiences and improve its future planning and execution capabilities.
 
-### Phase 1: Decompose User Intent
+## How it Works
 
--   **Trigger**: The `DialogueManager` delegates a complex query (e.g., prefixed with `project:`) to the `handle_project` method.
--   **Action**: The coordinator calls the `_decompose_user_intent_into_subtasks` method.
--   **Mechanism**: It queries a Large Language Model (LLM) with the user's request and a comprehensive list of all currently available agent capabilities (provided by the `ServiceDiscoveryModule`).
--   **Output**: The LLM returns a JSON array of subtask objects. Each object defines the `capability_needed` and the specific `task_parameters` for that step.
+When the `DialogueManager` identifies a project-level query, it delegates the request to the `ProjectCoordinator`. The coordinator's first step is to use an LLM to create a detailed plan, which takes the form of a task graph. It then begins to execute this plan, dispatching each subtask to the most appropriate service or agent via the Heterogeneous Service Protocol (HSP). It waits for the results of each subtask, respecting the dependencies defined in the graph. Once all results have been collected, it uses another LLM prompt to generate a final, integrated response for the user.
 
-### Phase 2: Execute Task Graph
+## Integration with Other Modules
 
--   **Action**: The list of subtasks is passed to the `_execute_task_graph` method.
--   **Mechanism**:
-    1.  A Directed Acyclic Graph (DAG) is constructed using the `networkx` library to represent the tasks and their dependencies. Dependencies are identified by looking for placeholders like `<output_of_task_1>` in the `task_parameters`.
-    2.  The graph is topologically sorted to determine the correct, non-blocking execution order.
-    3.  The coordinator iterates through the sorted tasks.
+The `ProjectCoordinator` is a highly integrated module that works in concert with many other core components:
 
-### Phase 3: Dispatch and Monitor Individual Subtasks
+*   **`DialogueManager`**: The entry point for all project-level requests.
+*   **`MultiLLMService`**: Used for both decomposing the initial query into a plan and for integrating the final results into a coherent response.
+*   **`ServiceDiscoveryModule`**: Essential for finding available capabilities to execute the subtasks.
+*   **`HSPConnector`**: The communication backbone for sending task requests to other services and agents.
+*   **`AgentManager`**: Used to launch specialized agents on demand when a required capability is not immediately available.
+*   **`HAMMemoryManager`**: For storing and retrieving information related to the project.
+*   **`LearningManager`**: To enable the AI to learn from its project management experiences.
+*   **`PersonalityManager`**: To tailor the final response to align with the AI's current personality.
+*   **`networkx`**: A key external library used for creating and managing the task dependency graph.
 
--   **Action**: For each task in the execution order, the `_dispatch_single_subtask` method is called.
--   **Mechanism**:
-    1.  **Dependency Injection**: The `_substitute_dependencies` helper function replaces any dependency placeholders in the task's parameters with the actual outputs from previously completed tasks.
-    2.  **Capability Search**: It queries the `ServiceDiscoveryModule` to find an active agent with the required capability.
-    3.  **Dynamic Launch**: If no agent is found, it communicates with the `AgentManager` to launch the required agent script (e.g., `data_analysis_agent.py`). It then waits for the new agent to register its capabilities.
-    4.  **HSP Dispatch**: A formal task request is sent to the target agent via the `HSPConnector`.
-    5.  **Asynchronous Wait**: The coordinator then enters an asynchronous wait state for the task result, using an `asyncio.Event` tied to the request's `correlation_id`. The `handle_task_result` method will set this event upon receiving the result from the HSP network.
+## Code Location
 
-### Phase 4: Integrate and Respond
-
--   **Action**: Once all tasks in the graph are completed, the `_integrate_subtask_results` method is called.
--   **Mechanism**: It sends the original user query along with the complete set of subtask results to the LLM.
--   **Output**: The LLM generates a final, comprehensive response that synthesizes all the intermediate findings.
-
-### Phase 5: Learn from Experience
-
--   **Action**: The `LearningManager` is invoked to process and store the entire project case.
--   **Mechanism**: A detailed record, including the initial query, the decomposed plan, all intermediate results, and the final response, is passed to the `learn_from_project_case` method. This allows the system to learn from its successes and failures.
-
-## Key Interactions
-
-The `ProjectCoordinator` is a central hub that interacts with several other core services:
-
--   **`MultiLLMService`**: Used for both task decomposition and final result integration.
--   **`ServiceDiscoveryModule`**: To find available agents and their capabilities.
--   **`AgentManager`**: To dynamically launch agents when needed.
--   **`HSPConnector`**: To send task requests to agents and receive results.
--   **`LearningManager`**: To store and learn from completed projects.
--   **`HAMMemoryManager`**: (Indirectly via LearningManager) To persist the learned knowledge.
--   **`PersonalityManager`**: To ensure the final response is consistent with the AI's current personality.
+`src/core_ai/dialogue/project_coordinator.py`

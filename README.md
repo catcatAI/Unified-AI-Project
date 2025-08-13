@@ -56,6 +56,34 @@ To run tests with coverage reports:
 pnpm test:coverage
 ```
 
+## Recent Updates
+
+- Hot reload, hot migration (blue/green), and draining support added to backend API.
+  - Docs: [docs/05-development/hot-reload-and-drain.md](docs/05-development/hot-reload-and-drain.md)
+  - Endpoints: see [docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md) under "Hot Reload and Drain".
+- AudioService demo mode and sentiment-analysis stub implemented.
+  - In demo mode, `speech_to_text_with_sentiment_analysis` returns a mock payload with `sentiment: "positive"`.
+  - When demo mode is disabled, the same method raises `NotImplementedError` (until real integration is configured).
+
+## Audio Service Demo Mode
+
+AudioService supports a demo mode for quick end-to-end testing without external STT/Sentiment services.
+
+Enable demo mode by adding the following to the backend config YAML:
+
+```yaml
+# apps/backend/configs/config.yaml
+use_simulated_resources: true
+```
+
+Behavior in demo mode:
+- `speech_to_text(audio_bytes)`: returns a mock transcription string.
+- `speech_to_text_with_sentiment_analysis(audio_bytes)`: returns a JSON object like:
+  ```json
+  { "text": "This is a mock transcription.", "sentiment": "positive", "confidence": 0.9, "language": "en-US" }
+  ```
+- Disabling demo mode (or omitting the flag) causes `speech_to_text_with_sentiment_analysis` to raise `NotImplementedError`.
+
 ## Documentation
 
 For detailed documentation on project architecture, development guidelines, and more, please refer to the [docs/README.md](docs/README.md) directory.

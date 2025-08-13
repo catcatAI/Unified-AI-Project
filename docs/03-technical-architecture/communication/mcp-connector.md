@@ -1,42 +1,35 @@
-# MCP Connector: Management Control Protocol Communication
+# MCPConnector: Management Control Protocol Connector
 
 ## Overview
 
-The `MCPConnector` (`src/mcp/connector.py`) is a specialized communication component within the Unified-AI-Project responsible for handling the **Management Control Protocol (MCP)**. MCP is designed for low-level control, coordination, and direct command execution between AI entities, often bypassing the higher-level HSP for critical or direct operational instructions.
+This document provides an overview of the `MCPConnector` module (`src/mcp/connector.py`). This module is responsible for managing the connection for the Management Control Protocol (MCP), providing a robust and reliable way to send and receive control commands between AI entities.
 
-This module ensures that AI instances can reliably send and receive commands, even in challenging network conditions, by leveraging MQTT as the primary transport and implementing robust fallback mechanisms.
+## Purpose
+
+The `MCPConnector` enables efficient and resilient command and control communication within the AI ecosystem. It allows one AI entity (e.g., a central orchestrator or a human operator) to send specific commands to another AI entity (e.g., a specialized agent) and receive responses. A key feature is its ability to leverage fallback mechanisms, ensuring communication even in the presence of network issues.
 
 ## Key Responsibilities and Features
 
-1.  **MQTT Communication**: 
-    *   Utilizes the `paho.mqtt.client` library to establish and maintain connections with an MQTT broker.
-    *   Handles publishing MCP command requests and subscribing to relevant topics for command responses and broadcasts.
-
-2.  **Command Handling and Registration**: 
-    *   Allows other modules to `register_command_handler` functions for specific MCP command names.
-    *   When an MCP command is received, the `MCPConnector` dispatches it to the appropriate registered handler.
-
-3.  **Robust Fallback Mechanisms**: 
-    *   A critical feature that ensures communication resilience. If the primary MQTT connection is unavailable, the `MCPConnector` can initialize and use various fallback protocols (managed by `MCPFallbackManager`).
-    *   This guarantees that critical control commands can still be delivered, even in degraded network environments.
-
-4.  **MCP Message Encapsulation**: 
-    *   Handles the creation and parsing of `MCPEnvelope` messages, which encapsulate `MCPCommandRequest` and `MCPCommandResponse` payloads.
-    *   Ensures messages conform to the defined MCP schema (`src/mcp/types.py`).
-
-5.  **Communication Status and Health Checks**: 
-    *   Provides methods (`get_communication_status`, `health_check`) to monitor the current state of the MCP connection and the health of the fallback protocols.
+*   **Primary MQTT Communication**: Utilizes the `paho.mqtt.client` library for its primary communication channel over MQTT. This provides a standard, lightweight, and efficient messaging protocol.
+*   **Command Handling**:
+    *   **`send_command`**: Provides a method to send a control command to a target AI. Commands include a `command_name` (e.g., "shutdown", "reboot", "update_config") and associated `parameters`.
+    *   **`register_command_handler`**: Allows other modules to register callback functions that will be invoked when a specific incoming command is received. This enables a flexible and extensible command processing system.
+*   **Fallback Protocols**: 
+    *   Integrates with and manages fallback communication protocols (handled by `mcp_fallback_protocols`). If the primary MQTT connection is unavailable, the connector can automatically attempt to send commands via these alternative channels.
+    *   Supports operation in multi-process environments with fallback, enhancing its robustness in complex deployments.
+*   **Connection Management**: Handles the lifecycle of the MQTT connection, including connecting to and disconnecting from the MQTT broker.
+*   **Health Check**: Provides a `health_check` method that reports the operational status of both the primary MQTT connection and the configured fallback protocols, offering insights into the communication health.
 
 ## How it Works
 
-The `MCPConnector` connects to an MQTT broker and subscribes to topics relevant to its AI instance (e.g., `mcp/broadcast`, `mcp/unicast/{ai_id}`). When an AI needs to send a control command, it calls `send_command`, which constructs an MCP message and attempts to publish it via MQTT. If MQTT is unavailable, it seamlessly switches to a configured fallback protocol to ensure delivery. Incoming MCP messages are received, parsed, and then dispatched to the appropriate registered command handlers within the AI system.
+Upon initialization, the `MCPConnector` creates an MQTT client and attempts to connect to a specified broker. It subscribes to MQTT topics relevant to its `ai_id` to receive incoming control commands. When a `send_command` request is made, the connector first attempts to publish the command via the primary MQTT connection. If this connection is not available or fails, it transparently attempts to send the command via the configured fallback protocols. Incoming commands, whether from MQTT or a fallback channel, are parsed, and if a handler is registered for that command, the corresponding callback function is invoked.
 
 ## Integration with Other Modules
 
--   **`ProjectCoordinator`**: May use the `MCPConnector` for direct control and coordination of sub-agents or external systems.
--   **`AgentManager`**: Could potentially receive MCP commands to manage the lifecycle of agents (e.g., start, stop, restart).
--   **`HSPConnector`**: While HSP handles higher-level semantic communication, MCP provides a complementary channel for direct operational control.
--   **`MCPFallbackManager`**: The underlying system that provides the various fallback communication channels (e.g., in-memory, file-based) when MQTT is not available.
+*   **`paho.mqtt.client`**: The core external library used for MQTT communication.
+*   **`mcp_fallback_protocols`**: Manages the alternative communication channels, providing resilience to the MCP.
+*   **`core_services`**: Likely initializes and manages the singleton instance of the `MCPConnector` as part of the overall system startup.
+*   **`ProjectCoordinator` and `AgentManager`**: These modules would be primary consumers of the `MCPConnector`, using it to send and receive control commands to manage the behavior and state of various AI components and agents.
 
 ## Code Location
 
