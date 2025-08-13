@@ -1,38 +1,35 @@
-# Minigames: Adding Interactivity and Variety
+# Minigames
 
 ## Overview
 
-The `minigames.py` (`src/game/minigames.py`) module introduces **interactive mini-games** into "Angela's World." These mini-games provide diversions from the main gameplay loop, offering players unique challenges and opportunities to earn rewards or advance specific in-game objectives.
+This document provides an overview of the minigame systems, defined in `src/game/minigames.py`. This module contains the logic and implementation for various interactive minigames within "Angela's World."
 
-This module is crucial for enhancing player engagement, adding replayability, and diversifying the gameplay experience beyond core narrative or exploration elements.
+## Purpose
+
+The purpose of the minigames module is to provide engaging, skill-based activities for the player to participate in. These minigames offer a break from the core dialogue and exploration loops and provide a way for the player to acquire resources and items.
 
 ## Key Responsibilities and Features
 
-1.  **Mini-Game Implementation (`FishingGame`)**: 
-    *   Defines the `FishingGame` class, a simple example of a mini-game.
-    *   Manages the mini-game's internal state, including its active status, timers, and game-specific elements (e.g., fishing bar position, catch zone).
+### `FishingGame` Class
 
-2.  **Player Interaction**: 
-    *   Handles player input specific to the mini-game (e.g., pressing the spacebar to attempt a catch in the `FishingGame`).
-    *   Determines the outcome of player actions within the mini-game's rules.
+The `FishingGame` is a simple, timing-based minigame where the player can catch fish.
 
-3.  **Game State Integration**: 
-    *   Integrates with the main game loop by providing `handle_events`, `update`, and `render` methods that can be called by the `GameStateManager`.
-
-4.  **Reward System Integration**: 
-    *   Upon successful completion of a mini-game, it can interact with the player's `Inventory` to add rewards (e.g., adding a 'fish' item).
+*   **Starting the Game (`start`)**: Initializes the minigame by setting a random time for the catch to become available and a random position for the "catch zone."
+*   **Event Handling (`handle_events`)**: Manages player input during the minigame. It specifically listens for the `SPACE` key, which triggers a catch attempt.
+*   **Game Logic (`update`)**: Updates the state of the minigame, primarily by moving the fishing bar up and down after a certain amount of time has passed.
+*   **Rendering (`render`)**: Draws the minigame's user interface, which includes the fishing bar background, the green "catch zone," and the red moving bar.
+*   **Catching Mechanism (`check_catch`)**: Determines if the player was successful. If the moving bar is within the catch zone when the player attempts to catch, a "fish" item is added to the player's inventory.
 
 ## How it Works
 
-When a mini-game is activated (e.g., the player interacts with a fishing spot), an instance of `FishingGame` is created and its `start` method is called. The mini-game then takes over the event handling, update, and rendering within the main game loop. Player input is processed by the mini-game's `handle_events` method. The `update` method progresses the mini-game's internal state (e.g., moving the fishing bar). The `render` method draws the mini-game's visual elements on the screen. Upon completion (success or failure), the mini-game deactivates itself, and control returns to the main game state.
+The `FishingGame` is a self-contained class that manages its own state (`is_active`, `timer`, etc.). When a player initiates the fishing action in the main game, a `FishingGame` instance is created and its `start()` method is called. The game then enters a state where it continuously calls the `update()` and `render()` methods of the `FishingGame` instance. The player must watch the moving bar and press the spacebar at the correct time to succeed.
 
 ## Integration with Other Modules
 
--   **`GameStateManager`**: The `GameStateManager` is responsible for transitioning into and out of mini-game states, and for calling the mini-game's update and render methods.
--   **`Player`**: The player's actions directly influence the mini-game, and rewards are added to the player's `Inventory`.
--   **`Inventory`**: The `Inventory` module is used to manage items obtained as rewards from mini-games.
--   **`Angela`**: While not directly integrated in this example, Angela could potentially offer mini-game challenges or provide commentary during mini-game play.
+*   **`Game` Object**: The `FishingGame` holds a reference to the main `Game` object, which gives it access to global game systems.
+*   **`Player` Object**: Upon a successful catch, the `FishingGame` directly interacts with the `player.inventory` to add the caught fish.
+*   **`GameStateManager`**: A dedicated game state or scene (e.g., a `FishingScene`) would be responsible for creating, running, and tearing down the `FishingGame` instance.
 
 ## Code Location
 
-`src/game/minigames.py`
+`apps/backend/src/game/minigames.py`

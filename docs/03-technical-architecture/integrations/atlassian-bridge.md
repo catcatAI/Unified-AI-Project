@@ -1,60 +1,40 @@
-# Atlassian Bridge: Seamless Integration with Atlassian Services
+# AtlassianBridge: Unified and Resilient Atlassian Integration
 
 ## Overview
 
-The `AtlassianBridge` (`src/integrations/atlassian_bridge.py`) is a comprehensive integration layer within the Unified-AI-Project that provides a **unified and resilient interface for interacting with Atlassian services**, specifically Confluence, Jira, and Bitbucket. Its primary goal is to enable the AI (Angela) to seamlessly perform tasks, manage documentation, track projects, and collaborate within the Atlassian ecosystem.
+This document provides an overview of the `AtlassianBridge` module (`src/integrations/atlassian_bridge.py`). This module serves as a unified and resilient bridge layer for interacting with a suite of Atlassian services, including Confluence, Jira, and Bitbucket.
 
-This module is crucial for automating workflows, enhancing project management capabilities, and allowing the AI to participate actively in development and knowledge-sharing processes.
+## Purpose
+
+The `AtlassianBridge` is designed to provide a single, consistent, and robust interface for the AI to interact with Atlassian products. It abstracts away the complexities of the individual Atlassian REST APIs and adds a layer of resilience, including features like endpoint fallback, caching, and offline support, to ensure reliable communication.
 
 ## Key Responsibilities and Features
 
-1.  **Unified Service Interface**: 
-    *   Provides a single point of access for Confluence, Jira, and Bitbucket operations, abstracting away the individual API complexities of each service.
+*   **Unified Interface**: Provides a set of high-level, asynchronous methods for common Atlassian operations, abstracting the underlying API calls:
+    *   **Confluence**: `create_confluence_page`, `update_confluence_page`, `get_confluence_page`, `search_confluence_pages`.
+    *   **Jira**: `create_jira_issue`, `update_jira_issue`, `get_jira_issue`, `search_jira_issues`, `transition_jira_issue`.
+    *   **Bitbucket**: `get_bitbucket_repositories`, `get_bitbucket_pull_requests`.
+*   **Resilience and High Availability**:
+    *   **Endpoint Management**: Manages a list of primary and backup URLs for each Atlassian service, allowing for seamless failover.
+    *   **Automatic Fallback**: If a request to the primary URL for a service fails, the bridge automatically retries the request with the configured backup URLs.
+    *   **Health Monitoring**: Includes a background task that periodically checks the health of all configured endpoints and can dynamically switch to a healthy endpoint if the primary one becomes unavailable.
+*   **Performance and Offline Capabilities**:
+    *   **Caching**: Implements both in-memory and file-based caching for `GET` requests. This improves performance by reducing redundant API calls and provides a basic level of offline access.
+    *   **Offline Mode**: Can be configured to serve stale (expired) cache data when all endpoints for a service are unavailable, ensuring that the AI can still access previously retrieved information.
+    *   **Offline Queue**: For write operations (`POST`, `PUT`, `DELETE`), if all endpoints are down, the bridge can queue the requests to be processed later when a connection is restored.
+*   **Content Handling**: Includes a helper method (`_markdown_to_confluence_storage`) to convert Markdown text into the Confluence storage format (XHTML-based) that is required by the Confluence API.
+*   **Integration with `RovoDevConnector`**: Leverages the `EnhancedRovoDevConnector` to make the actual HTTP requests, taking advantage of its built-in retry and error handling capabilities.
 
-2.  **Robust Fallback Mechanism (`_make_request_with_fallback`)**: 
-    *   Implements a sophisticated fallback strategy that attempts requests against primary and then backup URLs for each service.
-    *   Includes retry logic and configurable delays to ensure communication resilience in the face of network issues or service outages.
+## How it Works
 
-3.  **Caching (`_get_from_cache`, `_save_to_cache`)**: 
-    *   Supports both in-memory and file-based caching of GET request results.
-    *   Improves performance by reducing redundant API calls and provides a mechanism for serving stale data in offline scenarios.
-
-4.  **Offline Mode and Queue (`_add_to_offline_queue`, `process_offline_queue`)**: 
-    *   When enabled, write operations (POST, PUT, DELETE) are queued if the service is unreachable.
-    *   The `process_offline_queue` method attempts to re-process these queued operations when connectivity is restored, ensuring data consistency.
-
-5.  **Endpoint Health Monitoring (`_start_health_monitoring`, `_check_endpoints_health`)**: 
-    *   Periodically checks the health status of configured primary and backup endpoints for each Atlassian service.
-    *   Updates internal health status, allowing the system to dynamically select healthy endpoints.
-
-6.  **Confluence Operations**: 
-    *   `create_confluence_page`: Creates new pages with specified content (Markdown to Confluence storage format conversion included).
-    *   `update_confluence_page`: Updates existing pages.
-    *   `get_confluence_page`: Retrieves page content and metadata.
-    *   `search_confluence_pages`: Searches for pages using Confluence Query Language (CQL).
-    *   `get_confluence_spaces`: Retrieves a list of available Confluence spaces.
-
-7.  **Jira Operations**: 
-    *   `create_jira_issue`: Creates new Jira issues with various fields.
-    *   `update_jira_issue`: Updates fields of existing Jira issues.
-    *   `get_jira_issue`: Retrieves detailed information about a Jira issue.
-    *   `search_jira_issues`: Searches for issues using Jira Query Language (JQL).
-    *   `transition_jira_issue`: Changes the status of a Jira issue.
-    *   `get_jira_projects`: Retrieves a list of available Jira projects.
-
-8.  **Bitbucket Operations**: 
-    *   `get_bitbucket_repositories`: Retrieves a list of repositories within a workspace.
-    *   `get_bitbucket_pull_requests`: Retrieves pull requests for a given repository and state.
-
-9.  **Utility Methods**: 
-    *   `_markdown_to_confluence_storage`: Converts Markdown content to Confluence's storage format.
-    *   `link_jira_to_confluence`: Facilitates linking Jira issues to Confluence pages.
+The `AtlassianBridge` is initialized with an `EnhancedRovoDevConnector` instance, which handles the low-level HTTP communication. When a method like `create_jira_issue` is called on the bridge, it constructs the appropriate API request payload. It then uses its `_make_request_with_fallback` method to send the request. This method intelligently tries the primary URL for the service first. If that fails, it iterates through the configured backup URLs. For `GET` requests, it checks the cache before making a network call. If all endpoints are unavailable, it can queue write operations or serve stale data for read operations, depending on its configuration.
 
 ## Integration with Other Modules
 
--   **`ProjectCoordinator`**: Heavily relies on the `AtlassianBridge` to manage tasks, create documentation, and track progress within Jira and Confluence.
--   **`LearningManager`**: Could potentially learn from Jira issue resolutions or Confluence documentation updates.
--   **`RovoDevConnector`**: The `AtlassianBridge` uses an instance of `EnhancedRovoDevConnector` (aliased as `RovoDevConnector`) to make the actual HTTP requests, leveraging its retry and request handling capabilities.
+*   **`EnhancedRovoDevConnector`**: The underlying connector that is used for making all HTTP requests to the Atlassian APIs.
+*   **`aiohttp`**: The HTTP client library that is used by the connector.
+*   **`FastAPI` Server**: The main API server can use the `AtlassianBridge` to expose Atlassian functionalities to external clients.
+*   **`ToolDispatcher`**: Could use the `AtlassianBridge` to provide a suite of Atlassian-related tools to the AI, allowing it to manage projects, documents, and code repositories.
 
 ## Code Location
 

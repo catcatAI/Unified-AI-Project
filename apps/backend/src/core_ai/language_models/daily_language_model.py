@@ -8,6 +8,9 @@ from src.services.multi_llm_service import MultiLLMService, ChatMessage, LLMResp
 
 
 class DailyLanguageModel:
+    def set_llm_service(self, llm_service: MultiLLMService):
+        """Inject or replace the LLM service at runtime (used by hot reload)."""
+        self.llm_service = llm_service
     def __init__(self, llm_service: Optional[MultiLLMService] = None, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         if llm_service:

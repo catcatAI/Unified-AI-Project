@@ -1,48 +1,37 @@
-# Scenes and Game State Management
+# Scene and Game State Management
 
 ## Overview
 
-The `scenes.py` (`src/game/scenes.py`) module is fundamental to the structure and flow of "Angela's World." It defines the concept of **game scenes** (different areas or states of the game) and implements a **Game State Manager** to control transitions between these scenes. This modular approach allows for organized development of distinct game environments and their associated logic.
+This document provides an overview of the scene and game state management system, defined in `src/game/scenes.py`. This system is built around a state machine pattern that controls which part of the game is currently active.
 
-This module is crucial for creating a dynamic and engaging player experience, where the game world can change and evolve based on player actions and narrative progression.
+## Purpose
+
+The purpose of this system is to provide a structured and scalable way to manage the different states or "scenes" of the game. A scene could be a specific location (like the village), a menu screen, a minigame, or a dialogue sequence. By encapsulating the logic for each state into its own scene class, the system keeps the code organized and easy to maintain.
 
 ## Key Responsibilities and Features
 
-1.  **Base Scene Class (`Scene`)**: 
-    *   Serves as an abstract base class for all game scenes.
-    *   Defines the common interface for `handle_events`, `update`, and `render` methods that all scenes must implement.
+*   **`GameStateManager` Class**: This is the core of the state machine.
+    *   It holds a dictionary of all available scenes in the game.
+    *   It maintains a reference to the `current_state` (e.g., 'village').
+    *   It delegates all high-level `handle_events`, `update`, and `render` calls from the main game loop to the currently active scene.
 
-2.  **Specific Scene Implementation (`VillageScene`)**: 
-    *   A concrete example of a game scene, representing the village area.
-    *   Loads scene-specific assets (backgrounds, NPCs).
-    *   Manages player interaction with NPCs, triggering dialogue boxes.
-    *   Integrates the `Player` and `NPC` entities within its context.
+*   **`Scene` Class**: This is an abstract base class that defines the common interface for all scenes. Every scene must have `handle_events`, `update`, and `render` methods.
 
-3.  **Game State Manager (`GameStateManager`)**: 
-    *   The central component for controlling the overall flow of the game.
-    *   Maintains a dictionary of available game states (scenes).
-    *   Manages the `current_state`, delegating event handling, updates, and rendering to the active scene.
-    *   Enables seamless transitions between different game scenes.
-
-4.  **Player-NPC Interaction**: 
-    *   Within `VillageScene`, it detects when the player is near an NPC and presses the interaction key (e.g., 'E').
-    *   Triggers the NPC's `interact` method and displays a `DialogueBox` with the NPC's response.
-
-5.  **Resource Loading**: 
-    *   Scenes are responsible for loading their specific assets (e.g., background images, NPC sprites) from the game's asset manager.
+*   **`VillageScene` Class**: This is a concrete implementation of a scene.
+    *   It represents the main village area where the player can walk around and interact with NPCs.
+    *   It is responsible for loading its own background, creating the NPCs that belong in the scene, and managing the dialogue box.
+    *   It contains the logic for player-NPC interaction (e.g., checking for proximity and key presses to initiate dialogue).
 
 ## How it Works
 
-The `GameStateManager` is initialized with all available game scenes. In the main game loop, the `GameStateManager`'s `handle_events`, `update`, and `render` methods are called. These methods, in turn, call the corresponding methods of the `current_state` (the active scene). Each scene then manages its own logic, including player and NPC updates, and rendering its specific elements. When a condition for a scene change is met (e.g., player enters a new area, quest completed), the `GameStateManager` can switch the `current_state` to a new scene.
+The main `Game` object creates an instance of the `GameStateManager`. The `GameStateManager`, in turn, creates instances of all the different scenes and stores them in a dictionary. The main game loop then simply tells the `GameStateManager` to handle events, update, and render. The `GameStateManager` checks what its `current_state` is and passes the calls down to the appropriate scene object. This design makes it very simple to switch between different parts of the game by just changing the `current_state` string in the `GameStateManager`.
 
 ## Integration with Other Modules
 
--   **`Game` (main.py)**: The main game loop drives the `GameStateManager`.
--   **`Player`**: The `Player` instance is updated and rendered by the active scene.
--   **`NPCs`**: NPCs are loaded and managed within specific scenes, and their interaction logic is handled here.
--   **`UI` (DialogueBox)**: The `DialogueBox` is used by scenes to display conversational elements.
--   **Game Assets**: Scenes rely on the game's asset management to load their visual components.
+*   **`Game` Class**: The `GameStateManager` is a key component of the main `Game` class.
+*   **Character Classes (`Player`, `NPC`, `Angela`)**: Scenes are responsible for creating and managing the characters that appear within them.
+*   **UI Classes (`DialogueBox`)**: Scenes use UI elements like the `DialogueBox` to display information to the player.
 
 ## Code Location
 
-`src/game/scenes.py`
+`apps/backend/src/game/scenes.py`

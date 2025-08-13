@@ -1,44 +1,34 @@
-# Crisis System
+# CrisisSystem: AI Crisis Detection and Management
 
 ## Overview
 
-The `CrisisSystem` (`src/core_ai/crisis_system.py`) is a vital component within the Unified-AI-Project, designed to **detect, assess, and manage potential crisis situations** during AI interactions. Its primary goal is to ensure the safety, well-being, and ethical operation of the AI (Angela) and its users, by implementing predefined protocols when sensitive or critical indicators are detected.
+This document provides an overview of the `CrisisSystem` module (`src/core_ai/crisis_system.py`). This module is designed to detect and manage potential crisis situations, which may involve safety protocols, user well-being checks, or handing off to other support systems.
 
-This module is crucial for maintaining a responsible AI system, especially in scenarios where user input might indicate distress, harm, or other critical events that require immediate and appropriate responses.
+## Purpose
+
+The `CrisisSystem` serves as a critical safety mechanism within the AI. Its primary purpose is to ensure the safety and well-being of users interacting with the AI, and to effectively manage situations where the AI detects potential distress, harmful intent, or other critical events. It acts as a safety net and a mechanism for escalating critical situations to appropriate protocols or human intervention.
 
 ## Key Responsibilities and Features
 
-1.  **Crisis Detection (`assess_input_for_crisis`)**:
-    *   Analyzes incoming user input (and potentially context) for predefined crisis keywords or patterns.
-    *   Assigns a `crisis_level` (0 for no crisis, higher numbers for increasing severity) based on the detected indicators.
-
-2.  **Crisis Level Management**: 
-    *   Maintains the AI's current `crisis_level`.
-    *   Crisis levels can escalate based on new input but typically require explicit resolution to de-escalate.
-
-3.  **Protocol Triggering (`_trigger_protocol`)**: 
-    *   Activates specific, predefined `crisis_protocols` based on the detected `crisis_level`.
-    *   Protocols can range from simple logging to notifying human moderators, or triggering specific AI responses (handled by the `DialogueManager`).
-
-4.  **Crisis Resolution (`resolve_crisis`)**: 
-    *   Provides a mechanism to manually or automatically resolve an active crisis, resetting the `crisis_level` to zero.
-
-5.  **Configurable Keywords and Protocols**: 
-    *   Crisis keywords and their associated protocols are loaded from an external JSON configuration file (e.g., `configs/crisis_system_config.json`). This allows for flexible and updatable crisis definitions without code changes.
-
-6.  **Integration with Other Core AI Systems**: 
-    *   References `EmotionSystem` and `MemoryManager`, suggesting potential future integrations where emotional state or past crisis incidents could influence crisis assessment and response.
+*   **Crisis Detection (`assess_input_for_crisis`)**:
+    *   Analyzes incoming user input (primarily text) for predefined `crisis_keywords` and `negative_words`.
+    *   Assigns an internal `crisis_level` (0 for no crisis, with higher numbers indicating increasing severity).
+    *   The `crisis_level` is designed to only escalate through this method; de-escalation requires an explicit call to `resolve_crisis`.
+*   **Crisis Protocols (`_trigger_protocol`)**:
+    *   Based on the detected `crisis_level`, the system triggers predefined protocols. These protocols are highly configurable via a JSON file (`crisis_system_config.json`) and can range from simple internal logging to notifying human moderators or initiating other safety measures.
+*   **Crisis Resolution (`resolve_crisis`)**: Provides a method to manually or automatically resolve a crisis situation. Calling this method resets the internal `crisis_level` to 0, indicating that the crisis has been addressed.
+*   **Configuration Management**: Loads its operational parameters, including `crisis_keywords`, `negative_words`, `default_crisis_level_on_keyword`, and `crisis_protocols`, from a configuration dictionary or a specified JSON file.
+*   **Logging**: Logs all crisis events and the triggered protocols, providing an audit trail for review and analysis.
 
 ## How it Works
 
-Upon receiving input, the `CrisisSystem` scans the text for configured crisis keywords. If found, it updates the internal `crisis_level` and triggers the corresponding protocol. The protocols are defined in a configuration file and dictate the system's immediate response. The system maintains the `crisis_level` until explicitly resolved, ensuring sustained awareness of critical situations.
+The `CrisisSystem` continuously monitors incoming user input. If it detects specific keywords or sentiment indicators that suggest a potential crisis, it increases its internal `crisis_level`. Based on this level, it triggers predefined protocols, which can range from simple logging to notifying human moderators or initiating other safety measures. The crisis state persists until explicitly resolved by a call to `resolve_crisis`.
 
 ## Integration with Other Modules
 
--   **`DialogueManager`**: The `DialogueManager` would typically call `assess_input_for_crisis` to evaluate user input and then use the returned `crisis_level` to inform its response generation, potentially triggering specific crisis-response dialogues.
--   **`PersonalityManager`**: Crisis protocols might be influenced by Angela's personality, determining how she communicates during a crisis.
--   **`EmotionSystem`**: The `CrisisSystem` could inform the `EmotionSystem` of a crisis, leading to changes in Angela's emotional state and expression.
--   **`HAMMemoryManager`**: Crisis incidents and their resolutions could be stored in HAM for future learning and analysis, allowing the AI to improve its crisis management over time.
+*   **`DialogueManager`**: The `DialogueManager` would typically feed user input to the `CrisisSystem` for real-time assessment of potential crisis situations.
+*   **`EmotionSystem`**: Could potentially provide more nuanced sentiment analysis or emotional state information to the `CrisisSystem`, enhancing its detection capabilities.
+*   **`HAMMemoryManager`**: Could be used to log crisis events, store context related to crises, or even trigger memory-based interventions.
 
 ## Code Location
 

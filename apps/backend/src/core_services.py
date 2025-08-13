@@ -163,8 +163,32 @@ async def initialize_services(
                 def recall_gist(self, mem_id): return None
             ham_manager_instance = TempMockHAM(encryption_key="mock_key", db_path=None) # type: ignore
         else:
+            # Initialize ChromaDB client for production use
+            chroma_client = None
+            try:
+                import chromadb
+                import os
+                # Use HttpClient to work with HTTP-only mode
+                chroma_client = chromadb.HttpClient(
+                    host="localhost",
+                    port=8000
+                )
+                print(f"Core Services: ChromaDB HttpClient initialized successfully.")
+            except Exception as e:
+                print(f"Core Services: Warning - ChromaDB HttpClient initialization failed: {e}. Trying EphemeralClient.")
+                try:
+                    # Fallback to EphemeralClient if HttpClient fails
+                    chroma_client = chromadb.EphemeralClient()
+                    print(f"Core Services: ChromaDB EphemeralClient initialized successfully.")
+                except Exception as e2:
+                    print(f"Core Services: Warning - ChromaDB EphemeralClient initialization failed: {e2}. HAM will work without vector search.")
+                    chroma_client = None
+            
             # Ensure MIKO_HAM_KEY is set for real HAM
-            ham_manager_instance = HAMMemoryManager(core_storage_filename=f"ham_core_{ai_id.replace(':','_')}.json")
+            ham_manager_instance = HAMMemoryManager(
+                core_storage_filename=f"ham_core_{ai_id.replace(':','_')}.json",
+                chroma_client=chroma_client
+            )
 
     if not personality_manager_instance:
         personality_manager_instance = PersonalityManager() # Uses default profile initially

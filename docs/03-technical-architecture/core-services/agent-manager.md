@@ -1,45 +1,32 @@
-# Agent Manager
+# AgentManager: Lifecycle Management for Specialized Sub-Agents
 
 ## Overview
 
-The `AgentManager` (`src/core_ai/agent_manager.py`) is a critical component within the Unified-AI-Project responsible for **managing the lifecycle of specialized sub-agents**. It provides the capabilities to dynamically launch, monitor, and terminate sub-agent processes, enabling the system to efficiently utilize resources and scale its functionalities based on task demands.
+This document provides an overview of the `AgentManager` module (`src/core_ai/agent_manager.py`). Its primary function is to manage the lifecycle of specialized sub-agents, which includes discovering, launching, and terminating them as separate, independent processes.
 
-This module is fundamental to the project's multi-agent architecture, allowing the central AI (Angela) to orchestrate complex tasks by delegating them to specialized, independent AI processes.
+## Purpose
+
+The `AgentManager` is a key component for enabling a modular and scalable architecture. It allows the main AI system to delegate specific, complex, or long-running tasks to specialized agents that can run in parallel. This prevents blocking of the main AI loop and promotes a separation of concerns, where each agent can be an expert in a specific domain (e.g., data analysis, creative writing, web search).
 
 ## Key Responsibilities and Features
 
-1.  **Agent Discovery (`_discover_agent_scripts`)**:
-    *   Scans the `src/agents` directory to identify available Python scripts that implement specialized sub-agents.
-    *   Maintains a map of agent names to their corresponding script paths, making them discoverable by other parts of the system.
-
-2.  **Agent Launching (`launch_agent`)**:
-    *   Initiates a new sub-agent process, running the agent's script using a specified Python executable.
-    *   Manages a registry of `active_agents`, storing references to their process objects.
-    *   Prevents launching an agent if it's already running, ensuring resource efficiency.
-
-3.  **Agent Shutdown (`shutdown_agent`)**:
-    *   Gracefully terminates a running sub-agent process.
-    *   Attempts a graceful termination (SIGTERM) and, if necessary, forces termination (SIGKILL) after a timeout.
-
-4.  **Bulk Shutdown (`shutdown_all_agents`)**:
-    *   Provides a convenient method to shut down all sub-agent processes currently managed by the `AgentManager`.
-
-5.  **Basic Agent Health Check (`check_agent_health`)**:
-    *   Performs a rudimentary check to see if an agent's process is still alive.
-    *   (Note: This is a placeholder for more sophisticated health checks that would involve inter-process communication with the agent itself.)
-
-6.  **Waiting for Agent Readiness (`wait_for_agent_ready`)**:
-    *   A utility method that polls the `ServiceDiscoveryModule` to check if a newly launched agent has successfully advertised its capabilities, indicating it's ready to receive tasks.
+*   **Agent Discovery (`_discover_agent_scripts`)**: Automatically discovers available agent scripts within a designated directory (e.g., `src/agents`). This allows for the easy addition of new agents without requiring manual registration.
+*   **Lifecycle Management**:
+    *   **`launch_agent`**: Launches a specified agent in a new, non-blocking subprocess using `subprocess.Popen`. It ensures that the same agent is not launched multiple times if it is already running.
+    *   **`shutdown_agent`**: Terminates a running agent process. It first attempts a graceful shutdown (using `SIGTERM`) and then forcefully terminates the process (using `SIGKILL`) if it does not respond within a timeout period.
+    *   **`shutdown_all_agents`**: Provides a method to shut down all currently active agents that are managed by the `AgentManager`.
+*   **Health Checking (`check_agent_health`)**: Includes a basic mechanism to check if an agent process is still running. (A more robust health check, such as inter-process communication, is noted as a potential future improvement).
+*   **Readiness Probing (`wait_for_agent_ready`)**: Contains a placeholder method to wait for a newly launched agent to become "ready." This is achieved by monitoring for the agent's capability advertisement on the HSP network via the `ServiceDiscoveryModule`.
 
 ## How it Works
 
-The `AgentManager` is initialized with the path to the Python executable. It then discovers all available agent scripts. When a request to launch an agent comes in (e.g., from the `ProjectCoordinator`), it creates a new subprocess for that agent. It keeps track of active agents by their process IDs. For shutdown, it sends termination signals to the processes and waits for them to exit.
+The `AgentManager` first discovers all available agent scripts and stores their paths in a map. When a request to launch an agent is received, it uses Python's `subprocess` module to execute the corresponding agent script in a new, independent process. It maintains a dictionary of these active agent processes, which allows it to track and manage them. To shut down an agent, it uses the stored process object to send the appropriate termination signals.
 
 ## Integration with Other Modules
 
--   **`ProjectCoordinator`**: The primary consumer of the `AgentManager`. The `ProjectCoordinator` uses it to dynamically launch specialized agents required to execute subtasks within a complex project.
--   **`ServiceDiscoveryModule`**: The `AgentManager` relies on the `ServiceDiscoveryModule` to confirm when a newly launched agent has successfully advertised its capabilities and is ready for task delegation.
--   **`BaseAgent`**: All sub-agents inherit from `BaseAgent`, which handles the common logic for agent startup, shutdown, and HSP communication, working in conjunction with the `AgentManager`.
+*   **`subprocess`, `sys`, `os`, `logging`, `threading`**: Utilizes standard Python libraries for process management, system interaction, logging, and ensuring thread safety during agent launch.
+*   **`core_services`**: Can be used to get access to other core services, particularly the `ServiceDiscoveryModule`, which is essential for the readiness probing mechanism.
+*   **`DialogueManager`**: A primary consumer of the `AgentManager`. The `DialogueManager` would use this service to delegate complex tasks to specialized agents, allowing it to continue interacting with the user while the agent works in the background.
 
 ## Code Location
 

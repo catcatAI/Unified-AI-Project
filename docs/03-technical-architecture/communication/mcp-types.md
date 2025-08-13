@@ -1,61 +1,39 @@
-# MCP Types: Multi-Agent Communication Protocol Data Structures
+# MCP Types: Management Control Protocol Message Definitions
 
 ## Overview
 
-The `types.py` (`src/mcp/types.py`) module defines the **data structures and message formats** used within the Multi-Agent Communication Protocol (MCP) of the Unified-AI-Project. It provides the foundational types for inter-agent communication, supporting both legacy MCP implementations and enhanced Context7 integrations.
+This document provides a comprehensive overview of the data structures and message formats defined in the `src/mcp/types.py` module. These TypedDicts and dataclasses form the backbone of the Management Control Protocol (MCP), supporting both legacy and enhanced (Context7) versions of the protocol.
 
-This module is critical for ensuring structured and consistent data exchange between different AI models and components within the ecosystem, facilitating collaboration and coordinated task execution.
+This module is crucial for enabling standardized, type-safe, and extensible communication related to management, control, and contextual information exchange between AI entities within the Unified-AI-Project. It ensures interoperability and consistent interpretation of commands and data across different components.
 
-## Key Type Definitions
+## Key Responsibilities and Features
 
-### 1. Original MCP Types (Legacy)
+### Original MCP Types (Legacy)
 
-These types represent the initial or legacy message formats used in the MCP.
+*   **`MCPEnvelope`**: The top-level structure for legacy MCP messages. It includes essential metadata such as `mcp_envelope_version`, `message_id`, `sender_id`, `recipient_id`, `timestamp_sent`, `message_type`, `protocol_version`, and a generic `payload` field.
+*   **`MCPCommandRequest`**: Defines the payload structure for requesting a command execution. It specifies the `command_name` to be executed and a dictionary of `parameters` for that command.
+*   **`MCPCommandResponse`**: Defines the payload structure for responding to a command request. It includes the `request_id` of the original command, its `status` (e.g., "success", "failure", "in_progress"), an optional `payload` for the result data, and an `error_message` if the command failed.
 
--   **`MCPEnvelope` (TypedDict)**:
-    *   The basic message envelope for legacy MCP communications.
-    *   Includes fields such as `mcp_envelope_version`, `message_id`, `sender_id`, `recipient_id`, `timestamp_sent`, `message_type`, `protocol_version`, `payload` (generic dictionary), and `correlation_id`.
+### Context7 MCP Types (Enhanced)
 
--   **`MCPCommandRequest` (TypedDict)**:
-    *   Defines the structure for requesting a command execution from another agent.
-    *   Contains `command_name` and `parameters` (a dictionary of arguments).
+These types are designed for integration with Context7's advanced context management capabilities:
 
--   **`MCPCommandResponse` (TypedDict)**:
-    *   Defines the structure for responding to a command request.
-    *   Includes `request_id` (linking to the original request), `status` (e.g., "success", "failure", "in_progress"), `payload` (the result), and `error_message`.
+*   **`MCPMessage`**: An enhanced message format for Context7 integration. It includes `type` (e.g., "context_update", "context_query", "capability_discovery"), an optional `session_id`, a `payload` dictionary, and optional `timestamp` and `priority` fields.
+*   **`MCPResponse`**: An enhanced response format for Context7. It indicates `success` status, the `message_id` of the request it's responding to, a `data` dictionary for the response payload, and an optional `error` message.
+*   **`MCPCapability`**: Defines the structure for capabilities advertised by MCP services. It includes `name`, `version`, an optional `description`, and `parameters`.
+*   **`MCPContextItem`**: Represents a single item of contextual information exchanged via MCP. It includes `id`, `content`, `context_type`, and optional `relevance_score` and `metadata`.
+*   **`MCPCollaborationRequest`**: Defines a request for collaboration between AI models. It specifies the `source_model` and `target_model`, a `task_description`, `shared_context`, `collaboration_mode` (sync/async), and an optional `timeout`.
 
-### 2. Context7 MCP Types (Enhanced)
+## How it Works
 
-These types represent enhanced message formats designed for deeper integration with Context7, providing more granular control and richer context.
+These TypedDicts serve as the formal contract for all MCP messages. When an AI entity sends a message, it constructs an appropriate TypedDict structure and populates it with data. Receiving AIs can then parse and validate these messages against the defined types, ensuring consistent interpretation of management commands and contextual information. The module supports both simple command-response patterns (legacy) and more complex context-aware interactions (Context7 enhanced), allowing for flexible communication strategies within the AI ecosystem.
 
--   **`MCPMessage` (TypedDict)**:
-    *   An enhanced MCP message format for Context7 integration.
-    *   Fields include: `type`, `session_id` (optional), `payload` (generic dictionary), `timestamp` (optional), and `priority` (optional).
+## Integration with Other Modules
 
--   **`MCPResponse` (TypedDict)**:
-    *   An enhanced MCP response format.
-    *   Includes: `success` (boolean), `message_id`, `data` (result data), `error` (optional error message), and `timestamp` (optional).
-
--   **`MCPCapability` (TypedDict)**:
-    *   Defines the structure for an MCP capability, similar to HSP capabilities but specific to MCP.
-    *   Fields: `name`, `version`, `description` (optional), and `parameters` (optional dictionary).
-
--   **`MCPContextItem` (TypedDict)**:
-    *   Represents an item of context shared within MCP communication.
-    *   Fields: `id`, `content`, `context_type`, `relevance_score` (optional), and `metadata` (optional dictionary).
-
--   **`MCPCollaborationRequest` (TypedDict)**:
-    *   Defines a request for collaboration between AI models.
-    *   Fields: `source_model`, `target_model`, `task_description`, `shared_context` (dictionary), `collaboration_mode` (e.g., "sync", "async"), and `timeout` (optional).
-
-## Importance and Usage
-
-`mcp/types.py` is crucial for:
-
--   **Standardized Communication**: Provides a common language and structure for all MCP messages, ensuring that different AI components can understand and process each other's communications.
--   **Inter-Agent Collaboration**: Facilitates complex interactions and task delegation between AI models by defining clear request and response formats.
--   **Extensibility**: The use of `TypedDict` allows for easy extension and modification of message types as the protocol evolves.
--   **Type Safety**: Enhances code reliability and reduces errors by providing explicit type hints for all message fields.
+*   **`MCPConnector`**: The primary module that handles the serialization, deserialization, and validation of messages based on these types for communication over MQTT.
+*   **`Context7MCPConnector`**: Specifically uses the enhanced Context7 MCP types for its interactions with the Context7 service.
+*   **`MCPFallbackProtocolManager`**: Utilizes the `MCPMessage` type for its internal fallback communication mechanisms.
+*   **AI Management Tools**: External tools or internal AI components that issue control commands or exchange contextual information construct and consume messages that adhere to these defined types.
 
 ## Code Location
 

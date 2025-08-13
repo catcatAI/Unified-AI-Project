@@ -2,31 +2,34 @@
 
 ## Overview
 
-The `FragmentaOrchestrator` (`src/fragmenta/fragmenta_orchestrator.py`) is a key component within the Unified-AI-Project designed to **process complex tasks by intelligently retrieving and synthesizing information from multiple candidate memories**. It acts as a higher-level reasoning engine that leverages the AI's stored experiences to construct comprehensive responses or solutions.
+This document provides an overview of the `FragmentaOrchestrator` module (`src/fragmenta/fragmenta_orchestrator.py`). This module demonstrates a conceptual framework for processing complex tasks by retrieving, processing, and synthesizing multiple candidate memories from the Hierarchical Associative Memory (HAM) system.
 
-This module is crucial for enabling the AI to handle queries that require more than a simple lookup or a single tool invocation, allowing it to draw connections and derive insights from its vast memory base.
+## Purpose
+
+The primary purpose of the `FragmentaOrchestrator` is to handle complex problems that cannot be solved by retrieving a single piece of information. Instead of looking for a single perfect answer, it is designed to gather multiple, partially-relevant memory "fragments" (hence "Fragmenta") and orchestrate their processing to build a more comprehensive solution. This represents a more advanced form of reasoning, moving from simple lookups to synthesis and multi-source information fusion.
 
 ## Key Responsibilities and Features
 
-1.  **Complex Task Processing (`process_complex_task`)**:
-    *   Receives a `task_description` (which may include `query_params`) and `input_data`.
-    *   Formulates queries to the `HAMMemoryManager` to retrieve multiple relevant memories.
-    *   Synthesizes information from these retrieved memories to generate a comprehensive result.
-
-2.  **Memory Retrieval and Summarization**: 
-    *   Utilizes the `HAMMemoryManager`'s `query_core_memory` method to fetch a list of candidate memories that are potentially relevant to the complex task.
-    *   Performs a basic summarization of the `rehydrated_gist` from each retrieved memory, extracting key information.
+*   **Complex Task Processing (`process_complex_task`)**: The core method that takes a task description and input data.
+*   **Multi-Candidate Memory Retrieval**: It queries the `HAMMemoryManager` with the `return_multiple_candidates=True` flag, which is a crucial feature for retrieving a list of relevant memories rather than just the single best match.
+*   **Memory Fragment Processing**: It iterates through the retrieved candidate memories and applies a processing function to each one. In the current placeholder implementation, this is a simple text summarization of the memory's "gist".
+*   **Result Synthesis**: It returns a structured list of the processed results, which in a more advanced implementation could be further synthesized into a final, coherent answer.
 
 ## How it Works
 
-The `FragmentaOrchestrator` acts as an intelligent aggregator. When presented with a complex task, it doesn't attempt to solve it directly. Instead, it queries the AI's `HAMMemoryManager` for all relevant pieces of information (memories). Once these candidate memories are retrieved, it processes them (currently by simple summarization) and combines the insights to form a coherent response or a step towards solving the complex task. This approach allows for a flexible and scalable way to handle intricate problems by breaking them down into memory retrieval and synthesis operations.
+The `FragmentaOrchestrator` is invoked when a task is deemed too complex for a standard memory query. It uses the task description to formulate a broad query to the `HAMMemoryManager`. The HAM, in turn, returns a list of candidate memories that are potentially relevant to the task. The orchestrator then processes each of these memory fragments. The current implementation performs a simple summarization, but a more sophisticated version could involve:
+
+*   Ranking the fragments by relevance.
+*   Extracting key entities and relationships from each fragment.
+*   Fusing the information to form a new, synthesized memory.
+*   Identifying and resolving contradictions between fragments.
+
+This approach allows the AI to tackle more nuanced and multifaceted problems by drawing on a wider range of its stored knowledge.
 
 ## Integration with Other Modules
 
--   **`HAMMemoryManager`**: The core dependency, providing the underlying memory storage and retrieval capabilities. The `FragmentaOrchestrator` relies heavily on HAM's ability to efficiently query and return relevant experiences.
--   **`ProjectCoordinator`**: Could potentially delegate complex, multi-faceted subtasks to the `FragmentaOrchestrator` when a deep synthesis of past memories is required.
--   **`LearningManager`**: Insights gained from the `FragmentaOrchestrator`'s processing could be fed back into the `LearningManager` to refine future memory storage and retrieval strategies.
+*   **`HAMMemoryManager`**: This is the most critical dependency. The orchestrator's functionality is entirely dependent on the HAM's ability to perform multi-candidate queries and return rich memory objects.
 
 ## Code Location
 
-`src/fragmenta/fragmenta_orchestrator.py`
+`apps/backend/src/fragmenta/fragmenta_orchestrator.py`

@@ -1,71 +1,50 @@
-# HSP Types: Heterogeneous Service Protocol Data Structures
+# HSP Type Definitions
 
 ## Overview
 
-The `types.py` (`src/hsp/types.py`) module is the definitive source for **all data structures and message formats** used within the Heterogeneous Service Protocol (HSP) of the Unified-AI-Project. It leverages Python's `TypedDict` and `Literal` types to provide clear, explicit, and type-safe definitions for the various messages exchanged between AI entities.
+This document provides an overview of the core data structures and message formats for the Heterogeneous Service Protocol (HSP), as defined in `src/hsp/types.py`.
 
-This module is crucial for ensuring interoperability, data consistency, and robust communication across the entire HSP network, serving as the blueprint for how AI agents understand and interact with each other's data.
+## Purpose
 
-## Key Type Definitions
+The primary purpose of this module is to establish a standardized, type-safe contract for all messages exchanged between AI entities within the Unified AI Project. By defining these structures using `TypedDict`, it ensures data consistency, facilitates interoperability, and enables robust validation and parsing of HSP messages across different components and services.
 
-### 1. Core Message Envelope
+## Key Data Structures
 
--   **`HSPMessageEnvelope` (TypedDict)**:
-    *   The fundamental wrapper for all HSP messages. It defines the metadata and routing information common to every message.
-    *   Key fields include: `hsp_envelope_version`, `message_id` (UUID), `correlation_id` (for request-response patterns), `sender_ai_id`, `recipient_ai_id`, `timestamp_sent`, `message_type` (e.g., "HSP::Fact_v0.1"), `protocol_version`, `communication_pattern` (e.g., "publish", "request", "response"), `security_parameters`, `qos_parameters`, `routing_info`, `payload_schema_uri`, and the `payload` itself.
+*   **`HSPMessageEnvelope`**: The foundational structure for any HSP message. It encapsulates metadata about the message itself and its communication context.
+    *   **Core Fields**: `hsp_envelope_version`, `message_id`, `sender_ai_id`, `recipient_ai_id`, `timestamp_sent`, `message_type`, `protocol_version`, `communication_pattern`.
+    *   **Optional Fields**: `correlation_id`, `security_parameters`, `qos_parameters`, `routing_info`, `payload_schema_uri`.
+    *   `payload`: A generic dictionary (`Dict[str, Any]`) that holds the specific message content, whose structure is defined by other payload types.
 
-### 2. Payload Types
+*   **`HSPFactPayload`**: Defines the structure for messages conveying factual statements or learned information.
+    *   Includes fields for the statement itself (in natural language or structured semantic triples), `confidence_score`, `source_ai_id`, `timestamp_created`, and various contextual metadata.
 
-These TypedDicts define the structure of the `payload` within the `HSPMessageEnvelope` for different types of HSP communication.
+*   **`HSPBeliefPayload`**: Extends `HSPFactPayload` to represent beliefs, adding fields like `belief_holder_ai_id` and `justification` for the belief.
 
--   **`HSPFactPayload` (TypedDict)**:
-    *   Represents a factual statement or piece of knowledge being shared.
-    *   Includes fields like `id`, `statement_type` (e.g., "natural_language", "semantic_triple"), `statement_nl` (natural language), `statement_structured` (for structured data like semantic triples), `source_ai_id`, `original_source_info`, `timestamp_created`, `confidence_score`, `weight`, `valid_from`, `valid_until`, `context`, `tags`, and `access_policy_id`.
+*   **`HSPCapabilityAdvertisementPayload`**: Defines the structure for messages where an AI advertises its available capabilities (e.g., tools, services, functions).
+    *   Includes `capability_id`, `ai_id` (of the offering AI), `name`, `description`, `version`, input/output schemas, `cost_estimate_template`, `availability_status`, and `tags`.
 
--   **`HSPBeliefPayload` (TypedDict)**:
-    *   Extends `HSPFactPayload` to represent a belief held by an AI, including `belief_holder_ai_id` and optional `justification`.
+*   **`HSPTaskRequestPayload`**: Defines the structure for messages used to request another AI to perform a specific task or execute a capability.
+    *   Includes `request_id`, `requester_ai_id`, `target_ai_id`, `capability_id_filter` (or `capability_name_filter`), `parameters` (input for the capability), and optional fields for `priority`, `deadline`, and `callback_address`.
 
--   **`HSPCapabilityAdvertisementPayload` (TypedDict)**:
-    *   Used by AI agents to advertise their available capabilities to the network.
-    *   Includes `capability_id`, `ai_id` (of the advertiser), `agent_name`, `name`, `description`, `version`, `input_schema_uri`, `output_schema_uri`, `availability_status`, and `tags`.
+*   **`HSPTaskResultPayload`**: Defines the structure for messages conveying the outcome of a task execution.
+    *   Includes `result_id`, `request_id` (linking to the original request), `executing_ai_id`, `status` (success, failure, in_progress, etc.), `payload` (the actual result data), and `error_details` if the task failed.
 
--   **`HSPTaskRequestPayload` (TypedDict)**:
-    *   Defines the structure for one AI to request a task from another.
-    *   Includes `request_id`, `requester_ai_id`, `target_ai_id`, `capability_id_filter`, `parameters`, `requested_output_data_format`, `priority`, `deadline_timestamp`, and `callback_address`.
+*   **`HSPErrorDetails`**: A standardized structure for conveying detailed error information within HSP messages, including `error_code`, `error_message`, and `error_context`.
 
--   **`HSPTaskResultPayload` (TypedDict)**:
-    *   Defines the structure for an AI to send back the result of a task request.
-    *   Includes `result_id`, `request_id` (of the original task), `executing_ai_id`, `status` (e.g., "success", "failure"), `payload` (the result data), `output_data_format`, `error_details`, `timestamp_completed`, and `execution_metadata`.
+*   **`HSPEnvironmentalStatePayload`**: Defines the structure for messages that update other AIs about changes in the shared environment or context.
 
--   **`HSPAcknowledgementPayload` (TypedDict)**:
-    *   For acknowledging receipt or processing of a message.
+*   **`HSPAcknowledgementPayload` / `HSPNegativeAcknowledgementPayload`**: Structures for confirming message receipt or indicating a rejection/error in processing a message.
 
--   **`HSPNegativeAcknowledgementPayload` (TypedDict)**:
-    *   For indicating an error or rejection of a message, including `error_details`.
+## How it Works
 
--   **`HSPEnvironmentalStatePayload` (TypedDict)**:
-    *   Also known as ContextUpdate, for sharing environmental observations or state changes.
+This module primarily serves as a collection of `TypedDict` definitions. These definitions are imported and used throughout the backend codebase to ensure that data objects conform to the HSP specification. When messages are constructed for sending or parsed upon reception, these types provide strong type hints, enabling static analysis tools to catch potential data mismatches and improving code readability and maintainability.
 
-### 3. Supporting Types
+## Integration with Other Modules
 
--   **`HSPSecurityParameters` (TypedDict)**:
-    *   Defines parameters related to message security (e.g., `signature_algorithm`, `signature`, `encryption_details`).
-
--   **`HSPQoSParameters` (TypedDict)**:
-    *   Defines parameters related to Quality of Service (QoS) for messages (e.g., `priority`, `requires_ack`, `time_to_live_sec`).
-
--   **`HSPRoutingInfo` (TypedDict)**:
-    *   Provides information about message routing (e.g., `hops`, `final_destination_ai_id`).
-
-## Importance and Usage
-
-`hsp/types.py` is fundamental because it:
-
--   **Enforces Protocol Compliance**: Ensures all messages adhere to the HSP specification, enabling seamless communication between diverse AI components.
--   **Enhances Type Safety**: Provides strong type hints for message structures, reducing runtime errors and improving code quality.
--   **Facilitates Development**: Developers can easily understand the expected format of HSP messages, simplifying integration and debugging.
--   **Supports Interoperability**: Acts as a common language for AI entities, regardless of their internal implementation details.
+*   **`DataAligner`**: Heavily relies on these `TypedDict` definitions to validate the structure and content of incoming HSP messages.
+*   **`HSPConnector`**: Uses these types when constructing outgoing HSP messages and when parsing incoming raw messages from the network.
+*   **Various AI Components**: Modules such as `LearningManager` (for `HSPFactPayload`), `ServiceDiscoveryModule` (for `HSPCapabilityAdvertisementPayload`), and `ProjectCoordinator` (for `HSPTaskRequestPayload` and `HSPTaskResultPayload`) directly utilize these types for their communication needs.
 
 ## Code Location
 
-`src/hsp/types.py`
+`apps/backend/src/hsp/types.py`

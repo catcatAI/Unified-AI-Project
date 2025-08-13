@@ -1,43 +1,35 @@
-# NPCs: Non-Player Characters
+# NPC System
 
 ## Overview
 
-The `npcs.py` (`src/game/npcs.py`) module defines the **Non-Player Characters (NPCs)** within "Angela's World." It provides the foundational `NPC` class and utilities for loading and instantiating various NPCs, each with their unique data, visual representation, and interaction capabilities.
+This document provides an overview of the Non-Player Character (NPC) system, defined in `src/game/npcs.py`. This module is responsible for loading, creating, and managing the NPCs that populate the world of "Angela's World."
 
-This module is crucial for populating the game world with interactive entities that can engage with the player, provide quests, offer services, or simply add to the game's ambiance.
+## Purpose
+
+The purpose of the NPC system is to create a living, interactive world for the player. NPCs provide quests, information, and dialogue, making the world feel more dynamic and engaging. This system is designed to be data-driven, allowing for easy creation and modification of characters.
 
 ## Key Responsibilities and Features
 
-1.  **NPC Class Definition (`NPC`)**: 
-    *   The base class for all non-player characters.
-    *   Each NPC has an `id`, `name`, `npc_type`, visual assets (sprite and portrait), position (`x`, `y`), a `dialogue_tree`, a `relationship_level` with the player, and `event_flags`.
-
-2.  **Centralized NPC Data (`_NPC_DATA`)**: 
-    *   A global dictionary (`_NPC_DATA`) stores the static definitions for all NPCs, loaded from `data/game_data/npcs.json`.
-    *   Each NPC definition includes its visual assets, starting position, and dialogue structure.
-
-3.  **NPC Instantiation (`create_npc`)**: 
-    *   A utility function that takes an `npc_id` and returns a new `NPC` instance, populating it with data from `_NPC_DATA` and loading its visual assets from the game's asset manager.
-
-4.  **Dialogue System Integration (`interact`)**: 
-    *   Includes a placeholder `interact` method that, when called, would initiate a dialogue with the NPC.
-    *   The dialogue content is retrieved from the NPC's `dialogue_tree`, potentially based on the player's `relationship_level` or `event_flags`.
-
-5.  **Visual Representation**: 
-    *   Handles the rendering of the NPC's sprite on the game surface.
+*   **`NPC` Class**: Represents a single NPC in the game. Each instance holds all the data relevant to that character, including:
+    *   Basic properties: `id`, `name`, `type`.
+    *   Visuals: `image` (their in-game sprite) and `portrait` (for dialogues).
+    *   Position: A `rect` for their location in the game world.
+    *   Dialogue: A `dialogue_tree` that contains their conversational responses.
+    *   State: `relationship_level` with the player and `event_flags` to track story progression.
+*   **Data-Driven Design**: NPC data (name, position, dialogue, etc.) is loaded from an external JSON file (`data/game_data/npcs.json`). This allows for easy editing and expansion of the game's cast of characters without needing to change the source code.
+*   **NPC Factory (`create_npc`)**: A factory function that takes an `npc_id` and instantiates a corresponding `NPC` object, loading its data from the JSON file and its graphics from the game's asset manager.
+*   **Basic Dialogue System (`interact`)**: The `NPC` class includes a simple interaction method that can display dialogue from its `dialogue_tree`. The dialogue shown can be dependent on the `relationship_level` with the player, allowing for conversations that evolve over time.
 
 ## How it Works
 
-Upon module import, `npcs.py` attempts to load all NPC definitions from `npcs.json`. When `create_npc` is called, it retrieves the relevant data and creates an `NPC` object. This object is then responsible for rendering itself in the game world and handling interactions. The `interact` method is designed to be extended for more complex dialogue flows, potentially involving the `DialogueManager` for AI-driven conversations.
+At startup, the `load_npc_data()` function is called to read the `npcs.json` file and store the data in memory. When a game scene is loaded, it calls the `create_npc()` function for each NPC that should appear in that scene. This creates `NPC` objects with the appropriate data and graphics. When the player interacts with an NPC, the `interact()` method of that NPC is called, which then uses the game's dialogue system to display the appropriate line of text.
 
 ## Integration with Other Modules
 
--   **`Game` (main.py)**: The main game loop would create and manage `NPC` instances.
--   **`Player`**: Players interact with NPCs, triggering their `interact` method.
--   **`DialogueManager`**: While currently a placeholder, the `interact` method is designed to integrate with the `DialogueManager` for dynamic and AI-driven conversations.
--   **Game Assets**: Relies on the game's asset management system to load NPC sprites and portraits.
--   **`items.py`**: NPCs might give or receive items, interacting with the item system.
+*   **`Game` Object**: The `NPC` class holds a reference to the main `Game` object, giving it access to global systems like the asset manager and the dialogue box.
+*   **Game Scenes**: Scenes are responsible for creating the specific NPCs they contain by calling the `create_npc` factory function.
+*   **`DialogueBox`**: NPCs use the game's dialogue box UI element to present their conversations to the player.
 
 ## Code Location
 
-`src/game/npcs.py`
+`apps/backend/src/game/npcs.py`

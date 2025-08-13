@@ -1,5 +1,6 @@
 import re
 import logging
+import importlib
 from typing import Dict, Any, Optional, Callable # Added Callable
 
 # Assuming 'src' is in PYTHONPATH, making 'tools', 'core_ai', 'services' top-level packages
@@ -23,6 +24,17 @@ except ImportError as e:
     RAG_AVAILABLE = False
 
 class ToolDispatcher:
+    def set_llm_service(self, llm_service: Optional[MultiLLMService]):
+        """Inject or replace the LLM service at runtime (used by hot reload)."""
+        if hasattr(self, 'dlm') and hasattr(self.dlm, 'set_llm_service'):
+            self.dlm.set_llm_service(llm_service)
+        else:
+            # Fallback: re-instantiate the wrapper with the new LLM service
+            try:
+                from src.core_ai.language_models.daily_language_model import DailyLanguageModel
+                self.dlm = DailyLanguageModel(llm_service=llm_service)
+            except Exception:
+                pass
     def __init__(self, llm_service: Optional[MultiLLMService] = None):
         self.dlm = DailyLanguageModel(llm_service=llm_service)
         self.code_understanding_tool_instance = CodeUnderstandingTool()
@@ -506,6 +518,52 @@ class ToolDispatcher:
                 original_query_for_tool=query,
                 error_message="No specific tool could be inferred from the query."
             )
+
+    def reload_tools(self, only: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Hot-reload tool implementations by re-importing known modules and updating bindings.
+        If 'only' is provided, reload only that tool key (e.g., 'calculate').
+        Returns a summary dict with reloaded/updated/failed keys.
+        """
+        summary = {"reloaded": [], "updated": [], "failed": []}
+        # Map dispatcher keys to module import paths and callables to bind
+        mapping = {
+            "calculate": ("src.tools.math_tool", "calculate", self._execute_math_calculation),
+            "evaluate_logic": ("src.tools.logic_tool", "evaluate_expression", self._execute_logic_evaluation),
+            "translate_text": ("src.tools.translation_tool", "translate", self._execute_translation),
+            # Class-based tools can be re-instantiated
+            "inspect_code": ("src.tools.code_understanding_tool", "CodeUnderstandingTool", None),
+            "analyze_csv": ("src.tools.csv_tool", "CsvTool", None),
+            "create_image": ("src.tools.image_generation_tool", "ImageGenerationTool", None),
+        }
+        targets = [only] if only else list(mapping.keys())
+        for key in targets:
+            if key not in mapping:
+                summary["failed"].append({key: "unknown tool key"})
+                continue
+            module_path, symbol_name, wrapper = mapping[key]
+            try:
+                module = importlib.import_module(module_path)
+                importlib.reload(module)
+                new_symbol = getattr(module, symbol_name)
+                # Bind function-based tools directly
+                if callable(new_symbol) and wrapper is not None:
+                    # Keep dispatcher wrapper; underlying function called by wrapper picks up new impl implicitly
+                    summary["updated"].append(key)
+                else:
+                    # Class-based tools: re-instantiate stored instances and update tool map
+                    if key == "inspect_code":
+                        self.code_understanding_tool_instance = new_symbol()
+                    elif key == "analyze_csv":
+                        self.csv_tool_instance = new_symbol()
+                    elif key == "create_image":
+                        self.image_generation_tool_instance = new_symbol()
+                    summary["updated"].append(key)
+                summary["reloaded"].append(key)
+            except Exception as e:
+                logging.error(f"ToolDispatcher.reload_tools: failed to reload {key}: {e}")
+                summary["failed"].append({key: str(e)})
+        return summary
 
     def get_available_tools(self):
         """Returns a dictionary of available tools and their descriptions."""

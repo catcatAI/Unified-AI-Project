@@ -1,39 +1,36 @@
-# Tiles: Game Map and Terrain Management
+# Tile Map System
 
 ## Overview
 
-The `tiles.py` (`src/game/tiles.py`) module is a foundational component within "Angela's World" responsible for **defining and managing the game's map and terrain**. It provides the building blocks for creating the game world, including individual tiles, their properties, and the overall tilemap structure.
+This document provides an overview of the tile map system, defined in `src/game/tiles.py`. This system is responsible for creating and managing the grid-based game world of "Angela's World."
 
-This module is crucial for rendering the game environment, enabling player movement, and supporting interactions with the terrain (e.g., farming, mining).
+## Purpose
+
+The purpose of the tile map system is to provide a flexible and efficient way to build and render the game's environments. By dividing the world into a grid of tiles, it becomes easy to define different types of terrain, place objects, and manage interactions with the game world.
 
 ## Key Responsibilities and Features
 
-1.  **Tile Definition (`Tile`)**: 
-    *   Represents a single unit of the game map.
-    *   Each tile has `x` and `y` coordinates, a `tile_type` (e.g., 'grass', 'tilled', 'planted', 'rock'), and can optionally hold a `crop` or a `rock` entity.
+*   **`TileMap` Class**: This class represents the entire game map.
+    *   It holds a 2D array of `Tile` objects, which forms the grid-based world.
+    *   Its `render()` method is responsible for drawing the entire tilemap to the screen.
 
-2.  **Rock Entity (`Rock`)**: 
-    *   A simple class representing a rock object on a tile, with a `health` attribute (suggesting it can be mined or destroyed).
+*   **`Tile` Class**: This class represents a single tile in the map.
+    *   Each tile has a `tile_type`, which can be `grass`, `tilled`, `planted`, or `rock`.
+    *   A tile can contain other objects, such as a `crop` or a `rock`.
 
-3.  **Tile Map Generation (`TileMap`)**: 
-    *   Manages the entire game map as a 2D grid of `Tile` objects.
-    *   Randomly generates the initial map, including the placement of `rock` tiles.
+*   **`Rock` Class**: A simple class representing a rock object that can be placed on a tile.
 
-4.  **Tile Rendering**: 
-    *   The `TileMap`'s `render` method draws each tile on the game surface.
-    *   Currently, it uses simple colored squares to represent different tile types, providing a visual representation of the terrain.
+*   **Procedural Generation**: The `TileMap` constructor includes simple procedural generation logic to randomly place `rock` tiles on the map.
 
 ## How it Works
 
-The `TileMap` is initialized with a specified width and height, creating a grid of `Tile` objects. Each `Tile` is assigned a type, with some randomly designated as 'rock' tiles. In the game loop, the `TileMap`'s `render` method is called, which iterates through all tiles and draws a colored rectangle corresponding to each tile's type. This creates the visual background and interactive elements of the game world.
+When a `TileMap` is created, it generates a 2D list of `Tile` objects. Each tile is initialized with a default type of `grass`, but some are randomly changed to `rock`. The `render()` method of the `TileMap` then iterates through this 2D list and draws each tile as a colored rectangle on the screen, with the color determined by the tile's type. This provides a simple visual representation of the game world.
 
 ## Integration with Other Modules
 
--   **`Game` (main.py)**: The main game loop creates and renders the `TileMap`.
--   **`Player`**: The player character moves across the `TileMap`, and their interactions might change tile properties (e.g., tilling grass).
--   **`Scenes`**: Game scenes would utilize the `TileMap` to define their playable areas and visual backgrounds.
--   **`Items`**: Crops (defined in `items.py`) would be associated with `planted` tiles.
+*   **`Game` Class**: The main `Game` object is responsible for creating and holding the `TileMap` for the current area.
+*   **Scene Classes (`VillageScene`, etc.)**: Each scene that represents a physical location in the game world will have its own `TileMap` instance to define its environment.
 
 ## Code Location
 
-`src/game/tiles.py`
+`apps/backend/src/game/tiles.py`
