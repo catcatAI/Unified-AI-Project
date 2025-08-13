@@ -1,41 +1,40 @@
-# UI: Dialogue Box and User Interface Elements
+# UI System
 
 ## Overview
 
-The `ui.py` (`src/game/ui.py`) module is responsible for **rendering and managing user interface (UI) elements** within "Angela's World," with a primary focus on the `DialogueBox`. This component is essential for presenting character conversations to the player in a clear and visually appealing manner.
+This document provides an overview of the UI (User Interface) system, defined in `src/game/ui.py`. This module contains the classes for various UI elements used in "Angela's World," starting with the `DialogueBox`.
 
-It handles the display of character portraits, names, and dialogue text, making the narrative interactions engaging and easy to follow.
+## Purpose
+
+The purpose of the UI system is to provide the visual components through which the player interacts with the game and receives information. This includes displaying conversations, managing menus, and showing other game-related data.
 
 ## Key Responsibilities and Features
 
-1.  **Dialogue Box Management (`DialogueBox`)**: 
-    *   Controls the visibility (`is_active`) of the dialogue box.
-    *   Stores the `text` of the dialogue, the `character_name` speaking, and their `portrait` image.
+### `DialogueBox` Class
 
-2.  **Visual Rendering**: 
-    *   Draws the dialogue box background (semi-transparent black) and a white border.
-    *   Renders the character's portrait within a designated area, complete with its own border.
-    *   Displays the character's name (in yellow) and the dialogue text (in white) using Pygame's font rendering capabilities.
+The `DialogueBox` is the primary UI element for displaying conversations between the player and other characters.
 
-3.  **Display Control (`show`, `hide`)**: 
-    *   The `show` method activates the dialogue box and sets its content.
-    *   The `hide` method deactivates the dialogue box, making it disappear from the screen.
-
-4.  **Font and Styling**: 
-    *   Uses a `pygame.font.Font` object for rendering text, allowing for control over font size and style.
-    *   Defines specific colors for the name and text to enhance readability and visual hierarchy.
+*   **State Management**: The `DialogueBox` has an `is_active` flag to control whether it is currently visible.
+*   **Content Management**: It stores the `text` of the dialogue, the `character_name` of the speaker, and their `portrait`.
+*   **`show(text, character_name, portrait)`**: This method activates the dialogue box and populates it with the content of a specific line of dialogue.
+*   **`hide()`**: This method deactivates and hides the dialogue box.
+*   **Rendering (`render`)**: This method draws all the components of the dialogue box to the screen, including:
+    *   A semi-transparent background panel.
+    *   A border around the panel and the character portrait.
+    *   The speaking character's portrait.
+    *   The speaking character's name.
+    *   The dialogue text itself.
 
 ## How it Works
 
-An instance of `DialogueBox` is created by the game. When a dialogue needs to be displayed (e.g., during an NPC interaction), the `show` method is called with the text, character name, and portrait. In each frame of the game loop, the `DialogueBox`'s `render` method is called. If `is_active` is true, it draws all its components onto the game surface. The player can then hide the dialogue box, typically by pressing an interaction key, which calls the `hide` method.
+The `DialogueBox` is a self-contained UI component. When a game event that triggers a conversation occurs (e.g., the player interacting with an NPC), the `show()` method of the `DialogueBox` is called with the appropriate text and character information. The active game scene is then responsible for calling the `render()` method of the `DialogueBox` in its own `render()` method, which draws the box on top of the game world. When the conversation is over, the `hide()` method is called to remove the box from the screen.
 
 ## Integration with Other Modules
 
--   **`Game` (main.py)**: The main game loop calls the `DialogueBox`'s `render` method.
--   **`Scenes`**: Game scenes (e.g., `VillageScene`) interact with the `DialogueBox` to display conversations when the player interacts with NPCs.
--   **`NPCs`**: NPCs provide the character name, dialogue text, and portrait images that are displayed by the `DialogueBox`.
--   **`Angela`**: Angela's dialogue would also be displayed through this `DialogueBox`.
+*   **`Game` Class**: The main `Game` object will likely hold a single instance of the `DialogueBox` to be shared across all scenes.
+*   **Scene Classes**: Any scene that can have dialogue (e.g., `VillageScene`) will need to call the `show()`, `hide()`, and `render()` methods of the `DialogueBox`.
+*   **Character Classes (`NPC`, `Angela`)**: These classes provide the content (text, name, portrait) that is displayed in the `DialogueBox` when the player interacts with them.
 
 ## Code Location
 
-`src/game/ui.py`
+`apps/backend/src/game/ui.py`

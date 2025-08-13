@@ -1,41 +1,32 @@
-# Personality Manager
+# PersonalityManager: Dynamic AI Personality Management
 
 ## Overview
 
-The `PersonalityManager` (`src/core_ai/personality/personality_manager.py`) is a crucial component within the Unified-AI-Project responsible for defining, loading, managing, and dynamically adjusting the AI's (Angela's) personality. It allows Angela to exhibit a wide range of behaviors, communication styles, and emotional responses, making her interactions more nuanced and engaging.
+This document provides an overview of the `PersonalityManager` module (`src/core_ai/personality/personality_manager.py`). This module is responsible for loading, managing, and dynamically applying personality profiles to the AI.
 
-This module is central to shaping Angela's identity and ensuring consistency in her persona across different interactions and scenarios.
+## Purpose
+
+The `PersonalityManager` enables the AI to exhibit consistent, adaptable, and engaging personality traits. By influencing its communication style, emotional responses, and overall behavior, it is crucial for creating a more human-like and personalized interaction experience for users.
 
 ## Key Responsibilities and Features
 
-1.  **Personality Profile Management**: 
-    *   Scans a designated directory (defaulting to `configs/personality_profiles/`) for JSON files, each representing a distinct personality profile.
-    *   Each profile can define various traits, such as communication style, emotional tendencies, knowledge biases, and initial conversational prompts.
-
-2.  **Dynamic Profile Loading (`load_personality`)**: 
-    *   Allows the system to load a specific personality profile by name.
-    *   Supports a default profile fallback if a requested profile is not found.
-
-3.  **Trait Retrieval (`get_current_personality_trait`)**: 
-    *   Provides a flexible method to retrieve specific personality traits from the currently loaded profile, supporting nested trait access (e.g., `communication_style.tone_presets.default`).
-
-4.  **Initial Prompt Generation (`get_initial_prompt`)**: 
-    *   Returns a personality-specific initial prompt, which can be used to kickstart conversations with Angela in a manner consistent with her current persona.
-
-5.  **Dynamic Personality Adjustment (`apply_personality_adjustment`)**: 
-    *   Enables other modules (e.g., `LearningManager` based on user feedback or interaction analysis) to dynamically modify Angela's personality traits at runtime.
-    *   This feature is key to Angela's ability to adapt and evolve her persona over time, making her more responsive and realistic.
+*   **Profile Loading and Management**:
+    *   **`_scan_profiles`**: Automatically scans a designated directory (`configs/personality_profiles/`) for JSON files, each representing a distinct personality profile.
+    *   **`load_personality`**: Loads a specified personality profile, making it the `current_personality` that the AI will embody. It includes robust error handling, falling back to a default profile if the requested one is not found.
+    *   **`list_available_profiles`**: Provides a method to list all discovered personality profiles, including their display names.
+*   **Trait Access (`get_current_personality_trait`)**: Offers a flexible method to retrieve specific personality traits from the `current_personality`. It supports accessing nested traits using dot notation (e.g., `communication_style.tone_presets.default`), providing a structured way to define and retrieve complex personality attributes.
+*   **Initial Prompt (`get_initial_prompt`)**: Returns the initial greeting or conversational prompt defined within the currently loaded personality profile. This sets the initial tone for interactions.
+*   **Dynamic Adjustment (`apply_personality_adjustment`)**: Allows for dynamic, real-time adjustments to the `current_personality` based on external input. This input could come from user feedback, learning insights from the `LearningManager`, or other adaptive mechanisms, enabling the AI's personality to evolve over time.
 
 ## How it Works
 
-The `PersonalityManager` initializes by scanning a predefined directory for JSON-formatted personality profiles. Each profile is loaded and made available. The system can then explicitly load a specific personality, which becomes the `current_personality`. Other modules can query this `current_personality` for specific traits or apply adjustments to it. The `apply_personality_adjustment` method allows for granular updates to nested personality attributes, ensuring that changes are applied precisely.
+The `PersonalityManager` initializes by scanning a predefined directory for JSON files, each of which contains a detailed definition of a personality profile. It then loads either a default profile or a specifically requested one, setting it as the `current_personality`. This `current_personality` is a dynamic dictionary containing various traits and their values. Other modules within the AI system can query the `PersonalityManager` to retrieve specific traits, and the `LearningManager` can apply adjustments to these traits, allowing the AI's personality to adapt and grow based on its experiences.
 
 ## Integration with Other Modules
 
--   **`DialogueManager`**: Heavily relies on the `PersonalityManager` to fetch initial prompts, determine conversational tone, and influence response generation based on Angela's current personality.
--   **`LearningManager`**: Can suggest and apply personality adjustments based on learned insights from user interactions or system performance.
--   **`EmotionSystem`**: Personality traits can influence emotional responses, and vice-versa, creating a feedback loop for more realistic AI behavior.
--   **`CrisisSystem`**: Personality might influence how Angela reacts to and communicates during crisis situations.
+*   **`DialogueManager`**: A primary consumer of the `PersonalityManager`, using it to retrieve the AI's initial prompt and to influence its overall conversational style and tone.
+*   **`EmotionSystem`**: Would likely interact closely with the `PersonalityManager` to ensure that the AI's emotional responses are consistent with its current personality profile.
+*   **`LearningManager`**: Plays a crucial role in applying dynamic adjustments to the AI's personality based on insights gained from user interactions and other learning processes.
 
 ## Code Location
 

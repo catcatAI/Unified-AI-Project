@@ -17,13 +17,23 @@ class VectorStore:
             collection_name (str): The name of the collection to use.
         """
         try:
-            # Use EphemeralClient to avoid persistence issues
-            self.client = chromadb.EphemeralClient()
+            # Use HttpClient to work with HTTP-only mode
+            self.client = chromadb.HttpClient(
+                host="localhost",
+                port=8000
+            )
             self.collection: Collection = self.client.get_or_create_collection(name=collection_name)
-            logger.info(f"VectorStore initialized with collection '{collection_name}' using EphemeralClient.")
+            logger.info(f"VectorStore initialized with collection '{collection_name}' using HttpClient.")
         except Exception as e:
-            logger.error(f"Failed to initialize ChromaDB client: {e}")
-            raise
+            logger.error(f"Failed to initialize ChromaDB client with HttpClient: {e}")
+            try:
+                # Fallback to EphemeralClient if HttpClient fails
+                self.client = chromadb.EphemeralClient()
+                self.collection: Collection = self.client.get_or_create_collection(name=collection_name)
+                logger.info(f"VectorStore initialized with collection '{collection_name}' using EphemeralClient.")
+            except Exception as e2:
+                logger.error(f"Failed to initialize ChromaDB client with EphemeralClient: {e2}")
+                raise
 
     def add_documents(self, ids: List[str], embeddings: List[List[float]], metadatas: List[Dict[str, Any]], documents: Optional[List[str]] = None):
         """

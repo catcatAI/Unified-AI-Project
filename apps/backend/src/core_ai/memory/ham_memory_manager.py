@@ -133,12 +133,31 @@ class HAMMemoryManager:
         self._load_core_memory_from_file()
         logger.info(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
 
+        # Initialize ChromaDB collection if client is provided
+        self.chroma_collection = None
+        if chroma_client:
+            try:
+                self.chroma_collection = chroma_client.get_or_create_collection(
+                    name="ham_memories",
+                    embedding_function=MockEmbeddingFunction(),
+                    metadata={"hnsw:space": "cosine"}
+                )
+                logger.info("ChromaDB collection initialized successfully.")
+            except Exception as e:
+                logger.error(f"Failed to initialize ChromaDB collection: {e}")
+                self.chroma_collection = None
+
         # Initialize VectorMemoryStore and ImportanceScorer
-        # Temporarily disable VectorMemoryStore to avoid ChromaDB issues
-        # self.vector_store = VectorMemoryStore(persist_directory=os.path.join(self.storage_dir, "chroma_db"))
         self.vector_store = None
+        try:
+            self.vector_store = VectorMemoryStore(persist_directory=os.path.join(self.storage_dir, "chroma_db"))
+            logger.info("VectorMemoryStore initialized successfully.")
+        except Exception as e:
+            logger.warning(f"VectorMemoryStore initialization failed: {e}. Vector search will be disabled.")
+            self.vector_store = None
+        
         self.importance_scorer = ImportanceScorer()
-        logger.info("ImportanceScorer initialized. VectorMemoryStore temporarily disabled.")
+        logger.info("ImportanceScorer initialized.")
 
         # Start background cleanup task only if there's a running event loop
         try:

@@ -29,6 +29,16 @@ All backend endpoints are defined in `apps/backend/src/services/main_api_server.
 - **`POST /api/v1/hsp/tasks`**: Creates a new HSP task.
 - **`GET /api/v1/hsp/tasks/{correlation_id}`**: Returns the status of an HSP task.
 
+### Hot Reload and Drain
+
+Minimal operational endpoints for safe hot actions. See docs/05-development/hot-reload-and-drain.md for details.
+
+- **`POST /api/v1/hot/drain/start`**: Begin draining (pause acceptance of new work; advisory flag).
+- **`POST /api/v1/hot/drain/stop`**: End draining.
+- **`GET /api/v1/hot/status`**: Get draining state and initialized services snapshot.
+- **`POST /api/v1/hot/reload/llm`**: Reload MultiLLMService and rewire dependents (ToolDispatcher, DialogueManager).
+- **`POST /api/v1/hot/reload/hsp`**: Reload HSP connector with blue/green swap.
+
 ### Atlassian Integration
 
 - **`POST /api/atlassian/config`**: Configures the Atlassian integration.

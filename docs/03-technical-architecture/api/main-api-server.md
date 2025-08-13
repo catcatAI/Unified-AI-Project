@@ -1,38 +1,39 @@
-# Main API Server: External Interface to the Unified AI
+# MainAPIServer: Exposing AI Services via a RESTful API
 
 ## Overview
 
-The `main_api_server.py` (`src/services/main_api_server.py`) defines the **FastAPI application** that serves as the primary external interface to the Unified-AI-Project. It exposes a comprehensive set of RESTful API endpoints, allowing external clients (such as web frontends, mobile applications, or other services) to interact with the AI's core functionalities, including chat, session management, HSP-related tasks, and integrations with Atlassian and Rovo Dev.
+This document provides an overview of the `main_api_server.py` module (`src/services/main_api_server.py`). This module serves as the main entry point for the FastAPI application, defining all API endpoints and managing the application's lifecycle.
 
-This module is crucial for making the AI's capabilities accessible and consumable by a wide range of applications, providing a structured, validated, and well-documented entry point into the AI ecosystem.
+## Purpose
+
+The primary purpose of the `main_api_server` is to expose the AI's capabilities and services through a RESTful API. This allows external clients, such as a web dashboard, mobile applications, or other third-party services, to interact with the AI, send commands, retrieve information, and monitor its status in a standardized way.
 
 ## Key Responsibilities and Features
 
-1.  **FastAPI Application**: 
-    *   Built using the FastAPI framework, providing automatic OpenAPI (Swagger UI) documentation, data validation (via Pydantic models), and high performance.
-
-2.  **Service Lifecycle Management**: 
-    *   Utilizes FastAPI's `lifespan` context manager to gracefully initialize and shut down all core AI services (e.g., `DialogueManager`, `HAMMemoryManager`, `HSPConnector`) when the API server starts and stops.
-
-3.  **CORS Middleware**: 
-    *   Includes Cross-Origin Resource Sharing (CORS) middleware, enabling secure communication from web browsers hosted on different origins (e.g., a React frontend).
-
-4.  **Dependency Injection**: 
-    *   Leverages FastAPI's dependency injection system (`Depends`) to provide instances of core services like `AtlassianBridge` and `RovoDevAgent` to API endpoints, promoting modularity and testability.
-
-5.  **Comprehensive API Endpoints**: 
-    *   **Core AI Interaction**: `/chat`, `/api/v1/chat` (for general AI conversation), `/api/v1/session/start` (for session management).
-    *   **System Monitoring**: `/status`, `/services/health`, `/metrics` (for real-time insights into AI system health and performance).
-    *   **HSP Integration**: `/api/v1/hsp/services` (list available HSP capabilities), `/api/v1/hsp/tasks` (request a task from another HSP AI), `/api/v1/hsp/tasks/{correlation_id}` (get task status).
-    *   **Atlassian Integration**: Endpoints for configuring Atlassian connections, testing connections, and performing operations on Confluence (e.g., create/get pages, list spaces) and Jira (e.g., create/search issues, list projects).
-    *   **Rovo Dev Agent Integration**: Endpoints for getting Rovo Dev Agent status, submitting tasks, and retrieving task history.
-
-6.  **Integration with Core Services**: 
-    *   Relies heavily on the `get_services()` utility to access and orchestrate interactions with various core AI components, demonstrating how the API server acts as a facade for the entire AI system.
+*   **FastAPI Application**: The core of the module is a `FastAPI` application instance, which provides a modern, high-performance framework for building APIs.
+*   **Lifecycle Management (`lifespan`)**: Utilizes FastAPI's `lifespan` context manager to ensure that all core services are initialized (`initialize_services`) when the application starts up and are gracefully shut down (`shutdown_services`) when the application stops. This is crucial for managing resources and connections effectively.
+*   **CORS Middleware**: Configures Cross-Origin Resource Sharing (CORS) to allow requests from specific origins, such as a frontend development server, ensuring secure communication between the frontend and backend.
+*   **Comprehensive API Endpoints**: Defines a rich set of API endpoints to expose the AI's functionalities:
+    *   **Chat and Session Management**: Includes `/api/v1/chat` for real-time user interaction and `/api/v1/session/start` for managing conversational sessions.
+    *   **HSP Interaction**: Provides endpoints for listing discovered HSP services (`/api/v1/hsp/services`), requesting tasks from other AIs on the network (`/api/v1/hsp/tasks`), and polling for the status of those tasks (`/api/v1/hsp/tasks/{correlation_id}`).
+    *   **External Integrations**: Offers endpoints for configuring and interacting with external services like Atlassian (Jira, Confluence) and the `RovoDevAgent`.
+    *   **System Health and Monitoring**: Exposes endpoints like `/api/v1/health`, `/api/v1/system/services`, and `/api/v1/system/metrics/detailed` for monitoring the AI's health, the status of its internal services, and detailed system performance metrics.
+    *   **Model and Agent Management**: Includes endpoints for listing available models, routing model requests based on policies, and getting the status of various AI agents.
+    *   **Tool Endpoints**: Provides direct access to the AI's tools for tasks like code analysis, web search, and image generation, which are internally routed through the `ToolDispatcher`.
+    *   **Hot Reload/Drain**: Exposes endpoints under the `/api/v1/hot` route to allow for the dynamic reloading and draining of services without a full server restart.
+*   **Dependency Injection**: Leverages FastAPI's `Depends` system to inject necessary service instances (e.g., `AtlassianBridge`, `RovoDevAgent`) into endpoint functions, promoting clean and testable code.
+*   **Pydantic Models**: Utilizes Pydantic models defined in `api_models.py` to structure and validate the request and response bodies for all API endpoints. This ensures data consistency and automatically generates OpenAPI documentation.
 
 ## How it Works
 
-The `main_api_server.py` initializes the FastAPI application and defines all the API routes. When a request comes in, FastAPI handles routing, data validation (using Pydantic models defined in `api_models.py`), and then calls the appropriate asynchronous endpoint function. These functions interact with the core AI services (retrieved via `get_services()`) to process the request and return a structured JSON response. The `lifespan` context manager ensures that all necessary AI services are properly set up before the server starts accepting requests and cleanly shut down when it stops.
+The `main_api_server.py` script defines a FastAPI application that is run by an ASGI server like `uvicorn`. The `lifespan` function is a critical component that ensures all backend services are initialized before the server begins to accept requests. When an HTTP request is received, it is routed to the appropriate endpoint function. This function then interacts with the relevant core services (e.g., `DialogueManager`, `ToolDispatcher`, `HAMMemoryManager`) to process the request and generate a response.
+
+## Integration with Other Modules
+
+*   **`core_services`**: This is the most critical integration, as the API server relies on it for initializing, accessing, and shutting down all backend services.
+*   **`api_models`**: Used extensively to define the data structures for all API requests and responses.
+*   **All Core Services**: The API server acts as the primary interface to a wide range of core services, including `DialogueManager`, `ToolDispatcher`, `AtlassianBridge`, `RovoDevAgent`, and many others.
+*   **`fastapi` and `uvicorn`**: The web framework and ASGI server that power the API.
 
 ## Code Location
 

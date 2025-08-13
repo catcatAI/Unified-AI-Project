@@ -7,6 +7,11 @@ import os
 from pathlib import Path
 
 class PersonalityManager:
+    def reload_personality(self, profile_name: str | None = None) -> bool:
+        """Reload current or specified personality profile and rescan available profiles."""
+        self.available_profiles = self._scan_profiles()
+        name = profile_name or (self.current_personality.get("profile_name") if self.current_personality else self.default_profile_name)
+        return self.load_personality(name)
     def __init__(self, personality_profiles_dir: str = None, default_profile_name: str = "miko_base"):
         if personality_profiles_dir:
             self.profiles_dir = Path(personality_profiles_dir)

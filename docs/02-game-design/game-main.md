@@ -1,45 +1,38 @@
-# Game Main Module: Core Game Loop and Initialization
+# Game Main Module
 
 ## Overview
 
-The `main.py` (`src/game/main.py`) module serves as the **entry point and orchestrator for the "Angela's World" game**. It encapsulates the core game loop, handles the initialization of the Pygame environment, loads essential game assets, and manages the overall game state. This module brings together all the disparate game components to create a cohesive and interactive experience.
+This document provides an overview of the main game module, defined in `src/game/main.py`. This module serves as the primary entry point and contains the main `Game` class that orchestrates the entire "Angela's World" application.
 
-It is the central hub from which the entire game application is launched and controlled.
+## Purpose
+
+The purpose of this module is to initialize all necessary game systems, manage the main game loop, and coordinate the high-level interactions between different game components, such as the player, the AI character (Angela), and the various game states (e.g., main menu, gameplay, dialogue).
 
 ## Key Responsibilities and Features
 
-1.  **Pygame Initialization**: 
-    *   Initializes the Pygame library, setting up the display surface (`screen`), window caption, and game clock.
-    *   Includes `os.environ` settings for `SDL_VIDEODRIVER` and `SDL_AUDIODRIVER` to `'dummy'`, which can be useful for running the game in headless environments or for specific testing setups.
-
-2.  **Asset Loading (`load_assets`)**: 
-    *   Recursively scans the `assets/` directory (e.g., `images/`, `sprites/`) for `.png` files.
-    *   Loads these image assets into `pygame.Surface` objects and stores them in a structured `self.assets` dictionary, making them readily available throughout the game.
-    *   Includes error handling for missing asset directories or failed image loads.
-
-3.  **Game Loop (`run`)**: 
-    *   Contains the main game loop, which continuously processes events, updates game logic, and renders the game state.
-    *   Manages the game's `is_running` state, allowing for graceful exit.
-    *   Controls the frame rate using `self.clock.tick(60)`.
-
-4.  **Game State Management**: 
-    *   Utilizes a `GameStateManager` (`src/game/scenes.py`) to handle transitions and logic for different game states (e.g., title screen, gameplay, menus).
-    *   Delegates event handling, updates, and rendering to the current game state.
-
-5.  **Character Instantiation**: 
-    *   Creates instances of the main game characters: `Player` (`src/game/player.py`) and `Angela` (`src/game/angela.py`).
+*   **Game Initialization (`__init__`)**: The constructor is responsible for:
+    *   Initializing the Pygame library.
+    *   Setting up the game window, screen dimensions, and title.
+    *   Loading all necessary game assets (images, sprites) into a central `self.assets` dictionary.
+    *   Instantiating the core game objects: `Player`, `Angela`, and `GameStateManager`.
+*   **Asset Loading (`load_assets`)**: A dedicated method that recursively scans the `assets` directory, loads all `.png` files, and organizes them into a structured dictionary for easy access throughout the game.
+*   **Main Game Loop (`run`)**: The heart of the game. This asynchronous loop runs continuously and performs the following actions in order:
+    1.  Handles user input and system events (`handle_events`).
+    2.  Updates the state of all active game objects (`update`).
+    3.  Renders the current scene to the screen (`render`).
+    4.  Uses a clock to maintain a consistent frame rate.
+*   **State Management Delegation**: The `Game` class does not handle game logic directly. Instead, it delegates all event handling, updates, and rendering calls to the `GameStateManager`, which acts as a state machine for the game.
 
 ## How it Works
 
-Upon execution, the `main.py` script initializes the `Game` class. The `Game` constructor sets up Pygame, loads all necessary visual assets, and creates instances of the `Player`, `Angela`, and `GameStateManager`. The `run` method then enters the infinite game loop, where it continuously calls `handle_events`, `update`, and `render` methods, which in turn delegate to the `GameStateManager` to process the current game state. This modular design ensures that different aspects of the game are managed by their respective components.
+When the `main.py` script is executed, it creates an instance of the `Game` class and calls its `run()` method. This begins the main game loop. The `Game` class acts as a high-level orchestrator. The actual game logic, rendering, and event handling for any given moment are determined by the current scene (e.g., `VillageScene`, `DialogueScene`) being managed by the `GameStateManager`. This design keeps the main game loop clean and separates the concerns of different game states into their own respective classes.
 
 ## Integration with Other Modules
 
--   **`scenes.py` (GameStateManager)**: The `main.py` orchestrates the game flow by interacting with the `GameStateManager`.
--   **`player.py`**: The `Player` instance is created and managed by the `Game` class.
--   **`angela.py`**: The `Angela` game entity is created and integrated into the game loop, allowing her to update and render.
--   **`assets/` directory**: The `load_assets` method directly interacts with the game's asset structure.
+*   **`GameStateManager`**: The `Game` class is tightly coupled with the `GameStateManager`, to which it delegates all core game loop operations.
+*   **`Player` and `Angela`**: The `Game` class creates and holds the central instances of the player and the main AI character, making them accessible to other game systems.
+*   **Pygame**: The entire application is built on top of the Pygame framework for graphics, sound, and input.
 
 ## Code Location
 
-`src/game/main.py`
+`apps/backend/src/game/main.py`

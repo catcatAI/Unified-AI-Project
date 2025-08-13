@@ -1,69 +1,43 @@
-# Service Types: Data Structures for Service Layer
+# Service Types: Data Structures for Core Services and Simulated Environments
 
 ## Overview
 
-The `types.py` (`src/services/types.py`) module defines the **TypedDicts** used across various services within the Unified-AI-Project. These type definitions are crucial for ensuring data consistency, clarity, and type safety when interacting with services related to virtual input (simulated GUI interactions) and simulated hardware resources.
+This document provides a comprehensive overview of the TypedDicts and Literal types defined in the `src/services/types.py` module. These types define the fundamental data structures for representing virtual input (mouse and keyboard commands, UI element descriptions) and simulated hardware resources within the Unified-AI-Project.
 
-This module acts as a central repository for the schemas of data objects passed between different service components, facilitating robust development and integration.
+This module is crucial for ensuring clear, type-safe, and consistent data handling and communication between core services like `AIVirtualInputService` and `ResourceAwarenessService`, and other AI components that interact with these simulated environments.
 
-## Key Type Definitions
+## Key Responsibilities and Features
 
-### 1. Virtual Input Types
+### Virtual Input Types
 
-These types are primarily used by the `AIVirtualInputService` to describe UI elements and commands for simulated mouse and keyboard interactions.
+These types are primarily used by the `AIVirtualInputService` to define how the AI interacts with and perceives a simulated graphical user interface:
 
--   **`VirtualInputElementDescription`**:
-    *   Describes a single UI element within a virtual environment.
-    *   Fields include `element_id`, `element_type` (e.g., "button", "text_field"), `label`, `value`, `is_focused`, `is_enabled`, `is_visible`, `attributes` (for additional properties), and `children` (for nested elements).
+*   **`VirtualInputElementDescription`**: Describes a single UI element in a virtual environment. It includes `element_id`, `element_type`, `label`, `value`, various state flags (`is_focused`, `is_enabled`, `is_visible`), generic `attributes`, and a recursive `children` field for hierarchical UI structures.
+*   **`VirtualInputPermissionLevel` (Literal)**: Defines the operational modes for virtual input, such as `"simulation_only"` (commands are logged but not executed on the real system), `"requires_user_confirmation"`, and `"full_control_trusted"`.
+*   **`VirtualMouseEventType` (Literal)**: Enumerates the specific types of virtual mouse actions that can be performed (e.g., `"move_relative_to_window"`, `"click"`, `"double_click"`, `"right_click"`, `"hover"`, `"drag_start"`, `"drag_end"`, `"scroll"`).
+*   **`VirtualMouseCommand`**: Defines the structured command for a virtual mouse action. It includes the `action_type` (from `VirtualMouseEventType`), optional `target_element_id`, relative coordinates (`relative_x`, `relative_y`), `click_type`, and various scroll/drag parameters.
+*   **`VirtualKeyboardActionType` (Literal)**: Enumerates the specific types of virtual keyboard actions (e.g., `"type_string"`, `"press_keys"`, `"release_keys"`, `"special_key"`).
+*   **`VirtualKeyboardCommand`**: Defines the structured command for a virtual keyboard action. It includes the `action_type` (from `VirtualKeyboardActionType`), optional `target_element_id`, `text_to_type`, and a list of `keys` to press/release.
 
--   **`VirtualInputPermissionLevel`**:
-    *   A Literal type defining the permission levels for virtual input actions:
-        *   `"simulation_only"`: Actions are only simulated and logged.
-        *   `"requires_user_confirmation"`: Actions require explicit user confirmation before execution.
-        *   `"full_control_trusted"`: Full control is granted (highly restricted and for trusted environments).
+### Simulated Resource Types
 
--   **`VirtualMouseEventType`**:
-    *   A Literal type defining the various types of virtual mouse actions (e.g., "move_relative_to_window", "click", "double_click", "scroll").
+These types are primarily used by the `ResourceAwarenessService` to describe the characteristics of a simulated hardware environment:
 
--   **`VirtualMouseCommand`**:
-    *   Defines the structure of a command to perform a virtual mouse action.
-    *   Includes `action_type`, `target_element_id`, relative coordinates (`relative_x`, `relative_y`), `click_type`, `scroll_direction`, `scroll_amount_ratio`, `scroll_pages`, and drag-related parameters.
+*   **`SimulatedDiskConfig`**: Describes the configuration of a simulated disk, including `space_gb`, `warning_threshold_percent`, `critical_threshold_percent`, and `lag_factor_warning`/`critical`.
+*   **`SimulatedCPUConfig`**: Describes the configuration of a simulated CPU, primarily its `cores` count.
+*   **`SimulatedRAMConfig`**: Describes the configuration of simulated RAM, specifying `ram_gb`.
+*   **`SimulatedHardwareProfile`**: Aggregates the individual hardware configurations (`disk`, `cpu`, `ram`) and a boolean `gpu_available` into a single, comprehensive hardware profile.
+*   **`SimulatedResourcesRoot`**: The top-level structure for a simulated resources configuration file, containing the `simulated_hardware_profile`.
 
--   **`VirtualKeyboardActionType`**:
-    *   A Literal type defining the various types of virtual keyboard actions (e.g., "type_string", "press_keys", "special_key").
+## How it Works
 
--   **`VirtualKeyboardCommand`**:
-    *   Defines the structure of a command to perform a virtual keyboard action.
-    *   Includes `action_type`, `target_element_id`, `text_to_type` (for typing strings), and `keys` (for pressing individual or combinations of keys).
+These TypedDicts and Literal types serve as the formal data contracts for the `AIVirtualInputService` and `ResourceAwarenessService`. They define the expected shape and values of data that flows into and out of these services. This strong typing enables static analysis, ensures data integrity, and facilitates clear communication between different parts of the AI system that interact with simulated GUIs or query simulated hardware resources.
 
-### 2. Simulated Resource Types
+## Integration with Other Modules
 
-These types are primarily used by the `ResourceAwarenessService` to define and communicate the AI's simulated hardware profile.
-
--   **`SimulatedDiskConfig`**:
-    *   Describes the configuration of a simulated disk, including `space_gb`, `warning_threshold_percent`, `critical_threshold_percent`, and `lag_factor` for different states.
-
--   **`SimulatedCPUConfig`**:
-    *   Describes the configuration of a simulated CPU, primarily its `cores` count.
-
--   **`SimulatedRAMConfig`**:
-    *   Describes the configuration of simulated RAM, specifically `ram_gb`.
-
--   **`SimulatedHardwareProfile`**:
-    *   A composite type representing the entire simulated hardware profile.
-    *   Includes `profile_name`, and nested configurations for `disk`, `cpu`, `ram`, and `gpu_available` status.
-
--   **`SimulatedResourcesRoot`**:
-    *   The root structure for loading simulated resources configuration, containing the `simulated_hardware_profile`.
-
-## Importance and Usage
-
-These TypedDicts serve several important purposes:
-
--   **Type Safety**: They provide clear type hints, allowing for static analysis and reducing runtime errors related to incorrect data structures.
--   **Documentation**: They act as self-documenting schemas for the data exchanged between services.
--   **Consistency**: They enforce a consistent data format across the service layer, making integration and development more predictable.
--   **Clarity**: They improve code readability by explicitly defining the expected keys and types of dictionaries.
+*   **`AIVirtualInputService`**: Directly uses the `VirtualInputElementDescription`, `VirtualMouseCommand`, and `VirtualKeyboardCommand` types for its core functionality.
+*   **`ResourceAwarenessService`**: Directly uses the `SimulatedHardwareProfile` and its nested configuration types (`SimulatedDiskConfig`, `SimulatedCPUConfig`, `SimulatedRAMConfig`) for loading and providing hardware information.
+*   **AI Components**: Any AI component that needs to interact with a simulated GUI (e.g., for testing, training, or automation) or query simulated hardware resources would use these types to construct and interpret data.
 
 ## Code Location
 

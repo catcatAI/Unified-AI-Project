@@ -1,46 +1,30 @@
-# RAG Manager: Retrieval-Augmented Generation
+# RAGManager: Retrieval-Augmented Generation
 
 ## Overview
 
-The `RAGManager` (`src/core_ai/rag/rag_manager.py`) is a crucial component within the Unified-AI-Project that facilitates **Retrieval-Augmented Generation (RAG)**. Its primary function is to enable the AI to retrieve relevant information from a vast corpus of documents and use that information to inform and enhance its generated responses, particularly from Large Language Models (LLMs).
+This document provides an overview of the `RAGManager` module (`src/core_ai/rag/rag_manager.py`). This module is responsible for managing the process of Retrieval-Augmented Generation (RAG) by handling the creation of vector embeddings for documents and performing efficient similarity searches.
 
-This module is essential for:
+## Purpose
 
--   **Grounding LLM Responses**: Ensuring that AI-generated content is based on factual, retrieved information, reducing hallucinations.
--   **Accessing Up-to-Date Knowledge**: Allowing the AI to query and utilize knowledge that may not have been part of its initial training data.
--   **Improving Contextual Relevance**: Providing LLMs with specific, relevant context for a given query, leading to more accurate and pertinent responses.
+The `RAGManager` provides the AI with a powerful mechanism for retrieving relevant information from a large corpus of documents to augment its responses. This is a key component for building more knowledgeable and context-aware AI systems that can ground their responses in factual information, reducing hallucinations and improving the accuracy of their outputs.
 
 ## Key Responsibilities and Features
 
-1.  **Document Management (`add_document`)**:
-    *   Takes a text document and processes it to generate a high-dimensional vector embedding that captures its semantic meaning.
-    *   Stores the document content and its corresponding vector in an efficient index for rapid retrieval.
-
-2.  **Semantic Search (`search`)**:
-    *   Given a natural language query, it converts the query into a vector embedding.
-    *   Performs a similarity search within its indexed document collection to find the `k` most semantically similar documents.
-    *   Returns a list of tuples, each containing the retrieved document content and a similarity score.
-
-## Underlying Technologies
-
--   **Sentence Transformers (`sentence_transformers`)**:
-    *   Used to convert text (documents and queries) into dense vector embeddings. These embeddings represent the semantic meaning of the text, allowing for comparisons based on meaning rather than just keywords.
-    *   The default model used is `all-MiniLM-L6-v2`, a compact yet effective model for generating universal sentence embeddings.
-
--   **FAISS (`faiss`)**:
-    *   Facebook AI Similarity Search (FAISS) is a library for efficient similarity search and clustering of dense vectors.
-    *   The `RAGManager` uses `faiss.IndexFlatL2`, a basic but highly efficient index for L2 (Euclidean) distance similarity search. This enables very fast retrieval of similar documents from large datasets.
+*   **Vector Embeddings**: Utilizes a `SentenceTransformer` model (defaulting to `all-MiniLM-L6-v2`) to convert text documents into dense, numerical vector representations, also known as embeddings.
+*   **Vector Indexing**: Employs `faiss`, a high-performance library from Facebook AI, to create and manage an index of the document vectors. This allows for extremely efficient similarity searches, even with a large number of documents.
+*   **Document Storage**: Maintains a simple dictionary that maps the original text of the documents to their corresponding index in the `faiss` index.
+*   **Similarity Search (`search`)**: Provides a `search` method that takes a query, converts it into a vector embedding, and then uses the `faiss` index to find the `k` most similar documents. It returns a list of tuples, where each tuple contains a retrieved document and its similarity score.
 
 ## How it Works
 
-1.  **Indexing Phase**: When a document is added, `SentenceTransformer` converts its text into a numerical vector. This vector is then normalized and added to the FAISS index. The original document content is stored in an internal dictionary, mapped by its index position.
-2.  **Retrieval Phase**: When a query is received, it is similarly converted into a vector. This query vector is then used to search the FAISS index for the `k` nearest (most similar) document vectors. The corresponding documents are retrieved from the internal storage and returned along with their similarity scores.
+When a new document is added to the `RAGManager`, its text is first passed through the `SentenceTransformer` model to generate a vector embedding. This vector is then added to the `faiss` index, which is optimized for fast retrieval. When a search query is received, it is also converted into a vector using the same model. The `faiss` library is then used to efficiently compare the query vector against all the vectors in the index, returning the ones that are closest in the vector space. The `RAGManager` then retrieves the original text of these documents and returns them to the caller.
 
 ## Integration with Other Modules
 
--   **`MultiLLMService`**: The retrieved documents from `RAGManager` can be prepended or inserted into the context window of an LLM call, providing the LLM with relevant, up-to-date information to generate more accurate and grounded responses.
--   **`LearningManager`**: Could potentially feed new learned facts or insights into the `RAGManager`'s document collection, continuously expanding the AI's accessible knowledge base.
--   **`DialogueManager`**: Can use RAG to retrieve relevant conversational history or external knowledge to provide more informed and contextually appropriate responses to user queries.
+*   **`ToolDispatcher`**: The `search` method of the `RAGManager` is exposed as a `rag_query` tool by the `ToolDispatcher`, allowing the AI to easily perform RAG searches as part of its toolset.
+*   **`SentenceTransformer`**: The core external library used for generating the high-quality sentence and document embeddings.
+*   **`faiss`**: The core external library that provides the efficient similarity search functionality.
+*   **`numpy`**: Used for numerical operations, particularly for handling the vector embeddings.
 
 ## Code Location
 

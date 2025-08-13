@@ -1,55 +1,34 @@
-# MCP Context7 Connector: Enhanced AI Collaboration and Context Management
+# Context7MCPConnector: Enhanced Model Context Protocol Integration
 
 ## Overview
 
-The `context7_connector.py` (`src/mcp/context7_connector.py`) module is a pivotal component for integrating the Unified AI Project with **Context7's Model Context Protocol (MCP)**. This integration significantly enhances the AI ecosystem's capabilities by providing advanced context management, seamless model communication, and robust collaborative AI functionalities.
+This document provides an overview of the `Context7MCPConnector` module (`src/mcp/context7_connector.py`). This module is designed to provide integration with Context7's Model Context Protocol (MCP), enabling enhanced AI model communication and context management within the unified AI ecosystem.
 
-It acts as a bridge, allowing various AI models within the Unified AI Project to leverage Context7's powerful context-aware features for more intelligent and coordinated operations.
+## Purpose
+
+The `Context7MCPConnector` aims to facilitate advanced context awareness and collaborative AI capabilities. It allows AI models to seamlessly share and retrieve rich contextual information, and to collaborate on complex tasks, moving beyond simple message passing to a more integrated understanding of shared operational context.
 
 ## Key Responsibilities and Features
 
-### 1. `Context7MCPConnector`
-
-This class is the primary interface for direct communication with the Context7 MCP service.
-
--   **Connection Management**: Handles establishing and disconnecting from the Context7 MCP service, including session initialization.
--   **Context Operations**: 
-    *   `send_context`: Sends context data (e.g., dialogue, memory, task-related information) to Context7 for storage and processing.
-    *   `request_context`: Queries Context7 for relevant contextual information based on a given query.
--   **Model Collaboration (`collaborate_with_model`)**: Facilitates direct collaboration with other AI models registered with Context7, enabling task delegation and shared understanding.
--   **Context Compression (`compress_context`)**: Utilizes Context7's algorithms to compress context data, optimizing storage and transmission, especially for large datasets.
--   **Capability Discovery (`_discover_capabilities`)**: Discovers and registers the capabilities offered by Context7, allowing the Unified AI Project to understand and utilize available services.
--   **Message Handling (`_send_message`)**: Manages the sending of MCP messages to Context7 and handles the responses, including mock responses for development purposes.
-
-### 2. `UnifiedAIMCPIntegration`
-
-This class provides a higher-level integration layer, adapting Context7 MCP capabilities to existing Unified AI Project components.
-
--   **Dialogue Manager Integration (`integrate_with_dialogue_manager`)**: Enhances the DialogueManager's context awareness by sending current dialogue context to Context7 and retrieving historical context for richer conversations.
--   **HAM Memory Integration (`integrate_with_ham_memory`)**: Integrates with the Hierarchical Abstractive Memory (HAM) system for distributed memory management, including compressing memory data and sending it to Context7 for storage.
-
-### 3. `Context7Config`
-
-A dataclass for configuring the Context7 MCP integration, including:
-
--   `endpoint`: The URL of the Context7 MCP service.
--   `api_key`: Optional API key for authentication.
--   `timeout`: Request timeout for communications.
--   `max_retries`: Maximum number of retries for failed requests.
--   `enable_context_caching`: Flag to enable/disable local context caching.
--   `context_window_size`: Defines the size of the context window.
--   `compression_threshold`: Threshold for triggering context compression.
+*   **Context Management**:
+    *   **`send_context`**: Sends various types of context data (e.g., dialogue context, memory context, task context) to the Context7 MCP service. This allows for real-time updates and synchronization of the AI's operational environment.
+    *   **`request_context`**: Requests relevant contextual information from the Context7 MCP service based on a specific query. This enables the AI to retrieve historical or external context pertinent to its current task.
+    *   **`compress_context`**: Utilizes Context7's algorithms to compress context data, optimizing it for efficient storage and transmission, especially for large or complex contexts.
+*   **Model Collaboration (`collaborate_with_model`)**: Provides a mechanism to initiate and manage collaboration with other AI models through the Context7 MCP. This enables models to work together on shared tasks by exchanging and leveraging common contextual understanding.
+*   **Capability Discovery (`_discover_capabilities`, `get_capabilities`)**: Discovers and lists the capabilities that are available from the Context7 MCP service itself, allowing the AI to understand the services offered by the protocol.
+*   **Connection Management (`connect`, `disconnect`, `is_connected`)**: Handles the establishment and termination of connections with the Context7 MCP service endpoint.
+*   **Configuration (`Context7Config`)**: Uses a dedicated dataclass (`Context7Config`) to define configuration settings for the Context7 MCP integration, including the service endpoint, API key, timeouts, context caching preferences, and compression thresholds.
 
 ## How it Works
 
-The `Context7MCPConnector` establishes a connection to the Context7 MCP service. Once connected, it can send and receive various MCP messages, such as context updates, context queries, and collaboration requests. The `UnifiedAIMCPIntegration` then wraps these functionalities, providing a convenient interface for core AI components like the DialogueManager and HAM Memory to seamlessly interact with Context7, enriching their operations with external context and collaborative intelligence.
+The `Context7MCPConnector` establishes a connection to a specified Context7 MCP service endpoint. Once connected, it can send and request various types of context data, facilitating a shared understanding across different AI components. The current implementation uses a mock `_send_message` method to simulate communication with the MCP service. In a real-world scenario, this communication would typically occur over protocols like HTTP, WebSocket, or gRPC, depending on the Context7 MCP's actual implementation.
 
 ## Integration with Other Modules
 
--   **`mcp/types.py`**: Relies on the MCP message and data structure definitions from `mcp/types.py`.
--   **`DialogueManager`**: Leverages Context7 for enhanced dialogue context.
--   **`HAMMemoryManager`**: Utilizes Context7 for distributed memory management and compression.
--   **Backend API**: The connector would typically interact with a Context7 backend service via HTTP or other protocols.
+*   **`UnifiedAIMCPIntegration`**: A separate class within this module demonstrates how to integrate Context7 MCP capabilities with existing Unified AI components like `DialogueManager` and `HAMMemoryManager`, showcasing practical application patterns.
+*   **`DialogueManager`**: Can leverage this connector for enhanced context awareness during conversational interactions.
+*   **`HAMMemoryManager`**: Can utilize this connector for distributed memory management and for compressing memory contexts before storage or transmission.
+*   **MCP Data Structures**: Relies on `MCPMessage`, `MCPCapability`, and `MCPResponse` (defined in `src/mcp/types.py`) for structuring all MCP communication.
 
 ## Code Location
 

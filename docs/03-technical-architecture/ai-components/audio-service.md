@@ -1,32 +1,37 @@
-# Audio Service: Speech-to-Text and Text-to-Speech
+# AudioService: Speech-to-Text and Text-to-Speech Capabilities
 
 ## Overview
 
-The `AudioService` (`src/services/audio_service.py`) is a core component within the Unified-AI-Project responsible for enabling the AI (Angela) to **process audio input (Speech-to-Text) and generate audio output (Text-to-Speech)**. This module is crucial for facilitating natural language voice interactions, allowing Angela to understand spoken commands and respond verbally.
+This document provides an overview of the `AudioService` module (`src/services/audio_service.py`). This service provides functionalities for both speech-to-text (STT) and text-to-speech (TTS) conversions, and includes a mock sentiment analysis feature.
 
-While the current implementation includes mock logic for audio generation (sine waves) and a placeholder for speech-to-text, it lays the foundation for integrating advanced STT and TTS engines.
+## Purpose
+
+The `AudioService` is designed to enable the AI to interact with users through spoken language. It acts as a crucial interface for processing audio input (transcribing speech) and generating audio output (synthesizing speech), which are fundamental for any voice-enabled application.
 
 ## Key Responsibilities and Features
 
-1.  **Speech-to-Text (STT) Conversion (`speech_to_text`)**:
-    *   Takes raw audio data (bytes) and a specified language.
-    *   (Currently a mock implementation) Returns a transcribed text string, simulating the conversion of spoken words into written text.
-
-2.  **Text-to-Speech (TTS) Conversion (`text_to_speech`)**:
-    *   Takes a text string, a language, and an optional voice identifier.
-    *   (Currently a mock implementation) Generates placeholder audio data (a sine wave) as bytes, simulating the conversion of written text into spoken audio.
-    *   Allows for configuration of a default voice.
+*   **Speech-to-Text (`speech_to_text`)**:
+    *   Takes `audio_data` (raw bytes of audio) and an optional `language` parameter.
+    *   Currently, this is a mock implementation that returns a static transcription string. In a production environment, it would integrate with a real STT engine.
+*   **Speech-to-Text with Sentiment Analysis (`speech_to_text_with_sentiment_analysis`)**:
+    *   Takes `audio_data` and an optional `language`.
+    *   Its behavior is conditional on the application's `demo_mode` setting:
+        *   If `demo_mode` is disabled, it raises a `NotImplementedError`, indicating that real sentiment analysis integration is not yet available.
+        *   If `demo_mode` is enabled, it returns a mock sentiment payload (e.g., always reporting a "positive" sentiment with high confidence).
+    *   Leverages `src.config_loader.is_demo_mode` to determine its operational mode.
+*   **Text-to-Speech (`text_to_speech`)**:
+    *   Takes `text` (the string to be converted to speech), an optional `language`, and a `voice` identifier.
+    *   Currently, this is a mock implementation that generates a simple sine wave as placeholder audio data. In a production system, it would integrate with a real TTS engine to produce natural-sounding speech.
 
 ## How it Works
 
-The `AudioService` acts as an abstraction layer for underlying STT and TTS technologies. In its current state, it provides the interface for these operations but uses simplified, mock implementations. For STT, it acknowledges the input and returns a generic transcription. For TTS, it generates a basic audio signal (a sine wave) to represent spoken output. Future development would involve integrating with external STT/TTS APIs or local models to provide actual speech processing capabilities.
+The `AudioService` acts as an abstraction layer over underlying STT and TTS engines. In its current mock state, it simulates these functionalities to allow for the development and testing of other AI components that rely on audio processing. For STT, it returns a predefined string. For TTS, it generates a simple audio waveform. The sentiment analysis feature demonstrates how the service would integrate with a demo mode, providing mock data when enabled, which is useful for showcasing functionality without requiring complex external dependencies.
 
 ## Integration with Other Modules
 
--   **`DialogueManager`**: Would utilize the `AudioService` to convert spoken user input into text for processing and to convert Angela's text responses into spoken audio for output.
--   **`MultiLLMService`**: While not directly integrated, the `AudioService` provides the input (text from speech) and consumes the output (text for speech) that LLMs would process.
--   **`PersonalityManager`**: The chosen voice for TTS could be influenced by Angela's personality profile.
--   **`TimeSystem`**: Could potentially influence the tone or style of spoken responses based on the time of day.
+*   **`src.config_loader`**: Used to check the application's `demo_mode` status, influencing the behavior of the sentiment analysis feature.
+*   **`SpeechToTextTool`**: In a full implementation, the `speech_to_text` method would likely utilize a real `SpeechToTextTool` for actual transcription.
+*   **`DialogueManager`**: This service would be a key dependency for the `DialogueManager` to enable voice input and output for conversational interactions.
 
 ## Code Location
 

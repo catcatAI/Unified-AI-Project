@@ -9,12 +9,26 @@ class VectorMemoryStore:
     """向量化記憶存儲"""
     
     def __init__(self, persist_directory="./chroma_db"):
-        # Use EphemeralClient to avoid persistence issues
-        self.client = chromadb.EphemeralClient(
-            settings=Settings(
-                anonymized_telemetry=False
+        # Use HttpClient to work with HTTP-only mode
+        try:
+            # 嘗試使用 HttpClient
+            from chromadb.config import Settings
+            self.client = chromadb.HttpClient(
+                host="localhost",
+                port=8000,
+                settings=Settings(
+                    anonymized_telemetry=False
+                )
             )
-        )
+            print("VectorMemoryStore: Using HttpClient mode")
+        except Exception as e:
+            print(f"VectorMemoryStore: HttpClient initialization failed: {e}. Falling back to EphemeralClient.")
+            # 如果 HttpClient 失敗，回退到 EphemeralClient
+            self.client = chromadb.EphemeralClient(
+                settings=Settings(
+                    anonymized_telemetry=False
+                )
+            )
         self.collection = self.client.get_or_create_collection(
             name="ham_memories",
             metadata={"hnsw:space": "cosine"}
