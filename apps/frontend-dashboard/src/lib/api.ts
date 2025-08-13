@@ -198,6 +198,47 @@ export const apiService = {
             project_coordinator: true,
           },
           metrics: response.data.metrics || {
+
+  // Image management APIs
+  async deleteImage(imageId: string): Promise<{success: boolean; message: string; imageId: string; timestamp: string}> {
+    try {
+      const response = await api.delete(`/api/v1/images/${imageId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to delete image:', error);
+      throw error;
+    }
+  },
+
+  async batchDeleteImages(imageIds: string[]): Promise<{success: boolean; deletedCount: number; failedCount: number; deletedIds: string[]; failedIds: string[]; timestamp: string}> {
+    try {
+      const response = await api.post('/api/v1/images/batch-delete', {image_ids: imageIds});
+      return response.data;
+    } catch (error) {
+      console.error('Failed to batch delete images:', error);
+      throw error;
+    }
+  },
+
+  async getImageStatistics(): Promise<ImageStatistics> {
+    try {
+      const response = await api.get('/api/v1/images/statistics');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get image statistics:', error);
+      throw error;
+    }
+  },
+
+  async getImageHistory(): Promise<GeneratedImage[]> {
+    try {
+      const response = await api.get('/api/v1/images/history');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get image history:', error);
+      throw error;
+    }
+  },
             active_models: 8,
             tasks_completed: 1247,
             active_agents: 12,
