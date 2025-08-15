@@ -137,3 +137,16 @@ HSP 是異步消息傳遞，支持事件驅動；HTTP 是同步請求-響應模�
 
 _这是 HSP 的简化入门指南。完整技术细节请参考
 [HSP 规范](../hsp-specification/01-overview-and-concepts.md)。_
+
+## Known Issues（與代碼連結的潛在不一致）
+
+- Import 路徑示例可能不正確：
+  - 文檔：`from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector`
+  - 代碼現狀：`from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector`
+  - 建議：統一為以 `src` 為根的匯入路徑，以匹配運行時包佈局。
+- 訊息處理裝飾器示例可能不適用：
+  - 文檔示例使用 `@connector.on_message` 裝飾器；目前後端連接器以回調註冊（例如在 `HSPConnector` 透過 `register_on_*_callback` 或由 `MessageBridge` 轉發）為主。
+  - 建議：將示例改為顯式註冊回調的形式，或連結到實際 API 範例（如 `HSPConnector.register_on_capability_advertisement_callback(...)`）。
+- 訊息結構示例與 HSPMessageEnvelope 欄位命名：
+  - 文檔示例使用通用字段（id/type/sender/receiver/timestamp）。實作中 `HSPMessageEnvelope` 使用例如 `message_id/sender_id/recipient_id/message_type/timestamp_sent/payload` 等欄位。
+  - 建議：在快速入門中加註對應關係，避免新手混淆。

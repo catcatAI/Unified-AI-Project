@@ -12,17 +12,19 @@ from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime, timezone
 import uuid
 import logging
-import numpy as np # For cosine similarity calculation
+
+logger = logging.getLogger(__name__)
+
 from typing import Dict, Any
-import chromadb # Added for ChromaDB client
-from src.core_ai.memory.ham_types import DialogueMemoryEntryMetadata, HAMMemory, HAMRecallResult # Added for DialogueMemoryEntryMetadata, HAMMemory, and HAMRecallResult
+
+
+from src.core_ai.memory.ham_types import DialogueMemoryEntryMetadata, HAMMemory # Added for DialogueMemoryEntryMetadata, HAMMemory
+from src.core_ai.memory.types import HAMRecallResult # Import TypedDict version for proper dict-like access
 
 from src.core_ai.memory.ham_errors import HAMMemoryError, HAMQueryError, HAMStoreError
 from src.core_ai.memory.ham_utils import calculate_cosine_similarity, generate_embedding, get_current_utc_timestamp, is_valid_uuid
 from src.core_ai.memory.vector_store import VectorMemoryStore # New import
 from src.core_ai.memory.importance_scorer import ImportanceScorer # New import
-
-logger = logging.getLogger(__name__)
 
 # Mock embedding function for testing/development without full SentenceTransformer setup
 def _mock_embed_texts(input: List[str]) -> List[List[float]]:
@@ -82,7 +84,7 @@ class HAMMemoryManager:
                  resource_awareness_service: Optional[Any] = None, # Optional['ResourceAwarenessService']
                  personality_manager: Optional[Any] = None,
                  storage_dir: Optional[str] = None,
-                 chroma_client: Optional[chromadb.Client] = None): # New: Optional ChromaDB client
+                 chroma_client: Optional[Any] = None): # New: Optional ChromaDB client
         """
         Initializes the HAMMemoryManager.
 
@@ -133,28 +135,54 @@ class HAMMemoryManager:
         self._load_core_memory_from_file()
         logger.info(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
 
-        # Initialize ChromaDB collection if client is provided
+        # Initialize VectorMemoryStore and ImportanceScorer
+        self.vector_store = None
         self.chroma_collection = None
-        if chroma_client:
+
+        # Prefer using an externally provided Chroma client if available
+        if chroma_client is not None:
             try:
                 self.chroma_collection = chroma_client.get_or_create_collection(
                     name="ham_memories",
                     embedding_function=MockEmbeddingFunction(),
                     metadata={"hnsw:space": "cosine"}
                 )
-                logger.info("ChromaDB collection initialized successfully.")
+                logger.info("ChromaDB collection initialized from external chroma_client.")
             except Exception as e:
-                logger.error(f"Failed to initialize ChromaDB collection: {e}")
+                logger.error(f"Failed to initialize ChromaDB collection from external client: {e}")
                 self.chroma_collection = None
+        else:
+            if os.environ.get("HAM_DISABLE_VECTOR_STORE", "0") == "1":
+                logger.info("HAM: VectorMemoryStore disabled via HAM_DISABLE_VECTOR_STORE=1")
+            else:
+                try:
+                    # Attempt to initialize VectorMemoryStore. This will try to import chromadb internally.
+                    self.vector_store = VectorMemoryStore(persist_directory=os.path.join(self.storage_dir, "chroma_db"))
+                    logger.info("VectorMemoryStore initialized successfully.")
 
-        # Initialize VectorMemoryStore and ImportanceScorer
-        self.vector_store = None
-        try:
-            self.vector_store = VectorMemoryStore(persist_directory=os.path.join(self.storage_dir, "chroma_db"))
-            logger.info("VectorMemoryStore initialized successfully.")
-        except Exception as e:
-            logger.warning(f"VectorMemoryStore initialization failed: {e}. Vector search will be disabled.")
-            self.vector_store = None
+                    # If VectorMemoryStore successfully initialized, also try to get the ChromaDB collection.
+                    # This assumes VectorMemoryStore makes its client available or allows passing one.
+                    # Given the current VectorMemoryStore, it manages its own client internally,
+                    # so we might need a way to check if it successfully got a chromadb client.
+                    # For now, we'll assume if VectorMemoryStore initialized, chromaDB is likely okay.
+                    if self.vector_store and hasattr(self.vector_store, 'client') and self.vector_store.client:
+                        try:
+                            self.chroma_collection = self.vector_store.client.get_or_create_collection(
+                                name="ham_memories",
+                                embedding_function=MockEmbeddingFunction(),
+                                metadata={"hnsw:space": "cosine"}
+                            )
+                            logger.info("ChromaDB collection initialized successfully via VectorMemoryStore.")
+                        except Exception as e:
+                            logger.error(f"Failed to initialize ChromaDB collection via VectorMemoryStore: {e}")
+                            self.chroma_collection = None
+                    else:
+                        logger.warning("VectorMemoryStore client not available for direct ChromaDB collection access.")
+
+                except Exception as e:
+                    logger.warning(f"VectorMemoryStore initialization failed (likely due to chromadb/numpy issue): {e}. Vector search will be disabled.")
+                    self.vector_store = None
+                    self.chroma_collection = None
         
         self.importance_scorer = ImportanceScorer()
         logger.info("ImportanceScorer initialized.")
@@ -164,7 +192,7 @@ class HAMMemoryManager:
             loop = asyncio.get_running_loop()
             asyncio.create_task(self._delete_old_experiences())
         except RuntimeError:
-            # No running event loop, skip background task
+            # No running event loop, skip scheduling background task
             logger.info("HAM: No running event loop, background cleanup task not started.")
             pass
 
@@ -486,20 +514,28 @@ class HAMMemoryManager:
                 current_metadata
             )
         
-        # Store in vector store if available
-        if self.vector_store is not None:
-            try:
-                text_for_embedding = raw_data if isinstance(raw_data, str) else json.dumps(raw_data)
+        # Store in vector/Chroma store if available
+        try:
+            text_for_embedding = raw_data if isinstance(raw_data, str) else json.dumps(raw_data)
+            if self.chroma_collection is not None:
+                # Prefer direct Chroma collection when available (e.g., tests inject PersistentClient)
+                self.chroma_collection.add(
+                    documents=[text_for_embedding],
+                    metadatas=[current_metadata],
+                    ids=[memory_id]
+                )
+                logger.debug(f"HAM: Stored semantic vector for {memory_id} in injected Chroma collection.")
+            elif self.vector_store is not None:
                 await self.vector_store.add_memory(
                     memory_id=memory_id,
                     content=text_for_embedding,
                     metadata=current_metadata # Pass the updated metadata
                 )
                 logger.debug(f"HAM: Stored semantic vector for {memory_id} in VectorMemoryStore.")
-            except Exception as e:
-                logger.error(f"Error storing semantic vector in VectorMemoryStore for {memory_id}: {e}")
-        else:
-            logger.debug(f"HAM: VectorMemoryStore disabled, skipping semantic vector storage for {memory_id}.")
+            else:
+                logger.debug(f"HAM: Vector/Chroma store disabled, skipping semantic vector storage for {memory_id}.")
+        except Exception as e:
+            logger.error(f"Error storing semantic vector for {memory_id}: {e}")
 
         try:
             compressed_data = self._compress(data_to_process)
@@ -676,13 +712,14 @@ class HAMMemoryManager:
             # For other data types, just return the decompressed string for now
             rehydrated_content = decompressed_data_str
 
-        return HAMRecallResult(
-            id=memory_id,
-            timestamp=data_package["timestamp"],
-            data_type=data_package["data_type"],
-            rehydrated_gist=rehydrated_content,
-            metadata=data_package.get("metadata", {}) # type: ignore
-        )
+        # Build TypedDict-style HAMRecallResult
+        return {
+            "id": memory_id,
+            "timestamp": data_package.get("timestamp", datetime.now(timezone.utc).isoformat()),
+            "data_type": data_package.get("data_type", "unknown"),
+            "rehydrated_gist": rehydrated_content,
+            "metadata": data_package.get("metadata", {})
+        }
 
     def recall_raw_gist(self, memory_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -785,7 +822,7 @@ class HAMMemoryManager:
                     continue # Skip this memory if timestamp cannot be parsed
 
             # Sort results by timestamp
-            results.sort(key=lambda x: datetime.fromisoformat(x["timestamp"])) # type: ignore
+            results.sort(key=lambda x: datetime.fromisoformat(x["timestamp"]), reverse=True) # type: ignore
             
             return results
         except Exception as e:
@@ -805,20 +842,24 @@ class HAMMemoryManager:
             # Check if memory usage is high
             memory_info = psutil.virtual_memory()
             if memory_info.available < memory_info.total * memory_threshold:
-                # Sort memories by relevance and timestamp (oldest first)
-                sorted_memories = sorted(
-                    self.core_memory_store.items(), 
-                    key=lambda item: (item[1].get("relevance", 0.5), datetime.fromisoformat(item[1]["timestamp"]))
+                # Identify memories to delete (unprotected, oldest/lowest relevance first)
+                memories_to_consider = sorted(
+                    [
+                        (mem_id, data_pkg)
+                        for mem_id, data_pkg in self.core_memory_store.items()
+                        if not data_pkg.get("protected", False)
+                    ],
+                    key=lambda item: (item[1].get("relevance", 0.5), datetime.fromisoformat(item[1]["timestamp"])),
                 )
-                
-                # Delete unprotected memories until memory usage is acceptable
-                for memory_id, data_package in sorted_memories:
-                    if not data_package.get("protected", False):
-                        current_memory = psutil.virtual_memory()
-                        if current_memory.available < current_memory.total * memory_threshold:
+
+                # Delete memories until memory usage is acceptable
+                for memory_id, _ in memories_to_consider:
+                    current_memory = psutil.virtual_memory()
+                    if current_memory.available < current_memory.total * memory_threshold:
+                        if memory_id in self.core_memory_store:  # Ensure it still exists
                             del self.core_memory_store[memory_id]
-                        else:
-                            break
+                    else:
+                        break
         except Exception as e:
             logger.error(f"Error during deletion check: {e}")
 
@@ -851,12 +892,14 @@ class HAMMemoryManager:
         logger.debug(f"HAM: Querying core memory (type: {data_type_filter}, meta_filters: {metadata_filters}, keywords: {keywords}, semantic_query: {semantic_query})")
 
         candidate_mem_ids = []
+        fallback_semantic = False
 
         if semantic_query:
             if not self.chroma_collection:
                 logger.warning("ChromaDB collection not initialized. Cannot perform semantic search.")
                 # Fallback to iterating all memories if semantic search is not available
                 candidate_mem_ids = sorted(self.core_memory_store.keys(), reverse=True)
+                fallback_semantic = True
             else:
                 try:
                     # Generate embedding for the semantic query using the collection's embedding function
@@ -873,6 +916,7 @@ class HAMMemoryManager:
                     logger.error(f"Error querying ChromaDB: {e}")
                     # Fallback to iterating all memories if ChromaDB query fails
                     candidate_mem_ids = sorted(self.core_memory_store.keys(), reverse=True)
+                    fallback_semantic = True
         else:
             # If no semantic query, iterate through all memories
             candidate_mem_ids = sorted(self.core_memory_store.keys(), reverse=True)
@@ -926,6 +970,19 @@ class HAMMemoryManager:
                 if recalled_item: # recall_gist now returns Optional[HAMRecallResult]
                     # recalled_item already includes metadata if successful
                     candidate_items_with_id.append(recalled_item)
+
+        # Apply fallback semantic ranking when needed
+        if semantic_query and fallback_semantic and candidate_items_with_id:
+            query_tokens = {tok.strip('.,!?') for tok in semantic_query.lower().split() if len(tok.strip('.,!?')) > 2}
+            def _fallback_score(rec):
+                text = str(rec.get("rehydrated_gist", "")).lower()
+                gist_tokens = {tok.strip('.,!?') for tok in text.split() if len(tok.strip('.,!?')) > 2}
+                return len(query_tokens & gist_tokens)
+            # Sort by score desc, then by timestamp (newest first)
+            candidate_items_with_id.sort(
+                key=lambda x: (_fallback_score(x), datetime.fromisoformat(x["timestamp"])),
+                reverse=True
+            )
 
         # Sort by confidence if requested (primarily for facts)
         if sort_by_confidence and data_type_filter and data_type_filter.startswith("learned_fact"):

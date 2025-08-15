@@ -77,7 +77,7 @@ async def test_01_store_experience_and_verify_chromadb_entry(ham_chroma_manager_
     raw_text = "The quick brown fox jumps over the lazy dog."
     metadata: Dict[str, Any] = {"source": "test_chroma_store", "timestamp": datetime.now(timezone.utc).isoformat()}
 
-    memory_id = ham.store_experience(raw_text, "dialogue_text", metadata)
+    memory_id = await ham.store_experience(raw_text, "dialogue_text", metadata)
     assert memory_id is not None
 
     # Directly query ChromaDB to verify the entry
@@ -98,10 +98,10 @@ async def test_02_semantic_search_chromadb_first(ham_chroma_manager_fixture):
     ham = ham_chroma_manager_fixture
 
     # Store several distinct experiences
-    ham.store_experience("Apple is a fruit.", "fact", {"topic": "food"})
-    ham.store_experience("Python is a programming language.", "fact", {"topic": "programming"})
-    ham.store_experience("The sun is a star.", "fact", {"topic": "astronomy"})
-    ham.store_experience("A red delicious apple.", "fact", {"topic": "food"})
+    await ham.store_experience("Apple is a fruit.", "fact", {"topic": "food"})
+    await ham.store_experience("Python is a programming language.", "fact", {"topic": "programming"})
+    await ham.store_experience("The sun is a star.", "fact", {"topic": "astronomy"})
+    await ham.store_experience("A red delicious apple.", "fact", {"topic": "food"})
 
     # Perform a semantic query
     query_text = "What kind of fruit is red?"
@@ -109,7 +109,7 @@ async def test_02_semantic_search_chromadb_first(ham_chroma_manager_fixture):
 
     assert len(results) == 1
     # The exact content might vary based on embedding model, but it should be related to apples
-    assert "apple" in results[0].rehydrated_gist.lower()
+    assert "apple" in results[0]["rehydrated_gist"].lower()
     print("Test 02 PASSED")
 
 @pytest.mark.asyncio
@@ -118,8 +118,8 @@ async def test_03_semantic_search_chromadb_failure_fallback(ham_chroma_manager_f
     ham = ham_chroma_manager_fixture
 
     # Store some experiences
-    ham.store_experience("This is a fallback test sentence.", "test_type", {"tag": "fallback"})
-    ham.store_experience("Another sentence for testing.", "test_type", {"tag": "general"})
+    await ham.store_experience("This is a fallback test sentence.", "test_type", {"tag": "fallback"})
+    await ham.store_experience("Another sentence for testing.", "test_type", {"tag": "general"})
 
     # Simulate ChromaDB query failure
     with patch.object(ham.chroma_collection, 'query', side_effect=Exception("ChromaDB is down")):
@@ -127,5 +127,5 @@ async def test_03_semantic_search_chromadb_failure_fallback(ham_chroma_manager_f
         results = ham.query_core_memory(semantic_query=query_text, limit=1, sort_by_confidence=True)
 
         assert len(results) == 1
-        assert "fallback test sentence" in results[0].rehydrated_gist.lower()
+        assert "fallback test sentence" in results[0]["rehydrated_gist"].lower()
         print("Test 03 PASSED")

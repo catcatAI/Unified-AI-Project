@@ -22,6 +22,35 @@ Base router prefix: `/api/v1/hot`
 - `POST /reload/hsp`: Performs blue/green reload of HSP connector and re-subscribes minimal topics.
 - `POST /reload/personality`: Reloads personality profile (optionally `?profile=<name>`), updates EmotionSystem/DialogueManager.
 
+## Status Endpoint Reference (Examples)
+
+Example response schema (best-effort; fields may be None depending on runtime and mocks):
+
+```json
+{
+  "draining": false,
+  "services_initialized": {
+    "llm_interface": true,
+    "ham_manager": true,
+    "personality_manager": true,
+    "hsp_connector": true
+  },
+  "hsp": { "hsp_available": true, "is_connected": true, "fallback_enabled": true },
+  "mcp": { "mcp_available": false, "is_connected": false, "fallback_enabled": true },
+  "metrics": {
+    "hsp": { "is_connected": true, "pending_acks_count": 0, "retry_counts_active": 0 },
+    "mcp": { "is_connected": false, "fallback_initialized": false },
+    "learning": { "known_ai_count": 1 },
+    "memory": { "ham_store_size": 124 },
+    "lis": { "incidents_recent": 5, "antibodies_recent": 2 }
+  }
+}
+```
+
+Notes:
+- Values depend on environment (mock vs real connectors) and may be null if the metric is unavailable.
+- This endpoint is safe to call during draining and reload operations for observability.
+
 ## Implementation
 
 - File: `apps/backend/src/services/hot_reload_service.py`

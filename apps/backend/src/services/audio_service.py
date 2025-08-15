@@ -25,23 +25,10 @@ class AudioService:
         - If demo mode is disabled, raise NotImplementedError (real integration not provided).
         - If demo mode is enabled, return a mock sentiment payload.
         """
-        # Local import to avoid circulars at module import time
-        from src.config_loader import is_demo_mode
-
-        if not is_demo_mode():
-            raise NotImplementedError("Real sentiment analysis is not implemented.")
-
-        # Demo-mode behavior: reuse mock STT result and attach positive sentiment
-        text = self.speech_to_text(audio_data, language)
-        if text is None:
-            text = ""
-        result = {
-            "text": text,
-            "sentiment": "positive",
-            "confidence": 0.9,
-            "language": language,
-        }
-        return result
+        if self.config.use_simulated_resources:
+            return {"text": "This is a mock transcription.", "sentiment": "positive", "confidence": 0.9, "language": "en-US"}
+        else:
+            raise NotImplementedError("Real sentiment analysis not implemented yet. Enable demo mode or implement the actual service.")
 
     def text_to_speech(self, text: str, language: str = "en-US", voice: str = None) -> bytes | None:
         """
