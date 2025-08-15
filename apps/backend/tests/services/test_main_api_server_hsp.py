@@ -178,7 +178,7 @@ class TestHSPEndpoints:
         response = client.get("/api/v1/hsp/services")
         assert response.status_code == 200
         assert response.json() == []
-        await sdm.get_all_capabilities.assert_called_once_with() # Corrected assertion
+        sdm.get_all_capabilities.assert_called_once() # 修正 - 不能await MockAsyncMock的assert方法
 
     @pytest.mark.timeout(10)
     async def test_list_hsp_services_with_advertisements(self, client_with_overrides):

@@ -119,7 +119,7 @@ class UnifiedAIStyleChecker:
                 ))
             
             # Check for hardcoded paths
-            if re.search(r'["\'][A-Za-z]:[\\\/]', line) or re.search(r'["\']\/[a-zA-Z]', line):
+            if re.search(r'["\'][A-Za-z]:[\\\/]', line) or re.search(r'["\']/[a-zA-Z]', line):
                 if 'test' not in str(filepath).lower():
                     self.warnings.append((
                         str(filepath), 
@@ -147,13 +147,17 @@ class UnifiedAIStyleChecker:
                     ))
     
     def check_directory(self, directory: Path) -> None:
-        """Check all Python files in directory recursively."""
-        for py_file in directory.rglob('*.py'):
-            # Skip certain directories
-            if any(skip in str(py_file) for skip in ['__pycache__', '.git', 'build', 'dist']):
+        """Check all relevant files in directory recursively."""
+        for file_path in directory.rglob('*'):
+            # Skip certain directories and file types
+            if any(skip in str(file_path) for skip in ['__pycache__', '.git', 'build', 'dist', 'venv']):
                 continue
-                
-            self.check_file(py_file)
+            if file_path.is_dir():
+                continue
+            
+            # Only check common text file types
+            if file_path.suffix in ['.py', '.md', '.txt', '.yaml', '.json', '.js', '.ts', '.tsx', '.jsx', '.css', '.html']:
+                self.check_file(file_path)
     
     def report(self) -> int:
         """Generate report and return exit code."""
@@ -183,12 +187,12 @@ def main():
     """Main entry point."""
     checker = UnifiedAIStyleChecker()
     
-    # Check src directory
-    src_dir = Path('src')
-    if src_dir.exists():
-        checker.check_directory(src_dir)
+    # Check project root directory
+    project_root = Path(__file__).resolve().parent.parent # Assumes script is in project_root/scripts
+    if project_root.exists():
+        checker.check_directory(project_root)
     else:
-        print("❌ src/ directory not found")
+        print(f"❌ Project root directory not found at {project_root}")
         return 1
     
     return checker.report()
