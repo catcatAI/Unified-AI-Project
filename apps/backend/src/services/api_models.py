@@ -63,3 +63,23 @@ class RovoDevTaskModel(BaseModel):
 
 class JQLSearchModel(BaseModel):
     jql: str
+
+# --- Hot Status Models ---
+class HotStatusResponse(BaseModel):
+    draining: bool
+    services_initialized: Dict[str, bool]
+    hsp: Dict[str, Any]
+    mcp: Dict[str, Any]
+    metrics: Dict[str, Any]
+
+# --- HSP Service Discovery Models ---
+class HSPServiceDiscoveryResponse(BaseModel):
+    capability_id: str
+    name: str
+    description: str
+    version: str
+    ai_id: str
+    availability_status: str
+    tags: List[str] = []
+    supported_interfaces: List[str] = []
+    metadata: Dict[str, Any] = {}

@@ -3,10 +3,7 @@
 **Scan Timestamp**: 2025-08-06 10:32:11
 **Total Placeholders Found**: 1
 
-## 📌 Feature (1 items)
+## ✅ 已處理的佔位符 (1 items)
 
 ### `audio_service.py:54`
-- **Description**: Implement real sentiment analysis.
-```python
-# TODO(feature): Implement real sentiment analysis.
-```
+- **Description**: 已實作情緒分析的佔位符，在 demo 模式下返回模擬結果，非 demo 模式下引發 `NotImplementedError`。

@@ -1,5 +1,5 @@
 {
-  "next_memory_id": 95,
+  "next_memory_id": 127,
   "store": {
     "mem_000001": {
       "timestamp": "2025-08-10T09:21:09.059796+00:00",
@@ -861,6 +861,330 @@
       "metadata": {
         "tag": "general",
         "sha256_checksum": "5807383df630e504736e699beb24ca3ceafdc73c92c4af36c0b7a9e2996cb7f7"
+      }
+    },
+    "mem_000095": {
+      "timestamp": "2025-08-15T02:35:23.973545+00:00",
+      "data_type": "dialogue_text",
+      "encrypted_package_b64": "gAAAAABonpzrbhRI_3Ud4frOPoH_LyOElO7LRlK8NhiTgfE2oncvauAEJSzRv8lgPQ2S-XbYls5KLAy3KItYbn5Zr3jvqxitnuAgbUiBhDdvdvaYOu4yxS8utQ6gp2Nj3SoWuhinmZ_m-SqQFgqd5XEQerDE7H1gNEgOox-QOm1I1qiwJk-bfL-mLjlkq7TndLPrG1f3y0HEbHYlB31DzYum3sJHsCY3ZAGLD27bsFrCYiybVtlU-KSyHfiqJhCrNpCZRxm5Mk9P34uLxPKpZ5hrBjDUqk6onBYG8DQdPqW_3EgZAo5QarFp44Z9cfxv3H4_5RugjMwZV3gt0jivgvusbciNP7oFuqI8n4uK_AF4rasgMT3GxiKWanWT-DL908DPMtIohl5l",
+      "metadata": {
+        "source": "test_chroma_store",
+        "timestamp": "2025-08-15T02:35:23.948691+00:00",
+        "sha256_checksum": "ff5ed76976513bc6ef7e2814b28ae8c5730ef41e4834d6c36183e1c4b30feda7",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000096": {
+      "timestamp": "2025-08-15T02:35:24.171339+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonpzs2onJku9N3R0JQrRaF8yK8FfXs_yq2OZiXq3BTg75GCE1N9cslUX4NX5yVrv3F41TQz1TW3hPT0whjwtg-cnEoB3VL9vVIDJ3e_Y9e0YeSkk=",
+      "metadata": {
+        "topic": "food",
+        "sha256_checksum": "1c00730c93da30b791a603580a97ae2b0c315691af5e1b91bbdd0a293695538f",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000097": {
+      "timestamp": "2025-08-15T02:35:24.187812+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonpzsMK2RD5bODsz6RT9c5ayjtqtr8ddPHyhTOXfS2GtmxIxi_tP-w-dXK7boY1BCkSyapFPy9SlbXk3qjV3TZ0nHQDcg7laDDw-gnqUYknd0Igi4XYQoWhA-2i3pvgtEqRX-",
+      "metadata": {
+        "topic": "programming",
+        "sha256_checksum": "2d8d09f168d9e7d857316fe352ec3e2e2c1fe4c9ec1a816d3d45ea272d213929",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000098": {
+      "timestamp": "2025-08-15T02:35:24.205463+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonpzs47OKVE90PaTNzkOuRyo-1L20ZceJgwIQsUU29W_ag4iZz3FvGGgEqObIUICEhYh07xVCr5YleLUBtpD_KSGE60tW1LjR3fgWzl_yuVNQbkE=",
+      "metadata": {
+        "topic": "astronomy",
+        "sha256_checksum": "37a86ab29a9f452e794a8c831e4bc9647f75ea564e0dfd93603d766301582fe4",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000099": {
+      "timestamp": "2025-08-15T02:35:24.221080+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonpzsah9FZFKU254LWsz-gLgsq8LWlZvGKQL26YKuPrPbO3l1TmhhQjd5YkIGqxWgGgjgc-WFvrypgMvPvxx1c66E_94cebhbfQGpNUemYt8lvwA=",
+      "metadata": {
+        "topic": "food",
+        "sha256_checksum": "e9b274942f150973714a044498955069f9d4d95c8dca93f66e104182eb79885b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000100": {
+      "timestamp": "2025-08-15T02:35:24.853858+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonpzsESjN9xyjRXGJREhVCv3uI3AWZ1im-jPLe0mufXQSUq0JEF7ZtggfNonyT99JJuzEEe2115lFec6DAtleXZECaeuPtH8Y0Rh_BK7_AQMa4RZnHj-Bp6caoK91JQVqivzH",
+      "metadata": {
+        "tag": "fallback",
+        "sha256_checksum": "44dee6b25f4435d260bce83101219dd8849697a11f57b2da2a6fd6d0e686774b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000101": {
+      "timestamp": "2025-08-15T02:35:24.886161+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonpzsPe2EXrCD2vmAyIn-GxmhXynhXoTa3JLHgY0apdvG601BAhF1QdsBTy4P4u0sRFI3OCX8qgfM3d0azGusjXRXvFMiiJeSo61yc85PLfW8TUS-b3KeaHBHkhxZrlgTH8M_",
+      "metadata": {
+        "tag": "general",
+        "sha256_checksum": "5807383df630e504736e699beb24ca3ceafdc73c92c4af36c0b7a9e2996cb7f7",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000102": {
+      "timestamp": "2025-08-15T02:55:53.352995+00:00",
+      "data_type": "dialogue_text",
+      "encrypted_package_b64": "gAAAAABonqG5UL7bu_0DN8e2F-Bhfn7cSXkHHZgfjvS-zfHBklz17K2mdiq3psDf1GeY8s2QdTVZiaNzsZvxUyFYbdRtISLJ2_CqV-DqCuAf4Ssh7HNYtU9F2nXyisSW60wpTySHpnE8XtqlpxNvSWaLedeuoYbvflbTL0iM7XXiu_MfESoPWqj3xZ14OoPmYOLCZmVICnXHzVhzBhLndx2WgzVRS7h0nsJoMHHLOBN-wpYhmY-ajZlVHm84DrmEfUIKZhwZoT5mV6KP6TqRkRmuVcS0qyi8DSa12PdqHYLL-HZkrWkniA7vmdy6iKvMA2N2rkkZp4JzYJUXuET6scWsHNavQBVEQXnLKocjx-F4XDKE2iodZRitAn_OLAulHtPhxPQpA2D4",
+      "metadata": {
+        "source": "test_chroma_store",
+        "timestamp": "2025-08-15T02:55:53.332820+00:00",
+        "sha256_checksum": "ff5ed76976513bc6ef7e2814b28ae8c5730ef41e4834d6c36183e1c4b30feda7",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000103": {
+      "timestamp": "2025-08-15T02:55:53.555078+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonqG52hOUH2oQw4DaH145GIDSi-xWmmY1HrLKcwdvewas0hPuhRToW_sovEQqHNPKODODpE3l3pk8uJZP7gWWTFUFNtW5Au0l5CwksjJ5lw2eAFA=",
+      "metadata": {
+        "topic": "food",
+        "sha256_checksum": "1c00730c93da30b791a603580a97ae2b0c315691af5e1b91bbdd0a293695538f",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000104": {
+      "timestamp": "2025-08-15T02:55:53.586018+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonqG5jiZ8KEgvFQX2pBlzvwmmuuPra2bOwcTBWmgJ3xOBhswZSsGtdYvFJZr00Kh5dI5F7HpfIvL5y0LzTEc5bmWykYJz9QfnY_jH2LMUIRASaJG4VNs3IXAGGathlAdiSSdW",
+      "metadata": {
+        "topic": "programming",
+        "sha256_checksum": "2d8d09f168d9e7d857316fe352ec3e2e2c1fe4c9ec1a816d3d45ea272d213929",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000105": {
+      "timestamp": "2025-08-15T02:55:53.614506+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonqG55kOvMAoMgyZZHNbr0TEqETv8bl-2YAixModeFs10Et7rfRhLbS6Rfthxyt5qqhk6Qlw69ooyZj8utbjE9A11viBCQGMJFECkptjfOAbraBU=",
+      "metadata": {
+        "topic": "astronomy",
+        "sha256_checksum": "37a86ab29a9f452e794a8c831e4bc9647f75ea564e0dfd93603d766301582fe4",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000106": {
+      "timestamp": "2025-08-15T02:55:53.645822+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonqG57_5GnQXmg7uiYfzt1vZn0Deu9AUWfQoI9I0keaKo8-iab1h3R0MHNqKRtTh7sauzEYc5ZGzIZYS__e_j2s3oXTFImJk14g3c6WZYZA57OeM=",
+      "metadata": {
+        "topic": "food",
+        "sha256_checksum": "e9b274942f150973714a044498955069f9d4d95c8dca93f66e104182eb79885b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000107": {
+      "timestamp": "2025-08-15T02:55:53.861913+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonqG5YJ4PolcmrmdFZWKAu84msSJuJnzSQL11FhwPeShLMaCB0PyAeKubt7S5pStpoVaVAdI7Didtx_msyEdiHjq9cZSnZhTBl60SzxRmZ7QuJ4L0mqeUhHQTr2MoJ_MbwteI",
+      "metadata": {
+        "tag": "fallback",
+        "sha256_checksum": "44dee6b25f4435d260bce83101219dd8849697a11f57b2da2a6fd6d0e686774b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000108": {
+      "timestamp": "2025-08-15T02:55:53.876843+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonqG5MASG3wN_n9pXjnO1g_sKFzywf0IjMn1NhniSYbft5koG-s6IKWBeO0-8mXUIwXrEu8jpgyjnKanR4Gcw1JRIfx87s4-5TxALUznSVp_RuC8vLe0YkqlbQ73lvHeBF-Pr",
+      "metadata": {
+        "tag": "general",
+        "sha256_checksum": "5807383df630e504736e699beb24ca3ceafdc73c92c4af36c0b7a9e2996cb7f7",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000109": {
+      "timestamp": "2025-08-15T03:14:00.406089+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonqX4MR_fwMCZMNLCOaCQZRm5KzxSAW6rh7oz0QfxFGZg_vk6zKstWwRlrKCKuLO8BmxbmE6KjYw1ozU-mt6Fgo0-0vcvOk77-WtncloA1btyqB30i3apTjo2GZNyk83om3EG",
+      "metadata": {
+        "tag": "fallback",
+        "sha256_checksum": "44dee6b25f4435d260bce83101219dd8849697a11f57b2da2a6fd6d0e686774b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000110": {
+      "timestamp": "2025-08-15T03:14:00.445130+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonqX4PL88zKOUQbmQv_F_4ZgEOXrYbwTDBCj-OwrGK1lc2KC5klxwb2VDnoore9ChbDT12RY9gFB3QXeWw7_tARRgcBwsD1TDr6JsLRJIFhSZlUr98LEHkpnj8l8uFA6mdv3w",
+      "metadata": {
+        "tag": "general",
+        "sha256_checksum": "5807383df630e504736e699beb24ca3ceafdc73c92c4af36c0b7a9e2996cb7f7",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000111": {
+      "timestamp": "2025-08-15T03:15:34.141464+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonqZWusGSeLAJ4KkksAcIoC4kx8FdmU4_-mQLnEo9xItfMOsIu7dKCcWrNCw3b2qIQeBSAGJqESE3n5Bbgk9jGqgmwqH11BEMHXriugbi5DQj5A6sL-rN7XUhGHAT51qx83-e",
+      "metadata": {
+        "tag": "fallback",
+        "sha256_checksum": "44dee6b25f4435d260bce83101219dd8849697a11f57b2da2a6fd6d0e686774b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000112": {
+      "timestamp": "2025-08-15T03:15:34.166628+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonqZW4lebr3yw2xoOMNbtGQflmzh1GTvVD2odL6KvIpm54b5lVNFUCU7PmkArtMLWqQdAniIdYiKnPlU4GoOX_-0OlC5fJYR2SUSen38pSxqvuO-4f3QZjQqKMtmisiwZRFqj",
+      "metadata": {
+        "tag": "general",
+        "sha256_checksum": "5807383df630e504736e699beb24ca3ceafdc73c92c4af36c0b7a9e2996cb7f7",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000113": {
+      "timestamp": "2025-08-15T03:33:12.705925+00:00",
+      "data_type": "dialogue_text",
+      "encrypted_package_b64": "gAAAAABonqp4C2SkG8BlXNDaTzS7bv49w5t00fSHKE4e3-Qn0qlapaTjgcoZPj_v9pKXEXRkFwLqleOb2MXEXQGynSuRpmAnToI9siFgB4XIo7jlHP13HmsUOICs6ePMTCKzrvOV-SWm8Osr7iHhOH9vCiPxYt17fZNzS5SbQgA68H3HG2vyG0-ru-UcypvcXp2uwJv_SWOQOf_iM2bwrff0ugJ3FCtZO1zX2jtmE5vWKQUpoXn6jfr7p1cRqpBvZzNLo8vEWfuWjiWLfK3lVQPoGPd_YkJ-yjJCLuZr-fxavzBadhWHynZmO3H4pKvuILk1u3aXEh9nERn8kyV_RtR22o5zQFq_rIsZvhWiVgl9ptVMDT_tzmyjZM3Xl33kuQrGBz5rLAO0",
+      "metadata": {
+        "source": "test_chroma_store",
+        "timestamp": "2025-08-15T03:33:12.666340+00:00",
+        "sha256_checksum": "ff5ed76976513bc6ef7e2814b28ae8c5730ef41e4834d6c36183e1c4b30feda7",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000114": {
+      "timestamp": "2025-08-15T03:33:12.993798+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonqp428_tEkhJx2sqTGRjNvOiaHYOOIyz9KUkqRcdeva--snJ-Thk5yv7radKS9ns3sgGfxza1zjAF31xeSJ9llSkSTCHZf-t-sKDgOswuwT6OYo=",
+      "metadata": {
+        "topic": "food",
+        "sha256_checksum": "1c00730c93da30b791a603580a97ae2b0c315691af5e1b91bbdd0a293695538f",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000115": {
+      "timestamp": "2025-08-15T03:33:13.024450+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonqp5RwnBLNPmYYKpTksRvjKL0g0OuKfrcxiaKuJmNHEOifycsRy5k2EDLAEgSTW6gGxnSAkfcQLaZbGkvA_YT2mp_XSGwNv_8cx02nmPmW7lLeIT7nqeqUYjuR-m-5R6IGBy",
+      "metadata": {
+        "topic": "programming",
+        "sha256_checksum": "2d8d09f168d9e7d857316fe352ec3e2e2c1fe4c9ec1a816d3d45ea272d213929",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000116": {
+      "timestamp": "2025-08-15T03:33:13.043211+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonqp5ov7_Z6xlQpOzjw0YskVqLDbiAoJyh9P5l84zzXMVDOkaHPXKcRM213EsuQ3KbvqO-SmFZdIakuoDfcbNuoORZFl7gsCuQ_yomfDE3iMMknA=",
+      "metadata": {
+        "topic": "astronomy",
+        "sha256_checksum": "37a86ab29a9f452e794a8c831e4bc9647f75ea564e0dfd93603d766301582fe4",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000117": {
+      "timestamp": "2025-08-15T03:33:13.059949+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonqp5nF2d8rHU70dUFTBK_UEgabalzM6PEXGGB3c5baWNBVE5G_ax4bP_Nmb0rm5QtNVZXM_a4ukFlfBf9dGlqT5mMxF36ZTc9Ink_K1H7s1Tl4c=",
+      "metadata": {
+        "topic": "food",
+        "sha256_checksum": "e9b274942f150973714a044498955069f9d4d95c8dca93f66e104182eb79885b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000118": {
+      "timestamp": "2025-08-15T03:33:13.258260+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonqp5i8-g1ZkFrcpDs87Emy6p_j5uMXdSrIKOZcUSFaF1DlyvrQZ5GOdsuXq6LnflWpbHzSW2HChBR1qMijlqNcoL4a09NONmO-q3NwXiQitjH8cdaZx_7jSgQj33rpeVN2fJ",
+      "metadata": {
+        "tag": "fallback",
+        "sha256_checksum": "44dee6b25f4435d260bce83101219dd8849697a11f57b2da2a6fd6d0e686774b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000119": {
+      "timestamp": "2025-08-15T03:33:13.277058+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonqp5wre18KBOMy6q76qcwlW8Pq3o2jbE_uWv6rQIZH8VxTdsmHX1CgZ6AlgyN1yostB2lwORHbeqH5t-qHOnfVJYZt0gKMKSxg12AJVU8X7VxG1IK6WLXrCc3OWjQn2E7Icu",
+      "metadata": {
+        "tag": "general",
+        "sha256_checksum": "5807383df630e504736e699beb24ca3ceafdc73c92c4af36c0b7a9e2996cb7f7",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000120": {
+      "timestamp": "2025-08-15T03:45:03.372214+00:00",
+      "data_type": "dialogue_text",
+      "encrypted_package_b64": "gAAAAABonq0_tCnzBxJiQgDDFuBfTNzCARcZ-jXqgHCHZufI85TIORa2X9bznCKO96UfjZ_q4E11_MATMzYJodClLcUAzSAFFR_uWn7sAj_Svo_vwh2DeAhnIdsQJaGIUwnzMs-reu5OPdwROJKRx2A98vW28PDTvXQIKF69S6BoMa8GPMXepMC0Hdyil6QOO4t6oH79m-ZJOvImo1GNXOUd2cM2-7-6K9Xv2tds73tHniExdF9Kaut42eJh-AzfvL8ivM584t9o6fN4Uh-Hsr-2ZwbngDwCLwlE4u3dM32EtSSLZz38FryId8VVdg-h6Jd9iH_fGWGT0pk6rnBl0aq2tfyFWUJBape2yT2dg9hx9jjkX8FFW0CtZjq56MCmYYCmrcDYfEed",
+      "metadata": {
+        "source": "test_chroma_store",
+        "timestamp": "2025-08-15T03:45:03.344900+00:00",
+        "sha256_checksum": "ff5ed76976513bc6ef7e2814b28ae8c5730ef41e4834d6c36183e1c4b30feda7",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000121": {
+      "timestamp": "2025-08-15T03:45:03.554437+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonq0_iPEC-k1T4LEsyY7qTzbZlG9VJ3SACkjY_30yl4CDakiPzlC_LD-sLtoMSuzzYQaE2HPcYw_PH-NGAC7HKrnxdMSvD_TucUNZtWJlEsIICkA=",
+      "metadata": {
+        "topic": "food",
+        "sha256_checksum": "1c00730c93da30b791a603580a97ae2b0c315691af5e1b91bbdd0a293695538f",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000122": {
+      "timestamp": "2025-08-15T03:45:03.569511+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonq0_A3PPlAQ-6wOPWUGznItjiGPzOCQVOQtAZWfolHHQ_-pQl5zpSI4RrXicV6W4HKX-3KFL-JBF5TVpNek11Icpms9iudPmd_TIVdQc89p9MJBJqEdUNpdfLvQpckS-7WHq",
+      "metadata": {
+        "topic": "programming",
+        "sha256_checksum": "2d8d09f168d9e7d857316fe352ec3e2e2c1fe4c9ec1a816d3d45ea272d213929",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000123": {
+      "timestamp": "2025-08-15T03:45:03.585467+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonq0_taFJdDqQDYtaNYzK1VzxMX44k7WiRUy8g9q6bhm36IGkfcIuxKTW4W-En3rkdGCQVXEXFvljwnOnNiZkeE9anoSxTYpR1KznmKdUr6lM75E=",
+      "metadata": {
+        "topic": "astronomy",
+        "sha256_checksum": "37a86ab29a9f452e794a8c831e4bc9647f75ea564e0dfd93603d766301582fe4",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000124": {
+      "timestamp": "2025-08-15T03:45:03.604311+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABonq0_SODj9eU-9U8Bd9NwCyeUN5uxGw2CbLsmHPb-IdhR3vhqqKb1UJIWbzqPt7bhh5jWQsdX696el5lGGb2Cr_Q7zmvpTlwV5UoSAiNx5c24KkU=",
+      "metadata": {
+        "topic": "food",
+        "sha256_checksum": "e9b274942f150973714a044498955069f9d4d95c8dca93f66e104182eb79885b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000125": {
+      "timestamp": "2025-08-15T03:45:03.787966+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonq0_1C0SpIgILPTUhkg7HuejrkxTIBIsLENpzzpOkkFzVYhnh4GrWzOq7GzPVmqEsN8Z6yJH1_sQ78ZW5ttExZdaaFPspuDtHohEkUhut9yTd2Bvh9buFa-vaXeRr3_mMqQb",
+      "metadata": {
+        "tag": "fallback",
+        "sha256_checksum": "44dee6b25f4435d260bce83101219dd8849697a11f57b2da2a6fd6d0e686774b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000126": {
+      "timestamp": "2025-08-15T03:45:03.804595+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABonq0_iGhXa1nvKH4NKBuWuCkvHknkWIpgruJ3ck3_c_u_McM13rsl1Erj15CZkYA0jJd63pnQX5Xt5LZQG5QCqqrPFLjgCN-DoHQoO8MmPDjjvAiDmLjMf9RyHwVVZDwMNQ9X",
+      "metadata": {
+        "tag": "general",
+        "sha256_checksum": "5807383df630e504736e699beb24ca3ceafdc73c92c4af36c0b7a9e2996cb7f7",
+        "importance_score": 0.5
       }
     }
   }

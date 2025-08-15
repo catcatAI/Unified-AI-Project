@@ -65,11 +65,60 @@ class HotReloadService:
                 mcp_status = mcp.get_communication_status()
         except Exception:
             mcp_status = {"error": "failed to get MCP status"}
+        # Build best-effort metrics (safe access with hasattr/try)
+        metrics: Dict[str, Any] = {"hsp": {}, "mcp": {}, "learning": {}, "memory": {}, "lis": {}}
+        # HSP metrics
+        try:
+            if hsp is not None:
+                metrics["hsp"]["is_connected"] = getattr(hsp, "is_connected", None)
+                metrics["hsp"]["pending_acks_count"] = len(getattr(hsp, "_pending_acks", {})) if hasattr(hsp, "_pending_acks") else None
+                metrics["hsp"]["retry_counts_active"] = len(getattr(hsp, "_message_retry_counts", {})) if hasattr(hsp, "_message_retry_counts") else None
+        except Exception:
+            pass
+        # MCP metrics
+        try:
+            if mcp is not None:
+                metrics["mcp"]["is_connected"] = getattr(mcp, "is_connected", None)
+                metrics["mcp"]["fallback_initialized"] = getattr(mcp, "fallback_initialized", None)
+        except Exception:
+            pass
+        # Learning / Trust metrics
+        try:
+            tm = services.get("trust_manager")
+            if tm is not None:
+                metrics["learning"]["known_ai_count"] = len(getattr(tm, "trust_scores", {}))
+        except Exception:
+            pass
+        # Memory metrics (HAM)
+        ham = services.get("ham_manager")
+        try:
+            if ham is not None:
+                store = getattr(ham, "memory_store", getattr(ham, "core_memory_store", None))
+                if isinstance(store, dict):
+                    metrics["memory"]["ham_store_size"] = len(store)
+        except Exception:
+            pass
+        # LIS metrics (query recent counts if possible)
+        try:
+            if ham is not None and hasattr(ham, "query_core_memory"):
+                # Local import of constants to avoid cycles
+                try:
+                    from src.core_ai.lis.lis_cache_interface import LIS_INCIDENT_DATA_TYPE_PREFIX, LIS_ANTIBODY_DATA_TYPE_PREFIX  # type: ignore
+                except Exception:
+                    LIS_INCIDENT_DATA_TYPE_PREFIX = "lis_incident_v0.1_"  # fallback
+                    LIS_ANTIBODY_DATA_TYPE_PREFIX = "lis_antibody_v0.1_"
+                inc = ham.query_core_memory(metadata_filters={}, data_type_filter=LIS_INCIDENT_DATA_TYPE_PREFIX, limit=50)  # type: ignore
+                ab = ham.query_core_memory(metadata_filters={}, data_type_filter=LIS_ANTIBODY_DATA_TYPE_PREFIX, limit=50)  # type: ignore
+                metrics["lis"]["incidents_recent"] = len(inc) if isinstance(inc, list) else None
+                metrics["lis"]["antibodies_recent"] = len(ab) if isinstance(ab, list) else None
+        except Exception:
+            pass
         return {
             "draining": self._draining,
             "services_initialized": {k: (v is not None) for k, v in services.items()},
             "hsp": hsp_status,
             "mcp": mcp_status,
+            "metrics": metrics,
         }
 
     async def reload_llm(self, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:

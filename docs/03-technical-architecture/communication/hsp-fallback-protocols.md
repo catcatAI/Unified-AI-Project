@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides an overview of the `fallback_protocols.py` module, located at `src/hsp/fallback/fallback_protocols.py`. This module implements a robust and flexible fallback communication system for the AI, designed to ensure message delivery even when the primary Heterogeneous Service Protocol (HSP) communication channel (e.g., MQTT) is unavailable.
+This document provides an overview of the `fallback_protocols.py` module, located at `apps/backend/src/hsp/fallback/fallback_protocols.py`. This module implements a robust and flexible fallback communication system for the AI, designed to ensure message delivery even when the primary Heterogeneous Service Protocol (HSP) communication channel (e.g., MQTT) is unavailable.
 
 ## Purpose
 
