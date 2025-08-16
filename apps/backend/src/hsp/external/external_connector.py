@@ -39,7 +39,21 @@ class ExternalConnector:
             logger.error(f"Failed to connect to MQTT broker: {e}", exc_info=True)
 
     async def disconnect(self):
-        await self.mqtt_client.disconnect()
+        if not self.is_connected:
+            logger.debug("ExternalConnector already disconnected, skipping")
+            return
+            
+        try:
+            # Check if the mqtt_client and its transport are still valid
+            if (hasattr(self.mqtt_client, '_transport') and 
+                self.mqtt_client._transport is not None):
+                await self.mqtt_client.disconnect()
+            else:
+                logger.debug("MQTT client transport already closed, marking as disconnected")
+                self.is_connected = False
+        except Exception as e:
+            logger.warning(f"Error during MQTT disconnect (likely already closed): {e}")
+            self.is_connected = False
 
     async def publish(self, topic: str, payload: str, qos: int = 1):
         logger.debug(f"ExternalConnector.publish: topic={topic}, payload_type={type(payload)}, qos={qos}")
