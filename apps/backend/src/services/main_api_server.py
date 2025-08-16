@@ -154,14 +154,34 @@ async def get_hot_status(services=Depends(get_services)) -> HotStatusResponse:
 
 @app.get("/api/v1/hsp/services")
 async def list_hsp_services(services=Depends(get_services)) -> List[HSPServiceDiscoveryResponse]:
-    # services = get_services()
+    print(f"DEBUG: list_hsp_services called")
+    print(f"DEBUG: services type: {type(services)}")
+    print(f"DEBUG: services keys: {list(services.keys()) if hasattr(services, 'keys') else 'N/A'}")
+    
     sdm = services.get("service_discovery")
-    if not sdm:
+    print(f"DEBUG: sdm = {type(sdm)}")
+    
+    if hasattr(sdm, '_mock_name'):
+        print(f"DEBUG: sdm is a mock: {getattr(sdm, '_mock_name', 'Unknown')}")
+    else:
+        print(f"DEBUG: sdm is NOT a mock")
+    
+    # Important: only treat as missing when it's actually None (MagicMock may be falsy unexpectedly)
+    if sdm is None:
+        print("DEBUG: No service_discovery found (is None), returning empty list")
         return []
-    # 兼容同步或异步的 get_all_capabilities
+
+    print(f"DEBUG: Calling sdm.get_all_capabilities()")
     caps = sdm.get_all_capabilities()
+    print(f"DEBUG: get_all_capabilities returned: {type(caps)}")
+    
+    # 兼容同步或异步的 get_all_capabilities
     if hasattr(caps, '__await__'):
+        print("DEBUG: Awaiting caps")
         caps = await caps
+        
+    print(f"DEBUG: Final caps: {caps}")
+    
     normalized: List[HSPServiceDiscoveryResponse] = []
     for cap in caps or []:
         # cap could be dict-like; use get attr or item
@@ -177,6 +197,8 @@ async def list_hsp_services(services=Depends(get_services)) -> List[HSPServiceDi
             supported_interfaces=get_val("supported_interfaces") or [],
             metadata=get_val("metadata") or {},
         ))
+    
+    print(f"DEBUG: Returning {len(normalized)} normalized services")
     return normalized
 
 @app.post("/api/v1/hsp/tasks")
@@ -188,7 +210,7 @@ async def request_hsp_task(body: HSPTaskRequestInput, services=Depends(get_servi
 
     # Validate capability exists
     found = []
-    if sdm:
+    if sdm is not None:
         found_caps = sdm.find_capabilities(capability_id_filter=body.target_capability_id)
         if hasattr(found_caps, '__await__'):
             found_caps = await found_caps
@@ -220,7 +242,7 @@ async def request_hsp_task(body: HSPTaskRequestInput, services=Depends(get_servi
         }
 
     # Send request via HSP connector if available
-    if hsp_connector and hasattr(hsp_connector, "send_task_request"):
+    if hsp_connector is not None and hasattr(hsp_connector, "send_task_request"):
         send_req = hsp_connector.send_task_request(payload, recipient_ai_id=None, envelope=None)  # mocked to trigger callbacks
         if hasattr(send_req, '__await__'):
             await send_req

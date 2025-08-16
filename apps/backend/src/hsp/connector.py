@@ -128,6 +128,63 @@ class HSPConnector:
         self.internal_bus.subscribe("hsp.external.task_result", self._dispatch_task_result_to_callbacks)
         self.internal_bus.subscribe("hsp.external.acknowledgement", self._dispatch_acknowledgement_to_callbacks) # New subscription
 
+    # --- Test compatibility properties ---
+    @property
+    def mqtt_client(self):
+        """Provides access to the underlying MQTT client for test compatibility."""
+        return self.external_connector.mqtt_client
+    
+    @mqtt_client.setter
+    def mqtt_client(self, value):
+        """Allows tests to set the mock MQTT client."""
+        self.external_connector.mqtt_client = value
+    
+    @property
+    def subscribed_topics(self):
+        """Provides access to subscribed topics for test compatibility."""
+        return getattr(self.external_connector, 'subscribed_topics', set())
+    
+    @property
+    def on_message(self):
+        """Provides message callback for test compatibility."""
+        # Tests expect signature: on_message(client, topic, payload, qos, properties)
+        # MessageBridge.handle_external_message expects: handle_external_message(topic, message)
+        async def test_compatible_on_message(client, topic, payload, qos, properties):
+            topic_str = topic.decode() if isinstance(topic, (bytes, bytearray)) else topic
+            payload_str = payload.decode() if isinstance(payload, (bytes, bytearray)) else payload
+            await self.external_connector.on_message_callback(topic_str, payload_str)
+        return test_compatible_on_message
+
+    @on_message.setter  
+    def on_message(self, callback):
+        """Allows setting message callback for test compatibility."""
+        # Wrap a test-provided callback (client, topic, payload, qos, properties)
+        async def wrapper(topic, message):
+            await callback(None, topic, message, 1, None)
+        self.external_connector.on_message_callback = wrapper
+    
+    # --- Backward compatibility methods ---
+    def on_fact_received(self, callback):
+        """Backward compatibility method for registering fact callbacks."""
+        self.register_on_fact_callback(callback)
+        
+    def on_command_received(self, callback):
+        """Backward compatibility method for registering command callbacks (maps to task_request)."""
+        self.register_on_task_request_callback(callback)
+        
+    def on_connect_callback(self, callback):
+        """Backward compatibility method for registering connect callbacks.""" 
+        self.register_on_connect_callback(callback)
+        
+    def on_disconnect_callback(self, callback):
+        """Backward compatibility method for registering disconnect callbacks."""
+        self.register_on_disconnect_callback(callback)
+
+    async def subscribe(self, topic: str, qos: int = 1):
+        """Direct MQTT subscription for test compatibility."""
+        if hasattr(self.external_connector, 'subscribe'):
+            await self.external_connector.subscribe(topic, qos)
+
     async def connect(self):
         if self.mock_mode:
             self.logger.info("HSPConnector: Mock connect successful.")
@@ -175,15 +232,30 @@ class HSPConnector:
             self.logger.info("HSPConnector: Mock disconnect successful.")
             self.is_connected = False
         else:
-            await self.external_connector.disconnect()
-            self.is_connected = self.external_connector.is_connected
+            try:
+                await self.external_connector.disconnect()
+            except Exception as e:
+                self.logger.warning(f"HSPConnector: external disconnect raised (likely already closed): {e}")
+            finally:
+                # Reflect underlying state or force false
+                try:
+                    self.is_connected = bool(getattr(self.external_connector, 'is_connected', False))
+                except Exception:
+                    self.is_connected = False
 
         if self.fallback_manager and self.fallback_initialized:
-            await self.fallback_manager.shutdown()
-            self.fallback_initialized = False
+            try:
+                await self.fallback_manager.shutdown()
+            except Exception as e:
+                self.logger.warning(f"HSPConnector: fallback shutdown error: {e}")
+            finally:
+                self.fallback_initialized = False
 
         for callback in self._disconnect_callbacks:
-            await callback()
+            try:
+                await callback()
+            except Exception as e:
+                self.logger.warning(f"HSPConnector: disconnect callback error: {e}")
 
     async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
         logging.info(f"HSPConnector: publish_message called. self.external_connector.publish is {type(self.external_connector.publish)}")
@@ -786,23 +858,23 @@ class HSPConnector:
         return status
 
     async def health_check(self) -> Dict[str, Any]:
-        """健康檢查"""
+        """健康检查"""
         health = {
             "hsp_healthy": False,
             "fallback_healthy": False,
             "overall_healthy": False
         }
         
-        # 檢查HSP健康狀態
+        # 检查HSP健康状态
         if self.hsp_available and self.is_connected:
             try:
-                # 可以添加實際的HSP健康檢查邏輯
+                # 可以添加实际的健康检查逻辑
                 health["hsp_healthy"] = True
             except:
                 health["hsp_healthy"] = False
                 self.hsp_available = False
         
-        # 檢查fallback健康狀態
+        # 检查fallback健康状态
         if self.fallback_manager:
             try:
                 fallback_status = self.fallback_manager.get_status()
@@ -835,7 +907,7 @@ class HSPConnector:
         self.logger.info("Post-connection synchronization complete.")
 
     async def _handle_hsp_connection_error(self, error: Exception, attempt: int):
-        """統一 HSP 連接錯誤處理機制"""
+        """统一 HSP 连接错误处理机制"""
         error_message = f"HSP connection error (attempt {attempt}): {error}"
         self.logger.error(error_message)
         raise HSPConnectionError(error_message)

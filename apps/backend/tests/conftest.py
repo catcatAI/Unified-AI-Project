@@ -213,13 +213,128 @@ def mock_core_services():
     from src.core_ai.dialogue.dialogue_manager import DialogueManager
     from src.core_ai.dialogue.project_coordinator import ProjectCoordinator # Import ProjectCoordinator
     from src.core_ai.personality.personality_manager import PersonalityManager # Import PersonalityManager
+    
+    # Create mock service discovery that matches MockSDM behavior and provides Mock tracking
+    from unittest.mock import AsyncMock
+    
+    # Create the actual mock behavior instance
+    class MockSDMBehavior:
+        def __init__(self):
+            self._mock_sdm_capabilities_store = {}
+
+        async def process_capability_advertisement(self, payload, sender_ai_id, envelope):
+            try:
+                from src.hsp.types import HSPCapabilityAdvertisementPayload
+                from datetime import datetime, timezone
+                
+                if isinstance(payload, dict):
+                    if 'availability_status' not in payload:
+                        raise ValueError(f"Missing required field: availability_status")
+                    processed_payload = HSPCapabilityAdvertisementPayload(**payload)
+                elif hasattr(payload, '__getitem__'):  # TypedDict-like
+                    processed_payload = payload
+                else:
+                    logging.error(f"Invalid payload type: {type(payload)}")
+                    return
+                capability_id = processed_payload['capability_id']
+                self._mock_sdm_capabilities_store[capability_id] = (processed_payload, datetime.now(timezone.utc))
+            except Exception as e:
+                logging.error(f"Failed to process capability advertisement: {e}")
+
+        async def find_capabilities(self, capability_id_filter=None, capability_name_filter=None, tags_filter=None, min_trust_score=None, sort_by_trust=False):
+            results = []
+            for cap_id, (payload, last_seen) in self._mock_sdm_capabilities_store.items():
+                if capability_id_filter and cap_id != capability_id_filter:
+                    continue
+                payload_name = payload.get('name')
+                if capability_name_filter and payload_name != capability_name_filter:
+                    continue
+                payload_tags = payload.get('tags', [])
+                if tags_filter and not all(tag in payload_tags for tag in tags_filter):
+                    continue
+                results.append(payload)
+            return results
+
+        async def get_all_capabilities(self):
+            results = []
+            for cap_id, (payload, _) in self._mock_sdm_capabilities_store.items():
+                results.append(payload)
+            return results
+
+    # Create the behavior instance
+    mock_behavior = MockSDMBehavior()
+    
+    # Create an AsyncMock that delegates to the behavior instance
+    mock_service_discovery = AsyncMock()
+    
+    # Provide a sync wrapper for process_capability_advertisement so tests that don't await it still work
+    from unittest.mock import MagicMock
+    def _process_capability_advertisement_sync(payload, sender_ai_id, envelope):
+        try:
+            from src.hsp.types import HSPCapabilityAdvertisementPayload
+            from datetime import datetime, timezone
+            
+            if isinstance(payload, dict):
+                if 'availability_status' not in payload:
+                    raise ValueError(f"Missing required field: availability_status")
+                processed_payload = HSPCapabilityAdvertisementPayload(**payload)
+            elif hasattr(payload, '__getitem__'):  # TypedDict-like or dict-like
+                processed_payload = payload
+            else:
+                logging.error(f"Invalid payload type: {type(payload)}")
+                return
+            capability_id = processed_payload['capability_id']
+            mock_behavior._mock_sdm_capabilities_store[capability_id] = (processed_payload, datetime.now(timezone.utc))
+        except Exception as e:
+            logging.error(f"Failed to process capability advertisement (sync): {e}")
+    
+    # Assign mocks
+    mock_service_discovery.process_capability_advertisement = MagicMock(side_effect=_process_capability_advertisement_sync)
+    mock_service_discovery.find_capabilities.side_effect = mock_behavior.find_capabilities
+    mock_service_discovery.get_all_capabilities.side_effect = mock_behavior.get_all_capabilities
+    
+    # Store a reference to the behavior for access if needed
+    mock_service_discovery._mock_behavior = mock_behavior
+
+    # Create mock HAM manager that matches MockHAMMemoryManager behavior
+    class MockHAMManager:
+        def __init__(self):
+            self.memory_store = {}
+            self._next_id = 1
+
+        def store_experience(self, raw_data: str, data_type: str, metadata):
+            from datetime import datetime, timezone
+            mem_id = f"mem_{self._next_id:06d}"
+            self._next_id += 1
+            record_pkg = {
+                "raw_data": raw_data,
+                "data_type": data_type,
+                "metadata": metadata,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "mem_id": mem_id
+            }
+            self.memory_store[mem_id] = record_pkg
+            return mem_id
+
+        def query_memory(self, query_params):
+            results = []
+            for mem_id, record_pkg in self.memory_store.items():
+                match = True
+                for key, value in query_params.items():
+                    if key == "hsp_correlation_id":
+                        if record_pkg.get("metadata", {}).get("hsp_correlation_id") != value:
+                            match = False
+                            break
+                if match:
+                    results.append(record_pkg)
+            return results
+
+    # Remove stray reassignment that overrides our AsyncMock and causes NameError
+    # mock_service_discovery = MockServiceDiscovery()
+    mock_ham_manager = MockHAMManager()
 
     # Mock individual services
-    mock_ham_manager = MagicMock(spec='src.core_ai.memory.ham_memory_manager.HAMMemoryManager')
     mock_llm_interface = MagicMock(spec='src.services.multi_llm_service.MultiLLMService')
-    mock_service_discovery = MagicMock(spec='src.core_ai.service_discovery.service_discovery_module.ServiceDiscoveryModule')
-    mock_service_discovery.get_all_capabilities = AsyncMock()
-    mock_service_discovery.process_capability_advertisement = MagicMock()
     mock_trust_manager = MagicMock(spec='src.core_ai.trust_manager.trust_manager_module.TrustManager')
     
     # Explicitly mock PersonalityManager methods
@@ -254,8 +369,9 @@ def mock_core_services():
 
     # Configure mocks as needed for common scenarios
     mock_llm_interface.generate_response = AsyncMock(return_value='[{"capability_needed": "test_capability_v1", "task_parameters": {"param": "value"}, "task_description": "Test task"}]')
-    mock_ham_manager.store_experience = AsyncMock()
-    mock_service_discovery.find_capabilities = AsyncMock(return_value=[])
+    # Keep store_experience as sync if defined on mock_ham_manager
+    # (Do not override with AsyncMock)
+    # mock_ham_manager.store_experience = AsyncMock() if not hasattr(mock_ham_manager, 'store_experience') else mock_ham_manager.store_experience
     mock_hsp_connector.advertise_capability = AsyncMock()
     mock_hsp_connector.send_task_result = AsyncMock()
     mock_hsp_connector.send_task_request = AsyncMock(return_value="mock_correlation_id")
@@ -323,7 +439,8 @@ def client_with_overrides(mock_core_services):
     This allows for isolated testing of API endpoints.
     """
     from fastapi.testclient import TestClient
-    from src.services.main_api_server import app, get_services
+    from src.services.main_api_server import app
+    from src.core_services import get_services
 
     # Backup original dependencies and overrides
     original_get_services = app.dependency_overrides.get(get_services)
@@ -331,7 +448,8 @@ def client_with_overrides(mock_core_services):
     # Apply the mock overrides
     app.dependency_overrides[get_services] = lambda: mock_core_services
 
-    with TestClient(app) as client:
+    client = TestClient(app)
+    try:
         yield (
             client,
             mock_core_services["service_discovery"],
@@ -339,6 +457,12 @@ def client_with_overrides(mock_core_services):
             mock_core_services["ham_manager"],
             mock_core_services["hsp_connector"],
         )
+    finally:
+        # Ensure the client is explicitly closed after the test completes
+        try:
+            client.close()
+        except Exception:
+            pass
 
     # Restore original dependencies
     if original_get_services:

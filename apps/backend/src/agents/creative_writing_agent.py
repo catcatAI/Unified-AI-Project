@@ -43,7 +43,9 @@ class CreativeWritingAgent(BaseAgent):
         super().__init__(agent_id=agent_id, capabilities=capabilities)
 
         # This agent directly uses the LLMInterface initialized in its services.
-        self.llm_interface: MultiLLMService = self.services.get("llm_interface")
+        # Be defensive in case tests patch initialize_services to return None.
+        services = getattr(self, "services", None)
+        self.llm_interface: MultiLLMService = services.get("llm_interface") if isinstance(services, dict) else None
         self._load_prompts()
 
     def _load_prompts(self):
@@ -104,7 +106,7 @@ class CreativeWritingAgent(BaseAgent):
 
     def _create_polish_text_prompt(self, params: Dict[str, Any]) -> str:
         text = params.get('text_to_polish', '')
-        prompt_template = self.prompts.get('polish_text', "Polish the following text: {text}")
+        prompt_template = self.prompts.get('polish_text', "Please proofread and polish the following text for grammar, style, and clarity. Return only the improved text: {text}")
         return prompt_template.format(text=text)
 
     def _create_success_payload(self, request_id: str, result: Any) -> HSPTaskResultPayload:
@@ -120,6 +122,7 @@ class CreativeWritingAgent(BaseAgent):
             status="failure",
             error_details={"error_code": error_code, "error_message": error_message}
         )
+
 
 if __name__ == '__main__':
     async def main():
