@@ -101,8 +101,8 @@ async def test_hsp_connector_subscribe_and_receive(hsp_connector_instance, mock_
     topic = "hsp/test/subscription"
     received_messages = []
 
-    def mock_callback(payload, topic, envelope):
-        received_messages.append((payload, topic, envelope))
+    def mock_callback(payload, sender_ai_id, envelope):
+        received_messages.append((payload, sender_ai_id, envelope))
 
     hsp_connector_instance.on_fact_received(mock_callback)
 
@@ -154,9 +154,9 @@ async def test_hsp_connector_subscribe_and_receive(hsp_connector_instance, mock_
     )
 
     assert len(received_messages) == 1
-    received_payload, received_topic, received_envelope = received_messages[0]
+    received_payload, received_sender, received_envelope = received_messages[0]
     assert received_payload == test_payload
-    assert received_topic == topic
+    assert received_sender == test_envelope["sender_ai_id"]
     assert received_envelope == test_envelope
 
 @pytest.mark.asyncio
@@ -209,10 +209,10 @@ async def test_hsp_connector_ack_sending(hsp_connector_instance, mock_mqtt_clien
     ack_topic = ack_call_args[0]
     ack_payload = json.loads(ack_call_args[1])
 
-    assert ack_topic.startswith("hsp/ack/")
+    assert ack_topic.startswith("hsp/acks/")
     assert ack_payload["message_type"] == "HSP::Acknowledgement_v0.1"
     assert ack_payload["correlation_id"] == test_envelope["message_id"]
-    assert ack_call_kwargs['qos'] == 0 # ACKs are typically QoS 0
+    assert ack_call_kwargs['qos'] == 1 # ACKs use default QoS 1
 
 @pytest.mark.asyncio
 async def test_hsp_connector_on_connect_callback(hsp_connector_instance):
@@ -282,7 +282,7 @@ async def test_hsp_connector_register_specific_callbacks(hsp_connector_instance)
         mock_mqtt_message_fact.qos,
         mock_mqtt_message_fact.properties
     )
-    fact_callback.assert_called_once_with(fact_payload, "hsp/fact/test", fact_envelope)
+    fact_callback.assert_called_once_with(fact_payload, fact_envelope["sender_ai_id"], fact_envelope)
     command_callback.assert_not_called()
 
     # Simulate a command message

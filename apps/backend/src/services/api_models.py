@@ -30,32 +30,21 @@ class HSPTaskRequestOutput(BaseModel):
     target_capability_id: str
     error: Optional[str] = None
 
-class HSPTaskStatusOutput(BaseModel):
-    correlation_id: str
-    status: str # pending, completed, failed, unknown_or_expired
-    message: Optional[str] = None
-    result_payload: Optional[Dict[str, Any]] = None
-    error_details: Optional[Dict[str, Any]] = None
-
-# --- Atlassian API Models ---
+# --- Atlassian Models ---
 class AtlassianConfigModel(BaseModel):
-    domain: str
-    userEmail: str
-    apiToken: str
-    cloudId: str
+    base_url: str
+    username: str
+    api_token: str
 
 class ConfluencePageModel(BaseModel):
-    spaceKey: str
+    space_key: str
     title: str
     content: str
-    parentId: Optional[str] = None
 
 class JiraIssueModel(BaseModel):
-    projectKey: str
+    project_key: str
     summary: str
     description: str
-    issueType: str = "Task"
-    priority: str = "Medium"
 
 class RovoDevTaskModel(BaseModel):
     capability: str
@@ -71,6 +60,21 @@ class HotStatusResponse(BaseModel):
     hsp: Dict[str, Any]
     mcp: Dict[str, Any]
     metrics: Dict[str, Any]
+
+# --- Health Models ---
+class HealthResponse(BaseModel):
+    status: str
+    timestamp: str
+    services_initialized: Dict[str, bool]
+    components: Dict[str, Any] = {}
+
+# --- Readiness Models ---
+class ReadinessResponse(BaseModel):
+    ready: bool
+    timestamp: str
+    services_initialized: Dict[str, bool]
+    signals: Dict[str, Any] = {}
+    reason: Optional[str] = None
 
 # --- HSP Service Discovery Models ---
 class HSPServiceDiscoveryResponse(BaseModel):

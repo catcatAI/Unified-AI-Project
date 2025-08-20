@@ -230,7 +230,7 @@ class MockHSPPeer:
 
         if response_payload:
             print(f"  MockPeer: Sending TaskResult (status: {response_payload.get('status')}) to '{reply_to_address}' for CorrID '{correlation_id}'.")
-            self.connector.send_task_result(response_payload, reply_to_address, correlation_id)
+            await self.connector.send_task_result(response_payload, reply_to_address, correlation_id)
 
 
     async def run_loop(self):
@@ -244,16 +244,15 @@ class MockHSPPeer:
             if fact_counter <= env_counter:
                 fact_counter += 1
                 print(f"\n[MockPeer-{self.ai_id}] Periodic action: Publishing sample fact {fact_counter}...")
-                self.publish_sample_fact(fact_counter)
+                await self.publish_sample_fact(fact_counter)
             elif env_counter < fact_counter : # Publish env state if fewer env states have been sent
                 env_counter += 1
                 print(f"\n[MockPeer-{self.ai_id}] Periodic action: Publishing sample environment state {env_counter}...")
-                self.publish_sample_environmental_state(env_counter)
-            # else: # Could add another type of periodic message or just wait for next cycle
-            #    pass
+                await self.publish_sample_environmental_state(env_counter)
+            # else: pass
 
 
-    def publish_sample_fact(self, counter: int):
+    async def publish_sample_fact(self, counter: int):
         if not self.connector.is_connected:
             return
 
@@ -402,58 +401,63 @@ class MockHSPPeer:
         topic = "hsp/environment/peer_updates" # CLI peer doesn't subscribe to this by default
         print(f"[MockPeer-{self.ai_id}] Publishing sample environmental state to '{topic}' (ID: {payload['update_id']})")
 
-        envelope = self.connector._build_hsp_envelope(
-            payload=payload,
-            message_type="HSP::EnvironmentalState_v0.1",
-            recipient_ai_id_or_topic=topic,
-            communication_pattern="publish"
-        )
-        self.connector._send_hsp_message(envelope, mqtt_topic=topic)
+        envelope: HSPMessageEnvelope = { # type: ignore
+            "hsp_envelope_version": "0.1",
+            "message_id": str(uuid.uuid4()),
+            "correlation_id": None,
+            "sender_ai_id": self.ai_id,
+            "recipient_ai_id": "all",
+            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "message_type": "HSP::EnvironmentalState_v0.1",
+            "protocol_version": "0.1",
+            "communication_pattern": "publish",
+            "security_parameters": None,
+            "qos_parameters": {"requires_ack": False, "priority": "low"},
+            "routing_info": None,
+            "payload_schema_uri": "file:///HSP_EnvironmentalState_v0.1.schema.json",
+            "payload": payload
+        }
+        await self.connector.publish_message(topic, envelope, qos=1)
 
 
     async def start(self):
         print(f"[MockPeer-{self.ai_id}] Attempting to connect...")
-        if self.connector.connect(): # This starts the MQTT client's own network loop thread
-            await asyncio.sleep(1) # Wait for connection callback
+        await self.connector.connect()
+        # Allow a brief moment for any async post-connect initialization
+        await asyncio.sleep(0.2)
 
-            if self.connector.is_connected:
-                print(f"[MockPeer-{self.ai_id}] Successfully connected to MQTT broker.")
+        if self.connector.is_connected:
+            print(f"[MockPeer-{self.ai_id}] Successfully connected to MQTT broker.")
 
-                # 1. Publish capabilities
-                cap_topic = "hsp/capabilities/advertisements/general" # A common topic for all advertisements
-                print(f"[MockPeer-{self.ai_id}] Publishing capabilities to '{cap_topic}'...")
-                for cap_id, cap_payload in self.mock_capabilities.items():
-                    self.connector.publish_capability_advertisement(cap_payload, topic=cap_topic)
-                    print(f"  MockPeer: Advertised capability '{cap_id}'.")
+            # 1. Publish capabilities
+            print(f"[MockPeer-{self.ai_id}] Publishing capabilities...")
+            for cap_id, cap_payload in self.mock_capabilities.items():
+                await self.connector.publish_capability_advertisement(cap_payload)
+                print(f"  MockPeer: Advertised capability '{cap_id}'.")
 
-                # 2. Subscribe to relevant topics
-                topics_to_subscribe = [
-                    "hsp/knowledge/facts/#", # All facts
-                    f"hsp/requests/{self.ai_id}/#", # Task requests specifically for this mock AI
-                    # Add other general topics if needed, e.g. specific fact topics it might react to
-                ]
-                print(f"[MockPeer-{self.ai_id}] Subscribing to topics: {topics_to_subscribe}")
-                for topic in topics_to_subscribe:
-                    self.connector.subscribe(topic)
+            # 2. Subscribe to relevant topics
+            topics_to_subscribe = [
+                "hsp/knowledge/facts/#", # All facts
+                f"hsp/requests/{self.ai_id}/#", # Task requests specifically for this mock AI
+            ]
+            print(f"[MockPeer-{self.ai_id}] Subscribing to topics: {topics_to_subscribe}")
+            for topic in topics_to_subscribe:
+                await self.connector.subscribe(topic)
 
-                print(f"[MockPeer-{self.ai_id}] Subscriptions complete. Listening...")
+            print(f"[MockPeer-{self.ai_id}] Subscriptions complete. Listening...")
 
-                # Start a task for periodic publishing (facts, heartbeats, etc.)
-                asyncio.create_task(self.run_loop())
+            # Start a task for periodic publishing (facts, heartbeats, etc.)
+            asyncio.create_task(self.run_loop())
 
-                # Keep the main start task alive to listen (or until KeyboardInterrupt)
-                # The actual listening happens in the MQTT client's thread.
-                # This loop is just to keep the script running.
-                while True:
-                    await asyncio.sleep(1)
-            else:
-                print(f"[MockPeer-{self.ai_id}] Failed to establish connection after connect() call.")
+            # Keep the main start task alive
+            while True:
+                await asyncio.sleep(1)
         else:
-            print(f"[MockPeer-{self.ai_id}] Initial MqttClient.connect() call failed or did not initiate connection.")
+            print(f"[MockPeer-{self.ai_id}] Failed to establish connection after connect() call.")
 
-    def stop(self):
+    async def stop(self):
         print(f"[MockPeer-{self.ai_id}] Stopping...")
-        self.connector.disconnect()
+        await self.connector.disconnect()
         print(f"[MockPeer-{self.ai_id}] Disconnected.")
 
 
@@ -471,7 +475,7 @@ async def main_async_runner():
         print(f"[MockPeer-{peer_id}] An error occurred: {e}")
     finally:
         print(f"[MockPeer-{peer_id}] Shutting down...")
-        peer.stop()
+        await peer.stop()
         # Allow time for MQTT disconnect to complete
         await asyncio.sleep(1)
         print(f"[MockPeer-{peer_id}] Exited.")
@@ -490,4 +494,3 @@ if __name__ == "__main__":
         sys.exit(1)
 
     asyncio.run(main_async_runner())
-```

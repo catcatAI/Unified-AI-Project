@@ -350,6 +350,9 @@ catcatAI 組織
 | 每日勝利摘要 | (中) | `docs/06-project-management/status/daily-wins.md` | 每日勝利記錄 | 🟡 中 | ✅ 活躍 |
 
 #### 🚧 開發與維護文檔
+- Observability Guide — `docs/05-development/observability-guide.md`
+- Hot Reload & Drain — `docs/05-development/hot-reload-and-drain.md` (endpoints & examples)
+
 | 文檔名稱 | 語言 | 路徑 | 描述 | 時效性 | 維護狀態 |
 |---|---|---|---|---|---|
 | **舊版專案摘要** | (中) | `docs/06-project-management/reports/legacy-project-summary.md` | **描述專案早期狀態的歷史摘要** | 🟡 **歷史** | 🟢 **高** |
