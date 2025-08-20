@@ -6,6 +6,7 @@ import os
 import sys
 import asyncio
 import uuid
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
@@ -93,7 +94,7 @@ async def handle_query(args):
     print(f"AI: {response_text}")
 
 
-def handle_publish_fact(args):
+async def handle_publish_fact(args):
     services = get_services()
     hsp_connector = services.get("hsp_connector")
     # The AI ID used for publishing should be the one this CLI instance was initialized with.
@@ -128,11 +129,53 @@ def handle_publish_fact(args):
     learning_manager_instance = services.get("learning_manager")
     topic = args.topic or (learning_manager_instance.default_hsp_fact_topic if learning_manager_instance else "hsp/knowledge/facts/cli_manual") #type: ignore
 
-    success = hsp_connector.publish_fact(hsp_payload, topic)
+    # Optional: wait for internal echo on hsp.internal.fact
+    _echo_cb = None
+    echo_event: Optional[asyncio.Event] = None
+    echoed_envelope: Dict[str, Any] = {}
+    if getattr(args, 'wait_echo', False):
+        echo_event = asyncio.Event()
+        def _echo_cb(envelope: HSPMessageEnvelope):
+            try:
+                payload = envelope.get("payload") or {}
+                if isinstance(payload, dict) and payload.get("id") == fact_id:
+                    # Capture the envelope and signal
+                    echoed_envelope["envelope"] = envelope
+                    echo_event.set()
+            except Exception:
+                # Non-fatal: just ignore echo parsing issues
+                pass
+        # Subscribe before publishing to avoid missing the echo
+        try:
+            hsp_connector.internal_bus.subscribe("hsp.internal.fact", _echo_cb)
+        except Exception:
+            # If internal bus subscription fails, continue without echo waiting
+            _echo_cb = None
+            echo_event = None
+
+    success = await hsp_connector.publish_fact(hsp_payload, topic)
     if success:
         print(f"CLI: Manual fact '{fact_id}' published to topic '{topic}'.")
     else:
         print(f"CLI: Failed to publish manual fact to topic '{topic}'.")
+
+    # If echo waiting enabled, await the event with timeout and then unsubscribe
+    if getattr(args, 'wait_echo', False) and echo_event is not None and _echo_cb is not None:
+        try:
+            timeout_sec = getattr(args, 'echo_timeout', 3.0) or 3.0
+            await asyncio.wait_for(echo_event.wait(), timeout=timeout_sec)
+            env = echoed_envelope.get("envelope") or {}
+            payload = (env.get("payload") if isinstance(env, dict) else None) or {}
+            print("CLI: Received internal echo for published fact:")
+            print(f"  Echo MessageID: {env.get('message_id')} | Sender: {env.get('sender_ai_id')}")
+            print(f"  Echo Fact ID: {payload.get('id')} | Statement: {payload.get('statement_nl') or payload.get('statement_structured')}")
+        except asyncio.TimeoutError:
+            print(f"CLI: Timed out waiting for internal echo of fact '{fact_id}' after {getattr(args, 'echo_timeout', 3.0) or 3.0} seconds.")
+        finally:
+            try:
+                hsp_connector.internal_bus.unsubscribe("hsp.internal.fact", _echo_cb)
+            except Exception:
+                pass
 
 
 async def main_cli_logic():
@@ -147,6 +190,11 @@ async def main_cli_logic():
     publish_parser.add_argument("fact_statement", type=str, help="The statement of the fact")
     publish_parser.add_argument("--confidence", type=float, default=0.9, help="Confidence score (0.0-1.0)")
     publish_parser.add_argument("--topic", type=str, help="HSP topic to publish to")
+    # New: optional echo/wait flags
+    publish_parser.add_argument("--echo", "--wait", dest="wait_echo", action="store_true", help="Wait for internal echo (hsp.internal.fact) and print it")
+    publish_parser.add_argument("--echo-timeout", type=float, default=3.0, help="Seconds to wait for internal echo (default: 3.0)")
+    # New: test-friendly flag to skip post-command sleep
+    publish_parser.add_argument("--no-post-sleep", action="store_true", help="Skip post-command listening sleep (for tests)")
     publish_parser.set_defaults(func=handle_publish_fact)
 
     print(f"--- Unified-AI-Project CLI (Instance AI ID will be: {cli_ai_id}) ---")
@@ -192,7 +240,10 @@ async def main_cli_logic():
             # If it was not a query, keep alive briefly for HSP messages
             if args.command != "query":
                  print("\nCLI: Task complete. Listening for HSP messages for a few seconds (Ctrl+C to exit)...")
-                 await asyncio.sleep(10)
+-                 await asyncio.sleep(10)
++                 if not getattr(args, 'no_post_sleep', False):
++                     await asyncio.sleep(10)
+
         else: # Should be caught by len(sys.argv) check if truly no command
             parser.print_help(sys.stderr)
 

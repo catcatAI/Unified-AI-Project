@@ -34,15 +34,17 @@ class TestDependencyManager(unittest.TestCase):
                 }
             }
         }
-        # Use mock_open to simulate reading the YAML config file
+        # Use mock_open to simulate reading the YAML config file when needed
         self.mock_yaml_read = mock_open(read_data=yaml.dump(self.test_config))
 
     @patch('importlib.import_module')
     def test_primary_dependency_available(self, mock_import_module):
         """Test that a primary dependency is loaded correctly."""
         mock_import_module.return_value = MagicMock()
-        with patch('builtins.open', self.mock_yaml_read):
-            manager = DependencyManager()
+        # Avoid file IO: create manager then inject config
+        manager = DependencyManager(config_path="non_existent_path.yaml")
+        manager._config = self.test_config
+        manager._setup_dependency_statuses()
 
         self.assertTrue(manager.is_available('normal_lib'))
         status = manager.get_status('normal_lib')
@@ -58,8 +60,9 @@ class TestDependencyManager(unittest.TestCase):
         # Simulate ImportError for the primary, but success for the fallback
         mock_import_module.side_effect = [ImportError("No module named normal_lib"), MagicMock()]
 
-        with patch('builtins.open', self.mock_yaml_read):
-            manager = DependencyManager()
+        manager = DependencyManager(config_path="non_existent_path.yaml")
+        manager._config = self.test_config
+        manager._setup_dependency_statuses()
 
         self.assertTrue(manager.is_available('normal_lib'))
         status = manager.get_status('normal_lib')
@@ -74,8 +77,9 @@ class TestDependencyManager(unittest.TestCase):
     @patch('importlib.import_module', side_effect=ImportError("Module not found"))
     def test_all_dependencies_unavailable(self, mock_import_module):
         """Test behavior when a dependency and its fallbacks are all unavailable."""
-        with patch('builtins.open', self.mock_yaml_read):
-            manager = DependencyManager()
+        manager = DependencyManager(config_path="non_existent_path.yaml")
+        manager._config = self.test_config
+        manager._setup_dependency_statuses()
 
         self.assertFalse(manager.is_available('unavailable_lib'))
         status = manager.get_status('unavailable_lib')
@@ -87,19 +91,21 @@ class TestDependencyManager(unittest.TestCase):
     def test_import_name_mapping(self, mock_import_module):
         """Test that package names with hyphens are correctly mapped to import names."""
         mock_import_module.return_value = MagicMock()
-        with patch('builtins.open', self.mock_yaml_read):
-            manager = DependencyManager()
+        manager = DependencyManager(config_path="non_existent_path.yaml")
+        manager._config = self.test_config
+        manager._setup_dependency_statuses()
 
         self.assertTrue(manager.is_available('paho-mqtt'))
         # The manager should have tried to import 'paho.mqtt.client' based on its internal map.
         mock_import_module.assert_any_call('paho.mqtt.client')
 
-    @patch('importlib.import_module', side_effect=ImportError("Module not found"))
     @patch.dict('os.environ', {'UNIFIED_AI_ENV': 'production'})
+    @patch('importlib.import_module', side_effect=ImportError("Module not found"))
     def test_fallbacks_disabled_in_production(self, mock_import_module):
         """Test that fallbacks are not used when disabled by the environment config."""
-        with patch('builtins.open', self.mock_yaml_read):
-            manager = DependencyManager()
+        manager = DependencyManager(config_path="non_existent_path.yaml")
+        manager._config = self.test_config
+        manager._setup_dependency_statuses()
 
         self.assertFalse(manager.is_available('normal_lib'))
         status = manager.get_status('normal_lib')
@@ -110,14 +116,13 @@ class TestDependencyManager(unittest.TestCase):
 
     def test_dependency_report_generation(self):
         """Test the human-readable report generation."""
-        with patch('builtins.open', self.mock_yaml_read):
-            # Mock the internal state for a predictable report
-            manager = DependencyManager()
-            manager._dependencies = {
-                'lib_ok': DependencyStatus('lib_ok', is_available=True),
-                'lib_fallback': DependencyStatus('lib_fallback', fallback_available=True, fallback_name='fb_1'),
-                'lib_fail': DependencyStatus('lib_fail', error='Not found')
-            }
+        # Mock the internal state for a predictable report
+        manager = DependencyManager(config_path="non_existent_path.yaml")
+        manager._dependencies = {
+            'lib_ok': DependencyStatus('lib_ok', is_available=True),
+            'lib_fallback': DependencyStatus('lib_fallback', fallback_available=True, fallback_name='fb_1'),
+            'lib_fail': DependencyStatus('lib_fail', error='Not found')
+        }
 
         report = manager.get_dependency_report()
         self.assertIn("✓ Available (1):", report)

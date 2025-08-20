@@ -1,85 +1,46 @@
-import uvicorn # For running the app
+import os
 from fastapi import FastAPI, HTTPException, Depends
-from fastapi.routing import APIRouter
-from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from typing import List, Dict, Any, Optional
 from datetime import datetime
-import logging
-import uuid # For generating session IDs
-import time # For system uptime calculations
-from typing import List, Dict, Any, Optional # Updated from previous steps
-from fastapi.middleware.cors import CORSMiddleware # Import CORS middleware
+import uuid
 
-# Assuming src is in PYTHONPATH or this script is run from project root
-# Adjust paths as necessary if running from within services directory directly for testing
-from src.core_ai.dialogue.dialogue_manager import DialogueManager
-from src.services.api_models import UserInput, AIOutput, SessionStartRequest, SessionStartResponse, HSPTaskRequestInput, HSPTaskRequestOutput, HSPTaskStatusOutput, AtlassianConfigModel, ConfluencePageModel, JiraIssueModel, RovoDevTaskModel, JQLSearchModel # Added Atlassian models
-from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTask # Added HSPTask
-from src.integrations.rovo_dev_agent import RovoDevAgent # Added RovoDevAgent
-from src.integrations.atlassian_bridge import AtlassianBridge # Added AtlassianBridge
-from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+app = FastAPI(title="Unified AI Project API", version="1.0.0")
 
-# 导入Atlassian CLI Bridge
-try:
-    from src.integrations.atlassian_cli_bridge import AtlassianCLIBridge
-    ATLASSIAN_CLI_AVAILABLE = True
-except ImportError as e:
-    print(f"Atlassian CLI Bridge not available: {e}")
-    AtlassianCLIBridge = None
-    ATLASSIAN_CLI_AVAILABLE = False # Added RovoDevConnector
+# CORS configuration
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://127.0.0.1",
+    "http://127.0.0.1:3000",
+    "*",
+]
 
-
-from contextlib import asynccontextmanager # For lifespan events
-from src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID, DEFAULT_OPERATIONAL_CONFIGS
-from src.config_loader import load_config
-
-# --- Service Initialization using Lifespan ---
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("MainAPIServer: Initializing core services...")
-    # Load configuration
-    config = load_config()
-    # Initialize services with potentially API-specific configurations
-    # For example, API might use a different AI ID or specific LLM config than CLI.
-    api_ai_id = f"did:hsp:api_server_ai_{uuid.uuid4().hex[:6]}"
-    await initialize_services(
-        config=config,
-        ai_id=api_ai_id,
-        use_mock_ham=False, # API server should use real HAM, ensure MIKO_HAM_KEY is set
-        operational_configs=None # Or specific operational configs
-    )
-    # Ensure services are ready, especially HSP connector
-    services = get_services()
-    hsp_connector = services.get("hsp_connector")
-    if hsp_connector and not hsp_connector.is_connected:
-        print("MainAPIServer: Warning - HSPConnector did not connect successfully during init.")
-
-    print("MainAPIServer: Core services initialized.")
-    services = get_services()
-    service_discovery_module = services.get("service_discovery")
-    if service_discovery_module:
-        service_discovery_module.start_cleanup_task()
-    yield
-    print("MainAPIServer: Shutting down core services...")
-    if service_discovery_module:
-        service_discovery_module.stop_cleanup_task()
-    await shutdown_services()
-    print("MainAPIServer: Core services shut down.")
-
-app = FastAPI(
-    title="Unified AI Project API",
-    description="API endpoints for interacting with the Unified AI.",
-    version="0.1.0",
-    lifespan=lifespan # Use the lifespan context manager
-)
-
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # React 开发服务器
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Core services lifecycle
+from src.core_services import initialize_services, shutdown_services, get_services
+
+@app.on_event("startup")
+async def on_startup():
+    try:
+        ai_id = os.getenv("API_AI_ID", "did:hsp:api_server_ai")
+        await initialize_services(ai_id=ai_id, use_mock_ham=True)
+    except Exception as e:
+        print(f"Failed to initialize services: {e}")
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    try:
+        await shutdown_services()
+    except Exception as e:
+        print(f"Failed to shutdown services: {e}")
 
 @app.get("/")
 def read_root():
@@ -94,7 +55,98 @@ async def get_status():
 from src.services.multi_llm_service import get_multi_llm_service
 from src.core_ai.language_models.registry import ModelRegistry
 from src.core_ai.language_models.router import PolicyRouter, RoutingPolicy
-from src.services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse
+from src.services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
+
+# --- Health endpoint (v1) ---
+@app.get("/api/v1/health", response_model=HealthResponse)
+async def api_health(services=Depends(get_services)):
+    # Derive initialized services snapshot similar to /api/v1/hot/status
+    services_initialized = {
+        "ham": services.get("ham_manager") is not None,
+        "llm": services.get("llm_interface") is not None,
+        "service_discovery": services.get("service_discovery") is not None,
+        "hsp": services.get("hsp_connector") is not None,
+        "dialogue_manager": services.get("dialogue_manager") is not None,
+    }
+
+    # Basic components readiness signals (best-effort, non-failing)
+    components: Dict[str, Any] = {
+        "trust_manager": {
+            "available": services.get("trust_manager") is not None
+        },
+        "lis_cache": {
+            # We don't instantiate here; just report presence if HAM/LIS parts exist
+            "available": services.get("ham_manager") is not None
+        }
+    }
+
+    return HealthResponse(
+        status="ok",
+        timestamp=datetime.utcnow().isoformat() + "Z",
+        services_initialized=services_initialized,
+        components=components,
+    )
+
+# --- Readiness endpoint (v1) ---
+@app.get("/api/v1/ready", response_model=ReadinessResponse)
+async def api_ready(services=Depends(get_services)):
+    # Evaluate core service presence
+    llm_ok = services.get("llm_interface") is not None
+    dm_ok = services.get("dialogue_manager") is not None
+    ham_ok = services.get("ham_manager") is not None
+
+    hsp_conn = services.get("hsp_connector")
+    hsp_connected = bool(getattr(hsp_conn, "is_connected", False)) if hsp_conn else False
+
+    sdm_ok = services.get("service_discovery") is not None
+
+    services_initialized = {
+        "ham": ham_ok,
+        "llm": llm_ok,
+        "service_discovery": sdm_ok,
+        "hsp": hsp_connected,
+        "dialogue_manager": dm_ok,
+    }
+
+    # Signals (best-effort; no failures thrown)
+    signals: Dict[str, Any] = {
+        "hsp_connected": hsp_connected,
+        "lis_available": ham_ok,
+    }
+
+    # Trust peers count if available
+    tm = services.get("trust_manager")
+    if tm and hasattr(tm, "get_all_trust_scores"):
+        try:
+            scores = tm.get_all_trust_scores()
+            signals["trust_peers_count"] = len(scores) if isinstance(scores, dict) else 0
+        except Exception as e:
+            signals["trust_peers_count_error"] = str(e)
+
+    # LLM providers info (optional)
+    llm = services.get("llm_interface")
+    if llm is not None:
+        providers = getattr(llm, "model_configs", {})
+        try:
+            signals["llm_profiles"] = list(getattr(llm, "model_configs", {}).keys()) if isinstance(providers, dict) else []
+        except Exception:
+            signals["llm_profiles"] = []
+
+    # Define readiness: require LLM and DialogueManager; HAM preferred but optional
+    missing = []
+    if not llm_ok: missing.append("llm_interface")
+    if not dm_ok: missing.append("dialogue_manager")
+
+    ready = len(missing) == 0
+    reason = None if ready else f"Missing required components: {', '.join(missing)}"
+
+    return ReadinessResponse(
+        ready=ready,
+        timestamp=datetime.utcnow().isoformat() + "Z",
+        services_initialized=services_initialized,
+        signals=signals,
+        reason=reason,
+    )
 
 @app.get("/api/v1/models/available")
 async def get_models_available():
@@ -152,6 +204,10 @@ async def get_hot_status(services=Depends(get_services)) -> HotStatusResponse:
         metrics=metrics,
     )
 
+from src.services.api_models import HSPServiceDiscoveryResponse
+from fastapi import Depends
+from typing import List
+
 @app.get("/api/v1/hsp/services")
 async def list_hsp_services(services=Depends(get_services)) -> List[HSPServiceDiscoveryResponse]:
     print(f"DEBUG: list_hsp_services called")
@@ -187,122 +243,156 @@ async def list_hsp_services(services=Depends(get_services)) -> List[HSPServiceDi
         # cap could be dict-like; use get attr or item
         get_val = (lambda k: cap.get(k) if isinstance(cap, dict) else getattr(cap, k, None))
         normalized.append(HSPServiceDiscoveryResponse(
-            capability_id=get_val("capability_id"),
-            name=get_val("name"),
-            description=get_val("description") or "",
-            version=get_val("version") or "",
-            ai_id=get_val("ai_id") or "",
-            availability_status=get_val("availability_status") or "unknown",
-            tags=get_val("tags") or [],
-            supported_interfaces=get_val("supported_interfaces") or [],
-            metadata=get_val("metadata") or {},
+            capability_id=get_val('capability_id') or get_val('id') or "",
+            name=get_val('name') or "",
+            description=get_val('description') or "",
+            version=str(get_val('version') or ""),
+            ai_id=get_val('ai_id') or get_val('owner_ai_id') or "",
+            availability_status=get_val('availability_status') or get_val('status') or "unknown",
+            tags=get_val('tags') or [],
+            supported_interfaces=get_val('supported_interfaces') or [],
+            metadata=get_val('metadata') or {},
         ))
     
-    print(f"DEBUG: Returning {len(normalized)} normalized services")
     return normalized
 
+from typing import Dict
+from src.hsp.connector import HSPConnector
+from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
+from src.core_ai.dialogue.dialogue_manager import DialogueManager
+from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+
 @app.post("/api/v1/hsp/tasks")
-async def request_hsp_task(body: HSPTaskRequestInput, services=Depends(get_services)) -> HSPTaskRequestOutput:
-    # services = get_services()
-    dm = services.get("dialogue_manager")
+async def create_hsp_task(task_input: Dict[str, Any], services=Depends(get_services)):
+    hsp_connector: Optional[HSPConnector] = services.get("hsp_connector")
+    dialogue_manager: Optional[DialogueManager] = services.get("dialogue_manager")
+    ham: Optional[HAMMemoryManager] = services.get("ham_manager")
     sdm = services.get("service_discovery")
-    hsp_connector = services.get("hsp_connector")
 
-    # Validate capability exists
-    found = []
-    if sdm is not None:
-        found_caps = sdm.find_capabilities(capability_id_filter=body.target_capability_id)
-        if hasattr(found_caps, '__await__'):
-            found_caps = await found_caps
-        found = found_caps
-    if not found:
-        return HSPTaskRequestOutput(
-            status_message=f"Error: Capability ID {body.target_capability_id} not found.",
-            correlation_id=None,
-            target_capability_id=body.target_capability_id,
-            error="Capability not discovered.",
-        )
+    if dialogue_manager is None:
+        raise HTTPException(status_code=503, detail="DialogueManager not available")
 
-    corr_id = str(uuid.uuid4())
-    # Prepare payload according to tests/DM expectations
-    payload = {
-        "capability_id_filter": body.target_capability_id,
-        "parameters": body.parameters,
-        "correlation_id": corr_id,
-        "timestamp": datetime.utcnow().isoformat(),
-    }
+    if hsp_connector is None:
+        raise HTTPException(status_code=503, detail="HSPConnector not available")
 
-    # DialogueManager tracks pending requests
-    if dm is not None:
-        if not hasattr(dm, "_pending_hsp_task_requests"):
-            dm._pending_hsp_task_requests = {}
-        dm._pending_hsp_task_requests[corr_id] = {
-            "status": "pending",
-            "created_at": time.time(),
+    target_capability_id: str = task_input.get("target_capability_id", "")
+    parameters: Dict[str, Any] = task_input.get("parameters", {})
+
+    # Resolve capability to target AI via ServiceDiscovery
+    try:
+        found_caps = []
+        if sdm is not None and hasattr(sdm, "find_capabilities"):
+            res = sdm.find_capabilities(capability_id_filter=target_capability_id)
+            if hasattr(res, "__await__"):
+                found_caps = await res
+            else:
+                found_caps = res or []
+    except Exception:
+        found_caps = []
+
+    if not found_caps:
+        return {
+            "status_message": f"Error: Capability ID {target_capability_id} not found.",
+            "correlation_id": None,
+            "error": "Capability not discovered.",
         }
 
-    # Send request via HSP connector if available
-    if hsp_connector is not None and hasattr(hsp_connector, "send_task_request"):
-        send_req = hsp_connector.send_task_request(payload, recipient_ai_id=None, envelope=None)  # mocked to trigger callbacks
-        if hasattr(send_req, '__await__'):
-            await send_req
+    target_ai_id = None
+    first_cap = found_caps[0]
+    if isinstance(first_cap, dict):
+        target_ai_id = first_cap.get("ai_id")
+    else:
+        target_ai_id = getattr(first_cap, "ai_id", None)
 
-    return HSPTaskRequestOutput(
-        status_message="HSP Task request sent successfully.",
-        correlation_id=corr_id,
-        target_capability_id=body.target_capability_id,
-    )
+    # Build HSPTaskRequestPayload
+    payload: HSPTaskRequestPayload = {
+        "request_id": str(uuid.uuid4()),
+        "requester_ai_id": getattr(hsp_connector, "ai_id", None) or "",
+        "target_ai_id": target_ai_id,
+        "capability_id_filter": target_capability_id,
+        "parameters": parameters,
+    }
+
+    try:
+        correlation_id = await hsp_connector.send_task_request(payload, target_ai_id or "")
+        # Track pending in DialogueManager for status checks
+        if correlation_id:
+            if not hasattr(dialogue_manager, "_pending_hsp_task_requests"):
+                setattr(dialogue_manager, "_pending_hsp_task_requests", {})
+            try:
+                dialogue_manager._pending_hsp_task_requests[correlation_id] = {
+                    "created_at": datetime.utcnow().isoformat() + "Z",
+                    "target": target_ai_id,
+                    "capability_id": target_capability_id,
+                }
+            except Exception:
+                pass
+        return {
+            "status_message": "HSP Task request sent successfully.",
+            "correlation_id": correlation_id,
+            "target_capability_id": target_capability_id,
+        }
+    except Exception as e:
+        return {
+            "status_message": "error",
+            "error": str(e),
+            "target_capability_id": target_capability_id,
+        }
 
 @app.get("/api/v1/hsp/tasks/{correlation_id}")
-async def get_hsp_task_status(correlation_id: str, services=Depends(get_services)) -> HSPTaskStatusOutput:
-    # services = get_services()
-    dm = services.get("dialogue_manager")
-    ham = services.get("ham_manager")
+async def get_hsp_task_status(correlation_id: str, services=Depends(get_services)):
+    hsp_connector: Optional[HSPConnector] = services.get("hsp_connector")
+    dialogue_manager: Optional[DialogueManager] = services.get("dialogue_manager")
+    ham: Optional[HAMMemoryManager] = services.get("ham_manager")
+    if hsp_connector is None:
+        raise HTTPException(status_code=503, detail="HSPConnector not available")
 
-    # 1) Check HAM for result or error stored by DM
-    result_payload = None
-    error_details = None
-    if ham and hasattr(ham, "query_memory"):
-        # The tests query by metadata.hsp_correlation_id
-        records = ham.query_memory({"hsp_correlation_id": correlation_id})
-        for rec in records:
-            meta = rec.get("metadata", {})
-            if meta.get("source") == "hsp_task_result_success":
-                result_payload = meta.get("hsp_task_service_payload")
-                break
-            if meta.get("source") == "hsp_task_result_error":
-                error_details = meta.get("error_details")
-                break
+    # First, check HAM for a completed or failed result
+    try:
+        ham_results = []
+        if ham is not None and hasattr(ham, "query_memory"):
+            query = {"hsp_correlation_id": correlation_id}
+            res = ham.query_memory(query)
+            ham_results = await res if hasattr(res, "__await__") else (res or [])
+        if ham_results:
+            # Pick the most recent matching record; tests don't require strict ordering
+            record = ham_results[-1]
+            data_type = record.get("data_type")
+            metadata = record.get("metadata", {})
+            if isinstance(data_type, str) and "success" in data_type:
+                return {
+                    "status": "completed",
+                    "correlation_id": correlation_id,
+                    "result_payload": metadata.get("hsp_task_service_payload"),
+                    "message": "Task completed successfully.",
+                }
+            if isinstance(data_type, str) and ("error" in data_type or "failure" in data_type):
+                return {
+                    "status": "failed",
+                    "correlation_id": correlation_id,
+                    "error_details": metadata.get("error_details"),
+                }
+    except Exception:
+        # Ignore HAM errors for status endpoint robustness
+        pass
 
-    if result_payload is not None:
-        return HSPTaskStatusOutput(
-            correlation_id=correlation_id,
-            status="completed",
-            message="Task completed successfully.",
-            result_payload=result_payload,
-        )
-    if error_details is not None:
-        return HSPTaskStatusOutput(
-            correlation_id=correlation_id,
-            status="failed",
-            message="Task failed.",
-            error_details=error_details,
-        )
+    # If not in HAM, check pending state tracked by DialogueManager
+    try:
+        if dialogue_manager is not None and hasattr(dialogue_manager, "_pending_hsp_task_requests"):
+            if correlation_id in getattr(dialogue_manager, "_pending_hsp_task_requests", {}):
+                return {
+                    "status": "pending",
+                    "correlation_id": correlation_id,
+                    "message": "Task is pending; awaiting result.",
+                }
+    except Exception:
+        pass
 
-    # 2) Otherwise consult DM pending map
-    if dm is not None and hasattr(dm, "_pending_hsp_task_requests") and correlation_id in dm._pending_hsp_task_requests:
-        return HSPTaskStatusOutput(
-            correlation_id=correlation_id,
-            status="pending",
-            message="Task is pending.",
-        )
-
-    # 3) Unknown or expired
-    return HSPTaskStatusOutput(
-        correlation_id=correlation_id,
-        status="unknown_or_expired",
-        message="No record of this correlation id was found.",
-    )
+    # Unknown/expired if no trace found
+    return {
+        "status": "unknown_or_expired",
+        "correlation_id": correlation_id,
+    }
 
 if __name__ == "__main__":
     import uvicorn

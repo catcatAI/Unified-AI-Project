@@ -1,3 +1,4 @@
+<!-- DEPRECATED: Superseded by planning/core-development/TECHNICAL_ROADMAP.md and planning/project-management/planning-docs/STATUS_AND_ACTIONS.md (rolling) -->
 # 實施計畫：移除前端模擬數據並整合真實數據
 
 本計畫旨在逐步移除前端應用程式中的模擬數據，並將其替換為從後端 API 獲取的真實數據。計畫將分為多個階段，涵蓋後端 API 開發、前端數據層重構、組件更新以及測試與優化。

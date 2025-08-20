@@ -2,10 +2,14 @@ import pytest
 import asyncio
 import sys
 import json
+import os
 from unittest.mock import MagicMock, AsyncMock
 
 # Ensure the src directory is in the Python path
-sys.path.insert(0, 'apps/backend/src')
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+SRC_DIR = os.path.join(BASE_DIR, 'src')
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
 
 from core_ai.agent_manager import AgentManager
 from core_ai.dialogue.project_coordinator import ProjectCoordinator
@@ -100,14 +104,23 @@ async def hsp_connector(mock_broker, event_loop):
         ai_id="project_coordinator_ai",
         broker_address="127.0.0.1",
         broker_port=1883,
-        mock_mode=False  # Use a real connector
+        mock_mode=True  # Use mock mode to avoid real MQTT client issues
     )
-    # Monkey-patch the gmqtt client to use our mock broker
+    # Monkey-patch the mqtt client to use our mock broker
     connector.external_connector.mqtt_client.connect = AsyncMock(return_value=None)
     connector.external_connector.mqtt_client.disconnect = AsyncMock(return_value=None)
-    connector.external_connector.mqtt_client.publish = mock_broker.publish
-    connector.external_connector.mqtt_client.subscribe = mock_broker.subscribe
-    connector.external_connector.mqtt_client.on_message = mock_broker.on_message(connector.external_connector.on_message)
+    # Use AsyncMock with proper return value to avoid NoneType errors
+    connector.external_connector.mqtt_client.publish = AsyncMock(return_value=True, side_effect=mock_broker.publish)
+    # Fix subscribe to be an AsyncMock that also calls mock_broker.subscribe
+    async def mock_subscribe(topic, qos=1):
+        mock_broker.subscribe(topic, qos)
+        return True
+    connector.external_connector.mqtt_client.subscribe = AsyncMock(side_effect=mock_subscribe)
+    # Also ensure external_connector.publish and subscribe are properly mocked
+    connector.external_connector.publish = AsyncMock(return_value=True, side_effect=mock_broker.publish)
+    connector.external_connector.subscribe = AsyncMock(return_value=True)
+    # Register the on_message callback with the mock broker
+    mock_broker.on_message(connector.on_message)
 
     await connector.connect()
     yield connector
@@ -139,7 +152,13 @@ def project_coordinator(hsp_connector, service_discovery, agent_manager):
         }]
 
     async def fake_integrate(query, results):
-        return f"The result is: {results[0]['payload']}"
+        # ProjectCoordinator._wait_for_task_result returns payload directly or error dict
+        # results[0] should contain the payload (15) or an error dict {"error": "..."}
+        result_value = results[0]
+        if isinstance(result_value, dict) and "error" in result_value:
+            return f"Task failed: {result_value['error']}"
+        else:
+            return f"The result is: {result_value}"
 
     mock_llm.generate_response.side_effect = [
         json.dumps([{
@@ -169,9 +188,16 @@ DATA_ANALYSIS_AGENT_SCRIPT = """
 import asyncio
 import json
 import sys
+import os
 
-# Add src to path to allow imports
-sys.path.insert(0, 'apps/backend/src')
+# Add both src and parent directory to path to allow imports
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+SRC_DIR = os.path.join(BASE_DIR, 'src')
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+# Also add the parent of src to allow 'src.module' imports
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
 from hsp.connector import HSPConnector
 from hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload
@@ -248,9 +274,13 @@ async def test_full_project_flow_with_real_agent(project_coordinator, agent_mana
     """
     # --- Arrange ---
     # Create the dummy agent script file
-    agent_script_path = "apps/backend/src/agents/data_analysis_agent.py"
+    agent_script_path = os.path.join(SRC_DIR, "agents", "data_analysis_agent.py")
+    os.makedirs(os.path.dirname(agent_script_path), exist_ok=True)
     with open(agent_script_path, "w") as f:
         f.write(DATA_ANALYSIS_AGENT_SCRIPT)
+
+    # Refresh AgentManager discovery to include the newly created script
+    agent_manager.agent_script_map = agent_manager._discover_agent_scripts()
 
     # The agent_manager fixture already discovered this script.
     # We need to patch the HSPConnector inside the agent process to use the mock broker.
@@ -278,6 +308,7 @@ async def test_full_project_flow_with_real_agent(project_coordinator, agent_mana
         )
 
         # --- Assert ---
+        assert "Here's the result of your project request" in final_response
         assert "The result is: 15" in final_response
 
     finally:
@@ -285,7 +316,6 @@ async def test_full_project_flow_with_real_agent(project_coordinator, agent_mana
         if agent_process:
             agent_manager.shutdown_agent(agent_name)
         # It's good practice to clean up the created file
-        import os
         if os.path.exists(agent_script_path):
             os.remove(agent_script_path)
 

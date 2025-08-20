@@ -41,6 +41,7 @@ def validate_link(base_path: Path, link: str) -> bool:
         # 处理上级目录
         target_path = base_path.parent / link
     else:
+        # For other cases, assume it's a relative path from the file's directory
         target_path = base_path.parent / link
     
     # 解析路径

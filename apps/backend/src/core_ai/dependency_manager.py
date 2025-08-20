@@ -66,6 +66,7 @@ class DependencyManager:
         return {
             'dependencies': {
                 'core': [
+                    {'name': 'tensorflow', 'fallbacks': ['tf-keras'], 'essential': False},
                     {'name': 'spacy', 'fallbacks': ['nltk'], 'essential': False},
                 ],
                 'optional': []
@@ -140,8 +141,16 @@ class DependencyManager:
     def get_dependency(self, name: str) -> Optional[Any]:
         """Get a dependency module, loading it if it hasn't been loaded yet."""
         if name not in self._dependencies:
-            logger.warning(f"Unknown dependency '{name}' requested")
-            return None
+            # Try to lazily register this dependency from the config
+            all_deps = self._config.get('dependencies', {}).get('core', []) + \
+                       self._config.get('dependencies', {}).get('optional', [])
+            dep_config = next((c for c in all_deps if isinstance(c, dict) and c.get('name') == name), None)
+            if dep_config:
+                self._dependencies[name] = DependencyStatus(name)
+                self._check_dependency_availability(name, dep_config)
+            else:
+                logger.warning(f"Unknown dependency '{name}' requested")
+                return None
 
         status = self._dependencies[name]
 

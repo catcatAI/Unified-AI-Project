@@ -35,6 +35,41 @@ The `HotReloadService` utilizes an `asyncio.Lock` to ensure thread-safe operatio
 *   **`ToolDispatcher`, `DialogueManager`, `ServiceDiscoveryModule`**: These components are explicitly rewired by the `HotReloadService` to ensure they correctly reference the newly loaded service instances.
 *   **`asyncio`**: Provides the asynchronous primitives necessary for non-blocking operations and managing concurrent tasks during reloads.
 
+## Endpoints
+
+Base router prefix: `/api/v1/hot`
+
+- `POST /drain/start` — Begin draining (pause acceptance of new work; advisory flag)
+- `POST /drain/stop` — End draining
+- `GET /status` — Returns draining flag, initialized services snapshot, and communication status (HSP/MCP). See Status Metrics below
+- `POST /reload/llm` — Reload MultiLLMService and rewire dependents (ToolDispatcher, DialogueManager)
+- `POST /reload/tools` — Hot-reload tool implementations (optionally a single tool via `?tool=<key>`)
+- `POST /reload/personality` — Reload personality profile (optionally `?profile=<name>`) and update EmotionSystem/DialogueManager
+- `POST /reload/hsp` — Blue/green reload of HSP connector (connect new, subscribe, swap, disconnect old)
+
+## Status Metrics and Observability
+
+The `GET /api/v1/hot/status` endpoint exposes best-effort metrics for quick visibility:
+
+```jsonc
+{
+ "draining": false,
+ "services_initialized": { "llm_interface": true, "ham_manager": true },
+ "hsp": { "hsp_available": true, "is_connected": true },
+ "mcp": { "mcp_available": false, "is_connected": false },
+ "metrics": {
+   "hsp": { "is_connected": true, "pending_acks_count": 0, "retry_counts_active": 0 },
+   "mcp": { "is_connected": false, "fallback_initialized": false },
+   "learning": { "known_ai_count": 1, "tools": { "total_invocations": 0, "success_rate": 0.0 } },
+   "memory": { "ham_store_size": 124 },
+   "lis": { "incidents_recent": 5, "antibodies_recent": 2 }
+ }
+}
+```
+
+- Fields are best-effort and may be null depending on runtime/mocks
+- For dashboard schema and additional examples see `docs/05-development/observability-guide.md`
+
 ## Code Location
 
 `src/services/hot_reload_service.py`

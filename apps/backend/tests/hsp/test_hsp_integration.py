@@ -678,8 +678,18 @@ class TestHSPFactConsumption:
         trust_manager_fixture.update_trust_score(TEST_AI_ID_PEER_A, new_absolute_score=0.9)
         content_analyzer_module_fixture.graph.clear()
         
-        ca_mock = MagicMock(wraps=content_analyzer_module_fixture.process_hsp_fact_content)
-        content_analyzer_module_fixture.process_hsp_fact_content = ca_mock
+        done_event = asyncio.Event()
+        orig_ca = content_analyzer_module_fixture.process_hsp_fact_content
+        async def _wrapped_ca(*args, **kwargs):
+            try:
+                import inspect
+                if inspect.iscoroutinefunction(orig_ca):
+                    return await orig_ca(*args, **kwargs)
+                else:
+                    return orig_ca(*args, **kwargs)
+            finally:
+                done_event.set()
+        content_analyzer_module_fixture.process_hsp_fact_content = _wrapped_ca
         
         fid = f"pa_sfact_{uuid.uuid4().hex[:4]}"
         s = "hsp:e:Device1"
@@ -702,9 +712,9 @@ class TestHSPFactConsumption:
         )  # type: ignore
         
         await peer_a_hsp_connector.publish_fact(fact, topic=FACT_TOPIC_GENERAL)
-        await asyncio.sleep(1.5)
+        await asyncio.wait_for(done_event.wait(), timeout=3.0)
         
-        assert ca_mock.called
+        # CA was invoked (done_event set)
         g = content_analyzer_module_fixture.graph
         r_type = p.split('/')[-1].split('#')[-1]
         

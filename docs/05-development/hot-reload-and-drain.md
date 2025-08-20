@@ -1,5 +1,8 @@
 # Hot Reload, Hot Migration (Blue/Green), and Draining
 
+> [!WARNING]
+> The `POST` endpoints described in this document for triggering hot reloads and draining are currently **not implemented** in `main_api_server.py`. This feature may be deprecated or under development. Only the `GET /api/v1/hot/status` endpoint is available.
+
 This document describes the minimal hot-reload and hot-migration capabilities introduced for the backend API (FastAPI) and the global service singletons managed in `src/core_services`.
 
 ## Overview
@@ -47,9 +50,27 @@ Example response schema (best-effort; fields may be None depending on runtime an
 }
 ```
 
+Learning.tools (planned) — example aggregation snippet:
+
+```jsonc
+{
+  "metrics": {
+    "learning": {
+      "tools": {
+        "total_invocations": 42,
+        "success_rate": 0.86,
+        "recent_failures": 3,
+        "avg_latency": 280.5
+      }
+    }
+  }
+}
+```
+
 Notes:
 - Values depend on environment (mock vs real connectors) and may be null if the metric is unavailable.
 - This endpoint is safe to call during draining and reload operations for observability.
+- The `learning.tools` block will populate after ToolDispatcher action-policy logging is enabled.
 
 ## Implementation
 

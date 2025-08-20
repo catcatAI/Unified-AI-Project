@@ -118,19 +118,28 @@ class TestRovoDevConnector:
     @pytest.mark.asyncio
     async def test_make_request_error(self, connector):
         """测试 API 请求错误"""
+        from unittest.mock import MagicMock
+        
         mock_response = Mock()
         mock_response.status = 500
         mock_response.text = AsyncMock(return_value='Internal Server Error')
+        mock_response.json = AsyncMock(return_value={'error': 'Internal Server Error'})
         
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session = Mock()
-            mock_session.request.return_value.__aenter__.return_value = mock_response
+            # 使用 MagicMock 創建支持 __aenter__ 的對象
+            mock_context_manager = MagicMock()
+            mock_context_manager.__aenter__ = AsyncMock(return_value=mock_response)
+            mock_context_manager.__aexit__ = AsyncMock()
+            mock_session.request.return_value = mock_context_manager
             mock_session_class.return_value = mock_session
             
             connector.session = mock_session
             
-            with pytest.raises(Exception, match="API 错误: 500"):
-                await connector._make_request('GET', 'https://test.com/api')
+            with pytest.raises(Exception, match="API 錯誤: 500"):
+                print("Calling _make_request with status 500")
+                result = await connector._make_request('GET', 'https://test.com/api')
+                print(f"Result: {result}")
     
     @pytest.mark.asyncio
     async def test_caching_mechanism(self, connector):

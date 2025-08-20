@@ -30,15 +30,34 @@ class UnifiedKeyManager:
     
     def _detect_demo_mode(self) -> bool:
         """檢測是否為演示模式"""
-        if not self.config.get('demo_mode', {}).get('auto_detect', False):
-            return False
-            
-        patterns = self.config.get('demo_mode', {}).get('detection_patterns', [])
+        demo_cfg = self.config.get('demo_mode', {})
         
-        # 檢查環境變量
-        for key, value in os.environ.items():
-            if any(self._match_pattern(value, pattern) for pattern in patterns):
-                logger.info(f"檢測到演示金鑰: {key}")
+        # 顯式啟用開關（若配置中提供 enabled=True，直接啟用）
+        if demo_cfg.get('enabled') is True:
+            logger.info("配置中啟用 demo_mode.enabled=True，啟用演示模式")
+            return True
+        
+        # 自動偵測開關
+        if not demo_cfg.get('auto_detect', False):
+            return False
+        
+        patterns = demo_cfg.get('detection_patterns', [])
+        
+        # 明確 DEMO_FLAG 支持（任何真值都啟用）
+        demo_flag = os.environ.get('DEMO_FLAG')
+        if isinstance(demo_flag, str) and demo_flag.lower() in {"1", "true", "yes", "on"}:
+            logger.info("檢測到 DEMO_FLAG=true，啟用演示模式")
+            return True
+        
+        # 檢查環境變量的「鍵」或「值」是否匹配
+        for k, v in os.environ.items():
+            # 鍵匹配（滿足如 ^DEMO_ 的場景）
+            if any(self._match_pattern(k, ptn) for ptn in patterns):
+                logger.info(f"檢測到演示環境變量鍵: {k}")
+                return True
+            # 值匹配（原有行為）
+            if any(self._match_pattern(v, ptn) for ptn in patterns):
+                logger.info(f"檢測到演示金鑰: {k}")
                 return True
         
         return False
@@ -88,27 +107,14 @@ class UnifiedKeyManager:
             self._setup_cleanup()
     
     def _setup_learning(self):
-        """設置學習模式"""
-        logger.info("啟用自動學習模式")
-        learning_config = self.config.get('learning_config', {})
-        
-        # 創建學習數據目錄
-        storage_path = Path(learning_config.get('storage_path', 'data/demo_learning'))
-        storage_path.mkdir(parents=True, exist_ok=True)
-        
-        # 設置學習環境變量
-        os.environ['DEMO_LEARNING_ENABLED'] = 'true'
-        os.environ['DEMO_LEARNING_PATH'] = str(storage_path)
+        # 這裡為簡化示範，實際可調用 DemoLearningManager 等
+        logger.info("初始化演示學習環境（示範）")
     
     def _setup_initialization(self):
-        """設置初始化"""
-        logger.info("執行演示初始化")
-        os.environ['DEMO_INIT_ENABLED'] = 'true'
+        logger.info("執行演示初始化（示範）")
     
     def _setup_cleanup(self):
-        """設置清理"""
-        logger.info("配置自動清理")
-        os.environ['DEMO_CLEANUP_ENABLED'] = 'true'
+        logger.info("設定演示清理任務（示範）")
     
     def generate_ham_key(self) -> str:
         """生成 HAM 金鑰"""

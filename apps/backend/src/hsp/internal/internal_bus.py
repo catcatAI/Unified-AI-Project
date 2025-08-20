@@ -16,6 +16,18 @@ class InternalBus:
                 else:
                     callback(message)
 
+    async def publish_async(self, channel: str, message: Any):
+        """Awaitable version of publish that awaits coroutine callbacks sequentially.
+        Useful in tests to ensure downstream async handlers (e.g., ACK dispatch) complete before assertions.
+        """
+        print(f"DEBUG: InternalBus.publish_async - Channel: {channel}, Message: {message}")
+        if channel in self.subscriptions:
+            for callback in self.subscriptions[channel]:
+                if inspect.iscoroutinefunction(callback):
+                    await callback(message)
+                else:
+                    callback(message)
+
     def subscribe(self, channel: str, callback: Callable[[Any], None]):
         if channel not in self.subscriptions:
             self.subscriptions[channel] = []
