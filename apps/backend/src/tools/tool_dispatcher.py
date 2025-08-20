@@ -1,6 +1,10 @@
 import re
 import logging
 import importlib
+import json
+import time
+import hashlib
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, Callable # Added Callable
 
 # Assuming 'src' is in PYTHONPATH, making 'tools', 'core_ai', 'services' top-level packages
@@ -24,6 +28,37 @@ except ImportError as e:
     RAG_AVAILABLE = False
 
 class ToolDispatcher:
+    def _get_ham(self):
+        try:
+            from src.core_services import ham_manager_instance
+            return ham_manager_instance
+        except Exception:
+            return None
+
+    def _safe_params_hash(self, params: Dict[str, Any]) -> str:
+        try:
+            s = json.dumps(params or {}, sort_keys=True, ensure_ascii=False, default=str)
+            return hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
+        except Exception:
+            return ""
+
+    def _log_action_policy(self, record: Dict[str, Any]) -> None:
+        try:
+            ham = self._get_ham()
+            if not ham:
+                return
+            raw_data = json.dumps(record, ensure_ascii=False, default=str)
+            metadata = {
+                "ham_meta_action_policy": True,
+                "ham_meta_tool_name": record.get("tool_name"),
+                "ham_meta_success": record.get("success"),
+                "ham_meta_timestamp": record.get("timestamp"),
+            }
+            # Use a distinct data_type for action policy events
+            ham.store_experience(raw_data, "action_policy_v0.1", metadata)  # type: ignore[attr-defined]
+        except Exception as e:
+            logging.debug(f"ToolDispatcher: failed to log action policy: {e}")
+
     def set_llm_service(self, llm_service: Optional[MultiLLMService]):
         """Inject or replace the LLM service at runtime (used by hot reload)."""
         if hasattr(self, 'dlm') and hasattr(self.dlm, 'set_llm_service'):
@@ -74,6 +109,7 @@ class ToolDispatcher:
         """
         Dispatch a tool request with the given tool name and parameters
         """
+        start_ts = time.perf_counter()
         try:
             if tool_name not in self.tools:
                 return {
@@ -115,6 +151,25 @@ class ToolDispatcher:
             if hasattr(result, '__await__'):
                 result = await result
             
+            # Build action-policy record
+            try:
+                success = isinstance(result, dict) and result.get("status", "").lower() == "success"
+            except Exception:
+                success = True
+            record = {
+                "tool_name": tool_name,
+                "params_hash": self._safe_params_hash(parameters),
+                "outcome": str(result)[:5000],
+                "success": success,
+                "latency_ms": 0,  # not measured in this path
+                "cost_units": 0,
+                "user_context": {"user_id": parameters.get("user_id"), "session_id": parameters.get("session_id")},
+                "correlation_id": parameters.get("correlation_id"),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+            record["latency_ms"] = round((time.perf_counter() - start_ts) * 1000.0, 2)
+            self._log_action_policy(record)
+
             return {
                 "status": "success",
                 "result": result,
@@ -123,6 +178,21 @@ class ToolDispatcher:
             
         except Exception as e:
             logging.error(f"Error dispatching tool '{tool_name}': {e}")
+            # Log failure record
+            record = {
+                "tool_name": tool_name,
+                "params_hash": self._safe_params_hash(parameters),
+                "outcome": str(e)[:5000],
+                "success": False,
+                "latency_ms": 0,
+                "cost_units": 0,
+                "user_context": {"user_id": parameters.get("user_id"), "session_id": parameters.get("session_id")},
+                "correlation_id": parameters.get("correlation_id"),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+            record["latency_ms"] = round((time.perf_counter() - start_ts) * 1000.0, 2)
+            self._log_action_policy(record)
+
             return {
                 "status": "error",
                 "error_message": str(e),

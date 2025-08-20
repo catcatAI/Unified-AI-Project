@@ -1,6 +1,7 @@
 import numpy as np
 import wave
 import io
+from src.config_loader import is_demo_mode
 
 class AudioService:
     def __init__(self, config: dict = None):
@@ -25,8 +26,9 @@ class AudioService:
         - If demo mode is disabled, raise NotImplementedError (real integration not provided).
         - If demo mode is enabled, return a mock sentiment payload.
         """
-        if self.config.use_simulated_resources:
-            return {"text": "This is a mock transcription.", "sentiment": "positive", "confidence": 0.9, "language": "en-US"}
+        # Use global config flag via config_loader to match tests
+        if is_demo_mode():
+            return {"text": "This is a mock transcription.", "sentiment": "positive", "confidence": 0.9, "language": language}
         else:
             raise NotImplementedError("Real sentiment analysis not implemented yet. Enable demo mode or implement the actual service.")
 

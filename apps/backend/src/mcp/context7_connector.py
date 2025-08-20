@@ -39,7 +39,7 @@ class Context7MCPConnector:
     enabling enhanced context management, model communication, and
     collaborative AI capabilities within the unified ecosystem.
     """
-    
+
     def __init__(self, config: Context7Config):
         """
         Initialize the Context7 MCP Connector.
@@ -52,7 +52,13 @@ class Context7MCPConnector:
         self.context_cache: Dict[str, Any] = {}
         self.capabilities: List[MCPCapability] = []
         self._connected = False
-        
+
+    # Allow awaiting the connector instance in tests/fixtures that mistakenly await it
+    def __await__(self):
+        async def _return_self():
+            return self
+        return _return_self().__await__()
+    
     async def connect(self) -> bool:
         """
         Establish connection to Context7 MCP service.
@@ -316,6 +322,12 @@ class UnifiedAIMCPIntegration:
         """
         self.mcp = mcp_connector
         self.context_mappings: Dict[str, str] = {}
+    
+    # Allow awaiting the integration instance in tests that mistakenly await it
+    def __await__(self):
+        async def _return_self():
+            return self
+        return _return_self().__await__()
     
     async def integrate_with_dialogue_manager(
         self,

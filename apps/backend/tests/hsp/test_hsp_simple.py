@@ -77,10 +77,12 @@ async def test_hsp_connector_init(hsp_connector: HSPConnector):
 @pytest.mark.asyncio
 async def test_publish_fact(hsp_connector: HSPConnector, broker: MockMqttBroker, internal_bus: InternalBus):
     received_facts = []
+    received_event = asyncio.Event()
 
     async def fact_handler(message):
         print(f"Fact handler called with: {message}")
         received_facts.append(message['payload'])
+        received_event.set()
 
     # Subscribe to the internal bus topic
     internal_bus.subscribe("hsp.internal.fact", fact_handler)
@@ -98,7 +100,8 @@ async def test_publish_fact(hsp_connector: HSPConnector, broker: MockMqttBroker,
     # Publish the fact using the hsp_connector
     await hsp_connector.publish_fact(fact_payload, "hsp/knowledge/facts/test")
 
-    await asyncio.sleep(0.2)
+    # Wait until the fact is received or timeout instead of a fixed sleep
+    await asyncio.wait_for(received_event.wait(), timeout=2.0)
 
     assert len(received_facts) > 0, "No facts were received"
     assert received_facts[0]["id"] == fact_payload["id"]

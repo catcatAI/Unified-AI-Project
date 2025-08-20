@@ -1,0 +1,22 @@
+[2025-08-20] 121.txt 摘要與規劃關聯
+
+來源檔案: d:\Projects\121.txt
+
+核心摘要:
+- Flash/Pro 模型之間的文字對話紀錄共享是可行且合理的功能，建議以獨立 Dialogue History Service 提供跨模型共享，與模型推理核心解耦。
+- 專案屬性定位為「AGI 優先」：多代理、長短期記憶、工具使用、學習迴路等設計自起點納入，初始等級與上限高於「應用優先」型專案。
+- 大公司 AI 專案多以應用優先起步（Level 1/2），但可憑資源快速疊代升級。
+
+與目前 HSP/CLI 工作的關聯:
+- 為提升可觀測性與可測性（observability/testability），CLI 新增等待 internal_bus echo（hsp.internal.fact）的能力，利於後續把事實事件與對話紀錄服務串接。
+
+當前決策與待辦（摘錄）:
+- 已完成：CLI publish_fact await 修正，新增 --echo/--wait 與 --echo-timeout，並在發佈前訂閱 echo、逾時與解除訂閱處理。
+- 待辦：
+  1) 新增 CLI 端到端測試（驗證 await 與 echo）。
+  2) 在 connector 層補 internal_bus/external 映射的單元測試。
+  3) 將測試中的裸 asyncio.sleep 改為事件/條件等待。
+  4) 規劃 Dialogue History Service 介面與最小可行的跨模型文字紀錄共享流程（非本日範圍）。
+
+備註:
+- 詳細規劃請參見 d:\Projects\planning\2025-08-20-hsp-plan.md（已於 2025-08-20 更新，含附錄連結此摘要）。

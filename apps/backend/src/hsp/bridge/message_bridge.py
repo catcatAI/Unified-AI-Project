@@ -44,11 +44,32 @@ class MessageBridge:
             if internal_topic_suffix:
                 internal_channel = f"hsp.external.{internal_topic_suffix}"
                 print(f"DEBUG: MessageBridge.handle_external_message - Publishing to internal bus channel: {internal_channel} with aligned_message: {aligned_message}")
-                self.internal_bus.publish(internal_channel, aligned_message)
+                # Await the async publish to ensure downstream async handlers complete (important for tests like ACK sending)
+                if hasattr(self.internal_bus, 'publish_async'):
+                    await self.internal_bus.publish_async(internal_channel, aligned_message)
+                else:
+                    self.internal_bus.publish(internal_channel, aligned_message)
             else:
                 print(f"Warning: MessageBridge.handle_external_message - Unknown message_type '{message_type}'. Not publishing to internal bus.")
 
-    def handle_internal_message(self, message):
-        # In a real application, you might want to do more processing here
-        # For now, we'll just publish it to the external connector
-        self.external_connector.publish(message["topic"], message["payload"])
+    async def handle_internal_message(self, message):
+        # Normalize payload to bytes for MQTT publish compatibility
+        topic = message.get("topic")
+        payload = message.get("payload")
+        qos = message.get("qos", 1)
+
+        if isinstance(payload, (dict, list)):
+            payload_bytes = json.dumps(payload).encode('utf-8')
+        elif isinstance(payload, str):
+            payload_bytes = payload.encode('utf-8')
+        elif isinstance(payload, (bytes, bytearray)):
+            payload_bytes = bytes(payload)
+        else:
+            # Fallback: try JSON serialization
+            try:
+                payload_bytes = json.dumps(payload).encode('utf-8')
+            except Exception:
+                payload_bytes = str(payload).encode('utf-8')
+
+        # Ensure we await the async publish to avoid "coroutine not awaited" and race conditions in tests
+        await self.external_connector.publish(topic, payload_bytes, qos=qos)

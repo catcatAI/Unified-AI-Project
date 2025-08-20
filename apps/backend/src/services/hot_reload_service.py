@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 
 import asyncio
 from typing import Any, Dict, Optional
@@ -87,6 +88,45 @@ class HotReloadService:
             tm = services.get("trust_manager")
             if tm is not None:
                 metrics["learning"]["known_ai_count"] = len(getattr(tm, "trust_scores", {}))
+        except Exception:
+            pass
+        # Learning / Tools aggregation (best-effort)
+        try:
+            ham = services.get("ham_manager")
+            if ham is not None and hasattr(ham, "query_core_memory"):
+                # Query recent action policy events
+                events = ham.query_core_memory(metadata_filters={"ham_meta_action_policy": True}, data_type_filter="action_policy_v0.1", limit=200)  # type: ignore
+                total = len(events) if isinstance(events, list) else 0
+                successes = 0
+                latencies = []
+                failures_recent = 0
+                for ev in (events or []):
+                    try:
+                        md = ev.get("metadata", {}) if isinstance(ev, dict) else {}
+                        raw = ev.get("raw_data") or ev.get("rehydrated_gist") or ev.get("content") or ""
+                        # raw may be JSON string
+                        rec = None
+                        try:
+                            rec = json.loads(raw) if isinstance(raw, str) else raw
+                        except Exception:
+                            rec = None
+                        if rec and isinstance(rec, dict):
+                            if rec.get("success"):
+                                successes += 1
+                            else:
+                                failures_recent += 1
+                            if isinstance(rec.get("latency_ms"), (int, float)):
+                                latencies.append(float(rec.get("latency_ms")))
+                    except Exception:
+                        continue
+                avg_latency = (sum(latencies) / len(latencies)) if latencies else None
+                success_rate = (successes / total) if total else 0.0
+                metrics["learning"]["tools"] = {
+                    "total_invocations": total,
+                    "success_rate": success_rate,
+                    "recent_failures": failures_recent,
+                    "avg_latency": avg_latency,
+                }
         except Exception:
             pass
         # Memory metrics (HAM)
