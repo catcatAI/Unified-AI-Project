@@ -1,5 +1,5 @@
 {
-  "next_memory_id": 246,
+  "next_memory_id": 253,
   "store": {
     "mem_000001": {
       "timestamp": "2025-08-10T09:21:09.059796+00:00",
@@ -2388,6 +2388,77 @@
       "timestamp": "2025-08-21T15:32:13.532125+00:00",
       "data_type": "test_type",
       "encrypted_package_b64": "gAAAAABopzv9O8v5rX_ME6rx5QdDshcNrtUHXto4skO1_KBDHQXdyj9w4Tmisg7iUyLYHZOzNIoyT5pG-6m3b65pf87cb-awC0Ytst0o7pdkVLbI2gxYgsQvXlLob-YBaA1pNmcKec8B",
+      "metadata": {
+        "tag": "general",
+        "sha256_checksum": "5807383df630e504736e699beb24ca3ceafdc73c92c4af36c0b7a9e2996cb7f7",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000246": {
+      "timestamp": "2025-08-21T15:50:49.222457+00:00",
+      "data_type": "dialogue_text",
+      "encrypted_package_b64": "gAAAAABop0BZ3c4VoXkwtn8ZmS-fsO-zQ4fnKAbOjvN62vUZyNTtIdFTVqMx-wWiTHeK7J7aHfh64-Y-OJn8bd5NdR-2hfhcwaiLiFstoYA7WrbQh4WCJFmmqIjBY3bisEXPJvS_1w5EUFpQYoUOkHOvsLgH_CWQ77zj3_VjMwuP8GMtxH7NIrKXOXT8hEk38BIZKEFuqGQuV6wjW84jJ5_pvERK1eGkqa9Qcfd8gS3KEaVi340e_jZsWjpJgPWdJ6wbNG_aLwh_UoiflayzGJQMvcdbs9w7sP6VVM1cd-fiKYcwxpLsvMyy0s3ogVaIAiuLwmCuxpL0unnOMLSl_E37yOJqP9sr0JYFvk6vSlW-7GHlzl7F9jEiMKhS0ruEfSaIRjD-V_Fk",
+      "metadata": {
+        "source": "test_chroma_store",
+        "timestamp": "2025-08-21T15:50:49.210722+00:00",
+        "sha256_checksum": "ff5ed76976513bc6ef7e2814b28ae8c5730ef41e4834d6c36183e1c4b30feda7",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000247": {
+      "timestamp": "2025-08-21T15:50:49.458139+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABop0BZ3bJou0CH1kznU5ftN1WTYUgH9uufI2s8ED4ohsT3pyxLSx8AJH_tmrdMtXx-aO7putIjzN-qqcY1Qa-Ea9BrJNrzmLxLm4iVfROQ1y-hvt4=",
+      "metadata": {
+        "topic": "food",
+        "sha256_checksum": "1c00730c93da30b791a603580a97ae2b0c315691af5e1b91bbdd0a293695538f",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000248": {
+      "timestamp": "2025-08-21T15:50:49.470759+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABop0BZDqC2PGXoHy_VYSmKdim59bid0yoWykryGxxUnb4k5qnhdYr7nnJgoaduuh5U9jKiRByoIXRxzm4by2YcWKnxL5kunefzpIciEdUzIwBBxFUxBirakCn0Ul9ZrRmtGoSQ",
+      "metadata": {
+        "topic": "programming",
+        "sha256_checksum": "2d8d09f168d9e7d857316fe352ec3e2e2c1fe4c9ec1a816d3d45ea272d213929",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000249": {
+      "timestamp": "2025-08-21T15:50:49.483335+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABop0BZxhiqTG06ocMQf9DVVOeIVHFN-Ma8B6JihsRq7im_TAKkXCq8SVFcuaN_ZHjT6r_ALiQbFuHo0fYL2dNaj3UVOHHBXiGLC5QqipkOKZIUfgE=",
+      "metadata": {
+        "topic": "astronomy",
+        "sha256_checksum": "37a86ab29a9f452e794a8c831e4bc9647f75ea564e0dfd93603d766301582fe4",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000250": {
+      "timestamp": "2025-08-21T15:50:49.495806+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABop0BZ90KaBkBN0pJ5YBuE5aoW2yEb3YWC3TZ4sTw-ZFVyT2MqzMlu2WzKkLYjxb2Sn5SRCEdZPe3cLKc7joxtlqOfjUQVFiRQ9ULgnXIhhRksk_A=",
+      "metadata": {
+        "topic": "food",
+        "sha256_checksum": "e9b274942f150973714a044498955069f9d4d95c8dca93f66e104182eb79885b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000251": {
+      "timestamp": "2025-08-21T15:50:49.721778+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABop0BZgYdZvvdlVmhXb6Vu11xv26fJY35S-JOnpGoVKyVgbnHaRGKLzEFGQEFtpWIYIu3WV08I18qOQjXaa5zM-vDP12v-ndIgWFYH9vzhIEn3EB5ysTglgOAiR7n3RaA7QQM_",
+      "metadata": {
+        "tag": "fallback",
+        "sha256_checksum": "44dee6b25f4435d260bce83101219dd8849697a11f57b2da2a6fd6d0e686774b",
+        "importance_score": 0.5
+      }
+    },
+    "mem_000252": {
+      "timestamp": "2025-08-21T15:50:49.733920+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABop0BZAfGeOjuyQXKWPJRcf_8NRggpHeNpfXLmAszk57jQCeT5A23nifcC2PJ95kPM_OrUfu42tR369df96uEe3w69iauhpTdxYzRv9ENv3ln-N7-yM_jCdWUjaQ3mbXSSXja2",
       "metadata": {
         "tag": "general",
         "sha256_checksum": "5807383df630e504736e699beb24ca3ceafdc73c92c4af36c0b7a9e2996cb7f7",

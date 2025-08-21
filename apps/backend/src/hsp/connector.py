@@ -310,6 +310,7 @@ class HSPConnector:
 				await self.circuit_breaker(self.retry_policy(self._raw_publish_message))(topic, envelope, qos)
 				self.logger.debug(f"Message {correlation_id} published via HSP (decorated).")
 
+			# Handle ACK logic for both mock and non-mock modes
 			if requires_ack and ack_future is not None:
 				try:
 					await asyncio.wait_for(ack_future, timeout=self.ack_timeout_sec)
@@ -322,8 +323,18 @@ class HSPConnector:
 					)
 					for attempt in range(self.max_ack_retries):
 						try:
-							await self._raw_publish_message(topic, envelope, qos)
-							await asyncio.wait_for(ack_future, timeout=self.ack_timeout_sec)
+							# Create a new future for each retry attempt
+							new_ack_future = asyncio.Future()
+							self._pending_acks[correlation_id] = new_ack_future
+							
+							if self.mock_mode:
+								# In mock mode, we need to call publish again to trigger side_effect
+								if self.mqtt_client and hasattr(self.mqtt_client, "publish"):
+									await self.mqtt_client.publish(topic, json.dumps(envelope).encode("utf-8"), qos=qos)
+							else:
+								await self._raw_publish_message(topic, envelope, qos)
+							
+							await asyncio.wait_for(new_ack_future, timeout=self.ack_timeout_sec)
 							self.logger.info(
 								f"ACK received for message {correlation_id} after retry {attempt + 1}."
 							)
@@ -354,6 +365,9 @@ class HSPConnector:
 						self.logger.error(
 							f"No fallback or fallback disabled for message {correlation_id} after ACK retries."
 						)
+						# Clean up retry counts when all retries and fallback fail
+						if correlation_id in self._message_retry_counts:
+							del self._message_retry_counts[correlation_id]
 						return False
 				finally:
 					if correlation_id in self._pending_acks:

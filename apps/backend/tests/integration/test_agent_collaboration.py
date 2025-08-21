@@ -53,10 +53,15 @@ class TestAgentCollaboration(unittest.TestCase):
         """
         End-to-end test for a complex project involving a DAG of tasks.
         """
-        
+        # 1. Mock the LLM's decomposition response
+        mock_decomposed_plan = [
+            {"capability_needed": "analyze_csv_data", "task_parameters": {"csv_content": "a,b\n1,2"}},
+            {"capability_needed": "generate_marketing_copy", "task_parameters": {"product_description": "CSV has 2 columns"}},
+        ]
+        # 2. Mock the LLM's integration response
+        mock_integration_response = "Based on the data summary, this product is revolutionary for data scientists."
+        user_query = "project: analyze CSV and generate marketing copy"
 
-        
-        
         with patch('src.services.multi_llm_service.MultiLLMService.generate_response', new_callable=AsyncMock) as mock_generate_response:
             mock_generate_response.side_effect = [
                 str(mock_decomposed_plan).replace("'", '"'),
@@ -103,10 +108,10 @@ class TestAgentCollaboration(unittest.TestCase):
         self.assertIn("revolutionary for data scientists", final_response)
 
         # Check that the LLM was called twice (decomposition and integration)
-        self.assertEqual(mock_chat_completion.call_count, 2)
+        self.assertEqual(mock_generate_response.call_count, 2)
 
         # Check the integration prompt
-        integration_call_args = mock_chat_completion.call_args_list[1]
+        integration_call_args = mock_generate_response.call_args_list[1]
         self.assertIn("User's Original Request", integration_call_args.kwargs['prompt'])
         self.assertIn("Collected Results from Sub-Agents", integration_call_args.kwargs['prompt'])
         self.assertIn("CSV has 2 columns", integration_call_args.kwargs['prompt'])
@@ -195,29 +200,28 @@ class TestAgentCollaboration(unittest.TestCase):
             ]
 
             # 3. Mock service discovery to initially find nothing, then find the capability
-            service_discovery_mock = self.dialogue_manager.project_coordinator.service_discovery
-            service_discovery_mock.find_capabilities.side_effect = [
-                [], # First call finds nothing
-                [{"capability_id": "new_agent_v1_cap", "ai_id": "did:hsp:new_agent"}] # Second call finds it
-            ]
+            with patch.object(self.dialogue_manager.project_coordinator, 'service_discovery') as service_discovery_mock:
+                service_discovery_mock.find_capabilities.side_effect = [
+                    [], # First call finds nothing
+                    [{"capability_id": "new_agent_v1_cap", "ai_id": "did:hsp:new_agent"}] # Second call finds it
+                ]
 
-            # 4. Mock the agent manager
-            agent_manager_mock = self.dialogue_manager.project_coordinator.agent_manager
-            agent_manager_mock.launch_agent.return_value = "pid_123"
-            agent_manager_mock.wait_for_agent_ready = AsyncMock()
+                # 4. Mock the agent manager
+                with patch.object(self.dialogue_manager.project_coordinator, 'agent_manager') as agent_manager_mock:
+                    agent_manager_mock.launch_agent.return_value = "pid_123"
+                    agent_manager_mock.wait_for_agent_ready = AsyncMock()
 
-            # 5. Mock the dispatch
-            patcher_dispatch = patch.object(self.dialogue_manager.project_coordinator, '_dispatch_single_subtask', new=AsyncMock(return_value={"result": "ok"}))
+                    # 5. Mock the dispatch
+                    patcher_dispatch = patch.object(self.dialogue_manager.project_coordinator, '_dispatch_single_subtask', new=AsyncMock(return_value={"result": "ok"}))
 
+                    # 6. Run the project
+                    with patcher_dispatch:
+                        final_response = asyncio.run(self.dialogue_manager.get_simple_response("project: new agent"))
 
-            # 6. Run the project
-            with patcher_dispatch:
-                final_response = asyncio.run(self.dialogue_manager.get_simple_response("project: new agent"))
-
-            # 7. Assertions
-            self.assertIn("Dynamically launched agent", final_response)
-            agent_manager_mock.launch_agent.assert_called_once_with("new_agent_agent")
-            agent_manager_mock.wait_for_agent_ready.assert_awaited_once_with("new_agent_agent")
+                    # 7. Assertions
+                    self.assertIn("Dynamically launched agent", final_response)
+                    agent_manager_mock.launch_agent.assert_called_once_with("new_agent_agent")
+                    agent_manager_mock.wait_for_agent_ready.assert_awaited_once_with("new_agent_agent")
 
 
 if __name__ == '__main__':
