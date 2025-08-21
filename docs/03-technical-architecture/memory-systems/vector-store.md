@@ -1,6 +1,6 @@
 # VectorStore: ChromaDB Wrapper for Semantic Memory
 
-This document provides an overview of the `VectorStore` module (`src/core/memory/vector_store.py`).
+This document provides an overview of the `VectorStore` module (`src/core_ai/memory/vector_store.py`).
 
 ## Purpose
 
@@ -9,9 +9,9 @@ The `VectorStore` class serves as a robust and user-friendly interface for manag
 ## Key Responsibilities and Features
 
 *   **Initialization (`__init__`)**:
-    *   Initializes a `chromadb.PersistentClient`, which ensures that the vector database and its data are stored persistently on disk at a specified `path` (defaulting to `.chromadb/`).
+    *   Initializes a `chromadb.EphemeralClient` by default, which runs in-memory. This can be switched to a `chromadb.HttpClient` by setting the `CHROMA_HTTP_CLIENT=1` environment variable.
     *   Retrieves or creates a named collection (defaulting to `main_collection`) within the ChromaDB instance, serving as the container for documents and their embeddings.
-    *   Includes comprehensive error handling to manage potential issues during the ChromaDB client or collection initialization.
+    *   Includes comprehensive error handling to manage potential issues during the ChromaDB client or collection initialization, especially for dependency issues (e.g., `numpy` version conflicts).
 *   **Add Documents (`add_documents`)**:
     *   Provides a method to add one or more documents to the vector store.
     *   Each document requires a unique `id`, its `embeddings` (a list of floating-point numbers representing its vector), `metadatas` (a dictionary for additional descriptive attributes), and optionally the original `documents` content (text).

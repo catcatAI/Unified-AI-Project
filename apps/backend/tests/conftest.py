@@ -71,11 +71,21 @@ async def mock_handle_incoming_hsp_task_result_side_effect(project_coordinator, 
     await project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
 
 
-from typing import Optional, Dict, Any
-from cryptography.fernet import Fernet
-
 # 添加 src 目錄到路徑
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+import pytest
+import asyncio
+import sys
+import threading
+import time
+from pathlib import Path
+import logging
+from typing import Optional, Dict, Any
+from cryptography.fernet import Fernet
+from src.shared.types.common_types import DialogueTurn, DialogueMemoryEntryMetadata
+from datetime import datetime, timezone
+import uuid
 
 try:
     from core_ai.test_utils.deadlock_detector import (

@@ -64,6 +64,10 @@ formula_engine_instance: Optional[FormulaEngine] = None
 tool_dispatcher_instance: Optional[ToolDispatcher] = None
 dialogue_manager_instance: Optional[DialogueManager] = None
 
+# Optional feature services (economy/pet) - default None to avoid NameError in get_services
+pet_manager_instance = None
+economy_manager_instance = None
+
 
 # Configuration (can be loaded from file or passed)
 # For PoC, CLI and API might use slightly different default configs or AI IDs.
@@ -87,7 +91,7 @@ DEFAULT_OPERATIONAL_CONFIGS: Dict[str, Any] = {
 
 
 async def initialize_services(
-    config: Dict[str, Any],
+    config: Optional[Dict[str, Any]] = None,
     ai_id: str = DEFAULT_AI_ID,
     hsp_broker_address: str = DEFAULT_MQTT_BROKER,
     hsp_broker_port: int = DEFAULT_MQTT_PORT,
@@ -111,6 +115,18 @@ async def initialize_services(
     # --- 0. Demo Mode and Key Detection ---
     import os
     import yaml
+
+    # Provide default config if none passed
+    if config is None:
+        config = {
+            "mcp": {
+                "mqtt_broker_address": DEFAULT_MQTT_BROKER,
+                "mqtt_broker_port": DEFAULT_MQTT_PORT,
+                "enable_fallback": True,
+                "fallback_config": {}
+            },
+            "is_multiprocess": False
+        }
 
     # Collect all potential credentials for demo detection
     all_credentials = {}
@@ -342,6 +358,8 @@ def get_services() -> Dict[str, Any]:
         "audio_service": audio_service_instance,
         "vision_service": vision_service_instance,
         "resource_awareness_service": resource_awareness_service_instance,
+        "economy_manager": economy_manager_instance,
+        "pet_manager": pet_manager_instance,
     }
 
 async def shutdown_services():

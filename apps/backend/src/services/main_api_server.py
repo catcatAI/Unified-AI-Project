@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -393,6 +393,49 @@ async def get_hsp_task_status(correlation_id: str, services=Depends(get_services
         "status": "unknown_or_expired",
         "correlation_id": correlation_id,
     }
+
+# --- Economy Router ---
+economy_router = APIRouter()
+
+@economy_router.get("/balance/{user_id}")
+async def get_user_balance(user_id: str, services: Dict[str, Any] = Depends(get_services)):
+    economy_manager: Optional[EconomyManager] = services.get("economy_manager")
+    if not economy_manager:
+        raise HTTPException(status_code=503, detail="EconomyManager not available")
+    balance = economy_manager.get_balance(user_id)
+    return {"user_id": user_id, "balance": balance}
+
+@economy_router.post("/transaction")
+async def create_transaction(transaction_data: Dict[str, Any], services: Dict[str, Any] = Depends(get_services)):
+    economy_manager: Optional[EconomyManager] = services.get("economy_manager")
+    if not economy_manager:
+        raise HTTPException(status_code=503, detail="EconomyManager not available")
+    success = economy_manager.process_transaction(transaction_data)
+    if not success:
+        raise HTTPException(status_code=400, detail="Transaction failed")
+    return {"status": "success"}
+
+# --- Pet Router ---
+pet_router = APIRouter()
+
+@pet_router.get("/{pet_id}/state")
+async def get_pet_state(pet_id: str, services: Dict[str, Any] = Depends(get_services)):
+    pet_manager: Optional[PetManager] = services.get("pet_manager")
+    if not pet_manager or pet_manager.pet_id != pet_id:
+        # This simple check assumes one pet manager instance for now
+        raise HTTPException(status_code=404, detail="Pet not found")
+    return pet_manager.get_current_state()
+
+@pet_router.post("/{pet_id}/interact")
+async def interact_with_pet(pet_id: str, interaction_data: Dict[str, Any], services: Dict[str, Any] = Depends(get_services)):
+    pet_manager: Optional[PetManager] = services.get("pet_manager")
+    if not pet_manager or pet_manager.pet_id != pet_id:
+        raise HTTPException(status_code=404, detail="Pet not found")
+    result = pet_manager.handle_interaction(interaction_data)
+    return result
+
+app.include_router(economy_router, prefix="/api/v1/economy", tags=["Economy"])
+app.include_router(pet_router, prefix="/api/v1/pet", tags=["Pet"])
 
 if __name__ == "__main__":
     import uvicorn

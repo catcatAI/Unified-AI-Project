@@ -20,6 +20,7 @@ The purpose of the `HAMMemoryManager` is to provide the AI with a long-term memo
     *   Integrates with a `VectorMemoryStore` (which is backed by ChromaDB) to store vector embeddings of memories. This enables powerful semantic search capabilities.
     *   Uses an `ImportanceScorer` to assign an importance score to each memory, allowing for more nuanced retrieval and retention policies.
     *   The `retrieve_relevant_memories` method finds memories that are semantically similar to a given query, going beyond simple keyword matching.
+*   **Configuration**: The vector search functionality can be controlled via the `HAM_DISABLE_VECTOR_STORE=1` environment variable, which disables the feature. Additionally, the manager can accept an externally provided `chroma_client` during initialization, allowing for more flexible integration and testing.
 *   **Rich Querying Capabilities**: Provides flexible query methods, including `query_core_memory` and `query_by_date_range`, which allow for filtering memories based on keywords, date ranges, data types, and other metadata.
 *   **Resource Awareness**: Can be integrated with a `ResourceAwarenessService` to simulate disk space limitations and I/O lag. This makes the AI aware of its resource constraints and enables it to adapt its memory management strategies accordingly.
 *   **Persistence**: Saves the core memory store to a JSON file, ensuring that the AI's memories persist across sessions and restarts.
