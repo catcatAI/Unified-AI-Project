@@ -241,12 +241,17 @@ class LearningManager:
 
         # Now, attempt to distill a reusable strategy from this successful case.
         # This requires a powerful LLM.
-        if not self.fact_extractor.llm: # fact_extractor holds the llm_interface
+        if not self.fact_extractor.llm_service: # fact_extractor holds the llm_service
             print(f"[{self.ai_id}] No LLM interface available in FactExtractor, cannot distill strategy.")
             return
 
         distillation_prompt = self._create_strategy_distillation_prompt(project_case)
-        raw_strategy_output = self.fact_extractor.llm.generate_response(prompt=distillation_prompt, params={"temperature": 0.0})
+        from services.multi_llm_service import ChatMessage
+        messages = [ChatMessage(role="user", content=distillation_prompt)]
+        llm_response = await self.fact_extractor.llm_service.chat_completion(
+            model_id="gpt-4", messages=messages, temperature=0.0
+        )
+        raw_strategy_output = llm_response.content
 
         try:
             json_match = re.search(r"```json\s*([\s\S]*?)\s*```", raw_strategy_output)

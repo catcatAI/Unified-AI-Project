@@ -393,11 +393,17 @@ class HSPConnector:
 					self.logger.error(
 						f"Fallback also failed for message {correlation_id} after HSP resilience failure."
 					)
+					# Clean up retry counts when fallback fails
+					if correlation_id in self._message_retry_counts:
+						del self._message_retry_counts[correlation_id]
 					return False
 			else:
 				self.logger.error(
 					f"HSP not available and fallback disabled/failed for {correlation_id}."
 				)
+				# Clean up retry counts when fallback is disabled/unavailable
+				if correlation_id in self._message_retry_counts:
+					del self._message_retry_counts[correlation_id]
 				return False
 		except Exception as e:
 			self.logger.critical(

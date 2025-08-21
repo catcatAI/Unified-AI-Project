@@ -369,6 +369,14 @@ async def _initialize_services_async(
         )
         # DM's __init__ now registers its own task result callback with hsp_connector_instance
 
+    # Initialize default agents
+    try:
+        from src.core_ai.default_agents import initialize_default_agents
+        await initialize_default_agents()
+        print("Core Services: Default agents initialized.")
+    except Exception as e:
+        print(f"Core Services: Warning - Failed to initialize default agents: {e}")
+
     print("Core Services: All services initialized (or attempted).")
 
 
@@ -446,6 +454,14 @@ def get_services() -> Dict[str, Any]:
 async def shutdown_services():
     """Gracefully shuts down services, e.g., AgentManager and HSPConnector."""
     global hsp_connector_instance, agent_manager_instance, llm_interface_instance
+
+    # Shutdown default agents first
+    try:
+        from src.core_ai.default_agents import shutdown_default_agents
+        await shutdown_default_agents()
+        print("Core Services: Default agents shutdown.")
+    except Exception as e:
+        print(f"Core Services: Warning - Failed to shutdown default agents: {e}")
 
     if agent_manager_instance:
         print("Core Services: Shutting down all active agents...")

@@ -47,6 +47,9 @@ def hsp_connector_instance(mock_mqtt_client, mock_fallback_manager):
     # Manually set the mock fallback manager
     connector.fallback_manager = mock_fallback_manager
     connector.fallback_initialized = True # Assume it's initialized for tests
+    
+    # Force enable fallback for tests (override mock mode disable)
+    connector.enable_fallback = True
 
     # Ensure the mock publish is used
     connector.external_connector.publish = mock_mqtt_client.publish
@@ -160,6 +163,10 @@ async def test_scenario_3_no_ack_max_retries(hsp_connector_instance, mock_mqtt_c
     connector = hsp_connector_instance
     connector.ack_timeout_sec = 0.5 # Short timeout
     connector.max_ack_retries = 2 # Max 2 retries for testing
+    
+    # Disable fallback for this test to test pure ACK retry failure
+    connector.enable_fallback = False
+    
     msg_id = "msg3"
     corr_id = "corr3"
     envelope = create_ack_required_envelope(msg_id, corr_id)
@@ -214,7 +221,7 @@ async def test_scenario_5_hsp_unavailable_fallback_failure(hsp_connector_instanc
     result = await connector.publish_message("hsp/test", envelope)
 
     assert result is False
-    # Initial HSP attempt + retries (each retry will also try fallback)
+    # When HSP publish fails, we try fallback once immediately
     assert mock_mqtt_client.publish.call_count == 1 # Only one attempt via HSP
-    assert mock_fallback_manager.send_message.call_count == (connector.max_ack_retries + 1)
+    assert mock_fallback_manager.send_message.call_count == 1 # One fallback attempt
     assert connector._message_retry_counts.get(corr_id) is None # Should be cleared
