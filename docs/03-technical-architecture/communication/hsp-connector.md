@@ -21,7 +21,7 @@ The `HSPConnector` is designed to provide a unified and resilient communication 
     *   **Acknowledgements (ACKs)**: Supports a Quality of Service (QoS) parameter (`requires_ack`) to ensure guaranteed message delivery for critical messages.
     *   **Fallback Protocols**: Can initialize and use a suite of fallback communication protocols (including in-memory, file-based, and HTTP) if the primary HSP (MQTT) connection fails, ensuring that the AI can maintain communication even in adverse network conditions.
 *   **Callback-Based Architecture**: Employs a callback-based system that allows different modules to register their interest in specific message types. When a message of a certain type is received, the `HSPConnector` dispatches it to all registered callbacks for that type.
-*   **Connection Management**: Handles the process of connecting to and disconnecting from the MQTT broker, with automatic retries on connection failure.
+*   **Connection Management**: Handles the process of connecting to and disconnecting from the MQTT broker. The `connect` method includes a built-in retry mechanism, attempting to connect up to 3 times with exponential backoff to enhance connection stability.
 *   **Post-Connection Synchronization**: After a successful connection is established, it can re-advertise the AI's capabilities to the network, ensuring that other agents are aware of its services.
 
 ## How it Works
