@@ -14,13 +14,38 @@ from dataclasses import dataclass
 from enum import Enum
 
 import aiohttp
-import openai
-from anthropic import AsyncAnthropic
-import google.generativeai as genai
-import cohere
-from azure.identity import DefaultAzureCredential
-from azure.ai.inference import ChatCompletionsClient
-from azure.ai.inference.models import SystemMessage, UserMessage
+
+# Optional third-party providers. Guard imports so this module can be imported
+# in environments/tests where some SDKs are not installed.
+try:
+    import openai  # type: ignore
+except Exception:  # pragma: no cover
+    openai = None  # type: ignore
+
+try:
+    from anthropic import AsyncAnthropic  # type: ignore
+except Exception:  # pragma: no cover
+    AsyncAnthropic = None  # type: ignore
+
+try:
+    import google.generativeai as genai  # type: ignore
+except Exception:  # pragma: no cover
+    genai = None  # type: ignore
+
+try:
+    import cohere  # type: ignore
+except Exception:  # pragma: no cover
+    cohere = None  # type: ignore
+
+try:
+    from azure.identity import DefaultAzureCredential  # type: ignore
+    from azure.ai.inference import ChatCompletionsClient  # type: ignore
+    from azure.ai.inference.models import SystemMessage, UserMessage  # type: ignore
+except Exception:  # pragma: no cover
+    DefaultAzureCredential = None  # type: ignore
+    ChatCompletionsClient = None  # type: ignore
+    SystemMessage = None  # type: ignore
+    UserMessage = None  # type: ignore
 from aiolimiter import AsyncLimiter
 
 logger = logging.getLogger(__name__)
@@ -111,6 +136,8 @@ class OpenAIProvider(BaseLLMProvider):
     
     def __init__(self, config: ModelConfig):
         super().__init__(config)
+        if openai is None:
+            raise ImportError("openai SDK is not installed")
         openai.api_key = config.api_key
         if config.base_url:
             openai.api_base = config.base_url
@@ -196,6 +223,8 @@ class AnthropicProvider(BaseLLMProvider):
     
     def __init__(self, config: ModelConfig):
         super().__init__(config)
+        if AsyncAnthropic is None:
+            raise ImportError("anthropic SDK is not installed")
         self.client = AsyncAnthropic(api_key=config.api_key)
     
     async def chat_completion(
@@ -293,6 +322,8 @@ class GoogleProvider(BaseLLMProvider):
     
     def __init__(self, config: ModelConfig):
         super().__init__(config)
+        if genai is None:
+            raise ImportError("google.generativeai SDK is not installed")
         genai.configure(api_key=config.api_key)
         self.model = genai.GenerativeModel(config.model_name)
     
@@ -565,6 +596,8 @@ class AzureOpenAIProvider(BaseLLMProvider):
     
     def __init__(self, config: ModelConfig):
         super().__init__(config)
+        if ChatCompletionsClient is None or DefaultAzureCredential is None or SystemMessage is None:
+            raise ImportError("Azure AI Inference SDK is not installed")
         self.client = ChatCompletionsClient(
             endpoint=config.base_url,
             credential=DefaultAzureCredential() if not config.api_key else config.api_key
@@ -658,6 +691,8 @@ class CohereProvider(BaseLLMProvider):
     
     def __init__(self, config: ModelConfig):
         super().__init__(config)
+        if cohere is None:
+            raise ImportError("cohere SDK is not installed")
         self.client = cohere.AsyncClient(api_key=config.api_key)
     
     async def chat_completion(
