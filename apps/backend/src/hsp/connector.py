@@ -541,6 +541,10 @@ class HSPConnector:
 		self.logger.debug(f"Registering on_fact_callback: {callback}")
 		self._fact_callbacks.append(callback)
 
+	# Backwards-compatible alias expected by tests
+	def on_fact_received(self, callback: Callable[[HSPFactPayload, str, HSPMessageEnvelope], None]):
+		self.register_on_fact_callback(callback)
+
 	def register_on_capability_advertisement_callback(self, callback: Callable[[HSPCapabilityAdvertisementPayload, str, HSPMessageEnvelope], None]):
 		self.logger.debug(f"Registering on_capability_advertisement_callback: {callback}")
 		self._capability_advertisement_callbacks.append(callback)
@@ -548,14 +552,26 @@ class HSPConnector:
 	def register_on_task_request_callback(self, callback: Callable[[HSPTaskRequestPayload, str, HSPMessageEnvelope], None]):
 		self._task_request_callbacks.append(callback)
 
+	# Backwards-compatible alias for command messages used in tests
+	def on_command_received(self, callback: Callable[[HSPTaskRequestPayload, str, HSPMessageEnvelope], None]):
+		self.register_on_task_request_callback(callback)
+
 	def register_on_task_result_callback(self, callback: Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]):
 		self._task_result_callbacks.append(callback)
 
 	def register_on_connect_callback(self, callback: Callable[[], None]):
 		self._connect_callbacks.append(callback)
 
+	# Backwards-compatible alias expected by tests
+	def on_connect_callback(self, callback: Callable[[], None]):
+		self.register_on_connect_callback(callback)
+
 	def register_on_disconnect_callback(self, callback: Callable[[], None]):
 		self._disconnect_callbacks.append(callback)
+
+	# Backwards-compatible alias expected by tests
+	def on_disconnect_callback(self, callback: Callable[[], None]):
+		self.register_on_disconnect_callback(callback)
 
 	def register_on_acknowledgement_callback(self, callback: Callable[[HSPAcknowledgementPayload, str, HSPMessageEnvelope], None]):
 		self._acknowledgement_callbacks.append(callback)

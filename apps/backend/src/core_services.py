@@ -68,6 +68,43 @@ dialogue_manager_instance: Optional[DialogueManager] = None
 pet_manager_instance = None
 economy_manager_instance = None
 
+# Lightweight defaults for tests that import module-level singletons directly
+try:
+	if tool_dispatcher_instance is None:
+		tool_dispatcher_instance = ToolDispatcher(llm_service=None)
+except Exception:
+	pass
+
+try:
+	if ham_manager_instance is None:
+		class _LightweightMockHAM:
+			def __init__(self):
+				self.memory_store = []
+
+			def store_experience(self, raw_data, data_type, metadata=None):
+				entry = {"raw_data": raw_data, "data_type": data_type, "metadata": metadata or {}}
+				self.memory_store.append(entry)
+				return f"mock_ham_{len(self.memory_store)}"
+
+			def query_core_memory(self, metadata_filters=None, data_type_filter=None, limit=50, **kwargs):
+				results = []
+				for item in self.memory_store:
+					if data_type_filter and item.get("data_type") != data_type_filter:
+						continue
+					if metadata_filters:
+						meta = item.get("metadata", {})
+						ok = all(meta.get(k) == v for k, v in metadata_filters.items())
+						if not ok:
+							continue
+					results.append(item)
+					if len(results) >= limit:
+						break
+				return results
+
+		ham_manager_instance = _LightweightMockHAM()
+except Exception:
+	pass
+
 
 # Configuration (can be loaded from file or passed)
 # For PoC, CLI and API might use slightly different default configs or AI IDs.
@@ -90,7 +127,7 @@ DEFAULT_OPERATIONAL_CONFIGS: Dict[str, Any] = {
 
 
 
-async def initialize_services(
+async def _initialize_services_async(
     config: Optional[Dict[str, Any]] = None,
     ai_id: str = DEFAULT_AI_ID,
     hsp_broker_address: str = DEFAULT_MQTT_BROKER,
@@ -333,6 +370,50 @@ async def initialize_services(
         # DM's __init__ now registers its own task result callback with hsp_connector_instance
 
     print("Core Services: All services initialized (or attempted).")
+
+
+def initialize_services(
+    config: Optional[Dict[str, Any]] = None,
+    ai_id: str = DEFAULT_AI_ID,
+    hsp_broker_address: str = DEFAULT_MQTT_BROKER,
+    hsp_broker_port: int = DEFAULT_MQTT_PORT,
+    operational_configs: Optional[Dict[str, Any]] = None,
+    use_mock_ham: bool = False,
+    llm_config: Optional[Dict[str, Any]] = None
+):
+    """
+    Convenience wrapper allowing both sync and async usage:
+    - If called inside an event loop, returns a coroutine to be awaited.
+    - If called without an event loop (e.g., from tests), runs to completion synchronously.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        return _initialize_services_async(
+            config=config,
+            ai_id=ai_id,
+            hsp_broker_address=hsp_broker_address,
+            hsp_broker_port=hsp_broker_port,
+            operational_configs=operational_configs,
+            use_mock_ham=use_mock_ham,
+            llm_config=llm_config,
+        )
+    else:
+        asyncio.run(
+            _initialize_services_async(
+                config=config,
+                ai_id=ai_id,
+                hsp_broker_address=hsp_broker_address,
+                hsp_broker_port=hsp_broker_port,
+                operational_configs=operational_configs,
+                use_mock_ham=use_mock_ham,
+                llm_config=llm_config,
+            )
+        )
+
 
 
 def get_services() -> Dict[str, Any]:

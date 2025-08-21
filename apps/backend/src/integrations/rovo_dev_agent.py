@@ -178,7 +178,10 @@ class RovoDevAgent:
             self.is_active = True
             
             # Register capabilities with HSPConnector for post-connect synchronization
-            self.connector.hsp_connector.register_capability_provider(self._load_capabilities)
+            # Some tests create EnhancedRovoDevConnector without an HSP connector attribute.
+            # Guard this for test compatibility.
+            if hasattr(self.connector, 'hsp_connector') and self.connector.hsp_connector is not None:
+                self.connector.hsp_connector.register_capability_provider(self._load_capabilities)
 
             # 恢復之前的狀態
             if self.recovery_enabled:
