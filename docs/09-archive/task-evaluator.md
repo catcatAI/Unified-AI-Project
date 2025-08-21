@@ -1,3 +1,5 @@
+> **注意：此文件描述的功能目前尚未在程式碼中實現。** 這份文件已被移動到歸檔目錄，以反映其當前狀態。
+
 # TaskExecutionEvaluator: AI Task Performance Assessment
 
 ## Overview

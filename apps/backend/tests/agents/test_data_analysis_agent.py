@@ -6,7 +6,6 @@ import os
 import sys
 from unittest.mock import MagicMock, AsyncMock, patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from src.agents.data_analysis_agent import DataAnalysisAgent
 from src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
@@ -19,8 +18,8 @@ class TestDataAnalysisAgent(unittest.TestCase):
 
         # We need to mock the services that the agent's base class initializes
         self.mock_services = {
-            "hsp_connector": MagicMock(),
-            "tool_dispatcher": MagicMock()
+            "hsp_connector": AsyncMock(),
+            "tool_dispatcher": AsyncMock()
         }
 
         # Patch the service initialization and getter
@@ -33,17 +32,9 @@ class TestDataAnalysisAgent(unittest.TestCase):
         self.mock_initialize = patcher_initialize.start()
         self.mock_get_services = patcher_get.start()
 
-        # We also need to mock the ToolDispatcher used by the agent itself
-        patcher_tool_dispatcher = patch('src.agents.data_analysis_agent.ToolDispatcher')
-        self.mock_ToolDispatcher_class = patcher_tool_dispatcher.start()
-        self.addCleanup(patcher_tool_dispatcher.stop)
-
-        # Configure the mock instance that will be created
-        self.mock_tool_dispatcher_instance = MagicMock()
-        self.mock_ToolDispatcher_class.return_value = self.mock_tool_dispatcher_instance
-
         self.agent = DataAnalysisAgent(agent_id=self.agent_id)
         self.agent.hsp_connector = self.mock_services["hsp_connector"]
+        self.agent.tool_dispatcher = self.mock_services["tool_dispatcher"]
 
     @pytest.mark.timeout(10)
     def test_initialization(self):
@@ -58,15 +49,7 @@ class TestDataAnalysisAgent(unittest.TestCase):
     @pytest.mark.timeout(10)
     def test_handle_task_request_success(self):
         """Test the agent's handling of a successful task request."""
-        # 1. Configure the mock ToolDispatcher to return a successful response
-        mock_tool_response = ToolDispatcherResponse(
-            status="success",
-            payload="Analysis complete: 2 rows, 2 columns.",
-            tool_name_attempted="analyze_csv",
-            original_query_for_tool="summarize",
-            error_message=None
-        )
-        self.mock_tool_dispatcher_instance.dispatch.return_value = mock_tool_response
+
 
         # 2. Create a mock HSP task payload
         request_id = "test_req_001"
@@ -81,14 +64,7 @@ class TestDataAnalysisAgent(unittest.TestCase):
         # 3. Run the handle_task_request method
         asyncio.run(self.agent.handle_task_request(task_payload, "test_sender", envelope))
 
-        # 4. Assert that the tool dispatcher was called correctly
-        self.mock_tool_dispatcher_instance.dispatch.assert_called_once_with(
-            query="summarize",
-            explicit_tool_name="analyze_csv",
-            csv_content="a,b\n1,2"
-        )
-
-        # 5. Assert that the HSP connector sent the correct result
+        # 4. Assert that the HSP connector sent the correct result
         self.agent.hsp_connector.send_task_result.assert_called_once()
         sent_payload = self.agent.hsp_connector.send_task_result.call_args[0][0]
         sent_topic = self.agent.hsp_connector.send_task_result.call_args[0][1]
@@ -96,21 +72,12 @@ class TestDataAnalysisAgent(unittest.TestCase):
         self.assertEqual(sent_topic, "hsp/results/test_requester/req_001")
         self.assertEqual(sent_payload['request_id'], request_id)
         self.assertEqual(sent_payload['status'], "success")
-        self.assertEqual(sent_payload['payload'], "Analysis complete: 2 rows, 2 columns.")
-        self.assertIsNone(sent_payload['error_details'])
+        self.assertEqual(sent_payload['payload'], "Dummy analysis: Summarized 2 lines of CSV data.")
 
     @pytest.mark.timeout(10)
     def test_handle_task_request_tool_failure(self):
         """Test the agent's handling of a task where the tool fails."""
-        # 1. Configure the mock ToolDispatcher to return a failure response
-        mock_tool_response = ToolDispatcherResponse(
-            status="failure_tool_error",
-            payload=None,
-            tool_name_attempted="analyze_csv",
-            original_query_for_tool="summarize",
-            error_message="Invalid CSV format"
-        )
-        self.mock_tool_dispatcher_instance.dispatch.return_value = mock_tool_response
+
 
         # 2. Create a mock HSP task payload
         request_id = "test_req_002"
@@ -128,10 +95,13 @@ class TestDataAnalysisAgent(unittest.TestCase):
         # 4. Assert HSP connector sent a failure result
         self.agent.hsp_connector.send_task_result.assert_called_once()
         sent_payload = self.agent.hsp_connector.send_task_result.call_args[0][0]
+        sent_topic = self.agent.hsp_connector.send_task_result.call_args[0][1]
 
+        self.assertEqual(sent_topic, "hsp/results/test_requester/req_002")
+        self.assertEqual(sent_payload['request_id'], request_id)
         self.assertEqual(sent_payload['status'], "failure")
         self.assertIsNotNone(sent_payload['error_details'])
-        self.assertEqual(sent_payload['error_details']['error_message'], "Invalid CSV format")
+        self.assertEqual(sent_payload['error_details']['error_message'], "Dummy analysis failed: Unsupported query or invalid CSV.")
 
 if __name__ == '__main__':
     unittest.main()

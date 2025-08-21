@@ -1,35 +1,28 @@
-# Knowledge Distillation Manager
+# KnowledgeDistillationManager: Compressing AI Models
 
 ## Overview
 
-This document provides an overview of the `KnowledgeDistillationManager` module (`src/core_ai/learning/knowledge_distillation.py`). This module is responsible for managing the process of knowledge distillation, where knowledge from a large, complex "teacher" model is transferred to a smaller, more efficient "student" model.
+This document provides an overview of the `KnowledgeDistillationManager` module, located at `apps/backend/src/core_ai/learning/knowledge_distillation.py`. This module is part of the continuous learning framework, focusing on model optimization.
 
 ## Purpose
 
-The primary purpose of the `KnowledgeDistillationManager` is to enable the creation of smaller, computationally cheaper models that retain the performance of larger, more powerful models. This is crucial for deploying AI capabilities in resource-constrained environments (e.g., on-device, edge computing) where the original "teacher" model would be too slow or memory-intensive.
+The primary purpose of knowledge distillation is to transfer knowledge from a large, complex "teacher" model to a smaller, more efficient "student" model. The `KnowledgeDistillationManager` orchestrates this process, allowing the AI system to create smaller models that retain most of the performance of the larger ones, making them faster and less resource-intensive to run.
 
 ## Key Responsibilities and Features
 
-*   **Distillation Process (`distill_knowledge`)**:
-    *   Orchestrates the main training loop for knowledge distillation.
-    *   For each batch of training data, it gets predictions from both the teacher and student models.
-    *   It calculates a `distillation_loss` which measures the difference between the student's and teacher's outputs. This loss guides the student model to mimic the teacher's behavior.
-    *   Simulates the backpropagation process to update the student model's weights (in a real implementation, this would involve an optimizer).
-*   **Evaluation (`evaluate_distillation`)**:
-    *   Provides a mechanism to evaluate and compare the performance of both the teacher and student models on a separate test dataset.
-    *   Calculates a `distillation_ratio` to quantify how successfully the student has learned from the teacher.
-*   **Distillation Loss (`DistillationLoss`)**:
-    *   A placeholder class representing the loss function used in distillation.
-    *   In a real-world scenario, this would typically involve comparing the softened probability distributions of the teacher and student models using a metric like Kullback-Leibler (KL) divergence.
+*   **Model Management**: The manager is initialized with a `teacher_model` and a `student_model`.
+*   **Distillation Process (`distill_knowledge`)**: It iterates through training data, gets predictions from both the teacher and student models, and calculates a `distillation_loss`. This loss function (currently a placeholder) would typically encourage the student model's outputs to mimic the teacher's outputs.
+*   **Loss Calculation**: Utilizes a `DistillationLoss` class (currently a placeholder) to compute the difference between the teacher's and student's predictions. In a real implementation, this would involve techniques like using a "temperature" parameter to soften the teacher's output probabilities.
+*   **Evaluation (`evaluate_distillation`)**: Provides a method to compare the performance (e.g., accuracy) of the student model against the teacher model on a test dataset to measure the effectiveness of the distillation process.
 
 ## How it Works
 
-The `KnowledgeDistillationManager` takes a "teacher" model and a "student" model as input. During the `distill_knowledge` process, it feeds training data to both models. The output of the teacher model (often the logits or probabilities from the pre-softmax layer) is treated as "soft labels." The student model is then trained to not only predict the correct ground-truth labels but also to replicate the soft labels produced by the teacher. This allows the student to learn the nuanced decision-making process and generalization capabilities of the larger teacher model, resulting in a more capable and robust smaller model.
+The manager takes a large, well-trained teacher model and a smaller student model. It then runs a training loop where the student model is trained not on the ground-truth labels, but on the outputs (or "soft labels") produced by the teacher model. The goal is for the student to learn the teacher's reasoning process, effectively compressing the knowledge into a smaller architecture.
 
 ## Integration with Other Modules
 
-*   **Teacher and Student Models**: The manager requires two model objects that expose a `predict` method. These models can be any type of machine learning model, but are typically neural networks.
-*   **Data Services**: The manager consumes training and testing data, which would be provided by a data loading or data management service within the AI ecosystem.
+*   **`LearningManager`**: The `LearningManager` could initiate the knowledge distillation process, perhaps after a teacher model has reached a certain performance threshold or when a smaller, specialized model is needed.
+*   **AI Models**: This module directly interacts with any model objects that have a `predict` method, treating them as either a teacher or a student.
 
 ## Code Location
 

@@ -125,6 +125,29 @@ class BaseAgent:
             await self.hsp_connector.send_task_result(result_payload, callback_topic, task_payload.get("request_id"))
             logger.warning(f"[{self.agent_id}] Sent NOT_IMPLEMENTED failure response to {callback_topic}")
 
+    async def send_task_success(self, request_id: str, sender_ai_id: str, callback_address: str, payload: Any):
+        result_payload = HSPTaskResultPayload(
+            request_id=request_id,
+            executing_ai_id=self.agent_id,
+            status="success",
+            payload=payload
+        )
+        if self.hsp_connector:
+            await self.hsp_connector.send_task_result(result_payload, callback_address, request_id)
+
+    async def send_task_failure(self, request_id: str, sender_ai_id: str, callback_address: str, error_message: str):
+        result_payload = HSPTaskResultPayload(
+            request_id=request_id,
+            executing_ai_id=self.agent_id,
+            status="failure",
+            error_details={
+                "error_code": "TASK_EXECUTION_FAILED",
+                "error_message": error_message
+            }
+        )
+        if self.hsp_connector:
+            await self.hsp_connector.send_task_result(result_payload, callback_address, request_id)
+
 if __name__ == '__main__':
     # Example of how a BaseAgent could be run.
     # In a real scenario, a dedicated script would run a specific agent subclass.
