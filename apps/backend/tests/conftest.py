@@ -27,8 +27,7 @@ async def mock_get_simple_response_side_effect(dm, project_coordinator, tool_dis
 
     try:
         # Attempt to dispatch a tool based on user input
-        history = dm.active_sessions.get(session_id, [])
-        tool_response = await tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id, history=history)
+        tool_response = await tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id)
 
         response_text = ""
         if tool_response['status'] == "success":
@@ -344,7 +343,13 @@ def mock_core_services():
 
     # Remove stray reassignment that overrides our AsyncMock and causes NameError
     # mock_service_discovery = MockServiceDiscovery()
+    # Wrap store_experience with MagicMock to allow call_count assertions
     mock_ham_manager = MockHAMManager()
+    original_store = mock_ham_manager.store_experience
+    from unittest.mock import MagicMock
+    def store_experience_proxy(*args, **kwargs):
+        return original_store(*args, **kwargs)
+    mock_ham_manager.store_experience = MagicMock(side_effect=store_experience_proxy)
 
     # Mock individual services
     mock_llm_interface = MagicMock(spec='src.services.multi_llm_service.MultiLLMService')

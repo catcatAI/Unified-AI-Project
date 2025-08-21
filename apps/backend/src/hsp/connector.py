@@ -16,6 +16,24 @@ from src.shared.network_resilience import RetryPolicy, CircuitBreaker, NetworkEr
 from .fallback.fallback_protocols import get_fallback_manager, FallbackMessage, MessagePriority, initialize_fallback_protocols
 from .utils.fallback_config_loader import get_config_loader
 from pathlib import Path
+class _MockBrokerRegistry:
+    _subscribers: Dict[str, list] = {}
+    _connectors: Dict[str, "HSPConnector"] = {}
+
+    @classmethod
+    def register(cls, ai_id: str, connector: "HSPConnector"):
+        cls._connectors[ai_id] = connector
+
+    @classmethod
+    async def route(cls, topic: str, payload: bytes):
+        # Deliver to any connectors that have an on_message callback registered
+        # Simulate wildcard matches for simple topics used in tests
+        message_str = payload.decode("utf-8")
+        for connector in list(cls._connectors.values()):
+            callback = getattr(connector.external_connector, 'on_message_callback', None)
+            if callback:
+                await callback(topic, message_str)
+
 
 # Define the base path for schemas, ensuring cross-platform compatibility
 SCHEMA_BASE_PATH = Path(__file__).resolve().parent.parent.parent / "schemas"
@@ -69,6 +87,8 @@ class HSPConnector:
                 mock_mqtt_client_instance = MagicMock()
                 mock_mqtt_client_instance.publish = AsyncMock(return_value=True)
                 self.external_connector.mqtt_client = mock_mqtt_client_instance
+            # Global in-process broker for mock mode to route messages cross connectors
+            _MockBrokerRegistry.register(self.ai_id, self)
             
             self.is_connected = True # Considered connected in mock mode
             self.hsp_available = True  # Mock mode considers HSP available
@@ -369,7 +389,10 @@ class HSPConnector:
             payload_bytes = json.dumps(envelope).encode('utf-8')
             # Access mqtt_client correctly via property which handles external_connector access
             mqtt_client = self.mqtt_client
-            if mqtt_client and hasattr(mqtt_client, 'publish'):
+            if self.mock_mode:
+                # Route via mock broker
+                await _MockBrokerRegistry.route(topic, payload_bytes)
+            elif mqtt_client and hasattr(mqtt_client, 'publish'):
                 await mqtt_client.publish(topic, payload_bytes, qos=qos)
             elif hasattr(self.external_connector, 'publish'):
                 await self.external_connector.publish(topic, payload_bytes, qos=qos)
