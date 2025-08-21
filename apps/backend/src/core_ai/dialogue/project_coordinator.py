@@ -183,7 +183,7 @@ class ProjectCoordinator:
         )
         mqtt_request_topic = f"hsp/requests/{target_ai_id}"
 
-        correlation_id = self.hsp_connector.send_task_request(payload=hsp_task_payload, target_ai_id_or_topic=mqtt_request_topic)
+        correlation_id = await self.hsp_connector.send_task_request(payload=hsp_task_payload, target_ai_id_or_topic=mqtt_request_topic)
         if correlation_id:
             self.pending_hsp_task_requests[correlation_id] = PendingHSPTaskInfo(
                 user_id="project_subtask", session_id="project_subtask", original_query_text=description,

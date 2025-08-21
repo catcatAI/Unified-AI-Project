@@ -32,6 +32,7 @@ from src.core_ai.trust_manager.trust_manager_module import TrustManager
 from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
 from src.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, ChatMessage, LLMResponse
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
+from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 from src.tools.tool_dispatcher import ToolDispatcher
 from src.core_ai.formula_engine import FormulaEngine
 from src.shared.types.common_types import ToolDispatcherResponse
@@ -341,6 +342,17 @@ def mock_llm_fixture():
         '[{"fact_type": "general_statement", "content": {"subject": "Berlin", "relation": "is_capital_of", "object": "Germany"}, "confidence": 0.99}]'
     )
     llm.add_mock_response("unsatisfactory_response_for_hsp_query_trigger", "I don't know about that topic.")
+    
+    # Add mock responses for project coordination
+    llm.add_mock_response(
+        "Given a user's request, break it down into a series of subtasks that can be executed by specialized agents.",
+        '[{"capability_needed": "advanced_weather_forecast", "task_parameters": {"location": "London"}, "task_description": "Get weather forecast for London"}]'
+    )
+    llm.add_mock_response(
+        "Given the user's original request and the results of the subtasks, please provide a comprehensive final response.",
+        "Based on the weather forecast data: Sunny with a chance of rain for London. Here is the comprehensive response for your request."
+    )
+    
     return llm
 
 
@@ -523,6 +535,18 @@ async def dialogue_manager_fixture(
     formula_engine = MagicMock()
     agent_manager = MagicMock()
     
+    # Create ProjectCoordinator for the DialogueManager
+    project_coordinator = ProjectCoordinator(
+        llm_interface=mock_llm_fixture,
+        service_discovery=service_discovery_module_fixture,
+        hsp_connector=main_ai_hsp_connector,
+        agent_manager=agent_manager,
+        memory_manager=configured_learning_manager.ham_memory,
+        learning_manager=configured_learning_manager,
+        personality_manager=personality_manager_fixture,
+        dialogue_manager_config=dm_config
+    )
+    
     dm = DialogueManager(
         ai_id=TEST_AI_ID_MAIN,
         personality_manager=personality_manager_fixture,
@@ -539,6 +563,9 @@ async def dialogue_manager_fixture(
         agent_manager=agent_manager,
         config=dm_config
     )
+    
+    # Set the project_coordinator after creation
+    dm.project_coordinator = project_coordinator
     results_topic = f"hsp/results/{TEST_AI_ID_MAIN}/#"
     await main_ai_hsp_connector.subscribe(results_topic, lambda topic, payload: None)
     await asyncio.sleep(0.1)  # Allow subscription to be processed
@@ -889,7 +916,10 @@ class TestHSPTaskDelegation:
         # 4. Peer A needs to be ready to handle the task request
         task_received_event = asyncio.Event()
         
-        peer_a_hsp_connector.register_on_task_request_callback(lambda tp, sai, env: self._peer_a_task_handler(tp, sai, env, peer_a_hsp_connector, task_received_event))
+        async def task_handler(tp, sai, env):
+            await self._peer_fact_handler(tp, sai, env, peer_a_hsp_connector, task_received_event)
+        
+        peer_a_hsp_connector.register_on_task_request_callback(task_handler)
         
         # 5. Trigger the DM and wait for the result
         final_response = await dm.get_simple_response(query, "test_session_task", "test_user_task")

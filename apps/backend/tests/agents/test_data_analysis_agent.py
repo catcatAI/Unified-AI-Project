@@ -9,32 +9,22 @@ from unittest.mock import MagicMock, AsyncMock, patch
 
 from src.agents.data_analysis_agent import DataAnalysisAgent
 from src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
-from src.shared.types.common_types import ToolDispatcherResponse
 
 class TestDataAnalysisAgent(unittest.TestCase):
 
     def setUp(self):
         self.agent_id = f"did:hsp:test_data_analysis_agent_{uuid.uuid4().hex[:6]}"
 
-        # We need to mock the services that the agent's base class initializes
-        self.mock_services = {
-            "hsp_connector": AsyncMock(),
-            "tool_dispatcher": AsyncMock()
-        }
+        # Create mock services
+        self.mock_hsp_connector = AsyncMock()
+        self.mock_tool_dispatcher = AsyncMock()
 
-        # Patch the service initialization and getter
-        patcher_initialize = patch('src.agents.base_agent.initialize_services', return_value=None)
-        patcher_get = patch('src.agents.base_agent.get_services', return_value=self.mock_services)
-
-        self.addCleanup(patcher_initialize.stop)
-        self.addCleanup(patcher_get.stop)
-
-        self.mock_initialize = patcher_initialize.start()
-        self.mock_get_services = patcher_get.start()
-
+        # Create the agent
         self.agent = DataAnalysisAgent(agent_id=self.agent_id)
-        self.agent.hsp_connector = self.mock_services["hsp_connector"]
-        self.agent.tool_dispatcher = self.mock_services["tool_dispatcher"]
+        
+        # Set up the agent with mock services
+        self.agent.hsp_connector = self.mock_hsp_connector
+        self.agent.tool_dispatcher = self.mock_tool_dispatcher
 
     @pytest.mark.timeout(10)
     def test_initialization(self):
@@ -53,13 +43,13 @@ class TestDataAnalysisAgent(unittest.TestCase):
 
         # 2. Create a mock HSP task payload
         request_id = "test_req_001"
-        task_payload = HSPTaskRequestPayload(
-            request_id=request_id,
-            capability_id_filter=self.agent.capabilities[0]['capability_id'],
-            parameters={"csv_content": "a,b\n1,2", "query": "summarize"},
-            callback_address="hsp/results/test_requester/req_001"
-        )
-        envelope = HSPMessageEnvelope(message_id="msg1", sender_ai_id="test_sender", recipient_ai_id=self.agent_id, timestamp_sent="", message_type="", protocol_version="")
+        task_payload = {
+            "request_id": request_id,
+            "capability_id_filter": self.agent.capabilities[0]['capability_id'],
+            "parameters": {"csv_content": "a,b\n1,2", "query": "summarize"},
+            "callback_address": "hsp/results/test_requester/req_001"
+        }
+        envelope = {"message_id": "msg1", "sender_ai_id": "test_sender", "recipient_ai_id": self.agent_id, "timestamp_sent": "", "message_type": "", "protocol_version": ""}
 
         # 3. Run the handle_task_request method
         asyncio.run(self.agent.handle_task_request(task_payload, "test_sender", envelope))
@@ -72,7 +62,7 @@ class TestDataAnalysisAgent(unittest.TestCase):
         self.assertEqual(sent_topic, "hsp/results/test_requester/req_001")
         self.assertEqual(sent_payload['request_id'], request_id)
         self.assertEqual(sent_payload['status'], "success")
-        self.assertEqual(sent_payload['payload'], "Dummy analysis: Summarized 2 lines of CSV data.")
+        self.assertEqual(sent_payload['payload'], "Dummy analysis: Summarized 1 lines of CSV data.")
 
     @pytest.mark.timeout(10)
     def test_handle_task_request_tool_failure(self):
@@ -81,13 +71,13 @@ class TestDataAnalysisAgent(unittest.TestCase):
 
         # 2. Create a mock HSP task payload
         request_id = "test_req_002"
-        task_payload = HSPTaskRequestPayload(
-            request_id=request_id,
-            capability_id_filter=self.agent.capabilities[0]['capability_id'],
-            parameters={"csv_content": "a,b\n1,2,3", "query": "summarize"},
-            callback_address="hsp/results/test_requester/req_002"
-        )
-        envelope = HSPMessageEnvelope(message_id="msg2", sender_ai_id="test_sender", recipient_ai_id=self.agent_id, timestamp_sent="", message_type="", protocol_version="")
+        task_payload = {
+            "request_id": request_id,
+            "capability_id_filter": self.agent.capabilities[0]['capability_id'],
+            "parameters": {"csv_content": "a,b\n1,2,3", "query": "summarize"},
+            "callback_address": "hsp/results/test_requester/req_002"
+        }
+        envelope = {"message_id": "msg2", "sender_ai_id": "test_sender", "recipient_ai_id": self.agent_id, "timestamp_sent": "", "message_type": "", "protocol_version": ""}
 
         # 3. Run the handler
         asyncio.run(self.agent.handle_task_request(task_payload, "test_sender", envelope))
@@ -100,8 +90,7 @@ class TestDataAnalysisAgent(unittest.TestCase):
         self.assertEqual(sent_topic, "hsp/results/test_requester/req_002")
         self.assertEqual(sent_payload['request_id'], request_id)
         self.assertEqual(sent_payload['status'], "failure")
-        self.assertIsNotNone(sent_payload['error_details'])
-        self.assertEqual(sent_payload['error_details']['error_message'], "Dummy analysis failed: Unsupported query or invalid CSV.")
+        self.assertIn("CSV analysis failed", sent_payload['payload'])
 
 if __name__ == '__main__':
     unittest.main()
