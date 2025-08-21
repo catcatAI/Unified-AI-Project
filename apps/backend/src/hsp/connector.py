@@ -43,7 +43,8 @@ class HSPConnector:
         self.mock_mode = mock_mode
         self.broker_address = broker_address
         self.broker_port = broker_port
-        self.enable_fallback = enable_fallback
+        # Disable fallback automatically in mock mode to avoid binding to local ports during tests
+        self.enable_fallback = enable_fallback and not mock_mode
         self.fallback_manager = None
         self.fallback_initialized = False
         self.logger = logging.getLogger(__name__)

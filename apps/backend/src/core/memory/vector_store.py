@@ -1,5 +1,14 @@
 import chromadb
-from chromadb.types import Collection
+from typing import Any
+
+# ChromaDB type location varies by version; fall back gracefully
+try:  # ChromaDB <1.0 typically exposes types here
+    from chromadb.types import Collection  # type: ignore
+except Exception:  # pragma: no cover
+    try:
+        from chromadb.api.models import Collection  # type: ignore
+    except Exception:  # pragma: no cover
+        Collection = Any  # type: ignore
 import logging
 from typing import List, Dict, Any, Optional
 
