@@ -273,11 +273,14 @@ async def test_full_project_flow_with_real_agent(project_coordinator, agent_mana
     7. ProjectCoordinator receives the result and integrates it into a final answer.
     """
     # --- Arrange ---
-    # Create the dummy agent script file
+    # Create the dummy agent script file only if it doesn't exist
     agent_script_path = os.path.join(SRC_DIR, "agents", "data_analysis_agent.py")
-    os.makedirs(os.path.dirname(agent_script_path), exist_ok=True)
-    with open(agent_script_path, "w") as f:
-        f.write(DATA_ANALYSIS_AGENT_SCRIPT)
+    file_existed_before = os.path.exists(agent_script_path)
+    
+    if not file_existed_before:
+        os.makedirs(os.path.dirname(agent_script_path), exist_ok=True)
+        with open(agent_script_path, "w") as f:
+            f.write(DATA_ANALYSIS_AGENT_SCRIPT)
 
     # Refresh AgentManager discovery to include the newly created script
     agent_manager.agent_script_map = agent_manager._discover_agent_scripts()
@@ -315,8 +318,8 @@ async def test_full_project_flow_with_real_agent(project_coordinator, agent_mana
         # --- Teardown ---
         if agent_process:
             agent_manager.shutdown_agent(agent_name)
-        # It's good practice to clean up the created file
-        if os.path.exists(agent_script_path):
+        # Only clean up the file if we created it (it didn't exist before)
+        if not file_existed_before and os.path.exists(agent_script_path):
             os.remove(agent_script_path)
 
 @pytest.mark.asyncio
