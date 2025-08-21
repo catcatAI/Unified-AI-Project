@@ -8,6 +8,10 @@ from pathlib import Path
 import logging
 from typing import Optional, Dict, Any
 from cryptography.fernet import Fernet
+
+# Ensure src directory is on sys.path before importing from src.*
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
 from src.shared.types.common_types import DialogueTurn, DialogueMemoryEntryMetadata
 from datetime import datetime, timezone
 import uuid
@@ -71,8 +75,7 @@ async def mock_handle_incoming_hsp_task_result_side_effect(project_coordinator, 
     await project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
 
 
-# 添加 src 目錄到路徑
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# (src path already added above)
 
 import pytest
 import asyncio

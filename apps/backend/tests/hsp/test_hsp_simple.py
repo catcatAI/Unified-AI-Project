@@ -3,7 +3,7 @@ import asyncio
 pytest_plugins = ('pytest_asyncio',)
 import json
 from src.hsp.connector import HSPConnector
-from tests.hsp.test_hsp_integration import MockMqttBroker
+from .test_hsp_integration import MockMqttBroker
 from src.hsp.bridge.message_bridge import MessageBridge
 from src.hsp.internal.internal_bus import InternalBus
 from src.hsp.bridge.data_aligner import DataAligner

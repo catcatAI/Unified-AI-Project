@@ -20,7 +20,9 @@ from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPaylo
 from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
 from src.core_ai.dialogue.dialogue_manager import DialogueManager
 from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
-from tests.conftest import mqtt_broker_available
+# Avoid importing fixtures at module import time; use a simple flag instead
+# If a real broker check is needed, replace this with an actual availability check
+mqtt_broker_available = True
 
 
 import logging
