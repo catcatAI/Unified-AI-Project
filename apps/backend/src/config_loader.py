@@ -49,6 +49,10 @@ def is_demo_mode() -> bool:
     """
     Checks if the application is running in demo mode.
     """
+    # Env var override for tests/CI
+    env_flag = os.getenv("USE_SIMULATED_RESOURCES")
+    if env_flag is not None:
+        return env_flag.lower() in ("1", "true", "yes", "on")
     config = get_config()
     return config.get("use_simulated_resources", False)
 

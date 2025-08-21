@@ -40,7 +40,9 @@ def get_schema_uri(schema_name: str) -> str:
 class HSPConnector:
     def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False, mock_mqtt_client: Optional[MagicMock] = None, internal_bus: Optional[InternalBus] = None, message_bridge: Optional[MessageBridge] = None, enable_fallback: bool = True, **kwargs):
         self.ai_id = ai_id
-        self.mock_mode = mock_mode
+        # Allow forcing mock mode via env to stabilize tests/CI
+        import os
+        self.mock_mode = mock_mode or os.getenv('HSP_FORCE_MOCK', '').lower() == 'true'
         self.broker_address = broker_address
         self.broker_port = broker_port
         # Disable fallback automatically in mock mode to avoid binding to local ports during tests
