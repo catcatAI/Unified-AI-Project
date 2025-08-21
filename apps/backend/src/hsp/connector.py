@@ -94,6 +94,10 @@ class HSPConnector:
             )
         else:
             self.message_bridge = message_bridge
+            # Ensure we use the same internal bus as the provided message bridge
+            # so that any test subscriptions on that bus receive messages published
+            # by this connector.
+            self.internal_bus = message_bridge.internal_bus
 
         # Callbacks for different message types
         self._fact_callbacks = []

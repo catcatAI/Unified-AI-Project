@@ -1019,6 +1019,21 @@ class MultiLLMService:
         messages: List[ChatMessage],
         **kwargs
     ) -> LLMResponse:
+        # Test-mode short-circuit: avoid external calls and return a deterministic response
+        if os.getenv('LLM_TEST_MODE', '').lower() == 'true':
+            start_time = datetime.now()
+            content = kwargs.get('test_response', 'Mocked LLM response')
+            usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+            return LLMResponse(
+                content=content,
+                model='test-mock',
+                provider=ModelProvider.OPENAI,
+                usage=usage,
+                cost=0.0,
+                latency=(datetime.now() - start_time).total_seconds(),
+                timestamp=datetime.now(),
+                metadata={"test_mode": True}
+            )
         # 获取或创建提供商
         if model_id not in self.providers:
             self.providers[model_id] = self._create_provider(self.model_configs[model_id])
