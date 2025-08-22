@@ -76,7 +76,7 @@ class ProjectCoordinator:
             return f"{ai_name}: I can't access my specialist network to handle this project."
 
         logging.info(f"[{ai_name}] Phase 0/1: Decomposing project query...")
-        available_capabilities = self.service_discovery.get_all_capabilities()
+        available_capabilities = await self.service_discovery.get_all_capabilities()
         subtasks = await self._decompose_user_intent_into_subtasks(project_query, available_capabilities)
 
         if not subtasks:

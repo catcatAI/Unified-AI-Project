@@ -1,0 +1,42 @@
+{
+  "id": "10ea00b5-4ded-4274-9b10-d737ba5b1aa2",
+  "sender_id": "system",
+  "recipient_id": "all",
+  "message_type": "hsp_message",
+  "payload": {
+    "topic": "hsp/capabilities/advertisements/data_analysis_agent_001",
+    "envelope": {
+      "hsp_envelope_version": "0.1",
+      "message_id": "693654c1-d1d1-4164-8f6e-f3c0c4b32860",
+      "correlation_id": null,
+      "sender_ai_id": "data_analysis_agent_001",
+      "recipient_ai_id": "all",
+      "timestamp_sent": "2025-08-22T03:33:26.630510+00:00",
+      "message_type": "HSP::CapabilityAdvertisement_v0.1",
+      "protocol_version": "0.1",
+      "communication_pattern": "publish",
+      "security_parameters": null,
+      "qos_parameters": {
+        "requires_ack": false,
+        "priority": "medium"
+      },
+      "routing_info": null,
+      "payload_schema_uri": "file:///D:/Projects/Unified-AI-Project/apps/backend/schemas/HSP_CapabilityAdvertisement_v0.1.schema.json",
+      "payload": {
+        "capability_id": "data_analysis_v1",
+        "ai_id": "data_analysis_agent_001",
+        "name": "Data Analysis",
+        "description": "Performs data analysis tasks.",
+        "version": "1.0",
+        "availability_status": "online"
+      }
+    },
+    "qos": 1
+  },
+  "timestamp": 1755833613.6466799,
+  "priority": 2,
+  "correlation_id": null,
+  "retry_count": 0,
+  "max_retries": 3,
+  "ttl": null
+}

@@ -10,8 +10,12 @@ from typing import Optional, Dict, Any
 from cryptography.fernet import Fernet
 
 # Ensure src directory is on sys.path before importing from src.*
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+CUR_DIR = os.path.dirname(__file__)
+SRC_DIR = os.path.abspath(os.path.join(CUR_DIR, '..', 'src'))
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.shared.types.common_types import DialogueTurn, DialogueMemoryEntryMetadata
 from datetime import datetime, timezone
 import uuid
@@ -120,6 +124,7 @@ def setup_test_environment():
     
     # 設置其他測試環境變量
     os.environ['TESTING'] = 'true'
+    os.environ['OPENAI_API_KEY'] = 'test_key' # Add dummy key for tests
     
     yield
     
@@ -314,8 +319,9 @@ def mock_core_services():
         def __init__(self):
             self.memory_store = {}
             self._next_id = 1
+            self.store_experience = MagicMock(side_effect=self._store_experience_impl)
 
-        def store_experience(self, raw_data: str, data_type: str, metadata):
+        def _store_experience_impl(self, raw_data: str, data_type: str, metadata):
             from datetime import datetime, timezone
             mem_id = f"mem_{self._next_id:06d}"
             self._next_id += 1
