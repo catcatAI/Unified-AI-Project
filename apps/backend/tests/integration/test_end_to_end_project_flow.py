@@ -190,14 +190,15 @@ import json
 import sys
 import os
 
-# Add both src and parent directory to path to allow imports
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-SRC_DIR = os.path.join(BASE_DIR, 'src')
-if SRC_DIR not in sys.path:
-    sys.path.insert(0, SRC_DIR)
-# Also add the parent of src to allow 'src.module' imports
-if BASE_DIR not in sys.path:
-    sys.path.insert(0, BASE_DIR)
+# This path is injected by the test script
+PROJECT_SRC_DIR = "{project_src_dir}"
+if PROJECT_SRC_DIR not in sys.path:
+    sys.path.insert(0, PROJECT_SRC_DIR)
+
+# The parent of src is also needed for 'from src.module' imports
+PROJECT_BASE_DIR = os.path.dirname(PROJECT_SRC_DIR)
+if PROJECT_BASE_DIR not in sys.path:
+    sys.path.insert(0, PROJECT_BASE_DIR)
 
 from hsp.connector import HSPConnector
 from hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload
@@ -211,13 +212,8 @@ class DataAnalysisAgent:
             broker_port=1883,
             mock_mode=False
         )
-        # In a real scenario, this would use a real MQTT client.
-        # For this test, we need to patch it to use the mock broker.
-        # This is tricky as it's a different process. The test will rely on the default address.
 
     async def run(self):
-        # This is a simplified connection for the test.
-        # A real agent would have more robust connection logic.
         await self.hsp_connector.connect()
         self.hsp_connector.register_on_task_request_callback(self.handle_task)
 
@@ -230,11 +226,11 @@ class DataAnalysisAgent:
             availability_status="online",
         )
         await self.hsp_connector.publish_capability_advertisement(capability)
-        print(f"[{self.ai_id}] Capability advertised. Waiting for tasks.")
+        print(f"[{{self.ai_id}}] Capability advertised. Waiting for tasks.")
         await asyncio.Event().wait() # Keep running
 
     async def handle_task(self, task_payload, sender_ai_id, envelope):
-        print(f"[{self.ai_id}] Received task: {task_payload}")
+        print(f"[{{self.ai_id}}] Received task: {{task_payload}}")
         params = task_payload.get("parameters", {})
         data = params.get("data", [])
         result_data = sum(data)
@@ -252,7 +248,7 @@ class DataAnalysisAgent:
             sender_ai_id,
             envelope.get("correlation_id")
         )
-        print(f"[{self.ai_id}] Task completed and result sent.")
+        print(f"[{{self.ai_id}}] Task completed and result sent.")
 
 if __name__ == "__main__":
     agent = DataAnalysisAgent()
@@ -261,7 +257,7 @@ if __name__ == "__main__":
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(30)
-async def test_full_project_flow_with_real_agent(project_coordinator, agent_manager):
+async def test_full_project_flow_with_real_agent(project_coordinator, tmp_path):
     """
     Tests the full end-to-end flow:
     1. ProjectCoordinator receives a project.
@@ -273,36 +269,107 @@ async def test_full_project_flow_with_real_agent(project_coordinator, agent_mana
     7. ProjectCoordinator receives the result and integrates it into a final answer.
     """
     # --- Arrange ---
-    # Create the dummy agent script file
-    agent_script_path = os.path.join(SRC_DIR, "agents", "data_analysis_agent.py")
-    os.makedirs(os.path.dirname(agent_script_path), exist_ok=True)
-    with open(agent_script_path, "w") as f:
-        f.write(DATA_ANALYSIS_AGENT_SCRIPT)
+    # Create a temporary directory for the agent script
+    temp_agents_dir = tmp_path / "agents"
+    temp_agents_dir.mkdir()
+    agent_script_path = temp_agents_dir / "data_analysis_agent.py"
 
-    # Refresh AgentManager discovery to include the newly created script
-    agent_manager.agent_script_map = agent_manager._discover_agent_scripts()
+    # Create the script content dynamically to avoid format/f-string issues
+    # Use raw string (r'...') and escape backslashes for Windows paths
+    src_path_str = SRC_DIR.replace('\\', '\\\\')
+    base_dir_str = os.path.dirname(src_path_str)
 
-    # The agent_manager fixture already discovered this script.
-    # We need to patch the HSPConnector inside the agent process to use the mock broker.
-    # This is the hardest part of this test. Since we can't easily patch a separate
-    # process, we will rely on the fact that both the test and the agent script
-    # default to connecting to 127.0.0.1:1883, and our mock broker will be the
-    # only thing listening there.
+    agent_script_content = f"""
+import asyncio
+import json
+import sys
+import os
+
+PROJECT_SRC_DIR = r'{src_path_str}'
+if PROJECT_SRC_DIR not in sys.path:
+    sys.path.insert(0, PROJECT_SRC_DIR)
+
+PROJECT_BASE_DIR = r'{base_dir_str}'
+if PROJECT_BASE_DIR not in sys.path:
+    sys.path.insert(0, PROJECT_BASE_DIR)
+
+from hsp.connector import HSPConnector
+from hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload
+
+class DataAnalysisAgent:
+    def __init__(self):
+        self.ai_id = "data_analysis_agent_001"
+        self.hsp_connector = HSPConnector(
+            ai_id=self.ai_id,
+            broker_address="127.0.0.1",
+            broker_port=1883,
+            mock_mode=False
+        )
+
+    async def run(self):
+        await self.hsp_connector.connect()
+        self.hsp_connector.register_on_task_request_callback(self.handle_task)
+
+        capability = HSPCapabilityAdvertisementPayload(
+            capability_id=\"data_analysis_v1\",
+            ai_id=self.ai_id,
+            name=\"Data Analysis\",
+            description=\"Performs data analysis tasks.\",
+            version=\"1.0\",
+            availability_status=\"online\",
+        )
+        await self.hsp_connector.publish_capability_advertisement(capability)
+        print(f'[{{self.ai_id}}] Capability advertised. Waiting for tasks.')
+        await asyncio.Event().wait()
+
+    async def handle_task(self, task_payload, sender_ai_id, envelope):
+        print(f'[{{self.ai_id}}] Received task: {{task_payload}}')
+        params = task_payload.get("parameters", {{}})
+        data = params.get("data", [])
+        result_data = sum(data)
+
+        result_payload = HSPTaskResultPayload(
+            result_id=\"res_123\",
+            request_id=task_payload.get(\"request_id\"),
+            executing_ai_id=self.ai_id,
+            status=\"success\",
+            payload=result_data,
+            timestamp_completed= \"now\"
+        )
+        await self.hsp_connector.send_task_result(
+            result_payload,
+            sender_ai_id,
+            envelope.get(\"correlation_id\")
+        )
+        print(f'[{{self.ai_id}}] Task completed and result sent.')
+
+if __name__ == "__main__":
+    agent = DataAnalysisAgent()
+    asyncio.run(agent.run())
+"""
+    
+    agent_script_path.write_text(agent_script_content)
+
+    # Create a test-specific AgentManager pointing to the temporary directory
+    test_agent_manager = AgentManager(
+        python_executable=sys.executable,
+        agents_dir=str(temp_agents_dir)
+    )
+    
+    # Replace the default agent_manager in the project_coordinator with our test-specific one
+    project_coordinator.agent_manager = test_agent_manager
 
     agent_name = "data_analysis_agent"
     agent_process = None
 
     try:
         # --- Act ---
-        # Launch the agent in the background. It will connect and advertise.
-        pid = agent_manager.launch_agent(agent_name)
+        pid = test_agent_manager.launch_agent(agent_name)
         assert pid is not None
-        agent_process = agent_manager.active_agents[agent_name]
+        agent_process = test_agent_manager.active_agents[agent_name]
 
-        # Give the agent a moment to start up and advertise its capability.
         await asyncio.sleep(5)
 
-        # Now, trigger the project. The ProjectCoordinator should find the capability.
         final_response = await project_coordinator.handle_project(
             "Calculate the sum of a list", "session_e2e", "user_e2e"
         )
@@ -314,10 +381,9 @@ async def test_full_project_flow_with_real_agent(project_coordinator, agent_mana
     finally:
         # --- Teardown ---
         if agent_process:
-            agent_manager.shutdown_agent(agent_name)
-        # It's good practice to clean up the created file
-        if os.path.exists(agent_script_path):
-            os.remove(agent_script_path)
+            test_agent_manager.shutdown_agent(agent_name)
+
+
 
 @pytest.mark.asyncio
 async def test_mocked_end_to_end_flow(project_coordinator):
