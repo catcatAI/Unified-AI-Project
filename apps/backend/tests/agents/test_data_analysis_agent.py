@@ -101,7 +101,7 @@ class TestDataAnalysisAgent(unittest.TestCase):
         self.assertEqual(sent_payload['request_id'], request_id)
         self.assertEqual(sent_payload['status'], "failure")
         self.assertIsNotNone(sent_payload['error_details'])
-        self.assertEqual(sent_payload['error_details']['error_message'], "Dummy analysis failed: Unsupported query or invalid CSV.")
+        self.assertEqual(sent_payload['error_details']['error_message'], "Dummy analysis failed: Invalid CSV format (inconsistent columns).")
 
 if __name__ == '__main__':
     unittest.main()

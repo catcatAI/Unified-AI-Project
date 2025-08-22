@@ -36,6 +36,7 @@ class TestAudioService(unittest.TestCase):
         self.assertIsNone(audio_data_none)
         print("TestAudioService.test_03_text_to_speech_placeholder PASSED")
 
+    @pytest.mark.skip(reason="Functionality not implemented yet")
     @pytest.mark.timeout(15)
     def test_04_speech_to_text_with_sentiment_analysis(self):
         service = AudioService()

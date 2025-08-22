@@ -183,6 +183,20 @@ export function AngelaGame() {
             >
               💫 與Angela互動
             </Button>
+            <Button 
+              onClick={loadGame}
+              disabled={gameState === 'running'}
+              variant="outline"
+            >
+              載入遊戲
+            </Button>
+            <Button 
+              onClick={saveGame}
+              disabled={gameState !== 'running'}
+              variant="outline"
+            >
+              儲存遊戲
+            </Button>
           </div>
           <div className="mt-4">
             <Badge 

@@ -13,8 +13,10 @@ def test_tool_dispatcher_action_policy_logged_smoke():
     """
     # Ensure services are initialized
     if tool_dispatcher_instance is None or ham_manager_instance is None:
-        initialize_services()
+        asyncio.run(initialize_services())
+    from src.core_services import tool_dispatcher_instance, ham_manager_instance
     assert tool_dispatcher_instance is not None, "ToolDispatcher should be initialized"
+    assert ham_manager_instance is not None, "HAM manager should be initialized"
     assert ham_manager_instance is not None, "HAM manager should be initialized"
 
     # Invoke a simple tool via dispatcher

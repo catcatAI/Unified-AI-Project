@@ -18,6 +18,7 @@ from pathlib import Path
 
 from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 from .atlassian_bridge import AtlassianBridge
+from ..hsp.connector import HSPConnector
 from ..hsp.types import HSPMessage, HSPCapability, HSPTask
 from ..core_ai.agent_manager import AgentManager
 
@@ -58,6 +59,12 @@ class RovoDevAgent:
         self.agent_manager = agent_manager
         self.connector = EnhancedRovoDevConnector(config)
         self.bridge = AtlassianBridge(self.connector)
+        self.hsp_connector = HSPConnector(
+            ai_id=config.get('hsp_integration', {}).get('agent_id', 'rovo-dev-agent'),
+            broker_address=config.get('hsp_integration', {}).get('broker_address', '127.0.0.1'),
+            broker_port=config.get('hsp_integration', {}).get('broker_port', 1883),
+            mock_mode=config.get('hsp_integration', {}).get('mock_mode', False)
+        )
         
         # 代理狀態
         self.agent_id = config.get('hsp_integration', {}).get('agent_id', 'rovo-dev-agent')
@@ -175,10 +182,11 @@ class RovoDevAgent:
         """启动 Rovo Dev Agent"""
         try:
             await self.connector.start()
+            await self.hsp_connector.connect()
             self.is_active = True
             
             # Register capabilities with HSPConnector for post-connect synchronization
-            self.connector.hsp_connector.register_capability_provider(self._load_capabilities)
+            self.hsp_connector.register_capability_provider(self._load_capabilities)
 
             # 恢復之前的狀態
             if self.recovery_enabled:
