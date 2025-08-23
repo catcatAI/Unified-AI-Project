@@ -193,7 +193,7 @@ async def initialize_services(
                 # Use HttpClient to work with HTTP-only mode
                 chroma_client = chromadb.HttpClient(
                     host="localhost",
-                    port=8000
+                    port=8001
                 )
                 print(f"Core Services: ChromaDB HttpClient initialized successfully.")
             except Exception as e:
@@ -370,19 +370,43 @@ def get_services() -> Dict[str, Any]:
 
 async def shutdown_services():
     """Gracefully shuts down services, e.g., AgentManager and HSPConnector."""
-    global hsp_connector_instance, agent_manager_instance, llm_interface_instance
+    global hsp_connector_instance, agent_manager_instance, llm_interface_instance, ham_manager_instance, mcp_connector_instance
+    print("Core Services: Shutting down services...")
 
     if agent_manager_instance:
-        print("Core Services: Shutting down all active agents...")
-        agent_manager_instance.shutdown_all_agents()
+        try:
+            agent_manager_instance.shutdown_all_agents()
+            print("Core Services: AgentManager shut down.")
+        except Exception as e:
+            print(f"Core Services: Error during AgentManager shutdown: {e}")
 
     if hsp_connector_instance and hsp_connector_instance.is_connected:
-        print("Core Services: Shutting down HSPConnector...")
-        await hsp_connector_instance.disconnect()
+        try:
+            await hsp_connector_instance.disconnect()
+            print("Core Services: HSPConnector disconnected.")
+        except Exception as e:
+            print(f"Core Services: Error during HSPConnector disconnect: {e}")
 
     if llm_interface_instance:
-        print("Core Services: Shutting down LLM Interface...")
-        await llm_interface_instance.close()
+        try:
+            await llm_interface_instance.close()
+            print("Core Services: LLMInterface closed.")
+        except Exception as e:
+            print(f"Core Services: Error during LLMInterface close: {e}")
+
+    if ham_manager_instance:
+        try:
+            ham_manager_instance.close()
+            print("Core Services: HAM Memory Manager closed.")
+        except Exception as e:
+            print(f"Core Services: Error during HAM Memory Manager close: {e}")
+
+    if mcp_connector_instance:
+        try:
+            await mcp_connector_instance.disconnect()
+            print("Core Services: MCPConnector disconnected.")
+        except Exception as e:
+            print(f"Core Services: Error during MCPConnector disconnect: {e}")
 
     await demo_learning_manager.shutdown()
 
