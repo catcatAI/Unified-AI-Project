@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 class ProjectCoordinator:
     def __init__(self,
-                 llm_interface: MultiLLMService,
+                 llm_interface: LLMInterface,
                  service_discovery: ServiceDiscoveryModule,
                  hsp_connector: HSPConnector,
                  agent_manager: AgentManager,
@@ -144,7 +144,8 @@ class ProjectCoordinator:
     async def _dispatch_single_subtask(self, subtask: Dict[str, Any]) -> Any:
         capability_name = subtask.get("capability_needed")
         params = subtask.get("task_parameters", {})
-        found_caps = self.service_discovery.find_capabilities(capability_name_filter=capability_name)
+        
+        found_caps = await self.service_discovery.find_capabilities(capability_name_filter=capability_name)
 
         if not found_caps and self.agent_manager:
             agent_to_launch = f"{capability_name.split('_v')[0]}_agent"
@@ -153,7 +154,8 @@ class ProjectCoordinator:
                 # Wait for the agent to be ready using AgentManager's wait method
                 try:
                     await self.agent_manager.wait_for_agent_ready(agent_to_launch, timeout=10)
-                    found_caps = self.service_discovery.find_capabilities(capability_name_filter=capability_name)
+                    # After agent is ready, re-check capabilities.
+                    found_caps = await self.service_discovery.find_capabilities(capability_name_filter=capability_name)
                 except Exception as e:
                     logging.warning(f"[ProjectCoordinator] Warning: Error waiting for agent '{agent_to_launch}' to become ready: {e}")
 
@@ -181,9 +183,10 @@ class ProjectCoordinator:
             request_id=request_id, requester_ai_id=self.ai_id, target_ai_id=target_ai_id,
             capability_id_filter=capability_id, parameters=parameters, callback_address=callback_topic
         )
-        mqtt_request_topic = f"hsp/requests/{target_ai_id}"
+        mqtt_topic = f"hsp/requests/{target_ai_id}" # Corrected line
 
-        correlation_id = self.hsp_connector.send_task_request(payload=hsp_task_payload, target_ai_id_or_topic=mqtt_request_topic)
+
+        correlation_id = await self.hsp_connector.send_task_request(payload=hsp_task_payload, target_ai_id_or_topic=mqtt_topic)
         if correlation_id:
             self.pending_hsp_task_requests[correlation_id] = PendingHSPTaskInfo(
                 user_id="project_subtask", session_id="project_subtask", original_query_text=description,

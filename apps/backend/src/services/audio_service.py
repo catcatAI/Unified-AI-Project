@@ -27,7 +27,10 @@ class AudioService:
         - If demo mode is enabled, return a mock sentiment payload.
         """
         # Use global config flag via config_loader to match tests
-        if is_demo_mode():
+        import os
+
+        # Demo if config or env flag is enabled
+        if is_demo_mode() or os.getenv("USE_SIMULATED_RESOURCES") == "1" or self.config.get("use_simulated_resources", False):
             return {"text": "This is a mock transcription.", "sentiment": "positive", "confidence": 0.9, "language": language}
         else:
             raise NotImplementedError("Real sentiment analysis not implemented yet. Enable demo mode or implement the actual service.")

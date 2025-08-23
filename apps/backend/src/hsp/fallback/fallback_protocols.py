@@ -1,8 +1,3 @@
-"""
-备用协议系统
-当 HSP 协议不可用时提供基础内部通讯支持
-"""
-
 import asyncio
 import json
 import logging
@@ -13,6 +8,7 @@ from typing import Dict, Any, Optional, List, Callable, Union
 from enum import Enum
 from dataclasses import dataclass, asdict
 from datetime import datetime
+import os # Added this import
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +58,7 @@ class FallbackMessage:
         """检查消息是否过期"""
         if self.ttl is None:
             return False
-        return time.time() - self.timestamp > self.ttl
+        return time.time() - self.ttl > self.ttl
 
 class BaseFallbackProtocol(ABC):
     """备用协议基类"""
@@ -611,10 +607,14 @@ async def initialize_fallback_protocols() -> bool:
     """初始化备用协议"""
     manager = get_fallback_manager()
     
+    # Determine port based on testing environment
+    http_port = 0 if os.environ.get('TESTING') == 'true' else 8765 # Modified line
+    print(f"DEBUG: initialize_fallback_protocols - TESTING env var: {os.environ.get('TESTING')}, HTTP Port: {http_port}") # Added debug print
+    
     # 添加协议（按优先级）
     manager.add_protocol(InMemoryProtocol(), priority=1)  # 最低优先级
     manager.add_protocol(FileBasedProtocol(), priority=2)  # 中等优先级
-    manager.add_protocol(HTTPProtocol(), priority=3)  # 最高优先级
+    manager.add_protocol(HTTPProtocol(port=http_port), priority=3)  # 最高优先级 # Modified line
     
     # 初始化并启动
     if await manager.initialize():

@@ -329,6 +329,7 @@ catcatAI 組織
 | 除錯總結 | (英) | `docs/01-summaries-and-reports/debugging_summary.md` | 除錯總結 | ✅ 最新 | 🟢 高 |
 | 測試計畫 | (英) | `docs/01-summaries-and-reports/test_plan.md` | 測試計畫 | ✅ 最新 | 🟢 高 |
 | 工作區組織完成報告 | (英) | `docs/01-summaries-and-reports/WORKSPACE_ORGANIZATION_COMPLETE.md` | 工作區組織完成報告 | ✅ 最新 | 🟢 高 |
+| 未實作/部分實作核心功能摘要 | (英) | `docs/01-summaries-and-reports/UNIMPLEMENTED_FEATURES_SUMMARY.md` | 專案中未實作或部分實作的核心功能列表 | ✅ 最新 | 🟢 高 |
 
 #### 🛡️ 備用機制與容錯文檔
 | 文檔名稱 | 語言 | 路徑 | 描述 | 狀態 | 實用性 |

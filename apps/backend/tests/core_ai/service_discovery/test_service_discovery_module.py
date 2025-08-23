@@ -158,54 +158,60 @@ class TestServiceDiscoveryModule:
         return sdm
 
     @pytest.mark.timeout(10)
-    def test_find_capabilities_no_filters(self, populated_sdm: ServiceDiscoveryModule):
-        results = populated_sdm.find_capabilities()
+    @pytest.mark.asyncio
+    async def test_find_capabilities_no_filters(self, populated_sdm: ServiceDiscoveryModule):
+        results = await populated_sdm.find_capabilities()
         assert len(results) == 4
 
     @pytest.mark.timeout(10)
-    def test_find_capabilities_by_id(self, populated_sdm: ServiceDiscoveryModule):
-        results = populated_sdm.find_capabilities(capability_id_filter="c1")
+    @pytest.mark.asyncio
+    async def test_find_capabilities_by_id(self, populated_sdm: ServiceDiscoveryModule):
+        results = await populated_sdm.find_capabilities(capability_id_filter="c1")
         assert len(results) == 1
         assert results[0].get('capability_id') == "c1"
 
     @pytest.mark.timeout(10)
-    def test_find_capabilities_by_name(self, populated_sdm: ServiceDiscoveryModule):
-        results = populated_sdm.find_capabilities(capability_name_filter="CapAlpha")
+    @pytest.mark.asyncio
+    async def test_find_capabilities_by_name(self, populated_sdm: ServiceDiscoveryModule):
+        results = await populated_sdm.find_capabilities(capability_name_filter="CapAlpha")
         assert len(results) == 2
         assert {res.get('capability_id') for res in results} == {"c1", "c3"}
 
     @pytest.mark.timeout(10)
-    def test_find_capabilities_by_tags(self, populated_sdm: ServiceDiscoveryModule):
-        results_nlp = populated_sdm.find_capabilities(tags_filter=["nlp"])
+    @pytest.mark.asyncio
+    async def test_find_capabilities_by_tags(self, populated_sdm: ServiceDiscoveryModule):
+        results_nlp = await populated_sdm.find_capabilities(tags_filter=["nlp"])
         assert len(results_nlp) == 2
         assert {res.get('capability_id') for res in results_nlp} == {"c1", "c2"}
 
-        results_nlp_translation = populated_sdm.find_capabilities(tags_filter=["nlp", "translation"])
+        results_nlp_translation = await populated_sdm.find_capabilities(tags_filter=["nlp", "translation"])
         assert len(results_nlp_translation) == 1
         assert results_nlp_translation[0].get('capability_id') == "c1"
 
-        results_non_existent_tag = populated_sdm.find_capabilities(tags_filter=["non_existent"])
+        results_non_existent_tag = await populated_sdm.find_capabilities(tags_filter=["non_existent"])
         assert len(results_non_existent_tag) == 0
 
-        results_mixed_tags = populated_sdm.find_capabilities(tags_filter=["nlp", "storage"])
+        results_mixed_tags = await populated_sdm.find_capabilities(tags_filter=["nlp", "storage"])
         assert len(results_mixed_tags) == 0
 
     @pytest.mark.timeout(10)
-    def test_find_capabilities_by_min_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
-        results_min_trust_0_7 = populated_sdm.find_capabilities(min_trust_score=0.7)
+    @pytest.mark.asyncio
+    async def test_find_capabilities_by_min_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
+        results_min_trust_0_7 = await populated_sdm.find_capabilities(min_trust_score=0.7)
         assert len(results_min_trust_0_7) == 2
         assert {res.get('capability_id') for res in results_min_trust_0_7} == {"c1", "c4"}
 
-        results_min_trust_0_5 = populated_sdm.find_capabilities(min_trust_score=0.5)
+        results_min_trust_0_5 = await populated_sdm.find_capabilities(min_trust_score=0.5)
         assert len(results_min_trust_0_5) == 3
         assert {res.get('capability_id') for res in results_min_trust_0_5} == {"c1", "c2", "c4"}
 
-        results_min_trust_1_0 = populated_sdm.find_capabilities(min_trust_score=1.0)
+        results_min_trust_1_0 = await populated_sdm.find_capabilities(min_trust_score=1.0)
         assert len(results_min_trust_1_0) == 0
 
     @pytest.mark.timeout(10)
-    def test_find_capabilities_sort_by_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
-        results = populated_sdm.find_capabilities(sort_by_trust=True)
+    @pytest.mark.asyncio
+    async def test_find_capabilities_sort_by_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
+        results = await populated_sdm.find_capabilities(sort_by_trust=True)
         assert len(results) == 4
 
         trust_scores_ordered = [mock_trust_manager.get_trust_score(res.get('ai_id','')) for res in results] # type: ignore
@@ -217,13 +223,12 @@ class TestServiceDiscoveryModule:
         assert results[3].get('capability_id') == "c3"
 
     @pytest.mark.timeout(10)
-    def test_find_capabilities_combined_filters_and_sort(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
-        results = populated_sdm.find_capabilities(tags_filter=["nlp"], min_trust_score=0.5, sort_by_trust=True)
+    @pytest.mark.asyncio
+    async def test_find_capabilities_combined_filters_and_sort(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
+        results = await populated_sdm.find_capabilities(tags_filter=["nlp"], min_trust_score=0.5, sort_by_trust=True)
         assert len(results) == 2
         assert results[0].get('capability_id') == "c1"
         assert results[1].get('capability_id') == "c2"
-
-    
 
     def _add_capability_at_time(self, sdm: ServiceDiscoveryModule, cap_payload: HSPCapabilityAdvertisementPayload, mock_now_time: datetime):
         # Helper to add/update a capability as if it was processed at a specific time
@@ -251,7 +256,8 @@ class TestServiceDiscoveryModule:
             sdm.process_capability_advertisement(full_cap_payload, full_cap_payload['ai_id'], MagicMock(spec=HSPMessageEnvelope))
 
     @pytest.mark.timeout(10)
-    def test_staleness_checks(self, mock_trust_manager: MagicMock, caplog):
+    @pytest.mark.asyncio
+    async def test_staleness_checks(self, mock_trust_manager: MagicMock, caplog):
         """Combined test for find_capabilities and get_capability_by_id staleness."""
         caplog.set_level(logging.DEBUG, logger="src.core_ai.service_discovery.service_discovery_module")
         threshold = 60  # 1 minute
@@ -277,7 +283,7 @@ class TestServiceDiscoveryModule:
             mock_datetime_for_check.now.return_value = current_test_time # This is when staleness is evaluated
 
             # Test find_capabilities
-            results = sdm.find_capabilities()
+            results = await sdm.find_capabilities()
             assert len(results) == 1
             assert results[0].get('capability_id') == "fresh_cap"
             assert "Skipping stale capability ID: stale_cap" in caplog.text
@@ -327,7 +333,7 @@ class TestServiceDiscoveryModule:
             mock_datetime_obj_get_not_stale.now.return_value = current_simulated_time_for_check
             retrieved_cap_not_stale = sdm.get_capability_by_id(cap_id)
             assert retrieved_cap_not_stale is not None
-            assert retrieved_cap_not_stale.get('capability_id') == cap_id
+            assert retrieved_cap_not_stale.get('capability_id') == "cap_for_get_stale"
             assert "found but is stale" not in caplog.text
 
 # Path for patching datetime.now within the module under test

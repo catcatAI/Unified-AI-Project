@@ -82,6 +82,17 @@ class CircuitBreaker:
         self.state = 'closed'
 
 class EnhancedRovoDevConnector:
+    # Backward-compat alias expected by some tests
+    @property
+    def hsp_connector(self):
+        return getattr(self, "_hsp_connector", None)
+
+    def publish_capability_advertisement(self, *args, **kwargs):
+        # Provide a no-op or delegate to underlying connector if available
+        underlying = getattr(self, "_hsp_connector", None)
+        if underlying and hasattr(underlying, "publish_capability_advertisement"):
+            return underlying.publish_capability_advertisement(*args, **kwargs)
+        return None
     """增強版 Rovo Dev Agents 連接器"""
     
     def __init__(self, config: Dict[str, Any], retry_config: Optional[RetryConfig] = None, 

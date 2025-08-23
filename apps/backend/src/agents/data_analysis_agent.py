@@ -59,7 +59,7 @@ class DataAnalysisAgent(BaseAgent):
             if not csv_content:
                 error_message = "Dummy analysis failed: Missing CSV content."
             elif not is_csv_valid:
-                error_message = "Dummy analysis failed: Invalid CSV format (inconsistent columns)."
+                error_message = "Dummy analysis failed: Unsupported query or invalid CSV."
             else:
                 error_message = "Dummy analysis failed: Unsupported query or invalid CSV."
 

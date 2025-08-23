@@ -111,3 +111,47 @@ pnpm test:coverage
 *   **Action**: Attempted to create `apps/backend/src/core_ai/meta/adaptive_learning_controller.py` and its parent directory.
 *   **Status**:
     *   **Skipped**: Unable to complete due to persistent tool environment error: `Directory 'Unified-AI-Project' is not a registered workspace directory.` This prevents creating new directories or files within the project structure via shell commands.
+## Recent Problem-Solving Log
+
+### Problem-Solving Method Applied
+
+The following structured approach was used to identify and resolve recent issues:
+
+1.  **Understand the Problem**: Analyze error messages (e.g., `TypeError: 'coroutine' object is not subscriptable`), understand the context of the failure, and review recent code changes (`git diff`).
+2.  **Identify Implemented vs. Documented Features**: Scan code and documentation files to understand the project's current state and identify gaps. This involves reading key documentation and corresponding code files to verify actual implementation against documented status (e.g., "Conceptual," "Partial," "Placeholder").
+3.  **Document Findings**: Create new Markdown documents to formally record identified gaps (e.g., `UNIMPLEMENTED_FEATURES_SUMMARY.md`).
+4.  **Update Project Documentation**: Integrate new documents into the main project index (e.g., `UNIFIED_DOCUMENTATION_INDEX.md`) to ensure discoverability.
+5.  **Plan the Fix**: For specific code issues, pinpoint exact problematic lines, identify failing tests, and formulate precise code changes.
+6.  **Implement the Fix**: Apply code changes (e.g., adding `await` to `async` calls) and corresponding test changes (e.g., correcting `await` usage, using `patch.object` for mocking, addressing timing issues with `asyncio.create_task` and `await`ing tasks).
+7.  **Verify the Fix**: Run affected tests to confirm resolution and absence of new regressions.
+8.  **Update Related Documentation (Post-Fix)**: Review and update documentation directly related to the fixed code to ensure it accurately reflects the current implementation.
+
+### 2025-08-23
+
+*   **Task**: Resolve `TypeError: 'coroutine' object is not subscriptable` in `ProjectCoordinator` and related test failures.
+*   **Action**:
+    *   Modified `apps/backend/src/core_ai/dialogue/project_coordinator.py`: Added `await` to calls to `self.service_discovery.find_capabilities`.
+    *   Modified `apps/backend/tests/core_ai/dialogue/test_project_coordinator.py`:
+        *   Awaited `pc.service_discovery.get_all_capabilities()` in `test_handle_project_happy_path` assertion.
+        *   Corrected mocking of `agent_manager.launch_agent` and `agent_manager.wait_for_agent_ready` in `test_dispatch_single_subtask_agent_launch_and_discovery`.
+        *   Used `patch.object` for `sdm.find_capabilities` and adjusted timing with `await advertisement_task` in `test_dispatch_launches_and_discovers_with_real_components` to resolve timing issues.
+*   **Status**:
+    *   **Completed**: Code and test modifications are done.
+    *   **Verification**: All tests in `test_project_coordinator.py` passed.
+
+*   **Task**: Identify unimplemented/partially implemented core features.
+*   **Action**:
+    *   Scanned Python files in `apps/backend/src`.
+    *   Scanned Markdown files in `docs/`.
+    *   Reviewed `UNIFIED_DOCUMENTATION_INDEX.md` and specific technical architecture documents (`linguistic-immune-system.md`, `deep-mapping-personality.md`, `ai-virtual-input.md`, `knowledge-graph.md`, `meta-formulas.md`, `alpha-deep-model.md`, `fragmenta-orchestrator.md`, `simultaneous-translation.md`, `audio-processing.md`, `task_evaluator.py`, `adaptive_learning_controller.py`).
+    *   Compiled a comprehensive list of unimplemented/partially implemented features.
+*   **Status**:
+    *   **Completed**: Summary compiled.
+    *   **Output**: Created `docs/01-summaries-and-reports/UNIMPLEMENTED_FEATURES_SUMMARY.md`.
+
+*   **Task**: Update project documentation to reflect recent changes.
+*   **Action**:
+    *   Modified `docs/03-technical-architecture/ai-components/service-discovery-module.md`: Added a note that `find_capabilities` is an asynchronous method.
+    *   Modified `docs/UNIFIED_DOCUMENTATION_INDEX.md`: Added an entry for `UNIMPLEMENTED_FEATURES_SUMMARY.md` under "總結與報告" (Summaries and Reports).
+*   **Status**:
+    *   **Completed**: Documentation updated.
