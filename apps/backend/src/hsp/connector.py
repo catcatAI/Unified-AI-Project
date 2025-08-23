@@ -187,6 +187,26 @@ class HSPConnector:
 
     async def mqtt_subscribe(self, topic: str, qos: int = 1):
         """Direct MQTT subscription for test compatibility."""
+
+    async def close(self):
+        """Disconnects the external connector and cleans up resources."""
+        self.logger.info("HSPConnector: Disconnecting external connector...")
+        if self.external_connector and hasattr(self.external_connector, 'disconnect'):
+            try:
+                await self.external_connector.disconnect()
+                self.logger.info("HSPConnector: External connector disconnected.")
+            except Exception as e:
+                self.logger.error(f"HSPConnector: Error during external connector disconnect: {e}")
+        
+        if self.fallback_manager:
+            try:
+                await self.fallback_manager.shutdown()
+                self.logger.info("HSPConnector: Fallback manager shut down.")
+            except Exception as e:
+                self.logger.error(f"HSPConnector: Error during fallback manager shutdown: {e}")
+
+        self.is_connected = False
+        self.hsp_available = False
         if self.mock_mode:
             # In mock mode, just add to subscribed topics
             if not hasattr(self.external_connector, 'subscribed_topics'):

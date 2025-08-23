@@ -198,6 +198,15 @@ class HAMMemoryManager:
 
     def _generate_memory_id(self) -> str:
         mem_id = f"mem_{self.next_memory_id:06d}"
+
+    def close(self):
+        """Closes any open connections, e.g., ChromaDB client."""
+        if self.vector_store and hasattr(self.vector_store, 'close'):
+            try:
+                self.vector_store.close()
+                logger.info("HAMMemoryManager: Vector store closed successfully.")
+            except Exception as e:
+                logger.error(f"HAMMemoryManager: Error closing vector store: {e}")
         self.next_memory_id += 1
         return mem_id
 
