@@ -1,4 +1,50 @@
-mcp:
-  fallback_config: {}
-  mqtt_broker_address: "localhost"
-  mqtt_broker_port: 1883
+# Unified AI Project 配置文件
+# 开发环境配置
+
+# 服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: true
+  reload: true
+
+# ChromaDB 配置
+chromadb:
+  host: "localhost"
+  port: 8001
+  persist_directory: "./chromadb"
+
+# 日志配置
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# AI 模型配置
+ai_models:
+  use_simulated_resources: true
+  default_model: "gpt-3.5-turbo"
+
+# HSP 配置
+hsp:
+  mqtt_broker: "localhost"
+  mqtt_port: 1883
+  client_id: "unified_ai_backend"
+
+# 安全配置
+security:
+  secret_key: "development-secret-key-change-in-production"
+  algorithm: "HS256"
+  access_token_expire_minutes: 30
+
+# 测试配置
+testing:
+  use_mock_services: true
+  test_database_url: "sqlite:///./test.db"
+  mock_ai_responses: true
+
+# 开发配置
+development:
+  auto_reload: true
+  debug_mode: true
+  log_sql_queries: false
+  cors_origins: ["http://localhost:3000", "http://127.0.0.1:3000"]

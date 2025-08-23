@@ -28,7 +28,7 @@ def start_chroma_server():
     server = chromadb.Server(settings=settings)
     
     # 啟動服務器
-    server.run(host="localhost", port=8000)
+    server.run(host="localhost", port=8001)
 
 if __name__ == "__main__":
     start_chroma_server()
