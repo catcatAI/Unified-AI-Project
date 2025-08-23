@@ -63,10 +63,10 @@ class UnifiedControlCenter:
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
+        self.logger = logging.getLogger(__name__)
         self.components = self._initialize_components()
         self.orchestrator = ComponentOrchestrator()
         self.monitor = SystemMonitor()
-        self.logger = logging.getLogger(__name__)
     
     async def initialize_system(self):
         """初始化整個系統"""
@@ -699,7 +699,6 @@ class UnifiedControlCenter:
                 
         except Exception as e:
             self.logger.error(f"Error in causal learning and improvement: {e}")
-        return " ".join(text_outputs)
     
     def _calculate_integration_confidence(self, successful_results: List[Dict], 
                                         failed_results: List[Dict], 

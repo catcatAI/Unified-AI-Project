@@ -94,9 +94,14 @@ class VectorMemoryStore:
     def _setup_advanced_features(self):
         """設置高級功能"""
         try:
-            # 檢查現有記憶數量
+            # 檢查現有記憶數量 - 使用正確的ChromaDB API
             if self.collection:
-                existing_count = self.collection.count()
+                try:
+                    existing_count = len(self.collection.get(include=[])['ids'])  # 使用空的include參數
+                except Exception as e:
+                    existing_count = 0  # 如果失敗則假設為0
+                    logger.warning(f"Could not get collection count: {e}")
+                    
                 logger.info(f"VectorMemoryStore: Found {existing_count} existing memories")
                 
                 # 如果啟用自動清理，執行維護任務
@@ -239,7 +244,12 @@ class VectorMemoryStore:
             return {"error": "Vector store not initialized"}
         
         try:
-            total_memories = self.collection.count()
+            # 使用正確的ChromaDB API獲取記憶統計
+            try:
+                total_memories = len(self.collection.get(include=[])['ids'])  # 使用空的include參數
+            except Exception as e:
+                total_memories = 0
+                logger.warning(f"Could not get collection count for statistics: {e}")
             
             # 簡單統計
             statistics = {
