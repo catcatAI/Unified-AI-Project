@@ -36,6 +36,15 @@ from services.audio_service import AudioService
 from services.vision_service import VisionService
 from services.resource_awareness_service import ResourceAwarenessService
 
+# System Services - Hardware Detection and Deployment Management
+from system import (
+    HardwareProbe, 
+    DeploymentManager, 
+    get_hardware_profile, 
+    apply_optimal_config,
+    initialize_system
+)
+
 # --- Constants ---
 CAP_ADVERTISEMENT_TOPIC = "hsp/capabilities/advertisements/general"
 FACT_TOPIC_GENERAL = "hsp/knowledge/facts/general"
@@ -53,6 +62,10 @@ ham_manager_instance: Optional[HAMMemoryManager] = None
 personality_manager_instance: Optional[PersonalityManager] = None
 trust_manager_instance: Optional[TrustManager] = None
 agent_manager_instance: Optional[AgentManager] = None
+
+# System Services
+hardware_probe_instance: Optional[HardwareProbe] = None
+deployment_manager_instance: Optional[DeploymentManager] = None
 
 # HSP Related Services
 hsp_connector_instance: Optional[HSPConnector] = None
@@ -115,10 +128,32 @@ async def initialize_services(
     global emotion_system_instance, crisis_system_instance, time_system_instance
     global formula_engine_instance, tool_dispatcher_instance, dialogue_manager_instance, agent_manager_instance
     global ai_virtual_input_service_instance, audio_service_instance, vision_service_instance, resource_awareness_service_instance
+    global hardware_probe_instance, deployment_manager_instance
 
     print(f"Core Services: Initializing for AI ID: {ai_id}")
 
-    # --- 0. Demo Mode and Key Detection ---
+    # --- 0. Hardware Detection and Adaptive Deployment ---
+    # Initialize hardware detection and deployment management first
+    # to optimize subsequent service configurations
+    if not hardware_probe_instance:
+        try:
+            hardware_probe_instance = HardwareProbe()
+            print(f"Core Services: Hardware probe initialized")
+        except Exception as e:
+            print(f"Core Services: Warning - Hardware probe initialization failed: {e}")
+            hardware_probe_instance = None
+    
+    if not deployment_manager_instance and hardware_probe_instance:
+        try:
+            deployment_manager_instance = DeploymentManager()
+            # Apply optimal configuration based on hardware
+            deployment_config = deployment_manager_instance.generate_config()
+            applied_settings = deployment_manager_instance.apply_config(deployment_config)
+            print(f"Core Services: Applied {deployment_config.mode.value} deployment mode")
+            print(f"Core Services: AI Capability Score: {deployment_config.hardware_profile.ai_capability_score:.1f}/100")
+        except Exception as e:
+            print(f"Core Services: Warning - Deployment manager initialization failed: {e}")
+            deployment_manager_instance = None
     import os
     import yaml
 
