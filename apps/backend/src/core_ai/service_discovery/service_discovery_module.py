@@ -133,7 +133,7 @@ class ServiceDiscoveryModule:
             logger.debug("Stored capability: %s, Last seen: %s", capability_id, current_time.isoformat())
             logger.debug("Current known_capabilities state after update: %s", self.known_capabilities)
 
-    def find_capabilities(
+    async def find_capabilities(
         self,
         capability_id_filter: Optional[str] = None,
         capability_name_filter: Optional[str] = None,

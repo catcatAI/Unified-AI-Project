@@ -3,6 +3,12 @@ import asyncio
 from typing import Optional, Dict, Any
 import uuid
 
+import sys
+import os
+
+# Add the src directory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
+
 # Core AI Modules
 from core_ai.agent_manager import AgentManager
 from core_ai.dialogue.dialogue_manager import DialogueManager
