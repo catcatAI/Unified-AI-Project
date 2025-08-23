@@ -96,7 +96,7 @@ import uuid
 
 try:
     from core_ai.test_utils.deadlock_detector import (
-        deadlock_detection, 
+        deadlock_detection,
         timeout_with_detection,
         ResourceLeakDetector,
         AsyncLoopDetector
@@ -121,13 +121,13 @@ def setup_test_environment():
         # 生成一個測試用的密鑰
         test_key = Fernet.generate_key().decode()
         os.environ['MIKO_HAM_KEY'] = test_key
-    
+
     # 設置其他測試環境變量
     os.environ['TESTING'] = 'true'
-    os.environ['OPENAI_API_KEY'] = 'test_key' # Add dummy key for tests
-    
+    os.environ['OPENAI_API_KEY'] = 'dummy_key' # Re-add dummy key for module-level imports
+
     yield
-    
+
     # 清理（如果需要）
     pass
 
@@ -142,7 +142,7 @@ def mqtt_broker_available():
 def clean_test_files():
     """清理測試文件"""
     import glob
-    
+
     # 在測試前清理
     test_files = glob.glob("data/processed_data/test_*.json")
     for file in test_files:
@@ -150,9 +150,9 @@ def clean_test_files():
             os.remove(file)
         except FileNotFoundError:
             pass
-    
+
     yield
-    
+
     # 在測試後清理
     test_files = glob.glob("data/processed_data/test_*.json")
     for file in test_files:
@@ -166,23 +166,23 @@ def deadlock_detector():
     """死鎖檢測 fixture"""
     if not DEADLOCK_DETECTION_AVAILABLE:
         pytest.skip("Deadlock detection not available")
-    
+
     resource_detector = ResourceLeakDetector()
     async_detector = AsyncLoopDetector()
-    
+
     # 開始監控
     resource_detector.start_monitoring()
     async_detector.start_monitoring()
-    
+
     yield {
         'resource_detector': resource_detector,
         'async_detector': async_detector
     }
-    
+
     # 檢查洩漏
     leaks = resource_detector.check_leaks()
     async_leaks = async_detector.check_async_leaks()
-    
+
     for leak in leaks + async_leaks:
         if leak.detected:
             pytest.fail(f"Resource leak detected: {leak.details}")
@@ -192,14 +192,14 @@ def timeout_protection():
     """超時保護 fixture"""
     start_time = time.time()
     initial_thread_count = threading.active_count()
-    
+
     yield
-    
+
     # 檢查測試是否運行過長時間
     execution_time = time.time() - start_time
     if execution_time > 60:  # 60秒警告閾值
         pytest.fail(f"Test took too long: {execution_time:.2f}s")
-    
+
     # 檢查線程洩漏
     final_thread_count = threading.active_count()
     if final_thread_count > initial_thread_count + 2:  # 允許一些容差
@@ -211,12 +211,12 @@ def test_timeout_and_monitoring(request):
     # 檢查測試是否標記為需要特殊處理
     timeout_marker = request.node.get_closest_marker("timeout")
     deadlock_marker = request.node.get_closest_marker("deadlock_detection")
-    
+
     # 設置默認超時
     timeout = 30.0
     if timeout_marker:
         timeout = timeout_marker.args[0] if timeout_marker.args else 30.0
-    
+
     # 如果需要死鎖檢測
     if deadlock_marker and DEADLOCK_DETECTION_AVAILABLE:
         with deadlock_detection(timeout=timeout):
@@ -231,10 +231,10 @@ def mock_core_services():
     from src.core_ai.dialogue.dialogue_manager import DialogueManager
     from src.core_ai.dialogue.project_coordinator import ProjectCoordinator # Import ProjectCoordinator
     from src.core_ai.personality.personality_manager import PersonalityManager # Import PersonalityManager
-    
+
     # Create mock service discovery that matches MockSDM behavior and provides Mock tracking
     from unittest.mock import AsyncMock
-    
+
     # Create the actual mock behavior instance
     class MockSDMBehavior:
         def __init__(self):
@@ -244,7 +244,7 @@ def mock_core_services():
             try:
                 from src.hsp.types import HSPCapabilityAdvertisementPayload
                 from datetime import datetime, timezone
-                
+
                 if isinstance(payload, dict):
                     if 'availability_status' not in payload:
                         raise ValueError(f"Missing required field: availability_status")
@@ -281,17 +281,17 @@ def mock_core_services():
 
     # Create the behavior instance
     mock_behavior = MockSDMBehavior()
-    
+
     # Create an AsyncMock that delegates to the behavior instance
     mock_service_discovery = AsyncMock()
-    
+
     # Provide a sync wrapper for process_capability_advertisement so tests that don't await it still work
     from unittest.mock import MagicMock
     def _process_capability_advertisement_sync(payload, sender_ai_id, envelope):
         try:
             from src.hsp.types import HSPCapabilityAdvertisementPayload
             from datetime import datetime, timezone
-            
+
             if isinstance(payload, dict):
                 if 'availability_status' not in payload:
                     raise ValueError(f"Missing required field: availability_status")
@@ -305,12 +305,15 @@ def mock_core_services():
             mock_behavior._mock_sdm_capabilities_store[capability_id] = (processed_payload, datetime.now(timezone.utc))
         except Exception as e:
             logging.error(f"Failed to process capability advertisement (sync): {e}")
-    
+
     # Assign mocks
     mock_service_discovery.process_capability_advertisement = MagicMock(side_effect=_process_capability_advertisement_sync)
     mock_service_discovery.find_capabilities.side_effect = mock_behavior.find_capabilities
-    mock_service_discovery.get_all_capabilities.side_effect = mock_behavior.get_all_capabilities
-    
+    # Use patch.object to ensure get_all_capabilities is always an AsyncMock
+    from unittest.mock import patch
+    with patch.object(mock_service_discovery, 'get_all_capabilities', new_callable=AsyncMock) as mock_get_all_capabilities:
+        mock_get_all_capabilities.side_effect = mock_behavior.get_all_capabilities
+
     # Store a reference to the behavior for access if needed
     mock_service_discovery._mock_behavior = mock_behavior
 
@@ -355,7 +358,7 @@ def mock_core_services():
     # Mock individual services
     mock_llm_interface = MagicMock(spec='src.services.multi_llm_service.MultiLLMService')
     mock_trust_manager = MagicMock(spec='src.core_ai.trust_manager.trust_manager_module.TrustManager')
-    
+
     # Explicitly mock PersonalityManager methods
     mock_personality_manager = MagicMock(spec=PersonalityManager)
     mock_personality_manager.get_initial_prompt = MagicMock(return_value="Hello from mock personality!")
@@ -374,7 +377,7 @@ def mock_core_services():
     mock_hsp_connector = MagicMock(spec='src.hsp.connector.HSPConnector')
     mock_hsp_connector.ai_id = "mock_ai_id"
     mock_agent_manager = MagicMock(spec='src.core_ai.agent_manager.AgentManager')
-    
+
     # Mock the ProjectCoordinator instance
     mock_project_coordinator = MagicMock(spec=ProjectCoordinator)
     mock_project_coordinator.llm_interface = mock_llm_interface
@@ -480,7 +483,7 @@ def client_with_overrides(mock_core_services):
         # Ensure the client is explicitly closed after the test completes
         try:
             client.close()
-        except Exception:
+        except Exception: 
             pass
 
     # Restore original dependencies

@@ -115,7 +115,7 @@ class DialogueManager:
         try:
             # Attempt to dispatch a tool based on user input
             history = self.active_sessions.get(session_id, [])
-            tool_response = await self.tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id, history=history)
+            tool_response = await self.tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id)
 
             response_text = ""
             if tool_response['status'] == "success":

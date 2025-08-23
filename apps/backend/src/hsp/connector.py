@@ -16,6 +16,7 @@ from src.shared.network_resilience import RetryPolicy, CircuitBreaker, NetworkEr
 from .fallback.fallback_protocols import get_fallback_manager, FallbackMessage, MessagePriority, initialize_fallback_protocols
 from .utils.fallback_config_loader import get_config_loader
 from pathlib import Path
+import os # Added this import
 
 # Define the base path for schemas, ensuring cross-platform compatibility
 SCHEMA_BASE_PATH = Path(__file__).resolve().parent.parent.parent / "schemas"
@@ -821,7 +822,8 @@ class HSPConnector:
             http_config = protocols_config.get("http", {})
             if http_config.get("enabled", True):
                 host = http_config.get("host", "127.0.0.1")
-                port = http_config.get("port", 8765)
+                # Check TESTING env var here as well
+                port = 0 if os.environ.get('TESTING') == 'true' else http_config.get("port", 8765)
                 http_protocol = HTTPProtocol(host=host, port=port)
                 priority = http_config.get("priority", 3)
                 self.fallback_manager.add_protocol(http_protocol, priority=priority)
@@ -979,5 +981,3 @@ class HSPConnector:
         error_message = f"HSP connection error (attempt {attempt}): {error}"
         self.logger.error(error_message)
         raise HSPConnectionError(error_message)
-
-    

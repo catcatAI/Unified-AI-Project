@@ -18,6 +18,7 @@ The primary purpose of the `ServiceDiscoveryModule` is to enable dynamic, flexib
     *   Performs basic validation (e.g., checking for `capability_id` and `ai_id` presence) and logs the processing of advertisements.
 *   **Capability Discovery (`find_capabilities`)**:
     *   Provides a flexible querying interface to search the registry for capabilities based on various filters, including `capability_id`, `name`, `tags` (requiring all specified tags to be present), and `min_trust_score`.
+    *   **Note:** This is an asynchronous method (`async def`) and should be `await`ed when called.
     *   Automatically excludes stale entries from search results.
     *   Can sort the results by the trust score of the advertising AI, allowing for prioritization of more trustworthy services.
 *   **Trust Integration**: Integrates directly with a `TrustManager` instance. This allows the module to query the trustworthiness of AI agents advertising capabilities, and to use this trust score as a filtering or sorting criterion during capability discovery.
