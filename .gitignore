@@ -172,6 +172,26 @@ tmp_rovodev_test_cli_desktop.py
 *.npy # NumPy array files (often used for data dumps)
 *.npz # Compressed NumPy array files
 
+# Large Training Datasets (should not be committed to Git)
+data/common_voice_zh/ # 57GB Common Voice Chinese datasets
+data/visual_genome_sample/ # 18GB Visual Genome dataset
+data/coco_captions/ # 1GB MS COCO captions
+data/flickr30k_sample/ # Flickr30K sample data
+
+# Training artifacts and model files
+training/models/ # Trained model files
+training/checkpoints/ # Training checkpoints
+training/logs/ # Training logs
+*.tar.gz # Compressed dataset archives
+*.zip # Dataset archives
+
+# Data processing artifacts
+data/processed_data/ # If processed data is not meant to be versioned
+data/temp_data/
+data/atlassian_cache/ # Cache files
+data/fallback_comm/ # Communication fallback data
+data/task_queue/ # Temporary task data
+
 # Evaluation and report outputs
 evaluations/ # Directory for evaluation results
 reports/ # Directory for various reports
