@@ -40,7 +40,16 @@ set /p "choice=Choose (1-8): "
 
 :: Remove spaces and validate
 if defined choice set "choice=%choice: =%"
-if not defined choice goto invalid_input
+if not defined choice (
+    echo [ERROR] No input provided
+    timeout /t 2 >nul
+    goto main_loop
+)
+if "%choice%"=="" (
+    echo [ERROR] Empty input
+    timeout /t 2 >nul
+    goto main_loop
+)
 
 :: Process choice
 if "%choice%"=="1" call :test_all
@@ -53,10 +62,7 @@ if "%choice%"=="7" call :test_watch
 if "%choice%"=="8" goto exit_script
 
 :: Invalid input handling
-:invalid_input
-echo.
-echo [ERROR] Invalid choice. Please enter 1-8.
-echo.
+echo [ERROR] Invalid choice '%choice%'. Please enter 1-8.
 timeout /t 2 >nul
 goto main_loop
 
