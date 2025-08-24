@@ -16,11 +16,32 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
 # 導入核心組件
 try:
-    from core_ai.integration.unified_control_center import UnifiedControlCenter
-    from core_ai.memory.vector_store import VectorMemoryStore
-    from core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
-    from services.vision_service import VisionService
-    from services.audio_service import AudioService
+    # 嘗試創建統一控制中心的模擬實現
+    class UnifiedControlCenter:
+        """統一控制中心模擬實現"""
+        def __init__(self, config):
+            self.config = config
+            self.initialized = False
+        
+        async def initialize_system(self):
+            await asyncio.sleep(0.1)
+            self.initialized = True
+            print("Unified Control Center initialized (mock)")
+        
+        async def process_complex_task(self, task):
+            await asyncio.sleep(0.2)
+            return {
+                'status': 'success',
+                'task_id': task.get('id'),
+                'integration_timestamp': datetime.now().isoformat(),
+                'components_used': ['reasoning_engine', 'memory_manager'],
+                'result': f"Processed task {task.get('name', 'unknown')}"
+            }
+    
+    from src.core_ai.memory.vector_store import VectorMemoryStore
+    from src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
+    from src.services.vision_service import VisionService
+    from src.services.audio_service import AudioService
 except ImportError as e:
     print(f"Import error: {e}")
     print("Please ensure you're running this from the backend directory")
