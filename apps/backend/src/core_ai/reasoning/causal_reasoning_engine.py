@@ -456,3 +456,88 @@ class CausalReasoningEngine:
         """建議干預值（模擬）"""
         await asyncio.sleep(0.01)
         return f"optimized_{variable}_value"
+    
+    async def _counterfactual_analysis_enhanced(self, scenario: Dict[str, Any]) -> Dict[str, Any]:
+        """增強的反事實分析"""
+        logger.info("Performing enhanced counterfactual analysis")
+        await asyncio.sleep(0.03)
+        
+        outcome_variable = scenario.get('outcome_variable', 'unknown')
+        current_outcome = scenario.get('current_outcome', 'unknown')
+        
+        # 模擬反事實分析
+        counterfactual_outcomes = [
+            f"alternative_{outcome_variable}_1",
+            f"alternative_{outcome_variable}_2", 
+            f"improved_{outcome_variable}"
+        ]
+        
+        return {
+            'original_outcome': current_outcome,
+            'counterfactual_outcomes': counterfactual_outcomes,
+            'analysis_confidence': random.uniform(0.7, 0.95),
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _causal_prediction(self, scenario: Dict[str, Any]) -> Dict[str, Any]:
+        """因果預測分析"""
+        logger.info("Performing causal prediction analysis")
+        await asyncio.sleep(0.04)
+        
+        target_variable = scenario.get('target_variable', 'unknown')
+        time_horizon = scenario.get('time_horizon', '1_hour')
+        
+        # 模擬預測分析
+        predictions = {
+            'predicted_value': f"predicted_{target_variable}_value",
+            'confidence_interval': [0.6, 0.9],
+            'prediction_confidence': random.uniform(0.6, 0.88),
+            'time_horizon': time_horizon,
+            'influencing_factors': ['factor_1', 'factor_2', 'factor_3']
+        }
+        
+        return {
+            'predictions': predictions,
+            'causal_chain': await self._identify_causal_chain(target_variable),
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _causal_explanation(self, scenario: Dict[str, Any]) -> Dict[str, Any]:
+        """因果解釋分析"""
+        logger.info("Performing causal explanation analysis")
+        await asyncio.sleep(0.05)
+        
+        observed_outcome = scenario.get('observed_outcome', 'unknown')
+        context = scenario.get('context', {})
+        
+        # 模擬解釋分析
+        explanations = {
+            'primary_causes': ['primary_cause_1', 'primary_cause_2'],
+            'contributing_factors': ['factor_a', 'factor_b', 'factor_c'],
+            'explanation_confidence': random.uniform(0.7, 0.92),
+            'alternative_explanations': [
+                {'explanation': 'alternative_1', 'likelihood': 0.3},
+                {'explanation': 'alternative_2', 'likelihood': 0.2}
+            ]
+        }
+        
+        return {
+            'observed_outcome': observed_outcome,
+            'explanations': explanations,
+            'context_relevance': random.uniform(0.6, 0.9),
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _identify_causal_chain(self, target_variable: str) -> List[str]:
+        """識別因果鏈（模擬實現）"""
+        await asyncio.sleep(0.02)
+        
+        # 模擬因果鏈
+        chain_elements = [
+            f"root_cause_for_{target_variable}",
+            f"intermediate_factor_1", 
+            f"intermediate_factor_2",
+            target_variable
+        ]
+        
+        return chain_elements

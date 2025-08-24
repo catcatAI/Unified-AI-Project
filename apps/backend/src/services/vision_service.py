@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class VisionService:
     """查看服務：提供圖像理解、物體檢測、OCR等多模態處理能力"""
     
-    def __init__(self, config: dict = None):
+    def __init__(self, config: Optional[dict] = None):
         self.config = config or {}
         self.peer_services = {}  # 其他多模態服務的引用
         self.processing_history = []  # 處理歷史記錄
@@ -33,7 +33,8 @@ class VisionService:
         self.peer_services = peer_services
         logger.debug(f"Vision Service connected to peer services: {list(peer_services.keys())}")
 
-    async def analyze_image(self, image_data: bytes, features: list = None, context: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def analyze_image(self, image_data: bytes, features: Optional[List[str]] = None, 
+                          context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         分析圖像並提取指定特徵。增強版本支持更多特徵和上下文相關分析。
         'features' 可以包含: ["ocr", "object_detection", "captioning", "face_recognition", 
@@ -159,7 +160,7 @@ class VisionService:
             return {"error": str(e), "similarity_score": None}
 
     async def process_video_frame(self, frame_data: bytes, frame_number: int, 
-                                video_context: Dict[str, Any] = None) -> Dict[str, Any]:
+                                video_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """處理視頻幀片，支持時序分析"""
         logger.debug(f"Processing video frame {frame_number}")
         
@@ -324,7 +325,7 @@ class VisionService:
         """執行多模態分析，結合視覺、文本和音頻上下文"""
         await asyncio.sleep(0.05)
         
-        insights = {
+        insights: Dict[str, Any] = {
             "multimodal_confidence": random.uniform(0.7, 0.95),
             "cross_modal_consistency": random.uniform(0.6, 0.9)
         }
@@ -333,7 +334,9 @@ class VisionService:
         if context.get('text_context'):
             text_context = context['text_context']
             insights["text_visual_alignment"] = random.uniform(0.5, 0.9)
-            insights["context_enhanced_caption"] = f"Image shows {visual_analysis.get('caption', 'a scene')} which aligns with the text: {text_context[:50]}..."
+            # Store as string in a properly typed dictionary
+            caption_text = f"Image shows {visual_analysis.get('caption', 'a scene')} which aligns with the text: {text_context[:50]}..."
+            insights["context_enhanced_caption"] = caption_text
         
         # 結合音頻上下文
         if context.get('audio_context'):
@@ -342,7 +345,8 @@ class VisionService:
             
             # 如果有對等的音頻服務，可以進行更深入的分析
             if self.peer_services.get('audio'):
-                insights["cross_modal_features"] = "Audio and visual data processed together"
+                cross_modal_desc = "Audio and visual data processed together"
+                insights["cross_modal_features"] = cross_modal_desc
         
         return insights
 
@@ -384,8 +388,8 @@ class VisionService:
             if 'image_data' in input_data:
                 return await self.analyze_image(
                     input_data['image_data'],
-                    input_data.get('features'),
-                    input_data.get('context')
+                    input_data.get('features') or [],
+                    input_data.get('context') or {}
                 )
             elif 'compare_images' in input_data:
                 return await self.compare_images(
