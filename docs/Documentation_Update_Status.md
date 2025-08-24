@@ -142,11 +142,11 @@ This report summarizes the documentation status for source code files across the
 
 ### Backend (`apps/backend/src`)
 
-
-
-- `D:/Projects/Unified-AI-Project/apps/backend/src/game/scenes/village.py`
 - `D:/Projects/Unified-AI-Project/apps/backend/src/game/tiles.py`
 - `D:/Projects/Unified-AI-Project/apps/backend/src/game/utils.py`
+- `D:/Projects/Unified-AI-Project/apps/backend/src/hsp/bridge/data_aligner.py`
+- `D:/Projects/Unified-AI-Project/apps/backend/src/hsp/fallback/fallback_protocols.py`
+- `D:/Projects/Unified-AI-Project/apps/backend/src/hsp/types.py`
 
 ---
 

@@ -7,6 +7,7 @@ Unified-AI-Project/
 ├── 🔧 health-check.bat    # 环境检查工具
 ├── 🚀 start-dev.bat       # 启动开发环境
 ├── 🧪 run-tests.bat       # 运行测试套件
+├── 🚀 setup-training.bat  # 训练环境设置
 ├── 📖 README.md           # 项目主要说明
 ├── 📋 SIMPLE_GUIDE.md     # 本指南
 │
@@ -42,6 +43,12 @@ Unified-AI-Project/
 # - ChromaDB: http://localhost:8001
 ```
 
+### 训练准备
+```powershell
+# 设置训练环境
+.\setup-training.bat
+```
+
 ## 🔄 如需更多工具
 
 如果需要使用之前的Git修复工具或其他脚本：
@@ -60,13 +67,18 @@ Remove-Item fix-git-10k.bat
 
 ## 📚 查看文档
 
-所有文档现在整理在 `docs/` 目录中：
+所有文档现在整理在 `docs/` 目录中，特别推荐以下整合文档：
 
 ```powershell
 # 查看所有文档
 Get-ChildItem docs\
 
-# 打开特定文档
+# 推荐的整合文档指南
+notepad docs\BATCH_SCRIPTS_USAGE_GUIDE.md    # 批处理脚本使用指南
+notepad docs\GIT_AND_PROJECT_MANAGEMENT.md   # Git与项目管理指南
+notepad docs\TRAINING_PREPARATION_CHECKLIST.md  # 训练准备检查清单
+
+# 其他重要文档
 notepad docs\DEVELOPMENT_GUIDE.md
 notepad docs\GIT_10K_SOLUTION_REPORT.md
 ```
@@ -81,7 +93,7 @@ notepad docs\GIT_10K_SOLUTION_REPORT.md
 
 ## 💡 重要提示
 
-1. **核心功能**: 只保留了3个最重要的脚本
+1. **核心功能**: 只保留了4个最重要的脚本
 2. **文档整理**: 所有25个MD文档都在 `docs/` 目录
 3. **脚本备份**: 所有其他脚本都在 `backup/scripts/` 目录
 4. **安全保障**: 没有删除任何重要文件，只是移动和整理
@@ -90,7 +102,7 @@ notepad docs\GIT_10K_SOLUTION_REPORT.md
 ## 🎉 清理效果
 
 - **之前**: 根目录有25个MD文件 + 16个BAT脚本
-- **现在**: 根目录只有3个核心脚本 + 2个说明文档
+- **现在**: 根目录只有4个核心脚本 + 2个说明文档
 - **备份**: 所有文件都安全保存在对应目录中
 
 ---
