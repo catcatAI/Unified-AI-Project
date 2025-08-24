@@ -31,12 +31,13 @@ echo 4. Desktop Only
 echo 5. Coverage Reports
 echo 6. Quick Tests
 echo 7. Watch Mode
-echo 8. Exit
+echo 8. Check Git Status
+echo 9. Exit
 echo.
 
 :: Get user input with validation
 set "choice="
-set /p "choice=Choose (1-8): "
+set /p "choice=Choose (1-9): "
 
 :: Remove spaces and validate
 if defined choice set "choice=%choice: =%"
@@ -50,12 +51,13 @@ if "%choice%"=="4" call :test_desktop
 if "%choice%"=="5" call :test_coverage
 if "%choice%"=="6" call :test_quick
 if "%choice%"=="7" call :test_watch
-if "%choice%"=="8" goto exit_script
+if "%choice%"=="8" call :check_git
+if "%choice%"=="9" goto exit_script
 
 :: Invalid input handling
 :invalid_input
 echo.
-echo [ERROR] Invalid choice. Please enter 1-8.
+echo [ERROR] Invalid choice. Please enter 1-9.
 echo.
 timeout /t 2 >nul
 goto main_loop
@@ -159,8 +161,6 @@ if exist venv\Scripts\activate.bat (
     set "test_result=!errorlevel!"
     
     if !test_result!==0 (
-        echo [SUCCESS] Backend tests passed
-    ) else (
         echo [FAIL] Backend tests failed with exit code: !test_result!
         echo.
         echo [TROUBLESHOOTING]
@@ -168,6 +168,8 @@ if exist venv\Scripts\activate.bat (
         echo - Verify test files exist in tests/ directory
         echo - Check pytest configuration in pytest.ini
         echo - Run start-dev.bat to refresh environment
+    ) else (
+        echo [SUCCESS] Backend tests passed
     )
 ) else (
     echo [ERROR] Python virtual environment not found
@@ -202,44 +204,69 @@ goto main_loop
 :test_coverage
 echo.
 echo [INFO] Generating coverage reports...
+echo.
 cd apps\backend
 if exist venv\Scripts\activate.bat (
     call venv\Scripts\activate.bat >nul 2>&1
-    pytest --cov=src --cov-report=html
+    pytest --tb=short --cov=. --cov-report=html
+    echo [SUCCESS] Backend coverage report generated in htmlcov/
+) else (
+    echo [ERROR] Python venv not found
 )
 cd ..\..
-pnpm --filter frontend-dashboard test:coverage >nul 2>&1
-pnpm --filter desktop-app test:coverage >nul 2>&1
-echo [INFO] Reports generated in htmlcov/ and coverage/ folders
+pnpm --filter frontend-dashboard test:coverage
+echo.
+echo [INFO] Coverage reports completed.
 pause
 goto main_loop
 
 :test_quick
 echo.
-echo [INFO] Quick tests...
+echo [INFO] Running quick tests...
+echo.
 cd apps\backend
 if exist venv\Scripts\activate.bat (
     call venv\Scripts\activate.bat >nul 2>&1
-    pytest -m "not slow" --tb=short -v
+    pytest --tb=short -v -x --maxfail=1
+) else (
+    echo [ERROR] Python venv not found
 )
 cd ..\..
-pnpm --filter frontend-dashboard test --maxWorkers=50%% >nul 2>&1
-pnpm --filter desktop-app test --maxWorkers=50%% >nul 2>&1
-echo [INFO] Quick tests completed
+echo.
+echo [INFO] Quick tests completed.
 pause
 goto main_loop
 
 :test_watch
 echo.
-echo [INFO] Starting watch mode...
-start "Backend Watch" cmd /k "cd /d apps\backend && call venv\Scripts\activate.bat && pytest -f"
-start "Frontend Watch" cmd /k "pnpm --filter frontend-dashboard test --watch"
-start "Desktop Watch" cmd /k "pnpm --filter desktop-app test --watch"
-echo [INFO] Watch windows opened
+echo [INFO] Starting test watch mode...
+echo.
+cd apps\backend
+if exist venv\Scripts\activate.bat (
+    call venv\Scripts\activate.bat >nul 2>&1
+    pytest --tb=short -v --watch
+) else (
+    echo [ERROR] Python venv not found
+)
+cd ..\..
+echo.
+echo [INFO] Watch mode completed.
+pause
+goto main_loop
+
+:check_git
+echo.
+echo [INFO] Checking Git status...
+echo.
+git status
+echo.
+echo [INFO] For detailed Git cleanup, run safe-git-cleanup.bat
 pause
 goto main_loop
 
 :exit_script
 echo.
-echo Goodbye!
+echo Thank you for using Unified AI Project Test Suite!
+echo.
+pause
 exit /b 0

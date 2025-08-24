@@ -14,7 +14,7 @@ echo.
 set "error_count=0"
 
 :: Check Node.js
-echo [CHECK 1/6] Node.js Environment
+echo [CHECK 1/7] Node.js Environment
 where node >nul 2>&1
 if %errorlevel%==0 (
     for /f "tokens=*" %%i in ('node --version') do set node_version=%%i
@@ -27,7 +27,7 @@ if %errorlevel%==0 (
 
 :: Check Python
 echo.
-echo [CHECK 2/6] Python Environment
+echo [CHECK 2/7] Python Environment
 where python >nul 2>&1
 if %errorlevel%==0 (
     for /f "tokens=*" %%i in ('python --version') do set python_version=%%i
@@ -40,7 +40,7 @@ if %errorlevel%==0 (
 
 :: Check pnpm
 echo.
-echo [CHECK 3/6] Package Manager
+echo [CHECK 3/7] Package Manager
 where pnpm >nul 2>&1
 if %errorlevel%==0 (
     for /f "tokens=*" %%i in ('pnpm --version') do set pnpm_version=%%i
@@ -53,7 +53,7 @@ if %errorlevel%==0 (
 
 :: Check project dependencies
 echo.
-echo [CHECK 4/6] Project Dependencies
+echo [CHECK 4/7] Project Dependencies
 if exist "node_modules" (
     echo [OK] Node.js dependencies installed
 ) else (
@@ -64,7 +64,7 @@ if exist "node_modules" (
 
 :: Check Python virtual environment
 echo.
-echo [CHECK 5/6] Python Environment
+echo [CHECK 5/7] Python Environment
 if exist "apps\backend\venv" (
     echo [OK] Python virtual environment created
     
@@ -103,7 +103,7 @@ if exist "apps\backend\venv" (
 
 :: Check configuration files
 echo.
-echo [CHECK 6/6] Configuration Files
+echo [CHECK 6/7] Configuration Files
 if exist "apps\backend\configs\config.yaml" (
     echo [OK] Backend configuration file exists
 ) else (
@@ -117,6 +117,41 @@ if exist "package.json" (
     echo [FAIL] Root package.json missing
     echo [CRITICAL] Project structure may be corrupted
     set /a "error_count+=1"
+)
+
+:: Check directory structure
+echo.
+echo [CHECK 7/7] Directory Structure
+set "missing_dirs=0"
+if not exist "apps" (
+    echo [WARNING] apps directory missing
+    set /a "missing_dirs+=1"
+)
+if not exist "packages" (
+    echo [WARNING] packages directory missing
+    set /a "missing_dirs+=1"
+)
+if not exist "scripts" (
+    echo [WARNING] scripts directory missing
+    set /a "missing_dirs+=1"
+)
+if not exist "tests" (
+    echo [WARNING] tests directory missing
+    set /a "missing_dirs+=1"
+)
+if not exist "docs" (
+    echo [WARNING] docs directory missing
+    set /a "missing_dirs+=1"
+)
+if not exist "training" (
+    echo [WARNING] training directory missing
+    set /a "missing_dirs+=1"
+)
+
+if !missing_dirs! equ 0 (
+    echo [OK] All required directories present
+) else (
+    echo [INFO] Some directories missing, but not critical
 )
 
 echo.
@@ -144,7 +179,7 @@ if !error_count! gtr 0 (
     echo [READY TO START DEVELOPMENT]
     echo - Run start-dev.bat to launch development environment
     echo - Run run-tests.bat to execute test suite
-    echo - Run test-runner.bat for advanced testing features
+    echo - Run safe-git-cleanup.bat to clean Git status
     echo.
     echo [AVAILABLE SERVICES]
     echo - Backend API will run on: http://localhost:8000
@@ -157,8 +192,8 @@ echo ==========================================
 echo.
 
 echo [INFO] For troubleshooting help:
-echo - Read: TESTING_TROUBLESHOOTING.md
-echo - Read: QUICK_START.md
+echo - Read: docs/TESTING_TROUBLESHOOTING.md
+echo - Read: docs/QUICK_START.md
 echo - Check: docs/README.md
 echo.
 
