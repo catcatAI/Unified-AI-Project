@@ -121,7 +121,19 @@ Behavior in demo mode:
 
 For detailed documentation on project architecture, development guidelines, and more, please refer to the [docs/README.md](docs/README.md) directory.
 
-## Individual Package Readmes
+### 整合文档指南
+为了更好地管理和使用项目文档，我们创建了以下整合指南：
+
+1. [批处理脚本使用指南](docs/BATCH_SCRIPTS_USAGE_GUIDE.md) - 整合了所有批处理脚本的使用方法和故障排除信息
+2. [Git与项目管理指南](docs/GIT_AND_PROJECT_MANAGEMENT.md) - 整合了Git管理和项目结构的相关信息
+
+### 训练准备
+项目现已准备好进行AI训练，相关文档和脚本：
+
+1. [训练准备检查清单](docs/TRAINING_PREPARATION_CHECKLIST.md) - 详细列出训练前的所有准备工作
+2. [训练设置脚本](setup-training.bat) - 一键设置训练环境的批处理脚本
+
+### Individual Package Readmes
 
 For more specific information about each package, refer to their respective README files:
 
@@ -187,6 +199,6 @@ python scripts/export_openapi.py
 
 ---
 
-**最後更新**：2025年1月  
-**專案狀態**：積極開發中  
+**最後更新**：2025年8月24日  
+**專案狀態**：積極開發中，已準備好進行AI訓練  
 **目標里程碑**：Level 3 AGI 實現
