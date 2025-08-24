@@ -178,6 +178,20 @@ data/visual_genome_sample/ # 18GB Visual Genome dataset
 data/coco_captions/ # 1GB MS COCO captions
 data/flickr30k_sample/ # Flickr30K sample data
 
+# Additional data directories that should not be tracked
+data/audio_samples/*.wav
+data/audio_samples/*.mp3
+data/audio_samples/*.flac
+data/vision_samples/*.jpg
+data/vision_samples/*.png
+data/vision_samples/*.jpeg
+data/multimodal_samples/
+data/reasoning_samples/
+
+# Test and report files
+apps/backend/*_test_report_*.txt
+*.test_report.txt
+
 # Training artifacts and model files
 training/models/ # Trained model files
 training/checkpoints/ # Training checkpoints
