@@ -86,11 +86,12 @@ echo 1. Start Full Development Environment
 echo 2. Start Backend Only  
 echo 3. Start Frontend Only
 echo 4. Run Tests
-echo 5. Exit
+echo 5. Clean Git Status
+echo 6. Exit
 echo.
 
 set "choice="
-set /p "choice=Enter your choice (1-5): "
+set /p "choice=Enter your choice (1-6): "
 if defined choice set "choice=%choice: =%"
 if not defined choice goto invalid_choice
 
@@ -98,10 +99,11 @@ if "%choice%"=="1" goto start_all
 if "%choice%"=="2" goto start_backend
 if "%choice%"=="3" goto start_frontend  
 if "%choice%"=="4" goto run_tests
-if "%choice%"=="5" goto end
+if "%choice%"=="5" goto clean_git
+if "%choice%"=="6" goto end
 
 :invalid_choice
-echo [ERROR] Invalid choice. Please enter 1-5.
+echo [ERROR] Invalid choice. Please enter 1-6.
 echo.
 timeout /t 2 >nul
 goto menu
@@ -159,6 +161,16 @@ cd ..\..
 pnpm --filter frontend-dashboard test --passWithNoTests
 echo.
 echo Tests completed.
+pause
+goto menu
+
+:clean_git
+echo.
+echo Cleaning Git status...
+echo.
+call safe-git-cleanup.bat
+echo.
+echo Git status cleaned.
 pause
 goto menu
 

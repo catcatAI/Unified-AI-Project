@@ -201,3 +201,39 @@ test_results/ # Directory for test results
 data/processed_data/ # If processed data is not meant to be versioned
 data/temp_data/
 checkpoints/ # Model checkpoints
+
+# Temporary files and logs
+*_temp*.txt
+git_*.txt
+*.tmp
+style_check_output.txt
+temp_dir_list.txt
+todo_grep.txt
+markdown_files.txt
+docs_md_files.txt
+electron_docs_grep.txt
+*_search_results.txt
+commit_message.txt
+backend_entrypoint.txt
+frontend_*.txt
+test_report.md
+implementation_plan.md
+
+# Backup and archive directories
+backup/
+archive/
+
+# Temporary development tools
+fix-git-10k.bat
+emergency-git-fix.bat
+git-status-check.bat
+solve-git-issues.bat
+quick-organize.bat
+analyze-content.bat
+organize-project.bat
+final-integration.bat
+immediate-cleanup.bat
+test-git-tools.bat
+
+# Debug files
+debug_test.js
