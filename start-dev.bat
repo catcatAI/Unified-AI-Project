@@ -93,7 +93,16 @@ echo.
 set "choice="
 set /p "choice=Enter your choice (1-6): "
 if defined choice set "choice=%choice: =%"
-if not defined choice goto invalid_choice
+if not defined choice (
+    echo [ERROR] No input provided
+    timeout /t 2 >nul
+    goto menu
+)
+if "%choice%"=="" (
+    echo [ERROR] Empty input
+    timeout /t 2 >nul
+    goto menu
+)
 
 if "%choice%"=="1" goto start_all
 if "%choice%"=="2" goto start_backend
@@ -102,9 +111,7 @@ if "%choice%"=="4" goto run_tests
 if "%choice%"=="5" goto clean_git
 if "%choice%"=="6" goto end
 
-:invalid_choice
-echo [ERROR] Invalid choice. Please enter 1-6.
-echo.
+echo [ERROR] Invalid choice '%choice%'. Please enter 1-6.
 timeout /t 2 >nul
 goto menu
 

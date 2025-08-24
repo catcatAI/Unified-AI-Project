@@ -178,6 +178,43 @@ data/visual_genome_sample/ # 18GB Visual Genome dataset
 data/coco_captions/ # 1GB MS COCO captions
 data/flickr30k_sample/ # Flickr30K sample data
 
+# Data directories that should not be tracked
+data/
+!data/README.md
+!data/TRAINING_DATA_GUIDE.md
+!data/data_config.json
+
+# Additional data directories that should not be tracked
+data/audio_samples/*.wav
+data/audio_samples/*.mp3
+data/audio_samples/*.flac
+data/vision_samples/*.jpg
+data/vision_samples/*.png
+data/vision_samples/*.jpeg
+data/multimodal_samples/
+data/reasoning_samples/
+
+# Project organization and backup
+backup/
+docs/
+!docs/README.md
+
+# Temporary scripts and tools
+fix-git-10k.bat
+emergency-git-fix.bat
+git-status-check.bat
+solve-git-issues.bat
+*.tmp
+*_temp*.txt
+git_*.txt
+
+# Debug and development files
+debug_test.js
+
+# Test and report files
+apps/backend/*_test_report_*.txt
+*.test_report.txt
+
 # Training artifacts and model files
 training/models/ # Trained model files
 training/checkpoints/ # Training checkpoints

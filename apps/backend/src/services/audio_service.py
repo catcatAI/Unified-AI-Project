@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class AudioService:
     """音頻服務：提供語音識別、語音合成、情感分析等多模態處理能力"""
     
-    def __init__(self, config: dict = None):
+    def __init__(self, config: Optional[dict] = None):
         self.config = config or {}
         self.peer_services = {}  # 其他多模態服務的引用
         self.processing_history = []  # 處理歷史記錄
@@ -146,7 +146,7 @@ class AudioService:
         else:
             raise NotImplementedError("Real sentiment analysis not implemented yet. Enable demo mode or implement the actual service.")
 
-    def text_to_speech(self, text: str, language: str = "en-US", voice: str = None) -> bytes | None:
+    def text_to_speech(self, text: str, language: str = "en-US", voice: Optional[str] = None) -> Optional[bytes]:
         """
         Converts text to speech audio data.
         Mock logic: generates a sine wave.
