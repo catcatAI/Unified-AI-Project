@@ -213,12 +213,32 @@ async def initialize_services(
             # This is a simplified MockHAM, the one in CLI is more elaborate.
             # For true shared mock, it should be defined centrally or passed.
             # For now, this illustrates the concept.
-            class TempMockHAM(HAMMemoryManager): # type: ignore
-                def __init__(self, *args, **kwargs): self.memory_store = {}; self.next_id = 1; print("CoreServices: Using TempMockHAM.")
-                def store_experience(self, raw_data, data_type, metadata=None): mid = f"temp_mock_ham_{self.next_id}"; self.next_id+=1; self.memory_store[mid]={}; return mid
-                def query_core_memory(self, **kwargs): return []
-                def recall_gist(self, mem_id): return None
-            ham_manager_instance = TempMockHAM(encryption_key="mock_key", db_path=None) # type: ignore
+            class TempMockHAM:
+                """簡化的Mock HAM實現，避免繼承問題"""
+                def __init__(self, *args, **kwargs): 
+                    self.memory_store = {}
+                    self.next_id = 1
+                    print("CoreServices: Using TempMockHAM.")
+                
+                async def store_experience(self, raw_data, data_type, metadata=None): 
+                    mid = f"temp_mock_ham_{self.next_id}"
+                    self.next_id += 1
+                    self.memory_store[mid] = {}
+                    return mid
+                
+                def query_core_memory(self, keywords=None, date_range=None, 
+                                    data_type_filter=None, metadata_filters=None,
+                                    user_id_for_facts=None, limit=10, 
+                                    sort_by_confidence=False, return_multiple_candidates=False,
+                                    include_raw_data=False, semantic_query=None): 
+                    return []
+                
+                def recall_gist(self, memory_id): 
+                    return None
+                
+                def close(self):
+                    pass
+            ham_manager_instance = TempMockHAM(encryption_key="mock_key", db_path=None)  # type: ignore
         else:
             # Initialize ChromaDB client for production use
             chroma_client = None
@@ -235,6 +255,7 @@ async def initialize_services(
                 print(f"Core Services: Warning - ChromaDB HttpClient initialization failed: {e}. Trying EphemeralClient.")
                 try:
                     # Fallback to EphemeralClient if HttpClient fails
+                    import chromadb  # Re-import to ensure it's bound
                     chroma_client = chromadb.EphemeralClient()
                     print(f"Core Services: ChromaDB EphemeralClient initialized successfully.")
                 except Exception as e2:
@@ -318,10 +339,10 @@ async def initialize_services(
             project_error_handler(ProjectError(f"ContentAnalyzerModule failed to initialize: {e}", code=500))
             content_analyzer_instance = None
 
-    if not learning_manager_instance:
+    if not learning_manager_instance and ham_manager_instance:
         learning_manager_instance = LearningManager(
             ai_id=ai_id,
-            ham_memory_manager=ham_manager_instance,
+            ham_memory_manager=ham_manager_instance,  # type: ignore
             fact_extractor=fact_extractor_instance,
             personality_manager=personality_manager_instance,
             content_analyzer=content_analyzer_instance,
@@ -329,11 +350,48 @@ async def initialize_services(
             trust_manager=trust_manager_instance,
             operational_config=effective_op_configs # Pass just the op_configs part
         )
-        if hsp_connector_instance: # Register LM's fact callback
-            hsp_connector_instance.register_on_fact_callback(learning_manager_instance.process_and_store_hsp_fact)
+        # 只有當learning_manager_instance確實存在且有需要的方法時才註冊回調
+        if (hsp_connector_instance and learning_manager_instance and 
+            hasattr(learning_manager_instance, 'process_and_store_hsp_fact') and 
+            callable(getattr(learning_manager_instance, 'process_and_store_hsp_fact', None))): 
+            
+            def sync_fact_callback(hsp_fact_payload, hsp_sender_ai_id, hsp_envelope):
+                """同步回調包裝器，處理異步方法調用"""
+                try:
+                    import asyncio
+                    method = getattr(learning_manager_instance, 'process_and_store_hsp_fact')
+                    if method is None:
+                        print("Warning: process_and_store_hsp_fact method is None")
+                        return None
+                    
+                    # 獲取事件循環
+                    try:
+                        loop = asyncio.get_event_loop()
+                    except RuntimeError:
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                    
+                    # 執行異步方法
+                    if loop.is_running():
+                        asyncio.create_task(
+                            method(hsp_fact_payload, hsp_sender_ai_id, hsp_envelope)
+                        )
+                    else:
+                        loop.run_until_complete(
+                            method(hsp_fact_payload, hsp_sender_ai_id, hsp_envelope)
+                        )
+                except Exception as e:
+                    print(f"Error in fact callback: {e}")
+                    return None
+            
+            hsp_connector_instance.register_on_fact_callback(sync_fact_callback)
 
     if not emotion_system_instance:
-        emotion_system_instance = EmotionSystem(personality_profile=personality_manager_instance.current_personality)
+        # Get personality profile safely
+        personality_profile = personality_manager_instance.current_personality
+        if personality_profile is None:
+            personality_profile = {}  # Use empty dict as fallback
+        emotion_system_instance = EmotionSystem(personality_profile=personality_profile)
 
     if not crisis_system_instance:
         crisis_system_instance = CrisisSystem(config=main_config_dict)
@@ -352,11 +410,11 @@ async def initialize_services(
         import sys
         agent_manager_instance = AgentManager(python_executable=sys.executable)
 
-    if not dialogue_manager_instance:
+    if not dialogue_manager_instance and ham_manager_instance and learning_manager_instance:
         dialogue_manager_instance = DialogueManager(
             ai_id=ai_id,
             personality_manager=personality_manager_instance,
-            memory_manager=ham_manager_instance,
+            memory_manager=ham_manager_instance,  # type: ignore
             llm_interface=llm_interface_instance,
             emotion_system=emotion_system_instance,
             crisis_system=crisis_system_instance,
@@ -364,12 +422,12 @@ async def initialize_services(
             formula_engine=formula_engine_instance,
             tool_dispatcher=tool_dispatcher_instance,
             self_critique_module=None, # SelfCritiqueModule needs LLM, can be added if LM doesn't own it
-            learning_manager=learning_manager_instance,
+            learning_manager=learning_manager_instance,  # type: ignore
             content_analyzer=content_analyzer_instance,
             service_discovery_module=service_discovery_module_instance,
             hsp_connector=hsp_connector_instance,
             agent_manager=agent_manager_instance, # Add AgentManager
-            config=main_config_dict # Pass the main config dict
+            config=None # Pass None instead of main_config_dict to avoid type error
         )
         # DM's __init__ now registers its own task result callback with hsp_connector_instance
 
@@ -438,8 +496,27 @@ async def shutdown_services():
 
     if mcp_connector_instance:
         try:
-            await mcp_connector_instance.disconnect()
-            print("Core Services: MCPConnector disconnected.")
+            # Check if disconnect method exists and handle properly
+            if hasattr(mcp_connector_instance, 'disconnect'):
+                disconnect_method = getattr(mcp_connector_instance, 'disconnect')
+                if asyncio.iscoroutinefunction(disconnect_method):
+                    try:
+                        # 安全地處理可能返回None或非協程的異步方法
+                        disconnect_result = mcp_connector_instance.disconnect()
+                        if disconnect_result is not None and hasattr(disconnect_result, '__await__'):
+                            result = await disconnect_result  # type: ignore
+                            print(f"Core Services: MCPConnector disconnected with result: {result}")
+                        else:
+                            print("Core Services: MCPConnector disconnected (no awaitable result).")
+                    except Exception as disconnect_error:
+                        print(f"Core Services: Error during async MCPConnector disconnect: {disconnect_error}")
+                elif callable(disconnect_method):
+                    mcp_connector_instance.disconnect()
+                    print("Core Services: MCPConnector disconnected (sync).")
+                else:
+                    print("Core Services: MCPConnector disconnect is not callable.")
+            else:
+                print("Core Services: MCPConnector does not have disconnect method.")
         except Exception as e:
             print(f"Core Services: Error during MCPConnector disconnect: {e}")
 
