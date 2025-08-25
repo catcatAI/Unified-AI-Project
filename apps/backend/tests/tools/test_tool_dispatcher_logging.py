@@ -14,21 +14,21 @@ def test_tool_dispatcher_action_policy_logged_smoke():
     # Ensure services are initialized
     if tool_dispatcher_instance is None or ham_manager_instance is None:
         asyncio.run(initialize_services())
-    from src.core_services import tool_dispatcher_instance, ham_manager_instance
-    assert tool_dispatcher_instance is not None, "ToolDispatcher should be initialized"
-    assert ham_manager_instance is not None, "HAM manager should be initialized"
-    assert ham_manager_instance is not None, "HAM manager should be initialized"
+    # Import the updated instances after initialization
+    from src.core_services import tool_dispatcher_instance as td_instance, ham_manager_instance as ham_instance
+    assert td_instance is not None, "ToolDispatcher should be initialized"
+    assert ham_instance is not None, "HAM manager should be initialized"
 
     # Invoke a simple tool via dispatcher
     loop = asyncio.new_event_loop()
     try:
         asyncio.set_event_loop(loop)
-        _ = loop.run_until_complete(tool_dispatcher_instance.dispatch("calculate 1 + 1"))
+        _ = loop.run_until_complete(td_instance.dispatch("calculate 1 + 1"))
     finally:
         loop.close()
 
     # Query HAM for action policy events
-    events = ham_manager_instance.query_core_memory(
+    events = ham_instance.query_core_memory(
         metadata_filters={"ham_meta_action_policy": True},
         data_type_filter="action_policy_v0.1",
         limit=50,

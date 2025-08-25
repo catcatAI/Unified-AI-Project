@@ -2,6 +2,7 @@ import unittest
 import pytest
 import os
 import sys
+import asyncio
 
 from src.services.vision_service import VisionService
 
@@ -13,12 +14,14 @@ class TestVisionService(unittest.TestCase):
         self.assertIsNotNone(service)
         print("TestVisionService.test_01_initialization_placeholder PASSED")
 
+    @pytest.mark.asyncio
     @pytest.mark.timeout(15)
-    def test_02_analyze_image(self):
+    async def test_02_analyze_image(self):
         service = VisionService()
         dummy_image = b"dummy_image_bytes"
         features = ["captioning", "object_detection", "ocr"]
-        analysis = service.analyze_image(dummy_image, features=features)
+        # Fix: properly await the coroutine
+        analysis = await service.analyze_image(dummy_image, features=features)
 
         self.assertIn("caption", analysis)
         self.assertIn("A mock image of a captioning, object_detection, ocr.", analysis["caption"])
@@ -29,30 +32,35 @@ class TestVisionService(unittest.TestCase):
         self.assertIn("ocr_text", analysis)
         self.assertIn("Mock OCR text for image with length", analysis["ocr_text"])
 
-        analysis_none = service.analyze_image(None) # Test with None input
-        self.assertIsNone(analysis_none)
+        analysis_none = await service.analyze_image(None) # Test with None input
+        self.assertIn("error", analysis_none)
         print("TestVisionService.test_02_analyze_image PASSED")
 
+    @pytest.mark.asyncio
     @pytest.mark.timeout(15)
-    def test_03_compare_images(self):
+    async def test_03_compare_images(self):
         service = VisionService()
         dummy_image1 = b"dummy1"
         dummy_image2 = b"dummy2"
 
         results = set()
         for _ in range(10):
-            similarity = service.compare_images(dummy_image1, dummy_image2)
-            self.assertIsInstance(similarity, float)
-            self.assertGreaterEqual(similarity, 0.0)
-            self.assertLessEqual(similarity, 1.0)
-            results.add(similarity)
+            # Fix: properly await the coroutine
+            similarity = await service.compare_images(dummy_image1, dummy_image2)
+            self.assertIsInstance(similarity, dict)  # compare_images now returns a dict
+            self.assertIn("similarity_score", similarity)
+            score = similarity["similarity_score"]
+            self.assertIsInstance(score, float)
+            self.assertGreaterEqual(score, 0.0)
+            self.assertLessEqual(score, 1.0)
+            results.add(score)
 
         self.assertGreater(len(results), 1, "Expected multiple different similarity scores.")
 
-        similarity_none1 = service.compare_images(None, dummy_image2)
-        self.assertIsNone(similarity_none1)
-        similarity_none2 = service.compare_images(dummy_image1, None)
-        self.assertIsNone(similarity_none2)
+        similarity_none1 = await service.compare_images(None, dummy_image2)
+        self.assertIn("error", similarity_none1)
+        similarity_none2 = await service.compare_images(dummy_image1, None)
+        self.assertIn("error", similarity_none2)
         print("TestVisionService.test_03_compare_images PASSED")
 
 if __name__ == '__main__':

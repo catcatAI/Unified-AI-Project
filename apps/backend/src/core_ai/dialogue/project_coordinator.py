@@ -14,7 +14,7 @@ from src.shared.types.common_types import PendingHSPTaskInfo
 from datetime import datetime, timezone
 
 if TYPE_CHECKING:
-    from src.services.llm_interface import LLMInterface
+    from src.services.multi_llm_service import MultiLLMService
     from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
     from src.hsp.connector import HSPConnector
     from src.core_ai.agent_manager import AgentManager
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 class ProjectCoordinator:
     def __init__(self,
-                 llm_interface: LLMInterface,
+                 llm_interface: 'MultiLLMService',
                  service_discovery: ServiceDiscoveryModule,
                  hsp_connector: HSPConnector,
                  agent_manager: AgentManager,
@@ -76,7 +76,8 @@ class ProjectCoordinator:
             return f"{ai_name}: I can't access my specialist network to handle this project."
 
         logging.info(f"[{ai_name}] Phase 0/1: Decomposing project query...")
-        available_capabilities = await self.service_discovery.get_all_capabilities()
+        # Use the async version of get_all_capabilities
+        available_capabilities = await self.service_discovery.get_all_capabilities_async()
         subtasks = await self._decompose_user_intent_into_subtasks(project_query, available_capabilities)
 
         if not subtasks:
@@ -145,6 +146,10 @@ class ProjectCoordinator:
         capability_name = subtask.get("capability_needed")
         params = subtask.get("task_parameters", {})
         
+        # Check if capability_name is None
+        if not capability_name:
+            return {"error": "No capability name specified for subtask."}
+        
         found_caps = await self.service_discovery.find_capabilities(capability_name_filter=capability_name)
 
         if not found_caps and self.agent_manager:
@@ -170,7 +175,7 @@ class ProjectCoordinator:
 
         return await self._wait_for_task_result(correlation_id, capability_name)
 
-    async def _send_hsp_request(self, capability: Dict[str, Any], parameters: Dict[str, Any], description: str) -> Tuple[Optional[str], Optional[str]]:
+    async def _send_hsp_request(self, capability: HSPCapabilityAdvertisementPayload, parameters: Dict[str, Any], description: str) -> Tuple[Optional[str], Optional[str]]:
         target_ai_id = capability.get("ai_id")
         capability_id = capability.get("capability_id")
         if not target_ai_id or not capability_id or not self.hsp_connector:
@@ -207,7 +212,7 @@ class ProjectCoordinator:
         finally:
             self.task_completion_events.pop(correlation_id, None)
 
-    async def _decompose_user_intent_into_subtasks(self, user_query: str, available_capabilities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _decompose_user_intent_into_subtasks(self, user_query: str, available_capabilities: List[HSPCapabilityAdvertisementPayload]) -> List[Dict[str, Any]]:
         prompt = self.prompts['decompose_user_intent'].format(
             capabilities=json.dumps(available_capabilities, indent=2),
             user_query=user_query

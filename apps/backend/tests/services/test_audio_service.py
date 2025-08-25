@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 import os
 import sys
+import asyncio
 
 from src.services.audio_service import AudioService
 from src.config_loader import get_config, get_simulated_resources
@@ -15,15 +16,17 @@ class TestAudioService(unittest.TestCase):
         self.assertIsNotNone(service)
         print("TestAudioService.test_01_initialization_placeholder PASSED")
 
+    @pytest.mark.asyncio
     @pytest.mark.timeout(15)
-    def test_02_speech_to_text_placeholder(self):
+    async def test_02_speech_to_text_placeholder(self):
         service = AudioService()
         dummy_audio = b"dummy_audio_bytes"
-        text = service.speech_to_text(dummy_audio)
-        self.assertEqual(text, "This is a mock transcription.")
+        # Fix: properly await the coroutine
+        result = await service.speech_to_text(dummy_audio)
+        self.assertEqual(result["text"], "This is a mock transcription.")
 
-        text_none = service.speech_to_text(None) # Test with None input
-        self.assertIsNone(text_none)
+        result_none = await service.speech_to_text(None) # Test with None input
+        self.assertIn("error", result_none)
         print("TestAudioService.test_02_speech_to_text_placeholder PASSED")
 
     @pytest.mark.timeout(15)

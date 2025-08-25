@@ -14,7 +14,9 @@ from datetime import datetime
 
 # 添加項目路徑
 project_root = Path(__file__).parent.parent
-sys.path.append(str(project_root / "apps" / "backend" / "src"))
+backend_path = project_root / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+sys.path.insert(0, str(backend_path / "src"))
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -70,7 +72,7 @@ class TrainingIntegrator:
         logger.info("🔍 測試視覺服務集成...")
         
         try:
-            from services.vision_service import VisionService
+            from src.services.vision_service import VisionService
             
             vision_service = VisionService()
             
@@ -99,7 +101,7 @@ class TrainingIntegrator:
         logger.info("🔊 測試音頻服務集成...")
         
         try:
-            from services.audio_service import AudioService
+            from src.services.audio_service import AudioService
             
             audio_service = AudioService()
             
@@ -129,7 +131,7 @@ class TrainingIntegrator:
         logger.info("🧠 測試推理引擎集成...")
         
         try:
-            from core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
+            from src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
             
             reasoning_engine = CausalReasoningEngine({'causality_threshold': 0.5})
             
@@ -170,7 +172,7 @@ class TrainingIntegrator:
         logger.info("🧠 測試記憶系統集成...")
         
         try:
-            from core_ai.memory.vector_store import VectorMemoryStore
+            from src.core_ai.memory.vector_store import VectorMemoryStore
             
             vector_store = VectorMemoryStore(persist_directory="./test_vector_store")
             

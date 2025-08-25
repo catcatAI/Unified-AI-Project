@@ -257,20 +257,7 @@ test_report.md
 implementation_plan.md
 
 # Backup and archive directories
-backup/
 archive/
-
-# Temporary development tools
-fix-git-10k.bat
-emergency-git-fix.bat
-git-status-check.bat
-solve-git-issues.bat
-quick-organize.bat
-analyze-content.bat
-organize-project.bat
-final-integration.bat
-immediate-cleanup.bat
-test-git-tools.bat
 
 # Debug files
 debug_test.js
