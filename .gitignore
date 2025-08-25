@@ -261,3 +261,7 @@ archive/
 
 # Debug files
 debug_test.js
+
+# Test files
+simple_import_test.py
+test_data_analysis_import.py
