@@ -34,7 +34,15 @@ This monorepo is organized into applications and packages, centered around a uni
 
 ## 快速開始
 
-To set up and run the entire monorepo, follow these steps:
+To set up and run the entire monorepo, you can use the unified management script:
+
+1.  **Run Unified Management Script**: Double-click `unified-ai.bat` and select "Setup Environment" to automatically install all dependencies and set up the development environment.
+
+2.  **Start Development Servers**: After setup, double-click `unified-ai.bat` and select "Start Development" then "Start Full Development Environment" to start both the backend and frontend development servers concurrently.
+
+    The backend API will typically run on `http://localhost:8000`, and the frontend dashboard on `http://localhost:3000`.
+
+Alternatively, you can use traditional commands:
 
 1.  **Install pnpm**: If you don't have pnpm installed, you can install it globally:
     ```bash
@@ -50,7 +58,6 @@ To set up and run the entire monorepo, follow these steps:
     ```bash
     pnpm dev
     ```
-    The backend API will typically run on `http://localhost:8000`, and the frontend dashboard on `http://localhost:3000`.
 
 ## 核心架構組件
 
@@ -79,6 +86,13 @@ python Unified-AI-Project/scripts/export_openapi.py
 # output: Unified-AI-Project/docs/api/openapi.json
 ```
 
+To run all tests across the monorepo, you can use the unified management script:
+
+1. Double-click `unified-ai.bat`
+2. Select "Run Tests"
+3. Choose the type of tests you want to run
+
+Alternatively, you can use traditional commands:
 
 To run all tests across the monorepo:
 
@@ -97,6 +111,14 @@ pnpm test:coverage
 - AudioService demo mode and sentiment-analysis stub implemented.
   - In demo mode, `speech_to_text_with_sentiment_analysis` returns a mock payload with `sentiment: "positive"`.
   - When demo mode is disabled, the same method raises `NotImplementedError` (until real integration is configured).
+
+- **批處理脚本整合**：为了解决项目中批处理脚本过多的问题，我们创建了统一管理工具 `unified-ai.bat`，整合了所有常用功能。这减少了脚本数量，简化了操作流程，同时保持了所有原有功能。
+
+- **项目结构优化**：为了改善项目文件过多、结构混乱的问题，我们进行了全面的清理和整理工作：
+  - 将所有文档移至 `docs/` 目录集中管理
+  - 将非核心脚本移至 `backup/scripts/` 目录
+  - 创建统一文档索引和整合指南
+  - 根目录文件数量从约61个减少到约23个，减少了约62%
 
 ## Audio Service Demo Mode
 
@@ -120,6 +142,11 @@ Behavior in demo mode:
 ## Documentation
 
 For detailed documentation on project architecture, development guidelines, and more, please refer to the [docs/README.md](docs/README.md) directory.
+
+### 统一文档索引
+为了更好地管理和使用项目文档，我们创建了统一的文档索引：
+
+- [统一文档索引](docs/UNIFIED_DOCUMENTATION_INDEX.md) - 所有项目文档的集中索引
 
 ### 整合文档指南
 为了更好地管理和使用项目文档，我们创建了以下整合指南：
@@ -163,7 +190,7 @@ For more specific information about each package, refer to their respective READ
 ## 測試與驗證
 
 ### 執行測試套件
-```bash
+```
 # 後端測試
 cd apps/backend
 pytest tests/ -v
@@ -176,7 +203,7 @@ pytest tests/ --cov=src --cov-report=html
 ```
 
 ### 匯出 OpenAPI 規格
-```bash
+```
 python scripts/export_openapi.py
 # 輸出：docs/api/openapi.json
 ```
@@ -187,7 +214,7 @@ python scripts/export_openapi.py
 - **[核心架構](docs/architecture/README.md)**：系統設計與技術細節
 - **[AGI 發展計畫](../planning/core-development/agi-development-plan.md)**：邁向 Level 3-4 AGI 的策略
 - **[技術實施路線圖](../planning/core-development/technical-implementation-roadmap.md)**：具體開發任務清單
-- **[API 文檔](docs/API_ENDPOINTS.md)**：後端 API 使用指南
+- **[API 文档](docs/API_ENDPOINTS.md)**：後端 API 使用指南
 
 ## 個別套件說明
 

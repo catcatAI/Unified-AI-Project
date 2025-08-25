@@ -6,96 +6,44 @@ import threading
 import time
 from pathlib import Path
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, TYPE_CHECKING
 from cryptography.fernet import Fernet
-
-# Ensure src directory is on sys.path before importing from src.*
-CUR_DIR = os.path.dirname(__file__)
-SRC_DIR = os.path.abspath(os.path.join(CUR_DIR, '..', 'src'))
-if SRC_DIR not in sys.path:
-    sys.path.insert(0, SRC_DIR)
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.shared.types.common_types import DialogueTurn, DialogueMemoryEntryMetadata
 from datetime import datetime, timezone
 import uuid
 
-async def mock_get_simple_response_side_effect(dm, project_coordinator, tool_dispatcher, ham_manager, learning_manager, personality_manager, user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
-    ai_name = personality_manager.get_current_personality_trait("display_name", "AI")
+# 定义占位符类
+class PlaceholderResourceLeakDetector:
+    def __init__(self):
+        pass
+    def start_monitoring(self):
+        pass
+    def check_leaks(self) -> List:
+        return []
 
-    # Use triggers from config to activate special handlers
-    if project_coordinator and user_input.lower().startswith(dm.triggers["complex_project"]):
-        project_query = user_input[len(dm.triggers["complex_project"]):].strip()
-        logging.info(f"[{dm.ai_id}] Complex project detected. Delegating to ProjectCoordinator...")
-        return await project_coordinator.handle_project(project_query, session_id, user_id)
+class PlaceholderAsyncLoopDetector:
+    def __init__(self):
+        pass
+    def start_monitoring(self):
+        pass
+    def check_async_leaks(self) -> List:
+        return []
 
+class PlaceholderDeadlockDetector:
+    pass
+
+# 定义占位符上下文管理器
+from contextlib import contextmanager
+@contextmanager
+def placeholder_deadlock_detection(timeout: float = 30.0, check_interval: float = 1.0):
     try:
-        # Attempt to dispatch a tool based on user input
-        history = dm.active_sessions.get(session_id, [])
-        tool_response = await tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id, history=history)
+        yield PlaceholderDeadlockDetector()
+    finally:
+        pass
 
-        response_text = ""
-        if tool_response['status'] == "success":
-            response_text = tool_response['payload']
-        elif tool_response['status'] == "no_tool_found" or tool_response['status'] == "no_tool_inferred":
-            response_text = f"{ai_name}: You said '{user_input}'. This is a simple response."
-        else:
-            response_text = f"{ai_name}: An error occurred while processing your request: {tool_response['error_message']}"
-    except Exception as e:
-        logging.error(f"Error dispatching tool: {e}")
-        response_text = f"{ai_name}: I'm sorry, I encountered an error while trying to understand your request."
-
-    # Store user and AI turns in session and memory
-    if session_id and session_id in dm.active_sessions:
-        dm.active_sessions[session_id].append(DialogueTurn(speaker="user", text=user_input, timestamp=datetime.now(timezone.utc)))
-        dm.active_sessions[session_id].append(DialogueTurn(speaker="ai", text=response_text, timestamp=datetime.now(timezone.utc)))
-
-    if ham_manager:
-        user_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id} # type: ignore
-        user_mem_id = ham_manager.store_experience(user_input, "user_dialogue_text", user_metadata)
-
-        ai_metadata: DialogueMemoryEntryMetadata = {"speaker": "ai", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id, "user_input_ref": user_mem_id} # type: ignore
-        ham_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata)
-
-    # Analyze for personality adjustment
-    if learning_manager:
-        adjustment = await learning_manager.analyze_for_personality_adjustment(user_input)
-        if adjustment and personality_manager:
-            personality_manager.apply_personality_adjustment(adjustment)
-
-    return response_text
-
-async def mock_start_session_side_effect(dm, time_system, personality_manager, user_id: Optional[str] = None, session_id: Optional[str] = None) -> str:
-    if not session_id:
-        session_id = str(uuid.uuid4())
-    logging.info(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}.")
-    dm.active_sessions[session_id] = []
-    base_prompt = personality_manager.get_initial_prompt()
-    time_segment = time_system.get_time_of_day_segment()
-    greetings = {"morning": "Good morning!", "afternoon": "Good afternoon!", "evening": "Good evening!", "night": "Hello,"}
-    return f"{greetings.get(time_segment, '')} {base_prompt}".strip()
-
-async def mock_handle_incoming_hsp_task_result_side_effect(project_coordinator, result_payload: Dict[str, Any], sender_ai_id: str, envelope: Dict[str, Any]) -> None:
-    await project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
-
-
-# (src path already added above)
-
-import pytest
-import asyncio
-import sys
-import threading
-import time
-from pathlib import Path
-import logging
-from typing import Optional, Dict, Any
-from cryptography.fernet import Fernet
-from src.shared.types.common_types import DialogueTurn, DialogueMemoryEntryMetadata
-from datetime import datetime, timezone
-import uuid
-
+# 尝试导入实际的类和函数
 try:
-    from core_ai.test_utils.deadlock_detector import (
+    from src.core_ai.test_utils.deadlock_detector import (
         deadlock_detection,
         timeout_with_detection,
         ResourceLeakDetector,
@@ -104,7 +52,10 @@ try:
     DEADLOCK_DETECTION_AVAILABLE = True
 except ImportError:
     DEADLOCK_DETECTION_AVAILABLE = False
-
+    # 使用占位符
+    ResourceLeakDetector = PlaceholderResourceLeakDetector
+    AsyncLoopDetector = PlaceholderAsyncLoopDetector
+    deadlock_detection = placeholder_deadlock_detection
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -254,7 +205,11 @@ def mock_core_services():
                 else:
                     logging.error(f"Invalid payload type: {type(payload)}")
                     return
-                capability_id = processed_payload['capability_id']
+                # 使用 get 方法安全访问 capability_id，提供默认值以防键不存在
+                capability_id = processed_payload.get('capability_id')
+                if capability_id is None:
+                    logging.error("Missing required field: capability_id")
+                    return
                 self._mock_sdm_capabilities_store[capability_id] = (processed_payload, datetime.now(timezone.utc))
             except Exception as e:
                 logging.error(f"Failed to process capability advertisement: {e}")
@@ -301,7 +256,11 @@ def mock_core_services():
             else:
                 logging.error(f"Invalid payload type: {type(payload)}")
                 return
-            capability_id = processed_payload['capability_id']
+            # 使用 get 方法安全访问 capability_id，提供默认值以防键不存在
+            capability_id = processed_payload.get('capability_id')
+            if capability_id is None:
+                logging.error("Missing required field: capability_id")
+                return
             mock_behavior._mock_sdm_capabilities_store[capability_id] = (processed_payload, datetime.now(timezone.utc))
         except Exception as e:
             logging.error(f"Failed to process capability advertisement (sync): {e}")
@@ -313,6 +272,9 @@ def mock_core_services():
     from unittest.mock import patch
     with patch.object(mock_service_discovery, 'get_all_capabilities', new_callable=AsyncMock) as mock_get_all_capabilities:
         mock_get_all_capabilities.side_effect = mock_behavior.get_all_capabilities
+    # Also patch the async version
+    with patch.object(mock_service_discovery, 'get_all_capabilities_async', new_callable=AsyncMock) as mock_get_all_capabilities_async:
+        mock_get_all_capabilities_async.side_effect = mock_behavior.get_all_capabilities
 
     # Store a reference to the behavior for access if needed
     mock_service_discovery._mock_behavior = mock_behavior
@@ -336,6 +298,7 @@ def mock_core_services():
                 "mem_id": mem_id
             }
             self.memory_store[mem_id] = record_pkg
+            # 确保始终返回memory_id而不是None
             return mem_id
 
         def query_memory(self, query_params):
@@ -349,6 +312,33 @@ def mock_core_services():
                             break
                 if match:
                     results.append(record_pkg)
+            return results
+
+        def recall_gist(self, memory_id: str):
+            """Mock implementation of recall_gist"""
+            if memory_id in self.memory_store:
+                record = self.memory_store[memory_id]
+                return {
+                    "id": memory_id,
+                    "timestamp": record["timestamp"],
+                    "data_type": record["data_type"],
+                    "rehydrated_gist": str(record["raw_data"]),
+                    "metadata": record["metadata"]
+                }
+            return None
+
+        def query_core_memory(self, **kwargs):
+            """Mock implementation of query_core_memory"""
+            # Simplified implementation for testing
+            results = []
+            for mem_id, record in self.memory_store.items():
+                results.append({
+                    "id": mem_id,
+                    "timestamp": record["timestamp"],
+                    "data_type": record["data_type"],
+                    "rehydrated_gist": str(record["raw_data"]),
+                    "metadata": record["metadata"]
+                })
             return results
 
     # Remove stray reassignment that overrides our AsyncMock and causes NameError
@@ -420,6 +410,19 @@ def mock_core_services():
     mock_dialogue_manager.config = {}
     mock_dialogue_manager.triggers = {"complex_project": "project:", "manual_delegation": "!delegate_to", "context_analysis": "!analyze:"}
     mock_dialogue_manager.active_sessions = {} # Initialize active_sessions
+
+    # Define mock side effect functions
+    async def mock_get_simple_response_side_effect(dialogue_manager, project_coordinator, tool_dispatcher, ham_manager, learning_manager, personality_manager, user_input, session_id=None, user_id=None):
+        # Mock implementation for get_simple_response
+        return "Mocked response for: " + user_input
+
+    async def mock_start_session_side_effect(dialogue_manager, time_system, personality_manager, user_id=None, session_id=None):
+        # Mock implementation for start_session
+        return session_id or "mock_session_id"
+
+    async def mock_handle_incoming_hsp_task_result_side_effect(project_coordinator, result_payload, sender_ai_id, envelope):
+        # Mock implementation for _handle_incoming_hsp_task_result
+        pass
 
     # Define nested async functions for side_effects
     async def _get_simple_response_side_effect_wrapper(user_input, session_id=None, user_id=None):

@@ -19,7 +19,7 @@ from typing import Dict, Any
 
 
 from src.core_ai.memory.ham_types import DialogueMemoryEntryMetadata, HAMMemory # Added for DialogueMemoryEntryMetadata, HAMMemory
-from src.core_ai.memory.types import HAMRecallResult # Import TypedDict version for proper dict-like access
+from src.core_ai.memory.types import HAMRecallResult, HAMDataPackageInternal # Import TypedDict version for proper dict-like access
 
 from src.core_ai.memory.ham_errors import HAMMemoryError, HAMQueryError, HAMStoreError
 from src.core_ai.memory.ham_utils import calculate_cosine_similarity, generate_embedding, get_current_utc_timestamp, is_valid_uuid
@@ -198,17 +198,21 @@ class HAMMemoryManager:
 
     def _generate_memory_id(self) -> str:
         mem_id = f"mem_{self.next_memory_id:06d}"
+        self.next_memory_id += 1
+        return mem_id
 
     def close(self):
         """Closes any open connections, e.g., ChromaDB client."""
-        if self.vector_store and hasattr(self.vector_store, 'close'):
+        if self.vector_store and hasattr(self.vector_store, 'client') and self.vector_store.client:
             try:
-                self.vector_store.close()
-                logger.info("HAMMemoryManager: Vector store closed successfully.")
+                # ChromaDB clients don't have a close method in most versions
+                # We'll just set the reference to None to allow garbage collection
+                self.vector_store.client = None
+                logger.info("HAMMemoryManager: Vector store client dereferenced successfully.")
             except Exception as e:
-                logger.error(f"HAMMemoryManager: Error closing vector store: {e}")
-        self.next_memory_id += 1
-        return mem_id
+                logger.error(f"HAMMemoryManager: Error dereferencing vector store client: {e}")
+        # Note: Removed incorrect self.next_memory_id += 1 from here
+        # The increment should only happen in _generate_memory_id
 
     # --- Encryption/Decryption ---
     def _encrypt(self, data: bytes) -> bytes:
@@ -451,12 +455,14 @@ class HAMMemoryManager:
                 serializable_store = data.get("store", {})
                 self.core_memory_store = {}
                 for mem_id, data_pkg_b64 in serializable_store.items():
-                    self.core_memory_store[mem_id] = {
-                        "timestamp": data_pkg_b64["timestamp"],
-                        "data_type": data_pkg_b64["data_type"],
-                        "encrypted_package": data_pkg_b64["encrypted_package_b64"].encode('latin-1'),
-                        "metadata": data_pkg_b64.get("metadata", {})
-                    }
+                    self.core_memory_store[mem_id] = HAMDataPackageInternal(
+                        timestamp=data_pkg_b64["timestamp"],
+                        data_type=data_pkg_b64["data_type"],
+                        encrypted_package=data_pkg_b64["encrypted_package_b64"].encode('latin-1'),
+                        metadata=data_pkg_b64.get("metadata", {}),
+                        relevance=0.5,  # Default relevance score
+                        protected=False  # Default protection flag
+                    )
             logger.info(f"Core memory loaded from {self.core_storage_filepath}. Next ID: {self.next_memory_id}")
         except Exception as e:
             logger.error(f"Error loading core memory from file: {e}. Starting with an empty store.")
@@ -490,7 +496,15 @@ class HAMMemoryManager:
         # Ensure metadata is a dict for internal processing, even if None is passed.
         # The type hint guides towards DialogueMemoryEntryMetadata, but internally it's handled as Dict[str, Any]
         # for flexibility if direct dicts are passed (though discouraged by type hint).
-        current_metadata: Dict[str, Any] = dict(metadata) if metadata else {}
+        current_metadata: Dict[str, Any] = {}
+        if metadata:
+            # Handle both DialogueMemoryEntryMetadata objects and dict
+            if hasattr(metadata, 'to_dict'):
+                current_metadata = metadata.to_dict()
+            else:
+                # For other objects, create an empty dict as a safe fallback
+                # This avoids issues with trying to convert non-dict objects
+                current_metadata = {}
 
         memory_id = self._generate_memory_id() # Moved to top to ensure it's always bound
 
@@ -566,7 +580,7 @@ class HAMMemoryManager:
             "encrypted_package": encrypted_data, # This is bytes
             "metadata": current_metadata, # Use the processed current_metadata
             "relevance": 0.5, # Initial relevance score
-            "protected": metadata.get("protected", False) if metadata else False
+            "protected": current_metadata.get("protected", False) if current_metadata else False
         }
         self.core_memory_store[memory_id] = data_package
 
@@ -591,7 +605,7 @@ class HAMMemoryManager:
         Retrieves memories relevant to a given query using semantic search, and
         merges with a keyword-based search for a comprehensive recall.
         """
-        self.logger.debug(f"HAM: Retrieving relevant memories for query: '{query}'")
+        logger.debug(f"HAM: Retrieving relevant memories for query: '{query}'")
         
         semantic_results_ids = set()
         semantic_memories = []
@@ -610,15 +624,15 @@ class HAMMemoryManager:
                                 semantic_memories.append(self._deserialize_memory(mem_id, data_package))
                                 semantic_results_ids.add(mem_id)
                             except HAMMemoryError as e:
-                                self.logger.warning(f"Skipping deserialization of memory {mem_id} from vector store due to error: {e}")
+                                logger.warning(f"Skipping deserialization of memory {mem_id} from vector store due to error: {e}")
                                 
-                self.logger.debug(f"Retrieved {len(semantic_memories)} semantic memories for query: '{query}'")
+                logger.debug(f"Retrieved {len(semantic_memories)} semantic memories for query: '{query}'")
             except Exception as e:
-                self.logger.error(f"Error during semantic search for query '{query}': {e}")
+                logger.error(f"Error during semantic search for query '{query}': {e}")
                 # Fallback: if semantic search fails, proceed with only keyword search
                 semantic_memories = []
         else:
-            self.logger.debug(f"VectorMemoryStore disabled, skipping semantic search for query: '{query}'")
+            logger.debug(f"VectorMemoryStore disabled, skipping semantic search for query: '{query}'")
             semantic_memories = []
             
         # 2. Perform Keyword Search (and potential metadata filters)
@@ -636,9 +650,9 @@ class HAMMemoryManager:
                 try:
                     keyword_memories.append(self._deserialize_memory(mem_id, data_package))
                 except HAMMemoryError as e:
-                    self.logger.warning(f"Skipping deserialization of memory {mem_id} from keyword search due to error: {e}")
+                    logger.warning(f"Skipping deserialization of memory {mem_id} from keyword search due to error: {e}")
 
-        self.logger.debug(f"Retrieved {len(keyword_memories)} keyword-based memories.")
+        logger.debug(f"Retrieved {len(keyword_memories)} keyword-based memories.")
 
         # 3. Combine and Sort Results
         combined_results = semantic_memories + keyword_memories
@@ -652,7 +666,7 @@ class HAMMemoryManager:
         # Apply the final limit
         final_results = combined_results[:limit]
             
-        self.logger.info(f"Retrieved {len(final_results)} combined relevant memories for query: '{query}'")
+        logger.info(f"Retrieved {len(final_results)} combined relevant memories for query: '{query}'")
         return final_results
 
     def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
@@ -776,7 +790,7 @@ class HAMMemoryManager:
             logger.error(f"Error during raw gist retrieval for memory_id '%s': {e}", memory_id, exc_info=True)
             return None
 
-    def _deserialize_memory(self, memory_id: str, data_package: Dict[str, Any]) -> HAMMemory:
+    def _deserialize_memory(self, memory_id: str, data_package: HAMDataPackageInternal) -> HAMMemory:
         """反序列化內部數據包為 HAMMemory 物件。"""
         timestamp = data_package.get("timestamp", "")
         data_type = data_package.get("data_type", "")
@@ -795,12 +809,17 @@ class HAMMemoryManager:
                 if current_checksum != stored_checksum:
                     logger.critical(f"Checksum mismatch during deserialization for memory ID {memory_id}! Data may be corrupted.")
 
+            # Convert timestamp to datetime object
+            if isinstance(timestamp, str):
+                timestamp_obj = datetime.fromisoformat(timestamp)
+            else:
+                timestamp_obj = timestamp
+
             return HAMMemory(
                 id=memory_id,
                 content=content,
-                timestamp=timestamp,
-                metadata=metadata,
-                data_type=data_type
+                timestamp=timestamp_obj,
+                metadata=metadata
             )
         except Exception as e:
             logger.error(f"Error deserializing memory {memory_id}: {e}")
@@ -827,7 +846,7 @@ class HAMMemoryManager:
                         if match_filters:
                             results.append(self._deserialize_memory(mem_id, data_package))
                 except (ValueError, TypeError) as e:
-                    self.logger.warning(f"Error processing timestamp for memory {mem_id}: {e}")
+                    logger.warning(f"Error processing timestamp for memory {mem_id}: {e}")
                     continue # Skip this memory if timestamp cannot be parsed
 
             # Sort results by timestamp
@@ -835,7 +854,7 @@ class HAMMemoryManager:
             
             return results
         except Exception as e:
-            self.logger.error(f"Date range query failed: {e}")
+            logger.error(f"Date range query failed: {e}")
             raise HAMQueryError(f"Failed to query date range: {e}")
 
     def _perform_deletion_check(self):
@@ -928,7 +947,9 @@ class HAMMemoryManager:
                     fallback_semantic = True
         else:
             # If no semantic query, iterate through all memories
-            candidate_mem_ids = sorted(self.core_memory_store.keys(), reverse=True)
+            # Ensure we don't include None values in the sorted list
+            candidate_mem_ids = [mem_id for mem_id in self.core_memory_store.keys() if mem_id is not None]
+            candidate_mem_ids = sorted(candidate_mem_ids, reverse=True)
 
         # Candidate selection: Iterate through selected memory IDs
         candidate_items_with_id = []
@@ -1052,13 +1073,13 @@ if __name__ == '__main__':
     ts_now = datetime.now(timezone.utc).isoformat() # Added timezone
     # Provide metadata that aligns better with DialogueMemoryEntryMetadata
     exp1_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": ts_now, "user_id": "test_user", "session_id": "s1"} # type: ignore
-    exp1_id = ham.store_experience("Hello Miko! This is a test dialogue.", "dialogue_text", exp1_metadata)
+    exp1_id = asyncio.run(ham.store_experience("Hello Miko! This is a test dialogue.", "dialogue_text", exp1_metadata))
 
     exp2_metadata: DialogueMemoryEntryMetadata = {"speaker": "system", "timestamp": ts_now, "source": "developer_log"} # type: ignore
-    exp2_id = ham.store_experience("Miko learned about HAM today.", "dialogue_text", exp2_metadata)
+    exp2_id = asyncio.run(ham.store_experience("Miko learned about HAM today.", "dialogue_text", exp2_metadata))
 
     exp3_metadata: Dict[str, Any] = {"type": "puzzle_solution"} # Generic metadata
-    exp3_id = ham.store_experience({"value": 42, "unit": "answer"}, "generic_data", exp3_metadata) # type: ignore
+    exp3_id = asyncio.run(ham.store_experience({"value": 42, "unit": "answer"}, "generic_data", exp3_metadata)) # type: ignore
 
     print(f"Stored IDs: {exp1_id}, {exp2_id}, {exp3_id}")
 

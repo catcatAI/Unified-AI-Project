@@ -49,6 +49,7 @@ class MockMqttBroker:
         self.subscriptions: Dict[str, List[Callable[[str, bytes], None]]] = {}
         self.published_messages: List[Tuple[str, bytes]] = []
         self.is_running = False
+        self.clients: Dict[str, Callable] = {}  # Store registered clients
 
     async def start(self):
         logging.info("MockMqttBroker: Starting...")
@@ -59,6 +60,17 @@ class MockMqttBroker:
         self.is_running = False
         self.subscriptions.clear()
         self.published_messages.clear()
+        self.clients.clear()
+
+    def register_client(self, client_id: str, on_message_callback: Callable):
+        """Register a client with its message callback"""
+        self.clients[client_id] = on_message_callback
+        logging.debug(f"MockMqttBroker: Registered client {client_id}")
+
+    def subscribe_client(self, client_id: str, topic: str):
+        """Subscribe a client to a topic"""
+        if client_id in self.clients:
+            self.subscribe(topic, self.clients[client_id])
 
     async def publish(self, topic: str, payload: bytes, qos: int = 0):
         if not self.is_running:
@@ -131,7 +143,7 @@ class MockMqttBroker:
     def get_published_messages(self) -> List[Tuple[str, bytes]]:
         return self.published_messages.copy()
 
-    def clear_published_messages():
+    def clear_published_messages(self):
         self.published_messages.clear()
 
 # --- Pytest Fixtures ---
@@ -870,6 +882,7 @@ class TestHSPTaskDelegation:
         await asyncio.sleep(0.2)
         
         # 2. Verify Main AI's SDM has registered the capability
+        # Fix: Check if capability is available (this method is synchronous)
         assert sdm.is_capability_available("advanced_weather_forecast")
         
         # 3. Main AI's DM receives a query that should trigger delegation
@@ -932,10 +945,11 @@ class TestHSPTaskDelegation:
 
         # 2. Verify Main AI's SDM has registered the capability
         # First, check if the capability was received by the main AI's SDM
-        capabilities = sdm.find_capabilities(capability_id_filter=capability_id)
+        # Fix: properly await the coroutine
+        capabilities = await sdm.find_capabilities(capability_id_filter=capability_id)
         if not capabilities:
             # If not found by ID, try by name
-            capabilities = sdm.find_capabilities(capability_name_filter="failing_service")
+            capabilities = await sdm.find_capabilities(capability_name_filter="failing_service")
         
         # Log the current state for debugging
         import logging

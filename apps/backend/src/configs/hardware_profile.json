@@ -1,0 +1,44 @@
+{
+  "cpu": {
+    "cores_physical": 4,
+    "cores_logical": 4,
+    "frequency_max": 1114.0,
+    "frequency_current": 1114.0,
+    "architecture": "AMD64",
+    "brand": "Unknown Windows CPU",
+    "usage_percent": 65.5
+  },
+  "gpu": [
+    {
+      "name": "Integrated Graphics",
+      "memory_total": 1024,
+      "memory_available": 512,
+      "driver_version": "Unknown",
+      "cuda_version": null,
+      "opencl_support": false,
+      "vulkan_support": false
+    }
+  ],
+  "memory": {
+    "total": 7932,
+    "available": 703,
+    "used": 7228,
+    "usage_percent": 91.1
+  },
+  "storage": {
+    "total": 930,
+    "available": 739,
+    "used": 190,
+    "disk_type": "HDD"
+  },
+  "network": {
+    "bandwidth_download": 100.0,
+    "bandwidth_upload": 50.0,
+    "latency": 50.0,
+    "connection_type": "Unknown"
+  },
+  "platform": "windows",
+  "os_version": "10.0.26100",
+  "performance_tier": "Medium",
+  "ai_capability_score": 35.0
+}

@@ -5,6 +5,9 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 import uuid
 
+from src.economy.economy_manager import EconomyManager
+from src.pet.pet_manager import PetManager
+
 app = FastAPI(title="Unified AI Project API", version="1.0.0")
 
 # CORS configuration
@@ -228,14 +231,12 @@ async def list_hsp_services(services=Depends(get_services)) -> List[HSPServiceDi
         return []
 
     print(f"DEBUG: Calling sdm.get_all_capabilities()")
-    caps = sdm.get_all_capabilities()
-    print(f"DEBUG: get_all_capabilities returned: {type(caps)}")
-    
     # 兼容同步或异步的 get_all_capabilities
-    if hasattr(caps, '__await__'):
-        print("DEBUG: Awaiting caps")
-        caps = await caps
-        
+    if hasattr(sdm, 'get_all_capabilities_async'):
+        caps = await sdm.get_all_capabilities_async()
+    else:
+        caps = sdm.get_all_capabilities()
+    print(f"DEBUG: get_all_capabilities returned: {type(caps)}")
     print(f"DEBUG: Final caps: {caps}")
     
     normalized: List[HSPServiceDiscoveryResponse] = []
@@ -287,7 +288,17 @@ async def create_hsp_task(task_input: Dict[str, Any], services=Depends(get_servi
                 found_caps = await res
             else:
                 found_caps = res or []
-    except Exception:
+        # Handle case where sdm.get_all_capabilities might return a coroutine
+        elif sdm is not None and hasattr(sdm, "get_all_capabilities"):
+            res = sdm.get_all_capabilities()
+            if hasattr(res, "__await__"):
+                all_caps = await res
+            else:
+                all_caps = res or []
+            # Filter by capability ID
+            found_caps = [cap for cap in all_caps if (isinstance(cap, dict) and cap.get("capability_id") == target_capability_id) or (hasattr(cap, "capability_id") and getattr(cap, "capability_id") == target_capability_id)]
+    except Exception as e:
+        print(f"Error resolving capability: {e}")
         found_caps = []
 
     if not found_caps:
@@ -317,21 +328,19 @@ async def create_hsp_task(task_input: Dict[str, Any], services=Depends(get_servi
         correlation_id = await hsp_connector.send_task_request(payload, target_ai_id or "")
         # Track pending in DialogueManager for status checks
         if correlation_id:
-            if not hasattr(dialogue_manager, "_pending_hsp_task_requests"):
-                setattr(dialogue_manager, "_pending_hsp_task_requests", {})
             try:
-                dialogue_manager._pending_hsp_task_requests[correlation_id] = {
+                dialogue_manager.pending_hsp_task_requests[correlation_id] = {
                     "created_at": datetime.utcnow().isoformat() + "Z",
                     "target": target_ai_id,
                     "capability_id": target_capability_id,
                 }
             except Exception:
                 pass
-        return {
-            "status_message": "HSP Task request sent successfully.",
-            "correlation_id": correlation_id,
-            "target_capability_id": target_capability_id,
-        }
+            return {
+                "status_message": "HSP Task request sent successfully.",
+                "correlation_id": correlation_id,
+                "target_capability_id": target_capability_id,
+            }
     except Exception as e:
         return {
             "status_message": "error",
@@ -350,10 +359,10 @@ async def get_hsp_task_status(correlation_id: str, services=Depends(get_services
     # First, check HAM for a completed or failed result
     try:
         ham_results = []
-        if ham is not None and hasattr(ham, "query_memory"):
-            query = {"hsp_correlation_id": correlation_id}
-            res = ham.query_memory(query)
-            ham_results = await res if hasattr(res, "__await__") else (res or [])
+        if ham is not None and hasattr(ham, "query_core_memory"):
+            # 使用正确的query_core_memory方法替换不存在的query_memory方法
+            # 将查询参数作为metadata_filters传递
+            ham_results = ham.query_core_memory(metadata_filters={"hsp_correlation_id": correlation_id})
         if ham_results:
             # Pick the most recent matching record; tests don't require strict ordering
             record = ham_results[-1]

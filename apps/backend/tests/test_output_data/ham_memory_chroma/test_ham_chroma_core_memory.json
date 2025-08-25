@@ -2961,6 +2961,26 @@
         "sha256_checksum": "5807383df630e504736e699beb24ca3ceafdc73c92c4af36c0b7a9e2996cb7f7",
         "importance_score": 0.5
       }
+    },
+    "null": {
+      "timestamp": "2025-08-25T01:34:23.946713+00:00",
+      "data_type": "fact",
+      "encrypted_package_b64": "gAAAAABoq72fk8xAespIx9saTLoku7GYIeYyugDnG-fA5FKt8yAqyH253aJ0ph7xhVTo3nmpCWNVph1XriKMgNYPABK81L34QJQ22y8ORt63cmOyiaEtkBM=",
+      "metadata": {
+        "topic": "food",
+        "sha256_checksum": "e9b274942f150973714a044498955069f9d4d95c8dca93f66e104182eb79885b",
+        "importance_score": 0.5
+      }
+    },
+    "null": {
+      "timestamp": "2025-08-25T01:34:24.908522+00:00",
+      "data_type": "test_type",
+      "encrypted_package_b64": "gAAAAABoq72goEUKzANT_8RCogpcha0V2WduNuaB0weJ8G0_fRWhXFlfDmA7yvkBDfCUwQja2XP3U35R8iqeb7gNTymCaqYYD1UX6bJrq5KxM3wa1mCR23Q2W8zAS_hcc1SJW1R7v5eV",
+      "metadata": {
+        "tag": "general",
+        "sha256_checksum": "5807383df630e504736e699beb24ca3ceafdc73c92c4af36c0b7a9e2996cb7f7",
+        "importance_score": 0.5
+      }
     }
   }
 }

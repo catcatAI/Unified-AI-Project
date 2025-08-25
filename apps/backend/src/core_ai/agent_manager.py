@@ -142,7 +142,8 @@ class AgentManager:
             return
 
         for _ in range(timeout):
-            capabilities = service_discovery.get_all_capabilities()
+            # Fix: properly await the coroutine
+            capabilities = await service_discovery.get_all_capabilities_async()
             for cap in capabilities:
                 if agent_name in cap.get("capability_id", ""):
                     logging.info(f"[AgentManager] Agent '{agent_name}' is ready.")

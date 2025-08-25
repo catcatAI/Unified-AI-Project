@@ -18,7 +18,8 @@
     "build": "pnpm --filter '*' build",
     "clean": "pnpm -r clean && rimraf node_modules",
     "setup": "node scripts/setup.js",
-    "health-check": "python scripts/health_check.py"
+    "health-check": "python scripts/health_check.py",
+    "unified-ai": "unified-ai.bat"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

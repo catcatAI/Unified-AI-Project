@@ -5,6 +5,8 @@ class HAMDataPackageInternal(TypedDict):
     data_type: str
     encrypted_package: bytes # The actual encrypted data
     metadata: Dict[str, Any]
+    relevance: float  # Relevance score
+    protected: bool   # Protection flag
 
 class HAMRecallResult(TypedDict):
     id: str # Memory ID

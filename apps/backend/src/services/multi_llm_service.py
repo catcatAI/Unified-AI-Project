@@ -7,7 +7,7 @@ import asyncio
 import logging
 import json
 import os
-from typing import Dict, Any, Optional, List, Union, AsyncGenerator
+from typing import Dict, Any, Optional, List, Union, AsyncGenerator, Coroutine
 from datetime import datetime
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -15,10 +15,13 @@ from enum import Enum
 
 import aiohttp
 import openai
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam
 from anthropic import AsyncAnthropic
 import google.generativeai as genai
+from google.generativeai.types import GenerationConfig
 import cohere
 from azure.identity import DefaultAzureCredential
+from azure.core.credentials import AzureKeyCredential
 from azure.ai.inference import ChatCompletionsClient
 from azure.ai.inference.models import SystemMessage, UserMessage
 from aiolimiter import AsyncLimiter
@@ -93,7 +96,7 @@ class BaseLLMProvider(ABC):
         self, 
         messages: List[ChatMessage], 
         **kwargs
-    ) -> AsyncGenerator[str, None]:
+    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
         """流式聊天完成"""
         pass
     
@@ -111,9 +114,11 @@ class OpenAIProvider(BaseLLMProvider):
     
     def __init__(self, config: ModelConfig):
         super().__init__(config)
-        openai.api_key = config.api_key
-        if config.base_url:
-            openai.api_base = config.base_url
+        # 修复：使用正确的 OpenAI 客户端初始化方式
+        self.client = openai.AsyncOpenAI(
+            api_key=config.api_key,
+            base_url=config.base_url
+        )
     
     async def chat_completion(
         self, 
@@ -123,16 +128,24 @@ class OpenAIProvider(BaseLLMProvider):
         start_time = datetime.now()
         
         try:
-            openai_messages = [
-                {"role": msg.role, "content": msg.content}
-                for msg in messages
-            ]
+            openai_messages = []
+            for msg in messages:
+                openai_messages.append({"role": msg.role, "content": msg.content})
             
             # Mock fallback for tests when no/invalid key
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key or api_key == "dummy_key":
-                return {"choices": [{"message": {"content": "Mock response (no API key)"}}]}
-            response = await openai.chat.completions.create(
+                return LLMResponse(
+                    content="Mock response (no API key)",
+                    model=self.config.model_name,
+                    provider=ModelProvider.OPENAI,
+                    usage={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+                    cost=0.0,
+                    latency=0.1,
+                    timestamp=datetime.now(),
+                    metadata={}
+                )
+            response = await self.client.chat.completions.create(
                 model=self.config.model_name,
                 messages=openai_messages,
                 max_tokens=kwargs.get('max_tokens', self.config.max_tokens),
@@ -144,11 +157,16 @@ class OpenAIProvider(BaseLLMProvider):
             )
             
             latency = (datetime.now() - start_time).total_seconds()
-            usage = response.usage.to_dict()
+            usage_dict = response.usage.model_dump() if response.usage else {}
+            usage: Dict[str, int] = {
+                "prompt_tokens": usage_dict.get("prompt_tokens", 0),
+                "completion_tokens": usage_dict.get("completion_tokens", 0),
+                "total_tokens": usage_dict.get("total_tokens", 0)
+            }
             cost = self._calculate_cost(usage)
             
             return LLMResponse(
-                content=response.choices[0].message.content,
+                content=response.choices[0].message.content or "",
                 model=self.config.model_name,
                 provider=ModelProvider.OPENAI,
                 usage=usage,
@@ -166,14 +184,21 @@ class OpenAIProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
+    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+        # 直接返回异步生成器协程
+        return self._stream_impl(messages, **kwargs)
+    
+    async def _stream_impl(
+        self, 
+        messages: List[ChatMessage], 
+        **kwargs
     ) -> AsyncGenerator[str, None]:
-        openai_messages = [
-            {"role": msg.role, "content": msg.content}
-            for msg in messages
-        ]
+        openai_messages = []
+        for msg in messages:
+            openai_messages.append({"role": msg.role, "content": msg.content})
         
         try:
-            stream = await openai.chat.completions.create(
+            stream = await self.client.chat.completions.create(
                 model=self.config.model_name,
                 messages=openai_messages,
                 stream=True,
@@ -183,7 +208,7 @@ class OpenAIProvider(BaseLLMProvider):
             )
             
             async for chunk in stream:
-                if chunk.choices[0].delta.get("content"):
+                if chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
                     
         except Exception as e:
@@ -227,7 +252,7 @@ class AnthropicProvider(BaseLLMProvider):
                 model=self.config.model_name,
                 max_tokens=kwargs.get('max_tokens', self.config.max_tokens),
                 temperature=kwargs.get('temperature', self.config.temperature),
-                system=system_message,
+                system=system_message or "",
                 messages=claude_messages
             )
             
@@ -239,8 +264,16 @@ class AnthropicProvider(BaseLLMProvider):
             }
             cost = self._calculate_cost(usage)
             
+            # 获取 Claude 响应的文本内容
+            content_text = ""
+            if response.content and len(response.content) > 0:
+                # 安全地提取文本内容
+                content_item = response.content[0]
+                if hasattr(content_item, 'text'):
+                    content_text = str(getattr(content_item, 'text', ''))
+            
             return LLMResponse(
-                content=response.content[0].text,
+                content=content_text,
                 model=self.config.model_name,
                 provider=ModelProvider.ANTHROPIC,
                 usage=usage,
@@ -255,6 +288,14 @@ class AnthropicProvider(BaseLLMProvider):
             raise
     
     async def stream_completion(
+        self, 
+        messages: List[ChatMessage], 
+        **kwargs
+    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+        # 直接返回异步生成器协程
+        return self._stream_impl(messages, **kwargs)
+    
+    async def _stream_impl(
         self, 
         messages: List[ChatMessage], 
         **kwargs
@@ -277,7 +318,7 @@ class AnthropicProvider(BaseLLMProvider):
                 model=self.config.model_name,
                 max_tokens=kwargs.get('max_tokens', self.config.max_tokens),
                 temperature=kwargs.get('temperature', self.config.temperature),
-                system=system_message,
+                system=system_message or "",
                 messages=claude_messages
             ) as stream:
                 async for text in stream.text_stream:
@@ -350,7 +391,7 @@ class GoogleProvider(BaseLLMProvider):
             last_message = chat_history[-1]["parts"][0] if chat_history else "Hello"
             response = await chat.send_message_async(
                 last_message,
-                generation_config=genai.types.GenerationConfig(
+                generation_config=GenerationConfig(
                     max_output_tokens=kwargs.get('max_tokens', self.config.max_tokens),
                     temperature=kwargs.get('temperature', self.config.temperature),
                     top_p=kwargs.get('top_p', self.config.top_p),
@@ -383,6 +424,14 @@ class GoogleProvider(BaseLLMProvider):
             raise
     
     async def stream_completion(
+        self, 
+        messages: List[ChatMessage], 
+        **kwargs
+    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+        # 直接返回异步生成器协程
+        return self._stream_impl(messages, **kwargs)
+    
+    async def _stream_impl(
         self, 
         messages: List[ChatMessage], 
         **kwargs
@@ -427,7 +476,7 @@ class GoogleProvider(BaseLLMProvider):
             response = await chat.send_message_async(
                 last_message,
                 stream=True,
-                generation_config=genai.types.GenerationConfig(
+                generation_config=GenerationConfig(
                     max_output_tokens=kwargs.get('max_tokens', self.config.max_tokens),
                     temperature=kwargs.get('temperature', self.config.temperature),
                 )
@@ -459,6 +508,10 @@ class OllamaProvider(BaseLLMProvider):
         **kwargs
     ) -> LLMResponse:
         start_time = datetime.now()
+        
+        # 确保会话已初始化
+        if not self.session:
+            self.session = aiohttp.ClientSession()
         
         try:
             ollama_messages = [
@@ -521,7 +574,19 @@ class OllamaProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
+    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+        # 直接返回异步生成器协程
+        return self._stream_impl(messages, **kwargs)
+    
+    async def _stream_impl(
+        self, 
+        messages: List[ChatMessage], 
+        **kwargs
     ) -> AsyncGenerator[str, None]:
+        # 确保会话已初始化
+        if not self.session:
+            self.session = aiohttp.ClientSession()
+            
         ollama_messages = [
             {"role": msg.role, "content": msg.content}
             for msg in messages
@@ -569,9 +634,15 @@ class AzureOpenAIProvider(BaseLLMProvider):
     
     def __init__(self, config: ModelConfig):
         super().__init__(config)
+        # 修复凭据处理
+        if config.api_key:
+            credential = AzureKeyCredential(config.api_key)
+        else:
+            credential = DefaultAzureCredential()
+            
         self.client = ChatCompletionsClient(
-            endpoint=config.base_url,
-            credential=DefaultAzureCredential() if not config.api_key else config.api_key
+            endpoint=config.base_url or "",
+            credential=credential
         )
         self.deployment_name = getattr(config, 'deployment_name', config.model_name)
     
@@ -591,7 +662,7 @@ class AzureOpenAIProvider(BaseLLMProvider):
                     azure_messages.append(UserMessage(content=msg.content))
                 # Azure 会自动处理 assistant 消息
             
-            response = await self.client.complete(
+            response = self.client.complete(
                 messages=azure_messages,
                 model=self.deployment_name,
                 max_tokens=kwargs.get('max_tokens', self.config.max_tokens),
@@ -608,7 +679,7 @@ class AzureOpenAIProvider(BaseLLMProvider):
             cost = self._calculate_cost(usage)
             
             return LLMResponse(
-                content=response.choices[0].message.content,
+                content=response.choices[0].message.content or "",
                 model=self.config.model_name,
                 provider=ModelProvider.AZURE_OPENAI,
                 usage=usage,
@@ -626,6 +697,14 @@ class AzureOpenAIProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
+    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+        # 直接返回异步生成器协程
+        return self._stream_impl(messages, **kwargs)
+    
+    async def _stream_impl(
+        self, 
+        messages: List[ChatMessage], 
+        **kwargs
     ) -> AsyncGenerator[str, None]:
         # Azure OpenAI 流式实现
         azure_messages = []
@@ -636,7 +715,7 @@ class AzureOpenAIProvider(BaseLLMProvider):
                 azure_messages.append(UserMessage(content=msg.content))
         
         try:
-            response = await self.client.complete(
+            response = self.client.complete(
                 messages=azure_messages,
                 model=self.deployment_name,
                 max_tokens=kwargs.get('max_tokens', self.config.max_tokens),
@@ -644,7 +723,7 @@ class AzureOpenAIProvider(BaseLLMProvider):
                 stream=True
             )
             
-            async for chunk in response:
+            for chunk in response:
                 if chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
                     
@@ -726,6 +805,14 @@ class CohereProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
+    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+        # 直接返回异步生成器协程
+        return self._stream_impl(messages, **kwargs)
+    
+    async def _stream_impl(
+        self, 
+        messages: List[ChatMessage], 
+        **kwargs
     ) -> AsyncGenerator[str, None]:
         # Cohere 流式实现
         chat_history = []
@@ -743,7 +830,7 @@ class CohereProvider(BaseLLMProvider):
                     user_message = ""
         
         try:
-            response = await self.client.chat_stream(
+            response = self.client.chat_stream(
                 model=self.config.model_name,
                 message=user_message or "Hello",
                 chat_history=chat_history,
@@ -782,6 +869,10 @@ class HuggingFaceProvider(BaseLLMProvider):
         **kwargs
     ) -> LLMResponse:
         start_time = datetime.now()
+        
+        # 确保会话已初始化
+        if not self.session:
+            self.session = aiohttp.ClientSession()
         
         try:
             # 构建提示文本
@@ -839,7 +930,19 @@ class HuggingFaceProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
+    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+        # 直接返回异步生成器协程
+        return self._stream_impl(messages, **kwargs)
+    
+    async def _stream_impl(
+        self, 
+        messages: List[ChatMessage], 
+        **kwargs
     ) -> AsyncGenerator[str, None]:
+        # 确保会话已初始化
+        if not self.session:
+            self.session = aiohttp.ClientSession()
+            
         # Hugging Face Inference API 不直接支持流式，这里模拟实现
         response = await self.chat_completion(messages, **kwargs)
         
@@ -998,6 +1101,25 @@ class MultiLLMService:
             async with provider:
                 response = await provider.chat_completion(messages, **kwargs)
                 
+                # 确保响应是LLMResponse对象而不是字典
+                if isinstance(response, dict):
+                    # 如果是字典，转换为LLMResponse对象
+                    usage_data = response.get('usage', {})
+                    # 确保usage是一个字典
+                    if not isinstance(usage_data, dict):
+                        usage_data = {'total_tokens': 0}
+                    
+                    response = LLMResponse(
+                        content=response.get('content', ''),
+                        model=response.get('model', model_id),
+                        provider=response.get('provider', self.model_configs[model_id].provider),
+                        usage=usage_data,
+                        cost=response.get('cost', 0.0),
+                        latency=response.get('latency', 0.0),
+                        timestamp=response.get('timestamp', datetime.now()),
+                        metadata=response.get('metadata', {})
+                    )
+                
                 # 更新使用统计
                 self._update_usage_stats(model_id, response)
                 
@@ -1047,9 +1169,12 @@ class MultiLLMService:
         
         try:
             async with provider:
-                async for chunk in provider.stream_completion(messages, **kwargs):
+                # 获取流式响应协程并等待它
+                stream_coroutine = provider.stream_completion(messages, **kwargs)
+                stream_generator = await stream_coroutine
+                # 正确迭代流式响应
+                async for chunk in stream_generator:
                     yield chunk
-                    
         except Exception as e:
             self.usage_stats[model_id]['error_count'] += 1
             logger.error(f"模型 {model_id} 流式请求失败: {e}")
