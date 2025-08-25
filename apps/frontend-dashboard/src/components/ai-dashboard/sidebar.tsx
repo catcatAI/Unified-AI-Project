@@ -16,7 +16,8 @@ import {
   Brain,
   Zap,
   Github,
-  Monitor
+  Monitor,
+  Database
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -85,6 +86,12 @@ const sidebarItems = [
     icon: Monitor,
     tab: 'atlassian',
     description: 'Jira & Confluence'
+  },
+  {
+    title: 'Archive Manager',
+    icon: Database,
+    tab: 'archive',
+    description: 'Manage interaction history'
   },
   {
     title: 'Settings',

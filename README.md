@@ -32,6 +32,19 @@ This monorepo is organized into applications and packages, centered around a uni
 - **`packages/cli`**: Command-line interface tools for interacting with the backend services.
 - **`packages/ui`**: Shared UI components and design system for the frontend applications.
 
+## 📋 项目结构优化
+
+为了改善项目文件过多、结构混乱的问题，我们进行了全面的清理和整理工作：
+
+### 批处理脚本重组
+为简化根目录并提高可维护性，我们对批处理脚本进行了重组：
+- **根目录保留**：仅保留两个核心脚本
+  - `unified-ai.bat` - 统一管理工具（供人类使用）
+  - `ai-runner.bat` - 自动化工具（供AI代理使用）
+- **其他脚本**：所有其他批处理脚本已移动到 `tools/` 目录
+
+详细信息请参阅：[项目结构重组报告](docs/PROJECT_STRUCTURE_REORGANIZATION_REPORT.md)
+
 ## 快速開始
 
 To set up and run the entire monorepo, you can use the unified management script:
@@ -78,10 +91,81 @@ Alternatively, you can use traditional commands:
 - **HAMMemoryManager**：分層語義記憶管理
 - **VectorStore**：基於 ChromaDB 的向量資料庫介面
 
+## 訓練配置與預設
+
+### 訓練配置文件
+項目提供多種訓練配置文件以滿足不同需求：
+
+1. **默認配置** (`training/configs/training_config.json`)：
+   - 基本訓練參數設置
+   - 數據路徑配置
+   - 硬體配置選項
+
+2. **預設配置** (`training/configs/training_preset.json`)：
+   - 基於當前數據集的預設訓練方案
+   - 多種訓練場景（快速開始、全面訓練、視覺專注、音頻專注）
+   - 模型特定參數預設
+   - 數據預處理配置
+
+### 訓練場景預設
+預設配置包含四種訓練場景：
+
+1. **快速開始**：使用模擬數據快速訓練測試
+2. **全面訓練**：使用所有可用數據完整訓練
+3. **視覺專注**：專注訓練視覺相關模型
+4. **音頻專注**：專注訓練音頻相關模型
+
+### 訓練預設使用指南
+詳細使用說明請參閱：[訓練預設使用指南](docs/TRAINING_PRESET_USAGE_GUIDE.md)
+
+## CLI 工具
+
+项目提供了一套完整的命令行界面(CLI)工具，用于与AI系统进行交互：
+
+### CLI 工具组件
+
+1. **Unified CLI** - 通用AI交互工具
+2. **AI Models CLI** - AI模型管理与交互工具
+3. **HSP CLI** - 超结构协议工具
+
+### 使用方法
+
+可以通过以下方式使用CLI工具：
+
+1. **使用统一管理脚本**：
+   ```bash
+   # 双击 unified-ai.bat 并选择 "CLI Tools"
+   ```
+
+2. **使用CLI运行器**：
+   ```bash
+   # 运行CLI运行器
+   tools\cli-runner.bat
+   
+   # 直接执行CLI命令
+   tools\cli-runner.bat unified-cli health
+   tools\cli-runner.bat ai-models-cli list
+   tools\cli-runner.bat hsp-cli query "Hello"
+   ```
+
+3. **安装为系统命令**：
+   ```bash
+   # 安装CLI工具为系统命令
+   tools\cli-runner.bat install-cli
+   
+   # 安装后可直接使用
+   unified-ai health
+   unified-ai chat "Hello"
+   ```
+
+### 详细使用指南
+
+有关CLI工具的详细使用说明，请参阅：[CLI使用指南](docs/CLI_USAGE_GUIDE.md)
+
 ## Running Tests
 
 ### Export OpenAPI spec
-```bash
+```
 python Unified-AI-Project/scripts/export_openapi.py
 # output: Unified-AI-Project/docs/api/openapi.json
 ```
@@ -126,7 +210,7 @@ AudioService supports a demo mode for quick end-to-end testing without external 
 
 Enable demo mode by adding the following to the backend config YAML:
 
-```yaml
+```
 # apps/backend/configs/config.yaml
 use_simulated_resources: true
 ```
@@ -158,7 +242,7 @@ For detailed documentation on project architecture, development guidelines, and 
 项目现已准备好进行AI训练，相关文档和脚本：
 
 1. [训练准备检查清单](docs/TRAINING_PREPARATION_CHECKLIST.md) - 详细列出训练前的所有准备工作
-2. [训练设置脚本](setup-training.bat) - 一键设置训练环境的批处理脚本
+2. [训练设置脚本](tools/setup-training.bat) - 一键设置训练环境的批处理脚本
 
 ### Individual Package Readmes
 
@@ -226,6 +310,6 @@ python scripts/export_openapi.py
 
 ---
 
-**最後更新**：2025年8月24日  
+**最後更新**：2025年8月25日  
 **專案狀態**：積極開發中，已準備好進行AI訓練  
 **目標里程碑**：Level 3 AGI 實現
