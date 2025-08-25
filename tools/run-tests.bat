@@ -78,6 +78,7 @@ echo [1/3] Backend tests...
 cd apps\backend
 if exist venv\Scripts\activate.bat (
     call venv\Scripts\activate.bat >nul 2>&1
+    set PYTHONPATH=%PYTHONPATH%;%cd%\src
     pytest --tb=short -v -x --maxfail=5
     set "backend_result=!errorlevel!"
 ) else (
@@ -158,10 +159,13 @@ if exist venv\Scripts\activate.bat (
     call venv\Scripts\activate.bat >nul 2>&1
     
     echo [INFO] Running pytest...
+    set PYTHONPATH=%PYTHONPATH%;%cd%\src
     pytest --tb=short -v
     set "test_result=!errorlevel!"
     
     if !test_result!==0 (
+        echo [SUCCESS] Backend tests passed
+    ) else (
         echo [FAIL] Backend tests failed with exit code: !test_result!
         echo.
         echo [TROUBLESHOOTING]
@@ -169,8 +173,6 @@ if exist venv\Scripts\activate.bat (
         echo - Verify test files exist in tests/ directory
         echo - Check pytest configuration in pytest.ini
         echo - Run start-dev.bat to refresh environment
-    ) else (
-        echo [SUCCESS] Backend tests passed
     )
 ) else (
     echo [ERROR] Python virtual environment not found
@@ -209,6 +211,7 @@ echo.
 cd apps\backend
 if exist venv\Scripts\activate.bat (
     call venv\Scripts\activate.bat >nul 2>&1
+    set PYTHONPATH=%PYTHONPATH%;%cd%\src
     pytest --tb=short --cov=. --cov-report=html
     echo [SUCCESS] Backend coverage report generated in htmlcov/
 ) else (
@@ -228,6 +231,7 @@ echo.
 cd apps\backend
 if exist venv\Scripts\activate.bat (
     call venv\Scripts\activate.bat >nul 2>&1
+    set PYTHONPATH=%PYTHONPATH%;%cd%\src
     pytest --tb=short -v -x --maxfail=1
 ) else (
     echo [ERROR] Python venv not found
@@ -245,6 +249,7 @@ echo.
 cd apps\backend
 if exist venv\Scripts\activate.bat (
     call venv\Scripts\activate.bat >nul 2>&1
+    set PYTHONPATH=%PYTHONPATH%;%cd%\src
     pytest --tb=short -v --watch
 ) else (
     echo [ERROR] Python venv not found

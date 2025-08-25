@@ -8,6 +8,14 @@ import uuid
 from src.economy.economy_manager import EconomyManager
 from src.pet.pet_manager import PetManager
 
+# 尝试导入路径配置模块
+try:
+    from src.path_config import PROJECT_ROOT
+except ImportError:
+    # 如果路径配置模块不可用，使用默认路径处理
+    from pathlib import Path
+    PROJECT_ROOT = Path(__file__).parent.parent.parent
+
 app = FastAPI(title="Unified AI Project API", version="1.0.0")
 
 # CORS configuration

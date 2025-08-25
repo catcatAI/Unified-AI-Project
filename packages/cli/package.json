@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "start": "python cli/unified_cli.py",
+    "start:unified": "python cli/unified_cli.py",
+    "start:ai-models": "python cli/ai_models_cli.py",
+    "start:hsp": "python cli/main.py",
     "test": "echo 'CLI tests skipped - requires backend dependencies'",
     "test:coverage": "echo 'CLI coverage skipped - requires backend dependencies'"
   }
