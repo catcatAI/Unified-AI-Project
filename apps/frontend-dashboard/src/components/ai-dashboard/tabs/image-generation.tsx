@@ -8,7 +8,7 @@ import { Textarea } from '@acme/ui'
 import { Badge } from '@acme/ui'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@acme/ui'
 import { useToast } from '@/hooks/use-toast'
-import { useImageHistory, useImageStatistics } from '@/hooks/use-api-data'
+import { useImageHistory, useImageStatistics, useImageArchive } from '@/hooks/use-api-data'
 import { 
   Image as ImageIcon, 
   Download, 
@@ -22,7 +22,8 @@ import {
   AlertTriangle,
   BarChart3,
   Calendar,
-  HardDrive
+  HardDrive,
+  Archive
 } from 'lucide-react'
 
 export function ImageGeneration() {
@@ -34,6 +35,7 @@ export function ImageGeneration() {
   // API hooks
   const { data: imageHistory, loading: historyLoading, error: historyError, refresh: refreshHistory, deleteImage, batchDeleteImages } = useImageHistory()
   const { data: statistics, loading: statsLoading, refresh: refreshStats } = useImageStatistics()
+  const { saveImageToArchive } = useImageArchive()
   
   // Mock data for fallback
   const mockImages = [
@@ -85,6 +87,9 @@ export function ImageGeneration() {
       }
 
       const data = await response.json()
+      
+      // Save to archive
+      await saveImageToArchive(prompt, data.url, { size: selectedSize })
       
       toast({
         title: "Success",
@@ -201,304 +206,224 @@ export function ImageGeneration() {
           </Button>
         </div>
       </div>
-      
-      <Tabs defaultValue="generate" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="generate">Generate</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-          <TabsTrigger value="statistics">Statistics</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="generate" className="space-y-4">
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Generation Panel */}
-            <div className="lg:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Generate Image</CardTitle>
-                  <CardDescription>
-                    Describe the image you want to create
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      Prompt
-                    </label>
-                    <Textarea
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="A beautiful landscape with mountains and a lake..."
-                      rows={4}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      Image Size
-                    </label>
-                    <div className="grid gap-2">
-                      {imageSizes.map((size) => (
-                        <Button
-                          key={size.value}
-                          variant={selectedSize === size.value ? 'default' : 'outline'}
-                          size="sm"
-                          className="justify-start"
-                          onClick={() => setSelectedSize(size.value)}
-                        >
-                          {size.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleGenerateImage}
-                    disabled={!prompt.trim() || isGenerating}
-                    className="w-full"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Wand2 className="mr-2 h-4 w-4" />
-                        Generate Image
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="mt-4">
-                <CardHeader>
-                  <CardTitle className="text-lg">Tips</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div>• Be descriptive and specific</div>
-                  <div>• Include style preferences</div>
-                  <div>• Mention lighting and mood</div>
-                  <div>• Specify composition if needed</div>
-                  <div>• Use artistic terms for better results</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Recent Images Preview */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Images</CardTitle>
-                  <CardDescription>
-                    Latest generated images (view all in History tab)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {currentImages.length === 0 ? (
-                    <div className="text-center py-12">
-                      <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No images yet</h3>
-                      <p className="text-muted-foreground">
-                        Generate your first AI image using the panel on the left
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {currentImages.slice(0, 4).map((image) => (
-                        <Card key={image.id} className="overflow-hidden">
-                          <div className="aspect-square bg-muted flex items-center justify-center">
-                            <div className="text-center">
-                              <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                              <p className="text-sm text-muted-foreground">
-                                Generated Image
-                              </p>
-                            </div>
-                          </div>
-                          <CardContent className="p-4">
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium line-clamp-2">
-                                {image.prompt}
-                              </p>
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span>{image.size}</span>
-                                <span>{formatTime(image.created_at)}</span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="history" className="space-y-4">
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Generation Panel */}
+        <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Image History</CardTitle>
-                  <CardDescription>
-                    Manage your generated images
-                  </CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                Create New Image
+              </CardTitle>
+              <CardDescription>
+                Generate images from text prompts
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Prompt</label>
+                <Textarea
+                  placeholder="Describe the image you want to generate..."
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={4}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Size</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {imageSizes.map((size) => (
+                    <Button
+                      key={size.value}
+                      variant={selectedSize === size.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedSize(size.value)}
+                    >
+                      {size.label}
+                    </Button>
+                  ))}
                 </div>
-                {selectedImages.length > 0 && (
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
+              </div>
+              
+              <Button
+                className="w-full"
+                onClick={handleGenerateImage}
+                disabled={isGenerating || !prompt.trim()}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    Generate Image
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+          
+          {/* Statistics */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Statistics
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold">{currentStats.total_images}</div>
+                  <div className="text-sm text-muted-foreground">Total Images</div>
+                </div>
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold">{currentStats.images_today}</div>
+                  <div className="text-sm text-muted-foreground">Today</div>
+                </div>
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold">{currentStats.images_this_week}</div>
+                  <div className="text-sm text-muted-foreground">This Week</div>
+                </div>
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold">{currentStats.images_this_month}</div>
+                  <div className="text-sm text-muted-foreground">This Month</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Image Gallery */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                Generated Images
+              </CardTitle>
+              <CardDescription>
+                Your image generation history
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {historyLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : historyError ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Error Loading Images</h3>
+                  <p className="text-muted-foreground mb-4">{historyError}</p>
+                  <Button onClick={refreshHistory}>Retry</Button>
+                </div>
+              ) : currentImages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Images Generated</h3>
+                  <p className="text-muted-foreground">
+                    Start by creating your first AI-generated image using the panel on the left.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {currentImages.map((image) => (
+                    <div 
+                      key={image.id} 
+                      className={`border rounded-lg overflow-hidden group relative ${
+                        selectedImages.includes(image.id) ? 'ring-2 ring-primary' : ''
+                      }`}
+                    >
+                      <div 
+                        className="aspect-square bg-muted relative cursor-pointer"
+                        onClick={() => toggleImageSelection(image.id)}
+                      >
+                        <img 
+                          src={image.url} 
+                          alt={image.prompt}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Download image
+                              const link = document.createElement('a');
+                              link.href = image.url;
+                              link.download = `generated-image-${image.id}.png`;
+                              link.click();
+                            }}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Save to archive
+                              saveImageToArchive(image.prompt, image.url, { size: image.size });
+                              toast({
+                                title: "Saved",
+                                description: "Image saved to archive",
+                              });
+                            }}
+                          >
+                            <Archive className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteImage(image.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-sm font-medium truncate" title={image.prompt}>
+                          {image.prompt}
+                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {formatTime(image.created_at)}
+                          </div>
+                          <Badge variant="secondary" className="text-xs">
+                            {image.size}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {selectedImages.length > 0 && (
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    variant="destructive"
                     onClick={handleBatchDelete}
-                    disabled={batchDeleteLoading}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete Selected ({selectedImages.length})
                   </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {historyLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                  <span className="ml-2">Loading images...</span>
-                </div>
-              ) : historyError ? (
-                <div className="text-center py-8">
-                  <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Failed to load images</h3>
-                  <p className="text-muted-foreground mb-4">{historyError}</p>
-                  <Button onClick={refreshHistory}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Retry
-                  </Button>
-                </div>
-              ) : currentImages.length === 0 ? (
-                <div className="text-center py-12">
-                  <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No images found</h3>
-                  <p className="text-muted-foreground">
-                    Generate some images to see them here
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {currentImages.map((image) => (
-                    <Card key={image.id} className="overflow-hidden">
-                      <div className="relative">
-                        <div className="aspect-square bg-muted flex items-center justify-center">
-                          <div className="text-center">
-                            <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                            <p className="text-sm text-muted-foreground">
-                              Generated Image
-                            </p>
-                          </div>
-                        </div>
-                        <div className="absolute top-2 left-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedImages.includes(image.id)}
-                            onChange={() => toggleImageSelection(image.id)}
-                            className="w-4 h-4"
-                          />
-                        </div>
-                      </div>
-                      <CardContent className="p-4">
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium line-clamp-2">
-                            {image.prompt}
-                          </p>
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>{image.size}</span>
-                            <span>{formatBytes(image.file_size)}</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatTime(image.created_at)}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="flex-1">
-                              <Download className="mr-2 h-3 w-3" />
-                              Download
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleDeleteImage(image.id)}
-                              disabled={deleteLoading}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
                 </div>
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-        
-        <TabsContent value="statistics" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Images</CardTitle>
-                <ImageIcon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{currentStats.total_images}</div>
-                <p className="text-xs text-muted-foreground">
-                  All time generated
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
-                <HardDrive className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatBytes(currentStats.total_size)}</div>
-                <p className="text-xs text-muted-foreground">
-                  Total file size
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">This Month</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{currentStats.images_this_month}</div>
-                <p className="text-xs text-muted-foreground">
-                  +{currentStats.images_this_week} this week
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg. Generation</CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{currentStats.average_generation_time}s</div>
-                <p className="text-xs text-muted-foreground">
-                  Average time
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   )
 }

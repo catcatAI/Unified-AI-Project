@@ -17,6 +17,7 @@ This application contains the main web-based AI dashboard for the Unified AI Pro
 - **📊 System Monitor** - Real-time system metrics and performance analysis
 - **Atlassian Integration** - Manage Jira issues and Confluence pages.
 - **Rovo Dev Agents** - Interact with intelligent development agents.
+- **🗄️ Data Archive** - Store and manage AI interaction history
 
 ### 🎨 User Experience
 - **📱 Responsive Design** - Mobile-first approach with adaptive layouts
@@ -176,6 +177,13 @@ npx prisma studio
 - Optimized bundle sizes
 - Efficient state management
 - Responsive design patterns
+
+### Data Archive
+- **Automatic Archiving**: AI interactions are automatically saved to the archive
+- **Manual Archiving**: Save specific interactions manually
+- **Search and Filter**: Find specific entries by type or content
+- **Export**: Export your archive data as JSON
+- **Delete**: Remove individual entries or clear the entire archive
 
 ### User Experience
 - Intuitive navigation with collapsible sidebar

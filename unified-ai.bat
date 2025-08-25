@@ -24,12 +24,15 @@ echo 3. Start Development - Launch development servers
 echo 4. Run Tests - Execute test suite
 echo 5. Git Management - Git status and cleanup
 echo 6. Training Setup - Prepare for AI training
-echo 7. Emergency Git Fix - Recover from Git issues
-echo 8. Exit
+echo 7. Training Manager - Manage training data and processes
+echo 8. CLI Tools - Access Unified AI CLI tools
+echo 9. Emergency Git Fix - Recover from Git issues
+echo 10. Fix Dependencies - Resolve dependency issues
+echo 11. Exit
 echo.
 
 set "choice="
-set /p "choice=Enter your choice (1-8): "
+set /p "choice=Enter your choice (1-11): "
 if defined choice set "choice=%choice: =%"
 if not defined choice (
     echo [ERROR] No input provided
@@ -43,12 +46,153 @@ if "%choice%"=="3" goto start_dev
 if "%choice%"=="4" goto run_tests
 if "%choice%"=="5" goto git_management
 if "%choice%"=="6" goto training_setup
-if "%choice%"=="7" goto emergency_git_fix
-if "%choice%"=="8" goto end_script
+if "%choice%"=="7" goto training_manager
+if "%choice%"=="8" goto cli_tools
+if "%choice%"=="9" goto emergency_git_fix
+if "%choice%"=="10" goto fix_dependencies
+if "%choice%"=="11" goto end_script
 
-echo [ERROR] Invalid choice '%choice%'. Please enter 1-8.
+echo [ERROR] Invalid choice '%choice%'. Please enter 1-11.
 timeout /t 2 >nul
 goto main_menu
+
+:: CLI Tools Function
+:cli_tools
+echo.
+echo [INFO] Unified AI CLI Tools
+echo.
+echo Available CLI Tools:
+echo.
+echo 1. Unified CLI - General AI interactions
+echo 2. AI Models CLI - Model management and interactions
+echo 3. HSP CLI - Hyper-Structure Protocol tools
+echo 4. CLI Runner - Dedicated CLI tool launcher
+echo 5. Back to Main Menu
+echo.
+
+set "cli_choice="
+set /p "cli_choice=Enter your choice (1-5): "
+if defined cli_choice set "cli_choice=%cli_choice: =%"
+if not defined cli_choice (
+    echo [ERROR] No input provided
+    timeout /t 2 >nul
+    goto cli_tools
+)
+
+if "%cli_choice%"=="1" goto unified_cli
+if "%cli_choice%"=="2" goto ai_models_cli
+if "%cli_choice%"=="3" goto hsp_cli
+if "%cli_choice%"=="4" goto cli_runner
+if "%cli_choice%"=="5" goto main_menu
+
+echo [ERROR] Invalid choice '%cli_choice%'. Please enter 1-5.
+timeout /t 2 >nul
+goto cli_tools
+
+:: CLI Runner Function
+:cli_runner
+echo.
+echo [INFO] Starting CLI Runner...
+echo.
+if exist "tools\cli-runner.bat" (
+    call tools\cli-runner.bat
+) else (
+    echo [ERROR] CLI Runner script not found
+    echo.
+    echo Press any key to return to CLI tools menu...
+    pause >nul
+)
+goto cli_tools
+
+:: Unified CLI Function
+:unified_cli
+echo.
+echo [INFO] Starting Unified CLI...
+echo.
+cd /d %~dp0packages\cli
+if exist "cli/unified_cli.py" (
+    echo Running: python cli/unified_cli.py --help
+    echo.
+    python cli/unified_cli.py --help
+    echo.
+    echo Enter CLI command (or press Enter to return to menu):
+    echo Example: health, chat "Hello", analyze --code "def x(): pass"
+    echo.
+    set /p "cli_cmd=Command: "
+    if defined cli_cmd (
+        echo.
+        echo Running: python cli/unified_cli.py %cli_cmd%
+        echo.
+        python cli/unified_cli.py %cli_cmd%
+    )
+) else (
+    echo [ERROR] Unified CLI script not found
+)
+cd ..\..\..
+echo.
+echo Press any key to return to CLI tools menu...
+pause >nul
+goto cli_tools
+
+:: AI Models CLI Function
+:ai_models_cli
+echo.
+echo [INFO] Starting AI Models CLI...
+echo.
+cd /d %~dp0packages\cli
+if exist "cli/ai_models_cli.py" (
+    echo Running: python cli/ai_models_cli.py --help
+    echo.
+    python cli/ai_models_cli.py --help
+    echo.
+    echo Enter AI Models CLI command (or press Enter to return to menu):
+    echo Example: list, health, query "Explain quantum computing"
+    echo.
+    set /p "ai_cmd=Command: "
+    if defined ai_cmd (
+        echo.
+        echo Running: python cli/ai_models_cli.py %ai_cmd%
+        echo.
+        python cli/ai_models_cli.py %ai_cmd%
+    )
+) else (
+    echo [ERROR] AI Models CLI script not found
+)
+cd ..\..\..
+echo.
+echo Press any key to return to CLI tools menu...
+pause >nul
+goto cli_tools
+
+:: HSP CLI Function
+:hsp_cli
+echo.
+echo [INFO] Starting HSP CLI...
+echo.
+cd /d %~dp0packages\cli
+if exist "cli/main.py" (
+    echo Running: python cli/main.py --help
+    echo.
+    python cli/main.py --help
+    echo.
+    echo Enter HSP CLI command (or press Enter to return to menu):
+    echo Example: query "Hello", publish_fact "The sky is blue" --confidence 0.9
+    echo.
+    set /p "hsp_cmd=Command: "
+    if defined hsp_cmd (
+        echo.
+        echo Running: python cli/main.py %hsp_cmd%
+        echo.
+        python cli/main.py %hsp_cmd%
+    )
+) else (
+    echo [ERROR] HSP CLI script not found
+)
+cd ..\..\..
+echo.
+echo Press any key to return to CLI tools menu...
+pause >nul
+goto cli_tools
 
 :: Health Check Function
 :health_check
@@ -319,6 +463,21 @@ echo Press any key to return to main menu...
 pause >nul
 goto main_menu
 
+:: Training Manager Function
+:training_manager
+echo.
+echo [INFO] Launching Training Manager...
+echo.
+if exist "tools\train-manager.bat" (
+    call tools\train-manager.bat
+) else (
+    echo [ERROR] Training manager script not found
+)
+echo.
+echo Press any key to return to main menu...
+pause >nul
+goto main_menu
+
 :: Emergency Git Fix Function
 :emergency_git_fix
 echo.
@@ -328,6 +487,21 @@ if exist "tools\emergency-git-fix.bat" (
     call tools\emergency-git-fix.bat
 ) else (
     echo [ERROR] Emergency Git fix script not found
+)
+echo.
+echo Press any key to return to main menu...
+pause >nul
+goto main_menu
+
+:: Fix Dependencies Function
+:fix_dependencies
+echo.
+echo [INFO] Fixing dependencies...
+echo.
+if exist "tools\fix-dependencies.bat" (
+    call tools\fix-dependencies.bat
+) else (
+    echo [ERROR] Fix dependencies script not found
 )
 echo.
 echo Press any key to return to main menu...

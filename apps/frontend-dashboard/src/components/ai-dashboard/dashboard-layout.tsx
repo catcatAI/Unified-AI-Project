@@ -13,6 +13,7 @@ import { GithubConnect } from './tabs/github-connect'
 import { SystemMonitor } from './tabs/system-monitor'
 import { Settings } from './tabs/settings'
 import AtlassianIntegration from './tabs/atlassian-integration'
+import { ArchiveManager } from './tabs/archive-manager'
 
 export function DashboardLayout() {
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -37,6 +38,8 @@ export function DashboardLayout() {
         return <GithubConnect />
       case 'monitor':
         return <SystemMonitor />
+      case 'archive':
+        return <ArchiveManager />
       case 'settings':
         return <Settings />
       case 'atlassian':

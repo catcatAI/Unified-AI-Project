@@ -115,6 +115,18 @@ echo [ERROR] Invalid choice '%choice%'. Please enter 1-6.
 timeout /t 2 >nul
 goto menu
 
+:start_backend
+echo.
+echo Starting backend services only...
+echo.
+start "Backend API" cmd /k "cd /d apps\backend && call venv\Scripts\activate.bat && set PYTHONPATH=%PYTHONPATH%;%cd%\src && uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000"
+
+echo [SUCCESS] Backend services started!
+echo - API Server: http://localhost:8000
+echo.
+pause
+goto menu
+
 :start_all
 echo.
 echo Starting full development environment...
@@ -124,23 +136,11 @@ echo - Backend API: http://localhost:8000
 echo - Frontend Dashboard: http://localhost:3000
 echo.
 
-start "Backend API" cmd /k "cd /d apps\backend && call venv\Scripts\activate.bat && uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000"
+start "Backend API" cmd /k "cd /d apps\backend && call venv\Scripts\activate.bat && set PYTHONPATH=%PYTHONPATH%;%cd%\src && uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000"
 start "Frontend" cmd /k "pnpm --filter frontend-dashboard dev"
 
 echo [SUCCESS] Development environment started!
 echo Check the opened windows for service status.
-echo.
-pause
-goto menu
-
-:start_backend
-echo.
-echo Starting backend services only...
-echo.
-start "Backend API" cmd /k "cd /d apps\backend && call venv\Scripts\activate.bat && uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000"
-
-echo [SUCCESS] Backend services started!
-echo - API Server: http://localhost:8000
 echo.
 pause
 goto menu
@@ -163,6 +163,7 @@ echo Running test suite...
 echo.
 cd apps\backend
 call venv\Scripts\activate.bat
+set PYTHONPATH=%PYTHONPATH%;%cd%\src
 pytest --tb=short -v
 cd ..\..
 pnpm --filter frontend-dashboard test --passWithNoTests

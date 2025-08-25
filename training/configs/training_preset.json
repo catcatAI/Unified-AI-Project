@@ -1,0 +1,166 @@
+{
+  "preset_name": "Unified-AI-Project Default Preset",
+  "preset_version": "1.0",
+  "description": "Default training preset based on current available datasets",
+  "data_configuration": {
+    "available_datasets": {
+      "mock_data": {
+        "vision_samples": {
+          "path": "data/vision_samples",
+          "sample_count": 100,
+          "type": "image_captions",
+          "status": "available"
+        },
+        "audio_samples": {
+          "path": "data/audio_samples",
+          "sample_count": 40,
+          "type": "speech_transcripts",
+          "status": "available"
+        },
+        "reasoning_samples": {
+          "path": "data/reasoning_samples",
+          "sample_count": 24,
+          "type": "causal_relations",
+          "status": "available"
+        },
+        "multimodal_samples": {
+          "path": "data/multimodal_samples",
+          "sample_count": 50,
+          "type": "cross_modal_pairs",
+          "status": "available"
+        }
+      },
+      "downloaded_data": {
+        "flickr30k_sample": {
+          "path": "data/flickr30k_sample",
+          "type": "image_captions",
+          "status": "available"
+        },
+        "common_voice_zh": {
+          "path": "data/common_voice_zh",
+          "type": "speech_audio",
+          "status": "available"
+        },
+        "coco_captions": {
+          "path": "data/coco_captions",
+          "type": "image_captions",
+          "status": "available"
+        },
+        "visual_genome_sample": {
+          "path": "data/visual_genome_sample",
+          "type": "scene_graphs",
+          "status": "available"
+        }
+      }
+    },
+    "data_paths": {
+      "flickr30k": "data/flickr30k_sample",
+      "common_voice": "data/common_voice_zh",
+      "coco": "data/coco_captions",
+      "visual_genome": "data/visual_genome_sample",
+      "vision_samples": "data/vision_samples",
+      "audio_samples": "data/audio_samples",
+      "reasoning_samples": "data/reasoning_samples",
+      "multimodal_samples": "data/multimodal_samples"
+    }
+  },
+  "training_configuration": {
+    "batch_size": {
+      "default": 16,
+      "recommended_for_mock_data": 8,
+      "recommended_for_full_data": 32
+    },
+    "epochs": {
+      "default": 10,
+      "quick_test": 3,
+      "full_training": 50
+    },
+    "learning_rate": {
+      "default": 0.001,
+      "conservative": 0.0001,
+      "aggressive": 0.01
+    },
+    "save_interval": 100,
+    "validation_split": 0.2
+  },
+  "hardware_configuration": {
+    "use_gpu": true,
+    "mixed_precision": true,
+    "cpu_only": false,
+    "recommended_vram_gb": 8
+  },
+  "model_specific_presets": {
+    "vision_service": {
+      "batch_size": 16,
+      "learning_rate": 0.001,
+      "epochs": 20,
+      "data_sources": ["vision_samples", "flickr30k_sample", "coco_captions"]
+    },
+    "audio_service": {
+      "batch_size": 8,
+      "learning_rate": 0.001,
+      "epochs": 15,
+      "data_sources": ["audio_samples", "common_voice_zh"]
+    },
+    "causal_reasoning_engine": {
+      "batch_size": 32,
+      "learning_rate": 0.001,
+      "epochs": 30,
+      "data_sources": ["reasoning_samples", "visual_genome_sample"]
+    },
+    "multimodal_service": {
+      "batch_size": 12,
+      "learning_rate": 0.001,
+      "epochs": 25,
+      "data_sources": ["multimodal_samples", "flickr30k_sample", "coco_captions"]
+    }
+  },
+  "training_scenarios": {
+    "quick_start": {
+      "description": "Quick training with mock data for testing",
+      "datasets": ["vision_samples", "audio_samples", "reasoning_samples"],
+      "epochs": 3,
+      "batch_size": 8,
+      "target_models": ["vision_service", "audio_service", "causal_reasoning_engine"]
+    },
+    "comprehensive_training": {
+      "description": "Full training with all available data",
+      "datasets": ["vision_samples", "audio_samples", "reasoning_samples", "multimodal_samples", "flickr30k_sample", "common_voice_zh", "coco_captions", "visual_genome_sample"],
+      "epochs": 50,
+      "batch_size": 32,
+      "target_models": ["vision_service", "audio_service", "causal_reasoning_engine", "multimodal_service"]
+    },
+    "vision_focus": {
+      "description": "Focus on vision-related models",
+      "datasets": ["vision_samples", "flickr30k_sample", "coco_captions", "visual_genome_sample"],
+      "epochs": 30,
+      "batch_size": 16,
+      "target_models": ["vision_service"]
+    },
+    "audio_focus": {
+      "description": "Focus on audio-related models",
+      "datasets": ["audio_samples", "common_voice_zh"],
+      "epochs": 20,
+      "batch_size": 8,
+      "target_models": ["audio_service"]
+    }
+  },
+  "data_preprocessing": {
+    "vision": {
+      "resize": [224, 224],
+      "normalize": true,
+      "augmentation": true
+    },
+    "audio": {
+      "sample_rate": 16000,
+      "duration": 5.0,
+      "normalize": true
+    },
+    "text": {
+      "max_length": 512,
+      "tokenize": true
+    }
+  },
+  "created_date": "2025-08-25",
+  "last_updated": "2025-08-25"
+}

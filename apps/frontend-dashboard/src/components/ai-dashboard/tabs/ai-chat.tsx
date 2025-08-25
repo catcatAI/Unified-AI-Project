@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useChat } from '@/hooks/use-api-data'
+import { useChat, useChatArchive } from '@/hooks/use-api-data'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui'
 import { Button } from '@acme/ui'
 import { Input } from '@acme/ui'
@@ -16,7 +16,8 @@ import {
   Clock,
   ThumbsUp,
   ThumbsDown,
-  Copy
+  Copy,
+  Archive
 } from 'lucide-react'
 
 interface Message {
@@ -30,25 +31,22 @@ interface Message {
 export function AIChat() {
   const { toast } = useToast()
   const { messages, loading: isLoading, error, sendMessage } = useChat()
+  const { saveChatToArchive } = useChatArchive()
   const [inputValue, setInputValue] = useState('')
-
-  // Original mock messages (not used, kept for reference)
-  // const originalMessages = [
-  //   {
-  //     id: '1',
-  //     type: 'assistant',
-  //     content: 'Hello! I\'m your AI assistant...',
-  //     timestamp: new Date(Date.now() - 300000),
-  //     model: 'GPT-4'
-  //   },
-  //   // ... more mock messages
-  // ]
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
 
     try {
+      // Send message and get response
       await sendMessage(inputValue)
+      
+      // Save to archive
+      const lastAssistantMessage = messages[messages.length - 1]
+      if (lastAssistantMessage && lastAssistantMessage.type === 'assistant') {
+        await saveChatToArchive(inputValue, lastAssistantMessage.content)
+      }
+      
       setInputValue('')
       
       toast({
@@ -157,6 +155,24 @@ export function AIChat() {
                               >
                                 <Copy className="h-3 w-3" />
                               </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => {
+                                  // Save this message to archive
+                                  saveChatToArchive(
+                                    messages.find(m => m.type === 'user' && m.id < message.id)?.content || '',
+                                    message.content
+                                  )
+                                  toast({
+                                    title: "Saved",
+                                    description: "Message saved to archive",
+                                  })
+                                }}
+                              >
+                                <Archive className="h-3 w-3" />
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -198,47 +214,11 @@ export function AIChat() {
                 />
                 <Button
                   onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || isLoading}
+                  disabled={isLoading || !inputValue.trim()}
                 >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Chat Info */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">AI Models</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">GPT-4</span>
-                <Badge variant="default">Active</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Claude</span>
-                <Badge variant="secondary">Available</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Gemini</span>
-                <Badge variant="secondary">Available</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Capabilities</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="text-sm">• Natural language understanding</div>
-              <div className="text-sm">• Code generation and analysis</div>
-              <div className="text-sm">• Creative writing</div>
-              <div className="text-sm">• Problem solving</div>
-              <div className="text-sm">• Data analysis</div>
             </CardContent>
           </Card>
         </div>

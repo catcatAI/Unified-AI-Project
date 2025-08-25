@@ -1,6 +1,7 @@
 // Custom hooks for API data management
 import { useState, useEffect, useCallback } from 'react';
 import { apiService, SystemStatus, ServiceHealth, DetailedSystemMetrics, AIAgent, NeuralNetworkModel, ModelMetrics, TrainingStatus, GeneratedImage, ImageStatistics, withFallback } from '@/lib/api';
+import { dataArchiveService } from '@/lib/data-archive';
 
 // Hook for system status
 export function useSystemStatus() {
@@ -482,4 +483,75 @@ export function useImageStatistics() {
   }, [fetchData]);
 
   return { data, loading, error, refresh: fetchData };
+}
+
+// Hook for saving chat messages to archive
+export function useChatArchive() {
+  const saveChatToArchive = useCallback(async (input: string, output: string) => {
+    try {
+      await dataArchiveService.saveEntry({
+        type: 'chat',
+        input,
+        output,
+      });
+    } catch (error) {
+      console.error('Failed to save chat to archive:', error);
+    }
+  }, []);
+
+  return { saveChatToArchive };
+}
+
+// Hook for saving image generation to archive
+export function useImageArchive() {
+  const saveImageToArchive = useCallback(async (input: string, output: string, metadata?: Record<string, any>) => {
+    try {
+      await dataArchiveService.saveEntry({
+        type: 'image',
+        input,
+        output,
+        metadata,
+      });
+    } catch (error) {
+      console.error('Failed to save image to archive:', error);
+    }
+  }, []);
+
+  return { saveImageToArchive };
+}
+
+// Hook for saving web search to archive
+export function useSearchArchive() {
+  const saveSearchToArchive = useCallback(async (input: string, output: string, metadata?: Record<string, any>) => {
+    try {
+      await dataArchiveService.saveEntry({
+        type: 'search',
+        input,
+        output,
+        metadata,
+      });
+    } catch (error) {
+      console.error('Failed to save search to archive:', error);
+    }
+  }, []);
+
+  return { saveSearchToArchive };
+}
+
+// Hook for saving code analysis to archive
+export function useCodeArchive() {
+  const saveCodeToArchive = useCallback(async (input: string, output: string, metadata?: Record<string, any>) => {
+    try {
+      await dataArchiveService.saveEntry({
+        type: 'code',
+        input,
+        output,
+        metadata,
+      });
+    } catch (error) {
+      console.error('Failed to save code to archive:', error);
+    }
+  }, []);
+
+  return { saveCodeToArchive };
 }

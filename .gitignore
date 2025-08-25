@@ -265,3 +265,10 @@ debug_test.js
 # Test files
 simple_import_test.py
 test_data_analysis_import.py
+
+# 保护重要批处理文件不被误删
+!*.bat
+# 但排除以下目录中的批处理文件
+backup/**/*.bat
+restored_files_backup*/
+full_recovery_backup/

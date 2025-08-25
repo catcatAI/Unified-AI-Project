@@ -1,9 +1,9 @@
 {
   "data_paths": {
-    "flickr30k": "D:\\Projects\\Unified-AI-Project\\data\\flickr30k_sample",
-    "common_voice": "D:\\Projects\\Unified-AI-Project\\data\\common_voice_zh",
-    "coco": "D:\\Projects\\Unified-AI-Project\\data\\coco_captions",
-    "visual_genome": "D:\\Projects\\Unified-AI-Project\\data\\visual_genome_sample"
+    "flickr30k": "data/flickr30k_sample",
+    "common_voice": "data/common_voice_zh",
+    "coco": "data/coco_captions",
+    "visual_genome": "data/visual_genome_sample"
   },
   "training": {
     "batch_size": 16,
