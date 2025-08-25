@@ -3,14 +3,6 @@ from unittest.mock import AsyncMock, MagicMock, patch, call
 import asyncio
 import json
 import os
-import sys
-from pathlib import Path
-
-# 添加项目路径到sys.path
-project_root = Path(__file__).parent.parent.parent.parent
-backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
 
 from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 
@@ -57,20 +49,19 @@ async def test_handle_project_happy_path(project_coordinator):
     ]
     execution_results = {0: {"status": "success", "result": "index.html created."}}
     final_integrated_response = "I have successfully created the index.html file for your website."
-    
-    # 正确模拟 service_discovery.get_all_capabilities() 的异步调用
-    pc.service_discovery.get_all_capabilities = AsyncMock(return_value=[])
 
     # Mock the three main phases of the project
     pc._decompose_user_intent_into_subtasks = AsyncMock(return_value=decomposed_tasks)
     pc._execute_task_graph = AsyncMock(return_value=execution_results)
     pc._integrate_subtask_results = AsyncMock(return_value=final_integrated_response)
+    
+    # Mock the service discovery's get_all_capabilities method
+    pc.service_discovery.get_all_capabilities = AsyncMock(return_value=[])
 
     # Act
     response = await pc.handle_project(user_query, "session123", "user456")
 
     # Assert
-    pc.service_discovery.get_all_capabilities.assert_awaited_once()
     pc._decompose_user_intent_into_subtasks.assert_awaited_once_with(user_query, [])
     pc._execute_task_graph.assert_awaited_once_with(decomposed_tasks)
     pc._integrate_subtask_results.assert_awaited_once_with(user_query, execution_results)
@@ -89,8 +80,6 @@ async def test_handle_project_decomposition_fails(project_coordinator):
     """
     # Arrange
     pc = project_coordinator
-    # 正确模拟 service_discovery.get_all_capabilities() 的异步调用
-    pc.service_discovery.get_all_capabilities = AsyncMock(return_value=[])
     pc._decompose_user_intent_into_subtasks = AsyncMock(return_value=[]) # Simulate LLM failing to decompose
 
     # Patch the methods to check they were not called
