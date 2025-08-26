@@ -2,6 +2,9 @@ import os
 import json
 import numpy as np
 import sys
+from typing import Dict, Any, Optional, List
+from datetime import datetime
+from dataclasses import dataclass
 
 # Add src directory to sys.path for dependency manager import
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -11,6 +14,17 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 from core_ai.dependency_manager import dependency_manager
+from src.core_ai.compression.alpha_deep_model import DNADataChain
+
+@dataclass
+class LogicModelResult:
+    """逻辑模型结果数据类"""
+    input_proposition: str
+    predicted_result: bool
+    confidence: float
+    processing_time: float
+    timestamp: datetime
+    dna_chain_id: Optional[str] = None
 
 # Global variables to hold TensorFlow components, loaded on demand.
 tf = None
@@ -100,12 +114,16 @@ class LogicNNModel:
         if not _ensure_tensorflow_is_imported():
             print("LogicNNModel: TensorFlow not available. This instance will be non-functional.")
             self.model = None
+            self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
+            self.prediction_history: List[LogicModelResult] = []  # 预测历史记录
             return
         self.max_seq_len = max_seq_len
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
         self.lstm_units = lstm_units
         self.model = None # Build lazily
+        self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
+        self.prediction_history: List[LogicModelResult] = []  # 预测历史记录
 
     def _build_model(self):
         if not _tensorflow_is_available():
@@ -137,16 +155,59 @@ class LogicNNModel:
         print("Training complete.")
         return history
 
-    def predict(self, proposition_str, char_to_token):
+    def predict(self, proposition_str, char_to_token, dna_chain_id: Optional[str] = None):
         if not _tensorflow_is_available() or self.model is None:
             print("Cannot predict: TensorFlow not available or model not built.")
             return False # Default/dummy return
+        
+        start_time = datetime.now()
+        
         tokens = [char_to_token.get(char, char_to_token.get('<UNK>', 0)) for char in proposition_str]
         padded_sequence = pad_sequences([tokens], maxlen=self.max_seq_len, padding='post', truncating='post')
 
         prediction = self.model.predict(padded_sequence, verbose=0)
         predicted_class = np.argmax(prediction, axis=1)[0]
-        return bool(predicted_class)
+        confidence = float(np.max(prediction, axis=1)[0])
+        
+        result_bool = bool(predicted_class)
+        
+        end_time = datetime.now()
+        processing_time = (end_time - start_time).total_seconds()
+        
+        # Create result object
+        result = LogicModelResult(
+            input_proposition=proposition_str,
+            predicted_result=result_bool,
+            confidence=confidence,
+            processing_time=processing_time,
+            timestamp=end_time,
+            dna_chain_id=dna_chain_id
+        )
+        
+        # Add to prediction history
+        self.prediction_history.append(result)
+        
+        # Add to DNA chain if provided
+        if dna_chain_id:
+            if dna_chain_id not in self.dna_chains:
+                self.dna_chains[dna_chain_id] = DNADataChain(dna_chain_id)
+            self.dna_chains[dna_chain_id].add_node(f"logic_prediction_{len(self.prediction_history)}")
+        
+        return result_bool
+
+    def get_prediction_history(self) -> List[LogicModelResult]:
+        """获取预测历史记录"""
+        return self.prediction_history.copy()
+
+    def create_dna_chain(self, chain_id: str) -> DNADataChain:
+        """创建新的DNA数据链"""
+        if chain_id not in self.dna_chains:
+            self.dna_chains[chain_id] = DNADataChain(chain_id)
+        return self.dna_chains[chain_id]
+
+    def get_dna_chain(self, chain_id: str) -> Optional[DNADataChain]:
+        """获取DNA数据链"""
+        return self.dna_chains.get(chain_id)
 
     def save_model(self, path):
         if not _tensorflow_is_available() or self.model is None:
@@ -198,87 +259,3 @@ def get_logic_char_token_maps(dataset_path):
     token_to_char = {i: char for i, char in enumerate(final_vocab)}
     vocab_size = len(final_vocab)
     max_seq_len = max(len(prop) for prop in propositions) if propositions else 0
-
-    maps_to_save = {
-        'char_to_token': char_to_token,
-        'token_to_char': token_to_char,
-        'vocab_size': vocab_size,
-        'max_seq_len': max_seq_len
-    }
-    with open(CHAR_MAP_SAVE_PATH, 'w') as f:
-        json.dump(maps_to_save, f, indent=2)
-    print(f"Logic char maps saved to {CHAR_MAP_SAVE_PATH}")
-
-    return char_to_token, token_to_char, vocab_size, max_seq_len
-
-def preprocess_logic_data(dataset_path, char_to_token, max_seq_len, num_classes=2):
-    if not _tensorflow_is_available() or char_to_token is None or max_seq_len is None:
-        print("Cannot preprocess data: TensorFlow not available or invalid char_to_token/max_seq_len.")
-        return None, None
-    propositions = []
-    answers = []
-    with open(dataset_path, 'r') as f:
-        data = json.load(f)
-        for item in data:
-            propositions.append(item['proposition'])
-            answers.append(item['answer'])
-
-    sequences = [[char_to_token.get(char, char_to_token.get('<UNK>',0)) for char in prop] for prop in propositions]
-    X = pad_sequences(sequences, maxlen=max_seq_len, padding='post', truncating='post', value=char_to_token.get('<PAD>',0))
-    y = np.array([1 if ans else 0 for ans in answers])
-    y_categorical = to_categorical(y, num_classes=num_classes)
-
-    return X, y_categorical
-
-if __name__ == "__main__":
-    print("Logic NN Model Script (for structure definition and basic tests)")
-    if _tensorflow_is_available():
-        print("TensorFlow imported successfully.")
-
-        if not os.path.exists(TRAIN_DATA_PATH):
-            print(f"Training data {TRAIN_DATA_PATH} not found. Generating dummy data for test.")
-            dummy_train_data = [
-                {"proposition": "true AND false", "answer": False},
-                {"proposition": "NOT true", "answer": False},
-                {"proposition": "(true OR false) AND true", "answer": True}
-            ]
-            os.makedirs(os.path.dirname(TRAIN_DATA_PATH), exist_ok=True)
-            with open(TRAIN_DATA_PATH, 'w') as f:
-                json.dump(dummy_train_data, f)
-
-        c2t, t2c, v_size, max_len = get_logic_char_token_maps(TRAIN_DATA_PATH)
-        print(f"Vocab size: {v_size}, Max seq len: {max_len}")
-
-        X_dummy, y_dummy = preprocess_logic_data(TRAIN_DATA_PATH, c2t, max_len)
-        print(f"X_dummy shape: {X_dummy.shape}, y_dummy shape: {y_dummy.shape}")
-
-        logic_model = LogicNNModel(max_seq_len=max_len, vocab_size=v_size)
-        logic_model._build_model()
-        print("Model built.")
-
-        test_prop = "true AND false"
-        pred = logic_model.predict(test_prop, c2t)
-        print(f"Prediction for '{test_prop}': {pred}")
-
-        logic_model.save_model(MODEL_SAVE_PATH)
-        loaded_logic_model = LogicNNModel.load_model(MODEL_SAVE_PATH, CHAR_MAP_SAVE_PATH)
-        pred_loaded = loaded_logic_model.predict(test_prop, c2t)
-        print(f"Prediction for '{test_prop}' from loaded model: {pred_loaded}")
-
-        if "dummy_train_data" in locals() and os.path.exists(TRAIN_DATA_PATH):
-             if json.load(open(TRAIN_DATA_PATH)) == dummy_train_data:
-                os.remove(TRAIN_DATA_PATH)
-                print(f"Removed dummy {TRAIN_DATA_PATH}")
-        if os.path.exists(CHAR_MAP_SAVE_PATH):
-             maps_content = json.load(open(CHAR_MAP_SAVE_PATH))
-             if maps_content['max_seq_len'] <= 25 :
-                os.remove(CHAR_MAP_SAVE_PATH)
-                print(f"Removed dummy {CHAR_MAP_SAVE_PATH}")
-        if os.path.exists(MODEL_SAVE_PATH):
-            os.remove(MODEL_SAVE_PATH)
-            print(f"Removed dummy {MODEL_SAVE_PATH}")
-
-    else:
-        print("TensorFlow not available. Skipping model functionality tests.")
-
-    print("logic_model_nn.py executed.")
