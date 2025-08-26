@@ -10,7 +10,7 @@ import os
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
 sys.path.append(os.path.join(PROJECT_ROOT, 'apps', 'backend'))
 
-from src.core_ai.compression.alpha_deep_model import AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities
+from src.core_ai.compression.alpha_deep_model import AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities, CompressionAlgorithm
 
 class TestAlphaDeepModel(unittest.TestCase):
 
@@ -33,7 +33,8 @@ class TestAlphaDeepModel(unittest.TestCase):
                 text_confidence=0.99,
                 audio_features={"pitch": 150.5},
                 image_features=None
-            )
+            ),
+            dna_chain_id="test_chain_001"
         )
 
     def test_compress_decompress_cycle(self):
@@ -97,6 +98,88 @@ class TestAlphaDeepModel(unittest.TestCase):
 
         self.assertEqual(original_dict, decompressed)
         print("Successfully verified that dictionary input is handled correctly.")
+
+    def test_different_compression_algorithms(self):
+        """Test compression and decompression with different algorithms."""
+        print("\n--- test_different_compression_algorithms ---")
+        original_dict = self.sample_data.to_dict()
+        
+        algorithms = [CompressionAlgorithm.ZLIB, CompressionAlgorithm.BZ2, CompressionAlgorithm.LZMA, CompressionAlgorithm.MSGPACK_ONLY]
+        
+        for algorithm in algorithms:
+            with self.subTest(algorithm=algorithm):
+                compressed = self.model.compress(self.sample_data, algorithm)
+                self.assertIsInstance(compressed, bytes)
+                
+                decompressed = self.model.decompress(compressed, algorithm)
+                self.assertIsInstance(decompressed, dict)
+                
+                self.assertEqual(original_dict, decompressed)
+                print(f"Successfully verified {algorithm.value} compression/decompression cycle.")
+
+    def test_dna_chain_functionality(self):
+        """Test DNA data chain functionality."""
+        print("\n--- test_dna_chain_functionality ---")
+        
+        # Test creating a DNA chain
+        chain = self.model.create_dna_chain("test_chain")
+        self.assertIsNotNone(chain)
+        
+        # Test adding nodes to the chain
+        chain.add_node("mem_test_001")
+        chain.add_node("mem_test_002")
+        self.assertIn("mem_test_001", chain.nodes)
+        self.assertIn("mem_test_002", chain.nodes)
+        
+        # Test getting a chain
+        retrieved_chain = self.model.get_dna_chain("test_chain")
+        self.assertEqual(chain, retrieved_chain)
+        
+        # Test creating a branch
+        branch = chain.create_branch("test_branch", "mem_test_001")
+        self.assertIn("test_branch", chain.branches)
+        self.assertEqual(branch, chain.branches["test_branch"])
+        
+        print("Successfully verified DNA data chain functionality.")
+
+    def test_learning_mechanism(self):
+        """Test the enhanced learning mechanism."""
+        print("\n--- test_learning_mechanism ---")
+        
+        # Test learning without feedback
+        self.model.learn(self.sample_data)
+        
+        # Verify symbol was created
+        symbol = self.model.symbolic_space.get_symbol(self.sample_data.source_memory_id)
+        self.assertIsNotNone(symbol)
+        
+        # Test learning with feedback
+        feedback = {"accuracy": 0.95, "response_time": 0.5}
+        self.model.learn(self.sample_data, feedback)
+        
+        # Verify feedback was processed
+        feedback_symbol = self.model.symbolic_space.get_symbol(f"feedback_{self.sample_data.source_memory_id}")
+        self.assertIsNotNone(feedback_symbol)
+        
+        print("Successfully verified learning mechanism.")
+
+    def test_compression_stats(self):
+        """Test compression statistics tracking."""
+        print("\n--- test_compression_stats ---")
+        
+        # Perform some compressions
+        self.model.compress(self.sample_data, CompressionAlgorithm.ZLIB)
+        self.model.compress(self.sample_data, CompressionAlgorithm.BZ2)
+        self.model.compress(self.sample_data, CompressionAlgorithm.ZLIB)
+        
+        # Check stats
+        stats = self.model.get_compression_stats()
+        self.assertIn("zlib", stats)
+        self.assertIn("bz2", stats)
+        self.assertEqual(stats["zlib"]["total_compressions"], 2)
+        self.assertEqual(stats["bz2"]["total_compressions"], 1)
+        
+        print("Successfully verified compression statistics tracking.")
 
 if __name__ == '__main__':
     unittest.main()

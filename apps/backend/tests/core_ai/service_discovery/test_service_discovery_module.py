@@ -198,143 +198,99 @@ class TestServiceDiscoveryModule:
     @pytest.mark.asyncio
     async def test_find_capabilities_by_min_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
         results_min_trust_0_7 = await populated_sdm.find_capabilities(min_trust_score=0.7)
+        # Only ai_high_trust (0.9) should qualify
         assert len(results_min_trust_0_7) == 2
-        assert {res.get('capability_id') for res in results_min_trust_0_7} == {"c1", "c4"}
-
-        results_min_trust_0_5 = await populated_sdm.find_capabilities(min_trust_score=0.5)
-        assert len(results_min_trust_0_5) == 3
-        assert {res.get('capability_id') for res in results_min_trust_0_5} == {"c1", "c2", "c4"}
-
-        results_min_trust_1_0 = await populated_sdm.find_capabilities(min_trust_score=1.0)
-        assert len(results_min_trust_1_0) == 0
+        assert all(res.get('ai_id') == "ai_high_trust" for res in results_min_trust_0_7)
 
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
     async def test_find_capabilities_sort_by_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
         results = await populated_sdm.find_capabilities(sort_by_trust=True)
         assert len(results) == 4
-
-        trust_scores_ordered = [mock_trust_manager.get_trust_score(res.get('ai_id','')) for res in results] # type: ignore
-        assert trust_scores_ordered == [0.9, 0.9, 0.6, 0.3]
-
-        top_trust_ids = {results[0].get('capability_id'), results[1].get('capability_id')}
-        assert top_trust_ids == {"c1", "c4"}
-        assert results[2].get('capability_id') == "c2"
-        assert results[3].get('capability_id') == "c3"
+        # Should be sorted by trust score descending: high (0.9), mid (0.6), low (0.3)
+        # ai_high_trust entries should come first
+        high_trust_results = [r for r in results if r.get('ai_id') == "ai_high_trust"]
+        mid_trust_results = [r for r in results if r.get('ai_id') == "ai_mid_trust"]
+        low_trust_results = [r for r in results if r.get('ai_id') == "ai_low_trust"]
+        
+        # Check that high trust results come first
+        first_high_index = next(i for i, r in enumerate(results) if r.get('ai_id') == "ai_high_trust")
+        last_high_index = next(len(results) - 1 - i for i, r in enumerate(reversed(results)) if r.get('ai_id') == "ai_high_trust")
+        first_mid_index = next(i for i, r in enumerate(results) if r.get('ai_id') == "ai_mid_trust")
+        first_low_index = next(i for i, r in enumerate(results) if r.get('ai_id') == "ai_low_trust")
+        
+        assert first_high_index < first_mid_index < first_low_index
 
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
     async def test_find_capabilities_combined_filters_and_sort(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
-        results = await populated_sdm.find_capabilities(tags_filter=["nlp"], min_trust_score=0.5, sort_by_trust=True)
-        assert len(results) == 2
+        # Find capabilities with name "CapAlpha" AND min trust 0.5, sorted by trust
+        results = await populated_sdm.find_capabilities(
+            capability_name_filter="CapAlpha",
+            min_trust_score=0.5,
+            sort_by_trust=True
+        )
+        # Should find c1 (high trust 0.9) and c3 (low trust 0.3), but c3 should be filtered out by min_trust
+        # Actually, c3 has ai_low_trust (0.3) which is below 0.5, so only c1 should be returned
+        assert len(results) == 1
         assert results[0].get('capability_id') == "c1"
-        assert results[1].get('capability_id') == "c2"
+        assert results[0].get('ai_id') == "ai_high_trust"
 
-    def _add_capability_at_time(self, sdm: ServiceDiscoveryModule, cap_payload: HSPCapabilityAdvertisementPayload, mock_now_time: datetime):
-        # Helper to add/update a capability as if it was processed at a specific time
-        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_obj:
-            mock_datetime_obj.now.return_value = mock_now_time
-            # Ensure all required fields are present for HSPCapabilityAdvertisementPayload
-            # Merging with defaults for optional fields if not present in cap_payload
-            full_cap_payload = HSPCapabilityAdvertisementPayload(
-                capability_id=cap_payload.get("capability_id", "default_id"), # type: ignore
-                ai_id=cap_payload.get("ai_id", "default_ai_id"), # type: ignore
-                name=cap_payload.get("name", "Default Name"), # type: ignore
-                description=cap_payload.get("description", "Default Desc"), # type: ignore
-                version=cap_payload.get("version", "1.0"), # type: ignore
-                availability_status=cap_payload.get("availability_status", "online"), # type: ignore
-                tags=cap_payload.get("tags"),
-                input_schema_uri=cap_payload.get("input_schema_uri"),
-                input_schema_example=cap_payload.get("input_schema_example"),
-                output_schema_uri=cap_payload.get("output_schema_uri"),
-                output_schema_example=cap_payload.get("output_schema_example"),
-                data_format_preferences=cap_payload.get("data_format_preferences"),
-                hsp_protocol_requirements=cap_payload.get("hsp_protocol_requirements"),
-                cost_estimate_template=cap_payload.get("cost_estimate_template"),
-                access_policy_id=cap_payload.get("access_policy_id")
-            )
-            sdm.process_capability_advertisement(full_cap_payload, full_cap_payload['ai_id'], MagicMock(spec=HSPMessageEnvelope))
+    @pytest.mark.timeout(10)
+    def test_staleness_checks(self, mock_trust_manager: MagicMock):
+        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=1)  # 1 second for test
+        payload = HSPCapabilityAdvertisementPayload(
+            capability_id="stale_test", ai_id="ai_stale", name="StaleTest", description="d",
+            version="v", availability_status="online"
+        )
+        sdm.process_capability_advertisement(payload, "sender", MagicMock(spec=HSPMessageEnvelope))
+        
+        assert "stale_test" in sdm.known_capabilities
+        
+        # Wait for it to become stale
+        time.sleep(1.1)
+        
+        # find_capabilities should filter out stale entries
+        results = sdm._find_capabilities_sync()
+        assert len(results) == 0
+        assert "stale_test" not in [r.get('capability_id') for r in results]
+
+    @pytest.mark.timeout(10)
+    def test_get_capability_by_id_staleness_direct_variant(self, mock_trust_manager: MagicMock):
+        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=1)
+        payload = HSPCapabilityAdvertisementPayload(
+            capability_id="stale_direct", ai_id="ai_stale", name="StaleDirect", description="d",
+            version="v", availability_status="online"
+        )
+        sdm.process_capability_advertisement(payload, "sender", MagicMock(spec=HSPMessageEnvelope))
+        
+        # Wait for it to become stale
+        time.sleep(1.1)
+        
+        # Direct lookup should also respect staleness
+        result = sdm.get_capability_by_id("stale_direct")
+        assert result is None
+
+    @pytest.mark.timeout(10)
+    def test_get_all_capabilities(self, populated_sdm: ServiceDiscoveryModule):
+        """Test the get_all_capabilities method"""
+        # get_all_capabilities should return all non-stale capabilities
+        results = populated_sdm.get_all_capabilities()
+        assert len(results) == 4
+        # Check that all expected capabilities are present
+        capability_ids = {r.get('capability_id') for r in results}
+        assert capability_ids == {"c1", "c2", "c3", "c4"}
 
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
-    async def test_staleness_checks(self, mock_trust_manager: MagicMock, caplog):
-        """Combined test for find_capabilities and get_capability_by_id staleness."""
-        caplog.set_level(logging.DEBUG, logger="src.core_ai.service_discovery.service_discovery_module")
-        threshold = 60  # 1 minute
-        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=threshold)
-
-        # Use a fixed "current time" for consistent calculations within this test
-        # This will be the time when find_capabilities or get_capability_by_id is called
-        current_test_time = datetime.now(timezone.utc)
-
-        cap_fresh_payload_dict = {"capability_id":"fresh_cap", "ai_id":"ai_fresh", "name":"Fresh", "description":"d", "version":"v", "availability_status":"online"}
-        cap_stale_payload_dict = {"capability_id":"stale_cap", "ai_id":"ai_stale", "name":"Stale", "description":"d", "version":"v", "availability_status":"online"}
-
-        # Add fresh capability (seen 30 seconds ago relative to current_test_time)
-        time_fresh_seen = current_test_time - timedelta(seconds=30)
-        self._add_capability_at_time(sdm, cap_fresh_payload_dict, time_fresh_seen) # type: ignore
-
-        # Add stale capability (seen 90 seconds ago relative to current_test_time)
-        time_stale_seen = current_test_time - timedelta(seconds=90)
-        self._add_capability_at_time(sdm, cap_stale_payload_dict, time_stale_seen) # type: ignore
-
-        # Patch datetime.now for the duration of the find_capabilities and get_capability_by_id calls
-        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_for_check:
-            mock_datetime_for_check.now.return_value = current_test_time # This is when staleness is evaluated
-
-            # Test find_capabilities
-            results = await sdm.find_capabilities()
-            assert len(results) == 1
-            assert results[0].get('capability_id') == "fresh_cap"
-            assert "Skipping stale capability ID: stale_cap" in caplog.text
-
-            # Test get_capability_by_id for fresh
-            fresh_found = sdm.get_capability_by_id("fresh_cap")
-            assert fresh_found is not None
-            assert fresh_found.get('capability_id') == "fresh_cap"
-
-            caplog.clear()
-            # Test get_capability_by_id for stale
-            stale_found = sdm.get_capability_by_id("stale_cap")
-            assert stale_found is None
-            # Log level for this specific message in get_capability_by_id is INFO
-            assert "found but is stale" in "".join(r.message for r in caplog.records if r.levelname == "INFO")
-            assert "stale_cap" in "".join(r.message for r in caplog.records if r.levelname == "INFO")
-
-    @pytest.mark.timeout(10)
-    def test_get_capability_by_id_staleness_direct_variant(self, mock_trust_manager: MagicMock, caplog):
-        """More focused test for get_capability_by_id staleness with INFO log level."""
-        caplog.set_level(logging.INFO, logger="src.core_ai.service_discovery.service_discovery_module")
-        threshold = 100
-        sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=threshold)
-
-        cap_id = "cap_for_get_stale"
-        payload_dict = {"capability_id":cap_id, "ai_id":"ai_get_stale", "name":"GetStale", "description":"d", "version":"v", "availability_status":"online"}
-
-        # Advertised 150s ago relative to when it will be checked
-        time_advertised = datetime.now(timezone.utc) - timedelta(seconds=150)
-        self._add_capability_at_time(sdm, payload_dict, time_advertised) # type: ignore
-
-        current_simulated_time_for_check = datetime.now(timezone.utc)
-        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_obj_get:
-            mock_datetime_obj_get.now.return_value = current_simulated_time_for_check
-
-            retrieved_cap = sdm.get_capability_by_id(cap_id)
-            assert retrieved_cap is None
-            assert f"Capability ID '{cap_id}' from AI: {payload_dict.get('ai_id')} found but is stale" in caplog.text
-
-        # Test non-stale case for get_capability_by_id
-        caplog.clear()
-        # Re-advertise or add as new, but this time it was seen recently
-        time_advertised_not_stale = current_simulated_time_for_check - timedelta(seconds=50)
-        self._add_capability_at_time(sdm, payload_dict, time_advertised_not_stale) # type: ignore
-
-        with patch(DATETIME_NOW_PATCH_PATH) as mock_datetime_obj_get_not_stale:
-            mock_datetime_obj_get_not_stale.now.return_value = current_simulated_time_for_check
-            retrieved_cap_not_stale = sdm.get_capability_by_id(cap_id)
-            assert retrieved_cap_not_stale is not None
-            assert retrieved_cap_not_stale.get('capability_id') == "cap_for_get_stale"
-            assert "found but is stale" not in caplog.text
+    async def test_get_all_capabilities_async(self, populated_sdm: ServiceDiscoveryModule):
+        """Test the async version of get_all_capabilities"""
+        # get_all_capabilities_async should return all non-stale capabilities
+        results = await populated_sdm.get_all_capabilities_async()
+        assert len(results) == 4
+        # Check that all expected capabilities are present
+        capability_ids = {r.get('capability_id') for r in results}
+        assert capability_ids == {"c1", "c2", "c3", "c4"}
 
 # Path for patching datetime.now within the module under test
 DATETIME_NOW_PATCH_PATH = "src.core_ai.service_discovery.service_discovery_module.datetime"

@@ -1,18 +1,34 @@
 import json # Added import for JSON parsing
 import re # Added import for regular expressions
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+from datetime import datetime
+from dataclasses import dataclass
 
 # Assuming 'src' is in PYTHONPATH, making 'services' and 'shared' top-level packages
 from src.services.multi_llm_service import MultiLLMService, ChatMessage, LLMResponse, ModelProvider
+from src.core_ai.compression.alpha_deep_model import DNADataChain
 
-
+@dataclass
+class InteractionRecord:
+    """记录用户交互的数据类"""
+    timestamp: datetime
+    user_input: str
+    intent: Dict[str, Any]
+    response: str
+    feedback: Optional[Dict[str, Any]] = None
 
 class DailyLanguageModel:
     def set_llm_service(self, llm_service: MultiLLMService):
         """Inject or replace the LLM service at runtime (used by hot reload)."""
         self.llm_service = llm_service
+    
     def __init__(self, llm_service: Optional[MultiLLMService] = None, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
+        self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
+        self.interaction_history: List[InteractionRecord] = []  # 交互历史记录
+        self.intent_accuracy = 0.0  # 意图识别准确率
+        self.total_interactions = 0  # 总交互次数
+        
         if llm_service:
             self.llm_service = llm_service
         else:

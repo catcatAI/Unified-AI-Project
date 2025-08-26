@@ -55,7 +55,8 @@ async def test_get_simple_response_standard_flow(mock_core_services):
     )
 
     user_input = "Hello, how are you?"
-    expected_response = "TestAI: You said 'Hello, how are you?'. This is a simple response."
+    ai_name = mock_core_services["personality_manager"].get_current_personality_trait("display_name", "TestAI")
+    expected_response = f"{ai_name}: You said 'Hello, how are you?'. This is a simple response."
     session_id = "test_session_simple"
     user_id = "test_user_simple"
 
@@ -172,6 +173,7 @@ async def test_get_simple_response_tool_dispatch_success(mock_core_services):
     # Arrange
     dm = mock_core_services["dialogue_manager"]
     tool_dispatcher = mock_core_services["tool_dispatcher"]
+    personality_manager = mock_core_services["personality_manager"]
 
     success_payload = "The current time is 10:00 AM."
     tool_dispatcher.dispatch.return_value = ToolDispatcherResponse(
@@ -183,6 +185,7 @@ async def test_get_simple_response_tool_dispatch_success(mock_core_services):
     )
 
     user_input = "what time is it?"
+    ai_name = personality_manager.get_current_personality_trait("display_name", "TestAI")
 
     # Act
     response = await dm.get_simple_response(user_input)
@@ -204,12 +207,13 @@ async def test_get_simple_response_tool_dispatch_error(mock_core_services):
     # Arrange
     dm = mock_core_services["dialogue_manager"]
     tool_dispatcher = mock_core_services["tool_dispatcher"]
+    personality_manager = mock_core_services["personality_manager"]
 
     # Mock the Tool Dispatcher to raise an exception
     tool_dispatcher.dispatch.side_effect = Exception("Tool dispatch failed!")
 
     user_input = "weather in london"
-    ai_name = dm.personality_manager.get_current_personality_trait("display_name", "AI")
+    ai_name = personality_manager.get_current_personality_trait("display_name", "TestAI")
     expected_response = f"{ai_name}: I'm sorry, I encountered an error while trying to understand your request."
 
     # Act
