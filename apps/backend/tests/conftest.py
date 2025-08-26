@@ -228,11 +228,16 @@ def mock_core_services():
                 results.append(payload)
             return results
 
-        async def get_all_capabilities(self):
+        def get_all_capabilities(self):
+            """同步版本的get_all_capabilities"""
             results = []
             for cap_id, (payload, _) in self._mock_sdm_capabilities_store.items():
                 results.append(payload)
             return results
+
+        async def get_all_capabilities_async(self):
+            """异步版本的get_all_capabilities"""
+            return self.get_all_capabilities()
 
     # Create the behavior instance
     mock_behavior = MockSDMBehavior()
@@ -267,14 +272,9 @@ def mock_core_services():
 
     # Assign mocks
     mock_service_discovery.process_capability_advertisement = MagicMock(side_effect=_process_capability_advertisement_sync)
-    mock_service_discovery.find_capabilities.side_effect = mock_behavior.find_capabilities
-    # Use patch.object to ensure get_all_capabilities is always an AsyncMock
-    from unittest.mock import patch
-    with patch.object(mock_service_discovery, 'get_all_capabilities', new_callable=AsyncMock) as mock_get_all_capabilities:
-        mock_get_all_capabilities.side_effect = mock_behavior.get_all_capabilities
-    # Also patch the async version
-    with patch.object(mock_service_discovery, 'get_all_capabilities_async', new_callable=AsyncMock) as mock_get_all_capabilities_async:
-        mock_get_all_capabilities_async.side_effect = mock_behavior.get_all_capabilities
+    mock_service_discovery.find_capabilities = mock_behavior.find_capabilities
+    mock_service_discovery.get_all_capabilities = mock_behavior.get_all_capabilities
+    mock_service_discovery.get_all_capabilities_async = mock_behavior.get_all_capabilities_async
 
     # Store a reference to the behavior for access if needed
     mock_service_discovery._mock_behavior = mock_behavior
@@ -318,12 +318,17 @@ def mock_core_services():
             """Mock implementation of recall_gist"""
             if memory_id in self.memory_store:
                 record = self.memory_store[memory_id]
+                # Ensure metadata is properly returned with required fields
+                metadata = record["metadata"].copy() if record["metadata"] else {}
+                # Ensure speaker field is present in metadata
+                if 'speaker' not in metadata:
+                    metadata['speaker'] = 'unknown'
                 return {
                     "id": memory_id,
                     "timestamp": record["timestamp"],
                     "data_type": record["data_type"],
                     "rehydrated_gist": str(record["raw_data"]),
-                    "metadata": record["metadata"]
+                    "metadata": metadata
                 }
             return None
 
@@ -332,12 +337,14 @@ def mock_core_services():
             # Simplified implementation for testing
             results = []
             for mem_id, record in self.memory_store.items():
+                # Ensure metadata is properly returned
+                metadata = record["metadata"].copy() if record["metadata"] else {}
                 results.append({
                     "id": mem_id,
                     "timestamp": record["timestamp"],
                     "data_type": record["data_type"],
                     "rehydrated_gist": str(record["raw_data"]),
-                    "metadata": record["metadata"]
+                    "metadata": metadata
                 })
             return results
 
@@ -351,14 +358,14 @@ def mock_core_services():
 
     # Explicitly mock PersonalityManager methods
     mock_personality_manager = MagicMock(spec=PersonalityManager)
-    mock_personality_manager.get_initial_prompt = MagicMock(return_value="Hello from mock personality!")
+    mock_personality_manager.get_initial_prompt = MagicMock(return_value="Welcome!")
     mock_personality_manager.get_current_personality_trait = MagicMock(return_value="TestAI") # Explicitly mock and set return_value
     mock_personality_manager.apply_personality_adjustment = MagicMock() # Mock this method as well if it's called
 
     mock_emotion_system = MagicMock(spec='src.core_ai.emotion_system.EmotionSystem')
     mock_crisis_system = MagicMock(spec='src.core_ai.crisis.CrisisSystem')
     mock_time_system = MagicMock(spec='src.core_ai.time_system.TimeSystem')
-    mock_time_system.get_time_of_day_segment = MagicMock()
+    mock_time_system.get_time_of_day_segment = MagicMock(return_value="morning")
     mock_formula_engine = MagicMock(spec='src.core_ai.formula_engine.FormulaEngine')
     mock_tool_dispatcher = MagicMock(spec='src.tools.tool_dispatcher.ToolDispatcher')
     mock_tool_dispatcher.dispatch = AsyncMock()
@@ -414,15 +421,25 @@ def mock_core_services():
     # Define mock side effect functions
     async def mock_get_simple_response_side_effect(dialogue_manager, project_coordinator, tool_dispatcher, ham_manager, learning_manager, personality_manager, user_input, session_id=None, user_id=None):
         # Mock implementation for get_simple_response
-        return "Mocked response for: " + user_input
+        # Check if this is a project trigger
+        if project_coordinator and user_input.lower().startswith("project:"):
+            project_query = user_input[8:].strip()  # Remove "project:" prefix
+            # 直接调用project_coordinator.handle_project而不是返回mock响应
+            return await project_coordinator.handle_project(project_query, session_id, user_id)
+        # For standard flow, generate expected response format
+        ai_name = personality_manager.get_current_personality_trait("display_name", "TestAI")
+        return f"{ai_name}: You said '{user_input}'. This is a simple response."
 
     async def mock_start_session_side_effect(dialogue_manager, time_system, personality_manager, user_id=None, session_id=None):
         # Mock implementation for start_session
-        return session_id or "mock_session_id"
+        time_segment = time_system.get_time_of_day_segment()
+        base_prompt = personality_manager.get_initial_prompt()
+        greetings = {"morning": "Good morning!", "afternoon": "Good afternoon!", "evening": "Good evening!", "night": "Hello,"}
+        return f"{greetings.get(time_segment, '')} {base_prompt}".strip()
 
     async def mock_handle_incoming_hsp_task_result_side_effect(project_coordinator, result_payload, sender_ai_id, envelope):
         # Mock implementation for _handle_incoming_hsp_task_result
-        pass
+        await project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
 
     # Define nested async functions for side_effects
     async def _get_simple_response_side_effect_wrapper(user_input, session_id=None, user_id=None):

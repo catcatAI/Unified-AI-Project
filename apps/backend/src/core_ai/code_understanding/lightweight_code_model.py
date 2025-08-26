@@ -3,16 +3,30 @@ import os
 import glob
 import logging # Added logging
 from typing import List, Dict, Any, Optional, Union
+from datetime import datetime
+from dataclasses import dataclass, asdict
 
-# Placeholder for a lightweight model to understand code structure,
-# dependencies, and potentially generate simple code or configurations.
+# Import DNADataChain from alpha_deep_model
+from src.core_ai.compression.alpha_deep_model import DNADataChain
 
 logger = logging.getLogger(__name__)
+
+@dataclass
+class CodeAnalysisResult:
+    """代码分析结果数据类"""
+    filepath: str
+    analysis_timestamp: datetime
+    classes: List[Dict[str, Any]]
+    functions: List[Dict[str, Any]]
+    dependencies: List[str]
+    complexity_score: float
+    dna_chain_id: Optional[str] = None
 
 class LightweightCodeModel:
     """
     A model to perform lightweight static analysis of Python code,
     focusing on understanding the structure of tools.
+    Enhanced with DNA衍生数据链技术和代码复杂度分析.
     """
 
     def __init__(self, tools_directory: str = "src/tools/"):
@@ -23,6 +37,10 @@ class LightweightCodeModel:
             tools_directory (str): The root directory where tool files are located.
         """
         self.tools_directory = tools_directory
+        self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
+        self.analysis_history: List[CodeAnalysisResult] = []  # 分析历史记录
+        self.code_complexity_cache: Dict[str, float] = {}  # 代码复杂度缓存
+        
         if not os.path.isdir(tools_directory):
             logger.warning(f"Tools directory '{tools_directory}' does not exist or is not a directory.")
             # Consider raising an error or ensuring tools_directory is always valid upon instantiation.
@@ -103,18 +121,40 @@ class LightweightCodeModel:
 
         return params_details
 
-    def analyze_tool_file(self, filepath: str) -> Optional[Dict[str, Any]]:
+    def _calculate_complexity(self, node: ast.AST) -> float:
         """
-        Analyzes a single Python tool file to extract its structure.
-        (Placeholder - to be implemented)
+        Calculate code complexity score based on AST node.
+        """
+        complexity = 0
+        
+        # Count control flow statements
+        for child in ast.walk(node):
+            if isinstance(child, (ast.If, ast.For, ast.While, ast.With, ast.Try)):
+                complexity += 1
+            elif isinstance(child, ast.ExceptHandler):
+                complexity += 0.5
+            elif isinstance(child, (ast.And, ast.Or)):
+                complexity += 0.2
+            elif isinstance(child, ast.FunctionDef):
+                complexity += 2  # Functions add complexity
+            elif isinstance(child, ast.ClassDef):
+                complexity += 3  # Classes add more complexity
+        
+        return complexity
+
+    def analyze_tool_file(self, filepath: str, dna_chain_id: Optional[str] = None) -> Optional[CodeAnalysisResult]:
+        """
+        Analyzes a single Python tool file to extract its structure and complexity.
+        Enhanced with DNA数据链支持.
 
         Args:
             filepath (str): The absolute or relative path to the Python tool file.
+            dna_chain_id (Optional[str]): DNA链ID，用于关联分析结果
 
         Returns:
-            Optional[Dict[str, Any]]: A dictionary containing structural information
-                                      (classes, methods, docstrings, params, returns)
-                                      or None if the file cannot be parsed or analyzed.
+            Optional[CodeAnalysisResult]: A dataclass containing structural information
+                                          and analysis results, or None if the file cannot 
+                                          be parsed or analyzed.
         """
         if not os.path.isfile(filepath):
             logger.error(f"File not found at '{filepath}' for analysis.")
@@ -127,6 +167,19 @@ class LightweightCodeModel:
         except Exception as e:
             logger.error(f"Error parsing Python file '{filepath}': {e}", exc_info=True)
             return None
+
+        # Calculate complexity
+        complexity_score = self._calculate_complexity(tree)
+        
+        # Extract dependencies
+        dependencies = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    dependencies.append(alias.name)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    dependencies.append(node.module)
 
         file_structure: Dict[str, Any] = {
             "filepath": filepath,
@@ -146,10 +199,11 @@ class LightweightCodeModel:
                         method_info = {
                             "name": item.name,
                             "docstring": ast.get_docstring(item),
-                            "parameters": self._extract_method_parameters(item), # Placeholder call
-                            "returns": None # Placeholder for return type
+                            "parameters": self._extract_method_parameters(item),
+                            "returns": None,
+                            "complexity": self._calculate_complexity(item)
                         }
-                        # Basic return type hint (refined in next step)
+                        # Basic return type hint
                         if item.returns:
                             method_info["returns"] = ast.unparse(item.returns) if hasattr(ast, 'unparse') else "TypeHint (unparse unavailable)"
                         class_info["methods"].append(method_info)
@@ -159,18 +213,43 @@ class LightweightCodeModel:
                 func_info = {
                     "name": node.name,
                     "docstring": ast.get_docstring(node),
-                    "parameters": self._extract_method_parameters(node), # Placeholder call
-                    "returns": None # Placeholder for return type
+                    "parameters": self._extract_method_parameters(node),
+                    "returns": None,
+                    "complexity": self._calculate_complexity(node)
                 }
                 if node.returns:
                      func_info["returns"] = ast.unparse(node.returns) if hasattr(ast, 'unparse') else "TypeHint (unparse unavailable)"
                 file_structure["functions"].append(func_info)
 
-        return file_structure
+        # Create analysis result
+        analysis_result = CodeAnalysisResult(
+            filepath=filepath,
+            analysis_timestamp=datetime.now(),
+            classes=file_structure["classes"],
+            functions=file_structure["functions"],
+            dependencies=list(set(dependencies)),  # Remove duplicates
+            complexity_score=complexity_score,
+            dna_chain_id=dna_chain_id
+        )
+        
+        # Add to analysis history
+        self.analysis_history.append(analysis_result)
+        
+        # Update complexity cache
+        self.code_complexity_cache[filepath] = complexity_score
+        
+        # Add to DNA chain if provided
+        if dna_chain_id:
+            if dna_chain_id not in self.dna_chains:
+                self.dna_chains[dna_chain_id] = DNADataChain(dna_chain_id)
+            self.dna_chains[dna_chain_id].add_node(filepath)
+        
+        return analysis_result
 
-    def get_tool_structure(self, tool_name_or_filepath: str) -> Optional[Dict[str, Any]]:
+    def get_tool_structure(self, tool_name_or_filepath: str, dna_chain_id: Optional[str] = None) -> Optional[CodeAnalysisResult]:
         """
         Main interface method to get the structure of a specific tool.
+        Enhanced with DNA数据链支持.
 
         The `tool_name_or_filepath` can be:
         1. A direct absolute or relative path to a Python tool file.
@@ -182,11 +261,11 @@ class LightweightCodeModel:
 
         Args:
             tool_name_or_filepath (str): The name of the tool or direct filepath to the tool's Python file.
+            dna_chain_id (Optional[str]): DNA链ID，用于关联分析结果
 
         Returns:
-            Optional[Dict[str, Any]]: A dictionary containing structural information about the tool
-                                      (classes, methods, docstrings, params, returns) if resolved and parsed,
-                                      otherwise None.
+            Optional[CodeAnalysisResult]: A dataclass containing structural information and analysis results
+                                          if resolved and parsed, otherwise None.
         """
         resolved_path: Optional[str] = None
 
@@ -248,10 +327,28 @@ class LightweightCodeModel:
                     return None
 
         if resolved_path:
-            return self.analyze_tool_file(resolved_path)
+            return self.analyze_tool_file(resolved_path, dna_chain_id)
         else:
             logger.warning(f"Could not resolve tool '{tool_name_or_filepath}' to a Python file in '{self.tools_directory}' using supported conventions, nor as a direct path.")
             return None
+
+    def get_analysis_history(self) -> List[CodeAnalysisResult]:
+        """获取代码分析历史记录"""
+        return self.analysis_history.copy()
+
+    def get_code_complexity(self, filepath: str) -> Optional[float]:
+        """获取文件的代码复杂度"""
+        return self.code_complexity_cache.get(filepath)
+
+    def create_dna_chain(self, chain_id: str) -> DNADataChain:
+        """创建新的DNA数据链"""
+        if chain_id not in self.dna_chains:
+            self.dna_chains[chain_id] = DNADataChain(chain_id)
+        return self.dna_chains[chain_id]
+
+    def get_dna_chain(self, chain_id: str) -> Optional[DNADataChain]:
+        """获取DNA数据链"""
+        return self.dna_chains.get(chain_id)
 
 if __name__ == '__main__':
     # Example Usage (for testing during development)
@@ -272,29 +369,29 @@ if __name__ == '__main__':
     # A more direct way if running script from project root:
     model = LightweightCodeModel() # Uses default "src/tools/"
 
-    print("LightweightCodeModel initialized (placeholder).")
+    print("LightweightCodeModel initialized (enhanced version).")
     print(f"Looking for tools in: {model.tools_directory}")
 
     # The following will print warnings or return None as methods are placeholders.
     # tool_files = model.list_tool_files()
-    # print(f"Found tool files (placeholder): {tool_files}")
+    # print(f"Found tool files (enhanced): {tool_files}")
 
     # math_tool_path_rel = "src/tools/math_tool.py" # Relative to project root
     # if os.path.exists(math_tool_path_rel):
-    #     print(f"\nAnalyzing (placeholder): {math_tool_path_rel}")
+    #     print(f"\nAnalyzing (enhanced): {math_tool_path_rel}")
     #     structure = model.get_tool_structure(math_tool_path_rel)
     #     if structure:
-    #         print(json.dumps(structure, indent=2))
+    #         print(json.dumps(asdict(structure), indent=2, default=str))
     #     else:
-    #         print("Could not analyze tool structure (placeholder).")
+    #         print("Could not analyze tool structure (enhanced).")
     # else:
     #     print(f"Test math_tool.py not found at {math_tool_path_rel} from current working directory.")
 
     # # Example for a non-existent tool
-    # print("\nAnalyzing non-existent tool (placeholder):")
+    # print("\nAnalyzing non-existent tool (enhanced):")
     # non_existent_structure = model.get_tool_structure("non_existent_tool.py")
     # if not non_existent_structure:
-    #     print("Correctly returned None for non-existent tool (placeholder).")
+    #     print("Correctly returned None for non-existent tool (enhanced).")
 
     # Note: The __main__ block is primarily for very basic smoke testing of the class structure.
     # Proper testing will be done with unittest.
