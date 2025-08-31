@@ -99,11 +99,11 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
             analysis_result = self.model.analyze_tool_file("dummy_path/simple_tool.py")
 
         self.assertIsNotNone(analysis_result)
-        self.assertEqual(analysis_result["filepath"], "dummy_path/simple_tool.py")
+        self.assertEqual(analysis_result.filepath, "dummy_path/simple_tool.py")
 
         # Class assertions
-        self.assertEqual(len(analysis_result["classes"]), 1)
-        simple_tool_class = analysis_result["classes"][0]
+        self.assertEqual(len(analysis_result.classes), 1)
+        simple_tool_class = analysis_result.classes[0]
         self.assertEqual(simple_tool_class["name"], "SimpleTool")
         self.assertEqual(simple_tool_class["docstring"], "A simple tool class docstring.")
         self.assertEqual(len(simple_tool_class["methods"]), 2)
@@ -130,8 +130,8 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
         self.assertEqual(execute_method["returns"], "str")
 
         # Module-level function assertions
-        self.assertEqual(len(analysis_result["functions"]), 1)
-        module_func = analysis_result["functions"][0]
+        self.assertEqual(len(analysis_result.functions), 1)
+        module_func = analysis_result.functions[0]
         self.assertEqual(module_func["name"], "module_level_func")
         self.assertEqual(module_func["docstring"], "Module level function docstring.")
         expected_module_params = [
@@ -164,8 +164,8 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
             analysis_result = self.model.analyze_tool_file("dummy_path/empty_tool.py")
 
         self.assertIsNotNone(analysis_result)
-        self.assertEqual(len(analysis_result["classes"]), 0)
-        self.assertEqual(len(analysis_result["functions"]), 0)
+        self.assertEqual(len(analysis_result.classes), 0)
+        self.assertEqual(len(analysis_result.functions), 0)
 
     @pytest.mark.timeout(5)
     def test_analyze_tool_file_parsing_error(self):
@@ -255,7 +255,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
         self._create_dummy_tool_file("pref_exact.py", content="# exact content")
         self._create_dummy_tool_file("tool_pref_exact.py", content="# tool_prefix content")
         # analyze_tool_file will be mocked to return the path it was called with for simplicity
-        def side_effect_analyzer(filepath): return {"path": filepath}
+        def side_effect_analyzer(filepath, dna_chain_id=None): return {"path": filepath}
 
         with patch.object(self.model, 'analyze_tool_file', side_effect=side_effect_analyzer) as mock_analyze:
             result = self.model.get_tool_structure("pref_exact")

@@ -155,10 +155,9 @@ class TestAlphaDeepModel(unittest.TestCase):
         
         # Test learning with feedback
         feedback = {"accuracy": 0.95, "response_time": 0.5}
-        self.model.learn(self.sample_data, feedback)
+        feedback_symbol = self.model.learn(self.sample_data, feedback)
         
         # Verify feedback was processed
-        feedback_symbol = self.model.symbolic_space.get_symbol(f"feedback_{self.sample_data.source_memory_id}")
         self.assertIsNotNone(feedback_symbol)
         
         print("Successfully verified learning mechanism.")

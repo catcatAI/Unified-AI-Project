@@ -209,7 +209,7 @@ class LearningManager:
             "hsp_sender_ai_id": hsp_sender_ai_id,
         }
 
-        ham_data_type = f"hsp_learned_fact_{hsp_fact_payload.get('tags', ['unknown'])[0]}"
+        ham_data_type = f"hsp_learned_fact_{hsp_fact_payload.get('tags', ['unknown'])[0] if hsp_fact_payload.get('tags') else 'unknown'}"
         stored_id = self.ham_memory.store_experience(
             raw_data=fact_content_for_ham,
             data_type=ham_data_type,
@@ -241,12 +241,16 @@ class LearningManager:
 
         # Now, attempt to distill a reusable strategy from this successful case.
         # This requires a powerful LLM.
-        if not self.fact_extractor.llm: # fact_extractor holds the llm_interface
+        if not self.fact_extractor.llm_service: # fact_extractor holds the llm_interface
             print(f"[{self.ai_id}] No LLM interface available in FactExtractor, cannot distill strategy.")
             return
 
         distillation_prompt = self._create_strategy_distillation_prompt(project_case)
-        raw_strategy_output = self.fact_extractor.llm.generate_response(prompt=distillation_prompt, params={"temperature": 0.0})
+        # Use chat_completion instead of generate_response
+        from src.hsp.types import ChatMessage
+        messages = [ChatMessage(role="user", content=distillation_prompt)]
+        llm_response = await self.fact_extractor.llm_service.chat_completion(messages, params={"temperature": 0.0})
+        raw_strategy_output = llm_response.content
 
         try:
             json_match = re.search(r"```json\s*([\s\S]*?)\s*```", raw_strategy_output)

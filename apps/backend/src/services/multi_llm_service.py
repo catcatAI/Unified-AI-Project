@@ -130,7 +130,11 @@ class OpenAIProvider(BaseLLMProvider):
         try:
             openai_messages = []
             for msg in messages:
-                openai_messages.append({"role": msg.role, "content": msg.content})
+                # Check if msg is a dictionary or ChatMessage object
+                if isinstance(msg, dict):
+                    openai_messages.append({"role": msg["role"], "content": msg["content"]})
+                else:
+                    openai_messages.append({"role": msg.role, "content": msg.content})
             
             # Mock fallback for tests when no/invalid key
             api_key = os.getenv("OPENAI_API_KEY")
@@ -195,7 +199,11 @@ class OpenAIProvider(BaseLLMProvider):
     ) -> AsyncGenerator[str, None]:
         openai_messages = []
         for msg in messages:
-            openai_messages.append({"role": msg.role, "content": msg.content})
+            # Check if msg is a dictionary or ChatMessage object
+            if isinstance(msg, dict):
+                openai_messages.append({"role": msg["role"], "content": msg["content"]})
+            else:
+                openai_messages.append({"role": msg.role, "content": msg.content})
         
         try:
             stream = await self.client.chat.completions.create(
@@ -240,13 +248,23 @@ class AnthropicProvider(BaseLLMProvider):
             system_message = None
             
             for msg in messages:
-                if msg.role == "system":
-                    system_message = msg.content
+                # Check if msg is a dictionary or ChatMessage object
+                if isinstance(msg, dict):
+                    if msg["role"] == "system":
+                        system_message = msg["content"]
+                    else:
+                        claude_messages.append({
+                            "role": msg["role"],
+                            "content": msg["content"]
+                        })
                 else:
-                    claude_messages.append({
-                        "role": msg.role,
-                        "content": msg.content
-                    })
+                    if msg.role == "system":
+                        system_message = msg.content
+                    else:
+                        claude_messages.append({
+                            "role": msg.role,
+                            "content": msg.content
+                        })
             
             response = await self.client.messages.create(
                 model=self.config.model_name,
@@ -305,13 +323,23 @@ class AnthropicProvider(BaseLLMProvider):
         system_message = None
         
         for msg in messages:
-            if msg.role == "system":
-                system_message = msg.content
+            # Check if msg is a dictionary or ChatMessage object
+            if isinstance(msg, dict):
+                if msg["role"] == "system":
+                    system_message = msg["content"]
+                else:
+                    claude_messages.append({
+                        "role": msg["role"],
+                        "content": msg["content"]
+                    })
             else:
-                claude_messages.append({
-                    "role": msg.role,
-                    "content": msg.content
-                })
+                if msg.role == "system":
+                    system_message = msg.content
+                else:
+                    claude_messages.append({
+                        "role": msg.role,
+                        "content": msg.content
+                    })
         
         try:
             async with self.client.messages.stream(

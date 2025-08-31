@@ -502,9 +502,11 @@ class HAMMemoryManager:
             if hasattr(metadata, 'to_dict'):
                 current_metadata = metadata.to_dict()
             else:
-                # For other objects, create an empty dict as a safe fallback
-                # This avoids issues with trying to convert non-dict objects
-                current_metadata = {}
+                # For dict-like objects, copy the metadata
+                current_metadata = dict(metadata)
+        else:
+            # 如果metadata为None，初始化为空字典
+            current_metadata = {}
 
         memory_id = self._generate_memory_id() # Moved to top to ensure it's always bound
 

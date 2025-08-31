@@ -26,7 +26,7 @@ class LightweightCodeModel:
     """
     A model to perform lightweight static analysis of Python code,
     focusing on understanding the structure of tools.
-    Enhanced with DNA衍生数据链技术和代码复杂度分析.
+    Enhanced with DNA衍生数据链技术和代码复杂度 analysis.
     """
 
     def __init__(self, tools_directory: str = "src/tools/"):
@@ -327,7 +327,11 @@ class LightweightCodeModel:
                     return None
 
         if resolved_path:
-            return self.analyze_tool_file(resolved_path, dna_chain_id)
+            # 如果dna_chain_id为None，则不传递该参数
+            if dna_chain_id is not None:
+                return self.analyze_tool_file(resolved_path, dna_chain_id)
+            else:
+                return self.analyze_tool_file(resolved_path)
         else:
             logger.warning(f"Could not resolve tool '{tool_name_or_filepath}' to a Python file in '{self.tools_directory}' using supported conventions, nor as a direct path.")
             return None

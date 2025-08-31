@@ -259,3 +259,34 @@ def get_logic_char_token_maps(dataset_path):
     token_to_char = {i: char for i, char in enumerate(final_vocab)}
     vocab_size = len(final_vocab)
     max_seq_len = max(len(prop) for prop in propositions) if propositions else 0
+    
+    return char_to_token, token_to_char, vocab_size, max_seq_len
+
+def preprocess_logic_data(dataset_path, char_to_token, max_len, num_classes=2):
+    """Preprocess logic data for training."""
+    if not _tensorflow_is_available():
+        print("Cannot preprocess data: TensorFlow not available.")
+        return None, None
+    
+    propositions = []
+    labels = []
+    
+    with open(dataset_path, 'r') as f:
+        data = json.load(f)
+        for item in data:
+            propositions.append(item['proposition'])
+            labels.append(item['answer'])
+    
+    # Convert propositions to sequences of tokens
+    sequences = []
+    for prop in propositions:
+        tokens = [char_to_token.get(char, char_to_token.get('<UNK>', 0)) for char in prop]
+        sequences.append(tokens)
+    
+    # Pad sequences
+    X = pad_sequences(sequences, maxlen=max_len, padding='post', truncating='post')
+    
+    # Convert labels to categorical
+    y = to_categorical(labels, num_classes=num_classes)
+    
+    return X, y
