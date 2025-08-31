@@ -69,6 +69,74 @@ def _tensorflow_is_available():
 # Attempt to import TensorFlow on module load
 _ensure_tensorflow_is_imported()
 
+def get_char_token_maps(problems, answers):
+    """Create character to token mappings for the arithmetic model.
+    
+    Args:
+        problems: List of problem dictionaries with 'problem' key
+        answers: List of answer dictionaries with 'answer' key
+        
+    Returns:
+        tuple: (char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length)
+    """
+    # Collect all characters from problems and answers
+    chars = set()
+    
+    # Add special tokens
+    chars.add('\t')  # Start token
+    chars.add('\n')  # End token
+    chars.add('UNK')  # Unknown token
+    
+    # Collect characters from problems
+    for problem in problems:
+        if isinstance(problem, dict) and 'problem' in problem:
+            for char in problem['problem']:
+                chars.add(char)
+        elif isinstance(problem, str):
+            for char in problem:
+                chars.add(char)
+    
+    # Collect characters from answers
+    for answer in answers:
+        if isinstance(answer, dict) and 'answer' in answer:
+            for char in answer['answer']:
+                chars.add(char)
+        elif isinstance(answer, str):
+            for char in answer:
+                chars.add(char)
+    
+    # Create vocabulary
+    final_vocab = sorted(list(chars))
+    
+    # Create mappings
+    char_to_token = {char: i for i, char in enumerate(final_vocab)}
+    token_to_char = {i: char for i, char in enumerate(final_vocab)}
+    n_token = len(final_vocab)
+    
+    # Calculate max sequence lengths
+    max_encoder_seq_length = 0
+    max_decoder_seq_length = 0
+    
+    # For problems
+    for problem in problems:
+        if isinstance(problem, dict) and 'problem' in problem:
+            max_encoder_seq_length = max(max_encoder_seq_length, len(problem['problem']))
+        elif isinstance(problem, str):
+            max_encoder_seq_length = max(max_encoder_seq_length, len(problem))
+    
+    # For answers
+    for answer in answers:
+        if isinstance(answer, dict) and 'answer' in answer:
+            max_decoder_seq_length = max(max_decoder_seq_length, len(answer['answer']))
+        elif isinstance(answer, str):
+            max_decoder_seq_length = max(max_decoder_seq_length, len(answer))
+    
+    # Add buffer for start and end tokens
+    max_encoder_seq_length += 2  # For \t and \n
+    max_decoder_seq_length += 2  # For \t and \n
+    
+    return char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length
+
 class ArithmeticSeq2Seq:
     def __init__(self, char_to_token, token_to_char, max_encoder_seq_length, max_decoder_seq_length, n_token, latent_dim=256, embedding_dim=128):
         if not dependency_manager.is_available('tensorflow'):
@@ -254,3 +322,28 @@ class ArithmeticSeq2Seq:
         _ensure_tensorflow_is_imported() # Lazy import of TensorFlow
         try:
             with open(char_maps_path, 'r', encoding='utf-8') as f:
+                char_to_token, token_to_char = json.load(f)
+            
+            # Load model architecture and weights
+            instance = cls.__new__(cls)  # Create instance without calling __init__
+            instance.char_to_token = char_to_token
+            instance.token_to_char = token_to_char  # Note: variable name swap in saved file
+            instance.max_encoder_seq_length = max(len(k) for k in char_to_token.keys())
+            instance.max_decoder_seq_length = max(len(k) for k in token_to_char.keys())
+            instance.n_token = len(char_to_token)
+            instance.latent_dim = 256  # Default, should be saved/loaded
+            instance.embedding_dim = 128  # Default, should be saved/loaded
+            instance.model = None
+            instance.encoder_model = None
+            instance.decoder_model = None
+            instance.dna_chains = {}
+            instance.prediction_history = []
+            
+            # Build model structure
+            instance._build_inference_models()
+            instance.model.load_weights(model_weights_path)
+            
+            return instance
+        except Exception as e:
+            print(f"Error loading model for inference: {e}")
+            return None

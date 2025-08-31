@@ -1,151 +1,194 @@
 @echo off
 chcp 65001 >nul 2>&1
 setlocal enabledelayedexpansion
-title 緊急Git修復工具 - 安全版本
+title Unified AI Project - Emergency Git Fix
 color 0C
 
+:: Add error handling and logging (添加錯誤處理和日志記錄)
+set "LOG_FILE=%~dp0emergency-git-fix-errors.log"
+set "SCRIPT_NAME=emergency-git-fix.bat"
+
+:: Log script start (記錄腳本啟動)
+echo [%date% %time%] Script started: %SCRIPT_NAME% >> "%LOG_FILE%" 2>nul
+
 echo ==========================================
-echo      緊急Git修復工具
+echo   🔴 Unified AI Project - Emergency Git Fix
 echo ==========================================
 echo.
-echo [緊急] 檢測到大量文件被錯誤標記為刪除
-echo [修復] 正在執行緊急恢復程序...
+echo This script performs emergency Git operations to recover from critical issues. (此腳本執行緊急Git操作以從嚴重問題中恢復)
 echo.
-echo [安全提示] 操作前將創建安全備份
+echo ⚠️  WARNING: This script performs destructive operations! (警告：此腳本執行破壞性操作!)
+echo.
+echo Process: (過程)
+echo 1. 🆘 Reset to last known good commit (重置到最後一個已知的良好提交)
+echo 2. 🧹 Clean untracked files (清理未跟踪的文件)
+echo 3. 📦 Restore important files (恢復重要文件)
+echo 4. ✅ Verify repository status (驗證倉庫狀態)
 echo.
 
-:: 預檢查Git環境
-echo [預檢] 檢查Git倉庫狀態...
-if not exist ".git" (
-    echo [錯誤] 當前目錄不是Git倉庫
-    pause
+:: Confirm action (確認操作)
+echo [CONFIRM] Are you sure you want to perform emergency Git fix? (您確定要執行緊急Git修復嗎?)
+echo.
+echo This will: (這將:)
+echo - Reset your working directory to the last commit (將您的工作目錄重置到最後一次提交)
+echo - Delete all uncommitted changes (刪除所有未提交的更改)
+echo - Delete all untracked files (刪除所有未跟踪的文件)
+echo.
+
+:: 使用 set /p 替代 choice 命令
+:get_user_choice
+set "user_choice="
+set /p "user_choice=Continue with emergency Git fix (y/N)? "
+if not defined user_choice (
+    set "user_choice=N"
+)
+
+:: 验证用户输入
+if /i "%user_choice%"=="Y" (
+    goto continue_fix
+) else if /i "%user_choice%"=="N" (
+    echo [INFO] Operation cancelled by user (操作被用戶取消)
+    echo [%date% %time%] Operation cancelled by user >> "%LOG_FILE%" 2>nul
+    echo Press any key to exit...
+    pause >nul
+    exit /b 0
+) else (
+    echo [ERROR] Invalid choice '%user_choice%'. Please enter 'Y' or 'N'.
+    echo [%date% %time%] Invalid choice: %user_choice% >> "%LOG_FILE%" 2>nul
+    goto get_user_choice
+)
+
+:continue_fix
+
+:: Backup current state (備份當前狀態)
+echo.
+echo [STEP 1/5] Creating backup of current state... (創建當前狀態的備份)
+echo [%date% %time%] Creating backup of current state >> "%LOG_FILE%" 2>nul
+
+:: Create a backup branch (創建備份分支)
+for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set "dt=%%a"
+set "backup_branch=emergency-backup-%dt:~0,8%-%dt:~8,6%"
+git checkout -b %backup_branch% > backup_create.log 2>&1
+if errorlevel 1 (
+    echo [WARNING] Failed to create backup branch (無法創建備份分支)
+    echo [INFO] Check backup_create.log for details (檢查backup_create.log獲取詳細信息)
+) else (
+    echo [OK] Backup branch created: %backup_branch% (備份分支已創建: %backup_branch%)
+)
+
+:: Reset to last known good commit (重置到最後一個已知的良好提交)
+echo.
+echo [STEP 2/5] Resetting to last known good commit... (重置到最後一個已知的良好提交)
+echo [%date% %time%] Resetting to last known good commit >> "%LOG_FILE%" 2>nul
+
+git reset --hard HEAD > reset_hard.log 2>&1
+if errorlevel 1 (
+    echo [ERROR] Failed to reset to last commit (無法重置到最後一次提交)
+    echo [INFO] Check reset_hard.log for details (檢查reset_hard.log獲取詳細信息)
+    echo [%date% %time%] Failed to reset to last commit >> "%LOG_FILE%" 2>nul
+    echo Press any key to exit...
+    pause >nul
     exit /b 1
 )
+echo [OK] Repository reset to last commit (倉庫重置到最後一次提交)
 
-:: 獲取當前分支
-for /f "tokens=*" %%a in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "current_branch=%%a"
-echo [INFO] 當前分支: !current_branch!
+:: Clean untracked files (清理未跟踪的文件)
+echo.
+echo [STEP 3/5] Cleaning untracked files... (清理未跟踪的文件)
+echo [%date% %time%] Cleaning untracked files >> "%LOG_FILE%" 2>nul
 
-:: 創建緊急備份分支
-echo [安全] 創建緊急備份分支...
-set "emergency_backup=emergency-backup-%date:~0,4%%date:~5,2%%date:~8,2%-%time:~0,2%%time:~3,2%%time:~6,2%"
-set "emergency_backup=!emergency_backup: =0!"
-git branch "!emergency_backup!" >nul 2>&1
-if !errorlevel! equ 0 (
-    echo [成功] 緊急備份分支已創建: !emergency_backup!
+git clean -fd > clean_untracked.log 2>&1
+if errorlevel 1 (
+    echo [ERROR] Failed to clean untracked files (無法清理未跟踪的文件)
+    echo [INFO] Check clean_untracked.log for details (檢查clean_untracked.log獲取詳細信息)
+    echo [%date% %time%] Failed to clean untracked files >> "%LOG_FILE%" 2>nul
 ) else (
-    echo [警告] 無法創建備份分支
-    echo [選項] 是否繼續緊急修復？ (y/N)
-    set /p "emergency_continue="
-    if /i "!emergency_continue!" neq "y" (
-        echo [取消] 緊急修復已取消
-        pause
-        exit /b 0
-    )
+    echo [OK] Untracked files cleaned (未跟踪的文件已清理)
 )
 
-:: 顯示當前狀態
-echo [步驟 1] 檢查當前Git狀態...
-git status --porcelain | find /c "deleted" > deleted_count.txt
-set /p deleted_count=<deleted_count.txt
-echo [警告] 發現 %deleted_count% 個文件被標記為刪除
+:: Restore important files (恢復重要文件)
 echo.
+echo [STEP 4/5] Restoring important files... (恢復重要文件)
+echo [%date% %time%] Restoring important files >> "%LOG_FILE%" 2>nul
 
-:: 緊急重置
-echo [步驟 2] 執行緊急重置...
-echo [INFO] 重置暫存區...
-git reset HEAD >nul 2>&1
-if !errorlevel! neq 0 (
-    echo [警告] 重置暫存區失敗，嘗試替代方法...
-    git reset --mixed HEAD >nul 2>&1
+:: Restore configuration files (恢復配置文件)
+if exist ".gitignore.bak" (
+    copy ".gitignore.bak" ".gitignore" >nul 2>&1
+    echo [OK] .gitignore restored (已恢復.gitignore)
+) else if not exist ".gitignore" (
+    echo [INFO] Creating default .gitignore (創建默認.gitignore)
+    echo node_modules/ > .gitignore
+    echo *.log >> .gitignore
+    echo venv/ >> .gitignore
+    echo .env >> .gitignore
+    echo dist/ >> .gitignore
+    echo build/ >> .gitignore
+    echo __pycache__/ >> .gitignore
+    echo *.pyc >> .gitignore
 )
 
-echo [INFO] 恢復工作目錄...
-git checkout -- . >nul 2>&1
-if !errorlevel! neq 0 (
-    echo [警告] 恢復工作目錄部分失敗
+:: Restore package.json if missing (如果缺失則恢復package.json)
+if not exist "package.json" (
+    echo [INFO] package.json not found, creating minimal version (未找到package.json，創建最小版本)
+    echo { > package.json
+    echo   "name": "unified-ai-project", >> package.json
+    echo   "version": "1.0.0", >> package.json
+    echo   "description": "Unified AI Project", >> package.json
+    echo   "scripts": { >> package.json
+    echo     "dev": "pnpm --filter frontend-dashboard dev" >> package.json
+    echo   } >> package.json
+    echo } >> package.json
+    echo [OK] Minimal package.json created (已創建最小package.json)
 )
 
-echo [INFO] 清理未追蹤文件...
-git clean -fd >nul 2>&1
-
+:: Verify repository status (驗證倉庫狀態)
 echo.
-echo [步驟 3] 驗證修復結果...
-git status --porcelain > status_after_fix.txt
-for /f %%i in ('find /c /v "" ^< status_after_fix.txt') do set "remaining_issues=%%i"
+echo [STEP 5/5] Verifying repository status... (驗證倉庫狀態)
+echo [%date% %time%] Verifying repository status >> "%LOG_FILE%" 2>nul
 
-if %remaining_issues% lss 10 (
-    echo [成功] Git狀態已恢復正常
-    echo [結果] 剩餘問題: %remaining_issues% 個
+git status > final_status.log 2>&1
+echo [OK] Repository status verified (倉庫狀態已驗證)
+
+:: Check for critical directories (檢查關鍵目錄)
+set "missing_critical=0"
+if not exist "apps\" (
+    echo [WARNING] Critical directory 'apps' missing (關鍵目錄'apps'缺失)
+    set /a "missing_critical+=1"
+)
+if not exist "packages\" (
+    echo [WARNING] Critical directory 'packages' missing (關鍵目錄'packages'缺失)
+    set /a "missing_critical+=1"
+)
+if not exist "scripts\" (
+    echo [WARNING] Critical directory 'scripts' missing (關鍵目錄'scripts'缺失)
+    set /a "missing_critical+=1"
+)
+
+if %missing_critical% gtr 0 (
+    echo [INFO] %missing_critical% critical directories missing ( %missing_critical% 個關鍵目錄缺失)
+    echo [SUGGESTION] Consider cloning the repository again (建議再次克隆倉庫)
 ) else (
-    echo [警告] 仍有 %remaining_issues% 個問題需要處理
-    echo [建議] 執行深度修復...
-    
-    :: 深度修復
-    echo [深度修復] 重建索引...
-    git read-tree HEAD
-    git checkout-index -f -a
-    git update-index --refresh
+    echo [OK] All critical directories present (所有關鍵目錄都存在)
 )
 
 echo.
-echo [步驟 4] 檢查關鍵文件...
-set "critical_files=.gitignore README.md tools\health-check.bat tools\run-tests.bat tools\start-dev.bat"
-set "missing_files=0"
-
-for %%f in (%critical_files%) do (
-    if not exist "%%f" (
-        echo [警告] 關鍵文件缺失: %%f
-        set /a "missing_files+=1"
-    ) else (
-        echo [OK] 文件存在: %%f
-    )
-)
-
+echo [SUCCESS] Emergency Git fix completed! (緊急Git修復完成!)
+echo [%date% %time%] Emergency Git fix completed >> "%LOG_FILE%" 2>nul
 echo.
-echo [步驟 5] 清理和提交狀態...
-if %missing_files% equ 0 (
-    echo [成功] 所有關鍵文件都存在
-    echo [INFO] 檢查是否需要提交新文件...
-    
-    git add .gitignore >nul 2>&1
-    git add *.bat >nul 2>&1
-    git add *.md >nul 2>&1
-    git add apps/backend/diagnose_components.py >nul 2>&1
-    
-    git status --porcelain > final_status.txt
-    for /f %%i in ('find /c /v "" ^< final_status.txt') do set "final_changes=%%i"
-    
-    if %final_changes% gtr 0 (
-        echo [INFO] 發現 %final_changes% 個變更需要處理
-        echo [選項] 是否提交這些變更？ (y/N)
-        set /p "commit_choice="
-        if /i "!commit_choice!"=="y" (
-            git commit -m "緊急修復: 恢復被錯誤刪除的文件並整合批處理腳本系統"
-            echo [成功] 變更已提交
-        )
-    ) else (
-        echo [INFO] 沒有需要提交的變更
-    )
-) else (
-    echo [錯誤] %missing_files% 個關鍵文件缺失，需要手動恢復
-)
-
-:: 清理臨時文件
-del deleted_count.txt >nul 2>&1
-del status_after_fix.txt >nul 2>&1
-del final_status.txt >nul 2>&1
-
+echo Summary: (摘要)
+echo 🔴 Backup branch: %backup_branch% (備份分支: %backup_branch%)
+echo 🔄 Repository reset to last commit (倉庫重置到最後一次提交)
+echo 🧹 Untracked files cleaned (未跟踪的文件已清理)
+echo 📄 Critical files restored (關鍵文件已恢復)
 echo.
-echo ==========================================
-echo    緊急修復完成
-echo ==========================================
-echo.
-echo [狀態] Git倉庫狀態已修復
-echo [備份] 緊急備份分支: !emergency_backup!
-echo [建議] 執行 health-check.bat 驗證環境
-echo [建議] 執行 git status 確認最終狀態
-echo [恢復] 如需恢復，使用: git checkout !emergency_backup!
+echo Next steps: (下一步)
+echo 1. Review changes in backup branch if needed (如果需要，請查看備份分支中的更改)
+echo 2. Run health-check.bat to verify environment (運行health-check.bat驗證環境)
+echo 3. Run start-dev.bat to resume development (運行start-dev.bat恢復開發)
 echo.
 
-pause
+:end_script
+echo.
+echo Press any key to exit...
+pause >nul
+exit /b 0

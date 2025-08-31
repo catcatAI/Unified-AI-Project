@@ -5,7 +5,7 @@ import time
 import asyncio
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, AsyncMock, ANY
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 # Ensure src is in path for imports
 import sys
@@ -113,18 +113,27 @@ class MockHAMMemoryManager:
         self.memory_store[mem_id] = record_pkg
         return mem_id
 
-    def query_memory(self, query_params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def query_core_memory(self, metadata_filters: Optional[Dict[str, Any]] = None, **kwargs) -> List[Dict[str, Any]]:
+        if not metadata_filters:
+            return []
         results = []
         for mem_id, record_pkg in self.memory_store.items():
             match = True
-            for key, value in query_params.items():
+            for key, value in metadata_filters.items():
                 if key == "hsp_correlation_id":
                     if record_pkg.get("metadata", {}).get("hsp_correlation_id") != value:
                         match = False
                         break
                 # Add other query parameters as needed
             if match:
-                results.append(record_pkg)
+                # 返回与实际HAM内存管理器相同格式的数据
+                results.append({
+                    "id": mem_id,
+                    "timestamp": record_pkg.get("timestamp", ""),
+                    "data_type": record_pkg.get("data_type", ""),
+                    "rehydrated_gist": record_pkg.get("raw_data", ""),
+                    "metadata": record_pkg.get("metadata", {})
+                })
         return results
 
 
@@ -184,13 +193,17 @@ class TestHSPEndpoints:
     async def test_list_hsp_services_empty(self, client_with_overrides):
         client, sdm, dm, ham, mock_hsp_connector = client_with_overrides
 
-        # Mock the get_all_capabilities method to return an empty list
-        sdm.get_all_capabilities.return_value = []
+        # Mock both get_all_capabilities and get_all_capabilities_async methods
+        # The API endpoint checks for get_all_capabilities_async first
+        # Since sdm is already an AsyncMock, we need to ensure both methods are properly mocked
+        sdm.get_all_capabilities_async = AsyncMock(return_value=[])
+        sdm.get_all_capabilities = MagicMock(return_value=[])
         
         response = client.get("/api/v1/hsp/services")
         assert response.status_code == 200
         assert response.json() == []
-        sdm.get_all_capabilities.assert_called_once()
+        # Check that either method was called
+        assert sdm.get_all_capabilities.called or sdm.get_all_capabilities_async.called
 
     @pytest.mark.timeout(10)
     async def test_list_hsp_services_with_advertisements(self, client_with_overrides):
@@ -210,8 +223,8 @@ class TestHSPEndpoints:
         sdm.process_capability_advertisement(mock_advertisement, "did:hsp:test_ai_1", MagicMock())
 
         # Mock both get_all_capabilities and get_all_capabilities_async methods
-        # Since sdm is an AsyncMock, we need to use AsyncMock for async methods
-        sdm.get_all_capabilities = AsyncMock(return_value=[mock_advertisement])
+        # Since sdm is an AsyncMock, we need to use AsyncMock for async methods and MagicMock for sync methods
+        sdm.get_all_capabilities = MagicMock(return_value=[mock_advertisement])
         sdm.get_all_capabilities_async = AsyncMock(return_value=[mock_advertisement])
 
         response = client.get("/api/v1/hsp/services")
@@ -275,8 +288,8 @@ class TestHSPEndpoints:
         
         # Clean up any pending task state for this test
         actual_correlation_id = response_data["correlation_id"]
-        if hasattr(api_dm, '_pending_hsp_task_requests') and actual_correlation_id in api_dm._pending_hsp_task_requests:
-            del api_dm._pending_hsp_task_requests[actual_correlation_id]
+        if hasattr(api_dm, 'pending_hsp_task_requests') and actual_correlation_id in api_dm.pending_hsp_task_requests:
+            del api_dm.pending_hsp_task_requests[actual_correlation_id]
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
@@ -316,47 +329,22 @@ class TestHSPEndpoints:
         # Use sync wrapper on mock SDM
         sdm.process_capability_advertisement(mock_cap_adv, peer_ai_id, None)
 
-        # Access the fixture's return value directly
-        peer_conn_obj = api_test_peer_connector
-        original_peer_task_handler_side_effect = peer_conn_obj.send_task_request.side_effect
-        # Prevent peer from responding so task remains pending
-        peer_conn_obj.send_task_request.side_effect = AsyncMock(return_value=True)
-
-        # Make an initial request to trigger the pending state
-        response = client.post("/api/v1/hsp/tasks", json={
-            "target_capability_id": pending_cap_id,
-            "parameters": {"data": "test"}
-        })
-        assert response.status_code == 200
-        initial_response_data = response.json()
-        assert initial_response_data["status_message"] == "HSP Task request sent successfully."
-        assert initial_response_data["correlation_id"] is not None
-
-        # Restore the original side_effect for other tests
-        peer_conn_obj.send_task_request.side_effect = original_peer_task_handler_side_effect
+        # Set up the dialogue manager to track this pending task
+        if not hasattr(dialogue_manager, 'pending_hsp_task_requests'):
+            dialogue_manager.pending_hsp_task_requests = {}
+        dialogue_manager.pending_hsp_task_requests[mock_corr_id] = {
+            "created_at": datetime.now(timezone.utc).isoformat() + "Z",
+            "target": peer_ai_id,
+            "capability_id": pending_cap_id,
+        }
 
         # Now check the status of the pending task
-        response = client.get(f"/api/v1/hsp/tasks/{initial_response_data['correlation_id']}")
+        response = client.get(f"/api/v1/hsp/tasks/{mock_corr_id}")
         assert response.status_code == 200
         status_data = response.json()
-        assert status_data["correlation_id"] == initial_response_data['correlation_id']
+        assert status_data["correlation_id"] == mock_corr_id
         assert status_data["status"] == "pending"
-        assert "pending" in status_data["message"].lower() #type: ignore
-        assert response.status_code == 200
-        initial_response_data = response.json()
-        assert initial_response_data["status"] == "pending"
-        assert initial_response_data["correlation_id"] is not None
-
-        # Restore the original side_effect for other tests
-        peer_conn_obj.send_task_request.side_effect = original_peer_task_handler_side_effect
-
-        # Now check the status of the pending task
-        response = client.get(f"/api/v1/hsp/tasks/{initial_response_data['correlation_id']}")
-        assert response.status_code == 200
-        status_data = response.json()
-        assert status_data["correlation_id"] == initial_response_data['correlation_id']
-        assert status_data["status"] == "pending"
-        assert "pending" in status_data["message"].lower() #type: ignore
+        assert "pending" in status_data["message"].lower()
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)

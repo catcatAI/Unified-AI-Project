@@ -248,7 +248,7 @@ async def test_09_empty_text_abstraction(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_09_empty_text_abstraction...")
     raw_text = " "
-    metadata: DialogueMemoryEntryEntryMetadata = {"speaker":"system", "timestamp":datetime.now(timezone.utc).isoformat(), "test_case": "empty_text"}
+    metadata: DialogueMemoryEntryMetadata = {"speaker":"system", "timestamp":datetime.now(timezone.utc).isoformat(), "test_case": "empty_text"}
     memory_id = await ham_manager_no_res.store_experience(raw_text, "dialogue_text", metadata)
     recalled_data: Optional[HAMRecallResult] = ham_manager_no_res.recall_gist(memory_id)
     assert recalled_data is not None

@@ -114,8 +114,9 @@ class DialogueManager:
         
         try:
             # Attempt to dispatch a tool based on user input
-            history = self.active_sessions.get(session_id, [])
-            tool_response = await self.tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id)
+            history = self.active_sessions.get(session_id, []) if session_id else []
+            # 确保在调用tool_dispatcher.dispatch时传递history参数
+            tool_response = await self.tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id, history=history)
 
             response_text = ""
             if tool_response['status'] == "success":
@@ -123,7 +124,7 @@ class DialogueManager:
             elif tool_response['status'] == "no_tool_found" or tool_response['status'] == "no_tool_inferred":
                 response_text = f"{ai_name}: You said '{user_input}'. This is a simple response."
             else:
-                response_text = f"{ai_name}: An error occurred while processing your request: {tool_response['error_message']}"
+                response_text = f"{ai_name}: I'm sorry, I encountered an error while trying to understand your request."
         except Exception as e:
             logging.error(f"Error dispatching tool: {e}")
             response_text = f"{ai_name}: I'm sorry, I encountered an error while trying to understand your request."
@@ -133,6 +134,7 @@ class DialogueManager:
             self.active_sessions[session_id].append(DialogueTurn(speaker="user", text=user_input, timestamp=datetime.now(timezone.utc)))
             self.active_sessions[session_id].append(DialogueTurn(speaker="ai", text=response_text, timestamp=datetime.now(timezone.utc)))
 
+        # Always store in memory if memory manager is available, regardless of session
         if self.memory_manager:
             user_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id} # type: ignore
             user_mem_id = self.memory_manager.store_experience(user_input, "user_dialogue_text", user_metadata)

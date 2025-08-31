@@ -1,0 +1,3 @@
+Model trained with preset: full_dataset_training
+Epochs: 100
+Batch size: 16

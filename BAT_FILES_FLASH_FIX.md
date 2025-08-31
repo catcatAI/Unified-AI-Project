@@ -1,0 +1,85 @@
+# Unified AI Project - .bat 文件闪退问题修复说明
+
+## 问题分析
+
+在检查项目中的 .bat 文件时，我们发现可能导致闪退问题的原因包括：
+
+1. **路径处理问题**：在使用 `start` 命令启动新窗口时，没有正确处理工作目录
+2. **缺少错误处理**：脚本在遇到错误时直接退出，没有给用户查看错误信息的机会
+3. **缺少用户交互**：脚本执行完毕后立即关闭，用户无法查看执行结果
+4. **编码问题**：在处理中文字符时可能出现编码问题
+
+## 修复措施
+
+### 1. 添加错误处理和日志记录
+
+所有主要的 .bat 文件都已添加错误处理和日志记录功能：
+- 添加了日志文件记录脚本执行过程
+- 在关键步骤添加错误检查
+- 在脚本结束时添加暂停命令，防止窗口立即关闭
+
+### 2. 修复 start 命令使用问题
+
+在 [start-dev.bat](file:///d:\Projects\Unified-AI-Project\tools\start-dev.bat) 和 [ai-runner.bat](file:///d:\Projects\Unified-AI-Project\ai-runner.bat) 中，我们修复了 `start` 命令的使用：
+- 添加了 `/b` 参数避免创建新窗口导致闪退
+- 正确设置了工作目录路径
+- 添加了错误处理
+
+### 3. 改进用户交互
+
+所有脚本都添加了 `pause` 命令，确保用户可以查看执行结果：
+- 在脚本执行完毕后暂停
+- 在错误发生时暂停并显示错误信息
+- 在关键步骤后暂停，让用户确认执行结果
+
+### 4. 输入验证
+
+添加了输入验证机制，防止无效输入导致脚本异常：
+- 验证用户输入是否在有效范围内
+- 添加了输入格式检查
+
+## 修复的文件列表
+
+以下文件已进行闪退问题修复：
+
+1. [unified-ai.bat](file:///d:\Projects\Unified-AI-Project\unified-ai.bat) - 主要管理工具
+2. [ai-runner.bat](file:///d:\Projects\Unified-AI-Project\ai-runner.bat) - AI代理运行工具
+3. [tools\start-dev.bat](file:///d:\Projects\Unified-AI-Project\tools\start-dev.bat) - 开发环境启动工具
+4. [tools\run-tests.bat](file:///d:\Projects\Unified-AI-Project\tools\run-tests.bat) - 测试运行工具
+5. [tools\health-check.bat](file:///d:\Projects\Unified-AI-Project\tools\health-check.bat) - 健康检查工具
+6. [tools\fix-dependencies.bat](file:///d:\Projects\Unified-AI-Project\tools\fix-dependencies.bat) - 依赖修复工具
+7. [scripts\run_backend_tests.bat](file:///d:\Projects\Unified-AI-Project\scripts\run_backend_tests.bat) - 后端测试运行工具
+
+## 新增工具
+
+### 错误日志查看工具
+
+新增了 [tools\view-error-logs.bat](file:///d:\Projects\Unified-AI-Project\tools\view-error-logs.bat) 工具，用于查看脚本执行过程中产生的错误日志。
+
+使用方法：
+```
+tools\view-error-logs.bat
+```
+
+## 使用建议
+
+1. **正常执行**：所有脚本现在都会在执行完毕后暂停，用户可以查看执行结果
+2. **错误处理**：当脚本遇到错误时，会记录到日志文件并显示错误信息
+3. **日志查看**：使用 `tools\view-error-logs.bat` 可以查看所有错误日志
+4. **报告问题**：如果仍有闪退问题，请提供错误日志内容以便进一步诊断
+
+## 测试验证
+
+所有修复后的脚本都已通过以下测试：
+1. 正常执行流程测试
+2. 错误处理流程测试
+3. 中文字符处理测试
+4. 路径处理测试
+
+## 后续维护
+
+建议在后续开发中遵循以下原则：
+1. 所有 .bat 脚本都应包含错误处理和日志记录
+2. 脚本执行完毕后应添加 pause 命令
+3. 使用 start 命令时应正确设置工作目录
+4. 定期检查和清理错误日志文件

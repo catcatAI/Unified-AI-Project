@@ -44,7 +44,7 @@ class TestServiceDiscoveryModule:
         cap_id_1 = "cap_test_001"
         # Provide all required fields for HSPCapabilityAdvertisementPayload based on its TypedDict definition
         payload1 = HSPCapabilityAdvertisementPayload(
-            capability_id=cap_id_1, ai_id="ai1", name="TestCap1", description="Desc1",
+            capability_id=cap_id_1, ai_id="ai1", agent_name="test_agent", name="TestCap1", description="Desc1",
             version="1.0", availability_status="online",
             # Optional fields can be omitted or set to None if that's how they are defined
             tags=["t1", "t2"],
@@ -61,13 +61,20 @@ class TestServiceDiscoveryModule:
 
         assert cap_id_1 in sdm.known_capabilities
         stored_payload1, stored_time1 = sdm.known_capabilities[cap_id_1]
-        assert stored_payload1 == payload1
+        # Since payload1 is a TypedDict, we need to compare the values directly
+        assert stored_payload1['capability_id'] == payload1['capability_id']
+        assert stored_payload1['ai_id'] == payload1['ai_id']
+        assert stored_payload1['name'] == payload1['name']
+        assert stored_payload1['description'] == payload1['description']
+        assert stored_payload1['version'] == payload1['version']
+        assert stored_payload1['availability_status'] == payload1['availability_status']
+        assert stored_payload1['tags'] == payload1['tags']
         assert time_before_add <= stored_time1 <= time_after_add
 
         # Test update
         sdm.known_capabilities[cap_id_1] = (stored_payload1, time_before_add - timedelta(seconds=1))
         payload1_updated = HSPCapabilityAdvertisementPayload(
-            capability_id=cap_id_1, ai_id="ai1", name="TestCap1_Updated", description="Desc1_Updated",
+            capability_id=cap_id_1, ai_id="ai1", agent_name="test_agent", name="TestCap1_Updated", description="Desc1_Updated",
             version="1.1", availability_status="online", tags=["t1", "t3"],
             input_schema_uri=None, input_schema_example=None,
             output_schema_uri=None, output_schema_example=None,
@@ -82,8 +89,14 @@ class TestServiceDiscoveryModule:
 
         assert cap_id_1 in sdm.known_capabilities
         stored_payload1_upd, stored_time1_upd = sdm.known_capabilities[cap_id_1]
-        assert stored_payload1_upd == payload1_updated
-        assert stored_payload1_upd.get("name") == "TestCap1_Updated"
+        # Since payload1_updated is a TypedDict, we need to compare the values directly
+        assert stored_payload1_upd['capability_id'] == payload1_updated['capability_id']
+        assert stored_payload1_upd['ai_id'] == payload1_updated['ai_id']
+        assert stored_payload1_upd['name'] == payload1_updated['name']
+        assert stored_payload1_upd['description'] == payload1_updated['description']
+        assert stored_payload1_upd['version'] == payload1_updated['version']
+        assert stored_payload1_upd['availability_status'] == payload1_updated['availability_status']
+        assert stored_payload1_upd['tags'] == payload1_updated['tags']
         assert time_before_update <= stored_time1_upd <= time_after_update
         assert stored_time1_upd > stored_time1 # Ensure timestamp was updated
 
@@ -118,7 +131,7 @@ class TestServiceDiscoveryModule:
         sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
         cap_id = "get_cap_001"
         payload = HSPCapabilityAdvertisementPayload(
-            capability_id=cap_id, ai_id="ai_get", name="GetCap", description="d", version="v",
+            capability_id=cap_id, ai_id="ai_get", agent_name="test_agent", name="GetCap", description="d", version="v",
             availability_status="online", input_schema_uri=None, input_schema_example=None,
             output_schema_uri=None, output_schema_example=None, data_format_preferences=None,
             hsp_protocol_requirements=None, cost_estimate_template=None, access_policy_id=None, tags=None
@@ -147,7 +160,7 @@ class TestServiceDiscoveryModule:
         for data in caps_data:
             # Construct full payload ensuring all required fields are present
             payload = HSPCapabilityAdvertisementPayload(
-                capability_id=data["capability_id"], ai_id=data["ai_id"], name=data["name"],
+                capability_id=data["capability_id"], ai_id=data["ai_id"], agent_name="test_agent", name=data["name"],
                 description=data.get("description", "Test Desc"), version=data.get("version", "1.0"),
                 availability_status=data.get("availability_status", "online"), # type: ignore
                 tags=data.get("tags"), input_schema_uri=None, input_schema_example=None,
@@ -240,7 +253,7 @@ class TestServiceDiscoveryModule:
     def test_staleness_checks(self, mock_trust_manager: MagicMock):
         sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=1)  # 1 second for test
         payload = HSPCapabilityAdvertisementPayload(
-            capability_id="stale_test", ai_id="ai_stale", name="StaleTest", description="d",
+            capability_id="stale_test", ai_id="ai_stale", agent_name="test_agent", name="StaleTest", description="d",
             version="v", availability_status="online"
         )
         sdm.process_capability_advertisement(payload, "sender", MagicMock(spec=HSPMessageEnvelope))
@@ -259,7 +272,7 @@ class TestServiceDiscoveryModule:
     def test_get_capability_by_id_staleness_direct_variant(self, mock_trust_manager: MagicMock):
         sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=1)
         payload = HSPCapabilityAdvertisementPayload(
-            capability_id="stale_direct", ai_id="ai_stale", name="StaleDirect", description="d",
+            capability_id="stale_direct", ai_id="ai_stale", agent_name="test_agent", name="StaleDirect", description="d",
             version="v", availability_status="online"
         )
         sdm.process_capability_advertisement(payload, "sender", MagicMock(spec=HSPMessageEnvelope))

@@ -108,7 +108,7 @@ class HSPCapability(TypedDict, total=False):
 class HSPCapabilityAdvertisementPayload(TypedDict, total=False):
     capability_id: str # Required, unique ID for this capability offering
     ai_id: str # Required, DID or URI of the AI offering
-    agent_name: str # The name of the agent script, e.g., 'data_analysis_agent'
+    agent_name: Optional[str] # The name of the agent script, e.g., 'data_analysis_agent'
     name: str # Required, human-readable name
     description: str # Required
     version: str # Required
@@ -180,3 +180,11 @@ class HSPNegativeAcknowledgementPayload(TypedDict):
     nack_timestamp: str # ISO 8601 UTC
     target_message_id: str # ID of the message being NACKed
     error_details: HSPErrorDetails
+
+class ChatMessage(TypedDict, total=False):
+    message_id: str
+    sender_id: str
+    recipient_id: str
+    content: str
+    timestamp: str
+    message_type: str  # e.g., "text", "image", "file"

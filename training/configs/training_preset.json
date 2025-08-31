@@ -30,7 +30,40 @@
           "status": "available"
         }
       },
-      "downloaded_data": {
+      "concept_models_data": {
+        "concept_models_docs": {
+          "path": "data/concept_models_training_data/concept_models_docs_training_data.json",
+          "sample_count": 1000,
+          "type": "text_documents",
+          "status": "available"
+        },
+        "environment_simulation_data": {
+          "path": "data/concept_models_training_data/environment_simulation_data.json",
+          "sample_count": 100,
+          "type": "environment_transitions",
+          "status": "available"
+        },
+        "causal_reasoning_data": {
+          "path": "data/concept_models_training_data/causal_reasoning_data.json",
+          "sample_count": 50,
+          "type": "causal_relationships",
+          "status": "available"
+        },
+        "adaptive_learning_data": {
+          "path": "data/concept_models_training_data/adaptive_learning_data.json",
+          "sample_count": 50,
+          "type": "learning_strategies",
+          "status": "available"
+        },
+        "alpha_deep_model_data": {
+          "path": "data/concept_models_training_data/alpha_deep_model_data.json",
+          "sample_count": 50,
+          "type": "deep_parameters",
+          "status": "available"
+        }
+      }
+    },
+    "downloaded_data": {
         "flickr30k_sample": {
           "path": "data/flickr30k_sample",
           "type": "image_captions",
@@ -51,8 +84,7 @@
           "type": "scene_graphs",
           "status": "available"
         }
-      }
-    },
+      },
     "data_paths": {
       "flickr30k": "data/flickr30k_sample",
       "common_voice": "data/common_voice_zh",
@@ -61,7 +93,133 @@
       "vision_samples": "data/vision_samples",
       "audio_samples": "data/audio_samples",
       "reasoning_samples": "data/reasoning_samples",
-      "multimodal_samples": "data/multimodal_samples"
+      "multimodal_samples": "data/multimodal_samples",
+      "concept_models_docs": "data/concept_models_training_data/concept_models_docs_training_data.json",
+      "environment_simulation_data": "data/concept_models_training_data/environment_simulation_data.json",
+      "causal_reasoning_data": "data/concept_models_training_data/causal_reasoning_data.json",
+      "adaptive_learning_data": "data/concept_models_training_data/adaptive_learning_data.json",
+      "alpha_deep_model_data": "data/concept_models_training_data/alpha_deep_model_data.json"
+    }
+  },
+  "training_scenarios": {
+    "quick_start": {
+      "description": "Quick training with mock data for testing",
+      "datasets": ["vision_samples", "audio_samples", "reasoning_samples"],
+      "epochs": 3,
+      "batch_size": 8,
+      "target_models": ["vision_service", "audio_service", "causal_reasoning_engine"]
+    },
+    "comprehensive_training": {
+      "description": "Full training with all available data",
+      "datasets": ["vision_samples", "audio_samples", "reasoning_samples", "multimodal_samples", "flickr30k_sample", "common_voice_zh", "coco_captions", "visual_genome_sample"],
+      "epochs": 50,
+      "batch_size": 32,
+      "target_models": ["vision_service", "audio_service", "causal_reasoning_engine", "multimodal_service"]
+    },
+    "full_dataset_training": {
+      "description": "Full dataset training with automatic pause/resume capabilities",
+      "datasets": ["full_vision_data", "full_audio_data", "full_text_data", "full_multimodal_data"],
+      "epochs": 100,
+      "batch_size": 16,
+      "target_models": ["vision_service", "audio_service", "causal_reasoning_engine", "multimodal_service"],
+      "checkpoint_interval": 5,
+      "auto_pause_on_low_disk": true,
+      "min_disk_space_gb": 5
+    },
+    "vision_focus": {
+      "description": "Focus on vision-related models",
+      "datasets": ["vision_samples", "flickr30k_sample", "coco_captions", "visual_genome_sample"],
+      "epochs": 30,
+      "batch_size": 16,
+      "target_models": ["vision_service"]
+    },
+    "audio_focus": {
+      "description": "Focus on audio-related models",
+      "datasets": ["audio_samples", "common_voice_zh"],
+      "epochs": 20,
+      "batch_size": 8,
+      "target_models": ["audio_service"]
+    },
+    "math_model_training": {
+      "description": "Train mathematical calculation model",
+      "datasets": ["arithmetic_train_dataset"],
+      "epochs": 50,
+      "batch_size": 64,
+      "target_models": ["math_model"],
+      "checkpoint_interval": 5
+    },
+    "logic_model_training": {
+      "description": "Train logical reasoning model",
+      "datasets": ["logic_train_dataset"],
+      "epochs": 50,
+      "batch_size": 32,
+      "target_models": ["logic_model"],
+      "checkpoint_interval": 5
+    },
+    "real_math_model_training": {
+      "description": "Real mathematical model training with TensorFlow",
+      "datasets": ["arithmetic_train_dataset"],
+      "epochs": 100,
+      "batch_size": 64,
+      "target_models": ["math_model"],
+      "checkpoint_interval": 10
+    },
+    "real_logic_model_training": {
+      "description": "Real logical reasoning model training with TensorFlow",
+      "datasets": ["logic_train_dataset"],
+      "epochs": 100,
+      "batch_size": 32,
+      "target_models": ["logic_model"],
+      "checkpoint_interval": 10
+    },
+    "concept_models_training": {
+      "description": "Train all concept models",
+      "datasets": ["concept_models_docs", "reasoning_samples"],
+      "epochs": 30,
+      "batch_size": 16,
+      "target_models": ["concept_models"],
+      "checkpoint_interval": 5
+    },
+    "environment_simulator_training": {
+      "description": "Train environment simulator specifically",
+      "datasets": ["environment_simulation_data"],
+      "epochs": 20,
+      "batch_size": 16,
+      "target_models": ["environment_simulator"],
+      "checkpoint_interval": 5
+    },
+    "causal_reasoning_training": {
+      "description": "Train causal reasoning engine specifically",
+      "datasets": ["causal_reasoning_data", "reasoning_samples"],
+      "epochs": 25,
+      "batch_size": 32,
+      "target_models": ["causal_reasoning_engine"],
+      "checkpoint_interval": 5
+    },
+    "adaptive_learning_training": {
+      "description": "Train adaptive learning controller specifically",
+      "datasets": ["adaptive_learning_data"],
+      "epochs": 20,
+      "batch_size": 16,
+      "target_models": ["adaptive_learning_controller"],
+      "checkpoint_interval": 5
+    },
+    "alpha_deep_model_training": {
+      "description": "Train Alpha deep model specifically",
+      "datasets": ["alpha_deep_model_data", "concept_models_docs"],
+      "epochs": 30,
+      "batch_size": 12,
+      "target_models": ["alpha_deep_model"],
+      "checkpoint_interval": 5
+    },
+    "collaborative_training": {
+      "description": "Full model collaborative training using all available data",
+      "datasets": ["all_available_datasets"],
+      "epochs": 50,
+      "batch_size": 16,
+      "target_models": ["all_models"],
+      "checkpoint_interval": 5,
+      "enable_collaborative_training": true
     }
   },
   "training_configuration": {
@@ -113,36 +271,6 @@
       "learning_rate": 0.001,
       "epochs": 25,
       "data_sources": ["multimodal_samples", "flickr30k_sample", "coco_captions"]
-    }
-  },
-  "training_scenarios": {
-    "quick_start": {
-      "description": "Quick training with mock data for testing",
-      "datasets": ["vision_samples", "audio_samples", "reasoning_samples"],
-      "epochs": 3,
-      "batch_size": 8,
-      "target_models": ["vision_service", "audio_service", "causal_reasoning_engine"]
-    },
-    "comprehensive_training": {
-      "description": "Full training with all available data",
-      "datasets": ["vision_samples", "audio_samples", "reasoning_samples", "multimodal_samples", "flickr30k_sample", "common_voice_zh", "coco_captions", "visual_genome_sample"],
-      "epochs": 50,
-      "batch_size": 32,
-      "target_models": ["vision_service", "audio_service", "causal_reasoning_engine", "multimodal_service"]
-    },
-    "vision_focus": {
-      "description": "Focus on vision-related models",
-      "datasets": ["vision_samples", "flickr30k_sample", "coco_captions", "visual_genome_sample"],
-      "epochs": 30,
-      "batch_size": 16,
-      "target_models": ["vision_service"]
-    },
-    "audio_focus": {
-      "description": "Focus on audio-related models",
-      "datasets": ["audio_samples", "common_voice_zh"],
-      "epochs": 20,
-      "batch_size": 8,
-      "target_models": ["audio_service"]
     }
   },
   "data_preprocessing": {

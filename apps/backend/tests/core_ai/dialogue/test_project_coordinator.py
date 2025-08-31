@@ -19,6 +19,7 @@ def project_coordinator():
     """Provides a ProjectCoordinator instance with mocked dependencies."""
     mock_llm_interface = AsyncMock()
     mock_service_discovery = AsyncMock()  # 修改为AsyncMock
+    mock_service_discovery.get_all_capabilities_async = AsyncMock(return_value=[])
     mock_hsp_connector = MagicMock()
     mock_agent_manager = MagicMock()
     mock_memory_manager = MagicMock()
@@ -58,8 +59,8 @@ async def test_handle_project_happy_path(project_coordinator):
     execution_results = {0: {"status": "success", "result": "index.html created."}}
     final_integrated_response = "I have successfully created the index.html file for your website."
     
-    # 正确模拟 service_discovery.get_all_capabilities() 的异步调用
-    pc.service_discovery.get_all_capabilities = AsyncMock(return_value=[])
+    # 正确模拟 service_discovery.get_all_capabilities_async() 的异步调用
+    pc.service_discovery.get_all_capabilities_async.return_value = []
 
     # Mock the three main phases of the project
     pc._decompose_user_intent_into_subtasks = AsyncMock(return_value=decomposed_tasks)
@@ -70,7 +71,8 @@ async def test_handle_project_happy_path(project_coordinator):
     response = await pc.handle_project(user_query, "session123", "user456")
 
     # Assert
-    pc.service_discovery.get_all_capabilities.assert_awaited_once()
+    # 修复断言，确保正确检查异步方法的调用
+    pc.service_discovery.get_all_capabilities_async.assert_awaited_once()
     pc._decompose_user_intent_into_subtasks.assert_awaited_once_with(user_query, [])
     pc._execute_task_graph.assert_awaited_once_with(decomposed_tasks)
     pc._integrate_subtask_results.assert_awaited_once_with(user_query, execution_results)
@@ -89,8 +91,8 @@ async def test_handle_project_decomposition_fails(project_coordinator):
     """
     # Arrange
     pc = project_coordinator
-    # 正确模拟 service_discovery.get_all_capabilities() 的异步调用
-    pc.service_discovery.get_all_capabilities = AsyncMock(return_value=[])
+    # 正确模拟 service_discovery.get_all_capabilities_async() 的异步调用
+    pc.service_discovery.get_all_capabilities_async.return_value = []
     pc._decompose_user_intent_into_subtasks = AsyncMock(return_value=[]) # Simulate LLM failing to decompose
 
     # Patch the methods to check they were not called

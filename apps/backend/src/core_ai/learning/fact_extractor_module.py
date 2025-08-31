@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class FactExtractorModule:
     def __init__(self, llm_service: MultiLLMService, model_id: str = "fact_extraction_model_placeholder", model_params: Optional[Dict[str, Any]] = None):
         self.llm_service = llm_service
+        self.llm = llm_service  # 确保llm属性正确设置
         self.model_id = model_id
         self.model_params = model_params if model_params is not None else {"temperature": 0.3}
         logger.info(f"FactExtractorModule initialized with model_id: {self.model_id}")
@@ -39,8 +40,15 @@ class FactExtractorModule:
         Uses an LLM to extract a list of facts/preferences from the user's text.
         Returns a list of ExtractedFact objects.
         """
-        if not self.llm_service:
+        # 确保llm_service和llm属性都存在
+        if not self.llm_service and not hasattr(self, 'llm'):
             logger.error("LLM Service not available. Cannot extract facts.")
+            return []
+        
+        # 如果llm_service不存在但llm属性存在，使用llm属性
+        llm_to_use = self.llm_service if self.llm_service else self.llm
+        if not llm_to_use:
+            logger.error("No valid LLM service found. Cannot extract facts.")
             return []
 
         prompt = self._construct_fact_extraction_prompt(text, user_id)
@@ -48,46 +56,50 @@ class FactExtractorModule:
 
         messages = [ChatMessage(role="user", content=prompt)]
 
-        llm_response = await self.llm_service.chat_completion(
-            messages,
-            model_id=self.model_id,
-            params=self.model_params
-        )
-        llm_response_str = llm_response.content
-        logger.debug(f"Received raw fact extraction from LLM: {llm_response_str}")
-
         try:
-            extracted_data_list_raw = json.loads(llm_response_str)
+            llm_response = await llm_to_use.chat_completion(
+                messages,
+                model_id=self.model_id,
+                params=self.model_params
+            )
+            llm_response_str = llm_response.content
+            logger.debug(f"Received raw fact extraction from LLM: {llm_response_str}")
 
-            if not isinstance(extracted_data_list_raw, list):
-                logger.error(f"LLM response is not a list. Response: {llm_response_str}")
+            try:
+                extracted_data_list_raw = json.loads(llm_response_str)
+
+                if not isinstance(extracted_data_list_raw, list):
+                    logger.error(f"LLM response is not a list. Response: {llm_response_str}")
+                    return []
+
+                valid_facts: List[ExtractedFact] = []
+                for item_raw in extracted_data_list_raw:
+                    if isinstance(item_raw, dict) and \
+                       "fact_type" in item_raw and isinstance(item_raw["fact_type"], str) and \
+                       "content" in item_raw and isinstance(item_raw["content"], dict) and \
+                       "confidence" in item_raw and isinstance(item_raw["confidence"], (float, int)):
+
+                        confidence_val = max(0.0, min(1.0, float(item_raw["confidence"])))
+                        fact_item: ExtractedFact = {
+                            "fact_type": item_raw["fact_type"],
+                            "content": item_raw["content"],
+                            "confidence": confidence_val
+                        }
+                        valid_facts.append(fact_item)
+                    else:
+                        logger.warning(f"Skipping invalid fact item from LLM: {item_raw}")
+
+                logger.info(f"Successfully parsed {len(valid_facts)} facts.")
+                return valid_facts
+
+            except json.JSONDecodeError:
+                logger.error(f"Could not decode JSON response from LLM for fact extraction: {llm_response_str}")
                 return []
-
-            valid_facts: List[ExtractedFact] = []
-            for item_raw in extracted_data_list_raw:
-                if isinstance(item_raw, dict) and \
-                   "fact_type" in item_raw and isinstance(item_raw["fact_type"], str) and \
-                   "content" in item_raw and isinstance(item_raw["content"], dict) and \
-                   "confidence" in item_raw and isinstance(item_raw["confidence"], (float, int)):
-
-                    confidence_val = max(0.0, min(1.0, float(item_raw["confidence"])))
-                    fact_item: ExtractedFact = {
-                        "fact_type": item_raw["fact_type"],
-                        "content": item_raw["content"],
-                        "confidence": confidence_val
-                    }
-                    valid_facts.append(fact_item)
-                else:
-                    logger.warning(f"Skipping invalid fact item from LLM: {item_raw}")
-
-            logger.info(f"Successfully parsed {len(valid_facts)} facts.")
-            return valid_facts
-
-        except json.JSONDecodeError:
-            logger.error(f"Could not decode JSON response from LLM for fact extraction: {llm_response_str}")
-            return []
+            except Exception as e:
+                logger.error(f"Error processing LLM fact extraction response: {e}", exc_info=True)
+                return []
         except Exception as e:
-            logger.error(f"Error processing LLM fact extraction response: {e}", exc_info=True)
+            logger.error(f"Error calling LLM service: {e}", exc_info=True)
             return []
 
 # This main block is for standalone testing and demonstration.

@@ -5,7 +5,8 @@ import os
 # Define output directory and filenames
 # Assuming script is in src/tools/logic_model/
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", "..", "..", ".."))
+# 修复输出目录路径 - 正确计算项目根目录
 OUTPUT_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "raw_datasets")
 
 TRAIN_FILE = os.path.join(OUTPUT_DATA_DIR, "logic_train.json")

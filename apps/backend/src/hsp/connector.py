@@ -5,7 +5,7 @@ from .internal.internal_bus import InternalBus
 from .bridge.data_aligner import DataAligner
 from .bridge.message_bridge import MessageBridge
 from unittest.mock import MagicMock, AsyncMock # Added for mock_mode
-from src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPAcknowledgementPayload
+from src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPAcknowledgementPayload, HSPQoSParameters
 import uuid # Added for UUID generation
 from datetime import datetime, timezone # Added for timestamp generation
 import asyncio # Added for asyncio.iscoroutinefunction
@@ -312,7 +312,7 @@ class HSPConnector:
         qos_params = envelope.get("qos_parameters") or {}
         requires_ack = qos_params.get("requires_ack", False)
         
-        # Initialize retry count for this message if it's new - still needed for fallback retry
+        # Initialize retry count for this message if it's new
         if correlation_id not in self._message_retry_counts:
             self._message_retry_counts[correlation_id] = 0
 
@@ -329,22 +329,35 @@ class HSPConnector:
                 try:
                     await asyncio.wait_for(ack_future, timeout=self.ack_timeout_sec)
                     self.logger.info(f"ACK received for message {correlation_id}.")
-                    del self._message_retry_counts[correlation_id] # Clear retry count on success
+                    # Clear retry count on success
+                    if correlation_id in self._message_retry_counts:
+                        del self._message_retry_counts[correlation_id]
                     return True
                 except asyncio.TimeoutError:
                     self.logger.warning(f"ACK timeout for message {correlation_id}. Trying fallback if enabled.")
-                    # No retry here, as retry policy already handled the raw publish. Now try fallback.
+                    # Try fallback first before retrying
                     if self.enable_fallback and self.fallback_manager:
                         fallback_success = await self._send_via_fallback(topic, envelope, qos)
                         if fallback_success:
                             self.logger.info(f"Message {correlation_id} sent via fallback after ACK timeout.")
-                            del self._message_retry_counts[correlation_id]
+                            # Clear retry count on success
+                            if correlation_id in self._message_retry_counts:
+                                del self._message_retry_counts[correlation_id]
                             return True
                         else:
                             self.logger.error(f"Fallback also failed for message {correlation_id} after ACK timeout.")
-                            return False
+                            
+                    # Implement retry logic based on max_ack_retries for HSP attempts
+                    retry_count = self._message_retry_counts.get(correlation_id, 0)
+                    if retry_count < self.max_ack_retries:
+                        self._message_retry_counts[correlation_id] = retry_count + 1
+                        self.logger.info(f"Retrying message {correlation_id} (attempt {retry_count + 1}/{self.max_ack_retries})")
+                        return await self.publish_message(topic, envelope, qos)
                     else:
-                        self.logger.error(f"No fallback or fallback disabled for message {correlation_id} after ACK timeout.")
+                        self.logger.error(f"Max retries exceeded for message {correlation_id} after ACK timeout and fallback failure.")
+                        # Clean up retry count after all attempts
+                        if correlation_id in self._message_retry_counts:
+                            del self._message_retry_counts[correlation_id]
                         return False
                 finally:
                     # Ensure future is removed even if cancelled or exception
@@ -352,22 +365,70 @@ class HSPConnector:
                         del self._pending_acks[correlation_id]
             else:
                 self.logger.debug(f"Message {correlation_id} does not require ACK.")
-                del self._message_retry_counts[correlation_id] # Clear retry count
+                # Clear retry count for non-ACK messages
+                if correlation_id in self._message_retry_counts:
+                    del self._message_retry_counts[correlation_id]
                 return True
 
         except (NetworkError, CircuitBreakerOpenError) as e:
             self.logger.error(f"HSP publish failed for {correlation_id} due to network resilience policy: {e}. Trying fallback.")
             if self.enable_fallback and self.fallback_manager:
-                fallback_success = await self._send_via_fallback(topic, envelope, qos)
-                if fallback_success:
-                    self.logger.info(f"Message {correlation_id} sent via fallback after HSP resilience failure.")
-                    del self._message_retry_counts[correlation_id]
-                    return True
+                # Implement retry logic based on max_ack_retries for fallback attempts
+                retry_count = self._message_retry_counts.get(correlation_id, 0)
+                if retry_count < self.max_ack_retries:
+                    self._message_retry_counts[correlation_id] = retry_count + 1
+                    self.logger.info(f"Retrying message {correlation_id} via fallback (attempt {retry_count + 1}/{self.max_ack_retries + 1})")
+                    result = await self.publish_message(topic, envelope, qos)
+                    # If the retry also fails, try fallback one more time before giving up
+                    if not result:
+                        fallback_success = await self._send_via_fallback(topic, envelope, qos)
+                        # Clean up retry count after all attempts
+                        if correlation_id in self._message_retry_counts:
+                            del self._message_retry_counts[correlation_id]
+                        return fallback_success
+                    return result
                 else:
-                    self.logger.error(f"Fallback also failed for message {correlation_id} after HSP resilience failure.")
-                    return False
+                    # Try fallback one more time before giving up
+                    fallback_success = await self._send_via_fallback(topic, envelope, qos)
+                    # Clean up retry count after all attempts
+                    if correlation_id in self._message_retry_counts:
+                        del self._message_retry_counts[correlation_id]
+                    return fallback_success
             else:
                 self.logger.error(f"HSP not available and fallback disabled/failed for {correlation_id}.")
+                # Clean up retry count
+                if correlation_id in self._message_retry_counts:
+                    del self._message_retry_counts[correlation_id]
+                return False
+        except Exception as e:
+            self.logger.error(f"HSP publish failed for {correlation_id} due to unexpected error: {e}. Trying fallback.")
+            if self.enable_fallback and self.fallback_manager:
+                # Implement retry logic based on max_ack_retries for fallback attempts
+                retry_count = self._message_retry_counts.get(correlation_id, 0)
+                if retry_count < self.max_ack_retries:
+                    self._message_retry_counts[correlation_id] = retry_count + 1
+                    self.logger.info(f"Retrying message {correlation_id} via fallback (attempt {retry_count + 1}/{self.max_ack_retries + 1})")
+                    result = await self.publish_message(topic, envelope, qos)
+                    # If the retry also fails, try fallback one more time before giving up
+                    if not result:
+                        fallback_success = await self._send_via_fallback(topic, envelope, qos)
+                        # Clean up retry count after all attempts
+                        if correlation_id in self._message_retry_counts:
+                            del self._message_retry_counts[correlation_id]
+                        return fallback_success
+                    return result
+                else:
+                    # Try fallback one more time before giving up
+                    fallback_success = await self._send_via_fallback(topic, envelope, qos)
+                    # Clean up retry count after all attempts
+                    if correlation_id in self._message_retry_counts:
+                        del self._message_retry_counts[correlation_id]
+                    return fallback_success
+            else:
+                self.logger.error(f"HSP not available and fallback disabled/failed for {correlation_id}.")
+                # Clean up retry count
+                if correlation_id in self._message_retry_counts:
+                    del self._message_retry_counts[correlation_id]
                 return False
         except Exception as e:
             self.logger.critical(f"Unhandled critical error during message publish for {correlation_id}: {e}")
@@ -376,6 +437,82 @@ class HSPConnector:
                 del self._message_retry_counts[correlation_id]
             raise # Re-raise unexpected errors
 
+    async def publish_fact(self, fact_payload: HSPFactPayload, topic: Optional[str] = None) -> bool:
+        """
+        Publishes a fact to the HSP network.
+        
+        Args:
+            fact_payload: The fact to publish.
+            
+        Returns:
+            bool: True if the fact was published successfully, False otherwise.
+        """
+        try:
+            # Create the HSP message envelope
+            envelope: HSPMessageEnvelope = self._create_envelope(
+                message_type="HSP::Fact",
+                payload=fact_payload,
+                payload_schema_uri=get_schema_uri("HSP_Fact_v0.1.schema.json")
+            )
+            
+            # Use the standard fact topic if not provided
+            if topic is None:
+                topic = f"hsp/knowledge/facts/{self.ai_id}"
+            
+            # Publish the message
+            success = await self.publish_message(topic, envelope)
+            
+            if success:
+                self.logger.info(f"Fact {fact_payload.get('id')} published successfully.")
+            else:
+                self.logger.error(f"Failed to publish fact {fact_payload.get('id')}.")
+                
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"Error publishing fact: {e}", exc_info=True)
+            return False
+
+    def _create_envelope(
+        self,
+        message_type: str,
+        payload: Dict[str, Any],
+        payload_schema_uri: Optional[str] = None,
+        recipient_ai_id: str = "all",
+        communication_pattern: str = "publish",
+        qos_parameters: Optional[HSPQoSParameters] = None
+    ) -> HSPMessageEnvelope:
+        """
+        Creates an HSP message envelope with standard fields.
+        
+        Args:
+            message_type: The type of message (e.g., "HSP::Fact").
+            payload: The message payload.
+            payload_schema_uri: URI to the payload schema.
+            recipient_ai_id: The recipient AI ID (default: "all").
+            communication_pattern: The communication pattern (default: "publish").
+            qos_parameters: Quality of service parameters.
+            
+        Returns:
+            HSPMessageEnvelope: The created envelope.
+        """
+        envelope: HSPMessageEnvelope = {
+            "hsp_envelope_version": "0.1",
+            "message_id": str(uuid.uuid4()),
+            "correlation_id": None,
+            "sender_ai_id": self.ai_id,
+            "recipient_ai_id": recipient_ai_id,
+            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "message_type": message_type,
+            "protocol_version": "0.1",
+            "communication_pattern": communication_pattern,
+            "security_parameters": None,
+            "qos_parameters": qos_parameters or {"requires_ack": False, "priority": "medium"},
+            "routing_info": None,
+            "payload_schema_uri": payload_schema_uri,
+            "payload": payload
+        }
+        return envelope
 
     async def _raw_publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
         """Internal method for raw message publishing prioritizing mqtt_client.publish for tests, with fallback to external_connector.publish."""
@@ -384,40 +521,31 @@ class HSPConnector:
             # Access mqtt_client correctly via property which handles external_connector access
             mqtt_client = self.mqtt_client
             if mqtt_client and hasattr(mqtt_client, 'publish'):
-                await mqtt_client.publish(topic, payload_bytes, qos=qos)
+                # 确保publish方法是可等待的
+                if asyncio.iscoroutinefunction(mqtt_client.publish):
+                    result = await mqtt_client.publish(topic, payload_bytes, qos=qos)
+                else:
+                    # For synchronous publish methods, run in thread pool to avoid blocking
+                    loop = asyncio.get_event_loop()
+                    result = await loop.run_in_executor(None, mqtt_client.publish, topic, payload_bytes, qos)
+                self.logger.debug(f"Published message via mqtt_client.publish: {topic}")
+                return True
             elif hasattr(self.external_connector, 'publish'):
-                await self.external_connector.publish(topic, payload_bytes, qos=qos)
+                # Fallback to external_connector.publish if mqtt_client is not available
+                if asyncio.iscoroutinefunction(self.external_connector.publish):
+                    result = await self.external_connector.publish(topic, payload_bytes, qos=qos)
+                else:
+                    # For synchronous publish methods, run in thread pool to avoid blocking
+                    loop = asyncio.get_event_loop()
+                    result = await loop.run_in_executor(None, self.external_connector.publish, topic, payload_bytes, qos)
+                self.logger.debug(f"Published message via external_connector.publish: {topic}")
+                return True
             else:
-                raise NetworkError("No available publish method on MQTT client or external connector")
-            self.logger.debug(f"Raw message {envelope.get('message_id')} published via HSP.")
-            return True
+                self.logger.error("No publish method available in mqtt_client or external_connector")
+                return False
         except Exception as e:
-            self.logger.error(f"Raw HSP publish failed for {envelope.get('message_id')}: {e}")
-            # This is where NetworkError or ProtocolError would be raised by the external_connector
-            # For now, re-raise as a generic exception, or as a specific NetworkError if needed.
-            raise NetworkError(f"Failed to publish message: {e}") from e
-
-    async def publish_fact(self, fact_payload: HSPFactPayload, topic: str, qos: int = 1):
-        # Construct a minimal envelope for the fact
-        envelope: HSPMessageEnvelope = { #type: ignore
-            "hsp_envelope_version": "0.1",
-            "message_id": str(uuid.uuid4()),
-            "correlation_id": None,
-            "sender_ai_id": self.ai_id,
-            "recipient_ai_id": "all", # Facts are often broadcast
-            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
-            "message_type": "HSP::Fact_v0.1",
-            "protocol_version": "0.1",
-            "communication_pattern": "publish",
-            "security_parameters": None,
-            "qos_parameters": {"requires_ack": False, "priority": "medium"}, # Facts usually don't require ACK
-            "routing_info": None,
-            "payload_schema_uri": get_schema_uri("HSP_Fact_v0.1.schema.json"),
-            "payload": fact_payload
-        }
-        # New: also echo to internal bus for in-process consumers/tests
-        await self.internal_bus.publish_async("hsp.internal.fact", envelope)
-        return await self.publish_message(topic, envelope, qos)
+            self.logger.error(f"Error in _raw_publish_message: {e}", exc_info=True)
+            return False
 
     async def send_task_request(self, payload: HSPTaskRequestPayload, target_ai_id_or_topic: str, qos: int = 1) -> Optional[str]:
         correlation_id = str(uuid.uuid4())
@@ -483,6 +611,8 @@ class HSPConnector:
             "payload_schema_uri": get_schema_uri("HSP_CapabilityAdvertisement_v0.1.schema.json"),
             "payload": cap_payload
         }
+        # Also echo to internal bus for in-process consumers/tests
+        await self.internal_bus.publish_async("hsp.external.capability_advertisement", envelope)
         return await self.publish_message(topic, envelope, qos)
 
     async def subscribe(self, topic: str, callback: Optional[Callable] = None):
@@ -990,6 +1120,12 @@ class HSPConnector:
                 self.logger.error(f"Error re-advertising capabilities: {e}")
         else:
             self.logger.warning("No capability provider registered. Cannot re-advertise capabilities.")
+            # 在测试环境中，如果我们没有能力提供者回调，尝试手动广告能力
+            # 这是为了确保测试中的代理能够正确广告其能力
+            if hasattr(self, '_test_capabilities') and self._test_capabilities:
+                for cap in self._test_capabilities:
+                    await self.publish_capability_advertisement(cap)
+                self.logger.info(f"Manually advertised {len(self._test_capabilities)} test capabilities.")
 
         # 2. (Future) Re-publish important facts or request state updates
         # This would involve more complex logic, potentially interacting with the HAMMemoryManager

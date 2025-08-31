@@ -4,664 +4,493 @@ setlocal enabledelayedexpansion
 title Unified AI Project - Training Manager
 color 0A
 
-:: 训练管理器主菜单
+:: Add error handling and logging (添加錯誤處理和日志記錄)
+set "LOG_FILE=%~dp0train-manager-errors.log"
+set "SCRIPT_NAME=train-manager.bat"
+
+:: Log script start (記錄腳本啟動)
+echo [%date% %time%] Script started: %SCRIPT_NAME% >> "%LOG_FILE%" 2>nul
+
+:: Use absolute paths derived from script location (使用從腳本位置派生的絕對路徑)
+set "PROJECT_ROOT=%~dp0.."
+if "%PROJECT_ROOT:~-1%"=="\" set "PROJECT_ROOT=%PROJECT_ROOT:~0,-1%"
+:: 保存原始目錄路徑
+set "ORIGINAL_DIR=%CD%"
+
 :main_menu
 cls
 echo ==========================================
-echo   Unified AI Project - Training Manager
+echo   🧠 Unified AI Project - Training Manager
 echo ==========================================
 echo.
-echo 请选择操作:
+echo Manage your AI model training processes. (管理您的AI模型訓練過程)
 echo.
-echo 1. 生成训练数据 (Generate training data)
-echo 2. 下载训练数据 (Download training data)
-echo 3. 设置生成与下载 (Setup generation and download)
-echo 4. 列出统计 (List statistics)
-echo 5. 设置训练 (Setup training)
-echo 6. 开始训练 (Start training)
-echo 7. 查看训练状态 (View training status)
-echo 8. 退出 (Exit)
+echo Please select an option: (請選擇一個選項)
 echo.
-set /p choice="请输入选项 (1-8): "
-
-if "%choice%"=="1" goto generate_data
-if "%choice%"=="2" goto download_data
-if "%choice%"=="3" goto setup_generation_download
-if "%choice%"=="4" goto list_statistics
-if "%choice%"=="5" goto setup_training
-if "%choice%"=="6" goto start_training
-if "%choice%"=="7" goto view_training_status
-if "%choice%"=="8" goto exit_script
+echo   1. 🚀 Start Training (開始訓練)
+echo   2. 📊 View Training Progress (查看訓練進度)
+echo   3. ⏸️  Pause Training (暫停訓練)
+echo   4. ▶️  Resume Training (繼續訓練)
+echo   5. 🛑 Stop Training (停止訓練)
+echo   6. 📈 View Training Results (查看訓練結果)
+echo   7. 🧪 Run Training Tests (運行訓練測試)
+echo   8. 📂 Manage Training Data (管理訓練數據)
+echo   9. ⚙️  Training Configuration (訓練配置)
+echo   10. 🤝 Collaborative Training (協作式訓練)
+echo   11. ❌ Exit (退出)
 echo.
-echo 无效选项，请重新选择。
-pause
-goto main_menu
-
-:: 生成训练数据
-:generate_data
-cls
-echo ==========================================
-echo   生成训练数据 (Generate Training Data)
-echo ==========================================
-echo.
-echo 选择要生成的数据类型:
-echo.
-echo 1. 全部模拟数据 (All mock data)
-echo 2. 视觉数据 (Vision data)
-echo 3. 音频数据 (Audio data)
-echo 4. 推理数据 (Reasoning data)
-echo 5. 多模态数据 (Multimodal data)
-echo 6. 返回主菜单 (Back to main menu)
-echo.
-set /p data_choice="请输入选项 (1-6): "
-
-if "%data_choice%"=="1" (
-    echo.
-    echo 生成全部模拟训练数据...
-    python scripts\generate_mock_data.py
-    if %errorlevel% neq 0 (
-        echo.
-        echo [ERROR] 生成训练数据失败
-        pause
-        goto main_menu
-    )
-    echo.
-    echo [SUCCESS] 全部模拟训练数据生成完成
-    pause
-    goto main_menu
-)
-
-if "%data_choice%"=="2" (
-    echo.
-    echo 生成视觉训练数据...
-    python -c "from scripts.generate_mock_data import MockDataGenerator; g = MockDataGenerator(); g.generate_vision_data()"
-    if %errorlevel% neq 0 (
-        echo.
-        echo [ERROR] 生成视觉数据失败
-        pause
-        goto main_menu
-    )
-    echo.
-    echo [SUCCESS] 视觉训练数据生成完成
-    pause
-    goto main_menu
-)
-
-if "%data_choice%"=="3" (
-    echo.
-    echo 生成音频训练数据...
-    python -c "from scripts.generate_mock_data import MockDataGenerator; g = MockDataGenerator(); g.generate_audio_data()"
-    if %errorlevel% neq 0 (
-        echo.
-        echo [ERROR] 生成音频数据失败
-        pause
-        goto main_menu
-    )
-    echo.
-    echo [SUCCESS] 音频训练数据生成完成
-    pause
-    goto main_menu
-)
-
-if "%data_choice%"=="4" (
-    echo.
-    echo 生成推理训练数据...
-    python -c "from scripts.generate_mock_data import MockDataGenerator; g = MockDataGenerator(); g.generate_reasoning_data()"
-    if %errorlevel% neq 0 (
-        echo.
-        echo [ERROR] 生成推理数据失败
-        pause
-        goto main_menu
-    )
-    echo.
-    echo [SUCCESS] 推理训练数据生成完成
-    pause
-    goto main_menu
-)
-
-if "%data_choice%"=="5" (
-    echo.
-    echo 生成多模态训练数据...
-    python -c "from scripts.generate_mock_data import MockDataGenerator; g = MockDataGenerator(); g.generate_multimodal_data()"
-    if %errorlevel% neq 0 (
-        echo.
-        echo [ERROR] 生成多模态数据失败
-        pause
-        goto main_menu
-    )
-    echo.
-    echo [SUCCESS] 多模态训练数据生成完成
-    pause
-    goto main_menu
-)
-
-if "%data_choice%"=="6" goto main_menu
-echo.
-echo 无效选项，请重新选择。
-pause
-goto generate_data
-
-:: 下载训练数据
-:download_data
-cls
-echo ==========================================
-echo   下载训练数据 (Download Training Data)
-echo ==========================================
-echo.
-echo 注意: 下载训练数据需要网络连接和足够的磁盘空间
-echo.
-echo 1. 开始下载训练数据 (Start downloading training data)
-echo 2. 查看下载状态 (View download status)
-echo 3. 返回主菜单 (Back to main menu)
-echo.
-set /p download_choice="请输入选项 (1-3): "
-
-if "%download_choice%"=="1" (
-    echo.
-    echo 开始下载训练数据...
-    python scripts\download_training_data.py
-    if %errorlevel% neq 0 (
-        echo.
-        echo [ERROR] 下载训练数据失败
-        pause
-        goto main_menu
-    )
-    echo.
-    echo [SUCCESS] 训练数据下载完成
-    pause
-    goto main_menu
-)
-
-if "%download_choice%"=="2" (
-    echo.
-    echo 查看训练数据下载状态...
-    python -c "from scripts.download_training_data import DatasetDownloader; d = DatasetDownloader(); status = d.get_download_status(); print('训练数据下载状态:'); [print(f'{k}: {v}') for k, v in status.items()]"
-    pause
-    goto main_menu
-)
-
-if "%download_choice%"=="3" goto main_menu
-echo.
-echo 无效选项，请重新选择。
-pause
-goto download_data
-
-:: 设置生成与下载
-:setup_generation_download
-cls
-echo ==========================================
-echo   设置生成与下载 (Setup Generation and Download)
-echo ==========================================
-echo.
-echo 1. 检查环境 (Check environment)
-echo 2. 配置数据路径 (Configure data paths)
-echo 3. 设置磁盘空间检查 (Setup disk space check)
-echo 4. 返回主菜单 (Back to main menu)
-echo.
-set /p setup_choice="请输入选项 (1-4): "
-
-if "%setup_choice%"=="1" (
-    echo.
-    echo 检查环境...
-    where python >nul 2>&1
-    if %errorlevel% neq 0 (
-        echo [ERROR] Python 未安装
-        echo 请从 https://python.org/ 下载并安装 Python
-        pause
-        goto main_menu
-    )
-    echo [OK] Python 环境正常
-    pause
-    goto setup_generation_download
-)
-
-if "%setup_choice%"=="2" (
-    echo.
-    echo 配置数据路径...
-    echo 当前工作目录: %cd%
-    echo 数据目录: data\
-    echo 训练配置目录: training\configs\
-    echo.
-    echo [INFO] 路径配置检查完成
-    pause
-    goto setup_generation_download
-)
-
-if "%setup_choice%"=="3" (
-    echo.
-    echo 设置磁盘空间检查...
-    python -c "import shutil; total, used, free = shutil.disk_usage('.'); print(f'磁盘空间: 总计 {total//(1024**3)}GB, 已用 {used//(1024**3)}GB, 可用 {free//(1024**3)}GB')"
-    pause
-    goto setup_generation_download
-)
-
-if "%setup_choice%"=="4" goto main_menu
-echo.
-echo 无效选项，请重新选择。
-pause
-goto setup_generation_download
-
-:: 列出统计
-:list_statistics
-cls
-echo ==========================================
-echo   列出统计 (List Statistics)
 echo ==========================================
 echo.
 
-:: 统计模拟数据
-echo 模拟数据统计:
-echo ====================
-set vision_count=0
-set audio_count=0
-set reasoning_count=0
-set multimodal_count=0
-
-if exist "data\vision_samples\annotations.json" (
-    for /f "delims=" %%i in ('find /c "{" ^< "data\vision_samples\annotations.json"') do set vision_count=%%i
-    set vision_count=!vision_count:*:=!
+:: Get user choice with validation (獲取用戶選擇並驗證)
+:get_user_choice
+set "main_choice="
+set /p "main_choice=Enter your choice (1-11): "
+if not defined main_choice (
+    echo [ERROR] No input provided
+    echo [%date% %time%] No input provided >> "%LOG_FILE%" 2>nul
+    timeout /t 2 >nul
+    goto get_user_choice
 )
 
-if exist "data\audio_samples\transcripts.json" (
-    for /f "delims=" %%i in ('find /c "{" ^< "data\audio_samples\transcripts.json"') do set audio_count=%%i
-    set audio_count=!audio_count:*:=!
-)
-
-if exist "data\reasoning_samples\causal_relations.json" (
-    for /f "delims=" %%i in ('find /c "{" ^< "data\reasoning_samples\causal_relations.json"') do set reasoning_count=%%i
-    set reasoning_count=!reasoning_count:*:=!
-)
-
-if exist "data\multimodal_samples\multimodal_pairs.json" (
-    for /f "delims=" %%i in ('find /c "{" ^< "data\multimodal_samples\multimodal_pairs.json"') do set multimodal_count=%%i
-    set multimodal_count=!multimodal_count:*:=!
-)
-
-echo 视觉数据样本: !vision_count! 个
-echo 音频数据样本: !audio_count! 个
-echo 推理数据样本: !reasoning_count! 个
-echo 多模态数据样本: !multimodal_count! 个
-echo.
-
-:: 统计下载数据
-echo 下载数据统计:
-echo ====================
-set flickr_count=0
-set common_voice_count=0
-set coco_count=0
-set visual_genome_count=0
-
-if exist "data\flickr30k_sample" (
-    for /f "delims=" %%i in ('dir "data\flickr30k_sample" /b /s ^| find /c "."') do set flickr_count=%%i
-    set flickr_count=!flickr_count:*:=!
-)
-
-if exist "data\common_voice_zh" (
-    for /f "delims=" %%i in ('dir "data\common_voice_zh" /b /s ^| find /c "."') do set common_voice_count=%%i
-    set common_voice_count=!common_voice_count:*:=!
-)
-
-if exist "data\coco_captions" (
-    for /f "delims=" %%i in ('dir "data\coco_captions" /b /s ^| find /c "."') do set coco_count=%%i
-    set coco_count=!coco_count:*:=!
-)
-
-if exist "data\visual_genome_sample" (
-    for /f "delims=" %%i in ('dir "data\visual_genome_sample" /b /s ^| find /c "."') do set visual_genome_count=%%i
-    set visual_genome_count=!visual_genome_count:*:=!
-)
-
-echo Flickr30K 数据集文件数: !flickr_count! 个
-echo Common Voice 中文数据集文件数: !common_voice_count! 个
-echo COCO Captions 数据集文件数: !coco_count! 个
-echo Visual Genome 数据集文件数: !visual_genome_count! 个
-echo.
-
-:: 显示数据来源统计
-echo 数据来源统计:
-echo ====================
-echo 模拟数据来源:
-echo   - 视觉数据 (vision_samples): !vision_count! 个样本
-echo   - 音频数据 (audio_samples): !audio_count! 个样本
-echo   - 推理数据 (reasoning_samples): !reasoning_count! 个样本
-echo   - 多模态数据 (multimodal_samples): !multimodal_count! 个样本
-echo.
-echo 下载数据来源:
-echo   - Flickr30K 数据集 (flickr30k_sample): !flickr_count! 个文件
-echo   - Common Voice 中文数据集 (common_voice_zh): !common_voice_count! 个文件
-echo   - COCO Captions 数据集 (coco_captions): !coco_count! 个文件
-echo   - Visual Genome 数据集 (visual_genome_sample): !visual_genome_count! 个文件
-echo.
-
-:: 显示总统计
-set /a total_mock_data=!vision_count! + !audio_count! + !reasoning_count! + !multimodal_count!
-set /a total_downloaded_files=!flickr_count! + !common_voice_count! + !coco_count! + !visual_genome_count!
-echo 总计:
-echo ====================
-echo 模拟数据样本总数: !total_mock_data! 个
-echo 下载数据文件总数: !total_downloaded_files! 个
-echo.
-
-pause
-goto main_menu
-
-:: 设置训练
-:setup_training
-cls
-echo ==========================================
-echo   设置训练 (Setup Training)
-echo ==========================================
-echo.
-echo 1. 检查训练环境 (Check training environment)
-echo 2. 安装训练依赖 (Install training dependencies)
-echo 3. 配置训练参数 (Configure training parameters)
-echo 4. 返回主菜单 (Back to main menu)
-echo.
-set /p train_setup_choice="请输入选项 (1-4): "
-
-if "%train_setup_choice%"=="1" (
-    echo.
-    echo 检查训练环境...
-    where python >nul 2>&1
-    if %errorlevel% neq 0 (
-        echo [ERROR] Python 未安装
-        pause
-        goto main_menu
+:: Validate numeric input for menu choices (驗證菜單選擇的數字輸入)
+set "main_choice=%main_choice: =%"
+for %%i in (1 2 3 4 5 6 7 8 9 10 11) do (
+    if "%main_choice%"=="%%i" (
+        goto choice_%%i
     )
-    
-    echo [OK] Python 环境正常
-    
-    where pnpm >nul 2>&1
-    if %errorlevel% neq 0 (
-        echo [INFO] 安装 pnpm...
-        npm install -g pnpm
-        if %errorlevel% neq 0 (
-            echo [ERROR] 安装 pnpm 失败
-            pause
-            goto main_menu
-        )
-    )
-    echo [OK] pnpm 环境正常
-    
-    echo.
-    echo [SUCCESS] 训练环境检查完成
-    pause
-    goto setup_training
 )
 
-if "%train_setup_choice%"=="2" (
-    echo.
-    echo 安装训练依赖...
-    pnpm install
-    if %errorlevel% neq 0 (
-        echo [ERROR] 安装依赖失败
-        pause
-        goto main_menu
-    )
-    
-    cd apps\backend
-    if not exist "venv" (
-        echo [INFO] 创建 Python 虚拟环境...
-        python -m venv venv
-        if %errorlevel% neq 0 (
-            echo [ERROR] 创建虚拟环境失败
-            cd ..\..
-            pause
-            goto main_menu
-        )
-    )
-    
-    echo [INFO] 安装 Python 包...
-    call venv\Scripts\activate.bat
-    pip install --upgrade pip >nul 2>&1
-    pip install -r requirements.txt >nul 2>&1
-    pip install -r requirements-dev.txt >nul 2>&1
-    cd ..\..
-    
-    echo.
-    echo [SUCCESS] 训练依赖安装完成
-    pause
-    goto setup_training
-)
+echo [ERROR] Invalid choice '%main_choice%'. Please enter a valid option.
+echo [%date% %time%] Invalid choice: %main_choice% >> "%LOG_FILE%" 2>nul
+timeout /t 2 >nul
+goto get_user_choice
 
-if "%train_setup_choice%"=="3" (
-    echo.
-    echo 配置训练参数...
-    if exist "training\configs\training_config.json" (
-        echo 当前训练配置:
-        type training\configs\training_config.json
-        echo.
-        echo [INFO] 训练配置文件存在
-    ) else (
-        echo [WARN] 训练配置文件不存在，将使用默认配置
-    )
-    pause
-    goto setup_training
-)
-
-if "%train_setup_choice%"=="4" goto main_menu
-echo.
-echo 无效选项，请重新选择。
-pause
-goto setup_training
-
-:: 开始训练
-:start_training
-cls
-echo ==========================================
-echo   开始训练 (Start Training)
-echo ==========================================
-echo.
-echo 1. 使用默认配置开始训练 (Start training with default config)
-echo 2. 使用预设配置开始训练 (Start training with preset config)
-echo 3. 自定义训练参数 (Customize training parameters)
-echo 4. 运行训练集成测试 (Run training integration tests)
-echo 5. 返回主菜单 (Back to main menu)
-echo.
-set /p start_choice="请输入选项 (1-5): "
-
-if "%start_choice%"=="1" (
-    echo.
-    echo 使用默认配置开始训练...
-    echo [INFO] 此功能需要根据具体模型实现
-    echo [INFO] 请参考 apps/backend/training/ 目录中的训练脚本
-    echo.
-    echo 示例命令:
-    echo   cd apps\backend
-    echo   call venv\Scripts\activate.bat
-    echo   python training\train_model.py
-    echo.
-    echo 请根据具体需求运行相应的训练脚本
-    pause
-    goto main_menu
-)
-
-if "%start_choice%"=="2" (
-    echo.
-    echo 使用预设配置开始训练...
-    if exist "training\configs\training_preset.json" (
-        echo [INFO] 找到预设配置文件
-        echo [INFO] 预设配置包含多种训练场景:
-        echo.
-        echo   1. 快速开始 (Quick Start) - 使用模拟数据快速训练测试
-        echo      适用场景: 快速验证训练流程，测试模型基本功能
-        echo      数据集: vision_samples, audio_samples, reasoning_samples
-        echo      训练轮数: 3
-        echo.
-        echo   2. 全面训练 (Comprehensive Training) - 使用所有可用数据完整训练
-        echo      适用场景: 完整训练所有模型，获得最佳性能
-        echo      数据集: 所有可用数据集
-        echo      训练轮数: 50
-        echo.
-        echo   3. 视觉专注 (Vision Focus) - 专注训练视觉相关模型
-        echo      适用场景: 专门训练视觉服务模型
-        echo      数据集: 视觉相关数据集
-        echo      训练轮数: 30
-        echo.
-        echo   4. 音频专注 (Audio Focus) - 专注训练音频相关模型
-        echo      适用场景: 专门训练音频服务模型
-        echo      数据集: 音频相关数据集
-        echo      训练轮数: 20
-        echo.
-        set /p preset_choice="请选择训练场景 (1-4): "
-        
-        if "%preset_choice%"=="1" (
-            echo.
-            echo [INFO] 启动快速开始训练场景...
-            echo [INFO] 使用模拟数据进行快速训练测试
-            echo.
-            echo 正在启动训练...
-            cd apps\backend
-            call venv\Scripts\activate.bat
-            python ..\..\training\train_model.py --preset quick_start
-            cd ..\..
-        ) else if "%preset_choice%"=="2" (
-            echo.
-            echo [INFO] 启动全面训练场景...
-            echo [INFO] 使用所有可用数据进行完整训练
-            echo.
-            echo 正在启动训练...
-            cd apps\backend
-            call venv\Scripts\activate.bat
-            python ..\..\training\train_model.py --preset comprehensive_training
-            cd ..\..
-        ) else if "%preset_choice%"=="3" (
-            echo.
-            echo [INFO] 启动视觉专注训练场景...
-            echo.
-            echo 正在启动训练...
-            cd apps\backend
-            call venv\Scripts\activate.bat
-            python ..\..\training\train_model.py --preset vision_focus
-            cd ..\..
-        ) else if "%preset_choice%"=="4" (
-            echo.
-            echo [INFO] 启动音频专注训练场景...
-            echo.
-            echo 正在启动训练...
-            cd apps\backend
-            call venv\Scripts\activate.bat
-            python ..\..\training\train_model.py --preset audio_focus
-            cd ..\..
-        ) else (
-            echo.
-            echo [WARN] 无效选项，返回主菜单
-        )
-    ) else (
-        echo [WARN] 预设配置文件不存在，将使用默认配置
-        echo.
-        echo 正在启动训练...
-        cd apps\backend
-        call venv\Scripts\activate.bat
-        python ..\..\training\train_model.py
-        cd ..\..
-    )
-    echo.
-    pause
-    goto main_menu
-)
-
-if "%start_choice%"=="3" (
-    echo.
-    echo 自定义训练参数...
-    echo [INFO] 此功能需要交互式参数设置
-    echo [INFO] 请手动编辑 training\configs\training_config.json 文件
-    echo.
-    echo 当前配置:
-    if exist "training\configs\training_config.json" (
-        type training\configs\training_config.json
-    ) else (
-        echo [WARN] 配置文件不存在
-    )
-    echo.
-    echo 编辑完成后按任意键继续...
-    pause
-    goto main_menu
-)
-
-if "%start_choice%"=="4" (
-    echo.
-    echo 运行训练集成测试...
-    cd apps\backend
-    call venv\Scripts\activate.bat
-    python ..\..\scripts\training_integration.py
-    if %errorlevel% neq 0 (
-        echo [ERROR] 训练集成测试失败
-        cd ..\..
-        pause
-        goto main_menu
-    )
-    cd ..\..
-    echo.
-    echo [SUCCESS] 训练集成测试完成
-    pause
-    goto main_menu
-)
-
-if "%start_choice%"=="5" goto main_menu
-echo.
-echo 无效选项，请重新选择。
-pause
+:choice_1
 goto start_training
+:choice_2
+goto view_progress
+:choice_3
+goto pause_training
+:choice_4
+goto resume_training
+:choice_5
+goto stop_training
+:choice_6
+goto view_results
+:choice_7
+goto run_training_tests
+:choice_8
+goto manage_data
+:choice_9
+goto training_config
+:choice_10
+goto collaborative_training
+:choice_11
+goto exit_script
 
-:: 查看训练状态
-:view_training_status
-cls
-echo ==========================================
-echo   查看训练状态 (View Training Status)
-echo ==========================================
+:: Start Training (開始訓練)
+:start_training
 echo.
-echo 训练配置检查:
-echo.
-if exist "training\configs\training_config.json" (
-    echo [OK] 训练配置文件存在
+echo [INFO] Starting training process... (開始訓練過程)
+echo [%date% %time%] Starting training >> "%LOG_FILE%" 2>nul
+
+:: Check if training environment is set up (檢查訓練環境是否已設置)
+if not exist "%PROJECT_ROOT%\training\" (
+    echo [WARNING] Training directory not found (訓練目錄未找到)
+    echo [INFO] Setting up training environment... (設置訓練環境)
+    :: 修正路徑引用錯誤，從 tools\setup-training.bat 更正為 setup-training.bat
+    if exist "%PROJECT_ROOT%\tools\setup-training.bat" (
+        call "%PROJECT_ROOT%\tools\setup-training.bat"
+    ) else (
+        echo [ERROR] setup-training.bat not found
+        echo [%date% %time%] setup-training.bat not found >> "%LOG_FILE%" 2>nul
+        echo Press any key to continue...
+        pause >nul
+        goto main_menu
+    )
+)
+
+:: Run training script with preset options (使用預設選項運行訓練腳本)
+:: 修正路徑引用錯誤，確保使用正確的絕對路徑
+set "TRAINING_SCRIPT=%PROJECT_ROOT%\training\train_model.py"
+if exist "%TRAINING_SCRIPT%" (
+    echo [INFO] Launching training script... (啟動訓練腳本)
     echo.
-    echo 配置内容:
-    type training\configs\training_config.json
+    echo Available training presets: (可用的訓練預設)
+    echo   1. quick_start - Quick training with mock data for testing (使用模擬數據進行快速訓練以進行測試)
+    echo   2. comprehensive_training - Full training with all available data (使用所有可用數據進行完整訓練)
+    echo   3. vision_focus - Focus on vision-related models (專注於視覺相關模型)
+    echo   4. audio_focus - Focus on audio-related models (專注於音頻相關模型)
+    echo   5. full_dataset_training - Full dataset training with auto-pause/resume (完整數據集訓練，支持自動暫停/繼續)
+    echo   6. math_model_training - Train mathematical calculation model (訓練數學計算模型)
+    echo   7. logic_model_training - Train logical reasoning model (訓練邏輯推理模型)
+    echo   8. real_math_model_training - Real mathematical model training with TensorFlow (使用TensorFlow進行真實數學模型訓練)
+    echo   9. real_logic_model_training - Real logical reasoning model training with TensorFlow (使用TensorFlow進行真實邏輯推理模型訓練)
+    echo   10. concept_models_training - Train all concept models (訓練所有概念模型)
+    echo   11. collaborative_training - Full model collaborative training (全模型協作式訓練)
+    echo   12. Custom training (自定義訓練)
+    echo.
+    
+    set "preset_choice="
+    set /p "preset_choice=Enter your choice (1-12, or press Enter for quick_start): "
+    
+    :: 保存當前目錄並切換到訓練目錄
+    set "SAVED_DIR=%CD%"
+    cd /d "%PROJECT_ROOT%\training"
+    
+    if not defined preset_choice (
+        echo [INFO] Using default preset: quick_start
+        python train_model.py --preset quick_start
+    ) else if "%preset_choice%"=="1" (
+        echo [INFO] Using preset: quick_start
+        python train_model.py --preset quick_start
+    ) else if "%preset_choice%"=="2" (
+        echo [INFO] Using preset: comprehensive_training
+        python train_model.py --preset comprehensive_training
+    ) else if "%preset_choice%"=="3" (
+        echo [INFO] Using preset: vision_focus
+        python train_model.py --preset vision_focus
+    ) else if "%preset_choice%"=="4" (
+        echo [INFO] Using preset: audio_focus
+        python train_model.py --preset audio_focus
+    ) else if "%preset_choice%"=="5" (
+        echo [INFO] Using preset: full_dataset_training
+        python train_model.py --preset full_dataset_training
+    ) else if "%preset_choice%"=="6" (
+        echo [INFO] Using preset: math_model_training
+        python train_model.py --preset math_model_training
+    ) else if "%preset_choice%"=="7" (
+        echo [INFO] Using preset: logic_model_training
+        python train_model.py --preset logic_model_training
+    ) else if "%preset_choice%"=="8" (
+        echo [INFO] Using preset: real_math_model_training
+        python train_model.py --preset real_math_model_training
+    ) else if "%preset_choice%"=="9" (
+        echo [INFO] Using preset: real_logic_model_training
+        python train_model.py --preset real_logic_model_training
+    ) else if "%preset_choice%"=="10" (
+        echo [INFO] Using preset: concept_models_training
+        python train_model.py --preset concept_models_training
+    ) else if "%preset_choice%"=="11" (
+        echo [INFO] Using preset: collaborative_training
+        python train_model.py --preset collaborative_training
+    ) else (
+        echo [INFO] Using custom training
+        python train_model.py
+    )
+    
+    :: 檢查訓練腳本執行結果
+    if errorlevel 1 (
+        echo [WARNING] Training script execution paused or interrupted
+        echo [%date% %time%] Training script execution paused or interrupted >> "%LOG_FILE%" 2>nul
+    ) else (
+        echo [INFO] Training completed successfully
+        echo [%date% %time%] Training completed successfully >> "%LOG_FILE%" 2>nul
+    )
+    
+    :: 返回到保存的目錄
+    cd /d "%SAVED_DIR%"
 ) else (
-    echo [WARN] 训练配置文件不存在
+    echo [ERROR] Training script (train_model.py) not found
+    echo [%date% %time%] Training script not found: %TRAINING_SCRIPT% >> "%LOG_FILE%" 2>nul
+    echo Looking for: %TRAINING_SCRIPT%
 )
 
 echo.
-echo 检查点目录:
-echo.
-if exist "training\checkpoints" (
-    echo [OK] 检查点目录存在
-    dir training\checkpoints /b
-) else (
-    echo [INFO] 检查点目录不存在
-)
-
-echo.
-echo 日志目录:
-echo.
-if exist "training\logs" (
-    echo [OK] 日志目录存在
-    dir training\logs /b
-) else (
-    echo [INFO] 日志目录不存在
-)
-
-echo.
-echo 模型目录:
-echo.
-if exist "training\models" (
-    echo [OK] 模型目录存在
-    dir training\models /b
-) else (
-    echo [INFO] 模型目录不存在
-)
-
-echo.
-pause
+echo Press any key to continue...
+pause >nul
 goto main_menu
 
-:: 退出脚本
-:exit_script
-cls
+:: Resume Training (繼續訓練)
+:resume_training
 echo.
-echo 感谢使用 Unified AI Project 训练管理器!
+echo [INFO] Resuming training process... (繼續訓練過程)
+echo [%date% %time%] Resuming training >> "%LOG_FILE%" 2>nul
+
+:: Run training script with resume option (使用繼續選項運行訓練腳本)
+set "TRAINING_SCRIPT=%PROJECT_ROOT%\training\train_model.py"
+if exist "%TRAINING_SCRIPT%" (
+    echo [INFO] Launching training script with resume option... (啟動帶繼續選項的訓練腳本)
+    echo.
+    echo Available training presets: (可用的訓練預設)
+    echo   1. quick_start - Quick training with mock data for testing (使用模擬數據進行快速訓練以進行測試)
+    echo   2. comprehensive_training - Full training with all available data (使用所有可用數據進行完整訓練)
+    echo   3. vision_focus - Focus on vision-related models (專注於視覺相關模型)
+    echo   4. audio_focus - Focus on audio-related models (專注於音頻相關模型)
+    echo   5. full_dataset_training - Full dataset training with auto-pause/resume (完整數據集訓練，支持自動暫停/繼續)
+    echo   6. math_model_training - Train mathematical calculation model (訓練數學計算模型)
+    echo   7. logic_model_training - Train logical reasoning model (訓練邏輯推理模型)
+    echo   8. real_math_model_training - Real mathematical model training with TensorFlow (使用TensorFlow進行真實數學模型訓練)
+    echo   9. real_logic_model_training - Real logical reasoning model training with TensorFlow (使用TensorFlow進行真實邏輯推理模型訓練)
+    echo   10. concept_models_training - Train all concept models (訓練所有概念模型)
+    echo   11. collaborative_training - Full model collaborative training (全模型協作式訓練)
+    echo.
+    
+    set "preset_choice="
+    set /p "preset_choice=Enter your choice (1-11, or press Enter for quick_start): "
+    
+    :: 保存當前目錄並切換到訓練目錄
+    set "SAVED_DIR=%CD%"
+    cd /d "%PROJECT_ROOT%\training"
+    
+    if not defined preset_choice (
+        echo [INFO] Using default preset: quick_start
+        python train_model.py --preset quick_start --resume
+    ) else if "%preset_choice%"=="1" (
+        echo [INFO] Using preset: quick_start
+        python train_model.py --preset quick_start --resume
+    ) else if "%preset_choice%"=="2" (
+        echo [INFO] Using preset: comprehensive_training
+        python train_model.py --preset comprehensive_training --resume
+    ) else if "%preset_choice%"=="3" (
+        echo [INFO] Using preset: vision_focus
+        python train_model.py --preset vision_focus --resume
+    ) else if "%preset_choice%"=="4" (
+        echo [INFO] Using preset: audio_focus
+        python train_model.py --preset audio_focus --resume
+    ) else if "%preset_choice%"=="5" (
+        echo [INFO] Using preset: full_dataset_training
+        python train_model.py --preset full_dataset_training --resume
+    ) else if "%preset_choice%"=="6" (
+        echo [INFO] Using preset: math_model_training
+        python train_model.py --preset math_model_training --resume
+    ) else if "%preset_choice%"=="7" (
+        echo [INFO] Using preset: logic_model_training
+        python train_model.py --preset logic_model_training --resume
+    ) else if "%preset_choice%"=="8" (
+        echo [INFO] Using preset: real_math_model_training
+        python train_model.py --preset real_math_model_training --resume
+    ) else if "%preset_choice%"=="9" (
+        echo [INFO] Using preset: real_logic_model_training
+        python train_model.py --preset real_logic_model_training --resume
+    ) else if "%preset_choice%"=="10" (
+        echo [INFO] Using preset: concept_models_training
+        python train_model.py --preset concept_models_training --resume
+    ) else if "%preset_choice%"=="11" (
+        echo [INFO] Using preset: collaborative_training
+        python train_model.py --preset collaborative_training --resume
+    ) else (
+        echo [INFO] Using custom training
+        python train_model.py --resume
+    )
+    
+    :: 檢查訓練腳本執行結果
+    if errorlevel 1 (
+        echo [WARNING] Training script execution paused or interrupted
+        echo [%date% %time%] Training script execution paused or interrupted >> "%LOG_FILE%" 2>nul
+    ) else (
+        echo [INFO] Training completed successfully
+        echo [%date% %time%] Training completed successfully >> "%LOG_FILE%" 2>nul
+    )
+    
+    :: 返回到保存的目錄
+    cd /d "%SAVED_DIR%"
+) else (
+    echo [ERROR] Training script (train_model.py) not found
+    echo [%date% %time%] Training script not found: %TRAINING_SCRIPT% >> "%LOG_FILE%" 2>nul
+    echo Looking for: %TRAINING_SCRIPT%
+)
+
 echo.
-echo 按任意键退出...
+echo Press any key to continue...
 pause >nul
-exit /b 0
+goto main_menu
+
+:: Collaborative Training (協作式訓練)
+:collaborative_training
+echo.
+echo [INFO] Starting collaborative training... (開始協作式訓練)
+echo [%date% %time%] Starting collaborative training >> "%LOG_FILE%" 2>nul
+
+:: Run collaborative training with the new preset
+set "TRAINING_SCRIPT=%PROJECT_ROOT%\training\train_model.py"
+if exist "%TRAINING_SCRIPT%" (
+    echo [INFO] Launching collaborative training... (啟動協作式訓練)
+    echo.
+    echo This will start full model collaborative training using all available data.
+    echo 這將開始使用所有可用數據的全模型協作式訓練。
+    echo.
+    
+    set /p "confirm=Do you want to continue? (y/N): "
+    if /i "%confirm%"=="y" (
+        :: 保存當前目錄並切換到訓練目錄
+        set "SAVED_DIR=%CD%"
+        cd /d "%PROJECT_ROOT%\training"
+        
+        echo [INFO] Starting collaborative training with preset: collaborative_training
+        python train_model.py --preset collaborative_training
+        
+        :: 檢查訓練腳本執行結果
+        if errorlevel 1 (
+            echo [WARNING] Collaborative training script execution paused or interrupted
+            echo [%date% %time%] Collaborative training script execution paused or interrupted >> "%LOG_FILE%" 2>nul
+        ) else (
+            echo [INFO] Collaborative training completed successfully
+            echo [%date% %time%] Collaborative training completed successfully >> "%LOG_FILE%" 2>nul
+        )
+        
+        :: 返回到保存的目錄
+        cd /d "%SAVED_DIR%" 2>nul
+        if errorlevel 1 (
+            echo [ERROR] Failed to return to original directory
+            echo [%date% %time%] Failed to return to original directory >> "%LOG_FILE%" 2>nul
+        )
+    ) else (
+        echo [INFO] Collaborative training cancelled by user
+        echo [%date% %time%] Collaborative training cancelled by user >> "%LOG_FILE%" 2>nul
+    )
+) else (
+    echo [ERROR] Training script (train_model.py) not found
+    echo [%date% %time%] Training script not found: %TRAINING_SCRIPT% >> "%LOG_FILE%" 2>nul
+)
+
+echo.
+echo Press any key to continue...
+pause >nul
+goto main_menu
+
+:: Pause Training (暫停訓練)
+:pause_training
+echo.
+echo [INFO] Pausing training... (暫停訓練)
+echo [%date% %time%] Pausing training >> "%LOG_FILE%" 2>nul
+echo [INFO] Training pause functionality requires manual intervention
+echo [INFO] Please use Ctrl+C in the training console to pause training
+echo.
+echo Press any key to continue...
+pause >nul
+goto main_menu
+
+:: Stop Training (停止訓練)
+:stop_training
+echo.
+echo [INFO] Stopping training... (停止訓練)
+echo [%date% %time%] Stopping training >> "%LOG_FILE%" 2>nul
+echo [INFO] Training stop functionality requires manual intervention
+echo [INFO] Please close the training console to stop training
+echo.
+echo Press any key to continue...
+pause >nul
+goto main_menu
+
+:: View Training Progress (查看訓練進度)
+:view_progress
+echo.
+echo [INFO] Viewing training progress... (查看訓練進度)
+echo [%date% %time%] Viewing training progress >> "%LOG_FILE%" 2>nul
+
+:: Check for progress files (檢查進度文件)
+:: 修正路徑引用，確保使用正確的絕對路徑
+if exist "%PROJECT_ROOT%\training\progress.log" (
+    echo === Training Progress === (訓練進度)
+    type "%PROJECT_ROOT%\training\progress.log"
+) else (
+    echo [INFO] No progress log found (未找到進度日志)
+)
+
+echo.
+echo Press any key to continue...
+pause >nul
+goto main_menu
+
+:: View Training Results (查看訓練結果)
+:view_results
+echo.
+echo [INFO] Viewing training results... (查看訓練結果)
+echo [%date% %time%] Viewing training results >> "%LOG_FILE%" 2>nul
+
+:: Check for results files (檢查結果文件)
+:: 修正路徑引用，確保使用正確的絕對路徑並檢查 models 目錄
+if exist "%PROJECT_ROOT%\training\models\" (
+    echo === Training Results Directory === (訓練結果目錄)
+    dir "%PROJECT_ROOT%\training\models\" /b
+    echo.
+    echo [INFO] Found training results in models directory (在models目錄中找到訓練結果)
+) else (
+    echo [WARNING] No models directory found (未找到models目錄)
+)
+
+echo.
+echo Press any key to continue...
+pause >nul
+goto main_menu
+
+:: Run Training Tests (運行訓練測試)
+:run_training_tests
+echo.
+echo [INFO] Running training tests... (運行訓練測試)
+echo [%date% %time%] Running training tests >> "%LOG_FILE%" 2>nul
+
+:: Run training integration tests (運行訓練集成測試)
+:: 修正路徑引用，確保使用正確的絕對路徑
+if exist "%PROJECT_ROOT%\scripts\training_integration.py" (
+    echo [INFO] Running training integration tests... (運行訓練集成測試)
+    python "%PROJECT_ROOT%\scripts\training_integration.py"
+) else (
+    echo [ERROR] Training integration script not found
+    echo [%date% %time%] Training integration script not found >> "%LOG_FILE%" 2>nul
+)
+
+echo.
+echo Press any key to continue...
+pause >nul
+goto main_menu
+
+:: Manage Training Data (管理訓練數據)
+:manage_data
+echo.
+echo [INFO] Managing training data... (管理訓練數據)
+echo [%date% %time%] Managing training data >> "%LOG_FILE%" 2>nul
+
+:: Check for data directory (檢查數據目錄)
+:: 修正路徑引用，確保使用正確的絕對路徑
+if exist "%PROJECT_ROOT%\data\" (
+    echo === Data Directory === (數據目錄)
+    dir "%PROJECT_ROOT%\data\" /b
+    echo.
+    echo [INFO] Found data directory (找到數據目錄)
+) else (
+    echo [WARNING] No data directory found (未找到數據目錄)
+)
+
+echo.
+echo Press any key to continue...
+pause >nul
+goto main_menu
+
+:: Training Configuration (訓練配置)
+:training_config
+echo.
+echo [INFO] Training configuration... (訓練配置)
+echo [%date% %time%] Training configuration >> "%LOG_FILE%" 2>nul
+
+:: Check for config files (檢查配置文件)
+:: 修正路徑引用，確保使用正確的絕對路徑
+if exist "%PROJECT_ROOT%\training\configs\" (
+    echo === Training Configurations === (訓練配置)
+    dir "%PROJECT_ROOT%\training\configs\" /b
+    echo.
+    echo [INFO] Found configuration files (找到配置文件)
+) else (
+    echo [WARNING] No configuration directory found (未找到配置目錄)
+)
+
+echo.
+echo Press any key to continue...
+pause >nul
+goto main_menu
+
+:: Exit Script (退出腳本)
+:exit_script
+echo.
+echo [INFO] Exiting Training Manager... (退出訓練管理器)
+echo [%date% %time%] Exiting Training Manager >> "%LOG_FILE%" 2>nul
+echo.
+echo Returning to main menu... (返回主菜單)
+echo.
+:: 確保返回到原始目錄
+cd /d "%ORIGINAL_DIR%"
+echo Press any key to continue...
+pause >nul
+goto :eof

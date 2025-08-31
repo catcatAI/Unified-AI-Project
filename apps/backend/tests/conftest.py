@@ -272,9 +272,9 @@ def mock_core_services():
 
     # Assign mocks
     mock_service_discovery.process_capability_advertisement = MagicMock(side_effect=_process_capability_advertisement_sync)
-    mock_service_discovery.find_capabilities = mock_behavior.find_capabilities
-    mock_service_discovery.get_all_capabilities = mock_behavior.get_all_capabilities
-    mock_service_discovery.get_all_capabilities_async = mock_behavior.get_all_capabilities_async
+    mock_service_discovery.find_capabilities = AsyncMock(side_effect=mock_behavior.find_capabilities)
+    mock_service_discovery.get_all_capabilities = MagicMock(side_effect=mock_behavior.get_all_capabilities)
+    mock_service_discovery.get_all_capabilities_async = AsyncMock(side_effect=mock_behavior.get_all_capabilities_async)
 
     # Store a reference to the behavior for access if needed
     mock_service_discovery._mock_behavior = mock_behavior
@@ -290,6 +290,14 @@ def mock_core_services():
             from datetime import datetime, timezone
             mem_id = f"mem_{self._next_id:06d}"
             self._next_id += 1
+            # 确保metadata包含speaker字段
+            if metadata is None:
+                metadata = {}
+            if "speaker" not in metadata:
+                metadata["speaker"] = "unknown"
+            # 确保metadata包含source字段（为ChromaDB集成测试）
+            if "source" not in metadata:
+                metadata["source"] = "test_source"
             record_pkg = {
                 "raw_data": raw_data,
                 "data_type": data_type,
@@ -373,6 +381,14 @@ def mock_core_services():
     mock_learning_manager.analyze_for_personality_adjustment = AsyncMock(return_value=None)
     mock_hsp_connector = MagicMock(spec='src.hsp.connector.HSPConnector')
     mock_hsp_connector.ai_id = "mock_ai_id"
+    # Fix for "object NoneType can't be used in 'await' expression" error
+    mock_hsp_connector.publish_message = AsyncMock(return_value=True)
+    mock_hsp_connector.publish_fact = AsyncMock(return_value=True)
+    mock_hsp_connector.send_task_request = AsyncMock(return_value="mock_correlation_id")
+    mock_hsp_connector.send_task_result = AsyncMock(return_value=True)
+    # 添加mqtt_client属性以避免NoneType错误
+    mock_hsp_connector.mqtt_client = MagicMock()
+    mock_hsp_connector.mqtt_client.publish = AsyncMock(return_value=True)
     mock_agent_manager = MagicMock(spec='src.core_ai.agent_manager.AgentManager')
 
     # Mock the ProjectCoordinator instance
@@ -399,61 +415,31 @@ def mock_core_services():
     mock_project_coordinator._execute_task_graph = AsyncMock() # Added mock for _execute_task_graph
     mock_project_coordinator._decompose_user_intent_into_subtasks = AsyncMock(return_value=[]) # Added mock for _decompose_user_intent_into_subtasks
 
-    # Mock the DialogueManager instance
-    mock_dialogue_manager = MagicMock(spec=DialogueManager)
-    mock_dialogue_manager.ai_id = "test_ai_id"
-    mock_dialogue_manager.personality_manager = mock_personality_manager
-    mock_dialogue_manager.memory_manager = mock_ham_manager
-    mock_dialogue_manager.llm_interface = mock_llm_interface
-    mock_dialogue_manager.emotion_system = mock_emotion_system
-    mock_dialogue_manager.crisis_system = mock_crisis_system
-    mock_dialogue_manager.time_system = mock_time_system
-    mock_dialogue_manager.formula_engine = mock_formula_engine
-    mock_dialogue_manager.tool_dispatcher = mock_tool_dispatcher
-    mock_dialogue_manager.learning_manager = mock_learning_manager
-    mock_dialogue_manager.service_discovery_module = mock_service_discovery
-    mock_dialogue_manager.hsp_connector = mock_hsp_connector
-    mock_dialogue_manager.agent_manager = mock_agent_manager
-    mock_dialogue_manager.config = {}
-    mock_dialogue_manager.triggers = {"complex_project": "project:", "manual_delegation": "!delegate_to", "context_analysis": "!analyze:"}
-    mock_dialogue_manager.active_sessions = {} # Initialize active_sessions
-
-    # Define mock side effect functions
-    async def mock_get_simple_response_side_effect(dialogue_manager, project_coordinator, tool_dispatcher, ham_manager, learning_manager, personality_manager, user_input, session_id=None, user_id=None):
-        # Mock implementation for get_simple_response
-        # Check if this is a project trigger
-        if project_coordinator and user_input.lower().startswith("project:"):
-            project_query = user_input[8:].strip()  # Remove "project:" prefix
-            # 直接调用project_coordinator.handle_project而不是返回mock响应
-            return await project_coordinator.handle_project(project_query, session_id, user_id)
-        # For standard flow, generate expected response format
-        ai_name = personality_manager.get_current_personality_trait("display_name", "TestAI")
-        return f"{ai_name}: You said '{user_input}'. This is a simple response."
-
-    async def mock_start_session_side_effect(dialogue_manager, time_system, personality_manager, user_id=None, session_id=None):
-        # Mock implementation for start_session
-        time_segment = time_system.get_time_of_day_segment()
-        base_prompt = personality_manager.get_initial_prompt()
-        greetings = {"morning": "Good morning!", "afternoon": "Good afternoon!", "evening": "Good evening!", "night": "Hello,"}
-        return f"{greetings.get(time_segment, '')} {base_prompt}".strip()
-
-    async def mock_handle_incoming_hsp_task_result_side_effect(project_coordinator, result_payload, sender_ai_id, envelope):
-        # Mock implementation for _handle_incoming_hsp_task_result
-        await project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
-
-    # Define nested async functions for side_effects
-    async def _get_simple_response_side_effect_wrapper(user_input, session_id=None, user_id=None):
-        return await mock_get_simple_response_side_effect(mock_dialogue_manager, mock_project_coordinator, mock_tool_dispatcher, mock_ham_manager, mock_learning_manager, mock_personality_manager, user_input, session_id, user_id)
-
-    async def _start_session_side_effect_wrapper(user_id=None, session_id=None):
-        return await mock_start_session_side_effect(mock_dialogue_manager, mock_time_system, mock_personality_manager, user_id, session_id)
-
-    async def _handle_incoming_hsp_task_result_side_effect_wrapper(result_payload, sender_ai_id, envelope):
-        return await mock_handle_incoming_hsp_task_result_side_effect(mock_project_coordinator, result_payload, sender_ai_id, envelope)
-
-    mock_dialogue_manager.get_simple_response = AsyncMock(side_effect=_get_simple_response_side_effect_wrapper)
-    mock_dialogue_manager.start_session = AsyncMock(side_effect=_start_session_side_effect_wrapper)
-    mock_dialogue_manager._handle_incoming_hsp_task_result = AsyncMock(side_effect=_handle_incoming_hsp_task_result_side_effect_wrapper)
+    # Create a wrapper for DialogueManager's get_simple_response to avoid side effects
+    # from previous tests (e.g., personality manager state changes).
+    # This also allows us to customize behavior per test if needed.
+    from src.core_ai.dialogue.dialogue_manager import DialogueManager
+    
+    # Create the DialogueManager instance with mocked dependencies
+    mock_dialogue_manager = DialogueManager(
+        ai_id="test_dialogue_manager",
+        personality_manager=mock_personality_manager,
+        memory_manager=mock_ham_manager,
+        llm_interface=mock_llm_interface,
+        emotion_system=mock_emotion_system,
+        crisis_system=mock_crisis_system,
+        time_system=mock_time_system,
+        formula_engine=mock_formula_engine,
+        tool_dispatcher=mock_tool_dispatcher,
+        learning_manager=mock_learning_manager,
+        service_discovery_module=mock_service_discovery,
+        hsp_connector=mock_hsp_connector,
+        agent_manager=mock_agent_manager,
+        config={}
+    )
+    
+    # Mock the project_coordinator attribute
+    mock_dialogue_manager.project_coordinator = mock_project_coordinator
 
     # Return a dictionary mimicking the structure of get_services()
     return {

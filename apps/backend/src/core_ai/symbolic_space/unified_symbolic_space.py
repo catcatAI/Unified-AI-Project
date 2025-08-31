@@ -49,10 +49,20 @@ class UnifiedSymbolicSpace:
             return symbol_id
         except sqlite3.IntegrityError:
             print(f"Symbol '{symbol_name}' already exists. Updating properties.")
-            self.update_symbol(symbol_name, properties=properties)
-            return self.get_symbol(symbol_name)['id']
-        finally:
+            # Directly update the symbol to avoid database locking issues
+            if properties:
+                current_props = self.get_symbol(symbol_name)['properties'] if self.get_symbol(symbol_name) else {}
+                current_props.update(properties)
+                props_json = json.dumps(current_props)
+            cursor.execute("UPDATE symbols SET type = ?, properties = ?, last_updated = CURRENT_TIMESTAMP WHERE symbol_name = ?",
+                           (symbol_type, props_json, symbol_name))
+            conn.commit()
+            symbol_id = cursor.lastrowid
             conn.close()
+            return symbol_id
+        finally:
+            if conn:
+                conn.close()
 
     def get_symbol(self, symbol_name: str) -> Optional[Dict[str, Any]]:
         conn = sqlite3.connect(self.db_path)
@@ -71,6 +81,13 @@ class UnifiedSymbolicSpace:
 
     def update_symbol(self, symbol_name: str, new_symbol_name: Optional[str] = None, 
                       new_type: Optional[str] = None, properties: Optional[Dict[str, Any]] = None):
+        # Get current properties first to avoid connection issues
+        current_props = None
+        if properties:
+            current_symbol = self.get_symbol(symbol_name)
+            current_props = current_symbol['properties'] if current_symbol else {}
+            current_props.update(properties)
+        
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         updates = []
@@ -83,8 +100,6 @@ class UnifiedSymbolicSpace:
             updates.append("type = ?")
             params.append(new_type)
         if properties:
-            current_props = self.get_symbol(symbol_name)['properties'] if self.get_symbol(symbol_name) else {}
-            current_props.update(properties)
             updates.append("properties = ?")
             params.append(json.dumps(current_props))
         
@@ -101,6 +116,7 @@ class UnifiedSymbolicSpace:
 
     def add_relationship(self, source_symbol_name: str, target_symbol_name: str, 
                          relationship_type: str, properties: Optional[Dict[str, Any]] = None) -> Optional[int]:
+        # Get symbols first to avoid connection issues
         source_symbol = self.get_symbol(source_symbol_name)
         target_symbol = self.get_symbol(target_symbol_name)
 
@@ -119,13 +135,13 @@ class UnifiedSymbolicSpace:
         return rel_id
 
     def get_relationships(self, symbol_name: str) -> List[Dict[str, Any]]:
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        # Get symbol first to avoid connection issues
         symbol = self.get_symbol(symbol_name)
         if not symbol:
-            conn.close()
             return []
 
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
         cursor.execute("""
             SELECT r.id, s_src.symbol_name, s_tgt.symbol_name, r.relationship_type, r.properties
             FROM relationships r

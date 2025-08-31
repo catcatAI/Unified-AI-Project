@@ -395,8 +395,8 @@ async def get_hsp_task_status(correlation_id: str, services=Depends(get_services
 
     # If not in HAM, check pending state tracked by DialogueManager
     try:
-        if dialogue_manager is not None and hasattr(dialogue_manager, "_pending_hsp_task_requests"):
-            if correlation_id in getattr(dialogue_manager, "_pending_hsp_task_requests", {}):
+        if dialogue_manager is not None and hasattr(dialogue_manager, "pending_hsp_task_requests"):
+            if correlation_id in getattr(dialogue_manager, "pending_hsp_task_requests", {}):
                 return {
                     "status": "pending",
                     "correlation_id": correlation_id,
