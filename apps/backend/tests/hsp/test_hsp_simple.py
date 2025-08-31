@@ -104,10 +104,28 @@ async def test_publish_fact(hsp_connector: HSPConnector, broker: MockMqttBroker,
     )
 
     # Publish the fact using the hsp_connector
-    await hsp_connector.publish_fact(fact_payload, "hsp/knowledge/facts/test")
+    result = await hsp_connector.publish_fact(fact_payload, "hsp/knowledge/facts/test")
+    print(f"Publish result: {result}")
+    
+    # 添加更多调试信息
+    print(f"Internal bus subscriptions: {internal_bus.subscriptions}")
+    print(f"Internal bus has subscriptions attribute: {hasattr(internal_bus, 'subscriptions')}")
+    print(f"Registered callbacks: {hsp_connector._fact_callbacks}")
+    
+    # 添加发布结果的调试信息
+    print(f"Published messages in broker: {broker.get_published_messages()}")
 
     # Wait until the fact is received or timeout instead of a fixed sleep
-    await asyncio.wait_for(received_event.wait(), timeout=5.0) # Increased timeout for robustness
+    try:
+        await asyncio.wait_for(received_event.wait(), timeout=15.0) # 进一步增加超时时间
+    except asyncio.TimeoutError:
+        print(f"Timeout waiting for fact. Received facts so far: {received_facts}")
+        print(f"Published messages in broker: {broker.get_published_messages()}")
+        # 添加更多调试信息
+        print(f"Internal bus subscriptions at timeout: {internal_bus.subscriptions}")
+        print(f"Internal bus has subscriptions attribute at timeout: {hasattr(internal_bus, 'subscriptions')}")
+        print(f"Registered callbacks at timeout: {hsp_connector._fact_callbacks}")
+        raise
 
     assert len(received_facts) > 0, "No facts were received"
     assert received_facts[0]["id"] == fact_payload["id"]

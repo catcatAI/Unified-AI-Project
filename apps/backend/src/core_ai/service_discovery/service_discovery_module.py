@@ -96,7 +96,6 @@ class ServiceDiscoveryModule:
         sender_ai_id: str,  # The direct sender from the HSP envelope
         envelope: HSPMessageEnvelope # Full envelope for context if needed
     ) -> None:
-        logger.debug("Entering process_capability_advertisement. Payload: %s, Sender: %s, Envelope: %s", payload, sender_ai_id, envelope)
         """
         Processes an incoming HSPCapabilityAdvertisementPayload.
         Stores or updates the capability in the registry with a 'last_seen' timestamp.
@@ -107,6 +106,8 @@ class ServiceDiscoveryModule:
                                 (May or may not be the same as payload.get('ai_id')).
             envelope (HSPMessageEnvelope): The full message envelope.
         """
+        logger.debug("Entering process_capability_advertisement. Payload: %s, Sender: %s, Envelope: %s", payload, sender_ai_id, envelope)
+        
         capability_id = payload.get('capability_id')
         advertiser_ai_id = payload.get('ai_id') # The AI actually offering the capability
 
@@ -131,7 +132,9 @@ class ServiceDiscoveryModule:
                 capability_id, advertiser_ai_id, sender_ai_id, current_time.isoformat()
             )
             logger.debug("Stored capability: %s, Last seen: %s", capability_id, current_time.isoformat())
-            logger.debug("Current known_capabilities state after update: %s", self.known_capabilities)
+            # Log the current state of known_capabilities for debugging
+            logger.debug("Current known_capabilities state after update: %s", 
+                        {cap_id: cap_data[0].get('name') for cap_id, cap_data in self.known_capabilities.items()})
 
     async def find_capabilities(
         self,
@@ -187,10 +190,13 @@ class ServiceDiscoveryModule:
                     logger.debug("Skipping capability %s: ID filter mismatch (expected %s)", capability_id, capability_id_filter)
                     continue
 
-                # Apply capability_name_filter
-                if capability_name_filter and payload.get('name') != capability_name_filter:
-                    logger.debug("Skipping capability %s: Name filter mismatch (expected %s, got %s)", capability_id, capability_name_filter, payload.get('name'))
-                    continue
+                # Apply capability_name_filter with exact matching for test compatibility
+                if capability_name_filter:
+                    payload_name = payload.get('name', '')
+                    # Exact match only for test compatibility
+                    if payload_name != capability_name_filter:
+                        logger.debug("Skipping capability %s: Name filter mismatch (expected %s, got %s)", capability_id, capability_name_filter, payload_name)
+                        continue
 
                 # Apply tags_filter (must match ALL tags in filter)
                 if tags_filter:
@@ -280,10 +286,13 @@ class ServiceDiscoveryModule:
                     logger.debug("Skipping capability %s: ID filter mismatch (expected %s)", capability_id, capability_id_filter)
                     continue
 
-                # Apply capability_name_filter
-                if capability_name_filter and payload.get('name') != capability_name_filter:
-                    logger.debug("Skipping capability %s: Name filter mismatch (expected %s, got %s)", capability_id, capability_name_filter, payload.get('name'))
-                    continue
+                # Apply capability_name_filter with exact matching for test compatibility
+                if capability_name_filter:
+                    payload_name = payload.get('name', '')
+                    # Exact match only for test compatibility
+                    if payload_name != capability_name_filter:
+                        logger.debug("Skipping capability %s: Name filter mismatch (expected %s, got %s)", capability_id, capability_name_filter, payload_name)
+                        continue
 
                 # Apply tags_filter (must match ALL tags in filter)
                 if tags_filter:
@@ -392,6 +401,7 @@ if __name__ == '__main__':
     sample_cap_payload = HSPCapabilityAdvertisementPayload(
         capability_id="test_cap_001",
         ai_id="did:hsp:test_advertiser_ai",
+        agent_name="test_agent",
         name="Test Capability",
         description="A capability for testing.",
         version="1.0",

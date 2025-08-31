@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""
+测试模块导入以验证修复
+"""
+import sys
+import os
+
+# 添加项目路径
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+backend_path = os.path.join(project_root, 'apps', 'backend')
+sys.path.insert(0, backend_path)
+sys.path.insert(0, os.path.join(backend_path, 'src'))
+
+def test_imports():
+    """测试模块导入"""
+    modules_to_test = [
+        "src.core_ai.learning.content_analyzer_module",
+        "src.core_ai.learning.fact_extractor_module", 
+        "src.core_ai.service_discovery.service_discovery_module",
+        "src.core_ai.dialogue.project_coordinator"
+    ]
+    
+    results = []
+    for module_name in modules_to_test:
+        try:
+            __import__(module_name)
+            print(f"✓ {module_name} 导入成功")
+            results.append(True)
+        except Exception as e:
+            print(f"✗ {module_name} 导入失败: {e}")
+            results.append(False)
+    
+    return all(results)
+
+if __name__ == "__main__":
+    print("测试模块导入...")
+    success = test_imports()
+    if success:
+        print("\n🎉 所有模块导入成功！")
+        sys.exit(0)
+    else:
+        print("\n❌ 部分模块导入失败！")
+        sys.exit(1)

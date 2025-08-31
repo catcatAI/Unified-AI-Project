@@ -299,6 +299,8 @@ python scripts/export_openapi.py
 - **[AGI 發展計畫](../planning/core-development/agi-development-plan.md)**：邁向 Level 3-4 AGI 的策略
 - **[技術實施路線圖](../planning/core-development/technical-implementation-roadmap.md)**：具體開發任務清單
 - **[API 文档](docs/API_ENDPOINTS.md)**：後端 API 使用指南
+- **[概念模型實現](docs/CONCEPT_MODELS_IMPLEMENTATION.md)**：概念模型詳細實現文檔
+- **[概念模型訓練集成計劃](docs/CONCEPT_MODELS_TRAINING_INTEGRATION_PLAN.md)**：概念模型訓練集成方案
 
 ## 個別套件說明
 

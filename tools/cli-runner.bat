@@ -2,184 +2,146 @@
 chcp 65001 >nul 2>&1
 setlocal enabledelayedexpansion
 title Unified AI Project - CLI Runner
-color 0A
+color 0E
+
+:: Add error handling and logging (添加錯誤處理和日志記錄)
+set "LOG_FILE=%~dp0cli-runner-errors.log"
+set "SCRIPT_NAME=cli-runner.bat"
+
+:: Log script start (記錄腳本啟動)
+echo [%date% %time%] Script started: %SCRIPT_NAME% >> "%LOG_FILE%" 2>nul
 
 echo ==========================================
-echo   Unified AI Project - CLI Runner
+echo   🤖 Unified AI Project - CLI Runner
 echo ==========================================
 echo.
+echo Run CLI commands for the Unified AI Project. (運行Unified AI Project的CLI命令)
+echo.
+echo Available commands: (可用命令)
+echo.
+echo   setup     - Setup development environment (設置開發環境)
+echo   start     - Start development servers (啟動開發服務器)
+echo   test      - Run tests (運行測試)
+echo   train     - Setup training environment (設置訓練環境)
+echo   health    - Run health check (運行健康檢查)
+echo   clean     - Clean git status (清理git狀態)
+echo   logs      - View error logs (查看錯誤日志)
+echo   fix       - Fix dependencies (修復依賴)
+echo   venv      - Recreate virtual environment (重新創建虛擬環境)
+echo   emergency - Emergency git fix (緊急git修復)
+echo.
+echo Usage: cli-runner.bat [command] [options] (用法: cli-runner.bat [命令] [選項])
+echo.
 
-:main_menu
-cls
-echo ==========================================
-echo   Unified AI Project - CLI Runner
-echo ==========================================
-echo.
-echo Available CLI Tools:
-echo.
-echo 1. Unified CLI - General AI interactions
-echo 2. AI Models CLI - Model management and interactions
-echo 3. HSP CLI - Hyper-Structure Protocol tools
-echo 4. Install CLI as system command
-echo 5. Exit
-echo.
-
-set "choice="
-set /p "choice=Enter your choice (1-5): "
-if defined choice set "choice=%choice: =%"
-if not defined choice (
-    echo [ERROR] No input provided
-    timeout /t 2 >nul
-    goto main_menu
+:: Check if a command is provided (檢查是否提供了命令)
+if "%1"=="" (
+    echo [ERROR] No command provided (未提供命令)
+    echo [%date% %time%] No command provided >> "%LOG_FILE%" 2>nul
+    echo.
+    echo Use 'cli-runner.bat help' for available commands (使用'cli-runner.bat help'查看可用命令)
+    echo.
+    echo Press any key to exit...
+    pause >nul
+    exit /b 1
 )
 
-if "%choice%"=="1" goto unified_cli
-if "%choice%"=="2" goto ai_models_cli
-if "%choice%"=="3" goto hsp_cli
-if "%choice%"=="4" goto install_cli
-if "%choice%"=="5" goto end_script
+:: Process commands (處理命令)
+echo [INFO] Running command: %1 (運行命令: %1)
+echo [%date% %time%] Running command: %1 >> "%LOG_FILE%" 2>nul
 
-echo [ERROR] Invalid choice '%choice%'. Please enter 1-5.
-timeout /t 2 >nul
-goto main_menu
-
-:: Unified CLI Function
-:unified_cli
-echo.
-echo [INFO] Starting Unified CLI...
-echo.
-cd /d %~dp0..\packages\cli
-if exist "cli/unified_cli.py" (
-    if "%~1"=="" (
-        echo Usage: cli-runner.bat unified-cli [command] [options]
-        echo.
-        echo Running: python cli/unified_cli.py --help
-        echo.
-        python cli/unified_cli.py --help
-        echo.
-        echo Examples:
-        echo   cli-runner.bat unified-cli health
-        echo   cli-runner.bat unified-cli chat "Hello, how are you?"
-        echo   cli-runner.bat unified-cli analyze --code "def hello(): print('Hello')"
-        echo.
-        echo For interactive mode, run without parameters
+if "%1"=="setup" (
+    if exist "ai-runner.bat" (
+        call ai-runner.bat setup
     ) else (
-        echo Running: python cli/unified_cli.py %*
-        echo.
-        python cli/unified_cli.py %*
+        echo [ERROR] ai-runner.bat not found (未找到ai-runner.bat)
+        echo [%date% %time%] ai-runner.bat not found >> "%LOG_FILE%" 2>nul
     )
-) else (
-    echo [ERROR] Unified CLI script not found
-)
-cd ..\..\tools
-echo.
-echo Press any key to return to main menu...
-pause >nul
-goto main_menu
-
-:: AI Models CLI Function
-:ai_models_cli
-echo.
-echo [INFO] Starting AI Models CLI...
-echo.
-cd /d %~dp0..\packages\cli
-if exist "cli/ai_models_cli.py" (
-    if "%~1"=="" (
-        echo Usage: cli-runner.bat ai-models-cli [command] [options]
-        echo.
-        echo Running: python cli/ai_models_cli.py --help
-        echo.
-        python cli/ai_models_cli.py --help
-        echo.
-        echo Examples:
-        echo   cli-runner.bat ai-models-cli list
-        echo   cli-runner.bat ai-models-cli health
-        echo   cli-runner.bat ai-models-cli query "Explain quantum computing"
-        echo   cli-runner.bat ai-models-cli chat --model gpt-4
-        echo.
-        echo For interactive mode, run without parameters
+) else if "%1"=="start" (
+    if exist "tools\start-dev.bat" (
+        call tools\start-dev.bat
     ) else (
-        echo Running: python cli/ai_models_cli.py %*
-        echo.
-        python cli/ai_models_cli.py %*
+        echo [ERROR] start-dev.bat not found (未找到start-dev.bat)
+        echo [%date% %time%] start-dev.bat not found >> "%LOG_FILE%" 2>nul
     )
-) else (
-    echo [ERROR] AI Models CLI script not found
-)
-cd ..\..\tools
-echo.
-echo Press any key to return to main menu...
-pause >nul
-goto main_menu
-
-:: HSP CLI Function
-:hsp_cli
-echo.
-echo [INFO] Starting HSP CLI...
-echo.
-cd /d %~dp0..\packages\cli
-if exist "cli/main.py" (
-    if "%~1"=="" (
-        echo Usage: cli-runner.bat hsp-cli [command] [options]
-        echo.
-        echo Running: python cli/main.py --help
-        echo.
-        python cli/main.py --help
-        echo.
-        echo Examples:
-        echo   cli-runner.bat hsp-cli query "Hello"
-        echo   cli-runner.bat hsp-cli publish_fact "The sky is blue" --confidence 0.9
-        echo.
-        echo For interactive mode, run without parameters
+) else if "%1"=="test" (
+    if exist "tools\run-tests.bat" (
+        call tools\run-tests.bat
     ) else (
-        echo Running: python cli/main.py %*
-        echo.
-        python cli/main.py %*
+        echo [ERROR] run-tests.bat not found (未找到run-tests.bat)
+        echo [%date% %time%] run-tests.bat not found >> "%LOG_FILE%" 2>nul
     )
-) else (
-    echo [ERROR] HSP CLI script not found
-)
-cd ..\..\tools
-echo.
-echo Press any key to return to main menu...
-pause >nul
-goto main_menu
-
-:: Install CLI as system command
-:install_cli
-echo.
-echo [INFO] Installing CLI as system command...
-echo.
-cd /d %~dp0..\packages\cli
-if exist "setup.py" (
-    echo Installing CLI package...
-    pip install -e .
-    if %errorlevel% equ 0 (
-        echo.
-        echo [SUCCESS] CLI installed as system command!
-        echo You can now use 'unified-ai' command from anywhere
-        echo.
-        echo Example usage:
-        echo   unified-ai --help
-        echo   unified-ai health
-        echo   unified-ai chat "Hello"
+) else if "%1"=="train" (
+    if exist "setup-training.bat" (
+        call setup-training.bat
     ) else (
-        echo.
-        echo [ERROR] Failed to install CLI package
+        echo [ERROR] setup-training.bat not found (未找到setup-training.bat)
+        echo [%date% %time%] setup-training.bat not found >> "%LOG_FILE%" 2>nul
     )
+) else if "%1"=="health" (
+    if exist "tools\health-check.bat" (
+        call tools\health-check.bat
+    ) else (
+        echo [ERROR] health-check.bat not found (未找到health-check.bat)
+        echo [%date% %time%] health-check.bat not found >> "%LOG_FILE%" 2>nul
+    )
+) else if "%1"=="clean" (
+    if exist "tools\safe-git-cleanup.bat" (
+        call tools\safe-git-cleanup.bat
+    ) else (
+        echo [ERROR] safe-git-cleanup.bat not found (未找到safe-git-cleanup.bat)
+        echo [%date% %time%] safe-git-cleanup.bat not found >> "%LOG_FILE%" 2>nul
+    )
+) else if "%1"=="logs" (
+    if exist "tools\view-error-logs.bat" (
+        call tools\view-error-logs.bat
+    ) else (
+        echo [ERROR] view-error-logs.bat not found (未找到view-error-logs.bat)
+        echo [%date% %time%] view-error-logs.bat not found >> "%LOG_FILE%" 2>nul
+    )
+) else if "%1"=="fix" (
+    if exist "tools\fix-dependencies.bat" (
+        call tools\fix-dependencies.bat
+    ) else (
+        echo [ERROR] fix-dependencies.bat not found (未找到fix-dependencies.bat)
+        echo [%date% %time%] fix-dependencies.bat not found >> "%LOG_FILE%" 2>nul
+    )
+) else if "%1"=="venv" (
+    if exist "tools\recreate-venv.bat" (
+        call tools\recreate-venv.bat
+    ) else (
+        echo [ERROR] recreate-venv.bat not found (未找到recreate-venv.bat)
+        echo [%date% %time%] recreate-venv.bat not found >> "%LOG_FILE%" 2>nul
+    )
+) else if "%1"=="emergency" (
+    if exist "tools\emergency-git-fix.bat" (
+        call tools\emergency-git-fix.bat
+    ) else (
+        echo [ERROR] emergency-git-fix.bat not found (未找到emergency-git-fix.bat)
+        echo [%date% %time%] emergency-git-fix.bat not found >> "%LOG_FILE%" 2>nul
+    )
+) else if "%1"=="help" (
+    echo Available commands: (可用命令)
+    echo   setup     - Setup development environment (設置開發環境)
+    echo   start     - Start development servers (啟動開發服務器)
+    echo   test      - Run tests (運行測試)
+    echo   train     - Setup training environment (設置訓練環境)
+    echo   health    - Run health check (運行健康檢查)
+    echo   clean     - Clean git status (清理git狀態)
+    echo   logs      - View error logs (查看錯誤日志)
+    echo   fix       - Fix dependencies (修復依賴)
+    echo   venv      - Recreate virtual environment (重新創建虛擬環境)
+    echo   emergency - Emergency git fix (緊急git修復)
+    echo   help      - Show this help message (顯示此幫助消息)
 ) else (
-    echo [ERROR] setup.py not found
+    echo [ERROR] Unknown command '%1' (未知命令'%1')
+    echo [%date% %time%] Unknown command: %1 >> "%LOG_FILE%" 2>nul
+    echo.
+    echo Use 'cli-runner.bat help' for available commands (使用'cli-runner.bat help'查看可用命令)
 )
-cd ..\..\tools
-echo.
-echo Press any key to return to main menu...
-pause >nul
-goto main_menu
 
-:: End Script Function
-:end_script
 echo.
-echo Thank you for using Unified AI Project CLI Runner!
+echo [%date% %time%] Command %1 completed >> "%LOG_FILE%" 2>nul
 echo.
-pause
+echo Press any key to exit...
+pause >nul
 exit /b 0

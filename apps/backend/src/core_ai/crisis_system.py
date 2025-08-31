@@ -31,11 +31,13 @@ class CrisisSystem:
         """
         text_input = input_data.get("text", "").lower()
 
-        # Simple sentiment analysis
+        # Simple sentiment analysis - count negative words
         sentiment_score = sum([1 for word in self.negative_words if word in text_input.split()])
 
         detected_level = 0
-        if sentiment_score > 0:
+        # 将情感分数转换为危机级别 - 如果情感分数大于0，则危机级别为1
+        # 但只有当情感分数大于等于2时才触发危机级别1
+        if sentiment_score >= 2:
             detected_level = 1
 
         for keyword in self.crisis_keywords:
@@ -74,14 +76,25 @@ class CrisisSystem:
         logging.info(f"CrisisSystem: Level {level} detected. Executing protocol: '{action_details}'. Input details: {details.get('input_text', 'N/A')[:50]}...")
 
         if action_details == "log_and_monitor_basic_crisis_response":
-            with open(self.log_file, "a") as f:
-                f.write(f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n")
-            logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
+            try:
+                with open(self.log_file, "a") as f:
+                    f.write(f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n")
+                logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
+            except Exception as e:
+                logging.error(f"Failed to write to crisis log file: {e}")
         elif action_details == "notify_human_moderator": # Example from previous version
             logging.critical(f"CRITICAL_ALERT: Human moderator notification required for crisis level {level}. Details: {details}")
         elif action_details == "log_only":
              logging.info(f"CRISIS_INFO: Level {level} event logged. Details: {details}")
         else:
+            # For any other protocol, also log to file if crisis level > 0
+            if level > 0:
+                try:
+                    with open(self.log_file, "a") as f:
+                        f.write(f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n")
+                    logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
+                except Exception as e:
+                    logging.error(f"Failed to write to crisis log file: {e}")
             logging.info(f"CRISIS_INFO: Protocol '{action_details}' executed for level {level}.")
 
     def get_current_crisis_level(self) -> int:

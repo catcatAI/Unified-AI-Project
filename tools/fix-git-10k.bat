@@ -1,182 +1,169 @@
 @echo off
 chcp 65001 >nul 2>&1
 setlocal enabledelayedexpansion
-title Git 10K+ 問題解決工具 - 安全版本
+title Unified AI Project - Fix Git 10K Issues
 color 0D
 
+:: Add error handling and logging (添加錯誤處理和日志記錄)
+set "LOG_FILE=%~dp0fix-git-10k-errors.log"
+set "SCRIPT_NAME=fix-git-10k.bat"
+
+:: Log script start (記錄腳本啟動)
+echo [%date% %time%] Script started: %SCRIPT_NAME% >> "%LOG_FILE%" 2>nul
+
 echo ==========================================
-echo      Git 10K+ 問題解決工具
+echo   🐛 Unified AI Project - Fix Git 10K Issues
 echo ==========================================
 echo.
-echo 此工具將安全地處理：
-echo 1. 提交應該追蹤的項目本體文件
-echo 2. 忽略大型數據集和臨時文件
-echo 3. 清理不必要的追蹤
+echo This script fixes common Git issues related to large file handling. (此腳本修復與大文件處理相關的常見Git問題)
 echo.
-echo [安全提示] 操作前將創建備份分支
+echo Process: (過程)
+echo 1. 🔧 Configure Git for large files (為大文件配置Git)
+echo 2. 🧹 Clean Git cache (清理Git緩存)
+echo 3. 📦 Optimize Git repository (優化Git倉庫)
+echo 4. ✅ Verify configuration (驗證配置)
 echo.
 
-:: 預檢查Git狀態和環境
-echo [預檢] 檢查Git倉庫狀態...
-if not exist ".git" (
-    echo [錯誤] 當前目錄不是Git倉庫
-    pause
-    exit /b 1
+:: Confirm action (確認操作)
+echo [CONFIRM] Are you sure you want to fix Git 10K issues? (您確定要修復Git 10K問題嗎?)
+echo.
+
+:: 使用 set /p 替代 choice 命令
+:get_user_choice
+set "user_choice="
+set /p "user_choice=Continue with Git 10K fix (y/N)? "
+if not defined user_choice (
+    set "user_choice=N"
 )
 
-:: 檢查是否有未提交的重要變更
-git diff --name-only HEAD > pending_changes.txt
-for /f %%i in ('find /c /v "" ^< pending_changes.txt') do set "pending_count=%%i"
-if !pending_count! gtr 0 (
-    echo [警告] 檢測到 !pending_count! 個未提交的變更
-    echo [建議] 建議先備份當前工作
-    echo [選項] 是否繼續？ (y/N)
-    set /p "continue_choice="
-    if /i "!continue_choice!" neq "y" (
-        echo [取消] 操作已取消
-        del pending_changes.txt >nul 2>&1
-        pause
-        exit /b 0
-    )
-)
-
-:: 獲取當前分支名稱
-for /f "tokens=2 delims= " %%a in ('git branch --show-current 2^>nul') do set "current_branch=%%a"
-if "!current_branch!"=="" (
-    for /f "tokens=*" %%a in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "current_branch=%%a"
-)
-echo [INFO] 當前分支: !current_branch!
-
-:: 創建安全備份分支
-echo [安全] 創建備份分支...
-set "backup_branch=backup-before-10k-fix-%date:~0,4%%date:~5,2%%date:~8,2%-%time:~0,2%%time:~3,2%%time:~6,2%"
-set "backup_branch=!backup_branch: =0!"
-git branch "!backup_branch!" >nul 2>&1
-if !errorlevel! equ 0 (
-    echo [成功] 備份分支已創建: !backup_branch!
+:: 验证用户输入
+if /i "%user_choice%"=="Y" (
+    goto continue_fix
+) else if /i "%user_choice%"=="N" (
+    echo [INFO] Operation cancelled by user (操作被用戶取消)
+    echo [%date% %time%] Operation cancelled by user >> "%LOG_FILE%" 2>nul
+    echo Press any key to exit...
+    pause >nul
+    exit /b 0
 ) else (
-    echo [警告] 無法創建備份分支，但可以繼續
+    echo [ERROR] Invalid choice '%user_choice%'. Please enter 'Y' or 'N'.
+    echo [%date% %time%] Invalid choice: %user_choice% >> "%LOG_FILE%" 2>nul
+    goto get_user_choice
 )
 
-:: 檢查Git狀態
-echo [步驟 1] 檢查當前Git狀態...
-git status --porcelain > git_status_temp.txt
-if %errorlevel% neq 0 (
-    echo [錯誤] Git命令執行失敗
-    del pending_changes.txt >nul 2>&1
-    pause
-    exit /b 1
-)
+:continue_fix
 
-:: 統計文件數量
-for /f %%i in ('find /c /v "" ^< git_status_temp.txt') do set "total_files=%%i"
-echo [INFO] 檢測到 !total_files! 個未追蹤文件
+:: Configure Git for large files (為大文件配置Git)
+echo.
+echo [STEP 1/4] Configuring Git for large files... (為大文件配置Git)
+echo [%date% %time%] Configuring Git for large files >> "%LOG_FILE%" 2>nul
 
-if !total_files! gtr 10000 (
-    echo [警告] 文件數量超過10K，需要特殊處理
+:: Increase buffer size (增加緩衝區大小)
+git config --global http.postBuffer 524288000 > git_config.log 2>&1
+if errorlevel 1 (
+    echo [WARNING] Failed to set http.postBuffer (無法設置http.postBuffer)
 ) else (
-    echo [INFO] 文件數量在可控範圍內
+    echo [OK] http.postBuffer set to 500MB (http.postBuffer設置為500MB)
 )
 
+:: Configure for long paths (為長路徑配置)
+git config --global core.longpaths true >> git_config.log 2>&1
+if errorlevel 1 (
+    echo [WARNING] Failed to set core.longpaths (無法設置core.longpaths)
+) else (
+    echo [OK] core.longpaths enabled (core.longpaths已啟用)
+)
+
+:: Set file limit (設置文件限制)
+git config --global core.compression 0 >> git_config.log 2>&1
+if errorlevel 1 (
+    echo [WARNING] Failed to set core.compression (無法設置core.compression)
+) else (
+    echo [OK] core.compression disabled for large files (core.compression已禁用以處理大文件)
+)
+
+:: Clean Git cache (清理Git緩存)
 echo.
-echo [步驟 2] 處理項目本體文件...
+echo [STEP 2/4] Cleaning Git cache... (清理Git緩存)
+echo [%date% %time%] Cleaning Git cache >> "%LOG_FILE%" 2>nul
 
-:: 添加應該提交的項目本體文件
-echo [添加] 核心組件和腳本...
-git add apps/backend/diagnose_components.py >nul 2>&1
-
-:: 添加小型示例數據的README和配置文件
-echo [添加] 數據配置文件...
-if exist "data\README.md" git add data/README.md >nul 2>&1
-if exist "data\TRAINING_DATA_GUIDE.md" git add data/TRAINING_DATA_GUIDE.md >nul 2>&1
-if exist "data\data_config.json" git add data/data_config.json >nul 2>&1
-
-:: 添加文檔和配置文件
-echo [添加] 文檔和配置...
-git add *.md >nul 2>&1
-git add *.bat >nul 2>&1
-git add .gitignore >nul 2>&1
-
-echo.
-echo [步驟 3] 排除大型數據集...
-
-:: 安全地確保.gitignore生效
-echo [INFO] 安全更新.gitignore排除規則...
-:: 只對大型數據目錄執行緩存清理
-if exist "data\common_voice_zh" (
-    echo [清理] 移除Common Voice數據緩存...
-    git rm -r --cached data/common_voice_zh >nul 2>&1
-)
-if exist "data\visual_genome_sample" (
-    echo [清理] 移除Visual Genome數據緩存...
-    git rm -r --cached data/visual_genome_sample >nul 2>&1
-)
-if exist "data\coco_captions" (
-    echo [清理] 移除COCO數據緩存...
-    git rm -r --cached data/coco_captions >nul 2>&1
-)
-if exist "data\flickr30k_sample" (
-    echo [清理] 移除Flickr30K數據緩存...
-    git rm -r --cached data/flickr30k_sample >nul 2>&1
-)
-:: 重新添加項目文件
-echo [添加] 重新添加項目核心文件...
-git add . >nul 2>&1
-
-echo.
-echo [步驟 4] 檢查清理後狀態...
-git status --porcelain > git_status_after.txt
-for /f %%i in ('find /c /v "" ^< git_status_after.txt') do set "remaining_files=%%i"
-
-echo [結果] 清理前: !total_files! 個文件
-echo [結果] 清理後: !remaining_files! 個文件
-
-if !remaining_files! lss 100 (
-    echo [成功] 文件數量已控制在合理範圍內
-    echo.
-    echo [提交] 準備提交項目本體文件...
-    
-    set /p "commit_msg=請輸入提交訊息 (回車使用默認): "
-    if "!commit_msg!"=="" set "commit_msg=整合批處理腳本系統並清理大型數據集"
-    
-    git commit -m "!commit_msg!"
-    if !errorlevel! equ 0 (
-        echo [成功] 提交完成
-        echo.
-        echo [推送] 推送到遠程倉庫...
-        echo [INFO] 推送到分支: !current_branch!
-        git push origin "!current_branch!"
-        if !errorlevel! equ 0 (
-            echo [成功] 推送完成到分支 !current_branch!
-        ) else (
-            echo [警告] 推送失敗，請檢查網絡連接或權限
-            echo [恢復] 可以使用備份分支恢復: git checkout !backup_branch!
-        )
+:: Remove Git index (刪除Git索引)
+if exist ".git\index" (
+    del ".git\index" > git_clean.log 2>&1
+    if errorlevel 1 (
+        echo [WARNING] Failed to remove Git index (無法刪除Git索引)
     ) else (
-        echo [INFO] 沒有新的變更需要提交
+        echo [OK] Git index removed (Git索引已刪除)
     )
-) else (
-    echo [警告] 仍有 !remaining_files! 個文件，可能需要手動處理
-    echo.
-    echo [建議] 檢查以下文件：
-    type git_status_after.txt | findstr /v "^$"
 )
 
-:: 清理臨時文件
-del git_status_temp.txt >nul 2>&1
-del git_status_after.txt >nul 2>&1
-del pending_changes.txt >nul 2>&1
+:: Reset Git index (重置Git索引)
+git reset > git_reset.log 2>&1
+if errorlevel 1 (
+    echo [WARNING] Failed to reset Git index (無法重置Git索引)
+) else (
+    echo [OK] Git index reset (Git索引已重置)
+)
+
+:: Optimize Git repository (優化Git倉庫)
+echo.
+echo [STEP 3/4] Optimizing Git repository... (優化Git倉庫)
+echo [%date% %time%] Optimizing Git repository >> "%LOG_FILE%" 2>nul
+
+:: Run Git garbage collection (運行Git垃圾回收)
+git gc --aggressive > git_gc.log 2>&1
+if errorlevel 1 (
+    echo [WARNING] Git garbage collection failed (Git垃圾回收失敗)
+    echo [INFO] Check git_gc.log for details (檢查git_gc.log獲取詳細信息)
+) else (
+    echo [OK] Git garbage collection completed (Git垃圾回收完成)
+)
+
+:: Prune unreachable objects (修剪不可達對象)
+git prune > git_prune.log 2>&1
+if errorlevel 1 (
+    echo [WARNING] Git prune failed (Git修剪失敗)
+    echo [INFO] Check git_prune.log for details (檢查git_prune.log獲取詳細信息)
+) else (
+    echo [OK] Git prune completed (Git修剪完成)
+)
+
+:: Verify configuration (驗證配置)
+echo.
+echo [STEP 4/4] Verifying configuration... (驗證配置)
+echo [%date% %time%] Verifying configuration >> "%LOG_FILE%" 2>nul
+
+:: Check Git configuration (檢查Git配置)
+echo === Git Configuration === (Git配置)
+git config --global --get http.postBuffer
+git config --global --get core.longpaths
+git config --global --get core.compression
+
+:: Check repository status (檢查倉庫狀態)
+echo.
+echo === Repository Status === (倉庫狀態)
+git status --porcelain > repo_status.log 2>&1
+for /f %%i in ('find /c /v "" ^< repo_status.log 2^>nul') do set "status_count=%%i"
+echo [INFO] Repository has %status_count% items needing attention (倉庫有 %status_count% 個項目需要注意)
 
 echo.
-echo ==========================================
-echo    10K+ 問題解決完成
-echo ==========================================
+echo [SUCCESS] Git 10K issues fix completed! (Git 10K問題修復完成!)
+echo [%date% %time%] Git 10K issues fix completed >> "%LOG_FILE%" 2>nul
 echo.
-echo [摘要] 處理完成，大型數據集已排除，項目本體已提交
-echo [數據] Common Voice (57GB)、Visual Genome (18GB)、MS COCO (1GB) 已忽略
-echo [狀態] Git倉庫已清理，準備好用於開發
-echo [備份] 如需恢復，使用: git checkout !backup_branch!
-echo [清理] 如不需要備份，可刪除: git branch -d !backup_branch!
+echo Summary: (摘要)
+echo 🔧 Git configured for large files (Git已為大文件配置)
+echo 🧹 Git cache cleaned (Git緩存已清理)
+echo 📦 Git repository optimized (Git倉庫已優化)
+echo ✅ Configuration verified (配置已驗證)
+echo.
+echo Next steps: (下一步)
+echo 1. Run health-check.bat to verify Git status (運行health-check.bat驗證Git狀態)
+echo 2. Try your Git operation again (再次嘗試您的Git操作)
+echo 3. If issues persist, run emergency-git-fix.bat (如果問題仍然存在，運行emergency-git-fix.bat)
 echo.
 
-pause
+:end_script
+echo.
+echo Press any key to exit...
+pause >nul
+exit /b 0

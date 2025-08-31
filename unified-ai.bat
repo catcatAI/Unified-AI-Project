@@ -1,208 +1,324 @@
 @echo off
 chcp 65001 >nul 2>&1
 setlocal enabledelayedexpansion
-title Unified AI Project - Unified Management Tool
+title Unified AI Project - Enhanced Unified Management Tool
 color 0A
 
-echo ==========================================
-echo   Unified AI Project - Unified Management
-echo ==========================================
-echo.
+:: Add error handling and logging
+set "LOG_FILE=%~dp0unified-ai-errors.log"
+set "SCRIPT_NAME=unified-ai.bat"
+
+:: Log script start
+echo [%date% %time%] Script started: %SCRIPT_NAME% >> "%LOG_FILE%" 2>nul
 
 :: Main menu
 :main_menu
 cls
 echo ==========================================
-echo   Unified AI Project - Unified Management
+echo   Unified AI Project - Enhanced Unified Management
 echo ==========================================
 echo.
 echo Available Actions:
 echo.
-echo 1. Health Check - Check development environment
-echo 2. Setup Environment - Install dependencies and setup
-echo 3. Start Development - Launch development servers
-echo 4. Run Tests - Execute test suite
-echo 5. Git Management - Git status and cleanup
-echo 6. Training Setup - Prepare for AI training
-echo 7. Training Manager - Manage training data and processes
-echo 8. CLI Tools - Access Unified AI CLI tools
-echo 9. Emergency Git Fix - Recover from Git issues
-echo 10. Fix Dependencies - Resolve dependency issues
-echo 11. Exit
+echo 1. Health Check - Check development environment (檢查開發環境)
+echo 2. Setup Environment - Install dependencies and setup (安裝依賴和設置)
+echo 3. Start Development - Launch development servers (啟動開發服務器)
+echo 4. Run Tests - Execute test suite (執行測試套件)
+echo 5. Git Management - Git status and cleanup (Git狀態和清理)
+echo 6. Training Setup - Prepare for AI training (準備AI訓練)
+echo 7. Training Manager - Manage training data and processes (管理訓練數據和過程)
+echo 8. CLI Tools - Access Unified AI CLI tools (訪問Unified AI CLI工具)
+echo 9. Model Management - Manage AI models and DNA chains (管理AI模型和DNA鏈)
+echo 10. Data Analysis - Analyze project data and statistics (分析項目數據和統計)
+echo 11. Emergency Git Fix - Recover from Git issues (從Git問題中恢復)
+echo 12. Fix Dependencies - Resolve dependency issues (解決依賴問題)
+echo 13. System Information - Display system information (顯示系統信息)
+echo 14. Exit (退出)
 echo.
 
+:: Get user choice with validation
+:get_user_choice
 set "choice="
-set /p "choice=Enter your choice (1-11): "
-if defined choice set "choice=%choice: =%"
+set /p "choice=Enter your choice (1-14): "
 if not defined choice (
     echo [ERROR] No input provided
+    echo [%date% %time%] No input provided >> "%LOG_FILE%" 2>nul
     timeout /t 2 >nul
-    goto main_menu
+    goto get_user_choice
 )
 
-if "%choice%"=="1" goto health_check
-if "%choice%"=="2" goto setup_env
-if "%choice%"=="3" goto start_dev
-if "%choice%"=="4" goto run_tests
-if "%choice%"=="5" goto git_management
-if "%choice%"=="6" goto training_setup
-if "%choice%"=="7" goto training_manager
-if "%choice%"=="8" goto cli_tools
-if "%choice%"=="9" goto emergency_git_fix
-if "%choice%"=="10" goto fix_dependencies
-if "%choice%"=="11" goto end_script
+:: Validate numeric input for menu choices
+set "choice=%choice: =%"
+for %%i in (1 2 3 4 5 6 7 8 9 10 11 12 13 14) do (
+    if "%choice%"=="%%i" (
+        goto choice_%%i
+    )
+)
 
-echo [ERROR] Invalid choice '%choice%'. Please enter 1-11.
+echo [ERROR] Invalid choice '%choice%'. Please enter a valid option.
+echo [%date% %time%] Invalid choice: %choice% >> "%LOG_FILE%" 2>nul
 timeout /t 2 >nul
+goto get_user_choice
+
+:choice_1
+goto health_check
+:choice_2
+goto setup_env
+:choice_3
+goto start_dev
+:choice_4
+goto run_tests
+:choice_5
+goto git_management
+:choice_6
+goto training_setup
+:choice_7
+goto training_manager
+:choice_8
+goto cli_tools
+:choice_9
+goto model_management
+:choice_10
+goto data_analysis
+:choice_11
+goto emergency_git_fix
+:choice_12
+goto fix_dependencies
+:choice_13
+goto system_info
+:choice_14
+goto end_script
+
+:: Model Management Function
+:model_management
+echo.
+echo [INFO] AI Model Management
+echo.
+echo Available Model Management Options:
+echo.
+echo 1. List All Models - Show all available AI models (顯示所有可用的AI模型)
+echo 2. Model Health Check - Check status of all models (檢查所有模型的狀態)
+echo 3. DNA Chain Management - Manage DNA data chains (管理DNA數據鏈)
+echo 4. Model Performance Report - Generate model performance report (生成模型性能報告)
+echo 5. Back to Main Menu (返回主菜單)
+echo.
+
+:: Get model management choice with validation
+:get_model_choice
+set "model_choice="
+set /p "model_choice=Enter your choice (1-5): "
+if not defined model_choice (
+    echo [ERROR] No input provided
+    echo [%date% %time%] No model management choice provided >> "%LOG_FILE%" 2>nul
+    timeout /t 2 >nul
+    goto get_model_choice
+)
+
+:: Validate numeric input for model management choices
+set "model_choice=%model_choice: =%"
+for %%i in (1 2 3 4 5) do (
+    if "%model_choice%"=="%%i" (
+        goto model_choice_%%i
+    )
+)
+
+echo [ERROR] Invalid choice '%model_choice%'. Please enter a valid option.
+echo [%date% %time%] Invalid model management choice: %model_choice% >> "%LOG_FILE%" 2>nul
+timeout /t 2 >nul
+goto get_model_choice
+
+:model_choice_1
+goto list_all_models
+:model_choice_2
+goto model_health_check
+:model_choice_3
+goto dna_chain_management
+:model_choice_4
+goto model_performance_report
+:model_choice_5
 goto main_menu
 
-:: CLI Tools Function
-:cli_tools
+:: List All Models Function
+:list_all_models
 echo.
-echo [INFO] Unified AI CLI Tools
-echo.
-echo Available CLI Tools:
-echo.
-echo 1. Unified CLI - General AI interactions
-echo 2. AI Models CLI - Model management and interactions
-echo 3. HSP CLI - Hyper-Structure Protocol tools
-echo 4. CLI Runner - Dedicated CLI tool launcher
-echo 5. Back to Main Menu
-echo.
-
-set "cli_choice="
-set /p "cli_choice=Enter your choice (1-5): "
-if defined cli_choice set "cli_choice=%cli_choice: =%"
-if not defined cli_choice (
-    echo [ERROR] No input provided
-    timeout /t 2 >nul
-    goto cli_tools
-)
-
-if "%cli_choice%"=="1" goto unified_cli
-if "%cli_choice%"=="2" goto ai_models_cli
-if "%cli_choice%"=="3" goto hsp_cli
-if "%cli_choice%"=="4" goto cli_runner
-if "%cli_choice%"=="5" goto main_menu
-
-echo [ERROR] Invalid choice '%cli_choice%'. Please enter 1-5.
-timeout /t 2 >nul
-goto cli_tools
-
-:: CLI Runner Function
-:cli_runner
-echo.
-echo [INFO] Starting CLI Runner...
-echo.
-if exist "tools\cli-runner.bat" (
-    call tools\cli-runner.bat
-) else (
-    echo [ERROR] CLI Runner script not found
-    echo.
-    echo Press any key to return to CLI tools menu...
-    pause >nul
-)
-goto cli_tools
-
-:: Unified CLI Function
-:unified_cli
-echo.
-echo [INFO] Starting Unified CLI...
-echo.
-cd /d %~dp0packages\cli
-if exist "cli/unified_cli.py" (
-    echo Running: python cli/unified_cli.py --help
-    echo.
-    python cli/unified_cli.py --help
-    echo.
-    echo Enter CLI command (or press Enter to return to menu):
-    echo Example: health, chat "Hello", analyze --code "def x(): pass"
-    echo.
-    set /p "cli_cmd=Command: "
-    if defined cli_cmd (
-        echo.
-        echo Running: python cli/unified_cli.py %cli_cmd%
-        echo.
-        python cli/unified_cli.py %cli_cmd%
-    )
-) else (
-    echo [ERROR] Unified CLI script not found
-)
-cd ..\..\..
-echo.
-echo Press any key to return to CLI tools menu...
-pause >nul
-goto cli_tools
-
-:: AI Models CLI Function
-:ai_models_cli
-echo.
-echo [INFO] Starting AI Models CLI...
+echo [INFO] Listing All AI Models...
+echo [%date% %time%] Listing all AI models >> "%LOG_FILE%" 2>nul
 echo.
 cd /d %~dp0packages\cli
 if exist "cli/ai_models_cli.py" (
-    echo Running: python cli/ai_models_cli.py --help
+    echo Running: python cli/ai_models_cli.py list
     echo.
-    python cli/ai_models_cli.py --help
-    echo.
-    echo Enter AI Models CLI command (or press Enter to return to menu):
-    echo Example: list, health, query "Explain quantum computing"
-    echo.
-    set /p "ai_cmd=Command: "
-    if defined ai_cmd (
-        echo.
-        echo Running: python cli/ai_models_cli.py %ai_cmd%
-        echo.
-        python cli/ai_models_cli.py %ai_cmd%
-    )
+    python cli/ai_models_cli.py list
 ) else (
     echo [ERROR] AI Models CLI script not found
+    echo [%date% %time%] AI Models CLI script not found >> "%LOG_FILE%" 2>nul
 )
 cd ..\..\..
 echo.
-echo Press any key to return to CLI tools menu...
+echo Press any key to return to model management menu...
 pause >nul
-goto cli_tools
+goto model_management
 
-:: HSP CLI Function
-:hsp_cli
+:: Model Health Check Function
+:model_health_check
 echo.
-echo [INFO] Starting HSP CLI...
+echo [INFO] Performing Model Health Check...
+echo [%date% %time%] Performing model health check >> "%LOG_FILE%" 2>nul
 echo.
 cd /d %~dp0packages\cli
-if exist "cli/main.py" (
-    echo Running: python cli/main.py --help
+if exist "cli/ai_models_cli.py" (
+    echo Running: python cli/ai_models_cli.py health
     echo.
-    python cli/main.py --help
-    echo.
-    echo Enter HSP CLI command (or press Enter to return to menu):
-    echo Example: query "Hello", publish_fact "The sky is blue" --confidence 0.9
-    echo.
-    set /p "hsp_cmd=Command: "
-    if defined hsp_cmd (
-        echo.
-        echo Running: python cli/main.py %hsp_cmd%
-        echo.
-        python cli/main.py %hsp_cmd%
-    )
+    python cli/ai_models_cli.py health
 ) else (
-    echo [ERROR] HSP CLI script not found
+    echo [ERROR] AI Models CLI script not found
+    echo [%date% %time%] AI Models CLI script not found >> "%LOG_FILE%" 2>nul
 )
 cd ..\..\..
 echo.
-echo Press any key to return to CLI tools menu...
+echo Press any key to return to model management menu...
 pause >nul
-goto cli_tools
+goto model_management
+
+:: DNA Chain Management Function
+:dna_chain_management
+echo.
+echo [INFO] DNA Chain Management
+echo.
+echo Available DNA Chain Management Options:
+echo.
+echo 1. List DNA Chains - Show all DNA data chains (顯示所有DNA數據鏈)
+echo 2. Create DNA Chain - Create a new DNA data chain (創建新的DNA數據鏈)
+echo 3. View DNA Chain Details - View details of a specific DNA chain (查看特定DNA鏈的詳細信息)
+echo 4. Merge DNA Chains - Merge two DNA chains (合併兩個DNA鏈)
+echo 5. Back to Model Management (返回模型管理)
+echo.
+
+:: Get DNA chain management choice with validation
+:get_dna_choice
+set "dna_choice="
+set /p "dna_choice=Enter your choice (1-5): "
+if not defined dna_choice (
+    echo [ERROR] No input provided
+    echo [%date% %time%] No DNA chain management choice provided >> "%LOG_FILE%" 2>nul
+    timeout /t 2 >nul
+    goto get_dna_choice
+)
+
+:: Validate numeric input for DNA chain management choices
+set "dna_choice=%dna_choice: =%"
+for %%i in (1 2 3 4 5) do (
+    if "%dna_choice%"=="%%i" (
+        goto dna_choice_%%i
+    )
+)
+
+echo [ERROR] Invalid choice '%dna_choice%'. Please enter a valid option.
+echo [%date% %time%] Invalid DNA chain management choice: %dna_choice% >> "%LOG_FILE%" 2>nul
+timeout /t 2 >nul
+goto get_dna_choice
+
+:dna_choice_1
+goto list_dna_chains
+:dna_choice_2
+goto create_dna_chain
+:dna_choice_3
+goto view_dna_chain
+:dna_choice_4
+goto merge_dna_chains
+:dna_choice_5
+goto model_management
+
+:: List DNA Chains Function
+:list_dna_chains
+echo.
+echo [INFO] Listing DNA Data Chains...
+echo [%date% %time%] Listing DNA data chains >> "%LOG_FILE%" 2>nul
+echo.
+echo TODO: Implement DNA chain listing functionality
+echo.
+echo Press any key to return to DNA chain management menu...
+pause >nul
+goto dna_chain_management
+
+:: Create DNA Chain Function
+:create_dna_chain
+echo.
+echo [INFO] Creating DNA Data Chain...
+echo [%date% %time%] Creating DNA data chain >> "%LOG_FILE%" 2>nul
+echo.
+set /p "chain_name=Enter DNA chain name: "
+if defined chain_name (
+    echo TODO: Implement DNA chain creation functionality for %chain_name%
+) else (
+    echo [ERROR] No DNA chain name provided
+    echo [%date% %time%] No DNA chain name provided >> "%LOG_FILE%" 2>nul
+)
+echo.
+echo Press any key to return to DNA chain management menu...
+pause >nul
+goto dna_chain_management
+
+:: View DNA Chain Details Function
+:view_dna_chain
+echo.
+echo [INFO] Viewing DNA Chain Details...
+echo [%date% %time%] Viewing DNA chain details >> "%LOG_FILE%" 2>nul
+echo.
+set /p "chain_id=Enter DNA chain ID: "
+if defined chain_id (
+    echo TODO: Implement DNA chain details view for %chain_id%
+) else (
+    echo [ERROR] No DNA chain ID provided
+    echo [%date% %time%] No DNA chain ID provided >> "%LOG_FILE%" 2>nul
+)
+echo.
+echo Press any key to return to DNA chain management menu...
+pause >nul
+goto dna_chain_management
+
+:: Merge DNA Chains Function
+:merge_dna_chains
+echo.
+echo [INFO] Merging DNA Chains...
+echo [%date% %time%] Merging DNA chains >> "%LOG_FILE%" 2>nul
+echo.
+set /p "chain1_id=Enter first DNA chain ID: "
+set /p "chain2_id=Enter second DNA chain ID: "
+if defined chain1_id if defined chain2_id (
+    echo TODO: Implement DNA chain merging functionality for %chain1_id% and %chain2_id%
+) else (
+    echo [ERROR] Both DNA chain IDs must be provided
+    echo [%date% %time%] Missing DNA chain IDs for merge >> "%LOG_FILE%" 2>nul
+)
+echo.
+echo Press any key to return to DNA chain management menu...
+pause >nul
+goto dna_chain_management
+
+:: Model Performance Report Function
+:model_performance_report
+echo.
+echo [INFO] Generating Model Performance Report...
+echo [%date% %time%] Generating model performance report >> "%LOG_FILE%" 2>nul
+echo.
+echo TODO: Implement model performance report generation
+echo.
+echo Press any key to return to model management menu...
+pause >nul
+goto model_management
 
 :: Health Check Function
 :health_check
 echo.
 echo [INFO] Running Health Check...
+echo [%date% %time%] Running health check >> "%LOG_FILE%" 2>nul
 echo.
 if exist "tools\health-check.bat" (
     call tools\health-check.bat
 ) else (
     echo [ERROR] Health check script not found
+    echo [%date% %time%] Health check script not found >> "%LOG_FILE%" 2>nul
 )
 echo.
 echo Press any key to return to main menu...
@@ -212,76 +328,15 @@ goto main_menu
 :: Setup Environment Function
 :setup_env
 echo.
-echo [INFO] Setting up environment...
+echo [INFO] Setting up Environment...
+echo [%date% %time%] Setting up environment >> "%LOG_FILE%" 2>nul
 echo.
-
-:: Check environment
-where node >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Node.js not installed
-    echo [INFO] Download from: https://nodejs.org/
-    echo.
-    pause
-    goto main_menu
+if exist "tools\start-dev.bat" (
+    call tools\start-dev.bat
+) else (
+    echo [ERROR] Environment setup script not found
+    echo [%date% %time%] Environment setup script not found >> "%LOG_FILE%" 2>nul
 )
-
-where python >nul 2>&1  
-if %errorlevel% neq 0 (
-    echo [ERROR] Python not installed
-    echo [INFO] Download from: https://python.org/
-    echo.
-    pause
-    goto main_menu
-)
-
-echo [OK] Environment ready
-echo.
-
-:: Check pnpm
-where pnpm >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [INFO] Installing pnpm...
-    npm install -g pnpm
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to install pnpm
-        pause
-        goto main_menu
-    )
-)
-
-:: Install dependencies if needed
-if not exist "node_modules" (
-    echo [INFO] Installing Node.js dependencies...
-    pnpm install
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to install dependencies
-        pause
-        goto main_menu
-    )
-)
-
-:: Setup Python environment
-cd apps\backend
-if not exist "venv" (
-    echo [INFO] Creating Python virtual environment...
-    python -m venv venv
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to create virtual environment
-        cd ..\..
-        pause
-        goto main_menu
-    )
-)
-
-echo [INFO] Installing Python packages...
-call venv\Scripts\activate.bat
-pip install --upgrade pip >nul 2>&1
-pip install -r requirements.txt >nul 2>&1
-pip install -r requirements-dev.txt >nul 2>&1
-cd ..\..
-
-echo.
-echo [SUCCESS] Environment setup completed!
 echo.
 echo Press any key to return to main menu...
 pause >nul
@@ -290,117 +345,31 @@ goto main_menu
 :: Start Development Function
 :start_dev
 echo.
-echo [INFO] Starting development environment...
+echo [INFO] Starting Development Environment...
+echo [%date% %time%] Starting development environment >> "%LOG_FILE%" 2>nul
 echo.
-
-:start_dev_menu
-echo Choose an action:
-echo.
-echo 1. Start Full Development Environment
-echo 2. Start Backend Only  
-echo 3. Start Frontend Only
-echo 4. Run Tests
-echo 5. Clean Git Status
-echo 6. Back to Main Menu
-echo.
-
-set "dev_choice="
-set /p "dev_choice=Enter your choice (1-6): "
-if defined dev_choice set "dev_choice=%dev_choice: =%"
-if not defined dev_choice (
-    echo [ERROR] No input provided
-    timeout /t 2 >nul
-    goto start_dev_menu
-)
-
-if "%dev_choice%"=="1" goto start_all
-if "%dev_choice%"=="2" goto start_backend
-if "%dev_choice%"=="3" goto start_frontend  
-if "%dev_choice%"=="4" goto run_tests_dev
-if "%dev_choice%"=="5" goto clean_git_dev
-if "%dev_choice%"=="6" goto main_menu
-
-echo [ERROR] Invalid choice '%dev_choice%'. Please enter 1-6.
-timeout /t 2 >nul
-goto start_dev_menu
-
-:start_all
-echo.
-echo Starting full development environment...
-echo.
-echo Services will be available at:
-echo - Backend API: http://localhost:8000
-echo - Frontend Dashboard: http://localhost:3000
-echo.
-
-start "Backend API" cmd /k "cd /d apps\backend && call venv\Scripts\activate.bat && uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000"
-start "Frontend" cmd /k "pnpm --filter frontend-dashboard dev"
-
-echo [SUCCESS] Development environment started!
-echo Check the opened windows for service status.
-echo.
-pause
-goto start_dev_menu
-
-:start_backend
-echo.
-echo Starting backend services only...
-echo.
-start "Backend API" cmd /k "cd /d apps\backend && call venv\Scripts\activate.bat && uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000"
-
-echo [SUCCESS] Backend services started!
-echo - API Server: http://localhost:8000
-echo.
-pause
-goto start_dev_menu
-
-:start_frontend
-echo.
-echo Starting frontend service only...
-echo.
-start "Frontend" cmd /k "pnpm --filter frontend-dashboard dev"
-
-echo [SUCCESS] Frontend service started!
-echo - Dashboard: http://localhost:3000
-echo.
-pause
-goto start_dev_menu
-
-:run_tests_dev
-echo.
-echo Running test suite...
-echo.
-if exist "tools\run-tests.bat" (
-    call tools\run-tests.bat
+if exist "tools\start-dev.bat" (
+    call tools\start-dev.bat
 ) else (
-    echo [ERROR] Test script not found
+    echo [ERROR] Development start script not found
+    echo [%date% %time%] Development start script not found >> "%LOG_FILE%" 2>nul
 )
 echo.
-pause
-goto start_dev_menu
-
-:clean_git_dev
-echo.
-echo Cleaning Git status...
-echo.
-if exist "tools\safe-git-cleanup.bat" (
-    call tools\safe-git-cleanup.bat
-) else (
-    echo [ERROR] Git cleanup script not found
-)
-echo.
-pause
-goto start_dev_menu
+echo Press any key to return to main menu...
+pause >nul
+goto main_menu
 
 :: Run Tests Function
 :run_tests
 echo.
-echo [INFO] Running test suite...
+echo [INFO] Running Tests...
+echo [%date% %time%] Running tests >> "%LOG_FILE%" 2>nul
 echo.
 if exist "tools\run-tests.bat" (
     call tools\run-tests.bat
 ) else (
-    echo [ERROR] Test script not found
+    echo [ERROR] Test runner script not found
+    echo [%date% %time%] Test runner script not found >> "%LOG_FILE%" 2>nul
 )
 echo.
 echo Press any key to return to main menu...
@@ -411,52 +380,91 @@ goto main_menu
 :git_management
 echo.
 echo [INFO] Git Management...
+echo [%date% %time%] Git management >> "%LOG_FILE%" 2>nul
 echo.
-echo 1. Clean Git Status
-echo 2. Emergency Git Fix
-echo 3. Back to Main Menu
+echo Available Git Management Options:
+echo.
+echo 1. Safe Git Cleanup - Clean Git status safely (安全清理Git狀態)
+echo 2. View Error Logs - View error logs (查看錯誤日志)
+echo 3. Back to Main Menu (返回主菜單)
 echo.
 
+:: Get git management choice with validation
+:get_git_choice
 set "git_choice="
 set /p "git_choice=Enter your choice (1-3): "
-if defined git_choice set "git_choice=%git_choice: =%"
 if not defined git_choice (
     echo [ERROR] No input provided
+    echo [%date% %time%] No git management choice provided >> "%LOG_FILE%" 2>nul
     timeout /t 2 >nul
-    goto git_management
+    goto get_git_choice
 )
 
-if "%git_choice%"=="1" goto clean_git
-if "%git_choice%"=="2" goto emergency_git_fix
-if "%git_choice%"=="3" goto main_menu
+:: Validate numeric input for git management choices
+set "git_choice=%git_choice: =%"
+for %%i in (1 2 3) do (
+    if "%git_choice%"=="%%i" (
+        goto git_choice_%%i
+    )
+)
 
-echo [ERROR] Invalid choice '%git_choice%'. Please enter 1-3.
+echo [ERROR] Invalid choice '%git_choice%'. Please enter a valid option.
+echo [%date% %time%] Invalid git management choice: %git_choice% >> "%LOG_FILE%" 2>nul
 timeout /t 2 >nul
-goto git_management
+goto get_git_choice
 
-:clean_git
+:git_choice_1
+goto safe_git_cleanup
+:git_choice_2
+goto view_error_logs
+:git_choice_3
+goto main_menu
+
+:: Safe Git Cleanup Function
+:safe_git_cleanup
 echo.
-echo Cleaning Git status...
+echo [INFO] Running Safe Git Cleanup...
+echo [%date% %time%] Running safe git cleanup >> "%LOG_FILE%" 2>nul
 echo.
 if exist "tools\safe-git-cleanup.bat" (
     call tools\safe-git-cleanup.bat
 ) else (
-    echo [ERROR] Git cleanup script not found
+    echo [ERROR] Safe Git cleanup script not found
+    echo [%date% %time%] Safe Git cleanup script not found >> "%LOG_FILE%" 2>nul
 )
 echo.
-echo Press any key to return to main menu...
+echo Press any key to return to Git management menu...
 pause >nul
-goto main_menu
+goto git_management
+
+:: View Error Logs Function
+:view_error_logs
+echo.
+echo [INFO] Viewing Error Logs...
+echo [%date% %time%] Viewing error logs >> "%LOG_FILE%" 2>nul
+echo.
+if exist "tools\view-error-logs.bat" (
+    call tools\view-error-logs.bat
+) else (
+    echo [ERROR] Error log viewer script not found
+    echo [%date% %time%] Error log viewer script not found >> "%LOG_FILE%" 2>nul
+)
+echo.
+echo Press any key to return to Git management menu...
+pause >nul
+goto git_management
 
 :: Training Setup Function
 :training_setup
 echo.
-echo [INFO] Setting up training environment...
+echo [INFO] Setting up Training Environment...
+echo [%date% %time%] Setting up training environment >> "%LOG_FILE%" 2>nul
 echo.
 if exist "tools\setup-training.bat" (
     call tools\setup-training.bat
 ) else (
     echo [ERROR] Training setup script not found
+    echo [%date% %time%] Training setup script not found >> "%LOG_FILE%" 2>nul
 )
 echo.
 echo Press any key to return to main menu...
@@ -467,12 +475,43 @@ goto main_menu
 :training_manager
 echo.
 echo [INFO] Launching Training Manager...
+echo [%date% %time%] Launching training manager >> "%LOG_FILE%" 2>nul
 echo.
 if exist "tools\train-manager.bat" (
     call tools\train-manager.bat
 ) else (
     echo [ERROR] Training manager script not found
+    echo [%date% %time%] Training manager script not found >> "%LOG_FILE%" 2>nul
 )
+echo.
+echo Press any key to return to main menu...
+pause >nul
+goto main_menu
+
+:: CLI Tools Function
+:cli_tools
+echo.
+echo [INFO] Launching CLI Tools...
+echo [%date% %time%] Launching CLI tools >> "%LOG_FILE%" 2>nul
+echo.
+if exist "tools\cli-runner.bat" (
+    call tools\cli-runner.bat
+) else (
+    echo [ERROR] CLI runner script not found
+    echo [%date% %time%] CLI runner script not found >> "%LOG_FILE%" 2>nul
+)
+echo.
+echo Press any key to return to main menu...
+pause >nul
+goto main_menu
+
+:: Data Analysis Function
+:data_analysis
+echo.
+echo [INFO] Performing Data Analysis...
+echo [%date% %time%] Performing data analysis >> "%LOG_FILE%" 2>nul
+echo.
+echo TODO: Implement data analysis functionality
 echo.
 echo Press any key to return to main menu...
 pause >nul
@@ -481,12 +520,14 @@ goto main_menu
 :: Emergency Git Fix Function
 :emergency_git_fix
 echo.
-echo [INFO] Running emergency Git fix...
+echo [INFO] Running Emergency Git Fix...
+echo [%date% %time%] Running emergency Git fix >> "%LOG_FILE%" 2>nul
 echo.
 if exist "tools\emergency-git-fix.bat" (
     call tools\emergency-git-fix.bat
 ) else (
     echo [ERROR] Emergency Git fix script not found
+    echo [%date% %time%] Emergency Git fix script not found >> "%LOG_FILE%" 2>nul
 )
 echo.
 echo Press any key to return to main menu...
@@ -496,13 +537,27 @@ goto main_menu
 :: Fix Dependencies Function
 :fix_dependencies
 echo.
-echo [INFO] Fixing dependencies...
+echo [INFO] Fixing Dependencies...
+echo [%date% %time%] Fixing dependencies >> "%LOG_FILE%" 2>nul
 echo.
 if exist "tools\fix-dependencies.bat" (
     call tools\fix-dependencies.bat
 ) else (
-    echo [ERROR] Fix dependencies script not found
+    echo [ERROR] Dependency fix script not found
+    echo [%date% %time%] Dependency fix script not found >> "%LOG_FILE%" 2>nul
 )
+echo.
+echo Press any key to return to main menu...
+pause >nul
+goto main_menu
+
+:: System Information Function
+:system_info
+echo.
+echo [INFO] Displaying System Information...
+echo [%date% %time%] Displaying system information >> "%LOG_FILE%" 2>nul
+echo.
+systeminfo
 echo.
 echo Press any key to return to main menu...
 pause >nul
@@ -511,7 +566,12 @@ goto main_menu
 :: End Script Function
 :end_script
 echo.
-echo Thank you for using Unified AI Project!
+echo [INFO] Exiting Unified AI Project Management Tool...
+echo [%date% %time%] Exiting Unified AI Project Management Tool >> "%LOG_FILE%" 2>nul
 echo.
-pause
+echo Thank you for using the Unified AI Project Management Tool!
+echo 感謝您使用Unified AI Project管理工具！
+echo.
+echo Press any key to exit...
+pause >nul
 exit /b 0

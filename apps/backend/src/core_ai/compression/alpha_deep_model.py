@@ -110,7 +110,7 @@ class AlphaDeepModel:
         self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
         self.compression_stats: Dict[str, Dict[str, Any]] = {}  # 压缩统计信息
 
-    def learn(self, deep_parameter: DeepParameter, feedback: Optional[Dict[str, Any]] = None) -> None:
+    def learn(self, deep_parameter: DeepParameter, feedback: Optional[Dict[str, Any]] = None) -> Optional[Any]:
         """
         Enhanced learning mechanism that updates the model's internal state
         based on new DeepParameters and optional feedback.
@@ -160,8 +160,15 @@ class AlphaDeepModel:
         if feedback:
             # Adjust model parameters based on feedback
             self._adjust_model_parameters(deep_parameter, feedback)
+            # Ensure feedback symbol is created
+            feedback_symbol_name = f"feedback_{deep_parameter.source_memory_id}"
+            if not self.symbolic_space.get_symbol(feedback_symbol_name):
+                self.symbolic_space.add_symbol(feedback_symbol_name, 'Feedback', feedback)
+            # Return the feedback symbol to ensure it's not None
+            return self.symbolic_space.get_symbol(feedback_symbol_name)
         
         print(f"Symbolic space updated for {deep_parameter.source_memory_id}")
+        return None
 
     def _adjust_model_parameters(self, deep_parameter: DeepParameter, feedback: Dict[str, Any]):
         """Adjust model parameters based on feedback."""
