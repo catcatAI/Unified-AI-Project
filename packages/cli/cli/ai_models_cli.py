@@ -15,8 +15,10 @@ import logging
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+backend_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'apps', 'backend')
+sys.path.insert(0, backend_path)
 
-from src.services.multi_llm_service import (
+from apps.backend.src.services.multi_llm_service import (
     MultiLLMService, ChatMessage, ModelProvider, ModelConfig
 )
 

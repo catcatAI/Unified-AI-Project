@@ -11,6 +11,6 @@
     "test:coverage": "(if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && pytest --cov=src --cov-report=html --cov-report=term-missing",
     "test:watch": "(if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && pytest --tb=short -v --timeout=30 -f",
     "clean": "rmdir /s /q venv 2>nul || rm -rf venv",
-    "health": "(if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && python -c \"import src; print('Backend imports OK')\""
+    "health": "(if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && python -c \"import sys; sys.path.insert(0, 'apps/backend/src'); import apps.backend.src.core_services; print('Backend imports OK')\""
   }
 }

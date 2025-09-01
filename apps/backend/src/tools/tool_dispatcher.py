@@ -9,18 +9,18 @@ from typing import Dict, Any, Optional, Callable # Added Callable
 
 # Assuming 'src' is in PYTHONPATH, making 'tools', 'core_ai', 'services' top-level packages
 # Correcting imports to be absolute from project root (assuming /app is project root)
-from src.tools.math_tool import calculate as math_calculate
-from src.tools.logic_tool import evaluate_expression as logic_evaluate
-from src.tools.translation_tool import translate as translate_text
-from src.tools.code_understanding_tool import CodeUnderstandingTool
-from src.tools.csv_tool import CsvTool
-from src.tools.image_generation_tool import ImageGenerationTool
-from src.core_ai.language_models.daily_language_model import DailyLanguageModel
-from src.services.multi_llm_service import MultiLLMService
-from src.shared.types.common_types import ToolDispatcherResponse # Import new response type
+from apps.backend.src.tools.math_tool import calculate as math_calculate
+from apps.backend.src.tools.logic_tool import evaluate_expression as logic_evaluate
+from apps.backend.src.tools.translation_tool import translate as translate_text
+from apps.backend.src.tools.code_understanding_tool import CodeUnderstandingTool
+from apps.backend.src.tools.csv_tool import CsvTool
+from apps.backend.src.tools.image_generation_tool import ImageGenerationTool
+from apps.backend.src.core_ai.language_models.daily_language_model import DailyLanguageModel
+from apps.backend.src.services.multi_llm_service import MultiLLMService
+from apps.backend.src.shared.types.common_types import ToolDispatcherResponse # Import new response type
 from typing import Literal # For literal status types
 try:
-    from src.core_ai.rag.rag_manager import RAGManager
+    from apps.backend.src.core_ai.rag.rag_manager import RAGManager
     RAG_AVAILABLE = True
 except ImportError as e:
     print(f"RAG Manager not available: {e}")
@@ -30,7 +30,7 @@ except ImportError as e:
 class ToolDispatcher:
     def _get_ham(self):
         try:
-            from src.core_services import ham_manager_instance
+            from apps.backend.src.core_services import ham_manager_instance
             return ham_manager_instance
         except Exception:
             return None
@@ -66,7 +66,7 @@ class ToolDispatcher:
         else:
             # Fallback: re-instantiate the wrapper with the new LLM service
             try:
-                from src.core_ai.language_models.daily_language_model import DailyLanguageModel
+                from apps.backend.src.core_ai.language_models.daily_language_model import DailyLanguageModel
                 self.dlm = DailyLanguageModel(llm_service=llm_service)
             except Exception:
                 pass
@@ -598,13 +598,13 @@ class ToolDispatcher:
         summary = {"reloaded": [], "updated": [], "failed": []}
         # Map dispatcher keys to module import paths and callables to bind
         mapping = {
-            "calculate": ("src.tools.math_tool", "calculate", self._execute_math_calculation),
-            "evaluate_logic": ("src.tools.logic_tool", "evaluate_expression", self._execute_logic_evaluation),
-            "translate_text": ("src.tools.translation_tool", "translate", self._execute_translation),
+            "calculate": ("apps.backend.src.tools.math_tool", "calculate", self._execute_math_calculation),
+            "evaluate_logic": ("apps.backend.src.tools.logic_tool", "evaluate_expression", self._execute_logic_evaluation),
+            "translate_text": ("apps.backend.src.tools.translation_tool", "translate", self._execute_translation),
             # Class-based tools can be re-instantiated
-            "inspect_code": ("src.tools.code_understanding_tool", "CodeUnderstandingTool", None),
-            "analyze_csv": ("src.tools.csv_tool", "CsvTool", None),
-            "create_image": ("src.tools.image_generation_tool", "ImageGenerationTool", None),
+            "inspect_code": ("apps.backend.src.tools.code_understanding_tool", "CodeUnderstandingTool", None),
+            "analyze_csv": ("apps.backend.src.tools.csv_tool", "CsvTool", None),
+            "create_image": ("apps.backend.src.tools.image_generation_tool", "ImageGenerationTool", None),
         }
         targets = [only] if only else list(mapping.keys())
         for key in targets:
@@ -668,7 +668,7 @@ class ToolDispatcher:
 # Example Usage
 if __name__ == '__main__':
     import asyncio
-    from src.services.multi_llm_service import MultiLLMService
+    from apps.backend.src.services.multi_llm_service import MultiLLMService
 
     async def main_test():
         logging.basicConfig(level=logging.INFO)

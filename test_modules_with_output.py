@@ -22,7 +22,7 @@ with open(output_file, 'w') as f:
         f.write(f"[ERROR] Failed to import msgpack: {e}\n")
     
     try:
-        from src.services.multi_llm_service import MultiLLMService
+        from apps.backend.src.services.multi_llm_service import MultiLLMService
         f.write("[OK] MultiLLMService imported successfully\n")
     except ImportError as e:
         f.write(f"[ERROR] Failed to import MultiLLMService: {e}\n")

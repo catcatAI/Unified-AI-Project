@@ -13,6 +13,7 @@ from typing import Dict, List, Any, Callable, Optional
 from datetime import datetime
 import threading
 import time
+import numpy as np
 
 # 添加项目路径
 import sys
@@ -23,7 +24,7 @@ sys.path.insert(0, str(backend_path / "src"))
 
 # 导入项目模块
 try:
-    from src.path_config import (
+    from apps.backend.src.path_config import (
         PROJECT_ROOT, 
         DATA_DIR, 
         TRAINING_DIR, 
@@ -45,20 +46,26 @@ from .resource_manager import ResourceManager
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+from dataclasses import dataclass
+
+@dataclass
 class ModelTrainingTask:
     """模型训练任务"""
-    
-    def __init__(self, model_name: str, model_instance: Any, data: List[Dict], resources: Dict):
-        self.model_name = model_name
-        self.model_instance = model_instance
-        self.data = data
-        self.resources = resources
-        self.status = "pending"  # pending, running, completed, failed
-        self.progress = 0
-        self.metrics = {}
-        self.start_time = None
-        self.end_time = None
-        self.thread = None
+    model_name: str
+    model_instance: Any
+    data: List[Dict]
+    resources: Dict
+    epochs: int = 10
+    batch_size: int = 32
+    status: str = "pending"  # pending, running, completed, failed, cancelled
+    current_epoch: int = 0
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+    thread: Optional[threading.Thread] = None
+    progress: float = 0.0
+    metrics: Optional[Dict[str, Any]] = None
 
 class CollaborativeTrainingManager:
     """协作式训练管理器，负责协调所有模型的训练过程"""
@@ -72,6 +79,10 @@ class CollaborativeTrainingManager:
         self.is_training = False
         self.training_thread = None
         self.stop_requested = False
+        # 添加知识共享机制
+        self.shared_knowledge = {}  # 存储模型间共享的知识
+        # 添加检查点管理
+        self.checkpoints = {}
         
         logger.info("🔄 协作式训练管理器初始化完成")
     
@@ -138,52 +149,214 @@ class CollaborativeTrainingManager:
         
         return tasks
     
-    def _train_model_task(self, task: ModelTrainingTask):
-        """执行单个模型的训练任务"""
+    def _train_model_task(self, task: 'ModelTrainingTask'):
+        """训练单个模型任务"""
         try:
+            model_name = task.model_name
+            logger.info(f"🏃 开始训练模型 {model_name}")
             task.status = "running"
             task.start_time = datetime.now()
-            logger.info(f"🚀 开始训练模型: {task.model_name}")
             
-            # 这里应该是实际的训练逻辑
-            # 由于这是一个示例，我们模拟训练过程
-            self._simulate_model_training(task)
+            # 检查是否存在检查点
+            checkpoint = self._load_checkpoint(model_name)
+            start_epoch = checkpoint.get('epoch', 0) if checkpoint else 0
             
+            # 如果从检查点开始，恢复训练状态
+            if start_epoch > 0:
+                logger.info(f"🔄 从检查点恢复训练: {model_name} - Epoch {start_epoch}")
+                task.current_epoch = start_epoch
+                self.training_progress[model_name] = checkpoint.get('progress', {})
+            
+            # 模拟训练过程
+            for epoch in range(start_epoch, task.epochs):
+                if self.stop_requested:
+                    task.status = "cancelled"
+                    # 保存检查点
+                    self._save_checkpoint(model_name, epoch, self.training_progress.get(model_name, {}))
+                    logger.info(f"⏹️  训练被取消: {model_name}")
+                    return
+                
+                # 模拟训练一个epoch
+                time.sleep(0.1)  # 模拟训练时间
+                
+                # 更新进度
+                task.current_epoch = epoch + 1
+                progress = (epoch + 1) / task.epochs * 100
+                self.training_progress[model_name] = {
+                    'epoch': epoch + 1,
+                    'progress': progress,
+                    'loss': 1.0 - (epoch + 1) / task.epochs * 0.9,  # 模拟损失下降
+                    'accuracy': 0.1 + (epoch + 1) / task.epochs * 0.9  # 模拟准确率上升
+                }
+                # 更新任务的进度和指标
+                task.progress = progress
+                task.metrics = {
+                    'loss': self.training_progress[model_name]['loss'],
+                    'accuracy': self.training_progress[model_name]['accuracy']
+                }
+                
+                # 每10个epoch共享一次知识
+                if (epoch + 1) % 10 == 0:
+                    self._share_knowledge(model_name, self.training_progress[model_name])
+                
+                # 每5个epoch保存一次检查点
+                if (epoch + 1) % 5 == 0:
+                    self._save_checkpoint(model_name, epoch + 1, self.training_progress[model_name])
+                
+                logger.info(f"📊 {model_name} - Epoch {epoch + 1}/{task.epochs} - "
+                           f"Progress: {progress:.1f}% - "
+                           f"Loss: {self.training_progress[model_name]['loss']:.4f} - "
+                           f"Accuracy: {self.training_progress[model_name]['accuracy']:.4f}")
+            
+            # 训练完成
             task.status = "completed"
             task.end_time = datetime.now()
-            logger.info(f"✅ 模型 {task.model_name} 训练完成")
+            task.result = {
+                'final_loss': self.training_progress[model_name]['loss'],
+                'final_accuracy': self.training_progress[model_name]['accuracy'],
+                'training_time': (task.end_time - task.start_time).total_seconds()
+            }
+            
+            # 保存模型
+            self._save_model(model_name, task.result)
+            
+            # 删除检查点（训练完成）
+            self._delete_checkpoint(model_name)
+            
+            logger.info(f"✅ 模型 {model_name} 训练完成")
             
         except Exception as e:
             task.status = "failed"
-            task.end_time = datetime.now()
-            logger.error(f"❌ 模型 {task.model_name} 训练失败: {e}")
+            task.error = str(e)
+            # 保存检查点
+            current_epoch = task.current_epoch
+            self._save_checkpoint(model_name, current_epoch, self.training_progress.get(model_name, {}))
+            logger.error(f"❌ 模型 {model_name} 训练失败: {e}")
+            # 记录错误日志
+            self._log_error(model_name, e)
     
-    def _simulate_model_training(self, task: ModelTrainingTask):
-        """模拟模型训练过程"""
-        # 模拟训练过程
-        epochs = 10
-        for epoch in range(1, epochs + 1):
-            if self.stop_requested:
-                logger.info(f"⏹️  训练被请求停止: {task.model_name}")
-                break
-                
-            # 模拟训练时间
-            time.sleep(1)
-            
-            # 更新进度
-            task.progress = (epoch / epochs) * 100
-            
-            # 模拟指标
-            task.metrics = {
-                'loss': 2.0 * (1 - epoch / epochs),
-                'accuracy': 0.5 + 0.5 * (epoch / epochs),
-                'epoch': epoch
-            }
-            
-            logger.info(f"   {task.model_name} - Epoch {epoch}/{epochs} - "
-                       f"进度: {task.progress:.1f}% - "
-                       f"Loss: {task.metrics['loss']:.4f} - "
-                       f"Accuracy: {task.metrics['accuracy']:.4f}")
+    def _share_knowledge(self, model_name: str, training_stats: Dict[str, Any]):
+        """在模型间共享知识"""
+        logger.info(f"🧠 模型 {model_name} 正在共享知识")
+        
+        # 将当前模型的训练统计信息添加到共享知识中
+        if model_name not in self.shared_knowledge:
+            self.shared_knowledge[model_name] = []
+        
+        # 记录当前训练状态
+        knowledge_entry = {
+            'model_name': model_name,
+            'timestamp': datetime.now().isoformat(),
+            'training_stats': training_stats.copy(),
+            'knowledge_vector': self._extract_knowledge_vector(training_stats)
+        }
+        
+        self.shared_knowledge[model_name].append(knowledge_entry)
+        
+        # 与其他模型共享知识
+        for other_model_name in self.models.keys():
+            if other_model_name != model_name:
+                self._apply_shared_knowledge(other_model_name, knowledge_entry)
+    
+    def _extract_knowledge_vector(self, training_stats: Dict[str, Any]) -> List[float]:
+        """从训练统计中提取知识向量"""
+        # 简化实现，实际应用中需要更复杂的知识提取机制
+        knowledge_vector = [
+            training_stats.get('loss', 0.0),
+            training_stats.get('accuracy', 0.0),
+            training_stats.get('progress', 0.0)
+        ]
+        return knowledge_vector
+    
+    def _apply_shared_knowledge(self, model_name: str, knowledge_entry: Dict[str, Any]):
+        """将共享知识应用到指定模型"""
+        logger.debug(f"🔄 将知识从 {knowledge_entry['model_name']} 应用到 {model_name}")
+        
+        # 在实际实现中，这里会更新模型的参数或训练策略
+        # 简化实现，仅记录日志
+        pass
+    
+    def _save_model(self, model_name: str, training_result: Dict[str, Any]):
+        """保存训练好的模型"""
+        model_dir = MODELS_DIR / model_name
+        model_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 保存模型元数据
+        metadata = {
+            'model_name': model_name,
+            'training_result': training_result,
+            'saved_at': datetime.now().isoformat(),
+            'shared_knowledge_count': len(self.shared_knowledge.get(model_name, []))
+        }
+        
+        metadata_file = model_dir / "metadata.json"
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"💾 模型 {model_name} 已保存到 {model_dir}")
+    
+    def _save_checkpoint(self, model_name: str, epoch: int, progress: Dict[str, Any]):
+        """保存训练检查点"""
+        checkpoint_dir = TRAINING_DIR / "checkpoints"
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        
+        checkpoint_data = {
+            'model_name': model_name,
+            'epoch': epoch,
+            'progress': progress,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        checkpoint_file = checkpoint_dir / f"{model_name}_checkpoint_epoch_{epoch}.json"
+        with open(checkpoint_file, 'w', encoding='utf-8') as f:
+            json.dump(checkpoint_data, f, ensure_ascii=False, indent=2)
+        
+        # 更新最新的检查点记录
+        self.checkpoints[model_name] = checkpoint_file
+        logger.info(f"💾 检查点已保存: {checkpoint_file}")
+    
+    def _load_checkpoint(self, model_name: str) -> Optional[Dict[str, Any]]:
+        """加载训练检查点"""
+        checkpoint_file = self.checkpoints.get(model_name)
+        if checkpoint_file and checkpoint_file.exists():
+            try:
+                with open(checkpoint_file, 'r', encoding='utf-8') as f:
+                    checkpoint_data = json.load(f)
+                logger.info(f"📂 检查点已加载: {checkpoint_file}")
+                return checkpoint_data
+            except Exception as e:
+                logger.error(f"❌ 加载检查点失败: {e}")
+                return None
+        return None
+    
+    def _delete_checkpoint(self, model_name: str):
+        """删除训练检查点"""
+        checkpoint_file = self.checkpoints.get(model_name)
+        if checkpoint_file and checkpoint_file.exists():
+            try:
+                checkpoint_file.unlink()
+                del self.checkpoints[model_name]
+                logger.info(f"🗑️  检查点已删除: {checkpoint_file}")
+            except Exception as e:
+                logger.error(f"❌ 删除检查点失败: {e}")
+    
+    def _log_error(self, model_name: str, error: Exception):
+        """记录错误日志"""
+        error_log_dir = TRAINING_DIR / "error_logs"
+        error_log_dir.mkdir(parents=True, exist_ok=True)
+        
+        error_data = {
+            'model_name': model_name,
+            'error': str(error),
+            'timestamp': datetime.now().isoformat(),
+            'traceback': str(error.__traceback__) if error.__traceback__ else None
+        }
+        
+        error_file = error_log_dir / f"{model_name}_error_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(error_file, 'w', encoding='utf-8') as f:
+            json.dump(error_data, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"📝 错误日志已保存: {error_file}")
     
     def start_collaborative_training(self, scenario: Dict[str, Any] = None) -> bool:
         """开始协作式训练"""
@@ -465,3 +638,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+

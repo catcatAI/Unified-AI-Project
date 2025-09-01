@@ -2,8 +2,8 @@ import asyncio
 import uuid
 from typing import Dict, Any, List
 
-from src.agents.base_agent import BaseAgent
-from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from apps.backend.src.agents.base_agent import BaseAgent
+from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 class DataAnalysisAgent(BaseAgent):
     """

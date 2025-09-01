@@ -8,7 +8,7 @@ from unittest.mock import patch, MagicMock
 # Adjust the path to import from the src directory
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from src.core_ai.agent_manager import AgentManager
+from apps.backend.src.core_ai.agent_manager import AgentManager
 
 class TestAgentManager(unittest.TestCase):
 

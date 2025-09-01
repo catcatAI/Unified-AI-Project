@@ -30,16 +30,17 @@ echo 7. Training Manager - Manage training data and processes (管理訓練數�
 echo 8. CLI Tools - Access Unified AI CLI tools (訪問Unified AI CLI工具)
 echo 9. Model Management - Manage AI models and DNA chains (管理AI模型和DNA鏈)
 echo 10. Data Analysis - Analyze project data and statistics (分析項目數據和統計)
-echo 11. Emergency Git Fix - Recover from Git issues (從Git問題中恢復)
-echo 12. Fix Dependencies - Resolve dependency issues (解決依賴問題)
-echo 13. System Information - Display system information (顯示系統信息)
-echo 14. Exit (退出)
+echo 11. Data Pipeline - Run automated data processing pipeline (運行自動化數據處理流水線)
+echo 12. Emergency Git Fix - Recover from Git issues (從Git問題中恢復)
+echo 13. Fix Dependencies - Resolve dependency issues (解決依賴問題)
+echo 14. System Information - Display system information (顯示系統信息)
+echo 15. Exit (退出)
 echo.
 
 :: Get user choice with validation
 :get_user_choice
 set "choice="
-set /p "choice=Enter your choice (1-14): "
+set /p "choice=Enter your choice (1-15): "
 if not defined choice (
     echo [ERROR] No input provided
     echo [%date% %time%] No input provided >> "%LOG_FILE%" 2>nul
@@ -49,7 +50,7 @@ if not defined choice (
 
 :: Validate numeric input for menu choices
 set "choice=%choice: =%"
-for %%i in (1 2 3 4 5 6 7 8 9 10 11 12 13 14) do (
+for %%i in (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) do (
     if "%choice%"=="%%i" (
         goto choice_%%i
     )
@@ -81,13 +82,38 @@ goto model_management
 :choice_10
 goto data_analysis
 :choice_11
-goto emergency_git_fix
+goto data_pipeline
 :choice_12
-goto fix_dependencies
+goto emergency_git_fix
 :choice_13
-goto system_info
+goto fix_dependencies
 :choice_14
+goto system_info
+:choice_15
 goto end_script
+
+:: Data Pipeline Function
+:data_pipeline
+echo.
+echo [INFO] Running Automated Data Pipeline...
+echo [%date% %time%] Running automated data pipeline >> "%LOG_FILE%" 2>nul
+echo.
+
+:: Check if data pipeline script exists
+set "PIPELINE_SCRIPT=%~dp0tools\run_data_pipeline.bat"
+if exist "%PIPELINE_SCRIPT%" (
+    echo [INFO] Launching data pipeline script...
+    echo.
+    call "%PIPELINE_SCRIPT%"
+) else (
+    echo [ERROR] Data pipeline script not found: %PIPELINE_SCRIPT%
+    echo [%date% %time%] Data pipeline script not found >> "%LOG_FILE%" 2>nul
+)
+
+echo.
+echo Press any key to return to main menu...
+pause >nul
+goto main_menu
 
 :: Model Management Function
 :model_management

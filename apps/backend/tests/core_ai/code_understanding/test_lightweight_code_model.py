@@ -8,7 +8,7 @@ import tempfile # For temporary directory
 import logging # For self.assertLogs
 
 # Assuming src is in PYTHONPATH for test execution
-from src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
+from apps.backend.src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
 
 class TestLightweightCodeModel(unittest.TestCase):
 

@@ -38,7 +38,7 @@ def main():
     
     # 测试src模块导入
     print("\n3. Testing src module import...")
-    stdout, stderr, returncode = run_command_in_venv('python -c "import sys; sys.path.insert(0, \'.\'); sys.path.insert(0, \'src\'); from src.services.multi_llm_service import MultiLLMService; print(\'MultiLLMService imported successfully\')"')
+    stdout, stderr, returncode = run_command_in_venv('python -c "import sys; sys.path.insert(0, \'.\'); sys.path.insert(0, \'apps/backend/src\'); from apps.backend.src.services.multi_llm_service import MultiLLMService; print(\'MultiLLMService imported successfully\')"')
     if returncode == 0:
         print("✓ MultiLLMService import successful")
         print(stdout)

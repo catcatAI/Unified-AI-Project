@@ -3,8 +3,8 @@ import uuid
 import logging
 from typing import Dict, Any, Optional, List
 
-from src.core_services import initialize_services, get_services, shutdown_services
-from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from apps.backend.src.core_services import initialize_services, get_services, shutdown_services
+from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
 

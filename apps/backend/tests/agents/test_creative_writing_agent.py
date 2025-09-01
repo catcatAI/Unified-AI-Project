@@ -8,9 +8,9 @@ from unittest.mock import MagicMock, AsyncMock, patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from src.agents.creative_writing_agent import CreativeWritingAgent
-from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from src.services.multi_llm_service import MultiLLMService, ChatMessage, LLMResponse
+from apps.backend.src.agents.creative_writing_agent import CreativeWritingAgent
+from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from apps.backend.src.services.multi_llm_service import MultiLLMService, ChatMessage, LLMResponse
 
 class TestCreativeWritingAgent:
 

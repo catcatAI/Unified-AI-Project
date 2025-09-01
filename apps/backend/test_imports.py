@@ -19,7 +19,7 @@ except ImportError as e:
     print(f"[ERROR] Failed to import msgpack: {e}")
 
 try:
-    from src.services.multi_llm_service import MultiLLMService
+    from apps.backend.src.services.multi_llm_service import MultiLLMService
     print("[OK] MultiLLMService imported successfully")
 except ImportError as e:
     print(f"[ERROR] Failed to import MultiLLMService: {e}")
