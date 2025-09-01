@@ -25,7 +25,7 @@ from core_ai.time_system import TimeSystem
 from core_ai.formula_engine import FormulaEngine
 from tools.tool_dispatcher import ToolDispatcher
 from core_ai.demo_learning_manager import DemoLearningManager, demo_learning_manager
-from src.shared.error import ProjectError, project_error_handler
+from apps.backend.src.shared.error import ProjectError, project_error_handler
 
 # Services
 from services.multi_llm_service import MultiLLMService, get_multi_llm_service

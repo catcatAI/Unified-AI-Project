@@ -4,7 +4,7 @@ import os
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
 
 def test_entity_extraction():
     """Test entity extraction and relationship creation"""

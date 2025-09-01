@@ -9,8 +9,8 @@ import json
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(PROJECT_ROOT, 'apps', 'backend'))
 
-from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from src.core_ai.compression.alpha_deep_model import AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities
+from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.core_ai.compression.alpha_deep_model import AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities
 
 def main():
     """

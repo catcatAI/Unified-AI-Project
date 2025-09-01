@@ -28,7 +28,7 @@ def test_different_patch_approaches():
     print("=== 測試1: patch builtins.open ===")
     with patch('builtins.open', mock_yaml_read) as mock_file:
         try:
-            from src.core_ai.dependency_manager import DependencyManager
+            from apps.backend.src.core_ai.dependency_manager import DependencyManager
             manager = DependencyManager(config_path="test_config.yaml")
             print(f"Open調用次數: {mock_file.call_count}")
             print(f"調用參數: {mock_file.call_args_list}")

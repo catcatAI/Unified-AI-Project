@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from src.creation.creation_engine import CreationEngine
+from apps.backend.src.creation.creation_engine import CreationEngine
 
 class TestCreationEngine(unittest.TestCase):
     """

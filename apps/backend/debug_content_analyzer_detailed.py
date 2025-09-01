@@ -5,7 +5,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 import spacy
-from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
 
 def debug_analysis():
     # Initialize the analyzer

@@ -14,10 +14,10 @@ sys.path.insert(0, os.path.join(backend_path, 'src'))
 def test_imports():
     """测试模块导入"""
     modules_to_test = [
-        "src.core_ai.learning.content_analyzer_module",
-        "src.core_ai.learning.fact_extractor_module", 
-        "src.core_ai.service_discovery.service_discovery_module",
-        "src.core_ai.dialogue.project_coordinator"
+        "apps.backend.src.core_ai.learning.content_analyzer_module",
+        "apps.backend.src.core_ai.learning.fact_extractor_module", 
+        "apps.backend.src.core_ai.service_discovery.service_discovery_module",
+        "apps.backend.src.core_ai.dialogue.project_coordinator"
     ]
     
     results = []

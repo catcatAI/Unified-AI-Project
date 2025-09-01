@@ -1,10 +1,10 @@
 """import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
-from src.hsp.external.external_connector import ExternalConnector
-from src.hsp.internal.internal_bus import InternalBus
-from src.hsp.bridge.data_aligner import DataAligner
-from src.hsp.bridge.message_bridge import MessageBridge
+from apps.backend.src.hsp.external.external_connector import ExternalConnector
+from apps.backend.src.hsp.internal.internal_bus import InternalBus
+from apps.backend.src.hsp.bridge.data_aligner import DataAligner
+from apps.backend.src.hsp.bridge.message_bridge import MessageBridge
 
 @pytest.fixture
 def mock_external_connector():

@@ -5,14 +5,14 @@ from .internal.internal_bus import InternalBus
 from .bridge.data_aligner import DataAligner
 from .bridge.message_bridge import MessageBridge
 from unittest.mock import MagicMock, AsyncMock # Added for mock_mode
-from src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPAcknowledgementPayload, HSPQoSParameters
+from apps.backend.src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPAcknowledgementPayload, HSPQoSParameters
 import uuid # Added for UUID generation
 from datetime import datetime, timezone # Added for timestamp generation
 import asyncio # Added for asyncio.iscoroutinefunction
 import logging
 import time
-from src.shared.error import HSPConnectionError # Added for unified error handling
-from src.shared.network_resilience import RetryPolicy, CircuitBreaker, NetworkError, ProtocolError, CircuitBreakerOpenError # New imports for resilience
+from apps.backend.src.shared.error import HSPConnectionError # Added for unified error handling
+from apps.backend.src.shared.network_resilience import RetryPolicy, CircuitBreaker, NetworkError, ProtocolError, CircuitBreakerOpenError # New imports for resilience
 from .fallback.fallback_protocols import get_fallback_manager, FallbackMessage, MessagePriority, initialize_fallback_protocols
 from .utils.fallback_config_loader import get_config_loader
 from pathlib import Path

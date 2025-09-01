@@ -2,11 +2,11 @@ import pytest
 import asyncio
 pytest_plugins = ('pytest_asyncio',)
 import json
-from src.hsp.connector import HSPConnector
+from apps.backend.src.hsp.connector import HSPConnector
 from .test_hsp_integration import MockMqttBroker # Import MockMqttBroker
-from src.hsp.bridge.message_bridge import MessageBridge
-from src.hsp.internal.internal_bus import InternalBus
-from src.hsp.bridge.data_aligner import DataAligner
+from apps.backend.src.hsp.bridge.message_bridge import MessageBridge
+from apps.backend.src.hsp.internal.internal_bus import InternalBus
+from apps.backend.src.hsp.bridge.data_aligner import DataAligner
 from unittest.mock import AsyncMock, patch # Import patch
 
 @pytest.fixture
@@ -72,7 +72,7 @@ async def hsp_connector(broker: MockMqttBroker, internal_bus: InternalBus, data_
     yield connector
     await connector.disconnect()
 
-from src.hsp.types import HSPFactPayload
+from apps.backend.src.hsp.types import HSPFactPayload
 import uuid
 from datetime import datetime, timezone
 

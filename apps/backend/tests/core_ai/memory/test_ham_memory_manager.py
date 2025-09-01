@@ -12,13 +12,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from src.core_ai.memory.types import HAMRecallResult
-from src.services.types import SimulatedDiskConfig
-from src.shared.types.common_types import (
+from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.core_ai.memory.types import HAMRecallResult
+from apps.backend.src.services.types import SimulatedDiskConfig
+from apps.backend.src.shared.types.common_types import (
     DialogueMemoryEntryMetadata,
 )
-from src.services.resource_awareness_service import ResourceAwarenessService
+from apps.backend.src.services.resource_awareness_service import ResourceAwarenessService
 from cryptography.fernet import Fernet, InvalidToken
 import hashlib
 from unittest.mock import patch, MagicMock

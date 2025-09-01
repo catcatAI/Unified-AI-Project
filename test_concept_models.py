@@ -17,7 +17,7 @@ async def test_concept_models():
     # 测试环境模拟器
     print("1. 测试环境模拟器...")
     try:
-        from core_ai.concept_models.environment_simulator import EnvironmentSimulator, State, Action
+        from apps.backend.src.core_ai.concept_models.environment_simulator import EnvironmentSimulator, State, Action
         simulator = EnvironmentSimulator()
         
         # 创建测试数据
@@ -36,7 +36,7 @@ async def test_concept_models():
     # 测试因果推理引擎
     print("\n2. 测试因果推理引擎...")
     try:
-        from core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine, Observation, CausalRelationship
+        from apps.backend.src.core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine, Observation, CausalRelationship
         engine = CausalReasoningEngine()
         
         # 创建测试数据
@@ -58,7 +58,7 @@ async def test_concept_models():
     # 测试自适应学习控制器
     print("\n3. 测试自适应学习控制器...")
     try:
-        from core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController, TaskContext
+        from apps.backend.src.core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController, TaskContext
         controller = AdaptiveLearningController()
         
         # 创建任务上下文
@@ -80,7 +80,7 @@ async def test_concept_models():
     # 测试Alpha深度模型
     print("\n4. 测试Alpha深度模型...")
     try:
-        from core_ai.concept_models.alpha_deep_model import AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities
+        from apps.backend.src.core_ai.concept_models.alpha_deep_model import AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities
         model = AlphaDeepModel("test_alpha_model.db")
         
         # 创建深度参数
@@ -93,8 +93,8 @@ async def test_concept_models():
         )
         
         # 学习和压缩
-        model.learn(deep_param)
-        compressed = model.compress(deep_param)
+        await model.learn(deep_param)
+        compressed = await model.compress(deep_param)
         print(f"   ✓ Alpha深度模型测试通过")
         print(f"   压缩后大小: {len(compressed)} 字节")
     except Exception as e:
@@ -104,7 +104,7 @@ async def test_concept_models():
     # 测试统一符号空间
     print("\n5. 测试统一符号空间...")
     try:
-        from core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace, SymbolType
+        from apps.backend.src.core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace, SymbolType
         space = UnifiedSymbolicSpace("test_symbolic_space.db")
         
         # 添加符号
@@ -119,7 +119,7 @@ async def test_concept_models():
     # 运行集成测试
     print("\n6. 运行集成测试...")
     try:
-        from core_ai.concept_models.integration_test import run_integration_tests
+        from apps.backend.src.core_ai.concept_models.integration_test import run_integration_tests
         success = await run_integration_tests()
         if success:
             print("   ✓ 集成测试通过")

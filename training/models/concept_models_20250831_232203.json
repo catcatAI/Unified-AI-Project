@@ -1,0 +1,10 @@
+{
+  "model_type": "concept_models",
+  "training_date": "2025-08-31T23:22:03.073046",
+  "epochs": 30,
+  "batch_size": 16,
+  "final_metrics": {
+    "loss": 1.477765146701472,
+    "accuracy": 0.30555495918981834
+  }
+}

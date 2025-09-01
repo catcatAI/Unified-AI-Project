@@ -38,7 +38,7 @@ class ComponentDiagnostic:
         """診斷音頻服務"""
         logger.info("🎵 診斷音頻服務...")
         try:
-            from src.services.audio_service import AudioService
+            from apps.backend.src.services.audio_service import AudioService
             
             # 創建服務實例
             audio_service = AudioService()
@@ -63,7 +63,7 @@ class ComponentDiagnostic:
         """診斷視覺服務"""
         logger.info("👁️ 診斷視覺服務...")
         try:
-            from src.services.vision_service import VisionService
+            from apps.backend.src.services.vision_service import VisionService
             
             # 創建服務實例
             vision_service = VisionService()
@@ -88,7 +88,7 @@ class ComponentDiagnostic:
         """診斷向量存儲"""
         logger.info("🧠 診斷向量存儲...")
         try:
-            from src.core_ai.memory.vector_store import VectorMemoryStore
+            from apps.backend.src.core_ai.memory.vector_store import VectorMemoryStore
             
             # 創建向量存儲實例
             vector_store = VectorMemoryStore(persist_directory="./test_vector_db")
@@ -124,7 +124,7 @@ class ComponentDiagnostic:
         """診斷因果推理引擎"""
         logger.info("🔗 診斷因果推理引擎...")
         try:
-            from src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
+            from apps.backend.src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
             
             # 創建推理引擎實例
             causal_engine = CausalReasoningEngine(config={'causality_threshold': 0.5})
