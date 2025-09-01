@@ -4,7 +4,7 @@ import asyncio
 import json
 import os
 
-from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
+from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 
 @pytest.fixture
 def project_coordinator():

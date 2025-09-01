@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 from datetime import datetime
 import logging
+import numpy as np
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent
@@ -137,12 +138,25 @@ def create_specialized_training_data(output_dir):
     environment_data = []
     for i in range(100):
         sample = {
-            "id": f"env_{i}",
+            "id": f"env_{i:03d}",
             "type": "environment_transition",
-            "state_before": {"temperature": 20.0 + i * 0.1, "humidity": 50.0 + i * 0.2},
-            "action": {"name": "increase_temperature", "parameters": {"amount": 1.0 + (i % 5) * 0.5}},
-            "state_after": {"temperature": 21.0 + i * 0.1, "humidity": 50.0 + i * 0.2},
-            "uncertainty": 0.1 + (i % 10) * 0.01
+            "state_before": {
+                "temperature": round(20.0 + np.random.normal(0, 2), 2),
+                "humidity": round(50.0 + np.random.normal(0, 5), 2),
+                "pressure": round(1013.25 + np.random.normal(0, 10), 2)
+            },
+            "action": {
+                "name": np.random.choice(["increase_temperature", "decrease_temperature", "change_light", "adjust_humidity"]),
+                "parameters": {
+                    "amount": round(1.0 + np.random.random() * 5.0, 2)
+                }
+            },
+            "state_after": {
+                "temperature": round(21.0 + np.random.normal(0, 2), 2),
+                "humidity": round(50.0 + np.random.normal(0, 5), 2),
+                "pressure": round(1013.25 + np.random.normal(0, 10), 2)
+            },
+            "uncertainty": round(0.1 + np.random.random() * 0.2, 3)
         }
         environment_data.append(sample)
     
@@ -153,13 +167,19 @@ def create_specialized_training_data(output_dir):
     # 因果推理训练数据
     causal_data = []
     for i in range(50):
+        # 创建更复杂的因果关系数据
+        variables = ["temperature", "humidity", "comfort_level", "energy_consumption", "air_quality", "light_level", "noise_level"]
+        cause = np.random.choice(variables)
+        effect = np.random.choice([v for v in variables if v != cause])
+        
         sample = {
-            "id": f"causal_{i}",
+            "id": f"causal_{i:03d}",
             "type": "causal_relationship",
-            "variables": ["temperature", "comfort_level"],
-            "relationship": "temperature -> comfort_level",
-            "strength": 0.8 + (i % 20) * 0.01,
-            "confidence": 0.9 + (i % 10) * 0.01
+            "variables": [cause, effect],
+            "relationship": f"{cause} -> {effect}",
+            "strength": round(0.5 + np.random.random() * 0.5, 3),  # 0.5-1.0之间
+            "confidence": round(0.7 + np.random.random() * 0.3, 3),  # 0.7-1.0之间
+            "context": f"增强环境 {i}"
         }
         causal_data.append(sample)
     
@@ -170,12 +190,21 @@ def create_specialized_training_data(output_dir):
     # 自适应学习训练数据
     adaptive_data = []
     for i in range(50):
+        # 创建更复杂的学习策略数据
+        strategies = ["exploration", "exploitation", "conservative", "aggressive", "balanced"]
+        task_complexities = ["simple", "medium", "complex"]
+        
         sample = {
-            "id": f"adaptive_{i}",
+            "id": f"adaptive_{i:03d}",
             "type": "learning_strategy",
-            "context": {"task_complexity": 0.5 + (i % 5) * 0.1, "domain": "general"},
-            "strategy": "strategy_" + str(i % 5),
-            "performance": 0.7 + (i % 30) * 0.01
+            "context": {
+                "task_complexity": np.random.choice(task_complexities),
+                "domain": "general",
+                "previous_performance": [round(0.5 + np.random.random() * 0.5, 3) for _ in range(5)]  # 最近5次性能
+            },
+            "strategy": np.random.choice(strategies),
+            "performance": round(0.6 + np.random.random() * 0.4, 3),  # 0.6-1.0之间
+            "confidence": round(0.7 + np.random.random() * 0.3, 3)   # 0.7-1.0之间
         }
         adaptive_data.append(sample)
     
@@ -186,22 +215,39 @@ def create_specialized_training_data(output_dir):
     # Alpha深度模型训练数据
     alpha_data = []
     for i in range(50):
+        # 创建更复杂的深度参数数据
         sample = {
-            "id": f"alpha_{i}",
+            "id": f"alpha_{i:03d}",
             "type": "deep_parameter",
             "source_memory_id": f"mem_{i:06d}",
             "timestamp": datetime.now().isoformat(),
             "base_gist": {
-                "summary": f"Sample memory {i}",
-                "keywords": ["sample", "memory", f"item_{i}"],
-                "original_length": 100 + i * 10
+                "summary": f"增强记忆 {i} 与复杂关系",
+                "keywords": ["enhanced", "memory", f"item_{i}", "complex", "relationship"],
+                "original_length": 200 + i * 15  # 更长的原始内容
             },
             "relational_context": {
-                "entities": ["EntityA", "EntityB"],
-                "relationships": [{"subject": "EntityA", "verb": "related_to", "object": "EntityB"}]
+                "entities": [f"EntityA_{i}", f"EntityB_{i}", f"EntityC_{i}"],
+                "relationships": [
+                    {"subject": f"EntityA_{i}", "verb": "related_to", "object": f"EntityB_{i}"},
+                    {"subject": f"EntityB_{i}", "verb": "influences", "object": f"EntityC_{i}"},
+                    {"subject": f"EntityA_{i}", "verb": "affects", "object": f"EntityC_{i}"}
+                ]
             },
             "modalities": {
-                "text_confidence": 0.9 + (i % 10) * 0.01
+                "text_confidence": round(0.8 + (i % 20) * 0.01, 3),
+                "audio_features": {
+                    "pitch": int(100 + (i % 50) * 2), 
+                    "volume": round(0.5 + (i % 50) * 0.01, 3)
+                },
+                "image_features": {
+                    "brightness": round(0.5 + (i % 20) * 0.02, 3), 
+                    "contrast": round(0.6 + (i % 40) * 0.01, 3)
+                }
+            },
+            "action_feedback": {
+                "response_time": round(0.1 + (i % 10) * 0.05, 3),
+                "accuracy": round(0.85 + (i % 15) * 0.01, 3)
             }
         }
         alpha_data.append(sample)
@@ -211,10 +257,10 @@ def create_specialized_training_data(output_dir):
         json.dump(alpha_data, f, ensure_ascii=False, indent=2)
     
     logger.info("创建了专门的概念模型训练数据:")
-    logger.info(f"  - 环境模拟数据: {env_file}")
-    logger.info(f"  - 因果推理数据: {causal_file}")
-    logger.info(f"  - 自适应学习数据: {adaptive_file}")
-    logger.info(f"  - Alpha深度模型数据: {alpha_file}")
+    logger.info(f"  - 环境模拟数据: {len(environment_data)} 条记录，保存至 {env_file}")
+    logger.info(f"  - 因果推理数据: {len(causal_data)} 条记录，保存至 {causal_file}")
+    logger.info(f"  - 自适应学习数据: {len(adaptive_data)} 条记录，保存至 {adaptive_file}")
+    logger.info(f"  - Alpha深度模型数据: {len(alpha_data)} 条记录，保存至 {alpha_file}")
 
 def main():
     """主函数"""
@@ -224,6 +270,9 @@ def main():
     data_dir = project_root / "data"
     concept_models_data_dir = data_dir / "concept_models_training_data"
     
+    # 确保数据目录存在
+    data_dir.mkdir(parents=True, exist_ok=True)
+    
     # 从文档创建训练数据
     docs_dir = project_root
     samples = create_training_samples_from_docs(docs_dir, concept_models_data_dir)
@@ -231,6 +280,31 @@ def main():
     # 创建专门的训练数据
     create_specialized_training_data(concept_models_data_dir)
     
+    # 创建配置文件
+    config = {
+        "generated_date": datetime.now().isoformat(),
+        "data_paths": {
+            "concept_models_docs": "concept_models_docs_training_data.json",
+            "environment_simulation_data": "environment_simulation_data.json",
+            "causal_reasoning_data": "causal_reasoning_data.json",
+            "adaptive_learning_data": "adaptive_learning_data.json",
+            "alpha_deep_model_data": "alpha_deep_model_data.json"
+        },
+        "total_samples": {
+            "concept_models_docs": len(samples),
+            "environment_simulation_data": 100,
+            "causal_reasoning_data": 50,
+            "adaptive_learning_data": 50,
+            "alpha_deep_model_data": 50
+        },
+        "usage": "Training data for Unified-AI-Project concept models"
+    }
+    
+    config_file = concept_models_data_dir / "data_config.json"
+    with open(config_file, 'w', encoding='utf-8') as f:
+        json.dump(config, f, ensure_ascii=False, indent=2)
+    
+    logger.info(f"配置文件保存至: {config_file}")
     logger.info("概念模型训练数据准备完成!")
     logger.info(f"数据保存在: {concept_models_data_dir}")
 

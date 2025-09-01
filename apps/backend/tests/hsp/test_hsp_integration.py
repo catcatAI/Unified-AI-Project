@@ -11,8 +11,8 @@ import json
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)
 
-from src.hsp.connector import HSPConnector
-from src.hsp.types import (
+from apps.backend.src.hsp.connector import HSPConnector
+from apps.backend.src.hsp.types import (
 
     HSPFactPayload,
     HSPMessageEnvelope,
@@ -22,20 +22,20 @@ from src.hsp.types import (
     HSPErrorDetails,
     HSPFactStatementStructured,
 )
-from src.core_ai.learning.learning_manager import LearningManager
-from src.core_ai.learning.fact_extractor_module import FactExtractorModule
-from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-from src.core_ai.service_discovery.service_discovery_module import (
+from apps.backend.src.core_ai.learning.learning_manager import LearningManager
+from apps.backend.src.core_ai.learning.fact_extractor_module import FactExtractorModule
+from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from apps.backend.src.core_ai.service_discovery.service_discovery_module import (
     ServiceDiscoveryModule,
 )
-from src.core_ai.trust_manager.trust_manager_module import TrustManager
-from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from src.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, ChatMessage, LLMResponse
-from src.core_ai.dialogue.dialogue_manager import DialogueManager
-from src.tools.tool_dispatcher import ToolDispatcher
-from src.core_ai.formula_engine import FormulaEngine
-from src.shared.types.common_types import ToolDispatcherResponse
-from src.core_ai.personality.personality_manager import PersonalityManager
+from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager
+from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, ChatMessage, LLMResponse
+from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
+from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+from apps.backend.src.core_ai.formula_engine import FormulaEngine
+from apps.backend.src.shared.types.common_types import ToolDispatcherResponse
+from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
 
 
 
@@ -147,9 +147,9 @@ class MockMqttBroker:
         self.published_messages.clear()
 
 # --- Pytest Fixtures ---
-from src.hsp.internal.internal_bus import InternalBus
-from src.hsp.bridge.message_bridge import MessageBridge
-from src.hsp.bridge.data_aligner import DataAligner
+from apps.backend.src.hsp.internal.internal_bus import InternalBus
+from apps.backend.src.hsp.bridge.message_bridge import MessageBridge
+from apps.backend.src.hsp.bridge.data_aligner import DataAligner
 
 @pytest.fixture(scope="module")
 def event_loop():

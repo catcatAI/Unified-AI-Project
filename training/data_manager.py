@@ -12,6 +12,7 @@ from typing import Dict, List, Any, Tuple
 import mimetypes
 import hashlib
 from datetime import datetime
+import numpy as np
 
 # 添加项目路径
 import sys
@@ -22,7 +23,7 @@ sys.path.insert(0, str(backend_path / "src"))
 
 # 导入路径配置模块
 try:
-    from src.path_config import (
+    from apps.backend.src.path_config import (
         PROJECT_ROOT, 
         DATA_DIR, 
         TRAINING_DIR, 
@@ -59,7 +60,11 @@ class DataManager:
             'multimodal_service': ['image', 'audio', 'text', 'video'],
             'math_model': ['text'],
             'logic_model': ['text'],
-            'concept_models': ['text', 'json']
+            'concept_models': ['text', 'json'],
+            'environment_simulator': ['text', 'json'],
+            'causal_reasoning_engine': ['text', 'json'],  # 添加对因果推理引擎的JSON数据支持
+            'adaptive_learning_controller': ['text', 'json'],
+            'alpha_deep_model': ['text', 'json']
         }
     
     def scan_data(self) -> Dict[str, Any]:
@@ -316,6 +321,25 @@ class DataManager:
             data_files = self.get_data_by_type(data_type)
             training_data.extend(data_files)
         
+        # 对于概念模型，直接添加概念模型训练数据
+        if model_type in ['concept_models', 'environment_simulator', 'causal_reasoning_engine', 
+                         'adaptive_learning_controller', 'alpha_deep_model']:
+            # 添加概念模型专用训练数据
+            concept_data_dir = self.data_dir / "concept_models_training_data"
+            if concept_data_dir.exists():
+                for json_file in concept_data_dir.glob("*.json"):
+                    # 根据模型类型过滤数据
+                    if self._is_data_relevant_for_model(json_file.name, model_type):
+                        file_info = {
+                            'path': str(json_file),
+                            'relative_path': str(json_file.relative_to(self.data_dir)),
+                            'size': json_file.stat().st_size,
+                            'modified_time': json_file.stat().st_mtime,
+                            'extension': '.json',
+                            'type': 'json'
+                        }
+                        training_data.append(file_info)
+        
         # 过滤高质量数据
         high_quality_data = self.get_high_quality_data()
         filtered_data = []
@@ -326,10 +350,30 @@ class DataManager:
                 high_quality_files = [f['path'] for f in high_quality_data[data_type]]
                 if data_item['path'] in high_quality_files:
                     filtered_data.append(data_item)
+            else:
+                # 如果没有高质量数据检查，直接添加
+                filtered_data.append(data_item)
         
         logger.info(f"✅ 为模型 {model_type} 准备了 {len(filtered_data)} 个训练数据文件")
         return filtered_data
     
+    def _is_data_relevant_for_model(self, filename: str, model_type: str) -> bool:
+        """检查数据文件是否与特定模型相关"""
+        # 根据文件名和模型类型判断相关性
+        if model_type == 'environment_simulator' and 'environment' in filename:
+            return True
+        elif model_type == 'causal_reasoning_engine' and 'causal' in filename:
+            return True
+        elif model_type == 'adaptive_learning_controller' and 'adaptive' in filename:
+            return True
+        elif model_type == 'alpha_deep_model' and 'alpha' in filename:
+            return True
+        elif model_type == 'concept_models':
+            # 概念模型可以使用所有概念数据
+            return any(keyword in filename for keyword in ['environment', 'causal', 'adaptive', 'alpha'])
+        
+        return False
+
     def get_data_statistics(self) -> Dict[str, Any]:
         """获取数据统计信息"""
         if not self.data_catalog:

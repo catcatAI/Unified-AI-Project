@@ -7,8 +7,8 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from unittest.mock import AsyncMock, MagicMock
-from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
-from src.hsp.types import HSPCapabilityAdvertisementPayload
+from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator
+from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload
 
 async def test_project_coordinator_decomposition():
     """Test the project coordinator's decomposition functionality"""

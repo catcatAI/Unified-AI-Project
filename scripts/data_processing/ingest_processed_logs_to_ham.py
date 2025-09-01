@@ -5,12 +5,12 @@ import sys
 # Add project src to sys.path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
-SRC_DIR = os.path.join(PROJECT_ROOT, "src")
+SRC_DIR = os.path.join(PROJECT_ROOT, "apps", "backend", "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 try:
-    from core_ai.memory.ham_memory_manager import HAMMemoryManager
+    from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
 except ImportError:
     print("Error: Could not import HAMMemoryManager.")
     print("Ensure that src is in your PYTHONPATH or accessible,")

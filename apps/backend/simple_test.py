@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 # Test import
 try:
-    from src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+    from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
     print("SUCCESS: ContentAnalyzerModule imported successfully")
 except Exception as e:
     print(f"ERROR: Failed to import ContentAnalyzerModule: {e}")

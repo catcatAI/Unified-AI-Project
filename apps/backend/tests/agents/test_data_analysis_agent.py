@@ -7,9 +7,9 @@ import sys
 from unittest.mock import MagicMock, AsyncMock, patch
 
 
-from src.agents.data_analysis_agent import DataAnalysisAgent
-from src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
-from src.shared.types.common_types import ToolDispatcherResponse
+from apps.backend.src.agents.data_analysis_agent import DataAnalysisAgent
+from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+from apps.backend.src.shared.types.common_types import ToolDispatcherResponse
 
 class TestDataAnalysisAgent(unittest.TestCase):
 

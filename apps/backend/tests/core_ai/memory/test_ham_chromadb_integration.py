@@ -33,8 +33,8 @@ class MockEmbeddingFunction:
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from src.core_ai.memory.types import HAMRecallResult
+from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.core_ai.memory.types import HAMRecallResult
 
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)

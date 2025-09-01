@@ -9,10 +9,10 @@ from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from src.integrations.rovo_dev_agent import RovoDevAgent, TaskState, AgentRecoveryState
-from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
-from src.integrations.atlassian_bridge import AtlassianBridge
-from src.hsp.types import HSPTask, HSPCapability
+from apps.backend.src.integrations.rovo_dev_agent import RovoDevAgent, TaskState, AgentRecoveryState
+from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+from apps.backend.src.integrations.atlassian_bridge import AtlassianBridge
+from apps.backend.src.hsp.types import HSPTask, HSPCapability
 
 
 class TestRovoDevAgentRecovery:

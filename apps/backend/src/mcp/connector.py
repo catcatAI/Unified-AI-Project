@@ -6,8 +6,8 @@ import logging
 import asyncio
 from datetime import datetime, timezone
 
-from src.mcp.types import MCPEnvelope, MCPCommandRequest, MCPCommandResponse
-from src.shared.error import ProjectError, project_error_handler
+from apps.backend.src.mcp.types import MCPEnvelope, MCPCommandRequest, MCPCommandResponse
+from apps.backend.src.shared.error import ProjectError, project_error_handler
 
 class MCPConnector:
     def __init__(self, ai_id: str, mqtt_broker_address: str, mqtt_broker_port: int, 

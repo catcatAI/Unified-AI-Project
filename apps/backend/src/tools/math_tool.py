@@ -18,7 +18,7 @@ def _load_math_model():
         return _model_instance
 
     try:
-        from src.tools.math_model.model import ArithmeticSeq2Seq
+        from apps.backend.src.tools.math_model.model import ArithmeticSeq2Seq
         print("Loading arithmetic model for the first time...")
         if not os.path.exists(MODEL_WEIGHTS_PATH) or not os.path.exists(CHAR_MAPS_PATH):
             raise FileNotFoundError("Model or char map file not found.")
@@ -65,7 +65,7 @@ def extract_arithmetic_problem(text: str) -> str | None:
             return None
     return None
 
-from src.shared.types.common_types import ToolDispatcherResponse
+from apps.backend.src.shared.types.common_types import ToolDispatcherResponse
 import os
 
 def calculate(input_string: str) -> ToolDispatcherResponse:

@@ -1,38 +1,36 @@
 #!/usr/bin/env python3
 """
-Unified AI Project - 模型训练脚本
-支持使用预设配置进行训练，包含暂停、继续、自动磁盘空间检查等功能
-支持真实的TensorFlow神经网络训练
+模型训练脚本
+支持多种预设训练场景和协作式训练
 """
 
 import os
 import sys
 import json
-import argparse
-from pathlib import Path
-from datetime import datetime
 import logging
-import shutil
+from pathlib import Path
+from typing import Dict, Any, Optional
+import argparse
+from datetime import datetime
 import time
+import shutil
 import random
 import subprocess
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent
 backend_path = project_root / "apps" / "backend"
+sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
 
-# 导入路径配置模块
+# 导入项目模块
 try:
-    from src.path_config import (
+    from apps.backend.src.path_config import (
         PROJECT_ROOT, 
         DATA_DIR, 
         TRAINING_DIR, 
-        MODELS_DIR, 
-        CHECKPOINTS_DIR, 
+        MODELS_DIR,
         get_data_path, 
-        get_training_config_path, 
         resolve_path
     )
 except ImportError:
@@ -41,20 +39,36 @@ except ImportError:
     DATA_DIR = PROJECT_ROOT / "data"
     TRAINING_DIR = PROJECT_ROOT / "training"
     MODELS_DIR = TRAINING_DIR / "models"
-    CHECKPOINTS_DIR = TRAINING_DIR / "checkpoints"
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# 检查点目录
+CHECKPOINTS_DIR = TRAINING_DIR / "checkpoints"
+
+# 导入训练管理器
+from training.collaborative_training_manager import CollaborativeTrainingManager
+
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(TRAINING_DIR / 'training.log'),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
 class ModelTrainer:
-    """模型训练器，支持暂停、继续、自动磁盘空间检查等功能，以及真实的TensorFlow训练"""
+    """模型训练器，支持多种预设训练场景和协作式训练"""
     
     def __init__(self, config_path=None, preset_path=None):
         self.project_root = PROJECT_ROOT
         self.training_dir = TRAINING_DIR
         self.data_dir = DATA_DIR
-        self.config_path = config_path or get_training_config_path("training_config.json")
-        self.preset_path = preset_path or get_training_config_path("training_preset.json")
+        # 使用训练目录下的配置文件
+        default_config_path = TRAINING_DIR / "configs" / "training_config.json"
+        default_preset_path = TRAINING_DIR / "configs" / "training_preset.json"
+        self.config_path = Path(config_path) if config_path else default_config_path
+        self.preset_path = Path(preset_path) if preset_path else default_preset_path
         self.config = {}
         self.preset = {}
         self.checkpoint_file = None
@@ -279,11 +293,11 @@ class ModelTrainer:
         # 导入概念模型
         try:
             sys.path.append(str(self.project_root / "apps" / "backend" / "src"))
-            from core_ai.concept_models.environment_simulator import EnvironmentSimulator
-            from core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
-            from core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
-            from core_ai.concept_models.alpha_deep_model import AlphaDeepModel
-            from core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace
+            from apps.backend.src.core_ai.concept_models.environment_simulator import EnvironmentSimulator
+            from apps.backend.src.core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
+            from apps.backend.src.core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
+            from apps.backend.src.core_ai.concept_models.alpha_deep_model import AlphaDeepModel
+            from apps.backend.src.core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace
             
             logger.info("✅ 概念模型导入成功")
         except Exception as e:
@@ -364,7 +378,14 @@ class ModelTrainer:
         
         try:
             # 导入协作式训练管理器
-            from .collaborative_training_manager import CollaborativeTrainingManager
+            # 修复导入问题
+            import sys
+            from pathlib import Path
+            # 添加项目根目录到路径
+            project_root = Path(__file__).parent.parent
+            sys.path.insert(0, str(project_root))
+            
+            from training.collaborative_training_manager import CollaborativeTrainingManager
             
             # 初始化协作式训练管理器
             manager = CollaborativeTrainingManager()
@@ -393,25 +414,25 @@ class ModelTrainer:
         """注册所有可用模型"""
         # 注册概念模型
         try:
-            from core_ai.concept_models.environment_simulator import EnvironmentSimulator
+            from apps.backend.src.core_ai.concept_models.environment_simulator import EnvironmentSimulator
             manager.register_model("environment_simulator", EnvironmentSimulator())
         except Exception as e:
             logger.warning(f"⚠️ 无法注册环境模拟器: {e}")
         
         try:
-            from core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
+            from apps.backend.src.core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
             manager.register_model("causal_reasoning_engine", CausalReasoningEngine())
         except Exception as e:
             logger.warning(f"⚠️ 无法注册因果推理引擎: {e}")
         
         try:
-            from core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
+            from apps.backend.src.core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
             manager.register_model("adaptive_learning_controller", AdaptiveLearningController())
         except Exception as e:
             logger.warning(f"⚠️ 无法注册自适应学习控制器: {e}")
         
         try:
-            from core_ai.concept_models.alpha_deep_model import AlphaDeepModel
+            from apps.backend.src.core_ai.concept_models.alpha_deep_model import AlphaDeepModel
             manager.register_model("alpha_deep_model", AlphaDeepModel())
         except Exception as e:
             logger.warning(f"⚠️ 无法注册Alpha深度模型: {e}")

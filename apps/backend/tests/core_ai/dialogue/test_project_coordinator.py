@@ -12,7 +12,7 @@ backend_path = project_root / "apps" / "backend"
 sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
-from src.core_ai.dialogue.project_coordinator import ProjectCoordinator
+from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 
 @pytest.fixture
 def project_coordinator():

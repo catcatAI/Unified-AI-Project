@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.core_ai.dependency_manager import DependencyManager
+from apps.backend.src.core_ai.dependency_manager import DependencyManager
 import yaml
 from unittest.mock import patch, mock_open
 

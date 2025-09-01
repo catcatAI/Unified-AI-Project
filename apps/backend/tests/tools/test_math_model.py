@@ -79,7 +79,7 @@ class TestMathModelComponents(unittest.TestCase):
         print("\nRunning test_model_build_and_char_maps...")
         
         # Check if TensorFlow is available
-        from src.core_ai.dependency_manager import dependency_manager
+        from apps.backend.src.core_ai.dependency_manager import dependency_manager
         if not dependency_manager.is_available('tensorflow'):
             print("TensorFlow not available, skipping model build tests")
             self.skipTest("TensorFlow not available")

@@ -1,5 +1,5 @@
 import pytest
-from src.game.main import Game
+from apps.backend.src.game.main import Game
 from unittest.mock import MagicMock
 
 @pytest.fixture

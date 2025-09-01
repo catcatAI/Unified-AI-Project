@@ -34,7 +34,7 @@ async def test_get_simple_response_project_trigger(mock_core_services):
 
 import pytest
 from unittest.mock import AsyncMock, call
-from src.shared.types.common_types import ToolDispatcherResponse
+from apps.backend.src.shared.types.common_types import ToolDispatcherResponse
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 async def test_get_simple_response_standard_flow(mock_core_services):

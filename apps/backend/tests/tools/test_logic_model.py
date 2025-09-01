@@ -82,7 +82,7 @@ class TestLogicModelComponents(unittest.TestCase):
         print("\nRunning test_03_logic_model_nn_structure_and_helpers...")
         
         # Check if TensorFlow is available
-        from src.core_ai.dependency_manager import dependency_manager
+        from apps.backend.src.core_ai.dependency_manager import dependency_manager
         if not dependency_manager.is_available('tensorflow'):
             print("TensorFlow not available, skipping NN model tests")
             self.skipTest("TensorFlow not available")

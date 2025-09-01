@@ -2,8 +2,8 @@ import asyncio
 import uuid
 from unittest.mock import AsyncMock
 
-from src.agents.data_analysis_agent import DataAnalysisAgent
-from src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+from apps.backend.src.agents.data_analysis_agent import DataAnalysisAgent
+from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
 async def test_data_analysis_agent():
     # 创建一个DataAnalysisAgent实例

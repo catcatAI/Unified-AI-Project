@@ -38,10 +38,10 @@ try:
                 'result': f"Processed task {task.get('name', 'unknown')}"
             }
     
-    from src.core_ai.memory.vector_store import VectorMemoryStore
-    from src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
-    from src.services.vision_service import VisionService
-    from src.services.audio_service import AudioService
+    from apps.backend.src.core_ai.memory.vector_store import VectorMemoryStore
+    from apps.backend.src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
+    from apps.backend.src.services.vision_service import VisionService
+    from apps.backend.src.services.audio_service import AudioService
 except ImportError as e:
     print(f"Import error: {e}")
     print("Please ensure you're running this from the backend directory")

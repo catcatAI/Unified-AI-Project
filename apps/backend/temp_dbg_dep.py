@@ -1,7 +1,7 @@
 import yaml, os, sys
 from unittest.mock import patch, mock_open
 sys.path.insert(0, os.path.abspath('.'))
-from src.core_ai.dependency_manager import DependencyManager
+from apps.backend.src.core_ai.dependency_manager import DependencyManager
 
 test_config = {
     'dependencies': {

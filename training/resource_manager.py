@@ -21,7 +21,7 @@ sys.path.insert(0, str(backend_path / "src"))
 
 # 导入路径配置模块
 try:
-    from src.path_config import (
+    from apps.backend.src.path_config import (
         PROJECT_ROOT, 
         DATA_DIR, 
         TRAINING_DIR, 
@@ -164,27 +164,27 @@ class ResourceManager:
         # 定义不同模型的资源需求
         requirements = {
             'vision_service': {
-                'cpu_cores': 2,
-                'memory_gb': 4,
-                'gpu_memory_gb': 2,
+                'cpu_cores': 1,  # 降低CPU需求
+                'memory_gb': 1,  # 降低内存需求
+                'gpu_memory_gb': 1,
                 'priority': 2
             },
             'audio_service': {
                 'cpu_cores': 1,
-                'memory_gb': 2,
+                'memory_gb': 1,
                 'gpu_memory_gb': 0,  # 音频处理通常不需要GPU
                 'priority': 1
             },
             'causal_reasoning_engine': {
-                'cpu_cores': 4,
-                'memory_gb': 8,
+                'cpu_cores': 1,  # 降低CPU需求
+                'memory_gb': 1,  # 降低内存需求
                 'gpu_memory_gb': 0,  # 逻辑推理主要使用CPU
                 'priority': 3
             },
             'multimodal_service': {
-                'cpu_cores': 4,
-                'memory_gb': 8,
-                'gpu_memory_gb': 4,
+                'cpu_cores': 1,  # 降低CPU需求
+                'memory_gb': 1,  # 降低内存需求
+                'gpu_memory_gb': 1,
                 'priority': 4
             },
             'math_model': {
@@ -194,40 +194,34 @@ class ResourceManager:
                 'priority': 1
             },
             'logic_model': {
-                'cpu_cores': 2,
-                'memory_gb': 2,
+                'cpu_cores': 1,
+                'memory_gb': 1,
                 'gpu_memory_gb': 0,
                 'priority': 2
             },
             'concept_models': {
-                'cpu_cores': 3,
-                'memory_gb': 4,
-                'gpu_memory_gb': 1,
+                'cpu_cores': 1,
+                'memory_gb': 1,
+                'gpu_memory_gb': 0,
                 'priority': 3
             },
             'environment_simulator': {
-                'cpu_cores': 2,
-                'memory_gb': 3,
+                'cpu_cores': 1,
+                'memory_gb': 1,
                 'gpu_memory_gb': 0,
                 'priority': 2
-            },
-            'causal_reasoning_engine': {
-                'cpu_cores': 3,
-                'memory_gb': 4,
-                'gpu_memory_gb': 0,
-                'priority': 3
             },
             'adaptive_learning_controller': {
                 'cpu_cores': 1,
-                'memory_gb': 2,
+                'memory_gb': 1,
                 'gpu_memory_gb': 0,
-                'priority': 1
+                'priority': 3
             },
             'alpha_deep_model': {
-                'cpu_cores': 2,
-                'memory_gb': 3,
-                'gpu_memory_gb': 1,
-                'priority': 2
+                'cpu_cores': 1,
+                'memory_gb': 1,
+                'gpu_memory_gb': 0,
+                'priority': 4
             }
         }
         
@@ -238,224 +232,80 @@ class ResourceManager:
             'priority': 1
         })
     
-    def allocate_resources(self, model_requirements: Dict[str, Any], model_name: str) -> Optional[Dict[str, Any]]:
-        """根据模型需求分配资源"""
-        current_resources = self.get_system_resources()
+    def allocate_resources(self, requirements: Dict[str, Any], model_name: str = None) -> Optional[Dict[str, Any]]:
+        """为模型分配资源"""
+        if not requirements:
+            return None
         
-        required_cpu = model_requirements.get('cpu_cores', 1)
-        required_memory = model_requirements.get('memory_gb', 1) * (1024**3)  # 转换为字节
-        required_gpu_memory = model_requirements.get('gpu_memory_gb', 0) * (1024**3)
+        # 获取当前系统资源
+        system_resources = self.get_system_resources()
+        cpu_info = system_resources['cpu']
+        memory_info = system_resources['memory']
         
         # 检查CPU资源
-        available_cpu = current_resources['cpu']['available_cores']
-        if available_cpu < required_cpu:
+        required_cpu = requirements.get('cpu_cores', 1)
+        available_cpu = cpu_info['available_cores']
+        
+        if required_cpu > available_cpu:
             logger.warning(f"⚠️  CPU资源不足: 需要 {required_cpu} 核心，可用 {available_cpu:.2f} 核心")
             return None
         
         # 检查内存资源
-        available_memory = current_resources['memory']['available']
-        if available_memory < required_memory:
-            logger.warning(f"⚠️  内存资源不足: 需要 {required_memory / (1024**3):.2f} GB，可用 {available_memory / (1024**3):.2f} GB")
+        required_memory_gb = requirements.get('memory_gb', 1)
+        available_memory_gb = memory_info['available'] / (1024**3)
+        
+        if required_memory_gb > available_memory_gb:
+            logger.warning(f"⚠️  内存资源不足: 需要 {required_memory_gb:.2f} GB，可用 {available_memory_gb:.2f} GB")
             return None
         
-        # 检查GPU资源
-        allocated_gpu = None
-        if required_gpu_memory > 0 and current_resources['gpu']:
-            for gpu in current_resources['gpu']:
-                if gpu['free_memory'] >= required_gpu_memory:
-                    allocated_gpu = gpu
-                    break
-        
-        if required_gpu_memory > 0 and not allocated_gpu:
-            logger.warning(f"⚠️  GPU内存资源不足: 需要 {required_gpu_memory / (1024**3):.2f} GB")
-            # 如果模型需要GPU但没有可用GPU，可以考虑是否继续使用CPU
+        # 检查GPU资源（如果需要）
+        required_gpu_memory_gb = requirements.get('gpu_memory_gb', 0)
+        if required_gpu_memory_gb > 0 and self.gpu_info:
+            total_gpu_memory_gb = sum(gpu['free_memory'] for gpu in self.gpu_info) / (1024**3)
+            if required_gpu_memory_gb > total_gpu_memory_gb:
+                logger.warning(f"⚠️  GPU内存资源不足: 需要 {required_gpu_memory_gb:.2f} GB，可用 {total_gpu_memory_gb:.2f} GB")
+                # 如果GPU内存不足，但模型可以使用CPU运行，则继续分配
+                required_gpu_memory_gb = 0
         
         # 分配资源
         allocation = {
-            'model_name': model_name,
             'cpu_cores': required_cpu,
-            'memory_bytes': required_memory,
-            'gpu': allocated_gpu,
+            'memory_gb': required_memory_gb,
+            'gpu_memory_gb': required_gpu_memory_gb,
             'allocated_at': datetime.now().isoformat()
         }
         
         # 记录资源分配
-        self.resource_allocation[model_name] = allocation
+        if model_name:
+            self.resource_allocation[model_name] = allocation
         
-        logger.info(f"✅ 为模型 {model_name} 分配资源成功:")
-        logger.info(f"   CPU核心: {required_cpu}")
-        logger.info(f"   内存: {required_memory / (1024**3):.2f} GB")
-        if allocated_gpu:
-            logger.info(f"   GPU: {allocated_gpu['name']} ({required_gpu_memory / (1024**3):.2f} GB)")
-        
+        logger.info(f"✅ 资源分配成功: CPU {required_cpu} 核心, 内存 {required_memory_gb} GB, GPU {required_gpu_memory_gb} GB")
         return allocation
     
     def release_resources(self, model_name: str):
         """释放模型占用的资源"""
         if model_name in self.resource_allocation:
-            allocation = self.resource_allocation.pop(model_name)
-            logger.info(f"🔄 释放模型 {model_name} 的资源: CPU {allocation['cpu_cores']} 核心, 内存 {allocation['memory_bytes'] / (1024**3):.2f} GB")
-        else:
-            logger.warning(f"⚠️ 未找到模型 {model_name} 的资源分配记录")
+            del self.resource_allocation[model_name]
+            logger.info(f"🔄 释放模型 {model_name} 的资源")
     
-    def get_resource_allocation_status(self) -> Dict[str, Any]:
-        """获取资源分配状态"""
-        total_allocated_cpu = sum(allocation['cpu_cores'] for allocation in self.resource_allocation.values())
-        total_allocated_memory = sum(allocation['memory_bytes'] for allocation in self.resource_allocation.values())
+    def get_resource_utilization(self) -> Dict[str, Any]:
+        """获取资源利用率报告"""
+        system_resources = self.get_system_resources()
+        cpu_info = system_resources['cpu']
+        memory_info = system_resources['memory']
         
-        status = {
-            'total_system_cpu': self.cpu_count,
-            'allocated_cpu': total_allocated_cpu,
-            'available_cpu': self.cpu_count - total_allocated_cpu,
-            'total_system_memory_gb': self.total_memory / (1024**3),
-            'allocated_memory_gb': total_allocated_memory / (1024**3),
-            'available_memory_gb': (self.total_memory - total_allocated_memory) / (1024**3),
-            'active_allocations': self.resource_allocation,
-            'gpu_count': len(self.gpu_info)
+        utilization = {
+            'cpu_utilization': {
+                'used_cores': self.cpu_count - cpu_info['available_cores'],
+                'total_cores': self.cpu_count,
+                'utilization_percent': (self.cpu_count - cpu_info['available_cores']) / self.cpu_count * 100
+            },
+            'memory_utilization': {
+                'used_gb': (memory_info['total'] - memory_info['available']) / (1024**3),
+                'total_gb': memory_info['total'] / (1024**3),
+                'utilization_percent': memory_info['percent']
+            },
+            'allocated_models': list(self.resource_allocation.keys())
         }
         
-        return status
-    
-    def optimize_resource_allocation(self) -> Dict[str, Any]:
-        """优化资源分配"""
-        # 获取当前资源使用情况
-        current_resources = self.get_system_resources()
-        
-        # 根据优先级重新分配资源
-        sorted_allocations = sorted(
-            self.resource_allocation.items(),
-            key=lambda x: self.get_model_resource_requirements(x[0]).get('priority', 1),
-            reverse=True
-        )
-        
-        optimization_result = {
-            'reallocations': [],
-            'resource_status': self.get_resource_allocation_status(),
-            'timestamp': datetime.now().isoformat()
-        }
-        
-        # 这里可以实现更复杂的资源优化逻辑
-        # 例如：根据模型优先级和资源使用情况动态调整资源分配
-        
-        return optimization_result
-    
-    def monitor_resources(self) -> Dict[str, Any]:
-        """监控资源使用情况"""
-        current_resources = self.get_system_resources()
-        allocation_status = self.get_resource_allocation_status()
-        
-        # 检查是否有资源瓶颈
-        issues = []
-        if current_resources['cpu']['usage_percent'] > 90:
-            issues.append("CPU使用率过高")
-        
-        if current_resources['memory']['usage_percent'] > 90:
-            issues.append("内存使用率过高")
-        
-        if self.gpu_info:
-            for gpu in current_resources['gpu']:
-                if gpu['used_memory'] / gpu['total_memory'] > 0.9:
-                    issues.append(f"GPU {gpu['id']} 内存使用率过高")
-        
-        monitoring_result = {
-            'current_resources': current_resources,
-            'allocation_status': allocation_status,
-            'issues': issues,
-            'timestamp': datetime.now().isoformat()
-        }
-        
-        if issues:
-            logger.warning(f"⚠️  资源监控发现问题: {', '.join(issues)}")
-        
-        return monitoring_result
-    
-    def save_resource_status(self, status_path: str = None):
-        """保存资源状态到文件"""
-        if not status_path:
-            status_path = TRAINING_DIR / "resource_status.json"
-        
-        status_data = {
-            'resource_allocation': self.resource_allocation,
-            'resource_usage_history': self.resource_usage_history[-20:],  # 只保存最近20条记录
-            'generated_at': datetime.now().isoformat()
-        }
-        
-        try:
-            with open(status_path, 'w', encoding='utf-8') as f:
-                json.dump(status_data, f, ensure_ascii=False, indent=2)
-            logger.info(f"💾 资源状态已保存到: {status_path}")
-        except Exception as e:
-            logger.error(f"❌ 保存资源状态失败: {e}")
-    
-    def load_resource_status(self, status_path: str = None):
-        """从文件加载资源状态"""
-        if not status_path:
-            status_path = TRAINING_DIR / "resource_status.json"
-        
-        if not Path(status_path).exists():
-            logger.warning(f"⚠️ 资源状态文件不存在: {status_path}")
-            return False
-        
-        try:
-            with open(status_path, 'r', encoding='utf-8') as f:
-                status_data = json.load(f)
-            
-            self.resource_allocation = status_data.get('resource_allocation', {})
-            self.resource_usage_history = status_data.get('resource_usage_history', [])
-            logger.info(f"✅ 资源状态已从 {status_path} 加载")
-            return True
-        except Exception as e:
-            logger.error(f"❌ 加载资源状态失败: {e}")
-            return False
-
-
-def main():
-    """主函数，用于测试ResourceManager"""
-    print("🖥️  测试资源管理器...")
-    
-    # 初始化资源管理器
-    resource_manager = ResourceManager()
-    
-    # 显示系统资源
-    resources = resource_manager.get_system_resources()
-    print(f"📊 系统资源状态:")
-    print(f"  CPU使用率: {resources['cpu']['usage_percent']:.1f}%")
-    print(f"  可用CPU核心: {resources['cpu']['available_cores']:.1f}")
-    print(f"  内存使用率: {resources['memory']['usage_percent']:.1f}%")
-    print(f"  可用内存: {resources['memory']['available'] / (1024**3):.2f} GB")
-    print(f"  GPU数量: {len(resources['gpu'])}")
-    
-    # 测试模型资源分配
-    print(f"\n🔧 模型资源分配测试:")
-    for model_type in ['vision_service', 'causal_reasoning_engine', 'multimodal_service']:
-        requirements = resource_manager.get_model_resource_requirements(model_type)
-        allocation = resource_manager.allocate_resources(requirements, model_type)
-        if allocation:
-            print(f"  {model_type}: 分配成功")
-        else:
-            print(f"  {model_type}: 分配失败")
-    
-    # 显示资源分配状态
-    status = resource_manager.get_resource_allocation_status()
-    print(f"\n📈 资源分配状态:")
-    print(f"  已分配CPU: {status['allocated_cpu']} 核心")
-    print(f"  可用CPU: {status['available_cpu']:.1f} 核心")
-    print(f"  已分配内存: {status['allocated_memory_gb']:.2f} GB")
-    print(f"  可用内存: {status['available_memory_gb']:.2f} GB")
-    
-    # 监控资源
-    monitoring_result = resource_manager.monitor_resources()
-    if monitoring_result['issues']:
-        print(f"\n⚠️  资源监控发现问题:")
-        for issue in monitoring_result['issues']:
-            print(f"  - {issue}")
-    else:
-        print(f"\n✅ 资源监控正常")
-    
-    # 保存资源状态
-    resource_manager.save_resource_status()
-    print(f"\n✅ 资源管理器测试完成")
-
-
-if __name__ == "__main__":
-    main()
+        return utilization

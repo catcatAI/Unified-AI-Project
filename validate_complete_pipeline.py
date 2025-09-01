@@ -146,7 +146,7 @@ def test_tool_integration():
     try:
         # 测试数学工具
         print("测试数学工具...")
-        from src.tools.math_tool import calculate
+        from apps.backend.src.tools.math_tool import calculate
         
         math_test_cases = ["10 + 5", "20 - 8"]
         for case in math_test_cases:
@@ -155,7 +155,7 @@ def test_tool_integration():
         
         # 测试逻辑工具
         print("测试逻辑工具...")
-        from src.tools.logic_tool import evaluate_expression
+        from apps.backend.src.tools.logic_tool import evaluate_expression
         
         logic_test_cases = ["true AND false", "true OR false"]
         for case in logic_test_cases:
@@ -164,7 +164,7 @@ def test_tool_integration():
         
         # 测试工具调度器
         print("测试工具调度器...")
-        from src.tools.tool_dispatcher import ToolDispatcher
+        from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
         
         dispatcher = ToolDispatcher()
         available_tools = dispatcher.get_available_tools()

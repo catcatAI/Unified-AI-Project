@@ -34,9 +34,9 @@ except Exception as e:
 # 4. Attempt to import a project module without path modification
 print("\n[4] Attempting to import a project module (without PYTHONPATH modification)...")
 try:
-    print("    - Attempting: `from src.core_ai.memory.ham_memory_manager import HAMMemoryManager`")
+    print("    - Attempting: `from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager`")
     # This will fail if 'src' is not in the path
-    from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+    from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
     print("      ... SUCCESS: Project module `HAMMemoryManager` imported successfully.")
 except ImportError as e:
     print(f"      ... FAILED: Could not import `HAMMemoryManager`. Error: {e}")

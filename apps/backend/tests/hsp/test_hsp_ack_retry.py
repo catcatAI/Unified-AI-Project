@@ -3,8 +3,8 @@ import asyncio
 import logging
 import json
 from unittest.mock import MagicMock, AsyncMock
-from src.hsp.connector import HSPConnector
-from src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPQoSParameters, HSPAcknowledgementPayload
+from apps.backend.src.hsp.connector import HSPConnector
+from apps.backend.src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPQoSParameters, HSPAcknowledgementPayload
 from datetime import datetime, timezone
 import uuid
 

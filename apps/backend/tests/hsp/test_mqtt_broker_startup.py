@@ -3,7 +3,7 @@ import asyncio
 import os
 import sys
 from amqtt.broker import Broker
-from src.hsp.connector import HSPConnector
+from apps.backend.src.hsp.connector import HSPConnector
 
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)
