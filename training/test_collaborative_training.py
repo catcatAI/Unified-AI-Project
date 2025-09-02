@@ -14,7 +14,10 @@ sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
 import logging
-from collaborative_training_manager import CollaborativeTrainingManager
+# 使用绝对导入而不是相对导入
+from training.collaborative_training_manager import CollaborativeTrainingManager
+from training.data_manager import DataManager
+from training.resource_manager import ResourceManager
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -24,7 +27,6 @@ def test_data_manager():
     logger.info("🔍 测试数据管理器...")
     
     try:
-        from data_manager import DataManager
         data_manager = DataManager()
         
         # 扫描数据
@@ -51,7 +53,6 @@ def test_resource_manager():
     logger.info("🖥️  测试资源管理器...")
     
     try:
-        from resource_manager import ResourceManager
         resource_manager = ResourceManager()
         
         # 获取系统资源
@@ -107,6 +108,8 @@ def test_collaborative_training_manager():
         return True
     except Exception as e:
         logger.error(f"❌ 协作式训练管理器测试失败: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def main():
@@ -134,6 +137,8 @@ def main():
                 print(f"❌ {test_name} 测试失败")
         except Exception as e:
             print(f"❌ {test_name} 测试出错: {e}")
+            import traceback
+            traceback.print_exc()
     
     # 总结
     print(f"\n📊 测试结果: {passed}/{total} 个测试通过")
