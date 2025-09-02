@@ -3,16 +3,16 @@
 簡單測試 ChromaDB 修復是否有效
 """
 
-import sys
 import os
-import time
+import sys
 import subprocess
+import time
 import signal
 import atexit
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from core_ai.memory.vector_store import VectorMemoryStore
-from core.memory.vector_store import VectorStore
+from apps.backend.src.core_ai.memory.vector_store import VectorMemoryStore
+from apps.backend.src.core.memory.vector_store import VectorStore
 import tempfile
 import shutil
 

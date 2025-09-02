@@ -3,7 +3,7 @@ Atlassian 集成测试
 """
 import pytest
 from fastapi.testclient import TestClient
-from apps.backend.main import app
+from apps.backend.src.services.main_api_server import app
 from apps.backend.src.services.atlassian_api import AtlassianConfig
 
 # 创建测试客户端

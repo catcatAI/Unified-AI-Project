@@ -1,16 +1,16 @@
 import unittest
-import pytest
-import os
 import sys
+import os
+import pytest
 
-# Add src directory to sys.path
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..")) #
+# Add the src directory to the path
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
+
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from core_ai.emotion_system import EmotionSystem
+from apps.backend.src.core_ai.emotion_system import EmotionSystem
 
 class TestEmotionSystem(unittest.TestCase):
 

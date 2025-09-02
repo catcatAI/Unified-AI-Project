@@ -3,15 +3,15 @@ import sys
 import json
 import logging
 
-# Add src directory to sys.path to allow imports from sibling directories
+# Add the src directory to the path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from tools.logic_model.logic_parser_eval import LogicParserEval
-from core_ai.dependency_manager import dependency_manager
+from apps.backend.src.tools.logic_model.logic_parser_eval import LogicParserEval
+from apps.backend.src.core_ai.dependency_manager import dependency_manager
 
 # --- Configuration for NN Model ---
 MODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
@@ -43,7 +43,7 @@ class LogicTool:
             return self.nn_model_evaluator, self.nn_char_to_token
 
         try:
-            from tools.logic_model.logic_model_nn import LogicNNModel
+            from apps.backend.src.tools.logic_model.logic_model_nn import LogicNNModel
             logging.info("Loading LogicNNModel for the first time...")
             if not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH):
                 raise FileNotFoundError("NN Model or Char Map not found.")

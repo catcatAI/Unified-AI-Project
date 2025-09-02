@@ -2,9 +2,9 @@ import json
 from typing import List, Dict, Optional, Any
 
 # Assuming 'src' is in PYTHONPATH, making 'services' and 'shared' top-level packages
-from services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider
-from shared.types.common_types import CritiqueResult
-from core_ai.lis.tonal_repair_engine import TonalRepairEngine
+from apps.backend.src.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider
+from apps.backend.src.shared.types.common_types import CritiqueResult
+from apps.backend.src.core_ai.lis.tonal_repair_engine import TonalRepairEngine
 
 
 class SelfCritiqueModule:
