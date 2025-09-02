@@ -15,6 +15,7 @@ from apps.backend.src.shared.error import HSPConnectionError # Added for unified
 from apps.backend.src.shared.network_resilience import RetryPolicy, CircuitBreaker, NetworkError, ProtocolError, CircuitBreakerOpenError # New imports for resilience
 from .fallback.fallback_protocols import get_fallback_manager, FallbackMessage, MessagePriority, initialize_fallback_protocols
 from .utils.fallback_config_loader import get_config_loader
+from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
 from pathlib import Path
 import os # Added this import
 
@@ -57,6 +58,10 @@ class HSPConnector:
         self.batch_size = 10  # 批量大小
         self.message_batch: List[Dict[str, Any]] = []  # 消息批处理队列
         self.last_batch_send = time.time()  # 上次批量发送时间
+        
+        # 性能优化器
+        self.performance_optimizer = HSPPerformanceOptimizer()
+        self.performance_enhancer = HSPPerformanceEnhancer(self.performance_optimizer)
 
         if self.mock_mode:
             self.logger.info("HSPConnector: Initializing in mock mode.")
@@ -124,7 +129,7 @@ class HSPConnector:
         # Moved to connect() method to ensure event loop is running
 
         # Register internal message bridge handler for external messages
-        self.external_connector.on_message_callback = self.message_bridge.handle_external_message
+        self.external_connector.on_message_callback = self.performance_enhancer.enhance_receive(self.message_bridge.handle_external_message)
 
         # Subscribe to internal bus messages that need to go external
         self.internal_bus.subscribe("hsp.internal.message", self.message_bridge.handle_internal_message)
@@ -375,6 +380,9 @@ class HSPConnector:
         correlation_id = envelope.get("correlation_id") or message_id # Use message_id if correlation_id is not set
         qos_params = envelope.get("qos_parameters") or {}
         requires_ack = qos_params.get("requires_ack", False)
+        
+        # 性能优化：优化消息路由
+        optimized_message = await self.performance_optimizer.optimize_message_routing(envelope)
         
         # 性能优化：检查消息缓存
         if not requires_ack:

@@ -93,24 +93,42 @@ def mqtt_broker_available():
 def clean_test_files():
     """清理測試文件"""
     import glob
+    import shutil
+    from pathlib import Path
 
-    # 在測試前清理
+    # 确保测试目录存在
+    test_dir = Path("data/processed_data")
+    test_dir.mkdir(parents=True, exist_ok=True)
+    
+    # 在测试前清理
     test_files = glob.glob("data/processed_data/test_*.json")
     for file in test_files:
         try:
-            os.remove(file)
+            file_path = Path(file)
+            # 确保只删除测试文件（额外的安全检查）
+            if file_path.name.startswith("test_") and file_path.suffix == ".json":
+                os.remove(file)
+                print(f"Cleaned up test file: {file}")
         except FileNotFoundError:
             pass
+        except Exception as e:
+            print(f"Warning: Could not remove test file {file}: {e}")
 
     yield
 
-    # 在測試後清理
+    # 在测试后清理
     test_files = glob.glob("data/processed_data/test_*.json")
     for file in test_files:
         try:
-            os.remove(file)
+            file_path = Path(file)
+            # 确保只删除测试文件（额外的安全检查）
+            if file_path.name.startswith("test_") and file_path.suffix == ".json":
+                os.remove(file)
+                print(f"Cleaned up test file: {file}")
         except FileNotFoundError:
             pass
+        except Exception as e:
+            print(f"Warning: Could not remove test file {file}: {e}")
 
 @pytest.fixture(scope="function")
 def deadlock_detector():

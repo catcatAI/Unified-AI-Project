@@ -877,13 +877,32 @@ class HAMMemoryManager:
                 )
 
                 # Delete memories until memory usage is acceptable
+                deleted_count = 0
+                max_deletions_per_check = max(10, len(self.core_memory_store) // 10)  # Limit deletions per check
+                
                 for memory_id, _ in memories_to_consider:
+                    # Safety check: don't delete too many memories at once
+                    if deleted_count >= max_deletions_per_check:
+                        logger.info(f"Memory deletion limit reached: {deleted_count} memories deleted")
+                        break
+                        
                     current_memory = psutil.virtual_memory()
                     if current_memory.available < current_memory.total * memory_threshold:
                         if memory_id in self.core_memory_store:  # Ensure it still exists
-                            del self.core_memory_store[memory_id]
+                            # Additional safety check: ensure we're not deleting protected memories
+                            if not self.core_memory_store[memory_id].get("protected", False):
+                                del self.core_memory_store[memory_id]
+                                deleted_count += 1
+                                logger.debug(f"Deleted memory: {memory_id}")
+                            else:
+                                logger.warning(f"Attempted to delete protected memory: {memory_id}")
                     else:
                         break
+                        
+                if deleted_count > 0:
+                    # Save the updated memory store to file
+                    self._save_core_memory_to_file()
+                    logger.info(f"Memory cleanup completed: {deleted_count} memories deleted")
         except Exception as e:
             logger.error(f"Error during deletion check: {e}")
 
@@ -892,9 +911,17 @@ class HAMMemoryManager:
         Deletes old experiences that are no longer relevant.
         """
         while True:
+            # Ensure we don't check too frequently
             deletion_interval = max(60, 3600 - len(self.core_memory_store) * 10)
             await asyncio.sleep(deletion_interval)
-            await asyncio.to_thread(self._perform_deletion_check)
+            
+            # Perform deletion check in a separate thread to avoid blocking
+            try:
+                await asyncio.to_thread(self._perform_deletion_check)
+            except Exception as e:
+                logger.error(f"Error during memory cleanup: {e}")
+                # Continue with next iteration even if current check failed
+                continue
 
     def query_core_memory(self,
                           keywords: Optional[List[str]] = None,
