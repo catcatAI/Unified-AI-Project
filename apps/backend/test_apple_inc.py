@@ -6,35 +6,30 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 try:
     import spacy
-    print("spaCy imported successfully")
     
     # Try to load the model
     try:
         nlp = spacy.load("en_core_web_sm")
-        print("Model loaded successfully")
+        print("Loaded en_core_web_sm")
     except OSError:
-        print("Model not found, trying to download...")
         try:
-            spacy.cli.download("en_core_web_sm")
-            nlp = spacy.load("en_core_web_sm")
-            print("Model downloaded and loaded successfully")
-        except Exception as e:
-            print(f"Failed to download/load model: {e}")
+            nlp = spacy.load("en_core_web_md")
+            print("Loaded en_core_web_md")
+        except OSError:
             nlp = None
+            print("Could not load spaCy model")
     
     if nlp:
-        # Test the specific text
+        # Test the model
         text = "Apple Inc. is a company. Steve Jobs was a person."
         doc = nlp(text)
-        
-        print(f"Processing text: {text}")
         print(f"Entities found: {len(doc.ents)}")
         
         for ent in doc.ents:
             print(f"Entity: '{ent.text}' - Type: {ent.label_}")
         
         # Test the analyzer
-        from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+        from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
         analyzer = ContentAnalyzerModule()
         
         kg_data, nx_graph = analyzer.analyze_content(text)

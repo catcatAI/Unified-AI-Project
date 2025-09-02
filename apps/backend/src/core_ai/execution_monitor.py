@@ -47,9 +47,9 @@ class TerminalStatus(Enum):
 @dataclass
 class ExecutionConfig:
     """執行配置"""
-    default_timeout: float = 30.0
-    max_timeout: float = 300.0
-    min_timeout: float = 5.0
+    default_timeout: float = 60.0  # 增加默認超時時間從30秒到60秒
+    max_timeout: float = 600.0     # 增加最大超時時間從300秒到600秒
+    min_timeout: float = 10.0      # 增加最小超時時間從5秒到10秒
     check_interval: float = 1.0
     terminal_check_interval: float = 5.0
     cpu_threshold: float = 90.0

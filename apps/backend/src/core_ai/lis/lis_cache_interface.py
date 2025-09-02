@@ -14,7 +14,7 @@ from typing import List, Optional, Dict, Any, cast # Added cast
 import json # Added for HAMLISCache conceptual serialization
 from datetime import datetime, timezone # Added for timestamping in add_antibody
 
-# Assuming types will be imported from shared.types
+# Assuming types will be imported from apps.backend.src.shared.types
 from .types import (
     LIS_IncidentRecord,
     LIS_SemanticAnomalyDetectedEvent,

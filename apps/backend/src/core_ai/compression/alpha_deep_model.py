@@ -13,7 +13,7 @@ from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional, Union
 from enum import Enum
 
-from core_ai.symbolic_space.unified_symbolic_space import UnifiedSymbolicSpace
+from apps.backend.src.core_ai.symbolic_space.unified_symbolic_space import UnifiedSymbolicSpace
 
 class CompressionAlgorithm(Enum):
     """Compression algorithms supported by the model."""

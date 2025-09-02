@@ -18,6 +18,8 @@ def mock_mqtt_client():
     mock.disconnect = AsyncMock()
     mock.subscribe = AsyncMock()
     mock.publish = AsyncMock()
+    # 确保publish方法返回一个模拟的结果
+    mock.publish.return_value = MagicMock()
     return mock
 
 @pytest.fixture
@@ -30,9 +32,13 @@ def hsp_connector_instance(mock_mqtt_client):
         mock_mode=True # Enable mock mode for testing without a real broker
     )
     # Manually set the mock client if not in mock_mode, or ensure it's used if in mock_mode
-    # In mock_mode, HSPConnector.__init__ already sets self.mqtt_client to MagicMock
+    # In mock mode, HSPConnector.__init__ already sets self.mqtt_client to MagicMock
     # We can replace it with our specific mock_mqtt_client if we need to control its behavior
     connector.mqtt_client = mock_mqtt_client
+    # 确保外部连接器也使用相同的mock客户端，并设置subscribe和publish方法
+    connector.external_connector.mqtt_client = mock_mqtt_client
+    connector.external_connector.subscribe = mock_mqtt_client.subscribe
+    connector.external_connector.publish = mock_mqtt_client.publish
     return connector
 
 @pytest.mark.asyncio

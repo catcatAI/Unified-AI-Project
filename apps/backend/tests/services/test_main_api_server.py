@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from fastapi.testclient import TestClient
-from src.services.main_api_server import app, initialize_services, shutdown_services
+from apps.backend.src.services.main_api_server import app, initialize_services, shutdown_services
 
 # Use a pytest fixture to create the TestClient
 @pytest.fixture

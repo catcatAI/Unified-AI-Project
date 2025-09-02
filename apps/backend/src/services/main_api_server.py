@@ -5,16 +5,12 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 import uuid
 
-from apps.backend.src.economy.economy_manager import EconomyManager
-from apps.backend.src.pet.pet_manager import PetManager
+# Use relative imports instead of absolute imports
+from ..economy.economy_manager import EconomyManager
+from ..pet.pet_manager import PetManager
 
-# 尝试导入路径配置模块
-try:
-    from apps.backend.src.path_config import PROJECT_ROOT
-except ImportError:
-    # 如果路径配置模块不可用，使用默认路径处理
-    from pathlib import Path
-    PROJECT_ROOT = Path(__file__).parent.parent.parent
+# Use path configuration from path_config.py
+from ..path_config import PROJECT_ROOT
 
 app = FastAPI(title="Unified AI Project API", version="1.0.0")
 
@@ -36,7 +32,7 @@ app.add_middleware(
 )
 
 # Core services lifecycle
-from apps.backend.src.core_services import initialize_services, shutdown_services, get_services
+from ..core_services import initialize_services, shutdown_services, get_services
 
 @app.on_event("startup")
 async def on_startup():

@@ -65,8 +65,8 @@ function Install-Dependencies {
     
     # 安装 Node.js 依赖
     Write-Info "安装 Node.js 依赖..."
-    pnpm install
-    if ($LASTEXITCODE -ne 0) {
+    $nodeInstall = Start-Process -FilePath "pnpm" -ArgumentList "install" -Wait -NoNewWindow -PassThru -Timeout 300
+    if ($nodeInstall.ExitCode -ne 0) {
         Write-Error-Message "Node.js 依赖安装失败"
         return $false
     }
@@ -77,16 +77,54 @@ function Install-Dependencies {
     
     # 创建虚拟环境（如果不存在）
     if (-not (Test-Path "venv")) {
-        python -m venv venv
+        Write-Info "创建 Python 虚拟环境..."
+        $venvCreate = Start-Process -FilePath "python" -ArgumentList "-m", "venv", "venv" -Wait -NoNewWindow -PassThru -Timeout 120
+        if ($venvCreate.ExitCode -ne 0) {
+            Write-Error-Message "Python 虚拟环境创建失败"
+            Set-Location "..\.."
+            return $false
+        }
     }
     
     # 激活虚拟环境并安装依赖
+    Write-Info "激活虚拟环境并安装依赖..."
     & "venv\Scripts\Activate.ps1"
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    pip install -r requirements-dev.txt
     
-    Set-Location "..\..\"
+    $pipUpgrade = Start-Process -FilePath "pip" -ArgumentList "install", "--upgrade", "pip" -Wait -NoNewWindow -PassThru -Timeout 120
+    if ($pipUpgrade.ExitCode -ne 0) {
+        Write-Error-Message "pip 升级失败"
+        Set-Location "..\.."
+        return $false
+    }
+    
+    # 分别安装 requirements.txt 和 requirements-dev.txt 中的依赖，添加重试机制
+    $requirementsFiles = @("requirements.txt", "requirements-dev.txt")
+    foreach ($reqFile in $requirementsFiles) {
+        Write-Info "安装 $reqFile 中的依赖..."
+        $retryCount = 0
+        $maxRetries = 3
+        $success = $false
+        
+        while (-not $success -and $retryCount -lt $maxRetries) {
+            $pipInstall = Start-Process -FilePath "pip" -ArgumentList "install", "-r", $reqFile, "--timeout", "300" -Wait -NoNewWindow -PassThru
+            if ($pipInstall.ExitCode -eq 0) {
+                $success = $true
+                Write-ColorOutput "✓ $reqFile 依赖安装成功"
+            } else {
+                $retryCount++
+                if ($retryCount -lt $maxRetries) {
+                    Write-Info "安装失败，第 $retryCount 次重试..."
+                    Start-Sleep -Seconds 10
+                } else {
+                    Write-Error-Message "✗ $reqFile 依赖安装失败，已重试 $maxRetries 次"
+                    Set-Location "..\.."
+                    return $false
+                }
+            }
+        }
+    }
+    
+    Set-Location "..\.."
     return $true
 }
 

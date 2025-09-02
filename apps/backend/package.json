@@ -3,14 +3,22 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "setup": "python -m venv venv && (if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && pip install --upgrade pip && pip install -r requirements.txt && pip install -r requirements-dev.txt",
-    "dev": "echo \"Starting Python backend...\" && (if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && python start_chroma_server.py & uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000",
-    "dev:api": "(if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000",
-    "dev:chroma": "(if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && python start_chroma_server.py",
-    "test": "(if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && pytest --tb=short -v",
-    "test:coverage": "(if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && pytest --cov=src --cov-report=html --cov-report=term-missing",
-    "test:watch": "(if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && pytest --tb=short -v --timeout=30 -f",
+    "setup": "python -m venv venv; pip install --upgrade pip; pip install -r requirements.txt; pip install -r requirements-dev.txt",
+    "dev": "echo \"Starting Python backend...\"; python scripts/smart_dev_runner.py",
+    "dev:api": "python -m uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000",
+    "dev:chroma": "python start_chroma_server.py",
+    "test": "python scripts/smart_test_runner.py",
+    "test:coverage": "python scripts/smart_test_runner.py --cov=src --cov-report=html --cov-report=term-missing",
+    "test:watch": "python scripts/smart_test_runner.py --tb=short -v --timeout=30 -f",
     "clean": "rmdir /s /q venv 2>nul || rm -rf venv",
-    "health": "(if exist venv\\Scripts\\activate.bat (call venv\\Scripts\\activate.bat) else (source venv/bin/activate)) && python -c \"import sys; sys.path.insert(0, 'apps/backend/src'); import apps.backend.src.core_services; print('Backend imports OK')\""
+    "health": "python -c \"import sys; sys.path.insert(0, 'apps/backend/src'); import apps.backend.src.core_services; print('Backend imports OK')\"",
+    "fix": "python scripts/simple_auto_fix.py",
+    "fix:complete": "python scripts/auto_fix_complete.py",
+    "fix:advanced": "python scripts/advanced_auto_fix.py",
+    "fix:test": "python scripts/simple_auto_fix.py --fix --test",
+    "fix:advanced:test": "python scripts/advanced_auto_fix.py --test",
+    "validate": "python scripts/final_validation.py",
+    "validate:fix": "python scripts/advanced_auto_fix.py --test; python scripts/final_validation.py",
+    "demo:fix": "python scripts/test_fix_demo.py"
   }
 }
