@@ -454,6 +454,10 @@ async def interact_with_pet(pet_id: str, interaction_data: Dict[str, Any], servi
 app.include_router(economy_router, prefix="/api/v1/economy", tags=["Economy"])
 app.include_router(pet_router, prefix="/api/v1/pet", tags=["Pet"])
 
+# Atlassian API router
+from apps.backend.src.services.atlassian_api import atlassian_router
+app.include_router(atlassian_router)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
