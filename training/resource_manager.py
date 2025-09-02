@@ -35,6 +35,9 @@ except ImportError:
     DATA_DIR = PROJECT_ROOT / "data"
     TRAINING_DIR = PROJECT_ROOT / "training"
 
+# 导入智能资源分配器
+from .smart_resource_allocator import SmartResourceAllocator
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -50,6 +53,9 @@ class ResourceManager:
         self.resource_allocation = {}  # 记录资源分配情况
         self.resource_usage_history = []  # 资源使用历史
         self.task_queue = []  # 任务队列，按优先级排序
+        
+        # 智能资源分配器
+        self.smart_allocator = SmartResourceAllocator()
         self.running_tasks = {}  # 正在运行的任务
         
         logger.info(f"🖥️  系统资源信息:")
@@ -94,11 +100,12 @@ class ResourceManager:
                 import torch
                 if torch.cuda.is_available():
                     for i in range(torch.cuda.device_count()):
+                        props = torch.cuda.get_device_properties(i)
                         gpu_info = {
                             'id': i,
                             'name': torch.cuda.get_device_name(i),
-                            'total_memory': torch.cuda.get_device_properties(i).total_memory,
-                            'free_memory': torch.cuda.get_device_properties(i).total_memory,  # 简化处理
+                            'total_memory': props.total_memory,
+                            'free_memory': props.total_memory,  # 简化处理
                             'used_memory': 0
                         }
                         gpus.append(gpu_info)
@@ -272,41 +279,38 @@ class ResourceManager:
         if not requirements:
             return None
         
-        # 获取当前系统资源
-        system_resources = self.get_system_resources()
-        cpu_info = system_resources['cpu']
-        memory_info = system_resources['memory']
+        # 使用智能资源分配器进行资源分配
+        from .smart_resource_allocator import ResourceRequest
         
-        # 检查CPU资源
-        required_cpu = requirements.get('cpu_cores', 1)
-        available_cpu = cpu_info['available_cores']
+        # 创建资源请求
+        resource_request = ResourceRequest(
+            task_id=model_name or f"task_{int(datetime.now().timestamp())}",
+            cpu_cores=requirements.get('cpu_cores', 1),
+            memory_gb=requirements.get('memory_gb', 1),
+            gpu_memory_gb=requirements.get('gpu_memory_gb', 0),
+            priority=requirements.get('priority', 1),
+            estimated_time_hours=requirements.get('estimated_time_hours', 1),
+            resource_type="gpu" if requirements.get('gpu_memory_gb', 0) > 0 else "cpu"
+        )
         
-        if required_cpu > available_cpu:
-            logger.warning(f"⚠️  CPU资源不足: 需要 {required_cpu} 核心，可用 {available_cpu:.2f} 核心")
-            return None
-        
-        # 检查内存资源
-        required_memory_gb = requirements.get('memory_gb', 1)
-        available_memory_gb = memory_info['available'] / (1024**3)
-        
-        if required_memory_gb > available_memory_gb:
-            logger.warning(f"⚠️  内存资源不足: 需要 {required_memory_gb:.2f} GB，可用 {available_memory_gb:.2f} GB")
-            return None
-        
-        # 检查GPU资源（如果需要）
-        required_gpu_memory_gb = requirements.get('gpu_memory_gb', 0)
-        if required_gpu_memory_gb > 0 and self.gpu_info:
-            total_gpu_memory_gb = sum(gpu['free_memory'] for gpu in self.gpu_info) / (1024**3)
-            if required_gpu_memory_gb > total_gpu_memory_gb:
-                logger.warning(f"⚠️  GPU内存资源不足: 需要 {required_gpu_memory_gb:.2f} GB，可用 {total_gpu_memory_gb:.2f} GB")
-                # 如果GPU内存不足，但模型可以使用CPU运行，则继续分配
-                required_gpu_memory_gb = 0
+        # 请求资源
+        self.smart_allocator.request_resources(resource_request)
         
         # 分配资源
+        allocations = self.smart_allocator.allocate_resources()
+        
+        if not allocations:
+            logger.warning(f"⚠️  资源分配失败: {model_name}")
+            return None
+        
+        # 获取分配结果
+        allocation_result = allocations[0]  # 假设第一个分配就是我们需要的
+        
+        # 转换为原有格式
         allocation = {
-            'cpu_cores': required_cpu,
-            'memory_gb': required_memory_gb,
-            'gpu_memory_gb': required_gpu_memory_gb,
+            'cpu_cores': allocation_result.allocated_cpu_cores,
+            'memory_gb': allocation_result.allocated_memory_gb,
+            'gpu_memory_gb': allocation_result.allocated_gpu_memory_gb,
             'allocated_at': datetime.now().isoformat()
         }
         
@@ -314,7 +318,7 @@ class ResourceManager:
         if model_name:
             self.resource_allocation[model_name] = allocation
         
-        logger.info(f"✅ 资源分配成功: CPU {required_cpu} 核心, 内存 {required_memory_gb} GB, GPU {required_gpu_memory_gb} GB")
+        logger.info(f"✅ 资源分配成功: CPU {allocation_result.allocated_cpu_cores} 核心, 内存 {allocation_result.allocated_memory_gb} GB, GPU {allocation_result.allocated_gpu_memory_gb} GB")
         return allocation
     
     def release_resources(self, model_name: str):
