@@ -14,6 +14,9 @@ import { SystemMonitor } from './tabs/system-monitor'
 import { Settings } from './tabs/settings'
 import AtlassianIntegration from './tabs/atlassian-integration'
 import { ArchiveManager } from './tabs/archive-manager'
+// 导入新创建的增强组件
+import { EnhancedDashboard } from './tabs/enhanced-dashboard'
+import { EnhancedAIChat } from './tabs/enhanced-ai-chat'
 
 export function DashboardLayout() {
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -21,9 +24,11 @@ export function DashboardLayout() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardOverview />
+        // 使用增强版仪表板组件
+        return <EnhancedDashboard />
       case 'chat':
-        return <AIChat />
+        // 使用增强版AI聊天组件
+        return <EnhancedAIChat />
       case 'image':
         return <ImageGeneration />
       case 'search':
@@ -45,7 +50,8 @@ export function DashboardLayout() {
       case 'atlassian':
         return <AtlassianIntegration />
       default:
-        return <DashboardOverview />
+        // 默认使用增强版仪表板组件
+        return <EnhancedDashboard />
     }
   }
 

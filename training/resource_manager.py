@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Tuple, Optional
 import json
 from datetime import datetime
+import heapq
 
 # 添加项目路径
 import sys
@@ -48,6 +49,8 @@ class ResourceManager:
         self.gpu_info = self._detect_gpus()
         self.resource_allocation = {}  # 记录资源分配情况
         self.resource_usage_history = []  # 资源使用历史
+        self.task_queue = []  # 任务队列，按优先级排序
+        self.running_tasks = {}  # 正在运行的任务
         
         logger.info(f"🖥️  系统资源信息:")
         logger.info(f"   CPU核心数: {self.cpu_count} (物理核心: {self.physical_cpu_count})")
@@ -164,64 +167,74 @@ class ResourceManager:
         # 定义不同模型的资源需求
         requirements = {
             'vision_service': {
-                'cpu_cores': 1,  # 降低CPU需求
-                'memory_gb': 1,  # 降低内存需求
-                'gpu_memory_gb': 1,
-                'priority': 2
+                'cpu_cores': 2,
+                'memory_gb': 2,
+                'gpu_memory_gb': 2,
+                'priority': 2,
+                'estimated_time_hours': 2
             },
             'audio_service': {
                 'cpu_cores': 1,
                 'memory_gb': 1,
                 'gpu_memory_gb': 0,  # 音频处理通常不需要GPU
-                'priority': 1
+                'priority': 1,
+                'estimated_time_hours': 1
             },
             'causal_reasoning_engine': {
-                'cpu_cores': 1,  # 降低CPU需求
-                'memory_gb': 1,  # 降低内存需求
+                'cpu_cores': 2,
+                'memory_gb': 2,
                 'gpu_memory_gb': 0,  # 逻辑推理主要使用CPU
-                'priority': 3
+                'priority': 3,
+                'estimated_time_hours': 3
             },
             'multimodal_service': {
-                'cpu_cores': 1,  # 降低CPU需求
-                'memory_gb': 1,  # 降低内存需求
-                'gpu_memory_gb': 1,
-                'priority': 4
+                'cpu_cores': 3,
+                'memory_gb': 3,
+                'gpu_memory_gb': 3,
+                'priority': 4,
+                'estimated_time_hours': 4
             },
             'math_model': {
                 'cpu_cores': 1,
                 'memory_gb': 1,
                 'gpu_memory_gb': 0,
-                'priority': 1
+                'priority': 1,
+                'estimated_time_hours': 1
             },
             'logic_model': {
-                'cpu_cores': 1,
+                'cpu_cores': 2,
                 'memory_gb': 1,
                 'gpu_memory_gb': 0,
-                'priority': 2
+                'priority': 2,
+                'estimated_time_hours': 2
             },
             'concept_models': {
-                'cpu_cores': 1,
-                'memory_gb': 1,
-                'gpu_memory_gb': 0,
-                'priority': 3
+                'cpu_cores': 2,
+                'memory_gb': 2,
+                'gpu_memory_gb': 1,
+                'priority': 3,
+                'estimated_time_hours': 3
             },
             'environment_simulator': {
-                'cpu_cores': 1,
+                'cpu_cores': 2,
                 'memory_gb': 1,
                 'gpu_memory_gb': 0,
-                'priority': 2
+                'priority': 2,
+                'estimated_time_hours': 2
             },
             'adaptive_learning_controller': {
                 'cpu_cores': 1,
                 'memory_gb': 1,
                 'gpu_memory_gb': 0,
-                'priority': 3
+                'priority': 3,
+                'estimated_time_hours': 1
             },
             'alpha_deep_model': {
-                'cpu_cores': 1,
-                'memory_gb': 1,
-                'gpu_memory_gb': 0,
-                'priority': 4
+                'cpu_cores': 3,
+                'memory_gb': 3,
+                'gpu_memory_gb': 2,
+                'priority': 4,
+                'estimated_time_hours': 4
             }
         }
         
@@ -229,8 +242,30 @@ class ResourceManager:
             'cpu_cores': 1,
             'memory_gb': 1,
             'gpu_memory_gb': 0,
-            'priority': 1
+            'priority': 1,
+            'estimated_time_hours': 1
         })
+    
+    def add_task_to_queue(self, task_info: Dict[str, Any]):
+        """将任务添加到队列中"""
+        # 使用优先级和预计时间作为排序依据
+        priority = task_info.get('requirements', {}).get('priority', 1)
+        estimated_time = task_info.get('requirements', {}).get('estimated_time_hours', 1)
+        
+        # 创建任务元组：(优先级负值, 预计时间, 任务信息)
+        # 使用负值是因为heapq是最小堆，我们需要最大优先级先执行
+        task_tuple = (-priority, estimated_time, task_info)
+        heapq.heappush(self.task_queue, task_tuple)
+        logger.info(f"📥 任务已添加到队列: {task_info.get('model_name', 'Unknown')}")
+    
+    def get_next_task(self) -> Optional[Dict[str, Any]]:
+        """获取下一个要执行的任务"""
+        if not self.task_queue:
+            return None
+        
+        # 弹出优先级最高的任务
+        priority, estimated_time, task_info = heapq.heappop(self.task_queue)
+        return task_info
     
     def allocate_resources(self, requirements: Dict[str, Any], model_name: str = None) -> Optional[Dict[str, Any]]:
         """为模型分配资源"""
@@ -309,3 +344,104 @@ class ResourceManager:
         }
         
         return utilization
+    
+    def get_resource_allocation_status(self) -> Dict[str, Any]:
+        """获取资源分配状态"""
+        system_resources = self.get_system_resources()
+        cpu_info = system_resources['cpu']
+        memory_info = system_resources['memory']
+        
+        allocated_cpu = sum(allocation.get('cpu_cores', 0) for allocation in self.resource_allocation.values())
+        allocated_memory = sum(allocation.get('memory_gb', 0) for allocation in self.resource_allocation.values())
+        
+        status = {
+            'total_cpu': self.cpu_count,
+            'allocated_cpu': allocated_cpu,
+            'available_cpu': self.cpu_count - allocated_cpu,
+            'total_memory_gb': self.total_memory / (1024**3),
+            'allocated_memory_gb': allocated_memory,
+            'available_memory_gb': (self.total_memory / (1024**3)) - allocated_memory,
+            'gpu_info': self.gpu_info,
+            'allocated_models': list(self.resource_allocation.keys()),
+            'pending_tasks': len(self.task_queue)
+        }
+        
+        return status
+    
+    def optimize_resource_allocation(self) -> Dict[str, Any]:
+        """优化资源分配"""
+        logger.info("⚙️  开始优化资源分配...")
+        
+        # 获取当前资源使用情况
+        status = self.get_resource_allocation_status()
+        
+        optimization_result = {
+            'timestamp': datetime.now().isoformat(),
+            'actions_taken': [],
+            'current_status': status
+        }
+        
+        # 如果有大量空闲资源，可以考虑增加并行任务
+        if status['available_cpu'] > status['total_cpu'] * 0.5:
+            optimization_result['actions_taken'].append("系统有大量空闲CPU资源，可以增加并行任务")
+        
+        if status['available_memory_gb'] > status['total_memory_gb'] * 0.5:
+            optimization_result['actions_taken'].append("系统有大量空闲内存资源，可以增加并行任务")
+        
+        # 如果资源紧张，考虑暂停低优先级任务
+        if status['available_cpu'] < 1 or status['available_memory_gb'] < 1:
+            optimization_result['actions_taken'].append("系统资源紧张，建议暂停低优先级任务")
+        
+        logger.info("✅ 资源分配优化完成")
+        return optimization_result
+    
+    def dynamic_resource_scaling(self, model_name: str, current_performance: Dict[str, Any]) -> bool:
+        """动态调整模型资源分配"""
+        logger.info(f"📈 动态调整模型 {model_name} 的资源分配")
+        
+        if model_name not in self.resource_allocation:
+            logger.warning(f"⚠️  模型 {model_name} 未分配资源")
+            return False
+        
+        # 获取当前资源分配
+        current_allocation = self.resource_allocation[model_name]
+        cpu_cores = current_allocation['cpu_cores']
+        memory_gb = current_allocation['memory_gb']
+        
+        # 根据性能指标调整资源
+        accuracy = current_performance.get('accuracy', 0.0)
+        loss = current_performance.get('loss', 1.0)
+        processing_time = current_performance.get('processing_time', 1.0)
+        
+        # 如果准确率低且损失高，增加资源
+        if accuracy < 0.8 and loss > 0.5:
+            # 增加CPU核心
+            if cpu_cores < self.cpu_count:
+                current_allocation['cpu_cores'] = min(cpu_cores + 1, self.cpu_count)
+                logger.info(f"   增加CPU核心: {cpu_cores} -> {current_allocation['cpu_cores']}")
+            
+            # 增加内存
+            current_allocation['memory_gb'] = memory_gb * 1.2
+            logger.info(f"   增加内存: {memory_gb:.2f}GB -> {current_allocation['memory_gb']:.2f}GB")
+        
+        # 如果处理时间过长，增加资源
+        elif processing_time > 10.0:  # 超过10秒
+            if cpu_cores < self.cpu_count:
+                current_allocation['cpu_cores'] = min(cpu_cores + 1, self.cpu_count)
+                logger.info(f"   增加CPU核心: {cpu_cores} -> {current_allocation['cpu_cores']}")
+        
+        # 如果准确率高且损失低，可以减少资源以节省资源
+        elif accuracy > 0.95 and loss < 0.1:
+            # 减少CPU核心
+            if cpu_cores > 1:
+                current_allocation['cpu_cores'] = max(cpu_cores - 1, 1)
+                logger.info(f"   减少CPU核心: {cpu_cores} -> {current_allocation['cpu_cores']}")
+            
+            # 减少内存
+            current_allocation['memory_gb'] = max(memory_gb * 0.8, 1.0)
+            logger.info(f"   减少内存: {memory_gb:.2f}GB -> {current_allocation['memory_gb']:.2f}GB")
+        
+        # 更新资源分配记录
+        self.resource_allocation[model_name] = current_allocation
+        logger.info(f"✅ 模型 {model_name} 资源调整完成")
+        return True

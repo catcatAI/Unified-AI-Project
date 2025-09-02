@@ -107,14 +107,18 @@
       "datasets": ["vision_samples", "audio_samples", "reasoning_samples"],
       "epochs": 3,
       "batch_size": 8,
-      "target_models": ["vision_service", "audio_service", "causal_reasoning_engine"]
+      "target_models": ["vision_service", "audio_service", "causal_reasoning_engine"],
+      "use_gpu": true,
+      "distributed_training": false
     },
     "comprehensive_training": {
       "description": "Full training with all available data",
       "datasets": ["vision_samples", "audio_samples", "reasoning_samples", "multimodal_samples", "flickr30k_sample", "common_voice_zh", "coco_captions", "visual_genome_sample"],
       "epochs": 50,
       "batch_size": 32,
-      "target_models": ["vision_service", "audio_service", "causal_reasoning_engine", "multimodal_service"]
+      "target_models": ["vision_service", "audio_service", "causal_reasoning_engine", "multimodal_service"],
+      "use_gpu": true,
+      "distributed_training": true
     },
     "full_dataset_training": {
       "description": "Full dataset training with automatic pause/resume capabilities",
@@ -124,21 +128,27 @@
       "target_models": ["vision_service", "audio_service", "causal_reasoning_engine", "multimodal_service"],
       "checkpoint_interval": 5,
       "auto_pause_on_low_disk": true,
-      "min_disk_space_gb": 5
+      "min_disk_space_gb": 5,
+      "use_gpu": true,
+      "distributed_training": true
     },
     "vision_focus": {
       "description": "Focus on vision-related models",
       "datasets": ["vision_samples", "flickr30k_sample", "coco_captions", "visual_genome_sample"],
       "epochs": 30,
       "batch_size": 16,
-      "target_models": ["vision_service"]
+      "target_models": ["vision_service"],
+      "use_gpu": true,
+      "distributed_training": false
     },
     "audio_focus": {
       "description": "Focus on audio-related models",
       "datasets": ["audio_samples", "common_voice_zh"],
       "epochs": 20,
       "batch_size": 8,
-      "target_models": ["audio_service"]
+      "target_models": ["audio_service"],
+      "use_gpu": false,
+      "distributed_training": false
     },
     "math_model_training": {
       "description": "Train mathematical calculation model",
@@ -146,7 +156,9 @@
       "epochs": 50,
       "batch_size": 64,
       "target_models": ["math_model"],
-      "checkpoint_interval": 5
+      "checkpoint_interval": 5,
+      "use_gpu": false,
+      "distributed_training": false
     },
     "logic_model_training": {
       "description": "Train logical reasoning model",
@@ -154,7 +166,9 @@
       "epochs": 50,
       "batch_size": 32,
       "target_models": ["logic_model"],
-      "checkpoint_interval": 5
+      "checkpoint_interval": 5,
+      "use_gpu": false,
+      "distributed_training": false
     },
     "real_math_model_training": {
       "description": "Real mathematical model training with TensorFlow",
@@ -162,7 +176,9 @@
       "epochs": 100,
       "batch_size": 64,
       "target_models": ["math_model"],
-      "checkpoint_interval": 10
+      "checkpoint_interval": 10,
+      "use_gpu": true,
+      "distributed_training": true
     },
     "real_logic_model_training": {
       "description": "Real logical reasoning model training with TensorFlow",
@@ -170,7 +186,9 @@
       "epochs": 100,
       "batch_size": 32,
       "target_models": ["logic_model"],
-      "checkpoint_interval": 10
+      "checkpoint_interval": 10,
+      "use_gpu": true,
+      "distributed_training": true
     },
     "concept_models_training": {
       "description": "Train all concept models",
@@ -178,7 +196,9 @@
       "epochs": 30,
       "batch_size": 16,
       "target_models": ["concept_models"],
-      "checkpoint_interval": 5
+      "checkpoint_interval": 5,
+      "use_gpu": true,
+      "distributed_training": false
     },
     "environment_simulator_training": {
       "description": "Train environment simulator specifically",
@@ -186,7 +206,9 @@
       "epochs": 20,
       "batch_size": 16,
       "target_models": ["environment_simulator"],
-      "checkpoint_interval": 5
+      "checkpoint_interval": 5,
+      "use_gpu": false,
+      "distributed_training": false
     },
     "causal_reasoning_training": {
       "description": "Train causal reasoning engine specifically",
@@ -194,7 +216,9 @@
       "epochs": 25,
       "batch_size": 32,
       "target_models": ["causal_reasoning_engine"],
-      "checkpoint_interval": 5
+      "checkpoint_interval": 5,
+      "use_gpu": true,
+      "distributed_training": false
     },
     "adaptive_learning_training": {
       "description": "Train adaptive learning controller specifically",
@@ -202,7 +226,9 @@
       "epochs": 20,
       "batch_size": 16,
       "target_models": ["adaptive_learning_controller"],
-      "checkpoint_interval": 5
+      "checkpoint_interval": 5,
+      "use_gpu": false,
+      "distributed_training": false
     },
     "alpha_deep_model_training": {
       "description": "Train Alpha deep model specifically",
@@ -210,7 +236,9 @@
       "epochs": 30,
       "batch_size": 12,
       "target_models": ["alpha_deep_model"],
-      "checkpoint_interval": 5
+      "checkpoint_interval": 5,
+      "use_gpu": true,
+      "distributed_training": true
     },
     "collaborative_training": {
       "description": "Full model collaborative training using all available data",
@@ -219,7 +247,9 @@
       "batch_size": 16,
       "target_models": ["all_models"],
       "checkpoint_interval": 5,
-      "enable_collaborative_training": true
+      "enable_collaborative_training": true,
+      "use_gpu": true,
+      "distributed_training": true
     }
   },
   "training_configuration": {
@@ -245,32 +275,42 @@
     "use_gpu": true,
     "mixed_precision": true,
     "cpu_only": false,
-    "recommended_vram_gb": 8
+    "recommended_vram_gb": 8,
+    "distributed_training": true,
+    "max_workers": 4
   },
   "model_specific_presets": {
     "vision_service": {
       "batch_size": 16,
       "learning_rate": 0.001,
       "epochs": 20,
-      "data_sources": ["vision_samples", "flickr30k_sample", "coco_captions"]
+      "data_sources": ["vision_samples", "flickr30k_sample", "coco_captions"],
+      "use_gpu": true,
+      "distributed_training": false
     },
     "audio_service": {
       "batch_size": 8,
       "learning_rate": 0.001,
       "epochs": 15,
-      "data_sources": ["audio_samples", "common_voice_zh"]
+      "data_sources": ["audio_samples", "common_voice_zh"],
+      "use_gpu": false,
+      "distributed_training": false
     },
     "causal_reasoning_engine": {
       "batch_size": 32,
       "learning_rate": 0.001,
       "epochs": 30,
-      "data_sources": ["reasoning_samples", "visual_genome_sample"]
+      "data_sources": ["reasoning_samples", "visual_genome_sample"],
+      "use_gpu": true,
+      "distributed_training": false
     },
     "multimodal_service": {
       "batch_size": 12,
       "learning_rate": 0.001,
       "epochs": 25,
-      "data_sources": ["multimodal_samples", "flickr30k_sample", "coco_captions"]
+      "data_sources": ["multimodal_samples", "flickr30k_sample", "coco_captions"],
+      "use_gpu": true,
+      "distributed_training": true
     }
   },
   "data_preprocessing": {

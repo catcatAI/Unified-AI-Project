@@ -37,7 +37,9 @@ echo   7. 🧪 Run Training Tests (運行訓練測試)
 echo   8. 📂 Manage Training Data (管理訓練數據)
 echo   9. ⚙️  Training Configuration (訓練配置)
 echo   10. 🤝 Collaborative Training (協作式訓練)
-echo   11. ❌ Exit (退出)
+echo   11. 📈 Real-time Training Monitor (實時訓練監控)
+echo   12. 📊 Training Progress Visualization (訓練進度可視化)
+echo   13. ❌ Exit (退出)
 echo.
 echo ==========================================
 echo.
@@ -45,7 +47,7 @@ echo.
 :: Get user choice with validation (獲取用戶選擇並驗證)
 :get_user_choice
 set "main_choice="
-set /p "main_choice=Enter your choice (1-11): "
+set /p "main_choice=Enter your choice (1-13): "
 if not defined main_choice (
     echo [ERROR] No input provided
     echo [%date% %time%] No input provided >> "%LOG_FILE%" 2>nul
@@ -55,7 +57,7 @@ if not defined main_choice (
 
 :: Validate numeric input for menu choices (驗證菜單選擇的數字輸入)
 set "main_choice=%main_choice: =%"
-for %%i in (1 2 3 4 5 6 7 8 9 10 11) do (
+for %%i in (1 2 3 4 5 6 7 8 9 10 11 12 13) do (
     if "%main_choice%"=="%%i" (
         goto choice_%%i
     )
@@ -87,6 +89,10 @@ goto training_config
 :choice_10
 goto collaborative_training
 :choice_11
+goto real_time_monitor
+:choice_12
+goto progress_visualization
+:choice_13
 goto exit_script
 
 :: Start Training (開始訓練)
@@ -195,7 +201,6 @@ if exist "%TRAINING_SCRIPT%" (
     echo [ERROR] Training script (train_model.py) not found
     echo [%date% %time%] Training script not found: %TRAINING_SCRIPT% >> "%LOG_FILE%" 2>nul
     echo Looking for: %TRAINING_SCRIPT%
-)
 
 echo.
 echo Press any key to continue...
@@ -474,6 +479,229 @@ if exist "%PROJECT_ROOT%\training\configs\" (
     echo [INFO] Found configuration files (找到配置文件)
 ) else (
     echo [WARNING] No configuration directory found (未找到配置目錄)
+)
+
+echo.
+echo Press any key to continue...
+pause >nul
+goto main_menu
+
+:: Real-time Training Monitor (實時訓練監控)
+:real_time_monitor
+echo.
+echo [INFO] Starting real-time training monitor... (啟動實時訓練監控)
+echo [%date% %time%] Starting real-time training monitor >> "%LOG_FILE%" 2>nul
+
+:: Check if training is running by looking for progress files
+set "progress_file=%PROJECT_ROOT%\training\progress.log"
+set "training_active=false"
+
+if exist "%progress_file%" (
+    echo [INFO] Found training progress file (找到訓練進度文件)
+    set "training_active=true"
+) else (
+    echo [INFO] No active training detected (未檢測到活動訓練)
+)
+
+if "%training_active%"=="true" (
+    echo.
+    echo === Real-time Training Monitor ===
+    echo Press Ctrl+C to stop monitoring
+    echo.
+    
+    :monitor_loop
+    cls
+    echo ==========================================
+    echo   📈 Real-time Training Monitor
+    echo ==========================================
+    echo.
+    echo Last update: %date% %time%
+    echo.
+    
+    :: Display current progress
+    if exist "%progress_file%" (
+        echo === Current Training Progress ===
+        for /f "delims=" %%i in ('findstr /n "^" "%progress_file%"') do (
+            echo %%i
+        )
+        echo.
+    )
+    
+    echo === Training Statistics ===
+    :: Check for model files
+    if exist "%PROJECT_ROOT%\training\models\" (
+        echo Models directory: %PROJECT_ROOT%\training\models\
+        for /f "delims=" %%i in ('dir "%PROJECT_ROOT%\training\models\" /b 2^>nul') do (
+            echo   - %%i
+        )
+        echo.
+    )
+    
+    :: Check for checkpoint files
+    if exist "%PROJECT_ROOT%\training\checkpoints\" (
+        echo Checkpoints directory: %PROJECT_ROOT%\training\checkpoints\
+        for /f "delims=" %%i in ('dir "%PROJECT_ROOT%\training\checkpoints\" /b 2^>nul') do (
+            echo   - %%i
+        )
+        echo.
+    )
+    
+    echo Press Ctrl+C to stop monitoring, or any key to refresh...
+    timeout /t 5 >nul
+    goto monitor_loop
+) else (
+    echo.
+    echo [INFO] No active training to monitor (沒有活動訓練可監控)
+    echo Please start a training session first (請先啟動訓練會話)
+    echo.
+)
+
+echo.
+echo Press any key to continue...
+pause >nul
+goto main_menu
+
+:: Training Progress Visualization (訓練進度可視化)
+:progress_visualization
+echo.
+echo [INFO] Starting training progress visualization... (啟動訓練進度可視化)
+echo [%date% %time%] Starting training progress visualization >> "%LOG_FILE%" 2>nul
+
+:: Check if training is running by looking for progress files
+set "progress_file=%PROJECT_ROOT%\training\progress.log"
+set "training_active=false"
+
+if exist "%progress_file%" (
+    echo [INFO] Found training progress file (找到訓練進度文件)
+    set "training_active=true"
+) else (
+    echo [INFO] No active training detected (未檢測到活動訓練)
+)
+
+if "%training_active%"=="true" (
+    echo.
+    echo === Training Progress Visualization ===
+    echo This will generate a visual representation of training progress
+    echo 這將生成訓練進度的可視化表示
+    echo.
+    
+    :: Check for Python and required packages
+    python --version >nul 2>&1
+    if errorlevel 1 (
+        echo [ERROR] Python not found. Please install Python to use visualization features.
+        echo [ERROR] 未找到Python。請安裝Python以使用可視化功能。
+        echo.
+        echo Press any key to continue...
+        pause >nul
+        goto main_menu
+    )
+    
+    :: Generate visualization using Python script
+    set "visualization_script=%PROJECT_ROOT%\training\visualize_progress.py"
+    if exist "%visualization_script%" (
+        echo [INFO] Generating training progress visualization... (生成訓練進度可視化)
+        cd /d "%PROJECT_ROOT%\training"
+        python visualize_progress.py
+        cd /d "%CD%"
+        
+        :: Check if visualization was generated
+        if exist "%PROJECT_ROOT%\training\progress_visualization.png" (
+            echo [SUCCESS] Training progress visualization generated successfully
+            echo [SUCCESS] 訓練進度可視化生成成功
+            echo Visualization saved to: %PROJECT_ROOT%\training\progress_visualization.png
+            echo 可視化圖片保存到: %PROJECT_ROOT%\training\progress_visualization.png
+        ) else (
+            echo [WARNING] Failed to generate visualization
+            echo [WARNING] 生成可視化失敗
+        )
+    ) else (
+        echo [INFO] Creating visualization script... (創建可視化腳本)
+        
+        :: Create a simple visualization script
+        echo import matplotlib.pyplot as plt > "%visualization_script%"
+        echo import json >> "%visualization_script%"
+        echo import os >> "%visualization_script%"
+        echo. >> "%visualization_script%"
+        echo def parse_progress_log(log_file): >> "%visualization_script%"
+        echo     epochs = [] >> "%visualization_script%"
+        echo     losses = [] >> "%visualization_script%"
+        echo     accuracies = [] >> "%visualization_script%"
+        echo     with open(log_file, 'r') as f: >> "%visualization_script%"
+        echo         for line in f: >> "%visualization_script%"
+        echo             if 'Epoch' in line and 'Loss' in line: >> "%visualization_script%"
+        echo                 parts = line.split() >> "%visualization_script%"
+        echo                 try: >> "%visualization_script%"
+        echo                     epoch = int(parts[1].strip(':')) >> "%visualization_script%"
+        echo                     loss = float(parts[3].strip(',')) >> "%visualization_script%"
+        echo                     accuracy = float(parts[5]) >> "%visualization_script%"
+        echo                     epochs.append(epoch) >> "%visualization_script%"
+        echo                     losses.append(loss) >> "%visualization_script%"
+        echo                     accuracies.append(accuracy) >> "%visualization_script%"
+        echo                 except: >> "%visualization_script%"
+        echo                     continue >> "%visualization_script%"
+        echo     return epochs, losses, accuracies >> "%visualization_script%"
+        echo. >> "%visualization_script%"
+        echo def main(): >> "%visualization_script%"
+        echo     log_file = 'progress.log' >> "%visualization_script%"
+        echo     if not os.path.exists(log_file): >> "%visualization_script%"
+        echo         print("Progress log not found") >> "%visualization_script%"
+        echo         return >> "%visualization_script%"
+        echo. >> "%visualization_script%"
+        echo     epochs, losses, accuracies = parse_progress_log(log_file) >> "%visualization_script%"
+        echo. >> "%visualization_script%"
+        echo     if not epochs: >> "%visualization_script%"
+        echo         print("No training data found in progress log") >> "%visualization_script%"
+        echo         return >> "%visualization_script%"
+        echo. >> "%visualization_script%"
+        echo     # Create plots >> "%visualization_script%"
+        echo     plt.figure(figsize=(12, 5)) >> "%visualization_script%"
+        echo. >> "%visualization_script%"
+        echo     # Loss plot >> "%visualization_script%"
+        echo     plt.subplot(1, 2, 1) >> "%visualization_script%"
+        echo     plt.plot(epochs, losses, 'b-', linewidth=2) >> "%visualization_script%"
+        echo     plt.title('Training Loss') >> "%visualization_script%"
+        echo     plt.xlabel('Epoch') >> "%visualization_script%"
+        echo     plt.ylabel('Loss') >> "%visualization_script%"
+        echo     plt.grid(True) >> "%visualization_script%"
+        echo. >> "%visualization_script%"
+        echo     # Accuracy plot >> "%visualization_script%"
+        echo     plt.subplot(1, 2, 2) >> "%visualization_script%"
+        echo     plt.plot(epochs, accuracies, 'g-', linewidth=2) >> "%visualization_script%"
+        echo     plt.title('Training Accuracy') >> "%visualization_script%"
+        echo     plt.xlabel('Epoch') >> "%visualization_script%"
+        echo     plt.ylabel('Accuracy') >> "%visualization_script%"
+        echo     plt.grid(True) >> "%visualization_script%"
+        echo. >> "%visualization_script%"
+        echo     plt.tight_layout() >> "%visualization_script%"
+        echo     plt.savefig('progress_visualization.png', dpi=300, bbox_inches='tight') >> "%visualization_script%"
+        echo     plt.close() >> "%visualization_script%"
+        echo. >> "%visualization_script%"
+        echo     print("Training progress visualization saved to progress_visualization.png") >> "%visualization_script%"
+        echo. >> "%visualization_script%"
+        echo if __name__ == '__main__': >> "%visualization_script%"
+        echo     main() >> "%visualization_script%"
+        
+        echo [INFO] Running visualization script... (運行可視化腳本)
+        cd /d "%PROJECT_ROOT%\training"
+        python visualize_progress.py
+        cd /d "%CD%"
+        
+        :: Check if visualization was generated
+        if exist "%PROJECT_ROOT%\training\progress_visualization.png" (
+            echo [SUCCESS] Training progress visualization generated successfully
+            echo [SUCCESS] 訓練進度可視化生成成功
+            echo Visualization saved to: %PROJECT_ROOT%\training\progress_visualization.png
+            echo 可視化圖片保存到: %PROJECT_ROOT%\training\progress_visualization.png
+        ) else (
+            echo [WARNING] Failed to generate visualization
+            echo [WARNING] 生成可視化失敗
+        )
+    )
+) else (
+    echo.
+    echo [INFO] No active training to visualize (沒有活動訓練可視化)
+    echo Please start a training session first (請先啟動訓練會話)
+    echo.
 )
 
 echo.

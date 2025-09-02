@@ -77,7 +77,10 @@ class HSPMessageEnvelope(TypedDict): # total=True by default, all keys are requi
     communication_pattern: Literal[
         "publish", "request", "response",
         "stream_data", "stream_ack",
-        "acknowledgement", "negative_acknowledgement"
+        "acknowledgement", "negative_acknowledgement",
+        "broadcast", "multicast", "unicast",
+        "notification", "event", "command",
+        "query", "reply"
     ]
     security_parameters: Optional[HSPSecurityParameters]
     qos_parameters: Optional[HSPQoSParameters]
@@ -180,6 +183,37 @@ class HSPNegativeAcknowledgementPayload(TypedDict):
     nack_timestamp: str # ISO 8601 UTC
     target_message_id: str # ID of the message being NACKed
     error_details: HSPErrorDetails
+
+class HSPEventPayload(TypedDict, total=False):
+    event_id: str # Required, UUID
+    event_type: str # Required, namespaced string (e.g., "hsp:event:SystemShutdown")
+    source_ai_id: str # Required, DID or URI
+    timestamp_occurred: str # Required, ISO 8601 UTC
+    payload: Optional[Dict[str, Any]] # Event-specific data
+    severity: Optional[Literal["info", "warning", "error", "critical"]]
+    tags: Optional[List[str]]
+
+class HSPCommandPayload(TypedDict, total=False):
+    command_id: str # Required, UUID
+    command_type: str # Required, namespaced string (e.g., "hsp:command:RestartService")
+    target_ai_id: Optional[str] # DID or URI of target AI
+    requester_ai_id: str # Required, DID or URI of requester
+    parameters: Optional[Dict[str, Any]] # Command-specific parameters
+    timestamp_issued: str # Required, ISO 8601 UTC
+    deadline_timestamp: Optional[str] # ISO 8601 UTC
+    priority: Optional[int] # e.g., 1-10
+
+class HSPNotificationPayload(TypedDict, total=False):
+    notification_id: str # Required, UUID
+    notification_type: str # Required, namespaced string (e.g., "hsp:notification:TaskCompleted")
+    source_ai_id: str # Required, DID or URI
+    target_ai_id: Optional[str] # DID or URI of target AI (None for broadcast)
+    timestamp_sent: str # Required, ISO 8601 UTC
+    title: str # Required, brief title
+    content: str # Required, detailed content
+    priority: Optional[Literal["low", "normal", "high", "urgent"]]
+    actions: Optional[List[Dict[str, Any]]] # Possible actions the recipient can take
+    metadata: Optional[Dict[str, Any]] # Additional metadata
 
 class ChatMessage(TypedDict, total=False):
     message_id: str

@@ -234,6 +234,164 @@ function renderSettings(settings) {
     document.body.className = `theme-${settings.theme}`;
 }
 
+// 新增函数：渲染Atlassian集成状态
+function renderAtlassianStatus(status) {
+    const atlassianStatusDiv = document.getElementById("atlassianStatus");
+    if (!atlassianStatusDiv) return;
+
+    if (!status || !status.services) {
+        atlassianStatusDiv.innerHTML = '<p class="empty-message">No Atlassian services connected.</p>';
+        return;
+    }
+
+    let statusHtml = '<div class="atlassian-services">';
+    status.services.forEach(service => {
+        const statusClass = service.status === 'connected' ? 'status-available' : 
+                           service.status === 'error' ? 'status-error' : 'status-unavailable';
+        
+        statusHtml += `
+            <div class="service-item">
+                <div class="service-header">
+                    <h4>${service.name}</h4>
+                    <span class="service-status ${statusClass}">${service.status}</span>
+                </div>
+                <div class="service-details">
+                    <div class="detail-row"><strong>Last Sync:</strong> ${service.lastSync}</div>
+                    <div class="detail-row"><strong>Health:</strong> ${service.health}%</div>
+                </div>
+            </div>
+        `;
+    });
+    statusHtml += '</div>';
+
+    atlassianStatusDiv.innerHTML = statusHtml;
+}
+
+// 新增函数：渲染Jira项目列表
+function renderJiraProjects(projects) {
+    const jiraProjectsDiv = document.getElementById("jiraProjects");
+    if (!jiraProjectsDiv) return;
+
+    if (!projects || projects.length === 0) {
+        jiraProjectsDiv.innerHTML = '<p class="empty-message">No Jira projects found.</p>';
+        return;
+    }
+
+    let projectsHtml = '<div class="project-list">';
+    projects.forEach(project => {
+        projectsHtml += `
+            <div class="project-item">
+                <div class="project-header">
+                    <h4>${project.name} (${project.key})</h4>
+                </div>
+                <div class="project-details">
+                    <p>${project.description || 'No description'}</p>
+                </div>
+            </div>
+        `;
+    });
+    projectsHtml += '</div>';
+
+    jiraProjectsDiv.innerHTML = projectsHtml;
+}
+
+// 新增函数：渲染Confluence空间列表
+function renderConfluenceSpaces(spaces) {
+    const confluenceSpacesDiv = document.getElementById("confluenceSpaces");
+    if (!confluenceSpacesDiv) return;
+
+    if (!spaces || spaces.length === 0) {
+        confluenceSpacesDiv.innerHTML = '<p class="empty-message">No Confluence spaces found.</p>';
+        return;
+    }
+
+    let spacesHtml = '<div class="space-list">';
+    spaces.forEach(space => {
+        spacesHtml += `
+            <div class="space-item">
+                <div class="space-header">
+                    <h4>${space.name} (${space.key})</h4>
+                </div>
+                <div class="space-details">
+                    <p>${space.description || 'No description'}</p>
+                </div>
+            </div>
+        `;
+    });
+    spacesHtml += '</div>';
+
+    confluenceSpacesDiv.innerHTML = spacesHtml;
+}
+
+// 新增函数：渲染Rovo Dev Agents
+function renderRovoAgents(agents) {
+    const rovoAgentsDiv = document.getElementById("rovoAgents");
+    if (!rovoAgentsDiv) return;
+
+    if (!agents || agents.length === 0) {
+        rovoAgentsDiv.innerHTML = '<p class="empty-message">No Rovo Dev agents found.</p>';
+        return;
+    }
+
+    let agentsHtml = '<div class="agent-list">';
+    agents.forEach(agent => {
+        const statusClass = agent.status === 'active' ? 'status-available' : 
+                           agent.status === 'busy' ? 'status-progress' : 'status-unavailable';
+        
+        agentsHtml += `
+            <div class="agent-item">
+                <div class="agent-header">
+                    <h4>${agent.name}</h4>
+                    <span class="service-status ${statusClass}">${agent.status}</span>
+                </div>
+                <div class="agent-details">
+                    <div class="detail-row"><strong>ID:</strong> ${agent.id}</div>
+                    <div class="detail-row"><strong>Capabilities:</strong> ${agent.capabilities.join(', ')}</div>
+                </div>
+            </div>
+        `;
+    });
+    agentsHtml += '</div>';
+
+    rovoAgentsDiv.innerHTML = agentsHtml;
+}
+
+// 新增函数：渲染Rovo Dev Tasks
+function renderRovoTasks(tasks) {
+    const rovoTasksDiv = document.getElementById("rovoTasks");
+    if (!rovoTasksDiv) return;
+
+    if (!tasks || tasks.length === 0) {
+        rovoTasksDiv.innerHTML = '<p class="empty-message">No Rovo Dev tasks found.</p>';
+        return;
+    }
+
+    let tasksHtml = '<div class="task-list">';
+    tasks.forEach(task => {
+        const statusClass = task.status === 'completed' ? 'status-available' : 
+                           task.status === 'in_progress' ? 'status-progress' : 
+                           task.status === 'pending' ? 'status-pending' : 'status-unavailable';
+        
+        tasksHtml += `
+            <div class="task-item">
+                <div class="task-header">
+                    <h4>${task.title}</h4>
+                    <span class="service-status ${statusClass}">${task.status}</span>
+                </div>
+                <div class="task-details">
+                    <div class="detail-row"><strong>ID:</strong> ${task.id}</div>
+                    <div class="detail-row"><strong>Agent:</strong> ${task.agentId}</div>
+                    <div class="detail-row"><strong>Created:</strong> ${new Date(task.createdAt).toLocaleString()}</div>
+                    <div class="detail-row"><strong>Updated:</strong> ${new Date(task.updatedAt).toLocaleString()}</div>
+                </div>
+            </div>
+        `;
+    });
+    tasksHtml += '</div>';
+
+    rovoTasksDiv.innerHTML = tasksHtml;
+}
+
 function render() {
     const state = window.store.getState();
     showView(state.activeView);
@@ -241,6 +399,15 @@ function render() {
     renderHspServices(state.hsp.services);
     renderHspTaskStatus(state.hsp.taskStatus);
     renderSettings(state.settings);
+
+    // 渲染Atlassian集成相关状态
+    if (state.atlassian) {
+        renderAtlassianStatus(state.atlassian.status);
+        renderJiraProjects(state.atlassian.projects);
+        renderConfluenceSpaces(state.atlassian.spaces);
+        renderRovoAgents(state.atlassian.agents);
+        renderRovoTasks(state.atlassian.tasks);
+    }
 
     if (state.ui.errorMessage) {
         showNotification('error', state.ui.errorMessage);

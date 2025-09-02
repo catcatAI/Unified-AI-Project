@@ -10,6 +10,14 @@ const initialState = window.initialState || {
     taskStatus: {}, // { [correlationId]: { status: string, ... } }
     activePolls: {}, // { [correlationId]: intervalId }
   },
+  // 添加Atlassian集成状态
+  atlassian: {
+    status: null,
+    projects: [],
+    spaces: [],
+    agents: [],
+    tasks: []
+  },
   settings: {
     theme: 'dark',
     defaultModel: 'gpt-4',
@@ -84,6 +92,57 @@ function removeHspActivePoll(state, correlationId) {
     };
 }
 
+// 添加Atlassian集成相关的actions
+function setAtlassianStatus(state, status) {
+    return { 
+        ...state, 
+        atlassian: { 
+            ...state.atlassian, 
+            status: status 
+        } 
+    };
+}
+
+function setJiraProjects(state, projects) {
+    return { 
+        ...state, 
+        atlassian: { 
+            ...state.atlassian, 
+            projects: projects 
+        } 
+    };
+}
+
+function setConfluenceSpaces(state, spaces) {
+    return { 
+        ...state, 
+        atlassian: { 
+            ...state.atlassian, 
+            spaces: spaces 
+        } 
+    };
+}
+
+function setRovoAgents(state, agents) {
+    return { 
+        ...state, 
+        atlassian: { 
+            ...state.atlassian, 
+            agents: agents 
+        } 
+    };
+}
+
+function setRovoTasks(state, tasks) {
+    return { 
+        ...state, 
+        atlassian: { 
+            ...state.atlassian, 
+            tasks: tasks 
+        } 
+    };
+}
+
 function setTheme(state, theme) {
     return { ...state, settings: { ...state.settings, theme: theme } };
 }
@@ -122,6 +181,11 @@ window.store = {
         setHspTaskStatus,
         addHspActivePoll,
         removeHspActivePoll,
+        setAtlassianStatus,
+        setJiraProjects,
+        setConfluenceSpaces,
+        setRovoAgents,
+        setRovoTasks,
         setTheme,
         setDefaultModel,
         setLoading,

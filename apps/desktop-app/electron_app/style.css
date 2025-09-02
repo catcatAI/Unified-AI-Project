@@ -155,6 +155,101 @@ h1 {
 }
 pre { background-color: #181828; padding: 10px; border: 2px solid var(--border-color); overflow-x: auto; }
 
+/* Atlassian View Styles */
+.atlassian-section {
+     margin-bottom: 20px;
+     border: 2px solid var(--border-color);
+     background-color: #282838;
+}
+.atlassian-header {
+    background-color: #181828;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--border-color);
+}
+.atlassian-header h3 { margin: 0; font-size: 1em; }
+.atlassian-content { padding: 15px; }
+
+.service-item, .project-item, .space-item {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    background-color: #181828;
+}
+
+.service-header, .project-header, .space-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.service-details, .project-details, .space-details {
+    font-size: 0.9em;
+}
+
+.detail-row {
+    margin-bottom: 5px;
+}
+
+.status-available { color: #4CAF50; }
+.status-unavailable { color: #F44336; }
+.status-error { color: #FF9800; }
+
+.loading-message, .empty-message {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.status-badge-success { background-color: #4CAF50; color: white; }
+.status-badge-error { background-color: #F44336; color: white; }
+.status-badge-pending { background-color: #FFC107; color: black; }
+.status-badge-progress { background-color: #2196F3; color: white; }
+.status-badge-unknown { background-color: #9E9E9E; color: white; }
+.status-badge-default { background-color: #607D8B; color: white; }
+
+/* Task status container */
+.task-status-container {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    background-color: #181828;
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.task-timestamp {
+    font-size: 0.8em;
+    color: #888;
+}
+
+.task-message, .task-result, .task-error {
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.result-header, .error-header {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
 /* Responsive Styles */
 @media (max-width: 768px) {
     #mainContent {

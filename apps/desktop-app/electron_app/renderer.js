@@ -23,9 +23,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }});
     const gameViewButton = Button({ id: 'gameViewButton', text: 'Game', onClick: () => window.store.updateState(window.store.actions.setActiveView, "game") });
     const settingsViewButton = Button({ id: 'settingsViewButton', text: 'Settings', onClick: () => window.store.updateState(window.store.actions.setActiveView, "settings") });
+    // 添加Atlassian集成视图按钮
+    const atlassianViewButton = Button({ id: 'atlassianViewButton', text: 'Atlassian', onClick: () => {
+        window.store.updateState(window.store.actions.setActiveView, "atlassian");
+        // 重新加载Atlassian数据
+        loadAtlassianStatus();
+        loadJiraProjects();
+        loadConfluenceSpaces();
+        loadRovoAgents();
+        loadRovoTasks();
+    }});
+    
     nav.appendChild(chatViewButton);
     nav.appendChild(hspViewButton);
     nav.appendChild(gameViewButton);
+    nav.appendChild(atlassianViewButton);
     nav.appendChild(settingsViewButton);
 
     const sendButton = Button({ id: 'sendButton', text: 'Send', onClick: sendMessage });
@@ -215,6 +227,75 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // --- Atlassian Integration Functions ---
+
+    async function loadAtlassianStatus() {
+        try {
+            if (window.electronAPI && window.electronAPI.invoke) {
+                const status = await window.electronAPI.invoke("api:atlassian-status");
+                window.store.updateState(window.store.actions.setAtlassianStatus, status);
+            }
+        } catch (error) {
+            console.error("Error loading Atlassian status:", error);
+            window.store.updateState(window.store.actions.setErrorMessage, `Error loading Atlassian status: ${error.message}`);
+        }
+    }
+
+    async function loadJiraProjects() {
+        try {
+            if (window.electronAPI && window.electronAPI.invoke) {
+                const projects = await window.electronAPI.invoke("api:jira-projects");
+                window.store.updateState(window.store.actions.setJiraProjects, projects.projects || []);
+            }
+        } catch (error) {
+            console.error("Error loading Jira projects:", error);
+            window.store.updateState(window.store.actions.setErrorMessage, `Error loading Jira projects: ${error.message}`);
+        }
+    }
+
+    async function loadConfluenceSpaces() {
+        try {
+            if (window.electronAPI && window.electronAPI.invoke) {
+                const spaces = await window.electronAPI.invoke("api:confluence-spaces");
+                window.store.updateState(window.store.actions.setConfluenceSpaces, spaces.spaces || []);
+            }
+        } catch (error) {
+            console.error("Error loading Confluence spaces:", error);
+            window.store.updateState(window.store.actions.setErrorMessage, `Error loading Confluence spaces: ${error.message}`);
+        }
+    }
+
+    async function loadRovoAgents() {
+        try {
+            if (window.electronAPI && window.electronAPI.invoke) {
+                const agents = await window.electronAPI.invoke("api:rovo-agents");
+                window.store.updateState(window.store.actions.setRovoAgents, agents.agents || []);
+            }
+        } catch (error) {
+            console.error("Error loading Rovo agents:", error);
+            window.store.updateState(window.store.actions.setErrorMessage, `Error loading Rovo agents: ${error.message}`);
+        }
+    }
+
+    async function loadRovoTasks() {
+        try {
+            if (window.electronAPI && window.electronAPI.invoke) {
+                const tasks = await window.electronAPI.invoke("api:rovo-tasks");
+                window.store.updateState(window.store.actions.setRovoTasks, tasks.tasks || []);
+            }
+        } catch (error) {
+            console.error("Error loading Rovo tasks:", error);
+            window.store.updateState(window.store.actions.setErrorMessage, `Error loading Rovo tasks: ${error.message}`);
+        }
+    }
+
     // --- Initial Load ---
     window.store.updateState(window.store.actions.setActiveView, "chat");
+    
+    // Load Atlassian integration data
+    loadAtlassianStatus();
+    loadJiraProjects();
+    loadConfluenceSpaces();
+    loadRovoAgents();
+    loadRovoTasks();
 });
