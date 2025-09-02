@@ -36,9 +36,9 @@ class ExecutionManagerConfig:
     auto_recovery: bool = True
     
     # 超時配置
-    default_timeout: float = 30.0
-    max_timeout: float = 300.0
-    min_timeout: float = 5.0
+    default_timeout: float = 60.0   # 增加默認超時時間從30秒到60秒
+    max_timeout: float = 600.0      # 增加最大超時時間從300秒到600秒
+    min_timeout: float = 10.0       # 增加最小超時時間從5秒到10秒
     
     # 閾值配置
     cpu_warning: float = 80.0
@@ -56,7 +56,7 @@ class ExecutionManagerConfig:
     cache_size: int = 100
     
     # 恢復策略配置
-    stuck_process_timeout: float = 30.0
+    stuck_process_timeout: float = 60.0   # 增加卡住進程檢測超時從30秒到60秒
     max_retry_attempts: int = 3
     retry_delay: float = 5.0
     escalation_enabled: bool = True

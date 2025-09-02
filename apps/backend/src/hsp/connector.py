@@ -1229,3 +1229,34 @@ class HSPConnector:
         error_message = f"HSP connection error (attempt {attempt}): {error}"
         self.logger.error(error_message)
         raise HSPConnectionError(error_message)
+
+    # 添加subscribe方法以解决测试中的AttributeError
+    async def subscribe(self, topic: str, qos: int = 1):
+        """
+        Subscribe to a topic.
+        
+        Args:
+            topic: The topic to subscribe to
+            qos: Quality of Service level (default: 1)
+        """
+        if self.mock_mode:
+            # In mock mode, just add to subscribed topics
+            if not hasattr(self.external_connector, 'subscribed_topics'):
+                self.external_connector.subscribed_topics = set()
+            self.external_connector.subscribed_topics.add(topic)
+            # Also call the mock subscribe method
+            if hasattr(self.external_connector, 'subscribe'):
+                # 确保subscribe方法是可等待的
+                if asyncio.iscoroutinefunction(self.external_connector.subscribe):
+                    await self.external_connector.subscribe(topic, qos)
+                else:
+                    # For synchronous subscribe methods, just call directly
+                    self.external_connector.subscribe(topic, qos)
+        else:
+            if hasattr(self.external_connector, 'subscribe'):
+                # 确保subscribe方法是可等待的
+                if asyncio.iscoroutinefunction(self.external_connector.subscribe):
+                    await self.external_connector.subscribe(topic, qos)
+                else:
+                    # For synchronous subscribe methods, just call directly
+                    self.external_connector.subscribe(topic, qos)

@@ -60,7 +60,7 @@ def load_logic_nn_model():
 
     try:
         # Assuming dependency_manager is available globally or passed in if needed
-        # from core_ai.dependency_manager import is_dependency_available
+        # from apps.backend.src.core_ai.dependency_manager import is_dependency_available
         # if not is_dependency_available('tensorflow'):
         #     raise ImportError("TensorFlow not available through dependency manager")
 

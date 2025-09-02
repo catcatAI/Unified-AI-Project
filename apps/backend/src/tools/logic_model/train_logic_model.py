@@ -14,7 +14,7 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 try:
-    from tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
+    from apps.backend.src.tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
 except ImportError as e:
     print(f"Error importing from logic_model_nn: {e}")
     print("Ensure logic_model_nn.py is in the same directory and src is in sys.path.")

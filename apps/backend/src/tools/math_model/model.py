@@ -1,19 +1,18 @@
-import numpy as np
-import json
 import os
 import sys
-from typing import Dict, Any, Optional, List
 from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+import numpy as np
 
-# Add src directory to sys.path for dependency manager import
+# Add the src directory to the path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from core_ai.dependency_manager import dependency_manager
+from apps.backend.src.core_ai.dependency_manager import dependency_manager
 from apps.backend.src.core_ai.compression.alpha_deep_model import DNADataChain
 
 @dataclass

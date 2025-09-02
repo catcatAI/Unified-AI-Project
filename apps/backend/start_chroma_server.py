@@ -1,34 +1,39 @@
 #!/usr/bin/env python3
 """
-啟動 ChromaDB 服務器
+启动 ChromaDB 服务端
 """
 
+import subprocess
 import os
 import sys
-import chromadb
-from chromadb.config import Settings
 
 def start_chroma_server():
     """
-    啟動 ChromaDB 服務器
+    启动 ChromaDB 服务端
     """
-    print("啟動 ChromaDB 服務器...")
-    # 設置數據存儲路徑
+    print("启动 ChromaDB 服务端...")
+    
+    # 设置数据存储路径
     chroma_db_path = os.path.join(os.getcwd(), "chroma_db")
     os.makedirs(chroma_db_path, exist_ok=True)
     
-    # 啟動服務器
-    settings = Settings(
-        chroma_db_impl="duckdb+parquet",
-        persist_directory=chroma_db_path,
-        anonymized_telemetry=False
-    )
+    # 使用标准ChromaDB命令启动服务器
+    cmd = [
+        "chroma",
+        "run",
+        "--path", chroma_db_path,
+        "--host", "localhost",
+        "--port", "8001"
+    ]
     
-    # 創建服務器實例
-    server = chromadb.Server(settings=settings)
-    
-    # 啟動服務器
-    server.run(host="localhost", port=8001)
+    try:
+        subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"启动 ChromaDB 服务端失败: {e}")
+        sys.exit(1)
+    except FileNotFoundError:
+        print("未找到 chroma 命令，请确保已安装标准的 chromadb 包")
+        sys.exit(1)
 
 if __name__ == "__main__":
     start_chroma_server()

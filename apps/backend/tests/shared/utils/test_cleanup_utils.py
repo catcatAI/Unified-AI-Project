@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src')))
 
-from shared.utils import cleanup_utils
+from apps.backend.src.shared.utils import cleanup_utils
 
 class TestCleanupUtils(unittest.TestCase):
 

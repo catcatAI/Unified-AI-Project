@@ -9,7 +9,7 @@ import sys # For sys.executable
 
 # 整合執行監控系統
 try:
-    from ..core_ai.execution_manager import (
+    from apps.backend.src.core_ai.execution_manager import (
         ExecutionManager, ExecutionManagerConfig, 
         execute_with_smart_monitoring, ExecutionResult, ExecutionStatus
     )
@@ -18,7 +18,8 @@ except ImportError:
     EXECUTION_MONITORING_AVAILABLE = False
 
 # Default timeout for sandbox execution in seconds
-DEFAULT_SANDBOX_TIMEOUT = 10
+# 增加沙箱執行的默認超時時間從10秒到60秒
+DEFAULT_SANDBOX_TIMEOUT = 60
 
 # Template for the runner script that executes inside the sandbox
 # This script will be written to a temporary file and run by a subprocess.
@@ -31,7 +32,7 @@ import traceback # For capturing exception details
 import os # For os.path.basename, os.path.splitext
 
 def run_sandboxed_tool():
-    output = {{\"result\": None, \"error\": None, \"traceback\": None}}
+    output = {"result": None, "error": None, "traceback": None}
     try:
         if len(sys.argv) != 5:
             # Use proper f-string formatting here
@@ -45,7 +46,7 @@ def run_sandboxed_tool():
         # Dynamically import the generated tool module
         # Create a unique module name to avoid conflicts if run multiple times quickly
         module_file_basename = os.path.splitext(os.path.basename(tool_module_path))[0]
-        module_name = f"sandboxed_tool_module_{{module_file_basename}}"
+        module_name = f"sandboxed_tool_module_{module_file_basename}"
 
         spec = importlib.util.spec_from_file_location(module_name, tool_module_path)
         if spec is None or spec.loader is None:
@@ -59,12 +60,12 @@ def run_sandboxed_tool():
 
         tool_instance = None
         try:
-            tool_instance = ToolClass(config={{}})
+            tool_instance = ToolClass(config={})
         except TypeError:
             try:
                 tool_instance = ToolClass()
             except Exception as init_e:
-                raise type(init_e)(f"Failed to initialize '{class_name_to_run}' with default attempts (config={{}} or no args): {init_e}")
+                raise type(init_e)(f"Failed to initialize '{class_name_to_run}' with default attempts (config={} or no args): {init_e}")
 
 
         method_to_call = getattr(tool_instance, method_name_to_run)

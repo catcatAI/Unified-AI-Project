@@ -27,9 +27,10 @@ from apps.backend.src.shared.types.common_types import (
 from apps.backend.src.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
 from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 from apps.backend.src.core_ai.agent_manager import AgentManager
+from apps.backend.src.hsp.connector import HSPConnector
 
 if TYPE_CHECKING:
-    from apps.backend.src.hsp.connector import HSPConnector
+    pass
 
 class DialogueManager:
     def __init__(self,

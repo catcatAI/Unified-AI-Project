@@ -1,8 +1,13 @@
 import sys
 import os
 
-# Add the src directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Use the path configuration from path_config.py
+try:
+    from apps.backend.src.path_config import PROJECT_ROOT
+    sys.path.insert(0, str(PROJECT_ROOT / "apps" / "backend" / "src"))
+except ImportError:
+    # Fallback to default path handling
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 print("Testing imports...")
 

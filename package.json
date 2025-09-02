@@ -2,7 +2,7 @@
   "name": "unified-ai-monorepo",
   "private": true,
   "scripts": {
-    "install:all": "pnpm install && cd apps/backend && pip install -r requirements.txt && pip install -r requirements-dev.txt",
+    "install:all": "pnpm install; cd apps/backend; pip install -r requirements.txt; pip install -r requirements-dev.txt",
     "dev:dashboard": "pnpm --filter frontend-dashboard dev",
     "dev:backend": "pnpm --filter backend dev",
     "dev:desktop": "pnpm --filter desktop-app start",
@@ -16,7 +16,7 @@
     "test:watch": "concurrently --kill-others-on-fail \"pnpm --filter backend test --watch\" \"pnpm --filter frontend-dashboard test --watch\"",
     "dev-test": "concurrently --kill-others-on-fail --raw \"pnpm dev\" \"pnpm test:watch\"",
     "build": "pnpm --filter '*' build",
-    "clean": "pnpm -r clean && rimraf node_modules",
+    "clean": "pnpm -r clean; rimraf node_modules",
     "setup": "node scripts/setup.js",
     "health-check": "python scripts/health_check.py",
     "unified-ai": "unified-ai.bat"

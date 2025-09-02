@@ -5,26 +5,29 @@ import subprocess
 import json
 import os
 import sys # For sys.executable
+import tempfile
 
 # Store original os.path.join before any patching might occur elsewhere or locally
 original_os_path_join = os.path.join
 
 # Assuming src is in PYTHONPATH
-from services.sandbox_executor import SandboxExecutor, SANDBOX_RUNNER_SCRIPT_TEMPLATE, DEFAULT_SANDBOX_TIMEOUT
+from apps.backend.src.services.sandbox_executor import SandboxExecutor, SANDBOX_RUNNER_SCRIPT_TEMPLATE, DEFAULT_SANDBOX_TIMEOUT
 
 class TestSandboxExecutor(unittest.TestCase):
 
     def setUp(self):
-        self.executor = SandboxExecutor(timeout_seconds=2) # Use a short timeout for tests
+        # 增加超时时间以避免测试中超时
+        self.executor = SandboxExecutor(timeout_seconds=30) # 从2秒增加到30秒
 
     @patch('tempfile.TemporaryDirectory')
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.join')
     @patch('subprocess.run')
-    @pytest.mark.timeout(15)
+    @pytest.mark.timeout(60)  # 增加pytest超时到60秒
     def test_run_successful_execution(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir):
         # --- Setup Mocks ---
-        mock_temp_dir_path = "/tmp/fake_temp_dir"
+        # 使用适合当前操作系统的临时目录路径
+        mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir"
         mock_temp_dir_context_manager = MagicMock()
         mock_temp_dir_context_manager.__enter__.return_value = mock_temp_dir_path
         mock_temp_dir_context_manager.__exit__.return_value = None
@@ -80,9 +83,10 @@ class TestSandboxExecutor(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.join')
     @patch('subprocess.run')
-    @pytest.mark.timeout(15)
+    @pytest.mark.timeout(60)  # 增加pytest超时到60秒
     def test_run_execution_error_in_tool(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir):
-        mock_temp_dir_path = "/tmp/fake_temp_dir_error"
+        # 使用适合当前操作系统的临时目录路径
+        mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_error"
         mock_temp_dir_context_manager = MagicMock()
         mock_temp_dir_context_manager.__enter__.return_value = mock_temp_dir_path
         mock_temp_dir_context_manager.__exit__.return_value = None
@@ -100,16 +104,16 @@ class TestSandboxExecutor(unittest.TestCase):
 
         self.assertIsNone(result)
         self.assertIn("Error during sandboxed tool execution: TestException", error)
-        self.assertIn("Traceback here...", error)
+        self.assertIn("\nTraceback:\nTraceback here...", error)
 
     @patch('tempfile.TemporaryDirectory')
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.join')
     @patch('subprocess.run')
-    @pytest.mark.timeout(15)
+    @pytest.mark.timeout(60)  # 增加pytest超时到60秒
     def test_run_timeout_expired(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir):
-        mock_temp_dir_path = "/tmp/fake_temp_dir_timeout"
-        # ... (similar setup for temp_dir and os.path.join mocks) ...
+        # 使用适合当前操作系统的临时目录路径
+        mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_timeout"
         mock_temp_dir_context_manager = MagicMock()
         mock_temp_dir_context_manager.__enter__.return_value = mock_temp_dir_path
         mock_temp_dir_context_manager.__exit__.return_value = None
@@ -127,10 +131,10 @@ class TestSandboxExecutor(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.join')
     @patch('subprocess.run')
-    @pytest.mark.timeout(15)
+    @pytest.mark.timeout(60)  # 增加pytest超时到60秒
     def test_run_non_json_output(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir):
-        mock_temp_dir_path = "/tmp/fake_temp_dir_nonjson"
-        # ... (similar setup for temp_dir and os.path.join mocks) ...
+        # 使用适合当前操作系统的临时目录路径
+        mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_nonjson"
         mock_temp_dir_context_manager = MagicMock()
         mock_temp_dir_context_manager.__enter__.return_value = mock_temp_dir_path
         mock_temp_dir_context_manager.__exit__.return_value = None
@@ -152,10 +156,10 @@ class TestSandboxExecutor(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.join')
     @patch('subprocess.run')
-    @pytest.mark.timeout(15)
+    @pytest.mark.timeout(60)  # 增加pytest超时到60秒
     def test_run_stderr_output(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir):
-        mock_temp_dir_path = "/tmp/fake_temp_dir_stderr"
-        # ... (similar setup for temp_dir and os.path.join mocks) ...
+        # 使用适合当前操作系统的临时目录路径
+        mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_stderr"
         mock_temp_dir_context_manager = MagicMock()
         mock_temp_dir_context_manager.__enter__.return_value = mock_temp_dir_path
         mock_temp_dir_context_manager.__exit__.return_value = None

@@ -18,9 +18,9 @@ from pathlib import Path
 
 from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 from .atlassian_bridge import AtlassianBridge
-from ..hsp.connector import HSPConnector
-from ..hsp.types import HSPMessage, HSPCapability, HSPTask
-from ..core_ai.agent_manager import AgentManager
+from apps.backend.src.hsp.connector import HSPConnector
+from apps.backend.src.hsp.types import HSPMessage, HSPCapability, HSPTask
+from apps.backend.src.core_ai.agent_manager import AgentManager
 
 logger = logging.getLogger(__name__)
 

@@ -289,7 +289,7 @@ class TestRunner:
         logger.info("測試演示學習功能...")
         
         try:
-            from core_ai.demo_learning_manager import demo_learning_manager
+            from apps.backend.src.core_ai.demo_learning_manager import demo_learning_manager
             
             # 測試演示金鑰檢測
             demo_credentials = {

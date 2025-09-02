@@ -25,6 +25,8 @@
     }
   },
   "include": [
-    "src"
+    "components/**/*",
+    "lib/**/*",
+    "index.tsx"
   ]
 }
