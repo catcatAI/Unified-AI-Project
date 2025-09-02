@@ -50,6 +50,14 @@ class HSPConnector:
         self.logger = logging.getLogger(__name__)
         self.hsp_available = False  # Track HSP availability
 
+        # 性能优化参数
+        self.message_cache: Dict[str, Any] = {}  # 消息缓存
+        self.cache_ttl = 300  # 缓存有效期（秒）
+        self.batch_send_enabled = True  # 批量发送
+        self.batch_size = 10  # 批量大小
+        self.message_batch: List[Dict[str, Any]] = []  # 消息批处理队列
+        self.last_batch_send = time.time()  # 上次批量发送时间
+
         if self.mock_mode:
             self.logger.info("HSPConnector: Initializing in mock mode.")
             self.logger.debug(f"HSPConnector.__init__ - ai_id: {ai_id}, mock_mode: {mock_mode}")
@@ -304,6 +312,62 @@ class HSPConnector:
             except Exception as e:
                 self.logger.warning(f"HSPConnector: disconnect callback error: {e}")
 
+    # 性能优化：消息缓存机制
+    def _cache_message(self, message_id: str, message: Any):
+        """缓存消息以提高性能"""
+        self.message_cache[message_id] = {
+            'message': message,
+            'timestamp': time.time()
+        }
+        
+    def _get_cached_message(self, message_id: str) -> Optional[Any]:
+        """从缓存中获取消息"""
+        if message_id in self.message_cache:
+            cached = self.message_cache[message_id]
+            # 检查缓存是否过期
+            if time.time() - cached['timestamp'] < self.cache_ttl:
+                return cached['message']
+            else:
+                # 移除过期缓存
+                del self.message_cache[message_id]
+        return None
+        
+    def _clean_expired_cache(self):
+        """清理过期缓存"""
+        current_time = time.time()
+        expired_keys = [
+            key for key, value in self.message_cache.items()
+            if current_time - value['timestamp'] >= self.cache_ttl
+        ]
+        for key in expired_keys:
+            del self.message_cache[key]
+
+    # 性能优化：批量发送消息
+    async def _batch_send_messages(self):
+        """批量发送消息以提高性能"""
+        if not self.batch_send_enabled or not self.message_batch:
+            return
+            
+        # 检查是否应该发送批量消息
+        current_time = time.time()
+        if (len(self.message_batch) >= self.batch_size or 
+            current_time - self.last_batch_send >= 1.0):  # 每秒至少发送一次
+            
+            # 发送批量消息
+            for message_data in self.message_batch:
+                try:
+                    await self._raw_publish_message(
+                        message_data['topic'],
+                        message_data['envelope'],
+                        message_data['qos']
+                    )
+                except Exception as e:
+                    self.logger.error(f"批量发送消息失败: {e}")
+            
+            # 清空批处理队列
+            self.message_batch.clear()
+            self.last_batch_send = current_time
+
     async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
         logging.info(f"HSPConnector: publish_message called. self.external_connector.publish is {type(self.external_connector.publish)}")
         
@@ -312,6 +376,27 @@ class HSPConnector:
         qos_params = envelope.get("qos_parameters") or {}
         requires_ack = qos_params.get("requires_ack", False)
         
+        # 性能优化：检查消息缓存
+        if not requires_ack:
+            cached_result = self._get_cached_message(message_id)
+            if cached_result is not None:
+                self.logger.debug(f"使用缓存结果发送消息: {message_id}")
+                return cached_result
+        
+        # 性能优化：批量发送
+        if self.batch_send_enabled and not requires_ack:
+            # 将消息添加到批处理队列
+            self.message_batch.append({
+                'topic': topic,
+                'envelope': envelope,
+                'qos': qos
+            })
+            # 尝试批量发送
+            await self._batch_send_messages()
+            # 缓存结果
+            self._cache_message(message_id, True)
+            return True
+
         # Initialize retry count for this message if it's new
         if correlation_id not in self._message_retry_counts:
             self._message_retry_counts[correlation_id] = 0
@@ -332,6 +417,8 @@ class HSPConnector:
                     # Clear retry count on success
                     if correlation_id in self._message_retry_counts:
                         del self._message_retry_counts[correlation_id]
+                    # 缓存结果
+                    self._cache_message(message_id, True)
                     return True
                 except asyncio.TimeoutError:
                     self.logger.warning(f"ACK timeout for message {correlation_id}. Trying fallback if enabled.")
@@ -343,6 +430,8 @@ class HSPConnector:
                             # Clear retry count on success
                             if correlation_id in self._message_retry_counts:
                                 del self._message_retry_counts[correlation_id]
+                            # 缓存结果
+                            self._cache_message(message_id, True)
                             return True
                         else:
                             self.logger.error(f"Fallback also failed for message {correlation_id} after ACK timeout.")
@@ -358,6 +447,8 @@ class HSPConnector:
                         # Clean up retry count after all attempts
                         if correlation_id in self._message_retry_counts:
                             del self._message_retry_counts[correlation_id]
+                        # 缓存结果
+                        self._cache_message(message_id, False)
                         return False
                 finally:
                     # Ensure future is removed even if cancelled or exception
@@ -368,6 +459,8 @@ class HSPConnector:
                 # Clear retry count for non-ACK messages
                 if correlation_id in self._message_retry_counts:
                     del self._message_retry_counts[correlation_id]
+                # 缓存结果
+                self._cache_message(message_id, True)
                 return True
 
         except (NetworkError, CircuitBreakerOpenError) as e:
@@ -385,7 +478,11 @@ class HSPConnector:
                         # Clean up retry count after all attempts
                         if correlation_id in self._message_retry_counts:
                             del self._message_retry_counts[correlation_id]
+                        # 缓存结果
+                        self._cache_message(message_id, fallback_success)
                         return fallback_success
+                    # 缓存结果
+                    self._cache_message(message_id, result)
                     return result
                 else:
                     # Try fallback one more time before giving up
@@ -393,12 +490,16 @@ class HSPConnector:
                     # Clean up retry count after all attempts
                     if correlation_id in self._message_retry_counts:
                         del self._message_retry_counts[correlation_id]
+                    # 缓存结果
+                    self._cache_message(message_id, fallback_success)
                     return fallback_success
             else:
                 self.logger.error(f"HSP not available and fallback disabled/failed for {correlation_id}.")
                 # Clean up retry count
                 if correlation_id in self._message_retry_counts:
                     del self._message_retry_counts[correlation_id]
+                # 缓存结果
+                self._cache_message(message_id, False)
                 return False
         except Exception as e:
             self.logger.error(f"HSP publish failed for {correlation_id} due to unexpected error: {e}. Trying fallback.")
@@ -415,7 +516,11 @@ class HSPConnector:
                         # Clean up retry count after all attempts
                         if correlation_id in self._message_retry_counts:
                             del self._message_retry_counts[correlation_id]
+                        # 缓存结果
+                        self._cache_message(message_id, fallback_success)
                         return fallback_success
+                    # 缓存结果
+                    self._cache_message(message_id, result)
                     return result
                 else:
                     # Try fallback one more time before giving up
@@ -423,18 +528,24 @@ class HSPConnector:
                     # Clean up retry count after all attempts
                     if correlation_id in self._message_retry_counts:
                         del self._message_retry_counts[correlation_id]
+                    # 缓存结果
+                    self._cache_message(message_id, fallback_success)
                     return fallback_success
             else:
                 self.logger.error(f"HSP not available and fallback disabled/failed for {correlation_id}.")
                 # Clean up retry count
                 if correlation_id in self._message_retry_counts:
                     del self._message_retry_counts[correlation_id]
+                # 缓存结果
+                self._cache_message(message_id, False)
                 return False
         except Exception as e:
             self.logger.critical(f"Unhandled critical error during message publish for {correlation_id}: {e}")
             # For any other unexpected errors, clean up and fail.
             if correlation_id in self._message_retry_counts:
                 del self._message_retry_counts[correlation_id]
+            # 缓存结果
+            self._cache_message(message_id, False)
             raise # Re-raise unexpected errors
 
     async def publish_fact(self, fact_payload: HSPFactPayload, topic: Optional[str] = None) -> bool:
@@ -615,42 +726,6 @@ class HSPConnector:
         await self.internal_bus.publish_async("hsp.external.capability_advertisement", envelope)
         return await self.publish_message(topic, envelope, qos)
 
-    async def subscribe(self, topic: str, callback: Optional[Callable] = None):
-        """
-        Subscribe to a topic.
-        - If callback is provided: subscribe on internal bus for bridged messages.
-        - If no callback: perform direct MQTT subscription for test compatibility.
-        """
-        if callback is None:
-            # Direct MQTT subscription path (tests expect this)
-            if self.mock_mode:
-                if not hasattr(self.external_connector, 'subscribed_topics'):
-                    self.external_connector.subscribed_topics = set()
-                self.external_connector.subscribed_topics.add(topic)
-            # Prefer calling underlying MQTT client's subscribe so tests can assert it
-            mqtt_client = getattr(self, 'mqtt_client', None)
-            if mqtt_client and hasattr(mqtt_client, 'subscribe'):
-                await mqtt_client.subscribe(topic, self.default_qos)
-            elif hasattr(self.external_connector, 'subscribe'):
-                await self.external_connector.subscribe(topic, self.default_qos)
-        else:
-            # Internal bus subscription path
-            self.internal_bus.subscribe(f"hsp.external.{topic}", callback)
-
-    def unsubscribe(self, topic: str, callback: Optional[Callable] = None):
-        if callback is None:
-            # Direct MQTT unsubscribe compatibility (best-effort in mock)
-            if self.mock_mode and hasattr(self.external_connector, 'subscribed_topics'):
-                self.external_connector.subscribed_topics.discard(topic)
-            # If external connector has unsubscribe, call it
-            if hasattr(self.external_connector, 'unsubscribe'):
-                try:
-                    self.external_connector.unsubscribe(topic)
-                except Exception:
-                    pass
-        else:
-            self.internal_bus.unsubscribe(f"hsp.external.{topic}", callback)
-
     # --- Registration methods for external modules to receive specific message types ---
     def register_on_fact_callback(self, callback: Callable[[HSPFactPayload, str, HSPMessageEnvelope], None]):
         self.logger.debug(f"Registering on_fact_callback: {callback}")
@@ -778,13 +853,13 @@ class HSPConnector:
         self.logger.debug(f"Dispatching task request to {len(self._task_request_callbacks)} callbacks. Message: {message}")
 
         if payload and sender_ai_id:
-            task_payload = HSPTaskRequestPayload(**payload)
+            request_payload = HSPTaskRequestPayload(**payload)
             for callback in self._task_request_callbacks:
                 self.logger.debug(f"Calling on_task_request_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(task_payload, sender_ai_id, message)
+                    await callback(request_payload, sender_ai_id, message)
                 else:
-                    callback(task_payload, sender_ai_id, message)
+                    callback(request_payload, sender_ai_id, message)
 
             # Check if ACK is required and send it
             qos_params = message.get("qos_parameters")
@@ -870,15 +945,10 @@ class HSPConnector:
 
             # Resolve pending ACK if any
             if correlation_id and correlation_id in self._pending_acks:
-                future = self._pending_acks.pop(correlation_id)
-                if not future.done():
-                    future.set_result(ack_payload) # Signal that ACK was received
+                ack_future = self._pending_acks[correlation_id]
+                if not ack_future.done():
+                    ack_future.set_result(ack_payload)
                     self.logger.debug(f"Resolved pending ACK for correlation_id: {correlation_id}")
-            elif target_message_id and target_message_id in self._pending_acks: # Fallback to target_message_id if correlation_id not used for ACK tracking
-                future = self._pending_acks.pop(target_message_id)
-                if not future.done():
-                    future.set_result(ack_payload)
-                    self.logger.debug(f"Resolved pending ACK for target_message_id: {target_message_id}")
 
             for callback in self._acknowledgement_callbacks:
                 self.logger.debug(f"Calling on_acknowledgement_callback: {callback}")
@@ -886,6 +956,20 @@ class HSPConnector:
                     await callback(ack_payload, sender_ai_id, message)
                 else:
                     callback(ack_payload, sender_ai_id, message)
+
+    def unsubscribe(self, topic: str, callback: Optional[Callable] = None):
+        if callback is None:
+            # Direct MQTT unsubscribe compatibility (best-effort in mock)
+            if self.mock_mode and hasattr(self.external_connector, 'subscribed_topics'):
+                self.external_connector.subscribed_topics.discard(topic)
+            # If external connector has unsubscribe, call it
+            if hasattr(self.external_connector, 'unsubscribe'):
+                try:
+                    self.external_connector.unsubscribe(topic)
+                except Exception:
+                    pass
+        else:
+            self.internal_bus.unsubscribe(f"hsp.external.{topic}", callback)
 
     # --- Properties ---
     @property

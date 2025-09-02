@@ -185,3 +185,19 @@ class AgentManager:
         # 即使没有找到能力，也返回成功，因为代理可能已经启动
         # 在实际应用中，这应该更严格，但在测试环境中我们给代理更多时间
         logging.info(f"[AgentManager] Proceeding assuming agent '{agent_name}' is ready.")
+    
+    def get_available_agents(self) -> List[str]:
+        """
+        Returns a list of available agent names.
+        """
+        return list(self.agent_script_map.keys())
+    
+    def get_active_agents(self) -> Dict[str, int]:
+        """
+        Returns a dictionary of active agents and their PIDs.
+        """
+        active_agents = {}
+        for agent_name, process in self.active_agents.items():
+            if process.poll() is None:  # Agent is still running
+                active_agents[agent_name] = process.pid
+        return active_agents
