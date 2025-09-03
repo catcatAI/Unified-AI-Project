@@ -92,7 +92,7 @@ class TestTimeSystem(unittest.TestCase):
             # Or, if TimeSystem directly calls datetime.datetime.now(), patch that.
             # TimeSystem.get_current_time() calls datetime.datetime.now() if no override.
             # So we patch datetime.datetime.now within the scope of time_system module.
-            with patch('core_ai.time_system.datetime') as mock_datetime_module:
+            with patch('apps.backend.src.core_ai.time_system.datetime') as mock_datetime_module:
                 mock_datetime_module.datetime.now.return_value = mock_time
                 segment = self.time_sys.get_time_of_day_segment()
                 self.assertEqual(segment, expected_segment, f"Failed for time {mock_time.hour}h. Got {segment}, expected {expected_segment}")

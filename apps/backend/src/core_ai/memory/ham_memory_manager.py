@@ -72,6 +72,8 @@ class HAMMemoryManager:
     分层抽象记忆管理器
     实现分层抽象记忆管理功能，包括存储、检索、抽象和压缩
     """
+    # 添加缺失的常量定义
+    BASE_SAVE_DELAY_SECONDS = 0.1  # 基础保存延迟时间（秒）
 
     def __init__(self,
                  core_storage_filename="ham_core_memory.json",

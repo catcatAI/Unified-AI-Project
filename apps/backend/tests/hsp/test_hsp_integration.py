@@ -191,8 +191,8 @@ def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: InternalB
             self.mqtt_client.register_client(self.client_id, on_message_callback)
             await self.mqtt_client.subscribe(topic, on_message_callback)
 
-    dummy_external_connector = DummyExternalConnector(broker)
-    bridge = MessageBridge(dummy_external_connector, shared_internal_bus, shared_data_aligner)
+    dummy_external_connector = await DummyExternalConnector(broker)
+    bridge = await MessageBridge(dummy_external_connector, shared_internal_bus, shared_data_aligner)
     return bridge
 
 @pytest.fixture(scope="function")
@@ -354,7 +354,7 @@ def event_loop():
 
 @pytest.fixture
 def mock_llm_fixture():
-    llm = MockLLMInterface()
+    llm = await MockLLMInterface()
     llm.add_mock_response(
         "Berlin is the capital of Germany", 
         '[{"fact_type": "general_statement", "content": {"subject": "Berlin", "relation": "is_capital_of", "object": "Germany"}, "confidence": 0.99}]'
@@ -508,7 +508,7 @@ async def configured_learning_manager(
 @pytest.fixture
 async def service_discovery_module_fixture(main_ai_hsp_connector: HSPConnector, trust_manager_fixture: TrustManager):
     # main_ai_hsp_connector is now properly awaited by pytest-asyncio
-    sdm = ServiceDiscoveryModule(trust_manager=trust_manager_fixture)
+    sdm = await ServiceDiscoveryModule(trust_manager=trust_manager_fixture)
     main_ai_hsp_connector.register_on_capability_advertisement_callback(sdm.process_capability_advertisement)
     await asyncio.sleep(0.2)
     yield sdm
@@ -628,7 +628,7 @@ class TestHSPFactConsumption:
         ham_manager_fixture.memory_store.clear()
         
         # 不再使用Mock，直接使用真实的ContentAnalyzerModule
-        # ca_mock = MagicMock(wraps=content_analyzer_module_fixture.process_hsp_fact_content)
+        # ca_mock = await MagicMock(wraps=content_analyzer_module_fixture.process_hsp_fact_content)
         # content_analyzer_module_fixture.process_hsp_fact_content = ca_mock
         
         # Test high trust peer fact
@@ -748,7 +748,7 @@ class TestHSPFactConsumption:
         r_type = p.split('/')[-1].split('#')[-1]
         
         assert g.has_node(s) and g.nodes[s].get('hsp_source_info', {}).get('origin_fact_id') == fid
-        obj_node_id = next((n_id for n_id in g.nodes() if f"literal_{o}" in n_id), None)
+        obj_node_id = await next((n_id for n_id in g.nodes() if f"literal_{o}" in n_id), None)
         assert obj_node_id  # Updated literal node ID matching
         assert g.has_edge(s, obj_node_id) and g.edges[s, obj_node_id].get('type') == r_type
         print(f"[Test Consume Structured Fact] Verified by CA.")
@@ -773,7 +773,7 @@ class TestHSPFactConsumption:
         content_analyzer_module_fixture.graph.clear()
 
         # 不再使用Mock，直接使用真实的ContentAnalyzerModule
-        # ca_process_mock = MagicMock(wraps=content_analyzer_module_fixture.process_hsp_fact_content)
+        # ca_process_mock = await MagicMock(wraps=content_analyzer_module_fixture.process_hsp_fact_content)
         # content_analyzer_module_fixture.process_hsp_fact_content = ca_process_mock
 
         # Define a fact using external URIs that are in CA's ontology_mapping
@@ -945,7 +945,7 @@ class TestHSPTaskDelegation:
         query = "project: I need an advanced weather forecast for London."
         
         # Mock ToolDispatcher to return no local tool, forcing HSP delegation
-        mock_td = MagicMock(spec=ToolDispatcher)
+        mock_td = await MagicMock(spec=ToolDispatcher)
         mock_td.dispatch.return_value = ToolDispatcherResponse(
             status="unhandled_by_local_tool",
             payload=None,

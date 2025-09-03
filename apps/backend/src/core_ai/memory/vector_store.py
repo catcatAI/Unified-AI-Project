@@ -297,7 +297,7 @@ class VectorMemoryStore:
                 
                 # 直接嘗試刪除，由ChromaDB處理錯誤
                 if hasattr(self.collection, 'delete'):
-                    delete_method = getattr(self.collection, 'delete')
+                    delete_method = await getattr(self.collection, 'delete')
                     delete_method(ids=[memory_id])
                 else:
                     logger.warning(f"Delete method not available for memory {memory_id}")

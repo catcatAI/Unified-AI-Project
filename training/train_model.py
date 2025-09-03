@@ -16,12 +16,20 @@ import time
 import shutil
 import random
 import subprocess
+import numpy as np
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent
 backend_path = project_root / "apps" / "backend"
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
+
+# 尝试导入训练监控器
+try:
+    from training.auto_training_manager import TrainingMonitor
+    training_monitor = TrainingMonitor()
+except ImportError:
+    training_monitor = None
 
 # 导入项目模块
 try:
@@ -260,7 +268,7 @@ class ModelTrainer:
             logger.error(f"❌ 加载检查点失败: {e}")
             return None
     
-    def simulate_training_step(self, epoch, batch_size=16):
+    def simulate_training_step(self, epoch, batch_size=16, scenario_name="default"):
         """模拟一个训练步骤（实际项目中这里会是真正的训练代码）"""
         # 模拟更真实的训练时间
         # 对于早期epoch，训练时间较短；对于后期epoch，训练时间较长
@@ -285,10 +293,17 @@ class ModelTrainer:
         accuracy = min(max_accuracy, (epoch / 100) * max_accuracy + random.uniform(-0.02, 0.02))
         accuracy = max(0, accuracy)
         
-        return {
+        # 更新训练监控器
+        metrics = {
             "loss": loss,
             "accuracy": accuracy
         }
+        
+        if training_monitor:
+            progress = (epoch / 100) * 100  # 假设最多100个epoch
+            training_monitor.update_progress(scenario_name, epoch, progress, metrics)
+        
+        return metrics
     
     def _train_math_model(self, scenario):
         """训练数学模型"""
@@ -441,6 +456,94 @@ class ModelTrainer:
         # 这里应该是Alpha深度模型的实际训练代码
         # 为示例起见，我们使用模拟训练
         return self._simulate_training(scenario)
+    
+    def _train_code_model(self, scenario):
+        """训练代码模型"""
+        logger.info("🚀 开始训练代码模型...")
+        
+        # 获取训练参数
+        epochs = scenario.get('epochs', 10)
+        batch_size = scenario.get('batch_size', 16)
+        checkpoint_interval = scenario.get('checkpoint_interval', 5)
+        
+        # 模拟代码模型训练过程
+        try:
+            for epoch in range(1, epochs + 1):
+                # 模拟训练步骤
+                epoch_metrics = self.simulate_training_step(epoch, batch_size)
+                
+                # 显示进度
+                progress = (epoch / epochs) * 100
+                logger.info(f"  Epoch {epoch}/{epochs} - 进度: {progress:.1f}% - Loss: {epoch_metrics['loss']:.4f} - Accuracy: {epoch_metrics['accuracy']:.4f}")
+                
+                # 保存检查点
+                if epoch % checkpoint_interval == 0 or epoch == epochs:
+                    self.save_checkpoint(epoch, epoch_metrics)
+            
+            # 保存模型
+            model_filename = f"code_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            model_path = MODELS_DIR / model_filename
+            
+            model_info = {
+                "model_type": "code_model",
+                "training_date": datetime.now().isoformat(),
+                "epochs": epochs,
+                "batch_size": batch_size,
+                "final_metrics": epoch_metrics
+            }
+            
+            with open(model_path, 'w', encoding='utf-8') as f:
+                json.dump(model_info, f, ensure_ascii=False, indent=2)
+            logger.info(f"✅ 代码模型训练完成，模型保存至: {model_path}")
+            
+            return True
+        except Exception as e:
+            logger.error(f"❌ 代码模型训练过程中发生错误: {e}")
+            return False
+    
+    def _train_data_analysis_model(self, scenario):
+        """训练数据分析模型"""
+        logger.info("🚀 开始训练数据分析模型...")
+        
+        # 获取训练参数
+        epochs = scenario.get('epochs', 10)
+        batch_size = scenario.get('batch_size', 16)
+        checkpoint_interval = scenario.get('checkpoint_interval', 5)
+        
+        # 模拟数据分析模型训练过程
+        try:
+            for epoch in range(1, epochs + 1):
+                # 模拟训练步骤
+                epoch_metrics = self.simulate_training_step(epoch, batch_size)
+                
+                # 显示进度
+                progress = (epoch / epochs) * 100
+                logger.info(f"  Epoch {epoch}/{epochs} - 进度: {progress:.1f}% - Loss: {epoch_metrics['loss']:.4f} - Accuracy: {epoch_metrics['accuracy']:.4f}")
+                
+                # 保存检查点
+                if epoch % checkpoint_interval == 0 or epoch == epochs:
+                    self.save_checkpoint(epoch, epoch_metrics)
+            
+            # 保存模型
+            model_filename = f"data_analysis_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            model_path = MODELS_DIR / model_filename
+            
+            model_info = {
+                "model_type": "data_analysis_model",
+                "training_date": datetime.now().isoformat(),
+                "epochs": epochs,
+                "batch_size": batch_size,
+                "final_metrics": epoch_metrics
+            }
+            
+            with open(model_path, 'w', encoding='utf-8') as f:
+                json.dump(model_info, f, ensure_ascii=False, indent=2)
+            logger.info(f"✅ 数据分析模型训练完成，模型保存至: {model_path}")
+            
+            return True
+        except Exception as e:
+            logger.error(f"❌ 数据分析模型训练过程中发生错误: {e}")
+            return False
     
     def _train_collaboratively(self, scenario):
         """执行协作式训练"""
@@ -699,6 +802,10 @@ class ModelTrainer:
             return self._train_adaptive_learning(scenario)
         elif 'alpha_deep_model' in target_models:
             return self._train_alpha_deep_model(scenario)
+        elif 'code_model' in target_models:
+            return self._train_code_model(scenario)
+        elif 'data_analysis_model' in target_models:
+            return self._train_data_analysis_model(scenario)
         
         # 检查是否启用协作式训练
         if scenario.get('enable_collaborative_training', False):
@@ -746,7 +853,7 @@ class ModelTrainer:
                     return False
                 
                 # 模拟一个epoch的训练（实际项目中这里会是多个batch的训练）
-                epoch_metrics = self.simulate_training_step(epoch, batch_size)
+                epoch_metrics = self.simulate_training_step(epoch, batch_size, scenario_name)
                 
                 # 显示进度
                 progress = (epoch / epochs) * 100
@@ -932,7 +1039,7 @@ class ModelTrainer:
         logger.info("▶️ 继续训练")
         return self.train_with_preset(scenario_name)
     
-    def evaluate_model(self, model_path: Path, test_data: Optional[List[Dict]] = None) -> Dict[str, Any]:
+    def evaluate_model(self, model_path: Path, test_data: Optional[list] = None) -> Dict[str, Any]:
         """评估训练好的模型"""
         logger.info(f"🔍 开始评估模型: {model_path}")
         
@@ -982,6 +1089,59 @@ class ModelTrainer:
         except Exception as e:
             logger.error(f"❌ 模型评估过程中发生错误: {e}")
             return {"error": str(e)}
+    
+    def analyze_model_performance(self, model_path: Path) -> Dict[str, Any]:
+        """分析模型性能并生成详细报告"""
+        logger.info(f"📊 开始分析模型性能: {model_path}")
+        
+        # 评估模型
+        evaluation_results = self.evaluate_model(model_path)
+        
+        if "error" in evaluation_results:
+            return evaluation_results
+        
+        # 生成性能分析报告
+        performance_analysis = {
+            "model_name": evaluation_results["model_name"],
+            "analysis_date": datetime.now().isoformat(),
+            "overall_performance": "优秀" if evaluation_results["accuracy"] > 0.9 else "良好" if evaluation_results["accuracy"] > 0.8 else "一般",
+            "strengths": [],
+            "weaknesses": [],
+            "recommendations": [],
+            "metrics": evaluation_results
+        }
+        
+        # 根据指标分析优势和劣势
+        if evaluation_results["accuracy"] > 0.9:
+            performance_analysis["strengths"].append("高准确率")
+        else:
+            performance_analysis["weaknesses"].append("准确率有待提高")
+            performance_analysis["recommendations"].append("增加训练数据量")
+            
+        if evaluation_results["f1_score"] > 0.85:
+            performance_analysis["strengths"].append("良好的平衡性")
+        else:
+            performance_analysis["weaknesses"].append("精确率和召回率不平衡")
+            performance_analysis["recommendations"].append("调整分类阈值")
+            
+        if evaluation_results["inference_time_ms"] < 50:
+            performance_analysis["strengths"].append("快速推理")
+        else:
+            performance_analysis["weaknesses"].append("推理速度较慢")
+            performance_analysis["recommendations"].append("模型优化或量化")
+        
+        # 保存性能分析报告
+        analysis_dir = TRAINING_DIR / "performance_analysis"
+        analysis_dir.mkdir(parents=True, exist_ok=True)
+        
+        analysis_filename = f"performance_analysis_{model_path.stem}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        analysis_path = analysis_dir / analysis_filename
+        
+        with open(analysis_path, 'w', encoding='utf-8') as f:
+            json.dump(performance_analysis, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"✅ 模型性能分析完成，报告保存至: {analysis_path}")
+        return performance_analysis
     
     def deploy_model(self, model_path: Path, deployment_target: str = "local") -> bool:
         """部署训练好的模型"""
@@ -1076,6 +1236,7 @@ def main():
     parser.add_argument('--evaluate', type=str, help='评估指定的模型文件')
     parser.add_argument('--deploy', type=str, help='部署指定的模型文件')
     parser.add_argument('--target', type=str, default='local', help='部署目标 (local, staging, production)')
+    parser.add_argument('--auto', action='store_true', help='启用自动训练模式（自动识别数据、创建配置、执行训练）')
     
     args = parser.parse_args()
     
@@ -1112,6 +1273,18 @@ def main():
             print(f"\n✅ 模型部署成功: {model_path}")
         else:
             print(f"\n❌ 模型部署失败: {model_path}")
+    elif args.auto:
+        # 启用自动训练模式
+        print("🤖 启用自动训练模式")
+        try:
+            from training.auto_training_manager import AutoTrainingManager
+            auto_trainer = AutoTrainingManager()
+            report = auto_trainer.run_full_auto_training_pipeline()
+            print("\n✅ 自动训练完成!")
+            print("请查看训练目录中的模型和报告文件")
+        except Exception as e:
+            print(f"\n❌ 自动训练失败: {e}")
+            sys.exit(1)
     elif args.preset:
         # 使用预设配置训练
         if args.pause:

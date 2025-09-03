@@ -26,8 +26,8 @@ def base_agent():
 
 @pytest.mark.asyncio
 async def test_base_agent_init(base_agent):
-    with patch('src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('src.agents.base_agent.get_services') as mock_get_services:
+    with patch('apps.backend.src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
+        with patch('apps.backend.src.agents.base_agent.get_services') as mock_get_services:
             mock_get_services.return_value = {} # Init does not need hsp_connector for this test
             await base_agent._ainit()
     """Test that the BaseAgent initializes correctly."""
@@ -39,9 +39,9 @@ async def test_base_agent_init(base_agent):
 @pytest.mark.asyncio
 async def test_base_agent_start_stop(base_agent, mock_hsp_connector):
     """Test that the BaseAgent can start and stop correctly."""
-    with patch('src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('src.agents.base_agent.get_services') as mock_get_services:
-            with patch('src.agents.base_agent.shutdown_services', new_callable=AsyncMock) as mock_shutdown_services:
+    with patch('apps.backend.src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
+        with patch('apps.backend.src.agents.base_agent.get_services') as mock_get_services:
+            with patch('apps.backend.src.agents.base_agent.shutdown_services', new_callable=AsyncMock) as mock_shutdown_services:
                 mock_get_services.return_value = {
                     'hsp_connector': mock_hsp_connector,
                     'llm_interface': MagicMock(),
@@ -66,7 +66,8 @@ async def test_base_agent_start_stop(base_agent, mock_hsp_connector):
                 }
                 await base_agent.start()
                 assert base_agent.is_running is True
-                mock_hsp_connector.advertise_capability.assert_called_once()
+                # 验证每个能力都被广告了一次
+                assert mock_hsp_connector.advertise_capability.call_count == len(base_agent.capabilities)
                 await base_agent.stop()
                 mock_init_services.assert_called_once()
                 mock_shutdown_services.assert_called_once()
@@ -74,8 +75,8 @@ async def test_base_agent_start_stop(base_agent, mock_hsp_connector):
 @pytest.mark.asyncio
 async def test_base_agent_handle_task_request(base_agent, mock_hsp_connector):
     """Test the default handle_task_request method."""
-    with patch('src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('src.agents.base_agent.get_services') as mock_get_services:
+    with patch('apps.backend.src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
+        with patch('apps.backend.src.agents.base_agent.get_services') as mock_get_services:
             mock_get_services.return_value = {
                 'hsp_connector': mock_hsp_connector,
                 'llm_interface': MagicMock(),

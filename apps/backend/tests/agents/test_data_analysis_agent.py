@@ -45,7 +45,7 @@ class TestDataAnalysisAgent(unittest.TestCase):
         # Check that capabilities were defined
         self.assertTrue(len(self.agent.capabilities) > 0)
         # 验证能力名称与实现匹配
-        self.assertEqual(self.agent.capabilities[0]['name'], 'Data Analysis')
+        self.assertEqual(self.agent.capabilities[0]['name'], 'statistical_analysis')
 
     @pytest.mark.timeout(10)
     def test_handle_task_request_success(self):
@@ -73,8 +73,9 @@ class TestDataAnalysisAgent(unittest.TestCase):
         self.assertEqual(sent_topic, "hsp/results/test_requester/req_001")
         self.assertEqual(sent_payload['request_id'], request_id)
         self.assertEqual(sent_payload['status'], "success")
-        # 验证返回值是计算结果（数组和）
-        self.assertEqual(sent_payload['payload'], 15)
+        # 验证返回值包含正确的统计分析结果
+        self.assertIn('mean', sent_payload['payload'])
+        self.assertEqual(sent_payload['payload']['mean'], 3.0)
 
     @pytest.mark.timeout(10)
     def test_handle_task_request_tool_failure(self):

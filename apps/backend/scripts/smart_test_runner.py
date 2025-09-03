@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-智能測試運行器 - 在運行測試時自動檢測和修復錯誤
+智能測試運行器 - 在運行測試時自動檢測和修復錯誤 (兼容模式)
+此腳本已更新為使用新的分離架構，建議使用 workflow_controller.py
 """
 
 import os
@@ -99,6 +100,11 @@ def run_auto_fix():
 
 def run_tests(pytest_args=None):
     """运行测试"""
+    print("==========================================")
+    print("Unified AI Project 智能测试运行器 (兼容模式)")
+    print("==========================================")
+    print("注意: 此脚本已更新为使用新的分离架构，建议使用 workflow_controller.py")
+    
     setup_environment()
     
     # 构建命令

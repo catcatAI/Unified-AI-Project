@@ -47,11 +47,16 @@ class DataManager:
         self.data_catalog = {}
         self.data_quality_scores = {}
         self.supported_formats = {
-            'image': ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff'],
-            'audio': ['.wav', '.mp3', '.flac', '.aac', '.ogg'],
-            'text': ['.txt', '.md', '.json', '.csv', '.xml'],
-            'video': ['.mp4', '.avi', '.mov', '.mkv', '.flv'],
-            'document': ['.pdf', '.doc', '.docx', '.ppt', '.pptx']
+            'image': ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp'],
+            'audio': ['.wav', '.mp3', '.flac', '.aac', '.ogg', '.m4a', '.wma'],
+            'text': ['.txt', '.md', '.json', '.csv', '.xml', '.yaml', '.yml', '.log'],
+            'video': ['.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv', '.webm'],
+            'document': ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx'],
+            'code': ['.py', '.js', '.java', '.cpp', '.h', '.css', '.html', '.sql'],
+            'data': ['.npy', '.npz', '.h5', '.pkl', '.parquet', '.feather'],
+            'model': ['.pth', '.pt', '.h5', '.pb', '.onnx', '.tflite'],  # 模型文件
+            'archive': ['.zip', '.rar', '.7z', '.tar', '.gz'],  # 压缩文件
+            'binary': ['.bin', '.dat', '.exe', '.dll']  # 二进制文件
         }
         self.model_data_mapping = {
             'vision_service': ['image', 'document'],
@@ -60,11 +65,13 @@ class DataManager:
             'multimodal_service': ['image', 'audio', 'text', 'video'],
             'math_model': ['text'],
             'logic_model': ['text'],
-            'concept_models': ['text', 'json'],
-            'environment_simulator': ['text', 'json'],
-            'causal_reasoning_engine': ['text', 'json'],  # 添加对因果推理引擎的JSON数据支持
-            'adaptive_learning_controller': ['text', 'json'],
-            'alpha_deep_model': ['text', 'json']
+            'concept_models': ['text', 'json', 'code'],
+            'environment_simulator': ['text', 'json', 'code'],
+            'causal_reasoning_engine': ['text', 'json', 'code'],  # 添加对因果推理引擎的JSON数据支持
+            'adaptive_learning_controller': ['text', 'json', 'code'],
+            'alpha_deep_model': ['text', 'json', 'code'],
+            'code_model': ['code'],
+            'data_analysis_model': ['data', 'text']
         }
     
     def scan_data(self) -> Dict[str, Any]:
@@ -128,6 +135,25 @@ class DataManager:
                 return 'text'
             elif mime_type == 'application/pdf':
                 return 'document'
+            elif mime_type.startswith('application/'):
+                # 检查是否为模型文件
+                if any(model_ext in mime_type for model_ext in ['model', 'tensorflow', 'pytorch', 'onnx']):
+                    return 'model'
+                # 检查是否为压缩文件
+                elif any(arch_ext in mime_type for arch_ext in ['zip', 'rar', '7z', 'tar', 'gzip']):
+                    return 'archive'
+                # 其他应用程序文件
+                else:
+                    return 'binary'
+        
+        # 根据文件名模式进一步分类
+        filename = file_path.name.lower()
+        if any(pattern in filename for pattern in ['model', 'checkpoint', 'weights']):
+            return 'model'
+        elif any(pattern in filename for pattern in ['train', 'test', 'valid', 'dataset']):
+            return 'data'
+        elif any(pattern in filename for pattern in ['config', 'setting']):
+            return 'text'
         
         # 默认分类为文本
         return 'text'
@@ -164,6 +190,14 @@ class DataManager:
                 quality_info = self._assess_audio_quality(path, quality_info)
             elif file_type == 'text':
                 quality_info = self._assess_text_quality(path, quality_info)
+            elif file_type == 'code':
+                quality_info = self._assess_code_quality(path, quality_info)
+            elif file_type == 'model':
+                quality_info = self._assess_model_quality(path, quality_info)
+            elif file_type == 'data':
+                quality_info = self._assess_data_quality(path, quality_info)
+            elif file_type == 'archive':
+                quality_info = self._assess_archive_quality(path, quality_info)
             
             # 文件完整性检查
             if self._is_file_corrupted(path):
@@ -171,6 +205,15 @@ class DataManager:
                 quality_info['quality_score'] -= 30
             else:
                 quality_info['quality_score'] += 10
+                
+            # 文件修改时间检查（最近修改的文件质量更高）
+            import time
+            days_since_modified = (time.time() - quality_info['modified_time']) / (24 * 3600)
+            if days_since_modified < 7:  # 一周内修改的文件
+                quality_info['quality_score'] += 5
+            elif days_since_modified > 365:  # 一年以上未修改的文件
+                quality_info['issues'].append('文件长期未更新')
+                quality_info['quality_score'] -= 10
                 
         except Exception as e:
             quality_info['issues'].append(f'评估错误: {str(e)}')
@@ -202,6 +245,28 @@ class DataManager:
                 # 检查图像模式
                 if img.mode not in ['RGB', 'RGBA', 'L']:
                     quality_info['issues'].append(f'图像模式不常见: {img.mode}')
+                else:
+                    quality_info['quality_score'] += 5
+                    
+                # 检查图像清晰度（简单评估）
+                if width >= 50 and height >= 50:  # 只对足够大的图像进行清晰度评估
+                    # 计算图像的对比度
+                    import numpy as np
+                    img_array = np.array(img.convert('L'))  # 转换为灰度图
+                    contrast = img_array.std()
+                    if contrast > 30:  # 高对比度图像
+                        quality_info['quality_score'] += 10
+                    elif contrast < 10:  # 低对比度图像
+                        quality_info['issues'].append('图像对比度较低')
+                        quality_info['quality_score'] -= 5
+                
+                # 记录图像信息
+                quality_info['image_info'] = {
+                    'width': width,
+                    'height': height,
+                    'mode': img.mode,
+                    'format': img.format
+                }
         except ImportError:
             # 如果没有PIL，跳过图像特定检查
             pass
@@ -251,11 +316,263 @@ class DataManager:
                 quality_info['issues'].append('编码问题')
                 quality_info['quality_score'] -= 10
                 
+            # 文本质量分析
+            if len(content.strip()) > 0:
+                # 计算文本统计信息
+                lines = content.splitlines()
+                words = content.split()
+                
+                # 记录文本信息
+                quality_info['text_info'] = {
+                    'line_count': len(lines),
+                    'word_count': len(words),
+                    'character_count': len(content),
+                    'unique_characters': len(set(content))
+                }
+                
+                # 评估文本复杂度
+                if len(words) > 0:
+                    avg_word_length = sum(len(word) for word in words) / len(words)
+                    if 3 <= avg_word_length <= 10:  # 合理的平均词长
+                        quality_info['quality_score'] += 5
+                    
+                # 评估行长度一致性
+                if len(lines) > 1:
+                    line_lengths = [len(line) for line in lines]
+                    avg_line_length = sum(line_lengths) / len(line_lengths)
+                    if avg_line_length > 0:
+                        # 计算行长度变化系数
+                        length_variation = sum(abs(length - avg_line_length) for length in line_lengths) / (len(line_lengths) * avg_line_length)
+                        if length_variation < 0.5:  # 行长度相对一致
+                            quality_info['quality_score'] += 5
+                        
         except UnicodeDecodeError:
             quality_info['issues'].append('文件编码不支持')
             quality_info['quality_score'] -= 25
         except Exception as e:
             quality_info['issues'].append(f'文本读取错误: {str(e)}')
+            quality_info['quality_score'] -= 20
+        
+        return quality_info
+    
+    def _assess_code_quality(self, file_path: Path, quality_info: Dict) -> Dict:
+        """评估代码文件质量"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                
+            # 检查文件内容
+            if len(content.strip()) == 0:
+                quality_info['issues'].append('代码文件内容为空')
+                quality_info['quality_score'] -= 30
+            else:
+                quality_info['quality_score'] += 10
+                
+            # 代码质量分析
+            if len(content.strip()) > 0:
+                lines = content.splitlines()
+                
+                # 记录代码信息
+                quality_info['code_info'] = {
+                    'line_count': len(lines),
+                    'character_count': len(content),
+                    'empty_lines': sum(1 for line in lines if not line.strip()),
+                    'comment_lines': sum(1 for line in lines if line.strip().startswith('#') or line.strip().startswith('//') or line.strip().startswith('/*') or line.strip().startswith('*'))
+                }
+                
+                # 评估代码复杂度
+                if quality_info['code_info']['line_count'] > 0:
+                    comment_ratio = quality_info['code_info']['comment_lines'] / quality_info['code_info']['line_count']
+                    if 0.1 <= comment_ratio <= 0.5:  # 合理的注释比例
+                        quality_info['quality_score'] += 10
+                    elif comment_ratio > 0.5:  # 注释过多
+                        quality_info['issues'].append('注释比例过高')
+                        quality_info['quality_score'] -= 5
+                        
+                # 检查代码行长度
+                long_lines = sum(1 for line in lines if len(line) > 100)
+                if long_lines == 0:
+                    quality_info['quality_score'] += 5
+                elif long_lines / len(lines) > 0.3:  # 过多长行
+                    quality_info['issues'].append('代码行过长过多')
+                    quality_info['quality_score'] -= 10
+                    
+        except UnicodeDecodeError:
+            quality_info['issues'].append('代码文件编码不支持')
+            quality_info['quality_score'] -= 25
+        except Exception as e:
+            quality_info['issues'].append(f'代码读取错误: {str(e)}')
+            quality_info['quality_score'] -= 20
+        
+        return quality_info
+    
+    def _assess_model_quality(self, file_path: Path, quality_info: Dict) -> Dict:
+        """评估模型文件质量"""
+        try:
+            # 检查文件扩展名
+            extension = file_path.suffix.lower()
+            if extension in ['.pth', '.pt']:
+                quality_info['model_type'] = 'PyTorch'
+            elif extension in ['.h5', '.hdf5']:
+                quality_info['model_type'] = 'Keras/TensorFlow'
+            elif extension in ['.pb']:
+                quality_info['model_type'] = 'TensorFlow'
+            elif extension in ['.onnx']:
+                quality_info['model_type'] = 'ONNX'
+            elif extension in ['.tflite']:
+                quality_info['model_type'] = 'TensorFlow Lite'
+            else:
+                quality_info['model_type'] = 'Unknown'
+                quality_info['issues'].append('未知模型格式')
+                quality_info['quality_score'] -= 10
+            
+            # 模型文件大小评估
+            if quality_info['file_size'] < 1024:  # 小于1KB
+                quality_info['issues'].append('模型文件过小')
+                quality_info['quality_score'] -= 20
+            elif quality_info['file_size'] > 1024 * 1024 * 1024:  # 大于1GB
+                quality_info['issues'].append('模型文件过大')
+                quality_info['quality_score'] -= 10
+            else:
+                quality_info['quality_score'] += 15
+                
+            # 检查文件是否可读（基本完整性）
+            with open(file_path, 'rb') as f:
+                header = f.read(1024)  # 读取文件头
+                if len(header) > 0:
+                    quality_info['quality_score'] += 5
+                else:
+                    quality_info['issues'].append('模型文件头为空')
+                    quality_info['quality_score'] -= 15
+                    
+        except Exception as e:
+            quality_info['issues'].append(f'模型文件读取错误: {str(e)}')
+            quality_info['quality_score'] -= 25
+        
+        return quality_info
+    
+    def _assess_data_quality(self, file_path: Path, quality_info: Dict) -> Dict:
+        """评估数据文件质量"""
+        try:
+            extension = file_path.suffix.lower()
+            
+            # JSON数据文件
+            if extension == '.json':
+                import json
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                # 检查数据结构
+                if isinstance(data, dict):
+                    quality_info['data_info'] = {
+                        'type': 'dict',
+                        'keys': list(data.keys()) if isinstance(data, dict) else [],
+                        'size': len(data) if hasattr(data, '__len__') else 0
+                    }
+                    quality_info['quality_score'] += 10
+                elif isinstance(data, list):
+                    quality_info['data_info'] = {
+                        'type': 'list',
+                        'size': len(data)
+                    }
+                    if len(data) > 0:
+                        quality_info['quality_score'] += 10
+                    else:
+                        quality_info['issues'].append('JSON数据为空')
+                        quality_info['quality_score'] -= 10
+                else:
+                    quality_info['issues'].append('JSON数据格式不正确')
+                    quality_info['quality_score'] -= 15
+                    
+            # CSV数据文件
+            elif extension == '.csv':
+                import csv
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    reader = csv.reader(f)
+                    rows = list(reader)
+                
+                quality_info['data_info'] = {
+                    'type': 'csv',
+                    'rows': len(rows),
+                    'columns': len(rows[0]) if rows else 0
+                }
+                
+                if len(rows) > 0:
+                    quality_info['quality_score'] += 10
+                else:
+                    quality_info['issues'].append('CSV数据为空')
+                    quality_info['quality_score'] -= 10
+                    
+            # 其他数据文件
+            else:
+                quality_info['data_info'] = {
+                    'type': extension,
+                    'size': quality_info['file_size']
+                }
+                quality_info['quality_score'] += 5
+                
+        except json.JSONDecodeError:
+            quality_info['issues'].append('JSON格式错误')
+            quality_info['quality_score'] -= 20
+        except Exception as e:
+            quality_info['issues'].append(f'数据文件读取错误: {str(e)}')
+            quality_info['quality_score'] -= 15
+        
+        return quality_info
+    
+    def _assess_archive_quality(self, file_path: Path, quality_info: Dict) -> Dict:
+        """评估压缩文件质量"""
+        try:
+            import zipfile
+            import tarfile
+            
+            extension = file_path.suffix.lower()
+            
+            # 尝试打开压缩文件以检查完整性
+            if extension in ['.zip']:
+                with zipfile.ZipFile(file_path, 'r') as zip_file:
+                    file_list = zip_file.namelist()
+                    quality_info['archive_info'] = {
+                        'type': 'zip',
+                        'file_count': len(file_list),
+                        'files': file_list[:10]  # 只记录前10个文件
+                    }
+            elif extension in ['.tar', '.gz']:
+                with tarfile.open(file_path, 'r') as tar_file:
+                    file_list = tar_file.getnames()
+                    quality_info['archive_info'] = {
+                        'type': 'tar',
+                        'file_count': len(file_list),
+                        'files': file_list[:10]  # 只记录前10个文件
+                    }
+            else:
+                quality_info['archive_info'] = {
+                    'type': 'unknown',
+                    'file_count': 0
+                }
+                quality_info['issues'].append('不支持的压缩格式')
+                quality_info['quality_score'] -= 10
+            
+            # 压缩文件大小评估
+            if quality_info['file_size'] < 1024:  # 小于1KB
+                quality_info['issues'].append('压缩文件过小')
+                quality_info['quality_score'] -= 15
+            elif quality_info['file_size'] > 500 * 1024 * 1024:  # 大于500MB
+                quality_info['issues'].append('压缩文件过大')
+                quality_info['quality_score'] -= 5
+            else:
+                quality_info['quality_score'] += 10
+                
+            # 检查文件数量
+            file_count = quality_info.get('archive_info', {}).get('file_count', 0)
+            if file_count > 0:
+                quality_info['quality_score'] += 5
+            else:
+                quality_info['issues'].append('压缩文件为空')
+                quality_info['quality_score'] -= 10
+                
+        except Exception as e:
+            quality_info['issues'].append(f'压缩文件读取错误: {str(e)}')
             quality_info['quality_score'] -= 20
         
         return quality_info

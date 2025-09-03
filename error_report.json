@@ -1,0 +1,311 @@
+{
+  "total_errors": 30,
+  "errors_by_type": {
+    "异步测试协程警告": 14,
+    "断言失败": 4,
+    "超时错误": 10,
+    "导入路径错误": 2
+  },
+  "error_details": [
+    {
+      "type": "异步测试协程警告",
+      "file_path": "Project\\apps\\backend\\src\\core_ai\\memory\\vector_store.py",
+      "line_number": 123,
+      "message": "RuntimeWarning: coroutine 'VectorMemoryStore._schedule_maintenance' was never awaited",
+      "details": {
+        "context": "    from pkg_resources import resource_stream, resource_exists\n\ntests/core_ai/memory/test_ham_memory_manager.py: 11 warnings\n  D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core_ai\\memory\\vector_store.py:123: RuntimeWarning: coroutine 'VectorMemoryStore._schedule_maintenance' was never awaited\n    logger.warning(f\"Error setting up advanced features: {e}\")\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'VectorMemoryStore._schedule_maintenance' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "Project\\apps\\backend\\tests\\hsp\\test_hsp_integration.py",
+      "line_number": 73,
+      "message": "RuntimeWarning: coroutine 'MockMqttBroker.subscribe' was never awaited",
+      "details": {
+        "context": "\ntests/hsp/test_hsp_simple.py::test_hsp_connector_init\ntests/hsp/test_hsp_simple.py::test_publish_fact\n  D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\hsp\\test_hsp_integration.py:73: RuntimeWarning: coroutine 'MockMqttBroker.subscribe' was never awaited\n    self.subscribe(topic, self.clients[client_id])\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'MockMqttBroker.subscribe' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "Project\\apps\\backend\\src\\core_ai\\learning\\learning_manager.py",
+      "line_number": 240,
+      "message": "RuntimeWarning: coroutine 'initialize_services.<locals>.TempMockHAM.store_experience' was never awaited",
+      "details": {
+        "context": "tests/integration/test_agent_collaboration.py::TestAgentCollaboration::test_handle_project_dynamic_agent_launch\ntests/integration/test_agent_collaboration.py::TestAgentCollaboration::test_handle_project_failing_subtask\ntests/integration/test_agent_collaboration.py::TestAgentCollaboration::test_handle_project_no_dependencies\n  D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core_ai\\learning\\learning_manager.py:240: RuntimeWarning: coroutine 'initialize_services.<locals>.TempMockHAM.store_experience' was never awaited\n    self.ham_memory.store_experience(raw_data=project_case, data_type=\"project_execution_case\", metadata=raw_case_metadata)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'initialize_services.<locals>.TempMockHAM.store_experience' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\events.py",
+      "line_number": 88,
+      "message": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited",
+      "details": {
+        "context": "    async with self.limiters[provider_name]:\n\ntests/integration/test_learning_and_trust.py::TestLearningAndTrustIntegration::test_fact_from_high_trust_source_is_accepted\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\events.py:88: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited\n    self._context.run(self._callback, *self._args)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_placeholder' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/services/test_audio_service.py::TestAudioService::test_02_speech_to_text_placeholder\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_placeholder' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_placeholder' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestLLMInterface.test_02_generate_response_placeholder' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/services/test_llm_interface.py::TestLLMInterface::test_02_generate_response_placeholder\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestLLMInterface.test_02_generate_response_placeholder' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestLLMInterface.test_02_generate_response_placeholder' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestLLMInterface.test_03_list_models_placeholder' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/services/test_llm_interface.py::TestLLMInterface::test_03_list_models_placeholder\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestLLMInterface.test_03_list_models_placeholder' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestLLMInterface.test_03_list_models_placeholder' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestVisionService.test_02_analyze_image' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/services/test_vision_service.py::TestVisionService::test_02_analyze_image\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestVisionService.test_02_analyze_image' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestVisionService.test_02_analyze_image' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestVisionService.test_03_compare_images' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/services/test_vision_service.py::TestVisionService::test_03_compare_images\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestVisionService.test_03_compare_images' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestVisionService.test_03_compare_images' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestLogicModelComponents.test_05_tool_dispatcher_logic_routing' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/tools/test_logic_model.py::TestLogicModelComponents::test_05_tool_dispatcher_logic_routing\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestLogicModelComponents.test_05_tool_dispatcher_logic_routing' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestLogicModelComponents.test_05_tool_dispatcher_logic_routing' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestMathModelComponents.test_math_tool_calculate_model_unavailable' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/tools/test_math_model.py::TestMathModelComponents::test_math_tool_calculate_model_unavailable\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestMathModelComponents.test_math_tool_calculate_model_unavailable' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestMathModelComponents.test_math_tool_calculate_model_unavailable' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestMathModelComponents.test_tool_dispatcher_math_routing' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/tools/test_math_model.py::TestMathModelComponents::test_tool_dispatcher_math_routing\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestMathModelComponents.test_tool_dispatcher_math_routing' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestMathModelComponents.test_tool_dispatcher_math_routing' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestTranslationModelComponents.test_05_tool_dispatcher_translation_routing' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/tools/test_translation_model.py::TestTranslationModelComponents::test_05_tool_dispatcher_translation_routing\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestTranslationModelComponents.test_05_tool_dispatcher_translation_routing' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestTranslationModelComponents.test_05_tool_dispatcher_translation_routing' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "packages\\_pytest\\unraisableexception.py",
+      "line_number": 33,
+      "message": "RuntimeWarning: coroutine 'EnhancedAtlassianBridge._check_demo_mode' was never awaited",
+      "details": {
+        "context": "FAILED tests/test_hsp_connector.py::test_hsp_connector_ack_sending - AssertionError: Expected 'publish' to have been called once. Called 0 times.\n===== 40 failed, 451 passed, 15 skipped, 32 warnings in 321.40s (0:05:21) =====\n\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\unraisableexception.py:33: RuntimeWarning: coroutine 'EnhancedAtlassianBridge._check_demo_mode' was never awaited\n  gc.collect()\nRuntimeWarning: Enable tracemalloc to get the object allocation traceback\n",
+        "full_match": "RuntimeWarning: coroutine 'EnhancedAtlassianBridge._check_demo_mode' was never awaited"
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "tests\\core_ai\\learning\\test_content_analyzer_module.py",
+      "line_number": 60,
+      "message": "AssertionError: 5 != 4",
+      "details": {
+        "context": "_________ TestContentAnalyzerModule.test_02_simple_entity_extraction __________\ntests\\core_ai\\learning\\test_content_analyzer_module.py:60: in test_02_simple_entity_extraction\n    self.assertEqual(nx_graph.number_of_nodes(), len(kg_data[\"entities\"]))\nE   AssertionError: 5 != 4\n---------------------------- Captured stdout call -----------------------------\nDEBUG: Created is_a relationship: ent_apple_inc__4af4a2fe --is_a--> ent_concept_company_d39f4b30\nDEBUG: Created is_a relationship: ent_steve_jobs_2b9525db --is_a--> ent_person_cb92cbab",
+        "full_match": "AssertionError: 5 != 4"
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "tests\\core_ai\\learning\\test_content_analyzer_module.py",
+      "line_number": 899,
+      "message": "AssertionError: 'http://example.org/entity/Paris' != 'cai_instance:ex_Paris'",
+      "details": {
+        "context": "tests\\core_ai\\learning\\test_content_analyzer_module.py:899: in test_16_process_hsp_fact_content_semantic_triple_with_mapping\n    self.assertEqual(processed_triple_info[\"subject_id\"], expected_s_id) # type: ignore\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AssertionError: 'http://example.org/entity/Paris' != 'cai_instance:ex_Paris'\nE   - http://example.org/entity/Paris\nE   + cai_instance:ex_Paris\n_ TestContentAnalyzerModule.test_17_process_hsp_fact_content_semantic_triple_no_mapping _",
+        "full_match": "AssertionError: 'http://example.org/entity/Paris' != 'cai_instance:ex_Paris'"
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": null,
+      "line_number": null,
+      "message": "AssertionError: 5 != 4",
+      "details": {
+        "context": "FAILED tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_name_not_found - AssertionError: no logs of level WARNING or higher triggered on src.core_ai.code_understanding.lightweight_code_model\nFAILED tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_get_tool_structure_path_looks_like_path_but_not_found - AssertionError: no logs of level WARNING or higher triggered on src.core_ai.code_understanding.lightweight_code_model\nFAILED tests/core_ai/code_understanding/test_lightweight_code_model.py::TestLightweightCodeModel::test_list_tool_files_non_existent_dir - AssertionError: no logs of level WARNING or higher triggered on src.core_ai.code_understanding.lightweight_code_model\nFAILED tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_02_simple_entity_extraction - AssertionError: 5 != 4\nFAILED tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_06_noun_prep_noun_relationship_of - AssertionError: False is not true : Expected 'founder of' type relationship not found between Apple and Steve Jobs.\nFAILED tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_07_noun_of_noun_org_has_attribute - AssertionError: False is not true : Expected 'has_ceo' or similar relationship not found between Google and Sundar Pichai.\nFAILED tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_08_noun_of_noun_attribute_of - AssertionError: False is not true : Expected 'has_capital' or similar relationship not found between France and capital.",
+        "full_match": "AssertionError: 5 != 4"
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": null,
+      "line_number": null,
+      "message": "AssertionError: 'http://example.org/entity/Paris' != 'cai_instance:ex_Paris'",
+      "details": {
+        "context": "FAILED tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_13_matcher_person_is_ceo_of_org - AssertionError: False is not true : Relationship Microsoft -> Satya Nadella (type: has_ceo) not found in KG relationships. (Allow reverse: False)\nFAILED tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_14_matcher_person_is_founder_of_org - AssertionError: False is not true : Entity 'ExampleCorp' (type: ORG) not found in graph entities.\nFAILED tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_15_process_hsp_fact_content_nl - TypeError: list indices must be integers or slices, not str\nFAILED tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_16_process_hsp_fact_content_semantic_triple_with_mapping - AssertionError: 'http://example.org/entity/Paris' != 'cai_instance:ex_Paris'\n- http://example.org/entity/Paris\n+ cai_instance:ex_Paris\nFAILED tests/core_ai/learning/test_content_analyzer_module.py::TestContentAnalyzerModule::test_17_process_hsp_fact_content_semantic_triple_no_mapping - AssertionError: False is not true",
+        "full_match": "AssertionError: 'http://example.org/entity/Paris' != 'cai_instance:ex_Paris'"
+      }
+    },
+    {
+      "type": "超时错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py",
+      "line_number": 115,
+      "message": "TimeoutError",
+      "details": {
+        "context": "    async with timeouts.timeout(timeout):\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py:115: in __aexit__\n    raise TimeoutError from exc_val\nE   TimeoutError\n---------------------------- Captured stdout setup ----------------------------\nTrustManager initialized. Default score for new AIs: 0.5",
+        "full_match": "TimeoutError"
+      }
+    },
+    {
+      "type": "超时错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py",
+      "line_number": 115,
+      "message": "TimeoutError",
+      "details": {
+        "context": "               ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py:115: in __aexit__\n    raise TimeoutError from exc_val\nE   TimeoutError\n---------------------------- Captured stdout setup ----------------------------\nTrustManager initialized. Default score for new AIs: 0.5\nPersonalityManager: Successfully loaded personality 'miko_base'.",
+        "full_match": "TimeoutError"
+      }
+    },
+    {
+      "type": "超时错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py",
+      "line_number": 115,
+      "message": "TimeoutError",
+      "details": {
+        "context": "    async with timeouts.timeout(timeout):\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py:115: in __aexit__\n    raise TimeoutError from exc_val\nE   TimeoutError\n\nDuring handling of the above exception, another exception occurred:",
+        "full_match": "TimeoutError"
+      }
+    },
+    {
+      "type": "超时错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py",
+      "line_number": 115,
+      "message": "TimeoutError",
+      "details": {
+        "context": "               ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py:115: in __aexit__\n    raise TimeoutError from exc_val\nE   TimeoutError\n\nDuring handling of the above exception, another exception occurred:\ntests\\hsp\\test_hsp_integration.py:985: in test_dm_delegates_task_to_specialist_ai_and_gets_result",
+        "full_match": "TimeoutError"
+      }
+    },
+    {
+      "type": "超时错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py",
+      "line_number": 115,
+      "message": "TimeoutError",
+      "details": {
+        "context": "    async with timeouts.timeout(timeout):\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py:115: in __aexit__\n    raise TimeoutError from exc_val\nE   TimeoutError\n\nDuring handling of the above exception, another exception occurred:",
+        "full_match": "TimeoutError"
+      }
+    },
+    {
+      "type": "超时错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py",
+      "line_number": 115,
+      "message": "TimeoutError",
+      "details": {
+        "context": "               ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py:115: in __aexit__\n    raise TimeoutError from exc_val\nE   TimeoutError\n\nDuring handling of the above exception, another exception occurred:\ntests\\hsp\\test_hsp_integration.py:1080: in test_dm_handles_hsp_task_failure_and_falls_back",
+        "full_match": "TimeoutError"
+      }
+    },
+    {
+      "type": "超时错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py",
+      "line_number": 115,
+      "message": "TimeoutError",
+      "details": {
+        "context": "    async with timeouts.timeout(timeout):\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py:115: in __aexit__\n    raise TimeoutError from exc_val\nE   TimeoutError\n----------------------------- Captured log setup ------------------------------\nWARNING  apps.backend.src.hsp.connector:connector.py:1214 No capability provider registered. Cannot re-advertise capabilities.",
+        "full_match": "TimeoutError"
+      }
+    },
+    {
+      "type": "超时错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py",
+      "line_number": 115,
+      "message": "TimeoutError",
+      "details": {
+        "context": "               ^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\timeouts.py:115: in __aexit__\n    raise TimeoutError from exc_val\nE   TimeoutError\n----------------------------- Captured log setup ------------------------------\nWARNING  apps.backend.src.hsp.connector:connector.py:1214 No capability provider registered. Cannot re-advertise capabilities.\n---------------------------- Captured stdout call -----------------------------",
+        "full_match": "TimeoutError"
+      }
+    },
+    {
+      "type": "超时错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "TimeoutError",
+      "details": {
+        "context": "assert 0 > 0\n +  where 0 = len({})\n +    where {} = <apps.backend.tests.hsp.test_hsp_integration.MockHAM object at 0x00000271D1A3EE40>.memory_store\nFAILED tests/hsp/test_hsp_integration.py::TestHSPFactConsumption::test_main_ai_consumes_structured_fact_updates_kg - TimeoutError\nFAILED tests/hsp/test_hsp_integration.py::TestHSPFactConsumption::test_ca_semantic_mapping_for_hsp_structured_fact - AssertionError: ContentAnalyzerModule graph was not updated\nassert 0 > 0\n +  where 0 = len(NodeView(()))",
+        "full_match": "TimeoutError"
+      }
+    },
+    {
+      "type": "超时错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "TimeoutError",
+      "details": {
+        "context": " +        where <networkx.classes.digraph.DiGraph object at 0x00000271D1B3CFE0> = <apps.backend.src.core_ai.learning.content_analyzer_module.ContentAnalyzerModule object at 0x00000271D1B3D0A0>.graph\nFAILED tests/hsp/test_hsp_integration.py::TestHSPTaskDelegation::test_dm_delegates_task_to_specialist_ai_and_gets_result - Failed: Event wait timed out after 10.0 seconds\nFAILED tests/hsp/test_hsp_integration.py::TestHSPTaskDelegation::test_dm_handles_hsp_task_failure_and_falls_back - Failed: Event wait timed out after 10.0 seconds\nFAILED tests/hsp/test_hsp_simple.py::test_publish_fact - TimeoutError\nFAILED tests/integration/test_agent_collaboration.py::TestAgentCollaboration::test_handle_complex_project_with_dag - AssertionError: 'Based on the data summary' not found in \"Miko (Base): Here's the result of your project request:\\n\\nMock response (no API key)\"\nFAILED tests/integration/test_agent_collaboration.py::TestAgentCollaboration::test_handle_project_dynamic_agent_launch - AssertionError: 'Dynamically launched agent' not found in \"Miko (Base): Here's the result of your project request:\\n\\nMock response (no API key)\"\nFAILED tests/integration/test_agent_collaboration.py::TestAgentCollaboration::test_handle_project_failing_subtask - AssertionError: 'The project failed' not found in \"Miko (Base): Here's the result of your project request:\\n\\nMock response (no API key)\"",
+        "full_match": "TimeoutError"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "No module named 'apps'",
+      "details": {
+        "context": "\n    from apps.backend.src.hsp.connector import HSPConnector\n\nModuleNotFoundError: No module named 'apps'\n\nTraceback (most recent call last):\n",
+        "full_match": "No module named 'apps'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "agent_manager.py",
+      "line_number": 167,
+      "message": "No module named 'apps'",
+      "details": {
+        "context": "\n    from apps.backend.src.hsp.connector import HSPConnector\n\nModuleNotFoundError: No module named 'apps'\n\n------------------------------ Captured log call ------------------------------\nWARNING  root:agent_manager.py:167 [AgentManager] Agent 'data_analysis_agent' not ready within 10 seconds. Checking all capabilities...",
+        "full_match": "No module named 'apps'"
+      }
+    }
+  ]
+}
