@@ -53,6 +53,7 @@ CHECKPOINTS_DIR = TRAINING_DIR / "checkpoints"
 
 # 导入训练管理器
 from training.collaborative_training_manager import CollaborativeTrainingManager
+from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
 
 # 配置日志
 logging.basicConfig(
@@ -84,6 +85,7 @@ class ModelTrainer:
         self.tensorflow_available = self._check_tensorflow_availability()
         self.gpu_available = self._check_gpu_availability()
         self.distributed_training_enabled = False
+        self.error_handler = global_error_handler  # 错误处理器
         
         # 加载配置
         self.load_config()
@@ -91,33 +93,55 @@ class ModelTrainer:
     
     def _check_tensorflow_availability(self):
         """检查TensorFlow是否可用"""
+        context = ErrorContext("ModelTrainer", "_check_tensorflow_availability")
         try:
             import tensorflow as tf
             logger.info("✅ TensorFlow可用")
             return True
         except ImportError:
+            self.error_handler.handle_error(Exception("TensorFlow not available"), context, ErrorRecoveryStrategy.FALLBACK)
             logger.warning("⚠️ TensorFlow不可用，将使用模拟训练")
+            return False
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.warning(f"⚠️ 检查TensorFlow可用性时出错: {e}")
             return False
     
     def _check_gpu_availability(self):
         """检查GPU是否可用"""
+        context = ErrorContext("ModelTrainer", "_check_gpu_availability")
         try:
             import tensorflow as tf
-            if tf.config.list_physical_devices('GPU'):
-                logger.info(f"✅ GPU可用: {len(tf.config.list_physical_devices('GPU'))} 个设备")
+            
+            # 兼容不同版本的TensorFlow
+            gpus = []
+            if hasattr(tf, 'config'):
+                if hasattr(tf.config, 'list_physical_devices'):
+                    gpus = tf.config.list_physical_devices('GPU')
+                elif hasattr(tf.config, 'experimental') and hasattr(tf.config.experimental, 'list_physical_devices'):
+                    gpus = tf.config.experimental.list_physical_devices('GPU')
+            elif hasattr(tf, 'test') and hasattr(tf.test, 'is_gpu_available'):
+                # 更老版本的TensorFlow
+                return tf.test.is_gpu_available()
+            
+            if gpus:
+                logger.info(f"✅ GPU可用: {len(gpus)} 个设备")
                 return True
             else:
                 logger.info("ℹ️ 未检测到GPU设备，将使用CPU训练")
                 return False
         except ImportError:
+            self.error_handler.handle_error(Exception("TensorFlow not available"), context, ErrorRecoveryStrategy.FALLBACK)
             logger.warning("⚠️ TensorFlow不可用，无法检测GPU")
             return False
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             logger.warning(f"⚠️ 检测GPU时出错: {e}")
             return False
     
     def _setup_distributed_training(self):
         """设置分布式训练环境"""
+        context = ErrorContext("ModelTrainer", "_setup_distributed_training")
         try:
             import tensorflow as tf
             
@@ -139,16 +163,18 @@ class ModelTrainer:
                 self.distributed_training_enabled = True
                 return None
             else:
-                logger.info("ℹ️ 未检测到GPU，使用CPU训练")
+                logger.info("ℹ️ 未检测到GPU设备，使用CPU训练")
                 self.distributed_training_enabled = False
                 return None
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             logger.error(f"❌ 设置分布式训练环境时出错: {e}")
             self.distributed_training_enabled = False
             return None
     
     def _configure_gpu_memory(self):
         """配置GPU内存使用"""
+        context = ErrorContext("ModelTrainer", "_configure_gpu_memory")
         try:
             import tensorflow as tf
             gpus = tf.config.list_physical_devices('GPU')
@@ -164,68 +190,92 @@ class ModelTrainer:
                 logger.info("ℹ️ 未检测到GPU设备")
                 return False
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             logger.error(f"❌ 配置GPU内存时出错: {e}")
             return False
     
     def load_config(self):
         """加载训练配置"""
+        context = ErrorContext("ModelTrainer", "load_config")
         if self.config_path.exists():
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     self.config = json.load(f)
                 logger.info(f"✅ 加载训练配置: {self.config_path}")
             except Exception as e:
+                self.error_handler.handle_error(e, context)
                 logger.error(f"❌ 加载训练配置失败: {e}")
         else:
             logger.warning(f"⚠️ 训练配置文件不存在: {self.config_path}")
     
     def load_preset(self):
         """加载预设配置"""
+        context = ErrorContext("ModelTrainer", "load_preset")
         if self.preset_path.exists():
             try:
                 with open(self.preset_path, 'r', encoding='utf-8') as f:
                     self.preset = json.load(f)
                 logger.info(f"✅ 加载预设配置: {self.preset_path}")
             except Exception as e:
+                self.error_handler.handle_error(e, context)
                 logger.error(f"❌ 加载预设配置失败: {e}")
         else:
             logger.warning(f"⚠️ 预设配置文件不存在: {self.preset_path}")
     
     def resolve_data_path(self, path_str):
         """解析数据路径，支持相对路径和绝对路径"""
-        return resolve_path(path_str)
+        context = ErrorContext("ModelTrainer", "resolve_data_path")
+        try:
+            return resolve_path(path_str)
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 解析数据路径失败: {path_str} - {e}")
+            return None
     
     def get_preset_scenario(self, scenario_name):
         """获取预设场景配置"""
-        if not self.preset:
-            logger.error("❌ 预设配置未加载")
-            return None
+        context = ErrorContext("ModelTrainer", "get_preset_scenario", {"scenario_name": scenario_name})
+        try:
+            if not self.preset:
+                logger.error("❌ 预设配置未加载")
+                return None
+                
+            scenarios = self.preset.get('training_scenarios', {})
+            scenario = scenarios.get(scenario_name)
             
-        scenarios = self.preset.get('training_scenarios', {})
-        scenario = scenarios.get(scenario_name)
-        
-        if not scenario:
-            logger.error(f"❌ 未找到预设场景: {scenario_name}")
+            if not scenario:
+                logger.error(f"❌ 未找到预设场景: {scenario_name}")
+                return None
+                
+            logger.info(f"✅ 使用预设场景: {scenario_name}")
+            logger.info(f"📝 场景描述: {scenario.get('description', '无描述')}")
+            return scenario
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 获取预设场景失败: {scenario_name} - {e}")
             return None
-            
-        logger.info(f"✅ 使用预设场景: {scenario_name}")
-        logger.info(f"📝 场景描述: {scenario.get('description', '无描述')}")
-        return scenario
     
     def check_disk_space(self, min_space_gb=5):
         """检查磁盘空间是否充足"""
-        disk_usage = shutil.disk_usage(str(self.project_root))
-        free_space_gb = disk_usage.free / (1024**3)
-        
-        if free_space_gb < min_space_gb:
-            logger.warning(f"⚠️ 磁盘空间不足: 剩余 {free_space_gb:.2f} GB, 最少需要 {min_space_gb} GB")
-            return False
-        else:
-            logger.info(f"✅ 磁盘空间充足: 剩余 {free_space_gb:.2f} GB")
-            return True
+        context = ErrorContext("ModelTrainer", "check_disk_space")
+        try:
+            disk_usage = shutil.disk_usage(str(self.project_root))
+            free_space_gb = disk_usage.free / (1024**3)
+            
+            if free_space_gb < min_space_gb:
+                logger.warning(f"⚠️ 磁盘空间不足: 剩余 {free_space_gb:.2f} GB, 最少需要 {min_space_gb} GB")
+                return False
+            else:
+                logger.info(f"✅ 磁盘空间充足: 剩余 {free_space_gb:.2f} GB")
+                return True
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 检查磁盘空间失败: {e}")
+            return True  # 出错时假设空间充足
     
     def save_checkpoint(self, epoch, model_state=None):
         """保存训练检查点"""
+        context = ErrorContext("ModelTrainer", "save_checkpoint", {"epoch": epoch})
         checkpoint_path = CHECKPOINTS_DIR / f"epoch_{epoch}_checkpoint.json"
         checkpoint_data = {
             "epoch": epoch,
@@ -240,31 +290,34 @@ class ModelTrainer:
             self.checkpoint_file = checkpoint_path
             return True
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             logger.error(f"❌ 保存检查点失败: {e}")
             return False
     
     def load_checkpoint(self, checkpoint_path=None):
         """加载训练检查点"""
-        if not checkpoint_path and self.checkpoint_file:
-            checkpoint_path = self.checkpoint_file
-        elif not checkpoint_path:
-            # 查找最新的检查点文件
-            checkpoint_files = list(CHECKPOINTS_DIR.glob("*_checkpoint.json"))
-            if not checkpoint_files:
+        context = ErrorContext("ModelTrainer", "load_checkpoint")
+        try:
+            if not checkpoint_path and self.checkpoint_file:
+                checkpoint_path = self.checkpoint_file
+            elif not checkpoint_path:
+                # 查找最新的检查点文件
+                checkpoint_files = list(CHECKPOINTS_DIR.glob("*_checkpoint.json"))
+                if not checkpoint_files:
+                    logger.info("🔍 未找到检查点文件")
+                    return None
+                checkpoint_path = max(checkpoint_files, key=os.path.getctime)
+            
+            if not checkpoint_path or not Path(checkpoint_path).exists():
                 logger.info("🔍 未找到检查点文件")
                 return None
-            checkpoint_path = max(checkpoint_files, key=os.path.getctime)
-        
-        if not checkpoint_path or not Path(checkpoint_path).exists():
-            logger.info("🔍 未找到检查点文件")
-            return None
-            
-        try:
+                
             with open(checkpoint_path, 'r', encoding='utf-8') as f:
                 checkpoint_data = json.load(f)
             logger.info(f"✅ 加载检查点: {checkpoint_path.name}")
             return checkpoint_data
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             logger.error(f"❌ 加载检查点失败: {e}")
             return None
     
@@ -631,7 +684,7 @@ class ModelTrainer:
                 progress = (epoch / epochs) * 100
                 logger.info(f"  Epoch {epoch}/{epochs} - 进度: {progress:.1f}% - Loss: {epoch_metrics['loss']:.4f} - Accuracy: {epoch_metrics['accuracy']:.4f}")
                 
-                # 保存检查点
+                # 模拟保存检查点
                 if epoch % checkpoint_interval == 0 or epoch == epochs:
                     self.save_checkpoint(epoch, epoch_metrics)
             

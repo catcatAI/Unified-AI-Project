@@ -36,6 +36,8 @@ except ImportError:
     DATA_DIR = PROJECT_ROOT / "data"
     TRAINING_DIR = PROJECT_ROOT / "training"
 
+from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -46,6 +48,7 @@ class DataManager:
         self.data_dir = Path(data_dir) if data_dir else DATA_DIR
         self.data_catalog = {}
         self.data_quality_scores = {}
+        self.error_handler = global_error_handler  # 错误处理器
         self.supported_formats = {
             'image': ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp'],
             'audio': ['.wav', '.mp3', '.flac', '.aac', '.ogg', '.m4a', '.wma'],
@@ -76,90 +79,103 @@ class DataManager:
     
     def scan_data(self) -> Dict[str, Any]:
         """扫描并分类所有数据"""
+        context = ErrorContext("DataManager", "scan_data")
         logger.info(f"🔍 开始扫描数据目录: {self.data_dir}")
         
-        # 清空之前的数据目录
-        self.data_catalog = {}
-        
-        # 遍历数据目录
-        for root, dirs, files in os.walk(self.data_dir):
-            # 跳过隐藏目录
-            dirs[:] = [d for d in dirs if not d.startswith('.')]
+        try:
+            # 清空之前的数据目录
+            self.data_catalog = {}
             
-            for file in files:
-                # 跳过隐藏文件
-                if file.startswith('.'):
-                    continue
-                    
-                file_path = Path(root) / file
-                relative_path = file_path.relative_to(self.data_dir)
+            # 遍历数据目录
+            for root, dirs, files in os.walk(self.data_dir):
+                # 跳过隐藏目录
+                dirs[:] = [d for d in dirs if not d.startswith('.')]
                 
-                # 获取文件信息
-                try:
-                    stat = file_path.stat()
-                    file_info = {
-                        'path': str(file_path),
-                        'relative_path': str(relative_path),
-                        'size': stat.st_size,
-                        'modified_time': stat.st_mtime,
-                        'extension': file_path.suffix.lower(),
-                        'type': self._classify_file(file_path)
-                    }
+                for file in files:
+                    # 跳过隐藏文件
+                    if file.startswith('.'):
+                        continue
+                        
+                    file_path = Path(root) / file
+                    relative_path = file_path.relative_to(self.data_dir)
                     
-                    # 添加到数据目录
-                    self.data_catalog[str(relative_path)] = file_info
-                except Exception as e:
-                    logger.warning(f"⚠️ 无法获取文件信息 {file_path}: {e}")
-        
-        logger.info(f"✅ 数据扫描完成，共发现 {len(self.data_catalog)} 个文件")
-        return self.data_catalog
+                    # 获取文件信息
+                    try:
+                        stat = file_path.stat()
+                        file_info = {
+                            'path': str(file_path),
+                            'relative_path': str(relative_path),
+                            'size': stat.st_size,
+                            'modified_time': stat.st_mtime,
+                            'extension': file_path.suffix.lower(),
+                            'type': self._classify_file(file_path)
+                        }
+                        
+                        # 添加到数据目录
+                        self.data_catalog[str(relative_path)] = file_info
+                    except Exception as e:
+                        logger.warning(f"⚠️ 无法获取文件信息 {file_path}: {e}")
+            
+            logger.info(f"✅ 数据扫描完成，共发现 {len(self.data_catalog)} 个文件")
+            return self.data_catalog
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 扫描数据失败: {e}")
+            return {}
     
     def _classify_file(self, file_path: Path) -> str:
         """根据文件扩展名分类文件"""
-        extension = file_path.suffix.lower()
-        
-        for data_type, extensions in self.supported_formats.items():
-            if extension in extensions:
-                return data_type
-        
-        # 尝试使用mimetypes分类
-        mime_type, _ = mimetypes.guess_type(str(file_path))
-        if mime_type:
-            if mime_type.startswith('image/'):
-                return 'image'
-            elif mime_type.startswith('audio/'):
-                return 'audio'
-            elif mime_type.startswith('video/'):
-                return 'video'
-            elif mime_type.startswith('text/'):
+        context = ErrorContext("DataManager", "_classify_file", {"file_path": str(file_path)})
+        try:
+            extension = file_path.suffix.lower()
+            
+            for data_type, extensions in self.supported_formats.items():
+                if extension in extensions:
+                    return data_type
+            
+            # 尝试使用mimetypes分类
+            mime_type, _ = mimetypes.guess_type(str(file_path))
+            if mime_type:
+                if mime_type.startswith('image/'):
+                    return 'image'
+                elif mime_type.startswith('audio/'):
+                    return 'audio'
+                elif mime_type.startswith('video/'):
+                    return 'video'
+                elif mime_type.startswith('text/'):
+                    return 'text'
+                elif mime_type == 'application/pdf':
+                    return 'document'
+                elif mime_type.startswith('application/'):
+                    # 检查是否为模型文件
+                    if any(model_ext in mime_type for model_ext in ['model', 'tensorflow', 'pytorch', 'onnx']):
+                        return 'model'
+                    # 检查是否为压缩文件
+                    elif any(arch_ext in mime_type for arch_ext in ['zip', 'rar', '7z', 'tar', 'gzip']):
+                        return 'archive'
+                    # 其他应用程序文件
+                    else:
+                        return 'binary'
+            
+            # 根据文件名模式进一步分类
+            filename = file_path.name.lower()
+            if any(pattern in filename for pattern in ['model', 'checkpoint', 'weights']):
+                return 'model'
+            elif any(pattern in filename for pattern in ['train', 'test', 'valid', 'dataset']):
+                return 'data'
+            elif any(pattern in filename for pattern in ['config', 'setting']):
                 return 'text'
-            elif mime_type == 'application/pdf':
-                return 'document'
-            elif mime_type.startswith('application/'):
-                # 检查是否为模型文件
-                if any(model_ext in mime_type for model_ext in ['model', 'tensorflow', 'pytorch', 'onnx']):
-                    return 'model'
-                # 检查是否为压缩文件
-                elif any(arch_ext in mime_type for arch_ext in ['zip', 'rar', '7z', 'tar', 'gzip']):
-                    return 'archive'
-                # 其他应用程序文件
-                else:
-                    return 'binary'
-        
-        # 根据文件名模式进一步分类
-        filename = file_path.name.lower()
-        if any(pattern in filename for pattern in ['model', 'checkpoint', 'weights']):
-            return 'model'
-        elif any(pattern in filename for pattern in ['train', 'test', 'valid', 'dataset']):
-            return 'data'
-        elif any(pattern in filename for pattern in ['config', 'setting']):
+            
+            # 默认分类为文本
             return 'text'
-        
-        # 默认分类为文本
-        return 'text'
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 分类文件失败: {file_path} - {e}")
+            return 'text'  # 默认返回文本类型
     
     def assess_data_quality(self, file_path: str) -> Dict[str, Any]:
         """评估单个文件的数据质量"""
+        context = ErrorContext("DataManager", "assess_data_quality", {"file_path": file_path})
         path = Path(file_path)
         if not path.exists():
             return {'quality_score': 0, 'issues': ['文件不存在']}
@@ -216,6 +232,7 @@ class DataManager:
                 quality_info['quality_score'] -= 10
                 
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             quality_info['issues'].append(f'评估错误: {str(e)}')
             quality_info['quality_score'] = 0
         
@@ -227,6 +244,7 @@ class DataManager:
     
     def _assess_image_quality(self, file_path: Path, quality_info: Dict) -> Dict:
         """评估图像文件质量"""
+        context = ErrorContext("DataManager", "_assess_image_quality", {"file_path": str(file_path)})
         try:
             # 尝试导入PIL来检查图像文件
             from PIL import Image
@@ -271,6 +289,7 @@ class DataManager:
             # 如果没有PIL，跳过图像特定检查
             pass
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             quality_info['issues'].append(f'图像读取错误: {str(e)}')
             quality_info['quality_score'] -= 20
         
@@ -278,6 +297,7 @@ class DataManager:
     
     def _assess_audio_quality(self, file_path: Path, quality_info: Dict) -> Dict:
         """评估音频文件质量"""
+        context = ErrorContext("DataManager", "_assess_audio_quality", {"file_path": str(file_path)})
         # 简单的音频文件质量检查
         try:
             # 检查文件扩展名是否为支持的音频格式
@@ -287,6 +307,7 @@ class DataManager:
             else:
                 quality_info['issues'].append(f'音频格式可能不支持: {extension}')
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             quality_info['issues'].append(f'音频检查错误: {str(e)}')
             quality_info['quality_score'] -= 10
         
@@ -294,6 +315,7 @@ class DataManager:
     
     def _assess_text_quality(self, file_path: Path, quality_info: Dict) -> Dict:
         """评估文本文件质量"""
+        context = ErrorContext("DataManager", "_assess_text_quality", {"file_path": str(file_path)})
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -350,6 +372,7 @@ class DataManager:
             quality_info['issues'].append('文件编码不支持')
             quality_info['quality_score'] -= 25
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             quality_info['issues'].append(f'文本读取错误: {str(e)}')
             quality_info['quality_score'] -= 20
         
@@ -357,6 +380,7 @@ class DataManager:
     
     def _assess_code_quality(self, file_path: Path, quality_info: Dict) -> Dict:
         """评估代码文件质量"""
+        context = ErrorContext("DataManager", "_assess_code_quality", {"file_path": str(file_path)})
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -401,6 +425,7 @@ class DataManager:
             quality_info['issues'].append('代码文件编码不支持')
             quality_info['quality_score'] -= 25
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             quality_info['issues'].append(f'代码读取错误: {str(e)}')
             quality_info['quality_score'] -= 20
         
@@ -408,6 +433,7 @@ class DataManager:
     
     def _assess_model_quality(self, file_path: Path, quality_info: Dict) -> Dict:
         """评估模型文件质量"""
+        context = ErrorContext("DataManager", "_assess_model_quality", {"file_path": str(file_path)})
         try:
             # 检查文件扩展名
             extension = file_path.suffix.lower()
@@ -446,6 +472,7 @@ class DataManager:
                     quality_info['quality_score'] -= 15
                     
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             quality_info['issues'].append(f'模型文件读取错误: {str(e)}')
             quality_info['quality_score'] -= 25
         
@@ -453,6 +480,7 @@ class DataManager:
     
     def _assess_data_quality(self, file_path: Path, quality_info: Dict) -> Dict:
         """评估数据文件质量"""
+        context = ErrorContext("DataManager", "_assess_data_quality", {"file_path": str(file_path)})
         try:
             extension = file_path.suffix.lower()
             
@@ -515,6 +543,7 @@ class DataManager:
             quality_info['issues'].append('JSON格式错误')
             quality_info['quality_score'] -= 20
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             quality_info['issues'].append(f'数据文件读取错误: {str(e)}')
             quality_info['quality_score'] -= 15
         
@@ -522,6 +551,7 @@ class DataManager:
     
     def _assess_archive_quality(self, file_path: Path, quality_info: Dict) -> Dict:
         """评估压缩文件质量"""
+        context = ErrorContext("DataManager", "_assess_archive_quality", {"file_path": str(file_path)})
         try:
             import zipfile
             import tarfile
@@ -572,6 +602,7 @@ class DataManager:
                 quality_info['quality_score'] -= 10
                 
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             quality_info['issues'].append(f'压缩文件读取错误: {str(e)}')
             quality_info['quality_score'] -= 20
         
@@ -579,6 +610,7 @@ class DataManager:
     
     def _is_file_corrupted(self, file_path: Path) -> bool:
         """检查文件是否可能已损坏"""
+        context = ErrorContext("DataManager", "_is_file_corrupted", {"file_path": str(file_path)})
         try:
             # 计算文件的MD5哈希值
             hash_md5 = hashlib.md5()
@@ -591,167 +623,209 @@ class DataManager:
                 return True
                 
             return False
-        except Exception:
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
             return True
     
     def get_data_by_type(self, data_type: str) -> List[Dict[str, Any]]:
         """根据数据类型获取文件列表"""
-        result = []
-        for file_info in self.data_catalog.values():
-            if file_info['type'] == data_type:
-                result.append(file_info)
-        return result
+        context = ErrorContext("DataManager", "get_data_by_type", {"data_type": data_type})
+        try:
+            result = []
+            for file_info in self.data_catalog.values():
+                if file_info['type'] == data_type:
+                    result.append(file_info)
+            return result
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 根据数据类型获取文件列表失败: {data_type} - {e}")
+            return []
     
     def get_high_quality_data(self, min_quality_score: int = 70) -> Dict[str, List[Dict[str, Any]]]:
         """获取高质量数据（按类型分组）"""
-        high_quality_data = {}
-        
-        # 先评估所有数据的质量
-        for file_path in self.data_catalog.keys():
-            self.assess_data_quality(file_path)
-        
-        # 按类型分组高质量数据
-        for file_path, quality_info in self.data_quality_scores.items():
-            if quality_info['quality_score'] >= min_quality_score:
-                file_info = self.data_catalog.get(file_path)
-                if file_info:
-                    data_type = file_info['type']
-                    if data_type not in high_quality_data:
-                        high_quality_data[data_type] = []
-                    high_quality_data[data_type].append(file_info)
-        
-        return high_quality_data
+        context = ErrorContext("DataManager", "get_high_quality_data")
+        try:
+            high_quality_data = {}
+            
+            # 先评估所有数据的质量
+            for file_path in self.data_catalog.keys():
+                self.assess_data_quality(file_path)
+            
+            # 按类型分组高质量数据
+            for file_path, quality_info in self.data_quality_scores.items():
+                if quality_info['quality_score'] >= min_quality_score:
+                    file_info = self.data_catalog.get(file_path)
+                    if file_info:
+                        data_type = file_info['type']
+                        if data_type not in high_quality_data:
+                            high_quality_data[data_type] = []
+                        high_quality_data[data_type].append(file_info)
+            
+            return high_quality_data
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 获取高质量数据失败: {e}")
+            return {}
     
     def prepare_training_data(self, model_type: str) -> List[Dict[str, Any]]:
         """为特定模型类型准备训练数据"""
+        context = ErrorContext("DataManager", "prepare_training_data", {"model_type": model_type})
         logger.info(f"📦 为模型 {model_type} 准备训练数据")
         
-        # 获取该模型支持的数据类型
-        supported_types = self.model_data_mapping.get(model_type, [])
-        if not supported_types:
-            logger.warning(f"⚠️ 未找到模型 {model_type} 的数据映射")
-            return []
-        
-        # 收集支持的数据
-        training_data = []
-        for data_type in supported_types:
-            data_files = self.get_data_by_type(data_type)
-            training_data.extend(data_files)
-        
-        # 对于概念模型，直接添加概念模型训练数据
-        if model_type in ['concept_models', 'environment_simulator', 'causal_reasoning_engine', 
-                         'adaptive_learning_controller', 'alpha_deep_model']:
-            # 添加概念模型专用训练数据
-            concept_data_dir = self.data_dir / "concept_models_training_data"
-            if concept_data_dir.exists():
-                for json_file in concept_data_dir.glob("*.json"):
-                    # 根据模型类型过滤数据
-                    if self._is_data_relevant_for_model(json_file.name, model_type):
-                        file_info = {
-                            'path': str(json_file),
-                            'relative_path': str(json_file.relative_to(self.data_dir)),
-                            'size': json_file.stat().st_size,
-                            'modified_time': json_file.stat().st_mtime,
-                            'extension': '.json',
-                            'type': 'json'
-                        }
-                        training_data.append(file_info)
-        
-        # 过滤高质量数据
-        high_quality_data = self.get_high_quality_data()
-        filtered_data = []
-        for data_item in training_data:
-            # 检查数据是否在高质量数据中
-            data_type = data_item['type']
-            if data_type in high_quality_data:
-                high_quality_files = [f['path'] for f in high_quality_data[data_type]]
-                if data_item['path'] in high_quality_files:
+        try:
+            # 获取该模型支持的数据类型
+            supported_types = self.model_data_mapping.get(model_type, [])
+            if not supported_types:
+                logger.warning(f"⚠️ 未找到模型 {model_type} 的数据映射")
+                return []
+            
+            # 收集支持的数据
+            training_data = []
+            for data_type in supported_types:
+                data_files = self.get_data_by_type(data_type)
+                training_data.extend(data_files)
+            
+            # 对于概念模型，直接添加概念模型训练数据
+            if model_type in ['concept_models', 'environment_simulator', 'causal_reasoning_engine', 
+                             'adaptive_learning_controller', 'alpha_deep_model']:
+                # 添加概念模型专用训练数据
+                concept_data_dir = self.data_dir / "concept_models_training_data"
+                if concept_data_dir.exists():
+                    for json_file in concept_data_dir.glob("*.json"):
+                        # 根据模型类型过滤数据
+                        if self._is_data_relevant_for_model(json_file.name, model_type):
+                            file_info = {
+                                'path': str(json_file),
+                                'relative_path': str(json_file.relative_to(self.data_dir)),
+                                'size': json_file.stat().st_size,
+                                'modified_time': json_file.stat().st_mtime,
+                                'extension': '.json',
+                                'type': 'json'
+                            }
+                            training_data.append(file_info)
+            
+            # 过滤高质量数据
+            high_quality_data = self.get_high_quality_data()
+            filtered_data = []
+            for data_item in training_data:
+                # 检查数据是否在高质量数据中
+                data_type = data_item['type']
+                if data_type in high_quality_data:
+                    high_quality_files = [f['path'] for f in high_quality_data[data_type]]
+                    if data_item['path'] in high_quality_files:
+                        filtered_data.append(data_item)
+                else:
+                    # 如果没有高质量数据检查，直接添加
                     filtered_data.append(data_item)
-            else:
-                # 如果没有高质量数据检查，直接添加
-                filtered_data.append(data_item)
-        
-        logger.info(f"✅ 为模型 {model_type} 准备了 {len(filtered_data)} 个训练数据文件")
-        return filtered_data
+            
+            logger.info(f"✅ 为模型 {model_type} 准备了 {len(filtered_data)} 个训练数据文件")
+            return filtered_data
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 为模型 {model_type} 准备训练数据失败: {e}")
+            return []
     
     def _is_data_relevant_for_model(self, filename: str, model_type: str) -> bool:
         """检查数据文件是否与特定模型相关"""
-        # 根据文件名和模型类型判断相关性
-        if model_type == 'environment_simulator' and 'environment' in filename:
-            return True
-        elif model_type == 'causal_reasoning_engine' and 'causal' in filename:
-            return True
-        elif model_type == 'adaptive_learning_controller' and 'adaptive' in filename:
-            return True
-        elif model_type == 'alpha_deep_model' and 'alpha' in filename:
-            return True
-        elif model_type == 'concept_models':
-            # 概念模型可以使用所有概念数据
-            return any(keyword in filename for keyword in ['environment', 'causal', 'adaptive', 'alpha'])
-        
-        return False
+        context = ErrorContext("DataManager", "_is_data_relevant_for_model", {"filename": filename, "model_type": model_type})
+        try:
+            # 根据文件名和模型类型判断相关性
+            if model_type == 'environment_simulator' and 'environment' in filename:
+                return True
+            elif model_type == 'causal_reasoning_engine' and 'causal' in filename:
+                return True
+            elif model_type == 'adaptive_learning_controller' and 'adaptive' in filename:
+                return True
+            elif model_type == 'alpha_deep_model' and 'alpha' in filename:
+                return True
+            elif model_type == 'concept_models':
+                # 概念模型可以使用所有概念数据
+                return any(keyword in filename for keyword in ['environment', 'causal', 'adaptive', 'alpha'])
+            
+            return False
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 检查数据文件相关性失败: {filename} - {model_type} - {e}")
+            return False
 
     def get_data_statistics(self) -> Dict[str, Any]:
         """获取数据统计信息"""
-        if not self.data_catalog:
-            self.scan_data()
-        
-        stats = {
-            'total_files': len(self.data_catalog),
-            'file_types': {},
-            'total_size': 0,
-            'last_scan_time': datetime.now().isoformat()
-        }
-        
-        # 统计各类文件数量和大小
-        for file_info in self.data_catalog.values():
-            file_type = file_info['type']
-            if file_type not in stats['file_types']:
-                stats['file_types'][file_type] = {'count': 0, 'size': 0}
+        context = ErrorContext("DataManager", "get_data_statistics")
+        try:
+            if not self.data_catalog:
+                self.scan_data()
             
-            stats['file_types'][file_type]['count'] += 1
-            stats['file_types'][file_type]['size'] += file_info['size']
-            stats['total_size'] += file_info['size']
-        
-        return stats
-    
+            stats = {
+                'total_files': len(self.data_catalog),
+                'file_types': {},
+                'total_size': 0,
+                'last_scan_time': datetime.now().isoformat()
+            }
+            
+            # 统计各类文件数量和大小
+            for file_info in self.data_catalog.values():
+                file_type = file_info['type']
+                if file_type not in stats['file_types']:
+                    stats['file_types'][file_type] = {'count': 0, 'size': 0}
+                
+                stats['file_types'][file_type]['count'] += 1
+                stats['file_types'][file_type]['size'] += file_info['size']
+                stats['total_size'] += file_info['size']
+            
+            return stats
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 获取数据统计信息失败: {e}")
+            return {}
+
     def save_data_catalog(self, catalog_path: str = None):
         """保存数据目录到文件"""
-        if not catalog_path:
-            catalog_path = TRAINING_DIR / "data_catalog.json"
-        
-        catalog_data = {
-            'catalog': self.data_catalog,
-            'quality_scores': self.data_quality_scores,
-            'statistics': self.get_data_statistics(),
-            'generated_at': datetime.now().isoformat()
-        }
-        
+        context = ErrorContext("DataManager", "save_data_catalog")
         try:
-            with open(catalog_path, 'w', encoding='utf-8') as f:
-                json.dump(catalog_data, f, ensure_ascii=False, indent=2)
-            logger.info(f"💾 数据目录已保存到: {catalog_path}")
+            if not catalog_path:
+                catalog_path = TRAINING_DIR / "data_catalog.json"
+            
+            catalog_data = {
+                'catalog': self.data_catalog,
+                'quality_scores': self.data_quality_scores,
+                'statistics': self.get_data_statistics(),
+                'generated_at': datetime.now().isoformat()
+            }
+            
+            try:
+                with open(catalog_path, 'w', encoding='utf-8') as f:
+                    json.dump(catalog_data, f, ensure_ascii=False, indent=2)
+                logger.info(f"💾 数据目录已保存到: {catalog_path}")
+            except Exception as e:
+                logger.error(f"❌ 保存数据目录失败: {e}")
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             logger.error(f"❌ 保存数据目录失败: {e}")
     
     def load_data_catalog(self, catalog_path: str = None):
         """从文件加载数据目录"""
-        if not catalog_path:
-            catalog_path = TRAINING_DIR / "data_catalog.json"
-        
-        if not Path(catalog_path).exists():
-            logger.warning(f"⚠️ 数据目录文件不存在: {catalog_path}")
-            return False
-        
+        context = ErrorContext("DataManager", "load_data_catalog")
         try:
-            with open(catalog_path, 'r', encoding='utf-8') as f:
-                catalog_data = json.load(f)
+            if not catalog_path:
+                catalog_path = TRAINING_DIR / "data_catalog.json"
             
-            self.data_catalog = catalog_data.get('catalog', {})
-            self.data_quality_scores = catalog_data.get('quality_scores', {})
-            logger.info(f"✅ 数据目录已从 {catalog_path} 加载")
-            return True
+            if not Path(catalog_path).exists():
+                logger.warning(f"⚠️ 数据目录文件不存在: {catalog_path}")
+                return False
+            
+            try:
+                with open(catalog_path, 'r', encoding='utf-8') as f:
+                    catalog_data = json.load(f)
+                
+                self.data_catalog = catalog_data.get('catalog', {})
+                self.data_quality_scores = catalog_data.get('quality_scores', {})
+                logger.info(f"✅ 数据目录已从 {catalog_path} 加载")
+                return True
+            except Exception as e:
+                logger.error(f"❌ 加载数据目录失败: {e}")
+                return False
         except Exception as e:
+            self.error_handler.handle_error(e, context)
             logger.error(f"❌ 加载数据目录失败: {e}")
             return False
 

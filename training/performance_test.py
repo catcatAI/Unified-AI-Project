@@ -40,12 +40,14 @@ def test_data_scanning_performance():
     print(f"  ⏱️  扫描耗时: {elapsed_time:.2f} 秒")
     
     # 性能评估
-    if elapsed_time < 30:
+    if elapsed_time < 5:
         print(f"  🚀 扫描性能优秀")
-    elif elapsed_time < 60:
+    elif elapsed_time < 15:
         print(f"  ✅ 扫描性能良好")
+    elif elapsed_time < 30:
+        print(f"  ⚠️  扫描性能一般")
     else:
-        print(f"  ⚠️  扫描性能需要优化")
+        print(f"  ❌ 扫描性能较差，需要优化")
     
     return elapsed_time
 
@@ -59,15 +61,23 @@ def test_resource_monitoring():
     # 获取系统资源
     resources = scheduler._get_available_resources()
     
-    print(f"  ✅ CPU使用率: {resources.get('cpu_percent', 0)}%")
-    print(f"  ✅ 可用内存: {resources.get('memory_available', 0) / (1024*1024*1024):.2f} GB")
-    print(f"  ✅ GPU可用: {resources.get('gpu_available', False)}")
-    print(f"  ✅ 可用磁盘空间: {resources.get('disk_space_available', 0) / (1024*1024*1024):.2f} GB")
+    print(f"  ✅ 系统资源信息:")
+    for key, value in resources.items():
+        if key in ['memory_available', 'memory_total', 'disk_space_available']:
+            print(f"     {key}: {value / (1024*1024*1024):.2f} GB")
+        elif key == 'cpu_percent':
+            print(f"     {key}: {value}%")
+        else:
+            print(f"     {key}: {value}")
     
     # 测试资源检查功能
     test_task = {'model_name': 'concept_models'}
-    can_execute = scheduler._can_execute_task(test_task)
-    print(f"  ✅ 任务执行检查: {'可以执行' if can_execute else '资源不足'}")
+    try:
+        can_execute = scheduler._can_execute_task(test_task)
+        print(f"  ✅ 任务执行检查: {'可以执行' if can_execute else '资源不足'}")
+    except Exception as e:
+        print(f"  ❌ 任务执行检查失败: {e}")
+        return False
     
     return True
 
@@ -87,7 +97,7 @@ def test_incremental_learning_performance():
     # 记录结束时间
     end_time = time.time()
     
-    # 计算耗时
+    # 记录耗时
     elapsed_time = end_time - start_time
     
     print(f"  ✅ 系统初始化耗时: {elapsed_time:.2f} 秒")
@@ -103,15 +113,26 @@ def main():
     print("=" * 40)
     
     # 测试数据扫描性能
-    scan_time = test_data_scanning_performance()
+    try:
+        scan_time = test_data_scanning_performance()
+    except Exception as e:
+        print(f"❌ 数据扫描测试失败: {e}")
+        scan_time = float('inf')
     print()
     
     # 测试资源监控功能
-    test_resource_monitoring()
+    try:
+        test_resource_monitoring()
+    except Exception as e:
+        print(f"❌ 资源监控测试失败: {e}")
     print()
     
     # 测试增量学习整体性能
-    init_time = test_incremental_learning_performance()
+    try:
+        init_time = test_incremental_learning_performance()
+    except Exception as e:
+        print(f"❌ 增量学习性能测试失败: {e}")
+        init_time = float('inf')
     print()
     
     print("=" * 40)
@@ -119,14 +140,17 @@ def main():
     print(f"  数据扫描耗时: {scan_time:.2f} 秒")
     print(f"  系统初始化耗时: {init_time:.2f} 秒")
     
-    if scan_time < 30 and init_time < 5:
+    if scan_time < 5 and init_time < 2:
         print("  🎉 性能测试通过，系统响应迅速")
         return 0
-    elif scan_time < 60 and init_time < 10:
+    elif scan_time < 15 and init_time < 5:
         print("  ✅ 性能测试通过，系统响应良好")
         return 0
-    else:
+    elif scan_time < 30 and init_time < 10:
         print("  ⚠️  性能测试警告，系统响应较慢")
+        return 1
+    else:
+        print("  ❌ 性能测试失败，系统响应过慢")
         return 1
 
 if __name__ == "__main__":
