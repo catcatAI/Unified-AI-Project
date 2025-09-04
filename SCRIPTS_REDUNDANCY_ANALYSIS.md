@@ -1,5 +1,9 @@
 # Unified AI Project 脚本冗余分析报告
 
+> **备份说明**: 此文档已备份至 `backup_20250903/script_analysis/SCRIPTS_REDUNDANCY_ANALYSIS.md.backup`，作为历史记录保存。
+>
+> **状态**: 项目结构已优化，此文档仅供历史参考。
+
 ## 1. 概述
 
 本报告详细分析了Unified AI Project项目中重复和冗余的脚本，为后续的整合和优化工作提供依据。

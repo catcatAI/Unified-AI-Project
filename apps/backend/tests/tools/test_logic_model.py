@@ -171,7 +171,11 @@ class TestLogicModelComponents(unittest.TestCase):
         print("test_04_logic_tool_interface PASSED")
 
     @pytest.mark.timeout(10)
-    async def test_05_tool_dispatcher_logic_routing(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_05_tool_dispatcher_logic_routing(self):
         print("\nRunning test_05_tool_dispatcher_logic_routing...")
         dispatcher = ToolDispatcher()
 

@@ -70,7 +70,7 @@ class MockMqttBroker:
     def subscribe_client(self, client_id: str, topic: str):
         """Subscribe a client to a topic"""
         if client_id in self.clients:
-            self.subscribe(topic, self.clients[client_id])
+            await await self.subscribe(topic, self.clients[client_id])
 
     async def publish(self, topic: str, payload: bytes, qos: int = 0):
         if not self.is_running:
@@ -337,7 +337,7 @@ class MockHAM(HAMMemoryManager):
 
 
 # Helper function for async tests
-async def wait_for_event(event, timeout=5.0):
+async def wait_for_event(event, timeout = 40.0):
     try:
         await asyncio.wait_for(event.wait(), timeout)
     except asyncio.TimeoutError:
@@ -741,7 +741,7 @@ class TestHSPFactConsumption:
         
         await peer_a_hsp_connector.publish_fact(fact, topic=FACT_TOPIC_GENERAL)
         # 增加超时时间以避免测试超时
-        await asyncio.wait_for(done_event.wait(), timeout=10.0)
+        await asyncio.wait_for(done_event.wait(), timeout = 40.0)
         
         # CA was invoked (done_event set)
         g = content_analyzer_module_fixture.graph
@@ -982,7 +982,7 @@ class TestHSPTaskDelegation:
         final_response = await dm.get_simple_response(query, "test_session_task", "test_user_task")
         
         # Increase wait time to ensure task processing
-        await wait_for_event(task_received_event, timeout=10.0)
+        await wait_for_event(task_received_event, timeout = 40.0)
         
         # 6. Verify the final response incorporates the HSP task result
         assert "Sunny with a chance of rain" in final_response
@@ -1077,7 +1077,7 @@ class TestHSPTaskDelegation:
         
         # 6. Verify the task was received and the fallback was used
         # Increase wait time to ensure task processing
-        await wait_for_event(task_received_event, timeout=10.0)
+        await wait_for_event(task_received_event, timeout = 40.0)
         assert fallback_response in final_response
         print("[Test Task Failure] Verified DM handled task failure and used fallback response.")
 

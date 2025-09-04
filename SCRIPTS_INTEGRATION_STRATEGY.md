@@ -1,5 +1,9 @@
 # Unified AI Project 脚本整合策略
 
+> **备份说明**: 此文档已备份至 `backup_20250903/project_management/SCRIPTS_INTEGRATION_STRATEGY.md.backup`，作为历史记录保存。
+>
+> **状态**: 所有任务已完成，此文档仅供历史参考。
+
 ## 1. 概述
 
 本策略文档旨在为Unified AI Project项目中的脚本整合工作提供明确的指导方针和实施计划，确保整合后的脚本系统更加高效、易用和可维护。

@@ -16,7 +16,11 @@ class TestVisionService(unittest.TestCase):
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(15)
-    async def test_02_analyze_image(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_02_analyze_image(self):
         service = VisionService()
         dummy_image = b"dummy_image_bytes"
         features = ["captioning", "object_detection", "ocr"]
@@ -38,7 +42,11 @@ class TestVisionService(unittest.TestCase):
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(15)
-    async def test_03_compare_images(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_03_compare_images(self):
         service = VisionService()
         dummy_image1 = b"dummy1"
         dummy_image2 = b"dummy2"

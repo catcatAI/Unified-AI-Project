@@ -112,7 +112,11 @@ class TestTranslationModelComponents(unittest.TestCase):
             self.fail(f"request_model_upgrade raised an exception: {e}")
 
     @pytest.mark.timeout(5)
-    async def test_05_tool_dispatcher_translation_routing(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_05_tool_dispatcher_translation_routing(self):
         print("\nRunning test_05_tool_dispatcher_translation_routing...")
         dispatcher = ToolDispatcher()
 

@@ -15,6 +15,10 @@ def mock_mqtt_client():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(5)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_mcp_connector_initialization(mock_mqtt_client):
     """Test that MCPConnector initializes correctly."""
     connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_running_loop())
@@ -24,6 +28,10 @@ async def test_mcp_connector_initialization(mock_mqtt_client):
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(5)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_connect_and_disconnect(mock_mqtt_client):
     """Test the connect and disconnect methods."""
     loop = asyncio.get_event_loop()
@@ -39,6 +47,10 @@ async def test_connect_and_disconnect(mock_mqtt_client):
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(5)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_send_command(mock_mqtt_client):
     """Test sending a command."""
     loop = asyncio.get_event_loop()

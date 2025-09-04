@@ -1,5 +1,9 @@
 # Unified AI Project - .bat 文件功能分析
 
+> **备份说明**: 此文档已备份至 `backup_20250903/bat_fixes/BAT_FILES_ANALYSIS.md.backup`，作为历史记录保存。
+>
+> **状态**: 项目结构已优化，此文档仅供历史参考。
+
 ## 根目录 .bat 文件
 
 | 文件名 | 功能描述 | 调用方式 | 主要用途 |

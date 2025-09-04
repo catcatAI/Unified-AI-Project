@@ -1,5 +1,9 @@
 # Unified-AI-Project 文件恢复总结报告
 
+> **备份说明**: 此文档已备份至 `backup_20250903/recovery_docs/FILE_RECOVERY_SUMMARY.md.backup`，作为历史记录保存。
+>
+> **状态**: 问题已解决，此文档仅供历史参考。
+
 ## 概述
 本报告记录了对 Unified-AI-Project 项目中被误删的重要批处理文件的完整恢复过程。
 

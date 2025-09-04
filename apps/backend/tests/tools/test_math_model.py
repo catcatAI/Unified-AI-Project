@@ -140,7 +140,11 @@ class TestMathModelComponents(unittest.TestCase):
         print("test_extract_arithmetic_problem PASSED")
 
     @pytest.mark.timeout(10)
-    async def test_math_tool_calculate_model_unavailable(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_math_tool_calculate_model_unavailable(self):
         print("\nRunning test_math_tool_calculate_model_unavailable...")
         # Ensure no model is "pre-loaded" by other tests or available
         # For this test, we assume the model path is invalid or model not trained
@@ -192,7 +196,11 @@ class TestMathModelComponents(unittest.TestCase):
         print("test_math_tool_calculate_model_unavailable PASSED")
 
     @pytest.mark.timeout(10)
-    async def test_tool_dispatcher_math_routing(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_tool_dispatcher_math_routing(self):
         print("\nRunning test_tool_dispatcher_math_routing...")
         dispatcher = ToolDispatcher()
         # This test assumes math_tool.calculate will return the model unavailable error

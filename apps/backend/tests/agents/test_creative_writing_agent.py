@@ -51,7 +51,11 @@ class TestCreativeWritingAgent:
         assert self.agent.capabilities[0]['name'] == 'generate_marketing_copy'
 
     @pytest.mark.asyncio
-    async def test_handle_marketing_copy_request(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_handle_marketing_copy_request(self):
         """Test handling a 'generate_marketing_copy' task."""
         # 1. Configure mock LLM to return a predefined response
         expected_copy = "Buy our new amazing product! It's the best!"
@@ -95,7 +99,11 @@ class TestCreativeWritingAgent:
         assert sent_payload['payload'] == expected_copy
 
     @pytest.mark.asyncio
-    async def test_handle_polish_text_request(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_handle_polish_text_request(self):
         """Test handling a 'polish_text' task."""
         # 1. Configure mock LLM
         expected_polished_text = "This is a polished sentence."
@@ -134,7 +142,11 @@ class TestCreativeWritingAgent:
         assert sent_payload['payload'] == expected_polished_text
 
     @pytest.mark.asyncio
-    async def test_unsupported_capability(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_unsupported_capability(self):
         """Test that the agent correctly handles a request for a capability it doesn't support."""
         request_id = "creative_req_003"
         task_payload = HSPTaskRequestPayload(

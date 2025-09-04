@@ -1,5 +1,9 @@
 # Unified AI Project - .bat 文件重复识别报告
 
+> **备份说明**: 此文档已备份至 `backup_20250903/bat_fixes/BAT_FILES_DUPLICATES.md.backup`，作为历史记录保存。
+>
+> **状态**: 问题已处理，项目结构已优化，此文档仅供历史参考。
+
 ## 重复文件列表
 
 ### 1. 后端测试运行器重复

@@ -186,6 +186,10 @@ def project_coordinator(hsp_connector, service_discovery, agent_manager):
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(30)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_full_project_flow_with_real_agent(project_coordinator, tmp_path):
     """
     Tests the full end-to-end flow:

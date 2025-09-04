@@ -237,7 +237,7 @@ class LearningManager:
             "user_id": project_case.get("user_id"), "session_id": project_case.get("session_id"),
             "source": "agent_collaboration_project"
         }
-        self.ham_memory.store_experience(raw_data=project_case, data_type="project_execution_case", metadata=raw_case_metadata)
+        await self.ham_memory.store_experience(raw_data=project_case, data_type="project_execution_case", metadata=raw_case_metadata)
 
         # Now, attempt to distill a reusable strategy from this successful case.
         # This requires a powerful LLM.
@@ -428,8 +428,8 @@ if __name__ == '__main__':
 
     print("\nTest 2: Process incoming HSP fact (no conflict initially)")
     # Lowered confidence_score from 0.9 to 0.8 to allow Test 3 to supersede
-    incoming_fact_payload = await HSPFactPayload(id="hsp_fact_abc", source_ai_id="peer_ai_1", statement_nl="Peer fact 1", confidence_score=0.8, statement_type="natural_language", timestamp_created=datetime.now().isoformat()) #type: ignore
-    incoming_envelope = await HSPMessageEnvelope(message_id="msg1", sender_ai_id="peer_ai_1", recipient_ai_id=lm.ai_id, timestamp_sent="",message_type="HSP::Fact_v0.1",protocol_version="0.1",communication_pattern="publish",payload=incoming_fact_payload) #type: ignore
+    incoming_fact_payload = HSPFactPayload(id="hsp_fact_abc", source_ai_id="peer_ai_1", statement_nl="Peer fact 1", confidence_score=0.8, statement_type="natural_language", timestamp_created=datetime.now().isoformat()) #type: ignore
+    incoming_envelope = HSPMessageEnvelope(message_id="msg1", sender_ai_id="peer_ai_1", recipient_ai_id=lm.ai_id, timestamp_sent="",message_type="HSP::Fact_v0.1",protocol_version="0.1",communication_pattern="publish",payload=incoming_fact_payload) #type: ignore
     stored_ham_id_1 = lm.process_and_store_hsp_fact(incoming_fact_payload, "peer_ai_1", incoming_envelope)
     assert stored_ham_id_1 is not None
     assert abs(mock_ham.stored_experiences[stored_ham_id_1]['m']['confidence'] - (0.8 * 0.8)) < 0.001 # 0.8 * default trust 00.8
@@ -461,7 +461,7 @@ if __name__ == '__main__':
     # Stored fact (Test 3) has effective confidence 0.792.
     # Incoming fact: original confidence 0.98 -> effective 0.98 * 0.8 = 0.784.
     # This is within +/- 0.1 of 0.792. Values are different. Should log contradiction.
-    incoming_fact_payload_conflict_similar = await HSPFactPayload(id="hsp_fact_abc", source_ai_id="peer_ai_1", statement_nl="Peer fact 1 - similar confidence, different value", confidence_score=0.98, statement_type="natural_language", timestamp_created=datetime.now().isoformat()) #type: ignore
+    incoming_fact_payload_conflict_similar = HSPFactPayload(id="hsp_fact_abc", source_ai_id="peer_ai_1", statement_nl="Peer fact 1 - similar confidence, different value", confidence_score=0.98, statement_type="natural_language", timestamp_created=datetime.now().isoformat()) #type: ignore
     stored_ham_id_4 = lm.process_and_store_hsp_fact(incoming_fact_payload_conflict_similar, "peer_ai_1", incoming_envelope)
     assert stored_ham_id_4 is not None, "Similar confidence conflicting fact (diff value) should be stored with conflict logged"
     assert "conflicts_with_ham_records" in mock_ham.stored_experiences[stored_ham_id_4]['m']
@@ -473,7 +473,7 @@ if __name__ == '__main__':
     # Incoming fact: original confidence 0.98 -> effective 0.784.
     # We make the statement identical to mock_4's statement.
     statement_from_mock_4 = "Peer fact 1 - similar confidence, different value" # This was the content of mock_4 (stored_ham_id_4)
-    incoming_fact_payload_conflict_same_val = await HSPFactPayload(id="hsp_fact_abc", source_ai_id="peer_ai_1", statement_nl=statement_from_mock_4, confidence_score=0.98, statement_type="natural_language", timestamp_created=datetime.now().isoformat()) #type: ignore
+    incoming_fact_payload_conflict_same_val = HSPFactPayload(id="hsp_fact_abc", source_ai_id="peer_ai_1", statement_nl=statement_from_mock_4, confidence_score=0.98, statement_type="natural_language", timestamp_created=datetime.now().isoformat()) #type: ignore
     stored_ham_id_5b = lm.process_and_store_hsp_fact(incoming_fact_payload_conflict_same_val, "peer_ai_1", incoming_envelope)
     assert stored_ham_id_5b is None, "Similar confidence, same value fact should be ignored"
 
@@ -531,7 +531,7 @@ if __name__ == '__main__':
     # Ensure the new fact for merge is OLDER or same time to not win by recency, allowing merge to be tested.
     # If it's newer, tie_break_trust_recency will supersede.
     # For simplicity, let's use a slightly older fixed timestamp string, or reuse the existing one to ensure not newer.
-    older_timestamp_for_merge_payload = await datetime(2023,1,1,0,0,0).isoformat() # Clearly older
+    older_timestamp_for_merge_payload = datetime(2023,1,1,0,0,0).isoformat() # Clearly older
     if datetime.fromisoformat(timestamp_of_existing_fact_for_merge.replace('Z', '+00:00')) < datetime.fromisoformat(older_timestamp_for_merge_payload.replace('Z', '+00:00')):
         # This case should not happen if older_timestamp_for_merge_payload is truly older. Safety.
         older_timestamp_for_merge_payload = timestamp_of_existing_fact_for_merge

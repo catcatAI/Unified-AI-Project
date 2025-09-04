@@ -23,6 +23,10 @@ def audio_processing_agent():
     return agent
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_init(audio_processing_agent):
     """Test that the AudioProcessingAgent initializes correctly."""
     assert audio_processing_agent.agent_id == "did:hsp:audio_processing_agent_test"
@@ -33,6 +37,10 @@ async def test_audio_processing_agent_init(audio_processing_agent):
     assert "audio_enhancement" in capability_names
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_perform_speech_recognition(audio_processing_agent):
     """Test the speech recognition functionality."""
     params = {
@@ -51,6 +59,10 @@ async def test_audio_processing_agent_perform_speech_recognition(audio_processin
     assert isinstance(result["confidence"], float)
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_classify_audio(audio_processing_agent):
     """Test the audio classification functionality."""
     params = {
@@ -68,6 +80,10 @@ async def test_audio_processing_agent_classify_audio(audio_processing_agent):
     assert isinstance(result["top_confidence"], float)
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_enhance_audio(audio_processing_agent):
     """Test the audio enhancement functionality."""
     params = {
@@ -86,6 +102,10 @@ async def test_audio_processing_agent_enhance_audio(audio_processing_agent):
     assert result["enhancement_type"] == "noise_reduction"
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_handle_task_request_speech_recognition(audio_processing_agent, mock_hsp_connector):
     """Test handling a speech recognition task request."""
     with patch('apps.backend.src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
@@ -138,6 +158,10 @@ async def test_audio_processing_agent_handle_task_request_speech_recognition(aud
             assert callback_topic == "test_callback_1"
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_handle_task_request_unsupported_capability(audio_processing_agent, mock_hsp_connector):
     """Test handling a task request with an unsupported capability."""
     with patch('apps.backend.src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:

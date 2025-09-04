@@ -1,5 +1,9 @@
 # Training Manager 重复信息显示问题修复报告
 
+> **备份说明**: 此文档已备份至 `backup_20250903/training_fixes/TRAINING_MANAGER_DUPLICATE_INFO_FIX.md.backup`，作为历史记录保存。
+>
+> **状态**: 问题已解决，此文档仅供历史参考。
+
 ## 问题概述
 
 在使用训练管理器时，遇到了以下重复信息显示问题：

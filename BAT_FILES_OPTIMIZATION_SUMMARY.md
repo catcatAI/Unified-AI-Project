@@ -1,5 +1,9 @@
 # Unified AI Project - .bat 文件优化去重总结报告
 
+> **备份说明**: 此文档已备份至 `backup_20250903/bat_fixes/BAT_FILES_OPTIMIZATION_SUMMARY.md.backup`，作为历史记录保存。
+>
+> **状态**: 优化工作已完成，此文档仅供历史参考。
+
 ## 项目概述
 
 本次优化工作旨在对 Unified AI Project 中的 .bat 批处理文件进行分析、识别重复文件、设计优化方案并实施去重，以简化项目结构、减少维护负担、提升用户体验并保持功能完整性。

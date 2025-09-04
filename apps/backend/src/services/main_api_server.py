@@ -6,8 +6,8 @@ from datetime import datetime
 import uuid
 
 # Use relative imports instead of absolute imports
-from ..economy.economy_manager import EconomyManager
-from ..pet.pet_manager import PetManager
+from apps.backend.src.economy.economy_manager import EconomyManager
+from apps.backend.src.pet.pet_manager import PetManager
 
 # Use path configuration from path_config.py
 from ..path_config import PROJECT_ROOT

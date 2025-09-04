@@ -1,5 +1,9 @@
 # 备份与恢复标准化操作流程
 
+> **备份说明**: 此文档已备份至 `backup_20250903/recovery_docs/BACKUP_RECOVERY_STANDARD_PROCEDURE.md.backup`，作为历史记录保存。
+>
+> **状态**: 问题已解决，此文档仅供历史参考。
+
 ## 1. 概述
 
 本文档定义了 Unified AI Project 项目中备份与恢复操作的标准化流程，确保在执行任何修改前都进行适当的备份，并在需要时能够可靠地恢复文件。

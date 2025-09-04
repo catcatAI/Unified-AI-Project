@@ -5,6 +5,10 @@ from unittest.mock import AsyncMock
 from apps.backend.src.agents.data_analysis_agent import DataAnalysisAgent
 from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_data_analysis_agent():
     # 创建一个DataAnalysisAgent实例
     agent_id = f"did:hsp:test_data_analysis_agent_{uuid.uuid4().hex[:6]}"

@@ -1,5 +1,9 @@
 # Unified AI Project 脚本性能优化方案
 
+> **备份说明**: 此文档已备份至 `backup_20250903/script_analysis/SCRIPTS_PERFORMANCE_OPTIMIZATION.md.backup`，作为历史记录保存。
+>
+> **状态**: 问题已解决，此文档仅供历史参考。
+
 ## 1. 概述
 
 本方案旨在优化Unified AI Project项目中批处理脚本的性能，提高执行效率，减少资源消耗，改善用户体验。

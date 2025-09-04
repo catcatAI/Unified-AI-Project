@@ -51,7 +51,11 @@ class TestRovoDevConnector:
         assert decoded_credentials == f"{connector.user_email}:{connector.api_token}"
     
     @pytest.mark.asyncio
-    async def test_context_manager(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_context_manager(self, connector):
         """测试异步上下文管理器"""
         with patch.object(connector, 'start') as mock_start:
             with patch.object(connector, 'close') as mock_close:
@@ -62,7 +66,11 @@ class TestRovoDevConnector:
                 mock_close.assert_called_once()
     
     @pytest.mark.asyncio
-    async def test_authentication_success(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_authentication_success(self, connector):
         """测试认证成功"""
         mock_response = Mock()
         mock_response.status = 200
@@ -80,7 +88,11 @@ class TestRovoDevConnector:
             assert connector.authenticated is True
     
     @pytest.mark.asyncio
-    async def test_authentication_failure(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_authentication_failure(self, connector):
         """测试认证失败"""
         mock_response = Mock()
         mock_response.status = 401
@@ -97,7 +109,11 @@ class TestRovoDevConnector:
             assert connector.authenticated is False
     
     @pytest.mark.asyncio
-    async def test_make_request_success(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_make_request_success(self, connector):
         """测试成功的 API 请求"""
         mock_response_data = {'result': 'success'}
         mock_response = Mock()
@@ -116,7 +132,11 @@ class TestRovoDevConnector:
             assert result == mock_response_data
     
     @pytest.mark.asyncio
-    async def test_make_request_error(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_make_request_error(self, connector):
         """测试 API 请求错误"""
         from unittest.mock import MagicMock
         
@@ -142,7 +162,11 @@ class TestRovoDevConnector:
                 print(f"Result: {result}")
     
     @pytest.mark.asyncio
-    async def test_caching_mechanism(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_caching_mechanism(self, connector):
         """测试缓存机制"""
         test_data = {'cached': 'data'}
         cache_key = 'test_key'
@@ -165,7 +189,11 @@ class TestRovoDevConnector:
         assert cache_key not in connector.cache  # Should be cleaned up
     
     @pytest.mark.asyncio
-    async def test_connection_testing(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_connection_testing(self, connector):
         """测试连接测试功能"""
         # Mock successful responses
         with patch.object(connector, '_make_request_with_retry') as mock_request:
@@ -180,7 +208,11 @@ class TestRovoDevConnector:
             assert mock_request.call_count == 2
     
     @pytest.mark.asyncio
-    async def test_connection_testing_with_failures(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_connection_testing_with_failures(self, connector):
         """测试连接测试失败情况"""
         with patch.object(connector, '_make_request_with_retry') as mock_request:
             # First call (Jira) succeeds, second call (Confluence) fails
@@ -192,7 +224,11 @@ class TestRovoDevConnector:
             assert results['confluence'] is False
     
     @pytest.mark.asyncio
-    async def test_user_info_with_caching(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_user_info_with_caching(self, connector):
         """测试用户信息获取和缓存"""
         user_data = {
             'accountId': 'test_account_id',
@@ -214,7 +250,11 @@ class TestRovoDevConnector:
             assert mock_request.call_count == 1  # No additional API call
     
     @pytest.mark.asyncio
-    async def test_health_check(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_health_check(self, connector):
         """测试健康检查"""
         connector.authenticated = True
         connector.session = Mock()
@@ -231,7 +271,11 @@ class TestRovoDevConnector:
             assert health['services']['confluence'] is True
     
     @pytest.mark.asyncio
-    async def test_session_management(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_session_management(self, connector):
         """测试会话管理"""
         # Test start
         await connector.start()
@@ -247,7 +291,11 @@ class TestRovoDevConnector:
         assert connector.semaphore._value == 5  # max_concurrent_requests
     
     @pytest.mark.asyncio
-    async def test_concurrent_request_limiting(self, connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_concurrent_request_limiting(self, connector):
         """测试并发请求限制"""
         # This test would be more complex in a real scenario
         # but we can at least verify the semaphore is used

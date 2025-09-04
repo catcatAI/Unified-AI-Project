@@ -38,7 +38,11 @@ class TestLearningAndTrustIntegration:
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
-    async def test_duplicate_fact_increments_corroboration(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_duplicate_fact_increments_corroboration(self):
         """
         Tests that receiving a duplicate fact increments corroboration_count
         and does not store a new fact.
@@ -76,7 +80,11 @@ class TestLearningAndTrustIntegration:
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
-    async def test_fact_from_low_trust_source_is_discarded(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_fact_from_low_trust_source_is_discarded(self):
         """
         Tests that a fact with high original confidence is discarded if the source has very low trust.
         """
@@ -98,7 +106,11 @@ class TestLearningAndTrustIntegration:
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
-    async def test_fact_from_high_trust_source_is_accepted(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_fact_from_high_trust_source_is_accepted(self):
         """
         Tests that a fact with medium original confidence is accepted if the source has high trust.
         """

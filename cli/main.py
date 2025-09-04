@@ -14,7 +14,7 @@ sys.path.insert(0, str(project_root))
 
 try:
     import click
-    from cli.commands import dev, test, git, deps, system
+    from cli.commands import dev, test, git, deps, system, editor, rovo, security
     from cli.utils import logger
 except ImportError as e:
     print(f"缺少必要的依赖包: {e}")
@@ -46,6 +46,9 @@ cli.add_command(test)
 cli.add_command(git)
 cli.add_command(deps.deps)
 cli.add_command(system.system)
+cli.add_command(editor)
+cli.add_command(rovo)
+cli.add_command(security)
 
 
 @cli.command()

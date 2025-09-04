@@ -1,5 +1,9 @@
 # Unified AI Project 脚本文档和使用指南
 
+> **备份说明**: 此文档已备份至 `backup_20250903/script_analysis/SCRIPTS_DOCUMENTATION.md.backup`，作为历史记录保存。
+>
+> **状态**: 问题已解决，此文档仅供历史参考。
+
 ## 1. 概述
 
 本文档提供了Unified AI Project项目中所有脚本的详细说明和使用指南，包括pnpm指令、批处理脚本、PowerShell脚本和Python脚本。

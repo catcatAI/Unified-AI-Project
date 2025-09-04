@@ -35,6 +35,10 @@ def message_bridge(mock_external_connector, mock_internal_bus, mock_data_aligner
     return MessageBridge(mock_external_connector, mock_internal_bus, mock_data_aligner)
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_message_bridge_initialization(mock_external_connector, mock_internal_bus, mock_data_aligner):
     bridge = MessageBridge(mock_external_connector, mock_internal_bus, mock_data_aligner)
     
@@ -47,6 +51,10 @@ async def test_message_bridge_initialization(mock_external_connector, mock_inter
     )
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_valid_fact(message_bridge, mock_data_aligner, mock_internal_bus):
     topic = "hsp/fact/some_id"
     message_payload = {"message_type": "HSP::Fact_v0.1", "payload": {"id": "fact123", "content": "test fact"}}
@@ -62,6 +70,10 @@ async def test_handle_external_message_valid_fact(message_bridge, mock_data_alig
     )
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_invalid_json(message_bridge, capsys):
     topic = "hsp/fact/some_id"
     message_str = "invalid json string"
@@ -72,6 +84,10 @@ async def test_handle_external_message_invalid_json(message_bridge, capsys):
     assert "Error: Received invalid JSON message" in out
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_data_alignment_error(message_bridge, mock_data_aligner, mock_internal_bus, capsys):
     topic = "hsp/fact/some_id"
     message_payload = {"message_type": "HSP::Fact_v0.1", "payload": {"id": "fact123", "content": "test fact"}}
@@ -87,6 +103,10 @@ async def test_handle_external_message_data_alignment_error(message_bridge, mock
     assert "Error: MessageBridge.handle_external_message - Data alignment failed: alignment error" in out
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_unknown_message_type(message_bridge, mock_data_aligner, mock_internal_bus, capsys):
     topic = "hsp/fact/some_id"
     message_payload = {"message_type": "UNKNOWN_TYPE", "payload": {"id": "fact123", "content": "test fact"}}
@@ -101,6 +121,10 @@ async def test_handle_external_message_unknown_message_type(message_bridge, mock
     assert "Warning: MessageBridge.handle_external_message - Unknown message_type 'UNKNOWN_TYPE'. Not publishing to internal bus." in out
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_internal_message_publish_to_external(message_bridge, mock_external_connector):
     internal_message = {
         "topic": "hsp/external/fact/publish",
@@ -117,6 +141,10 @@ async def test_handle_internal_message_publish_to_external(message_bridge, mock_
     )
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_internal_message_payload_types(message_bridge, mock_external_connector):
     # Test with string payload
     await message_bridge.handle_internal_message({"topic": "test/str", "payload": "hello", "qos": 0})
@@ -143,6 +171,10 @@ async def test_handle_internal_message_payload_types(message_bridge, mock_extern
 
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_no_publish_async_on_bus(message_bridge, mock_data_aligner, mock_internal_bus):
     # Simulate an InternalBus without publish_async (e.g., older version or different mock setup)
     del mock_internal_bus.publish_async

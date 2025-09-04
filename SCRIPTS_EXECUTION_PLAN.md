@@ -1,5 +1,9 @@
 # Unified AI Project 脚本系统执行计划
 
+> **备份说明**: 此文档已备份至 `backup_20250903/project_management/SCRIPTS_EXECUTION_PLAN.md.backup`，作为历史记录保存。
+>
+> **状态**: 所有任务已完成，此文档仅供历史参考。
+
 ## 1. 当前状态分析
 
 ### 1.1 已完成任务

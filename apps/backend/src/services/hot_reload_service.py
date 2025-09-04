@@ -5,7 +5,7 @@ import asyncio
 from typing import Any, Dict, Optional
 
 # We intentionally import the module to mutate its singletons safely
-from apps.backend.src.core_services import core_services
+from apps.backend.src.core_services import apps.backend.src.core_services
 
 
 _hot_reload_service_singleton: Optional["HotReloadService"] = None

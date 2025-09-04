@@ -1,5 +1,9 @@
 # Training Scripts Fix Report
 
+> **备份说明**: 此文档已备份至 `backup_20250903/training_fixes/TRAINING_SCRIPTS_FIX_REPORT.md.backup`，作为历史记录保存。
+>
+> **状态**: 问题已解决，此文档仅供历史参考。
+
 ## 问题概述
 
 在检查Unified AI项目的训练相关脚本时，发现了几个路径引用错误、目录切换问题和注释语法问题，导致训练管理器无法正确找到和执行训练脚本，以及在训练完成后返回错误的目录。

@@ -18,7 +18,11 @@ class TestAudioService(unittest.TestCase):
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(15)
-    async def test_02_speech_to_text_placeholder(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_02_speech_to_text_placeholder(self):
         service = AudioService()
         dummy_audio = b"dummy_audio_bytes"
         # Fix: properly await the coroutine

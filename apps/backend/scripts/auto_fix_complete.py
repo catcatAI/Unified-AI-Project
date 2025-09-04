@@ -16,48 +16,48 @@ SRC_DIR = PROJECT_ROOT / "src"
 # 需要修复的导入映射
 IMPORT_MAPPINGS = {
     # core_ai模块的修复
-    "from core_ai.": "from apps.backend.src.core_ai.",
-    "import core_ai.": "import apps.backend.src.core_ai.",
+    "from apps.backend.src.core_ai.": "from apps.backend.src.core_ai.",
+    "import apps.backend.src.core_ai.": "import apps.backend.src.core_ai.",
     
     # core模块的修复
     "from core.": "from apps.backend.src.core.",
     "import core.": "import apps.backend.src.core.",
     
     # services模块的修复
-    "from services.": "from apps.backend.src.services.",
-    "import services.": "import apps.backend.src.services.",
+    "from apps.backend.src.services.": "from apps.backend.src.services.",
+    "import apps.backend.src.services.": "import apps.backend.src.services.",
     
     # hsp模块的修复
-    "from hsp.": "from apps.backend.src.hsp.",
-    "import hsp.": "import apps.backend.src.hsp.",
+    "from apps.backend.src.hsp.": "from apps.backend.src.hsp.",
+    "import apps.backend.src.hsp.": "import apps.backend.src.hsp.",
     
     # mcp模块的修复
-    "from mcp.": "from apps.backend.src.mcp.",
-    "import mcp.": "import apps.backend.src.mcp.",
+    "from apps.backend.src.mcp.": "from apps.backend.src.mcp.",
+    "import apps.backend.src.mcp.": "import apps.backend.src.mcp.",
     
     # system模块的修复
-    "from system.": "from apps.backend.src.system.",
-    "import system.": "import apps.backend.src.system.",
+    "from apps.backend.src.system.": "from apps.backend.src.system.",
+    "import apps.backend.src.system.": "import apps.backend.src.system.",
     
     # tools模块的修复
-    "from tools.": "from apps.backend.src.tools.",
-    "import tools.": "import apps.backend.src.tools.",
+    "from apps.backend.src.tools.": "from apps.backend.src.tools.",
+    "import apps.backend.src.tools.": "import apps.backend.src.tools.",
     
     # shared模块的修复
-    "from shared.": "from apps.backend.src.shared.",
-    "import shared.": "import apps.backend.src.shared.",
+    "from apps.backend.src.shared.": "from apps.backend.src.shared.",
+    "import apps.backend.src.shared.": "import apps.backend.src.shared.",
     
     # agents模块的修复
-    "from agents.": "from apps.backend.src.agents.",
-    "import agents.": "import apps.backend.src.agents.",
+    "from apps.backend.src.agents.": "from apps.backend.src.agents.",
+    "import apps.backend.src.agents.": "import apps.backend.src.agents.",
     
     # game模块的修复
-    "from game.": "from apps.backend.src.game.",
-    "import game.": "import apps.backend.src.game.",
+    "from apps.backend.src.game.": "from apps.backend.src.game.",
+    "import apps.backend.src.game.": "import apps.backend.src.game.",
     
     # 其他可能的修复
     "from core_services": "from apps.backend.src.core_services",
-    "import core_services": "import apps.backend.src.core_services",
+    "import apps.backend.src.core_services": "import apps.backend.src.core_services",
 }
 
 def find_python_files() -> List[Path]:
@@ -120,7 +120,7 @@ def fix_imports_in_file(file_path: Path) -> Tuple[bool, List[str]]:
         # 修复相对导入问题
         relative_imports = re.findall(r'from\s+\.\.core_ai\.', content)
         for match in relative_imports:
-            new_import = match.replace('from ..core_ai.', 'from apps.backend.src.core_ai.')
+            new_import = match.replace('from apps.backend.src.core_ai.', 'from apps.backend.src.core_ai.')
             content = content.replace(match, new_import)
             fixes_made.append(f"{match} -> {new_import}")
         

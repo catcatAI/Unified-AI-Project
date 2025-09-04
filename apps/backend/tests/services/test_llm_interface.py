@@ -17,7 +17,11 @@ class TestLLMInterface(unittest.TestCase):
         print("TestLLMInterface.test_01_initialization_placeholder PASSED")
 
     @pytest.mark.timeout(15)
-    async def test_02_generate_response_placeholder(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_02_generate_response_placeholder(self):
         interface = MultiLLMService()
         response = await interface.generate_response("test prompt")
         # The default mock response is "This is a generic mock response from mock-generic-v1 to the prompt: \"{prompt}\""
@@ -26,7 +30,11 @@ class TestLLMInterface(unittest.TestCase):
         print("TestLLMInterface.test_02_generate_response_placeholder PASSED")
 
     @pytest.mark.timeout(15)
-    async def test_03_list_models_placeholder(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_03_list_models_placeholder(self):
         interface = MultiLLMService()
         models = await interface.list_available_models()
         self.assertIsInstance(models, list)

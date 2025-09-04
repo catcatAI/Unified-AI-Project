@@ -1,5 +1,9 @@
 # Unified AI Project - .bat 文件闪退问题修复说明
 
+> **备份说明**: 此文档已备份至 `backup_20250903/bat_fixes/BAT_FILES_FLASH_FIX.md.backup`，作为历史记录保存。
+>
+> **状态**: 问题已完全解决，此文档仅供历史参考。
+
 ## 问题分析
 
 在检查项目中的 .bat 文件时，我们发现可能导致闪退问题的原因包括：

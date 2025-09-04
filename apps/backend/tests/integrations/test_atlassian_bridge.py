@@ -57,7 +57,11 @@ class TestAtlassianBridge:
         await bridge.close()
     
     @pytest.mark.asyncio
-    async def test_create_confluence_page(self, bridge, mock_connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_create_confluence_page(self, bridge, mock_connector):
         """测试创建 Confluence 页面"""
         # Mock response
         mock_response = {
@@ -83,7 +87,11 @@ class TestAtlassianBridge:
     
 
     @pytest.mark.asyncio
-    async def test_search_jira_issues(self, bridge, mock_connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_search_jira_issues(self, bridge, mock_connector):
         """测试搜索 Jira 问题"""
         mock_response = {
             'issues': [
@@ -114,7 +122,11 @@ class TestAtlassianBridge:
         assert result[0]['key'] == 'TEST-123'
         assert result[1]['key'] == 'TEST-124'
     
-    async def test_update_confluence_page(self, bridge, mock_connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_update_confluence_page(self, bridge, mock_connector):
         """测试更新 Confluence 页面"""
         mock_response = {
             'id': '123456',
@@ -134,7 +146,11 @@ class TestAtlassianBridge:
         assert result['version']['number'] == 2
     
     @pytest.mark.asyncio
-    async def test_get_confluence_spaces(self, bridge, mock_connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_get_confluence_spaces(self, bridge, mock_connector):
         """测试获取 Confluence 空间"""
         mock_response = {
             'results': [
@@ -161,7 +177,11 @@ class TestAtlassianBridge:
         assert result[1]['key'] == 'DOCS'
     
     @pytest.mark.asyncio
-    async def test_get_jira_projects(self, bridge, mock_connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_get_jira_projects(self, bridge, mock_connector):
         """测试获取 Jira 项目"""
         mock_response = [
             {
@@ -184,7 +204,11 @@ class TestAtlassianBridge:
         assert result[1]['key'] == 'ANOTHER'
 
     @pytest.mark.asyncio
-    async def test_error_handling(self, bridge, mock_connector):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_error_handling(self, bridge, mock_connector):
         """测试错误处理"""
         # Mock connector to raise an exception
         mock_connector._make_request_with_retry.side_effect = Exception("API Error")
@@ -197,7 +221,11 @@ class TestAtlassianBridge:
             )
     
     @pytest.mark.asyncio
-    async def test_content_formatting(self, bridge):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_content_formatting(self, bridge):
         """测试内容格式化"""
         
         # Test markdown to Confluence storage format conversion
