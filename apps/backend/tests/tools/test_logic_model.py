@@ -5,13 +5,13 @@ import sys
 import shutil # For cleaning up directories
 import pytest # Import pytest
 
-from src.tools.logic_model import logic_data_generator
-from src.tools.logic_model import logic_model_nn
-from src.tools.logic_model.logic_parser_eval import LogicParserEval
-from src.tools import logic_tool
-from src.tools.logic_tool import evaluate_expression as evaluate_logic_via_tool
-from src.tools.tool_dispatcher import ToolDispatcher
-from src.tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
+from apps.backend.src.tools.logic_model import logic_data_generator
+from apps.backend.src.tools.logic_model import logic_model_nn
+from apps.backend.src.tools.logic_model.logic_parser_eval import LogicParserEval
+from apps.backend.src.tools import logic_tool
+from apps.backend.src.tools.logic_tool import evaluate_expression as evaluate_logic_via_tool
+from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+from apps.backend.src.tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
 
 # Define a consistent test output directory for this test suite
 TEST_DATA_GEN_OUTPUT_DIR = "tests/test_output_data/logic_model_data"

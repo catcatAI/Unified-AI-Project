@@ -3,8 +3,8 @@ import pytest
 from unittest.mock import MagicMock, patch
 import json
 
-from src.mcp.connector import MCPConnector
-from src.mcp.types import MCPCommandRequest
+from apps.backend.src.mcp.connector import MCPConnector
+from apps.backend.src.mcp.types import MCPCommandRequest
 
 @pytest.fixture
 def mock_mqtt_client():

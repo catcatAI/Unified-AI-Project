@@ -6,17 +6,17 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
 import json
 
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager # Corrected
-from apps.backend.src.core_ai.learning.fact_extractor_module import FactExtractorModule # Corrected
-from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule # Corrected
-from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager # Corrected
+from ..memory.ham_memory_manager import HAMMemoryManager # Corrected
+from .fact_extractor_module import FactExtractorModule # Corrected
+from .content_analyzer_module import ContentAnalyzerModule # Corrected
+from ..trust_manager.trust_manager_module import TrustManager # Corrected
 from .types import LearnedFactRecord
 
-from apps.backend.src.hsp.types import HSPFactPayload, HSPMessageEnvelope # Corrected
-from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
+from ...hsp.types import HSPFactPayload, HSPMessageEnvelope # Corrected
+from ..personality.personality_manager import PersonalityManager
 
 if TYPE_CHECKING:
-    from apps.backend.src.hsp.connector import HSPConnector # Corrected
+    from ...hsp.connector import HSPConnector # Corrected
 
 
 class LearningManager:

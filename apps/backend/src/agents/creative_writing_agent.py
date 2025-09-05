@@ -6,9 +6,9 @@ import logging
 from typing import Dict, Any, List
 from pathlib import Path # Import Path
 
-from apps.backend.src.agents.base_agent import BaseAgent
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from apps.backend.src.services.multi_llm_service import MultiLLMService, ChatMessage
+from .base_agent import BaseAgent
+from ..hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from ..services.multi_llm_service import MultiLLMService, ChatMessage
 
 class CreativeWritingAgent(BaseAgent):
     """

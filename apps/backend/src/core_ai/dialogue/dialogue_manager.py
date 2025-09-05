@@ -8,26 +8,26 @@ import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from datetime import datetime, timezone
 
-from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.services.multi_llm_service import MultiLLMService
-from apps.backend.src.core_ai.emotion_system import EmotionSystem
-from apps.backend.src.core_ai.crisis_system import CrisisSystem
-from apps.backend.src.core_ai.time_system import TimeSystem
-from apps.backend.src.core_ai.formula_engine import FormulaEngine
-from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
-from apps.backend.src.core_ai.learning.learning_manager import LearningManager
-from apps.backend.src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from apps.backend.src.services.sandbox_executor import SandboxExecutor
+from ..personality.personality_manager import PersonalityManager
+from ..memory.ham_memory_manager import HAMMemoryManager
+from ...services.multi_llm_service import MultiLLMService
+from ..emotion_system import EmotionSystem
+from ..crisis_system import CrisisSystem
+from ..time_system import TimeSystem
+from ..formula_engine import FormulaEngine
+from ...tools.tool_dispatcher import ToolDispatcher
+from ..learning.learning_manager import LearningManager
+from ..service_discovery.service_discovery_module import ServiceDiscoveryModule
+from ...services.sandbox_executor import SandboxExecutor
 import networkx as nx
-from apps.backend.src.shared.types.common_types import (
+from ...shared.types.common_types import (
     OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
 )
 
-from apps.backend.src.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
-from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator
-from apps.backend.src.core_ai.agent_manager import AgentManager
-from apps.backend.src.hsp.connector import HSPConnector
+from ...hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
+from .project_coordinator import ProjectCoordinator
+from ..agent_manager import AgentManager
+from ...hsp.connector import HSPConnector
 
 if TYPE_CHECKING:
     pass

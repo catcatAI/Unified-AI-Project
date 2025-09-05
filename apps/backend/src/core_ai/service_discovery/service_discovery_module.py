@@ -6,11 +6,11 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, Optional, List, Tuple
 
-from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
+from ...hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
 # Assuming TrustManager is correctly importable. If it's in the same directory, this might need adjustment
 # based on how __init__.py in trust_manager_module's folder is set up.
 # For now, direct import path as per typical project structure.
-from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager
+from ...core_ai.trust_manager.trust_manager_module import TrustManager
 
 logger = logging.getLogger(__name__)
 

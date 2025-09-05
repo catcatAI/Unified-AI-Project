@@ -2,8 +2,8 @@ import asyncio
 import logging
 import json
 from unittest.mock import AsyncMock, MagicMock
-from src.hsp.connector import HSPConnector
-from src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPQoSParameters
+from apps.backend.src.hsp.connector import HSPConnector
+from apps.backend.src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPQoSParameters
 import pytest
 
 # Configure logging for tests

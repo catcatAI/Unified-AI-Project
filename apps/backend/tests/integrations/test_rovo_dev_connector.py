@@ -7,7 +7,7 @@ import aiohttp
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
 
-from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 
 class TestRovoDevConnector:

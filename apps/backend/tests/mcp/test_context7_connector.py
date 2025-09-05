@@ -12,12 +12,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 from typing import Dict, Any
 
-from src.mcp.context7_connector import (
+from apps.backend.src.mcp.context7_connector import (
     Context7MCPConnector,
     Context7Config,
     UnifiedAIMCPIntegration
 )
-from src.mcp.types import MCPMessage, MCPResponse, MCPCapability
+from apps.backend.src.mcp.types import MCPMessage, MCPResponse, MCPCapability
 
 
 class TestContext7Config:

@@ -5,14 +5,14 @@ import json
 import sys
 import shutil
 
-from src.tools import translation_tool
-from src.tools.translation_tool import (
+from apps.backend.src.tools import translation_tool
+from apps.backend.src.tools.translation_tool import (
     translate,
     _detect_language,
     _load_dictionary,
     request_model_upgrade,
 )
-from src.tools.tool_dispatcher import ToolDispatcher
+from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
 
 # Define a consistent test output directory for this test suite
 TEST_DATA_DIR = "tests/test_output_data/translation_model_data"

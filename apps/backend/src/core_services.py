@@ -7,34 +7,34 @@ import sys
 import os
 
 # Core AI Modules
-from apps.backend.src.core_ai.agent_manager import AgentManager
-from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
-from apps.backend.src.core_ai.learning.learning_manager import LearningManager
-from apps.backend.src.core_ai.learning.fact_extractor_module import FactExtractorModule
-from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-from apps.backend.src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
-from apps.backend.src.core_ai.emotion_system import EmotionSystem
-from apps.backend.src.core_ai.crisis_system import CrisisSystem
-from apps.backend.src.core_ai.time_system import TimeSystem
-from apps.backend.src.core_ai.formula_engine import FormulaEngine
-from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
-from apps.backend.src.core_ai.demo_learning_manager import DemoLearningManager, demo_learning_manager
-from apps.backend.src.shared.error import ProjectError, project_error_handler
+from .core_ai.agent_manager import AgentManager
+from .core_ai.dialogue.dialogue_manager import DialogueManager
+from .core_ai.learning.learning_manager import LearningManager
+from .core_ai.learning.fact_extractor_module import FactExtractorModule
+from .core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from .core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+from .core_ai.trust_manager.trust_manager_module import TrustManager
+from .core_ai.memory.ham_memory_manager import HAMMemoryManager
+from .core_ai.personality.personality_manager import PersonalityManager
+from .core_ai.emotion_system import EmotionSystem
+from .core_ai.crisis_system import CrisisSystem
+from .core_ai.time_system import TimeSystem
+from .core_ai.formula_engine import FormulaEngine
+from .tools.tool_dispatcher import ToolDispatcher
+from .core_ai.demo_learning_manager import DemoLearningManager, demo_learning_manager
+from .shared.error import ProjectError, project_error_handler
 
 # Services
-from apps.backend.src.services.multi_llm_service import MultiLLMService, get_multi_llm_service
-from apps.backend.src.hsp.connector import HSPConnector
-from apps.backend.src.mcp.connector import MCPConnector
-from apps.backend.src.services.ai_virtual_input_service import AIVirtualInputService
-from apps.backend.src.services.audio_service import AudioService
-from apps.backend.src.services.vision_service import VisionService
-from apps.backend.src.services.resource_awareness_service import ResourceAwarenessService
+from .services.multi_llm_service import MultiLLMService, get_multi_llm_service
+from .hsp.connector import HSPConnector
+from .mcp.connector import MCPConnector
+from .services.ai_virtual_input_service import AIVirtualInputService
+from .services.audio_service import AudioService
+from .services.vision_service import VisionService
+from .services.resource_awareness_service import ResourceAwarenessService
 
 # System Services - Hardware Detection and Deployment Management
-from apps.backend.src.system import (
+from .system import (
     HardwareProbe, 
     DeploymentManager, 
     get_hardware_profile, 

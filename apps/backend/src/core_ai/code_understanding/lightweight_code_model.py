@@ -7,7 +7,7 @@ from datetime import datetime
 from dataclasses import dataclass, asdict
 
 # Import DNADataChain from alpha_deep_model
-from apps.backend.src.core_ai.compression.alpha_deep_model import DNADataChain
+from ..compression.alpha_deep_model import DNADataChain
 
 logger = logging.getLogger(__name__)
 

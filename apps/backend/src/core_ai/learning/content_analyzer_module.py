@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 
 from ..knowledge_graph.types import KGEntity, KGRelationship, KnowledgeGraph
-from apps.backend.src.hsp.types import HSPFactPayload, HSPFactStatementStructured  # Import HSPFactPayload
+from ...hsp.types import HSPFactPayload, HSPFactStatementStructured  # Import HSPFactPayload
 
 from spacy.matcher import Matcher  # Added Matcher
 

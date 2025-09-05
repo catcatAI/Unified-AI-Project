@@ -6,7 +6,7 @@ import unittest
 import asyncio
 import pytest_asyncio
 
-from src.services.multi_llm_service import MultiLLMService
+from apps.backend.src.services.multi_llm_service import MultiLLMService
 
 class TestLLMInterface(unittest.TestCase):
 

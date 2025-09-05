@@ -12,29 +12,29 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Import core components
-from apps.backend.src.core_ai.agent_manager import AgentManager
-from apps.backend.src.core_ai.execution_manager import ExecutionManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.core_ai.learning.continuous_learning_manager import ContinuousLearningManager
-from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
+from .core_ai.agent_manager import AgentManager
+from .core_ai.execution_manager import ExecutionManager
+from .core_ai.memory.ham_memory_manager import HAMMemoryManager
+from .core_ai.learning.continuous_learning_manager import ContinuousLearningManager
+from .core_ai.dialogue.dialogue_manager import DialogueManager
 
 # Import services
-from apps.backend.src.services.multi_llm_service import MultiLLMService
-from apps.backend.src.services.ai_editor import AIEditorService
-from apps.backend.src.services.ai_virtual_input_service import AIVirtualInputService
-from apps.backend.src.services.resource_awareness_service import ResourceAwarenessService
+from .services.multi_llm_service import MultiLLMService
+from .services.ai_editor import AIEditorService
+from .services.ai_virtual_input_service import AIVirtualInputService
+from .services.resource_awareness_service import ResourceAwarenessService
 
 # Import integrations
-from apps.backend.src.integrations.enhanced_atlassian_bridge import EnhancedAtlassianBridge
-from apps.backend.src.integrations.rovo_dev_agent import RovoDevAgent
+from .integrations.enhanced_atlassian_bridge import EnhancedAtlassianBridge
+from .integrations.rovo_dev_agent import RovoDevAgent
 
 # Import security
-from apps.backend.src.security.permission_control import PermissionControlSystem
-from apps.backend.src.security.audit_logger import AuditLogger
-from apps.backend.src.security.enhanced_sandbox import EnhancedSandboxExecutor
+from .security.permission_control import PermissionControlSystem
+from .security.audit_logger import AuditLogger
+from .security.enhanced_sandbox import EnhancedSandboxExecutor
 
 # Import tools
-from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+from .tools.tool_dispatcher import ToolDispatcher
 
 logger = logging.getLogger(__name__)
 

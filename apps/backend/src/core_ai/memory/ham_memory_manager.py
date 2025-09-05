@@ -18,13 +18,13 @@ logger = logging.getLogger(__name__)
 from typing import Dict, Any
 
 
-from apps.backend.src.core_ai.memory.ham_types import DialogueMemoryEntryMetadata, HAMMemory # Added for DialogueMemoryEntryMetadata, HAMMemory
-from apps.backend.src.core_ai.memory.types import HAMRecallResult, HAMDataPackageInternal # Import TypedDict version for proper dict-like access
+from .ham_types import DialogueMemoryEntryMetadata, HAMMemory # Added for DialogueMemoryEntryMetadata, HAMMemory
+from .types import HAMRecallResult, HAMDataPackageInternal # Import TypedDict version for proper dict-like access
 
-from apps.backend.src.core_ai.memory.ham_errors import HAMMemoryError, HAMQueryError, HAMStoreError
-from apps.backend.src.core_ai.memory.ham_utils import calculate_cosine_similarity, generate_embedding, get_current_utc_timestamp, is_valid_uuid
-from apps.backend.src.core_ai.memory.vector_store import VectorMemoryStore # New import
-from apps.backend.src.core_ai.memory.importance_scorer import ImportanceScorer # New import
+from .ham_errors import HAMMemoryError, HAMQueryError, HAMStoreError
+from .ham_utils import calculate_cosine_similarity, generate_embedding, get_current_utc_timestamp, is_valid_uuid
+from .vector_store import VectorMemoryStore # New import
+from .importance_scorer import ImportanceScorer # New import
 
 # Mock embedding function for testing/development without full SentenceTransformer setup
 def _mock_embed_texts(input: List[str]) -> List[List[float]]:

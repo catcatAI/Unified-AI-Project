@@ -37,7 +37,7 @@ def test_different_patch_approaches():
             print(f"錯誤: {e}")
     
     print("\n=== 測試2: 檢查實際模組內的open引用 ===")
-    import src.core_ai.dependency_manager as dm_module
+    import apps.backend.src.core_ai.dependency_manager as dm_module
     print(f"模組中的open函數: {dm_module.open}")
     print(f"open是否為內建: {dm_module.open is open}")
     

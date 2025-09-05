@@ -6,8 +6,8 @@ from datetime import datetime
 import uuid
 
 # Use relative imports instead of absolute imports
-from apps.backend.src.economy.economy_manager import EconomyManager
-from apps.backend.src.pet.pet_manager import PetManager
+from ..economy.economy_manager import EconomyManager
+from ..pet.pet_manager import PetManager
 
 # Use path configuration from path_config.py
 from ..path_config import PROJECT_ROOT
@@ -59,10 +59,10 @@ async def get_status():
     return {"status": "running"}
 
 # Remaining imports
-from apps.backend.src.services.multi_llm_service import get_multi_llm_service
-from apps.backend.src.core_ai.language_models.registry import ModelRegistry
-from apps.backend.src.core_ai.language_models.router import PolicyRouter, RoutingPolicy
-from apps.backend.src.services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
+from .multi_llm_service import get_multi_llm_service
+from ..core_ai.language_models.registry import ModelRegistry
+from ..core_ai.language_models.router import PolicyRouter, RoutingPolicy
+from .api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
 
 # --- Health endpoint (v1) ---
 @app.get("/api/v1/health", response_model=HealthResponse)

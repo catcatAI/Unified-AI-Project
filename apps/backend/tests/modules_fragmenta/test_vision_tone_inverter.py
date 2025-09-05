@@ -3,7 +3,7 @@ import pytest
 import os
 import sys
 
-from src.modules_fragmenta.vision_tone_inverter import VisionToneInverter
+from apps.backend.src.modules_fragmenta.vision_tone_inverter import VisionToneInverter
 
 class TestVisionToneInverter(unittest.TestCase):
 

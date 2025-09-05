@@ -4,7 +4,7 @@ import os
 import sys
 import asyncio
 
-from src.services.vision_service import VisionService
+from apps.backend.src.services.vision_service import VisionService
 
 class TestVisionService(unittest.TestCase):
 

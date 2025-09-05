@@ -5,8 +5,8 @@ import os
 import sys
 import asyncio
 
-from src.services.audio_service import AudioService
-from src.config_loader import get_config, get_simulated_resources
+from apps.backend.src.services.audio_service import AudioService
+from apps.backend.src.config_loader import get_config, get_simulated_resources
 
 class TestAudioService(unittest.TestCase):
 
