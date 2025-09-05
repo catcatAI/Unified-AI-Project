@@ -12,8 +12,8 @@ from pathlib import Path
 backend_src = Path(__file__).parent.parent.parent / "apps" / "backend" / "src"
 sys.path.insert(0, str(backend_src))
 
-from services.ai_editor import AIEditorService
-from services.ai_editor_config import get_config
+from apps.backend.src.core.services.ai_editor import AIEditorService
+from apps.backend.src.core.services.ai_editor_config import get_config
 
 @click.group()
 def editor():

@@ -25,9 +25,9 @@ sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 导入模型定义
-from tools.train_vision_model import SimpleVisionModel
-from tools.train_audio_model import SimpleAudioModel
-from tools.train_text_model import SimpleTextModel
+from apps.backend.src.core.tools.train_vision_model import SimpleVisionModel
+from apps.backend.src.core.tools.train_audio_model import SimpleAudioModel
+from apps.backend.src.core.tools.train_text_model import SimpleTextModel
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

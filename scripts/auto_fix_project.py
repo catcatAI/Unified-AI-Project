@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-一键修复脚本
+一键修复脚本 - 适应新的目录结构
 """
 
 import os
@@ -61,7 +61,23 @@ def check_env_vars(python_executable):
     """检查环境变量"""
     print("检查环境变量...")
     script_path = Path(__file__).parent / "check_env_vars.py"
-    subprocess.run([python_executable, str(script_path)])
+    if script_path.exists():
+        subprocess.run([python_executable, str(script_path)])
+    else:
+        print("未找到环境变量检查脚本")
+
+def run_enhanced_auto_fix(python_executable):
+    """运行增强版自动修复工具"""
+    print("运行增强版自动修复工具...")
+    script_path = Path(__file__).parent / "enhanced_auto_fix.py"
+    if script_path.exists():
+        result = subprocess.run([python_executable, str(script_path), "--all"])
+        if result.returncode == 0:
+            print("✓ 增强版自动修复完成")
+        else:
+            print("✗ 增强版自动修复失败")
+    else:
+        print("未找到增强版自动修复工具")
 
 def main():
     """主函数"""
@@ -84,6 +100,9 @@ def main():
     
     # 检查环境变量
     check_env_vars(python_executable)
+    
+    # 运行增强版自动修复工具
+    run_enhanced_auto_fix(python_executable)
     
     print("修复完成!")
 

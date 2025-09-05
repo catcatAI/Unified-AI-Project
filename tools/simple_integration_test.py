@@ -67,7 +67,7 @@ def test_service_components():
     print("Testing service components...")
     
     try:
-        from services.ai_editor import AIEditorService
+        from apps.backend.src.core.services.ai_editor import AIEditorService
         from integrations.enhanced_atlassian_bridge import EnhancedAtlassianBridge
         
         # Test AI Editor
@@ -93,7 +93,7 @@ def test_tool_components():
     print("Testing tool components...")
     
     try:
-        from tools.tool_dispatcher import ToolDispatcher
+        from apps.backend.src.core.tools.tool_dispatcher import ToolDispatcher
         
         # Test Tool Dispatcher
         tool_dispatcher = ToolDispatcher()

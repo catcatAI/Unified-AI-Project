@@ -1,647 +1,414 @@
 #!/usr/bin/env python3
 """
-增强版自动修复工具
-修复所有已知问题，包括导入路径、异步协程警告、断言失败和超时错误
+增强版自动修复工具 - 适应新的目录结构
 """
 
 import os
 import sys
 import re
 import json
-import ast
-import asyncio
-import subprocess
+import traceback
 from pathlib import Path
-from typing import Dict, List, Tuple, Set, Optional
-from dataclasses import dataclass
-from enum import Enum
+from typing import List, Tuple, Dict, Set
+import argparse
+import ast
+import subprocess
+import time
 
-# 项目根目录 - 修正路径计算
-SCRIPT_DIR = Path(__file__).parent
-PROJECT_ROOT = SCRIPT_DIR.parent
+# 项目根目录
+PROJECT_ROOT = Path(__file__).parent.parent
 BACKEND_ROOT = PROJECT_ROOT / "apps" / "backend"
 SRC_DIR = BACKEND_ROOT / "src"
 
-class FixType(Enum):
-    IMPORT_PATH = "import_path"
-    ASYNC_WARNING = "async_warning"
-    ASSERTION_ERROR = "assertion_error"
-    TIMEOUT_ERROR = "timeout_error"
-    UNKNOWN = "unknown"
+# 新的导入映射 - 适应重构后的目录结构
+NEW_IMPORT_MAPPINGS = {
+    "from core_ai.": "from apps.backend.src.ai.",
+    "import core_ai.": "import apps.backend.src.ai.",
+    "from core.": "from apps.backend.src.core.",
+    "import core.": "import apps.backend.src.core.",
+    "from services.": "from apps.backend.src.core.services.",
+    "import services.": "import apps.backend.src.core.services.",
+    "from tools.": "from apps.backend.src.core.tools.",
+    "import tools.": "import apps.backend.src.core.tools.",
+    "from hsp.": "from apps.backend.src.core.hsp.",
+    "import hsp.": "import apps.backend.src.core.hsp.",
+    "from shared.": "from apps.backend.src.core.shared.",
+    "import shared.": "import apps.backend.src.core.shared.",
+    "from agents.": "from apps.backend.src.ai.agents.",
+    "import agents.": "import apps.backend.src.ai.agents.",
+    "from core_ai.audio.": "from apps.backend.src.ai.audio.",
+    "import core_ai.audio.": "import apps.backend.src.ai.audio.",
+    "from core_ai.code_understanding.": "from apps.backend.src.ai.code_understanding.",
+    "import core_ai.code_understanding.": "import apps.backend.src.ai.code_understanding.",
+    "from core_ai.compression.": "from apps.backend.src.ai.compression.",
+    "import core_ai.compression.": "import apps.backend.src.ai.compression.",
+    "from core_ai.concept_models.": "from apps.backend.src.ai.concept_models.",
+    "import core_ai.concept_models.": "import apps.backend.src.ai.concept_models.",
+    "from core_ai.crisis.": "from apps.backend.src.ai.crisis.",
+    "import core_ai.crisis.": "import apps.backend.src.ai.crisis.",
+    "from core_ai.deep_mapper.": "from apps.backend.src.ai.deep_mapper.",
+    "import core_ai.deep_mapper.": "import apps.backend.src.ai.deep_mapper.",
+    "from core_ai.dialogue.": "from apps.backend.src.ai.dialogue.",
+    "import core_ai.dialogue.": "import apps.backend.src.ai.dialogue.",
+    "from core_ai.discovery.": "from apps.backend.src.ai.discovery.",
+    "import core_ai.discovery.": "import apps.backend.src.ai.discovery.",
+    "from core_ai.emotion.": "from apps.backend.src.ai.emotion.",
+    "import core_ai.emotion.": "import apps.backend.src.ai.emotion.",
+    "from core_ai.evaluation.": "from apps.backend.src.ai.evaluation.",
+    "import core_ai.evaluation.": "import apps.backend.src.ai.evaluation.",
+    "from core_ai.formula_engine.": "from apps.backend.src.ai.formula_engine.",
+    "import core_ai.formula_engine.": "import apps.backend.src.ai.formula_engine.",
+    "from core_ai.integration.": "from apps.backend.src.ai.integration.",
+    "import core_ai.integration.": "import apps.backend.src.ai.integration.",
+    "from core_ai.knowledge_graph.": "from apps.backend.src.ai.knowledge_graph.",
+    "import core_ai.knowledge_graph.": "import apps.backend.src.ai.knowledge_graph.",
+    "from core_ai.language_models.": "from apps.backend.src.ai.language_models.",
+    "import core_ai.language_models.": "import apps.backend.src.ai.language_models.",
+    "from core_ai.learning.": "from apps.backend.src.ai.learning.",
+    "import core_ai.learning.": "import apps.backend.src.ai.learning.",
+    "from core_ai.lis.": "from apps.backend.src.ai.lis.",
+    "import core_ai.lis.": "import apps.backend.src.ai.lis.",
+    "from core_ai.memory.": "from apps.backend.src.ai.memory.",
+    "import core_ai.memory.": "import apps.backend.src.ai.memory.",
+    "from core_ai.meta.": "from apps.backend.src.ai.meta.",
+    "import core_ai.meta.": "import apps.backend.src.ai.meta.",
+    "from core_ai.meta_formulas.": "from apps.backend.src.ai.meta_formulas.",
+    "import core_ai.meta_formulas.": "import apps.backend.src.ai.meta_formulas.",
+    "from core_ai.optimization.": "from apps.backend.src.ai.optimization.",
+    "import core_ai.optimization.": "import apps.backend.src.ai.optimization.",
+    "from core_ai.personality.": "from apps.backend.src.ai.personality.",
+    "import core_ai.personality.": "import apps.backend.src.ai.personality.",
+    "from core_ai.rag.": "from apps.backend.src.ai.rag.",
+    "import core_ai.rag.": "import apps.backend.src.ai.rag.",
+    "from core_ai.reasoning.": "from apps.backend.src.ai.reasoning.",
+    "import core_ai.reasoning.": "import apps.backend.src.ai.reasoning.",
+    "from core_ai.symbolic_space.": "from apps.backend.src.ai.symbolic_space.",
+    "import core_ai.symbolic_space.": "import apps.backend.src.ai.symbolic_space.",
+    "from core_ai.test_utils.": "from apps.backend.src.ai.test_utils.",
+    "import core_ai.test_utils.": "import apps.backend.src.ai.test_utils.",
+    "from core_ai.time.": "from apps.backend.src.ai.time.",
+    "import core_ai.time.": "import apps.backend.src.ai.time.",
+    "from core_ai.translation.": "from apps.backend.src.ai.translation.",
+    "import core_ai.translation.": "import apps.backend.src.ai.translation.",
+    "from core_ai.trust.": "from apps.backend.src.ai.trust.",
+    "import core_ai.trust.": "import apps.backend.src.ai.trust.",
+    "from core_ai.world_model.": "from apps.backend.src.ai.world_model.",
+    "import core_ai.world_model.": "import apps.backend.src.ai.world_model.",
+}
 
-@dataclass
-class FixResult:
-    file_path: Path
-    fix_type: FixType
-    success: bool
-    message: str
-    changes_made: List[str]
+# 需要完全替换的导入映射
+FULL_REPLACEMENT_MAPPINGS = {
+    # Core services的修复
+    "from apps.backend.src.core_services import": "from apps.backend.src.core_services import",
+    "import apps.backend.src.core_services": "import apps.backend.src.core_services",
+    
+    # Main API server的修复
+    "from apps.backend.src.core.services.main_api_server import": "from apps.backend.src.core.services.main_api_server import",
+    "import apps.backend.src.core.services.main_api_server": "import apps.backend.src.core.services.main_api_server",
+    
+    # Multi LLM service的修复
+    "from apps.backend.src.core.services.multi_llm_service import": "from apps.backend.src.core.services.multi_llm_service import",
+    "import apps.backend.src.core.services.multi_llm_service": "import apps.backend.src.core.services.multi_llm_service",
+    
+    # Tool dispatcher的修复
+    "from apps.backend.src.core.tools.tool_dispatcher import": "from apps.backend.src.core.tools.tool_dispatcher import",
+    "import apps.backend.src.core.tools.tool_dispatcher": "import apps.backend.src.core.tools.tool_dispatcher",
+}
 
-class EnhancedAutoFix:
-    def __init__(self):
-        self.fix_results: List[FixResult] = []
-        self.error_report_path = PROJECT_ROOT / "error_report.json"
-        self.test_results_path = PROJECT_ROOT / "test_results.json"
+class EnhancedImportFixer:
+    def __init__(self, project_root: Path):
+        self.project_root = project_root
+        self.backend_root = project_root / "apps" / "backend"
+        self.src_dir = self.backend_root / "src"
+        self.fixed_files: Set[str] = set()
+        self.failed_files: Set[str] = set()
+        self.module_cache: Dict[str, List[Path]] = {}
+        self.fix_report: Dict = {
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "files_processed": 0,
+            "files_fixed": 0,
+            "fixes_made": [],
+            "errors": [],
+            "warnings": []
+        }
         
-    def _create_module_mapping(self) -> Dict[str, str]:
-        """创建模块映射以帮助修复导入"""
-        module_mapping = {}
+    def find_python_files(self) -> List[Path]:
+        """查找所有Python文件"""
+        python_files = []
         
-        # 遍历src目录，创建模块到路径的映射
-        if SRC_DIR.exists():
-            for py_file in SRC_DIR.rglob("*.py"):
-                # 获取相对路径
-                relative_path = py_file.relative_to(SRC_DIR)
+        # 遍历所有Python文件
+        for py_file in self.project_root.rglob("*.py"):
+            # 跳过备份目录和node_modules
+            if any(part in str(py_file) for part in ["backup", "node_modules", "__pycache__", "venv", ".git", "dist", "build"]):
+                continue
                 
-                # 创建模块名
-                module_name = str(relative_path).replace(os.sep, ".").replace(".py", "")
-                
-                # 处理__init__.py文件
-                if module_name.endswith(".__init__"):
-                    module_name = module_name[:-9]  # 移除.__init__
-                
-                # 添加到映射
-                module_mapping[module_name] = f"apps.backend.src.{module_name}"
-                
-                # 如果是__init__.py，也添加目录名作为模块名
-                if py_file.name == "__init__.py":
-                    parent_module = str(relative_path.parent).replace(os.sep, ".")
-                    if parent_module != ".":
-                        module_mapping[parent_module] = f"apps.backend.src.{parent_module}"
-        
-        return module_mapping
-        
-    def load_error_report(self) -> Dict:
-        """加载错误报告"""
+            python_files.append(py_file)
+            
+        return python_files
+
+    def fix_imports_in_file(self, file_path: Path) -> Tuple[bool, List[str]]:
+        """修复文件中的导入"""
         try:
-            with open(self.error_report_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            print(f"[ERROR] 错误报告文件 {self.error_report_path} 未找到")
-            return {}
-        except json.JSONDecodeError as e:
-            print(f"[ERROR] 错误报告文件格式错误: {e}")
-            return {}
-    
-    def fix_import_paths(self) -> List[FixResult]:
-        """修复导入路径问题"""
-        print("开始修复导入路径问题...")
-        results = []
-        
-        # 需要修复的导入映射
-        import_mappings = {
-            # 修复相对导入问题
-            r"from\s+\.\.core_ai\.": "from apps.backend.src.core_ai.",
-            r"from\s+\.\.services\.": "from apps.backend.src.services.",
-            r"from\s+\.\.tools\.": "from apps.backend.src.tools.",
-            r"from\s+\.\.hsp\.": "from apps.backend.src.hsp.",
-            r"from\s+\.\.shared\.": "from apps.backend.src.shared.",
-            r"from\s+\.\.agents\.": "from apps.backend.src.agents.",
-            r"from\s+\.\.mcp\.": "from apps.backend.src.mcp.",
-            r"from\s+\.\.system\.": "from apps.backend.src.system.",
-            r"from\s+\.\.configs\.": "from apps.backend.src.configs.",
-            r"from\s+\.\.utils\.": "from apps.backend.src.utils.",
-            r"from\s+\.\.security\.": "from apps.backend.src.security.",
-            r"from\s+\.\.integrations\.": "from apps.backend.src.integrations.",
-            r"from\s+\.\.creation\.": "from apps.backend.src.creation.",
-            r"from\s+\.\.evaluation\.": "from apps.backend.src.evaluation.",
-            r"from\s+\.\.economy\.": "from apps.backend.src.economy.",
-            r"from\s+\.\.pet\.": "from apps.backend.src.pet.",
-            r"from\s+\.\.search\.": "from apps.backend.src.search.",
-            r"from\s+\.\.monitoring\.": "from apps.backend.src.monitoring.",
-            r"from\s+\.\.fragmenta\.": "from apps.backend.src.fragmenta.",
-            r"from\s+\.\.modules_fragmenta\.": "from apps.backend.src.modules_fragmenta.",
-            r"from\s+\.\.game\.": "from apps.backend.src.game.",
-            r"from\s+\.\.interfaces\.": "from apps.backend.src.interfaces.",
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                
+            original_content = content
+            fixes_made = []
             
-            # 修复绝对导入问题
-            r"from core_ai\.": "from apps.backend.src.core_ai.",
-            r"import core_ai\.": "import apps.backend.src.core_ai.",
-            r"from services\.": "from apps.backend.src.services.",
-            r"import services\.": "import apps.backend.src.services.",
-            r"from tools\.": "from apps.backend.src.tools.",
-            r"import tools\.": "import apps.backend.src.tools.",
-            r"from hsp\.": "from apps.backend.src.hsp.",
-            r"import hsp\.": "import apps.backend.src.hsp.",
-            r"from shared\.": "from apps.backend.src.shared.",
-            r"import shared\.": "import apps.backend.src.shared.",
-            r"from agents\.": "from apps.backend.src.agents.",
-            r"import agents\.": "import apps.backend.src.agents.",
-            r"from mcp\.": "from apps.backend.src.mcp.",
-            r"import mcp\.": "import apps.backend.src.mcp.",
-            r"from system\.": "from apps.backend.src.system.",
-            r"import system\.": "import apps.backend.src.system.",
-            r"from configs\.": "from apps.backend.src.configs.",
-            r"import configs\.": "import apps.backend.src.configs.",
-            r"from utils\.": "from apps.backend.src.utils.",
-            r"import utils\.": "import apps.backend.src.utils.",
-            r"from security\.": "from apps.backend.src.security.",
-            r"import security\.": "import apps.backend.src.security.",
-            r"from integrations\.": "from apps.backend.src.integrations.",
-            r"import integrations\.": "import apps.backend.src.integrations.",
-            r"from creation\.": "from apps.backend.src.creation.",
-            r"import creation\.": "import apps.backend.src.creation.",
-            r"from evaluation\.": "from apps.backend.src.evaluation.",
-            r"import evaluation\.": "import apps.backend.src.evaluation.",
-            r"from economy\.": "from apps.backend.src.economy.",
-            r"import economy\.": "import apps.backend.src.economy.",
-            r"from pet\.": "from apps.backend.src.pet.",
-            r"import pet\.": "import apps.backend.src.pet.",
-            r"from search\.": "from apps.backend.src.search.",
-            r"import search\.": "import apps.backend.src.search.",
-            r"from monitoring\.": "from apps.backend.src.monitoring.",
-            r"import monitoring\.": "import apps.backend.src.monitoring.",
-            r"from fragmenta\.": "from apps.backend.src.fragmenta.",
-            r"import fragmenta\.": "import apps.backend.src.fragmenta.",
-            r"from modules_fragmenta\.": "from apps.backend.src.modules_fragmenta.",
-            r"import modules_fragmenta\.": "import apps.backend.src.modules_fragmenta.",
-            r"from game\.": "from apps.backend.src.game.",
-            r"import game\.": "import apps.backend.src.game.",
-            r"from interfaces\.": "from apps.backend.src.interfaces.",
-            r"import interfaces\.": "import apps.backend.src.interfaces.",
-            
-            # 修复"apps"模块导入问题
-            r"from apps\.": "from apps.",
-            r"import apps\.": "import apps.",
-        }
-        
-        # 查找所有Python文件
-        python_files = list(BACKEND_ROOT.rglob("*.py"))
-        
-        # 创建模块映射以帮助修复导入
-        module_mapping = self._create_module_mapping()
-        
-        for py_file in python_files:
-            # 跳过备份目录和node_modules
-            if any(part in str(py_file) for part in ["backup", "node_modules", "__pycache__", "venv", ".git"]):
-                continue
-                
-            try:
-                with open(py_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    
-                original_content = content
-                changes_made = []
-                
-                # 应用所有导入映射
-                for pattern, replacement in import_mappings.items():
-                    new_content = re.sub(pattern, replacement, content)
-                    if new_content != content:
-                        # 记录变化
-                        matches = re.findall(pattern, content)
-                        for match in matches:
-                            changes_made.append(f"修复导入: {match} -> {replacement}")
-                        content = new_content
-                
-                # 应用智能导入修复
-                content, smart_changes = self._fix_imports_smartly(content, py_file, module_mapping)
-                if smart_changes:
-                    changes_made.extend(smart_changes)
-                
-                # 如果内容有变化，写入文件
-                if content != original_content:
-                    with open(py_file, 'w', encoding='utf-8') as f:
-                        f.write(content)
-                    results.append(FixResult(
-                        file_path=py_file,
-                        fix_type=FixType.IMPORT_PATH,
-                        success=True,
-                        message=f"成功修复导入路径问题",
-                        changes_made=changes_made
-                    ))
-                    print(f"✓ 修复了文件 {py_file}")
-                    for change in changes_made:
-                        print(f"  - {change}")
-                else:
-                    results.append(FixResult(
-                        file_path=py_file,
-                        fix_type=FixType.IMPORT_PATH,
-                        success=True,
-                        message="无需修复",
-                        changes_made=[]
-                    ))
-            except Exception as e:
-                results.append(FixResult(
-                    file_path=py_file,
-                    fix_type=FixType.IMPORT_PATH,
-                    success=False,
-                    message=f"修复文件时出错: {e}",
-                    changes_made=[]
-                ))
-                print(f"✗ 修复文件 {py_file} 时出错: {e}")
-        
-        return results
-    
-    def fix_async_warnings(self) -> List[FixResult]:
-        """修复异步协程警告"""
-        print("开始修复异步协程警告...")
-        results = []
-        
-        # 需要修复的协程调用模式
-        async_patterns = [
-            # VectorMemoryStore._schedule_maintenance
-            (r"logger\.warning\(f\"Error setting up advanced features: \{e\}\"\)", 
-             r"await logger.warning(f\"Error setting up advanced features: {e}\")"),
-            
-            # MockMqttBroker.subscribe
-            (r"self\.subscribe\(topic, self\.clients\[client_id\]\)", 
-             r"await self.subscribe(topic, self.clients[client_id])"),
-             
-            # TempMockHAM.store_experience
-            (r"self\.ham_memory\.store_experience\(raw_data=project_case, data_type=\"project_execution_case\", metadata=raw_case_metadata\)", 
-             r"await self.ham_memory.store_experience(raw_data=project_case, data_type=\"project_execution_case\", metadata=raw_case_metadata)"),
-             
-            # 修复learning_manager.py中的语法错误
-            (r"incoming_fact_payload = await HSPFactPayload\(", 
-             r"incoming_fact_payload = HSPFactPayload("),
-             
-            (r"incoming_envelope = await HSPMessageEnvelope\(", 
-             r"incoming_envelope = HSPMessageEnvelope("),
-             
-            (r"incoming_fact_payload_conflict_similar = await HSPFactPayload\(", 
-             r"incoming_fact_payload_conflict_similar = HSPFactPayload("),
-             
-            (r"incoming_fact_payload_conflict_same_val = await HSPFactPayload\(", 
-             r"incoming_fact_payload_conflict_same_val = HSPFactPayload("),
-             
-            (r"older_timestamp_for_merge_payload = await datetime\(", 
-             r"older_timestamp_for_merge_payload = datetime("),
-        ]
-        
-        # 查找所有Python文件
-        python_files = list(BACKEND_ROOT.rglob("*.py"))
-        
-        for py_file in python_files:
-            # 跳过备份目录和node_modules
-            if any(part in str(py_file) for part in ["backup", "node_modules", "__pycache__", "venv", ".git"]):
-                continue
-                
-            try:
-                with open(py_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    
-                original_content = content
-                changes_made = []
-                
-                # 应用所有异步模式修复
-                for pattern, replacement in async_patterns:
-                    new_content = re.sub(pattern, replacement, content)
-                    if new_content != content:
-                        # 记录变化
-                        matches = re.findall(pattern, content)
-                        for match in matches:
-                            changes_made.append(f"修复异步调用: {match} -> {replacement}")
-                        content = new_content
-                
-                # 如果内容有变化，写入文件
-                if content != original_content:
-                    with open(py_file, 'w', encoding='utf-8') as f:
-                        f.write(content)
-                    results.append(FixResult(
-                        file_path=py_file,
-                        fix_type=FixType.ASYNC_WARNING,
-                        success=True,
-                        message=f"成功修复异步协程警告",
-                        changes_made=changes_made
-                    ))
-                    print(f"✓ 修复了文件 {py_file}")
-                    for change in changes_made:
-                        print(f"  - {change}")
-                else:
-                    results.append(FixResult(
-                        file_path=py_file,
-                        fix_type=FixType.ASYNC_WARNING,
-                        success=True,
-                        message="无需修复",
-                        changes_made=[]
-                    ))
-            except Exception as e:
-                results.append(FixResult(
-                    file_path=py_file,
-                    fix_type=FixType.ASYNC_WARNING,
-                    success=False,
-                    message=f"修复文件时出错: {e}",
-                    changes_made=[]
-                ))
-                print(f"✗ 修复文件 {py_file} 时出错: {e}")
-        
-        return results
-    
-    def fix_assertion_errors(self) -> List[FixResult]:
-        """修复断言错误"""
-        print("开始修复断言错误...")
-        results = []
-        
-        # 查找测试文件中的断言错误
-        test_files = list(BACKEND_ROOT.rglob("test_*.py"))
-        
-        for test_file in test_files:
-            # 跳过备份目录和node_modules
-            if any(part in str(test_file) for part in ["backup", "node_modules", "__pycache__", "venv", ".git"]):
-                continue
-                
-            try:
-                with open(test_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    
-                original_content = content
-                changes_made = []
-                
-                # 修复ContentAnalyzerModule中的实体数量断言
-                # 分析实际的实体数量差异，而不是简单地注释掉断言
-                content = re.sub(
-                    r"self\.assertEqual\(nx_graph\.number_of_nodes\(\), len\(kg_data\[\"entities\"\]\)\)",
-                    r"# 修复实体数量断言 - 需要检查实际的实体计数逻辑\n"
-                    r"# 获取实体节点数量\n"
-                    r"entity_nodes = [n for n, attrs in nx_graph.nodes(data=True) if attrs.get('type') == 'entity']\n"
-                    r"entity_count = len(entity_nodes)\n"
-                    r"expected_entity_count = len([e for e in kg_data[\"entities\"] if e.get('type') == 'entity'])\n"
-                    r"self.assertEqual(entity_count, expected_entity_count)",
-                    content
-                )
-                
-                # 修复关系断言错误 - 使用更准确的断言
-                content = re.sub(
-                    r"self\.assertTrue\((.*?Expected.*?not found.*?)\)",
-                    r"# 修复关系断言 - 使用更具体的断言\n"
-                    r"# self.assertTrue(\1)\n"
-                    r"self.skipTest('需要进一步分析关系提取逻辑')",
-                    content
-                )
-                
-                # 修复Paris实体URI断言错误
-                content = re.sub(
-                    r"self\.assertEqual\(processed_triple_info\[\"subject_id\"\], expected_s_id\)",
-                    r"# 修复Paris实体URI断言 - 检查URI映射逻辑\n"
-                    r"# self.assertEqual(processed_triple_info[\"subject_id\"], expected_s_id)\n"
-                    r"# 检查两种可能的URI格式\n"
-                    r"subject_id = processed_triple_info[\"subject_id\"]\n"
-                    r"if subject_id.startswith('http://'):\n"
-                    r"    self.assertEqual(subject_id, 'http://example.org/entity/Paris')\n"
-                    r"else:\n"
-                    r"    self.assertEqual(subject_id, 'cai_instance:ex_Paris')",
-                    content
-                )
-                
-                # 如果内容有变化，写入文件
-                if content != original_content:
-                    with open(test_file, 'w', encoding='utf-8') as f:
-                        f.write(content)
-                    results.append(FixResult(
-                        file_path=test_file,
-                        fix_type=FixType.ASSERTION_ERROR,
-                        success=True,
-                        message=f"成功修复断言错误",
-                        changes_made=["修复了测试断言错误"]
-                    ))
-                    print(f"✓ 修复了文件 {test_file}")
-                else:
-                    results.append(FixResult(
-                        file_path=test_file,
-                        fix_type=FixType.ASSERTION_ERROR,
-                        success=True,
-                        message="无需修复",
-                        changes_made=[]
-                    ))
-            except Exception as e:
-                results.append(FixResult(
-                    file_path=test_file,
-                    fix_type=FixType.ASSERTION_ERROR,
-                    success=False,
-                    message=f"修复文件时出错: {e}",
-                    changes_made=[]
-                ))
-                print(f"✗ 修复文件 {test_file} 时出错: {e}")
-        
-        return results
-    
-    def fix_timeout_errors(self) -> List[FixResult]:
-        """修复超时错误"""
-        print("开始修复超时错误...")
-        results = []
-        
-        # 查找可能引起超时的测试文件
-        test_files = list(BACKEND_ROOT.rglob("test_*.py"))
-        
-        for test_file in test_files:
-            # 跳过备份目录和node_modules
-            if any(part in str(test_file) for part in ["backup", "node_modules", "__pycache__", "venv", ".git"]):
-                continue
-                
-            try:
-                with open(test_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    
-                original_content = content
-                changes_made = []
-                
-                # 增加测试超时时间
-                content = re.sub(
-                    r"timeout\s*=\s*(\d+\.?\d*)",
-                    lambda m: f"timeout = {float(m.group(1)) * 2}" if float(m.group(1)) < 30 else m.group(0),
-                    content
-                )
-                
-                # 优化异步测试中的等待逻辑
-                # 查找asyncio.wait_for调用并增加超时时间
-                content = re.sub(
-                    r"asyncio\.wait_for\((.*?),\s*timeout\s*=\s*(\d+\.?\d*)\)",
-                    lambda m: f"asyncio.wait_for({m.group(1)}, timeout={float(m.group(2)) * 2})" if float(m.group(2)) < 30 else m.group(0),
-                    content
-                )
-                
-                # 优化事件等待超时
-                content = re.sub(
-                    r"event\.wait\((\d+\.?\d*)\)",
-                    lambda m: f"event.wait({float(m.group(1)) * 2})" if float(m.group(1)) < 30 else m.group(0),
-                    content
-                )
-                
-                # 添加更智能的重试机制
-                # 查找可能需要重试的测试代码
-                retry_patterns = [
-                    (r"(async\s+def\s+test_.*?:)", 
-                     r"# 添加重试装饰器以处理不稳定的测试\n"
-                     r"# @pytest.mark.flaky(reruns=3, reruns_delay=2)\n"
-                     r"\1"),
-                ]
-                
-                for pattern, replacement in retry_patterns:
-                    content = re.sub(pattern, replacement, content)
-                
-                # 如果内容有变化，写入文件
-                if content != original_content:
-                    with open(test_file, 'w', encoding='utf-8') as f:
-                        f.write(content)
-                    results.append(FixResult(
-                        file_path=test_file,
-                        fix_type=FixType.TIMEOUT_ERROR,
-                        success=True,
-                        message=f"成功修复超时错误",
-                        changes_made=["增加了测试超时时间", "优化了异步等待逻辑", "添加了重试机制"]
-                    ))
-                    print(f"✓ 修复了文件 {test_file}")
-                else:
-                    results.append(FixResult(
-                        file_path=test_file,
-                        fix_type=FixType.TIMEOUT_ERROR,
-                        success=True,
-                        message="无需修复",
-                        changes_made=[]
-                    ))
-            except Exception as e:
-                results.append(FixResult(
-                    file_path=test_file,
-                    fix_type=FixType.TIMEOUT_ERROR,
-                    success=False,
-                    message=f"修复文件时出错: {e}",
-                    changes_made=[]
-                ))
-                print(f"✗ 修复文件 {test_file} 时出错: {e}")
-        
-        return results
-    
-    def run_fixes(self) -> List[FixResult]:
-        """运行所有修复"""
-        print("=== Unified AI Project 增强自动修复工具 ===")
-        print(f"项目根目录: {PROJECT_ROOT}")
-        print(f"后端目录: {BACKEND_ROOT}")
-        print(f"源代码目录: {SRC_DIR}")
-        
-        all_results = []
-        
-        # 修复导入路径问题
-        import_results = self.fix_import_paths()
-        all_results.extend(import_results)
-        
-        # 修复异步协程警告
-        async_results = self.fix_async_warnings()
-        all_results.extend(async_results)
-        
-        # 修复断言错误
-        assertion_results = self.fix_assertion_errors()
-        all_results.extend(assertion_results)
-        
-        # 修复超时错误
-        timeout_results = self.fix_timeout_errors()
-        all_results.extend(timeout_results)
-        
-        # 保存修复结果
-        self.save_fix_results(all_results)
-        
-        return all_results
-    
-    def save_fix_results(self, results: List[FixResult]):
-        """保存修复结果"""
-        fix_report = {
-            "total_files": len(set(str(r.file_path) for r in results)),
-            "successful_fixes": len([r for r in results if r.success]),
-            "failed_fixes": len([r for r in results if not r.success]),
-            "fix_details": []
-        }
-        
-        for result in results:
-            fix_report["fix_details"].append({
-                "file_path": str(result.file_path),
-                "fix_type": result.fix_type.value,
-                "success": result.success,
-                "message": result.message,
-                "changes_made": result.changes_made
-            })
-        
-        report_file = PROJECT_ROOT / "enhanced_auto_fix_report.json"
-        with open(report_file, 'w', encoding='utf-8') as f:
-            json.dump(fix_report, f, ensure_ascii=False, indent=2)
-        
-        print(f"\n修复报告已保存到: {report_file}")
-        
-    def _fix_imports_smartly(self, content: str, file_path: Path, module_mapping: Dict[str, str]) -> Tuple[str, List[str]]:
-        """智能修复导入路径问题"""
-        changes_made = []
-        
-        # 查找所有导入语句
-        import_patterns = [
-            r"from\s+([a-zA-Z0-9_.]+)\s+import",
-            r"import\s+([a-zA-Z0-9_.]+)"
-        ]
-        
-        for pattern in import_patterns:
-            matches = re.finditer(pattern, content)
-            for match in matches:
-                module_name = match.group(1)
-                
-                # 检查是否需要修复
-                if module_name in module_mapping and not module_name.startswith("apps.backend.src"):
-                    # 构造新的导入语句
-                    old_import = match.group(0)
-                    new_module_path = module_mapping[module_name]
-                    new_import = old_import.replace(module_name, new_module_path)
-                    
-                    # 替换内容
+            # 应用完全替换映射
+            for old_import, new_import in FULL_REPLACEMENT_MAPPINGS.items():
+                if old_import in content:
                     content = content.replace(old_import, new_import)
-                    changes_made.append(f"智能修复导入: {old_import} -> {new_import}")
+                    fixes_made.append(f"完全替换: {old_import} -> {new_import}")
+            
+            # 应用新的导入映射
+            for old_import, new_import in NEW_IMPORT_MAPPINGS.items():
+                if old_import in content and new_import not in content:
+                    content = content.replace(old_import, new_import)
+                    fixes_made.append(f"映射替换: {old_import} -> {new_import}")
+            
+            # 处理相对导入问题
+            # 修复相对导入问题 (从 .core_ai 到新的结构)
+            relative_patterns = [
+                (r'from\s+\.\s+core_ai\s*\.', 'from apps.backend.src.ai.'),
+                (r'from\s+\.\s+core\s*\.', 'from apps.backend.src.core.'),
+                (r'from\s+\.\s+services\s*\.', 'from apps.backend.src.core.services.'),
+                (r'from\s+\.\s+tools\s*\.', 'from apps.backend.src.core.tools.'),
+                (r'from\s+\.\s+hsp\s*\.', 'from apps.backend.src.core.hsp.'),
+                (r'from\s+\.\s+shared\s*\.', 'from apps.backend.src.core.shared.'),
+                (r'from\s+\.\s+agents\s*\.', 'from apps.backend.src.ai.agents.'),
+                (r'import\s+\.\s+core_ai\s*\.', 'import apps.backend.src.ai.'),
+                (r'import\s+\.\s+core\s*\.', 'import apps.backend.src.core.'),
+                (r'import\s+\.\s+services\s*\.', 'import apps.backend.src.core.services.'),
+                (r'import\s+\.\s+tools\s*\.', 'import apps.backend.src.core.tools.'),
+                (r'import\s+\.\s+hsp\s*\.', 'import apps.backend.src.core.hsp.'),
+                (r'import\s+\.\s+shared\s*\.', 'import apps.backend.src.core.shared.'),
+                (r'import\s+\.\s+agents\s*\.', 'import apps.backend.src.ai.agents.'),
+                # 处理 ..core_ai 等双点相对导入
+                (r'from\s+\.\.\s+core_ai\s*\.', 'from apps.backend.src.ai.'),
+                (r'from\s+\.\.\s+core\s*\.', 'from apps.backend.src.core.'),
+                (r'from\s+\.\.\s+services\s*\.', 'from apps.backend.src.core.services.'),
+                (r'from\s+\.\.\s+tools\s*\.', 'from apps.backend.src.core.tools.'),
+                (r'from\s+\.\.\s+hsp\s*\.', 'from apps.backend.src.core.hsp.'),
+                (r'from\s+\.\.\s+shared\s*\.', 'from apps.backend.src.core.shared.'),
+                (r'from\s+\.\.\s+agents\s*\.', 'from apps.backend.src.ai.agents.'),
+                (r'import\s+\.\.\s+core_ai\s*\.', 'import apps.backend.src.ai.'),
+                (r'import\s+\.\.\s+core\s*\.', 'import apps.backend.src.core.'),
+                (r'import\s+\.\.\s+services\s*\.', 'import apps.backend.src.core.services.'),
+                (r'import\s+\.\.\s+tools\s*\.', 'import apps.backend.src.core.tools.'),
+                (r'import\s+\.\.\s+hsp\s*\.', 'import apps.backend.src.core.hsp.'),
+                (r'import\s+\.\.\s+shared\s*\.', 'import apps.backend.src.core.shared.'),
+                (r'import\s+\.\.\s+agents\s*\.', 'import apps.backend.src.ai.agents.'),
+            ]
+            
+            for pattern, replacement in relative_patterns:
+                matches = re.findall(pattern, content)
+                if matches:
+                    content = re.sub(pattern, replacement, content)
+                    for match in matches:
+                        fixes_made.append(f"相对导入修复: {match} -> {replacement}")
+            
+            # 如果内容有变化，写入文件
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                return True, fixes_made
+            else:
+                return False, []
+                
+        except Exception as e:
+            error_msg = f"修复文件 {file_path} 时出错: {str(e)}"
+            print(f"✗ {error_msg}")
+            self.fix_report["errors"].append({
+                "file": str(file_path),
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            })
+            return False, []
+
+    def fix_all_imports(self) -> Dict[str, int]:
+        """修复所有导入问题"""
+        print("开始扫描项目中的导入问题...")
+        python_files = self.find_python_files()
         
-        return content, changes_made
-    
+        if not python_files:
+            print("未找到Python文件。")
+            return {"fixed": 0, "skipped": 0, "errors": 0}
+            
+        print(f"发现 {len(python_files)} 个Python文件。")
+        self.fix_report["files_processed"] = len(python_files)
+        
+        total_fixes = 0
+        files_fixed = 0
+        files_skipped = 0
+        files_with_errors = 0
+        
+        for file_path in python_files:
+            try:
+                fixed, fixes_made = self.fix_imports_in_file(file_path)
+                if fixed:
+                    files_fixed += 1
+                    total_fixes += len(fixes_made)
+                    print(f"✓ 修复了文件 {file_path}")
+                    for fix in fixes_made:
+                        print(f"  - {fix}")
+                        self.fix_report["fixes_made"].append({
+                            "file": str(file_path),
+                            "fix": fix
+                        })
+                elif fixes_made:  # 有错误但尝试了修复
+                    files_with_errors += 1
+                else:
+                    # 没有需要修复的内容
+                    pass
+            except Exception as e:
+                error_msg = f"处理文件 {file_path} 时出错: {str(e)}"
+                print(f"✗ {error_msg}")
+                self.fix_report["errors"].append({
+                    "file": str(file_path),
+                    "error": str(e),
+                    "traceback": traceback.format_exc()
+                })
+                files_with_errors += 1
+        
+        self.fix_report["files_fixed"] = files_fixed
+        return {
+            "fixed": files_fixed,
+            "skipped": files_skipped,
+            "errors": files_with_errors,
+            "total_fixes": total_fixes
+        }
+
     def validate_fixes(self) -> bool:
         """验证修复是否成功"""
         print("\n=== 验证修复 ===")
         try:
             # 添加项目路径
-            if str(PROJECT_ROOT) not in sys.path:
-                sys.path.insert(0, str(PROJECT_ROOT))
-            if str(SRC_DIR) not in sys.path:
-                sys.path.insert(0, str(SRC_DIR))
+            if str(self.project_root) not in sys.path:
+                sys.path.insert(0, str(self.project_root))
+            if str(self.src_dir) not in sys.path:
+                sys.path.insert(0, str(self.src_dir))
                 
             # 尝试导入核心模块
-            try:
-                from apps.backend.src.core_services import initialize_services
-                print("✓ 核心服务模块导入成功")
-            except ImportError as e:
-                print(f"⚠ 核心服务模块导入失败: {e}")
-                
-            try:
-                from apps.backend.src.core_ai.agent_manager import AgentManager
-                print("✓ Agent管理器模块导入成功")
-            except ImportError as e:
-                print(f"⚠ Agent管理器模块导入失败: {e}")
-                
-            try:
-                from apps.backend.src.hsp.connector import HSPConnector
-                print("✓ HSP连接器模块导入成功")
-            except ImportError as e:
-                print(f"⚠ HSP连接器模块导入失败: {e}")
-                
-            try:
-                from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
-                print("✓ 对话管理器模块导入成功")
-            except ImportError as e:
-                print(f"⚠ 对话管理器模块导入失败: {e}")
+            test_modules = [
+                "apps.backend.src.core_services",
+                "apps.backend.src.ai.agents.base.base_agent",
+                "apps.backend.src.core.hsp.connector",
+                "apps.backend.src.ai.dialogue.dialogue_manager",
+                "apps.backend.src.core.tools.tool_dispatcher",
+                "apps.backend.src.core.services.main_api_server",
+                "apps.backend.src.core.services.multi_llm_service",
+                "apps.backend.src.ai.memory.ham_memory_manager",
+                "apps.backend.src.ai.learning.learning_manager",
+                "apps.backend.src.ai.personality.personality_manager",
+                "apps.backend.src.ai.trust.trust_manager_module",
+                "apps.backend.src.ai.discovery.service_discovery_module"
+            ]
             
-            print("关键模块导入验证完成。")
-            return True
+            success_count = 0
+            for module in test_modules:
+                try:
+                    __import__(module)
+                    print(f"✓ {module} 导入成功")
+                    success_count += 1
+                except ImportError as e:
+                    warning_msg = f"⚠ {module} 导入失败: {e}"
+                    print(warning_msg)
+                    self.fix_report["warnings"].append(warning_msg)
+                except Exception as e:
+                    error_msg = f"✗ {module} 导入时出现错误: {e}"
+                    print(error_msg)
+                    self.fix_report["errors"].append({
+                        "module": module,
+                        "error": str(e),
+                        "type": "import_validation"
+                    })
             
+            print(f"关键模块导入验证: {success_count}/{len(test_modules)} 成功")
+            return success_count > 0
+                
         except Exception as e:
-            print(f"✗ 验证过程中出现错误: {e}")
+            error_msg = f"验证过程中出现错误: {str(e)}"
+            print(f"✗ {error_msg}")
+            self.fix_report["errors"].append({
+                "error": str(e),
+                "type": "validation",
+                "traceback": traceback.format_exc()
+            })
             return False
-    
+
+    def run_import_test(self) -> bool:
+        """运行导入测试"""
+        print("\n=== 运行导入测试 ===")
+        try:
+            # 切换到项目根目录
+            original_cwd = os.getcwd()
+            os.chdir(self.project_root)
+            
+            # 尝试导入几个关键模块
+            test_modules = [
+                "apps.backend.src.core_services",
+                "apps.backend.src.ai.agents.base.base_agent",
+                "apps.backend.src.core.hsp.connector",
+                "apps.backend.src.ai.dialogue.dialogue_manager"
+            ]
+            
+            success_count = 0
+            for module in test_modules:
+                try:
+                    __import__(module)
+                    print(f"✓ {module} 导入成功")
+                    success_count += 1
+                except ImportError as e:
+                    print(f"✗ {module} 导入失败: {e}")
+                except Exception as e:
+                    print(f"✗ {module} 导入时出现错误: {e}")
+        
+            # 恢复工作目录
+            os.chdir(original_cwd)
+            
+            if success_count == len(test_modules):
+                print("所有测试模块导入成功。")
+                return True
+            else:
+                print(f"导入测试: {success_count}/{len(test_modules)} 成功")
+                return success_count > 0
+                
+        except Exception as e:
+            print(f"✗ 运行导入测试时出错: {e}")
+            return False
+        finally:
+            # 恢复工作目录
+            try:
+                os.chdir(original_cwd)
+            except:
+                pass
+
+    def save_fix_report(self, report_path: Path = None):
+        """保存修复报告"""
+        if report_path is None:
+            report_path = self.project_root / "enhanced_auto_fix_report.json"
+            
+        try:
+            with open(report_path, 'w', encoding='utf-8') as f:
+                json.dump(self.fix_report, f, ensure_ascii=False, indent=2)
+            print(f"✓ 修复报告已保存到 {report_path}")
+        except Exception as e:
+            print(f"✗ 保存修复报告时出错: {e}")
+
     def run_tests(self) -> bool:
         """运行测试"""
         print("\n=== 运行测试 ===")
         try:
             # 切换到项目根目录
             original_cwd = os.getcwd()
-            os.chdir(PROJECT_ROOT)
+            os.chdir(self.project_root)
             
             # 尝试运行一个简单的导入测试
-            import subprocess
-            import time
-            
-            # 使用pytest收集测试但不运行（--collect-only）
             print("收集测试用例...")
             result = subprocess.run([
                 "python", "-m", "pytest", "--collect-only", "-q", "--tb=no"
-            ], cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=120)
+            ], cwd=self.project_root, capture_output=True, text=True, timeout=120)
             
             if result.returncode == 0:
                 # 解析收集到的测试数量
@@ -651,8 +418,6 @@ class EnhancedAutoFix:
                     print(f"✓ {test_count_line[0]}")
                 else:
                     print("✓ 测试收集成功")
-                # 恢复工作目录
-                os.chdir(original_cwd)
                 return True
             else:
                 print("✗ 测试收集失败")
@@ -660,41 +425,58 @@ class EnhancedAutoFix:
                     print("STDOUT:", result.stdout[-500:])  # 只显示最后500个字符
                 if result.stderr:
                     print("STDERR:", result.stderr[-500:])  # 只显示最后500个字符
-                # 恢复工作目录
-                os.chdir(original_cwd)
                 return False
-                    
+                
         except subprocess.TimeoutExpired:
             print("✗ 测试收集超时")
-            # 恢复工作目录
-            os.chdir(original_cwd)
             return False
         except Exception as e:
             print(f"✗ 运行测试时出错: {e}")
-            # 恢复工作目录
-            os.chdir(original_cwd)
             return False
+        finally:
+            # 恢复工作目录
+            try:
+                os.chdir(original_cwd)
+            except:
+                pass
 
 def main():
-    fixer = EnhancedAutoFix()
-    results = fixer.run_fixes()
+    parser = argparse.ArgumentParser(description="增强版自动修复工具 - 适应新的目录结构")
+    parser.add_argument("--fix", action="store_true", help="修复导入路径问题")
+    parser.add_argument("--validate", action="store_true", help="验证修复结果")
+    parser.add_argument("--test", action="store_true", help="运行测试")
+    parser.add_argument("--report", type=str, default="enhanced_auto_fix_report.json", help="修复报告文件路径")
+    parser.add_argument("--all", action="store_true", help="执行所有操作")
     
-    # 统计结果
-    successful_fixes = len([r for r in results if r.success])
-    failed_fixes = len([r for r in results if not r.success])
+    args = parser.parse_args()
     
-    print(f"\n修复统计:")
-    print(f"  成功: {successful_fixes} 个修复")
-    print(f"  失败: {failed_fixes} 个修复")
+    print("=== Unified AI Project 增强版自动修复工具 ===")
+    print(f"项目根目录: {PROJECT_ROOT}")
+    print(f"后端根目录: {BACKEND_ROOT}")
+    print(f"源代码目录: {SRC_DIR}")
     
-    # 验证修复
-    if not fixer.validate_fixes():
-        print("修复验证失败。")
+    # 创建导入修复器
+    fixer = EnhancedImportFixer(PROJECT_ROOT)
     
-    # 运行测试
-    if not fixer.run_tests():
-        print("测试失败。")
-        return 1
+    # 执行操作
+    if args.fix or args.all:
+        results = fixer.fix_all_imports()
+        print(f"\n修复统计:")
+        print(f"  处理了: {results['fixed']} 个文件")
+        print(f"  总共修复: {results['total_fixes']} 处导入")
+        print(f"  错误: {results['errors']} 个文件")
+    
+    if args.validate or args.all:
+        if not fixer.validate_fixes():
+            print("修复验证失败。")
+    
+    if args.test or args.all:
+        if not fixer.run_tests():
+            print("测试失败。")
+            return 1
+    
+    # 保存修复报告
+    fixer.save_fix_report(Path(args.report))
     
     print("\n=== 所有操作完成 ===")
     return 0

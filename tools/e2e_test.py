@@ -21,8 +21,8 @@ def test_end_to_end_workflow():
         from security.permission_control import PermissionControlSystem, PermissionContext, PermissionType
         from security.audit_logger import AuditLogger
         from security.enhanced_sandbox import EnhancedSandboxExecutor, SandboxConfig
-        from services.ai_editor import DataProcessor
-        from services.ai_virtual_input_service import AIVirtualInputService
+        from apps.backend.src.core.services.ai_editor import DataProcessor
+        from apps.backend.src.core.services.ai_virtual_input_service import AIVirtualInputService
         
         # Initialize all components
         print("  Initializing system components...")
@@ -255,7 +255,7 @@ def test_data_processing_workflow():
     print("Testing data processing workflow...")
     
     try:
-        from services.ai_editor import DataProcessor
+        from apps.backend.src.core.services.ai_editor import DataProcessor
         from security.audit_logger import AuditLogger
         
         data_processor = DataProcessor()

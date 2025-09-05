@@ -12,7 +12,7 @@ from pathlib import Path
 backend_src = Path(__file__).parent.parent.parent / "apps" / "backend" / "src"
 sys.path.insert(0, str(backend_src))
 
-from core_services import UnifiedAICore
+from apps.backend.src.core_services import UnifiedAICore
 
 @click.group()
 def integrate():

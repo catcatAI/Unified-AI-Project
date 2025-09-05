@@ -237,6 +237,49 @@ class EnhancedAutoFixer:
             r"\1 apps.backend.src.", 
             content
         )
+        
+        # 修正core_ai导入为完整路径
+        content = re.sub(
+            r"(from|import)\s+core_ai\.", 
+            r"\1 apps.backend.src.ai.", 
+            content
+        )
+        
+        # 修正services导入为完整路径
+        content = re.sub(
+            r"(from|import)\s+services\.", 
+            r"\1 apps.backend.src.core.services.", 
+            content
+        )
+        
+        # 修正tools导入为完整路径
+        content = re.sub(
+            r"(from|import)\s+tools\.", 
+            r"\1 apps.backend.src.core.tools.", 
+            content
+        )
+        
+        # 修正hsp导入为完整路径
+        content = re.sub(
+            r"(from|import)\s+hsp\.", 
+            r"\1 apps.backend.src.core.hsp.", 
+            content
+        )
+        
+        # 修正shared导入为完整路径
+        content = re.sub(
+            r"(from|import)\s+shared\.", 
+            r"\1 apps.backend.src.core.shared.", 
+            content
+        )
+        
+        # 修正agents导入为完整路径
+        content = re.sub(
+            r"(from|import)\s+agents\.", 
+            r"\1 apps.backend.src.ai.agents.", 
+            content
+        )
+        
         return content
     
     def _fix_config_errors(self) -> int:
