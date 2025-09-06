@@ -272,3 +272,38 @@ test_data_analysis_import.py
 backup/**/*.bat
 restored_files_backup*/
 full_recovery_backup/
+
+# 项目整理后的新增忽略规则
+# 临时测试和调试文件
+test_*.py
+check_*.py
+debug_*.py
+*_temp*.py
+*_test_*.py
+
+# 临时数据文件
+*.db
+!alpha_deep_model_symbolic_space.db
+!integration_test_symbolic_space.db
+
+# 临时日志文件
+*.log
+!dependency_install.log
+
+# 临时JSON文件
+*.json
+!package.json
+!pnpm-lock.yaml
+!eslint.config.mjs
+
+# 临时文本文件
+*.txt
+!requirements.txt
+
+# 备份文件
+*.backup
+*.bak
+
+# 临时目录
+.crush/
+.qoder/

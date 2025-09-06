@@ -391,12 +391,33 @@ echo.
 echo [INFO] Running Tests...
 echo [%date% %time%] Running tests >> "%LOG_FILE%" 2>nul
 echo.
-if exist "tools\run-tests.bat" (
+
+:: Run the unified test script
+if exist "tools\core\run-tests.bat" (
+    echo [INFO] Executing unified test script...
+    call "tools\core\run-tests.bat" --all --verbose
+    if errorlevel 1 (
+        echo [ERROR] Test execution failed
+        echo [%date% %time%] ERROR: Test execution failed >> "%LOG_FILE%" 2>nul
+    ) else (
+        echo [SUCCESS] Tests completed successfully
+        echo [%date% %time%] SUCCESS: Tests completed successfully >> "%LOG_FILE%" 2>nul
+    )
+) else if exist "tools\run-tests.bat" (
+    echo [INFO] Executing legacy test script...
     call tools\run-tests.bat
+    if errorlevel 1 (
+        echo [ERROR] Test execution failed
+        echo [%date% %time%] ERROR: Test execution failed >> "%LOG_FILE%" 2>nul
+    ) else (
+        echo [SUCCESS] Tests completed successfully
+        echo [%date% %time%] SUCCESS: Tests completed successfully >> "%LOG_FILE%" 2>nul
+    )
 ) else (
-    echo [ERROR] Test runner script not found
-    echo [%date% %time%] Test runner script not found >> "%LOG_FILE%" 2>nul
+    echo [ERROR] Test script not found
+    echo [%date% %time%] ERROR: Test script not found >> "%LOG_FILE%" 2>nul
 )
+
 echo.
 echo Press any key to return to main menu...
 pause >nul
@@ -410,15 +431,18 @@ echo [%date% %time%] Git management >> "%LOG_FILE%" 2>nul
 echo.
 echo Available Git Management Options:
 echo.
-echo 1. Safe Git Cleanup - Clean Git status safely (安全清理Git狀態)
-echo 2. View Error Logs - View error logs (查看錯誤日志)
-echo 3. Back to Main Menu (返回主菜單)
+echo 1. Git Status - Show Git status (顯示Git狀態)
+echo 2. Safe Git Cleanup - Clean Git status safely (安全清理Git狀態)
+echo 3. Fix Git 10K+ Files - Fix Git 10K+ files issue (修復Git 10K+文件問題)
+echo 4. Emergency Git Fix - Emergency Git recovery (緊急Git恢復)
+echo 5. View Error Logs - View error logs (查看錯誤日志)
+echo 6. Back to Main Menu (返回主菜單)
 echo.
 
 :: Get git management choice with validation
 :get_git_choice
 set "git_choice="
-set /p "git_choice=Enter your choice (1-3): "
+set /p "git_choice=Enter your choice (1-6): "
 if not defined git_choice (
     echo [ERROR] No input provided
     echo [%date% %time%] No git management choice provided >> "%LOG_FILE%" 2>nul
@@ -428,7 +452,7 @@ if not defined git_choice (
 
 :: Validate numeric input for git management choices
 set "git_choice=%git_choice: =%"
-for %%i in (1 2 3) do (
+for %%i in (1 2 3 4 5 6) do (
     if "%git_choice%"=="%%i" (
         goto git_choice_%%i
     )
@@ -440,10 +464,124 @@ timeout /t 2 >nul
 goto get_git_choice
 
 :git_choice_1
-goto safe_git_cleanup
+goto git_status
 :git_choice_2
-goto view_error_logs
+goto safe_git_cleanup
 :git_choice_3
+goto fix_git_10k
+:git_choice_4
+goto emergency_git_fix
+:git_choice_5
+goto view_error_logs
+:git_choice_6
+goto main_menu
+
+:: Git Status Function
+:git_status
+echo.
+echo [INFO] Showing Git Status...
+echo [%date% %time%] Showing git status >> "%LOG_FILE%" 2>nul
+echo.
+
+:: Run the unified git cleanup script for status
+if exist "tools\maintenance\git-cleanup.bat" (
+    echo [INFO] Executing git status check...
+    call "tools\maintenance\git-cleanup.bat" --status
+    if errorlevel 1 (
+        echo [ERROR] Git status check failed
+        echo [%date% %time%] ERROR: Git status check failed >> "%LOG_FILE%" 2>nul
+    )
+) else if exist "tools\safe-git-cleanup.bat" (
+    echo [INFO] Executing legacy git status check...
+    call tools\safe-git-cleanup.bat
+    if errorlevel 1 (
+        echo [ERROR] Git status check failed
+        echo [%date% %time%] ERROR: Git status check failed >> "%LOG_FILE%" 2>nul
+    )
+) else (
+    echo [ERROR] Git cleanup script not found
+    echo [%date% %time%] ERROR: Git cleanup script not found >> "%LOG_FILE%" 2>nul
+)
+
+echo.
+echo Press any key to return to main menu...
+pause >nul
+goto main_menu
+
+:: Fix Git 10K+ Files Function
+:fix_git_10k
+echo.
+echo [INFO] Fixing Git 10K+ Files Issue...
+echo [%date% %time%] Fixing git 10k files issue >> "%LOG_FILE%" 2>nul
+echo.
+
+:: Run the unified git cleanup script for 10K fix
+if exist "tools\maintenance\git-cleanup.bat" (
+    echo [INFO] Executing git 10K fix...
+    call "tools\maintenance\git-cleanup.bat" --fix-10k --verbose
+    if errorlevel 1 (
+        echo [ERROR] Git 10K fix failed
+        echo [%date% %time%] ERROR: Git 10K fix failed >> "%LOG_FILE%" 2>nul
+    ) else (
+        echo [SUCCESS] Git 10K fix completed successfully
+        echo [%date% %time%] SUCCESS: Git 10K fix completed successfully >> "%LOG_FILE%" 2>nul
+    )
+) else if exist "tools\fix-git-10k.bat" (
+    echo [INFO] Executing legacy git 10K fix...
+    call tools\fix-git-10k.bat
+    if errorlevel 1 (
+        echo [ERROR] Git 10K fix failed
+        echo [%date% %time%] ERROR: Git 10K fix failed >> "%LOG_FILE%" 2>nul
+    ) else (
+        echo [SUCCESS] Git 10K fix completed successfully
+        echo [%date% %time%] SUCCESS: Git 10K fix completed successfully >> "%LOG_FILE%" 2>nul
+    )
+) else (
+    echo [ERROR] Git 10K fix script not found
+    echo [%date% %time%] ERROR: Git 10K fix script not found >> "%LOG_FILE%" 2>nul
+)
+
+echo.
+echo Press any key to return to main menu...
+pause >nul
+goto main_menu
+
+:: Emergency Git Fix Function
+:emergency_git_fix
+echo.
+echo [INFO] Emergency Git Fix...
+echo [%date% %time%] Emergency git fix >> "%LOG_FILE%" 2>nul
+echo.
+
+:: Run the unified git cleanup script for emergency fix
+if exist "tools\maintenance\git-cleanup.bat" (
+    echo [INFO] Executing emergency git fix...
+    call "tools\maintenance\git-cleanup.bat" --emergency --force
+    if errorlevel 1 (
+        echo [ERROR] Emergency git fix failed
+        echo [%date% %time%] ERROR: Emergency git fix failed >> "%LOG_FILE%" 2>nul
+    ) else (
+        echo [SUCCESS] Emergency git fix completed successfully
+        echo [%date% %time%] SUCCESS: Emergency git fix completed successfully >> "%LOG_FILE%" 2>nul
+    )
+) else if exist "tools\emergency-git-fix.bat" (
+    echo [INFO] Executing legacy emergency git fix...
+    call tools\emergency-git-fix.bat
+    if errorlevel 1 (
+        echo [ERROR] Emergency git fix failed
+        echo [%date% %time%] ERROR: Emergency git fix failed >> "%LOG_FILE%" 2>nul
+    ) else (
+        echo [SUCCESS] Emergency git fix completed successfully
+        echo [%date% %time%] SUCCESS: Emergency git fix completed successfully >> "%LOG_FILE%" 2>nul
+    )
+) else (
+    echo [ERROR] Emergency git fix script not found
+    echo [%date% %time%] ERROR: Emergency git fix script not found >> "%LOG_FILE%" 2>nul
+)
+
+echo.
+echo Press any key to return to main menu...
+pause >nul
 goto main_menu
 
 :: Safe Git Cleanup Function
@@ -566,12 +704,33 @@ echo.
 echo [INFO] Fixing Dependencies...
 echo [%date% %time%] Fixing dependencies >> "%LOG_FILE%" 2>nul
 echo.
-if exist "tools\fix-dependencies.bat" (
+
+:: Run the unified dependency fix script
+if exist "tools\maintenance\fix-deps.bat" (
+    echo [INFO] Executing unified dependency fix...
+    call "tools\maintenance\fix-deps.bat" --all --verbose
+    if errorlevel 1 (
+        echo [ERROR] Dependency fix failed
+        echo [%date% %time%] ERROR: Dependency fix failed >> "%LOG_FILE%" 2>nul
+    ) else (
+        echo [SUCCESS] Dependencies fixed successfully
+        echo [%date% %time%] SUCCESS: Dependencies fixed successfully >> "%LOG_FILE%" 2>nul
+    )
+) else if exist "tools\fix-dependencies.bat" (
+    echo [INFO] Executing legacy dependency fix...
     call tools\fix-dependencies.bat
+    if errorlevel 1 (
+        echo [ERROR] Dependency fix failed
+        echo [%date% %time%] ERROR: Dependency fix failed >> "%LOG_FILE%" 2>nul
+    ) else (
+        echo [SUCCESS] Dependencies fixed successfully
+        echo [%date% %time%] SUCCESS: Dependencies fixed successfully >> "%LOG_FILE%" 2>nul
+    )
 ) else (
     echo [ERROR] Dependency fix script not found
-    echo [%date% %time%] Dependency fix script not found >> "%LOG_FILE%" 2>nul
+    echo [%date% %time%] ERROR: Dependency fix script not found >> "%LOG_FILE%" 2>nul
 )
+
 echo.
 echo Press any key to return to main menu...
 pause >nul
