@@ -1,0 +1,86 @@
+{
+  "features": [
+    {
+      "id": "env_simulator",
+      "name": "环境模拟器",
+      "description": "实现完整的环境模拟功能，包括状态预测、动作效果模型和不确定性估计器",
+      "status": "complete",
+      "feature_type": "core_model",
+      "implementation_file": "apps/backend/src/ai/concept_models/environment_simulator.py",
+      "last_updated": "2025-09-06T15:35:00",
+      "notes": "已实现实际的神经网络训练逻辑"
+    },
+    {
+      "id": "causal_engine",
+      "name": "因果推理引擎",
+      "description": "实现完整的因果推理功能，包括因果图、干预规划器和反事实推理器",
+      "status": "in_progress",
+      "feature_type": "core_model",
+      "implementation_file": "apps/backend/src/ai/concept_models/causal_reasoning_engine.py",
+      "last_updated": "2025-09-06T15:35:00",
+      "notes": "正在实现实际的因果关系学习算法"
+    },
+    {
+      "id": "adaptive_controller",
+      "name": "自适应学习控制器",
+      "description": "实现完整的自适应学习控制功能，包括性能跟踪器、策略选择器和学习策略优化",
+      "status": "in_progress",
+      "feature_type": "core_model",
+      "implementation_file": "apps/backend/src/ai/concept_models/adaptive_learning_controller.py",
+      "last_updated": "2025-09-06T15:35:00",
+      "notes": "正在实现实际的学习策略优化算法"
+    },
+    {
+      "id": "alpha_deep_model",
+      "name": "Alpha深度模型",
+      "description": "实现高级数据表示和压缩功能",
+      "status": "in_progress",
+      "feature_type": "core_model",
+      "implementation_file": "apps/backend/src/ai/concept_models/alpha_deep_model.py",
+      "last_updated": "2025-09-06T15:35:00",
+      "notes": "正在实现实际的深度参数学习算法"
+    },
+    {
+      "id": "collaborative_training",
+      "name": "协作式训练",
+      "description": "支持多个AI模型间的协作训练",
+      "status": "in_progress",
+      "feature_type": "training_system",
+      "implementation_file": "training/collaborative_training_manager.py",
+      "last_updated": "2025-09-06T15:35:00",
+      "notes": "正在完善模型实际训练逻辑和知识共享机制"
+    },
+    {
+      "id": "auto_training",
+      "name": "自动训练",
+      "description": "实现自动识别训练数据、自动建立训练和自动训练的功能",
+      "status": "complete",
+      "feature_type": "training_system",
+      "implementation_file": "training/auto_training_manager.py",
+      "last_updated": "2025-09-06T15:35:00",
+      "notes": ""
+    },
+    {
+      "id": "data_manager",
+      "name": "数据管理器",
+      "description": "自动检测、分类和处理训练数据",
+      "status": "complete",
+      "feature_type": "data_processing",
+      "implementation_file": "training/data_manager.py",
+      "last_updated": "2025-09-06T15:35:00",
+      "notes": ""
+    },
+    {
+      "id": "train_manager_cli",
+      "name": "训练管理器CLI",
+      "description": "命令行界面管理训练过程",
+      "status": "complete",
+      "feature_type": "cli_tool",
+      "implementation_file": "tools/train-manager.bat",
+      "last_updated": "2025-09-06T15:35:00",
+      "notes": ""
+    }
+  ],
+  "last_updated": "2025-09-06T15:35:00",
+  "total_features": 8
+}

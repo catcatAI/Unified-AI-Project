@@ -17,12 +17,9 @@ import numpy as np
 
 # 添加项目路径
 import sys
-from pathlib import Path
 project_root = Path(__file__).parent.parent
 backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 导入项目模块
@@ -43,17 +40,11 @@ except ImportError:
     MODELS_DIR = TRAINING_DIR / "models"
 
 # 导入数据管理器和资源管理器
-from training.data_manager import DataManager
-from training.resource_manager import ResourceManager
-from training.gpu_optimizer import GPUOptimizer
-from training.distributed_optimizer import DistributedOptimizer
-from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
-from training.unified_execution_framework import (
-    UnifiedExecutor, 
-    ResourceManager as ExecutionResourceManager,
-    create_collaborative_training_context,
-    create_concept_model_training_context
-)
+from .data_manager import DataManager
+from .resource_manager import ResourceManager
+from .gpu_optimizer import GPUOptimizer
+from .distributed_optimizer import DistributedOptimizer
+from .error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -149,10 +140,6 @@ class CollaborativeTrainingManager:
         # GPU优化器和分布式优化器
         self.gpu_optimizer = GPUOptimizer()
         self.distributed_optimizer = DistributedOptimizer()
-        
-        # 统一执行器和资源管理器
-        self.unified_executor = UnifiedExecutor()
-        self.execution_resource_manager = ExecutionResourceManager()
         
         logger.info("🔄 协作式训练管理器初始化完成")
     

@@ -580,12 +580,6 @@ class EnvironmentSimulator:
         self.action_effect_model = ActionEffectModel()
         self.uncertainty_estimator = UncertaintyEstimator()
         self.logger = logging.getLogger(__name__)
-        # 添加训练数据存储
-        self.training_data = {
-            "state_transitions": [],
-            "action_effects": [],
-            "uncertainty_data": []
-        }
     
     async def simulate_action_consequences(self, current_state: State, proposed_action: Action) -> Dict[str, Any]:
         """模拟动作后果"""
@@ -683,64 +677,7 @@ class EnvironmentSimulator:
             experience.get("actual_state")
         )
         await self.uncertainty_estimator.update(prediction_error)
-        
-        # 存储训练数据用于后续批量训练
-        self._store_training_data(experience)
         self.logger.info("Environment model updated from experience.")
-
-    def _store_training_data(self, experience: Dict[str, Any]):
-        """存储训练数据"""
-        # 存储状态转移数据
-        state_transition_data = {
-            "state": {
-                "time_step": experience["state"].time_step,
-                "variables": experience["state"].variables
-            },
-            "action": {
-                "name": experience["action"].name,
-                "parameters": experience["action"].parameters
-            },
-            "next_state": {
-                "time_step": experience["next_state"].time_step,
-                "variables": experience["next_state"].variables
-            }
-        }
-        self.training_data["state_transitions"].append(state_transition_data)
-        
-        # 存储动作效果数据
-        action_effect_data = {
-            "action": {
-                "name": experience["action"].name,
-                "parameters": experience["action"].parameters
-            },
-            "state": {
-                "time_step": experience["state"].time_step,
-                "variables": experience["state"].variables
-            },
-            "actual_effect": experience["actual_effect"]
-        }
-        self.training_data["action_effects"].append(action_effect_data)
-        
-        # 存储不确定性数据
-        uncertainty_data = {
-            "state": {
-                "time_step": experience["state"].time_step,
-                "variables": experience["state"].variables
-            },
-            "action": {
-                "name": experience["action"].name,
-                "parameters": experience["action"].parameters
-            },
-            "predicted_state": {
-                "time_step": experience["predicted_state"].time_step,
-                "variables": experience["predicted_state"].variables
-            },
-            "actual_state": {
-                "time_step": experience["actual_state"].time_step,
-                "variables": experience["actual_state"].variables
-            }
-        }
-        self.training_data["uncertainty_data"].append(uncertainty_data)
 
     def _calculate_prediction_error(self, predicted_state: State, actual_state: State) -> float:
         """计算预测误差"""
@@ -759,32 +696,21 @@ class EnvironmentSimulator:
                     
         return min(error, 1.0)  # 限制误差在0-1之间
         
-    def train_models(self, training_data: Dict[str, List[Dict[str, Any]]] = None, epochs: int = 100):
+    def train_models(self, training_data: Dict[str, List[Dict[str, Any]]], epochs: int = 100):
         """训练所有模型"""
         self.logger.info("Training all environment simulator models")
         
-        # 使用传入的训练数据或内部存储的数据
-        data_to_use = training_data if training_data is not None else self.training_data
-        
         # 训练状态预测器
-        if "state_transitions" in data_to_use and data_to_use["state_transitions"]:
-            self.state_predictor.train_model(data_to_use["state_transitions"], epochs)
+        if "state_transitions" in training_data:
+            self.state_predictor.train_model(training_data["state_transitions"], epochs)
         
         # 训练动作效果模型
-        if "action_effects" in data_to_use and data_to_use["action_effects"]:
-            self.action_effect_model.train_model(data_to_use["action_effects"], epochs)
+        if "action_effects" in training_data:
+            self.action_effect_model.train_model(training_data["action_effects"], epochs)
         
         # 训练不确定性估计器
-        if "uncertainty_data" in data_to_use and data_to_use["uncertainty_data"]:
-            self.uncertainty_estimator.train_model(data_to_use["uncertainty_data"], epochs)
-        
-        # 清空内部存储的训练数据
-        if training_data is None:
-            self.training_data = {
-                "state_transitions": [],
-                "action_effects": [],
-                "uncertainty_data": []
-            }
+        if "uncertainty_data" in training_data:
+            self.uncertainty_estimator.train_model(training_data["uncertainty_data"], epochs)
         
         self.logger.info("All environment simulator models training completed")
 

@@ -15,12 +15,9 @@ import heapq
 
 # 添加项目路径
 import sys
-from pathlib import Path
 project_root = Path(__file__).parent.parent
 backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 导入路径配置模块
@@ -39,7 +36,7 @@ except ImportError:
     TRAINING_DIR = PROJECT_ROOT / "training"
 
 # 导入智能资源分配器
-from training.smart_resource_allocator import SmartResourceAllocator
+from .smart_resource_allocator import SmartResourceAllocator
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -303,7 +300,7 @@ class ResourceManager:
             return None
         
         # 使用智能资源分配器进行资源分配
-        from training.smart_resource_allocator import ResourceRequest
+        from .smart_resource_allocator import ResourceRequest
         
         # 创建资源请求
         resource_request = ResourceRequest(

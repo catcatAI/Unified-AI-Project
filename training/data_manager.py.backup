@@ -16,12 +16,9 @@ import numpy as np
 
 # 添加项目路径
 import sys
-from pathlib import Path
 project_root = Path(__file__).parent.parent
 backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 导入路径配置模块
