@@ -1,0 +1,123 @@
+# 依赖管理配置文件
+# Dependency Management Configuration
+
+# 核心依赖
+core_dependencies:
+  - fastapi
+  - uvicorn
+  - pydantic
+  - sqlalchemy
+  - alembic
+  - python-multipart
+  - python-jose
+  - passlib
+  - bcrypt
+
+# AI相关依赖
+ai_dependencies:
+  - openai
+  - anthropic
+  - transformers
+  - torch
+  - numpy
+  - pandas
+  - scikit-learn
+  - faiss-cpu
+
+# 数据库依赖
+database_dependencies:
+  - psycopg2-binary
+  - asyncpg
+  - redis
+  - chromadb
+
+# 开发依赖
+dev_dependencies:
+  - pytest
+  - pytest-asyncio
+  - black
+  - flake8
+  - mypy
+  - pre-commit
+
+# 可选依赖
+optional_dependencies:
+  - jupyter
+  - matplotlib
+  - seaborn
+  - plotly
+
+# 依赖冲突检查规则
+conflict_rules:
+  - name: "torch_version"
+    description: "PyTorch版本兼容性检查"
+    packages: ["torch", "torchvision", "torchaudio"]
+    min_version: "1.9.0"
+    
+  - name: "fastapi_version"
+    description: "FastAPI版本兼容性检查"
+    packages: ["fastapi", "uvicorn"]
+    min_version: "0.68.0"
+
+# 环境变量检查
+required_env_vars:
+  - OPENAI_API_KEY
+  - DATABASE_URL
+  - REDIS_URL
+  - SECRET_KEY
+
+# 可选环境变量
+optional_env_vars:
+  - ANTHROPIC_API_KEY
+  - HUGGINGFACE_API_KEY
+  - WANDB_API_KEY
+  - DEBUG
+  - LOG_LEVEL
+
+# 系统要求
+system_requirements:
+  python_version: ">=3.8"
+  memory_gb: 4
+  disk_space_gb: 10
+  
+# 修复建议
+fix_suggestions:
+  missing_dependency:
+    - "运行: pip install {package_name}"
+    - "或者: pip install -r requirements.txt"
+    
+  version_conflict:
+    - "升级包: pip install --upgrade {package_name}"
+    - "或者: pip install {package_name}=={required_version}"
+    
+  missing_env_var:
+    - "设置环境变量: export {var_name}={example_value}"
+    - "或者在.env文件中添加: {var_name}={example_value}"
+
+# 自动修复配置
+auto_fix:
+  enabled: true
+  backup_before_fix: true
+  max_retry_attempts: 3
+  timeout_seconds: 300
+  
+  # 允许自动修复的操作
+  allowed_operations:
+    - install_missing_packages
+    - upgrade_packages
+    - create_env_file_template
+    - fix_import_paths
+    
+  # 禁止自动修复的操作
+  forbidden_operations:
+    - uninstall_packages
+    - modify_system_files
+    - change_python_version
+
+# 日志配置
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "dependency_manager.log"
+  max_size_mb: 10
+  backup_count: 5

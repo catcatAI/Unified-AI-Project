@@ -5,8 +5,8 @@ import logging # For caplog if needed, or to check logs from module
 
 import time
 
-from apps.backend.src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager
+from apps.backend.src.ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+from apps.backend.src.ai.trust_manager.trust_manager_module import TrustManager
 from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
 
 # --- Mock TrustManager ---

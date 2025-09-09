@@ -13,7 +13,7 @@ CONFIGS_DIR = os.path.join(PROJECT_ROOT, "configs") # For accessing personality 
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
+from apps.backend.src.ai.personality.personality_manager import PersonalityManager
 
 class TestPersonalityManager(unittest.TestCase):
 

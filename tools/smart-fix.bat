@@ -1,58 +1,58 @@
 @echo off
-:: 智能修复批处理脚本
-:: 用于执行完整的智能修复流程
+:: Smart Fix Batch Script
+:: Used to execute complete smart fix process
 
 setlocal enabledelayedexpansion
 
-:: 设置项目根目录
+:: Set project root directory
 set "PROJECT_ROOT=%~dp0.."
 set "PYTHON_SCRIPT=%PROJECT_ROOT%\apps\backend\scripts\execute_smart_fix.py"
 
 echo ================================
-echo   Unified AI Project 智能修复工具
+echo   Unified AI Project Smart Fix Tool
 echo ================================
 
-:: 检查Python环境
-echo 检查Python环境...
+:: Check Python environment
+echo Checking Python environment...
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo 错误: 未找到Python环境，请先安装Python 3.8或更高版本
+    echo Error: Python environment not found, please install Python 3.8 or higher
     pause
     exit /b 1
 )
 
-:: 检查虚拟环境
-echo 检查虚拟环境...
+:: Check virtual environment
+echo Checking virtual environment...
 if exist "%PROJECT_ROOT%\apps\backend\venv\Scripts\activate.bat" (
-    echo 激活虚拟环境...
+    echo Activating virtual environment...
     call "%PROJECT_ROOT%\apps\backend\venv\Scripts\activate.bat"
 ) else (
-    echo 警告: 未找到虚拟环境，将使用系统Python环境
+    echo Warning: Virtual environment not found, using system Python
 )
 
-:: 检查执行脚本是否存在
+:: Check if execution script exists
 if not exist "%PYTHON_SCRIPT%" (
-    echo 错误: 执行脚本不存在 - %PYTHON_SCRIPT%
+    echo Error: Execution script does not exist - %PYTHON_SCRIPT%
     pause
     exit /b 1
 )
 
-:: 运行智能修复执行器
-echo 开始执行智能修复流程...
+:: Run smart fix executor
+echo Starting smart fix process...
 echo.
 
 python "%PYTHON_SCRIPT%"
 
 if errorlevel 1 (
     echo.
-    echo 智能修复流程执行失败
+    echo Smart fix process execution failed
     pause
     exit /b 1
 ) else (
     echo.
-    echo 智能修复流程执行成功完成
+    echo Smart fix process completed successfully
 )
 
 echo.
-echo 按任意键退出...
+echo Press any key to exit...
 pause >nul

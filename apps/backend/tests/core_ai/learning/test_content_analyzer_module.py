@@ -6,8 +6,8 @@ from datetime import datetime, timezone # Added for HSP tests
 
 # Assuming the module is in src.core_ai.learning.content_analyzer_module
 # Adjust path if necessary based on how tests are run and PYTHONPATH
-from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule, ProcessedTripleInfo, CAHSPFactProcessingResult
-from apps.backend.src.core_ai.knowledge_graph.types import KGEntity, KGRelationship, KnowledgeGraph
+from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzerModule, ProcessedTripleInfo, CAHSPFactProcessingResult
+from apps.backend.src.ai.knowledge_graph.types import KGEntity, KGRelationship, KnowledgeGraph
 from apps.backend.src.hsp.types import HSPFactPayload, HSPFactStatementStructured # Import HSP types
 import uuid # For generating unique fact IDs in tests
 

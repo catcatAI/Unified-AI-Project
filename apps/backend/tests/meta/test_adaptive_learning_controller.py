@@ -3,8 +3,8 @@ import asyncio
 from unittest.mock import MagicMock, patch, AsyncMock
 import os
 import shutil
-from apps.backend.src.core_ai.meta.adaptive_learning_controller import AdaptiveLearningController, PerformanceTracker, StrategySelector
-from apps.backend.src.core_ai.meta.learning_log_db import LearningLogDB
+from apps.backend.src.ai.meta.adaptive_learning_controller import AdaptiveLearningController, PerformanceTracker, StrategySelector
+from apps.backend.src.ai.meta.learning_log_db import LearningLogDB
 
 class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
     # 添加重试装饰器以处理不稳定的测试

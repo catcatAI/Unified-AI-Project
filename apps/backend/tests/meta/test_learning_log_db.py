@@ -3,7 +3,7 @@ import os
 import sqlite3
 import json
 from datetime import datetime
-from apps.backend.src.core_ai.meta.learning_log_db import LearningLogDB
+from apps.backend.src.ai.meta.learning_log_db import LearningLogDB
 
 class TestLearningLogDB(unittest.TestCase):
     def setUp(self):

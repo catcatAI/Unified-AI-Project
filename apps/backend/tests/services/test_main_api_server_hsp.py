@@ -17,9 +17,9 @@ from apps.backend.src.services.main_api_server import app # Main FastAPI app
 from apps.backend.src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID
 from apps.backend.src.hsp.connector import HSPConnector
 from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from apps.backend.src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
-from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator
+from apps.backend.src.ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
+from apps.backend.src.ai.dialogue.project_coordinator import ProjectCoordinator
 # Avoid importing fixtures at module import time; use a simple flag instead
 # If a real broker check is needed, replace this with an actual availability check
 mqtt_broker_available = True

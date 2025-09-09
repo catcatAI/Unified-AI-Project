@@ -3,8 +3,8 @@ import asyncio
 from unittest.mock import MagicMock, patch, AsyncMock
 import os
 import shutil
-from apps.backend.src.core_ai.evaluation.task_evaluator import TaskExecutionEvaluator, MetricsCalculator, FeedbackAnalyzer
-from apps.backend.src.core_ai.evaluation.evaluation_db import EvaluationDB
+from apps.backend.src.ai.evaluation.task_evaluator import TaskExecutionEvaluator, MetricsCalculator, FeedbackAnalyzer
+from apps.backend.src.ai.evaluation.evaluation_db import EvaluationDB
 
 class TestMetricsCalculator(unittest.IsolatedAsyncioTestCase):
     def setUp(self):

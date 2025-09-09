@@ -3,9 +3,9 @@ import uuid
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from apps.backend.src.core_ai.learning.learning_manager import LearningManager
-from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.ai.learning.learning_manager import LearningManager
+from apps.backend.src.ai.trust_manager.trust_manager_module import TrustManager
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
 from apps.backend.src.hsp.types import HSPFactPayload, HSPMessageEnvelope
 
 class TestLearningAndTrustIntegration:

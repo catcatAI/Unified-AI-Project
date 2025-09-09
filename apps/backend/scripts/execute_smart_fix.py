@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 # 添加项目根目录到路径
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # 配置日志
@@ -34,7 +34,7 @@ class SmartFixExecutor:
         logger.info("开始运行智能自动修复...")
         try:
             # 导入并运行智能自动修复工具
-            smart_fix_script = self.project_root / "apps" / "backend" / "scripts" / "smart_auto_fix.py"
+            smart_fix_script = self.project_root / "scripts" / "enhanced_auto_fix.py"
             if not smart_fix_script.exists():
                 logger.error(f"智能自动修复脚本不存在: {smart_fix_script}")
                 return False

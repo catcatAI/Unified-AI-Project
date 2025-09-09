@@ -22,20 +22,20 @@ from apps.backend.src.hsp.types import (
     HSPErrorDetails,
     HSPFactStatementStructured,
 )
-from apps.backend.src.core_ai.learning.learning_manager import LearningManager
-from apps.backend.src.core_ai.learning.fact_extractor_module import FactExtractorModule
-from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-from apps.backend.src.core_ai.service_discovery.service_discovery_module import (
+from apps.backend.src.ai.learning.learning_manager import LearningManager
+from apps.backend.src.ai.learning.fact_extractor_module import FactExtractorModule
+from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzerModule
+from apps.backend.src.ai.service_discovery.service_discovery_module import (
     ServiceDiscoveryModule,
 )
-from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.ai.trust_manager.trust_manager_module import TrustManager
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
 from apps.backend.src.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, ChatMessage, LLMResponse
-from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
+from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
 from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
-from apps.backend.src.core_ai.formula_engine import FormulaEngine
+from apps.backend.src.ai.formula_engine import FormulaEngine
 from apps.backend.src.shared.types.common_types import ToolDispatcherResponse
-from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
+from apps.backend.src.ai.personality.personality_manager import PersonalityManager
 
 
 

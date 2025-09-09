@@ -38,7 +38,7 @@ async def test_get_simple_response_project_trigger(mock_core_services):
 
 import pytest
 from unittest.mock import AsyncMock, call
-from apps.backend.src.shared.types.common_types import ToolDispatcherResponse
+from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 # 添加重试装饰器以处理不稳定的测试

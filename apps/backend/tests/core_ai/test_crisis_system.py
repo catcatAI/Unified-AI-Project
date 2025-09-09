@@ -11,7 +11,7 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from apps.backend.src.core_ai.crisis_system import CrisisSystem
+from apps.backend.src.ai.crisis_system import CrisisSystem
 
 class TestCrisisSystem(unittest.TestCase):
 

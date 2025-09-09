@@ -23,7 +23,7 @@ from .types import (
     NarrativeAntibodyObject,
 )
 # Import HAMMemoryManager for type hinting in the concrete implementation.
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
 
 
 # --- Constants for HAMLISCache ---
