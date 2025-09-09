@@ -10,24 +10,24 @@ from datetime import datetime, timezone
 
 from ..personality.personality_manager import PersonalityManager
 from ..memory.ham_memory_manager import HAMMemoryManager
-from ...core.services.multi_llm_service import MultiLLMService
+from ...services.multi_llm_service import MultiLLMService
 from ..emotion.emotion_system import EmotionSystem
 from ..crisis.crisis_system import CrisisSystem
 from ..time.time_system import TimeSystem
 from ..formula_engine import FormulaEngine
-from ...core.tools.tool_dispatcher import ToolDispatcher
+from ...tools.tool_dispatcher import ToolDispatcher
 from ..learning.learning_manager import LearningManager
 from ..discovery.service_discovery_module import ServiceDiscoveryModule
-from ...core.services.sandbox_executor import SandboxExecutor
+from ...services.sandbox_executor import SandboxExecutor
 import networkx as nx
 from ...core.shared.types.common_types import (
     OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
 )
 
-from ...core.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
+from ...hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
 from .project_coordinator import ProjectCoordinator
-from ...core.managers.agent_manager import AgentManager
-from ...core.hsp.connector import HSPConnector
+from ...managers.agent_manager import AgentManager
+from ...hsp.connector import HSPConnector
 
 if TYPE_CHECKING:
     pass

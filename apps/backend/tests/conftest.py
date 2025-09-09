@@ -198,8 +198,8 @@ def mock_core_services():
     from unittest.mock import MagicMock, AsyncMock
     import logging
     from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
-from apps.backend.src.ai.dialogue.project_coordinator import ProjectCoordinator # Import ProjectCoordinator
-from apps.backend.src.ai.personality.personality_manager import PersonalityManager # Import PersonalityManager
+    from apps.backend.src.ai.dialogue.project_coordinator import ProjectCoordinator # Import ProjectCoordinator
+    from apps.backend.src.ai.personality.personality_manager import PersonalityManager # Import PersonalityManager
 
     # Create mock service discovery that matches MockSDM behavior and provides Mock tracking
     from unittest.mock import AsyncMock
