@@ -7,7 +7,7 @@ import sys
 from unittest.mock import MagicMock, AsyncMock, patch
 
 
-from apps.backend.src.agents.data_analysis_agent import DataAnalysisAgent
+from apps.backend.src.ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
 from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 from apps.backend.src.shared.types.common_types import ToolDispatcherResponse
 
@@ -23,8 +23,8 @@ class TestDataAnalysisAgent(unittest.TestCase):
         }
 
         # Patch the service initialization and getter
-        patcher_initialize = patch('src.agents.base_agent.initialize_services', return_value=None)
-        patcher_get = patch('src.agents.base_agent.get_services', return_value=self.mock_services)
+        patcher_initialize = patch('apps.backend.src.core_services.initialize_services', return_value=None)
+        patcher_get = patch('apps.backend.src.core_services.get_services', return_value=self.mock_services)
 
         self.addCleanup(patcher_initialize.stop)
         self.addCleanup(patcher_get.stop)

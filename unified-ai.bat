@@ -34,13 +34,14 @@ echo 11. Data Pipeline - Run automated data processing pipeline (運行自動化
 echo 12. Emergency Git Fix - Recover from Git issues (從Git問題中恢復)
 echo 13. Fix Dependencies - Resolve dependency issues (解決依賴問題)
 echo 14. System Information - Display system information (顯示系統信息)
-echo 15. Exit (退出)
+echo 15. Unified Auto Fix - Enhanced auto-fix system with 4 modes (增強自動修復系統)
+echo 16. Exit (退出)
 echo.
 
 :: Get user choice with validation
 :get_user_choice
 set "choice="
-set /p "choice=Enter your choice (1-15): "
+set /p "choice=Enter your choice (1-16): "
 if not defined choice (
     echo [ERROR] No input provided
     echo [%date% %time%] No input provided >> "%LOG_FILE%" 2>nul
@@ -50,13 +51,13 @@ if not defined choice (
 
 :: Validate numeric input for menu choices
 set "choice=%choice: =%"
-for %%i in (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) do (
+for %%i in (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16) do (
     if "%choice%"=="%%i" (
         goto choice_%%i
     )
 )
 
-echo [ERROR] Invalid choice '%choice%'. Please enter a valid option.
+echo [ERROR] Invalid choice '%choice%'. Please enter a valid option (1-16).
 echo [%date% %time%] Invalid choice: %choice% >> "%LOG_FILE%" 2>nul
 timeout /t 2 >nul
 goto get_user_choice
@@ -90,6 +91,8 @@ goto fix_dependencies
 :choice_14
 goto system_info
 :choice_15
+goto unified_auto_fix
+:choice_16
 goto end_script
 
 :: Data Pipeline Function
@@ -743,6 +746,36 @@ echo [INFO] Displaying System Information...
 echo [%date% %time%] Displaying system information >> "%LOG_FILE%" 2>nul
 echo.
 systeminfo
+echo.
+echo Press any key to return to main menu...
+pause >nul
+goto main_menu
+
+:: Unified Auto Fix Function
+:unified_auto_fix
+echo.
+echo [INFO] Unified Auto Fix System
+echo [%date% %time%] Starting unified auto fix system >> "%LOG_FILE%" 2>nul
+echo.
+
+:: Check if unified auto fix script exists
+set "UNIFIED_FIX_SCRIPT=%~dp0scripts\unified_auto_fix.bat"
+if exist "%UNIFIED_FIX_SCRIPT%" (
+    echo [INFO] Launching unified auto fix system...
+    echo.
+    call "%UNIFIED_FIX_SCRIPT%"
+    if errorlevel 1 (
+        echo [ERROR] Unified auto fix failed
+        echo [%date% %time%] ERROR: Unified auto fix failed >> "%LOG_FILE%" 2>nul
+    ) else (
+        echo [SUCCESS] Unified auto fix completed successfully
+        echo [%date% %time%] SUCCESS: Unified auto fix completed successfully >> "%LOG_FILE%" 2>nul
+    )
+) else (
+    echo [ERROR] Unified auto fix script not found: %UNIFIED_FIX_SCRIPT%
+    echo [%date% %time%] ERROR: Unified auto fix script not found >> "%LOG_FILE%" 2>nul
+)
+
 echo.
 echo Press any key to return to main menu...
 pause >nul

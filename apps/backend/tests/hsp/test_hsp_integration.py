@@ -25,10 +25,10 @@ from apps.backend.src.hsp.types import (
 from apps.backend.src.ai.learning.learning_manager import LearningManager
 from apps.backend.src.ai.learning.fact_extractor_module import FactExtractorModule
 from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzerModule
-from apps.backend.src.ai.service_discovery.service_discovery_module import (
+from apps.backend.src.ai.discovery.service_discovery_module import (
     ServiceDiscoveryModule,
 )
-from apps.backend.src.ai.trust_manager.trust_manager_module import TrustManager
+from apps.backend.src.ai.trust.trust_manager_module import TrustManager
 from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
 from apps.backend.src.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, ChatMessage, LLMResponse
 from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
@@ -67,10 +67,10 @@ class MockMqttBroker:
         self.clients[client_id] = on_message_callback
         logging.debug(f"MockMqttBroker: Registered client {client_id}")
 
-    def subscribe_client(self, client_id: str, topic: str):
+    async def subscribe_client(self, client_id: str, topic: str):
         """Subscribe a client to a topic"""
         if client_id in self.clients:
-            await await self.subscribe(topic, self.clients[client_id])
+            await self.subscribe(topic, self.clients[client_id])
 
     async def publish(self, topic: str, payload: bytes, qos: int = 0):
         if not self.is_running:
@@ -168,7 +168,7 @@ def shared_data_aligner():
 
 
 @pytest.fixture(scope="function")
-def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: InternalBus, shared_data_aligner: DataAligner):
+async def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: InternalBus, shared_data_aligner: DataAligner):
     # The MessageBridge needs an external_connector, which is the mock_mqtt_client from the broker
     # We'll create a dummy ExternalConnector for the MessageBridge to use,
     # but its on_message_callback will be overridden by the MessageBridge itself.
@@ -191,7 +191,7 @@ def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: InternalB
             self.mqtt_client.register_client(self.client_id, on_message_callback)
             await self.mqtt_client.subscribe(topic, on_message_callback)
 
-    dummy_external_connector = await DummyExternalConnector(broker)
+    dummy_external_connector = DummyExternalConnector(broker)
     bridge = await MessageBridge(dummy_external_connector, shared_internal_bus, shared_data_aligner)
     return bridge
 
@@ -353,8 +353,8 @@ def event_loop():
 
 
 @pytest.fixture
-def mock_llm_fixture():
-    llm = await MockLLMInterface()
+async def mock_llm_fixture():
+    llm = MockLLMInterface()
     llm.add_mock_response(
         "Berlin is the capital of Germany", 
         '[{"fact_type": "general_statement", "content": {"subject": "Berlin", "relation": "is_capital_of", "object": "Germany"}, "confidence": 0.99}]'

@@ -102,7 +102,7 @@ class TestRovoDevAgentRecovery:
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_state_persistence(self, agent, tmp_path):
+    async def test_state_persistence(self, agent, tmp_path):
         """測試狀態持久化"""
         # 設置臨時存儲路徑
         agent.storage_path = tmp_path
@@ -130,7 +130,7 @@ async def test_state_persistence(self, agent, tmp_path):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_state_recovery(self, agent, tmp_path, mock_task):
+    async def test_state_recovery(self, agent, tmp_path, mock_task):
         """測試狀態恢復"""
         # 設置臨時存儲路徑
         agent.storage_path = tmp_path
@@ -171,10 +171,10 @@ async def test_state_recovery(self, agent, tmp_path, mock_task):
 
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_task_timeout_handling(self, agent, mock_task):
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    async def test_task_timeout_handling(self, agent, mock_task):
         """測試任務超時處理"""
         task_id = 'timeout-task'
         
@@ -202,11 +202,10 @@ async def test_task_timeout_handling(self, agent, mock_task):
         assert task_id not in agent.active_tasks  # 從活動任務中移除
 
     @pytest.mark.asyncio
+    @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_task_retry_mechanism(self, agent, mock_task):
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    async def test_task_retry_mechanism(self, agent, mock_task):
         """測試任務重試機制"""
         task_id = 'retry-task'
         
@@ -236,18 +235,18 @@ async def test_task_retry_mechanism(self, agent, mock_task):
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_degraded_mode_activation(self, agent):
-        """測試降級模式激活"""
-        # 初始狀態
-        assert not agent.degraded_mode
-        assert len(agent.degraded_capabilities) == 0
+    """測試降級模式激活"""
+    # 初始狀態
+    assert not agent.degraded_mode
+    assert len(agent.degraded_capabilities) == 0
 
-        # 激活降級模式
-        await agent._enter_degraded_mode()
+    # 激活降級模式
+    await agent._enter_degraded_mode()
 
-        # 驗證降級模式
-        assert agent.degraded_mode
-        assert len(agent.degraded_capabilities) > 0
-        assert agent.metrics['degraded_mode_activations'] == 1
+    # 驗證降級模式
+    assert agent.degraded_mode
+    assert len(agent.degraded_capabilities) > 0
+    assert agent.metrics['degraded_mode_activations'] == 1
 
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试

@@ -73,7 +73,7 @@ class TestContext7MCPConnector:
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_connector_initialization(self, connector):
+    async def test_connector_initialization(self, connector):
         """Test connector initialization."""
         assert connector.config.endpoint == "https://test-mcp.context7.com"
         assert connector.session_id is None
@@ -85,7 +85,7 @@ async def test_connector_initialization(self, connector):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_connect_success(self, connector):
+    async def test_connect_success(self, connector):
         """Test successful connection."""
         result = await connector.connect()
         
@@ -100,7 +100,7 @@ async def test_connect_success(self, connector):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_disconnect(self, connector):
+    async def test_disconnect(self, connector):
         """Test disconnection."""
         await connector.connect()
         assert connector._connected is True
@@ -115,7 +115,7 @@ async def test_disconnect(self, connector):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_send_context(self, connector):
+    async def test_send_context(self, connector):
         """Test sending context data."""
         await connector.connect()
         
@@ -136,10 +136,10 @@ async def test_send_context(self, connector):
     
     @pytest.mark.timeout(5)
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_request_context(self, connector):
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    async def test_request_context(self, connector):
         """Test requesting context."""
         await connector.connect()
         
@@ -157,11 +157,10 @@ async def test_request_context(self, connector):
             assert "relevance" in item
     
     @pytest.mark.timeout(5)
+    @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_collaborate_with_model(self, connector):
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    async def test_collaborate_with_model(self, connector):
         """Test model collaboration."""
         await connector.connect()
         
@@ -186,7 +185,7 @@ async def test_collaborate_with_model(self, connector):
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_compress_context(self, connector):
-        """Test context compression."""
+    """Test context compression."""
         await connector.connect()
         
         large_context = {

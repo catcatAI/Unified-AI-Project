@@ -6,7 +6,7 @@ import logging
 from typing import Dict, Any, List
 from pathlib import Path # Import Path
 
-from .base_agent import BaseAgent
+from apps.backend.src.ai.agents.base.base_agent import BaseAgent
 from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 from apps.backend.src.core.services.multi_llm_service import MultiLLMService, ChatMessage
 

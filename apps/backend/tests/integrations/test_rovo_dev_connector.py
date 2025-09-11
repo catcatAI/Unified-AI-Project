@@ -55,7 +55,7 @@ class TestRovoDevConnector:
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_context_manager(self, connector):
+    async def test_context_manager(self, connector):
         """测试异步上下文管理器"""
         with patch.object(connector, 'start') as mock_start:
             with patch.object(connector, 'close') as mock_close:
@@ -70,7 +70,7 @@ async def test_context_manager(self, connector):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_authentication_success(self, connector):
+    async def test_authentication_success(self, connector):
         """测试认证成功"""
         mock_response = Mock()
         mock_response.status = 200
@@ -92,7 +92,7 @@ async def test_authentication_success(self, connector):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_authentication_failure(self, connector):
+    async def test_authentication_failure(self, connector):
         """测试认证失败"""
         mock_response = Mock()
         mock_response.status = 401
@@ -110,10 +110,10 @@ async def test_authentication_failure(self, connector):
     
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_make_request_success(self, connector):
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    async def test_make_request_success(self, connector):
         """测试成功的 API 请求"""
         mock_response_data = {'result': 'success'}
         mock_response = Mock()
@@ -132,11 +132,10 @@ async def test_make_request_success(self, connector):
             assert result == mock_response_data
     
     @pytest.mark.asyncio
+    @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_make_request_error(self, connector):
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    async def test_make_request_error(self, connector):
         """测试 API 请求错误"""
         from unittest.mock import MagicMock
         
@@ -167,23 +166,23 @@ async def test_make_request_error(self, connector):
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_caching_mechanism(self, connector):
-        """测试缓存机制"""
-        test_data = {'cached': 'data'}
-        cache_key = 'test_key'
-        
-        # Test cache miss
-        cached = await connector.get_cached_response(cache_key)
-        assert cached is None
-        
-        # Set cache
-        connector.set_cache(cache_key, test_data)
-        
-        # Test cache hit
-        cached = await connector.get_cached_response(cache_key)
-        assert cached == test_data
-        
-        # Test cache expiration
-        connector.cache_timestamps[cache_key] = datetime.now() - timedelta(seconds=400)  # Expired
+    """测试缓存机制"""
+    test_data = {'cached': 'data'}
+    cache_key = 'test_key'
+    
+    # Test cache miss
+    cached = await connector.get_cached_response(cache_key)
+    assert cached is None
+    
+    # Set cache
+    connector.set_cache(cache_key, test_data)
+    
+    # Test cache hit
+    cached = await connector.get_cached_response(cache_key)
+    assert cached == test_data
+    
+    # Test cache expiration
+    connector.cache_timestamps[cache_key] = datetime.now() - timedelta(seconds=400)  # Expired
         cached = await connector.get_cached_response(cache_key)
         assert cached is None
         assert cache_key not in connector.cache  # Should be cleaned up

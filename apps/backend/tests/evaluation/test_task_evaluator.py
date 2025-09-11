@@ -45,7 +45,7 @@ class TestFeedbackAnalyzer(unittest.IsolatedAsyncioTestCase):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_analyze_positive_feedback(self):
+    async def test_analyze_positive_feedback(self):
         analyzer = FeedbackAnalyzer()
         user_feedback = {"text": "This was excellent, very good performance! I love this feature."}
         analysis = await analyzer.analyze(user_feedback)

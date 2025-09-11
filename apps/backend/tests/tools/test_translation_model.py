@@ -113,10 +113,10 @@ class TestTranslationModelComponents(unittest.TestCase):
 
     @pytest.mark.timeout(5)
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_05_tool_dispatcher_translation_routing(self):
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    async def test_05_tool_dispatcher_translation_routing(self):
         print("\nRunning test_05_tool_dispatcher_translation_routing...")
         dispatcher = ToolDispatcher()
 

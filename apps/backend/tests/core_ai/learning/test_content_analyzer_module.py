@@ -8,7 +8,7 @@ from datetime import datetime, timezone # Added for HSP tests
 # Adjust path if necessary based on how tests are run and PYTHONPATH
 from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzerModule, ProcessedTripleInfo, CAHSPFactProcessingResult
 from apps.backend.src.ai.knowledge_graph.types import KGEntity, KGRelationship, KnowledgeGraph
-from apps.backend.src.hsp.types import HSPFactPayload, HSPFactStatementStructured # Import HSP types
+from apps.backend.src.core.hsp.types import HSPFactPayload, HSPFactStatementStructured # Import HSP types
 import uuid # For generating unique fact IDs in tests
 
 class TestContentAnalyzerModule(unittest.TestCase):
@@ -58,7 +58,7 @@ class TestContentAnalyzerModule(unittest.TestCase):
         self.assertNodeInNxGraph("steve_jobs", "Steve Jobs", "PERSON", nx_graph)
 
         # TODO: 修复实体数量断言
-# self.assertEqual(nx_graph.number_of_nodes(), len(kg_data[\"entities\"]))
+# self.assertEqual(nx_graph.number_of_nodes(), len(kg_data["entities"]))
 # 暂时跳过此断言以允许测试继续
 
     @pytest.mark.timeout(5)
@@ -915,13 +915,13 @@ class TestContentAnalyzerModule(unittest.TestCase):
         expected_o_id = self.analyzer.ontology_mapping.get(object_uri, object_uri) # "cai_type:Country"
 
         # 修复Paris实体URI断言 - 检查URI映射逻辑
-# self.assertEqual(processed_triple_info[\"subject_id\"], expected_s_id)
-# 检查两种可能的URI格式
-subject_id = processed_triple_info[\"subject_id\"]
-if subject_id.startswith('http://'):
-    self.assertEqual(subject_id, 'http://example.org/entity/Paris')
-else:
-    self.assertEqual(subject_id, 'cai_instance:ex_Paris') # type: ignore
+        # self.assertEqual(processed_triple_info["subject_id"], expected_s_id)
+        # 检查两种可能的URI格式
+        subject_id = processed_triple_info["subject_id"]
+        if subject_id.startswith('http://'):
+            self.assertEqual(subject_id, 'http://example.org/entity/Paris')
+        else:
+            self.assertEqual(subject_id, 'cai_instance:ex_Paris') # type: ignore
         self.assertEqual(processed_triple_info["predicate_type"], expected_p_type) # type: ignore
         self.assertEqual(processed_triple_info["object_id"], expected_o_id) # type: ignore
 
@@ -967,13 +967,13 @@ else:
         # Object is literal, so ID will be generated like "literal_somevalue_..."
 
         # 修复Paris实体URI断言 - 检查URI映射逻辑
-# self.assertEqual(processed_triple_info[\"subject_id\"], expected_s_id)
+# self.assertEqual(processed_triple_info["subject_id"], expected_s_id)
 # 检查两种可能的URI格式
-subject_id = processed_triple_info[\"subject_id\"]
-if subject_id.startswith('http://'):
-    self.assertEqual(subject_id, 'http://example.org/entity/Paris')
-else:
-    self.assertEqual(subject_id, 'cai_instance:ex_Paris') # type: ignore
+        subject_id = processed_triple_info["subject_id"]
+        if subject_id.startswith('http://'):
+            self.assertEqual(subject_id, 'http://example.org/entity/Paris')
+        else:
+            self.assertEqual(subject_id, 'cai_instance:ex_Paris') # type: ignore
         self.assertEqual(processed_triple_info["predicate_type"], expected_p_type) # type: ignore
         self.assertTrue(processed_triple_info["object_id"].startswith("literal_somevalue")) # type: ignore
 

@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
 
-from apps.backend.src.agents.knowledge_graph_agent import KnowledgeGraphAgent
+from apps.backend.src.ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
 
 @pytest.fixture
 def mock_hsp_connector():
@@ -119,8 +119,8 @@ async def test_knowledge_graph_agent_query_knowledge_graph(knowledge_graph_agent
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_handle_task_request_entity_linking(knowledge_graph_agent, mock_hsp_connector):
     """Test handling an entity linking task request."""
-    with patch('apps.backend.src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('apps.backend.src.agents.base_agent.get_services') as mock_get_services:
+    with patch('apps.backend.src.core_services.initialize_services', new_callable=AsyncMock) as mock_init_services:
+        with patch('apps.backend.src.core_services.get_services') as mock_get_services:
             mock_get_services.return_value = {
                 'hsp_connector': mock_hsp_connector,
                 'llm_interface': MagicMock(),
@@ -174,8 +174,8 @@ async def test_knowledge_graph_agent_handle_task_request_entity_linking(knowledg
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_handle_task_request_unsupported_capability(knowledge_graph_agent, mock_hsp_connector):
     """Test handling a task request with an unsupported capability."""
-    with patch('apps.backend.src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('apps.backend.src.agents.base_agent.get_services') as mock_get_services:
+    with patch('apps.backend.src.core_services.initialize_services', new_callable=AsyncMock) as mock_init_services:
+        with patch('apps.backend.src.core_services.get_services') as mock_get_services:
             mock_get_services.return_value = {
                 'hsp_connector': mock_hsp_connector,
                 'llm_interface': MagicMock(),

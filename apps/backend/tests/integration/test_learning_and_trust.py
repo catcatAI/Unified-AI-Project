@@ -4,7 +4,7 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 from apps.backend.src.ai.learning.learning_manager import LearningManager
-from apps.backend.src.ai.trust_manager.trust_manager_module import TrustManager
+from apps.backend.src.ai.trust.trust_manager_module import TrustManager
 from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
 from apps.backend.src.hsp.types import HSPFactPayload, HSPMessageEnvelope
 
@@ -42,7 +42,7 @@ class TestLearningAndTrustIntegration:
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_duplicate_fact_increments_corroboration(self):
+    async def test_duplicate_fact_increments_corroboration(self):
         """
         Tests that receiving a duplicate fact increments corroboration_count
         and does not store a new fact.
@@ -84,7 +84,7 @@ async def test_duplicate_fact_increments_corroboration(self):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_fact_from_low_trust_source_is_discarded(self):
+    async def test_fact_from_low_trust_source_is_discarded(self):
         """
         Tests that a fact with high original confidence is discarded if the source has very low trust.
         """
@@ -110,7 +110,7 @@ async def test_fact_from_low_trust_source_is_discarded(self):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_fact_from_high_trust_source_is_accepted(self):
+    async def test_fact_from_high_trust_source_is_accepted(self):
         """
         Tests that a fact with medium original confidence is accepted if the source has high trust.
         """

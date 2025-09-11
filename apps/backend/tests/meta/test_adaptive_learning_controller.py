@@ -11,7 +11,7 @@ class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_analyze_trend_improving(self):
+    async def test_analyze_trend_improving(self):
         tracker = PerformanceTracker()
         history = [
             {"success_rate": 0.7},
@@ -77,7 +77,7 @@ class TestStrategySelector(unittest.IsolatedAsyncioTestCase):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_select_improving_trend(self):
+    async def test_select_improving_trend(self):
         selector = StrategySelector()
         task_context = {"complexity_level": 0.3}
         performance_trend = {"direction": "improving", "magnitude": 0.6}
@@ -88,7 +88,7 @@ async def test_select_improving_trend(self):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_select_degrading_complex_task(self):
+    async def test_select_degrading_complex_task(self):
         selector = StrategySelector()
         task_context = {"complexity_level": 0.8}
         performance_trend = {"direction": "degrading", "magnitude": 0.51} # Changed magnitude

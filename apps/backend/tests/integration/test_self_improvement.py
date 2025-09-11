@@ -13,7 +13,7 @@ class TestSelfImprovement(aiounittest.AsyncTestCase):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_self_improvement(self):
+    async def test_self_improvement(self):
         """
         Tests the self-improvement capabilities of the system.
         """

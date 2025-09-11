@@ -1330,8 +1330,8 @@ def get_multi_llm_service() -> MultiLLMService:
     global _multi_llm_service
     if _multi_llm_service is None:
         config_path = os.path.join(
-            os.path.dirname(__file__), 
-            '..', '..', 'configs', 'multi_llm_config.json'
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 
+            'configs', 'multi_llm_config.json'
         )
         _multi_llm_service = MultiLLMService(config_path)
     return _multi_llm_service

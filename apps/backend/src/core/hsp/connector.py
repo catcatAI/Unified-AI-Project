@@ -764,6 +764,9 @@ class HSPConnector:
 
     async def advertise_capability(self, capability: HSPCapabilityAdvertisementPayload):
         """Publishes a capability advertisement."""
+        # Ensure the capability has the required ai_id field
+        if 'ai_id' not in capability:
+            capability['ai_id'] = self.ai_id
         await self.publish_capability_advertisement(capability)
 
     # --- Internal dispatch methods ---

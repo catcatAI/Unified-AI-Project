@@ -81,7 +81,7 @@ class TestAtlassianBridgeFallback:
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_endpoint_config_loading(self, bridge):
+    async def test_endpoint_config_loading(self, bridge):
         """測試端點配置加載"""
         assert 'confluence' in bridge.endpoints
         assert 'jira' in bridge.endpoints
@@ -96,7 +96,7 @@ async def test_endpoint_config_loading(self, bridge):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_successful_primary_endpoint(self, monkeypatch, bridge):
+    async def test_successful_primary_endpoint(self, monkeypatch, bridge):
         """測試主端點成功請求"""
         expected_result = {'id': '123', 'title': 'Test Page'}
         
@@ -125,7 +125,7 @@ async def test_successful_primary_endpoint(self, monkeypatch, bridge):
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_fallback_to_backup_endpoint(self, monkeypatch, bridge):
+    async def test_fallback_to_backup_endpoint(self, monkeypatch, bridge):
         """測試備用端點切換"""
         expected_result = {'id': '123', 'title': 'Test Page'}
         
@@ -153,10 +153,10 @@ async def test_fallback_to_backup_endpoint(self, monkeypatch, bridge):
 
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_all_endpoints_fail(self, monkeypatch, bridge):
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    async def test_all_endpoints_fail(self, monkeypatch, bridge):
         """測試所有端點都失敗"""
         # 確保離線模式關閉
         bridge.offline_mode = False
@@ -192,11 +192,10 @@ async def test_all_endpoints_fail(self, monkeypatch, bridge):
         assert bridge.connector._make_request_with_retry.call_count == expected_calls
 
     @pytest.mark.asyncio
+    @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_cache_functionality(self, bridge):
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    async def test_cache_functionality(self, bridge):
         """測試緩存功能"""
         test_data = {'id': '123', 'title': 'Cached Page'}
         cache_key = 'test_key'
@@ -214,19 +213,19 @@ async def test_cache_functionality(self, bridge):
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_expired_cache(self, bridge):
-        """測試過期緩存"""
-        test_data = {'id': '123', 'title': 'Expired Page'}
-        cache_key = 'test_key'
+    """測試過期緩存"""
+    test_data = {'id': '123', 'title': 'Expired Page'}
+    cache_key = 'test_key'
 
-        # 保存到緩存，設置很短的TTL
-        await bridge._save_to_cache(cache_key, test_data, ttl=1)
+    # 保存到緩存，設置很短的TTL
+    await bridge._save_to_cache(cache_key, test_data, ttl=1)
 
-        # 等待過期
-        await asyncio.sleep(2)
+    # 等待過期
+    await asyncio.sleep(2)
 
-        # 應該返回None
-        cached_result = await bridge._get_from_cache(cache_key)
-        assert cached_result is None
+    # 應該返回None
+    cached_result = await bridge._get_from_cache(cache_key)
+    assert cached_result is None
 
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试

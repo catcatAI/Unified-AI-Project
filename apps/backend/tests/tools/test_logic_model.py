@@ -172,10 +172,10 @@ class TestLogicModelComponents(unittest.TestCase):
 
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_05_tool_dispatcher_logic_routing(self):
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    async def test_05_tool_dispatcher_logic_routing(self):
         print("\nRunning test_05_tool_dispatcher_logic_routing...")
         dispatcher = ToolDispatcher()
 

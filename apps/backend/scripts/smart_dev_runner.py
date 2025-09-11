@@ -156,7 +156,7 @@ def start_uvicorn_server():
         # 检查进程是否仍在运行
         if uvicorn_process.poll() is None:
             print("✅ Uvicorn服务器启动成功")
-            return uvicorn_process
+            return uvicorn_process, ""
         else:
             # 获取错误输出
             stdout, stderr = uvicorn_process.communicate()

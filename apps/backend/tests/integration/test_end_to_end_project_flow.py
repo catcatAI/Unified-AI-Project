@@ -11,9 +11,9 @@ SRC_DIR = os.path.join(BASE_DIR, 'src')
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from apps.backend.src.ai.agent_manager import AgentManager
+from apps.backend.src.core.managers.agent_manager import AgentManager
 from apps.backend.src.ai.dialogue.project_coordinator import ProjectCoordinator
-from apps.backend.src.ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
 from apps.backend.src.ai.trust_manager.trust_manager_module import TrustManager
 from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
 from apps.backend.src.ai.personality.personality_manager import PersonalityManager

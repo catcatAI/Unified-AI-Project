@@ -30,7 +30,6 @@ class BaseAgent:
         self.agent_name = agent_name
         self.hsp_connector = None
         self.is_running = False
-        logging.basicConfig(level=logging.INFO)
         self.services = None
 
     async def _ainit(self):
