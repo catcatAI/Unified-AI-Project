@@ -100,7 +100,7 @@ def generate_dataset(num_samples, output_dir, filename_prefix="arithmetic", file
 def _write_summary_report(project_root: Path, output_dir: Path, datasets_meta, summary_out: Optional[str] = None) -> Path:
     report = {
         "title": "Arithmetic dataset generation summary",
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "project_root": str(project_root),
         "output_dir": str(output_dir),
         "total_datasets": len(datasets_meta),
