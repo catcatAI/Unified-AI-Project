@@ -1,0 +1,74 @@
+name: Scheduled Config Backup
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'  # Every Monday 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare backup files list
+        id: prep
+        shell: bash
+        run: |
+          set -euo pipefail
+          DATE=$(date +"%Y-%m-%d")
+          echo "date=$DATE" >> $GITHUB_OUTPUT
+          mkdir -p backup_out
+          # Candidate files/directories to backup (metadata only)
+          cat > backup_list.txt << 'EOF'
+          dependency_config.yaml
+          requirements.txt
+          setup.py
+          pnpm-workspace.yaml
+          package.json
+          pnpm-lock.yaml
+          PROJECT_OVERVIEW.md
+          PROJECT_STATUS_SUMMARY_2025_09_06.md
+          apps
+          scripts
+          .github/workflows
+          EOF
+          # Filter existing entries only (exclude large data dirs)
+          while read -r path; do
+            if [ -e "$path" ]; then
+              echo "$path" >> backup_out/include_existing.txt
+            fi
+          done < backup_list.txt
+          tar -czf backup_out/config-${DATE}.tar.gz -T backup_out/include_existing.txt
+          sha256sum backup_out/config-${DATE}.tar.gz > backup_out/config-${DATE}.sha256
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: config-backup-${{ steps.prep.outputs.date }}
+          path: backup_out/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commit backup to infra/backups branch [skip ci]
+        env:
+          DATE: ${{ steps.prep.outputs.date }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Create or switch to infra/backups branch without altering default branch history
+          git fetch origin infra/backups || true
+          git checkout -B infra/backups origin/infra/backups || git checkout -B infra/backups
+          mkdir -p backups/${DATE}
+          cp -r backup_out/* backups/${DATE}/
+          git add backups/${DATE}
+          git commit -m "chore(backup): weekly config snapshot ${DATE} [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:infra/backups
