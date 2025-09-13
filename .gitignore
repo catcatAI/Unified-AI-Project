@@ -283,6 +283,8 @@ debug_*.py
 
 # 临时数据文件
 *.db
+# Ignore large training data catalog generated locally
+training/data_catalog.json
 !alpha_deep_model_symbolic_space.db
 !integration_test_symbolic_space.db
 
