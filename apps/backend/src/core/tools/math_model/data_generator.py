@@ -2,6 +2,14 @@ import random
 import csv
 import json
 import os # Added os module
+from pathlib import Path
+
+
+def _atomic_write_text(path: Path, content: str) -> None:\n    tmp = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp, 'w', encoding='utf-8', newline='\n') as f:
+        f.write(content)
+    os.replace(tmp, path)
+
 
 def generate_problem(max_digits=3, operations=None):
     """Generates a random arithmetic problem."""
@@ -31,6 +39,7 @@ def generate_problem(max_digits=3, operations=None):
 
     return problem_str, answer
 
+
 def generate_dataset(num_samples, output_dir, filename_prefix="arithmetic", file_format="csv", max_digits=3):
     """Generates a dataset of arithmetic problems and saves it."""
     problems = []
@@ -41,28 +50,40 @@ def generate_dataset(num_samples, output_dir, filename_prefix="arithmetic", file
     os.makedirs(output_dir, exist_ok=True)
 
     if file_format == "csv":
-        filepath = os.path.join(output_dir, f"{filename_prefix}.csv")
-        with open(filepath, 'w', newline='', encoding='utf-8') as f:
+        filepath = Path(output_dir) / f"{filename_prefix}.csv"
+        tmp = filepath.with_suffix(filepath.suffix + ".tmp")
+        with open(tmp, 'w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=["problem", "answer"])
             writer.writeheader()
             writer.writerows(problems)
+        os.replace(tmp, filepath)
         print(f"Generated {num_samples} samples in {filepath}")
     elif file_format == "json":
-        filepath = os.path.join(output_dir, f"{filename_prefix}.json")
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(problems, f, indent=2)
+        filepath = Path(output_dir) / f"{filename_prefix}.json"
+        json_text = json.dumps(problems, indent=2)
+        _atomic_write_text(filepath, json_text)
         print(f"Generated {num_samples} samples in {filepath}")
     else:
         print(f"Unsupported file format: {file_format}")
+
 
 if __name__ == "__main__":
     num_train_samples = 10000
     num_test_samples = 2000
     
-    # Get absolute path to project root
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
-    output_directory = os.path.join(project_root, "data", "raw_datasets")
+    # Resolve project root robustly by walking up until repo markers are found
+    script_dir = Path(__file__).resolve().parent
+
+    def _find_project_root(start: Path) -> Path:
+        # Identify repository root by presence of typical top-level dirs
+        for p in [start] + list(start.parents):
+            if (p / "apps").exists() and (p / "training").exists():
+                return p
+        # Fallback to highest parent
+        return start.parents[-1]
+
+    project_root = _find_project_root(script_dir)
+    output_directory = str(project_root / "data" / "raw_datasets")
 
     # Generate training data as JSON (for train.py)
     generate_dataset(num_train_samples,

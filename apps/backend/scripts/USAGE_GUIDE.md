@@ -14,14 +14,14 @@
 
 2. **`ModuleNotFoundError: No module named 'core_ai'`**
    - 问题原因：在core_services.py中使用了错误的导入路径
-   - 解决方法：修正导入路径为完整路径 `apps.backend.src.core_ai.*`
+   - 解决方法：修正导入路径为当前模块命名 `apps.backend.src.ai.*`（从旧的 `core_ai` 迁移至 `ai`）
 
 ## 自动修复系统组件
 
 ### 1. 修复工具
 
 #### 简化版修复工具 (`simple_auto_fix.py`)
-- 专门修复 `core_ai` 模块的导入路径问题
+- 将遗留的 `core_ai` 导入批量迁移为 `ai` 路径
 - 适合快速修复特定问题
 
 #### 完整版修复工具 (`auto_fix_complete.py`)
@@ -113,7 +113,7 @@ pnpm validate
 
 根据您的需求选择合适的修复工具：
 
-#### 快速修复（仅core_ai模块）
+#### 快速修复（仅core_ai迁移至ai）
 ```bash
 pnpm fix
 ```
@@ -251,7 +251,8 @@ A: 可以，增强版工具会创建备份：
 - 将备份文件复制回原位置
 
 ### Q: 自动修复工具支持哪些模块？
-A: 支持所有核心模块：
+A: 支持以下模块（迁移目标以 ai.* 为准）：
+- ai.*（現行路徑）
 - core_ai.*
 - core.*
 - services.*
@@ -275,7 +276,7 @@ A: 可以，编辑 `advanced_auto_fix.py` 中的 `import_mappings` 字典。
 1. **扫描阶段**：遍历项目中的所有Python文件
 2. **识别阶段**：使用AST解析识别导入语句
 3. **匹配阶段**：匹配已知的错误导入模式
-4. **修复阶段**：替换为正确的导入路径
+4. **修复阶段**：替换为正确的导入路径（优先迁移为 `apps.backend.src.ai.*`）
 5. **验证阶段**：验证修复结果
 6. **报告阶段**：生成详细的修复报告
 
@@ -292,9 +293,9 @@ from ..core_ai.dialogue import dialogue_manager
 import core_ai.dialogue.dialogue_manager
 
 # 修复为
-from apps.backend.src.core_ai.agent_manager import AgentManager
-from apps.backend.src.core_ai.dialogue import dialogue_manager
-import apps.backend.src.core_ai.dialogue.dialogue_manager
+from apps.backend.src.ai.agent_manager import AgentManager
+from apps.backend.src.ai.dialogue import dialogue_manager
+import apps.backend.src.ai.dialogue.dialogue_manager
 ```
 
 ## 总结

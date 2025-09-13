@@ -5,7 +5,7 @@
 ## 工具介绍
 
 ### 1. simple_auto_fix.py
-简化版自动修复工具，专门修复 `core_ai` 模块的导入路径问题。
+简化版自动修复工具，专门将遗留的 `core_ai` 导入迁移为当前 `ai` 模块路径。
 
 ### 2. auto_fix_complete.py
 完整版自动修复工具，修复所有已知模块的导入路径问题。
@@ -120,9 +120,9 @@ import core_ai.dialogue.dialogue_manager
 from ..core_ai.dialogue import dialogue_manager
 
 # 修复后
-from apps.backend.src.core_ai.agent_manager import AgentManager
-import apps.backend.src.core_ai.dialogue.dialogue_manager
-from apps.backend.src.core_ai.dialogue import dialogue_manager
+from apps.backend.src.ai.agent_manager import AgentManager
+import apps.backend.src.ai.dialogue.dialogue_manager
+from apps.backend.src.ai.dialogue import dialogue_manager
 ```
 
 ### 自动备份
@@ -137,6 +137,7 @@ from apps.backend.src.core_ai.dialogue import dialogue_manager
 ## 支持的模块
 
 工具支持修复以下模块的导入路径：
+- ai.*（現行路徑，用於修復結果與驗證）
 - core_ai.*
 - core.*
 - services.*

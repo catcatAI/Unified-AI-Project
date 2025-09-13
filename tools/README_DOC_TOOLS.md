@@ -58,13 +58,31 @@
 ## 注意事項
 
 - 首次使用時，請先執行「掃描專案並生成文檔更新計畫」
-- 文檔狀態數據存儲在專案根目錄的 `.doc_status.json` 文件中
+- 文檔狀態數據存儲在專案根目錄的 `doc_update_status.json` 文件中
 - 更詳細的使用說明請參考專案根目錄的 `DOCUMENT_UPDATE_GUIDE.md`
 
 ## 系統要求
 
 - Python 3.6 或更高版本
 - Windows 環境 (對於 .bat 和 .ps1 腳本)
+
+## 命令行用法示例（非互動）
+
+以下命令使用 `scripts/update_doc_status.py` 直接操作狀態與報告：
+
+```bash
+# 列出全部待更新文檔
+python scripts/update_doc_status.py list --status 待更新
+
+# 查看特定文檔詳情
+python scripts/update_doc_status.py show "PROJECT_OVERVIEW.md"
+
+# 將文檔標記為已更新並附註
+python scripts/update_doc_status.py update "PROJECT_OVERVIEW.md" 已更新 --notes "同步至 2025-09-12，內容一致性校正"
+
+# 生成最新的 Markdown 報告
+python scripts/update_doc_status.py report
+```
 
 ## 問題反饋
 

@@ -139,8 +139,28 @@ python scripts/document_update_plan.py
 
 可以直接編輯 `doc_update_status.json` 文件更新狀態，或開發額外的工具輔助狀態更新。
 
-## 注意事項
+## 命令行用法示例（非互動）
 
-- 過程中需保持代碼與文檔的同步更新，每次修改後即時記錄進度
-- 對於複雜模組，可以創建更詳細的文檔結構
-- 確保文檔內容對新加入的團隊成員友好，提供足夠的上下文信息
+以下操作基於腳本 `scripts/update_doc_status.py` 與狀態檔 `doc_update_status.json`：
+
+- 列出待更新文檔（可加上目錄過濾）：
+  ```bash
+  python scripts/update_doc_status.py list --status 待更新
+  python scripts/update_doc_status.py list --status 待更新 --dir apps/backend
+  ```
+
+- 查看特定文檔詳細資訊：
+  ```bash
+  python scripts/update_doc_status.py show PROJECT_OVERVIEW.md
+  ```
+
+- 標記文檔為已更新並附註：
+  ```bash
+  python scripts/update_doc_status.py update PROJECT_OVERVIEW.md 已更新 --notes "目錄結構與依賴關係已同步至代碼現狀"
+  python scripts/update_doc_status.py update tools/README_DOC_TOOLS.md 已更新 --notes "修正狀態檔名，補充命令行示例"
+  ```
+
+- 生成 Markdown 報告（輸出至根目錄 `doc_update_report.md`）：
+  ```bash
+  python scripts/update_doc_status.py report
+  ```
