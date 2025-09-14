@@ -1,0 +1,53 @@
+name: Manual/Conditional Training
+
+on:
+  workflow_dispatch:
+    inputs:
+      resume:
+        description: 'Resume from last checkpoint'
+        type: boolean
+        default: true
+      preset:
+        description: 'Training preset name'
+        type: string
+        default: 'quick_start'
+
+permissions:
+  contents: read
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f apps/backend/requirements.txt ]; then pip install -r apps/backend/requirements.txt; fi
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run training
+        shell: bash
+        run: |
+          RESUME_FLAG=""
+          if [ "${{ inputs.resume }}" = "true" ]; then RESUME_FLAG="--resume"; fi
+          python scripts/project_ai_orchestrator.py --run-training --preset "${{ inputs.preset }}" $RESUME_FLAG -v
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-artifacts
+          path: |
+            orchestrator_run_report.json
+            training_logs/**
+          if-no-files-found: ignore
