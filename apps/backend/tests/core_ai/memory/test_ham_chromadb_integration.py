@@ -33,8 +33,8 @@ class MockEmbeddingFunction:
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.core_ai.memory.types import HAMRecallResult
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.ai.memory.ham_types import HAMRecallResult
 
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)
@@ -71,6 +71,10 @@ def ham_chroma_manager_fixture():
         print(f"Warning: Failed to clean up temp directory {temp_dir}: {e}")
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_01_store_experience_and_verify_chromadb_entry(ham_chroma_manager_fixture):
     print("\n--- Test 01: Store Experience and Verify ChromaDB Entry ---")
     ham = ham_chroma_manager_fixture
@@ -93,6 +97,10 @@ async def test_01_store_experience_and_verify_chromadb_entry(ham_chroma_manager_
     print("Test 01 PASSED")
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_02_semantic_search_chromadb_first(ham_chroma_manager_fixture):
     print("\n--- Test 02: Semantic Search (ChromaDB first) ---")
     ham = ham_chroma_manager_fixture
@@ -113,6 +121,10 @@ async def test_02_semantic_search_chromadb_first(ham_chroma_manager_fixture):
     print("Test 02 PASSED")
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_03_semantic_search_chromadb_failure_fallback(ham_chroma_manager_fixture):
     print("\n--- Test 03: Semantic Search Fallback (ChromaDB failure) ---")
     ham = ham_chroma_manager_fixture

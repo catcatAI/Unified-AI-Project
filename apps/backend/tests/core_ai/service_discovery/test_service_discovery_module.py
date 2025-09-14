@@ -5,9 +5,9 @@ import logging # For caplog if needed, or to check logs from module
 
 import time
 
-from apps.backend.src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager
-from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
+from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
+from apps.backend.src.ai.trust.trust_manager_module import TrustManager
+from apps.backend.src.core.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
 
 # --- Mock TrustManager ---
 @pytest.fixture
@@ -172,12 +172,20 @@ class TestServiceDiscoveryModule:
 
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_find_capabilities_no_filters(self, populated_sdm: ServiceDiscoveryModule):
         results = await populated_sdm.find_capabilities()
         assert len(results) == 4
 
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_find_capabilities_by_id(self, populated_sdm: ServiceDiscoveryModule):
         results = await populated_sdm.find_capabilities(capability_id_filter="c1")
         assert len(results) == 1
@@ -185,6 +193,10 @@ class TestServiceDiscoveryModule:
 
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_find_capabilities_by_name(self, populated_sdm: ServiceDiscoveryModule):
         results = await populated_sdm.find_capabilities(capability_name_filter="CapAlpha")
         assert len(results) == 2
@@ -192,6 +204,10 @@ class TestServiceDiscoveryModule:
 
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_find_capabilities_by_tags(self, populated_sdm: ServiceDiscoveryModule):
         results_nlp = await populated_sdm.find_capabilities(tags_filter=["nlp"])
         assert len(results_nlp) == 2
@@ -209,6 +225,10 @@ class TestServiceDiscoveryModule:
 
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_find_capabilities_by_min_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
         results_min_trust_0_7 = await populated_sdm.find_capabilities(min_trust_score=0.7)
         # Only ai_high_trust (0.9) should qualify
@@ -217,6 +237,10 @@ class TestServiceDiscoveryModule:
 
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_find_capabilities_sort_by_trust(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
         results = await populated_sdm.find_capabilities(sort_by_trust=True)
         assert len(results) == 4
@@ -236,6 +260,10 @@ class TestServiceDiscoveryModule:
 
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_find_capabilities_combined_filters_and_sort(self, populated_sdm: ServiceDiscoveryModule, mock_trust_manager: MagicMock):
         # Find capabilities with name "CapAlpha" AND min trust 0.5, sorted by trust
         results = await populated_sdm.find_capabilities(
@@ -296,6 +324,10 @@ class TestServiceDiscoveryModule:
 
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_get_all_capabilities_async(self, populated_sdm: ServiceDiscoveryModule):
         """Test the async version of get_all_capabilities"""
         # get_all_capabilities_async should return all non-stale capabilities

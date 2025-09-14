@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from apps.backend.src.core_ai.lis.tonal_repair_engine import TonalRepairEngine
+from apps.backend.src.ai.lis.tonal_repair_engine import TonalRepairEngine
 
 class TestTonalRepairEngine(unittest.TestCase):
     @pytest.mark.timeout(5)

@@ -26,7 +26,7 @@ def load_math_model():
     CHAR_MAPS_PATH = os.path.join(_get_project_root(), "data/models/arithmetic_char_maps.json")
 
     try:
-        from src.tools.math_model.model import ArithmeticSeq2Seq
+        from apps.backend.src.tools.math_model.model import ArithmeticSeq2Seq
         print("Loading arithmetic model for the first time...")
         if not os.path.exists(MODEL_WEIGHTS_PATH) or not os.path.exists(CHAR_MAPS_PATH):
             raise FileNotFoundError("Math model or char map file not found.")
@@ -64,7 +64,7 @@ def load_logic_nn_model():
         # if not is_dependency_available('tensorflow'):
         #     raise ImportError("TensorFlow not available through dependency manager")
 
-        from src.tools.logic_model.logic_model_nn import LogicNNModel
+        from apps.backend.src.tools.logic_model.logic_model_nn import LogicNNModel
         print("Loading LogicNNModel for the first time...")
         if not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH):
             raise FileNotFoundError("Logic NN Model or Char Map not found.")

@@ -86,7 +86,11 @@ class AGIIntegrationTest:
         
         await self.generate_test_report()
     
-    async def test_unified_control_center(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_unified_control_center(self):
         """測試統一控制中心"""
         logger.info("🧠 Testing Unified Control Center...")
         
@@ -131,7 +135,11 @@ class AGIIntegrationTest:
             logger.error(f"❌ Unified Control Center test failed: {e}")
             raise
     
-    async def test_multimodal_processing(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_multimodal_processing(self):
         """測試多模態處理能力"""
         logger.info("🎭 Testing Multimodal Processing...")
         
@@ -176,7 +184,11 @@ class AGIIntegrationTest:
             logger.error(f"❌ Multimodal Processing test failed: {e}")
             raise
     
-    async def test_vector_storage_system(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_vector_storage_system(self):
         """測試向量存儲系統"""
         logger.info("🔍 Testing Vector Storage System...")
         
@@ -228,7 +240,11 @@ class AGIIntegrationTest:
             logger.error(f"❌ Vector Storage System test failed: {e}")
             raise
     
-    async def test_causal_reasoning_engine(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_causal_reasoning_engine(self):
         """測試因果推理引擎"""
         logger.info("🔗 Testing Causal Reasoning Engine...")
         
@@ -287,7 +303,11 @@ class AGIIntegrationTest:
             logger.error(f"❌ Causal Reasoning Engine test failed: {e}")
             raise
     
-    async def test_end_to_end_agi_workflow(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_end_to_end_agi_workflow(self):
         """測試端到端AGI工作流程"""
         logger.info("🌟 Testing End-to-End AGI Workflow...")
         

@@ -5,11 +5,11 @@ import csv
 import sys
 import pytest # Import pytest
 
-from src.tools.math_model import data_generator
-from src.tools.math_tool import extract_arithmetic_problem, calculate as calculate_via_tool
-from src.tools.math_tool import MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH
-from src.tools.tool_dispatcher import ToolDispatcher
-from src.tools.math_model.model import ArithmeticSeq2Seq, get_char_token_maps
+from apps.backend.src.tools.math_model import data_generator
+from apps.backend.src.tools.math_tool import extract_arithmetic_problem, calculate as calculate_via_tool
+from apps.backend.src.tools.math_tool import MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH
+from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+from apps.backend.src.tools.math_model.model import ArithmeticSeq2Seq, get_char_token_maps
 
 # Define a consistent test output directory
 TEST_OUTPUT_DIR = "tests/test_output_data"
@@ -79,7 +79,7 @@ class TestMathModelComponents(unittest.TestCase):
         print("\nRunning test_model_build_and_char_maps...")
         
         # Check if TensorFlow is available
-        from apps.backend.src.core_ai.dependency_manager import dependency_manager
+        from apps.backend.src.ai.dependency_manager import dependency_manager
         if not dependency_manager.is_available('tensorflow'):
             print("TensorFlow not available, skipping model build tests")
             self.skipTest("TensorFlow not available")
@@ -140,6 +140,10 @@ class TestMathModelComponents(unittest.TestCase):
         print("test_extract_arithmetic_problem PASSED")
 
     @pytest.mark.timeout(10)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_math_tool_calculate_model_unavailable(self):
         print("\nRunning test_math_tool_calculate_model_unavailable...")
         # Ensure no model is "pre-loaded" by other tests or available
@@ -192,6 +196,9 @@ class TestMathModelComponents(unittest.TestCase):
         print("test_math_tool_calculate_model_unavailable PASSED")
 
     @pytest.mark.timeout(10)
+    @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_tool_dispatcher_math_routing(self):
         print("\nRunning test_tool_dispatcher_math_routing...")
         dispatcher = ToolDispatcher()

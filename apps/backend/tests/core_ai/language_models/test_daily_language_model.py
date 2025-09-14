@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock # Added for AsyncMock
 import json
 from unittest.mock import AsyncMock, MagicMock
 from apps.backend.src.services.multi_llm_service import LLMResponse, ChatMessage
-from apps.backend.src.core_ai.language_models.daily_language_model import DailyLanguageModel
+from apps.backend.src.ai.language_models.daily_language_model import DailyLanguageModel
 from apps.backend.src.services.multi_llm_service import MultiLLMService, ModelProvider
 from datetime import datetime
 
@@ -74,6 +74,10 @@ class TestDailyLanguageModel:
         print("TestDailyLanguageModel.test_01_initialization PASSED")
 
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_02_recognize_intent_calculate(self):
         queries = {
             "calculate 2 + 2": {"tool_name": "calculate", "query": "2 + 2"},
@@ -92,6 +96,10 @@ class TestDailyLanguageModel:
         print("TestDailyLanguageModel.test_02_recognize_intent_calculate PASSED")
 
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_03_recognize_intent_evaluate_logic(self):
         queries = {
             "evaluate true AND false": {"tool_name": "evaluate_logic", "query": "true AND false"},
@@ -106,6 +114,10 @@ class TestDailyLanguageModel:
         print("TestDailyLanguageModel.test_03_recognize_intent_evaluate_logic PASSED")
 
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_04_recognize_intent_translate_text(self):
         queries = {
             "translate hello to chinese": {"tool_name": "translate_text", "text_hint": "hello", "lang_hint": "chinese"},
@@ -130,6 +142,10 @@ class TestDailyLanguageModel:
         print("TestDailyLanguageModel.test_04_recognize_intent_translate_text PASSED")
 
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_05_no_intent_recognized(self):
         query_text = "this is a general statement without clear tool triggers"
         intent = await self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools)

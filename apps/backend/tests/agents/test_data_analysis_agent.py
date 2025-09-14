@@ -7,7 +7,7 @@ import sys
 from unittest.mock import MagicMock, AsyncMock, patch
 
 
-from apps.backend.src.agents.data_analysis_agent import DataAnalysisAgent
+from apps.backend.src.ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
 from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 from apps.backend.src.shared.types.common_types import ToolDispatcherResponse
 
@@ -23,8 +23,8 @@ class TestDataAnalysisAgent(unittest.TestCase):
         }
 
         # Patch the service initialization and getter
-        patcher_initialize = patch('src.agents.base_agent.initialize_services', return_value=None)
-        patcher_get = patch('src.agents.base_agent.get_services', return_value=self.mock_services)
+        patcher_initialize = patch('apps.backend.src.core_services.initialize_services', return_value=None)
+        patcher_get = patch('apps.backend.src.core_services.get_services', return_value=self.mock_services)
 
         self.addCleanup(patcher_initialize.stop)
         self.addCleanup(patcher_get.stop)
@@ -45,7 +45,7 @@ class TestDataAnalysisAgent(unittest.TestCase):
         # Check that capabilities were defined
         self.assertTrue(len(self.agent.capabilities) > 0)
         # 验证能力名称与实现匹配
-        self.assertEqual(self.agent.capabilities[0]['name'], 'Data Analysis')
+        self.assertEqual(self.agent.capabilities[0]['name'], 'statistical_analysis')
 
     @pytest.mark.timeout(10)
     def test_handle_task_request_success(self):
@@ -73,8 +73,9 @@ class TestDataAnalysisAgent(unittest.TestCase):
         self.assertEqual(sent_topic, "hsp/results/test_requester/req_001")
         self.assertEqual(sent_payload['request_id'], request_id)
         self.assertEqual(sent_payload['status'], "success")
-        # 验证返回值是计算结果（数组和）
-        self.assertEqual(sent_payload['payload'], 15)
+        # 验证返回值包含正确的统计分析结果
+        self.assertIn('mean', sent_payload['payload'])
+        self.assertEqual(sent_payload['payload']['mean'], 3.0)
 
     @pytest.mark.timeout(10)
     def test_handle_task_request_tool_failure(self):

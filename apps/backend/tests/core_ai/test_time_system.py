@@ -11,7 +11,7 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from apps.backend.src.core_ai.time_system import TimeSystem
+from apps.backend.src.ai.time.time_system import TimeSystem
 from unittest.mock import patch # For mocking datetime
 
 class TestTimeSystem(unittest.TestCase):
@@ -92,7 +92,7 @@ class TestTimeSystem(unittest.TestCase):
             # Or, if TimeSystem directly calls datetime.datetime.now(), patch that.
             # TimeSystem.get_current_time() calls datetime.datetime.now() if no override.
             # So we patch datetime.datetime.now within the scope of time_system module.
-            with patch('core_ai.time_system.datetime') as mock_datetime_module:
+            with patch('apps.backend.src.ai.time.time_system.datetime') as mock_datetime_module:
                 mock_datetime_module.datetime.now.return_value = mock_time
                 segment = self.time_sys.get_time_of_day_segment()
                 self.assertEqual(segment, expected_segment, f"Failed for time {mock_time.hour}h. Got {segment}, expected {expected_segment}")

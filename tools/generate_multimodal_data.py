@@ -24,7 +24,7 @@ sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 导入特征提取器
-from tools.extract_features import FeatureExtractor
+from apps.backend.src.core.tools.extract_features import FeatureExtractor
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

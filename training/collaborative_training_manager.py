@@ -17,9 +17,12 @@ import numpy as np
 
 # 添加项目路径
 import sys
+from pathlib import Path
 project_root = Path(__file__).parent.parent
 backend_path = project_root / "apps" / "backend"
+sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
+sys.path.insert(0, str(backend_path / "src"))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 导入项目模块
@@ -40,10 +43,17 @@ except ImportError:
     MODELS_DIR = TRAINING_DIR / "models"
 
 # 导入数据管理器和资源管理器
-from .data_manager import DataManager
-from .resource_manager import ResourceManager
-from .gpu_optimizer import GPUOptimizer
-from .distributed_optimizer import DistributedOptimizer
+from training.data_manager import DataManager
+from training.resource_manager import ResourceManager
+from training.gpu_optimizer import GPUOptimizer
+from training.distributed_optimizer import DistributedOptimizer
+from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
+from training.unified_execution_framework import (
+    UnifiedExecutor, 
+    ResourceManager as ExecutionResourceManager,
+    create_collaborative_training_context,
+    create_concept_model_training_context
+)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -74,25 +84,44 @@ class ModelTrainingTask:
     collaboration_score: float = 0.0
     received_knowledge_count: int = 0
     sent_knowledge_count: int = 0
+    # 添加错误处理相关属性
+    error_handler: ErrorHandler = global_error_handler
+    retry_count: int = 0
+    max_retries: int = 3
     
     def update_metrics(self, new_metrics: Dict[str, Any]):
         """更新模型指标"""
-        if self.metrics is None:
-            self.metrics = {}
-        self.metrics.update(new_metrics)
+        context = ErrorContext("ModelTrainingTask", "update_metrics", {"model_name": self.model_name})
+        try:
+            if self.metrics is None:
+                self.metrics = {}
+            self.metrics.update(new_metrics)
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 更新模型指标失败 {self.model_name}: {e}")
     
     def add_shared_knowledge(self, knowledge: Dict[str, Any]):
         """添加共享知识"""
-        self.shared_knowledge.append(knowledge)
-        self.received_knowledge_count += 1
-        # 更新协作分数
-        self.collaboration_score = min(1.0, self.collaboration_score + 0.05)
+        context = ErrorContext("ModelTrainingTask", "add_shared_knowledge", {"model_name": self.model_name})
+        try:
+            self.shared_knowledge.append(knowledge)
+            self.received_knowledge_count += 1
+            # 更新协作分数
+            self.collaboration_score = min(1.0, self.collaboration_score + 0.05)
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 添加共享知识失败 {self.model_name}: {e}")
     
     def increment_sent_knowledge(self):
         """增加发送知识计数"""
-        self.sent_knowledge_count += 1
-        # 更新协作分数
-        self.collaboration_score = min(1.0, self.collaboration_score + 0.02)
+        context = ErrorContext("ModelTrainingTask", "increment_sent_knowledge", {"model_name": self.model_name})
+        try:
+            self.sent_knowledge_count += 1
+            # 更新协作分数
+            self.collaboration_score = min(1.0, self.collaboration_score + 0.02)
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 增加发送知识计数失败 {self.model_name}: {e}")
 
 class CollaborativeTrainingManager:
     """协作式训练管理器，负责协调所有模型的训练过程"""
@@ -114,81 +143,114 @@ class CollaborativeTrainingManager:
         self.model_communication_channels = {}
         # 添加训练历史记录
         self.training_history = []
+        # 添加错误处理器
+        self.error_handler = global_error_handler
         
         # GPU优化器和分布式优化器
         self.gpu_optimizer = GPUOptimizer()
         self.distributed_optimizer = DistributedOptimizer()
         
+        # 统一执行器和资源管理器
+        self.unified_executor = UnifiedExecutor()
+        self.execution_resource_manager = ExecutionResourceManager()
+        
         logger.info("🔄 协作式训练管理器初始化完成")
     
     def register_model(self, model_name: str, model_instance: Any):
         """注册模型"""
-        self.models[model_name] = model_instance
-        logger.info(f"✅ 注册模型: {model_name}")
+        context = ErrorContext("CollaborativeTrainingManager", "register_model", {"model_name": model_name})
+        try:
+            self.models[model_name] = model_instance
+            logger.info(f"✅ 注册模型: {model_name}")
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 注册模型失败: {model_name} - {e}")
     
     def unregister_model(self, model_name: str):
         """注销模型"""
-        if model_name in self.models:
-            del self.models[model_name]
-            logger.info(f"🗑️  注销模型: {model_name}")
+        context = ErrorContext("CollaborativeTrainingManager", "unregister_model", {"model_name": model_name})
+        try:
+            if model_name in self.models:
+                del self.models[model_name]
+                logger.info(f"🗑️  注销模型: {model_name}")
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 注销模型失败: {model_name} - {e}")
     
     def prepare_training_data(self) -> Dict[str, List[Dict]]:
         """为所有模型准备训练数据"""
+        context = ErrorContext("CollaborativeTrainingManager", "prepare_training_data")
         logger.info("📦 开始准备训练数据...")
-        
-        # 扫描所有数据
-        self.data_manager.scan_data()
-        
-        # 为每个模型准备数据
-        model_data = {}
-        for model_name in self.models.keys():
-            data = self.data_manager.prepare_training_data(model_name)
-            model_data[model_name] = data
-            logger.info(f"   为模型 {model_name} 准备了 {len(data)} 个训练文件")
-        
-        return model_data
+        try:
+            # 扫描所有数据
+            self.data_manager.scan_data()
+            
+            # 为每个模型准备数据
+            model_data = {}
+            for model_name in self.models.keys():
+                data = self.data_manager.prepare_training_data(model_name)
+                model_data[model_name] = data
+                logger.info(f"   为模型 {model_name} 准备了 {len(data)} 个训练文件")
+            
+            return model_data
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 准备训练数据失败: {e}")
+            return {}
     
     def allocate_resources_for_models(self) -> Dict[str, Dict]:
         """为所有模型分配资源"""
+        context = ErrorContext("CollaborativeTrainingManager", "allocate_resources_for_models")
         logger.info("🖥️  开始分配资源...")
-        
-        # 优化GPU资源
-        self.gpu_optimizer.optimize_gpu_memory()
-        
-        model_resources = {}
-        for model_name in self.models.keys():
-            requirements = self.resource_manager.get_model_resource_requirements(model_name)
-            allocation = self.resource_manager.allocate_resources(requirements, model_name)
-            model_resources[model_name] = allocation
+        try:
+            # 优化GPU资源
+            self.gpu_optimizer.optimize_gpu_memory()
             
-            if allocation:
-                logger.info(f"   为模型 {model_name} 分配资源成功")
-            else:
-                logger.warning(f"   为模型 {model_name} 分配资源失败")
-        
-        return model_resources
+            model_resources = {}
+            for model_name in self.models.keys():
+                requirements = self.resource_manager.get_model_resource_requirements(model_name)
+                allocation = self.resource_manager.allocate_resources(requirements, model_name)
+                model_resources[model_name] = allocation
+                
+                if allocation:
+                    logger.info(f"   为模型 {model_name} 分配资源成功")
+                else:
+                    logger.warning(f"   为模型 {model_name} 分配资源失败")
+            
+            return model_resources
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 分配资源失败: {e}")
+            return {}
     
     def create_training_tasks(self, model_data: Dict[str, List[Dict]], 
                             model_resources: Dict[str, Dict]) -> List[ModelTrainingTask]:
         """创建训练任务"""
-        tasks = []
-        
-        for model_name, model_instance in self.models.items():
-            data = model_data.get(model_name, [])
-            resources = model_resources.get(model_name)
+        context = ErrorContext("CollaborativeTrainingManager", "create_training_tasks")
+        try:
+            tasks = []
             
-            if resources:
-                task = ModelTrainingTask(model_name, model_instance, data, resources)
-                tasks.append(task)
-                self.training_tasks[model_name] = task
-                logger.info(f"✅ 创建训练任务: {model_name}")
-            else:
-                logger.warning(f"⚠️  无法为模型 {model_name} 创建训练任务，资源分配失败")
-        
-        return tasks
+            for model_name, model_instance in self.models.items():
+                data = model_data.get(model_name, [])
+                resources = model_resources.get(model_name)
+                
+                if resources:
+                    task = ModelTrainingTask(model_name, model_instance, data, resources)
+                    tasks.append(task)
+                    self.training_tasks[model_name] = task
+                    logger.info(f"✅ 创建训练任务: {model_name}")
+                else:
+                    logger.warning(f"⚠️  无法为模型 {model_name} 创建训练任务，资源分配失败")
+            
+            return tasks
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 创建训练任务失败: {e}")
+            return []
     
     def _train_model_task(self, task: 'ModelTrainingTask'):
         """训练单个模型任务"""
+        context = ErrorContext("CollaborativeTrainingManager", "_train_model_task", {"model_name": task.model_name})
         try:
             model_name = task.model_name
             logger.info(f"🏃 开始训练模型 {model_name}")
@@ -259,71 +321,87 @@ class CollaborativeTrainingManager:
     
     def _enable_model_collaboration_on_completion(self, task: ModelTrainingTask):
         """在模型训练完成时启用模型协作"""
-        logger.info(f"🤝 模型 {task.model_name} 训练完成，启用协作机制")
-        
-        # 将模型的训练结果添加到共享知识库
-        knowledge = {
-            "model_name": task.model_name,
-            "metrics": task.metrics,
-            "training_time": (task.end_time - task.start_time).total_seconds() if task.end_time and task.start_time else 0,
-            "timestamp": datetime.now().isoformat(),
-            "collaboration_score": task.collaboration_score,
-            "knowledge_vector": self._extract_knowledge_vector(task.metrics or {})
-        }
-        
-        # 添加到共享知识库
-        if task.model_name not in self.shared_knowledge:
-            self.shared_knowledge[task.model_name] = []
-        self.shared_knowledge[task.model_name].append(knowledge)
-        
-        # 与其他模型共享知识
-        shared_count = 0
-        for other_model_name in self.models.keys():
-            if other_model_name != task.model_name:
-                self._propagate_knowledge_to_model(other_model_name, knowledge)
-                shared_count += 1
-        
-        logger.info(f"   向 {shared_count} 个模型共享了 {task.model_name} 的知识")
+        context = ErrorContext("CollaborativeTrainingManager", "_enable_model_collaboration_on_completion", {"model_name": task.model_name})
+        try:
+            logger.info(f"🤝 模型 {task.model_name} 训练完成，启用协作机制")
+            
+            # 将模型的训练结果添加到共享知识库
+            knowledge = {
+                "model_name": task.model_name,
+                "metrics": task.metrics,
+                "training_time": (task.end_time - task.start_time).total_seconds() if task.end_time and task.start_time else 0,
+                "timestamp": datetime.now().isoformat(),
+                "collaboration_score": task.collaboration_score,
+                "knowledge_vector": self._extract_knowledge_vector(task.metrics or {})
+            }
+            
+            # 添加到共享知识库
+            if task.model_name not in self.shared_knowledge:
+                self.shared_knowledge[task.model_name] = []
+            self.shared_knowledge[task.model_name].append(knowledge)
+            
+            # 与其他模型共享知识
+            shared_count = 0
+            for other_model_name in self.models.keys():
+                if other_model_name != task.model_name:
+                    self._propagate_knowledge_to_model(other_model_name, knowledge)
+                    shared_count += 1
+            
+            logger.info(f"   向 {shared_count} 个模型共享了 {task.model_name} 的知识")
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 启用模型协作失败 {task.model_name}: {e}")
     
     def _propagate_knowledge_to_model(self, target_model_name: str, knowledge: Dict[str, Any]):
         """向特定模型传播知识"""
-        if target_model_name in self.training_tasks:
-            target_task = self.training_tasks[target_model_name]
-            target_task.add_shared_knowledge(knowledge)
-            
-            # 根据接收到的知识调整训练参数
-            self._adjust_training_based_on_received_knowledge(target_task, knowledge)
+        context = ErrorContext("CollaborativeTrainingManager", "_propagate_knowledge_to_model", {"target_model_name": target_model_name})
+        try:
+            if target_model_name in self.training_tasks:
+                target_task = self.training_tasks[target_model_name]
+                target_task.add_shared_knowledge(knowledge)
+                
+                # 根据接收到的知识调整训练参数
+                self._adjust_training_based_on_received_knowledge(target_task, knowledge)
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 传播知识失败 {target_model_name}: {e}")
     
     def _adjust_training_based_on_received_knowledge(self, task: ModelTrainingTask, knowledge: Dict[str, Any]):
         """根据接收到的知识调整训练"""
-        if not task.metrics:
-            return
+        context = ErrorContext("CollaborativeTrainingManager", "_adjust_training_based_on_received_knowledge", {"model_name": task.model_name})
+        try:
+            if not task.metrics:
+                return
             
-        source_metrics = knowledge.get('metrics', {})
-        current_metrics = task.metrics
-        
-        # 如果源模型的准确率更高，调整学习率
-        source_accuracy = source_metrics.get('accuracy', 0.0)
-        current_accuracy = current_metrics.get('accuracy', 0.0)
-        
-        if source_accuracy > current_accuracy:
-            # 适度提高学习率以加速收敛
-            task.learning_rate = min(0.1, task.learning_rate * 1.02)
-            logger.debug(f"   调整 {task.model_name} 的学习率为 {task.learning_rate:.6f}")
-        
-        # 如果源模型的损失更低，调整批次大小
-        source_loss = source_metrics.get('loss', 1.0)
-        current_loss = current_metrics.get('loss', 1.0)
-        
-        if source_loss < current_loss:
-            # 适度增加批次大小以提高效率
-            task.batch_size = min(512, task.batch_size * 1.02)
-            logger.debug(f"   调整 {task.model_name} 的批次大小为 {int(task.batch_size)}")
+            source_metrics = knowledge.get('metrics', {})
+            current_metrics = task.metrics
+            
+            # 如果源模型的准确率更高，调整学习率
+            source_accuracy = source_metrics.get('accuracy', 0.0)
+            current_accuracy = current_metrics.get('accuracy', 0.0)
+            
+            if source_accuracy > current_accuracy:
+                # 适度提高学习率以加速收敛
+                task.learning_rate = min(0.1, task.learning_rate * 1.02)
+                logger.debug(f"   调整 {task.model_name} 的学习率为 {task.learning_rate:.6f}")
+            
+            # 如果源模型的损失更低，调整批次大小
+            source_loss = source_metrics.get('loss', 1.0)
+            current_loss = current_metrics.get('loss', 1.0)
+            
+            if source_loss < current_loss:
+                # 适度增加批次大小以提高效率
+                task.batch_size = min(512, task.batch_size * 1.02)
+                logger.debug(f"   调整 {task.model_name} 的批次大小为 {int(task.batch_size)}")
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 调整训练参数失败 {task.model_name}: {e}")
     
     def _train_model_simulated(self, task: 'ModelTrainingTask', start_epoch: int):
         """模拟训练模型（用于不支持真实训练的模型）"""
-        model_name = task.model_name
+        context = ErrorContext("CollaborativeTrainingManager", "_train_model_simulated", {"model_name": task.model_name})
         try:
+            model_name = task.model_name
             # 模拟训练过程
             for epoch in range(start_epoch, task.epochs):
                 if self.stop_requested:
@@ -369,7 +447,7 @@ class CollaborativeTrainingManager:
         except Exception as e:
             logger.error(f"❌ 模拟训练过程中发生错误: {e}")
             return False
-    
+
     def _train_concept_models_real(self, task: 'ModelTrainingTask'):
         """真实训练概念模型"""
         model_name = task.model_name

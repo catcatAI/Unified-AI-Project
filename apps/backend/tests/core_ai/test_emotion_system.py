@@ -10,7 +10,7 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from apps.backend.src.core_ai.emotion_system import EmotionSystem
+from apps.backend.src.ai.emotion.emotion_system import EmotionSystem
 
 class TestEmotionSystem(unittest.TestCase):
 

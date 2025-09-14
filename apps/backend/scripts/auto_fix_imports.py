@@ -20,7 +20,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 class ImportFixer:
     def __init__(self, project_root: Path):
         self.project_root = project_root
-        self.src_dir = project_root / "src"
+        self.src_dir = project_root / "apps" / "backend" / "src"
         self.fixed_files: Set[str] = set()
         self.failed_files: Set[str] = set()
         self.module_cache: Dict[str, List[Path]] = {}
@@ -43,13 +43,13 @@ class ImportFixer:
                 tree = ast.parse(content)
                 for node in ast.walk(tree):
                     if isinstance(node, ast.ImportFrom):
-                        if node.module and node.module.startswith('core_ai'):
+                        if node.module and (node.module.startswith('core_ai') or node.module.startswith('services') or node.module.startswith('tools') or node.module.startswith('hsp') or node.module.startswith('shared') or node.module.startswith('agents')):
                             # 检查是否需要修复
                             if not self._is_valid_import(node.module):
                                 import_issues.append((py_file, node.module, node.lineno))
                     elif isinstance(node, ast.Import):
                         for alias in node.names:
-                            if alias.name.startswith('core_ai'):
+                            if alias.name.startswith('core_ai') or alias.name.startswith('services') or alias.name.startswith('tools') or alias.name.startswith('hsp') or alias.name.startswith('shared') or alias.name.startswith('agents'):
                                 if not self._is_valid_import(alias.name):
                                     import_issues.append((py_file, alias.name, node.lineno))
             except Exception as e:
@@ -65,9 +65,31 @@ class ImportFixer:
             return True
         except ImportError:
             # 如果直接导入失败，检查是否可以通过完整路径导入
-            full_module_path = f"apps.backend.src.{module_name}"
+            # 检查新的目录结构
+            if module_name.startswith('core_ai'):
+                # 新的AI模块路径
+                new_module_name = module_name.replace('core_ai', 'apps.backend.src.ai')
+            elif module_name.startswith('services'):
+                # 新的服务模块路径
+                new_module_name = module_name.replace('services', 'apps.backend.src.core.services')
+            elif module_name.startswith('tools'):
+                # 新的工具模块路径
+                new_module_name = module_name.replace('tools', 'apps.backend.src.core.tools')
+            elif module_name.startswith('hsp'):
+                # 新的HSP模块路径
+                new_module_name = module_name.replace('hsp', 'apps.backend.src.core.hsp')
+            elif module_name.startswith('shared'):
+                # 新的共享模块路径
+                new_module_name = module_name.replace('shared', 'apps.backend.src.core.shared')
+            elif module_name.startswith('agents'):
+                # 新的代理模块路径
+                new_module_name = module_name.replace('agents', 'apps.backend.src.ai.agents')
+            else:
+                # 其他模块保持原样
+                new_module_name = f"apps.backend.src.{module_name}"
+            
             try:
-                __import__(full_module_path)
+                __import__(new_module_name)
                 return False  # 需要修复
             except ImportError:
                 return False  # 确实不存在
@@ -78,7 +100,7 @@ class ImportFixer:
             return self.module_cache[module_name]
             
         module_paths = []
-        # 将core_ai转换为实际路径
+        # 将模块名转换为实际路径
         relative_path = module_name.replace('.', os.sep)
         
         # 在src目录中搜索
@@ -109,14 +131,37 @@ class ImportFixer:
             for line in lines:
                 # 检查是否包含需要修复的导入
                 if f"from {module_name}" in line or f"import {module_name}" in line:
+                    # 根据模块名确定新的导入路径
+                    if module_name.startswith('core_ai'):
+                        # 新的AI模块路径
+                        new_module_name = module_name.replace('core_ai', 'apps.backend.src.ai')
+                    elif module_name.startswith('services'):
+                        # 新的服务模块路径
+                        new_module_name = module_name.replace('services', 'apps.backend.src.core.services')
+                    elif module_name.startswith('tools'):
+                        # 新的工具模块路径
+                        new_module_name = module_name.replace('tools', 'apps.backend.src.core.tools')
+                    elif module_name.startswith('hsp'):
+                        # 新的HSP模块路径
+                        new_module_name = module_name.replace('hsp', 'apps.backend.src.core.hsp')
+                    elif module_name.startswith('shared'):
+                        # 新的共享模块路径
+                        new_module_name = module_name.replace('shared', 'apps.backend.src.core.shared')
+                    elif module_name.startswith('agents'):
+                        # 新的代理模块路径
+                        new_module_name = module_name.replace('agents', 'apps.backend.src.ai.agents')
+                    else:
+                        # 其他模块保持原样
+                        new_module_name = f"apps.backend.src.{module_name}"
+                    
                     # 构造新的导入语句
                     fixed_line = line.replace(
                         f"from {module_name}", 
-                        f"from apps.backend.src.{module_name}"
+                        f"from {new_module_name}"
                     )
                     fixed_line = fixed_line.replace(
                         f"import {module_name}", 
-                        f"import apps.backend.src.{module_name}"
+                        f"import {new_module_name}"
                     )
                     
                     if fixed_line != line:
@@ -132,7 +177,7 @@ class ImportFixer:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.writelines(new_lines)
                     
-                print(f"✓ 修复了文件 {file_path} 中的导入: {module_name}")
+                print(f"✓ 修复了文件 {file_path} 中的导入: {module_name} -> {new_module_name}")
                 self.fixed_files.add(str(file_path))
                 return True
             else:
@@ -241,7 +286,7 @@ class ImportFixer:
             
             # 启动FastAPI服务器
             fastapi_process = subprocess.Popen(
-                [str(venv_python), "-m", "uvicorn", "src.services.main_api_server:app", 
+                [str(venv_python), "-m", "uvicorn", "apps.backend.src.core.services.main_api_server:app", 
                  "--reload", "--host", "0.0.0.0", "--port", "8000"],
                 cwd=self.project_root,
                 stdout=subprocess.PIPE,

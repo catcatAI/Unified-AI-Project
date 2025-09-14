@@ -26,16 +26,16 @@ def load_trained_model(model_name):
     try:
         # 根据模型名称导入相应的模型类
         if model_name == "environment_simulator":
-            from core_ai.concept_models.environment_simulator import EnvironmentSimulator
+            from apps.backend.src.ai.concept_models.environment_simulator import EnvironmentSimulator
             model = EnvironmentSimulator()
         elif model_name == "causal_reasoning_engine":
-            from core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
+            from apps.backend.src.ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
             model = CausalReasoningEngine()
         elif model_name == "adaptive_learning_controller":
-            from core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
+            from apps.backend.src.ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
             model = AdaptiveLearningController()
         elif model_name == "alpha_deep_model":
-            from core_ai.concept_models.alpha_deep_model import AlphaDeepModel
+            from apps.backend.src.ai.concept_models.alpha_deep_model import AlphaDeepModel
             model = AlphaDeepModel()
         else:
             logger.error(f"未知的模型名称: {model_name}")

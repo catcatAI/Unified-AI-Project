@@ -34,6 +34,10 @@ def hsp_connector_instance(mock_mqtt_client):
     return connector
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_init(hsp_connector_instance):
     """Test basic initialization of the HSPConnector."""
     assert hsp_connector_instance.ai_id == "test_ai"
@@ -44,6 +48,10 @@ async def test_hsp_connector_init(hsp_connector_instance):
     
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_connect_disconnect_mock_mode(hsp_connector_instance, mock_mqtt_client):
     """Test connect and disconnect in mock mode."""
     await hsp_connector_instance.connect()
@@ -55,6 +63,10 @@ async def test_hsp_connector_connect_disconnect_mock_mode(hsp_connector_instance
     assert hsp_connector_instance.is_connected is False
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_publish_message(hsp_connector_instance, mock_mqtt_client):
     """Test publishing a generic HSP message."""
     topic = "hsp/test/topic"

@@ -2,8 +2,8 @@ import asyncio
 import logging
 import json
 from unittest.mock import AsyncMock, MagicMock
-from src.hsp.connector import HSPConnector
-from src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPQoSParameters
+from apps.backend.src.hsp.connector import HSPConnector
+from apps.backend.src.hsp.types import HSPMessageEnvelope, HSPFactPayload, HSPQoSParameters
 import pytest
 
 # Configure logging for tests
@@ -42,6 +42,10 @@ def hsp_connector_instance(mock_mqtt_client):
     return connector
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_init(hsp_connector_instance):
     """Test basic initialization of the HSPConnector."""
     assert hsp_connector_instance.ai_id == "test_ai"
@@ -52,6 +56,10 @@ async def test_hsp_connector_init(hsp_connector_instance):
     assert hsp_connector_instance.mqtt_client is not None
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_connect_disconnect_mock_mode(hsp_connector_instance, mock_mqtt_client):
     """Test connect and disconnect in mock mode."""
     await hsp_connector_instance.connect()
@@ -63,6 +71,10 @@ async def test_hsp_connector_connect_disconnect_mock_mode(hsp_connector_instance
     assert hsp_connector_instance.is_connected is False
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_publish_message(hsp_connector_instance, mock_mqtt_client):
     """Test publishing a generic HSP message."""
     topic = "hsp/test/topic"
@@ -102,6 +114,10 @@ async def test_hsp_connector_publish_message(hsp_connector_instance, mock_mqtt_c
     assert call_kwargs['qos'] == hsp_connector_instance.default_qos
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_subscribe_and_receive(hsp_connector_instance, mock_mqtt_client):
     """Test subscribing to a topic and simulating message reception."""
     topic = "hsp/test/subscription"
@@ -166,6 +182,10 @@ async def test_hsp_connector_subscribe_and_receive(hsp_connector_instance, mock_
     assert received_envelope == test_envelope
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_ack_sending(hsp_connector_instance, mock_mqtt_client):
     """Test automatic ACK sending for messages requiring acknowledgement."""
     topic = "hsp/test/ack_required"
@@ -221,6 +241,10 @@ async def test_hsp_connector_ack_sending(hsp_connector_instance, mock_mqtt_clien
     assert ack_call_kwargs['qos'] == 1 # ACKs use default QoS 1
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_on_connect_callback(hsp_connector_instance):
     """Test that the on_connect callback is properly registered and called."""
     mock_callback = AsyncMock()
@@ -231,6 +255,10 @@ async def test_hsp_connector_on_connect_callback(hsp_connector_instance):
     mock_callback.assert_called_once()
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_on_disconnect_callback(hsp_connector_instance):
     """Test that the on_disconnect callback is properly registered and called."""
     mock_callback = AsyncMock()
@@ -241,6 +269,10 @@ async def test_hsp_connector_on_disconnect_callback(hsp_connector_instance):
     mock_callback.assert_called_once()
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_register_specific_callbacks(hsp_connector_instance):
     """Test registering and calling specific message type callbacks."""
     fact_callback = AsyncMock()

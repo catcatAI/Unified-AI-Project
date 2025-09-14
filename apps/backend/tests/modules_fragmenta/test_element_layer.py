@@ -3,7 +3,7 @@ import pytest
 import os
 import sys
 
-from src.modules_fragmenta.element_layer import ElementLayer
+from apps.backend.src.modules_fragmenta.element_layer import ElementLayer
 
 class TestElementLayer(unittest.TestCase):
 

@@ -250,6 +250,26 @@
       "enable_collaborative_training": true,
       "use_gpu": true,
       "distributed_training": true
+    },
+    "code_model_training": {
+      "description": "Train code understanding and generation model",
+      "datasets": ["code_samples"],
+      "epochs": 30,
+      "batch_size": 16,
+      "target_models": ["code_model"],
+      "checkpoint_interval": 5,
+      "use_gpu": true,
+      "distributed_training": false
+    },
+    "data_analysis_model_training": {
+      "description": "Train data analysis and processing model",
+      "datasets": ["data_samples"],
+      "epochs": 25,
+      "batch_size": 32,
+      "target_models": ["data_analysis_model"],
+      "checkpoint_interval": 5,
+      "use_gpu": true,
+      "distributed_training": false
     }
   },
   "training_configuration": {

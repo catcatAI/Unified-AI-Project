@@ -15,9 +15,12 @@ import heapq
 
 # 添加项目路径
 import sys
+from pathlib import Path
 project_root = Path(__file__).parent.parent
 backend_path = project_root / "apps" / "backend"
+sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
+sys.path.insert(0, str(backend_path / "src"))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 导入路径配置模块
@@ -36,7 +39,7 @@ except ImportError:
     TRAINING_DIR = PROJECT_ROOT / "training"
 
 # 导入智能资源分配器
-from .smart_resource_allocator import SmartResourceAllocator
+from training.smart_resource_allocator import SmartResourceAllocator
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -119,35 +122,55 @@ class ResourceManager:
     
     def get_system_resources(self) -> Dict[str, Any]:
         """获取当前系统资源状态"""
-        cpu_percent = psutil.cpu_percent(interval=1)
-        memory_info = psutil.virtual_memory()
-        
-        # 更新GPU信息
-        gpu_info = self._update_gpu_info()
-        
-        resources = {
-            'cpu': {
-                'count': self.cpu_count,
-                'physical_count': self.physical_cpu_count,
-                'usage_percent': cpu_percent,
-                'available_cores': self.cpu_count * (100 - cpu_percent) / 100
-            },
-            'memory': {
-                'total': memory_info.total,
-                'available': memory_info.available,
-                'used': memory_info.used,
-                'usage_percent': memory_info.percent
-            },
-            'gpu': gpu_info,
-            'timestamp': datetime.now().isoformat()
-        }
-        
-        # 记录资源使用历史
-        self.resource_usage_history.append(resources)
-        if len(self.resource_usage_history) > 100:  # 限制历史记录数量
-            self.resource_usage_history.pop(0)
-        
-        return resources
+        try:
+            cpu_percent = psutil.cpu_percent(interval=1)
+            memory_info = psutil.virtual_memory()
+            
+            # 更新GPU信息
+            gpu_info = self._update_gpu_info()
+            
+            resources = {
+                'cpu': {
+                    'count': self.cpu_count,
+                    'physical_count': self.physical_cpu_count,
+                    'usage_percent': cpu_percent,
+                    'available_cores': self.cpu_count * (100 - cpu_percent) / 100
+                },
+                'memory': {
+                    'total': memory_info.total,
+                    'available': memory_info.available,
+                    'used': memory_info.used,
+                    'usage_percent': memory_info.percent
+                },
+                'gpu': gpu_info,
+                'timestamp': datetime.now().isoformat()
+            }
+            
+            # 记录资源使用历史
+            self.resource_usage_history.append(resources)
+            if len(self.resource_usage_history) > 100:  # 限制历史记录数量
+                self.resource_usage_history.pop(0)
+            
+            return resources
+        except Exception as e:
+            logger.error(f"❌ 获取系统资源信息失败: {e}")
+            # 返回默认资源信息
+            return {
+                'cpu': {
+                    'count': self.cpu_count,
+                    'physical_count': self.physical_cpu_count,
+                    'usage_percent': 0,
+                    'available_cores': self.cpu_count
+                },
+                'memory': {
+                    'total': self.total_memory,
+                    'available': self.available_memory,
+                    'used': 0,
+                    'usage_percent': 0
+                },
+                'gpu': self.gpu_info,
+                'timestamp': datetime.now().isoformat()
+            }
     
     def _update_gpu_info(self) -> List[Dict[str, Any]]:
         """更新GPU信息"""
@@ -280,7 +303,7 @@ class ResourceManager:
             return None
         
         # 使用智能资源分配器进行资源分配
-        from .smart_resource_allocator import ResourceRequest
+        from training.smart_resource_allocator import ResourceRequest
         
         # 创建资源请求
         resource_request = ResourceRequest(

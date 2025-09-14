@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
 
-from apps.backend.src.agents.audio_processing_agent import AudioProcessingAgent
+from apps.backend.src.ai.agents.specialized.audio_processing_agent import AudioProcessingAgent
 
 @pytest.fixture
 def mock_hsp_connector():
@@ -23,6 +23,10 @@ def audio_processing_agent():
     return agent
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_init(audio_processing_agent):
     """Test that the AudioProcessingAgent initializes correctly."""
     assert audio_processing_agent.agent_id == "did:hsp:audio_processing_agent_test"
@@ -33,6 +37,10 @@ async def test_audio_processing_agent_init(audio_processing_agent):
     assert "audio_enhancement" in capability_names
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_perform_speech_recognition(audio_processing_agent):
     """Test the speech recognition functionality."""
     params = {
@@ -51,6 +59,10 @@ async def test_audio_processing_agent_perform_speech_recognition(audio_processin
     assert isinstance(result["confidence"], float)
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_classify_audio(audio_processing_agent):
     """Test the audio classification functionality."""
     params = {
@@ -68,6 +80,10 @@ async def test_audio_processing_agent_classify_audio(audio_processing_agent):
     assert isinstance(result["top_confidence"], float)
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_enhance_audio(audio_processing_agent):
     """Test the audio enhancement functionality."""
     params = {
@@ -86,103 +102,63 @@ async def test_audio_processing_agent_enhance_audio(audio_processing_agent):
     assert result["enhancement_type"] == "noise_reduction"
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_handle_task_request_speech_recognition(audio_processing_agent, mock_hsp_connector):
     """Test handling a speech recognition task request."""
-    with patch('apps.backend.src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('apps.backend.src.agents.base_agent.get_services') as mock_get_services:
-            mock_get_services.return_value = {
-                'hsp_connector': mock_hsp_connector,
-                'llm_interface': MagicMock(),
-                'ham_manager': MagicMock(),
-                'personality_manager': MagicMock(),
-                'trust_manager': MagicMock(),
-                'service_discovery': MagicMock(),
-                'fact_extractor': MagicMock(),
-                'content_analyzer': MagicMock(),
-                'learning_manager': MagicMock(),
-                'emotion_system': MagicMock(),
-                'crisis_system': MagicMock(),
-                'time_system': MagicMock(),
-                'formula_engine': MagicMock(),
-                'tool_dispatcher': MagicMock(),
-                'dialogue_manager': MagicMock(),
-                'agent_manager': MagicMock(),
-                'ai_virtual_input_service': MagicMock(),
-                'audio_service': MagicMock(),
-                'vision_service': MagicMock(),
-                'resource_awareness_service': MagicMock(),
-            }
-            await audio_processing_agent._ainit()
-            
-            task_payload = {
-                "request_id": "test_request_1",
-                "capability_id_filter": "speech_recognition_v1.0",
-                "parameters": {
-                    "audio_file": "sample_audio.wav",
-                    "language": "en"
-                },
-                "callback_address": "test_callback_1"
-            }
-            envelope = {"sender_ai_id": "test_sender"}
-            
-            await audio_processing_agent.handle_task_request(task_payload, "test_sender", envelope)
-            
-            # Verify that send_task_result was called
-            assert mock_hsp_connector.send_task_result.called
-            call_args = mock_hsp_connector.send_task_result.call_args
-            result_payload = call_args[0][0]
-            callback_topic = call_args[0][1]
-            
-            assert result_payload["status"] == "success"
-            assert "payload" in result_payload
-            assert callback_topic == "test_callback_1"
+    # Directly set the required services instead of patching core_services
+    audio_processing_agent.hsp_connector = mock_hsp_connector
+    
+    task_payload = {
+        "request_id": "test_request_1",
+        "capability_id_filter": "speech_recognition_v1.0",
+        "parameters": {
+            "audio_file": "sample_audio.wav",
+            "language": "en"
+        },
+        "callback_address": "test_callback_1"
+    }
+    envelope = {"sender_ai_id": "test_sender"}
+    
+    await audio_processing_agent.handle_task_request(task_payload, "test_sender", envelope)
+    
+    # Verify that send_task_result was called
+    assert mock_hsp_connector.send_task_result.called
+    call_args = mock_hsp_connector.send_task_result.call_args
+    result_payload = call_args[0][0]
+    callback_topic = call_args[0][1]
+    
+    assert result_payload["status"] == "success"
+    assert "payload" in result_payload
+    assert callback_topic == "test_callback_1"
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_audio_processing_agent_handle_task_request_unsupported_capability(audio_processing_agent, mock_hsp_connector):
     """Test handling a task request with an unsupported capability."""
-    with patch('apps.backend.src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('apps.backend.src.agents.base_agent.get_services') as mock_get_services:
-            mock_get_services.return_value = {
-                'hsp_connector': mock_hsp_connector,
-                'llm_interface': MagicMock(),
-                'ham_manager': MagicMock(),
-                'personality_manager': MagicMock(),
-                'trust_manager': MagicMock(),
-                'service_discovery': MagicMock(),
-                'fact_extractor': MagicMock(),
-                'content_analyzer': MagicMock(),
-                'learning_manager': MagicMock(),
-                'emotion_system': MagicMock(),
-                'crisis_system': MagicMock(),
-                'time_system': MagicMock(),
-                'formula_engine': MagicMock(),
-                'tool_dispatcher': MagicMock(),
-                'dialogue_manager': MagicMock(),
-                'agent_manager': MagicMock(),
-                'ai_virtual_input_service': MagicMock(),
-                'audio_service': MagicMock(),
-                'vision_service': MagicMock(),
-                'resource_awareness_service': MagicMock(),
-            }
-            await audio_processing_agent._ainit()
-            
-            task_payload = {
-                "request_id": "test_request_2",
-                "capability_id_filter": "unsupported_capability_v1.0",
-                "parameters": {},
-                "callback_address": "test_callback_2"
-            }
-            envelope = {"sender_ai_id": "test_sender"}
-            
-            await audio_processing_agent.handle_task_request(task_payload, "test_sender", envelope)
-            
-            # Verify that send_task_result was called with failure
-            assert mock_hsp_connector.send_task_result.called
-            call_args = mock_hsp_connector.send_task_result.call_args
-            result_payload = call_args[0][0]
-            callback_topic = call_args[0][1]
-            
-            assert result_payload["status"] == "failure"
-            assert "error_details" in result_payload
-            assert result_payload["error_details"]["error_code"] == "CAPABILITY_NOT_SUPPORTED"
-            assert callback_topic == "test_callback_2"
+    # Directly set the required services instead of patching core_services
+    audio_processing_agent.hsp_connector = mock_hsp_connector
+    
+    task_payload = {
+        "request_id": "test_request_2",
+        "capability_id_filter": "unsupported_capability_v1.0",
+        "parameters": {},
+        "callback_address": "test_callback_2"
+    }
+    envelope = {"sender_ai_id": "test_sender"}
+    
+    await audio_processing_agent.handle_task_request(task_payload, "test_sender", envelope)
+    
+    # Verify that send_task_result was called with failure
+    assert mock_hsp_connector.send_task_result.called
+    call_args = mock_hsp_connector.send_task_result.call_args
+    result_payload = call_args[0][0]
+    callback_topic = call_args[0][1]
+    
+    assert result_payload["status"] == "failure"
+    assert "error_details" in result_payload
+    assert result_payload["error_details"]["error_code"] == "CAPABILITY_NOT_SUPPORTED"
+    assert callback_topic == "test_callback_2"

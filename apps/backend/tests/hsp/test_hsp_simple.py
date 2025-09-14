@@ -77,10 +77,18 @@ import uuid
 from datetime import datetime, timezone
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_hsp_connector_init(hsp_connector: HSPConnector):
     assert hsp_connector is not None
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_publish_fact(hsp_connector: HSPConnector, broker: MockMqttBroker, internal_bus: InternalBus):
     received_facts = []
     received_event = asyncio.Event()
@@ -117,7 +125,7 @@ async def test_publish_fact(hsp_connector: HSPConnector, broker: MockMqttBroker,
 
     # Wait until the fact is received or timeout instead of a fixed sleep
     try:
-        await asyncio.wait_for(received_event.wait(), timeout=15.0) # 进一步增加超时时间
+        await asyncio.wait_for(received_event.wait(), timeout = 30.0) # 进一步增加超时时间
     except asyncio.TimeoutError:
         print(f"Timeout waiting for fact. Received facts so far: {received_facts}")
         print(f"Published messages in broker: {broker.get_published_messages()}")

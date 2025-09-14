@@ -59,10 +59,10 @@ async def get_status():
     return {"status": "running"}
 
 # Remaining imports
-from apps.backend.src.services.multi_llm_service import get_multi_llm_service
-from apps.backend.src.core_ai.language_models.registry import ModelRegistry
-from apps.backend.src.core_ai.language_models.router import PolicyRouter, RoutingPolicy
-from apps.backend.src.services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
+from .multi_llm_service import get_multi_llm_service
+from apps.backend.src.ai.language_models.registry import ModelRegistry
+from apps.backend.src.ai.language_models.router import PolicyRouter, RoutingPolicy
+from .api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
 
 # --- Health endpoint (v1) ---
 @app.get("/api/v1/health", response_model=HealthResponse)
@@ -264,8 +264,8 @@ async def list_hsp_services(services=Depends(get_services)) -> List[HSPServiceDi
 from typing import Dict
 from apps.backend.src.hsp.connector import HSPConnector
 from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
-from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
 
 @app.post("/api/v1/hsp/tasks")
 async def create_hsp_task(task_input: Dict[str, Any], services=Depends(get_services)):

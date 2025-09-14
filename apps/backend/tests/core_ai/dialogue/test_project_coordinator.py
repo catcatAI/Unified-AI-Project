@@ -12,7 +12,7 @@ backend_path = project_root / "apps" / "backend"
 sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
-from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator
+from apps.backend.src.ai.dialogue.project_coordinator import ProjectCoordinator
 
 @pytest.fixture
 def project_coordinator():
@@ -45,6 +45,10 @@ def project_coordinator():
     return pc
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_project_happy_path(project_coordinator):
     """
     Tests the full, successful execution of a project from query to final response.
@@ -85,6 +89,10 @@ async def test_handle_project_happy_path(project_coordinator):
     assert response == expected_response
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_project_decomposition_fails(project_coordinator):
     """
     Tests that if task decomposition fails, a user-friendly message is returned.
@@ -107,6 +115,10 @@ async def test_handle_project_decomposition_fails(project_coordinator):
             mock_integrate.assert_not_called()
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_execute_task_graph_with_dependencies(project_coordinator):
     """
     Tests that _execute_task_graph correctly handles dependencies between tasks.
@@ -143,6 +155,10 @@ async def test_execute_task_graph_with_dependencies(project_coordinator):
     ])
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_dispatch_single_subtask_agent_not_found(project_coordinator):
     """
     Tests that if an agent cannot be found or launched, an error is returned.
@@ -161,6 +177,10 @@ async def test_dispatch_single_subtask_agent_not_found(project_coordinator):
     assert result == {"error": "Could not find or launch an agent with capability 'non_existent_capability_v1'."}
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_dispatch_single_subtask_agent_launch_and_discovery(project_coordinator):
     """
     Tests the logic for launching a new agent when a capability is not initially found.
@@ -201,6 +221,10 @@ async def test_dispatch_single_subtask_agent_launch_and_discovery(project_coordi
     pc.agent_manager.launch_agent.assert_called_once_with(agent_name_to_launch)
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_wait_for_task_result_timeout(project_coordinator):
     """
     Tests that _wait_for_task_result correctly returns an error on timeout.

@@ -3,7 +3,7 @@ import os
 import sqlite3
 import json
 from datetime import datetime
-from apps.backend.src.core_ai.evaluation.evaluation_db import EvaluationDB
+from apps.backend.src.ai.evaluation.evaluation_db import EvaluationDB
 
 class TestEvaluationDB(unittest.TestCase):
     def setUp(self):

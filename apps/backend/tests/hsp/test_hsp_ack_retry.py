@@ -99,6 +99,10 @@ async def simulate_incoming_ack(connector: HSPConnector, target_message_id: str,
     await connector._dispatch_acknowledgement_to_callbacks(dict(ack_envelope))
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_scenario_1_successful_ack(hsp_connector_instance, mock_mqtt_client):
     logger.info("\n--- Test Scenario 1: Successful ACK (Happy Path) ---")
     connector = hsp_connector_instance
@@ -120,6 +124,10 @@ async def test_scenario_1_successful_ack(hsp_connector_instance, mock_mqtt_clien
     assert connector._message_retry_counts.get(corr_id) is None # Should be cleared
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_scenario_2_delayed_ack(hsp_connector_instance, mock_mqtt_client):
     logger.info("\n--- Test Scenario 2: Delayed ACK ---")
     connector = hsp_connector_instance
@@ -152,6 +160,10 @@ async def test_scenario_2_delayed_ack(hsp_connector_instance, mock_mqtt_client):
     assert connector._message_retry_counts.get(corr_id) is None # Should be cleared
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_scenario_3_no_ack_max_retries(hsp_connector_instance, mock_mqtt_client, mock_fallback_manager):
     logger.info("\n--- Test Scenario 3: No ACK (Max Retries Exceeded) ---")
     connector = hsp_connector_instance
@@ -181,6 +193,10 @@ async def test_scenario_3_no_ack_max_retries(hsp_connector_instance, mock_mqtt_c
     assert connector._message_retry_counts.get(corr_id) is None  # Should be cleared, not reset to 0
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_scenario_4_hsp_unavailable_fallback_success(hsp_connector_instance, mock_mqtt_client, mock_fallback_manager):
     logger.info("\n--- Test Scenario 4: HSP Unavailable, Fallback Success ---")
     connector = hsp_connector_instance
@@ -204,6 +220,10 @@ async def test_scenario_4_hsp_unavailable_fallback_success(hsp_connector_instanc
     assert connector._message_retry_counts.get(corr_id) is None # Should be cleared
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_scenario_5_hsp_unavailable_fallback_failure(hsp_connector_instance, mock_mqtt_client, mock_fallback_manager):
     logger.info("\n--- Test Scenario 5: HSP Unavailable, Fallback Failure ---")
     connector = hsp_connector_instance

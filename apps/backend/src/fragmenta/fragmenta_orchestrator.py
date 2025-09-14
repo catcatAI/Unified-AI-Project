@@ -1,4 +1,4 @@
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
 
 class FragmentaOrchestrator:
     def __init__(self, ham_manager: HAMMemoryManager):

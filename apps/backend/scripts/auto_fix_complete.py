@@ -11,25 +11,25 @@ from typing import List, Tuple, Dict, Set
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
-SRC_DIR = PROJECT_ROOT / "src"
+SRC_DIR = PROJECT_ROOT / "apps" / "backend" / "src"
 
-# 需要修复的导入映射
+# 需要修复的导入映射 - 适应新的目录结构
 IMPORT_MAPPINGS = {
-    # core_ai模块的修复
-    "from core_ai.": "from apps.backend.src.core_ai.",
-    "import core_ai.": "import apps.backend.src.core_ai.",
+    # core_ai模块的修复 - 新的AI目录结构
+    "from core_ai.": "from apps.backend.src.ai.",
+    "import core_ai.": "import apps.backend.src.ai.",
     
     # core模块的修复
     "from core.": "from apps.backend.src.core.",
     "import core.": "import apps.backend.src.core.",
     
-    # services模块的修复
-    "from services.": "from apps.backend.src.services.",
-    "import services.": "import apps.backend.src.services.",
+    # services模块的修复 - 新的服务目录结构
+    "from services.": "from apps.backend.src.core.services.",
+    "import services.": "import apps.backend.src.core.services.",
     
-    # hsp模块的修复
-    "from hsp.": "from apps.backend.src.hsp.",
-    "import hsp.": "import apps.backend.src.hsp.",
+    # hsp模块的修复 - 新的HSP目录结构
+    "from hsp.": "from apps.backend.src.core.hsp.",
+    "import hsp.": "import apps.backend.src.core.hsp.",
     
     # mcp模块的修复
     "from mcp.": "from apps.backend.src.mcp.",
@@ -39,17 +39,17 @@ IMPORT_MAPPINGS = {
     "from system.": "from apps.backend.src.system.",
     "import system.": "import apps.backend.src.system.",
     
-    # tools模块的修复
-    "from tools.": "from apps.backend.src.tools.",
-    "import tools.": "import apps.backend.src.tools.",
+    # tools模块的修复 - 新的工具目录结构
+    "from tools.": "from apps.backend.src.core.tools.",
+    "import tools.": "import apps.backend.src.core.tools.",
     
-    # shared模块的修复
-    "from shared.": "from apps.backend.src.shared.",
-    "import shared.": "import apps.backend.src.shared.",
+    # shared模块的修复 - 新的共享目录结构
+    "from shared.": "from apps.backend.src.core.shared.",
+    "import shared.": "import apps.backend.src.core.shared.",
     
-    # agents模块的修复
-    "from agents.": "from apps.backend.src.agents.",
-    "import agents.": "import apps.backend.src.agents.",
+    # agents模块的修复 - 新的代理目录结构
+    "from agents.": "from apps.backend.src.ai.agents.",
+    "import agents.": "import apps.backend.src.ai.agents.",
     
     # game模块的修复
     "from game.": "from apps.backend.src.game.",
@@ -57,7 +57,7 @@ IMPORT_MAPPINGS = {
     
     # 其他可能的修复
     "from core_services": "from apps.backend.src.core_services",
-    "import core_services": "import apps.backend.src.core_services",
+    "import apps.backend.src.core_services": "import apps.backend.src.core_services",
 }
 
 def find_python_files() -> List[Path]:
@@ -120,9 +120,30 @@ def fix_imports_in_file(file_path: Path) -> Tuple[bool, List[str]]:
         # 修复相对导入问题
         relative_imports = re.findall(r'from\s+\.\.core_ai\.', content)
         for match in relative_imports:
-            new_import = match.replace('from ..core_ai.', 'from apps.backend.src.core_ai.')
+            new_import = match.replace('from apps.backend.src.ai.', 'from apps.backend.src.ai.')
             content = content.replace(match, new_import)
             fixes_made.append(f"{match} -> {new_import}")
+        
+        # 修复其他相对导入
+        relative_patterns = [
+            (r'from\s+\.\.services\.', 'from apps.backend.src.core.services.'),
+            (r'from\s+\.\.tools\.', 'from apps.backend.src.core.tools.'),
+            (r'from\s+\.\.hsp\.', 'from apps.backend.src.core.hsp.'),
+            (r'from\s+\.\.shared\.', 'from apps.backend.src.core.shared.'),
+            (r'from\s+\.\.agents\.', 'from apps.backend.src.ai.agents.'),
+            (r'import\s+\.\.core_ai\.', 'import apps.backend.src.ai.'),
+            (r'import\s+\.\.services\.', 'import apps.backend.src.core.services.'),
+            (r'import\s+\.\.tools\.', 'import apps.backend.src.core.tools.'),
+            (r'import\s+\.\.hsp\.', 'import apps.backend.src.core.hsp.'),
+            (r'import\s+\.\.shared\.', 'import apps.backend.src.core.shared.'),
+            (r'import\s+\.\.agents\.', 'import apps.backend.src.ai.agents.'),
+        ]
+        
+        for pattern, replacement in relative_patterns:
+            matches = re.findall(pattern, content)
+            for match in matches:
+                content = re.sub(pattern, replacement, content)
+                fixes_made.append(f"相对导入修复: {match} -> {replacement}")
         
         # 如果内容有变化，写入文件
         if content != original_content:
@@ -213,7 +234,7 @@ def validate_fixes() -> bool:
         if str(SRC_DIR) not in sys.path:
             sys.path.insert(0, str(SRC_DIR))
             
-        # 尝试导入核心模块
+        # 尝试导入核心模块 - 适应新的目录结构
         try:
             from apps.backend.src.core_services import initialize_services
             print("✓ 核心服务模块导入成功")
@@ -221,19 +242,19 @@ def validate_fixes() -> bool:
             print(f"⚠ 核心服务模块导入失败: {e}")
             
         try:
-            from apps.backend.src.core_ai.agent_manager import AgentManager
+            from apps.backend.src.ai.agents.base.base_agent import BaseAgent
             print("✓ Agent管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ Agent管理器模块导入失败: {e}")
             
         try:
-            from apps.backend.src.hsp.connector import HSPConnector
+            from apps.backend.src.core.hsp.connector import HSPConnector
             print("✓ HSP连接器模块导入成功")
         except ImportError as e:
             print(f"⚠ HSP连接器模块导入失败: {e}")
             
         try:
-            from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
+            from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
             print("✓ 对话管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ 对话管理器模块导入失败: {e}")
@@ -253,12 +274,12 @@ def run_import_test() -> bool:
         original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
         
-        # 尝试导入几个关键模块
+        # 尝试导入几个关键模块 - 适应新的目录结构
         test_modules = [
             "apps.backend.src.core_services",
-            "apps.backend.src.core_ai.agent_manager",
-            "apps.backend.src.hsp.connector",
-            "apps.backend.src.core_ai.dialogue.dialogue_manager"
+            "apps.backend.src.ai.agents.base.base_agent",
+            "apps.backend.src.core.hsp.connector",
+            "apps.backend.src.ai.dialogue.dialogue_manager"
         ]
         
         success_count = 0

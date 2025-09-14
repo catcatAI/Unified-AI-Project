@@ -9,7 +9,7 @@
 ### 1. 核心修复工具开发 ✅
 
 #### 简化版自动修复工具 (`simple_auto_fix.py`)
-- 专门修复 `core_ai` 模块的导入路径问题
+- 将遗留的 `core_ai` 导入路径批量迁移为 `ai` 路径
 - 处理相对导入问题
 - 验证关键模块导入
 - 文件大小: 8,470 字节
@@ -92,7 +92,7 @@
 
 ### 问题2: `ModuleNotFoundError: No module named 'core_ai'` ✅
 - **问题原因**: 在core_services.py中使用了错误的导入路径
-- **解决方案**: 修正导入路径为完整路径 `apps.backend.src.core_ai.*`
+- **解决方案**: 修正导入路径为完整路径 `apps.backend.src.ai.*`（从旧的 `core_ai` 迁移至 `ai`）
 - **验证状态**: 已解决并通过测试
 
 ## 系统功能完整验证

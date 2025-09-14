@@ -2,7 +2,7 @@ import json
 import asyncio
 import pytest
 
-from src.core_services import initialize_services, ham_manager_instance, tool_dispatcher_instance
+from apps.backend.src.core_services import initialize_services, ham_manager_instance, tool_dispatcher_instance
 
 
 @pytest.mark.timeout(15)
@@ -15,7 +15,7 @@ def test_tool_dispatcher_action_policy_logged_smoke():
     if tool_dispatcher_instance is None or ham_manager_instance is None:
         asyncio.run(initialize_services())
     # Import the updated instances after initialization
-    from src.core_services import tool_dispatcher_instance as td_instance, ham_manager_instance as ham_instance
+    from apps.backend.src.core_services import tool_dispatcher_instance as td_instance, ham_manager_instance as ham_instance
     assert td_instance is not None, "ToolDispatcher should be initialized"
     assert ham_instance is not None, "HAM manager should be initialized"
 

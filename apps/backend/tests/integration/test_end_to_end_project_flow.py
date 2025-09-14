@@ -11,12 +11,12 @@ SRC_DIR = os.path.join(BASE_DIR, 'src')
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from apps.backend.src.core_ai.agent_manager import AgentManager
-from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator
-from apps.backend.src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
+from apps.backend.src.core.managers.agent_manager import AgentManager
+from apps.backend.src.ai.dialogue.project_coordinator import ProjectCoordinator
+from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
+from apps.backend.src.ai.trust_manager.trust_manager_module import TrustManager
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.ai.personality.personality_manager import PersonalityManager
 from apps.backend.src.hsp.connector import HSPConnector
 from apps.backend.src.services.multi_llm_service import MultiLLMService
 
@@ -186,6 +186,10 @@ def project_coordinator(hsp_connector, service_discovery, agent_manager):
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(30)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_full_project_flow_with_real_agent(project_coordinator, tmp_path):
     """
     Tests the full end-to-end flow:

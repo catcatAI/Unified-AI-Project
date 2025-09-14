@@ -2,9 +2,9 @@ import pytest
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timezone, timedelta
 
-from src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from src.core_ai.trust_manager.trust_manager_module import TrustManager
-from src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
+from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
+from apps.backend.src.ai.trust.trust_manager_module import TrustManager
+from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
 
 # --- Mock TrustManager ---
 @pytest.fixture

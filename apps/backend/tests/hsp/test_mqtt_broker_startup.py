@@ -44,6 +44,10 @@ async def hsp_connector(broker):
     await connector.disconnect()
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_broker_and_connector_startup(hsp_connector):
     # If we reach here, it means the broker started and the connector connected successfully
     assert hsp_connector.is_connected, "HSPConnector should be connected"

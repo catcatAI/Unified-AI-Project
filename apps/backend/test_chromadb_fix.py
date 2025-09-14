@@ -38,7 +38,7 @@ def start_chroma_server():
                 server_process.terminate()
             else:  # Linux/Mac
                 server_process.send_signal(signal.SIGTERM)
-            server_process.wait(timeout=5)
+            server_process.wait(timeout = 40.0)
     
     atexit.register(cleanup)
     return server_process
@@ -104,4 +104,4 @@ if __name__ == "__main__":
                 server_process.terminate()
             else:  # Linux/Mac
                 server_process.send_signal(signal.SIGTERM)
-            server_process.wait(timeout=5)
+            server_process.wait(timeout = 40.0)

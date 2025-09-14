@@ -5,8 +5,8 @@ import os
 import yaml
 from pathlib import Path
 
-from src.services.resource_awareness_service import ResourceAwarenessService, DEFAULT_CONFIG_PATH
-from src.services.types import (
+from apps.backend.src.core.services.resource_awareness_service import ResourceAwarenessService, DEFAULT_CONFIG_PATH
+from apps.backend.src.core.services.types import (
     SimulatedHardwareProfile,
     SimulatedDiskConfig,
     SimulatedCPUConfig,

@@ -12,13 +12,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.core_ai.memory.types import HAMRecallResult
-from apps.backend.src.services.types import SimulatedDiskConfig
-from apps.backend.src.shared.types.common_types import (
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.ai.memory.ham_types import HAMRecallResult
+from apps.backend.src.core.services.types import SimulatedDiskConfig
+from apps.backend.src.core.shared.types.common_types import (
     DialogueMemoryEntryMetadata,
 )
-from apps.backend.src.services.resource_awareness_service import ResourceAwarenessService
+from apps.backend.src.core.services.resource_awareness_service import ResourceAwarenessService
 from cryptography.fernet import Fernet, InvalidToken
 import hashlib
 from unittest.mock import patch, MagicMock
@@ -81,6 +81,10 @@ def ham_manager_fixture(): # Remove async from fixture
 # Now, rewrite the tests as functions, using the fixture
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_01_initialization_and_empty_store(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_01_initialization_and_empty_store...")
@@ -92,6 +96,10 @@ async def test_01_initialization_and_empty_store(ham_manager_fixture):
 
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_02_store_and_recall_text_experience(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_02_store_and_recall_text_experience...")
@@ -131,6 +139,10 @@ async def test_02_store_and_recall_text_experience(ham_manager_fixture):
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_03_store_and_recall_generic_data(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_03_store_and_recall_generic_data...")
@@ -151,6 +163,10 @@ async def test_03_store_and_recall_generic_data(ham_manager_fixture):
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_04_persistence(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_04_persistence...")
@@ -178,6 +194,10 @@ async def test_04_persistence(ham_manager_fixture):
 
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_05_recall_non_existent_memory(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_05_recall_non_existent_memory...")
@@ -189,6 +209,10 @@ async def test_05_recall_non_existent_memory(ham_manager_fixture):
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_06_query_memory_keywords(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_06_query_memory_keywords...")
@@ -208,6 +232,10 @@ async def test_06_query_memory_keywords(ham_manager_fixture):
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_07_query_memory_data_type(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_07_query_memory_data_type...")
@@ -223,6 +251,10 @@ async def test_07_query_memory_data_type(ham_manager_fixture):
 
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_08_query_memory_date_range(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_08_query_memory_date_range...")
@@ -244,6 +276,10 @@ async def test_08_query_memory_date_range(ham_manager_fixture):
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_09_empty_text_abstraction(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_09_empty_text_abstraction...")
@@ -266,6 +302,10 @@ async def test_09_empty_text_abstraction(ham_manager_fixture):
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_10_encryption_decryption(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_10_encryption_decryption...")
@@ -288,6 +328,10 @@ async def test_10_encryption_decryption(ham_manager_fixture):
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_11_checksum_verification(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_11_checksum_verification...")
@@ -319,6 +363,10 @@ async def test_11_checksum_verification(ham_manager_fixture):
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_12_advanced_text_abstraction_placeholders(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_12_advanced_text_abstraction_placeholders...")
@@ -346,6 +394,10 @@ async def test_12_advanced_text_abstraction_placeholders(ham_manager_fixture):
 # --- Tests for Resource Awareness ---
 @pytest.mark.timeout(10)  # 10秒超時，模擬磁盤滿的情況
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_13_store_experience_simulated_disk_full(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_13_store_experience_simulated_disk_full...")
@@ -371,6 +423,10 @@ async def test_13_store_experience_simulated_disk_full(ham_manager_fixture):
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(10)  # 10秒超時，模擬延遲警告
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_14_store_experience_simulated_lag_warning(ham_manager_fixture, caplog):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_14_store_experience_simulated_lag_warning...")
@@ -396,6 +452,10 @@ async def test_14_store_experience_simulated_lag_warning(ham_manager_fixture, ca
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(10)  # 10秒超時，模擬嚴重延遲
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_15_store_experience_simulated_lag_critical(ham_manager_fixture, caplog):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_15_store_experience_simulated_lag_critical...")
@@ -417,6 +477,10 @@ async def test_15_store_experience_simulated_lag_critical(ham_manager_fixture, c
 
 @pytest.mark.timeout(10)  # 10秒超時，可能需要較長時間
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_16_get_current_disk_usage_gb(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_16_get_current_disk_usage_gb...")
@@ -436,6 +500,10 @@ async def test_16_get_current_disk_usage_gb(ham_manager_fixture):
 
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_17_query_core_memory_return_multiple_candidates(ham_manager_fixture):
     ham_manager_no_res, ham_manager_with_res, mock_resource_service, test_filename = ham_manager_fixture
     print("\nRunning test_17_query_core_memory_return_multiple_candidates...")
@@ -449,6 +517,10 @@ async def test_17_query_core_memory_return_multiple_candidates(ham_manager_fixtu
 
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_18_encryption_failure(ham_manager_fixture, monkeypatch):
     """測試加密失敗時的錯誤處理"""
     ham_manager_no_res, _, _, _ = ham_manager_fixture
@@ -467,6 +539,10 @@ async def test_18_encryption_failure(ham_manager_fixture, monkeypatch):
 
 @pytest.mark.timeout(5)  # 5秒超時
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_19_disk_full_handling(ham_manager_fixture, monkeypatch):
     """測試磁盤空間不足時的處理"""
     ham_manager_no_res, _, _, _ = ham_manager_fixture
@@ -485,6 +561,10 @@ async def test_19_disk_full_handling(ham_manager_fixture, monkeypatch):
 
 @pytest.mark.timeout(10)  # 10秒超時，因為這個測試可能涉及等待
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_20_delete_old_experiences(ham_manager_fixture, monkeypatch):
     """測試自動清理舊記憶"""
     ham_manager_no_res, _, _, _ = ham_manager_fixture
@@ -525,6 +605,10 @@ async def test_20_delete_old_experiences(ham_manager_fixture, monkeypatch):
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(10)  # 10秒超時，因為這個測試涉及並發操作
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_21_concurrent_access(ham_manager_fixture):
     """測試並發訪問記憶管理器"""
     ham_manager_no_res, _, _, _ = ham_manager_fixture
@@ -558,6 +642,10 @@ async def test_21_concurrent_access(ham_manager_fixture):
 
 @pytest.mark.timeout(5)
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_22_recall_raw_gist(ham_manager_fixture):
     """Tests the new recall_raw_gist method."""
     ham_manager_no_res, _, _, _ = ham_manager_fixture
@@ -585,6 +673,10 @@ async def test_22_recall_raw_gist(ham_manager_fixture):
 @pytest.mark.skip(reason="ChromaDB not initialized due to NumPy incompatibility")
 @pytest.mark.timeout(5)
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_23_rehydrate_with_relational_context(ham_manager_fixture):
     """Tests that the rehydrated gist string includes the new relational context."""
     ham_manager_no_res, _, _, _ = ham_manager_fixture

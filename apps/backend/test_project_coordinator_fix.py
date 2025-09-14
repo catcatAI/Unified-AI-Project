@@ -10,6 +10,10 @@ from unittest.mock import AsyncMock, MagicMock
 from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator
 from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload
 
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_project_coordinator_decomposition():
     """Test the project coordinator's decomposition functionality"""
     print("Testing ProjectCoordinator decomposition...")

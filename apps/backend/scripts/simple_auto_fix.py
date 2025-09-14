@@ -56,7 +56,7 @@ def fix_imports_in_file(file_path: Path) -> bool:
         
         # 修复import导入
         content = re.sub(
-            r"import core_ai\.", 
+            r"import apps.backend.src.core_ai\.", 
             "import apps.backend.src.core_ai.", 
             content
         )

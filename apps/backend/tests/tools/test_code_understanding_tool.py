@@ -3,8 +3,8 @@ import pytest
 from unittest.mock import patch, MagicMock
 import os
 
-from src.tools.code_understanding_tool import CodeUnderstandingTool
-from src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
+from apps.backend.src.tools.code_understanding_tool import CodeUnderstandingTool
+from apps.backend.src.ai.code_understanding.lightweight_code_model import LightweightCodeModel
 
 class TestCodeUnderstandingTool(unittest.TestCase):
 

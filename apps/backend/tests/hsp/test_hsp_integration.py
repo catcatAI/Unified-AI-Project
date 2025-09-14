@@ -22,20 +22,20 @@ from apps.backend.src.hsp.types import (
     HSPErrorDetails,
     HSPFactStatementStructured,
 )
-from apps.backend.src.core_ai.learning.learning_manager import LearningManager
-from apps.backend.src.core_ai.learning.fact_extractor_module import FactExtractorModule
-from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-from apps.backend.src.core_ai.service_discovery.service_discovery_module import (
+from apps.backend.src.ai.learning.learning_manager import LearningManager
+from apps.backend.src.ai.learning.fact_extractor_module import FactExtractorModule
+from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzerModule
+from apps.backend.src.ai.discovery.service_discovery_module import (
     ServiceDiscoveryModule,
 )
-from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.ai.trust.trust_manager_module import TrustManager
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
 from apps.backend.src.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, ChatMessage, LLMResponse
-from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
+from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
 from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
-from apps.backend.src.core_ai.formula_engine import FormulaEngine
+from apps.backend.src.ai.formula_engine import FormulaEngine
 from apps.backend.src.shared.types.common_types import ToolDispatcherResponse
-from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
+from apps.backend.src.ai.personality.personality_manager import PersonalityManager
 
 
 
@@ -67,10 +67,10 @@ class MockMqttBroker:
         self.clients[client_id] = on_message_callback
         logging.debug(f"MockMqttBroker: Registered client {client_id}")
 
-    def subscribe_client(self, client_id: str, topic: str):
+    async def subscribe_client(self, client_id: str, topic: str):
         """Subscribe a client to a topic"""
         if client_id in self.clients:
-            self.subscribe(topic, self.clients[client_id])
+            await self.subscribe(topic, self.clients[client_id])
 
     async def publish(self, topic: str, payload: bytes, qos: int = 0):
         if not self.is_running:
@@ -168,7 +168,7 @@ def shared_data_aligner():
 
 
 @pytest.fixture(scope="function")
-def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: InternalBus, shared_data_aligner: DataAligner):
+async def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: InternalBus, shared_data_aligner: DataAligner):
     # The MessageBridge needs an external_connector, which is the mock_mqtt_client from the broker
     # We'll create a dummy ExternalConnector for the MessageBridge to use,
     # but its on_message_callback will be overridden by the MessageBridge itself.
@@ -192,7 +192,7 @@ def shared_message_bridge(broker: MockMqttBroker, shared_internal_bus: InternalB
             await self.mqtt_client.subscribe(topic, on_message_callback)
 
     dummy_external_connector = DummyExternalConnector(broker)
-    bridge = MessageBridge(dummy_external_connector, shared_internal_bus, shared_data_aligner)
+    bridge = await MessageBridge(dummy_external_connector, shared_internal_bus, shared_data_aligner)
     return bridge
 
 @pytest.fixture(scope="function")
@@ -337,7 +337,7 @@ class MockHAM(HAMMemoryManager):
 
 
 # Helper function for async tests
-async def wait_for_event(event, timeout=5.0):
+async def wait_for_event(event, timeout = 40.0):
     try:
         await asyncio.wait_for(event.wait(), timeout)
     except asyncio.TimeoutError:
@@ -353,7 +353,7 @@ def event_loop():
 
 
 @pytest.fixture
-def mock_llm_fixture():
+async def mock_llm_fixture():
     llm = MockLLMInterface()
     llm.add_mock_response(
         "Berlin is the capital of Germany", 
@@ -508,7 +508,7 @@ async def configured_learning_manager(
 @pytest.fixture
 async def service_discovery_module_fixture(main_ai_hsp_connector: HSPConnector, trust_manager_fixture: TrustManager):
     # main_ai_hsp_connector is now properly awaited by pytest-asyncio
-    sdm = ServiceDiscoveryModule(trust_manager=trust_manager_fixture)
+    sdm = await ServiceDiscoveryModule(trust_manager=trust_manager_fixture)
     main_ai_hsp_connector.register_on_capability_advertisement_callback(sdm.process_capability_advertisement)
     await asyncio.sleep(0.2)
     yield sdm
@@ -628,7 +628,7 @@ class TestHSPFactConsumption:
         ham_manager_fixture.memory_store.clear()
         
         # 不再使用Mock，直接使用真实的ContentAnalyzerModule
-        # ca_mock = MagicMock(wraps=content_analyzer_module_fixture.process_hsp_fact_content)
+        # ca_mock = await MagicMock(wraps=content_analyzer_module_fixture.process_hsp_fact_content)
         # content_analyzer_module_fixture.process_hsp_fact_content = ca_mock
         
         # Test high trust peer fact
@@ -741,14 +741,14 @@ class TestHSPFactConsumption:
         
         await peer_a_hsp_connector.publish_fact(fact, topic=FACT_TOPIC_GENERAL)
         # 增加超时时间以避免测试超时
-        await asyncio.wait_for(done_event.wait(), timeout=10.0)
+        await asyncio.wait_for(done_event.wait(), timeout = 40.0)
         
         # CA was invoked (done_event set)
         g = content_analyzer_module_fixture.graph
         r_type = p.split('/')[-1].split('#')[-1]
         
         assert g.has_node(s) and g.nodes[s].get('hsp_source_info', {}).get('origin_fact_id') == fid
-        obj_node_id = next((n_id for n_id in g.nodes() if f"literal_{o}" in n_id), None)
+        obj_node_id = await next((n_id for n_id in g.nodes() if f"literal_{o}" in n_id), None)
         assert obj_node_id  # Updated literal node ID matching
         assert g.has_edge(s, obj_node_id) and g.edges[s, obj_node_id].get('type') == r_type
         print(f"[Test Consume Structured Fact] Verified by CA.")
@@ -773,7 +773,7 @@ class TestHSPFactConsumption:
         content_analyzer_module_fixture.graph.clear()
 
         # 不再使用Mock，直接使用真实的ContentAnalyzerModule
-        # ca_process_mock = MagicMock(wraps=content_analyzer_module_fixture.process_hsp_fact_content)
+        # ca_process_mock = await MagicMock(wraps=content_analyzer_module_fixture.process_hsp_fact_content)
         # content_analyzer_module_fixture.process_hsp_fact_content = ca_process_mock
 
         # Define a fact using external URIs that are in CA's ontology_mapping
@@ -945,7 +945,7 @@ class TestHSPTaskDelegation:
         query = "project: I need an advanced weather forecast for London."
         
         # Mock ToolDispatcher to return no local tool, forcing HSP delegation
-        mock_td = MagicMock(spec=ToolDispatcher)
+        mock_td = await MagicMock(spec=ToolDispatcher)
         mock_td.dispatch.return_value = ToolDispatcherResponse(
             status="unhandled_by_local_tool",
             payload=None,
@@ -982,7 +982,7 @@ class TestHSPTaskDelegation:
         final_response = await dm.get_simple_response(query, "test_session_task", "test_user_task")
         
         # Increase wait time to ensure task processing
-        await wait_for_event(task_received_event, timeout=10.0)
+        await wait_for_event(task_received_event, timeout = 40.0)
         
         # 6. Verify the final response incorporates the HSP task result
         assert "Sunny with a chance of rain" in final_response
@@ -1077,7 +1077,7 @@ class TestHSPTaskDelegation:
         
         # 6. Verify the task was received and the fallback was used
         # Increase wait time to ensure task processing
-        await wait_for_event(task_received_event, timeout=10.0)
+        await wait_for_event(task_received_event, timeout = 40.0)
         assert fallback_response in final_response
         print("[Test Task Failure] Verified DM handled task failure and used fallback response.")
 

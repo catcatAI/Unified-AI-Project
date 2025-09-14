@@ -7,7 +7,7 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from apps.backend.src.core_ai.dependency_manager import DependencyManager, DependencyStatus
+from apps.backend.src.ai.dependency_manager import DependencyManager, DependencyStatus
 
 
 class TestDependencyManager(unittest.TestCase):

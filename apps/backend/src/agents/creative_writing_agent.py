@@ -1,14 +1,13 @@
 import asyncio
 import uuid
-import yaml
 import os
 import logging
 from typing import Dict, Any, List
-from pathlib import Path # Import Path
 
-from apps.backend.src.agents.base_agent import BaseAgent
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from apps.backend.src.services.multi_llm_service import MultiLLMService, ChatMessage
+from apps.backend.src.ai.agents.base.base_agent import BaseAgent
+from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from apps.backend.src.core.services.multi_llm_service import MultiLLMService, ChatMessage
+
 
 class CreativeWritingAgent(BaseAgent):
     """
@@ -32,7 +31,7 @@ class CreativeWritingAgent(BaseAgent):
             {
                 "capability_id": f"{agent_id}_polish_text_v1.0",
                 "name": "polish_text",
-                "description": "Improves the grammar, style, and clarity of a given text.",
+                "description": "Polishes given text for grammar, style, and clarity.",
                 "version": "1.0",
                 "parameters": [
                     {"name": "text_to_polish", "type": "string", "required": True}
@@ -41,30 +40,7 @@ class CreativeWritingAgent(BaseAgent):
             }
         ]
         super().__init__(agent_id=agent_id, capabilities=capabilities)
-
-        # This agent directly uses the LLMInterface initialized in its services.
-        # Be defensive in case tests patch initialize_services to return None.
-        services = getattr(self, "services", None)
-        self.llm_interface: MultiLLMService = services.get("llm_interface") if isinstance(services, dict) else None
-        self._load_prompts()
-
-    def _load_prompts(self):
-        """Loads prompts from the YAML file."""
-        # Get the project root dynamically
-        current_dir = Path(__file__).parent
-        # Assuming 'configs' is directly under 'apps/backend'
-        project_root = current_dir.parent.parent # Go up from src/agents to apps/backend
-        prompts_path = project_root / "configs" / "prompts.yaml"
-
-        try:
-            with open(prompts_path, 'r', encoding='utf-8') as f:
-                all_prompts = yaml.safe_load(f)
-                self.prompts = all_prompts.get('creative_writing_agent', {})
-        except FileNotFoundError:
-            self.prompts = {}
-        except Exception as e:
-            logging.error(f"Error loading prompts from {prompts_path}: {e}")
-            self.prompts = {}
+        logging.info(f"[{self.agent_id}] CreativeWritingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id")
@@ -73,43 +49,72 @@ class CreativeWritingAgent(BaseAgent):
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
 
-        if not self.llm_interface:
-            result_payload = self._create_failure_payload(request_id, "INTERNAL_ERROR", "MultiLLMService is not available.")
-        else:
-            try:
-                if "generate_marketing_copy" in capability_id:
-                    prompt = self._create_marketing_copy_prompt(params)
-                    messages = [ChatMessage(role="user", content=prompt)]
-                    llm_response = await self.llm_interface.chat_completion(messages)
-                    result_payload = self._create_success_payload(request_id, llm_response.content)
-                elif "polish_text" in capability_id:
-                    prompt = self._create_polish_text_prompt(params)
-                    messages = [ChatMessage(role="user", content=prompt)]
-                    llm_response = await self.llm_interface.chat_completion(messages)
-                    result_payload = self._create_success_payload(request_id, llm_response.content)
-                else:
-                    result_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
-            except Exception as e:
-                result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR", str(e))
+        try:
+            if "generate_marketing_copy" in capability_id:
+                result = await self._generate_marketing_copy(params)
+                result_payload = self._create_success_payload(request_id, result)
+            elif "polish_text" in capability_id:
+                result = await self._polish_text(params)
+                result_payload = self._create_success_payload(request_id, result)
+            else:
+                result_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
+        except Exception as e:
+            logging.error(f"[{self.agent_id}] Error processing task {request_id}: {e}")
+            result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR", str(e))
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
             await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
-    def _create_marketing_copy_prompt(self, params: Dict[str, Any]) -> str:
-        product = params.get('product_description', 'an unspecified product')
-        audience = params.get('target_audience', 'a general audience')
-        style = params.get('style', 'persuasive')
-        prompt_template = self.prompts.get('generate_marketing_copy', "Generate marketing copy for {product}.")
-        return prompt_template.format(style=style, product=product, audience=audience)
+    async def _generate_marketing_copy(self, params: Dict[str, Any]) -> str:
+        """Generates marketing copy based on product description and target audience."""
+        product_description = params.get('product_description', '')
+        target_audience = params.get('target_audience', '')
+        style = params.get('style', 'professional')
 
-    def _create_polish_text_prompt(self, params: Dict[str, Any]) -> str:
-        text = params.get('text_to_polish', '')
-        prompt_template = self.prompts.get('polish_text', "Please proofread and polish the following text for grammar, style, and clarity. Return only the improved text: {text}")
-        return prompt_template.format(text=text)
+        if not product_description or not target_audience:
+            raise ValueError("Both product_description and target_audience are required")
 
-    def _create_success_payload(self, request_id: str, result: Any) -> HSPTaskResultPayload:
+        # Create a prompt for the LLM
+        prompt = f"""
+        Generate marketing copy for the following product:
+        
+        Product: {product_description}
+        Target Audience: {target_audience}
+        Style: {style}
+        
+        The marketing copy should be compelling and highlight the key benefits of the product.
+        """
+        
+        # Use the LLM service to generate the copy
+        messages = [ChatMessage(role="user", content=prompt)]
+        response = await self.llm_interface.chat_completion(messages=messages)
+        
+        return response.content
+
+    async def _polish_text(self, params: Dict[str, Any]) -> str:
+        """Polishes text for grammar, style, and clarity."""
+        text_to_polish = params.get('text_to_polish', '')
+
+        if not text_to_polish:
+            raise ValueError("text_to_polish is required")
+
+        # Create a prompt for the LLM
+        prompt = f"""
+        Please proofread and polish the following text for grammar, style, and clarity.
+        Return only the improved text without any additional comments:
+        
+        Text: {text_to_polish}
+        """
+        
+        # Use the LLM service to polish the text
+        messages = [ChatMessage(role="user", content=prompt)]
+        response = await self.llm_interface.chat_completion(messages=messages)
+        
+        return response.content
+
+    def _create_success_payload(self, request_id: str, result: str) -> HSPTaskResultPayload:
         return HSPTaskResultPayload(
             request_id=request_id,
             status="success",
@@ -122,7 +127,6 @@ class CreativeWritingAgent(BaseAgent):
             status="failure",
             error_details={"error_code": error_code, "error_message": error_message}
         )
-
 
 if __name__ == '__main__':
     async def main():

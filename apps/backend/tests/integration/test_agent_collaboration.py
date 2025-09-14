@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, AsyncMock, patch
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from apps.backend.src.core_services import initialize_services, get_services, shutdown_services
-from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
+from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
 
 class TestAgentCollaboration(unittest.TestCase):
 

@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from src.tools.parameter_extractor import ParameterExtractor
+from apps.backend.src.tools.parameter_extractor import ParameterExtractor
 
 class TestParameterExtractor(unittest.TestCase):
 

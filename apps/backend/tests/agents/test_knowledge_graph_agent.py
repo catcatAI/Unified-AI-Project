@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
 
-from apps.backend.src.agents.knowledge_graph_agent import KnowledgeGraphAgent
+from apps.backend.src.ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
 
 @pytest.fixture
 def mock_hsp_connector():
@@ -23,6 +23,10 @@ def knowledge_graph_agent():
     return agent
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_init(knowledge_graph_agent):
     """Test that the KnowledgeGraphAgent initializes correctly."""
     assert knowledge_graph_agent.agent_id == "did:hsp:knowledge_graph_agent_test"
@@ -33,6 +37,10 @@ async def test_knowledge_graph_agent_init(knowledge_graph_agent):
     assert "graph_query" in capability_names
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_perform_entity_linking(knowledge_graph_agent):
     """Test the entity linking functionality."""
     params = {
@@ -55,6 +63,10 @@ async def test_knowledge_graph_agent_perform_entity_linking(knowledge_graph_agen
         assert "confidence" in entity
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_extract_relationships(knowledge_graph_agent):
     """Test the relationship extraction functionality."""
     params = {
@@ -76,6 +88,10 @@ async def test_knowledge_graph_agent_extract_relationships(knowledge_graph_agent
         assert "confidence" in rel
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_query_knowledge_graph(knowledge_graph_agent):
     """Test the knowledge graph query functionality."""
     params = {
@@ -97,10 +113,14 @@ async def test_knowledge_graph_agent_query_knowledge_graph(knowledge_graph_agent
         assert "confidence" in res
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_handle_task_request_entity_linking(knowledge_graph_agent, mock_hsp_connector):
     """Test handling an entity linking task request."""
-    with patch('apps.backend.src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('apps.backend.src.agents.base_agent.get_services') as mock_get_services:
+    with patch('apps.backend.src.core_services.initialize_services', new_callable=AsyncMock) as mock_init_services:
+        with patch('apps.backend.src.core_services.get_services') as mock_get_services:
             mock_get_services.return_value = {
                 'hsp_connector': mock_hsp_connector,
                 'llm_interface': MagicMock(),
@@ -148,10 +168,14 @@ async def test_knowledge_graph_agent_handle_task_request_entity_linking(knowledg
             assert callback_topic == "test_callback_1"
 
 @pytest.mark.asyncio
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_handle_task_request_unsupported_capability(knowledge_graph_agent, mock_hsp_connector):
     """Test handling a task request with an unsupported capability."""
-    with patch('apps.backend.src.agents.base_agent.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('apps.backend.src.agents.base_agent.get_services') as mock_get_services:
+    with patch('apps.backend.src.core_services.initialize_services', new_callable=AsyncMock) as mock_init_services:
+        with patch('apps.backend.src.core_services.get_services') as mock_get_services:
             mock_get_services.return_value = {
                 'hsp_connector': mock_hsp_connector,
                 'llm_interface': MagicMock(),

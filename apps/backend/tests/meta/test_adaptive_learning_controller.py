@@ -3,10 +3,14 @@ import asyncio
 from unittest.mock import MagicMock, patch, AsyncMock
 import os
 import shutil
-from apps.backend.src.core_ai.meta.adaptive_learning_controller import AdaptiveLearningController, PerformanceTracker, StrategySelector
-from apps.backend.src.core_ai.meta.learning_log_db import LearningLogDB
+from apps.backend.src.ai.meta.adaptive_learning_controller import AdaptiveLearningController, PerformanceTracker, StrategySelector
+from apps.backend.src.ai.meta.learning_log_db import LearningLogDB
 
 class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_analyze_trend_improving(self):
         tracker = PerformanceTracker()
         history = [
@@ -21,7 +25,11 @@ class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(trend["magnitude"], 0)
         self.assertGreater(trend["slope"], 0.01)
 
-    async def test_analyze_trend_degrading(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_analyze_trend_degrading(self):
         tracker = PerformanceTracker()
         history = [
             {"success_rate": 0.9},
@@ -35,7 +43,11 @@ class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(trend["magnitude"], 0)
         self.assertLess(trend["slope"], -0.01)
 
-    async def test_analyze_trend_stable(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_analyze_trend_stable(self):
         tracker = PerformanceTracker()
         history = [
             {"success_rate": 0.7},
@@ -49,7 +61,11 @@ class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
         self.assertLess(trend["magnitude"], 1.0) # Changed assertion to 1.0
         self.assertAlmostEqual(trend["slope"], 0.0, delta=0.01)
 
-    async def test_analyze_trend_empty_history(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_analyze_trend_empty_history(self):
         tracker = PerformanceTracker()
         history = []
         trend = await tracker.analyze_trend(history)
@@ -57,6 +73,10 @@ class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
         self.assertLess(trend["magnitude"], 1.0) # Changed assertion
 
 class TestStrategySelector(unittest.IsolatedAsyncioTestCase):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_select_improving_trend(self):
         selector = StrategySelector()
         task_context = {"complexity_level": 0.3}
@@ -64,6 +84,10 @@ class TestStrategySelector(unittest.IsolatedAsyncioTestCase):
         strategy = await selector.select(task_context, performance_trend)
         self.assertEqual(strategy, "current_strategy")
 
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_select_degrading_complex_task(self):
         selector = StrategySelector()
         task_context = {"complexity_level": 0.8}
@@ -71,14 +95,22 @@ class TestStrategySelector(unittest.IsolatedAsyncioTestCase):
         strategy = await selector.select(task_context, performance_trend)
         self.assertEqual(strategy, "new_exploration_strategy")
 
-    async def test_select_degrading_simple_task(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_select_degrading_simple_task(self):
         selector = StrategySelector()
         task_context = {"complexity_level": 0.3}
         performance_trend = {"direction": "degrading", "magnitude": 0.51}
         strategy = await selector.select(task_context, performance_trend)
         self.assertEqual(strategy, "new_exploration_strategy")
 
-    async def test_select_stable_low_confidence_complex_task(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_select_stable_low_confidence_complex_task(self):
         selector = StrategySelector()
         selector.confidence_score = 0.59 # Low confidence
         task_context = {"complexity_level": 0.71}
@@ -86,7 +118,11 @@ class TestStrategySelector(unittest.IsolatedAsyncioTestCase):
         strategy = await selector.select(task_context, performance_trend)
         self.assertEqual(strategy, "new_exploration_strategy")
 
-    async def test_select_stable_high_confidence_simple_task(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_select_stable_high_confidence_simple_task(self):
         selector = StrategySelector()
         selector.confidence_score = 0.9 # High confidence
         task_context = {"complexity_level": 0.3}
@@ -119,7 +155,11 @@ class TestAdaptiveLearningController(unittest.IsolatedAsyncioTestCase):
         if os.path.exists(self.controller.storage_path):
             shutil.rmtree(self.controller.storage_path)
 
-    async def test_adapt_learning_strategy(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_adapt_learning_strategy(self):
         task_context = {"complexity_level": 0.6}
         performance_history = [{"success_rate": 0.8}]
 
@@ -136,7 +176,11 @@ class TestAdaptiveLearningController(unittest.IsolatedAsyncioTestCase):
         self.controller.performance_tracker.analyze_trend.assert_called_once_with(performance_history)
         self.controller.strategy_selector.select.assert_called_once_with(task_context, {"direction": "stable", "magnitude": 0.0})
 
-    async def test_optimize_parameters_degrading_performance(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_optimize_parameters_degrading_performance(self):
         strategy_id = "current_strategy"
         strategy = {"default_parameters": {"learning_rate": 0.01, "exploration_rate": 0.1}}
         context = {"complexity_level": 0.7, "historical_success_rate": 0.6}
@@ -147,7 +191,11 @@ class TestAdaptiveLearningController(unittest.IsolatedAsyncioTestCase):
         params = await self.controller._optimize_parameters(strategy_id, strategy, context)
         self.assertGreater(params["exploration_rate"], 0.1) # Should increase exploration
 
-    async def test_optimize_parameters_improving_performance(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_optimize_parameters_improving_performance(self):
         strategy_id = "current_strategy"
         strategy = {"default_parameters": {"learning_rate": 0.01, "exploration_rate": 0.1}}
         context = {"complexity_level": 0.3, "historical_success_rate": 0.9}
@@ -158,7 +206,11 @@ class TestAdaptiveLearningController(unittest.IsolatedAsyncioTestCase):
         params = await self.controller._optimize_parameters(strategy_id, strategy, context)
         self.assertLess(params["exploration_rate"], 0.1) # Should decrease exploration
 
-    async def test_update_strategy_effectiveness_increase(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_update_strategy_effectiveness_increase(self):
         strategy_id = "current_strategy"
         performance_result = {"success_rate": 0.95}
         self.controller.learning_strategies = {"current_strategy": {"effectiveness": 0.7}}
@@ -167,7 +219,11 @@ class TestAdaptiveLearningController(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(self.controller.learning_strategies[strategy_id]["effectiveness"], 0.7)
         self.controller._schedule_strategy_improvement.assert_not_called()
 
-    async def test_update_strategy_effectiveness_decrease_and_schedule(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_update_strategy_effectiveness_decrease_and_schedule(self):
         strategy_id = "current_strategy"
         performance_result = {"success_rate": 0.4}
         self.controller.learning_strategies = {"current_strategy": {"effectiveness": 0.5}}
@@ -184,34 +240,58 @@ class TestAdaptiveLearningControllerComplexityAssessment(unittest.IsolatedAsynci
         if os.path.exists(self.controller.storage_path):
             shutil.rmtree(self.controller.storage_path)
 
-    async def test_assess_task_complexity_default(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_assess_task_complexity_default(self):
         task_context = {}
         complexity = await self.controller._assess_task_complexity(task_context)
         self.assertEqual(complexity, 0.5)
 
-    async def test_assess_task_complexity_from_context(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_assess_task_complexity_from_context(self):
         task_context = {'complexity_level': 0.8}
         complexity = await self.controller._assess_task_complexity(task_context)
         self.assertEqual(complexity, 0.8)
 
-    async def test_assess_task_complexity_complex_keywords(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_assess_task_complexity_complex_keywords(self):
         task_context = {'description': 'A complex multi-step task'}
         complexity = await self.controller._assess_task_complexity(task_context)
         self.assertGreater(complexity, 0.5)
         self.assertLessEqual(complexity, 1.0)
 
-    async def test_assess_task_complexity_simple_keywords(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_assess_task_complexity_simple_keywords(self):
         task_context = {'description': 'A simple single-step task'}
         complexity = await self.controller._assess_task_complexity(task_context)
         self.assertLess(complexity, 0.5)
         self.assertGreaterEqual(complexity, 0.0)
 
-    async def test_assess_task_complexity_research_keywords(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_assess_task_complexity_research_keywords(self):
         task_context = {'description': 'A research and exploration task'}
         complexity = await self.controller._assess_task_complexity(task_context)
         self.assertGreater(complexity, 0.6) # Should be higher than default
 
-    async def test_assess_task_complexity_mixed_keywords_and_context(self):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_assess_task_complexity_mixed_keywords_and_context(self):
         task_context = {'description': 'A simple task', 'complexity_level': 0.9}
         complexity = await self.controller._assess_task_complexity(task_context)
         self.assertEqual(complexity, 0.9) # Explicit level should override description

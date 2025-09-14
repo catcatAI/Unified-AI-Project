@@ -8,7 +8,7 @@ from pathlib import Path
 import logging
 from typing import Optional, Dict, Any, List, TYPE_CHECKING
 from cryptography.fernet import Fernet
-from apps.backend.src.shared.types.common_types import DialogueTurn, DialogueMemoryEntryMetadata
+from apps.backend.src.core.shared.types.common_types import DialogueTurn, DialogueMemoryEntryMetadata
 from datetime import datetime, timezone
 import uuid
 
@@ -43,7 +43,7 @@ def placeholder_deadlock_detection(timeout: float = 30.0, check_interval: float 
 
 # 尝试导入实际的类和函数
 try:
-    from apps.backend.src.core_ai.test_utils.deadlock_detector import (
+    from apps.backend.src.ai.test_utils.deadlock_detector import (
         deadlock_detection,
         timeout_with_detection,
         ResourceLeakDetector,
@@ -197,9 +197,9 @@ def test_timeout_and_monitoring(request):
 def mock_core_services():
     from unittest.mock import MagicMock, AsyncMock
     import logging
-    from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
-    from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator # Import ProjectCoordinator
-    from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager # Import PersonalityManager
+    from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
+    from apps.backend.src.ai.dialogue.project_coordinator import ProjectCoordinator # Import ProjectCoordinator
+    from apps.backend.src.ai.personality.personality_manager import PersonalityManager # Import PersonalityManager
 
     # Create mock service discovery that matches MockSDM behavior and provides Mock tracking
     from unittest.mock import AsyncMock
@@ -436,7 +436,7 @@ def mock_core_services():
     # Create a wrapper for DialogueManager's get_simple_response to avoid side effects
     # from previous tests (e.g., personality manager state changes).
     # This also allows us to customize behavior per test if needed.
-    from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
+    from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
     
     # Create the DialogueManager instance with mocked dependencies
     mock_dialogue_manager = DialogueManager(

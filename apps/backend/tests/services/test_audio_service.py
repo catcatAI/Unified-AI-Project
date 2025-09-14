@@ -5,8 +5,8 @@ import os
 import sys
 import asyncio
 
-from src.services.audio_service import AudioService
-from src.config_loader import get_config, get_simulated_resources
+from apps.backend.src.services.audio_service import AudioService
+from apps.backend.src.config_loader import get_config, get_simulated_resources
 
 class TestAudioService(unittest.TestCase):
 
@@ -18,6 +18,10 @@ class TestAudioService(unittest.TestCase):
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(15)
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_02_speech_to_text_placeholder(self):
         service = AudioService()
         dummy_audio = b"dummy_audio_bytes"

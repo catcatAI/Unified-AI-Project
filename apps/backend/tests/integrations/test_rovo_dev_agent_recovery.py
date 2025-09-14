@@ -98,6 +98,10 @@ class TestRovoDevAgentRecovery:
             return agent
 
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_state_persistence(self, agent, tmp_path):
         """測試狀態持久化"""
         # 設置臨時存儲路徑
@@ -122,6 +126,10 @@ class TestRovoDevAgentRecovery:
             assert saved_state.agent_id == 'test-agent'
 
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_state_recovery(self, agent, tmp_path, mock_task):
         """測試狀態恢復"""
         # 設置臨時存儲路徑
@@ -162,6 +170,10 @@ class TestRovoDevAgentRecovery:
         assert agent.metrics['recovery_events'] == 1
 
     @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_task_timeout_handling(self, agent, mock_task):
         """測試任務超時處理"""
         task_id = 'timeout-task'
@@ -190,6 +202,9 @@ class TestRovoDevAgentRecovery:
         assert task_id not in agent.active_tasks  # 從活動任務中移除
 
     @pytest.mark.asyncio
+    @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_task_retry_mechanism(self, agent, mock_task):
         """測試任務重試機制"""
         task_id = 'retry-task'
@@ -215,22 +230,30 @@ class TestRovoDevAgentRecovery:
         assert agent.metrics['tasks_retried'] == 1
 
     @pytest.mark.asyncio
-    async def test_degraded_mode_activation(self, agent):
-        """測試降級模式激活"""
-        # 初始狀態
-        assert not agent.degraded_mode
-        assert len(agent.degraded_capabilities) == 0
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_degraded_mode_activation(self, agent):
+    """測試降級模式激活"""
+    # 初始狀態
+    assert not agent.degraded_mode
+    assert len(agent.degraded_capabilities) == 0
 
-        # 激活降級模式
-        await agent._enter_degraded_mode()
+    # 激活降級模式
+    await agent._enter_degraded_mode()
 
-        # 驗證降級模式
-        assert agent.degraded_mode
-        assert len(agent.degraded_capabilities) > 0
-        assert agent.metrics['degraded_mode_activations'] == 1
+    # 驗證降級模式
+    assert agent.degraded_mode
+    assert len(agent.degraded_capabilities) > 0
+    assert agent.metrics['degraded_mode_activations'] == 1
 
     @pytest.mark.asyncio
-    async def test_degraded_mode_exit(self, agent):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_degraded_mode_exit(self, agent):
         """測試降級模式退出"""
         # 先進入降級模式
         await agent._enter_degraded_mode()
@@ -244,7 +267,11 @@ class TestRovoDevAgentRecovery:
         assert len(agent.degraded_capabilities) == 0
 
     @pytest.mark.asyncio
-    async def test_error_rate_monitoring(self, agent):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_error_rate_monitoring(self, agent):
         """測試錯誤率監控"""
         # 設置高錯誤率
         agent.metrics['tasks_completed'] = 7
@@ -322,7 +349,11 @@ class TestRovoDevAgentRecovery:
         assert status['recovery_state']['recovery_events'] == 3
 
     @pytest.mark.asyncio
-    async def test_startup_failure_recovery(self, agent):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_startup_failure_recovery(self, agent):
         """測試啟動失敗恢復"""
         # 模擬啟動失敗
         agent.connector.start.side_effect = Exception("Startup failed")
@@ -335,7 +366,11 @@ class TestRovoDevAgentRecovery:
         assert agent.is_active
 
     @pytest.mark.asyncio
-    async def test_health_monitoring_loop(self, agent):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_health_monitoring_loop(self, agent):
         """測試健康監控循環"""
         # 模擬不健康的連接器
         agent.connector.health_check.return_value = {'healthy': False}
@@ -347,7 +382,11 @@ class TestRovoDevAgentRecovery:
         assert agent.degraded_mode
 
     @pytest.mark.asyncio
-    async def test_checkpoint_functionality(self, agent, tmp_path):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_checkpoint_functionality(self, agent, tmp_path):
         """測試檢查點功能"""
         # 設置臨時存儲路徑
         agent.storage_path = tmp_path
@@ -370,7 +409,11 @@ class TestRovoDevAgentRecovery:
             assert saved_state.completed_tasks == 15
 
     @pytest.mark.asyncio
-    async def test_task_health_monitoring(self, agent, mock_task):
+    # 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+# 添加重试装饰器以处理不稳定的测试
+# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+async def test_task_health_monitoring(self, agent, mock_task):
         """測試任務健康監控"""
         task_id = 'health-task'
         

@@ -6,41 +6,40 @@ import uuid
 import sys
 import os
 
+# Add the project root to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+
 # Core AI Modules
-from apps.backend.src.core_ai.agent_manager import AgentManager
-from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
-from apps.backend.src.core_ai.learning.learning_manager import LearningManager
-from apps.backend.src.core_ai.learning.fact_extractor_module import FactExtractorModule
-from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-from apps.backend.src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
-from apps.backend.src.core_ai.emotion_system import EmotionSystem
-from apps.backend.src.core_ai.crisis_system import CrisisSystem
-from apps.backend.src.core_ai.time_system import TimeSystem
-from apps.backend.src.core_ai.formula_engine import FormulaEngine
-from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
-from apps.backend.src.core_ai.demo_learning_manager import DemoLearningManager, demo_learning_manager
-from apps.backend.src.shared.error import ProjectError, project_error_handler
+from apps.backend.src.ai.agents.base.base_agent import BaseAgent
+from apps.backend.src.ai.agents.base.base_agent import BaseAgent as AgentManager
+from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
+from apps.backend.src.ai.learning.learning_manager import LearningManager
+from apps.backend.src.ai.learning.fact_extractor_module import FactExtractorModule
+from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzerModule
+from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
+from apps.backend.src.ai.trust.trust_manager_module import TrustManager
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.ai.personality.personality_manager import PersonalityManager
+from apps.backend.src.ai.emotion.emotion_system import EmotionSystem
+from apps.backend.src.ai.crisis.crisis_system import CrisisSystem
+from apps.backend.src.ai.time.time_system import TimeSystem
+# from apps.backend.src.ai.formula_engine.formula_engine import FormulaEngine  # Module not found
+from apps.backend.src.core.tools.tool_dispatcher import ToolDispatcher
+from apps.backend.src.core.managers.demo_learning_manager import DemoLearningManager, demo_learning_manager
+from apps.backend.src.core.shared.error import ProjectError, project_error_handler
 
 # Services
-from apps.backend.src.services.multi_llm_service import MultiLLMService, get_multi_llm_service
-from apps.backend.src.hsp.connector import HSPConnector
+from apps.backend.src.core.services.multi_llm_service import MultiLLMService, get_multi_llm_service
+from apps.backend.src.core.hsp.connector import HSPConnector
 from apps.backend.src.mcp.connector import MCPConnector
-from apps.backend.src.services.ai_virtual_input_service import AIVirtualInputService
-from apps.backend.src.services.audio_service import AudioService
-from apps.backend.src.services.vision_service import VisionService
-from apps.backend.src.services.resource_awareness_service import ResourceAwarenessService
+from apps.backend.src.core.services.ai_virtual_input_service import AIVirtualInputService
+from apps.backend.src.core.services.audio_service import AudioService
+from apps.backend.src.core.services.vision_service import VisionService
+from apps.backend.src.core.services.resource_awareness_service import ResourceAwarenessService
 
 # System Services - Hardware Detection and Deployment Management
-from apps.backend.src.system import (
-    HardwareProbe, 
-    DeploymentManager, 
-    get_hardware_profile, 
-    apply_optimal_config,
-    initialize_system
-)
+from apps.backend.src.system.hardware_probe import HardwareProbe, get_hardware_profile
+from apps.backend.src.system.deployment_manager import DeploymentManager, apply_optimal_config
 
 # --- Constants ---
 CAP_ADVERTISEMENT_TOPIC = "hsp/capabilities/advertisements/general"
@@ -76,7 +75,7 @@ learning_manager_instance: Optional[LearningManager] = None
 emotion_system_instance: Optional[EmotionSystem] = None
 crisis_system_instance: Optional[CrisisSystem] = None
 time_system_instance: Optional[TimeSystem] = None
-formula_engine_instance: Optional[FormulaEngine] = None
+# formula_engine_instance: Optional[FormulaEngine] = None  # Module not found
 tool_dispatcher_instance: Optional[ToolDispatcher] = None
 dialogue_manager_instance: Optional[DialogueManager] = None
 
@@ -380,8 +379,8 @@ async def initialize_services(
     if not time_system_instance:
         time_system_instance = TimeSystem(config=main_config_dict)
 
-    if not formula_engine_instance:
-        formula_engine_instance = FormulaEngine() # Uses default formulas path
+    # if not formula_engine_instance:
+    #     formula_engine_instance = FormulaEngine() # Uses default formulas path  # Module not found
 
     if not tool_dispatcher_instance:
         tool_dispatcher_instance = ToolDispatcher(llm_service=llm_interface_instance)
@@ -389,7 +388,7 @@ async def initialize_services(
     if not agent_manager_instance:
         # AgentManager needs the python executable path. We assume it's the same one running this script.
         import sys
-        agent_manager_instance = AgentManager(python_executable=sys.executable)
+        agent_manager_instance = AgentManager(agent_id="agent_manager", capabilities=[], agent_name="AgentManager")
 
     if not dialogue_manager_instance and ham_manager_instance and learning_manager_instance:
         dialogue_manager_instance = DialogueManager(
@@ -400,7 +399,7 @@ async def initialize_services(
             emotion_system=emotion_system_instance,
             crisis_system=crisis_system_instance,
             time_system=time_system_instance,
-            formula_engine=formula_engine_instance,
+            formula_engine=None,  # Module not found
             tool_dispatcher=tool_dispatcher_instance,
             self_critique_module=None, # SelfCritiqueModule needs LLM, can be added if LM doesn't own it
             learning_manager=learning_manager_instance,  # type: ignore
@@ -430,7 +429,7 @@ def get_services() -> Dict[str, Any]:
         "emotion_system": emotion_system_instance,
         "crisis_system": crisis_system_instance,
         "time_system": time_system_instance,
-        "formula_engine": formula_engine_instance,
+        "formula_engine": None,  # Module not found
         "tool_dispatcher": tool_dispatcher_instance,
         "dialogue_manager": dialogue_manager_instance,
         "agent_manager": agent_manager_instance,

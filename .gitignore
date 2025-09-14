@@ -1,9 +1,9 @@
-# Operating System Files
+﻿# Operating System Files
 .DS_Store
 Thumbs.db
 ehthumbs.db
 Desktop.ini
-$RECYCLE.BIN/
+.BIN/
 *.lnk
 
 # Python specific
@@ -136,6 +136,7 @@ error.log
 *.so
 *.out
 *.log.*
+
 .terraform/
 .terraform.lock.hcl
 .cabal-sandbox/
@@ -145,38 +146,27 @@ error.log
 .virtual_documents/
 .ipynb_checkpoints/
 
-# Specific files from the parent .gitignore that might apply here
+# Specific files possibly referenced elsewhere
 commit_message.txt
 git.txt
 moon.mod.json
 tmp_rovodev_complete_integration_test.py
 tmp_rovodev_test_cli_desktop.py
 
-# Potentially project-specific items from Unified-AI-Project-feature-mcp-ipc-fix (if relevant here)
-# You may need to review if these apply to the root Unified-AI-Project
-# data/model_cache/
-# data/runtime_data/
-# non_project_files/
-# report.json
-# pytest_output.log
-# dependency_check.log
-# test_output.log
-# tmp_rovodev_test_timeout_detection.py
-
 # Model and data outputs
-*.pt # PyTorch model files
-*.h5 # Keras/TensorFlow model files
-*.onnx # ONNX model files
-*.pkl # Python pickle files (often used for serialized data/models)
-*.bin # Binary files (could be models or other compiled outputs)
-*.npy # NumPy array files (often used for data dumps)
-*.npz # Compressed NumPy array files
+*.pt
+*.h5
+*.onnx
+*.pkl
+*.bin
+*.npy
+*.npz
 
 # Large Training Datasets (should not be committed to Git)
-data/common_voice_zh/ # 57GB Common Voice Chinese datasets
-data/visual_genome_sample/ # 18GB Visual Genome dataset
-data/coco_captions/ # 1GB MS COCO captions
-data/flickr30k_sample/ # Flickr30K sample data
+data/common_voice_zh/
+data/visual_genome_sample/
+data/coco_captions/
+data/flickr30k_sample/
 
 # Data directories that should not be tracked
 data/
@@ -196,7 +186,8 @@ data/reasoning_samples/
 
 # Project organization and backup
 backup/
-docs/
+# DO NOT ignore docs folder globally; docs are tracked
+#!docs/
 !docs/README.md
 
 # Temporary scripts and tools
@@ -204,7 +195,6 @@ fix-git-10k.bat
 emergency-git-fix.bat
 git-status-check.bat
 solve-git-issues.bat
-*.tmp
 *_temp*.txt
 git_*.txt
 
@@ -216,59 +206,31 @@ apps/backend/*_test_report_*.txt
 *.test_report.txt
 
 # Training artifacts and model files
-training/models/ # Trained model files
-training/checkpoints/ # Training checkpoints
-training/logs/ # Training logs
-*.tar.gz # Compressed dataset archives
-*.zip # Dataset archives
+training/models/
+training/checkpoints/
+training/logs/
+*.tar.gz
+*.zip
 
 # Data processing artifacts
-data/processed_data/ # If processed data is not meant to be versioned
+data/processed_data/
 data/temp_data/
-data/atlassian_cache/ # Cache files
-data/fallback_comm/ # Communication fallback data
-data/task_queue/ # Temporary task data
+data/atlassian_cache/
+data/fallback_comm/
+data/task_queue/
 
 # Evaluation and report outputs
-evaluations/ # Directory for evaluation results
-reports/ # Directory for various reports
-test_results/ # Directory for test results
+evaluations/
+reports/
+test_results/
 
 # Temporary files specific to machine learning/data processing
-data/processed_data/ # If processed data is not meant to be versioned
+data/processed_data/
 data/temp_data/
-checkpoints/ # Model checkpoints
+checkpoints/
 
 # Temporary files and logs
-*_temp*.txt
-git_*.txt
-*.tmp
 style_check_output.txt
 temp_dir_list.txt
 todo_grep.txt
 markdown_files.txt
-docs_md_files.txt
-electron_docs_grep.txt
-*_search_results.txt
-commit_message.txt
-backend_entrypoint.txt
-frontend_*.txt
-test_report.md
-implementation_plan.md
-
-# Backup and archive directories
-archive/
-
-# Debug files
-debug_test.js
-
-# Test files
-simple_import_test.py
-test_data_analysis_import.py
-
-# 保护重要批处理文件不被误删
-!*.bat
-# 但排除以下目录中的批处理文件
-backup/**/*.bat
-restored_files_backup*/
-full_recovery_backup/

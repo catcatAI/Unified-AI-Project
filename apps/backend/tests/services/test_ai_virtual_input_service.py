@@ -3,8 +3,8 @@ import unittest
 import pytest
 from typing import Tuple, Optional, List, Dict, Any
 
-from src.services.ai_virtual_input_service import AIVirtualInputService
-from src.services.types import (
+from apps.backend.src.core.services.ai_virtual_input_service import AIVirtualInputService
+from apps.backend.src.core.services.types import (
     VirtualMouseCommand,
     VirtualKeyboardCommand,
     VirtualInputElementDescription,
