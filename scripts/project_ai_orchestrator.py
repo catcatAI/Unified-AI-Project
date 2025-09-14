@@ -128,7 +128,7 @@ def decide_data_generation(data_status: Dict[str, Any], verbose=False) -> Dict[s
     return needs
 
 
-def generate_or_fix_data(needs: Dict[str, bool], *, verbose=False, dry_run=False) -> Dict[str, int]:
+def generate_or_fix_data(needs: Dict[str, bool], *, verbose=False, dry_run=False, math_args: list = None) -> Dict[str, int]:
     """視需要執行資料生成腳本。"""
     results = {"concept_models": 0, "math_model": 0}
     if needs.get("concept_models"):
@@ -138,9 +138,13 @@ def generate_or_fix_data(needs: Dict[str, bool], *, verbose=False, dry_run=False
         else:
             print("[WARN] 缺少概念模型數據生成腳本:", PREPARE_CONCEPT_DATA_SCRIPT)
             results["concept_models"] = 1
-    if needs.get("math_model"):
+    # 允許當提供了 math_args 時強制觸發數學資料生成（即便 needs["math_model"] 為 False），以支援可選參數透傳的顯式請求
+    if needs.get("math_model") or (math_args is not None and len(math_args) > 0):
         if MATH_DATA_GENERATOR.exists():
-            code = run_cmd([sys.executable, str(MATH_DATA_GENERATOR)], cwd=APPS_BACKEND_DIR, verbose=verbose, dry_run=dry_run)
+            cmd = [sys.executable, str(MATH_DATA_GENERATOR)]
+            if math_args:
+                cmd.extend([str(x) for x in math_args])
+            code = run_cmd(cmd, cwd=APPS_BACKEND_DIR, verbose=verbose, dry_run=dry_run)
             results["math_model"] = code
         else:
             print("[WARN] 缺少數學模型數據生成腳本:", MATH_DATA_GENERATOR)
@@ -452,6 +456,15 @@ def main():
     parser.add_argument("--resume", action="store_true", help="若可續訓則嘗試加入 --resume")
     parser.add_argument("--check-docs", action="store_true", help="進行文檔鏈接驗證")
     parser.add_argument("--fix-doc-links", action="store_true", help="依據 validate_doc_links 的重定位映射，批量修正 MD 連結目標（可與 --dry-run 搭配預覽）")
+    # 數學數據生成器參數透傳（可選，保持相容：未提供則不影響原行為）
+    parser.add_argument("--math-mode", type=str, choices=["default", "single"], default=None, help="數學數據生成模式：default 生成 train(JSON)+test(CSV)；single 按參數生成單一資料集")
+    parser.add_argument("--math-num-samples", type=int, default=None, help="single 模式下生成樣本數量")
+    parser.add_argument("--math-file-format", type=str, choices=["csv", "json"], default=None, help="single 模式輸出格式")
+    parser.add_argument("--math-filename-prefix", type=str, default=None, help="single 模式文件名前綴")
+    parser.add_argument("--math-output-dir", type=str, default=None, help="輸出目錄（預設為 <project_root>/data/raw_datasets）")
+    parser.add_argument("--math-max-digits", type=int, default=None, help="數字最大位數（預設 3）")
+    parser.add_argument("--math-seed", type=int, default=None, help="隨機種子（可重現）")
+    parser.add_argument("--math-summary-out", type=str, default=None, help="摘要報表 JSON 輸出路徑（可選）")
     # 新增：端到端流程 & 狀態管理
     parser.add_argument("--full-cycle", action="store_true", help="一鍵執行：檢查→生成→決策→(可選訓練)→文檔校驗/修復→報告")
     parser.add_argument("--run-id", type=str, default=None, help="指定本次執行的 run-id（可與 --resume-run 搭配）")
@@ -518,7 +531,26 @@ def main():
 
     # 3) 視需要生成資料
     if args.generate_data and not _step_done(run_state, "data_generation"):
-        gen_results = generate_or_fix_data(data_needs, verbose=args.verbose, dry_run=args.dry_run)
+        # 組裝可選的數學數據生成器參數（未提供則不添加，保持相容）
+        math_args = []
+        if args.math_mode:
+            math_args += ["--mode", args.math_mode]
+        if args.math_num_samples is not None:
+            math_args += ["--num-samples", str(args.math_num_samples)]
+        if args.math_file_format:
+            math_args += ["--file-format", args.math_file_format]
+        if args.math_filename_prefix:
+            math_args += ["--filename-prefix", args.math_filename_prefix]
+        if args.math_output_dir:
+            math_args += ["--output-dir", args.math_output_dir]
+        if args.math_max_digits is not None:
+            math_args += ["--max-digits", str(args.math_max_digits)]
+        if args.math_seed is not None:
+            math_args += ["--seed", str(args.math_seed)]
+        if args.math_summary_out:
+            math_args += ["--summary-out", args.math_summary_out]
+        
+        gen_results = generate_or_fix_data(data_needs, verbose=args.verbose, dry_run=args.dry_run, math_args=(math_args or None))
         summary["steps"]["data_generation_results"] = gen_results
         _checkpoint(state_dir, run_id, "data_generation", "done", gen_results)
     elif args.generate_data:
