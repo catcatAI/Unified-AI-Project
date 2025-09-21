@@ -3,9 +3,9 @@ import uuid
 import logging
 from typing import Dict, Any, List
 
-from apps.backend.src.ai.agents.base.base_agent import BaseAgent
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from apps.backend.src.tools.web_search_tool import WebSearchTool
+from .base.base_agent import BaseAgent
+from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from ....tools.web_search_tool import WebSearchTool
 
 class WebSearchAgent(BaseAgent):
     """

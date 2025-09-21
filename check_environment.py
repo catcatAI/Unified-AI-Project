@@ -1,50 +1,34 @@
-#!/usr/bin/env python3
-"""
-检查Python环境和依赖项
-"""
-
 import sys
-import importlib
+import os
 
-def check_python_version():
-    """检查Python版本"""
-    print(f"Python版本: {sys.version}")
-    print(f"Python路径: {sys.executable}")
-    return sys.version_info
+# 添加项目路径
+project_root = r"D:\Projects\Unified-AI-Project"
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, "src"))
+sys.path.insert(0, os.path.join(project_root, "apps", "backend"))
+sys.path.insert(0, os.path.join(project_root, "apps", "backend", "src"))
 
-def check_package(package_name):
-    """检查包是否已安装"""
-    try:
-        package = importlib.import_module(package_name)
-        print(f"✅ {package_name} 已安装 - 版本: {getattr(package, '__version__', '未知')}")
-        return True
-    except ImportError:
-        print(f"❌ {package_name} 未安装")
-        return False
+print("Python path:")
+for i, path in enumerate(sys.path):
+    print(f"  {i}: {path}")
 
-def main():
-    print("=== Python环境检查 ===")
-    check_python_version()
-    
-    print("\n=== 依赖包检查 ===")
-    required_packages = [
-        "tensorflow",
-        "numpy",
-        "sklearn"
-    ]
-    
-    missing_packages = []
-    for package in required_packages:
-        if not check_package(package):
-            missing_packages.append(package)
-    
-    print("\n=== 检查结果 ===")
-    if missing_packages:
-        print(f"缺少以下包: {', '.join(missing_packages)}")
-        print("请运行以下命令安装:")
-        print("pip install tensorflow numpy scikit-learn")
-    else:
-        print("✅ 所有必需的包都已安装")
+# 检查是否可以导入关键模块
+try:
+    import pytest
+    print(f"\nPytest version: {pytest.__version__}")
+except ImportError as e:
+    print(f"\nFailed to import pytest: {e}")
 
-if __name__ == "__main__":
-    main()
+try:
+    from apps.backend.src.hsp.connector import HSPConnector
+    print("Successfully imported HSPConnector")
+except ImportError as e:
+    print(f"Failed to import HSPConnector: {e}")
+
+try:
+    from apps.backend.tests.hsp.test_hsp_integration import MockMqttBroker
+    print("Successfully imported MockMqttBroker")
+except ImportError as e:
+    print(f"Failed to import MockMqttBroker: {e}")
+
+print("\nEnvironment check completed.")

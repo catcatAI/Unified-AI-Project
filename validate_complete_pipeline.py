@@ -12,8 +12,9 @@ from pathlib import Path
 # 添加项目路径
 PROJECT_ROOT = Path(__file__).parent
 BACKEND_PATH = PROJECT_ROOT / "apps" / "backend"
+SRC_PATH = BACKEND_PATH / "src"
 sys.path.insert(0, str(BACKEND_PATH))
-sys.path.insert(0, str(BACKEND_PATH / "src"))
+sys.path.insert(0, str(SRC_PATH))
 
 def print_section(title):
     """打印章节标题"""
@@ -146,7 +147,7 @@ def test_tool_integration():
     try:
         # 测试数学工具
         print("测试数学工具...")
-        from apps.backend.src.tools.math_tool import calculate
+        from tools.math_tool import calculate
         
         math_test_cases = ["10 + 5", "20 - 8"]
         for case in math_test_cases:
@@ -155,7 +156,7 @@ def test_tool_integration():
         
         # 测试逻辑工具
         print("测试逻辑工具...")
-        from apps.backend.src.tools.logic_tool import evaluate_expression
+        from tools.logic_tool import evaluate_expression
         
         logic_test_cases = ["true AND false", "true OR false"]
         for case in logic_test_cases:
@@ -164,7 +165,7 @@ def test_tool_integration():
         
         # 测试工具调度器
         print("测试工具调度器...")
-        from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+        from tools.tool_dispatcher import ToolDispatcher
         
         dispatcher = ToolDispatcher()
         available_tools = dispatcher.get_available_tools()

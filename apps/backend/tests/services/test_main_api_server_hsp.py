@@ -3,21 +3,27 @@ from fastapi.testclient import TestClient
 import uuid
 import time
 import asyncio
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, AsyncMock, ANY
-from typing import List, Dict, Any, Optional
-
-# Ensure src is in path for imports
+import json
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone
+import pytest
 
-# Import the FastAPI app and core services
+# Add the src directory to the path
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+SRC_DIR = os.path.join(PROJECT_ROOT, "src")
+
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
 from apps.backend.src.services.main_api_server import app # Main FastAPI app
 from apps.backend.src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID
 from apps.backend.src.hsp.connector import HSPConnector
 from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from apps.backend.src.ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+# 修复导入路径 - 使用正确的模块路径
+from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
 from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
 from apps.backend.src.ai.dialogue.project_coordinator import ProjectCoordinator
 # Avoid importing fixtures at module import time; use a simple flag instead
@@ -191,9 +197,9 @@ class TestHSPEndpoints:
 
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
     async def test_list_hsp_services_empty(self, client_with_overrides):
         client, sdm, dm, ham, mock_hsp_connector = client_with_overrides
 
@@ -211,9 +217,8 @@ class TestHSPEndpoints:
 
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.asyncio
     async def test_list_hsp_services_with_advertisements(self, client_with_overrides):
         client, sdm, dm, ham, mock_hsp_connector = client_with_overrides
 
@@ -249,7 +254,6 @@ class TestHSPEndpoints:
     @pytest.mark.asyncio
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_request_hsp_task_success(self, client_with_overrides, api_test_peer_connector):
         client, sdm, api_dm, ham, mock_hsp_connector = client_with_overrides
         peer_ai_id = "did:hsp:test_api_peer_007"
@@ -305,9 +309,7 @@ class TestHSPEndpoints:
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_request_hsp_task_capability_not_found(self, client_with_overrides):
         client, sdm, dm, ham, mock_hsp_connector = client_with_overrides
         response = client.post("/api/v1/hsp/tasks", json={
@@ -324,9 +326,7 @@ class TestHSPEndpoints:
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_get_hsp_task_status_pending(self, client_with_overrides, api_test_peer_connector): # Added api_test_peer_connector fixture
         client, sdm, dialogue_manager, ham, mock_hsp_connector = client_with_overrides
 
@@ -368,9 +368,7 @@ class TestHSPEndpoints:
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
     async def test_get_hsp_task_status_completed_from_ham(self, client_with_overrides):
         client, sdm, dm, ham_manager, mock_hsp_connector = client_with_overrides
 
@@ -408,9 +406,7 @@ class TestHSPEndpoints:
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
     async def test_get_hsp_task_status_failed_from_ham(self, client_with_overrides):
         client, sdm, dm, ham_manager, mock_hsp_connector = client_with_overrides
 
@@ -440,9 +436,7 @@ class TestHSPEndpoints:
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
     async def test_get_hsp_task_status_unknown(self, client_with_overrides):
         client, sdm, dm, ham, mock_hsp_connector = client_with_overrides
         mock_corr_id = "unknown_corr_id_000"

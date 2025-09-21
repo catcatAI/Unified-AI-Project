@@ -1,145 +1,187 @@
 import pytest
 import asyncio
-import os
+from unittest.mock import Mock, patch, AsyncMock
 import sys
-from unittest.mock import MagicMock, AsyncMock, patch
+import os
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+# Add the src directory to the path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from apps.backend.src.ai.agents.base.base_agent import BaseAgent
-
-@pytest.fixture
-def mock_hsp_connector():
-    """Fixture to provide a mock HSPConnector."""
-    mock = MagicMock()
-    mock.register_on_task_request_callback = MagicMock()
-    mock.advertise_capability = AsyncMock()
-    mock.send_task_result = AsyncMock()
-    mock.is_connected = True
-    return mock
+from agents.base_agent import BaseAgent
 
 @pytest.fixture
 def base_agent():
-    """Fixture to provide a BaseAgent instance."""
-    agent = BaseAgent(
-        agent_name="test_agent",
-        agent_id="did:hsp:test_agent_123",
-        capabilities=[{
-            "capability_id": "test_capability_v1.0",
-            "name": "test_capability",
-            "description": "A test capability for unit testing",
-            "version": "1.0",
-            "availability_status": "online"
-        }]
-    )
-    return agent
+    """Create a BaseAgent instance for testing."""
+    agent_id = "test_agent_123"
+    capabilities = [
+        {
+            "capability_id": "test_capability_1",
+            "name": "Test Capability",
+            "description": "A test capability",
+            "version": "1.0"
+        }
+    ]
+    return BaseAgent(agent_id=agent_id, capabilities=capabilities, agent_name="TestAgent")
 
 @pytest.mark.asyncio
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_base_agent_init(base_agent):
-    with patch('apps.backend.src.core_services.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('apps.backend.src.core_services.get_services') as mock_get_services:
-            mock_get_services.return_value = {} # Init does not need hsp_connector for this test
-            await base_agent._ainit()
-    """Test that the BaseAgent initializes correctly."""
-    assert base_agent.agent_name == "test_agent"
-    assert base_agent.agent_id == "did:hsp:test_agent_123"
-    assert base_agent.capabilities == [{
-        "capability_id": "test_capability_v1.0",
-        "name": "test_capability",
-        "description": "A test capability for unit testing",
-        "version": "1.0",
-        "availability_status": "online"
-    }]
+async def test_base_agent_initialization(base_agent):
+    """Test BaseAgent initialization."""
+    assert base_agent.agent_id == "test_agent_123"
+    assert base_agent.agent_name == "TestAgent"
+    assert len(base_agent.capabilities) == 1
+    assert base_agent.capabilities[0]["name"] == "Test Capability"
+    assert base_agent.hsp_connector is None
     assert base_agent.is_running is False
 
 @pytest.mark.asyncio
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_base_agent_start_stop(base_agent, mock_hsp_connector):
-    """Test that the BaseAgent can start and stop correctly."""
-    with patch('apps.backend.src.core_services.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('apps.backend.src.core_services.get_services') as mock_get_services:
-            with patch('apps.backend.src.core_services.shutdown_services', new_callable=AsyncMock) as mock_shutdown_services:
-                mock_get_services.return_value = {
-                    'hsp_connector': mock_hsp_connector,
-                    'llm_interface': MagicMock(),
-                    'ham_manager': MagicMock(),
-                    'personality_manager': MagicMock(),
-                    'trust_manager': MagicMock(),
-                    'service_discovery': MagicMock(),
-                    'fact_extractor': MagicMock(),
-                    'content_analyzer': MagicMock(),
-                    'learning_manager': MagicMock(),
-                    'emotion_system': MagicMock(),
-                    'crisis_system': MagicMock(),
-                    'time_system': MagicMock(),
-                    'formula_engine': MagicMock(),
-                    'tool_dispatcher': MagicMock(),
-                    'dialogue_manager': MagicMock(),
-                    'agent_manager': MagicMock(),
-                    'ai_virtual_input_service': MagicMock(),
-                    'audio_service': MagicMock(),
-                    'vision_service': MagicMock(),
-                    'resource_awareness_service': MagicMock(),
-                }
-                # 模拟hsp_connector的connect方法返回True
-                mock_hsp_connector.connect = AsyncMock(return_value=True)
-                # 模拟hsp_connector的is_connected属性为True
-                mock_hsp_connector.is_connected = True
-                await base_agent.start()
-                assert base_agent.is_running is True
-                # 验证每个能力都被广告了一次
-                assert mock_hsp_connector.advertise_capability.call_count == len(base_agent.capabilities)
-                await base_agent.stop()
-                mock_init_services.assert_called_once()
-                mock_shutdown_services.assert_called_once()
+async def test_base_agent_start(base_agent):
+    """Test BaseAgent start method."""
+    # Import the module inside the test to avoid import issues
+    import core_services
+    
+    # Mock the service initialization to avoid creating real services
+    with patch.object(core_services, 'initialize_services') as mock_init_services, \
+         patch.object(core_services, 'get_services') as mock_get_services, \
+         patch.object(core_services, 'shutdown_services') as mock_shutdown_services:
+        
+        # Make initialize_services a coroutine function
+        mock_init_services.return_value = asyncio.Future()
+        mock_init_services.return_value.set_result(None)
+        
+        # Setup mocks
+        mock_hsp_connector = AsyncMock()
+        mock_hsp_connector.is_connected = True
+        mock_get_services.return_value = {"hsp_connector": mock_hsp_connector}
+        
+        # Start the agent
+        await base_agent.start()
+        
+        # Assertions
+        assert base_agent.is_running is True
+        assert base_agent.hsp_connector == mock_hsp_connector
+        mock_init_services.assert_called_once()
+        mock_get_services.assert_called_once()
+        if base_agent.hsp_connector:
+            base_agent.hsp_connector.register_on_task_request_callback.assert_called_once_with(base_agent.handle_task_request)
+        
+        # Test that capabilities are advertised
+        if base_agent.hsp_connector:
+            assert base_agent.hsp_connector.advertise_capability.call_count == len(base_agent.capabilities)
 
 @pytest.mark.asyncio
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_base_agent_handle_task_request(base_agent, mock_hsp_connector):
-    """Test the default handle_task_request method."""
-    with patch('core_services.initialize_services', new_callable=AsyncMock) as mock_init_services:
-        with patch('core_services.get_services') as mock_get_services:
-            mock_get_services.return_value = {
-                'hsp_connector': mock_hsp_connector,
-                'llm_interface': MagicMock(),
-                'ham_manager': MagicMock(),
-                'personality_manager': MagicMock(),
-                'trust_manager': MagicMock(),
-                'service_discovery': MagicMock(),
-                'fact_extractor': MagicMock(),
-                'content_analyzer': MagicMock(),
-                'learning_manager': MagicMock(),
-                'emotion_system': MagicMock(),
-                'crisis_system': MagicMock(),
-                'time_system': MagicMock(),
-                'formula_engine': MagicMock(),
-                'tool_dispatcher': MagicMock(),
-                'dialogue_manager': MagicMock(),
-                'agent_manager': MagicMock(),
-                'ai_virtual_input_service': MagicMock(),
-                'audio_service': MagicMock(),
-                'vision_service': MagicMock(),
-                'resource_awareness_service': MagicMock(),
-            }
-            await base_agent._ainit() # Call _ainit to set up the agent with mocked services
-            # 确保hsp_connector被正确设置
-            base_agent.hsp_connector = mock_hsp_connector
-            task_payload = {
-                "request_id": "test_request",
-                "capability_id_filter": "test_capability",
-                "callback_address": "test_callback"
-            }
-            envelope = {"sender_ai_id": "test_sender"}
-            await base_agent.handle_task_request(task_payload, "test_sender", envelope)
-            mock_hsp_connector.send_task_result.assert_called_once()
+async def test_base_agent_stop(base_agent):
+    """Test BaseAgent stop method."""
+    # Import the module inside the test to avoid import issues
+    import core_services
+    
+    # First start the agent
+    with patch.object(core_services, 'initialize_services') as mock_init_services, \
+         patch.object(core_services, 'get_services') as mock_get_services, \
+         patch.object(core_services, 'shutdown_services') as mock_shutdown_services:
+        
+        # Make initialize_services a coroutine function
+        mock_init_services.return_value = asyncio.Future()
+        mock_init_services.return_value.set_result(None)
+        
+        mock_hsp_connector = AsyncMock()
+        mock_get_services.return_value = {"hsp_connector": mock_hsp_connector}
+        
+        await base_agent.start()
+        assert base_agent.is_running is True
+        
+        # Now stop the agent
+        await base_agent.stop()
+        assert base_agent.is_running is False
+        mock_shutdown_services.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_base_agent_is_healthy(base_agent):
+    """Test BaseAgent health check."""
+    # Initially not healthy
+    assert base_agent.is_healthy() is False
+    
+    # Make it healthy
+    base_agent.is_running = True
+    base_agent.hsp_connector = Mock()
+    base_agent.hsp_connector.is_connected = True
+    
+    assert base_agent.is_healthy() is True
+
+@pytest.mark.asyncio
+async def test_base_agent_handle_task_request(base_agent):
+    """Test BaseAgent default task request handler."""
+    # Mock the HSP connector
+    base_agent.hsp_connector = AsyncMock()
+    
+    # Create a test task payload
+    task_payload = {
+        "request_id": "test_request_123",
+        "capability_id_filter": "nonexistent_capability",
+        "callback_address": "test/callback/topic"
+    }
+    
+    # Call the handler
+    await base_agent.handle_task_request(task_payload, "sender_456", {})
+    
+    # Verify that a failure response was sent
+    base_agent.hsp_connector.send_task_result.assert_called_once()
+    args, kwargs = base_agent.hsp_connector.send_task_result.call_args
+    result_payload = args[0]
+    
+    assert result_payload["status"] == "failure"
+    assert result_payload["error_details"]["error_code"] == "NOT_IMPLEMENTED"
+    assert "not implemented" in result_payload["error_details"]["error_message"].lower()
+
+@pytest.mark.asyncio
+async def test_base_agent_send_task_success(base_agent):
+    """Test BaseAgent send_task_success method."""
+    # Mock the HSP connector
+    base_agent.hsp_connector = AsyncMock()
+    
+    # Send a success response
+    await base_agent.send_task_success(
+        request_id="test_request_123",
+        sender_ai_id="sender_456",
+        callback_address="test/callback/topic",
+        payload={"result": "success"}
+    )
+    
+    # Verify the success response was sent
+    base_agent.hsp_connector.send_task_result.assert_called_once()
+    args, kwargs = base_agent.hsp_connector.send_task_result.call_args
+    result_payload = args[0]
+    
+    assert result_payload["status"] == "success"
+    assert result_payload["request_id"] == "test_request_123"
+    assert result_payload["payload"] == {"result": "success"}
+
+@pytest.mark.asyncio
+async def test_base_agent_send_task_failure(base_agent):
+    """Test BaseAgent send_task_failure method."""
+    # Mock the HSP connector
+    base_agent.hsp_connector = AsyncMock()
+    
+    # Send a failure response
+    await base_agent.send_task_failure(
+        request_id="test_request_123",
+        sender_ai_id="sender_456",
+        callback_address="test/callback/topic",
+        error_message="Test error message"
+    )
+    
+    # Verify the failure response was sent
+    base_agent.hsp_connector.send_task_result.assert_called_once()
+    args, kwargs = base_agent.hsp_connector.send_task_result.call_args
+    result_payload = args[0]
+    
+    assert result_payload["status"] == "failure"
+    assert result_payload["request_id"] == "test_request_123"
+    assert result_payload["error_details"]["error_code"] == "TASK_EXECUTION_FAILED"
+    assert result_payload["error_details"]["error_message"] == "Test error message"
+
+if __name__ == '__main__':
+    # Run the tests using pytest
+    import subprocess
+    import sys
+    result = subprocess.run([sys.executable, '-m', 'pytest', __file__, '-v'])
+    sys.exit(result.returncode)

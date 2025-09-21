@@ -44,6 +44,7 @@ from training.data_manager import DataManager
 from training.train_model import ModelTrainer
 from training.collaborative_training_manager import CollaborativeTrainingManager
 from training.error_handling_framework import ErrorHandler, ErrorContext, ErrorRecoveryStrategy, global_error_handler, resilient_operation
+from training.model_version_controller import VersionControlManager
 
 # 配置日志
 logging.basicConfig(
@@ -258,6 +259,7 @@ class ModelManager:
         self.models_dir = Path(models_dir) if models_dir else MODELS_DIR
         self.model_versions = {}
         self.error_handler = global_error_handler  # 错误处理器
+        self.version_controller = VersionControlManager(models_dir)  # 版本控制器
         self._load_model_versions()
     
     def _load_model_versions(self):
@@ -301,43 +303,61 @@ class ModelManager:
             return None
     
     def save_incremental_model(self, model_name: str, model_path: Path, metrics: Dict[str, Any]):
-        """保存增量更新的模型"""
+        """保存增量更新的模型（集成版本控制）"""
         context = ErrorContext("ModelManager", "save_incremental_model", {
             "model_name": model_name,
             "model_path": str(model_path)
         })
         try:
-            # 生成版本号
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            version_name = f"{model_name}_v{timestamp}.pth"
-            version_path = self.models_dir / version_name
+            # 使用版本控制器创建新版本
+            metadata = {
+                'performance_metrics': metrics,
+                'training_data': {},
+                'change_log': f'Incremental update for {model_name}',
+                'tags': ['incremental', 'auto-generated']
+            }
             
-            # 复制模型文件
-            import shutil
-            shutil.copy2(model_path, version_path)
+            # 根据性能指标自动标记版本类型
+            accuracy = metrics.get('accuracy', 0)
+            version_type = "alpha"  # 默认为alpha版本
+            if accuracy >= 0.95:
+                version_type = "release"
+                metadata['tags'].append('stable')
+            elif accuracy >= 0.85:
+                version_type = "beta"
+                metadata['tags'].append('testing')
             
-            # 更新版本信息
-            if model_name not in self.model_versions:
-                self.model_versions[model_name] = {
-                    'versions': [],
-                    'latest': version_name,
-                    'created_at': datetime.now().isoformat()
-                }
+            # 创建版本
+            version_name = self.version_controller.create_version(
+                model_name, model_path, metadata, version_type)
             
-            self.model_versions[model_name]['versions'].append({
-                'version': version_name,
-                'path': str(version_path),
-                'created_at': datetime.now().isoformat(),
-                'metrics': metrics
-            })
-            self.model_versions[model_name]['latest'] = version_name
-            self.model_versions[model_name]['updated_at'] = datetime.now().isoformat()
-            
-            # 保存版本信息
-            self._save_model_versions()
-            
-            logger.info(f"✅ 保存增量模型: {version_name}")
-            return version_path
+            if version_name:
+                # 更新本地版本信息以保持兼容性
+                version_path = self.models_dir / version_name
+                if model_name not in self.model_versions:
+                    self.model_versions[model_name] = {
+                        'versions': [],
+                        'latest': version_name,
+                        'created_at': datetime.now().isoformat()
+                    }
+                
+                self.model_versions[model_name]['versions'].append({
+                    'version': version_name,
+                    'path': str(version_path),
+                    'created_at': datetime.now().isoformat(),
+                    'metrics': metrics
+                })
+                self.model_versions[model_name]['latest'] = version_name
+                self.model_versions[model_name]['updated_at'] = datetime.now().isoformat()
+                
+                # 保存版本信息
+                self._save_model_versions()
+                
+                logger.info(f"✅ 保存增量模型: {version_name} (类型: {version_type})")
+                return version_path
+            else:
+                logger.error(f"❌ 使用版本控制器创建版本失败")
+                return None
         except Exception as e:
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 保存增量模型失败: {e}")
@@ -387,6 +407,60 @@ class ModelManager:
         except Exception as e:
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 自动清理模型失败: {e}")
+    
+    def rollback_to_latest_stable_version(self, model_name: str) -> bool:
+        """一键回滚到最新的稳定版本"""
+        context = ErrorContext("ModelManager", "rollback_to_latest_stable_version", {"model_name": model_name})
+        try:
+            # 使用版本控制器查找最新的稳定版本
+            stable_versions = self.version_controller.get_versions_by_tag(model_name, "stable")
+            if not stable_versions:
+                logger.warning(f"⚠️  模型 {model_name} 没有标记为稳定版本的版本")
+                return False
+            
+            # 按创建时间排序，获取最新的稳定版本
+            stable_versions.sort(key=lambda x: x['created_at'], reverse=True)
+            latest_stable_version = stable_versions[0]['version']
+            
+            # 执行回滚
+            success = self.version_controller.rollback_to_version(model_name, latest_stable_version)
+            if success:
+                logger.info(f"✅ 模型 {model_name} 已回滚到最新稳定版本: {latest_stable_version}")
+            else:
+                logger.error(f"❌ 模型 {model_name} 回滚到稳定版本失败")
+            
+            return success
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 一键回滚到稳定版本失败: {e}")
+            return False
+    
+    def rollback_to_previous_version(self, model_name: str) -> bool:
+        """一键回滚到上一个版本"""
+        context = ErrorContext("ModelManager", "rollback_to_previous_version", {"model_name": model_name})
+        try:
+            # 获取版本历史
+            version_history = self.version_controller.get_version_history(model_name)
+            if len(version_history) < 2:
+                logger.warning(f"⚠️  模型 {model_name} 没有足够的版本历史进行回滚")
+                return False
+            
+            # 按创建时间排序
+            version_history.sort(key=lambda x: x['created_at'], reverse=True)
+            previous_version = version_history[1]['version']
+            
+            # 执行回滚
+            success = self.version_controller.rollback_to_version(model_name, previous_version)
+            if success:
+                logger.info(f"✅ 模型 {model_name} 已回滚到上一个版本: {previous_version}")
+            else:
+                logger.error(f"❌ 模型 {model_name} 回滚到上一个版本失败")
+            
+            return success
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 一键回滚到上一个版本失败: {e}")
+            return False
 
 
 class TrainingScheduler:

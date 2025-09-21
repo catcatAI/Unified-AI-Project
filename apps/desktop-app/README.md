@@ -7,6 +7,10 @@ This application is the official game client for "Angela's World", the AI-driven
 - Desktop interface for interacting with AI services
 - Integrates with the Python backend via IPC
 - Embedded web views for specific functionalities (e.g., code inspection, dashboard)
+- Complete game client for "Angela's World" simulation
+- Real-time AI interaction with context management
+- Integrated training system access
+- Comprehensive error handling and logging
 
 ## Getting Started
 

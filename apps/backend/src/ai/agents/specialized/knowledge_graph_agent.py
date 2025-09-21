@@ -198,7 +198,6 @@ class KnowledgeGraphAgent(BaseAgent):
         
         return {
             "results": results,
-            "graph_id": graph_id,
             "total_results": len(results)
         }
 
@@ -215,14 +214,3 @@ class KnowledgeGraphAgent(BaseAgent):
             status="failure",
             error_details={"error_code": error_code, "error_message": error_message}
         )
-
-if __name__ == '__main__':
-    async def main():
-        agent_id = f"did:hsp:knowledge_graph_agent_{uuid.uuid4().hex[:6]}"
-        agent = KnowledgeGraphAgent(agent_id=agent_id)
-        await agent.start()
-
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nKnowledgeGraphAgent manually stopped.")

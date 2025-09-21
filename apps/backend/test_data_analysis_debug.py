@@ -1,14 +1,17 @@
 import asyncio
 import uuid
+import pytest
 from unittest.mock import AsyncMock
 
-from apps.backend.src.agents.data_analysis_agent import DataAnalysisAgent
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+# 修复导入路径
+from apps.backend.src.ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
+from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.asyncio
 async def test_data_analysis_agent():
     # 创建一个DataAnalysisAgent实例
     agent_id = f"did:hsp:test_data_analysis_agent_{uuid.uuid4().hex[:6]}"
@@ -75,6 +78,3 @@ async def test_data_analysis_agent():
         print(f"Status: {sent_payload['status']}")
         print(f"Payload: {sent_payload.get('payload', 'N/A')}")
         print(f"Error details: {sent_payload.get('error_details', 'N/A')}")
-
-if __name__ == "__main__":
-    asyncio.run(test_data_analysis_agent())

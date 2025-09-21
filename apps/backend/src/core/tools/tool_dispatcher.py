@@ -15,12 +15,12 @@ from .translation_tool import translate as translate_text
 from .code_understanding_tool import CodeUnderstandingTool
 from .csv_tool import CsvTool
 from .image_generation_tool import ImageGenerationTool
-from apps.backend.src.ai.language_models.daily_language_model import DailyLanguageModel
-from apps.backend.src.core.services.multi_llm_service import MultiLLMService
-from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse # Import new response type
+from ai.language_models.daily_language_model import DailyLanguageModel
+from services.multi_llm_service import MultiLLMService
+from shared.types.common_types import ToolDispatcherResponse # Import new response type
 from typing import Literal # For literal status types
 try:
-    from apps.backend.src.ai.rag.rag_manager import RAGManager
+    from ai.rag.rag_manager import RAGManager
     RAG_AVAILABLE = True
 except ImportError as e:
     print(f"RAG Manager not available: {e}")
@@ -66,7 +66,7 @@ class ToolDispatcher:
         else:
             # Fallback: re-instantiate the wrapper with the new LLM service
             try:
-                from apps.backend.src.ai.language_models.daily_language_model import DailyLanguageModel
+                from ai.language_models.daily_language_model import DailyLanguageModel
                 self.dlm = DailyLanguageModel(llm_service=llm_service)
             except Exception:
                 pass
@@ -668,7 +668,7 @@ class ToolDispatcher:
 # Example Usage
 if __name__ == '__main__':
     import asyncio
-    from apps.backend.src.core.services.multi_llm_service import MultiLLMService
+    from services.multi_llm_service import MultiLLMService
 
     async def main_test():
         logging.basicConfig(level=logging.INFO)

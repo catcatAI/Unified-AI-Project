@@ -1,3 +1,4 @@
+import unittest
 import aiounittest
 import pytest
 from unittest.mock import MagicMock, AsyncMock
@@ -10,9 +11,8 @@ class TestKnowledgeUpdate(aiounittest.AsyncTestCase):
 
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
     async def test_knowledge_update(self):
         """
         Tests the knowledge update capabilities of the system.

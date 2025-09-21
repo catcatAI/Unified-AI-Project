@@ -2,9 +2,9 @@ import asyncio
 import uuid
 from typing import Dict, Any, List
 
-from apps.backend.src.ai.agents.base.base_agent import BaseAgent
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+from .base.base_agent import BaseAgent
+from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from ....tools.tool_dispatcher import ToolDispatcher
 
 class ImageGenerationAgent(BaseAgent):
     """

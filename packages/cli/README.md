@@ -8,10 +8,15 @@ This package contains the command-line interface (CLI) tools for interacting wit
 - Console script entry: `unified-ai`
 - Config via flags or env (CLI_BASE_URL, CLI_TOKEN, CLI_TIMEOUT)
 - Supports JSON output (`--json`) for automation
+- Port management and conflict resolution
+- Unified execution framework for all project tools
 
 - Send queries to the AI
 - Interact with HSP services
 - Manage AI models
+- Access training system and concept models
+- Context management and tool tracking
+- Automated defect detection and testing optimization
 
 ## Getting Started
 

@@ -2,7 +2,8 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+    <!-- 修复CSP策略，确保允许加载Google Fonts和DOMPurify -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data:;">
     <title>Unified AI Console</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -133,8 +134,10 @@
     </div>
 
     <script>
-        window.ipcChannels = require('./src/ipc-channels');
+        // window.ipcChannels is now exposed via preload.js
     </script>
+    <!-- 使用CDN引入DOMPurify，避免路径问题 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.0/purify.min.js"></script>
     <script src="./src/components/Button.js"></script>
     <script src="./src/components/Notification.js"></script>
     <script src="./src/store.js"></script>

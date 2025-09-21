@@ -13,7 +13,7 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 try:
-    from apps.backend.src.tools.logic_model.logic_model_nn import LogicNNModel, preprocess_logic_data # Assuming load_model is part of LogicNNModel
+    from .logic_model_nn import LogicNNModel, preprocess_logic_data # Assuming load_model is part of LogicNNModel
 except ImportError as e:
     print(f"Error importing from logic_model_nn: {e}")
     sys.exit(1)

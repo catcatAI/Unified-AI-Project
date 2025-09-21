@@ -41,30 +41,30 @@ def fix_imports_in_file(file_path: Path) -> bool:
             content = f.read()
             
         # 检查是否已经修复过
-        if "from apps.backend.src.core_ai." in content:
+        if "from apps.backend.src.core_ai." not in content and "import apps.backend.src.core_ai." not in content:
             print(f"  文件 {file_path} 已经修复过，跳过")
             return True
             
         original_content = content
         
-        # 修复from导入
+        # 修复from导入 - 从绝对导入修复为相对导入
         content = re.sub(
-            r"from core_ai\.", 
-            "from apps.backend.src.core_ai.", 
+            r"from apps\.backend\.src\.core_ai\.", 
+            "from ", 
             content
         )
         
-        # 修复import导入
+        # 修复import导入 - 从绝对导入修复为相对导入
         content = re.sub(
-            r"import apps.backend.src.core_ai\.", 
-            "import apps.backend.src.core_ai.", 
+            r"import apps\.backend\.src\.core_ai\.", 
+            "import ", 
             content
         )
         
-        # 处理相对导入
+        # 处理相对导入 - 修正相对导入路径
         content = re.sub(
             r"from\s+\.\.core_ai\.", 
-            "from apps.backend.src.core_ai.", 
+            "from core_ai.", 
             content
         )
         
@@ -119,21 +119,21 @@ def validate_fixes():
         if str(SRC_DIR) not in sys.path:
             sys.path.insert(0, str(SRC_DIR))
             
-        # 尝试导入核心模块
+        # 尝试导入核心模块 - 使用相对导入
         try:
-            from apps.backend.src.core_ai.agent_manager import AgentManager
+            from core_ai.agent_manager import AgentManager
             print("✓ Agent管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ Agent管理器模块导入失败: {e}")
             
         try:
-            from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
+            from core_ai.dialogue.dialogue_manager import DialogueManager
             print("✓ 对话管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ 对话管理器模块导入失败: {e}")
             
         try:
-            from apps.backend.src.core_ai.learning.learning_manager import LearningManager
+            from core_ai.learning.learning_manager import LearningManager
             print("✓ 学习管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ 学习管理器模块导入失败: {e}")
@@ -155,9 +155,9 @@ def run_import_test():
         
         # 尝试导入几个关键模块
         test_modules = [
-            "apps.backend.src.core_ai.agent_manager",
-            "apps.backend.src.core_ai.dialogue.dialogue_manager",
-            "apps.backend.src.core_ai.learning.learning_manager"
+            "core_ai.agent_manager",
+            "core_ai.dialogue.dialogue_manager",
+            "core_ai.learning.learning_manager"
         ]
         
         success_count = 0

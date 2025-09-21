@@ -167,11 +167,13 @@ class ExecutionManager:
                     log_terminal_status=execution_config.get('logging', {}).get('log_terminal_status', False)
                 )
             else:
-                self.logger.warning("System config not found, using default configuration")
+                # 使用臨時logger或print語句，因為self.logger尚未初始化
+                print("System config not found, using default configuration")
                 return ExecutionManagerConfig()
                 
         except Exception as e:
-            self.logger.error(f"Failed to load system config: {e}")
+            # 使用臨時logger或print語句，因為self.logger尚未初始化
+            print(f"Failed to load system config: {e}")
             return ExecutionManagerConfig()
 
     def _setup_logger(self) -> logging.Logger:

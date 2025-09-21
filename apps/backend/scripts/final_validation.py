@@ -30,7 +30,7 @@ def test_original_problem_imports():
     # 测试问题1: HSPConnector导入问题
     print("\n1. 测试HSPConnector导入:")
     try:
-        from apps.backend.src.hsp.connector import HSPConnector
+        from hsp.connector import HSPConnector
         print("✓ HSPConnector 导入成功")
     except ImportError as e:
         print(f"✗ HSPConnector 导入失败: {e}")
@@ -42,13 +42,13 @@ def test_original_problem_imports():
     # 测试问题2: core_ai模块导入问题
     print("\n2. 测试core_ai模块导入:")
     core_ai_modules = [
-        "apps.backend.src.core_ai.agent_manager",
-        "apps.backend.src.core_ai.dialogue.dialogue_manager",
-        "apps.backend.src.core_ai.learning.learning_manager",
-        "apps.backend.src.core_ai.personality.personality_manager",
-        "apps.backend.src.core_ai.memory.ham_memory_manager",
-        "apps.backend.src.core_ai.service_discovery.service_discovery_module",
-        "apps.backend.src.core_ai.trust_manager.trust_manager_module",
+        "core_ai.agent_manager",
+        "core_ai.dialogue.dialogue_manager",
+        "core_ai.learning.learning_manager",
+        "core_ai.personality.personality_manager",
+        "core_ai.memory.ham_memory_manager",
+        "core_ai.service_discovery.service_discovery_module",
+        "core_ai.trust_manager.trust_manager_module",
     ]
     
     success_count = 0
@@ -71,7 +71,7 @@ def test_core_services():
     print("\n=== 测试核心服务导入 ===")
     
     try:
-        from apps.backend.src.core_services import (
+        from core_services import (
             initialize_services, 
             get_services, 
             shutdown_services,
@@ -95,7 +95,7 @@ def test_main_api_server():
     print("\n=== 测试主API服务器导入 ===")
     
     try:
-        from apps.backend.src.services.main_api_server import app
+        from services.main_api_server import app
         print("✓ 主API服务器导入成功")
         return True
     except ImportError as e:
@@ -110,7 +110,7 @@ def test_dialogue_manager_hsp_connector():
     print("\n=== 测试DialogueManager中的HSPConnector ===")
     
     try:
-        from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
+        from core_ai.dialogue.dialogue_manager import DialogueManager
         print("✓ DialogueManager 导入成功")
         
         # 检查HSPConnector是否在DialogueManager中正确定义
@@ -144,33 +144,33 @@ def run_comprehensive_import_test():
     # 测试关键模块
     critical_modules = [
         # 核心服务
-        "apps.backend.src.core_services",
+        "core_services",
         
         # Core AI 模块
-        "apps.backend.src.core_ai.agent_manager",
-        "apps.backend.src.core_ai.dialogue.dialogue_manager",
-        "apps.backend.src.core_ai.learning.learning_manager",
-        "apps.backend.src.core_ai.personality.personality_manager",
-        "apps.backend.src.core_ai.memory.ham_memory_manager",
-        "apps.backend.src.core_ai.service_discovery.service_discovery_module",
-        "apps.backend.src.core_ai.trust_manager.trust_manager_module",
-        "apps.backend.src.core_ai.emotion_system",
-        "apps.backend.src.core_ai.crisis_system",
-        "apps.backend.src.core_ai.time_system",
+        "core_ai.agent_manager",
+        "core_ai.dialogue.dialogue_manager",
+        "core_ai.learning.learning_manager",
+        "core_ai.personality.personality_manager",
+        "core_ai.memory.ham_memory_manager",
+        "core_ai.service_discovery.service_discovery_module",
+        "core_ai.trust_manager.trust_manager_module",
+        "core_ai.emotion_system",
+        "core_ai.crisis_system",
+        "core_ai.time_system",
         
         # HSP 模块
-        "apps.backend.src.hsp.connector",
-        "apps.backend.src.hsp.types",
+        "hsp.connector",
+        "hsp.types",
         
         # Services 模块
-        "apps.backend.src.services.main_api_server",
-        "apps.backend.src.services.multi_llm_service",
+        "services.main_api_server",
+        "services.multi_llm_service",
         
         # Tools 模块
-        "apps.backend.src.tools.tool_dispatcher",
+        "tools.tool_dispatcher",
         
         # Shared 模块
-        "apps.backend.src.shared.types.common_types",
+        "shared.types.common_types",
     ]
     
     success_count = 0

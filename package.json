@@ -3,12 +3,12 @@
   "private": true,
   "scripts": {
     "install:all": "pnpm install; cd apps/backend; pip install -r requirements.txt; pip install -r requirements-dev.txt",
-    "dev:dashboard": "pnpm --filter frontend-dashboard dev",
-    "dev:backend": "pnpm --filter backend dev",
-    "dev:desktop": "pnpm --filter desktop-app start",
+    "dev:dashboard": "node scripts/port_manager.js kill-service FRONTEND_DASHBOARD && pnpm --filter frontend-dashboard dev",
+    "dev:backend": "node scripts/port_manager.js kill-service BACKEND_API && pnpm --filter backend dev",
+    "dev:desktop": "node scripts/port_manager.js kill-service DESKTOP_APP && pnpm --filter desktop-app start",
     "dev": "concurrently --kill-others-on-fail --raw \"pnpm dev:backend\" \"pnpm dev:dashboard\"",
-    "dev:all": "concurrently --kill-others-on-fail --raw \"pnpm dev:backend\" \"pnpm dev:dashboard\" \"pnpm dev:desktop\"",
-    "test": "cross-env TESTING=true pnpm --filter \"*\" test",
+    "dev:all": "node scripts/kill_port_3000.js && concurrently --kill-others-on-fail --raw \"pnpm dev:backend\" \"pnpm dev:dashboard\" \"pnpm dev:desktop\"",
+    "test": "cd apps/backend && python scripts/workflow_controller.py",
     "test:backend": "pnpm --filter backend test",
     "test:frontend": "pnpm --filter frontend-dashboard test",
     "test:desktop": "pnpm --filter desktop-app test",
@@ -19,7 +19,11 @@
     "clean": "pnpm -r clean; rimraf node_modules",
     "setup": "node scripts/setup.js",
     "health-check": "python scripts/health_check.py",
-    "unified-ai": "unified-ai.bat"
+    "unified-ai": "unified-ai.bat",
+    "port-info": "node scripts/port_manager.js info",
+    "port-check": "node scripts/port_manager.js check",
+    "port-kill-service": "node scripts/port_manager.js kill-service",
+    "kill-port-3000": "node scripts/kill_port_3000.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

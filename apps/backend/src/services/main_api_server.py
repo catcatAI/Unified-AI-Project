@@ -1,18 +1,171 @@
 import os
+import sys
 from fastapi import FastAPI, HTTPException, Depends, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
-# Use relative imports instead of absolute imports
-from ..economy.economy_manager import EconomyManager
-from ..pet.pet_manager import PetManager
+# Simplified path handling - Add the project root and src directory to the Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+src_dir = os.path.join(project_root, 'src')
+apps_backend_dir = os.path.join(project_root)
 
-# Use path configuration from path_config.py
-from ..path_config import PROJECT_ROOT
+# Ensure paths are added in the correct order
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+if apps_backend_dir not in sys.path:
+    sys.path.insert(0, apps_backend_dir)
 
-app = FastAPI(title="Unified AI Project API", version="1.0.0")
+print(f"Project root: {project_root}")
+print(f"Src dir: {src_dir}")
+print(f"Apps backend dir: {apps_backend_dir}")
+print(f"Sys path: {sys.path}")
+
+# Use absolute imports instead of relative imports when running as a script
+try:
+    # Try absolute imports first (for when running with uvicorn)
+    from economy.economy_manager import EconomyManager
+    from pet.pet_manager import PetManager
+    from path_config import PROJECT_ROOT
+    from core_services import initialize_services, shutdown_services, get_services
+    from services.multi_llm_service import get_multi_llm_service
+    from ai.language_models.registry import ModelRegistry
+    from ai.language_models.router import PolicyRouter, RoutingPolicy
+    from services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
+    from hsp.connector import HSPConnector
+    from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
+    from ai.dialogue.dialogue_manager import DialogueManager
+    from ai.memory.ham_memory_manager import HAMMemoryManager
+    from core.services.atlassian_api import atlassian_router
+    print("Absolute imports successful")
+except ImportError as e:
+    print(f"Absolute import failed: {e}")
+    # Fall back to relative imports (for when running with uvicorn)
+    try:
+        from apps.backend.src.economy.economy_manager import EconomyManager
+        from apps.backend.src.pet.pet_manager import PetManager
+        from apps.backend.src.path_config import PROJECT_ROOT
+        from apps.backend.src.core_services import initialize_services, shutdown_services, get_services
+        from apps.backend.src.core.services.multi_llm_service import get_multi_llm_service
+        from apps.backend.src.ai.language_models.registry import ModelRegistry
+        from apps.backend.src.ai.language_models.router import PolicyRouter, RoutingPolicy
+        from apps.backend.src.services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
+        from apps.backend.src.hsp.connector import HSPConnector
+        from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
+        from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
+        from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+        from apps.backend.src.core.services.atlassian_api import atlassian_router
+        print("Relative imports successful")
+    except ImportError as e2:
+        print(f"Relative import also failed: {e2}")
+        raise e2
+
+from contextlib import asynccontextmanager
+
+async def initialize_services_layered():
+    """分层初始化服务"""
+    print("🔧 开始分层初始化服务...")
+    
+    # 第1层: 核心服务初始化
+    print("🔧 第1层: 核心服务初始化")
+    try:
+        # 初始化HAM内存管理
+        from ai.memory.ham_memory_manager import HAMMemoryManager
+        ham_manager = HAMMemoryManager()
+        print("✅ HAM服务初始化完成")
+        
+        # 初始化多LLM服务
+        from services.multi_llm_service import get_multi_llm_service
+        llm_interface = get_multi_llm_service()
+        print("✅ LLM服务初始化完成")
+        
+        # 初始化服务发现
+        from core.services.service_discovery import ServiceDiscoveryModule
+        service_discovery = ServiceDiscoveryModule()
+        print("✅ 服务发现初始化完成")
+    except Exception as e:
+        print(f"❌ 核心服务初始化失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    # 第2层: 核心组件启动
+    print("⚙️ 第2层: 核心组件启动")
+    try:
+        # 初始化HSP连接器
+        from hsp.connector import HSPConnector
+        hsp_connector = HSPConnector(
+            ai_id=os.getenv("API_AI_ID", "did:hsp:api_server_ai"),
+            broker_address="localhost",
+            broker_port=1883
+        )
+        print("✅ HSP连接器初始化完成")
+        
+        # 初始化对话管理器
+        from ai.dialogue.dialogue_manager import DialogueManager
+        dialogue_manager = DialogueManager()
+        print("✅ 对话管理器初始化完成")
+    except Exception as e:
+        print(f"❌ 核心组件启动失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    # 第3层: 功能模块加载
+    print("🔌 第3层: 功能模块加载")
+    try:
+        # 加载经济系统
+        from economy.economy_manager import EconomyManager
+        economy_manager = EconomyManager()
+        print("✅ 经济系统初始化完成")
+        
+        # 加载宠物系统
+        from pet.pet_manager import PetManager
+        pet_manager = PetManager()
+        print("✅ 宠物系统初始化完成")
+    except Exception as e:
+        print(f"⚠️ 功能模块加载失败: {e}")
+        import traceback
+        traceback.print_exc()
+        # 功能模块失败不影响核心服务
+    
+    print("✅ 服务分层初始化完成")
+    return True
+
+# @deprecated: startup/shutdown on_event migrated to lifespan
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        # 尝试使用分层初始化
+        if await initialize_services_layered():
+            print("Services initialized successfully with layered approach")
+        else:
+            # 如果分层初始化失败，回退到原来的初始化方式
+            ai_id = os.getenv("API_AI_ID", "did:hsp:api_server_ai")
+            await initialize_services(ai_id=ai_id, use_mock_ham=True)
+            print("Services initialized successfully with fallback approach")
+        yield
+    except Exception as e:
+        # Enhanced error handling with detailed logging
+        print(f"Failed to initialize services: {e}")
+        import traceback
+        traceback.print_exc()
+        # Re-raise the exception to ensure proper lifespan handling
+        raise
+    finally:
+        try:
+            await shutdown_services()
+            print("Services shutdown successfully")
+        except Exception as e:
+            print(f"Failed to shutdown services: {e}")
+            import traceback
+            traceback.print_exc()
+
+# Instantiate FastAPI with lifespan handler
+app = FastAPI(title="Unified AI Project API", version="1.0.0", lifespan=lifespan)
 
 # CORS configuration
 origins = [
@@ -31,23 +184,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Core services lifecycle
-from ..core_services import initialize_services, shutdown_services, get_services
-
-@app.on_event("startup")
-async def on_startup():
-    try:
-        ai_id = os.getenv("API_AI_ID", "did:hsp:api_server_ai")
-        await initialize_services(ai_id=ai_id, use_mock_ham=True)
-    except Exception as e:
-        print(f"Failed to initialize services: {e}")
-
-@app.on_event("shutdown")
-async def on_shutdown():
-    try:
-        await shutdown_services()
-    except Exception as e:
-        print(f"Failed to shutdown services: {e}")
+# Deprecated on_event hooks migrated to lifespan handler above
 
 @app.get("/")
 def read_root():
@@ -57,12 +194,6 @@ def read_root():
 async def get_status():
     """Health check endpoint for testing and monitoring"""
     return {"status": "running"}
-
-# Remaining imports
-from .multi_llm_service import get_multi_llm_service
-from apps.backend.src.ai.language_models.registry import ModelRegistry
-from apps.backend.src.ai.language_models.router import PolicyRouter, RoutingPolicy
-from .api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
 
 # --- Health endpoint (v1) ---
 @app.get("/api/v1/health", response_model=HealthResponse)
@@ -89,7 +220,7 @@ async def api_health(services=Depends(get_services)):
 
     return HealthResponse(
         status="ok",
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00","Z"),
         services_initialized=services_initialized,
         components=components,
     )
@@ -149,7 +280,7 @@ async def api_ready(services=Depends(get_services)):
 
     return ReadinessResponse(
         ready=ready,
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00","Z"),
         services_initialized=services_initialized,
         signals=signals,
         reason=reason,
@@ -211,10 +342,6 @@ async def get_hot_status(services=Depends(get_services)) -> HotStatusResponse:
         metrics=metrics,
     )
 
-from apps.backend.src.services.api_models import HSPServiceDiscoveryResponse
-from fastapi import Depends
-from typing import List
-
 @app.get("/api/v1/hsp/services")
 async def list_hsp_services(services=Depends(get_services)) -> List[HSPServiceDiscoveryResponse]:
     print(f"DEBUG: list_hsp_services called")
@@ -260,12 +387,6 @@ async def list_hsp_services(services=Depends(get_services)) -> List[HSPServiceDi
         ))
     
     return normalized
-
-from typing import Dict
-from apps.backend.src.hsp.connector import HSPConnector
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
-from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
-from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
 
 @app.post("/api/v1/hsp/tasks")
 async def create_hsp_task(task_input: Dict[str, Any], services=Depends(get_services)):
@@ -334,7 +455,7 @@ async def create_hsp_task(task_input: Dict[str, Any], services=Depends(get_servi
         if correlation_id:
             try:
                 dialogue_manager.pending_hsp_task_requests[correlation_id] = {
-                    "created_at": datetime.utcnow().isoformat() + "Z",
+                    "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                     "target": target_ai_id,
                     "capability_id": target_capability_id,
                 }
@@ -449,11 +570,8 @@ async def interact_with_pet(pet_id: str, interaction_data: Dict[str, Any], servi
 
 app.include_router(economy_router, prefix="/api/v1/economy", tags=["Economy"])
 app.include_router(pet_router, prefix="/api/v1/pet", tags=["Pet"])
-
-# Atlassian API router
-from apps.backend.src.services.atlassian_api import atlassian_router
 app.include_router(atlassian_router)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)  # 改回端口为8000

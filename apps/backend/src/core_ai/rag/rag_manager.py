@@ -1,4 +1,22 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# 使用我们的兼容性模块
+try:
+    from apps.backend.src.compat.transformers_compat import import_sentence_transformers
+    SentenceTransformer, SENTENCE_TRANSFORMERS_AVAILABLE = import_sentence_transformers()
+    if not SENTENCE_TRANSFORMERS_AVAILABLE:
+        print("Warning: Could not import sentence_transformers")
+except ImportError as e:
+    print(f"Warning: Could not import transformers_compat: {e}")
+    SentenceTransformer = None
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+
 import numpy as np
+import logging
+from typing import List, Dict, Any, Optional
+from pathlib import Path
+
 import faiss
 from sentence_transformers import SentenceTransformer
 from typing import List, Tuple, Dict

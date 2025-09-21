@@ -23,12 +23,14 @@ class InternalBus:
         print(f"DEBUG: InternalBus.publish_async - Channel: {channel}, Message: {message}")
         if channel in self.subscriptions:
             for callback in self.subscriptions[channel]:
+                print(f"DEBUG: InternalBus.publish_async - Calling callback: {callback}")
                 if inspect.iscoroutinefunction(callback):
                     await callback(message)
                 else:
                     callback(message)
 
     def subscribe(self, channel: str, callback: Callable[[Any], None]):
+        print(f"DEBUG: InternalBus.subscribe - Channel: {channel}, Callback: {callback}")
         if channel not in self.subscriptions:
             self.subscriptions[channel] = []
         self.subscriptions[channel].append(callback)

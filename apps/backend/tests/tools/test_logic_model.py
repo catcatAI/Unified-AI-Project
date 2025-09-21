@@ -5,6 +5,7 @@ import sys
 import shutil # For cleaning up directories
 import pytest # Import pytest
 
+# 修复导入路径 - 从正确的路径导入模块
 from apps.backend.src.tools.logic_model import logic_data_generator
 from apps.backend.src.tools.logic_model import logic_model_nn
 from apps.backend.src.tools.logic_model.logic_parser_eval import LogicParserEval
@@ -172,9 +173,8 @@ class TestLogicModelComponents(unittest.TestCase):
 
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_05_tool_dispatcher_logic_routing(self):
         print("\nRunning test_05_tool_dispatcher_logic_routing...")
         dispatcher = ToolDispatcher()

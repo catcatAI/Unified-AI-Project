@@ -6,17 +6,17 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
 import json
 
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager # Corrected
-from apps.backend.src.core_ai.learning.fact_extractor_module import FactExtractorModule # Corrected
-from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule # Corrected
-from apps.backend.src.core_ai.trust_manager.trust_manager_module import TrustManager # Corrected
+from memory.ham_memory_manager import HAMMemoryManager
+from fact_extractor_module import FactExtractorModule
+from content_analyzer_module import ContentAnalyzerModule
+from trust_manager.trust_manager_module import TrustManager
 from .types import LearnedFactRecord
 
-from apps.backend.src.hsp.types import HSPFactPayload, HSPMessageEnvelope # Corrected
-from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
+from hsp.types import HSPFactPayload, HSPMessageEnvelope
+from personality.personality_manager import PersonalityManager
 
 if TYPE_CHECKING:
-    from apps.backend.src.hsp.connector import HSPConnector # Corrected
+    from hsp.connector import HSPConnector
 
 
 class LearningManager:
@@ -247,7 +247,7 @@ class LearningManager:
 
         distillation_prompt = self._create_strategy_distillation_prompt(project_case)
         # Use chat_completion instead of generate_response
-        from apps.backend.src.hsp.types import ChatMessage
+        from hsp.types import ChatMessage
         messages = [ChatMessage(role="user", content=distillation_prompt)]
         llm_response = await self.fact_extractor.llm_service.chat_completion(messages, params={"temperature": 0.0})
         raw_strategy_output = llm_response.content

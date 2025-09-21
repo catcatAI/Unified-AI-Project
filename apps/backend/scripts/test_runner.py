@@ -1,87 +1,161 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-独立的测试执行模块
-负责运行测试并收集结果，将结果保存到文件中供后续分析
+测试运行器
+用于执行测试套件并生成结果报告
 """
 
-import subprocess
 import json
+import logging
+import subprocess
 import sys
 from pathlib import Path
+from typing import Dict, List, Any, Optional
 from datetime import datetime
-from typing import Dict, Any, Optional
 
+# 设置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class TestRunner:
-    def __init__(self, output_file: str = "test_results.json"):
-        self.output_file = output_file
-        self.project_root = Path(__file__).parent.parent
+    """测试运行器"""
     
-    def run_tests(self, pytest_args: Optional[str] = None) -> Dict[str, Any]:
-        """运行测试并生成结果文件"""
-        print("[TEST] 开始运行测试套件")
-        print("=" * 50)
+    def __init__(self, results_dir: str = "test_results"):
+        """
+        初始化测试运行器
         
+        Args:
+            results_dir: 测试结果目录
+        """
+        self.results_dir = Path(results_dir)
+        self.results_dir.mkdir(exist_ok=True)
+    
+    def run_tests(self, test_paths: List[str] = None, extra_args: List[str] = None) -> Dict[str, Any]:
+        """
+        运行测试套件
+        
+        Args:
+            test_paths: 测试路径列表
+            extra_args: 额外的pytest参数
+            
+        Returns:
+            测试结果
+        """
         # 构建命令
-        cmd = [sys.executable, "-m", "pytest", "--tb=short", "-v"]
-        if pytest_args:
-            cmd.extend(pytest_args.split())
+        cmd = [sys.executable, "-m", "pytest"]
         
-        # 执行测试
+        if test_paths:
+            cmd.extend(test_paths)
+        else:
+            cmd.append(".")
+        
+        if extra_args:
+            cmd.extend(extra_args)
+        
+        # 添加默认参数
+        cmd.extend([
+            "--tb=short",
+            "--json-report",
+            "--json-report-file=latest_test_results.json",
+            "-v"
+        ])
+        
+        logger.info(f"运行测试命令: {' '.join(cmd)}")
+        
         try:
-            process = subprocess.Popen(
-                cmd,
-                cwd=self.project_root,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
+            # 运行测试
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=".")
             
-            stdout, stderr = process.communicate()
-            
-            # 分析结果
+            # 解析结果
             test_results = {
-                "exit_code": process.returncode,
-                "stdout": stdout,
-                "stderr": stderr,
-                "timestamp": str(datetime.now())
+                "command": " ".join(cmd),
+                "exit_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "timestamp": datetime.now().isoformat()
             }
             
-            # 保存结果到文件
-            with open(self.output_file, 'w', encoding='utf-8') as f:
-                json.dump(test_results, f, ensure_ascii=False, indent=2)
-            
-            # 输出测试结果到终端
-            print(stdout)
-            if stderr:
-                print(stderr, file=sys.stderr)
-            
-            print("=" * 50)
-            print(f"[TEST] 测试完成，退出码: {process.returncode}")
+            # 保存结果
+            self._save_test_results(test_results)
             
             return test_results
-            
         except Exception as e:
-            error_result = {
-                "exit_code": -1,
-                "stdout": "",
-                "stderr": str(e),
-                "timestamp": str(datetime.now())
+            logger.error(f"运行测试失败: {e}")
+            return {
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
             }
+    
+    def _save_test_results(self, results: Dict[str, Any]):
+        """
+        保存测试结果
+        
+        Args:
+            results: 测试结果
+        """
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"test_results_{timestamp}.json"
             
-            # 保存错误结果到文件
-            with open(self.output_file, 'w', encoding='utf-8') as f:
-                json.dump(error_result, f, ensure_ascii=False, indent=2)
+            with open(self.results_dir / filename, 'w', encoding='utf-8') as f:
+                json.dump(results, f, ensure_ascii=False, indent=2)
             
-            print(f"[TEST] 运行测试时发生错误: {e}", file=sys.stderr)
-            return error_result
+            # 同时保存为最新结果
+            with open(self.results_dir / "latest_test_results.json", 'w', encoding='utf-8') as f:
+                json.dump(results, f, ensure_ascii=False, indent=2)
+            
+            logger.info(f"测试结果已保存到: {self.results_dir / filename}")
+        except Exception as e:
+            logger.error(f"保存测试结果失败: {e}")
+    
+    def get_test_summary(self, results: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        从测试结果中提取摘要信息
+        
+        Args:
+            results: 测试结果
+            
+        Returns:
+            测试摘要
+        """
+        # 这里应该解析stdout来提取测试统计信息
+        # 简化实现，实际应该更复杂
+        stdout = results.get('stdout', '')
+        
+        # 简单的统计提取
+        lines = stdout.split('\n')
+        summary_line = None
+        for line in lines:
+            if 'passed' in line and 'failed' in line:
+                summary_line = line
+                break
+        
+        return {
+            "raw_summary": summary_line,
+            "exit_code": results.get('exit_code', -1),
+            "timestamp": results.get('timestamp')
+        }
 
 
-if __name__ == "__main__":
-    # 可以直接运行测试
+# 添加pytest标记，防止被误认为测试类
+TestRunner.__test__ = False
+
+
+def main():
+    """主函数"""
     runner = TestRunner()
     
-    # 获取命令行参数（如果有）
-    args = sys.argv[1] if len(sys.argv) > 1 else None
+    # 示例使用方式
+    # 运行所有测试
+    # results = runner.run_tests()
     
-    runner.run_tests(args)
+    # 运行特定测试
+    # results = runner.run_tests(["tests/unit"], ["-x", "--tb=short"])
+    
+    # 获取测试摘要
+    # summary = runner.get_test_summary(results)
+    
+    logger.info("测试运行器已准备就绪")
+
+if __name__ == "__main__":
+    main()

@@ -1,7 +1,21 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# 使用我们的兼容性模块
+try:
+    from apps.backend.src.compat.transformers_compat import import_sentence_transformers
+    SentenceTransformer, SENTENCE_TRANSFORMERS_AVAILABLE = import_sentence_transformers()
+    if not SENTENCE_TRANSFORMERS_AVAILABLE:
+        print("Warning: Could not import sentence_transformers")
+except ImportError as e:
+    print(f"Warning: Could not import transformers_compat: {e}")
+    SentenceTransformer = None
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+
 import numpy as np
 import logging
-from sentence_transformers import SentenceTransformer
-from typing import List, Tuple, Dict
+from typing import List, Dict, Any, Optional, Tuple
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +24,9 @@ class RAGManager:
     Manages Retrieval-Augmented Generation by handling vector embeddings and similarity search.
     """
     def __init__(self, model_name: str = 'all-MiniLM-L6-v2'):
+        if not SENTENCE_TRANSFORMERS_AVAILABLE or SentenceTransformer is None:
+            raise RuntimeError("SentenceTransformer is not available. RAG functionality is disabled.")
+        
         self.model = SentenceTransformer(model_name)
         self.embedding_dim = self.model.get_sentence_embedding_dimension()
         self.index = None

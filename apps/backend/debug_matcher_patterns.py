@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 import spacy
 from spacy.matcher import Matcher
-from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from .src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
 
 def debug_matcher_patterns():
     # Initialize the analyzer

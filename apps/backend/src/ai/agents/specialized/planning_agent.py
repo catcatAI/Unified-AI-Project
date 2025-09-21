@@ -5,8 +5,8 @@ import json
 from typing import Dict, Any, List
 from datetime import datetime, timedelta
 
-from apps.backend.src.ai.agents.base.base_agent import BaseAgent
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from .base.base_agent import BaseAgent
+from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 class PlanningAgent(BaseAgent):
     """

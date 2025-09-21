@@ -8,26 +8,57 @@ import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from datetime import datetime, timezone
 
-from ..personality.personality_manager import PersonalityManager
-from ..memory.ham_memory_manager import HAMMemoryManager
-from ...services.multi_llm_service import MultiLLMService
-from ..emotion.emotion_system import EmotionSystem
-from ..crisis.crisis_system import CrisisSystem
-from ..time.time_system import TimeSystem
-from ..formula_engine import FormulaEngine
-from ...tools.tool_dispatcher import ToolDispatcher
-from ..learning.learning_manager import LearningManager
-from ..discovery.service_discovery_module import ServiceDiscoveryModule
-from ...services.sandbox_executor import SandboxExecutor
-import networkx as nx
-from ...core.shared.types.common_types import (
-    OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
-)
-
-from ...hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
-from .project_coordinator import ProjectCoordinator
-from ...managers.agent_manager import AgentManager
-from ...hsp.connector import HSPConnector
+# Use absolute imports instead of relative imports when running as a script
+try:
+    # Try absolute imports first (for when running with uvicorn)
+    from agents.base_agent import BaseAgent
+    from ai.personality.personality_manager import PersonalityManager
+    from ai.memory.ham_memory_manager import HAMMemoryManager
+    from services.multi_llm_service import MultiLLMService
+    from ai.emotion.emotion_system import EmotionSystem
+    from ai.crisis.crisis_system import CrisisSystem
+    from ai.time.time_system import TimeSystem
+    from ai.formula_engine import FormulaEngine
+    from tools.tool_dispatcher import ToolDispatcher
+    from ai.learning.learning_manager import LearningManager
+    from discovery.service_discovery_module import ServiceDiscoveryModule
+    from services.sandbox_executor import SandboxExecutor
+    import networkx as nx
+    from core.shared.types.common_types import (
+        OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
+    )
+    from hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
+    from ai.dialogue.project_coordinator import ProjectCoordinator
+    from managers.agent_manager import AgentManager
+    from hsp.connector import HSPConnector
+    print("Absolute imports successful in dialogue_manager")
+except ImportError as e:
+    print(f"Absolute import failed in dialogue_manager: {e}")
+    # Fall back to relative imports (for when running with uvicorn)
+    try:
+        from ...ai.personality.personality_manager import PersonalityManager
+        from ...ai.memory.ham_memory_manager import HAMMemoryManager
+        from ...services.multi_llm_service import MultiLLMService
+        from ...ai.emotion.emotion_system import EmotionSystem
+        from ...ai.crisis.crisis_system import CrisisSystem
+        from ...ai.time.time_system import TimeSystem
+        from ...ai.formula_engine import FormulaEngine
+        from ...tools.tool_dispatcher import ToolDispatcher
+        from ...ai.learning.learning_manager import LearningManager
+        from ...core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
+        from ...services.sandbox_executor import SandboxExecutor
+        import networkx as nx
+        from ...core.shared.types.common_types import (
+            OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
+        )
+        from ...hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
+        from .project_coordinator import ProjectCoordinator
+        from ...managers.agent_manager import AgentManager
+        from ...hsp.connector import HSPConnector
+        print("Relative imports successful in dialogue_manager")
+    except ImportError as e2:
+        print(f"Relative import also failed in dialogue_manager: {e2}")
+        raise e2
 
 if TYPE_CHECKING:
     pass

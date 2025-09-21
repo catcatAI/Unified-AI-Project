@@ -26,7 +26,7 @@ sys.path.insert(0, str(backend_path / "src"))
 
 # 导入路径配置模块
 try:
-    from apps.backend.src.path_config import (
+    from path_config import (
         PROJECT_ROOT, 
         DATA_DIR, 
         TRAINING_DIR, 

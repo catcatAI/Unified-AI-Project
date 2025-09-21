@@ -53,6 +53,59 @@ class HAMRecallResult:
             metadata=data.get("metadata")
         )
 
+
+class MemoryMetadata:
+    def __init__(self, created_at: str, updated_at: str, importance_score: float, 
+                 tags: List[str], data_type: str):
+        self.created_at = created_at
+        self.updated_at = updated_at
+        self.importance_score = importance_score
+        self.tags = tags
+        self.data_type = data_type
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "importance_score": self.importance_score,
+            "tags": self.tags,
+            "data_type": self.data_type
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        return cls(
+            created_at=data["created_at"],
+            updated_at=data["updated_at"],
+            importance_score=data["importance_score"],
+            tags=data["tags"],
+            data_type=data["data_type"]
+        )
+
+
+class MemoryItem:
+    def __init__(self, id: str, content: str, metadata: MemoryMetadata):
+        self.id = id
+        self.content = content
+        self.metadata = metadata
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "content": self.content,
+            "metadata": self.metadata.to_dict() if self.metadata else None
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        metadata = MemoryMetadata.from_dict(data["metadata"]) if data.get("metadata") else None
+        return cls(
+            id=data["id"],
+            content=data["content"],
+            metadata=metadata
+        )
+
+
 class DialogueMemoryEntryMetadata:
     def __init__(self,
                  timestamp: datetime,

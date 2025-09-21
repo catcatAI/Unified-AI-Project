@@ -31,8 +31,8 @@ def load_simulated_resources(config_path: str = "configs/simulated_resources.yam
     """
     global _simulated_resources
     if _simulated_resources is None:
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-        full_config_path = os.path.join(project_root, config_path)
+        backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        full_config_path = os.path.join(backend_root, config_path)
         with open(full_config_path, 'r') as f:
             _simulated_resources = yaml.safe_load(f)
     return _simulated_resources
@@ -50,7 +50,9 @@ def is_demo_mode() -> bool:
     Checks if the application is running in demo mode.
     """
     config = get_config()
-    return config.get("use_simulated_resources", False)
+    # Check in the ai_models section where use_simulated_resources is defined
+    ai_models_config = config.get("ai_models", {})
+    return ai_models_config.get("use_simulated_resources", False)
 
 def get_mock_placeholder_value(placeholder_type: str, placeholder_key: str) -> Any:
     """

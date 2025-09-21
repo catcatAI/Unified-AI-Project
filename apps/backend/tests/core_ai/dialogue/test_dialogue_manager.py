@@ -7,9 +7,7 @@ from unittest.mock import AsyncMock
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_get_simple_response_project_trigger(mock_core_services):
     """
     Tests that a user input starting with the project trigger
@@ -42,9 +40,6 @@ from apps.backend.src.core.shared.types.common_types import ToolDispatcherRespon
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_get_simple_response_standard_flow(mock_core_services):
     """
     Tests the standard dialogue flow that results in a simple response
@@ -96,9 +91,6 @@ async def test_get_simple_response_standard_flow(mock_core_services):
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_start_session_greeting(mock_core_services):
     """
     Tests that starting a new session returns the correct greeting
@@ -125,9 +117,6 @@ async def test_start_session_greeting(mock_core_services):
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_incoming_hsp_task_result(mock_core_services):
     """
     Tests that an incoming HSP task result is correctly delegated
@@ -155,9 +144,6 @@ async def test_handle_incoming_hsp_task_result(mock_core_services):
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_get_simple_response_no_project_trigger(mock_core_services):
     """
     Ensures that if the input does NOT start with the project trigger,
@@ -187,9 +173,6 @@ async def test_get_simple_response_no_project_trigger(mock_core_services):
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_get_simple_response_tool_dispatch_success(mock_core_services):
     """
     Tests the flow where the ToolDispatcher successfully finds and runs a tool.
@@ -226,9 +209,6 @@ async def test_get_simple_response_tool_dispatch_success(mock_core_services):
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_get_simple_response_tool_dispatch_error(mock_core_services):
     """
     Tests the flow where the ToolDispatcher raises an exception,

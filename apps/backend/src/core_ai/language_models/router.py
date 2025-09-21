@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
 
-from apps.backend.src.core_ai.language_models.registry import ModelRegistry, ModelProfile
-from apps.backend.src.services.multi_llm_service import ModelProvider
+from registry import ModelRegistry, ModelProfile
+from services.multi_llm_service import ModelProvider
 
 
 @dataclass

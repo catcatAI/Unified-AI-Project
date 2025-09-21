@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import shutil
 import re
-from apps.backend.src.core.shared.utils.cleanup_utils import cleanup_temp_files, cleanup_cache_data, cleanup_log_files, cleanup_demo_artifacts
+from core.shared.utils.cleanup_utils import cleanup_temp_files, cleanup_cache_data, cleanup_log_files, cleanup_demo_artifacts
 
 logger = logging.getLogger(__name__)
 
@@ -245,6 +245,7 @@ class DemoLearningManager:
             
         except Exception as e:
             logger.error(f"清除操作失敗: {e}")
+    
     
     
     

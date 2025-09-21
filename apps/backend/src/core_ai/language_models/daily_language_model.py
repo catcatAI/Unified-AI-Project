@@ -5,8 +5,8 @@ from datetime import datetime
 from dataclasses import dataclass
 
 # Assuming 'src' is in PYTHONPATH, making 'services' and 'shared' top-level packages
-from apps.backend.src.services.multi_llm_service import MultiLLMService, ChatMessage, LLMResponse, ModelProvider
-from apps.backend.src.core_ai.compression.alpha_deep_model import DNADataChain
+from ...core.services.multi_llm_service import MultiLLMService, ChatMessage, LLMResponse, ModelProvider
+from ..compression.alpha_deep_model import DNADataChain
 
 @dataclass
 class InteractionRecord:

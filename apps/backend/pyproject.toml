@@ -82,6 +82,7 @@ markers = [
     "ai_core: marks tests for core AI functionality",
     "timeout: marks tests with a timeout",
     "integration: marks tests that require external services or integration setup",
+    "flaky: marks tests as flaky (random failures)",
 ]
 filterwarnings = [ "ignore::DeprecationWarning", "ignore::PendingDeprecationWarning",]
 addopts = "-v --tb=short --strict-markers"

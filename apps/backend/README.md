@@ -8,6 +8,14 @@ This application contains the core Python backend services that power Angela, th
 - API endpoints (FastAPI)
 - Integrations with external services
 - Data processing and management
+- AI Agent System with multiple specialized agents
+- HSP (Heterogeneous Service Protocol) for inter-module communication
+- HAM (Hierarchical Abstract Memory) for memory management
+- Training system with auto, collaborative, and incremental learning
+- Context management system with tool tracking and performance analysis
+- Automated defect detection and testing optimization
+- Complete concept models implementation (Environment Simulator, Causal Reasoning Engine, Adaptive Learning Controller, Alpha Deep Model)
+- Enhanced error handling and logging mechanisms
 
 ## Getting Started
 

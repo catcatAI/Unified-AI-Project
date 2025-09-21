@@ -1,48 +1,138 @@
 # 專案文件更新計畫報告
 
-生成時間: 2025-09-12 23:12:48
+生成時間: 2025-09-19 07:51:23
 
 ## 概況
-- 總文檔數: 914
-- 待更新: 897
+- 總文檔數: 1035
+- 待更新: 1035
 - 更新中: 0
-- 已更新: 5
+- 已更新: 0
 - 需審查: 0
-- 無需更新: 12
+- 無需更新: 0
 
 ## 文檔分組
 
 ### [根目錄]
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
+| AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md | 待更新 | 0 | 未更新 |
+| AUDIO_SERVICE_FIX_REPORT.md | 待更新 | 0 | 未更新 |
+| AUTOMATED_UPDATE_PROCESS_DESIGN.md | 待更新 | 0 | 未更新 |
 | AUTO_FIX_EVALUATION_REPORT.md | 待更新 | 0 | 未更新 |
+| BACKUP_LOG.md | 待更新 | 0 | 未更新 |
+| BACKUP_RECOVERY_STANDARD_PROCEDURE.md | 待更新 | 0 | 未更新 |
+| BACKUP_RECOVERY_TASK_LIST.md | 待更新 | 0 | 未更新 |
 | BATCH_FILES_README.md | 待更新 | 0 | 未更新 |
+| BATCH_SCRIPTS_SECURITY_TEST_REPORT.md | 待更新 | 1 | 未更新 |
+| BATCH_SCRIPTS_TASK_LIST.md | 待更新 | 0 | 未更新 |
+| BAT_FILES_ANALYSIS.md | 待更新 | 0 | 未更新 |
+| BAT_FILES_DUPLICATES.md | 待更新 | 0 | 未更新 |
+| BAT_FILES_FLASH_FIX.md | 待更新 | 0 | 未更新 |
+| BAT_FILES_FLASH_FIX_COMPLETE.md | 待更新 | 0 | 未更新 |
+| BAT_FILES_FLASH_FIX_FINAL.md | 待更新 | 0 | 未更新 |
+| BAT_FILES_FLASH_FIX_REPAIR.md | 待更新 | 0 | 未更新 |
+| BAT_FILES_FLASH_FIX_SUMMARY.md | 待更新 | 0 | 未更新 |
+| BAT_FILES_IMPLEMENTATION_SUMMARY.md | 待更新 | 0 | 未更新 |
+| BAT_FILES_OPTIMIZATION_PLAN.md | 待更新 | 0 | 未更新 |
+| BAT_FILES_OPTIMIZATION_SUMMARY.md | 待更新 | 0 | 未更新 |
+| BAT_FILES_OPTIMIZATION_VERIFICATION.md | 待更新 | 0 | 未更新 |
+| BRANCH_MERGE_AND_AUTOMATION_SUMMARY.md | 待更新 | 0 | 未更新 |
+| BRANCH_MERGE_EXECUTION_PLAN.md | 待更新 | 0 | 未更新 |
 | CHANGELOG.md | 待更新 | 0 | 未更新 |
-| DOCUMENT_UPDATE_GUIDE.md | 已更新 | 0 | 2025-09-12 20:20 |
+| CLI_TOOLS_TASK_LIST.md | 待更新 | 0 | 未更新 |
+| COLLABORATIVE_TRAINING_FIX_REPORT.md | 待更新 | 0 | 未更新 |
+| COMPLETE_CONTEXT_SYSTEM_UPGRADE_PLAN.md | 待更新 | 0 | 未更新 |
+| COMPREHENSIVE_PROJECT_SUMMARY.md | 待更新 | 0 | 未更新 |
+| COMPREHENSIVE_TESTING_AND_FIXING_PLAN.md | 待更新 | 1 | 未更新 |
+| CONCEPT_MODELS_FINAL_REPORT.md | 待更新 | 0 | 未更新 |
+| CONTEXT_MANAGER_FRAMEWORK_DESIGN.md | 待更新 | 0 | 未更新 |
+| CONTEXT_MANAGER_IMPLEMENTATION_PLAN.md | 待更新 | 0 | 未更新 |
+| CONTEXT_SYSTEM_ARCHITECTURE_DESIGN.md | 待更新 | 0 | 未更新 |
+| CONTEXT_SYSTEM_IMPLEMENTATION_SUMMARY.md | 待更新 | 0 | 未更新 |
+| CONTEXT_SYSTEM_PHASE2_IMPLEMENTATION_PLAN.md | 待更新 | 0 | 未更新 |
+| CORE_SERVICE_MANAGER_IMPROVEMENT_SUMMARY.md | 待更新 | 0 | 未更新 |
+| DESKTOP_APP_TASK_LIST.md | 待更新 | 0 | 未更新 |
+| DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md | 待更新 | 0 | 未更新 |
+| DOCUMENT_UPDATE_GUIDE.md | 待更新 | 0 | 未更新 |
+| ENHANCEMENT_SUMMARY_REPORT.md | 待更新 | 0 | 未更新 |
 | EXECUTION_ISSUES_ANALYSIS_REPORT.md | 待更新 | 0 | 未更新 |
 | EXECUTION_METHOD_OPTIMIZATION_REPORT_2025_09_06.md | 待更新 | 0 | 未更新 |
+| EXECUTION_PLAN_ADVANCED_TESTING_DEBUGGING.md | 待更新 | 1 | 未更新 |
+| EXECUTION_PLAN_AI_AGENT_SYSTEM.md | 待更新 | 0 | 未更新 |
+| EXECUTION_PLAN_CORE_SERVICE_MANAGER.md | 待更新 | 0 | 未更新 |
+| EXECUTION_PLAN_HSP_PROTOCOL.md | 待更新 | 0 | 未更新 |
+| EXECUTION_PLAN_MEMORY_SYSTEM.md | 待更新 | 0 | 未更新 |
+| EXECUTION_PLAN_SYSTEM_INTEGRATION_TEST.md | 待更新 | 1 | 未更新 |
+| EXECUTION_PLAN_TESTING_SYSTEM.md | 待更新 | 1 | 未更新 |
+| EXECUTION_PLAN_TEST_INFRASTRUCTURE.md | 待更新 | 1 | 未更新 |
+| EXECUTION_PLAN_TRAINING_SYSTEM.md | 待更新 | 0 | 未更新 |
+| FILE_RECOVERY_REPORT.md | 待更新 | 0 | 未更新 |
+| FILE_RECOVERY_SUMMARY.md | 待更新 | 0 | 未更新 |
+| FINAL_PROJECT_SUMMARY.md | 待更新 | 0 | 未更新 |
+| FINAL_TEST_FIXES_SUMMARY.md | 待更新 | 1 | 未更新 |
+| FINAL_TRAINING_READINESS_REPORT.md | 待更新 | 0 | 未更新 |
+| FUTURE_IMPROVEMENT_EXECUTION_PLAN.md | 待更新 | 0 | 未更新 |
+| HSP_PROTOCOL_IMPROVEMENT_SUMMARY.md | 待更新 | 0 | 未更新 |
+| HSP_TEST_FIXES_SUMMARY.md | 待更新 | 1 | 未更新 |
 | IFLOW.md | 待更新 | 0 | 未更新 |
+| IMPROVEMENT_PLAN_EXECUTION_SUMMARY.md | 待更新 | 0 | 未更新 |
 | INSTALL_DOC_TOOLS.md | 待更新 | 0 | 未更新 |
+| INTEGRATION_TEST_FRAMEWORK_DESIGN.md | 待更新 | 1 | 未更新 |
+| PROBLEM_SOLVED_REPORT.md | 待更新 | 0 | 未更新 |
+| PROJECT_ANALYSIS_SUMMARY.md | 待更新 | 0 | 未更新 |
 | PROJECT_CLEANUP_COMPLETION_REPORT_2025_09_06.md | 待更新 | 0 | 未更新 |
+| PROJECT_COMPLETION_REPORT.md | 待更新 | 0 | 未更新 |
+| PROJECT_COMPLETION_STATUS.md | 待更新 | 0 | 未更新 |
+| PROJECT_CONTEXT_SYSTEM_COMPLETION_REPORT.md | 待更新 | 0 | 未更新 |
+| PROJECT_DELIVERY_CHECKLIST.md | 待更新 | 0 | 未更新 |
+| PROJECT_ENHANCEMENT_SUMMARY.md | 待更新 | 0 | 未更新 |
+| PROJECT_IMPLEMENTATION_SUMMARY.md | 待更新 | 0 | 未更新 |
+| PROJECT_IMPLEMENTATION_TRACKER.md | 待更新 | 0 | 未更新 |
 | PROJECT_ISSUE_FIX_MAPPING.md | 待更新 | 0 | 未更新 |
 | PROJECT_ISSUE_FIX_PLAN.md | 待更新 | 0 | 未更新 |
-| PROJECT_OVERVIEW.md | 已更新 | 0 | 2025-09-12 20:20 |
+| PROJECT_OVERVIEW.md | 待更新 | 0 | 未更新 |
+| PROJECT_PLAN_ANALYSIS_AND_SUMMARY_REPORT.md | 待更新 | 0 | 未更新 |
+| PROJECT_STATUS_REPORT.md | 待更新 | 0 | 未更新 |
 | PROJECT_STATUS_SUMMARY_2025_09_06.md | 待更新 | 0 | 未更新 |
-| README.md | 待更新 | 12 | 未更新 |
+| PROJECT_TEST_FIXES_SUMMARY.md | 待更新 | 1 | 未更新 |
+| PROJECT_TRAINING_READY.md | 待更新 | 0 | 未更新 |
+| PROJECT_WEEKLY_REPORT_TEMPLATE.md | 待更新 | 0 | 未更新 |
+| README.md | 待更新 | 59 | 未更新 |
 | READY_FOR_TRAINING.md | 待更新 | 0 | 未更新 |
 | SIMPLE_GUIDE.md | 待更新 | 0 | 未更新 |
+| SYSTEM_INTEGRATION_ANALYSIS.md | 待更新 | 0 | 未更新 |
+| SYSTEM_INTEGRATION_TEST_ENHANCEMENT_PLAN.md | 待更新 | 1 | 未更新 |
+| SYSTEM_INTEGRATION_TEST_EXECUTION_SUMMARY.md | 待更新 | 1 | 未更新 |
+| SYSTEM_INTEGRATION_TEST_IMPROVEMENT_PLAN.md | 待更新 | 1 | 未更新 |
+| TEST_FIXES_SUMMARY.md | 待更新 | 1 | 未更新 |
+| TEST_FIXING_STRATEGY.md | 待更新 | 1 | 未更新 |
+| TEST_RESULT_PROCESSING_PROJECT_SUMMARY.md | 待更新 | 1 | 未更新 |
+| TOOL_CALL_CHAIN_TRACKING_DESIGN.md | 待更新 | 0 | 未更新 |
+| TOOL_CATEGORY_SYSTEM_DESIGN.md | 待更新 | 0 | 未更新 |
+| TOOL_CONTEXT_DATA_MODEL_DESIGN.md | 待更新 | 0 | 未更新 |
+| TRAINING_MANAGER_DUPLICATE_INFO_FIX.md | 待更新 | 0 | 未更新 |
+| TRAINING_MANAGER_FINAL_PATH_FIXES.md | 待更新 | 0 | 未更新 |
+| TRAINING_MANAGER_PATH_FIXES.md | 待更新 | 0 | 未更新 |
+| TRAINING_READINESS_REPORT.md | 待更新 | 0 | 未更新 |
+| TRAINING_SCRIPTS_FIX_REPORT.md | 待更新 | 0 | 未更新 |
+| UNIFIED_AI_IMPROVEMENT_PLAN.md | 待更新 | 0 | 未更新 |
 | UNIFIED_EXECUTION_GUIDE.md | 待更新 | 0 | 未更新 |
 | crisis_log.txt | 待更新 | 0 | 未更新 |
 | doc_update_report.md | 待更新 | 0 | 未更新 |
+| dxdiag_output.txt | 待更新 | 0 | 未更新 |
+| pr-125-changed-files.txt | 待更新 | 0 | 未更新 |
+| pr-125-diff-stat.txt | 待更新 | 0 | 未更新 |
 | requirements.txt | 待更新 | 0 | 未更新 |
-| test_report.md | 待更新 | 0 | 未更新 |
+| test_modules_output.txt | 待更新 | 2 | 未更新 |
+| test_report.md | 待更新 | 1 | 未更新 |
+| test_suite_optimization_summary.md | 待更新 | 1 | 未更新 |
 
 ### .qoder/quests
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
 | -cuserscataiappdatalocalprogramspythonpython312libunittes....md | 待更新 | 0 | 未更新 |
 | batch-file-fixing.md | 待更新 | 0 | 未更新 |
-| check-project.md | 待更新 | 0 | 未更新 |
+| check-project-issues.md | 待更新 | 0 | 未更新 |
 | content-analysis-module-test-failure.md | 待更新 | 0 | 未更新 |
 | graphical-launcher-development.md | 待更新 | 0 | 未更新 |
 | issue-identification-and-resolution.md | 待更新 | 0 | 未更新 |
@@ -53,6 +143,7 @@
 | project-data-processing-and-ai-integration.md | 待更新 | 0 | 未更新 |
 | project-data-processing-and-terminal-integration.md | 待更新 | 0 | 未更新 |
 | project-feature-expansion-and-editor-integration.md | 待更新 | 0 | 未更新 |
+| project-issue-resolution.md | 待更新 | 0 | 未更新 |
 | project-organization-and-optimization.md | 待更新 | 0 | 未更新 |
 | project-test-debug.md | 待更新 | 0 | 未更新 |
 | test-failure-analysis.md | 待更新 | 0 | 未更新 |
@@ -69,7 +160,8 @@
 | ---- | ---- | ---------- | -------- |
 | CONTENT_ANALYSIS_MODULE_TEST_FIXES_SUMMARY.md | 待更新 | 2 | 未更新 |
 | FINAL_TEST_FIXES_SUMMARY.md | 待更新 | 3 | 未更新 |
-| README.md | 待更新 | 5107 | 未更新 |
+| PLACEHOLDER_REPORT.md | 待更新 | 0 | 未更新 |
+| README.md | 待更新 | 5897 | 未更新 |
 | TEST_FIXES_SUMMARY.md | 待更新 | 2 | 未更新 |
 | agi_integration_test_report_20250824_152621.txt | 待更新 | 0 | 未更新 |
 | crisis_log.txt | 待更新 | 0 | 未更新 |
@@ -82,10 +174,12 @@
 ### apps/backend/scripts
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
-| COMPLETION_REPORT.md | 已更新 | 0 | 2025-09-12 20:20 |
-| README.md | 已更新 | 24 | 2025-09-12 20:20 |
+| COMPLETION_REPORT.md | 待更新 | 0 | 未更新 |
+| README.md | 待更新 | 41 | 未更新 |
 | README_separated_test_fix.md | 待更新 | 0 | 未更新 |
-| USAGE_GUIDE.md | 已更新 | 0 | 2025-09-12 20:20 |
+| TEST_RESULT_PROCESSING_INTEGRATION_GUIDE.md | 待更新 | 0 | 未更新 |
+| TEST_RESULT_PROCESSING_README.md | 待更新 | 0 | 未更新 |
+| USAGE_GUIDE.md | 待更新 | 0 | 未更新 |
 
 ### apps/backend/src
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
@@ -106,6 +200,12 @@
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
 | README.md | 待更新 | 2 | 未更新 |
+
+### apps/backend/src/core_ai/context
+| 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
+| ---- | ---- | ---------- | -------- |
+| README.md | 待更新 | 16 | 未更新 |
+| requirements.txt | 待更新 | 0 | 未更新 |
 
 ### apps/backend/src/docs/technical_design
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
@@ -135,7 +235,7 @@
 ### apps/desktop-app
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
-| README.md | 無需更新 | 51 | 2025-09-12 21:57 |
+| README.md | 待更新 | 51 | 未更新 |
 
 ### apps/desktop-app/docs
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
@@ -154,10 +254,10 @@
 ### apps/frontend-dashboard
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
-| CONSOLE_ERRORS_FIXED.md | 無需更新 | 0 | 2025-09-12 21:57 |
-| DATA_INTEGRATION_SUMMARY.md | 無需更新 | 0 | 2025-09-12 21:57 |
-| ERROR_FIXES_SUMMARY.md | 無需更新 | 0 | 2025-09-12 21:57 |
-| README.md | 無需更新 | 99 | 2025-09-12 21:57 |
+| CONSOLE_ERRORS_FIXED.md | 待更新 | 0 | 未更新 |
+| DATA_INTEGRATION_SUMMARY.md | 待更新 | 0 | 未更新 |
+| ERROR_FIXES_SUMMARY.md | 待更新 | 0 | 未更新 |
+| README.md | 待更新 | 99 | 未更新 |
 
 ### apps/frontend-dashboard/docs
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
@@ -687,6 +787,27 @@
 | ---- | ---- | ---------- | -------- |
 | 2025-08-20-hsp-endpoints-update.md | 待更新 | 0 | 未更新 |
 
+### backup_20250901
+| 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
+| ---- | ---- | ---------- | -------- |
+| CHANGELOG.md | 待更新 | 0 | 未更新 |
+| README.md | 待更新 | 124 | 未更新 |
+
+### backup_20250901_2/tools/logic_model
+| 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
+| ---- | ---- | ---------- | -------- |
+| README.md | 待更新 | 8 | 未更新 |
+
+### backup_20250901_2/tools/math_model
+| 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
+| ---- | ---- | ---------- | -------- |
+| README.md | 待更新 | 6 | 未更新 |
+
+### backup_20250901_2/tools/translation_model
+| 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
+| ---- | ---- | ---------- | -------- |
+| README.md | 待更新 | 1 | 未更新 |
+
 ### data
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
@@ -704,6 +825,7 @@
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
 | API_ENDPOINTS.md | 待更新 | 0 | 未更新 |
+| AUTO_DYNAMIC_CONTROL.md | 待更新 | 0 | 未更新 |
 | BATCH_SCRIPTS_AUDIT_REPORT.md | 待更新 | 0 | 未更新 |
 | BATCH_SCRIPTS_CONSOLIDATION_FINAL_REPORT.md | 待更新 | 0 | 未更新 |
 | BATCH_SCRIPTS_CONSOLIDATION_PLAN.md | 待更新 | 0 | 未更新 |
@@ -727,6 +849,7 @@
 | DOCUMENTATION_ORGANIZATION_PLAN.md | 待更新 | 0 | 未更新 |
 | DOCUMENTATION_REORGANIZATION_PLAN.md | 待更新 | 0 | 未更新 |
 | DOCUMENTATION_UPDATE_SUMMARY.md | 待更新 | 0 | 未更新 |
+| DYNAMIC_LOADING_TECHNIQUES.md | 待更新 | 0 | 未更新 |
 | Documentation_Update_Status.md | 待更新 | 0 | 未更新 |
 | FINAL_BAT_CHECK_REPORT.md | 待更新 | 0 | 未更新 |
 | FINAL_IMPLEMENTATION_SUMMARY.md | 待更新 | 0 | 未更新 |
@@ -738,10 +861,12 @@
 | GIT_AND_PROJECT_MANAGEMENT.md | 待更新 | 0 | 未更新 |
 | HAMMemory.md | 待更新 | 0 | 未更新 |
 | HAM_AUTO_DELETE_IMPROVEMENT.md | 待更新 | 0 | 未更新 |
+| HARDWARE_OPTIMIZATION.md | 待更新 | 0 | 未更新 |
 | HSP.md | 待更新 | 0 | 未更新 |
 | IMPLEMENTATION_STATUS.md | 待更新 | 0 | 未更新 |
 | MANUAL_TESTING_REQUIRED.md | 待更新 | 0 | 未更新 |
 | PLACEHOLDER_REPORT.md | 待更新 | 0 | 未更新 |
+| PORT_MANAGEMENT_STRATEGY.md | 待更新 | 0 | 未更新 |
 | PROJECTS_COLLABORATION_GUIDE_Version2.md | 待更新 | 0 | 未更新 |
 | PROJECT_CLEANUP_FINAL_REPORT.md | 待更新 | 0 | 未更新 |
 | PROJECT_CLEANUP_PLAN.md | 待更新 | 0 | 未更新 |
@@ -776,8 +901,15 @@
 | UNIFIED_DOCUMENTATION_INDEX.md | 待更新 | 0 | 未更新 |
 | USER_GUIDE.md | 待更新 | 0 | 未更新 |
 | VALUE_TYPES.md | 待更新 | 0 | 未更新 |
+| enhanced_fault_tolerance_design.md | 待更新 | 0 | 未更新 |
+| enhanced_fault_tolerance_implementation.md | 待更新 | 0 | 未更新 |
 | implementation_plan.md | 待更新 | 0 | 未更新 |
+| integration_test_framework_design.md | 待更新 | 0 | 未更新 |
+| test_quality_evaluation_standards.md | 待更新 | 0 | 未更新 |
 | test_report.md | 待更新 | 0 | 未更新 |
+| testing_system_enhancement_summary.md | 待更新 | 0 | 未更新 |
+| testing_system_improvement_completion_report.md | 待更新 | 0 | 未更新 |
+| testing_system_improvement_progress.md | 待更新 | 0 | 未更新 |
 
 ### docs/00-overview
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
@@ -1196,6 +1328,15 @@
 | ---- | ---- | ---------- | -------- |
 | README.md | 待更新 | 0 | 未更新 |
 
+### docs/archive/plans
+| 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
+| ---- | ---- | ---------- | -------- |
+| 2025-09-18_EXECUTION_PLAN_AI_AGENT_SYSTEM.md | 待更新 | 0 | 未更新 |
+| 2025-09-18_EXECUTION_PLAN_CORE_SERVICE_MANAGER.md | 待更新 | 0 | 未更新 |
+| 2025-09-18_EXECUTION_PLAN_HSP_PROTOCOL.md | 待更新 | 0 | 未更新 |
+| 2025-09-18_EXECUTION_PLAN_MEMORY_SYSTEM.md | 待更新 | 0 | 未更新 |
+| 2025-09-18_EXECUTION_PLAN_TRAINING_SYSTEM.md | 待更新 | 0 | 未更新 |
+
 ### docs/developer-guide
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
@@ -1321,32 +1462,40 @@
 ### packages/cli
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
-| README.md | 無需更新 | 12 | 2025-09-12 22:28 |
+| README.md | 待更新 | 14 | 未更新 |
 
 ### packages/ui
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
 | README.md | 待更新 | 31 | 未更新 |
 
+### tests
+| 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
+| ---- | ---- | ---------- | -------- |
+| README.md | 待更新 | 11 | 未更新 |
+
 ### tools
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
-| README.md | 無需更新 | 67 | 2025-09-12 22:28 |
-| README_DOC_TOOLS.md | 無需更新 | 0 | 2025-09-12 22:28 |
+| README.md | 待更新 | 70 | 未更新 |
+| README_DOC_TOOLS.md | 待更新 | 0 | 未更新 |
 
 ### training
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |
 | ---- | ---- | ---------- | -------- |
-| collaborative_training_completion_report.md | 無需更新 | 0 | 2025-09-12 21:29 |
-| collaborative_training_implementation_summary.md | 無需更新 | 0 | 2025-09-12 21:29 |
+| MODEL_VERSION_CONTROL_DESIGN.md | 待更新 | 0 | 未更新 |
+| PRIORITY_SCHEDULING_DESIGN.md | 待更新 | 0 | 未更新 |
+| README.md | 待更新 | 58 | 未更新 |
+| collaborative_training_completion_report.md | 待更新 | 0 | 未更新 |
+| collaborative_training_implementation_summary.md | 待更新 | 0 | 未更新 |
 | enhancement_summary.md | 待更新 | 0 | 未更新 |
-| incremental_learning_design.md | 無需更新 | 0 | 2025-09-12 21:29 |
+| incremental_learning_design.md | 待更新 | 0 | 未更新 |
 | incremental_learning_final_report.md | 待更新 | 0 | 未更新 |
 | incremental_learning_summary.md | 待更新 | 0 | 未更新 |
 | integration_test_report.md | 待更新 | 0 | 未更新 |
 | parallel_scanning_optimization_report.md | 待更新 | 0 | 未更新 |
 | performance_optimization_report.md | 待更新 | 0 | 未更新 |
-| project_completion_report.md | 無需更新 | 0 | 2025-09-12 21:29 |
+| project_completion_report.md | 待更新 | 0 | 未更新 |
 
 ### training/reports
 | 文檔 | 狀態 | 關聯代碼數 | 最後更新 |

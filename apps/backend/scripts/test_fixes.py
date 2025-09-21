@@ -9,12 +9,14 @@ from pathlib import Path
 
 # 添加项目路径
 PROJECT_ROOT = Path(__file__).parent.parent
+SRC_PATH = PROJECT_ROOT / "src"
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(SRC_PATH))
 
 def test_dataclass_import():
     """测试dataclass导入修复"""
     try:
-        from apps.backend.src.tools.math_model.model import MathModelResult
+        from tools.math_model.model import MathModelResult
         print("✅ dataclass导入修复成功")
         return True
     except Exception as e:
@@ -24,7 +26,7 @@ def test_dataclass_import():
 def test_rovo_dev_connector():
     """测试RovoDevConnector修复"""
     try:
-        from apps.backend.src.integrations.rovo_dev_connector import RovoDevConnector
+        from integrations.rovo_dev_connector import RovoDevConnector
         print("✅ RovoDevConnector导入修复成功")
         return True
     except Exception as e:
@@ -34,7 +36,7 @@ def test_rovo_dev_connector():
 def test_atlassian_integration_import():
     """测试Atlassian集成导入修复"""
     try:
-        from apps.backend.src.services.main_api_server import app
+        from services.main_api_server import app
         print("✅ Atlassian集成导入修复成功")
         return True
     except Exception as e:
@@ -45,19 +47,19 @@ def test_test_file_imports():
     """测试测试文件导入修复"""
     try:
         # 测试Atlassian集成测试文件
-        from apps.backend.tests.integration.test_atlassian_integration import TestAtlassianIntegration
+        from tests.integration.test_atlassian_integration import TestAtlassianIntegration
         print("✅ Atlassian集成测试文件导入修复成功")
         
         # 测试Hot endpoints测试文件
-        from apps.backend.tests.services.test_hot_endpoints import test_hot_status_endpoint_basic_structure
+        from tests.services.test_hot_endpoints import test_hot_status_endpoint_basic_structure
         print("✅ Hot endpoints测试文件导入修复成功")
         
         # 测试Main API server测试文件
-        from apps.backend.tests.services.test_main_api_server import test_read_main
+        from tests.services.test_main_api_server import test_read_main
         print("✅ Main API server测试文件导入修复成功")
         
         # 测试Main API server HSP测试文件
-        from apps.backend.tests.services.test_main_api_server_hsp import TestHSPEndpoints
+        from tests.services.test_main_api_server_hsp import TestHSPEndpoints
         print("✅ Main API server HSP测试文件导入修复成功")
         
         return True

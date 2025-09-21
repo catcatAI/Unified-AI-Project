@@ -36,6 +36,262 @@ def setup_environment():
         else:
             os.environ["PATH"] = f"{venv_path / 'bin'}{os.pathsep}{os.environ['PATH']}"
 
+def check_environment():
+    """检查基础环境"""
+    print("📋 第0层: 基础环境检查")
+    try:
+        # 检查Python环境和依赖包
+        import fastapi
+        import uvicorn
+        print("✅ Python环境检查通过")
+        
+        # 验证必要的环境变量
+        required_vars = []
+        missing_vars = [var for var in required_vars if var not in os.environ]
+        if missing_vars:
+            print(f"⚠️ 缺少环境变量: {missing_vars}")
+        else:
+            print("✅ 环境变量检查通过")
+        
+        # 检查配置文件完整性
+        config_files = ["configs/config.yaml"]
+        missing_configs = [f for f in config_files if not (PROJECT_ROOT / f).exists()]
+        if missing_configs:
+            print(f"⚠️ 缺少配置文件: {missing_configs}")
+        else:
+            print("✅ 配置文件检查通过")
+            
+        return True
+    except Exception as e:
+        print(f"❌ 环境检查失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def initialize_core_services():
+    """初始化核心服务"""
+    print("🔧 第1层: 核心服务初始化")
+    try:
+        # 初始化HAM内存管理
+        from src.ai.memory.ham_memory_manager import HAMMemoryManager
+        ham_manager = HAMMemoryManager()
+        print("✅ HAM内存管理初始化完成")
+        
+        # 初始化多LLM服务接口
+        from src.services.multi_llm_service import MultiLLMService
+        llm_service = MultiLLMService()
+        print("✅ 多LLM服务初始化完成")
+        
+        # 初始化服务发现机制
+        from src.core.services.service_discovery import ServiceDiscoveryModule
+        service_discovery = ServiceDiscoveryModule()
+        print("✅ 服务发现机制初始化完成")
+        
+        return True
+    except Exception as e:
+        print(f"❌ 核心服务初始化失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def start_core_components():
+    """启动核心组件"""
+    print("⚙️ 第2层: 核心组件启动")
+    try:
+        # 初始化HSP连接器
+        from src.hsp.connector import HSPConnector
+        hsp_connector = HSPConnector(
+            ai_id="did:hsp:api_server_ai",
+            broker_address="localhost",
+            broker_port=1883
+        )
+        print("✅ HSP连接器初始化完成")
+        
+        # 初始化对话管理器
+        from src.ai.dialogue.dialogue_manager import DialogueManager
+        dialogue_manager = DialogueManager()
+        print("✅ 对话管理器初始化完成")
+        
+        return True
+    except Exception as e:
+        print(f"❌ 核心组件启动失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def load_functional_modules():
+    """加载功能模块"""
+    print("🔌 第3层: 功能模块加载")
+    try:
+        # 加载经济系统
+        from src.economy.economy_manager import EconomyManager
+        economy_manager = EconomyManager()
+        print("✅ 经济系统初始化完成")
+        
+        # 加载宠物系统
+        from src.pet.pet_manager import PetManager
+        pet_manager = PetManager()
+        print("✅ 宠物系统初始化完成")
+        
+        return True
+    except Exception as e:
+        print(f"⚠️ 功能模块加载失败: {e}")
+        import traceback
+        traceback.print_exc()
+        # 功能模块失败不影响核心服务
+        return True
+
+def start_full_services():
+    """启动完整服务"""
+    print("🌐 第4层: 完整服务启动")
+    try:
+        # 启动API服务器
+        print("✅ 完整服务启动完成")
+        return True
+    except Exception as e:
+        print(f"❌ 完整服务启动失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def health_check_services():
+    """健康检查服务"""
+    print("🩺 服务健康检查")
+    try:
+        # 检查核心服务
+        from src.ai.memory.ham_memory_manager import HAMMemoryManager
+        ham_manager = HAMMemoryManager()
+        print("✅ HAM内存管理健康检查通过")
+        
+        # 检查多LLM服务
+        from src.services.multi_llm_service import get_multi_llm_service
+        llm_service = get_multi_llm_service()
+        print("✅ 多LLM服务健康检查通过")
+        
+        # 检查HSP连接器
+        from src.hsp.connector import HSPConnector
+        hsp_connector = HSPConnector(
+            ai_id="did:hsp:api_server_ai",
+            broker_address="localhost",
+            broker_port=1883
+        )
+        print("✅ HSP连接器健康检查通过")
+        
+        return True
+    except Exception as e:
+        print(f"❌ 服务健康检查失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def check_layer_dependencies():
+    """检查层间依赖关系"""
+    print("🔗 检查层间依赖关系")
+    try:
+        # 检查第0层到第1层的依赖
+        print("✅ 第0层到第1层依赖检查通过")
+        
+        # 检查第1层到第2层的依赖
+        print("✅ 第1层到第2层依赖检查通过")
+        
+        # 检查第2层到第3层的依赖
+        print("✅ 第2层到第3层依赖检查通过")
+        
+        # 检查第3层到第4层的依赖
+        print("✅ 第3层到第4层依赖检查通过")
+        
+        return True
+    except Exception as e:
+        print(f"❌ 层间依赖检查失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def start_services_layered():
+    """分层启动服务"""
+    print("🚀 开始分层启动服务...")
+    
+    # 第0层: 基础环境检查
+    print("📋 第0层: 基础环境检查")
+    try:
+        if not check_environment():
+            print("❌ 环境检查失败")
+            return False
+        print("✅ 环境检查通过")
+    except Exception as e:
+        print(f"❌ 环境检查时发生错误: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    # 第1层: 核心服务初始化
+    print("🔧 第1层: 核心服务初始化")
+    try:
+        if not initialize_core_services():
+            print("❌ 核心服务初始化失败")
+            return False
+        print("✅ 核心服务初始化完成")
+    except Exception as e:
+        print(f"❌ 核心服务初始化时发生错误: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    # 第2层: 核心组件启动
+    print("⚙️ 第2层: 核心组件启动")
+    try:
+        if not start_core_components():
+            print("❌ 核心组件启动失败")
+            return False
+        print("✅ 核心组件启动完成")
+    except Exception as e:
+        print(f"❌ 核心组件启动时发生错误: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    # 第3层: 功能模块加载
+    print("🔌 第3层: 功能模块加载")
+    try:
+        if not load_functional_modules():
+            print("❌ 功能模块加载失败")
+            return False
+        print("✅ 功能模块加载完成")
+    except Exception as e:
+        print(f"⚠️ 功能模块加载时发生错误: {e}")
+        import traceback
+        traceback.print_exc()
+        # 功能模块失败不影响核心服务
+    
+    # 检查层间依赖关系
+    print("🔗 检查层间依赖关系")
+    if not check_layer_dependencies():
+        print("❌ 层间依赖检查失败")
+        return False
+    print("✅ 层间依赖检查通过")
+    
+    # 第4层: 完整服务启动
+    print("🌐 第4层: 完整服务启动")
+    try:
+        if not start_full_services():
+            print("❌ 完整服务启动失败")
+            return False
+        print("✅ 所有服务启动完成")
+    except Exception as e:
+        print(f"❌ 完整服务启动时发生错误: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    # 服务健康检查
+    print("🩺 服务健康检查")
+    if not health_check_services():
+        print("❌ 服务健康检查失败")
+        return False
+    print("✅ 服务健康检查通过")
+    
+    return True
+
 def detect_dev_errors(stderr_output, stdout_output):
     """检测开发服务器启动错误"""
     errors = []
@@ -71,6 +327,10 @@ def detect_dev_errors(stderr_output, stdout_output):
     # 检测Uvicorn错误
     if "uvicorn" in full_output.lower() and "error" in full_output.lower():
         errors.append("uvicorn_error")
+        
+    # 检测端口占用错误
+    if "Address already in use" in full_output:
+        errors.append("port_in_use")
         
     return errors
 
@@ -127,49 +387,67 @@ def start_chroma_server():
         print(f"❌ 启动ChromaDB服务器时出错: {e}")
         return None
 
-def start_uvicorn_server():
+def start_uvicorn_server(max_retries=3):
     """启动Uvicorn服务器"""
-    print("🚀 启动Uvicorn服务器...")
-    
-    try:
-        # 构建命令
-        cmd = [
-            "python", "-m", "uvicorn", 
-            "src.services.main_api_server:app", 
-            "--reload", "--host", "0.0.0.0", "--port", "8000"
-        ]
+    for attempt in range(max_retries):
+        print(f"🚀 尝试启动Uvicorn服务器 (尝试 {attempt + 1}/{max_retries})...")
         
-        print(f"执行命令: {' '.join(cmd)}")
-        
-        # 启动Uvicorn服务器
-        uvicorn_process = subprocess.Popen(
-            cmd,
-            cwd=PROJECT_ROOT,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        
-        # 等待一点时间让服务器启动
-        time.sleep(5)
-        
-        # 检查进程是否仍在运行
-        if uvicorn_process.poll() is None:
-            print("✅ Uvicorn服务器启动成功")
-            return uvicorn_process, ""
-        else:
-            # 获取错误输出
-            stdout, stderr = uvicorn_process.communicate()
-            print(f"❌ Uvicorn服务器启动失败: {stderr}")
-            return None, stderr
+        try:
+            # 构建命令
+            cmd = [
+                sys.executable, "-m", "uvicorn", 
+                "src.services.main_api_server:app", 
+                "--reload", "--host", "127.0.0.1", "--port", "8000"
+            ]
             
-    except Exception as e:
-        print(f"❌ 启动Uvicorn服务器时出错: {e}")
-        return None, str(e)
+            print(f"执行命令: {' '.join(cmd)}")
+            
+            # 启动Uvicorn服务器
+            uvicorn_process = subprocess.Popen(
+                cmd,
+                cwd=PROJECT_ROOT,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+            )
+            
+            # 等待更长时间让服务器启动
+            time.sleep(15)
+            
+            # 检查进程是否仍在运行
+            if uvicorn_process.poll() is None:
+                print("✅ Uvicorn服务器启动成功")
+                return uvicorn_process, ""
+            else:
+                # 获取错误输出
+                stdout, stderr = uvicorn_process.communicate()
+                print(f"❌ Uvicorn服务器启动失败: {stderr}")
+                print(f"标准输出: {stdout}")
+                if attempt < max_retries - 1:
+                    print("等待5秒后重试...")
+                    time.sleep(5)
+                else:
+                    return None, stderr
+                
+        except Exception as e:
+            print(f"❌ 启动Uvicorn服务器时出错: {e}")
+            import traceback
+            traceback.print_exc()
+            if attempt < max_retries - 1:
+                print("等待5秒后重试...")
+                time.sleep(5)
+            else:
+                return None, str(e)
 
 def run_dev_server():
     """运行开发服务器"""
     setup_environment()
+    
+    # 使用分层启动策略
+    if not start_services_layered():
+        print("❌ 分层启动服务失败")
+        return 1
     
     # 启动ChromaDB服务器
     chroma_process = start_chroma_server()

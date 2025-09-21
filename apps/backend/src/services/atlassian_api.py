@@ -7,10 +7,10 @@ from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 import logging
 
-from apps.backend.src.integrations.atlassian_cli_bridge import AtlassianCLIBridge
-from apps.backend.src.integrations.enhanced_atlassian_bridge import EnhancedAtlassianBridge
-from apps.backend.src.integrations.rovo_dev_connector import RovoDevConnector
-from apps.backend.src.core_services import get_services
+from ..integrations.atlassian_cli_bridge import AtlassianCLIBridge
+from ..integrations.enhanced_atlassian_bridge import EnhancedAtlassianBridge
+from ..integrations.rovo_dev_connector import RovoDevConnector
+from ..core_services import get_services
 
 # 配置日志
 logger = logging.getLogger(__name__)

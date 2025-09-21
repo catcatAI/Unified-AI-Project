@@ -7,8 +7,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from apps.backend.src.ai.agents.base.base_agent import BaseAgent
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+# 修复导入路径
+from ..base.base_agent import BaseAgent
+from ....core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 class DataAnalysisAgent(BaseAgent):
     """
@@ -205,55 +206,45 @@ class DataAnalysisAgent(BaseAgent):
                 results["trend_direction"] = "stable"
         
         if pattern_type == "seasonality" or pattern_type == "basic":
-            # Simple seasonality detection (check for repeating patterns)
-            if len(np_data) >= 4:
-                # Calculate differences between consecutive points
-                diffs = np.diff(np_data)
-                # Check if there's a repeating pattern in differences
-                if len(diffs) >= 4:
-                    # Simple check: see if first and third differences are similar
-                    # and second and fourth differences are similar
-                    if len(diffs) >= 4:
-                        pattern_score = abs(diffs[0] - diffs[2]) + abs(diffs[1] - diffs[3])
-                        results["seasonality_score"] = float(pattern_score)
-                        results["has_seasonality"] = pattern_score < np.std(diffs) * 0.5
+            # Simple seasonality detection using autocorrelation
+            if len(np_data) > 10:  # Need sufficient data points
+                # Calculate autocorrelation for lags 1 to 10
+                autocorr = []
+                for lag in range(1, min(11, len(np_data)//2)):
+                    corr = np.corrcoef(np_data[:-lag], np_data[lag:])[0, 1]
+                    autocorr.append(float(corr))
+                results["autocorrelation"] = autocorr
         
         if pattern_type == "anomaly" or pattern_type == "basic":
             # Simple anomaly detection using z-scores
             mean = np.mean(np_data)
             std = np.std(np_data)
-            z_scores = np.abs((np_data - mean) / std)
-            
-            # Anomalies are points with z-score > 2
-            anomalies = np.where(z_scores > 2)[0]
-            results["anomalies"] = anomalies.tolist()
-            results["anomaly_count"] = len(anomalies)
-            results["anomaly_percentage"] = float(len(anomalies) / len(np_data) * 100)
+            if std > 0:
+                z_scores = np.abs((np_data - mean) / std)
+                # Find points with z-score > 2 (2 standard deviations)
+                anomalies = np.where(z_scores > 2)[0].tolist()
+                results["anomalies"] = anomalies
+                results["anomaly_threshold"] = 2.0
         
         return results
 
-    def _create_success_payload(self, request_id: str, result: Any) -> HSPTaskResultPayload:
+    def _create_success_payload(self, request_id: str, result: Dict[str, Any]) -> HSPTaskResultPayload:
+        """Creates a success result payload."""
         return HSPTaskResultPayload(
             request_id=request_id,
+            executing_ai_id=self.agent_id,
             status="success",
             payload=result
         )
 
     def _create_failure_payload(self, request_id: str, error_code: str, error_message: str) -> HSPTaskResultPayload:
+        """Creates a failure result payload."""
         return HSPTaskResultPayload(
             request_id=request_id,
+            executing_ai_id=self.agent_id,
             status="failure",
-            error_details={"error_code": error_code, "error_message": error_message}
+            error_details={
+                "error_code": error_code,
+                "error_message": error_message
+            }
         )
-
-
-if __name__ == '__main__':
-    async def main():
-        agent_id = f"did:hsp:data_analysis_agent_{uuid.uuid4().hex[:6]}"
-        agent = DataAnalysisAgent(agent_id=agent_id)
-        await agent.start()
-
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nDataAnalysisAgent manually stopped.")

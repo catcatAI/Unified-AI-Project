@@ -24,7 +24,7 @@ from scripts.fix_executor import FixExecutor
 class WorkflowController:
     def __init__(self):
         self.test_runner = TestRunner()
-        self.error_analyzer = ErrorAnalyzer()
+        self.error_analyzer = ErrorAnalyzer("test_results/latest_test_results.json")
         self.fix_executor = FixExecutor()
         self.max_iterations = 3  # 最大迭代次数，防止无限循环
     

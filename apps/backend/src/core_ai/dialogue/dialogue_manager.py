@@ -8,25 +8,25 @@ import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from datetime import datetime, timezone
 
-from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.services.multi_llm_service import MultiLLMService
-from apps.backend.src.core_ai.emotion_system import EmotionSystem
-from apps.backend.src.core_ai.crisis_system import CrisisSystem
-from apps.backend.src.core_ai.time_system import TimeSystem
-from apps.backend.src.core_ai.formula_engine import FormulaEngine
+from apps.backend.src.ai.personality.personality_manager import PersonalityManager
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.core.services.multi_llm_service import MultiLLMService
+from apps.backend.src.ai.emotion.emotion_system import EmotionSystem
+from apps.backend.src.ai.crisis.crisis_system import CrisisSystem
+from apps.backend.src.ai.time.time_system import TimeSystem
+from apps.backend.src.ai.formula_engine import FormulaEngine
 from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
-from apps.backend.src.core_ai.learning.learning_manager import LearningManager
-from apps.backend.src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-from apps.backend.src.services.sandbox_executor import SandboxExecutor
+from apps.backend.src.ai.learning.learning_manager import LearningManager
+from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
+from apps.backend.src.core.services.sandbox_executor import SandboxExecutor
 import networkx as nx
-from apps.backend.src.shared.types.common_types import (
+from apps.backend.src.core.shared.types.common_types import (
     OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
 )
 
 from apps.backend.src.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
 from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator
-from apps.backend.src.core_ai.agent_manager import AgentManager
+from apps.backend.src.managers.agent_manager import AgentManager
 from apps.backend.src.hsp.connector import HSPConnector
 
 if TYPE_CHECKING:

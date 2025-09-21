@@ -6,12 +6,19 @@ const Store = require("electron-store");
 const CHANNELS = require("./src/ipc-channels");
 const ErrorHandler = require("./src/error-handler");
 
+// 端口管理配置
+const PORT_CONFIG = {
+  FRONTEND_DASHBOARD: 3000,
+  DESKTOP_APP: 3001,
+  BACKEND_API: 8000  // 改回端口为8000
+};
+
 const errorHandler = new ErrorHandler();
 
 const store = new Store();
 
 let pythonExecutable = "python";
-let backendApiUrl = "http://localhost:8000"; // Default value
+let backendApiUrl = `http://localhost:${PORT_CONFIG.BACKEND_API}`; // 使用统一的端口配置
 
 function loadDesktopAppConfig() {
   const configPath = path.join(__dirname, "..", "desktop-app-config.json");
@@ -22,18 +29,18 @@ function loadDesktopAppConfig() {
       if (config.backend_api_url) {
         backendApiUrl = config.backend_api_url;
         console.log(`Main Process: Loaded backend API URL: ${backendApiUrl}`);
-        errorHandler.log('info', `Loaded backend API URL: ${backendApiUrl}`);
+        // errorHandler.log('info', `Loaded backend API URL: ${backendApiUrl}`);
       } else {
         console.log("Main Process: Config file found, but backend_api_url not set. Using default.");
-        errorHandler.log('warn', "Config file found, but backend_api_url not set. Using default.");
+        // errorHandler.log('warn', "Config file found, but backend_api_url not set. Using default.");
       }
     } else {
       console.log("Main Process: desktop-app-config.json not found. Using default backend API URL.");
-      errorHandler.log('warn', "desktop-app-config.json not found. Using default backend API URL.");
+      // errorHandler.log('warn', "desktop-app-config.json not found. Using default backend API URL.");
     }
   } catch (error) {
     console.error("Main Process: Error loading desktop app config:", error);
-    errorHandler.log('error', `Error loading desktop app config: ${error.message}`, error);
+    // errorHandler.log('error', `Error loading desktop app config: ${error.message}`, error);
   }
 }
 
@@ -48,20 +55,20 @@ function loadPythonPath() {
         console.log(
           `Main Process: Found Python executable path: ${pythonExecutable}`,
         );
-        errorHandler.log('info', `Found Python executable path: ${pythonExecutable}`);
+        // errorHandler.log('info', `Found Python executable path: ${pythonExecutable}`);
       } else {
         console.log(
           "Main Process: .env file found, but PYTHON_EXECUTABLE not set. Using default 'python'.",
         );
-        errorHandler.log('warn', ".env file found, but PYTHON_EXECUTABLE not set. Using default 'python'.");
+        // errorHandler.log('warn', ".env file found, but PYTHON_EXECUTABLE not set. Using default 'python'.");
       }
     } else {
       console.log("Main Process: .env file not found. Using default 'python'.");
-      errorHandler.log('warn', ".env file not found. Using default 'python'.");
+      // errorHandler.log('warn', ".env file not found. Using default 'python'.");
     }
   } catch (error) {
     console.error("Main Process: Error loading Python path:", error);
-    errorHandler.log('error', `Error loading Python path: ${error.message}`, error);
+    // errorHandler.log('error', `Error loading Python path: ${error.message}`, error);
   }
 }
 

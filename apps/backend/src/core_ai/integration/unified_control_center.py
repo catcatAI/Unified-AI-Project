@@ -6,11 +6,12 @@ import json
 import threading
 import time
 
+# 修复导入路径
 from apps.backend.src.config_loader import get_config
-from apps.backend.src.core_ai.concept_models.environment_simulator import EnvironmentSimulator
-from apps.backend.src.core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
-from apps.backend.src.core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
-from apps.backend.src.core_ai.concept_models.alpha_deep_model import AlphaDeepModel
+from apps.backend.src.core_ai.models.environment_simulator import EnvironmentSimulator
+from apps.backend.src.core_ai.models.causal_reasoning_engine import CausalReasoningEngine
+from apps.backend.src.core_ai.models.adaptive_learning_controller import AdaptiveLearningController
+from apps.backend.src.core_ai.models.alpha_deep_model import AlphaDeepModel
 
 logger = logging.getLogger(__name__)
 
@@ -200,27 +201,18 @@ class UnifiedControlCenter:
             success = completed_models == total_models
             
             self.training_progress['collaborative'] = {
-                'status': 'completed' if success else 'partial_completed',
+                'status': 'completed' if success else 'partial',
                 'start_time': start_time,
                 'end_time': end_time,
                 'training_time': training_time,
                 'progress': 100,
                 'completed_models': completed_models,
                 'total_models': total_models,
-                'message': f'協作式訓練完成: {completed_models}/{total_models} 個模型訓練成功',
-                'model_results': {}
+                'message': f'協作式訓練完成: {completed_models}/{total_models} 個模型成功訓練',
+                'success': success
             }
             
-            # 收集各模型的訓練結果
-            for i, (model_name, _) in enumerate(training_tasks):
-                model_progress = self.get_training_progress(model_name)
-                self.training_progress['collaborative']['model_results'][model_name] = model_progress
-            
-            if success:
-                logger.info(f"✅ 協作式訓練完成，耗時 {training_time:.2f} 秒")
-            else:
-                logger.warning(f"⚠️ 協作式訓練部分完成 ({completed_models}/{total_models})，耗時 {training_time:.2f} 秒")
-            
+            logger.info(f"{'✅' if success else '⚠️'} 協作式訓練完成，耗時 {training_time:.2f} 秒")
             return success
             
         except Exception as e:
@@ -232,117 +224,188 @@ class UnifiedControlCenter:
             }
             return False
     
-    def get_collaborative_training_progress(self) -> Dict[str, Any]:
-        """獲取協作式訓練進度"""
-        return self.training_progress.get('collaborative', {
-            'status': 'unknown',
-            'message': '未找到協作式訓練進度信息'
-        })
-    
-    async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """執行複雜任務"""
-        logger.info(f"Executing task: {task.get('name', 'Unnamed Task')}")
-        
-        try:
-            # 這裡會實現任務的實際執行邏輯
-            # 為了簡化，我們只返回一個模擬結果
-            result = {
-                "status": "completed",
-                "result": f"Task {task.get('name', 'Unnamed Task')} completed successfully",
-                "execution_time": 0.1
-            }
+    def start(self):
+        """啟動統一控制中心"""
+        if self.is_running:
+            logger.warning("UnifiedControlCenter is already running")
+            return
             
-            logger.info(f"✅ Task executed successfully: {task.get('name', 'Unnamed Task')}")
-            return result
+        logger.info("Starting UnifiedControlCenter...")
+        self.is_running = True
+        
+        # 啟動健康檢查線程
+        self.health_check_thread = threading.Thread(target=self._health_check_worker, daemon=True)
+        self.health_check_thread.start()
+        
+        logger.info("✅ UnifiedControlCenter started successfully")
+    
+    def stop(self):
+        """停止統一控制中心"""
+        if not self.is_running:
+            logger.warning("UnifiedControlCenter is not running")
+            return
             
-        except Exception as e:
-            logger.error(f"❌ Error executing task: {e}")
-            return {
-                "status": "error",
-                "error": str(e)
-            }
-    
-    def health_check(self) -> Dict[str, Any]:
-        """執行健康檢查"""
-        health_status = {
-            "timestamp": datetime.now().isoformat(),
-            "components": {}
-        }
+        logger.info("Stopping UnifiedControlCenter...")
+        self.is_running = False
         
-        for component_name, component in self.components.items():
-            try:
-                # 檢查組件是否正常工作
-                # 這是一個簡化的檢查，實際情況下會更複雜
-                health_status["components"][component_name] = {
-                    "status": "healthy",
-                    "message": "Component is functioning normally"
-                }
-            except Exception as e:
-                health_status["components"][component_name] = {
-                    "status": "unhealthy",
-                    "error": str(e)
-                }
+        # 等待健康檢查線程結束
+        if self.health_check_thread and self.health_check_thread.is_alive():
+            self.health_check_thread.join(timeout=5.0)
         
-        self.health_status = health_status
-        return health_status
-    
-    def start_health_monitoring(self):
-        """開始健康監控"""
-        if not self.health_check_thread or not self.health_check_thread.is_alive():
-            self.health_check_thread = threading.Thread(target=self._health_check_worker, daemon=True)
-            self.health_check_thread.start()
-            logger.info("✅ Health monitoring started")
+        logger.info("✅ UnifiedControlCenter stopped successfully")
     
     def _health_check_worker(self):
         """健康檢查工作線程"""
         while self.is_running:
             try:
-                self.health_check()
+                self._perform_health_check()
                 time.sleep(30)  # 每30秒檢查一次
             except Exception as e:
-                logger.error(f"❌ Error in health check worker: {e}")
+                logger.error(f"Health check error: {e}")
+                time.sleep(30)  # 出錯時也等待30秒
     
-    async def start(self):
-        """啟動統一控制中心"""
-        logger.info("🚀 Starting Unified Control Center...")
+    def _perform_health_check(self):
+        """執行健康檢查"""
+        logger.debug("Performing health check...")
         
-        self.is_running = True
-        self.start_health_monitoring()
+        # 檢查各組件健康狀態
+        for component_name, component in self.components.items():
+            try:
+                # 假設組件有is_healthy方法
+                if hasattr(component, 'is_healthy'):
+                    is_healthy = component.is_healthy()
+                    self.health_status[component_name] = {
+                        'status': 'healthy' if is_healthy else 'unhealthy',
+                        'timestamp': datetime.now().isoformat()
+                    }
+                else:
+                    # 如果沒有is_healthy方法，假設組件是健康的
+                    self.health_status[component_name] = {
+                        'status': 'unknown',
+                        'timestamp': datetime.now().isoformat()
+                    }
+            except Exception as e:
+                logger.error(f"Health check failed for {component_name}: {e}")
+                self.health_status[component_name] = {
+                    'status': 'error',
+                    'error': str(e),
+                    'timestamp': datetime.now().isoformat()
+                }
         
-        logger.info("✅ Unified Control Center started successfully")
+        logger.debug("Health check completed")
     
-    async def stop(self):
-        """停止統一控制中心"""
-        logger.info("🛑 Stopping Unified Control Center...")
+    def get_health_status(self) -> Dict[str, Any]:
+        """獲取健康狀態"""
+        return self.health_status
+    
+    async def process_complex_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """處理複雜任務"""
+        logger.info(f"Processing complex task: {task.get('name', 'unnamed')}")
         
-        self.is_running = False
-        
-        # 等待健康檢查線程結束
-        if self.health_check_thread and self.health_check_thread.is_alive():
-            self.health_check_thread.join(timeout=5)
-        
-        logger.info("✅ Unified Control Center stopped successfully")
-
-# 創建全局實例
-control_center = UnifiedControlCenter()
+        try:
+            # 根據任務類型調用相應的組件
+            task_type = task.get('type', '')
+            result = None
+            
+            if 'multimodal_analysis' in task_type:
+                # 多模態分析任務
+                result = await self._process_multimodal_analysis(task)
+            elif 'reasoning' in task_type:
+                # 推理任務
+                result = await self._process_reasoning_task(task)
+            elif 'learning' in task_type:
+                # 學習任務
+                result = await self._process_learning_task(task)
+            else:
+                # 默認處理
+                result = await self._process_generic_task(task)
+            
+            logger.info(f"✅ Task {task.get('name', 'unnamed')} processed successfully")
+            return {
+                'status': 'success',
+                'task_id': task.get('id'),
+                'integration_timestamp': datetime.now().isoformat(),
+                'components_used': list(self.components.keys()),
+                'result': result
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error processing task {task.get('name', 'unnamed')}: {e}")
+            return {
+                'status': 'error',
+                'task_id': task.get('id'),
+                'error': str(e),
+                'timestamp': datetime.now().isoformat()
+            }
+    
+    async def _process_multimodal_analysis(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """處理多模態分析任務"""
+        # 簡化實現，實際情況下會更複雜
+        await asyncio.sleep(0.1)
+        return {
+            'analysis_type': 'multimodal',
+            'summary': 'Multimodal analysis completed',
+            'confidence': 0.95
+        }
+    
+    async def _process_reasoning_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """處理推理任務"""
+        # 簡化實現，實際情況下會更複雜
+        await asyncio.sleep(0.1)
+        return {
+            'reasoning_type': 'causal',
+            'conclusion': 'Reasoning task completed',
+            'confidence': 0.92
+        }
+    
+    async def _process_learning_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """處理學習任務"""
+        # 簡化實現，實際情況下會更複雜
+        await asyncio.sleep(0.1)
+        return {
+            'learning_type': 'adaptive',
+            'outcome': 'Learning task completed',
+            'improvement': 0.15
+        }
+    
+    async def _process_generic_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """處理通用任務"""
+        # 簡化實現，實際情況下會更複雜
+        await asyncio.sleep(0.1)
+        return {
+            'task_type': 'generic',
+            'result': 'Generic task completed',
+            'status': 'success'
+        }
 
 if __name__ == "__main__":
-    # 用於測試的簡單示例
+    # 測試UnifiedControlCenter
     async def main():
-        await control_center.start()
+        ucc = UnifiedControlCenter()
+        ucc.start()
         
-        # 模擬執行一些任務
-        task = {
-            "name": "Test Task",
-            "description": "A simple test task"
+        # 測試複雜任務處理
+        test_task = {
+            'id': 'test_001',
+            'name': 'test_multimodal_analysis',
+            'type': 'multimodal_analysis',
+            'data': {
+                'text': 'Test text data',
+                'image': b'test_image_data',
+                'audio': b'test_audio_data'
+            }
         }
         
-        result = await control_center.execute_task(task)
+        result = await ucc.process_complex_task(test_task)
         print(f"Task result: {result}")
         
-        # 模擬運行一段時間
-        await asyncio.sleep(5)
+        # 測試健康狀態
+        health_status = ucc.get_health_status()
+        print(f"Health status: {health_status}")
         
-        await control_center.stop()
+        ucc.stop()
     
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nUnifiedControlCenter test manually stopped.")

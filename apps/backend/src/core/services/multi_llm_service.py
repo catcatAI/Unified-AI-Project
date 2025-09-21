@@ -1082,8 +1082,8 @@ class MultiLLMService:
     
     def _ensure_router(self):
         try:
-            from apps.backend.src.core_ai.language_models.registry import ModelRegistry
-            from apps.backend.src.core_ai.language_models.router import PolicyRouter, RoutingPolicy
+            from ai.language_models.registry import ModelRegistry
+            from ai.language_models.router import PolicyRouter, RoutingPolicy
         except Exception:
             return None, None, None
         registry = ModelRegistry(self.model_configs)

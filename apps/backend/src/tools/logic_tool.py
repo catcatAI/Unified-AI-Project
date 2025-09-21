@@ -11,7 +11,8 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 from .logic_model.logic_parser_eval import LogicParserEval
-from apps.backend.src.core.managers.dependency_manager import dependency_manager
+# 修复导入路径
+from core.managers.dependency_manager import dependency_manager
 
 # --- Configuration for NN Model ---
 MODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")

@@ -20,10 +20,11 @@ project_root = Path(__file__).parent.parent
 backend_path = project_root / "apps" / "backend"
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
+sys.path.insert(0, str(backend_path / "src"))
 
 # 导入项目模块
 try:
-    from apps.backend.src.path_config import (
+    from path_config import (
         PROJECT_ROOT, 
         DATA_DIR, 
         TRAINING_DIR, 
@@ -42,6 +43,7 @@ except ImportError:
 from training.data_manager import DataManager
 from training.collaborative_training_manager import CollaborativeTrainingManager
 from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
+from training.task_priority_evaluator import TaskPriorityEvaluator
 
 # 延迟导入ModelTrainer以避免循环导入
 ModelTrainer = None
@@ -170,6 +172,7 @@ class AutoTrainingManager:
         self.model_trainer = ModelTrainer()
         self.collaborative_manager = CollaborativeTrainingManager()
         self.training_monitor = TrainingMonitor()
+        self.priority_evaluator = TaskPriorityEvaluator()
         
         # 确保必要的目录存在
         self._ensure_directories()
@@ -617,10 +620,10 @@ class AutoTrainingManager:
     
     def auto_train(self, training_config: Dict[str, Any]) -> Dict[str, Any]:
         """
-        根据训练配置自动执行训练
+        根据训练配置自动执行训练（支持优先级调度）
         """
         context = ErrorContext("AutoTrainingManager", "auto_train")
-        logger.info("🚀 开始自动训练...")
+        logger.info("🚀 开始自动训练（支持优先级调度）...")
         
         try:
             # 重置训练监控器
@@ -637,8 +640,22 @@ class AutoTrainingManager:
             # 获取优化的训练参数
             training_params = training_config.get('training_params', {})
             
+            # 为每个场景计算优先级
+            scenario_priorities = {}
             for scenario_name in scenarios:
-                logger.info(f"🏋️  开始训练场景: {scenario_name}")
+                scenario_priorities[scenario_name] = self._calculate_scenario_priority(
+                    scenario_name, training_config)
+            
+            # 按优先级排序场景
+            sorted_scenarios = sorted(scenarios, 
+                                    key=lambda x: scenario_priorities.get(x, 50), 
+                                    reverse=True)
+            
+            logger.info(f"📋 训练场景优先级排序: {[(s, scenario_priorities.get(s, 50)) for s in sorted_scenarios]}")
+            
+            for scenario_name in sorted_scenarios:
+                priority = scenario_priorities.get(scenario_name, 50)
+                logger.info(f"🏋️  开始训练场景: {scenario_name} (优先级: {priority:.1f})")
                 
                 try:
                     # 根据场景类型执行不同的训练策略
@@ -653,8 +670,8 @@ class AutoTrainingManager:
                         # 对于数学和逻辑模型，使用真实训练
                         success = self._train_math_logic_model(scenario_name)
                     elif scenario_name == 'collaborative_training':
-                        # 协作式训练
-                        success = self._train_collaborative_model(training_params)
+                        # 协作式训练（传递优先级信息）
+                        success = self._train_collaborative_model(training_params, scenario_priorities)
                     else:
                         # 使用默认训练方法
                         success = self.model_trainer.train_with_preset(scenario_name)
@@ -662,6 +679,7 @@ class AutoTrainingManager:
                     # 记录结果
                     results[scenario_name] = {
                         'success': success,
+                        'priority': priority,
                         'completed_at': datetime.now().isoformat(),
                         'model_path': str(self.models_dir),
                         'scenario_type': scenario_name,
@@ -677,18 +695,32 @@ class AutoTrainingManager:
                     logger.error(f"❌ 训练场景 {scenario_name} 执行出错: {e}")
                     results[scenario_name] = {
                         'success': False,
+                        'priority': priority,
                         'error': str(e),
                         'completed_at': datetime.now().isoformat(),
                         'scenario_type': scenario_name,
                         'training_progress': self.training_monitor.get_progress(scenario_name)
                     }
             
-            # 执行协作式训练（如果有多个模型）
+            # 执行协作式训练（如果有多个模型，传递优先级信息）
             if len(scenarios) > 1:
-                logger.info("🔄 开始协作式训练...")
+                logger.info("🔄 开始协作式训练（支持优先级调度）...")
                 try:
+                    # 构建任务优先级信息
+                    task_priorities = {}
+                    target_models = list(training_config.get('data_mapping', {}).keys())
+                    for model_name in target_models:
+                        # 根据模型类型和数据质量计算优先级
+                        model_priority = self._calculate_model_priority(model_name, training_config)
+                        task_priorities[model_name] = {
+                            'business_urgency': 8 if model_name in ['concept_models', 'causal_reasoning_engine'] else 5,
+                            'manual_urgency': 7,
+                            'performance_drop': 0.1
+                        }
+                    
                     collaborative_success = self.collaborative_manager.start_collaborative_training({
-                        'target_models': list(training_config.get('data_mapping', {}).keys())
+                        'target_models': target_models,
+                        'task_priorities': task_priorities
                     })
                     results['collaborative_training'] = {
                         'success': collaborative_success,
@@ -779,25 +811,112 @@ class AutoTrainingManager:
             logger.error(f"❌ 数学/逻辑模型训练失败: {e}")
             return False
     
-    def _train_collaborative_model(self, training_params: Dict[str, Any]) -> bool:
+    def _train_collaborative_model(self, training_params: Dict[str, Any], scenario_priorities: Dict[str, float] = None) -> bool:
         """
-        执行协作式训练
+        执行协作式训练（支持优先级调度）
         """
         context = ErrorContext("AutoTrainingManager", "_train_collaborative_model")
-        logger.info("🔄 开始协作式训练...")
+        logger.info("🔄 开始协作式训练（支持优先级调度）...")
         
         try:
-            # 使用优化的参数执行协作式训练
-            success = self.collaborative_manager.start_collaborative_training({
+            # 构建协作式训练配置
+            collaborative_config = {
                 'epochs': training_params.get('epochs', 10),
                 'batch_size': training_params.get('batch_size', 16),
                 'learning_rate': training_params.get('learning_rate', 0.001)
-            })
+            }
+            
+            # 如果有场景优先级信息，添加到配置中
+            if scenario_priorities:
+                collaborative_config['scenario_priorities'] = scenario_priorities
+            
+            # 使用优化的参数执行协作式训练
+            success = self.collaborative_manager.start_collaborative_training(collaborative_config)
             return success
         except Exception as e:
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 协作式训练失败: {e}")
             return False
+    
+    def _calculate_scenario_priority(self, scenario_name: str, training_config: Dict[str, Any]) -> float:
+        """
+        计算训练场景的优先级
+        """
+        context = ErrorContext("AutoTrainingManager", "_calculate_scenario_priority", {"scenario_name": scenario_name})
+        try:
+            # 基础优先级（根据场景类型）
+            base_priority = 50
+            
+            if scenario_name in ['full_dataset_training', 'comprehensive_training']:
+                base_priority = 90
+            elif scenario_name in ['concept_models_training', 'causal_reasoning_training']:
+                base_priority = 80
+            elif scenario_name in ['vision_focus', 'audio_focus']:
+                base_priority = 75
+            elif scenario_name in ['math_model_training', 'logic_model_training']:
+                base_priority = 70
+            elif scenario_name in ['code_model_training', 'data_analysis_model_training']:
+                base_priority = 65
+            elif scenario_name == 'quick_start':
+                base_priority = 60
+            elif scenario_name == 'collaborative_training':
+                base_priority = 85
+            
+            # 考虑数据质量
+            data_quality_info = training_config.get('data_quality_info', {})
+            quality_ratio = data_quality_info.get('quality_ratio', 0)
+            data_quality_bonus = quality_ratio * 20  # 数据质量占比最高加20分
+            
+            # 考虑数据量
+            high_quality_files = data_quality_info.get('high_quality_files', 0)
+            data_volume_bonus = min(20, high_quality_files / 100)  # 数据量每100个文件加1分，最多加20分
+            
+            # 计算最终优先级
+            final_priority = base_priority + data_quality_bonus + data_volume_bonus
+            
+            # 确保优先级在合理范围内
+            final_priority = max(0, min(100, final_priority))
+            
+            logger.debug(f"📊 场景 {scenario_name} 优先级计算: 基础={base_priority}, "
+                        f"数据质量加成={data_quality_bonus:.1f}, 数据量加成={data_volume_bonus:.1f}, "
+                        f"最终={final_priority:.1f}")
+            
+            return final_priority
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 计算场景优先级失败: {e}")
+            return 50.0
+    
+    def _calculate_model_priority(self, model_name: str, training_config: Dict[str, Any]) -> float:
+        """
+        计算模型的优先级
+        """
+        context = ErrorContext("AutoTrainingManager", "_calculate_model_priority", {"model_name": model_name})
+        try:
+            # 使用任务优先级评估器计算优先级
+            model_task_info = {
+                'model_name': model_name,
+                'business_urgency': 7,  # 默认业务紧急程度
+                'manual_urgency': 6,   # 默认手动紧急程度
+                'performance_drop': 0.1 # 默认性能下降程度
+            }
+            
+            # 根据模型类型调整业务紧急程度
+            if model_name in ['concept_models', 'causal_reasoning_engine', 'environment_simulator']:
+                model_task_info['business_urgency'] = 9
+            elif model_name in ['vision_service', 'audio_service']:
+                model_task_info['business_urgency'] = 8
+            elif model_name in ['math_model', 'logic_model']:
+                model_task_info['business_urgency'] = 7
+            
+            # 计算优先级
+            priority = self.priority_evaluator.calculate_priority(model_task_info)
+            
+            return priority
+        except Exception as e:
+            self.error_handler.handle_error(e, context)
+            logger.error(f"❌ 计算模型优先级失败: {e}")
+            return 50.0
     
     def run_full_auto_training_pipeline(self) -> Dict[str, Any]:
         """

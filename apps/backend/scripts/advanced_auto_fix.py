@@ -54,51 +54,51 @@ class AdvancedImportFixer:
         
         # 导入映射规则
         self.import_mappings = {
-            # core_ai模块
-            r"from\s+core_ai\.": "from apps.backend.src.core_ai.",
-            r"import\s+core_ai\.": "import apps.backend.src.core_ai.",
+            # core_ai模块 - 修复绝对导入为相对导入
+            r"from\s+apps\.backend\.src\.core_ai\.": "from ",
+            r"import\s+apps\.backend\.src\.core_ai\.": "import ",
             
-            # core模块
-            r"from\s+core\.": "from apps.backend.src.core.",
-            r"import\s+core\.": "import apps.backend.src.core.",
+            # core模块 - 修复绝对导入为相对导入
+            r"from\s+apps\.backend\.src\.core\.": "from ..",
+            r"import\s+apps\.backend\.src\.core\.": "import ..",
             
-            # services模块
-            r"from\s+services\.": "from apps.backend.src.services.",
-            r"import\s+services\.": "import apps.backend.src.services.",
+            # services模块 - 修复绝对导入为相对导入
+            r"from\s+apps\.backend\.src\.services\.": "from ",
+            r"import\s+apps\.backend\.src\.services\.": "import ",
             
-            # hsp模块
-            r"from\s+hsp\.": "from apps.backend.src.hsp.",
-            r"import\s+hsp\.": "import apps.backend.src.hsp.",
+            # hsp模块 - 修复绝对导入为相对导入
+            r"from\s+apps\.backend\.src\.hsp\.": "from ",
+            r"import\s+apps\.backend\.src\.hsp\.": "import ",
             
-            # mcp模块
-            r"from\s+mcp\.": "from apps.backend.src.mcp.",
-            r"import\s+mcp\.": "import apps.backend.src.mcp.",
+            # mcp模块 - 修复绝对导入为相对导入
+            r"from\s+apps\.backend\.src\.mcp\.": "from ",
+            r"import\s+apps\.backend\.src\.mcp\.": "import ",
             
-            # system模块
-            r"from\s+system\.": "from apps.backend.src.system.",
-            r"import\s+system\.": "import apps.backend.src.system.",
+            # system模块 - 修复绝对导入为相对导入
+            r"from\s+apps\.backend\.src\.system\.": "from ",
+            r"import\s+apps\.backend\.src\.system\.": "import ",
             
-            # tools模块
-            r"from\s+tools\.": "from apps.backend.src.tools.",
-            r"import\s+tools\.": "import apps.backend.src.tools.",
+            # tools模块 - 修复绝对导入为相对导入
+            r"from\s+apps\.backend\.src\.tools\.": "from ",
+            r"import\s+apps\.backend\.src\.tools\.": "import ",
             
-            # shared模块
-            r"from\s+shared\.": "from apps.backend.src.shared.",
-            r"import\s+shared\.": "import apps.backend.src.shared.",
+            # shared模块 - 修复绝对导入为相对导入
+            r"from\s+apps\.backend\.src\.shared\.": "from ",
+            r"import\s+apps\.backend\.src\.shared\.": "import ",
             
-            # agents模块
-            r"from\s+agents\.": "from apps.backend.src.agents.",
-            r"import\s+agents\.": "import apps.backend.src.agents.",
+            # agents模块 - 修复绝对导入为相对导入
+            r"from\s+apps\.backend\.src\.agents\.": "from ",
+            r"import\s+apps\.backend\.src\.agents\.": "import ",
             
-            # game模块
-            r"from\s+game\.": "from apps.backend.src.game.",
-            r"import\s+game\.": "import apps.backend.src.game.",
+            # game模块 - 修复绝对导入为相对导入
+            r"from\s+apps\.backend\.src\.game\.": "from ",
+            r"import\s+apps\.backend\.src\.game\.": "import ",
             
-            # 相对导入修复
-            r"from\s+\.\.core_ai\.": "from apps.backend.src.core_ai.",
-            r"from\s+\.\.core\.": "from apps.backend.src.core.",
-            r"from\s+\.\.services\.": "from apps.backend.src.services.",
-            r"from\s+\.\.hsp\.": "from apps.backend.src.hsp.",
+            # 修正相对导入路径
+            r"from\s+\.\.core_ai\.": "from core_ai.",
+            r"from\s+\.\.core\.": "from core.",
+            r"from\s+\.\.services\.": "from services.",
+            r"from\s+\.\.hsp\.": "from hsp.",
         }
     
     def backup_file(self, file_path: Path) -> Path:
@@ -254,14 +254,16 @@ class AdvancedImportFixer:
             # 添加路径
             if str(self.project_root) not in sys.path:
                 sys.path.insert(0, str(self.project_root))
+            if str(self.src_dir) not in sys.path:
+                sys.path.insert(0, str(self.src_dir))
             
             # 测试关键模块导入
             test_modules = [
-                "apps.backend.src.core_services",
-                "apps.backend.src.core_ai.agent_manager",
-                "apps.backend.src.core_ai.dialogue.dialogue_manager",
-                "apps.backend.src.hsp.connector",
-                "apps.backend.src.services.main_api_server"
+                "core_services",
+                "core_ai.agent_manager",
+                "core_ai.dialogue.dialogue_manager",
+                "hsp.connector",
+                "services.main_api_server"
             ]
             
             success_count = 0
@@ -311,8 +313,8 @@ class AdvancedImportFixer:
             result = subprocess.run([
                 "python", "-c", 
                 "import sys; sys.path.insert(0, '.'); "
-                "from apps.backend.src.core_services import initialize_services; "
-                "from apps.backend.src.core_ai.agent_manager import AgentManager; "
+                "from core_services import initialize_services; "
+                "from core_ai.agent_manager import AgentManager; "
                 "print('关键模块导入测试通过')"
             ], cwd=self.project_root, capture_output=True, text=True, timeout=30)
             

@@ -59,11 +59,26 @@ class ExternalConnector:
         logger.debug(f"ExternalConnector.publish: topic={topic}, payload_type={type(payload)}, qos={qos}")
         await self.mqtt_client.publish(topic, payload, qos=qos)
 
-    async def subscribe(self, topic: str, qos: int = 1):
-        await self.mqtt_client.subscribe(topic, qos=qos)
+    async def subscribe(self, topic: str, callback=None, qos: int = 1):
+        # If we're in mock mode (callback provided), use the callback
+        if callback is not None:
+            # For mock mode, we just need to register the callback
+            if not hasattr(self, 'mock_subscriptions'):
+                self.mock_subscriptions = {}
+            if topic not in self.mock_subscriptions:
+                self.mock_subscriptions[topic] = []
+            if callback not in self.mock_subscriptions[topic]:
+                self.mock_subscriptions[topic].append(callback)
+        else:
+            # Normal mode - use the MQTT client
+            await self.mqtt_client.subscribe(topic, qos=qos)
         self.subscribed_topics.add(topic)
 
     async def unsubscribe(self, topic: str):
+        # Remove from mock subscriptions if they exist
+        if hasattr(self, 'mock_subscriptions') and topic in self.mock_subscriptions:
+            del self.mock_subscriptions[topic]
+        # Normal mode - use the MQTT client
         await self.mqtt_client.unsubscribe(topic)
         self.subscribed_topics.discard(topic)
 
@@ -76,10 +91,37 @@ class ExternalConnector:
         else:
             logger.error(f"Failed to connect, return code {rc}")
 
+    async def on_message(self, client, topic, payload, qos, properties):
+        # First, call the on_message_callback if it exists
+        if self.on_message_callback:
+            # 确保正确调用回调函数，传递正确的参数
+            if asyncio.iscoroutinefunction(self.on_message_callback):
+                await self.on_message_callback(topic, payload.decode() if isinstance(payload, bytes) else payload)
+            else:
+                self.on_message_callback(topic, payload.decode() if isinstance(payload, bytes) else payload)
+        
+        # Then, call any mock subscriptions if they exist
+        if hasattr(self, 'mock_subscriptions'):
+            for sub_topic, callbacks in self.mock_subscriptions.items():
+                if self._topic_matches(sub_topic, topic):
+                    for callback in callbacks:
+                        if asyncio.iscoroutinefunction(callback):
+                            await callback(client, topic, payload, qos, properties)
+                        else:
+                            callback(client, topic, payload, qos, properties)
+
+    def _topic_matches(self, subscription_topic, message_topic):
+        """Check if a message topic matches a subscription topic."""
+        # Simple implementation - exact match or wildcard
+        if subscription_topic == '#':
+            return True
+        if subscription_topic == message_topic:
+            return True
+        if subscription_topic.endswith('#'):
+            prefix = subscription_topic[:-1]
+            return message_topic.startswith(prefix)
+        return False
+
     def on_disconnect(self, client, exc):
         self.is_connected = False
         logger.info("Disconnected from MQTT Broker.")
-
-    async def on_message(self, client, topic, payload, qos, properties):
-        if self.on_message_callback:
-            await self.on_message_callback(topic.decode(), payload.decode())

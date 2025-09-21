@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import pygame
-from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
+from ..ai.dialogue.dialogue_manager import DialogueManager
 
 class Angela:
     def __init__(self, game):

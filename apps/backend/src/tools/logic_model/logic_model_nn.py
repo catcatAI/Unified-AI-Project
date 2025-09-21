@@ -13,8 +13,11 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from apps.backend.src.ai.dependency_manager import dependency_manager
-from apps.backend.src.ai.compression.alpha_deep_model import DNADataChain
+# 修复导入路径 - 从正确的路径导入 dependency_manager
+# 修复导入路径
+from ...core.managers.dependency_manager import dependency_manager
+# 修复导入路径
+from ...ai.compression.alpha_deep_model import DNADataChain
 
 @dataclass
 class LogicModelResult:

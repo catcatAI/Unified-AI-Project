@@ -11,6 +11,7 @@ from cryptography.fernet import Fernet
 from apps.backend.src.core.shared.types.common_types import DialogueTurn, DialogueMemoryEntryMetadata
 from datetime import datetime, timezone
 import uuid
+import warnings
 
 # 定义占位符类
 class PlaceholderResourceLeakDetector:
@@ -397,16 +398,44 @@ def mock_core_services():
     mock_tool_dispatcher.dispatch = AsyncMock()
     mock_learning_manager = MagicMock(spec='src.core_ai.learning.learning_manager.LearningManager')
     mock_learning_manager.analyze_for_personality_adjustment = AsyncMock(return_value=None)
-    mock_hsp_connector = MagicMock(spec='src.hsp.connector.HSPConnector')
+    
+    # Create a proper mock for HSPConnector with all required methods and attributes
+    mock_hsp_connector = MagicMock()
     mock_hsp_connector.ai_id = "mock_ai_id"
-    # Fix for "object NoneType can't be used in 'await' expression" error
+    mock_hsp_connector.is_connected = True
+    
+    # Add all the methods that tests expect
     mock_hsp_connector.publish_message = AsyncMock(return_value=True)
     mock_hsp_connector.publish_fact = AsyncMock(return_value=True)
     mock_hsp_connector.send_task_request = AsyncMock(return_value="mock_correlation_id")
     mock_hsp_connector.send_task_result = AsyncMock(return_value=True)
-    # 添加mqtt_client属性以避免NoneType错误
+    mock_hsp_connector.advertise_capability = AsyncMock()
+    mock_hsp_connector.connect = AsyncMock()
+    mock_hsp_connector.disconnect = AsyncMock()
+    mock_hsp_connector.register_on_fact_callback = MagicMock()
+    mock_hsp_connector.register_on_capability_advertisement_callback = MagicMock()
+    mock_hsp_connector.register_on_task_request_callback = MagicMock()
+    mock_hsp_connector.register_on_task_result_callback = MagicMock()
+    mock_hsp_connector.register_on_connect_callback = MagicMock()
+    mock_hsp_connector.register_on_disconnect_callback = MagicMock()
+    mock_hsp_connector.register_on_acknowledgement_callback = MagicMock()
+    mock_hsp_connector.register_capability_provider = MagicMock()
+    mock_hsp_connector.mqtt_subscribe = AsyncMock()
+    mock_hsp_connector.close = AsyncMock()
+    mock_hsp_connector.on_connect = AsyncMock()
+    mock_hsp_connector.on_disconnect = AsyncMock()
+    mock_hsp_connector.on_fact_received = MagicMock()
+    mock_hsp_connector.on_command_received = MagicMock()
+    mock_hsp_connector.on_connect_callback = MagicMock()
+    mock_hsp_connector.on_disconnect_callback = MagicMock()
+    
+    # Add properties that tests expect
     mock_hsp_connector.mqtt_client = MagicMock()
     mock_hsp_connector.mqtt_client.publish = AsyncMock(return_value=True)
+    mock_hsp_connector.subscribed_topics = set()
+    mock_hsp_connector.on_message = MagicMock()
+    mock_hsp_connector.default_qos = 1
+    
     mock_agent_manager = MagicMock(spec='src.core_ai.agent_manager.AgentManager')
 
     # Mock the ProjectCoordinator instance
@@ -425,9 +454,6 @@ def mock_core_services():
     # Keep store_experience as sync if defined on mock_ham_manager
     # (Do not override with AsyncMock)
     # mock_ham_manager.store_experience = AsyncMock() if not hasattr(mock_ham_manager, 'store_experience') else mock_ham_manager.store_experience
-    mock_hsp_connector.advertise_capability = AsyncMock()
-    mock_hsp_connector.send_task_result = AsyncMock()
-    mock_hsp_connector.send_task_request = AsyncMock(return_value="mock_correlation_id")
     mock_project_coordinator.handle_project = AsyncMock(return_value="Mocked project response.")
     mock_project_coordinator.handle_task_result = AsyncMock()
     mock_project_coordinator._execute_task_graph = AsyncMock() # Added mock for _execute_task_graph
@@ -517,3 +543,19 @@ def client_with_overrides(mock_core_services):
         # If there was no override before, clear it
         if get_services in app.dependency_overrides:
             del app.dependency_overrides[get_services]
+
+# Silence protobuf upb DeprecationWarnings from google._upb._message only
+warnings.filterwarnings(
+    action="ignore",
+    category=DeprecationWarning,
+    module=r"google\._upb\._message",
+)
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "flaky(reruns, reason=None): mark test as flaky with given reruns")
+    config.addinivalue_line("markers", "timeout(seconds): mark test with a timeout in seconds")
+    config.addinivalue_line("markers", "slow: mark tests as slow and optionally skipped via -m not slow")
+    config.addinivalue_line("markers", "mcp: mark tests that depend on MCP/external services")
+    config.addinivalue_line("markers", "context7: mark tests related to Context7 connector/external env")
+    config.addinivalue_line("markers", "performance: mark tests for performance benchmarking")
+    config.addinivalue_line("markers", "benchmark: mark tests for benchmarking")

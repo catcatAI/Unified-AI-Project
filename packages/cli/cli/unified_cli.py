@@ -8,8 +8,17 @@ import json
 import sys
 import os
 
-# Using the refactored client
-from .client import UnifiedAIClient
+# 使用绝对导入而不是相对导入
+try:
+    from cli.client import UnifiedAIClient
+except ImportError:
+    # 如果上面的导入失败，尝试相对导入
+    try:
+        from .client import UnifiedAIClient
+    except ImportError:
+        # 如果相对导入也失败，尝试直接导入
+        import client
+        UnifiedAIClient = client.UnifiedAIClient
 
 class LegacyClientShim:
     pass  # kept for backward-compat if referenced elsewhere

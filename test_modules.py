@@ -2,7 +2,11 @@ import sys
 import os
 
 # Add the src directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'backend', 'src'))
+project_root = os.path.dirname(__file__)
+backend_path = os.path.join(project_root, 'apps', 'backend')
+src_path = os.path.join(backend_path, 'src')
+sys.path.insert(0, src_path)
+sys.path.insert(0, backend_path)
 
 print("Testing module imports...")
 
@@ -19,7 +23,7 @@ except ImportError as e:
     print(f"[ERROR] Failed to import msgpack: {e}")
 
 try:
-    from apps.backend.src.services.multi_llm_service import MultiLLMService
+    from services.multi_llm_service import MultiLLMService
     print("[OK] MultiLLMService imported successfully")
 except ImportError as e:
     print(f"[ERROR] Failed to import MultiLLMService: {e}")

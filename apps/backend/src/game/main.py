@@ -3,9 +3,9 @@ import os
 import sys
 import logging
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from apps.backend.src.game.scenes import GameStateManager
-from apps.backend.src.game.player import Player
-from apps.backend.src.game.angela import Angela
+from .scenes import GameStateManager
+from .player import Player
+from .angela import Angela
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 

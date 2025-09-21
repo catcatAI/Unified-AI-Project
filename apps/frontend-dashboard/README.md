@@ -221,6 +221,17 @@ const results = await zai.functions.invoke('web_search', {
 })
 ```
 
+### AI Agent System
+The dashboard provides a comprehensive interface for interacting with the AI Agent System, which includes:
+- **Creative Writing Agent**: Generates marketing copy, blog posts, and other creative content
+- **Image Generation Agent**: Creates images from text descriptions
+- **Web Search Agent**: Performs web searches and information retrieval
+- **Data Analysis Agent**: Analyzes data and generates insights
+- **Code Understanding Agent**: Understands and analyzes code
+- **Audio Processing Agent**: Processes audio data
+- **Vision Processing Agent**: Processes visual data
+- **Knowledge Graph Agent**: Manages knowledge graphs and relationships
+
 ## 🚀 Deployment
 
 ### Vercel (Recommended)

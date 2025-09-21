@@ -1,3 +1,13 @@
+// 修复global未定义的问题
+if (typeof global === 'undefined') {
+  window.global = window;
+}
+
+// 确保DOMPurify在全局作用域可用
+if (window.DOMPurify) {
+  global.DOMPurify = window.DOMPurify;
+}
+
 const initialState = window.initialState || {
   // Application state
   activeView: 'chat', // 'chat', 'hsp', 'game', 'settings'
@@ -10,7 +20,7 @@ const initialState = window.initialState || {
     taskStatus: {}, // { [correlationId]: { status: string, ... } }
     activePolls: {}, // { [correlationId]: intervalId }
   },
-  // 添加Atlassian集成状态
+  // Adding Atlassian integration state
   atlassian: {
     status: null,
     projects: [],
@@ -92,7 +102,7 @@ function removeHspActivePoll(state, correlationId) {
     };
 }
 
-// 添加Atlassian集成相关的actions
+// Adding Atlassian integration related actions
 function setAtlassianStatus(state, status) {
     return { 
         ...state, 
@@ -167,7 +177,13 @@ function updateState(action, payload) {
   const newState = action(currentState, payload);
   currentState = newState;
   render(); // This will be defined in render.js
-  window.electronAPI.invoke('save-state', currentState);
+  
+  // Check if electronAPI is available before invoking
+  if (window.electronAPI && typeof window.electronAPI.invoke === 'function') {
+    window.electronAPI.invoke('save-state', currentState);
+  } else {
+    console.warn('electronAPI not available, state not saved');
+  }
 }
 
 window.store = {

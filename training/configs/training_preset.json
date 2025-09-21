@@ -297,7 +297,10 @@
     "cpu_only": false,
     "recommended_vram_gb": 8,
     "distributed_training": true,
-    "max_workers": 4
+    "max_workers": 4,
+    "integrated_graphics_support": true,
+    "minimum_vram_gb_for_integrated": 1,
+    "enable_integrated_graphics_optimization": true
   },
   "model_specific_presets": {
     "vision_service": {

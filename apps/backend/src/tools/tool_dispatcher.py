@@ -30,7 +30,7 @@ except ImportError as e:
 class ToolDispatcher:
     def _get_ham(self):
         try:
-            from ...core_services import ham_manager_instance
+            from apps.backend.src.core_services import ham_manager_instance
             return ham_manager_instance
         except Exception:
             return None
@@ -668,7 +668,7 @@ class ToolDispatcher:
 # Example Usage
 if __name__ == '__main__':
     import asyncio
-    from apps.backend.src.core.services.multi_llm_service import MultiLLMService
+    from core.services.multi_llm_service import MultiLLMService
 
     async def main_test():
         logging.basicConfig(level=logging.INFO)

@@ -1,1 +1,1 @@
-pass
+# This package makes the 'hsp' directory a Python package.

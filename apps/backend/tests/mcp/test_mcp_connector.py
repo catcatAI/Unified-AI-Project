@@ -8,7 +8,7 @@ from apps.backend.src.mcp.types import MCPCommandRequest
 
 @pytest.fixture
 def mock_mqtt_client():
-    with patch('src.mcp.connector.mqtt.Client') as mock_client_class:
+    with patch('apps.backend.src.mcp.connector.mqtt.Client') as mock_client_class:
         mock_client_instance = MagicMock()
         mock_client_class.return_value = mock_client_instance
         yield mock_client_instance
@@ -16,9 +16,7 @@ def mock_mqtt_client():
 @pytest.mark.asyncio
 @pytest.mark.timeout(5)
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_mcp_connector_initialization(mock_mqtt_client):
     """Test that MCPConnector initializes correctly."""
     connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_running_loop())
@@ -29,9 +27,6 @@ async def test_mcp_connector_initialization(mock_mqtt_client):
 @pytest.mark.asyncio
 @pytest.mark.timeout(5)
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_connect_and_disconnect(mock_mqtt_client):
     """Test the connect and disconnect methods."""
     loop = asyncio.get_event_loop()
@@ -48,9 +43,6 @@ async def test_connect_and_disconnect(mock_mqtt_client):
 @pytest.mark.asyncio
 @pytest.mark.timeout(5)
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_send_command(mock_mqtt_client):
     """Test sending a command."""
     loop = asyncio.get_event_loop()

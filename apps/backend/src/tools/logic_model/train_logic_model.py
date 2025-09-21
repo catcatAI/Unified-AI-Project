@@ -1,10 +1,31 @@
-import json
-import os
-import sys
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+逻辑模型训练脚本
+使用Keras构建和训练逻辑推理模型
+"""
+
+# 添加兼容性导入
+try:
+    # 设置环境变量以解决Keras兼容性问题
+    import os
+    os.environ['TF_USE_LEGACY_KERAS'] = '1'
+    
+    from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
+    from tensorflow.keras.optimizers import Adam
+    KERAS_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Could not import keras: {e}")
+    EarlyStopping = ModelCheckpoint = ReduceLROnPlateau = Sequential = Dense = Dropout = BatchNormalization = Adam = None
+    KERAS_AVAILABLE = False
+
 import numpy as np
-import tensorflow as tf
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+import json
+import logging
+from pathlib import Path
+from typing import Dict, Any, List, Tuple
 
 # Add src directory to sys.path to allow imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -14,7 +35,8 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 try:
-    from apps.backend.src.tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
+    # 修复导入路径
+    from .logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
 except ImportError as e:
     print(f"Error importing from logic_model_nn: {e}")
     print("Ensure logic_model_nn.py is in the same directory and src is in sys.path.")

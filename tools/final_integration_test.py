@@ -105,8 +105,8 @@ def test_ai_editor_integration():
     
     try:
         # Import AI editor components
-        from apps.backend.src.core.services.ai_editor import DataProcessor
-        from apps.backend.src.core.services.ai_virtual_input_service import AIVirtualInputService
+        from core.services.ai_editor import DataProcessor
+        from core.services.ai_virtual_input_service import AIVirtualInputService
         
         # Create AI editor components
         data_processor = DataProcessor()
@@ -158,7 +158,7 @@ def test_component_compatibility():
         # Import components
         from security.permission_control import PermissionControlSystem, PermissionContext, PermissionType
         from security.audit_logger import AuditLogger
-        from apps.backend.src.core.services.ai_editor import DataProcessor
+        from core.services.ai_editor import DataProcessor
         
         # Create components
         permission_system = PermissionControlSystem()

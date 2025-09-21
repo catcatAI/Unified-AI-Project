@@ -15,12 +15,13 @@
     "db:reset": "prisma migrate reset"
   },
   "dependencies": {
+    "@acme/ui": "workspace:*",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^3.9.1",
     "@mdxeditor/editor": "^3.39.1",
-    "@prisma/client": "^6.11.1",
+    "@prisma/client": "^6.13.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -65,7 +66,7 @@
     "next-auth": "^4.24.11",
     "next-intl": "^4.3.4",
     "next-themes": "^0.4.6",
-    "prisma": "^6.11.1",
+    "prisma": "^6.13.0",
     "react": "^19.0.0",
     "react-day-picker": "^9.8.0",
     "react-dom": "^19.0.0",
@@ -85,8 +86,7 @@
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
     "z-ai-web-dev-sdk": "^0.0.10",
-    "zod": "^4.0.2",
-    "@acme/ui": "workspace:*"
+    "zod": "^4.0.2"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.28.0",

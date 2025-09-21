@@ -6,54 +6,20 @@
 
 import os
 import sys
-import json
-import logging
-from pathlib import Path
-from typing import Dict, Any, Optional
-import argparse
-from datetime import datetime
-import time
 import shutil
+from pathlib import Path
+from datetime import datetime
+import json
+import time
 import random
-import subprocess
-import numpy as np
 
-# 添加项目路径
+# 添加项目根目录到路径
 project_root = Path(__file__).parent.parent
-backend_path = project_root / "apps" / "backend"
 sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_path))
-
-# 尝试导入训练监控器
-try:
-    from training.auto_training_manager import TrainingMonitor
-    training_monitor = TrainingMonitor()
-except ImportError:
-    training_monitor = None
 
 # 导入项目模块
-try:
-    from apps.backend.src.path_config import (
-        PROJECT_ROOT, 
-        DATA_DIR, 
-        TRAINING_DIR, 
-        MODELS_DIR,
-        get_data_path, 
-        resolve_path
-    )
-except ImportError:
-    # 如果路径配置模块不可用，使用默认路径处理
-    PROJECT_ROOT = project_root
-    DATA_DIR = PROJECT_ROOT / "data"
-    TRAINING_DIR = PROJECT_ROOT / "training"
-    MODELS_DIR = TRAINING_DIR / "models"
-
-# 检查点目录
-CHECKPOINTS_DIR = TRAINING_DIR / "checkpoints"
-
-# 导入训练管理器
-from training.collaborative_training_manager import CollaborativeTrainingManager
 from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
+from training.enhanced_checkpoint_manager import EnhancedCheckpointManager, global_checkpoint_manager
 
 # 配置日志
 logging.basicConfig(
@@ -66,11 +32,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# 定义项目目录
+PROJECT_ROOT = project_root
+DATA_DIR = PROJECT_ROOT / "data"
+TRAINING_DIR = PROJECT_ROOT / "training"
+MODELS_DIR = TRAINING_DIR / "models"
+CHECKPOINTS_DIR = TRAINING_DIR / "checkpoints"
+
 class ModelTrainer:
-    """模型训练器，支持多种预设训练场景和协作式训练"""
+    """模型训练器"""
     
-    def __init__(self, config_path=None, preset_path=None):
-        self.project_root = PROJECT_ROOT
+    def __init__(self, project_root: str = ".", config_path: str = None, preset_path: str = None):
+        self.project_root = Path(project_root)
         self.training_dir = TRAINING_DIR
         self.data_dir = DATA_DIR
         # 使用训练目录下的配置文件
@@ -86,6 +59,7 @@ class ModelTrainer:
         self.gpu_available = self._check_gpu_availability()
         self.distributed_training_enabled = False
         self.error_handler = global_error_handler  # 错误处理器
+        self.checkpoint_manager = global_checkpoint_manager  # 增强的检查点管理器
         
         # 加载配置
         self.load_config()
@@ -124,12 +98,46 @@ class ModelTrainer:
                 # 更老版本的TensorFlow
                 return tf.test.is_gpu_available()
             
+            # 检查是否检测到GPU
             if gpus:
                 logger.info(f"✅ GPU可用: {len(gpus)} 个设备")
                 return True
             else:
-                logger.info("ℹ️ 未检测到GPU设备，将使用CPU训练")
-                return False
+                # 检查是否是集成显卡环境
+                # 在集成显卡上，TensorFlow可能不会自动检测到GPU，但我们仍然可以尝试使用它
+                try:
+                    # 检查系统是否有GPU设备（即使TensorFlow没有检测到）
+                    import platform
+                    system = platform.system().lower()
+                    
+                    if system == "windows":
+                        # Windows系统使用WMI检查
+                        import subprocess
+                        import json
+                        
+                        result = subprocess.run([
+                            "powershell.exe", 
+                            "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
+                        ], capture_output=True, text=True, timeout=10)
+                        
+                        if result.returncode == 0 and result.stdout.strip():
+                            gpu_data = json.loads(result.stdout)
+                            
+                            # 检查是否有GPU设备
+                            if isinstance(gpu_data, list) and len(gpu_data) > 0:
+                                # 有GPU设备，即使TensorFlow没有检测到，也认为GPU"可用"（可以尝试使用）
+                                logger.info("ℹ️  检测到系统GPU设备，但TensorFlow未识别，将尝试使用CPU训练")
+                                return False  # TensorFlow无法使用GPU
+                            elif isinstance(gpu_data, dict):
+                                logger.info("ℹ️  检测到系统GPU设备，但TensorFlow未识别，将尝试使用CPU训练")
+                                return False  # TensorFlow无法使用GPU
+                    
+                    # 如果无法确定或没有检测到GPU设备
+                    logger.info("ℹ️ 未检测到GPU设备，将使用CPU训练")
+                    return False
+                except Exception as e:
+                    logger.info(f"ℹ️ 未检测到GPU设备或无法确定GPU状态: {e}，将使用CPU训练")
+                    return False
         except ImportError:
             self.error_handler.handle_error(Exception("TensorFlow not available"), context, ErrorRecoveryStrategy.FALLBACK)
             logger.warning("⚠️ TensorFlow不可用，无法检测GPU")
@@ -274,30 +282,43 @@ class ModelTrainer:
             return True  # 出错时假设空间充足
     
     def save_checkpoint(self, epoch, model_state=None):
-        """保存训练检查点"""
+        """保存训练检查点（增强版本）"""
         context = ErrorContext("ModelTrainer", "save_checkpoint", {"epoch": epoch})
-        checkpoint_path = CHECKPOINTS_DIR / f"epoch_{epoch}_checkpoint.json"
-        checkpoint_data = {
-            "epoch": epoch,
-            "timestamp": datetime.now().isoformat(),
-            "model_state": model_state if model_state else {}
-        }
-        
         try:
-            with open(checkpoint_path, 'w', encoding='utf-8') as f:
-                json.dump(checkpoint_data, f, ensure_ascii=False, indent=2)
-            logger.info(f"💾 保存检查点: {checkpoint_path.name}")
-            self.checkpoint_file = checkpoint_path
-            return True
+            # 准备检查点状态
+            checkpoint_state = {
+                "epoch": epoch,
+                "timestamp": datetime.now().isoformat(),
+                "model_state": model_state if model_state else {},
+                "metrics": {},  # 如果有的话，可以添加当前的训练指标
+                "config": {
+                    "batch_size": 16,  # 默认值，实际应该从配置中获取
+                    "learning_rate": 0.001  # 默认值，实际应该从配置中获取
+                }
+            }
+            
+            # 使用增强的检查点管理器保存检查点
+            checkpoint_id = self.checkpoint_manager.save_checkpoint(checkpoint_state, "main_training", "epoch")
+            
+            if checkpoint_id:
+                checkpoint_path = CHECKPOINTS_DIR / f"epoch_{epoch}_checkpoint.json"
+                self.checkpoint_file = checkpoint_path
+                logger.info(f"💾 检查点已保存: {checkpoint_path.name}")
+                return True
+            else:
+                logger.error("❌ 使用增强检查点管理器保存检查点失败")
+                return False
+                
         except Exception as e:
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 保存检查点失败: {e}")
             return False
-    
+
     def load_checkpoint(self, checkpoint_path=None):
-        """加载训练检查点"""
+        """加载训练检查点（增强版本）"""
         context = ErrorContext("ModelTrainer", "load_checkpoint")
         try:
+            # 使用增强的检查点管理器加载检查点
             if not checkpoint_path and self.checkpoint_file:
                 checkpoint_path = self.checkpoint_file
             elif not checkpoint_path:
@@ -311,11 +332,17 @@ class ModelTrainer:
             if not checkpoint_path or not Path(checkpoint_path).exists():
                 logger.info("🔍 未找到检查点文件")
                 return None
+            
+            # 使用增强的检查点管理器加载检查点
+            checkpoint_data = self.checkpoint_manager.load_checkpoint(task_id="main_training")
+            
+            if checkpoint_data:
+                logger.info(f"✅ 加载检查点: {Path(checkpoint_path).name}")
+                return checkpoint_data
+            else:
+                logger.error("❌ 使用增强检查点管理器加载检查点失败")
+                return None
                 
-            with open(checkpoint_path, 'r', encoding='utf-8') as f:
-                checkpoint_data = json.load(f)
-            logger.info(f"✅ 加载检查点: {checkpoint_path.name}")
-            return checkpoint_data
         except Exception as e:
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 加载检查点失败: {e}")
@@ -431,11 +458,11 @@ class ModelTrainer:
         # 导入概念模型
         try:
             sys.path.append(str(self.project_root / "apps" / "backend" / "src"))
-            from apps.backend.src.core_ai.concept_models.environment_simulator import EnvironmentSimulator
-            from apps.backend.src.core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
-            from apps.backend.src.core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
-            from apps.backend.src.core_ai.concept_models.alpha_deep_model import AlphaDeepModel
-            from apps.backend.src.core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace
+            from core_ai.concept_models.environment_simulator import EnvironmentSimulator
+            from core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
+            from core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
+            from core_ai.concept_models.alpha_deep_model import AlphaDeepModel
+            from core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace
             
             logger.info("✅ 概念模型导入成功")
         except Exception as e:
@@ -694,7 +721,7 @@ class ModelTrainer:
             return False
     
     def _train_with_gpu(self, scenario):
-        """使用GPU进行训练"""
+        """使用GPU进行训练（增强容错版本）"""
         logger.info("🚀 开始使用GPU训练...")
         
         try:
@@ -711,19 +738,48 @@ class ModelTrainer:
             batch_size = scenario.get('batch_size', 16)
             checkpoint_interval = scenario.get('checkpoint_interval', 5)
             
-            # 如果启用分布式训练，使用策略范围
-            if self.distributed_training_enabled and strategy:
-                with strategy.scope():
-                    # 在分布式策略范围内创建模型和优化器
-                    logger.info("🔄 在分布式策略范围内创建模型")
-                    # 这里会创建实际的模型和优化器
-                    # 为示例起见，我们使用模拟训练
-                    success = self._simulate_training_with_gpu(scenario)
-            else:
-                # 单GPU或CPU训练
-                success = self._simulate_training_with_gpu(scenario)
+            # 尝试加载检查点以支持从中断处继续
+            start_epoch = 1
+            checkpoint_data = self.load_checkpoint()
+            if checkpoint_data:
+                start_epoch = checkpoint_data.get('epoch', 0) + 1
+                logger.info(f"🔄 从检查点继续训练，起始轮数: {start_epoch}")
             
-            return success
+            # 模拟训练过程
+            try:
+                for epoch in range(start_epoch, epochs + 1):
+                    # 检查是否需要暂停
+                    if self.is_paused:
+                        logger.info("⏸️ 训练已暂停")
+                        self.save_checkpoint(epoch)
+                        return False
+                    
+                    # 模拟训练步骤
+                    epoch_metrics = self.simulate_training_step(epoch, batch_size)
+                    
+                    # 显示进度
+                    progress = (epoch / epochs) * 100
+                    logger.info(f"  Epoch {epoch}/{epochs} - 进度: {progress:.1f}% - Loss: {epoch_metrics['loss']:.4f} - Accuracy: {epoch_metrics['accuracy']:.4f}")
+                    
+                    # 使用增强的检查点管理器决定是否保存检查点
+                    checkpoint_decision = self.checkpoint_manager.should_save_checkpoint(
+                        epoch, 
+                        epoch_metrics, 
+                        "main_training"
+                    )
+                    
+                    if checkpoint_decision['should_save']:
+                        logger.info(f"💾 根据策略保存检查点: {checkpoint_decision['reasons']}")
+                        self.save_checkpoint(epoch, epoch_metrics)
+                    elif epoch % checkpoint_interval == 0 or epoch == epochs:
+                        # 保持原有的检查点间隔逻辑作为后备
+                        self.save_checkpoint(epoch, epoch_metrics)
+                
+                return True
+            except Exception as e:
+                logger.error(f"❌ 模拟训练过程中发生错误: {e}")
+                return False
+            
         except Exception as e:
             logger.error(f"❌ GPU训练过程中发生错误: {e}")
             return False
@@ -788,15 +844,28 @@ class ModelTrainer:
             return False
     
     def _simulate_distributed_training(self, scenario):
-        """模拟分布式训练过程"""
+        """模拟分布式训练过程（增强容错版本）"""
         # 获取训练参数
         epochs = scenario.get('epochs', 10)
         batch_size = scenario.get('batch_size', 16)
         checkpoint_interval = scenario.get('checkpoint_interval', 5)
         
+        # 尝试加载检查点以支持从中断处继续
+        start_epoch = 1
+        checkpoint_data = self.load_checkpoint()
+        if checkpoint_data:
+            start_epoch = checkpoint_data.get('epoch', 0) + 1
+            logger.info(f"🔄 从检查点继续分布式训练，起始轮数: {start_epoch}")
+        
         # 模拟分布式训练过程（通常更快）
         try:
-            for epoch in range(1, epochs + 1):
+            for epoch in range(start_epoch, epochs + 1):
+                # 检查是否需要暂停
+                if self.is_paused:
+                    logger.info("⏸️ 分布式训练已暂停")
+                    self.save_checkpoint(epoch)
+                    return False
+                
                 # 模拟分布式训练步骤
                 time.sleep(0.03)  # 模拟分布式训练时间（更快）
                 
@@ -810,8 +879,18 @@ class ModelTrainer:
                 progress = (epoch / epochs) * 100
                 logger.info(f"  Epoch {epoch}/{epochs} - 进度: {progress:.1f}% - Loss: {epoch_metrics['loss']:.4f} - Accuracy: {epoch_metrics['accuracy']:.4f} (分布式训练)")
                 
-                # 保存检查点
-                if epoch % checkpoint_interval == 0 or epoch == epochs:
+                # 使用增强的检查点管理器决定是否保存检查点
+                checkpoint_decision = self.checkpoint_manager.should_save_checkpoint(
+                    epoch, 
+                    epoch_metrics, 
+                    "distributed_training"
+                )
+                
+                if checkpoint_decision['should_save']:
+                    logger.info(f"💾 根据策略保存分布式训练检查点: {checkpoint_decision['reasons']}")
+                    self.save_checkpoint(epoch, epoch_metrics)
+                elif epoch % checkpoint_interval == 0 or epoch == epochs:
+                    # 保持原有的检查点间隔逻辑作为后备
                     self.save_checkpoint(epoch, epoch_metrics)
             
             return True
@@ -819,25 +898,51 @@ class ModelTrainer:
             logger.error(f"❌ 分布式模拟训练过程中发生错误: {e}")
             return False
     
-    def train_with_preset(self, scenario_name):
-        """使用预设配置进行训练，支持暂停、继续、自动磁盘空间检查等功能"""
+    def train(self, scenario_name: str = None, scenario: Dict[str, Any] = None):
+        """执行训练（增强容错版本）"""
         logger.info(f"🚀 开始使用预设配置训练: {scenario_name}")
         
-        scenario = self.get_preset_scenario(scenario_name)
-        if not scenario:
-            return False
+        if scenario_name:
+            scenario = self.get_preset_scenario(scenario_name)
+            if not scenario:
+                return False
         
         # 检查是否启用GPU训练
         use_gpu = scenario.get('use_gpu', self.gpu_available)
-        if use_gpu and self.gpu_available:
-            logger.info("🖥️  启用GPU训练")
-            return self._train_with_gpu(scenario)
+        
+        # 检查硬件配置中的集成显卡支持
+        integrated_graphics_support = self.config.get('hardware_configuration', {}).get('integrated_graphics_support', False)
+        minimum_vram_gb = self.config.get('hardware_configuration', {}).get('minimum_vram_gb_for_integrated', 1)
+        
+        # 如果启用了集成显卡支持，即使没有检测到专用GPU，也可以尝试使用GPU训练
+        if use_gpu and (self.gpu_available or integrated_graphics_support):
+            # 检查是否有足够的显存（对于集成显卡要求较低）
+            if self.gpu_available or (integrated_graphics_support and self._check_system_gpu_memory() >= minimum_vram_gb):
+                logger.info("🖥️  启用GPU训练")
+                return self._train_with_gpu(scenario)
+            else:
+                logger.info("⚠️  显存不足，将使用CPU训练")
+                # 继续执行CPU训练逻辑
         
         # 检查是否启用分布式训练
         use_distributed = scenario.get('distributed_training', False)
         if use_distributed and self.gpu_available:
             logger.info("🔄 启用分布式训练")
             return self._train_distributed(scenario)
+        
+        # 应用集成显卡优化（如果适用）
+        if integrated_graphics_optimizer and integrated_graphics_optimizer.is_integrated_graphics_system():
+            logger.info("🔧 应用集成显卡优化")
+            optimization_results = integrated_graphics_optimizer.apply_all_optimizations()
+            logger.info(f"集成显卡优化结果: {optimization_results}")
+            
+            # 根据优化结果调整训练参数
+            if 'optimizations_applied' in optimization_results:
+                # 调整批处理大小
+                original_batch_size = scenario.get('batch_size', 16)
+                adjusted_batch_size = integrated_graphics_optimizer.adjust_batch_size_for_integrated_graphics(original_batch_size)
+                scenario['batch_size'] = adjusted_batch_size
+                logger.info(f"批处理大小从 {original_batch_size} 调整为 {adjusted_batch_size}")
         
         # 检查是否是真实训练场景
         target_models = scenario.get('target_models', [])
@@ -905,6 +1010,12 @@ class ModelTrainer:
                     self.is_paused = True
                     return False
                 
+                # 检查是否需要暂停（模拟用户中断）
+                if self.is_paused:
+                    logger.info("⏸️ 训练已暂停")
+                    self.save_checkpoint(epoch)
+                    return False
+                
                 # 模拟一个epoch的训练（实际项目中这里会是多个batch的训练）
                 epoch_metrics = self.simulate_training_step(epoch, batch_size, scenario_name)
                 
@@ -916,12 +1027,6 @@ class ModelTrainer:
                 if epoch % checkpoint_interval == 0 or epoch == epochs:
                     self.save_checkpoint(epoch, epoch_metrics)
                 
-                # 检查是否需要暂停（模拟用户中断）
-                if self.is_paused:
-                    logger.info("⏸️ 训练已暂停")
-                    self.save_checkpoint(epoch, epoch_metrics)
-                    return False
-                    
             # 保存最终模型
             model_filename = f"{scenario_name}_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pth"
             model_path = MODELS_DIR / model_filename
@@ -1276,6 +1381,49 @@ class ModelTrainer:
                 json.dump(deployment_log, f, ensure_ascii=False, indent=2)
             
             return False
+    
+    def _check_system_gpu_memory(self):
+        """检查系统GPU内存"""
+        try:
+            import platform
+            system = platform.system().lower()
+            
+            if system == "windows":
+                # Windows系统使用WMI检查
+                import subprocess
+                import json
+                
+                result = subprocess.run([
+                    "powershell.exe", 
+                    "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
+                ], capture_output=True, text=True, timeout=10)
+                
+                if result.returncode == 0 and result.stdout.strip():
+                    gpu_data = json.loads(result.stdout)
+                    
+                    # 计算总GPU内存（以GB为单位）
+                    total_memory_gb = 0
+                    
+                    # Handle both single GPU and multiple GPU cases
+                    if isinstance(gpu_data, list):
+                        gpu_list = gpu_data
+                    else:
+                        gpu_list = [gpu_data]
+                    
+                    # Sum up memory from all GPUs
+                    for gpu_info in gpu_list:
+                        adapter_ram = gpu_info.get('AdapterRAM', 0)
+                        # Convert RAM from bytes to GB
+                        memory_gb = adapter_ram / (1024**3) if adapter_ram else 0
+                        total_memory_gb += memory_gb
+                    
+                    return total_memory_gb
+                    
+            # For other platforms or if WMI detection failed, return 0
+            return 0
+        except Exception as e:
+            logger.warning(f"检查系统GPU内存时出错: {e}")
+            return 0
 
 
 def main():

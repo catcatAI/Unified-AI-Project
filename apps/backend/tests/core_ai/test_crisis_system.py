@@ -11,6 +11,7 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
+# 修复导入路径
 from apps.backend.src.ai.crisis.crisis_system import CrisisSystem
 
 class TestCrisisSystem(unittest.TestCase):
@@ -99,9 +100,8 @@ class TestCrisisSystem(unittest.TestCase):
                         found_protocol_print = True
                         break
                         
-            # TODO: 修复关系断言
-# self.assertTrue(...)
-# 暂时跳过此断言以允许测试继续
+            # 验证协议触发打印
+            self.assertTrue(found_protocol_print, "Expected protocol trigger print not found")
 
         print("TestCrisisSystem.test_05_trigger_protocol PASSED")
         self.crisis_sys_custom_config.resolve_crisis("Test cleanup")

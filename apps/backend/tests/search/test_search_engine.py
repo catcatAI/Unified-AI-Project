@@ -14,8 +14,8 @@ class TestSearchEngine(unittest.TestCase):
         """
         from unittest.mock import patch
 
-        with patch("src.search.search_engine.SearchEngine._search_huggingface") as mock_search_huggingface, \
-             patch("src.search.search_engine.SearchEngine._search_github") as mock_search_github:
+        with patch("apps.backend.src.search.search_engine.SearchEngine._search_huggingface") as mock_search_huggingface, \
+             patch("apps.backend.src.search.search_engine.SearchEngine._search_github") as mock_search_github:
             mock_search_huggingface.return_value = ["bert-base-uncased"]
             mock_search_github.return_value = ["google-research/bert"]
 

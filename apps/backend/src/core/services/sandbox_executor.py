@@ -9,7 +9,7 @@ import sys # For sys.executable
 
 # 整合執行監控系統
 try:
-    from apps.backend.src.core_ai.execution_manager import (
+    from ai.execution_manager import (
         ExecutionManager, ExecutionManagerConfig, 
         execute_with_smart_monitoring, ExecutionResult, ExecutionStatus
     )

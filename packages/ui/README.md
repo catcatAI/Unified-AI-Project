@@ -23,6 +23,12 @@ This package includes the following UI components:
 - **Separator**: Visual dividers and separators
 - **Tabs**: Tabbed navigation components
 - **Textarea**: Multi-line text input fields
+- **Toast**: Notification system for user feedback
+- **Tooltip**: Contextual help and information
+- **Switch**: Toggle switches for boolean values
+- **Slider**: Range selectors for numeric values
+- **Checkbox**: Checkable input fields
+- **Radio**: Radio button groups
 
 ## Development
 

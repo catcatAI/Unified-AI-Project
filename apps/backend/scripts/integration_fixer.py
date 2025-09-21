@@ -220,11 +220,11 @@ class IntegrationFixer:
                     })
                     
                 # 检查内容分析模块的导入问题
-                if "from apps.backend.src.core_ai.learning" in content and "from ." in content:
+                if "from apps.backend.src.core_ai.learning" in content:
                     issues.append({
                         "type": "import_error",
                         "file": str(ca_path),
-                        "description": "相对导入和绝对导入混用"
+                        "description": "使用了绝对导入路径"
                     })
             else:
                 issues.append({

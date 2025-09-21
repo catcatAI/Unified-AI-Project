@@ -56,13 +56,14 @@ async def test_handle_project_happy_path(project_coordinator):
     pc._integrate_subtask_results = AsyncMock(return_value=final_integrated_response)
     
     # Mock the service discovery's get_all_capabilities method
-    pc.service_discovery.get_all_capabilities = AsyncMock(return_value=[])
+    available_capabilities = []
+    pc.service_discovery.get_all_capabilities_async = AsyncMock(return_value=available_capabilities)
 
     # Act
     response = await pc.handle_project(user_query, "session123", "user456")
 
     # Assert
-    pc._decompose_user_intent_into_subtasks.assert_awaited_once_with(user_query, [])
+    pc._decompose_user_intent_into_subtasks.assert_awaited_once_with(user_query, available_capabilities)
     pc._execute_task_graph.assert_awaited_once_with(decomposed_tasks)
     pc._integrate_subtask_results.assert_awaited_once_with(user_query, execution_results)
 

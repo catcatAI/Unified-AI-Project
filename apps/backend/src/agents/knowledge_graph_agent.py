@@ -4,9 +4,9 @@ import json
 import logging
 from typing import Dict, Any, List
 
-from apps.backend.src.agents.base_agent import BaseAgent
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+from .base_agent import BaseAgent
+from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from ..tools.tool_dispatcher import ToolDispatcher
 
 class KnowledgeGraphAgent(BaseAgent):
     """

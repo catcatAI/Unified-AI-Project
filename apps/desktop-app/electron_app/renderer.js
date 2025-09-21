@@ -1,7 +1,5 @@
-const { ses } = require("ses");
-ses.enable();
-
-const DOMPurify = require("dompurify");
+// ses is enabled via preload or not needed
+// DOMPurify is now loaded via CDN in index.html
 
 document.addEventListener("DOMContentLoaded", () => {
     const userInputField = document.getElementById("userInput");
@@ -14,6 +12,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const defaultModelInput = document.getElementById("defaultModelInput");
 
     const CHANNELS = window.ipcChannels;
+    
+    // 使用通过CDN加载的DOMPurify
+    const DOMPurify = window.DOMPurify;
 
     // --- Create UI ---
     const chatViewButton = Button({ id: 'chatViewButton', text: 'Chat', onClick: () => window.store.updateState(window.store.actions.setActiveView, "chat") });
@@ -76,7 +77,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Logic ---
 
     async function sendMessage() {
-        const text = DOMPurify.sanitize(userInputField.value.trim());
+        // 确保DOMPurify可用
+        const sanitizedText = DOMPurify ? DOMPurify.sanitize(userInputField.value.trim()) : userInputField.value.trim();
+        const text = sanitizedText;
         if (!text) return;
 
         const sessionId = window.store.getState().chat.sessionId;

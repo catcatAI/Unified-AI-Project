@@ -37,6 +37,12 @@ from .deployment_manager import (
     get_deployment_mode
 )
 
+from .integrated_graphics_optimizer import (
+    IntegratedGraphicsOptimizer,
+    optimize_for_integrated_graphics,
+    get_integrated_graphics_recommendations
+)
+
 __all__ = [
     # Hardware Detection
     'HardwareProbe',
@@ -60,40 +66,10 @@ __all__ = [
     'ProcessingConfig',
     'get_deployment_config',
     'apply_optimal_config',
-    'get_deployment_mode'
+    'get_deployment_mode',
+    
+    # Integrated Graphics Optimization
+    'IntegratedGraphicsOptimizer',
+    'optimize_for_integrated_graphics',
+    'get_integrated_graphics_recommendations'
 ]
-
-# Quick setup function for easy integration
-def initialize_system() -> dict:
-    """
-    Initialize the system with optimal configuration based on hardware.
-    Returns a dictionary with system information and applied settings.
-    """
-    try:
-        # Get hardware profile
-        hardware_profile = get_hardware_profile()
-        
-        # Apply optimal configuration
-        settings = apply_optimal_config()
-        
-        # Return summary
-        return {
-            'hardware_profile': hardware_profile,
-            'deployment_settings': settings,
-            'performance_tier': hardware_profile.performance_tier,
-            'ai_capability_score': hardware_profile.ai_capability_score,
-            'deployment_mode': get_deployment_mode().value,
-            'status': 'success'
-        }
-        
-    except Exception as e:
-        return {
-            'status': 'error',
-            'error': str(e),
-            'fallback': True
-        }
-
-# Version info
-__version__ = "1.0.0"
-__author__ = "Unified AI Project Team"
-__description__ = "Hardware-adaptive AI deployment system"

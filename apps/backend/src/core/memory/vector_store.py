@@ -1,5 +1,6 @@
 import chromadb
-from chromadb.types import Collection
+# 修正導入方式 - 直接從chromadb導入Collection
+from chromadb import Collection
 import logging
 from typing import List, Dict, Any, Optional
 

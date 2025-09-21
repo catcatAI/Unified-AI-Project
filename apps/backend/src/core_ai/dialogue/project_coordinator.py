@@ -9,18 +9,18 @@ from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
 import yaml
 import os
 
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload
-from apps.backend.src.shared.types.common_types import PendingHSPTaskInfo
+from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload
+from shared.types.common_types import PendingHSPTaskInfo
 from datetime import datetime, timezone
 
 if TYPE_CHECKING:
-    from apps.backend.src.services.multi_llm_service import MultiLLMService
-    from apps.backend.src.core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-    from apps.backend.src.hsp.connector import HSPConnector
-    from apps.backend.src.core_ai.agent_manager import AgentManager
-    from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-    from apps.backend.src.core_ai.learning.learning_manager import LearningManager
-    from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
+    from services.multi_llm_service import MultiLLMService
+    from service_discovery.service_discovery_module import ServiceDiscoveryModule
+    from hsp.connector import HSPConnector
+    from agent_manager import AgentManager
+    from memory.ham_memory_manager import HAMMemoryManager
+    from learning.learning_manager import LearningManager
+    from personality.personality_manager import PersonalityManager
 
 class ProjectCoordinator:
     def __init__(self,

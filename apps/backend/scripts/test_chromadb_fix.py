@@ -9,10 +9,11 @@ import subprocess
 import time
 import signal
 import atexit
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from apps.backend.src.core_ai.memory.vector_store import VectorMemoryStore
-from apps.backend.src.core.memory.vector_store import VectorStore
+# 修正導入路徑 - 使用正確的模塊路徑
+from src.core.memory.vector_store import VectorStore
+from src.core_ai.memory.vector_store import VectorMemoryStore
 import tempfile
 import shutil
 

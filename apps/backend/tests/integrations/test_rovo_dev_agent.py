@@ -4,11 +4,15 @@ Rovo Dev Agent 测试用例
 
 import pytest
 import asyncio
+import sys
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 
-from apps.backend.src.integrations.rovo_dev_agent import RovoDevAgent
-from apps.backend.src.hsp.types import HSPTask, HSPCapability
+# 修复导入路径
+sys.path.insert(0, 'd:\\Projects\\Unified-AI-Project\\apps\\backend\\src')
+
+from integrations.rovo_dev_agent import RovoDevAgent
+from hsp.types import HSPTask, HSPCapability
 
 
 class TestRovoDevAgent:
@@ -50,8 +54,9 @@ class TestRovoDevAgent:
     @pytest.fixture
     def agent(self, mock_config):
         """创建测试代理实例"""
-        with patch('src.integrations.enhanced_rovo_dev_connector.EnhancedRovoDevConnector'):
-            with patch('src.integrations.rovo_dev_agent.AtlassianBridge'):
+        # 修复导入路径 - 使用正确的模块路径
+        with patch('integrations.enhanced_rovo_dev_connector.EnhancedRovoDevConnector'):
+            with patch('integrations.rovo_dev_agent.AtlassianBridge'):
                 return RovoDevAgent(mock_config)
     
     def test_agent_initialization(self, agent, mock_config):
@@ -74,9 +79,8 @@ class TestRovoDevAgent:
     
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
     async def test_agent_start_stop(self, agent):
         """测试代理启动和停止"""
         # Mock connector methods
@@ -93,9 +97,7 @@ class TestRovoDevAgent:
     
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
     async def test_code_analysis_task(self, agent):
         """测试代码分析任务"""
         # Mock bridge method
@@ -119,9 +121,7 @@ class TestRovoDevAgent:
     
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_documentation_generation_task(self, agent):
         """测试文档生成任务"""
         agent.bridge.create_confluence_page = AsyncMock(return_value={'id': 'test_doc_page'})
@@ -142,7 +142,7 @@ class TestRovoDevAgent:
     @pytest.mark.asyncio
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
     async def test_issue_tracking_task(self, agent):
         """测试问题追踪任务"""
         agent.bridge.create_jira_issue = AsyncMock(return_value={
@@ -166,27 +166,25 @@ class TestRovoDevAgent:
     
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_task_submission_and_processing(self, agent):
-    """测试任务提交和处理"""
-    # Mock the dispatch method
-    agent._dispatch_task = AsyncMock(return_value={'status': 'completed'})
-    
-    task = HSPTask(
-        task_id='test_task_001',
-        capability='code_analysis',
-        parameters={'repository_url': 'https://github.com/test/repo'},
-        requester_id='test_requester'
-    )
-    
-    # Start the agent
-    agent.is_active = True
-    
-    # Submit task
-    await agent.submit_task(task)
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_task_submission_and_processing(self, agent):
+        """测试任务提交和处理"""
+        # Mock the dispatch method
+        agent._dispatch_task = AsyncMock(return_value={'status': 'completed'})
         
+        task = HSPTask(
+            task_id='test_task_001',
+            capability='code_analysis',
+            parameters={'repository_url': 'https://github.com/test/repo'},
+            requester_id='test_requester'
+        )
+        
+        # Start the agent
+        agent.is_active = True
+        
+        # Submit task
+        await agent.submit_task(task)
+            
         # Process the task manually (since we're not running the loop)
         await agent._process_task(task)
         
@@ -195,13 +193,41 @@ async def test_task_submission_and_processing(self, agent):
         assert len(agent.task_history) == 1
         assert agent.task_history[0]['task_id'] == 'test_task_001'
         assert agent.task_history[0]['status'] == 'completed'
-    
+
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_task_error_handling(self, agent):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_task_processing(self, agent):
+        """测试任务处理"""
+        # Mock dispatch to return a result
+        agent._dispatch_task = AsyncMock(return_value={'result': 'Task completed successfully'})
+        
+        task = HSPTask(
+            task_id='test_task_001',
+            capability='code_analysis',
+            parameters={'repository_url': 'https://github.com/test/repo'},
+            requester_id='test_requester'
+        )
+        
+        # Start the agent
+        agent.is_active = True
+        
+        # Submit task
+        await agent.submit_task(task)
+            
+        # Process the task manually (since we're not running the loop)
+        await agent._process_task(task)
+        
+        # Check metrics
+        assert agent.metrics['tasks_completed'] == 1
+        assert len(agent.task_history) == 1
+        assert agent.task_history[0]['task_id'] == 'test_task_001'
+        assert agent.task_history[0]['status'] == 'completed'
+
+    @pytest.mark.asyncio
+    # 添加重试装饰器以处理不稳定的测试
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_task_error_handling(self, agent):
         """测试任务错误处理"""
         # Mock dispatch to raise an error
         agent._dispatch_task = AsyncMock(side_effect=Exception("Test error"))
@@ -223,7 +249,7 @@ async def test_task_error_handling(self, agent):
         assert len(agent.task_history) == 1
         assert agent.task_history[0]['status'] == 'failed'
         assert 'error' in agent.task_history[0]
-    
+
     def test_metrics_update(self, agent):
         """测试指标更新"""
         # Test successful task
@@ -240,10 +266,8 @@ async def test_task_error_handling(self, agent):
     
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_status_reporting(self, agent):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_status_reporting(self, agent):
         """测试状态报告"""
         agent.is_active = True
         status = await agent.get_status()
@@ -306,10 +330,8 @@ async def test_status_reporting(self, agent):
     
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_unsupported_capability(self, agent):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_unsupported_capability(self, agent):
         """测试不支持的能力"""
         task = HSPTask(
             task_id='unsupported_task',
@@ -328,10 +350,8 @@ class TestRovoDevAgentIntegration:
     @pytest.mark.asyncio
     @pytest.mark.integration
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_full_workflow(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_full_workflow(self):
         """测试完整工作流程"""
         # This test would require actual Atlassian credentials
         # and should only run in integration test environment
@@ -340,10 +360,8 @@ async def test_full_workflow(self):
     @pytest.mark.asyncio
     @pytest.mark.integration
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_real_confluence_integration(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_real_confluence_integration(self):
         """测试真实 Confluence 集成"""
         # This test would create actual Confluence pages
         # and should only run in integration test environment
@@ -352,10 +370,8 @@ async def test_real_confluence_integration(self):
     @pytest.mark.asyncio
     @pytest.mark.integration
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_real_jira_integration(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_real_jira_integration(self):
         """测试真实 Jira 集成"""
         # This test would create actual Jira issues
         # and should only run in integration test environment

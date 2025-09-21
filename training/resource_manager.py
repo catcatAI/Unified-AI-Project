@@ -41,6 +41,15 @@ except ImportError:
 # 导入智能资源分配器
 from training.smart_resource_allocator import SmartResourceAllocator
 
+# 导入集成显卡优化器
+try:
+    from apps.backend.src.system import IntegratedGraphicsOptimizer, get_hardware_profile
+    hardware_profile = get_hardware_profile()
+    integrated_graphics_optimizer = IntegratedGraphicsOptimizer(hardware_profile) if hardware_profile else None
+except ImportError:
+    hardware_profile = None
+    integrated_graphics_optimizer = None
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -96,7 +105,7 @@ class ResourceManager:
         except Exception as e:
             logger.warning(f"⚠️  检测NVIDIA GPU时出错: {e}")
         
-        # 如果没有检测到NVIDIA GPU，尝试检测其他GPU
+        # 如果没有检测到NVIDIA GPU，尝试检测其他GPU（AMD/Intel等）
         if not gpus:
             try:
                 # 尝试使用torch检测GPU
@@ -117,6 +126,54 @@ class ResourceManager:
                 logger.warning("⚠️  未安装torch库，无法检测GPU")
             except Exception as e:
                 logger.warning(f"⚠️  通过PyTorch检测GPU时出错: {e}")
+        
+        # 如果仍然没有检测到GPU，尝试使用系统级检测（针对集成显卡）
+        if not gpus:
+            try:
+                # 使用psutil和系统信息检测集成显卡
+                import platform
+                system = platform.system().lower()
+                
+                if system == "windows":
+                    # Windows系统使用WMI检测
+                    import subprocess
+                    import json
+                    
+                    result = subprocess.run([
+                        "powershell.exe", 
+                        "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
+                    ], capture_output=True, text=True, timeout=10)
+                    
+                    if result.returncode == 0:
+                        gpu_data = json.loads(result.stdout)
+                        
+                        # Handle both single GPU and multiple GPU cases
+                        if isinstance(gpu_data, list):
+                            gpu_list = gpu_data
+                        else:
+                            gpu_list = [gpu_data]
+                        
+                        # Process each GPU
+                        for idx, gpu_info in enumerate(gpu_list):
+                            name = gpu_info.get('Name', 'Integrated Graphics')
+                            adapter_ram = gpu_info.get('AdapterRAM', 0)
+                            
+                            # Convert RAM from bytes to bytes (keep as is for compatibility with existing code)
+                            memory_total = adapter_ram if adapter_ram else 1073741824  # Default 1GB
+                            
+                            gpu_info = {
+                                'id': idx,
+                                'name': name,
+                                'total_memory': memory_total,
+                                'free_memory': memory_total,  # Simplified
+                                'used_memory': 0
+                            }
+                            gpus.append(gpu_info)
+                        
+                        logger.info(f"✅ 通过WMI检测到 {len(gpus)} 个GPU设备")
+                        
+            except Exception as e:
+                logger.warning(f"⚠️  检测集成显卡时出错: {e}")
         
         return gpus
     
@@ -301,6 +358,37 @@ class ResourceManager:
         """为模型分配资源"""
         if not requirements:
             return None
+        
+        # 为集成显卡系统特殊处理
+        is_integrated_graphics = False
+        if integrated_graphics_optimizer:
+            is_integrated_graphics = integrated_graphics_optimizer.is_integrated_graphics_system()
+        
+        if is_integrated_graphics:
+            logger.info(f"为集成显卡系统调整资源需求: {model_name}")
+            # 应用集成显卡优化建议
+            recommendations = integrated_graphics_optimizer.get_optimization_recommendations()
+            
+            # 根据优化建议调整资源需求
+            if "optimizations" in recommendations:
+                # 降低GPU内存需求
+                if requirements.get('gpu_memory_gb', 0) > 0:
+                    original_gpu_memory = requirements['gpu_memory_gb']
+                    # 根据集成显卡性能等级调整GPU内存需求
+                    performance_tier = integrated_graphics_optimizer.get_integrated_graphics_performance_tier()
+                    if performance_tier == "minimal":
+                        requirements['gpu_memory_gb'] = min(requirements['gpu_memory_gb'], 0.5)
+                    elif performance_tier == "low":
+                        requirements['gpu_memory_gb'] = min(requirements['gpu_memory_gb'], 1.0)
+                    elif performance_tier == "medium":
+                        requirements['gpu_memory_gb'] = min(requirements['gpu_memory_gb'], 2.0)
+                    logger.info(f"GPU内存需求从 {original_gpu_memory}GB 调整为 {requirements['gpu_memory_gb']}GB")
+                
+                # 调整CPU核心数需求
+                if performance_tier in ["minimal", "low"]:
+                    original_cpu_cores = requirements.get('cpu_cores', 1)
+                    requirements['cpu_cores'] = min(requirements.get('cpu_cores', 1), 2)
+                    logger.info(f"CPU核心数需求从 {original_cpu_cores} 调整为 {requirements['cpu_cores']}")
         
         # 使用智能资源分配器进行资源分配
         from training.smart_resource_allocator import ResourceRequest

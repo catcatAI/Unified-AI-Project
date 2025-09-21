@@ -57,6 +57,11 @@ pnpm test:watch       # 测试监听模式
 # 开发 + 测试
 pnpm dev-test         # 同时启动开发环境和测试监控
 
+# 端口管理
+pnpm port-info        # 显示端口信息
+pnpm port-check       # 检查端口是否被占用
+pnpm port-kill-service # 终止占用端口的服务
+
 # 工具
 pnpm setup            # 项目设置
 pnpm health-check     # 健康检查
@@ -202,7 +207,12 @@ pytest -s     # 显示print输出
 
 3. **端口被占用**
    ```bash
-   # 查找占用端口的进程
+   # 使用端口管理工具
+   pnpm port-info                    # 查看所有端口状态
+   pnpm port-check 8000             # 检查特定端口
+   pnpm port-kill-service BACKEND   # 终止后端服务
+   
+   # 或者手动查找占用端口的进程
    netstat -ano | findstr :8000  # Windows
    lsof -i :8000  # Linux/Mac
    
@@ -217,6 +227,18 @@ pytest -s     # 显示print输出
    source venv/bin/activate
    python start_chroma_server.py
    ```
+
+### 端口管理策略
+
+项目采用统一的端口管理策略来避免开发过程中的端口冲突问题：
+
+| 服务名称 | 端口号 | 用途说明 |
+|---------|-------|---------|
+| FRONTEND_DASHBOARD | 3000 | 前端仪表板 Web 服务 |
+| DESKTOP_APP | 3001 | 桌面应用 Electron 服务 |
+| BACKEND_API | 8000 | 后端 API 服务 |
+
+项目实现了自动化的端口冲突检测和解决机制，在启动服务之前会自动检测并终止已存在的冲突进程。详细信息请参阅：[端口管理策略](PORT_MANAGEMENT_STRATEGY.md)
 
 ### 调试技巧
 

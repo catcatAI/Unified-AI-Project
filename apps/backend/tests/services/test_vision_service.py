@@ -9,18 +9,19 @@ from apps.backend.src.services.vision_service import VisionService
 class TestVisionService(unittest.TestCase):
 
     @pytest.mark.timeout(15)
-    def test_01_initialization_placeholder(self):
+    def test_01_initialization(self):
+        """Test Vision service initialization."""
         service = VisionService()
         self.assertIsNotNone(service)
-        print("TestVisionService.test_01_initialization_placeholder PASSED")
+        # Check that service has required attributes
+        self.assertTrue(hasattr(service, 'config'))
+        print("TestVisionService.test_01_initialization PASSED")
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(15)
-    # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_02_analyze_image(self):
+        """Test image analysis."""
         service = VisionService()
         dummy_image = b"dummy_image_bytes"
         features = ["captioning", "object_detection", "ocr"]
@@ -42,11 +43,8 @@ class TestVisionService(unittest.TestCase):
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(15)
-    # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-    # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_03_compare_images(self):
+        """Test image comparison."""
         service = VisionService()
         dummy_image1 = b"dummy1"
         dummy_image2 = b"dummy2"

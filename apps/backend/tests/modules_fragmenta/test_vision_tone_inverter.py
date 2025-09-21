@@ -9,22 +9,35 @@ class TestVisionToneInverter(unittest.TestCase):
 
     @pytest.mark.timeout(5)
     def test_01_initialization(self):
+        """Test VisionToneInverter initialization."""
         inverter = VisionToneInverter()
         self.assertIsNotNone(inverter)
         print("TestVisionToneInverter.test_01_initialization PASSED")
 
     @pytest.mark.timeout(5)
-    def test_02_invert_visual_tone_placeholder(self):
+    def test_02_invert_visual_tone(self):
+        """Test visual tone inversion."""
         inverter = VisionToneInverter()
-        sample_visuals = {"color": "blue"}
+        sample_visuals = {"color": "blue", "brightness": 0.5}
         target_tone = "brighter"
 
         adjusted_visuals = inverter.invert_visual_tone(sample_visuals, target_tone)
 
+        # Verify the adjustment note is added
         self.assertIn("tone_adjustment_note", adjusted_visuals)
         self.assertIn(target_tone, adjusted_visuals["tone_adjustment_note"])
-        self.assertEqual(adjusted_visuals["color"], "blue") # Original data should persist
-        print("TestVisionToneInverter.test_02_invert_visual_tone_placeholder PASSED")
+        
+        # Verify original data is preserved
+        self.assertEqual(adjusted_visuals["color"], "blue")
+        
+        # Verify brightness adjustment
+        self.assertGreater(adjusted_visuals["brightness"], 0.5)
+        
+        # Test with different tone
+        darker_visuals = inverter.invert_visual_tone(sample_visuals, "darker")
+        self.assertLess(darker_visuals["brightness"], 0.5)
+        
+        print("TestVisionToneInverter.test_02_invert_visual_tone PASSED")
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

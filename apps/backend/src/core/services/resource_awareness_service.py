@@ -34,9 +34,9 @@ class ResourceAwarenessService:
         self._config_path: str
 
         # Determine project root to correctly locate the config file
-        # Assuming this file is in src/services/
+        # File is in src/core/services/ -> project root expected by tests is apps/backend (three levels up from src/core/services)
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
+        project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
 
         if config_filepath is None:
             self._config_path = os.path.join(project_root, DEFAULT_CONFIG_PATH)

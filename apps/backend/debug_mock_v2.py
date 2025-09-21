@@ -6,7 +6,7 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from apps.backend.src.core_ai.dependency_manager import DependencyManager
+from .src.core_ai.dependency_manager import DependencyManager
 
 def test_module_level_mock():
     """測試模組級 open 的 mock 攔截。"""

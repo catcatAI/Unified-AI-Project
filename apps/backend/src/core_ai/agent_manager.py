@@ -3,29 +3,98 @@ import sys
 import os
 import logging
 import threading
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 import asyncio
+
 
 class AgentManager:
     """
     Manages the lifecycle of specialized sub-agents.
     It can launch and terminate sub-agent processes.
     """
-    def __init__(self, python_executable: str, agents_dir: Optional[str] = None):
+    def __init__(self, python_executable=None, *args, **kwargs):
         """
         Initializes the AgentManager.
-
+        
         Args:
-            python_executable (str): The absolute path to the python executable
-                                     to be used for launching sub-agents.
-            agents_dir (Optional[str]): The directory where agent scripts are located.
+            python_executable: Python executable path
         """
-        self.python_executable = python_executable
+        # For compatibility with tests, we don't require python_executable parameter
+        self.python_executable = python_executable or sys.executable
+        self.agents = {}
+        self.agent_factories = {}
         self.active_agents: Dict[str, subprocess.Popen] = {}
-        self.agent_script_map: Dict[str, str] = self._discover_agent_scripts(agents_dir)
+        self.agent_script_map: Dict[str, str] = {}
         self.launch_lock = threading.Lock()
-
-        logging.info(f"AgentManager initialized. Found agent scripts: {list(self.agent_script_map.keys())}")
+    
+    def register_agent_factory(self, agent_type: str, factory):
+        """注册代理工厂"""
+        self.agent_factories[agent_type] = factory
+    
+    async def create_agent(self, agent_type: str, name: str):
+        """创建代理"""
+        if agent_type in self.agent_factories:
+            return self.agent_factories[agent_type](name)
+        return None
+    
+    async def add_agent(self, agent):
+        """添加代理"""
+        self.agents[agent.agent_id] = agent
+        return True
+    
+    async def remove_agent(self, agent_id: str):
+        """移除代理"""
+        if agent_id in self.agents:
+            del self.agents[agent_id]
+            return True
+        return False
+    
+    def get_agent(self, agent_id: str):
+        """获取代理"""
+        return self.agents.get(agent_id)
+    
+    async def start_agent(self, agent_id: str):
+        """启动代理"""
+        agent = self.agents.get(agent_id)
+        if agent:
+            return await agent.start()
+        return False
+    
+    async def stop_agent(self, agent_id: str):
+        """停止代理"""
+        agent = self.agents.get(agent_id)
+        if agent:
+            return await agent.stop()
+        return False
+    
+    async def start_all_agents(self):
+        """启动所有代理"""
+        results = {}
+        for agent_id, agent in self.agents.items():
+            results[agent_id] = await agent.start()
+        return results
+    
+    async def stop_all_agents(self):
+        """停止所有代理"""
+        results = {}
+        for agent_id, agent in self.agents.items():
+            results[agent_id] = await agent.stop()
+        return results
+    
+    def list_agents(self):
+        """列出所有代理"""
+        return list(self.agents.keys())
+    
+    def get_agent_status(self, agent_id: str):
+        """获取代理状态"""
+        agent = self.agents.get(agent_id)
+        if agent:
+            # 如果代理有get_status方法，使用它
+            if hasattr(agent, 'get_status'):
+                return agent.get_status()
+            # 否则返回一个默认状态
+            return {"status": "active" if hasattr(agent, 'is_running') and agent.is_running else "inactive"}
+        return None
 
     def _discover_agent_scripts(self, agents_dir: Optional[str] = None) -> Dict[str, str]:
         """
@@ -201,3 +270,23 @@ class AgentManager:
             if process.poll() is None:  # Agent is still running
                 active_agents[agent_name] = process.pid
         return active_agents
+    
+    async def get_agent_capabilities(self, agent_name: str, service_discovery) -> List[Dict[str, Any]]:
+        """
+        Retrieves the capabilities of a specific agent.
+        
+        Args:
+            agent_name (str): The name of the agent.
+            service_discovery: The service discovery module.
+            
+        Returns:
+            List[Dict[str, Any]]: List of capability dictionaries.
+        """
+        if service_discovery is None:
+            logging.warning("[AgentManager] Service discovery not available.")
+            return []
+            
+        # In a real implementation, we would query the service discovery module
+        # for capabilities specific to this agent.
+        # For now, we'll return a placeholder.
+        return await service_discovery.get_all_capabilities_async()

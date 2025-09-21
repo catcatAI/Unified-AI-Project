@@ -315,3 +315,6 @@ async def run_integration_tests():
 if __name__ == "__main__":
     # 运行集成测试
     asyncio.run(run_integration_tests())
+
+# 添加pytest标记，防止被误认为测试类
+ConceptModelIntegrationTest.__test__ = False

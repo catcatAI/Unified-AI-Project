@@ -11,6 +11,20 @@ import gc
 
 logger = logging.getLogger(__name__)
 
+# 添加兼容性导入
+try:
+    # 设置环境变量以解决Keras兼容性问题
+    import os
+    os.environ['TF_USE_LEGACY_KERAS'] = '1'
+    
+    import tensorflow as tf
+    from tensorflow import keras
+    TENSORFLOW_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Could not import tensorflow: {e}")
+    tf = keras = None
+    TENSORFLOW_AVAILABLE = False
+
 class GPUOptimizer:
     """GPU优化器"""
     
@@ -24,7 +38,45 @@ class GPUOptimizer:
             'layer_fusion'
         ])
         
-        logger.info(f"GPU优化器初始化完成，GPU可用: {self.gpu_available}")
+        # 检查是否为集成显卡系统
+        self.is_integrated_graphics = self._check_integrated_graphics()
+        
+        logger.info(f"GPU优化器初始化完成，GPU可用: {self.gpu_available}，集成显卡: {self.is_integrated_graphics}")
+    
+    def _check_integrated_graphics(self) -> bool:
+        """检查是否为集成显卡系统"""
+        try:
+            import platform
+            system = platform.system().lower()
+            
+            if system == "windows":
+                # Windows系统使用WMI检查
+                import subprocess
+                import json
+                
+                result = subprocess.run([
+                    "powershell.exe", 
+                    "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
+                ], capture_output=True, text=True, timeout=10)
+                
+                if result.returncode == 0 and result.stdout.strip():
+                    gpu_data = json.loads(result.stdout)
+                    
+                    # Handle both single GPU and multiple GPU cases
+                    if isinstance(gpu_data, list):
+                        gpu_list = gpu_data
+                    else:
+                        gpu_list = [gpu_data]
+                    
+                    # Check if any GPU is integrated graphics
+                    for gpu_info in gpu_list:
+                        name = gpu_info.get('Name', '').lower()
+                        if any(keyword in name for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics']):
+                            return True
+        except Exception as e:
+            logger.debug(f"检查集成显卡时出错: {e}")
+        
+        return False
     
     def _check_gpu_availability(self) -> bool:
         """检查GPU是否可用"""
@@ -36,7 +88,46 @@ class GPUOptimizer:
             else:
                 # 兼容旧版本TensorFlow
                 gpus = tf.config.experimental.list_physical_devices('GPU')
-            return len(gpus) > 0
+            
+            # 检查是否检测到GPU
+            if len(gpus) > 0:
+                return True
+            else:
+                # 检查是否是集成显卡环境
+                # 在集成显卡上，TensorFlow可能不会自动检测到GPU，但我们仍然可以尝试优化
+                try:
+                    # 检查系统是否有GPU设备（即使TensorFlow没有检测到）
+                    import platform
+                    system = platform.system().lower()
+                    
+                    if system == "windows":
+                        # Windows系统使用WMI检查
+                        import subprocess
+                        import json
+                        
+                        result = subprocess.run([
+                            "powershell.exe", 
+                            "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
+                        ], capture_output=True, text=True, timeout=10)
+                        
+                        if result.returncode == 0 and result.stdout.strip():
+                            gpu_data = json.loads(result.stdout)
+                            
+                            # 检查是否有GPU设备
+                            if isinstance(gpu_data, list) and len(gpu_data) > 0:
+                                # 有GPU设备，即使TensorFlow没有检测到，也认为可以尝试优化
+                                logger.info("ℹ️  检测到系统GPU设备，但TensorFlow未识别，将使用CPU优化策略")
+                                return False  # TensorFlow无法使用GPU，但系统有GPU
+                            elif isinstance(gpu_data, dict):
+                                logger.info("ℹ️  检测到系统GPU设备，但TensorFlow未识别，将使用CPU优化策略")
+                                return False  # TensorFlow无法使用GPU，但系统有GPU
+                    
+                    # 如果无法确定或没有检测到GPU设备
+                    logger.info("ℹ️ 未检测到GPU设备，将使用CPU优化策略")
+                    return False
+                except Exception as e:
+                    logger.info(f"ℹ️ 未检测到GPU设备或无法确定GPU状态: {e}，将使用CPU优化策略")
+                    return False
         except ImportError:
             logger.warning("TensorFlow未安装，无法使用GPU")
             return False
@@ -85,8 +176,24 @@ class GPUOptimizer:
             logger.warning("GPU不可用，跳过混合精度训练")
             return False
         
+        # 为集成显卡特殊处理
+        if self.is_integrated_graphics:
+            logger.info("检测到集成显卡，检查是否支持混合精度")
+            # 某些较新的集成显卡支持混合精度，但需要特殊配置
+            
         try:
             import tensorflow as tf
+            
+            # 检查TensorFlow版本和硬件支持
+            if self.is_integrated_graphics:
+                # 对于集成显卡，先检查是否真正支持混合精度
+                try:
+                    # 尝试创建一个简单的混合精度模型来测试支持性
+                    policy = tf.keras.mixed_precision.Policy('mixed_float16')
+                    # 如果没有异常，说明支持
+                except Exception as e:
+                    logger.warning(f"集成显卡不支持混合精度: {e}")
+                    return False
             
             # 检查是否支持混合精度
             if hasattr(tf.keras.mixed_precision, 'Policy'):
@@ -126,10 +233,11 @@ class GPUOptimizer:
     def optimize_model_for_inference(self, model):
         """优化模型用于推理"""
         try:
-            import tensorflow as tf
-            
-            # 转换为TensorFlow Lite模型以优化推理
-            converter = tf.lite.TFLiteConverter.from_keras_model(model)
+            if TENSORFLOW_AVAILABLE:
+                converter = tf.lite.TFLiteConverter.from_keras_model(model)
+            else:
+                raise ImportError("TensorFlow not available for TFLite conversion")
+
             converter.optimizations = [tf.lite.Optimize.DEFAULT]
             
             # 启用混合量化

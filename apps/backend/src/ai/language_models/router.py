@@ -2,7 +2,14 @@ from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
 
 from .registry import ModelRegistry, ModelProfile
-from ...services.multi_llm_service import ModelProvider
+
+# Use absolute imports instead of relative imports when running as a script
+try:
+    # Try relative imports first (for when running with uvicorn)
+    from ...services.multi_llm_service import ModelProvider
+except ImportError:
+    # Fall back to absolute imports (for when running as a script)
+    from services.multi_llm_service import ModelProvider
 
 
 @dataclass

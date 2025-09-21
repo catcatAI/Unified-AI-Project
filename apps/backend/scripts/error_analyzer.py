@@ -20,6 +20,8 @@ class ErrorType(Enum):
     TIMEOUT_ERROR = "超时错误"
     IMPORT_ERROR = "导入路径错误"
     CONFIG_ERROR = "配置问题"
+    CONNECTION_ERROR = "连接错误"
+    VALIDATION_ERROR = "数据验证错误"
     UNKNOWN = "未知错误"
 
 
@@ -33,7 +35,7 @@ class ErrorInfo:
 
 
 class ErrorAnalyzer:
-    def __init__(self, test_results_file: str = "test_results.json"):
+    def __init__(self, test_results_file: str = "test_results/latest_test_results.json"):
         self.test_results_file = test_results_file
         self.error_patterns = {
             ErrorType.ASYNC_WARNING: r"RuntimeWarning: coroutine '.*' was never awaited",
@@ -41,7 +43,20 @@ class ErrorAnalyzer:
             ErrorType.ATTRIBUTE_ERROR: r"AttributeError: .* object has no attribute .*",
             ErrorType.ASSERTION_ERROR: r"AssertionError: .* != .*",
             ErrorType.TIMEOUT_ERROR: r"(TimeoutError|test timeout exceeded)",
-            ErrorType.IMPORT_ERROR: r"(ModuleNotFoundError|No module named) .*",
+            ErrorType.IMPORT_ERROR: r"(ModuleNotFoundError|No module named|ImportError) .*",
+            ErrorType.CONFIG_ERROR: r"(ConfigError|ConfigurationError|Invalid configuration)",
+            ErrorType.CONNECTION_ERROR: r"(ConnectionError|Connection failed|Could not connect)",
+            ErrorType.VALIDATION_ERROR: r"(ValidationError|Validation failed)",
+        }
+        
+        # 添加更多错误模式以提高识别率，但避免过于宽泛的匹配
+        self.additional_error_patterns = {
+            ErrorType.TIMEOUT_ERROR: r"(?<!plugin.*)timeout(?!\s+plugin)",  # 避免匹配插件信息
+            ErrorType.ASSERTION_ERROR: r"assert.*==",  # 更精确的断言匹配
+            ErrorType.ATTRIBUTE_ERROR: r"AttributeError:",  # 更精确的属性错误匹配
+            ErrorType.IMPORT_ERROR: r"ImportError:",  # 更精确的导入错误匹配
+            ErrorType.CONNECTION_ERROR: r"Connection",  # 更精确的连接错误匹配
+            ErrorType.VALIDATION_ERROR: r"ValidationError",  # 更精确的验证错误匹配
         }
     
     def load_test_results(self) -> Dict[str, Any]:
@@ -67,12 +82,47 @@ class ErrorAnalyzer:
         stderr = test_results.get("stderr", "")
         combined_output = stdout + "\n" + stderr
         
+        # 首先尝试从测试结果中提取具体的失败用例
+        errors.extend(self._extract_test_failures(test_results))
+        
         # 分析每种错误类型
         for error_type, pattern in self.error_patterns.items():
             matches = re.finditer(pattern, combined_output)
             for match in matches:
                 error_info = self._extract_error_details(error_type, match, combined_output)
-                errors.append(error_info)
+                # 避免重复添加相同错误
+                if error_info not in errors:
+                    errors.append(error_info)
+        
+        # 使用额外的错误模式进行匹配，但避免匹配插件信息
+        for error_type, pattern in getattr(self, 'additional_error_patterns', {}).items():
+            # 对于超时错误，使用更精确的模式匹配，避免匹配插件信息
+            if error_type == ErrorType.TIMEOUT_ERROR:
+                # 匹配真正的超时错误，但排除插件信息
+                precise_patterns = [
+                    r"TimeoutError:",
+                    r"test timeout exceeded",
+                    r"timeout.*seconds",
+                    r"timed out"
+                ]
+                
+                for precise_pattern in precise_patterns:
+                    matches = re.finditer(precise_pattern, combined_output, re.IGNORECASE)
+                    for match in matches:
+                        # 检查匹配的内容是否在插件信息中
+                        context = self._get_error_context(match, combined_output, 5)
+                        if "plugin" not in context.lower() and "metadata" not in context.lower():
+                            error_info = self._extract_error_details(error_type, match, combined_output)
+                            # 避免重复添加相同错误
+                            if error_info not in errors:
+                                errors.append(error_info)
+            else:
+                matches = re.finditer(pattern, combined_output, re.IGNORECASE)
+                for match in matches:
+                    error_info = self._extract_error_details(error_type, match, combined_output)
+                    # 避免重复添加相同错误
+                    if error_info not in errors:
+                        errors.append(error_info)
         
         # 如果没有匹配已知错误类型，但测试失败了，则添加未知错误
         if not errors and test_results.get("exit_code", 0) != 0:
@@ -143,6 +193,104 @@ class ErrorAnalyzer:
         context_lines = lines[start_line:end_line]
         
         return '\n'.join(context_lines)
+    
+    def _extract_test_failures(self, test_results: Dict[str, Any]) -> List[ErrorInfo]:
+        """从测试结果中提取失败的测试用例"""
+        errors = []
+        stdout = test_results.get("stdout", "")
+        
+        # 查找失败的测试用例
+        failure_pattern = r"FAILED (.*?::.*?) - (.*?)\n"
+        matches = re.finditer(failure_pattern, stdout)
+        
+        for match in matches:
+            test_name = match.group(1)
+            error_message = match.group(2)
+            
+            # 确定错误类型
+            error_type = ErrorType.UNKNOWN
+            if "Timeout" in error_message or "timeout" in error_message:
+                error_type = ErrorType.TIMEOUT_ERROR
+            elif "Assertion" in error_message:
+                error_type = ErrorType.ASSERTION_ERROR
+            elif "Attribute" in error_message:
+                error_type = ErrorType.ATTRIBUTE_ERROR
+            elif "Import" in error_message or "ModuleNotFoundError" in error_message:
+                error_type = ErrorType.IMPORT_ERROR
+            elif "Connection" in error_message or "connect" in error_message:
+                error_type = ErrorType.CONNECTION_ERROR
+            elif "Validation" in error_message or "validation" in error_message:
+                error_type = ErrorType.VALIDATION_ERROR
+            elif "Config" in error_message or "config" in error_message:
+                error_type = ErrorType.CONFIG_ERROR
+            
+            # 尝试提取文件路径
+            file_path = None
+            line_number = None
+            if "::" in test_name:
+                # 处理测试名称格式如: tests/hsp/test_hsp_advanced_integration.py::TestHSPAdvancedIntegration::test_hsp_connector_error_recovery_and_retry
+                parts = test_name.split("::")
+                file_path = parts[0]  # 第一部分是文件路径
+                
+                # 确保文件路径格式正确
+                if not file_path.endswith(".py"):
+                    file_path += ".py"
+            
+            error_info = ErrorInfo(
+                error_type=error_type,
+                file_path=file_path,
+                line_number=line_number,
+                error_message=error_message,
+                details={"test_name": test_name}
+            )
+            errors.append(error_info)
+        
+        # 如果上面的方法没有找到失败用例，尝试另一种方式
+        if not errors:
+            # 查找测试摘要中的失败信息
+            summary_pattern = r"===== (\d+) failed, (\d+) passed, (\d+) skipped, (\d+) warnings in .* ====="
+            summary_match = re.search(summary_pattern, stdout)
+            if summary_match:
+                failed_count = int(summary_match.group(1))
+                if failed_count > 0:
+                    # 查找具体的失败测试
+                    failed_tests = re.findall(r"FAILED (.*?::.*?)\n", stdout)
+                    for test in failed_tests:
+                        error_info = ErrorInfo(
+                            error_type=ErrorType.UNKNOWN,
+                            file_path=None,
+                            line_number=None,
+                            error_message=f"测试 {test} 失败",
+                            details={"test_name": test}
+                        )
+                        errors.append(error_info)
+        
+        # 如果仍然没有找到错误，但测试结果表明有失败，则添加一个通用错误
+        if not errors and test_results.get("exit_code", 0) != 0:
+            # 查找具体的错误信息
+            error_lines = []
+            in_error_section = False
+            for line in stdout.split('\n'):
+                if "FAILURES" in line:
+                    in_error_section = True
+                    continue
+                elif in_error_section and line.startswith("=") and "failed" in line:
+                    break
+                elif in_error_section and line.strip():
+                    error_lines.append(line)
+            
+            if error_lines:
+                error_message = "\n".join(error_lines[:5])  # 取前5行错误信息
+                error_info = ErrorInfo(
+                    error_type=ErrorType.UNKNOWN,
+                    file_path=None,
+                    line_number=None,
+                    error_message=error_message,
+                    details={"source": "test_failure_summary"}
+                )
+                errors.append(error_info)
+        
+        return errors
     
     def generate_error_report(self) -> Dict[str, Any]:
         """生成错误分析报告"""

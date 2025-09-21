@@ -15,49 +15,49 @@ SRC_DIR = PROJECT_ROOT / "apps" / "backend" / "src"
 
 # 需要修复的导入映射 - 适应新的目录结构
 IMPORT_MAPPINGS = {
-    # core_ai模块的修复 - 新的AI目录结构
-    "from core_ai.": "from apps.backend.src.ai.",
-    "import core_ai.": "import apps.backend.src.ai.",
+    # core_ai模块的修复 - 从绝对导入修复为相对导入
+    "from apps.backend.src.ai.": "from ",
+    "import apps.backend.src.ai.": "import ",
     
-    # core模块的修复
-    "from core.": "from apps.backend.src.core.",
-    "import core.": "import apps.backend.src.core.",
+    # core模块的修复 - 从绝对导入修复为相对导入
+    "from apps.backend.src.core.": "from ..",
+    "import apps.backend.src.core.": "import ..",
     
-    # services模块的修复 - 新的服务目录结构
-    "from services.": "from apps.backend.src.core.services.",
-    "import services.": "import apps.backend.src.core.services.",
+    # services模块的修复 - 从绝对导入修复为相对导入
+    "from apps.backend.src.core.services.": "from ",
+    "import apps.backend.src.core.services.": "import ",
     
-    # hsp模块的修复 - 新的HSP目录结构
-    "from hsp.": "from apps.backend.src.core.hsp.",
-    "import hsp.": "import apps.backend.src.core.hsp.",
+    # hsp模块的修复 - 从绝对导入修复为相对导入
+    "from apps.backend.src.core.hsp.": "from ",
+    "import apps.backend.src.core.hsp.": "import ",
     
-    # mcp模块的修复
-    "from mcp.": "from apps.backend.src.mcp.",
-    "import mcp.": "import apps.backend.src.mcp.",
+    # mcp模块的修复 - 从绝对导入修复为相对导入
+    "from apps.backend.src.mcp.": "from ",
+    "import apps.backend.src.mcp.": "import ",
     
-    # system模块的修复
-    "from system.": "from apps.backend.src.system.",
-    "import system.": "import apps.backend.src.system.",
+    # system模块的修复 - 从绝对导入修复为相对导入
+    "from apps.backend.src.system.": "from ",
+    "import apps.backend.src.system.": "import ",
     
-    # tools模块的修复 - 新的工具目录结构
-    "from tools.": "from apps.backend.src.core.tools.",
-    "import tools.": "import apps.backend.src.core.tools.",
+    # tools模块的修复 - 从绝对导入修复为相对导入
+    "from apps.backend.src.core.tools.": "from ",
+    "import apps.backend.src.core.tools.": "import ",
     
-    # shared模块的修复 - 新的共享目录结构
-    "from shared.": "from apps.backend.src.core.shared.",
-    "import shared.": "import apps.backend.src.core.shared.",
+    # shared模块的修复 - 从绝对导入修复为相对导入
+    "from apps.backend.src.core.shared.": "from ",
+    "import apps.backend.src.core.shared.": "import ",
     
-    # agents模块的修复 - 新的代理目录结构
-    "from agents.": "from apps.backend.src.ai.agents.",
-    "import agents.": "import apps.backend.src.ai.agents.",
+    # agents模块的修复 - 从绝对导入修复为相对导入
+    "from apps.backend.src.ai.agents.": "from ",
+    "import apps.backend.src.ai.agents.": "import ",
     
-    # game模块的修复
-    "from game.": "from apps.backend.src.game.",
-    "import game.": "import apps.backend.src.game.",
+    # game模块的修复 - 从绝对导入修复为相对导入
+    "from apps.backend.src.game.": "from ",
+    "import apps.backend.src.game.": "import ",
     
     # 其他可能的修复
-    "from core_services": "from apps.backend.src.core_services",
-    "import apps.backend.src.core_services": "import apps.backend.src.core_services",
+    "from apps.backend.src.core_services": "from ",
+    "import apps.backend.src.core_services": "import ",
 }
 
 def find_python_files() -> List[Path]:
@@ -236,25 +236,25 @@ def validate_fixes() -> bool:
             
         # 尝试导入核心模块 - 适应新的目录结构
         try:
-            from apps.backend.src.core_services import initialize_services
+            from core_services import initialize_services
             print("✓ 核心服务模块导入成功")
         except ImportError as e:
             print(f"⚠ 核心服务模块导入失败: {e}")
             
         try:
-            from apps.backend.src.ai.agents.base.base_agent import BaseAgent
+            from ai.agents.base.base_agent import BaseAgent
             print("✓ Agent管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ Agent管理器模块导入失败: {e}")
             
         try:
-            from apps.backend.src.core.hsp.connector import HSPConnector
+            from core.hsp.connector import HSPConnector
             print("✓ HSP连接器模块导入成功")
         except ImportError as e:
             print(f"⚠ HSP连接器模块导入失败: {e}")
             
         try:
-            from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
+            from ai.dialogue.dialogue_manager import DialogueManager
             print("✓ 对话管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ 对话管理器模块导入失败: {e}")
@@ -276,10 +276,10 @@ def run_import_test() -> bool:
         
         # 尝试导入几个关键模块 - 适应新的目录结构
         test_modules = [
-            "apps.backend.src.core_services",
-            "apps.backend.src.ai.agents.base.base_agent",
-            "apps.backend.src.core.hsp.connector",
-            "apps.backend.src.ai.dialogue.dialogue_manager"
+            "core_services",
+            "ai.agents.base.base_agent",
+            "core.hsp.connector",
+            "ai.dialogue.dialogue_manager"
         ]
         
         success_count = 0

@@ -7,8 +7,8 @@ import ast # Ensure ast is imported for any direct ast comparisons if needed, th
 import tempfile # For temporary directory
 import logging # For self.assertLogs
 
-# Assuming src is in PYTHONPATH for test execution
-from apps.backend.src.ai.code_understanding.lightweight_code_model import LightweightCodeModel
+# 修复导入路径
+from apps.backend.src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
 
 class TestLightweightCodeModel(unittest.TestCase):
 
@@ -18,7 +18,7 @@ class TestLightweightCodeModel(unittest.TestCase):
         self.temp_tools_dir = self.temp_dir_obj.name
         self.model = LightweightCodeModel(tools_directory=self.temp_tools_dir)
         # It's good practice to also capture logs if the module emits them during tests
-        # self.logger_patcher = patch('src.core_ai.code_understanding.lightweight_code_model.logger')
+        # self.logger_patcher = patch('apps.backend.src.ai.code_understanding.lightweight_code_model.logger')
         # self.mock_logger = self.logger_patcher.start()
 
     def tearDown(self):
@@ -58,7 +58,7 @@ class TestLightweightCodeModel(unittest.TestCase):
     @pytest.mark.timeout(5)
     def test_list_tool_files_non_existent_dir(self):
         # This test now implicitly uses the logger due to changes in __init__
-        with self.assertLogs(logger='src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
+        with self.assertLogs(logger='apps.backend.src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
             model = LightweightCodeModel(tools_directory="non_existent_dir_for_list_test/")
         self.assertTrue(any("Tools directory 'non_existent_dir_for_list_test/' does not exist" in record.getMessage() for record in cm.records))
 
@@ -202,7 +202,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
     @pytest.mark.timeout(5)
     def test_get_tool_structure_direct_invalid_path(self):
         invalid_path = os.path.join(self.temp_tools_dir, "non_existent_tool.py")
-        with self.assertLogs(logger='src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
+        with self.assertLogs(logger='apps.backend.src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
             result = self.model.get_tool_structure(invalid_path)
             self.assertIsNone(result)
         self.assertTrue(any(f"appears to be a path but was not found" in record.getMessage() for record in cm.records))
@@ -214,7 +214,7 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
         # Ensure this path doesn't accidentally exist relative to where test runs
         self.assertFalse(os.path.isfile(path_like_non_existent))
 
-        with self.assertLogs(logger='src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
+        with self.assertLogs(logger='apps.backend.src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
             result = self.model.get_tool_structure(path_like_non_existent)
         self.assertIsNone(result)
         self.assertTrue(any(f"appears to be a path but was not found" in record.getMessage() for record in cm.records))
@@ -267,14 +267,14 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
     def test_get_tool_structure_ambiguous_patterns(self):
         self._create_dummy_tool_file("tool_ambiguous_pattern.py")
         self._create_dummy_tool_file("ambiguous_pattern_tool.py")
-        with self.assertLogs(logger='src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
+        with self.assertLogs(logger='apps.backend.src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
             result = self.model.get_tool_structure("ambiguous_pattern")
         self.assertIsNone(result)
         self.assertTrue(any("Ambiguous tool name 'ambiguous_pattern'" in record.getMessage() for record in cm.records))
 
     @pytest.mark.timeout(5)
     def test_get_tool_structure_name_not_found(self):
-        with self.assertLogs(logger='src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
+        with self.assertLogs(logger='apps.backend.src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as cm:
             result = self.model.get_tool_structure("completely_non_existent_tool_name")
         self.assertIsNone(result)
         self.assertTrue(any("Could not resolve tool 'completely_non_existent_tool_name'" in record.getMessage() for record in cm.records))
@@ -284,12 +284,12 @@ def module_level_func(x: float, *args, y: float = 3.14, **kwargs) -> List[float]
         bad_dir_path = "path_that_does_not_exist_at_all_xyz"
 
         # Test log during __init__
-        with self.assertLogs(logger='src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as init_cm:
+        with self.assertLogs(logger='apps.backend.src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as init_cm:
             model_bad_dir = LightweightCodeModel(tools_directory=bad_dir_path)
         self.assertTrue(any(f"Tools directory '{bad_dir_path}' does not exist or is not a directory." in record.getMessage() for record in init_cm.records))
 
         # Test log during get_tool_structure
-        with self.assertLogs(logger='src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as get_cm:
+        with self.assertLogs(logger='apps.backend.src.core_ai.code_understanding.lightweight_code_model', level='WARNING') as get_cm:
             result = model_bad_dir.get_tool_structure("any_tool_name")
         self.assertIsNone(result)
         self.assertTrue(any(f"Tools directory '{bad_dir_path}' is not valid. Cannot resolve tool by name: any_tool_name" in record.getMessage() for record in get_cm.records))

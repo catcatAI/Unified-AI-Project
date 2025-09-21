@@ -1,3 +1,1 @@
-"""
-Training module package
-"""
+# training package init file

@@ -11,9 +11,10 @@ import logging
 # 添加项目路径
 project_root = Path(__file__).parent
 backend_path = project_root / "apps" / "backend"
+src_path = backend_path / "src"
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
+sys.path.insert(0, str(src_path))
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -23,35 +24,35 @@ def test_concept_models_import():
     logger.info("=== 测试概念模型导入 ===")
     
     try:
-        from apps.backend.src.core_ai.concept_models.environment_simulator import EnvironmentSimulator
+        from core_ai.concept_models.environment_simulator import EnvironmentSimulator
         logger.info("✅ 环境模拟器导入成功")
     except Exception as e:
         logger.error(f"❌ 环境模拟器导入失败: {e}")
         return False
     
     try:
-        from apps.backend.src.core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
+        from core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
         logger.info("✅ 因果推理引擎导入成功")
     except Exception as e:
         logger.error(f"❌ 因果推理引擎导入失败: {e}")
         return False
     
     try:
-        from apps.backend.src.core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
+        from core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
         logger.info("✅ 自适应学习控制器导入成功")
     except Exception as e:
         logger.error(f"❌ 自适应学习控制器导入失败: {e}")
         return False
     
     try:
-        from apps.backend.src.core_ai.concept_models.alpha_deep_model import AlphaDeepModel
+        from core_ai.concept_models.alpha_deep_model import AlphaDeepModel
         logger.info("✅ Alpha深度模型导入成功")
     except Exception as e:
         logger.error(f"❌ Alpha深度模型导入失败: {e}")
         return False
     
     try:
-        from apps.backend.src.core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace
+        from core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace
         logger.info("✅ 统一符号空间导入成功")
     except Exception as e:
         logger.error(f"❌ 统一符号空间导入失败: {e}")

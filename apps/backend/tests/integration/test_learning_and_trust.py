@@ -39,9 +39,8 @@ class TestLearningAndTrustIntegration:
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
     async def test_duplicate_fact_increments_corroboration(self):
         """
         Tests that receiving a duplicate fact increments corroboration_count
@@ -73,17 +72,15 @@ class TestLearningAndTrustIntegration:
         assert result is None
         # It should have queried memory to find the duplicate
         self.ham_memory.query_core_memory.assert_called_once()
-        # It should NOT have tried to store a new experience
+        # It should not have tried to store a new experience
         self.ham_memory.store_experience.assert_not_called()
-        # It SHOULD have incremented the metadata field of the existing record
+        # It should have incremented the metadata field of the existing record
         self.ham_memory.increment_metadata_field.assert_called_once_with(existing_ham_id, "corroboration_count")
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
     async def test_fact_from_low_trust_source_is_discarded(self):
         """
         Tests that a fact with high original confidence is discarded if the source has very low trust.
@@ -107,9 +104,7 @@ class TestLearningAndTrustIntegration:
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
     async def test_fact_from_high_trust_source_is_accepted(self):
         """
         Tests that a fact with medium original confidence is accepted if the source has high trust.
@@ -135,5 +130,3 @@ class TestLearningAndTrustIntegration:
         call_args = self.ham_memory.store_experience.call_args
         stored_metadata = call_args.kwargs['metadata']
         assert stored_metadata['confidence'] == pytest.approx((0.6 * 0.9 * 0.7) + (0.5 * 0.15) + (0.5 * 0.15))
-
-

@@ -1,106 +1,183 @@
-import unittest
 import pytest
 import asyncio
-import uuid
-import os
-import sys
-from unittest.mock import MagicMock, AsyncMock, patch
+import pandas as pd
+from unittest.mock import Mock, patch, AsyncMock
+from apps.backend.src.agents.data_analysis_agent import DataAnalysisAgent
 
+@pytest.fixture
+def data_agent():
+    """Create a DataAnalysisAgent instance for testing."""
+    agent_id = "test_data_agent_123"
+    return DataAnalysisAgent(agent_id=agent_id)
 
-from apps.backend.src.ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
-from apps.backend.src.shared.types.common_types import ToolDispatcherResponse
+def test_data_agent_initialization(data_agent):
+    """Test DataAnalysisAgent initialization."""
+    assert data_agent.agent_id == "test_data_agent_123"
+    assert len(data_agent.capabilities) == 2
+    
+    # Check that all expected capabilities are present
+    capability_names = [cap["name"] for cap in data_agent.capabilities]
+    assert "statistical_analysis" in capability_names
+    assert "data_processing" in capability_names
 
-class TestDataAnalysisAgent(unittest.TestCase):
+@pytest.mark.asyncio
+async def test_data_agent_handle_task_request_statistical_analysis(data_agent):
+    """Test DataAnalysisAgent handling statistical_analysis task."""
+    # Mock the HSP connector
+    data_agent.hsp_connector = AsyncMock()
+    
+    # Create test data
+    test_data = {
+        "A": [1, 2, 3, 4, 5],
+        "B": [10, 20, 30, 40, 50],
+        "C": ["x", "y", "z", "x", "y"]
+    }
+    
+    # Create a test task payload for statistical analysis
+    task_payload = {
+        "request_id": "test_request_123",
+        "capability_id_filter": "statistical_analysis",
+        "parameters": {
+            "data": test_data,
+            "analysis_type": "descriptive"
+        },
+        "callback_address": "test/callback/topic"
+    }
+    
+    # Call the handler
+    await data_agent.handle_task_request(task_payload, "sender_456", {})
+    
+    # Verify that a response was sent
+    data_agent.hsp_connector.send_task_result.assert_called_once()
+    args, kwargs = data_agent.hsp_connector.send_task_result.call_args
+    result_payload = args[0]
+    
+    assert result_payload["status"] == "success"
+    assert result_payload["request_id"] == "test_request_123"
+    assert "payload" in result_payload
+    assert "descriptive_stats" in result_payload["payload"]
 
-    def setUp(self):
-        self.agent_id = f"did:hsp:test_data_analysis_agent_{uuid.uuid4().hex[:6]}"
+@pytest.mark.asyncio
+async def test_data_agent_handle_task_request_data_processing(data_agent):
+    """Test DataAnalysisAgent handling data_processing task."""
+    # Mock the HSP connector
+    data_agent.hsp_connector = AsyncMock()
+    
+    # Create test data
+    test_data = {
+        "A": [1, 2, 3, 4, 5],
+        "B": [10, 20, 30, 40, 50],
+        "C": ["x", "y", "z", "x", "y"]
+    }
+    
+    # Create a test task payload for data processing
+    task_payload = {
+        "request_id": "test_request_456",
+        "capability_id_filter": "data_processing",
+        "parameters": {
+            "data": test_data,
+            "operations": ["clean", "normalize"]
+        },
+        "callback_address": "test/callback/topic"
+    }
+    
+    # Call the handler
+    await data_agent.handle_task_request(task_payload, "sender_789", {})
+    
+    # Verify that a response was sent
+    data_agent.hsp_connector.send_task_result.assert_called_once()
+    args, kwargs = data_agent.hsp_connector.send_task_result.call_args
+    result_payload = args[0]
+    
+    assert result_payload["status"] == "success"
+    assert result_payload["request_id"] == "test_request_456"
+    assert "payload" in result_payload
+    assert "processed_data" in result_payload["payload"]
 
-        # We need to mock the services that the agent's base class initializes
-        self.mock_services = {
-            "hsp_connector": AsyncMock(),
-            "tool_dispatcher": AsyncMock()
-        }
+@pytest.mark.asyncio
+async def test_data_agent_handle_task_request_unsupported_capability(data_agent):
+    """Test DataAnalysisAgent handling unsupported capability."""
+    # Mock the HSP connector
+    data_agent.hsp_connector = AsyncMock()
+    
+    # Create a test task payload for unsupported capability
+    task_payload = {
+        "request_id": "test_request_999",
+        "capability_id_filter": "unsupported_capability",
+        "parameters": {},
+        "callback_address": "test/callback/topic"
+    }
+    
+    # Call the handler
+    await data_agent.handle_task_request(task_payload, "sender_202", {})
+    
+    # Verify that a failure response was sent
+    data_agent.hsp_connector.send_task_result.assert_called_once()
+    args, kwargs = data_agent.hsp_connector.send_task_result.call_args
+    result_payload = args[0]
+    
+    assert result_payload["status"] == "failure"
+    assert result_payload["request_id"] == "test_request_999"
+    assert result_payload["error_details"]["error_code"] == "CAPABILITY_NOT_SUPPORTED"
 
-        # Patch the service initialization and getter
-        patcher_initialize = patch('apps.backend.src.core_services.initialize_services', return_value=None)
-        patcher_get = patch('apps.backend.src.core_services.get_services', return_value=self.mock_services)
+def test_perform_statistical_analysis_descriptive(data_agent):
+    """Test the _perform_statistical_analysis method with descriptive analysis."""
+    # Create test data
+    test_data = {
+        "A": [1, 2, 3, 4, 5],
+        "B": [10, 20, 30, 40, 50]
+    }
+    
+    params = {
+        "data": test_data,
+        "analysis_type": "descriptive"
+    }
+    
+    result = data_agent._perform_statistical_analysis(params)
+    
+    assert "descriptive_stats" in result
+    assert "missing_values" in result
+    assert "data_types" in result
+    assert result["analysis_type"] == "descriptive"
 
-        self.addCleanup(patcher_initialize.stop)
-        self.addCleanup(patcher_get.stop)
+def test_perform_statistical_analysis_correlation(data_agent):
+    """Test the _perform_statistical_analysis method with correlation analysis."""
+    # Create test data
+    test_data = {
+        "A": [1, 2, 3, 4, 5],
+        "B": [10, 20, 30, 40, 50]
+    }
+    
+    params = {
+        "data": test_data,
+        "analysis_type": "correlation"
+    }
+    
+    result = data_agent._perform_statistical_analysis(params)
+    
+    assert "correlation_matrix" in result
+    assert result["analysis_type"] == "correlation"
 
-        self.mock_initialize = patcher_initialize.start()
-        self.mock_get_services = patcher_get.start()
-
-        self.agent = DataAnalysisAgent(agent_id=self.agent_id)
-        self.agent.hsp_connector = self.mock_services["hsp_connector"]
-        self.agent.tool_dispatcher = self.mock_services["tool_dispatcher"]
-
-    @pytest.mark.timeout(10)
-    def test_initialization(self):
-        """Test that the agent initializes correctly and advertises its capabilities."""
-        self.assertEqual(self.agent.agent_id, self.agent_id)
-        self.assertIsNotNone(self.agent.hsp_connector)
-
-        # Check that capabilities were defined
-        self.assertTrue(len(self.agent.capabilities) > 0)
-        # 验证能力名称与实现匹配
-        self.assertEqual(self.agent.capabilities[0]['name'], 'statistical_analysis')
-
-    @pytest.mark.timeout(10)
-    def test_handle_task_request_success(self):
-        """Test the agent's handling of a successful task request."""
-
-
-        # 2. Create a mock HSP task payload
-        request_id = "test_req_001"
-        task_payload = HSPTaskRequestPayload(
-            request_id=request_id,
-            capability_id_filter=self.agent.capabilities[0]['capability_id'],
-            parameters={"data": [1, 2, 3, 4, 5]},  # 修改参数以匹配实际实现
-            callback_address="hsp/results/test_requester/req_001"
-        )
-        envelope = HSPMessageEnvelope(message_id="msg1", sender_ai_id="test_sender", recipient_ai_id=self.agent_id, timestamp_sent="", message_type="", protocol_version="")
-
-        # 3. Run the handle_task_request method
-        asyncio.run(self.agent.handle_task_request(task_payload, "test_sender", envelope))
-
-        # 4. Assert that the HSP connector sent the correct result
-        self.agent.hsp_connector.send_task_result.assert_called_once()
-        sent_payload = self.agent.hsp_connector.send_task_result.call_args[0][0]
-        sent_topic = self.agent.hsp_connector.send_task_result.call_args[0][1]
-
-        self.assertEqual(sent_topic, "hsp/results/test_requester/req_001")
-        self.assertEqual(sent_payload['request_id'], request_id)
-        self.assertEqual(sent_payload['status'], "success")
-        # 验证返回值包含正确的统计分析结果
-        self.assertIn('mean', sent_payload['payload'])
-        self.assertEqual(sent_payload['payload']['mean'], 3.0)
-
-    @pytest.mark.timeout(10)
-    def test_handle_task_request_tool_failure(self):
-        """Test the agent's handling of a task where the tool fails."""
-
-
-        # 2. Create a mock HSP task payload with invalid data that will cause sum() to fail
-        request_id = "test_req_002"
-        task_payload = HSPTaskRequestPayload(
-            request_id=request_id,
-            capability_id_filter=self.agent.capabilities[0]['capability_id'],
-            parameters={"data": ["invalid", "data"]},  # 传递无法处理的数据，包含非数字元素的数组
-            callback_address="hsp/results/test_requester/req_002"
-        )
-        envelope = HSPMessageEnvelope(message_id="msg2", sender_ai_id="test_sender", recipient_ai_id=self.agent_id, timestamp_sent="", message_type="", protocol_version="")
-
-        # 3. Run the handler
-        asyncio.run(self.agent.handle_task_request(task_payload, "test_sender", envelope))
-
-        # 4. Assert HSP connector sent a failure result
-        self.agent.hsp_connector.send_task_result.assert_called_once()
-        sent_payload = self.agent.hsp_connector.send_task_result.call_args[0][0]
-        sent_topic = self.agent.hsp_connector.send_task_result.call_args[0][1]
-
-        self.assertEqual(sent_topic, "hsp/results/test_requester/req_002")
-        self.assertEqual(sent_payload['request_id'], request_id)
-        self.assertEqual(sent_payload['status'], "failure")
-        self.assertIsNotNone(sent_payload.get('error_details'))
+def test_perform_data_processing(data_agent):
+    """Test the _perform_data_processing method."""
+    # Create test data with some missing values
+    test_data = {
+        "A": [1, 2, None, 4, 5],
+        "B": [10, 20, 30, 40, 50]
+    }
+    
+    params = {
+        "data": test_data,
+        "operations": ["clean", "normalize"]
+    }
+    
+    result = data_agent._perform_data_processing(params)
+    
+    assert "processed_data" in result
+    assert "operations_performed" in result
+    assert "clean" in result["operations_performed"]
+    assert "normalize" in result["operations_performed"]
+    
+    # Check that the data was actually processed
+    processed_data = result["processed_data"]
+    assert len(processed_data) > 0  # Should have some rows after cleaning

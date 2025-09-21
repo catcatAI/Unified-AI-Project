@@ -4,9 +4,9 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import uuid
 
-from apps.backend.src.core_ai.agent_manager import AgentManager
-from apps.backend.src.hsp.hsp_connector import HSPConnector
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
+from ...core_ai.agent_manager import AgentManager
+from hsp.hsp_connector import HSPConnector
+from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
 
 logger = logging.getLogger(__name__)
 

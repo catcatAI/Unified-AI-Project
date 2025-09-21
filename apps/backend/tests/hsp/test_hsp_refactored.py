@@ -24,9 +24,7 @@ def message_bridge(mock_external_connector, internal_bus, data_aligner):
 
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_message_bridge_external_to_internal(message_bridge, internal_bus):
     test_topic = "test/topic"
     test_message = '{"id": "123"}'
@@ -39,9 +37,6 @@ async def test_message_bridge_external_to_internal(message_bridge, internal_bus)
 
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_message_bridge_internal_to_external(message_bridge, mock_external_connector):
     test_topic = "test/topic"
     test_message = {"id": "123"}

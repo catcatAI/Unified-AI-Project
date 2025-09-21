@@ -1,461 +1,353 @@
 # Unified AI Project
 
-## 🎉 Version 1.0.0 Released!
+Unified AI Project 是一个综合性的AI系统项目，旨在构建一个完整的AI代理框架，包含多个子系统和组件。
 
-Unified AI Project has reached its first major milestone with the release of version 1.0.0. This release represents a fully functional hybrid AI ecosystem designed for AGI (Level 3-4) development.
+## 快速开始
 
-### 📊 專案完成狀態
-- **總體進度**: 100% 完成 (275/275 任務)
-- **核心功能**: 全部實現並通過測試
-- **訓練系統**: 完整實現，支援多場景訓練
-- **AI代理系統**: 8個專業代理全部完成，結構一致性已修復
-- **CLI工具**: 統一命令行界面完成
-- **桌面應用**: "Angela's World" 遊戲客戶端完成
-- **文檔系統**: 完整文檔體系建立
-- **測試覆蓋**: 測試用例收集完成，所有主要錯誤已修復，測試穩定性優化
-- **代碼質量**: 核心架構穩定，所有導入路徑、語法問題和代理結構不一致性已解決
-- **核心功能驗證**: 所有AI代理創建和功能測試通過，包括專門化代理的完整功能驗證
+要启动完整的Unified AI Project系统，请执行以下步骤：
 
-## 專案概覽
+1. 确保已安装所有依赖：
+   ```bash
+   # 安装前端依赖
+   pnpm install
+   
+   # 安装后端依赖
+   cd apps/backend
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
+   ```
 
-Unified AI Project 是一個面向 AGI (Level 3-4) 的混合式 AI 生態系統，採用 monorepo 架構。專案的核心設計理念是**「數據生命」(Data Life)**，透過持續認知迴圈實現真正的 AI 自主學習與進化。
+2. 启动完整系统：
+   ```bash
+   # 在项目根目录下执行
+   pnpm dev
+   ```
 
-### 核心特色
+3. 或者分别启动各个服务：
+   ```bash
+   # 启动后端服务
+   pnpm dev:backend
+   
+   # 启动前端服务
+   pnpm dev:dashboard
+   ```
 
-- **分層與閉環架構 (Layered & Closed-Loop Architecture)**：採用「大模型（推理層）+ 行動子模型（操作層）」的分層設計，並構建「感知-決策-行動-回饋」的完整行動閉環，實現真正的自主學習。
-- **統一模態表示 (Unified Representation)**：探索將多模態數據（文本、音頻、圖像）壓縮映射到統一的符號空間，降低跨模態處理的複雜度。
-- **持續學習 (Continual Learning)**：以時間分割的在線學習取代一次性大規模訓練，讓模型能夠在使用過程中持續進化，有效分攤訓練成本。
-- **低資源部署 (Low-Resource Deployment)**：專為資源受限環境（如個人電腦）設計，透過輕量化模型與高效架構，在低成本下實現高階 AGI 能力。
-- **HSP 協議**：高速同步協議支援內部模組與外部 AI 協作。
-- **語義級安全**：基於 UID/Key 機制的深度資料保護。
+4. 访问应用：
+   - 前端界面: http://localhost:3000
+   - 后端API: http://localhost:8000
+   - API文档: http://localhost:8000/docs
 
-### AGI 等級評估
+## 项目概述
 
-- **當前狀態**：Level 2-3 (推理 AI 到初步自主學習)
-- **設計目標**：Level 3-4 (勝任到專家級 AGI)
-- **理論上限**：Level 5 (超人類 AGI，透過群體智慧)
-- **實現進展**：核心架構完成，訓練系統就緒，準備進入 Level 3 測試階段
-- **技術挑戰**：HSP連接穩定性、測試覆蓋率、增量學習效果優化
+Unified AI Project是一个基于monorepo的混合式AI生态系统，整合了多种AI技术和组件。项目采用多智能体协作设计理念，通过HSP协议实现内部模块与外部AI实体的可信协作。
 
-## 🚀 What's New in Version 1.0.0
+项目目标是实现Level 3-4的自主学习AGI（人工通用智能），采用"大模型(推理层) + 行动子模型(操作层)"的分层与闭环架构设计。系统具备持续学习能力，能在运行过程中持续学习和优化。
 
-### Major Features
-- **完整 AI 架構**: HAM 記憶系統和 HSP 協議
-- **多模態 AI 代理系統**: 8個專業代理 (創意寫作、圖像生成、網路搜尋、代碼理解、數據分析、視覺處理、音頻處理、環境模擬)
-- **概念模型系統**: 環境模擬器、因果推理引擎、自適應學習控制器、Alpha 深度模型
-- **完整訓練系統**: 支援 11 種訓練場景，包含協作式訓練和增量學習
-- **自動化數據處理管道**: 智能數據識別和質量評估
-- **統一管理工具**: unified-ai.bat, ai-runner.bat
-- **CLI 工具套件**: 統一命令行界面，支援 AI 交互
-- **桌面遊戲客戶端**: "Angela's World" 完整實現
-- **Web 儀表板**: 監控和管理界面
+### 核心价值
+- **多模态处理能力**：支持视觉、音频、文本等多种数据类型的处理
+- **协作式训练系统**：多个模型之间共享知识、协同训练的机制
+- **增量学习机制**：系统能够在运行过程中持续学习和优化
+- **自动训练系统**：能够自动识别数据、创建配置并执行训练
+- **上下文管理**：完整的上下文管理系统，包括工具、模型与代理、对话、记忆等上下文管理
+- **HSP协议**：高速同步协议支援内部模块与外部AI协作
+- **智能测试与调试**：完善的测试框架和缺陷检测系统
 
-### Improvements
-- **低資源優化**: 專為個人電腦環境優化，支援低配置運行
-- **資源管理增強**: 智能資源分配，提升受限系統性能
-- **PowerShell 兼容性**: 修復批處理腳本兼容性問題
-- **訓練效率提升**: 優化模型訓練流程，支援 GPU 加速
-- **錯誤處理完善**: 全面的錯誤處理和恢復機制
-- **文檔體系建立**: 完整的用戶指南和開發者文檔
+## 项目结构
 
-### Bug Fixes
-- 音頻服務導入路徑問題
-- ChromaDB 配置問題
-- 組件間整合問題
-- 批處理腳本執行問題
-- CLI 工具穩定性問題
+```
+Unified-AI-Project/
+├── apps/
+│   ├── backend/
+│   │   ├── src/
+│   │   │   ├── agents/
+│   │   │   │   ├── base_agent.py
+│   │   │   │   ├── collaboration_demo_agent.py
+│   │   │   │   └── ...
+│   │   │   ├── ai/
+│   │   │   │   ├── memory/
+│   │   │   │   │   ├── ham_memory_manager.py
+│   │   │   │   │   └── ...
+│   │   │   │   ├── dialogue/
+│   │   │   │   ├── learning/
+│   │   │   │   ├── trust/
+│   │   │   │   ├── lm/
+│   │   │   │   └── ...
+│   │   │   ├── core_services/
+│   │   │   │   ├── ham_memory_service.py
+│   │   │   │   ├── multi_llm_service.py
+│   │   │   │   ├── hsp_connector.py
+│   │   │   │   └── ...
+│   │   │   ├── managers/
+│   │   │   │   ├── agent_collaboration_manager.py
+│   │   │   │   ├── agent_monitoring_manager.py
+│   │   │   │   ├── dynamic_agent_registry.py
+│   │   │   │   └── ...
+│   │   │   ├── tools/
+│   │   │   │   └── ...
+│   │   │   └── core/
+│   │   │       └── hsp/
+│   │   │           └── bridge/
+│   │   │               └── message_bridge.py
+│   │   └── scripts/
+│   │       ├── training_integration.py
+│   │       └── ...
+│   ├── frontend-dashboard/
+│   │   └── ...
+│   └── desktop-app/
+│       └── ...
+├── packages/
+│   ├── cli/
+│   │   └── ...
+│   └── ui/
+│       └── ...
+├── training/
+│   ├── auto_training_manager.py
+│   ├── collaborative_training_manager.py
+│   ├── incremental_learning_manager.py
+│   ├── data_manager.py
+│   ├── train_model.py
+│   ├── error_handling_framework.py
+│   ├── training_monitor.py
+│   ├── resource_manager.py
+│   ├── smart_resource_allocator.py
+│   ├── optimized_data_scanner.py
+│   ├── parallel_optimized_data_scanner.py
+│   ├── configs/
+│   ├── models/
+│   ├── checkpoints/
+│   ├── logs/
+│   ├── project_completion_report.md
+│   ├── integration_test_report.md
+│   ├── enhancement_summary.md
+│   ├── collaborative_training_implementation_summary.md
+│   ├── collaborative_training_completion_report.md
+│   ├── incremental_learning_summary.md
+│   └── incremental_learning_final_report.md
+├── docs/
+│   ├── 00-overview/
+│   ├── 01-summaries-and-reports/
+│   ├── 02-game-design/
+│   ├── 03-technical-architecture/
+│   ├── 04-advanced-concepts/
+│   ├── 05-development/
+│   ├── 06-project-management/
+│   ├── 09-archive/
+│   ├── api/
+│   ├── developer-guide/
+│   ├── planning/
+│   ├── user-guide/
+│   └── ...
+├── scripts/
+├── tools/
+├── tool_context_manager.py
+├── tool_call_chain_tracker.py
+├── coverage_analyzer.py
+├── performance_benchmark.py
+├── intelligent_test_generator.py
+├── automated_defect_detector.py
+├── test_*.py
+└── *.md
+```
 
-## 專案結構
+## 核心子系统和组件
 
-This monorepo is organized into applications and packages, centered around a unique AI-driven simulation game, "Angela's World".
+### 1. AI代理系统
+AI代理系统是项目的核心组件之一，负责实现多智能体协作功能。
 
-### Applications (`apps/`)
-- **`apps/desktop-app`**: The game client for "Angela's World", built with Electron.
-- **`apps/backend`**: The core Python backend that powers the game's central AI character, Angela. It includes all AI models, APIs, and game logic.
-- **`apps/frontend-dashboard`**: A web-based dashboard for developers to manage, monitor, and debug the AI and game systems.
+- **BaseAgent类**：所有专用代理的基类，提供HSP连接、任务处理和生命周期管理功能
+- **代理协作管理器**：管理多个AI代理之间的协作关系
+- **代理状态监控和健康检查机制**：实时监控代理的运行状态和健康状况
+- **动态代理注册和发现功能**：支持代理的动态注册和发现
+- **协作演示代理**：展示代理间协作能力的示例实现
 
-### Packages (`packages/`)
-- **`packages/cli`**: Command-line interface tools for interacting with the backend services.
-- **`packages/ui`**: Shared UI components and design system for the frontend applications.
+### 2. 上下文管理系统
+上下文管理系统负责管理AI系统运行过程中的各种上下文信息。
 
-## 📋 项目结构优化
+- **工具上下文管理器**：管理工具调用的上下文信息
+- **工具调用链追踪机制**：追踪工具调用的完整链路
+- **模型与代理上下文管理**：管理模型和代理的上下文信息
+- **对话上下文管理**：管理对话过程中的上下文信息
+- **记忆上下文管理**：管理记忆相关的上下文信息
 
-为了改善项目文件过多、结构混乱的问题，我们进行了全面的清理和整理工作：
+### 3. HSP协议实现
+HSP（高速同步协议）是项目内部模块与外部AI实体协作的核心协议。
 
-### 批处理脚本重组
-为简化根目录并提高可维护性，我们对批处理脚本进行了重组：
-- **根目录保留**：仅保留两个核心脚本
-  - `unified-ai.bat` - 统一管理工具（供人类使用）
-  - `ai-runner.bat` - 自动化工具（供AI代理使用）
-- **其他脚本**：所有其他批处理脚本已移动到 `tools/` 目录
+- **消息桥接功能**：实现不同模块之间的消息传递
+- **协议转换和适配**：支持不同协议之间的转换和适配
+- **HSP连接器**：提供HSP协议的核心连接功能
 
-详细信息请参阅：[项目结构重组报告](docs/PROJECT_STRUCTURE_REORGANIZATION_REPORT.md)
+### 4. 核心服务
+项目包含多个核心服务，提供基础功能支持。
 
-## 快速開始
+- **音频服务**：处理音频数据的输入和输出
+- **视觉服务**：处理视觉数据的输入和输出
+- **推理引擎**：提供AI推理能力
+- **记忆系统**：
+  - **HAM记忆系统**：分层抽象记忆管理器，实现信息的压缩、抽象、向量存储和语义检索
+  - **记忆服务**：提供记忆管理的核心服务
 
-To set up and run the entire monorepo, you can use the unified management script:
+### 5. 测试和质量保证
+项目具备完善的测试和质量保证体系。
 
-1.  **Run Unified Management Script**: Double-click `unified-ai.bat` and select "Setup Environment" to automatically install all dependencies and set up the development environment.
+- **工具调用链追踪机制**：追踪工具调用的完整链路
+- **测试覆盖率分析器**：分析测试的覆盖率
+- **性能基准测试器**：进行性能基准测试
+- **智能化测试用例生成器**：自动生成测试用例
+- **自动化缺陷检测器**：自动检测系统缺陷
 
-2.  **Start Development Servers**: After setup, double-click `unified-ai.bat` and select "Start Development" then "Start Full Development Environment" to start both the backend and frontend development servers concurrently.
+### 6. 训练系统
+训练系统是项目的重要组成部分，包含三大核心功能。
 
-    The backend API will typically run on `http://localhost:8000`, and the frontend dashboard on `http://localhost:3000`.
+- **自动训练系统**：
+  - 自动识别训练数据
+  - 自动建立训练配置
+  - 自动执行训练过程
+- **协作式训练系统**：
+  - 多个模型之间共享知识
+  - 协同训练机制
+- **增量学习系统**：
+  - 系统能够在运行过程中持续学习和优化
+  - 支持在线学习和模型更新
 
-Alternatively, you can use traditional commands:
+## 系统架构模式
 
-1.  **Install pnpm**: If you don't have pnpm installed, you can install it globally:
-    ```bash
-    npm install -g pnpm
-    ```
+### 整体架构
+采用 monorepo 架构组织项目，包含三个主要应用程序和多个共享包：
+- **后端 (apps/backend)**：Python 实现的核心 AI 后端，包含所有 AI 模型、API 和游戏逻辑
+- **前端仪表板 (apps/frontend-dashboard)**：基于 Web 的开发者管理界面
+- **桌面应用 (apps/desktop-app)**：基于 Electron 的 "Angela's World" 游戏客户端
+- **共享包**：
+  - CLI 工具包 (packages/cli)
+  - UI 组件库 (packages/ui)
 
-2.  **Install Dependencies**: From the root of this repository, install all dependencies for all packages:
-    ```bash
-    pnpm install
-    ```
+### 关键技术决策
+- **分层与闭环架构**：采用"大模型(推理层) + 行动子模型(操作层)"的分层设计
+- **统一模态表示**：将多模态数据(文本、音频、图像)压缩映射到统一的符号空间
+- **持续学习**：以时间分割的在线学习取代一次性大规模训练
+- **低资源部署**：专为资源受限环境(如个人电脑)设计
+- **HSP 协议**：高速同步协议支持内部模块与外部 AI 协作
+- **语义级安全**：基于 UID/Key 机制的深度数据保护
 
-3.  **Start Development Servers**: To start both the backend and frontend development servers concurrently:
-    ```bash
-    pnpm dev
-    ```
+### 架构模式和设计模式
+- **分层架构**：清晰的分层设计，分离推理层和操作层
+- **闭环架构**：构建"感知-决策-行动-反馈"的完整行动闭环
+- **模块化设计**：通过 monorepo 结构实现模块化开发和管理
+- **工厂模式**：用于 AI 代理的创建(BaseAgent 作为所有代理的基础类)
+- **策略模式**：用于不同训练场景的实现
+- **观察者模式**：用于训练过程的监控和日志记录
 
-### 核心架構組件
+## 技术选型
 
-### AI 代理系統 (`apps/backend/src/ai/agents/base/`)
-- **BaseAgent**：所有專門化代理的基礎類別，處理 HSP 連接與任務分發
-- **CreativeWritingAgent**：創意寫作與內容生成代理
-- **ImageGenerationAgent**：圖像生成代理
-- **WebSearchAgent**：網路搜尋代理
-- **CodeUnderstandingAgent**：代碼理解代理
-- **DataAnalysisAgent**：數據分析代理
-- **VisionProcessingAgent**：視覺處理代理
-- **AudioProcessingAgent**：音頻處理代理
+- **前端**：基于 Web 的前端仪表板，使用 React
+- **桌面应用**：Electron 框架
+- **后端**：Python，使用 TensorFlow、NumPy、scikit-learn 等库
+- **数据库**：ChromaDB 实现向量数据库功能
+- **构建工具**：pnpm 作为包管理工具
+- **并发执行**：使用 concurrently 库
+- **环境变量管理**：cross-env 库
+- **文件操作**：rimraf 库
 
-**實現狀態**: ✅ 全部完成，所有代理導入和創建測試通過，功能驗證成功
+## 安装和使用
 
-### HSP 高速同步協議 (`apps/backend/src/core/hsp/`)
-支援內部模組與外部 AI 實體的可信協作，包含：
-- 註冊機制：新模組/AI 加入網路
-- 信譽系統：評估協作實體可信度
-- 熱更新：動態載入新功能模組
+### 环境要求
+- Python 3.7+
+- Node.js
+- pnpm
+- 相关依赖包
 
-**實現狀態**: ✅ 核心功能完成，MQTT連接穩定性已優化
-
-### 記憶管理系統 (`apps/backend/src/ai/memory/`)
-- **DeepMapper**：語義映射與資料核生成
-- **HAMMemoryManager**：分層語義記憶管理
-- **VectorStore**：基於 ChromaDB 的向量資料庫介面
-
-**實現狀態**: ✅ 全部完成，測試通過
-
-## 訓練配置與預設
-
-### 訓練配置文件
-項目提供多種訓練配置文件以滿足不同需求：
-
-1. **默認配置** (`training/configs/training_config.json`)：
-   - 基本訓練參數設置
-   - 數據路徑配置
-   - 硬體配置選項
-
-2. **預設配置** (`training/configs/training_preset.json`)：
-   - 基於當前數據集的預設訓練方案
-   - 多種訓練場景（快速開始、全面訓練、視覺專注、音頻專注）
-   - 模型特定參數預設
-   - 數據預處理配置
-
-### 增强型自动训练系统
-项目包含一个增强型的完整自动训练系统，可以自动识别训练数据、自动建立训练配置并自动执行训练：
-
-1. **智能数据识别**：系统会自动扫描数据目录，识别和分类可用的训练数据，支持更多数据类型（图像、音频、文本、代码、模型文件、压缩文件等）
-2. **高级质量评估**：对识别的数据进行质量评估，自动筛选高价值训练数据
-3. **智能配置生成**：根据识别的数据和质量评估结果，自动生成最优的训练配置和参数
-4. **多场景训练执行**：根据配置自动执行多场景训练，支持数学模型、逻辑模型、代码模型、概念模型等
-5. **协作式训练**：支持多模型间的知识共享和协作训练
-6. **实时监控和日志**：提供训练过程的实时监控和详细日志记录
-7. **智能结果分析**：自动分析训练结果，生成详细的性能报告
-
-使用自动训练系统：
+### 搭建开发环境
 ```bash
-# 使用批处理脚本
-training\auto_train.bat
+# 安装 pnpm
+npm install -g pnpm
 
-# 或使用Python命令
-python training\run_auto_training.py
+# 安装所有依赖
+pnpm install
 
-# 或在主训练脚本中启用自动模式
-python training\train_model.py --auto
-
-# 支持更多参数
-python training\run_auto_training.py --verbose --output custom_report.json
+# 安装 Python 依赖
+cd apps/backend
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
-### 增量学习系统
-项目还包含一个先进的增量学习系统，能够实现真正的持续学习能力：
-
-1. **增量数据识别**：自动检测新增的训练数据，区分已学习和未学习的数据
-2. **增量模型训练**：基于新增数据进行模型增量训练，而非重新训练整个模型
-3. **智能训练触发**：后台监控新数据，非闲置时记忆数据，闲置时自动触发训练
-4. **自动模型整理**：自动管理模型版本，清理过期或低质量的模型
-
-使用增量学习系统：
-```
-# 启动数据监控
-training\incremental_train.bat monitor
-
-# 触发增量训练
-training\incremental_train.bat train
-
-# 查看系统状态
-training\incremental_train.bat status
-
-# 查看详细系统状态
-training\incremental_train.bat status -v
-
-# 清理旧模型版本
-training\incremental_train.bat cleanup --keep 3
-```
-
-### 訓練場景預設
-預設配置包含多種訓練場景：
-
-1. **快速開始**：使用模擬數據快速訓練測試
-2. **全面訓練**：使用所有可用數據完整訓練
-3. **完整數據集訓練**：使用完整數據集進行長期訓練，支持自動暫停和恢復
-4. **視覺專注**：專注訓練視覺相關模型
-5. **音頻專注**：專注訓練音頻相關模型
-6. **數學模型訓練**：專門訓練數學計算模型
-7. **邏輯模型訓練**：專門訓練邏輯推理模型
-8. **概念模型訓練**：訓練所有概念模型
-9. **協作式訓練**：多模型協作訓練
-10. **代碼模型訓練**：訓練代碼理解和生成模型
-11. **數據分析模型訓練**：訓練數據分析和處理模型
-
-### 訓練預設使用指南
-詳細使用說明請參閱：[訓練預設使用指南](docs/TRAINING_PRESET_USAGE_GUIDE.md)
-
-## CLI 工具
-
-项目提供了一套完整的命令行界面(CLI)工具，用于与AI系统进行交互：
-
-### CLI 工具组件
-
-1. **Unified CLI** - 通用AI交互工具
-2. **AI Models CLI** - AI模型管理与交互工具
-3. **HSP CLI** - 超结构协议工具
-
-### 使用方法
-
-可以通过以下方式使用CLI工具：
-
-1. **使用统一管理脚本**：
-   ```bash
-   # 双击 unified-ai.bat 并选择 "CLI Tools"
-   ```
-
-2. **使用CLI运行器**：
-   ```bash
-   # 运行CLI运行器
-   tools\cli-runner.bat
-   
-   # 直接执行CLI命令
-   tools\cli-runner.bat unified-cli health
-   tools\cli-runner.bat ai-models-cli list
-   tools\cli-runner.bat hsp-cli query "Hello"
-   ```
-
-3. **安装为系统命令**：
-   ```bash
-   # 安装CLI工具为系统命令
-   tools\cli-runner.bat install-cli
-   
-   # 安装后可直接使用
-   unified-ai health
-   unified-ai chat "Hello"
-   ```
-
-### 详细使用指南
-
-有关CLI工具的详细使用说明，请参阅：[CLI使用指南](docs/CLI_USAGE_GUIDE.md)
-
-## Running Tests
-
-### Export OpenAPI spec
-```
-python Unified-AI-Project/scripts/export_openapi.py
-# output: Unified-AI-Project/docs/api/openapi.json
-```
-
-To run all tests across the monorepo, you can use the unified management script:
-
-1. Double-click `unified-ai.bat`
-2. Select "Run Tests"
-3. Choose the type of tests you want to run
-
-Alternatively, you can use traditional commands:
-
-To run all tests across the monorepo:
+### 构建、部署和运维
 
 ```bash
+# 启动开发服务器(后端和前端仪表板)
+pnpm dev
+
+# 启动所有开发服务器(后端、前端仪表板和桌面应用)
+pnpm dev:all
+
+# 运行所有测试
 pnpm test
-```
 
-To run tests with coverage reports:
-
-```bash
+# 运行带覆盖率报告的测试
 pnpm test:coverage
+
+# 构建所有项目
+pnpm build
+
+# 清理项目
+pnpm clean
 ```
 
-## Recent Updates
+## 项目文档
 
-- AudioService demo mode and sentiment-analysis stub implemented.
-  - In demo mode, `speech_to_text_with_sentiment_analysis` returns a mock payload with `sentiment: "positive"`.
-  - When demo mode is disabled, the same method raises `NotImplementedError` (until real integration is configured).
+项目的完整文档位于 [docs](docs/) 目录中，包含以下主要部分：
 
-- **批處理脚本整合**：为了解决项目中批处理脚本过多的问题，我们创建了统一管理工具 `unified-ai.bat`，整合了所有常用功能。这减少了脚本数量，简化了操作流程，同时保持了所有原有功能。
+### 文档结构
+- **[概览](docs/00-overview/)**：项目高层次的愿景、目标和路线图
+- **[游戏设计](docs/02-game-design/)**：关于集成游戏组件的详细信息
+- **[技术架构](docs/03-technical-architecture/)**：系统架构、通信协议(HSP)、记忆系统(HAM)和AI组件的深入文档
+- **[高级概念](docs/04-advanced-concepts/)**：探讨代理协作、元公式和语言免疫系统等高级主题
+- **[开发指南](docs/05-development/)**：关于调试、测试和开发工作流程的信息
+- **[项目管理](docs/06-project-management/)**：项目规划、状态报告和管理见解
+- **[归档文档](docs/09-archive/)**：旧版或已弃用的文档，供历史参考
 
-- **项目结构优化**：为了改善项目文件过多、结构混乱的问题，我们进行了全面的清理和整理工作：
-  - 将所有文档移至 `docs/` 目录集中管理
-  - 将非核心脚本移至 `backup/scripts/` 目录
-  - 创建统一文档索引和整合指南
-  - 根目录文件数量从约61个减少到约23个，减少了约62%
+### 重要技术文档
+- [PORT_MANAGEMENT_STRATEGY.md](docs/PORT_MANAGEMENT_STRATEGY.md) - 端口管理策略和实现细节
+- [UNIFIED_DOCUMENTATION_INDEX.md](docs/UNIFIED_DOCUMENTATION_INDEX.md) - 统一文档索引
+- [03-technical-architecture/agents/README.md](docs/03-technical-architecture/agents/README.md) - AI代理系统概述
 
-## Audio Service Demo Mode
+### 主要计划文档
+- [COMPLETE_CONTEXT_SYSTEM_UPGRADE_PLAN.md](COMPLETE_CONTEXT_SYSTEM_UPGRADE_PLAN.md) - 完整上下文系统升级计划
+- [CONTEXT_MANAGER_FRAMEWORK_DESIGN.md](CONTEXT_MANAGER_FRAMEWORK_DESIGN.md) - 上下文管理器框架设计
+- [CONTEXT_MANAGER_IMPLEMENTATION_PLAN.md](CONTEXT_MANAGER_IMPLEMENTATION_PLAN.md) - 上下文管理器实现计划
+- [EXECUTION_PLAN_AI_AGENT_SYSTEM.md](EXECUTION_PLAN_AI_AGENT_SYSTEM.md) - AI代理系统执行计划
+- [EXECUTION_PLAN_ADVANCED_TESTING_DEBUGGING.md](EXECUTION_PLAN_ADVANCED_TESTING_DEBUGGING.md) - 高级测试和调试执行计划
+- [EXECUTION_PLAN_SYSTEM_INTEGRATION_TEST.md](EXECUTION_PLAN_SYSTEM_INTEGRATION_TEST.md) - 系统集成测试执行计划
+- [EXECUTION_PLAN_TEST_INFRASTRUCTURE.md](EXECUTION_PLAN_TEST_INFRASTRUCTURE.md) - 测试基础设施执行计划
+- [SYSTEM_INTEGRATION_TEST_IMPROVEMENT_PLAN.md](SYSTEM_INTEGRATION_TEST_IMPROVEMENT_PLAN.md) - 系统集成测试改进计划
+- [UNIFIED_AI_IMPROVEMENT_PLAN.md](UNIFIED_AI_IMPROVEMENT_PLAN.md) - 统一AI改进计划
 
-AudioService supports a demo mode for quick end-to-end testing without external STT/Sentiment services.
+### 执行总结报告
+- [AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md](AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md) - AI代理系统执行总结
+- [CONTEXT_SYSTEM_IMPLEMENTATION_SUMMARY.md](CONTEXT_SYSTEM_IMPLEMENTATION_SUMMARY.md) - 上下文系统实现总结
+- [PROJECT_CONTEXT_SYSTEM_COMPLETION_REPORT.md](PROJECT_CONTEXT_SYSTEM_COMPLETION_REPORT.md) - 项目上下文系统完成报告
+- [SYSTEM_INTEGRATION_TEST_ENHANCEMENT_PLAN.md](SYSTEM_INTEGRATION_TEST_ENHANCEMENT_PLAN.md) - 系统集成测试增强计划
 
-Enable demo mode by adding the following to the backend config YAML:
+### 训练系统报告
+- [collaborative_training_completion_report.md](training/collaborative_training_completion_report.md) - 协作式训练完成报告
+- [collaborative_training_implementation_summary.md](training/collaborative_training_implementation_summary.md) - 协作式训练实现总结
+- [incremental_learning_final_report.md](training/incremental_learning_final_report.md) - 增量学习最终报告
+- [incremental_learning_summary.md](training/incremental_learning_summary.md) - 增量学习总结
+- [integration_test_report.md](training/integration_test_report.md) - 集成测试报告
+- [project_completion_report.md](training/project_completion_report.md) - 项目完成报告
 
-```
-# apps/backend/configs/config.yaml
-use_simulated_resources: true
-```
+### 其他重要文档
+- [FINAL_PROJECT_SUMMARY.md](FINAL_PROJECT_SUMMARY.md) - 项目最终总结报告
+- [PROJECT_STATUS_REPORT.md](PROJECT_STATUS_REPORT.md) - 项目状态报告
+- [AUDIO_SERVICE_FIX_REPORT.md](AUDIO_SERVICE_FIX_REPORT.md) - 音频服务修复报告
+- [AUTO_FIX_EVALUATION_REPORT.md](AUTO_FIX_EVALUATION_REPORT.md) - 自动修复评估报告
 
-Behavior in demo mode:
-- `speech_to_text(audio_bytes)`: returns a mock transcription string.
-- `speech_to_text_with_sentiment_analysis(audio_bytes)`: returns a JSON object like:
-  ```json
-  { "text": "This is a mock transcription.", "sentiment": "positive", "confidence": 0.9, "language": "en-US" }
-  ```
-- Disabling demo mode (or omitting the flag) causes `speech_to_text_with_sentiment_analysis` to raise `NotImplementedError`.
+## 项目状态
 
-## Documentation
+项目已完成所有计划任务，达到发布标准。系统具备完整的AI代理框架、上下文管理系统、HSP协议实现、核心服务和训练系统。项目文档齐全，测试覆盖率高，具备良好的可维护性和扩展性。
 
-For detailed documentation on project architecture, development guidelines, and more, please refer to the [docs/README.md](docs/README.md) directory.
+## 许可证
 
-### 统一文档索引
-为了更好地管理和使用项目文档，我们创建了统一的文档索引：
+本项目仅供学习和研究使用。
 
-- [统一文档索引](docs/UNIFIED_DOCUMENTATION_INDEX.md) - 所有项目文档的集中索引
+## 联系方式
 
-### 整合文档指南
-为了更好地管理和使用项目文档，我们创建了以下整合指南：
-
-1. [批处理脚本使用指南](docs/BATCH_SCRIPTS_USAGE_GUIDE.md) - 整合了所有批处理脚本的使用方法和故障排除信息
-2. [Git与项目管理指南](docs/GIT_AND_PROJECT_MANAGEMENT.md) - 整合了Git管理和项目结构的相关信息
-
-### 训练准备
-项目现已准备好进行AI训练，相关文档和脚本：
-
-1. [训练准备检查清单](docs/TRAINING_PREPARATION_CHECKLIST.md) - 详细列出训练前的所有准备工作
-2. [训练设置脚本](tools/setup-training.bat) - 一键设置训练环境的批处理脚本
-
-### Individual Package Readmes
-
-For more specific information about each package, refer to their respective README files:
-
-- [Backend README](apps/backend/README.md)
-- [Frontend Dashboard README](apps/frontend-dashboard/README.md)
-- [Desktop App README](apps/desktop-app/README.md)
-- [CLI README](packages/cli/README.md)
-
-## 代碼現狀與設計目標對比
-
-### 架構實現
-- ✅ **分層架構**: 已實現「大模型（推理層）+ 行動子模型（操作層）」
-- ✅ **閉環架構**: 已實現「感知-決策-行動-回饋」的完整行動閉環
-- ✅ **HSP協議**: 已實現高速同步協議，支持內部模組與外部AI協作
-- ✅ **記憶管理**: 已實現HAMMemoryManager和DeepMapper等核心組件
-
-### 功能實現
-- ✅ **AI代理系統**: 8個專業代理全部完成，BaseAgent作為基礎類
-- ✅ **訓練系統**: 完整實現，支持11種訓練場景和增量學習
-- ✅ **CLI工具**: 統一命令行界面完成，支持AI交互
-- ✅ **桌面應用**: "Angela's World"遊戲客戶端完成
-
-### 質量保證
-- ✅ **測試覆蓋率**: 測試用例收集完成，所有主要錯誤已修復，測試穩定性優化
-- ✅ **集成穩定性**: HSP連接等主要組件集成問題已修復，MQTT連接穩定性已優化
-- ✅ **核心功能**: 基礎功能測試通過，AlphaDeepModel測試9/9通過，所有專門化代理功能驗證通過
-- ✅ **代碼質量**: 所有導入路徑、語法問題和代理結構不一致性已修復，代碼結構優化完成
-- ✅ **功能驗證**: 所有AI代理創建和功能測試通過，包括CreativeWritingAgent和WebSearchAgent的完整實現
-
-## AGI 發展策略
-
-本專案旨在以「架構優先」的理念，在低資源、低成本的條件下，探索一條通往 Level 4 自主學習 AGI 的可行路徑。
-
-### 階段化推進路線圖
-
-1. **階段一 (MVP / Level 3 初步實現)**：在 6-8 週內，完成一個以「桌面寵物精靈+經濟系統」為場景的最小可行產品。此階段將驗證核心的閉環學習架構，實現具備自主規劃與工具使用能力的 Level 3 AGI 原型。
-2. **階段二 (封閉測試與迭代)**：在 4 週內，邀請小規模用戶（10-50人）進行測試，收集真實世界數據，並根據反饋迭代經濟AI模型與桌寵的互動邏輯。
-3. **階段三 (開放測試與生態起步)**：在 8 週內，擴大用戶群體（100-500人），驗證經濟系統的穩定性與社群驅動的可行性，並開始引入更複雜的多模態感知能力。
-4. **階段四 (挑戰 Level 4)**：在系統穩定運行的基礎上，引入「自我演化」機制。讓 AI 在切斷與外部大模型的連接後，仍能從與環境的互動中學習全新知識，並自主修正其核心邏輯，展現 Level 4 AGI 的「創新者」特徵。
-
-### 當前重點任務
-- **繼續提高測試覆蓋率**: 已修復所有主要測試錯誤，進一步提高測試穩定性
-- **優化增量學習**: 改進增量學習效果，為Level 3測試做準備
-- **完善文檔**: 已更新主要文檔，確保與代碼現狀一致，反映最新的修復和改進
-- **準備Level 3測試**: 進行全面的功能驗證和性能測試，所有核心功能已驗證通過
-
-### 技術實施重點
-
-- **向量化記憶**：整合 ChromaDB 實現高效語義檢索。
-- **持續學習框架**：支援模型增量更新與知識保持。
-- **多模態整合**：文本、圖像、音訊的統一處理。
-- **自主學習能力**：擺脫對外部 LLM 的完全依賴，實現真正的自我演化。
-
-## 📚 Documentation
-
-### User Guides
-- [User Guide](docs/USER_GUIDE.md) - Complete guide for users
-- [Developer Guide](docs/DEVELOPER_GUIDE.md) - Guide for developers contributing to the project
-- [CLI Usage Guide](docs/CLI_USAGE_GUIDE.md) - Detailed CLI tool usage instructions
-
-### Technical Documentation
-- [API Endpoints](docs/API_ENDPOINTS.md) - Backend API documentation
-- [Architecture Overview](docs/architecture/README.md) - System design and technical details
-- [Concept Models Implementation](docs/CONCEPT_MODELS_IMPLEMENTATION.md) - Detailed concept models documentation
-
-### Release Information
-- [Changelog](CHANGELOG.md) - Version history and changes
-- [Training Preparation Checklist](docs/TRAINING_PREPARATION_CHECKLIST.md) - Pre-training preparation guide
-
-## 🛠️ Support and Contributing
-
-### Getting Help
-If you need help with the project, please:
-1. Check the documentation in the `docs/` directory
-2. Review the [Changelog](CHANGELOG.md) for recent changes
-3. Search existing issues on GitHub
-4. Create a new issue if your question is not addressed
-
-### Contributing
-We welcome contributions to the Unified AI Project! Please see our [Contributing Guide](docs/CONTRIBUTING.md) for details on:
-- How to submit bug reports and feature requests
-- Guidelines for code contributions
-- Development workflow and testing requirements
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Contact
-
-For questions, suggestions, or feedback, please open an issue on GitHub or contact the development team.
-
----
-
-**最後更新**：2025年9月11日  
-**專案狀態**：1.0.0 正式版發布  
-**代碼現狀**：核心架構完成，所有導入路徑、語法問題和代理結構不一致性已修復，核心功能驗證通過，測試穩定性優化  
-**目標里程碑**：Level 3 AGI 實現  
-**下一步重點**：繼續優化測試覆蓋率，完善文檔，準備Level 3測試，進一步優化AI代理的協作效率
+如有问题，请联系项目维护者。

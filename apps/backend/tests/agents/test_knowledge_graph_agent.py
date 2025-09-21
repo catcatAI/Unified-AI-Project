@@ -24,9 +24,7 @@ def knowledge_graph_agent():
 
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_init(knowledge_graph_agent):
     """Test that the KnowledgeGraphAgent initializes correctly."""
     assert knowledge_graph_agent.agent_id == "did:hsp:knowledge_graph_agent_test"
@@ -38,9 +36,6 @@ async def test_knowledge_graph_agent_init(knowledge_graph_agent):
 
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_perform_entity_linking(knowledge_graph_agent):
     """Test the entity linking functionality."""
     params = {
@@ -64,9 +59,6 @@ async def test_knowledge_graph_agent_perform_entity_linking(knowledge_graph_agen
 
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_extract_relationships(knowledge_graph_agent):
     """Test the relationship extraction functionality."""
     params = {
@@ -89,9 +81,6 @@ async def test_knowledge_graph_agent_extract_relationships(knowledge_graph_agent
 
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_query_knowledge_graph(knowledge_graph_agent):
     """Test the knowledge graph query functionality."""
     params = {
@@ -114,9 +103,6 @@ async def test_knowledge_graph_agent_query_knowledge_graph(knowledge_graph_agent
 
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_handle_task_request_entity_linking(knowledge_graph_agent, mock_hsp_connector):
     """Test handling an entity linking task request."""
     with patch('apps.backend.src.core_services.initialize_services', new_callable=AsyncMock) as mock_init_services:
@@ -169,9 +155,6 @@ async def test_knowledge_graph_agent_handle_task_request_entity_linking(knowledg
 
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_knowledge_graph_agent_handle_task_request_unsupported_capability(knowledge_graph_agent, mock_hsp_connector):
     """Test handling a task request with an unsupported capability."""
     with patch('apps.backend.src.core_services.initialize_services', new_callable=AsyncMock) as mock_init_services:

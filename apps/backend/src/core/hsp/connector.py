@@ -6,16 +6,22 @@ from .bridge.data_aligner import DataAligner
 from .bridge.message_bridge import MessageBridge
 from unittest.mock import MagicMock, AsyncMock # Added for mock_mode
 from .types import HSPMessageEnvelope, HSPFactPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPAcknowledgementPayload, HSPQoSParameters
+# Import HSPOpinionPayload from the correct module
+from apps.backend.src.hsp.types import HSPOpinionPayload
 import uuid # Added for UUID generation
 from datetime import datetime, timezone # Added for timestamp generation
 import asyncio # Added for asyncio.iscoroutinefunction
 import logging
 import time
-from ...shared.error import HSPConnectionError # Added for unified error handling
-from ...shared.network_resilience import RetryPolicy, CircuitBreaker, NetworkError, ProtocolError, CircuitBreakerOpenError # New imports for resilience
+from apps.backend.src.shared.error import HSPConnectionError # Added for unified error handling
+from apps.backend.src.shared.network_resilience import RetryPolicy, CircuitBreaker, NetworkError, ProtocolError, CircuitBreakerOpenError # New imports for resilience
 from .fallback.fallback_protocols import get_fallback_manager, FallbackMessage, MessagePriority, initialize_fallback_protocols
 from .utils.fallback_config_loader import get_config_loader
 from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
+from .security import HSPSecurityManager, HSPSecurityContext
+from .advanced_performance_optimizer import HSPAdvancedPerformanceOptimizer, HSPAdvancedPerformanceEnhancer
+from .extensibility import HSPExtensionManager, HSPMessageRegistry
+from .versioning import HSPVersionManager, HSPVersionConverter
 from pathlib import Path
 import os # Added this import
 
@@ -62,6 +68,22 @@ class HSPConnector:
         # 性能优化器
         self.performance_optimizer = HSPPerformanceOptimizer()
         self.performance_enhancer = HSPPerformanceEnhancer(self.performance_optimizer)
+        
+        # 安全管理器
+        self.security_manager = HSPSecurityManager()
+        self.security_context = HSPSecurityContext(self.security_manager)
+        
+        # 高级性能优化器
+        self.advanced_performance_optimizer = HSPAdvancedPerformanceOptimizer()
+        self.advanced_performance_enhancer = HSPAdvancedPerformanceEnhancer(self.advanced_performance_optimizer)
+        
+        # 扩展管理器
+        self.extension_manager = HSPExtensionManager()
+        self.message_registry = HSPMessageRegistry()
+        
+        # 版本管理器
+        self.version_manager = HSPVersionManager()
+        self.version_converter = HSPVersionConverter(self.version_manager)
 
         if self.mock_mode:
             self.logger.info("HSPConnector: Initializing in mock mode.")
@@ -129,7 +151,11 @@ class HSPConnector:
         # Moved to connect() method to ensure event loop is running
 
         # Register internal message bridge handler for external messages
-        self.external_connector.on_message_callback = self.performance_enhancer.enhance_receive(self.message_bridge.handle_external_message)
+        # 先应用高级性能增强，再应用基础性能增强
+        enhanced_handler = self.advanced_performance_enhancer.enhance_receive(
+            self.message_bridge.handle_external_message
+        )
+        self.external_connector.on_message_callback = self.performance_enhancer.enhance_receive(enhanced_handler)
 
         # Subscribe to internal bus messages that need to go external
         self.internal_bus.subscribe("hsp.internal.message", self.message_bridge.handle_internal_message)
@@ -623,7 +649,7 @@ class HSPConnector:
             "recipient_ai_id": recipient_ai_id,
             "timestamp_sent": datetime.now(timezone.utc).isoformat(),
             "message_type": message_type,
-            "protocol_version": "0.1",
+            "protocol_version": self.version_manager.current_version,
             "communication_pattern": communication_pattern,
             "security_parameters": None,
             "qos_parameters": qos_parameters or {"requires_ack": False, "priority": "medium"},
@@ -631,11 +657,21 @@ class HSPConnector:
             "payload_schema_uri": payload_schema_uri,
             "payload": payload
         }
-        return envelope
+        
+        # 应用安全处理
+        try:
+            secured_envelope = self.security_context.secure_message(envelope, self.ai_id)
+            return secured_envelope
+        except Exception as e:
+            self.logger.error(f"安全处理消息失败: {e}")
+            return envelope
 
     async def _raw_publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
         """Internal method for raw message publishing prioritizing mqtt_client.publish for tests, with fallback to external_connector.publish."""
         try:
+            # 使用高级性能优化器优化消息路由
+            routing_result, routing_status = self.advanced_performance_optimizer.optimize_message_routing(envelope)
+            
             payload_bytes = json.dumps(envelope).encode('utf-8')
             # Access mqtt_client correctly via property which handles external_connector access
             mqtt_client = self.mqtt_client
@@ -777,14 +813,24 @@ class HSPConnector:
 
         self.logger.debug(f"Dispatching fact to {len(self._fact_callbacks)} callbacks. Message: {message}")
 
+        # 安全验证
+        is_valid, validated_message = self.security_context.authenticate_and_process_message(message)
+        if not is_valid:
+            self.logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}")
+            return
+        
+        # 使用验证后的消息
+        payload = validated_message.get("payload")
+        sender_ai_id = validated_message.get("sender_ai_id")
+
         if payload and sender_ai_id:
             fact_payload = HSPFactPayload(**payload)
             for callback in self._fact_callbacks:
                 self.logger.debug(f"Calling on_fact_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(fact_payload, sender_ai_id, message)
+                    await callback(fact_payload, sender_ai_id, validated_message)
                 else:
-                    callback(fact_payload, sender_ai_id, message)
+                    callback(fact_payload, sender_ai_id, validated_message)
 
             # Check if ACK is required and send it
             qos_params = message.get("qos_parameters")
@@ -820,14 +866,24 @@ class HSPConnector:
 
         self.logger.debug(f"Dispatching capability advertisement to {len(self._capability_advertisement_callbacks)} callbacks. Message: {message}")
 
+        # 安全验证
+        is_valid, validated_message = self.security_context.authenticate_and_process_message(message)
+        if not is_valid:
+            self.logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}")
+            return
+        
+        # 使用验证后的消息
+        payload = validated_message.get("payload")
+        sender_ai_id = validated_message.get("sender_ai_id")
+
         if payload and sender_ai_id:
             cap_payload = HSPCapabilityAdvertisementPayload(**payload)
             for callback in self._capability_advertisement_callbacks:
                 self.logger.debug(f"Calling on_capability_advertisement_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(cap_payload, sender_ai_id, message)
+                    await callback(cap_payload, sender_ai_id, validated_message)
                 else:
-                    callback(cap_payload, sender_ai_id, message)
+                    callback(cap_payload, sender_ai_id, validated_message)
 
             # Check if ACK is required and send it
             qos_params = message.get("qos_parameters")
@@ -863,14 +919,24 @@ class HSPConnector:
 
         self.logger.debug(f"Dispatching task request to {len(self._task_request_callbacks)} callbacks. Message: {message}")
 
+        # 安全验证
+        is_valid, validated_message = self.security_context.authenticate_and_process_message(message)
+        if not is_valid:
+            self.logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}")
+            return
+        
+        # 使用验证后的消息
+        payload = validated_message.get("payload")
+        sender_ai_id = validated_message.get("sender_ai_id")
+
         if payload and sender_ai_id:
             request_payload = HSPTaskRequestPayload(**payload)
             for callback in self._task_request_callbacks:
                 self.logger.debug(f"Calling on_task_request_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(request_payload, sender_ai_id, message)
+                    await callback(request_payload, sender_ai_id, validated_message)
                 else:
-                    callback(request_payload, sender_ai_id, message)
+                    callback(request_payload, sender_ai_id, validated_message)
 
             # Check if ACK is required and send it
             qos_params = message.get("qos_parameters")
@@ -906,14 +972,24 @@ class HSPConnector:
 
         self.logger.debug(f"Dispatching task result to {len(self._task_result_callbacks)} callbacks. Message: {message}")
 
+        # 安全验证
+        is_valid, validated_message = self.security_context.authenticate_and_process_message(message)
+        if not is_valid:
+            self.logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}")
+            return
+        
+        # 使用验证后的消息
+        payload = validated_message.get("payload")
+        sender_ai_id = validated_message.get("sender_ai_id")
+
         if payload and sender_ai_id:
             result_payload = HSPTaskResultPayload(**payload)
             for callback in self._task_result_callbacks:
                 self.logger.debug(f"Calling on_task_result_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(result_payload, sender_ai_id, message)
+                    await callback(result_payload, sender_ai_id, validated_message)
                 else:
-                    callback(result_payload, sender_ai_id, message)
+                    callback(result_payload, sender_ai_id, validated_message)
 
             # Check if ACK is required and send it
             qos_params = message.get("qos_parameters")
@@ -949,10 +1025,20 @@ class HSPConnector:
 
         self.logger.debug(f"Dispatching acknowledgement to {len(self._acknowledgement_callbacks)} callbacks. Message: {message}")
 
+        # 安全验证
+        is_valid, validated_message = self.security_context.authenticate_and_process_message(message)
+        if not is_valid:
+            self.logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}")
+            return
+        
+        # 使用验证后的消息
+        payload = validated_message.get("payload")
+        sender_ai_id = validated_message.get("sender_ai_id")
+
         if payload and sender_ai_id:
             ack_payload = HSPAcknowledgementPayload(**payload)
             target_message_id = ack_payload.get("target_message_id")
-            correlation_id = message.get("correlation_id")
+            correlation_id = validated_message.get("correlation_id")
 
             # Resolve pending ACK if any
             if correlation_id and correlation_id in self._pending_acks:
@@ -964,9 +1050,9 @@ class HSPConnector:
             for callback in self._acknowledgement_callbacks:
                 self.logger.debug(f"Calling on_acknowledgement_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(ack_payload, sender_ai_id, message)
+                    await callback(ack_payload, sender_ai_id, validated_message)
                 else:
-                    callback(ack_payload, sender_ai_id, message)
+                    callback(ack_payload, sender_ai_id, validated_message)
 
     def unsubscribe(self, topic: str, callback: Optional[Callable] = None):
         if callback is None:
@@ -1263,3 +1349,98 @@ class HSPConnector:
                 else:
                     # For synchronous subscribe methods, just call directly
                     self.external_connector.subscribe(topic, qos)
+
+    async def publish_opinion(self, opinion_payload: HSPOpinionPayload, topic: Optional[str] = None) -> bool:
+        """
+        Publishes an opinion to the HSP network.
+        
+        Args:
+            opinion_payload: The opinion to publish.
+            topic: The topic to publish to. If None, uses the standard opinion topic.
+            
+        Returns:
+            bool: True if the opinion was published successfully, False otherwise.
+        """
+        try:
+            # Create the HSP message envelope
+            envelope: HSPMessageEnvelope = self._create_envelope(
+                message_type="HSP::Opinion",
+                payload=opinion_payload,
+                payload_schema_uri=get_schema_uri("HSP_Opinion_v0.1.schema.json")
+            )
+            
+            # Use the standard opinion topic if not provided
+            if topic is None:
+                topic = f"hsp/knowledge/opinions/{self.ai_id}"
+            
+            # Publish the message
+            success = await self.publish_message(topic, envelope)
+            
+            if success:
+                self.logger.info(f"Opinion {opinion_payload.get('id')} published successfully.")
+            else:
+                self.logger.error(f"Failed to publish opinion {opinion_payload.get('id')}.")
+                
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"Error publishing opinion: {e}", exc_info=True)
+            return False
+
+    async def subscribe_to_facts(self, callback: Callable):
+        """
+        Subscribe to fact messages.
+        
+        Args:
+            callback: The callback function to call when a fact message is received.
+        """
+        # Register the callback for fact messages
+        self.register_on_fact_callback(callback)
+        
+        # Subscribe to the fact topic
+        topic = f"hsp/knowledge/facts/#"
+        await self.subscribe(topic)
+
+    async def subscribe_to_opinions(self, callback: Callable):
+        """
+        Subscribe to opinion messages.
+        
+        Args:
+            callback: The callback function to call when an opinion message is received.
+        """
+        # Register the callback for opinion messages
+        # Note: We'll treat opinions as a special type of fact for now
+        self.register_on_fact_callback(callback)
+        
+        # Subscribe to the opinion topic
+        topic = f"hsp/knowledge/opinions/#"
+        await self.subscribe(topic)
+
+    def get_connector_status(self) -> Dict[str, Any]:
+        """
+        Get the connector status.
+        
+        Returns:
+            Dict[str, Any]: The connector status.
+        """
+        return self.get_communication_status()
+
+    async def _handle_fact_message(self, fact_message: Dict[str, Any]):
+        """
+        Handle a fact message.
+        
+        Args:
+            fact_message: The fact message to handle.
+        """
+        # Dispatch the fact message to callbacks
+        await self._dispatch_fact_to_callbacks(fact_message)
+
+    async def _handle_opinion_message(self, opinion_message: Dict[str, Any]):
+        """
+        Handle an opinion message.
+        
+        Args:
+            opinion_message: The opinion message to handle.
+        """
+        # Dispatch the opinion message to callbacks (treated as facts for now)
+        await self._dispatch_fact_to_callbacks(opinion_message)

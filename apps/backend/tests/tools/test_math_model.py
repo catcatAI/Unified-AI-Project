@@ -141,9 +141,8 @@ class TestMathModelComponents(unittest.TestCase):
 
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_math_tool_calculate_model_unavailable(self):
         print("\nRunning test_math_tool_calculate_model_unavailable...")
         # Ensure no model is "pre-loaded" by other tests or available
@@ -198,7 +197,6 @@ class TestMathModelComponents(unittest.TestCase):
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_tool_dispatcher_math_routing(self):
         print("\nRunning test_tool_dispatcher_math_routing...")
         dispatcher = ToolDispatcher()

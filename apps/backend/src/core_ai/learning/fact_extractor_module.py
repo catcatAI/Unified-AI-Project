@@ -3,7 +3,7 @@ import logging
 from typing import List, Dict, Optional, Any
 
 # Assuming 'src' is in PYTHONPATH, making 'services' a top-level package
-from apps.backend.src.services.multi_llm_service import MultiLLMService, ChatMessage
+from services.multi_llm_service import MultiLLMService, ChatMessage
 from .types import ExtractedFact
 # LearnedFactRecord content is what this module aims to extract, but the full record is assembled by LearningManager
 
@@ -105,7 +105,7 @@ class FactExtractorModule:
 # This main block is for standalone testing and demonstration.
 if __name__ == '__main__':
     import asyncio
-    from apps.backend.src.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, LLMResponse
+    from services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, LLMResponse
     from datetime import datetime
 
     # Basic logging setup for demo

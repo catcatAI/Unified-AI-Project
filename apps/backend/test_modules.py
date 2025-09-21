@@ -8,16 +8,17 @@ import os
 # 添加项目路径
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 backend_path = os.path.join(project_root, 'apps', 'backend')
+src_path = os.path.join(backend_path, 'src')
 sys.path.insert(0, backend_path)
-sys.path.insert(0, os.path.join(backend_path, 'src'))
+sys.path.insert(0, src_path)
 
 def test_imports():
     """测试模块导入"""
     modules_to_test = [
-        "apps.backend.src.core_ai.learning.content_analyzer_module",
-        "apps.backend.src.core_ai.learning.fact_extractor_module", 
-        "apps.backend.src.core_ai.service_discovery.service_discovery_module",
-        "apps.backend.src.core_ai.dialogue.project_coordinator"
+        "core_ai.learning.content_analyzer_module",
+        "core_ai.learning.fact_extractor_module", 
+        "core_ai.service_discovery.service_discovery_module",
+        "core_ai.dialogue.project_coordinator"
     ]
     
     results = []

@@ -6,6 +6,7 @@ from ..internal.internal_bus import InternalBus
 class MessageBridge:
     _message_type_to_internal_topic_map = {
         "HSP::Fact_v0.1": "fact",
+        "HSP::Opinion_v0.1": "opinion",  # 添加观点消息的映射
         "HSP::CapabilityAdvertisement_v0.1": "capability_advertisement",
         "HSP::TaskRequest_v0.1": "task_request",
         "HSP::TaskResult_v0.1": "task_result",
@@ -32,6 +33,7 @@ class MessageBridge:
 
         # Align and validate the message
         aligned_message, error = self.data_aligner.align_message(message_dict)
+        print(f"DEBUG: MessageBridge.handle_external_message - Aligned message: {aligned_message}, error: {error}")
         if error:
             # Handle error, maybe publish to an error topic
             print(f"Error: MessageBridge.handle_external_message - Data alignment failed: {error}")
@@ -39,11 +41,16 @@ class MessageBridge:
 
         # Publish the aligned message to the internal bus
         message_type = aligned_message.get("message_type")
+        print(f"DEBUG: MessageBridge.handle_external_message - Message type: {message_type}")
         if message_type:
             internal_topic_suffix = self._message_type_to_internal_topic_map.get(message_type)
+            print(f"DEBUG: MessageBridge.handle_external_message - Internal topic suffix: {internal_topic_suffix}")
             if internal_topic_suffix:
                 internal_channel = f"hsp.external.{internal_topic_suffix}"
                 print(f"DEBUG: MessageBridge.handle_external_message - Publishing to internal bus channel: {internal_channel} with aligned_message: {aligned_message}")
+                # Ensure the message includes sender_ai_id from the envelope
+                if "sender_ai_id" not in aligned_message and "sender_ai_id" in message_dict:
+                    aligned_message["sender_ai_id"] = message_dict["sender_ai_id"]
                 # Await the async publish to ensure downstream async handlers complete (important for tests like ACK sending)
                 if hasattr(self.internal_bus, 'publish_async'):
                     await self.internal_bus.publish_async(internal_channel, aligned_message)
@@ -51,6 +58,8 @@ class MessageBridge:
                     self.internal_bus.publish(internal_channel, aligned_message)
             else:
                 print(f"Warning: MessageBridge.handle_external_message - Unknown message_type '{message_type}'. Not publishing to internal bus.")
+        else:
+            print("DEBUG: MessageBridge.handle_external_message - No message type found")
 
     async def handle_internal_message(self, message):
         # Normalize payload to bytes for MQTT publish compatibility

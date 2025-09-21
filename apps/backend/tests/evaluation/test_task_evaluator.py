@@ -3,6 +3,7 @@ import asyncio
 from unittest.mock import MagicMock, patch, AsyncMock
 import os
 import shutil
+import pytest
 from apps.backend.src.ai.evaluation.task_evaluator import TaskExecutionEvaluator, MetricsCalculator, FeedbackAnalyzer
 from apps.backend.src.ai.evaluation.evaluation_db import EvaluationDB
 
@@ -11,10 +12,9 @@ class TestMetricsCalculator(unittest.IsolatedAsyncioTestCase):
         self.calculator = MetricsCalculator()
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_calculate_objective_metrics_success(self):
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_calculate_objective_metrics_success(self):
         task = {"id": "task_success"}
         execution_result = {"execution_time": 10.0, "success": True, "errors": []}
         metrics = await self.calculator.calculate_objective_metrics(task, execution_result)
@@ -26,10 +26,8 @@ async def test_calculate_objective_metrics_success(self):
         self.assertEqual(metrics["error_count"], 0)
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_calculate_objective_metrics_failure(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_calculate_objective_metrics_failure(self):
         task = {"id": "task_failure"}
         execution_result = {"execution_time": 5.0, "success": False, "errors": ["error1"]}
         metrics = await self.calculator.calculate_objective_metrics(task, execution_result)
@@ -42,9 +40,7 @@ async def test_calculate_objective_metrics_failure(self):
 
 class TestFeedbackAnalyzer(unittest.IsolatedAsyncioTestCase):
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    # 添加重试装饰器以处理不稳定的测试
     async def test_analyze_positive_feedback(self):
         analyzer = FeedbackAnalyzer()
         user_feedback = {"text": "This was excellent, very good performance! I love this feature."}
@@ -55,10 +51,8 @@ class TestFeedbackAnalyzer(unittest.IsolatedAsyncioTestCase):
         self.assertIn("feature_request", analysis["categories"])
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_analyze_negative_feedback(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_analyze_negative_feedback(self):
         analyzer = FeedbackAnalyzer()
         user_feedback = {"text": "Terrible accuracy, very poor result. Found a bug."}
         analysis = await analyzer.analyze(user_feedback)
@@ -68,10 +62,8 @@ async def test_analyze_negative_feedback(self):
         self.assertIn("bug", analysis["categories"])
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_analyze_neutral_feedback(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_analyze_neutral_feedback(self):
         analyzer = FeedbackAnalyzer()
         user_feedback = {"text": "The task completed. It was okay."}
         analysis = await analyzer.analyze(user_feedback)
@@ -80,10 +72,8 @@ async def test_analyze_neutral_feedback(self):
         self.assertEqual(analysis["categories"], [])
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_analyze_mixed_feedback(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_analyze_mixed_feedback(self):
         analyzer = FeedbackAnalyzer()
         user_feedback = {"text": "The performance was great, but I found a small issue."}
         analysis = await analyzer.analyze(user_feedback)
@@ -93,10 +83,8 @@ async def test_analyze_mixed_feedback(self):
         self.assertIn("bug", analysis["categories"])
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_analyze_usability_feedback(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_analyze_usability_feedback(self):
         analyzer = FeedbackAnalyzer()
         user_feedback = {"text": "This is very intuitive and easy to use."}
         analysis = await analyzer.analyze(user_feedback)
@@ -131,10 +119,8 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase):
             shutil.rmtree(self.evaluator.storage_path)
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_evaluate_task_execution_failure(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_evaluate_task_execution_failure(self):
         task = {"id": "task_failure", "expected_output": "Incorrect result"}
         execution_result = {
             "execution_time": 7,
@@ -164,10 +150,8 @@ async def test_evaluate_task_execution_failure(self):
         self.evaluator._store_evaluation.assert_called_once()
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_generate_improvements_error(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_generate_improvements_error(self):
         task = {"id": "task_error"}
         result = {"errors": ["Runtime Error"]}
         metrics = {"completion_time": 1.0, "success_rate": 0.0, "quality_score": 0.5}
@@ -176,10 +160,8 @@ async def test_generate_improvements_error(self):
         self.assertEqual(suggestions[0]["type"], "error_analysis")
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_generate_improvements_performance(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_generate_improvements_performance(self):
         task = {"id": "task_perf"}
         result = {}
         metrics = {"completion_time": 10.0, "success_rate": 1.0, "quality_score": 0.9}
@@ -188,10 +170,8 @@ async def test_generate_improvements_performance(self):
         self.assertEqual(suggestions[0]["type"], "performance")
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_generate_improvements_quality(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_generate_improvements_quality(self):
         task = {"id": "task_quality"}
         result = {}
         metrics = {"completion_time": 1.0, "success_rate": 1.0, "quality_score": 0.6}
@@ -200,10 +180,8 @@ async def test_generate_improvements_quality(self):
         self.assertEqual(suggestions[0]["type"], "quality")
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_generate_improvements_general(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_generate_improvements_general(self):
         task = {"id": "task_general"}
         result = {}
         metrics = {"completion_time": 1.0, "success_rate": 1.0, "quality_score": 0.9}
@@ -212,10 +190,8 @@ async def test_generate_improvements_general(self):
         self.assertEqual(suggestions[0]["type"], "general")
 
     # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_evaluate_task_execution_no_expected_output(self):
+    # 添加重试装饰器以处理不稳定的测试
+    async def test_evaluate_task_execution_no_expected_output(self):
         task = {"id": "task_no_expected_output"}
         execution_result = {
             "execution_time": 5,

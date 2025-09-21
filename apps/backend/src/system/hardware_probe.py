@@ -164,6 +164,8 @@ class HardwareProbe:
             other_gpus = self._detect_other_gpu()
             gpus.extend(other_gpus)
             
+            # If we found GPUs through WMI or other methods, use them
+            # Otherwise, fall back to integrated graphics detection
             if not gpus:
                 # Fallback to integrated graphics detection
                 gpus.append(self._detect_integrated_gpu())
@@ -298,17 +300,148 @@ class HardwareProbe:
     def _detect_other_gpu(self) -> List[GPUInfo]:
         """Detect AMD/Intel and other GPUs"""
         gpus = []
-        # Placeholder for AMD/Intel GPU detection
-        # Can be implemented using platform-specific tools
+        
+        try:
+            # For Windows, use WMI to detect integrated graphics
+            if self.platform_name == "windows":
+                import subprocess
+                import json
+                
+                # Get GPU information using WMI
+                result = subprocess.run([
+                    "powershell.exe", 
+                    "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM, DriverVersion, AdapterCompatibility | ConvertTo-Json"
+                ], capture_output=True, text=True, timeout=10)
+                
+                if result.returncode == 0:
+                    # Parse the JSON output
+                    gpu_data = json.loads(result.stdout)
+                    
+                    # Handle both single GPU and multiple GPU cases
+                    if isinstance(gpu_data, list):
+                        gpu_list = gpu_data
+                    else:
+                        gpu_list = [gpu_data]
+                    
+                    # Process each GPU
+                    for gpu_info in gpu_list:
+                        name = gpu_info.get('Name', 'Unknown GPU')
+                        adapter_ram = gpu_info.get('AdapterRAM', 0)
+                        driver_version = gpu_info.get('DriverVersion', 'Unknown')
+                        adapter_compatibility = gpu_info.get('AdapterCompatibility', '')
+                        
+                        # Convert RAM from bytes to MB
+                        memory_total = int(adapter_ram / (1024 * 1024)) if adapter_ram else 1024
+                        
+                        # Estimate available memory (shared system memory for integrated graphics)
+                        memory_available = min(memory_total, 512)  # Default estimate for integrated graphics
+                        
+                        # Check if this is integrated graphics
+                        is_integrated = any(keyword in name.lower() or keyword in adapter_compatibility.lower() 
+                                          for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
+                        
+                        # For integrated graphics, memory is shared with system RAM
+                        if is_integrated:
+                            # Get system memory to estimate shared GPU memory
+                            try:
+                                system_memory = psutil.virtual_memory().total
+                                # Estimate shared memory as a portion of system memory (typically 1/4 to 1/2)
+                                estimated_shared = min(int(system_memory / (1024 * 1024 * 4)), 2048)  # Cap at 2GB
+                                memory_available = min(estimated_shared, memory_total)
+                            except Exception:
+                                pass
+                        
+                        gpus.append(GPUInfo(
+                            name=name,
+                            memory_total=memory_total,
+                            memory_available=memory_available,
+                            driver_version=driver_version,
+                            cuda_version=None,  # Integrated graphics typically don't support CUDA
+                            opencl_support=True,  # Most modern integrated graphics support OpenCL
+                            vulkan_support=True   # Most modern integrated graphics support Vulkan
+                        ))
+                    
+                    if gpus:
+                        logger.info(f"检测到 {len(gpus)} 个GPU设备通过WMI")
+                        return gpus
+            
+            # For other platforms or if WMI detection failed, use basic detection
+            # Placeholder for AMD/Intel GPU detection
+            # Can be implemented using platform-specific tools
+        except Exception as e:
+            logger.warning(f"检测其他GPU时出错: {e}")
+        
         return gpus
     
     def _detect_integrated_gpu(self) -> GPUInfo:
         """Fallback integrated GPU detection"""
+        # Try to get more accurate integrated GPU information
+        try:
+            import platform
+            system = platform.system().lower()
+            
+            if system == "windows":
+                # Windows系统使用WMI检测
+                import subprocess
+                import json
+                
+                result = subprocess.run([
+                    "powershell.exe", 
+                    "Get-WmiObject -Class Win32_VideoController | Where-Object {$_.Name -like '*Intel*' -or $_.Name -like '*AMD*' -or $_.Name -like '*Radeon*' -or $_.Name -like '*HD Graphics*' -or $_.Name -like '*UHD Graphics*'} | Select-Object Name, AdapterRAM, DriverVersion | ConvertTo-Json"
+                ], capture_output=True, text=True, timeout=10)
+                
+                if result.returncode == 0 and result.stdout.strip():
+                    gpu_data = json.loads(result.stdout)
+                    
+                    # Handle both single GPU and multiple GPU cases
+                    if isinstance(gpu_data, list) and len(gpu_data) > 0:
+                        gpu_info = gpu_data[0]  # Take the first matching GPU
+                    elif isinstance(gpu_data, dict):
+                        gpu_info = gpu_data
+                    else:
+                        # Fallback to general GPU query if specific query returned nothing
+                        result = subprocess.run([
+                            "powershell.exe", 
+                            "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM, DriverVersion | ConvertTo-Json"
+                        ], capture_output=True, text=True, timeout=10)
+                        
+                        if result.returncode == 0 and result.stdout.strip():
+                            gpu_data = json.loads(result.stdout)
+                            if isinstance(gpu_data, list) and len(gpu_data) > 0:
+                                gpu_info = gpu_data[0]
+                            elif isinstance(gpu_data, dict):
+                                gpu_info = gpu_data
+                            else:
+                                raise ValueError("No GPU data found")
+                        else:
+                            raise ValueError("Failed to get GPU data")
+                    
+                    name = gpu_info.get('Name', 'Integrated Graphics')
+                    adapter_ram = gpu_info.get('AdapterRAM', 0)
+                    driver_version = gpu_info.get('DriverVersion', 'Unknown')
+                    
+                    # Convert RAM from bytes to MB
+                    memory_total = int(adapter_ram / (1024 * 1024)) if adapter_ram else 1024
+                    
+                    return GPUInfo(
+                        name=name,
+                        memory_total=memory_total,
+                        memory_available=min(memory_total, 512),  # Conservative estimate
+                        driver_version=driver_version,
+                        cuda_version=None,
+                        opencl_support=True,
+                        vulkan_support=True
+                    )
+        except Exception as e:
+            logger.debug(f"Integrated GPU detection with WMI failed: {e}")
+        
+        # Fallback to basic integrated GPU detection
         return GPUInfo(
             name="Integrated Graphics",
             memory_total=1024,  # Estimate
             memory_available=512,
             driver_version="Unknown",
+            cuda_version=None,
             opencl_support=False,
             vulkan_support=False
         )
@@ -390,16 +523,26 @@ class HardwareProbe:
         if gpu and gpu[0].name != "Unknown GPU":
             best_gpu = max(gpu, key=lambda g: g.memory_total)
             
-            if best_gpu.cuda_version:
-                gpu_score += 10  # CUDA support bonus
+            # Check if this is a discrete GPU or integrated graphics
+            is_discrete = not any(keyword in best_gpu.name.lower() 
+                                for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
             
-            if best_gpu.memory_total >= 8192:  # 8GB+
-                gpu_score += 20
-            elif best_gpu.memory_total >= 4096:  # 4GB+
-                gpu_score += 15
-            elif best_gpu.memory_total >= 2048:  # 2GB+
+            # CUDA support bonus (typically only for NVIDIA discrete GPUs)
+            if best_gpu.cuda_version:
                 gpu_score += 10
+            
+            # Memory scoring
+            if best_gpu.memory_total >= 8192:  # 8GB+
+                gpu_score += 20 if is_discrete else 15  # Lower score for integrated graphics
+            elif best_gpu.memory_total >= 4096:  # 4GB+
+                gpu_score += 15 if is_discrete else 10
+            elif best_gpu.memory_total >= 2048:  # 2GB+
+                gpu_score += 10 if is_discrete else 7
             elif best_gpu.memory_total >= 1024:  # 1GB+
+                gpu_score += 5 if is_discrete else 3
+            
+            # Bonus for discrete GPUs
+            if is_discrete:
                 gpu_score += 5
         
         # Memory scoring (0-25 points)

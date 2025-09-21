@@ -102,6 +102,12 @@ class HSPBeliefPayload(HSPFactPayload, total=False): # Inherits from HSPFactPayl
     justification_type: Optional[Literal["text", "inference_chain_id", "evidence_ids_list"]]
     justification: Optional[str | List[str]] # Text, or ID, or list of IDs
 
+class HSPOpinionPayload(HSPFactPayload, total=False): # Inherits from HSPFactPayload, most fields are similar
+    opinion_holder_ai_id: str # Required, defaults to source_ai_id if not specified by sender
+    justification_type: Optional[Literal["text", "inference_chain_id", "evidence_ids_list"]]
+    justification: Optional[str | List[str]] # Text, or ID, or list of IDs
+    reasoning_chain: Optional[List[str]] # List of fact IDs that led to this opinion
+
 class HSPCapability(TypedDict, total=False):
     name: str
     description: str

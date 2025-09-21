@@ -46,7 +46,47 @@ class SmartResourceAllocator:
         self.allocation_history = []
         self.max_history_size = 1000
         
+        # 检查是否为集成显卡系统
+        self.is_integrated_graphics_system = self._check_integrated_graphics_system()
+        
         logger.info("智能资源分配器初始化完成")
+        if self.is_integrated_graphics_system:
+            logger.info("检测到集成显卡系统，将应用特殊资源分配策略")
+    
+    def _check_integrated_graphics_system(self) -> bool:
+        """检查是否为集成显卡系统"""
+        try:
+            import platform
+            system = platform.system().lower()
+            
+            if system == "windows":
+                # Windows系统使用WMI检查
+                import subprocess
+                import json
+                
+                result = subprocess.run([
+                    "powershell.exe", 
+                    "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
+                ], capture_output=True, text=True, timeout=10)
+                
+                if result.returncode == 0 and result.stdout.strip():
+                    gpu_data = json.loads(result.stdout)
+                    
+                    # Handle both single GPU and multiple GPU cases
+                    if isinstance(gpu_data, list):
+                        gpu_list = gpu_data
+                    else:
+                        gpu_list = [gpu_data]
+                    
+                    # Check if any GPU is integrated graphics
+                    for gpu_info in gpu_list:
+                        name = gpu_info.get('Name', '').lower()
+                        if any(keyword in name for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics']):
+                            return True
+        except Exception as e:
+            logger.debug(f"检查集成显卡时出错: {e}")
+        
+        return False
     
     def _initialize_resource_pools(self) -> Dict[str, Any]:
         """初始化资源池"""
@@ -112,7 +152,7 @@ class SmartResourceAllocator:
         except Exception as e:
             logger.warning(f"检测NVIDIA GPU时出错: {e}")
         
-        # 如果没有检测到NVIDIA GPU，尝试检测其他GPU
+        # 如果没有检测到NVIDIA GPU，尝试检测其他GPU（AMD/Intel等）
         if not gpus:
             try:
                 # 尝试使用torch检测GPU
@@ -134,6 +174,55 @@ class SmartResourceAllocator:
                 logger.warning("未安装torch库，无法检测GPU")
             except Exception as e:
                 logger.warning(f"通过PyTorch检测GPU时出错: {e}")
+        
+        # 如果仍然没有检测到GPU，尝试使用系统级检测（针对集成显卡）
+        if not gpus:
+            try:
+                # 使用系统信息检测集成显卡
+                import platform
+                system = platform.system().lower()
+                
+                if system == "windows":
+                    # Windows系统使用WMI检测
+                    import subprocess
+                    import json
+                    
+                    result = subprocess.run([
+                        "powershell.exe", 
+                        "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
+                    ], capture_output=True, text=True, timeout=10)
+                    
+                    if result.returncode == 0:
+                        gpu_data = json.loads(result.stdout)
+                        
+                        # Handle both single GPU and multiple GPU cases
+                        if isinstance(gpu_data, list):
+                            gpu_list = gpu_data
+                        else:
+                            gpu_list = [gpu_data]
+                        
+                        # Process each GPU
+                        for idx, gpu_info in enumerate(gpu_list):
+                            name = gpu_info.get('Name', 'Integrated Graphics')
+                            adapter_ram = gpu_info.get('AdapterRAM', 0)
+                            
+                            # Convert RAM from bytes to GB
+                            memory_total_gb = adapter_ram / (1024**3) if adapter_ram else 1.0  # Default 1GB
+                            
+                            gpu_info = {
+                                'id': idx,
+                                'name': name,
+                                'total_memory': memory_total_gb,
+                                'free_memory': memory_total_gb,  # Simplified
+                                'used_memory': 0,
+                                'utilization': 0
+                            }
+                            gpus.append(gpu_info)
+                        
+                        logger.info(f"通过WMI检测到 {len(gpus)} 个GPU设备")
+                        
+            except Exception as e:
+                logger.warning(f"检测集成显卡时出错: {e}")
         
         return gpus
     
@@ -232,6 +321,20 @@ class SmartResourceAllocator:
     
     def _allocate_gpu_resources(self, request: ResourceRequest) -> ResourceAllocation:
         """分配GPU资源"""
+        # 为集成显卡系统特殊处理
+        if self.is_integrated_graphics_system:
+            logger.info(f"为集成显卡系统分配资源: 任务 {request.task_id}")
+            # 对于集成显卡，需要更保守的资源分配
+            
+            # 限制GPU内存分配
+            max_gpu_memory_gb = 1.0  # 集成显卡最多分配1GB GPU内存
+            request.gpu_memory_gb = min(request.gpu_memory_gb, max_gpu_memory_gb)
+            
+            # 确保有足够的系统内存来补充显存不足
+            min_system_memory_gb = 2.0
+            if request.memory_gb < min_system_memory_gb:
+                request.memory_gb = min_system_memory_gb
+        
         # 分配CPU核心（GPU任务也需要CPU）
         allocated_cpu = min(request.cpu_cores, self.resource_pools['cpu']['available_cores'])
         

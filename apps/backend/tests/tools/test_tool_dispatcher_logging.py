@@ -2,7 +2,10 @@ import json
 import asyncio
 import pytest
 
-from apps.backend.src.core_services import initialize_services, ham_manager_instance, tool_dispatcher_instance
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from src.core_services import initialize_services, ham_manager_instance, tool_dispatcher_instance
 
 
 @pytest.mark.timeout(15)

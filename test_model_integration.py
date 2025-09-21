@@ -9,15 +9,16 @@ from pathlib import Path
 # 添加项目路径
 PROJECT_ROOT = Path(__file__).parent
 BACKEND_PATH = PROJECT_ROOT / "apps" / "backend"
+SRC_PATH = BACKEND_PATH / "src"
 sys.path.insert(0, str(BACKEND_PATH))
-sys.path.insert(0, str(BACKEND_PATH / "src"))
+sys.path.insert(0, str(SRC_PATH))
 
 def test_math_model():
     """测试数学模型"""
     print("\n=== 测试数学模型 ===")
     
     try:
-        from apps.backend.src.tools.math_tool import calculate
+        from tools.math_tool import calculate
         
         # 测试一些数学计算
         test_cases = [
@@ -45,7 +46,7 @@ def test_logic_model():
     print("\n=== 测试逻辑模型 ===")
     
     try:
-        from apps.backend.src.tools.logic_tool import evaluate_expression
+        from tools.logic_tool import evaluate_expression
         
         # 测试一些逻辑表达式
         test_cases = [
@@ -73,7 +74,7 @@ def test_tool_dispatcher():
     print("\n=== 测试工具调度器 ===")
     
     try:
-        from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+        from tools.tool_dispatcher import ToolDispatcher
         
         # 创建工具调度器实例
         dispatcher = ToolDispatcher()

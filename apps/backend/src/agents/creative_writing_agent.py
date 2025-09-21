@@ -4,9 +4,9 @@ import os
 import logging
 from typing import Dict, Any, List
 
-from apps.backend.src.ai.agents.base.base_agent import BaseAgent
-from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from apps.backend.src.core.services.multi_llm_service import MultiLLMService, ChatMessage
+from .base_agent import BaseAgent
+from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, ChatMessage
+from core.services.multi_llm_service import MultiLLMService
 
 
 class CreativeWritingAgent(BaseAgent):
@@ -40,6 +40,8 @@ class CreativeWritingAgent(BaseAgent):
             }
         ]
         super().__init__(agent_id=agent_id, capabilities=capabilities)
+        # Initialize the LLM interface
+        self.llm_interface = MultiLLMService()
         logging.info(f"[{self.agent_id}] CreativeWritingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):

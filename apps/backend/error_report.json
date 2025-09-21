@@ -1,16 +1,726 @@
 {
-  "total_errors": 1,
+  "total_errors": 74,
   "errors_by_type": {
-    "未知错误": 1
+    "未知错误": 26,
+    "异步测试协程警告": 30,
+    "属性错误": 2,
+    "断言失败": 7,
+    "导入路径错误": 5,
+    "连接错误": 4
   },
   "error_details": [
     {
       "type": "未知错误",
       "file_path": null,
       "line_number": null,
-      "message": "测试失败但未识别具体错误类型",
+      "message": "测试 tests/hsp/test_hsp_security.py::TestHSPSecurity::test_secure_message_processing 失败",
       "details": {
-        "exit_code": 2
+        "test_name": "tests/hsp/test_hsp_security.py::TestHSPSecurity::test_secure_message_processing"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/hsp/test_hsp_security.py::TestHSPSecurity::test_hsp_connector_secure_message_dispatch 失败",
+      "details": {
+        "test_name": "tests/hsp/test_hsp_security.py::TestHSPSecurity::test_hsp_connector_secure_message_dispatch"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/integration/test_atlassian_integration.py::TestAtlassianIntegration::test_get_jira_projects_without_configuration 失败",
+      "details": {
+        "test_name": "tests/integration/test_atlassian_integration.py::TestAtlassianIntegration::test_get_jira_projects_without_configuration"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/integration/test_atlassian_integration.py::TestAtlassianIntegration::test_create_confluence_page_without_enhanced_bridge 失败",
+      "details": {
+        "test_name": "tests/integration/test_atlassian_integration.py::TestAtlassianIntegration::test_create_confluence_page_without_enhanced_bridge"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/integration/test_end_to_end_project_flow.py::test_full_project_flow_with_real_agent 失败",
+      "details": {
+        "test_name": "tests/integration/test_end_to_end_project_flow.py::test_full_project_flow_with_real_agent"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/integrations/test_rovo_dev_agent.py::TestRovoDevAgent::test_task_submission_and_processing 失败",
+      "details": {
+        "test_name": "tests/integrations/test_rovo_dev_agent.py::TestRovoDevAgent::test_task_submission_and_processing"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/integrations/test_rovo_dev_agent.py::TestRovoDevAgent::test_task_processing 失败",
+      "details": {
+        "test_name": "tests/integrations/test_rovo_dev_agent.py::TestRovoDevAgent::test_task_processing"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_authentication_success 失败",
+      "details": {
+        "test_name": "tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_authentication_success"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_authentication_failure 失败",
+      "details": {
+        "test_name": "tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_authentication_failure"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_make_request_success 失败",
+      "details": {
+        "test_name": "tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_make_request_success"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/modules_fragmenta/test_element_layer.py::TestElementLayer::test_02_process_elements 失败",
+      "details": {
+        "test_name": "tests/modules_fragmenta/test_element_layer.py::TestElementLayer::test_02_process_elements"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/modules_fragmenta/test_vision_tone_inverter.py::TestVisionToneInverter::test_02_invert_visual_tone 失败",
+      "details": {
+        "test_name": "tests/modules_fragmenta/test_vision_tone_inverter.py::TestVisionToneInverter::test_02_invert_visual_tone"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/shared/test_key_manager.py::TestUnifiedKeyManager::test_demo_mode_detection_from_env 失败",
+      "details": {
+        "test_name": "tests/shared/test_key_manager.py::TestUnifiedKeyManager::test_demo_mode_detection_from_env"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/shared/test_key_manager.py::TestUnifiedKeyManager::test_generate_ham_key_in_demo_mode 失败",
+      "details": {
+        "test_name": "tests/shared/test_key_manager.py::TestUnifiedKeyManager::test_generate_ham_key_in_demo_mode"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/shared/test_key_manager.py::TestUnifiedKeyManager::test_get_key_in_demo_mode 失败",
+      "details": {
+        "test_name": "tests/shared/test_key_manager.py::TestUnifiedKeyManager::test_get_key_in_demo_mode"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/test_core_services.py::TestCoreServices::test_initialize_services 失败",
+      "details": {
+        "test_name": "tests/test_core_services.py::TestCoreServices::test_initialize_services"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/test_dependency_manager.py::TestDependencyManager::test_config_file_not_found 失败",
+      "details": {
+        "test_name": "tests/test_dependency_manager.py::TestDependencyManager::test_config_file_not_found"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/test_dependency_manager.py::TestDependencyManager::test_dependency_report_generation 失败",
+      "details": {
+        "test_name": "tests/test_dependency_manager.py::TestDependencyManager::test_dependency_report_generation"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/test_dependency_manager.py::TestDependencyManager::test_fallback_dependency_used 失败",
+      "details": {
+        "test_name": "tests/test_dependency_manager.py::TestDependencyManager::test_fallback_dependency_used"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/test_dependency_manager.py::TestDependencyManager::test_fallbacks_disabled_in_production 失败",
+      "details": {
+        "test_name": "tests/test_dependency_manager.py::TestDependencyManager::test_fallbacks_disabled_in_production"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/tools/test_code_understanding_tool.py::TestCodeUnderstandingTool::test_describe_tool_found 失败",
+      "details": {
+        "test_name": "tests/tools/test_code_understanding_tool.py::TestCodeUnderstandingTool::test_describe_tool_found"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/tools/test_code_understanding_tool.py::TestCodeUnderstandingTool::test_describe_tool_not_found 失败",
+      "details": {
+        "test_name": "tests/tools/test_code_understanding_tool.py::TestCodeUnderstandingTool::test_describe_tool_not_found"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/tools/test_code_understanding_tool.py::TestCodeUnderstandingTool::test_describe_tool_structure_with_no_docstrings_or_params 失败",
+      "details": {
+        "test_name": "tests/tools/test_code_understanding_tool.py::TestCodeUnderstandingTool::test_describe_tool_structure_with_no_docstrings_or_params"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/tools/test_code_understanding_tool.py::TestCodeUnderstandingTool::test_list_tools_success 失败",
+      "details": {
+        "test_name": "tests/tools/test_code_understanding_tool.py::TestCodeUnderstandingTool::test_list_tools_success"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/tools/test_parameter_extractor.py::TestParameterExtractor::test_download_model_parameters 失败",
+      "details": {
+        "test_name": "tests/tools/test_parameter_extractor.py::TestParameterExtractor::test_download_model_parameters"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/tools/test_tool_dispatcher_logging.py::test_tool_dispatcher_action_policy_logged_smoke 失败",
+      "details": {
+        "test_name": "tests/tools/test_tool_dispatcher_logging.py::test_tool_dispatcher_action_policy_logged_smoke"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "Project\\apps\\backend\\src\\core_ai\\agent_collaboration_manager.py",
+      "line_number": 52,
+      "message": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited",
+      "details": {
+        "context": "\ntests/agents/test_base_agent.py::test_base_agent_start\ntests/agents/test_base_agent.py::test_base_agent_stop\n  D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core_ai\\agent_collaboration_manager.py:52: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited\n    self.hsp_connector.register_on_task_result_callback(self._handle_task_result)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "Project\\apps\\backend\\src\\core_ai\\agent_monitoring_manager.py",
+      "line_number": 62,
+      "message": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited",
+      "details": {
+        "context": "\ntests/agents/test_base_agent.py::test_base_agent_start\ntests/agents/test_base_agent.py::test_base_agent_stop\n  D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core_ai\\agent_monitoring_manager.py:62: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited\n    self.hsp_connector.register_on_capability_advertisement_callback(\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "Project\\apps\\backend\\src\\core_ai\\dynamic_agent_registry.py",
+      "line_number": 49,
+      "message": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited",
+      "details": {
+        "context": "\ntests/agents/test_base_agent.py::test_base_agent_start\ntests/agents/test_base_agent.py::test_base_agent_stop\n  D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core_ai\\dynamic_agent_registry.py:49: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited\n    self.hsp_connector.register_on_capability_advertisement_callback(\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "Project\\apps\\backend\\src\\agents\\base_agent.py",
+      "line_number": 131,
+      "message": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited",
+      "details": {
+        "context": "\ntests/agents/test_base_agent.py::test_base_agent_start\ntests/agents/test_base_agent.py::test_base_agent_stop\n  D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\agents\\base_agent.py:131: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited\n    self.hsp_connector.register_on_task_request_callback(self.handle_task_request)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "Project\\apps\\backend\\src\\ai\\dialogue\\project_coordinator.py",
+      "line_number": 129,
+      "message": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited",
+      "details": {
+        "context": "    self._load_plugins(namespace)\n\ntests/integration/test_agent_collaboration.py::TestAgentCollaboration::test_handle_project_dynamic_agent_launch\n  D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\ai\\dialogue\\project_coordinator.py:129: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited\n    result = await self._dispatch_single_subtask(subtask_data)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "Project\\apps\\backend\\src\\core_services.py",
+      "line_number": 673,
+      "message": "RuntimeWarning: coroutine 'AgentManager.shutdown_all_agents' was never awaited",
+      "details": {
+        "context": "tests/services/test_hsp_endpoints.py: 3 warnings\ntests/services/test_main_api_server.py: 2 warnings\ntests/services/test_models_endpoints.py: 2 warnings\n  D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core_services.py:673: RuntimeWarning: coroutine 'AgentManager.shutdown_all_agents' was never awaited\n    agent_manager_instance.shutdown_all_agents()\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'AgentManager.shutdown_all_agents' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\mock.py",
+      "line_number": 808,
+      "message": "RuntimeWarning: coroutine 'sleep' was never awaited",
+      "details": {
+        "context": "tests/integration/test_hsp_protocol_integration.py: 6 warnings\ntests/integration/test_memory_system_integration.py: 5 warnings\ntests/integration/test_system_level_integration.py: 2 warnings\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\mock.py:808: RuntimeWarning: coroutine 'sleep' was never awaited\n    return object.__setattr__(self, name, value)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'sleep' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\events.py",
+      "line_number": 88,
+      "message": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited",
+      "details": {
+        "context": "    response = client.post(\"/api/v1/atlassian/configure\", json=config.dict())\n\ntests/integration/test_learning_and_trust.py::TestLearningAndTrustIntegration::test_fact_from_high_trust_source_is_accepted\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\events.py:88: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited\n    self._context.run(self._callback, *self._args)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "packages\\pytest_benchmark\\fixture.py",
+      "line_number": 109,
+      "message": "RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_hsp_message_publish_performance.<locals>.publish_message' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/integration/test_performance_benchmark.py::TestPerformanceBenchmark::test_hsp_message_publish_performance\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytest_benchmark\\fixture.py:109: RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_hsp_message_publish_performance.<locals>.publish_message' was never awaited\n    function_to_benchmark(*args, **kwargs)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_hsp_message_publish_performance.<locals>.publish_message' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "packages\\pytest_benchmark\\fixture.py",
+      "line_number": 109,
+      "message": "RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_memory_store_performance.<locals>.store_memory' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/integration/test_performance_benchmark.py::TestPerformanceBenchmark::test_memory_store_performance\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytest_benchmark\\fixture.py:109: RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_memory_store_performance.<locals>.store_memory' was never awaited\n    function_to_benchmark(*args, **kwargs)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_memory_store_performance.<locals>.store_memory' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "packages\\pytest_benchmark\\fixture.py",
+      "line_number": 109,
+      "message": "RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_concurrent_agent_operations_performance.<locals>.concurrent_operations' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/integration/test_performance_benchmark.py::TestPerformanceBenchmark::test_concurrent_agent_operations_performance\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytest_benchmark\\fixture.py:109: RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_concurrent_agent_operations_performance.<locals>.concurrent_operations' was never awaited\n    function_to_benchmark(*args, **kwargs)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_concurrent_agent_operations_performance.<locals>.concurrent_operations' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "packages\\pytest_benchmark\\fixture.py",
+      "line_number": 109,
+      "message": "RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_memory_retrieval_performance.<locals>.retrieve_memory' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/integration/test_performance_benchmark.py::TestPerformanceBenchmark::test_memory_retrieval_performance\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytest_benchmark\\fixture.py:109: RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_memory_retrieval_performance.<locals>.retrieve_memory' was never awaited\n    function_to_benchmark(*args, **kwargs)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestPerformanceBenchmark.test_memory_retrieval_performance.<locals>.retrieve_memory' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "packages\\pytest_benchmark\\fixture.py",
+      "line_number": 258,
+      "message": "RuntimeWarning: coroutine 'TestSystemLoadBenchmark.test_high_load_agent_management.<locals>.high_load_operations' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/integration/test_performance_benchmark.py::TestSystemLoadBenchmark::test_high_load_agent_management\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytest_benchmark\\fixture.py:258: RuntimeWarning: coroutine 'TestSystemLoadBenchmark.test_high_load_agent_management.<locals>.high_load_operations' was never awaited\n    duration, result = runner(loops_range)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestSystemLoadBenchmark.test_high_load_agent_management.<locals>.high_load_operations' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "packages\\pytest_benchmark\\fixture.py",
+      "line_number": 258,
+      "message": "RuntimeWarning: coroutine 'TestSystemLoadBenchmark.test_concurrent_hsp_message_processing.<locals>.concurrent_message_processing' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/integration/test_performance_benchmark.py::TestSystemLoadBenchmark::test_concurrent_hsp_message_processing\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytest_benchmark\\fixture.py:258: RuntimeWarning: coroutine 'TestSystemLoadBenchmark.test_concurrent_hsp_message_processing.<locals>.concurrent_message_processing' was never awaited\n    duration, result = runner(loops_range)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestSystemLoadBenchmark.test_concurrent_hsp_message_processing.<locals>.concurrent_message_processing' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "packages\\pytest_benchmark\\fixture.py",
+      "line_number": 109,
+      "message": "RuntimeWarning: coroutine 'TestAgentPerformanceBenchmarks.test_concurrent_agent_operations_performance.<locals>.concurrent_operations' was never awaited",
+      "details": {
+        "context": "  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.\n\ntests/integration/test_performance_benchmarks.py::TestAgentPerformanceBenchmarks::test_concurrent_agent_operations_performance\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytest_benchmark\\fixture.py:109: RuntimeWarning: coroutine 'TestAgentPerformanceBenchmarks.test_concurrent_agent_operations_performance.<locals>.concurrent_operations' was never awaited\n    function_to_benchmark(*args, **kwargs)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestAgentPerformanceBenchmarks.test_concurrent_agent_operations_performance.<locals>.concurrent_operations' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_success' was never awaited",
+      "details": {
+        "context": "    warnings.warn(\n\ntests/services/test_audio_service.py::TestAudioService::test_02_speech_to_text_success\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_success' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_success' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_with_empty_input' was never awaited",
+      "details": {
+        "context": "    return self.run(*args, **kwds)\n\ntests/services/test_audio_service.py::TestAudioService::test_02_speech_to_text_with_empty_input\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_with_empty_input' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_with_empty_input' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_with_none_input' was never awaited",
+      "details": {
+        "context": "    return self.run(*args, **kwds)\n\ntests/services/test_audio_service.py::TestAudioService::test_02_speech_to_text_with_none_input\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_with_none_input' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestAudioService.test_02_speech_to_text_with_none_input' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestLLMInterface.test_02_generate_response' was never awaited",
+      "details": {
+        "context": "    return self.run(*args, **kwds)\n\ntests/services/test_llm_interface.py::TestLLMInterface::test_02_generate_response\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestLLMInterface.test_02_generate_response' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestLLMInterface.test_02_generate_response' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestLLMInterface.test_03_list_models' was never awaited",
+      "details": {
+        "context": "    return self.run(*args, **kwds)\n\ntests/services/test_llm_interface.py::TestLLMInterface::test_03_list_models\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestLLMInterface.test_03_list_models' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestLLMInterface.test_03_list_models' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestVisionService.test_02_analyze_image' was never awaited",
+      "details": {
+        "context": "    warnings.warn(\n\ntests/services/test_vision_service.py::TestVisionService::test_02_analyze_image\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestVisionService.test_02_analyze_image' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestVisionService.test_02_analyze_image' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestVisionService.test_03_compare_images' was never awaited",
+      "details": {
+        "context": "    return self.run(*args, **kwds)\n\ntests/services/test_vision_service.py::TestVisionService::test_03_compare_images\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestVisionService.test_03_compare_images' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestVisionService.test_03_compare_images' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestCoreServiceManager.test_load_service_success' was never awaited",
+      "details": {
+        "context": "    warnings.warn(\n\ntests/test_core_service_manager.py::TestCoreServiceManager::test_load_service_success\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestCoreServiceManager.test_load_service_success' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestCoreServiceManager.test_load_service_success' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestCoreServiceManager.test_load_service_with_dependencies' was never awaited",
+      "details": {
+        "context": "    return self.run(*args, **kwds)\n\ntests/test_core_service_manager.py::TestCoreServiceManager::test_load_service_with_dependencies\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestCoreServiceManager.test_load_service_with_dependencies' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestCoreServiceManager.test_load_service_with_dependencies' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestCoreServiceManager.test_restart_service' was never awaited",
+      "details": {
+        "context": "    return self.run(*args, **kwds)\n\ntests/test_core_service_manager.py::TestCoreServiceManager::test_restart_service\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestCoreServiceManager.test_restart_service' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestCoreServiceManager.test_restart_service' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestCoreServiceManager.test_unload_service' was never awaited",
+      "details": {
+        "context": "    return self.run(*args, **kwds)\n\ntests/test_core_service_manager.py::TestCoreServiceManager::test_unload_service\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestCoreServiceManager.test_unload_service' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestCoreServiceManager.test_unload_service' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestLogicModelComponents.test_05_tool_dispatcher_logic_routing' was never awaited",
+      "details": {
+        "context": "    plt.savefig(self.reports_dir / output_file, dpi=300, bbox_inches='tight')\n\ntests/tools/test_logic_model.py::TestLogicModelComponents::test_05_tool_dispatcher_logic_routing\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestLogicModelComponents.test_05_tool_dispatcher_logic_routing' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestLogicModelComponents.test_05_tool_dispatcher_logic_routing' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestMathModelComponents.test_math_tool_calculate_model_unavailable' was never awaited",
+      "details": {
+        "context": "    return self.run(*args, **kwds)\n\ntests/tools/test_math_model.py::TestMathModelComponents::test_math_tool_calculate_model_unavailable\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestMathModelComponents.test_math_tool_calculate_model_unavailable' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestMathModelComponents.test_math_tool_calculate_model_unavailable' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestMathModelComponents.test_tool_dispatcher_math_routing' was never awaited",
+      "details": {
+        "context": "    return self.run(*args, **kwds)\n\ntests/tools/test_math_model.py::TestMathModelComponents::test_tool_dispatcher_math_routing\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestMathModelComponents.test_tool_dispatcher_math_routing' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestMathModelComponents.test_tool_dispatcher_math_routing' was never awaited"
+      }
+    },
+    {
+      "type": "异步测试协程警告",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py",
+      "line_number": 589,
+      "message": "RuntimeWarning: coroutine 'TestTranslationModelComponents.test_05_tool_dispatcher_translation_routing' was never awaited",
+      "details": {
+        "context": "    return self.run(*args, **kwds)\n\ntests/tools/test_translation_model.py::TestTranslationModelComponents::test_05_tool_dispatcher_translation_routing\n  C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\unittest\\case.py:589: RuntimeWarning: coroutine 'TestTranslationModelComponents.test_05_tool_dispatcher_translation_routing' was never awaited\n    if method() is not None:\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "full_match": "RuntimeWarning: coroutine 'TestTranslationModelComponents.test_05_tool_dispatcher_translation_routing' was never awaited"
+      }
+    },
+    {
+      "type": "属性错误",
+      "file_path": "Project\\apps\\backend\\tests\\tools\\test_tool_dispatcher_logging.py",
+      "line_number": 26,
+      "message": "AttributeError: 'ToolDispatcher' object has no attribute 'dispatch'",
+      "details": {
+        "context": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\tools\\test_tool_dispatcher_logging.py:26: in test_tool_dispatcher_action_policy_logged_smoke\n    _ = loop.run_until_complete(td_instance.dispatch(\"calculate 1 + 1\"))\n                                ^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'ToolDispatcher' object has no attribute 'dispatch'\n---------------------------- Captured stdout call -----------------------------\nCore Services: Initializing for AI ID: did:hsp:unified_ai_core_4380f8\nCore Services: All services initialized (or attempted).",
+        "full_match": "AttributeError: 'ToolDispatcher' object has no attribute 'dispatch'"
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\tools\\test_code_understanding_tool.py",
+      "line_number": 37,
+      "message": "AssertionError: 'No Python tools found in the tools directory.' != 'Available Python tools: another_tool, math_tool, sub_tool.'",
+      "details": {
+        "context": "______________ TestCodeUnderstandingTool.test_list_tools_success ______________\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\tools\\test_code_understanding_tool.py:37: in test_list_tools_success\n    self.assertEqual(result, expected_output)\nE   AssertionError: 'No Python tools found in the tools directory.' != 'Available Python tools: another_tool, math_tool, sub_tool.'\nE   - No Python tools found in the tools directory.\nE   + Available Python tools: another_tool, math_tool, sub_tool.\n------------------------------ Captured log call ------------------------------",
+        "full_match": "AssertionError: 'No Python tools found in the tools directory.' != 'Available Python tools: another_tool, math_tool, sub_tool.'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "No module named 'apps'",
+      "details": {
+        "context": "\n    from apps.backend.src.hsp.connector import HSPConnector\n\nModuleNotFoundError: No module named 'apps'\n\nTraceback (most recent call last):\n",
+        "full_match": "No module named 'apps'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "agent_manager.py",
+      "line_number": 167,
+      "message": "No module named 'apps'",
+      "details": {
+        "context": "\n    from apps.backend.src.hsp.connector import HSPConnector\n\nModuleNotFoundError: No module named 'apps'\n\n------------------------------ Captured log call ------------------------------\nWARNING  root:agent_manager.py:167 [AgentManager] Agent 'data_analysis_agent' not ready within 10 seconds. Checking all capabilities...",
+        "full_match": "No module named 'apps'"
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "connector.py",
+      "line_number": 819,
+      "message": "assert response.status_code ==",
+      "details": {
+        "context": "WARNING  apps.backend.src.core.hsp.connector:connector.py:819 消息安全验证失败: test_001\n____ TestAtlassianIntegration.test_get_jira_projects_without_configuration ____\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integration\\test_atlassian_integration.py:44: in test_get_jira_projects_without_configuration\n    assert response.status_code == 400\nE   assert 500 == 400\nE    +  where 500 = <Response [500 Internal Server Error]>.status_code\n------------------------------ Captured log call ------------------------------",
+        "full_match": "assert response.status_code =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\integration\\test_atlassian_integration.py",
+      "line_number": 44,
+      "message": "assert 500 ==",
+      "details": {
+        "context": "____ TestAtlassianIntegration.test_get_jira_projects_without_configuration ____\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integration\\test_atlassian_integration.py:44: in test_get_jira_projects_without_configuration\n    assert response.status_code == 400\nE   assert 500 == 400\nE    +  where 500 = <Response [500 Internal Server Error]>.status_code\n------------------------------ Captured log call ------------------------------\nERROR    apps.backend.src.core.services.atlassian_api:atlassian_api.py:206 Failed to get Jira projects: 500: [WinError 2] 系統找不到指定的檔案。",
+        "full_match": "assert 500 =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "agent_manager.py",
+      "line_number": 124,
+      "message": "assert agent.task_history[0]['task_id'] ==",
+      "details": {
+        "context": "WARNING  root:agent_manager.py:124 [AgentManager] Agent 'data_analysis_agent' not found or not running.\n____________ TestRovoDevAgent.test_task_submission_and_processing _____________\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integrations\\test_rovo_dev_agent.py:194: in test_task_submission_and_processing\n    assert agent.task_history[0]['task_id'] == 'test_task_001'\nE   AssertionError: assert <MagicMock name='mock.types.HSPTask().__getitem__()' id='1263842181488'> == 'test_task_001'\n---------------------------- Captured stdout setup ----------------------------\nDEBUG: InternalBus.subscribe - Channel: hsp.internal.message, Callback: <bound method MessageBridge.handle_internal_message of <hsp.bridge.message_bridge.MessageBridge object at 0x0000012642DD1FA0>>",
+        "full_match": "assert agent.task_history[0]['task_id'] =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\integrations\\test_rovo_dev_agent.py",
+      "line_number": 194,
+      "message": "AssertionError: assert <MagicMock name='mock.types.HSPTask().__getitem__()' id='1263842181488'> ==",
+      "details": {
+        "context": "____________ TestRovoDevAgent.test_task_submission_and_processing _____________\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integrations\\test_rovo_dev_agent.py:194: in test_task_submission_and_processing\n    assert agent.task_history[0]['task_id'] == 'test_task_001'\nE   AssertionError: assert <MagicMock name='mock.types.HSPTask().__getitem__()' id='1263842181488'> == 'test_task_001'\n---------------------------- Captured stdout setup ----------------------------\nDEBUG: InternalBus.subscribe - Channel: hsp.internal.message, Callback: <bound method MessageBridge.handle_internal_message of <hsp.bridge.message_bridge.MessageBridge object at 0x0000012642DD1FA0>>\nDEBUG: InternalBus.subscribe - Channel: hsp.internal.message, Callback: <bound method MessageBridge.handle_internal_message of <hsp.bridge.message_bridge.MessageBridge object at 0x0000012642DD1FA0>>",
+        "full_match": "AssertionError: assert <MagicMock name='mock.types.HSPTask().__getitem__()' id='1263842181488'> =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\integrations\\test_rovo_dev_agent.py",
+      "line_number": 224,
+      "message": "assert agent.task_history[0]['task_id'] ==",
+      "details": {
+        "context": "DEBUG: InternalBus.subscribe - Channel: hsp.external.acknowledgement, Callback: <bound method HSPConnector._dispatch_acknowledgement_to_callbacks of <hsp.connector.HSPConnector object at 0x0000012642DD1D90>>\n____________________ TestRovoDevAgent.test_task_processing ____________________\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integrations\\test_rovo_dev_agent.py:224: in test_task_processing\n    assert agent.task_history[0]['task_id'] == 'test_task_001'\nE   AssertionError: assert <MagicMock name='mock.types.HSPTask().__getitem__()' id='1263842181488'> == 'test_task_001'\n---------------------------- Captured stdout setup ----------------------------\nDEBUG: InternalBus.subscribe - Channel: hsp.internal.message, Callback: <bound method MessageBridge.handle_internal_message of <hsp.bridge.message_bridge.MessageBridge object at 0x0000012642DBB800>>",
+        "full_match": "assert agent.task_history[0]['task_id'] =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\integrations\\test_rovo_dev_agent.py",
+      "line_number": 224,
+      "message": "AssertionError: assert <MagicMock name='mock.types.HSPTask().__getitem__()' id='1263842181488'> ==",
+      "details": {
+        "context": "____________________ TestRovoDevAgent.test_task_processing ____________________\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integrations\\test_rovo_dev_agent.py:224: in test_task_processing\n    assert agent.task_history[0]['task_id'] == 'test_task_001'\nE   AssertionError: assert <MagicMock name='mock.types.HSPTask().__getitem__()' id='1263842181488'> == 'test_task_001'\n---------------------------- Captured stdout setup ----------------------------\nDEBUG: InternalBus.subscribe - Channel: hsp.internal.message, Callback: <bound method MessageBridge.handle_internal_message of <hsp.bridge.message_bridge.MessageBridge object at 0x0000012642DBB800>>\nDEBUG: InternalBus.subscribe - Channel: hsp.internal.message, Callback: <bound method MessageBridge.handle_internal_message of <hsp.bridge.message_bridge.MessageBridge object at 0x0000012642DBB800>>",
+        "full_match": "AssertionError: assert <MagicMock name='mock.types.HSPTask().__getitem__()' id='1263842181488'> =="
+      }
+    },
+    {
+      "type": "属性错误",
+      "file_path": "Project\\apps\\backend\\tests\\tools\\test_tool_dispatcher_logging.py",
+      "line_number": 26,
+      "message": "AttributeError:",
+      "details": {
+        "context": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\tools\\test_tool_dispatcher_logging.py:26: in test_tool_dispatcher_action_policy_logged_smoke\n    _ = loop.run_until_complete(td_instance.dispatch(\"calculate 1 + 1\"))\n                                ^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: 'ToolDispatcher' object has no attribute 'dispatch'\n---------------------------- Captured stdout call -----------------------------\nCore Services: Initializing for AI ID: did:hsp:unified_ai_core_4380f8\nCore Services: All services initialized (or attempted).",
+        "full_match": "AttributeError:"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "Project\\apps\\backend\\src\\ai\\learning\\learning_manager.py",
+      "line_number": 9,
+      "message": "ImportError:",
+      "details": {
+        "context": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\ai\\learning\\learning_manager.py:9: in <module>\n    from ...ai.memory.ham_memory_manager import HAMMemoryManager # Corrected\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   ImportError: attempted relative import beyond top-level package\n\nDuring handling of the above exception, another exception occurred:\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core_services.py:173: in __init__",
+        "full_match": "ImportError:"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "Project\\apps\\backend\\src\\ai\\dialogue\\dialogue_manager.py",
+      "line_number": 39,
+      "message": "ImportError:",
+      "details": {
+        "context": "    raise e2\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\ai\\dialogue\\dialogue_manager.py:39: in <module>\n    from ...ai.personality.personality_manager import PersonalityManager\nE   ImportError: attempted relative import beyond top-level package\n\nDuring handling of the above exception, another exception occurred:\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\test_core_services.py:58: in test_initialize_services",
+        "full_match": "ImportError:"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "Project\\apps\\backend\\src\\core_services.py",
+      "line_number": 179,
+      "message": "ImportError:",
+      "details": {
+        "context": "    raise e2\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core_services.py:179: in __init__\n    from .ai.dialogue.dialogue_manager import DialogueManager as RealDialogueManager\nE   ImportError: attempted relative import with no known parent package\n---------------------------- Captured stdout call -----------------------------\nCore Services: Initializing for AI ID: did:hsp:unified_ai_core_711ccc\nCore Services: Hardware probe initialized",
+        "full_match": "ImportError:"
+      }
+    },
+    {
+      "type": "连接错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "connection",
+      "details": {
+        "context": "tests/integration/test_hsp_integration.py::TestHSPIntegration::test_agent_communication_flow PASSED [ 49%]\ntests/integration/test_hsp_integration.py::TestMemorySystemIntegration::test_memory_storage_retrieval_flow PASSED [ 50%]\ntests/integration/test_hsp_integration.py::TestAgentSystemIntegration::test_agent_lifecycle_flow PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPProtocolIntegration::test_hsp_connection_integration PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPProtocolIntegration::test_hsp_message_publish_subscribe_integration PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPProtocolIntegration::test_hsp_agent_communication_integration PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPMessageRoutingIntegration::test_hsp_message_routing_integration PASSED [ 50%]",
+        "full_match": "connection"
+      }
+    },
+    {
+      "type": "连接错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "connection",
+      "details": {
+        "context": "tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_make_request_success FAILED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_make_request_error PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_caching_mechanism PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing_with_failures PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_user_info_with_caching PASSED [ 65%]\ntests/mcp/test_context7_connector.py::TestContext7Config::test_config_creation PASSED [ 65%]",
+        "full_match": "connection"
+      }
+    },
+    {
+      "type": "连接错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "connection",
+      "details": {
+        "context": "tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_make_request_error PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_caching_mechanism PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing_with_failures PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_user_info_with_caching PASSED [ 65%]\ntests/mcp/test_context7_connector.py::TestContext7Config::test_config_creation PASSED [ 65%]\ntests/mcp/test_context7_connector.py::TestContext7Config::test_config_defaults PASSED [ 65%]",
+        "full_match": "connection"
+      }
+    },
+    {
+      "type": "连接错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "connection",
+      "details": {
+        "context": "tests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_request_context PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_collaborate_with_model PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_compress_context PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_connection_required_error PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_capabilities_discovery PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_unhandled_message_type PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestUnifiedAIMCPIntegration::test_dialogue_manager_integration PASSED [ 66%]",
+        "full_match": "connection"
       }
     }
   ]

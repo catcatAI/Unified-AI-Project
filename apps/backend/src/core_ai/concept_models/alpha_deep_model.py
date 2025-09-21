@@ -204,6 +204,17 @@ class AlphaDeepModel:
                     rel
                 )
 
+        # 确保实体符号与内存符号关联
+        if memory_symbol:
+            for entity_name, entity_symbol_id in entity_symbols.items():
+                entity_symbol = await self.symbolic_space.get_symbol_by_id(entity_symbol_id)
+                if entity_symbol:
+                    await self.symbolic_space.add_relationship(
+                        memory_symbol.id,
+                        entity_symbol_id,
+                        'contains_entity'
+                    )
+
         # 处理多模态数据
         if memory_symbol:
             await self.symbolic_space.update_symbol(

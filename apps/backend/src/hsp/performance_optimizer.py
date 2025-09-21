@@ -398,7 +398,11 @@ class HSPPerformanceEnhancer:
             
             # 执行原始接收函数
             try:
-                result = await original_receive_func(*args, **kwargs)
+                # 确保参数正确传递
+                if asyncio.iscoroutinefunction(original_receive_func):
+                    result = await original_receive_func(*args, **kwargs)
+                else:
+                    result = original_receive_func(*args, **kwargs)
                 success = True
             except Exception as e:
                 result = None

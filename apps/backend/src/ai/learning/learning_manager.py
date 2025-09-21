@@ -6,17 +6,17 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
 import json
 
-from ..memory.ham_memory_manager import HAMMemoryManager # Corrected
+from ...ai.memory.ham_memory_manager import HAMMemoryManager # Corrected
 from .fact_extractor_module import FactExtractorModule # Corrected
 from .content_analyzer_module import ContentAnalyzerModule # Corrected
-from ..trust.trust_manager_module import TrustManager # Corrected
+from ...ai.trust.trust_manager_module import TrustManager # Corrected
 from .types import LearnedFactRecord
 
-from ...core.hsp.types import HSPFactPayload, HSPMessageEnvelope # Corrected
-from ..personality.personality_manager import PersonalityManager
+from ...hsp.types import HSPFactPayload, HSPMessageEnvelope # Corrected
+from ...ai.personality.personality_manager import PersonalityManager
 
 if TYPE_CHECKING:
-    from ...core.hsp.connector import HSPConnector # Corrected
+    from ...hsp.connector import HSPConnector # Corrected
 
 
 class LearningManager:
@@ -247,7 +247,7 @@ class LearningManager:
 
         distillation_prompt = self._create_strategy_distillation_prompt(project_case)
         # Use chat_completion instead of generate_response
-        from apps.backend.src.hsp.types import ChatMessage
+        from hsp.types import ChatMessage
         messages = [ChatMessage(role="user", content=distillation_prompt)]
         llm_response = await self.fact_extractor.llm_service.chat_completion(messages, params={"temperature": 0.0})
         raw_strategy_output = llm_response.content
@@ -308,7 +308,7 @@ The JSON object MUST contain:
 - **Final Response Summary:** "{project_case.get('final_response', '')[:200]}..."
 
 ---
-**Distilled Strategy (JSON Object Only):**
+**Distilled Strategy (JSON Object Only):
 """
         return prompt
 

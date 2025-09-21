@@ -1,7 +1,31 @@
-import json
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+数学模型训练脚本
+使用Keras构建和训练数学计算模型
+"""
+
+# 添加兼容性导入
+try:
+    # 设置环境变量以解决Keras兼容性问题
+    import os
+    os.environ['TF_USE_LEGACY_KERAS'] = '1'
+    
+    from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
+    from tensorflow.keras.optimizers import Adam
+    KERAS_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Could not import keras: {e}")
+    EarlyStopping = ModelCheckpoint = ReduceLROnPlateau = Sequential = Dense = Dropout = BatchNormalization = Adam = None
+    KERAS_AVAILABLE = False
+
 import numpy as np
-import tensorflow as tf
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+import json
+import logging
+from pathlib import Path
+from typing import Dict, Any, List, Tuple
 
 from model import ArithmeticSeq2Seq, get_char_token_maps, prepare_data
 

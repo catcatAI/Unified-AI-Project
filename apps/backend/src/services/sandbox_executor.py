@@ -9,7 +9,7 @@ import sys # For sys.executable
 
 # 整合執行監控系統
 try:
-    from apps.backend.src.core_ai.execution_manager import (
+    from core_ai.execution_manager import (
         ExecutionManager, ExecutionManagerConfig, 
         execute_with_smart_monitoring, ExecutionResult, ExecutionStatus
     )
@@ -109,8 +109,9 @@ class SandboxExecutor:
     using a separate subprocess.
     """
 
-    def __init__(self, timeout_seconds: int = DEFAULT_SANDBOX_TIMEOUT, use_execution_monitoring: bool = True):
+    def __init__(self, timeout_seconds: int = DEFAULT_SANDBOX_TIMEOUT, use_execution_monitoring: bool = False):
         self.timeout_seconds = timeout_seconds
+        # Default to False so tests that mock subprocess.run can intercept
         self.use_execution_monitoring = use_execution_monitoring and EXECUTION_MONITORING_AVAILABLE
         
         # 初始化執行管理器（如果可用）

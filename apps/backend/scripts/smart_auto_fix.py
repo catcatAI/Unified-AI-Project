@@ -95,30 +95,30 @@ class SmartAutoFixer:
             # 导入路径修复策略
             FixStrategy(
                 fix_type=FixType.IMPORT_PATH,
-                description="修复core_ai相对导入问题",
-                pattern=r"from\s+\.\.core_ai\.",
-                replacement="from apps.backend.src.core_ai.",
+                description="修复core_ai绝对导入问题",
+                pattern=r"from\s+apps\.backend\.src\.core_ai\.",
+                replacement="from ",
                 priority=1
             ),
             FixStrategy(
                 fix_type=FixType.IMPORT_PATH,
-                description="修复core相对导入问题",
-                pattern=r"from\s+\.\.core\.",
-                replacement="from apps.backend.src.core.",
+                description="修复core绝对导入问题",
+                pattern=r"from\s+apps\.backend\.src\.core\.",
+                replacement="from ..",
                 priority=1
             ),
             FixStrategy(
                 fix_type=FixType.IMPORT_PATH,
-                description="修复services相对导入问题",
-                pattern=r"from\s+\.\.services\.",
-                replacement="from apps.backend.src.services.",
+                description="修复services绝对导入问题",
+                pattern=r"from\s+apps\.backend\.src\.services\.",
+                replacement="from ",
                 priority=1
             ),
             FixStrategy(
                 fix_type=FixType.IMPORT_PATH,
-                description="修复hsp相对导入问题",
-                pattern=r"from\s+\.\.hsp\.",
-                replacement="from apps.backend.src.hsp.",
+                description="修复hsp绝对导入问题",
+                pattern=r"from\s+apps\.backend\.src\.hsp\.",
+                replacement="from ",
                 priority=1
             ),
             

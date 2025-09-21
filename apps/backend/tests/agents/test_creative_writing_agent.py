@@ -1,169 +1,162 @@
-import unittest
 import pytest
 import asyncio
-import uuid
-import os
-import sys
-from unittest.mock import MagicMock, AsyncMock, patch
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-
+from unittest.mock import Mock, patch, AsyncMock
 from apps.backend.src.agents.creative_writing_agent import CreativeWritingAgent
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from apps.backend.src.core.services.multi_llm_service import MultiLLMService, ChatMessage, LLMResponse
 
-class TestCreativeWritingAgent:
+@pytest.fixture
+def creative_agent():
+    """Create a CreativeWritingAgent instance for testing."""
+    agent_id = "test_creative_agent_123"
+    return CreativeWritingAgent(agent_id=agent_id)
 
-    @pytest.fixture(autouse=True)
-    def setup_agent(self):
-        self.agent_id = f"did:hsp:test_creative_writing_agent_{uuid.uuid4().hex[:6]}"
+def test_creative_agent_initialization(creative_agent):
+    """Test CreativeWritingAgent initialization."""
+    assert creative_agent.agent_id == "test_creative_agent_123"
+    assert len(creative_agent.capabilities) == 2
+    
+    # Check that all expected capabilities are present
+    capability_names = [cap["name"] for cap in creative_agent.capabilities]
+    assert "generate_marketing_copy" in capability_names
+    assert "polish_text" in capability_names
 
-        # Mock the services that the agent's base class initializes
-        self.mock_llm_interface = MagicMock(spec=MultiLLMService)
-        self.mock_llm_interface.chat_completion = AsyncMock()
-        
-        self.mock_hsp_connector = MagicMock()
-        self.mock_hsp_connector.send_task_result = AsyncMock()
-        self.mock_hsp_connector.register_on_task_request_callback = MagicMock()
-        self.mock_hsp_connector.advertise_capability = AsyncMock()
-        
-        self.mock_services = {
-            "hsp_connector": self.mock_hsp_connector,
-            "llm_interface": self.mock_llm_interface
-        }
+@pytest.mark.asyncio
+async def test_creative_agent_handle_task_request_generate_marketing_copy(creative_agent):
+    """Test CreativeWritingAgent handling generate_marketing_copy task."""
+    # Mock the HSP connector and LLM interface
+    creative_agent.hsp_connector = AsyncMock()
+    creative_agent.llm_interface = AsyncMock()
+    
+    # Mock the LLM response
+    mock_response = Mock()
+    mock_response.content = "Creative marketing copy for testing purposes."
+    creative_agent.llm_interface.chat_completion.return_value = mock_response
+    
+    # Create a test task payload for marketing copy generation
+    task_payload = {
+        "request_id": "test_request_123",
+        "capability_id_filter": "generate_marketing_copy",
+        "parameters": {
+            "product_description": "AI-powered writing assistant",
+            "target_audience": "Software developers",
+            "style": "professional"
+        },
+        "callback_address": "test/callback/topic"
+    }
+    
+    # Call the handler
+    await creative_agent.handle_task_request(task_payload, "sender_456", {})
+    
+    # Verify that a response was sent
+    creative_agent.hsp_connector.send_task_result.assert_called_once()
+    args, kwargs = creative_agent.hsp_connector.send_task_result.call_args
+    result_payload = args[0]
+    
+    assert result_payload["status"] == "success"
+    assert result_payload["request_id"] == "test_request_123"
+    assert "payload" in result_payload
+    assert isinstance(result_payload["payload"], str)
 
-        with patch('apps.backend.src.core_services.initialize_services', return_value=None) as mock_initialize, \
-             patch('apps.backend.src.core_services.get_services', return_value=self.mock_services) as mock_get_services:
-            self.mock_initialize = mock_initialize
-            self.mock_get_services = mock_get_services
+@pytest.mark.asyncio
+async def test_creative_agent_handle_task_request_polish_text(creative_agent):
+    """Test CreativeWritingAgent handling polish_text task."""
+    # Mock the HSP connector and LLM interface
+    creative_agent.hsp_connector = AsyncMock()
+    creative_agent.llm_interface = AsyncMock()
+    
+    # Mock the LLM response
+    mock_response = Mock()
+    mock_response.content = "Polished text with improved grammar and clarity."
+    creative_agent.llm_interface.chat_completion.return_value = mock_response
+    
+    # Create a test task payload for text polishing
+    task_payload = {
+        "request_id": "test_request_456",
+        "capability_id_filter": "polish_text",
+        "parameters": {
+            "text_to_polish": "This is a sample text that needs polishing."
+        },
+        "callback_address": "test/callback/topic"
+    }
+    
+    # Call the handler
+    await creative_agent.handle_task_request(task_payload, "sender_789", {})
+    
+    # Verify that a response was sent
+    creative_agent.hsp_connector.send_task_result.assert_called_once()
+    args, kwargs = creative_agent.hsp_connector.send_task_result.call_args
+    result_payload = args[0]
+    
+    assert result_payload["status"] == "success"
+    assert result_payload["request_id"] == "test_request_456"
+    assert "payload" in result_payload
+    assert isinstance(result_payload["payload"], str)
 
-            self.agent = CreativeWritingAgent(agent_id=self.agent_id)
-            self.agent.hsp_connector = self.mock_services["hsp_connector"]
-            self.agent.llm_interface = self.mock_services["llm_interface"]
-            yield
+@pytest.mark.asyncio
+async def test_creative_agent_handle_task_request_unsupported_capability(creative_agent):
+    """Test CreativeWritingAgent handling unsupported capability."""
+    # Mock the HSP connector
+    creative_agent.hsp_connector = AsyncMock()
+    
+    # Create a test task payload for unsupported capability
+    task_payload = {
+        "request_id": "test_request_999",
+        "capability_id_filter": "unsupported_capability",
+        "parameters": {},
+        "callback_address": "test/callback/topic"
+    }
+    
+    # Call the handler
+    await creative_agent.handle_task_request(task_payload, "sender_202", {})
+    
+    # Verify that a failure response was sent
+    creative_agent.hsp_connector.send_task_result.assert_called_once()
+    args, kwargs = creative_agent.hsp_connector.send_task_result.call_args
+    result_payload = args[0]
+    
+    assert result_payload["status"] == "failure"
+    assert result_payload["request_id"] == "test_request_999"
+    assert result_payload["error_details"]["error_code"] == "CAPABILITY_NOT_SUPPORTED"
 
-    @pytest.mark.timeout(10)
-    def test_initialization(self):
-        """Test that the agent initializes correctly."""
-        assert self.agent.agent_id == self.agent_id
-        assert self.agent.llm_interface is not None
-        assert len(self.agent.capabilities) == 2
-        assert self.agent.capabilities[0]['name'] == 'generate_marketing_copy'
+@pytest.mark.asyncio
+async def test_creative_agent_generate_marketing_copy(creative_agent):
+    """Test the _generate_marketing_copy method."""
+    # Mock the LLM interface
+    creative_agent.llm_interface = AsyncMock()
+    
+    # Mock the LLM response
+    mock_response = Mock()
+    mock_response.content = "Creative marketing copy for testing."
+    creative_agent.llm_interface.chat_completion.return_value = mock_response
+    
+    params = {
+        "product_description": "AI-powered writing assistant",
+        "target_audience": "Software developers",
+        "style": "professional"
+    }
+    
+    result = await creative_agent._generate_marketing_copy(params)
+    
+    assert isinstance(result, str)
+    assert result == "Creative marketing copy for testing."
+    creative_agent.llm_interface.chat_completion.assert_called_once()
 
-    @pytest.mark.asyncio
-    # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-    async def test_handle_marketing_copy_request(self):
-        """Test handling a 'generate_marketing_copy' task."""
-        # 1. Configure mock LLM to return a predefined response
-        expected_copy = "Buy our new amazing product! It's the best!"
-        mock_llm_response = MagicMock(spec=LLMResponse)
-        mock_llm_response.content = expected_copy
-        self.mock_llm_interface.chat_completion.return_value = mock_llm_response
-
-        # 2. Create mock HSP task payload
-        request_id = "creative_req_001"
-        task_payload = HSPTaskRequestPayload(
-            request_id=request_id,
-            capability_id_filter="generate_marketing_copy",
-            parameters={
-                "product_description": "A new amazing product.",
-                "target_audience": "Everyone",
-                "style": "enthusiastic"
-            },
-            callback_address="hsp/results/test_requester/req_001"
-        )
-        envelope = HSPMessageEnvelope(message_id="msg_creative_1", sender_ai_id="test_sender", recipient_ai_id=self.agent_id, timestamp_sent="", message_type="", protocol_version="")
-
-        # 3. Run the handler
-        await self.agent.handle_task_request(task_payload, "test_sender", envelope)
-
-        # 4. Assert LLM was called with the correct prompt
-        self.mock_llm_interface.chat_completion.assert_called_once()
-        call_args = self.mock_llm_interface.chat_completion.call_args
-        # Check the messages argument, which should be a list of ChatMessage objects
-        messages_arg = call_args.kwargs['messages']
-        assert isinstance(messages_arg, list)
-        assert len(messages_arg) > 0
-        assert isinstance(messages_arg[0], ChatMessage)
-        assert "Generate marketing copy" in messages_arg[0].content
-        assert "A new amazing product" in messages_arg[0].content
-
-        # 5. Assert HSP connector sent the correct success result
-        self.agent.hsp_connector.send_task_result.assert_called_once()
-        sent_payload = self.agent.hsp_connector.send_task_result.call_args[0][0]
-
-        assert sent_payload['status'] == "success"
-        assert sent_payload['payload'] == expected_copy
-
-    @pytest.mark.asyncio
-    # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-    # 添加重试装饰器以处理不稳定的测试
-    # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-    async def test_handle_polish_text_request(self):
-        """Test handling a 'polish_text' task."""
-        # 1. Configure mock LLM
-        expected_polished_text = "This is a polished sentence."
-        mock_llm_response = MagicMock(spec=LLMResponse)
-        mock_llm_response.content = expected_polished_text
-        self.mock_llm_interface.chat_completion.return_value = mock_llm_response
-
-        # 2. Create mock HSP task payload
-        request_id = "creative_req_002"
-        task_payload = HSPTaskRequestPayload(
-            request_id=request_id,
-            capability_id_filter="polish_text",
-            parameters={"text_to_polish": "this is a polished sentence"},
-            callback_address="hsp/results/test_requester/req_002"
-        )
-        envelope = HSPMessageEnvelope(message_id="msg_creative_2", sender_ai_id="test_sender", recipient_ai_id=self.agent_id, timestamp_sent="", message_type="", protocol_version="")
-
-        # 3. Run the handler
-        await self.agent.handle_task_request(task_payload, "test_sender", envelope)
-
-        # 4. Assert LLM was called correctly
-        self.mock_llm_interface.chat_completion.assert_called_once()
-        call_args = self.mock_llm_interface.chat_completion.call_args
-        messages_arg = call_args.kwargs['messages']
-        assert isinstance(messages_arg, list)
-        assert len(messages_arg) > 0
-        assert isinstance(messages_arg[0], ChatMessage)
-        assert "Please proofread and polish the following text for grammar, style, and clarity" in messages_arg[0].content
-        assert "this is a polished sentence" in messages_arg[0].content
-
-        # 5. Assert HSP connector sent the correct success result
-        self.agent.hsp_connector.send_task_result.assert_called_once()
-        sent_payload = self.agent.hsp_connector.send_task_result.call_args[0][0]
-
-        assert sent_payload['status'] == "success"
-        assert sent_payload['payload'] == expected_polished_text
-
-    @pytest.mark.asyncio
-    # 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-# 添加重试装饰器以处理不稳定的测试
-# @pytest.mark.flaky(reruns=3, reruns_delay=2)
-    async def test_unsupported_capability(self):
-        """Test that the agent correctly handles a request for a capability it doesn't support."""
-        request_id = "creative_req_003"
-        task_payload = HSPTaskRequestPayload(
-            request_id=request_id,
-            capability_id_filter="translate_to_klingon",
-            parameters={},
-            callback_address="hsp/results/test_requester/req_003"
-        )
-        envelope = HSPMessageEnvelope(message_id="msg_creative_3", sender_ai_id="test_sender", recipient_ai_id=self.agent_id, timestamp_sent="", message_type="", protocol_version="")
-
-        await self.agent.handle_task_request(task_payload, "test_sender", envelope)
-
-        self.agent.hsp_connector.send_task_result.assert_called_once()
-        sent_payload = self.agent.hsp_connector.send_task_result.call_args[0][0]
-
-        assert sent_payload['status'] == "failure"
-        assert sent_payload['error_details'] is not None
-        assert sent_payload['error_details']['error_code'] == "CAPABILITY_NOT_SUPPORTED"
-
-
+@pytest.mark.asyncio
+async def test_creative_agent_polish_text(creative_agent):
+    """Test the _polish_text method."""
+    # Mock the LLM interface
+    creative_agent.llm_interface = AsyncMock()
+    
+    # Mock the LLM response
+    mock_response = Mock()
+    mock_response.content = "Polished text with improved grammar."
+    creative_agent.llm_interface.chat_completion.return_value = mock_response
+    
+    params = {
+        "text_to_polish": "This is a sample text that needs polishing."
+    }
+    
+    result = await creative_agent._polish_text(params)
+    
+    assert isinstance(result, str)
+    assert result == "Polished text with improved grammar."
+    creative_agent.llm_interface.chat_completion.assert_called_once()

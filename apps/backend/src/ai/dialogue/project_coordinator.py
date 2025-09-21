@@ -9,6 +9,7 @@ from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
 import yaml
 import os
 
+# 修复相对导入路径，使用正确的相对导入
 from ...hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload
 from ...shared.types.common_types import PendingHSPTaskInfo
 from datetime import datetime, timezone

@@ -7,7 +7,11 @@ import os
 import asyncio
 
 # 添加项目路径
-sys.path.append(os.path.join(os.path.dirname(__file__), 'apps', 'backend', 'src'))
+project_root = os.path.dirname(__file__)
+backend_path = os.path.join(project_root, 'apps', 'backend')
+src_path = os.path.join(backend_path, 'src')
+sys.path.append(src_path)
+sys.path.append(backend_path)
 
 def test_imports():
     """测试所有概念模型的导入"""
@@ -16,7 +20,7 @@ def test_imports():
     # 测试环境模拟器
     print("1. 测试环境模拟器导入...")
     try:
-        from apps.backend.src.core_ai.concept_models.environment_simulator import EnvironmentSimulator, State, Action
+        from core_ai.concept_models.environment_simulator import EnvironmentSimulator, State, Action
         print("   ✓ 环境模拟器导入成功")
     except Exception as e:
         print(f"   ❌ 环境模拟器导入失败: {e}")
@@ -25,7 +29,7 @@ def test_imports():
     # 测试因果推理引擎
     print("\n2. 测试因果推理引擎导入...")
     try:
-        from apps.backend.src.core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine, Observation, CausalRelationship
+        from core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine, Observation, CausalRelationship
         print("   ✓ 因果推理引擎导入成功")
     except Exception as e:
         print(f"   ❌ 因果推理引擎导入失败: {e}")
@@ -34,7 +38,7 @@ def test_imports():
     # 测试自适应学习控制器
     print("\n3. 测试自适应学习控制器导入...")
     try:
-        from apps.backend.src.core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController, TaskContext
+        from core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController, TaskContext
         print("   ✓ 自适应学习控制器导入成功")
     except Exception as e:
         print(f"   ❌ 自适应学习控制器导入失败: {e}")
@@ -43,7 +47,7 @@ def test_imports():
     # 测试Alpha深度模型
     print("\n4. 测试Alpha深度模型导入...")
     try:
-        from apps.backend.src.core_ai.concept_models.alpha_deep_model import AlphaDeepModel, DeepParameter
+        from core_ai.concept_models.alpha_deep_model import AlphaDeepModel, DeepParameter
         print("   ✓ Alpha深度模型导入成功")
     except Exception as e:
         print(f"   ❌ Alpha深度模型导入失败: {e}")
@@ -52,7 +56,7 @@ def test_imports():
     # 测试统一符号空间
     print("\n5. 测试统一符号空间导入...")
     try:
-        from apps.backend.src.core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace, SymbolType
+        from core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace, SymbolType
         print("   ✓ 统一符号空间导入成功")
     except Exception as e:
         print(f"   ❌ 统一符号空间导入失败: {e}")
@@ -61,7 +65,7 @@ def test_imports():
     # 测试集成测试
     print("\n6. 测试集成测试导入...")
     try:
-        from apps.backend.src.core_ai.concept_models.integration_test import ConceptModelIntegrationTest
+        from core_ai.concept_models.integration_test import ConceptModelIntegrationTest
         print("   ✓ 集成测试导入成功")
     except Exception as e:
         print(f"   ❌ 集成测试导入失败: {e}")
@@ -77,31 +81,31 @@ async def test_basic_functionality():
     try:
         # 测试环境模拟器基本功能
         print("1. 测试环境模拟器基本功能...")
-        from apps.backend.src.core_ai.concept_models.environment_simulator import EnvironmentSimulator, State, Action
+        from core_ai.concept_models.environment_simulator import EnvironmentSimulator, State, Action
         simulator = EnvironmentSimulator()
         print("   ✓ 环境模拟器实例化成功")
         
         # 测试因果推理引擎基本功能
         print("\n2. 测试因果推理引擎基本功能...")
-        from apps.backend.src.core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
+        from core_ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
         engine = CausalReasoningEngine()
         print("   ✓ 因果推理引擎实例化成功")
         
         # 测试自适应学习控制器基本功能
         print("\n3. 测试自适应学习控制器基本功能...")
-        from apps.backend.src.core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
+        from core_ai.concept_models.adaptive_learning_controller import AdaptiveLearningController
         controller = AdaptiveLearningController()
         print("   ✓ 自适应学习控制器实例化成功")
         
         # 测试Alpha深度模型基本功能
         print("\n4. 测试Alpha深度模型基本功能...")
-        from apps.backend.src.core_ai.concept_models.alpha_deep_model import AlphaDeepModel
+        from core_ai.concept_models.alpha_deep_model import AlphaDeepModel
         model = AlphaDeepModel("test_alpha_model.db")
         print("   ✓ Alpha深度模型实例化成功")
         
         # 测试统一符号空间基本功能
         print("\n5. 测试统一符号空间基本功能...")
-        from apps.backend.src.core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace
+        from core_ai.concept_models.unified_symbolic_space import UnifiedSymbolicSpace
         space = UnifiedSymbolicSpace("test_symbolic_space.db")
         print("   ✓ 统一符号空间实例化成功")
         

@@ -1,4 +1,3 @@
-
 """
 Rovo Dev Agent 核心实现
 提供智能开发助手功能，集成 Atlassian 生态系统
@@ -20,15 +19,16 @@ from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 from .atlassian_bridge import AtlassianBridge
 # Try to import from the full path first, fallback to relative import
 try:
-    from apps.backend.src.hsp.connector import HSPConnector
-    from apps.backend.src.hsp.types import HSPMessage, HSPCapability, HSPTask
-    from apps.backend.src.core_ai.agent_manager import AgentManager
+    # 修复导入路径
+    from hsp.connector import HSPConnector
+    from hsp.types import HSPMessage, HSPCapability, HSPTask
+    from core_ai.agent_manager import AgentManager
 except ImportError:
     # Fallback to relative imports
     try:
-        from ...hsp.connector import HSPConnector
-        from ...hsp.types import HSPMessage, HSPCapability, HSPTask
-        from ...core_ai.agent_manager import AgentManager
+        from hsp.connector import HSPConnector
+        from hsp.types import HSPMessage, HSPCapability, HSPTask
+        from core_ai.agent_manager import AgentManager
     except ImportError:
         # If relative imports also fail, create mock classes
         class HSPConnector:
@@ -175,7 +175,7 @@ class RovoDevAgent:
             'code_analysis': {
                 'repository_url': {'type': 'string', 'required': True},
                 'analysis_type': {'type': 'string', 'enum': ['quality', 'security', 'performance'], 'default': 'quality'},
-                'output_format': {'type': 'string', 'enum': ['markdown', 'json'], 'default': 'markdown'}
+                'output_format': {'type': 'string', 'enum': ['text', 'json'], 'default': 'text'}
             },
             'documentation_generation': {
                 'source_path': {'type': 'string', 'required': True},
@@ -366,7 +366,7 @@ class RovoDevAgent:
         """
         repository_url = parameters['repository_url']
         analysis_type = parameters.get('analysis_type', 'quality')
-        output_format = parameters.get('output_format', 'markdown')
+        output_format = parameters.get('output_format', 'text')
         
         # 模擬程式碼分析過程
         await asyncio.sleep(2)  # 模擬分析時間
