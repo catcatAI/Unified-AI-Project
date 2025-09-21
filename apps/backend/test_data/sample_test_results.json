@@ -1,0 +1,126 @@
+{
+  "timestamp": "2023-06-15T14:30:00",
+  "summary": {
+    "total": 150,
+    "passed": 135,
+    "failed": 10,
+    "skipped": 5,
+    "duration": 180.5,
+    "start_time": "2023-06-15T14:25:00",
+    "end_time": "2023-06-15T14:30:00"
+  },
+  "tests": [
+    {
+      "nodeid": "tests/unit/test_user_service.py::test_create_user",
+      "outcome": "passed",
+      "duration": 0.02
+    },
+    {
+      "nodeid": "tests/unit/test_user_service.py::test_get_user",
+      "outcome": "passed",
+      "duration": 0.01
+    },
+    {
+      "nodeid": "tests/unit/test_user_service.py::test_update_user",
+      "outcome": "failed",
+      "duration": 0.03,
+      "call": {
+        "longrepr": "AssertionError: assert {'name': 'John', 'age': 30} == {'name': 'John', 'age': 31}\n  Differing items:\n    {'age': 30} != {'age': 31}"
+      }
+    },
+    {
+      "nodeid": "tests/unit/test_user_service.py::test_delete_user",
+      "outcome": "passed",
+      "duration": 0.02
+    },
+    {
+      "nodeid": "tests/unit/test_product_service.py::test_create_product",
+      "outcome": "passed",
+      "duration": 0.05
+    },
+    {
+      "nodeid": "tests/unit/test_product_service.py::test_get_product",
+      "outcome": "failed",
+      "duration": 0.04,
+      "call": {
+        "longrepr": "TimeoutError: Request timed out after 30 seconds"
+      }
+    },
+    {
+      "nodeid": "tests/unit/test_product_service.py::test_update_product",
+      "outcome": "passed",
+      "duration": 0.03
+    },
+    {
+      "nodeid": "tests/unit/test_product_service.py::test_delete_product",
+      "outcome": "passed",
+      "duration": 0.02
+    },
+    {
+      "nodeid": "tests/unit/test_order_service.py::test_create_order",
+      "outcome": "passed",
+      "duration": 0.1
+    },
+    {
+      "nodeid": "tests/unit/test_order_service.py::test_get_order",
+      "outcome": "passed",
+      "duration": 0.05
+    },
+    {
+      "nodeid": "tests/unit/test_order_service.py::test_update_order",
+      "outcome": "passed",
+      "duration": 0.06
+    },
+    {
+      "nodeid": "tests/unit/test_order_service.py::test_delete_order",
+      "outcome": "failed",
+      "duration": 0.04,
+      "call": {
+        "longrepr": "ConnectionError: Failed to connect to database"
+      }
+    },
+    {
+      "nodeid": "tests/unit/test_payment_service.py::test_process_payment",
+      "outcome": "passed",
+      "duration": 0.2
+    },
+    {
+      "nodeid": "tests/unit/test_payment_service.py::test_refund_payment",
+      "outcome": "failed",
+      "duration": 0.03,
+      "call": {
+        "longrepr": "AssertionError: assert 100.0 == 95.0"
+      }
+    },
+    {
+      "nodeid": "tests/unit/test_payment_service.py::test_cancel_payment",
+      "outcome": "passed",
+      "duration": 0.08
+    }
+  ],
+  "benchmarks": {
+    "tests/performance/test_user_performance.py::test_user_creation_performance": {
+      "mean": 0.025,
+      "median": 0.023,
+      "stddev": 0.005,
+      "rounds": 100
+    },
+    "tests/performance/test_product_performance.py::test_product_search_performance": {
+      "mean": 0.15,
+      "median": 0.14,
+      "stddev": 0.02,
+      "rounds": 50
+    },
+    "tests/performance/test_order_performance.py::test_order_processing_performance": {
+      "mean": 0.35,
+      "median": 0.33,
+      "stddev": 0.05,
+      "rounds": 30
+    }
+  },
+  "coverage": {
+    "total_lines": 1200,
+    "covered_lines": 1020,
+    "coverage_rate": 0.85
+  }
+}

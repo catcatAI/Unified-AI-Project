@@ -1,0 +1,17 @@
+{
+  "context_id": "8c8e3d0c-719a-4098-83b4-1a24829969db",
+  "context_type": "tool",
+  "created_at": "2025-09-20T18:48:44.394772",
+  "updated_at": "2025-09-20T18:48:44.394772",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "category_id": "cat_001",
+    "name": "测试分类",
+    "description": "测试描述",
+    "parent_id": null,
+    "type": "tool_category"
+  },
+  "version": "1.0",
+  "tags": []
+}

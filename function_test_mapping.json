@@ -1,0 +1,6133 @@
+{
+  "source_files": {
+    "config_loader.py": {
+      "functions": [
+        "load_config",
+        "get_config",
+        "load_simulated_resources",
+        "get_simulated_resources",
+        "is_demo_mode",
+        "get_mock_placeholder_value"
+      ],
+      "classes": []
+    },
+    "core_services.py": {
+      "functions": [
+        "get_services",
+        "sync_fact_callback",
+        "__init__",
+        "query_core_memory",
+        "recall_gist",
+        "close"
+      ],
+      "classes": [
+        "TempMockHAM"
+      ]
+    },
+    "path_config.py": {
+      "functions": [
+        "get_data_path",
+        "get_training_config_path",
+        "resolve_path"
+      ],
+      "classes": []
+    },
+    "system_integration.py": {
+      "functions": [
+        "__init__",
+        "_initialize_components",
+        "start_system",
+        "stop_system",
+        "process_request",
+        "_handle_dialogue_request",
+        "_handle_tool_request",
+        "_handle_atlassian_request",
+        "_handle_editor_request"
+      ],
+      "classes": [
+        "UnifiedAISystem"
+      ]
+    },
+    "__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "agents\\audio_processing_agent.py": {
+      "functions": [
+        "__init__",
+        "_perform_speech_recognition",
+        "_classify_audio",
+        "_enhance_audio",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "AudioProcessingAgent"
+      ]
+    },
+    "agents\\base_agent.py": {
+      "functions": [
+        "__init__",
+        "is_healthy"
+      ],
+      "classes": [
+        "BaseAgent"
+      ]
+    },
+    "agents\\code_understanding_agent.py": {
+      "functions": [
+        "__init__",
+        "_analyze_code",
+        "_generate_documentation",
+        "_perform_code_review",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "CodeUnderstandingAgent"
+      ]
+    },
+    "agents\\creative_writing_agent.py": {
+      "functions": [
+        "__init__",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "CreativeWritingAgent"
+      ]
+    },
+    "agents\\data_analysis_agent.py": {
+      "functions": [],
+      "classes": []
+    },
+    "agents\\image_generation_agent.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "ImageGenerationAgent"
+      ]
+    },
+    "agents\\knowledge_graph_agent.py": {
+      "functions": [
+        "__init__",
+        "_perform_entity_linking",
+        "_extract_relationships",
+        "_query_knowledge_graph",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "KnowledgeGraphAgent"
+      ]
+    },
+    "agents\\nlp_processing_agent.py": {
+      "functions": [
+        "__init__",
+        "_generate_text_summary",
+        "_perform_sentiment_analysis",
+        "_extract_entities",
+        "_detect_language",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "NLPProcessingAgent"
+      ]
+    },
+    "agents\\planning_agent.py": {
+      "functions": [
+        "__init__",
+        "_create_task_plan",
+        "_optimize_schedule",
+        "_track_progress",
+        "_estimate_completion_date",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "PlanningAgent"
+      ]
+    },
+    "agents\\vision_processing_agent.py": {
+      "functions": [
+        "__init__",
+        "_classify_image",
+        "_detect_objects",
+        "_enhance_image",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "VisionProcessingAgent"
+      ]
+    },
+    "agents\\web_search_agent.py": {
+      "functions": [
+        "__init__",
+        "get_capabilities"
+      ],
+      "classes": [
+        "WebSearchAgent"
+      ]
+    },
+    "agents\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\dependency_manager.py": {
+      "functions": [
+        "__init__",
+        "__repr__",
+        "__init__",
+        "_load_config",
+        "_use_default_config",
+        "_setup_dependency_statuses",
+        "is_available",
+        "get_status",
+        "get_dependency",
+        "list_dependencies",
+        "get_all_status",
+        "get_dependency_report",
+        "reload_dependency"
+      ],
+      "classes": [
+        "DependencyStatus",
+        "DependencyInfo",
+        "DependencyManager"
+      ]
+    },
+    "ai\\agents\\base\\base_agent.py": {
+      "functions": [
+        "__init__",
+        "is_healthy"
+      ],
+      "classes": [
+        "BaseAgent"
+      ]
+    },
+    "ai\\agents\\specialized\\audio_processing_agent.py": {
+      "functions": [
+        "__init__",
+        "_perform_speech_recognition",
+        "_classify_audio",
+        "_enhance_audio",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "AudioProcessingAgent"
+      ]
+    },
+    "ai\\agents\\specialized\\code_understanding_agent.py": {
+      "functions": [
+        "__init__",
+        "_analyze_code",
+        "_generate_documentation",
+        "_perform_code_review",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "CodeUnderstandingAgent"
+      ]
+    },
+    "ai\\agents\\specialized\\creative_writing_agent.py": {
+      "functions": [
+        "__init__",
+        "_load_prompts",
+        "_create_marketing_copy_prompt",
+        "_create_polish_text_prompt",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "CreativeWritingAgent"
+      ]
+    },
+    "ai\\agents\\specialized\\data_analysis_agent.py": {
+      "functions": [
+        "__init__",
+        "_perform_statistical_analysis",
+        "_generate_data_summary",
+        "_identify_patterns",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "DataAnalysisAgent"
+      ]
+    },
+    "ai\\agents\\specialized\\image_generation_agent.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "ImageGenerationAgent"
+      ]
+    },
+    "ai\\agents\\specialized\\knowledge_graph_agent.py": {
+      "functions": [
+        "__init__",
+        "_perform_entity_linking",
+        "_extract_relationships",
+        "_query_knowledge_graph",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "KnowledgeGraphAgent"
+      ]
+    },
+    "ai\\agents\\specialized\\nlp_processing_agent.py": {
+      "functions": [
+        "__init__",
+        "_generate_text_summary",
+        "_perform_sentiment_analysis",
+        "_extract_entities",
+        "_detect_language",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "NLPProcessingAgent"
+      ]
+    },
+    "ai\\agents\\specialized\\planning_agent.py": {
+      "functions": [
+        "__init__",
+        "_create_task_plan",
+        "_optimize_schedule",
+        "_track_progress",
+        "_estimate_completion_date",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "PlanningAgent"
+      ]
+    },
+    "ai\\agents\\specialized\\vision_processing_agent.py": {
+      "functions": [
+        "__init__",
+        "_classify_image",
+        "_detect_objects",
+        "_enhance_image",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "VisionProcessingAgent"
+      ]
+    },
+    "ai\\agents\\specialized\\web_search_agent.py": {
+      "functions": [
+        "__init__",
+        "_create_success_payload",
+        "_create_failure_payload"
+      ],
+      "classes": [
+        "WebSearchAgent"
+      ]
+    },
+    "ai\\agents\\specialized\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\audio\\audio_processing.py": {
+      "functions": [],
+      "classes": [
+        "AudioProcessing"
+      ]
+    },
+    "ai\\code_understanding\\lightweight_code_model.py": {
+      "functions": [
+        "__init__",
+        "list_tool_files",
+        "_extract_method_parameters",
+        "_calculate_complexity",
+        "analyze_tool_file",
+        "get_tool_structure",
+        "get_analysis_history",
+        "get_code_complexity",
+        "create_dna_chain",
+        "get_dna_chain"
+      ],
+      "classes": [
+        "CodeAnalysisResult",
+        "LightweightCodeModel"
+      ]
+    },
+    "ai\\code_understanding\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\compression\\alpha_deep_model.py": {
+      "functions": [
+        "to_dict",
+        "__init__",
+        "add_node",
+        "create_branch",
+        "merge_chain",
+        "__init__",
+        "learn",
+        "_adjust_model_parameters",
+        "compress",
+        "decompress",
+        "get_compression_stats",
+        "create_dna_chain",
+        "get_dna_chain"
+      ],
+      "classes": [
+        "CompressionAlgorithm",
+        "HAMGist",
+        "RelationalContext",
+        "Modalities",
+        "DeepParameter",
+        "DNADataChain",
+        "AlphaDeepModel"
+      ]
+    },
+    "ai\\compression\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\concept_models\\adaptive_learning_controller.py": {
+      "functions": [
+        "__init__",
+        "_init_db",
+        "__init__",
+        "_build_policy_network",
+        "_context_to_features",
+        "train_model",
+        "__init__",
+        "_build_parameter_optimizer",
+        "_initialize_strategies",
+        "_context_to_parameter_features",
+        "_optimized_params_to_dict",
+        "train_model",
+        "_dict_to_target_params",
+        "__init__",
+        "train_models"
+      ],
+      "classes": [
+        "PerformanceRecord",
+        "LearningStrategy",
+        "TaskContext",
+        "PerformanceTracker",
+        "StrategySelector",
+        "LearningStrategyOptimizer",
+        "AdaptiveLearningController"
+      ]
+    },
+    "ai\\concept_models\\alpha_deep_model.py": {
+      "functions": [
+        "to_dict",
+        "__init__",
+        "add_node",
+        "create_branch",
+        "merge_chain",
+        "__init__",
+        "_build_deep_model",
+        "_parameter_to_features",
+        "_feedback_to_target",
+        "create_dna_chain",
+        "get_compression_stats",
+        "get_symbolic_space",
+        "test_alpha_deep_model"
+      ],
+      "classes": [
+        "CompressionAlgorithm",
+        "HAMGist",
+        "RelationalContext",
+        "Modalities",
+        "DeepParameter",
+        "DNADataChain",
+        "AlphaDeepModel"
+      ]
+    },
+    "ai\\concept_models\\causal_reasoning_engine.py": {
+      "functions": [
+        "__init__",
+        "_build_causal_discovery_model",
+        "_prepare_causal_features",
+        "get_relationship",
+        "train_model",
+        "__init__",
+        "_build_intervention_model",
+        "_prepare_intervention_features",
+        "train_model",
+        "__init__",
+        "_build_counterfactual_model",
+        "_prepare_counterfactual_features",
+        "train_model",
+        "__init__",
+        "train_models"
+      ],
+      "classes": [
+        "CausalRelationship",
+        "Observation",
+        "Intervention",
+        "CounterfactualScenario",
+        "CausalGraph",
+        "InterventionPlanner",
+        "CounterfactualReasoner",
+        "CausalReasoningEngine"
+      ]
+    },
+    "ai\\concept_models\\environment_simulator.py": {
+      "functions": [
+        "__init__",
+        "_build_model",
+        "_state_to_features",
+        "_prediction_to_variables",
+        "_state_to_target",
+        "train_model",
+        "__init__",
+        "_build_model",
+        "_action_state_to_features",
+        "_prediction_to_effect",
+        "train_model",
+        "_effect_to_target",
+        "__init__",
+        "_build_model",
+        "_state_action_state_to_features",
+        "train_model",
+        "_calculate_prediction_error",
+        "__init__",
+        "_store_training_data",
+        "_calculate_prediction_error",
+        "train_models"
+      ],
+      "classes": [
+        "State",
+        "Action",
+        "Scenario",
+        "StatePredictor",
+        "ActionEffectModel",
+        "UncertaintyEstimator",
+        "EnvironmentSimulator"
+      ]
+    },
+    "ai\\concept_models\\integration_test.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "ConceptModelIntegrationTest"
+      ]
+    },
+    "ai\\concept_models\\unified_symbolic_space.py": {
+      "functions": [
+        "__init__",
+        "_init_db"
+      ],
+      "classes": [
+        "SymbolType",
+        "Symbol",
+        "Relationship",
+        "UnifiedSymbolicSpace"
+      ]
+    },
+    "ai\\concept_models\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\crisis\\crisis_system.py": {
+      "functions": [
+        "__init__",
+        "assess_input_for_crisis",
+        "_trigger_protocol",
+        "get_current_crisis_level",
+        "resolve_crisis",
+        "_load_config_from_file"
+      ],
+      "classes": [
+        "CrisisSystem"
+      ]
+    },
+    "ai\\deep_mapper\\mapper.py": {
+      "functions": [
+        "__init__",
+        "load_mapping_rules",
+        "map",
+        "reverse_map",
+        "_recursive_map",
+        "_invert_mapping_rules"
+      ],
+      "classes": [
+        "DeepMapper"
+      ]
+    },
+    "ai\\deep_mapper\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\dialogue\\dialogue_manager.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "DialogueManager"
+      ]
+    },
+    "ai\\dialogue\\project_coordinator.py": {
+      "functions": [
+        "__init__",
+        "_load_prompts",
+        "handle_task_result",
+        "_substitute_dependencies",
+        "replace_func"
+      ],
+      "classes": [
+        "ProjectCoordinator"
+      ]
+    },
+    "ai\\dialogue\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\discovery\\service_discovery_module.py": {
+      "functions": [
+        "__init__",
+        "start_cleanup_task",
+        "stop_cleanup_task",
+        "_periodic_cleanup",
+        "remove_stale_capabilities",
+        "process_capability_advertisement",
+        "_find_capabilities_sync",
+        "get_capability_by_id",
+        "get_all_capabilities",
+        "is_capability_available",
+        "__init__",
+        "get_trust_score",
+        "update_trust_score"
+      ],
+      "classes": [
+        "ServiceDiscoveryModule",
+        "MockTrustManager"
+      ]
+    },
+    "ai\\discovery\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\emotion\\emotion_system.py": {
+      "functions": [
+        "__init__",
+        "update_emotion_based_on_input",
+        "get_current_emotion_expression"
+      ],
+      "classes": [
+        "EmotionSystem"
+      ]
+    },
+    "ai\\evaluation\\evaluation_db.py": {
+      "functions": [
+        "__init__",
+        "_init_db",
+        "add_evaluation",
+        "get_evaluations_by_task_id",
+        "get_average_metrics",
+        "close",
+        "delete_db_file"
+      ],
+      "classes": [
+        "EvaluationDB"
+      ]
+    },
+    "ai\\evaluation\\task_evaluator.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "MetricsCalculator",
+        "FeedbackAnalyzer",
+        "TaskExecutionEvaluator"
+      ]
+    },
+    "ai\\evaluation\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\formula_engine\\types.py": {
+      "functions": [],
+      "classes": [
+        "FormulaConfigEntry"
+      ]
+    },
+    "ai\\formula_engine\\__init__.py": {
+      "functions": [
+        "__init__",
+        "_get_project_root",
+        "_load_formulas",
+        "match_input",
+        "execute_formula"
+      ],
+      "classes": [
+        "FormulaEngine"
+      ]
+    },
+    "ai\\integration\\unified_control_center.py": {
+      "functions": [
+        "__init__",
+        "_initialize_components",
+        "_establish_inter_component_connections",
+        "get_training_progress",
+        "get_collaborative_training_progress",
+        "health_check",
+        "start_health_monitoring",
+        "_health_check_worker"
+      ],
+      "classes": [
+        "UnifiedControlCenter"
+      ]
+    },
+    "ai\\knowledge_graph\\types.py": {
+      "functions": [],
+      "classes": [
+        "KGEntityAttributes",
+        "KGEntity",
+        "KGRelationshipAttributes",
+        "KGRelationship",
+        "KnowledgeGraphMetadata",
+        "KnowledgeGraph"
+      ]
+    },
+    "ai\\language_models\\daily_language_model.py": {
+      "functions": [
+        "set_llm_service",
+        "__init__",
+        "_construct_tool_selection_prompt"
+      ],
+      "classes": [
+        "InteractionRecord",
+        "DailyLanguageModel",
+        "PatchedMultiLLMService"
+      ]
+    },
+    "ai\\language_models\\registry.py": {
+      "functions": [
+        "to_dict",
+        "__init__",
+        "_is_available",
+        "list_profiles",
+        "profiles_dict"
+      ],
+      "classes": [
+        "ModelProfile",
+        "ModelRegistry"
+      ]
+    },
+    "ai\\language_models\\router.py": {
+      "functions": [
+        "__init__",
+        "route"
+      ],
+      "classes": [
+        "RoutingPolicy",
+        "PolicyRouter"
+      ]
+    },
+    "ai\\language_models\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\learning\\content_analyzer_module.py": {
+      "functions": [
+        "__init__",
+        "_load_ontology_mappings",
+        "_add_custom_matcher_patterns",
+        "analyze_content",
+        "_get_or_create_entity",
+        "process_hsp_fact_content",
+        "__init__",
+        "__init__"
+      ],
+      "classes": [
+        "ProcessedTripleInfo",
+        "CAHSPFactProcessingResult",
+        "ContentAnalyzerModule",
+        "MockToken",
+        "MockToken"
+      ]
+    },
+    "ai\\learning\\experience_replay.py": {
+      "functions": [
+        "__init__",
+        "add_experience",
+        "sample_batch",
+        "_calculate_priority"
+      ],
+      "classes": [
+        "ExperienceReplayBuffer"
+      ]
+    },
+    "ai\\learning\\fact_extractor_module.py": {
+      "functions": [
+        "__init__",
+        "_construct_fact_extraction_prompt"
+      ],
+      "classes": [
+        "FactExtractorModule",
+        "PatchedMultiLLMServiceForFactExtraction"
+      ]
+    },
+    "ai\\learning\\knowledge_distillation.py": {
+      "functions": [
+        "__init__",
+        "__call__",
+        "__init__"
+      ],
+      "classes": [
+        "DistillationLoss",
+        "KnowledgeDistillationManager"
+      ]
+    },
+    "ai\\learning\\learning_manager.py": {
+      "functions": [
+        "__init__",
+        "_create_strategy_distillation_prompt",
+        "__init__",
+        "store_experience",
+        "query_core_memory",
+        "extract_facts",
+        "__init__",
+        "publish_fact",
+        "connect",
+        "get_trust_score",
+        "update_trust_score",
+        "process_hsp_fact_content"
+      ],
+      "classes": [
+        "LearningManager",
+        "MockHAMMemoryManager",
+        "MockFactExtractor",
+        "MockHSPConnector",
+        "MockTrustManager",
+        "MockContentAnalyzer"
+      ]
+    },
+    "ai\\learning\\self_critique_module.py": {
+      "functions": [
+        "__init__",
+        "_construct_critique_prompt",
+        "critique_interaction",
+        "_get_mock_response"
+      ],
+      "classes": [
+        "SelfCritiqueModule",
+        "PatchedLLMInterfaceForCritique"
+      ]
+    },
+    "ai\\learning\\types.py": {
+      "functions": [],
+      "classes": [
+        "UserPreferenceContent",
+        "UserStatementContent",
+        "ExtractedFact",
+        "LearnedFactRecord"
+      ]
+    },
+    "ai\\learning\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\lis\\lis_cache_interface.py": {
+      "functions": [
+        "store_incident",
+        "get_incident_by_id",
+        "query_incidents",
+        "find_related_incidents",
+        "get_learned_antibodies",
+        "update_incident_status",
+        "add_antibody",
+        "__init__",
+        "store_incident",
+        "get_incident_by_id",
+        "query_incidents",
+        "find_related_incidents",
+        "get_learned_antibodies",
+        "update_incident_status",
+        "add_antibody"
+      ],
+      "classes": [
+        "LISCacheInterface",
+        "HAMLISCache"
+      ]
+    },
+    "ai\\lis\\tonal_repair_engine.py": {
+      "functions": [
+        "repair_output"
+      ],
+      "classes": [
+        "TonalRepairEngine"
+      ]
+    },
+    "ai\\lis\\types.py": {
+      "functions": [],
+      "classes": [
+        "LIS_SemanticAnomalyDetectedEvent",
+        "LIS_InterventionReport",
+        "LIS_IncidentRecord",
+        "NarrativeAntibodyObject"
+      ]
+    },
+    "ai\\lis\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\memory\\ham_config.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\memory\\ham_db_interface.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\memory\\ham_errors.py": {
+      "functions": [],
+      "classes": [
+        "HAMMemoryError",
+        "HAMQueryError",
+        "HAMStoreError",
+        "VectorStoreError"
+      ]
+    },
+    "ai\\memory\\ham_memory_manager.py": {
+      "functions": [
+        "_mock_embed_texts",
+        "__init__",
+        "__call__",
+        "name",
+        "__init__",
+        "_generate_memory_id",
+        "close",
+        "_encrypt",
+        "_decrypt",
+        "_compress",
+        "_decompress",
+        "_abstract_text",
+        "_rehydrate_text_gist",
+        "_normalize_date",
+        "_get_current_disk_usage_gb",
+        "_simulate_disk_lag_and_check_limit",
+        "_save_core_memory_to_file",
+        "_load_core_memory_from_file",
+        "recall_gist",
+        "recall_raw_gist",
+        "_deserialize_memory",
+        "_perform_deletion_check",
+        "query_core_memory",
+        "increment_metadata_field",
+        "_fallback_score"
+      ],
+      "classes": [
+        "MockEmbeddingFunction",
+        "HAMMemoryManager"
+      ]
+    },
+    "ai\\memory\\ham_types.py": {
+      "functions": [
+        "__init__",
+        "to_dict",
+        "from_dict",
+        "__init__",
+        "to_dict",
+        "from_dict",
+        "__init__",
+        "to_dict",
+        "from_dict"
+      ],
+      "classes": [
+        "HAMMemory",
+        "HAMRecallResult",
+        "DialogueMemoryEntryMetadata"
+      ]
+    },
+    "ai\\memory\\ham_utils.py": {
+      "functions": [
+        "calculate_cosine_similarity",
+        "generate_embedding",
+        "get_current_utc_timestamp",
+        "is_valid_uuid"
+      ],
+      "classes": []
+    },
+    "ai\\memory\\importance_scorer.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "ImportanceScorer"
+      ]
+    },
+    "ai\\memory\\types.py": {
+      "functions": [],
+      "classes": [
+        "HAMDataPackageInternal",
+        "HAMRecallResult"
+      ]
+    },
+    "ai\\memory\\vector_store.py": {
+      "functions": [
+        "__init__",
+        "_initialize_vector_store",
+        "_setup_advanced_features",
+        "_generate_search_id"
+      ],
+      "classes": [
+        "VectorStoreError",
+        "VectorMemoryStore"
+      ]
+    },
+    "ai\\memory\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\meta\\adaptive_learning_controller.py": {
+      "functions": [
+        "__init__",
+        "__init__",
+        "_initialize_strategies"
+      ],
+      "classes": [
+        "PerformanceTracker",
+        "StrategySelector",
+        "AdaptiveLearningController"
+      ]
+    },
+    "ai\\meta\\learning_log_db.py": {
+      "functions": [
+        "__init__",
+        "_init_db",
+        "add_log_entry",
+        "get_all_log_entries",
+        "close",
+        "delete_db_file"
+      ],
+      "classes": [
+        "LearningLogDB"
+      ]
+    },
+    "ai\\meta_formulas\\errx.py": {
+      "functions": [
+        "__init__",
+        "__repr__"
+      ],
+      "classes": [
+        "ErrX"
+      ]
+    },
+    "ai\\meta_formulas\\meta_formula.py": {
+      "functions": [
+        "__init__",
+        "execute"
+      ],
+      "classes": [
+        "MetaFormula"
+      ]
+    },
+    "ai\\meta_formulas\\undefined_field.py": {
+      "functions": [
+        "__init__",
+        "probe"
+      ],
+      "classes": [
+        "UndefinedField"
+      ]
+    },
+    "ai\\meta_formulas\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\optimization\\distributed_processing.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "NodeManager",
+        "TaskScheduler",
+        "LoadBalancer",
+        "DistributedProcessingFramework"
+      ]
+    },
+    "ai\\personality\\personality_manager.py": {
+      "functions": [
+        "reload_personality",
+        "__init__",
+        "_scan_profiles",
+        "load_personality",
+        "get_current_personality_trait",
+        "get_initial_prompt",
+        "list_available_profiles",
+        "apply_personality_adjustment"
+      ],
+      "classes": [
+        "PersonalityManager"
+      ]
+    },
+    "ai\\personality\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\rag\\rag_manager.py": {
+      "functions": [
+        "__init__",
+        "_initialize_index",
+        "add_document",
+        "search"
+      ],
+      "classes": [
+        "RAGManager"
+      ]
+    },
+    "ai\\reasoning\\causal_reasoning_engine.py": {
+      "functions": [
+        "__init__",
+        "__init__"
+      ],
+      "classes": [
+        "CausalGraph",
+        "InterventionPlanner",
+        "CounterfactualReasoner",
+        "CausalReasoningEngine"
+      ]
+    },
+    "ai\\symbolic_space\\unified_symbolic_space.py": {
+      "functions": [
+        "__init__",
+        "_init_db",
+        "add_symbol",
+        "get_symbol",
+        "update_symbol",
+        "add_relationship",
+        "get_relationships",
+        "delete_symbol",
+        "delete_relationship"
+      ],
+      "classes": [
+        "UnifiedSymbolicSpace"
+      ]
+    },
+    "ai\\test_utils\\deadlock_detector.py": {
+      "functions": [
+        "deadlock_detection",
+        "loop_detection",
+        "timeout_with_detection",
+        "check_for_infinite_loop",
+        "__init__",
+        "start_detection",
+        "stop_detection",
+        "_detection_loop",
+        "_check_for_deadlocks",
+        "_report_potential_deadlock",
+        "__init__",
+        "check_iteration",
+        "reset",
+        "__init__",
+        "start_monitoring",
+        "check_leaks",
+        "__init__",
+        "start_monitoring",
+        "check_async_leaks",
+        "decorator",
+        "decorator",
+        "test_function",
+        "wrapper",
+        "wrapper",
+        "timeout_handler"
+      ],
+      "classes": [
+        "DetectionType",
+        "DetectionResult",
+        "DeadlockDetector",
+        "LoopDetector",
+        "ResourceLeakDetector",
+        "AsyncLoopDetector"
+      ]
+    },
+    "ai\\time\\time_system.py": {
+      "functions": [
+        "__init__",
+        "get_current_time",
+        "get_formatted_current_time",
+        "set_reminder",
+        "check_due_reminders",
+        "get_time_of_day_segment"
+      ],
+      "classes": [
+        "TimeSystem"
+      ]
+    },
+    "ai\\translation\\simultaneous_translation.py": {
+      "functions": [
+        "__init__",
+        "translate",
+        "stream_translate"
+      ],
+      "classes": [
+        "SimultaneousTranslation"
+      ]
+    },
+    "ai\\trust\\trust_manager_module.py": {
+      "functions": [
+        "__init__",
+        "_clamp_score",
+        "get_trust_score",
+        "update_trust_score",
+        "set_default_trust_score",
+        "get_all_trust_scores"
+      ],
+      "classes": [
+        "TrustManager"
+      ]
+    },
+    "ai\\trust\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "ai\\world_model\\environment_simulator.py": {
+      "functions": [
+        "__init__",
+        "_calculate_prediction_error"
+      ],
+      "classes": [
+        "StatePredictor",
+        "ActionEffectModel",
+        "UncertaintyEstimator",
+        "EnvironmentSimulator"
+      ]
+    },
+    "core\\hsp\\connector.py": {
+      "functions": [
+        "get_schema_uri",
+        "__init__",
+        "default_qos",
+        "mqtt_client",
+        "mqtt_client",
+        "subscribed_topics",
+        "on_message",
+        "on_message",
+        "on_fact_received",
+        "on_command_received",
+        "on_connect_callback",
+        "on_disconnect_callback",
+        "_cache_message",
+        "_get_cached_message",
+        "_clean_expired_cache",
+        "_create_envelope",
+        "register_on_fact_callback",
+        "register_on_capability_advertisement_callback",
+        "register_on_task_request_callback",
+        "register_on_task_result_callback",
+        "register_on_connect_callback",
+        "register_on_disconnect_callback",
+        "register_on_acknowledgement_callback",
+        "register_capability_provider",
+        "unsubscribe",
+        "is_connected",
+        "is_connected",
+        "get_communication_status"
+      ],
+      "classes": [
+        "HSPConnector"
+      ]
+    },
+    "core\\hsp\\performance_optimizer.py": {
+      "functions": [
+        "__init__",
+        "cache_message",
+        "get_cached_message",
+        "clean_expired_cache",
+        "add_message_to_batch",
+        "compress_message",
+        "decompress_message",
+        "record_message_metrics",
+        "get_performance_stats",
+        "_calculate_cache_hit_rate",
+        "get_network_efficiency_report",
+        "_calculate_compression_ratio",
+        "_identify_bottlenecks",
+        "_generate_optimization_recommendations",
+        "__init__",
+        "enhance_publish",
+        "enhance_receive"
+      ],
+      "classes": [
+        "MessageMetrics",
+        "HSPPerformanceOptimizer",
+        "HSPPerformanceEnhancer"
+      ]
+    },
+    "core\\hsp\\types.py": {
+      "functions": [],
+      "classes": [
+        "HSPMessage",
+        "HSPFactStatementStructured",
+        "HSPOriginalSourceInfo",
+        "HSPFactPayload",
+        "HSPSecurityParameters",
+        "HSPQoSParameters",
+        "HSPRoutingInfo",
+        "HSPMessageEnvelope",
+        "HSPBeliefPayload",
+        "HSPCapability",
+        "HSPCapabilityAdvertisementPayload",
+        "HSPTaskRequestPayload",
+        "HSPErrorDetails",
+        "HSPTaskResultPayload",
+        "HSPTask",
+        "HSPEnvironmentalStatePayload",
+        "HSPAcknowledgementPayload",
+        "HSPNegativeAcknowledgementPayload",
+        "HSPEventPayload",
+        "HSPCommandPayload",
+        "HSPNotificationPayload",
+        "ChatMessage"
+      ]
+    },
+    "core\\hsp\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\hsp\\bridge\\data_aligner.py": {
+      "functions": [
+        "__init__",
+        "align_message",
+        "_align_envelope",
+        "_align_payload",
+        "_align_fact_payload",
+        "_align_task_request_payload",
+        "_align_task_result_payload",
+        "_align_capability_advertisement_payload",
+        "_create_error_details"
+      ],
+      "classes": [
+        "DataAligner"
+      ]
+    },
+    "core\\hsp\\bridge\\message_bridge.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "MessageBridge"
+      ]
+    },
+    "core\\hsp\\bridge\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\hsp\\external\\external_connector.py": {
+      "functions": [
+        "__init__",
+        "on_connect",
+        "on_disconnect"
+      ],
+      "classes": [
+        "ExternalConnector"
+      ]
+    },
+    "core\\hsp\\external\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\hsp\\fallback\\fallback_protocols.py": {
+      "functions": [
+        "get_fallback_manager",
+        "to_dict",
+        "from_dict",
+        "is_expired",
+        "__init__",
+        "register_handler",
+        "_record_error",
+        "_reset_error_state",
+        "__init__",
+        "__init__",
+        "__init__",
+        "add_endpoint",
+        "__init__",
+        "add_protocol",
+        "get_status"
+      ],
+      "classes": [
+        "ProtocolStatus",
+        "MessagePriority",
+        "FallbackMessage",
+        "BaseFallbackProtocol",
+        "InMemoryProtocol",
+        "FileBasedProtocol",
+        "HTTPProtocol",
+        "FallbackProtocolManager"
+      ]
+    },
+    "core\\hsp\\internal\\internal_bus.py": {
+      "functions": [
+        "__init__",
+        "publish",
+        "subscribe",
+        "unsubscribe"
+      ],
+      "classes": [
+        "InternalBus"
+      ]
+    },
+    "core\\hsp\\internal\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\hsp\\utils\\fallback_config_loader.py": {
+      "functions": [
+        "get_config_loader",
+        "load_fallback_config",
+        "load_hsp_config",
+        "__init__",
+        "_find_config_file",
+        "load_config",
+        "_merge_configs",
+        "get_fallback_config",
+        "get_hsp_config",
+        "is_fallback_enabled",
+        "get_protocol_config",
+        "get_message_config",
+        "get_logging_config",
+        "save_config",
+        "validate_config"
+      ],
+      "classes": [
+        "FallbackConfigLoader"
+      ]
+    },
+    "core\\hsp\\utils\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\managers\\agent_collaboration_manager.py": {
+      "functions": [
+        "__init__",
+        "_handle_agent_result",
+        "get_collaboration_status",
+        "cancel_collaboration_task",
+        "get_available_agents",
+        "register_on_task_result_callback"
+      ],
+      "classes": [
+        "AgentCollaborationManager",
+        "MockAgentManager",
+        "MockHSPConnector"
+      ]
+    },
+    "core\\managers\\agent_manager.py": {
+      "functions": [
+        "__init__",
+        "_discover_agent_scripts",
+        "launch_agent",
+        "check_agent_health",
+        "shutdown_agent",
+        "shutdown_all_agents",
+        "get_available_agents",
+        "get_active_agents"
+      ],
+      "classes": [
+        "AgentManager"
+      ]
+    },
+    "core\\managers\\demo_learning_manager.py": {
+      "functions": [
+        "__init__",
+        "_load_config",
+        "detect_demo_credentials",
+        "_get_memory_usage",
+        "_get_storage_usage",
+        "_get_active_connections",
+        "_analyze_interactions",
+        "_analyze_errors",
+        "_analyze_performance",
+        "_generate_recommendations",
+        "_get_collection_period"
+      ],
+      "classes": [
+        "DemoLearningManager"
+      ]
+    },
+    "core\\managers\\dependency_manager.py": {
+      "functions": [
+        "print_dependency_report",
+        "__init__",
+        "__init__",
+        "_load_config",
+        "_get_default_config",
+        "_setup_dependency_statuses",
+        "_check_dependency_availability",
+        "get_dependency",
+        "is_available",
+        "get_status",
+        "get_all_status",
+        "get_dependency_report"
+      ],
+      "classes": [
+        "DependencyStatus",
+        "DependencyManager"
+      ]
+    },
+    "core\\managers\\execution_manager.py": {
+      "functions": [
+        "get_execution_manager",
+        "execute_with_smart_monitoring",
+        "__init__",
+        "_load_config_from_system",
+        "_setup_logger",
+        "start_health_monitoring",
+        "stop_health_monitoring",
+        "_health_monitoring_loop",
+        "_check_resource_thresholds",
+        "_handle_resource_issue",
+        "_attempt_resource_recovery",
+        "execute_command",
+        "_should_retry",
+        "get_execution_statistics",
+        "get_system_health_report",
+        "reset_statistics",
+        "__enter__",
+        "__exit__"
+      ],
+      "classes": [
+        "ExecutionManagerConfig",
+        "ExecutionManager"
+      ]
+    },
+    "core\\managers\\execution_monitor.py": {
+      "functions": [
+        "get_execution_monitor",
+        "execute_with_monitoring",
+        "__init__",
+        "_setup_logging",
+        "calculate_adaptive_timeout",
+        "check_terminal_responsiveness",
+        "_monitor_terminal",
+        "_monitor_resources",
+        "_start_monitoring",
+        "_stop_monitoring",
+        "execute_command",
+        "timeout_context",
+        "is_process_stuck",
+        "get_system_health",
+        "timeout_handler"
+      ],
+      "classes": [
+        "ExecutionStatus",
+        "TerminalStatus",
+        "ExecutionConfig",
+        "ExecutionResult",
+        "ExecutionMonitor"
+      ]
+    },
+    "core\\managers\\genesis.py": {
+      "functions": [
+        "create_genesis_secret",
+        "split_secret_into_shards",
+        "recover_secret_from_shards",
+        "parse_genesis_secret"
+      ],
+      "classes": [
+        "GenesisManager"
+      ]
+    },
+    "core\\memory\\vector_store.py": {
+      "functions": [
+        "__init__",
+        "add_documents",
+        "query",
+        "delete_documents",
+        "update_document"
+      ],
+      "classes": [
+        "VectorStore"
+      ]
+    },
+    "core\\services\\ai_editor.py": {
+      "functions": [
+        "__init__",
+        "process_data",
+        "_process_text_data",
+        "_process_code_data",
+        "_process_structured_data",
+        "_process_application_data",
+        "_apply_text_transformations",
+        "_apply_code_transformations",
+        "_apply_structured_transformations",
+        "_apply_application_transformations",
+        "_generate_summary",
+        "_extract_keywords",
+        "_extract_functions",
+        "_extract_classes",
+        "_extract_comments",
+        "_extract_docstrings",
+        "_analyze_complexity",
+        "_calculate_max_nesting",
+        "_calculate_nesting_depth",
+        "_flatten_structure",
+        "__init__",
+        "set_memory_manager",
+        "process_application_data",
+        "process_text_content",
+        "process_code_content",
+        "process_structured_data",
+        "execute_data_transformation_script",
+        "get_processed_data_from_memory",
+        "_flatten"
+      ],
+      "classes": [
+        "DataProcessor",
+        "AIEditorService"
+      ]
+    },
+    "core\\services\\ai_editor_config.py": {
+      "functions": [
+        "get_config",
+        "update_config"
+      ],
+      "classes": [
+        "DataProcessingConfig",
+        "SandboxConfig",
+        "AIEditorConfig"
+      ]
+    },
+    "core\\services\\ai_virtual_input_service.py": {
+      "functions": [
+        "__init__",
+        "load_virtual_ui",
+        "get_current_virtual_ui",
+        "_find_element_by_id",
+        "_log_action",
+        "process_mouse_command",
+        "process_keyboard_command",
+        "get_action_log",
+        "clear_action_log",
+        "get_virtual_state"
+      ],
+      "classes": [
+        "AIVirtualInputService"
+      ]
+    },
+    "core\\services\\api_models.py": {
+      "functions": [],
+      "classes": [
+        "UserInput",
+        "AIOutput",
+        "SessionStartRequest",
+        "SessionStartResponse",
+        "HSPTaskRequestInput",
+        "HSPTaskRequestOutput",
+        "AtlassianConfigModel",
+        "ConfluencePageModel",
+        "JiraIssueModel",
+        "RovoDevTaskModel",
+        "JQLSearchModel",
+        "HotStatusResponse",
+        "HealthResponse",
+        "ReadinessResponse",
+        "HSPServiceDiscoveryResponse"
+      ]
+    },
+    "core\\services\\atlassian_api.py": {
+      "functions": [],
+      "classes": [
+        "AtlassianConfig",
+        "ConfluencePageCreate",
+        "JiraIssueCreate",
+        "TaskAssignment"
+      ]
+    },
+    "core\\services\\audio_service.py": {
+      "functions": [
+        "__init__",
+        "set_peer_services",
+        "_generate_processing_id",
+        "text_to_speech",
+        "_generate_demo_speech_audio"
+      ],
+      "classes": [
+        "AudioService"
+      ]
+    },
+    "core\\services\\hot_reload_service.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\services\\main_api_server.py": {
+      "functions": [
+        "read_root"
+      ],
+      "classes": []
+    },
+    "core\\services\\multi_llm_service.py": {
+      "functions": [
+        "get_multi_llm_service",
+        "__init__",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_build_prompt",
+        "_calculate_cost",
+        "__init__",
+        "load_config",
+        "_create_provider",
+        "_ensure_router",
+        "_update_usage_stats",
+        "get_available_models",
+        "get_model_info",
+        "get_usage_summary"
+      ],
+      "classes": [
+        "ModelProvider",
+        "ModelConfig",
+        "ChatMessage",
+        "LLMResponse",
+        "BaseLLMProvider",
+        "OpenAIProvider",
+        "AnthropicProvider",
+        "GoogleProvider",
+        "OllamaProvider",
+        "AzureOpenAIProvider",
+        "CohereProvider",
+        "HuggingFaceProvider",
+        "MultiLLMService"
+      ]
+    },
+    "core\\services\\resource_awareness_service.py": {
+      "functions": [
+        "__init__",
+        "_load_profile",
+        "_get_safe_default_profile",
+        "get_simulated_hardware_profile",
+        "get_simulated_disk_config",
+        "get_simulated_cpu_config",
+        "get_simulated_ram_config"
+      ],
+      "classes": [
+        "ResourceAwarenessService"
+      ]
+    },
+    "core\\services\\sandbox_executor.py": {
+      "functions": [
+        "__init__",
+        "run",
+        "__init__"
+      ],
+      "classes": [
+        "SandboxExecutor",
+        "ProcessResult"
+      ]
+    },
+    "core\\services\\types.py": {
+      "functions": [],
+      "classes": [
+        "VirtualInputElementDescription",
+        "VirtualMouseCommand",
+        "VirtualKeyboardCommand",
+        "SimulatedDiskConfig",
+        "SimulatedCPUConfig",
+        "SimulatedRAMConfig",
+        "SimulatedHardwareProfile",
+        "SimulatedResourcesRoot"
+      ]
+    },
+    "core\\services\\vision_service.py": {
+      "functions": [
+        "__init__",
+        "set_peer_services",
+        "_generate_processing_id"
+      ],
+      "classes": [
+        "VisionService"
+      ]
+    },
+    "core\\services\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\shared\\error.py": {
+      "functions": [
+        "project_error_handler",
+        "__init__",
+        "__init__"
+      ],
+      "classes": [
+        "ProjectError",
+        "HSPConnectionError"
+      ]
+    },
+    "core\\shared\\key_manager.py": {
+      "functions": [
+        "__init__",
+        "_load_config",
+        "_detect_demo_mode",
+        "_match_pattern",
+        "get_key",
+        "setup_demo_environment",
+        "_setup_learning",
+        "_setup_initialization",
+        "_setup_cleanup",
+        "generate_ham_key"
+      ],
+      "classes": [
+        "UnifiedKeyManager"
+      ]
+    },
+    "core\\shared\\network_resilience.py": {
+      "functions": [
+        "__init__",
+        "__call__",
+        "__init__",
+        "__call__",
+        "_success",
+        "_fail"
+      ],
+      "classes": [
+        "NetworkError",
+        "ProtocolError",
+        "RetryPolicy",
+        "CircuitBreaker",
+        "CircuitBreakerOpenError"
+      ]
+    },
+    "core\\shared\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\shared\\types\\common_types.py": {
+      "functions": [],
+      "classes": [
+        "ServiceStatus",
+        "ServiceType",
+        "ServiceAdvertisement",
+        "ServiceQuery",
+        "ServiceInstanceHealth",
+        "ToolDispatcherResponse",
+        "LLMConfig",
+        "DialogueTurn",
+        "PendingHSPTaskInfo",
+        "OperationalConfig",
+        "CritiqueResult",
+        "DialogueMemoryEntryMetadata",
+        "ParsedToolIODetails",
+        "OverwriteDecision",
+        "LLMProviderOllamaConfig",
+        "LLMProviderOpenAIConfig",
+        "LLMModelInfo",
+        "HAMRecallResult",
+        "HAMDataPackageInternal"
+      ]
+    },
+    "core\\shared\\types\\mappable_data_object.py": {
+      "functions": [
+        "__init__",
+        "compress",
+        "decompress",
+        "add_layer",
+        "get_layer"
+      ],
+      "classes": [
+        "MappableDataObject"
+      ]
+    },
+    "core\\shared\\types\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\shared\\utils\\cleanup_utils.py": {
+      "functions": [
+        "cleanup_temp_files",
+        "cleanup_cache_data",
+        "cleanup_log_files",
+        "cleanup_demo_artifacts"
+      ],
+      "classes": []
+    },
+    "core\\shared\\utils\\env_utils.py": {
+      "functions": [
+        "setup_env_file",
+        "add_env_variable"
+      ],
+      "classes": []
+    },
+    "core\\tools\\calculator_tool.py": {
+      "functions": [
+        "eval_expr",
+        "eval_",
+        "calculate"
+      ],
+      "classes": []
+    },
+    "core\\tools\\code_understanding_tool.py": {
+      "functions": [
+        "__init__",
+        "list_tools",
+        "describe_tool",
+        "execute"
+      ],
+      "classes": [
+        "CodeUnderstandingTool"
+      ]
+    },
+    "core\\tools\\csv_tool.py": {
+      "functions": [
+        "__init__",
+        "analyze"
+      ],
+      "classes": [
+        "CsvTool"
+      ]
+    },
+    "core\\tools\\dependency_checker.py": {
+      "functions": [
+        "check_package",
+        "check_dependencies",
+        "get_install_command",
+        "print_status_report",
+        "main",
+        "print_dependency_report"
+      ],
+      "classes": []
+    },
+    "core\\tools\\file_system_tool.py": {
+      "functions": [
+        "list_files",
+        "read_file",
+        "write_file"
+      ],
+      "classes": []
+    },
+    "core\\tools\\image_generation_tool.py": {
+      "functions": [
+        "__init__",
+        "create_image"
+      ],
+      "classes": [
+        "ImageGenerationTool"
+      ]
+    },
+    "core\\tools\\image_recognition_tool.py": {
+      "functions": [
+        "recognize_image",
+        "save_model",
+        "load_model"
+      ],
+      "classes": []
+    },
+    "core\\tools\\logic_tool.py": {
+      "functions": [
+        "__init__",
+        "_get_parser_evaluator",
+        "_get_nn_model_evaluator",
+        "evaluate_expression"
+      ],
+      "classes": [
+        "LogicTool"
+      ]
+    },
+    "core\\tools\\math_tool.py": {
+      "functions": [
+        "_load_math_model",
+        "extract_arithmetic_problem",
+        "calculate"
+      ],
+      "classes": []
+    },
+    "core\\tools\\natural_language_generation_tool.py": {
+      "functions": [
+        "generate_text",
+        "save_model",
+        "load_model"
+      ],
+      "classes": []
+    },
+    "core\\tools\\speech_to_text_tool.py": {
+      "functions": [
+        "recognize_speech",
+        "save_model",
+        "load_model"
+      ],
+      "classes": []
+    },
+    "core\\tools\\tool_dispatcher.py": {
+      "functions": [
+        "_get_ham",
+        "_safe_params_hash",
+        "_log_action_policy",
+        "set_llm_service",
+        "__init__",
+        "_execute_csv_analysis",
+        "_execute_image_creation",
+        "_execute_code_inspection",
+        "_execute_rag_query",
+        "_execute_math_calculation",
+        "_execute_logic_evaluation",
+        "_execute_translation",
+        "reload_tools",
+        "get_available_tools",
+        "add_model",
+        "replace_model",
+        "add_tool",
+        "replace_tool"
+      ],
+      "classes": [
+        "ToolDispatcher"
+      ]
+    },
+    "core\\tools\\translation_tool.py": {
+      "functions": [
+        "_load_dictionary",
+        "_detect_language",
+        "translate",
+        "request_model_upgrade"
+      ],
+      "classes": []
+    },
+    "core\\tools\\web_search_tool.py": {
+      "functions": [
+        "__init__",
+        "_load_config"
+      ],
+      "classes": [
+        "WebSearchTool"
+      ]
+    },
+    "core\\tools\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\tools\\logic_model\\evaluate_logic_model.py": {
+      "functions": [
+        "load_logic_test_dataset",
+        "main"
+      ],
+      "classes": []
+    },
+    "core\\tools\\logic_model\\lightweight_logic_model.py": {
+      "functions": [
+        "main",
+        "__init__",
+        "evaluate_proposition",
+        "_normalize_proposition",
+        "_safe_eval_logic",
+        "solve_logic_problem",
+        "solve_problem",
+        "_extract_logic_expression",
+        "train_on_dataset",
+        "generate_truth_table",
+        "save_model",
+        "load_model"
+      ],
+      "classes": [
+        "LightweightLogicModel"
+      ]
+    },
+    "core\\tools\\logic_model\\logic_data_generator.py": {
+      "functions": [
+        "generate_simple_proposition",
+        "evaluate_proposition",
+        "generate_dataset",
+        "save_dataset"
+      ],
+      "classes": []
+    },
+    "core\\tools\\logic_model\\logic_model_nn.py": {
+      "functions": [
+        "_ensure_tensorflow_is_imported",
+        "_tensorflow_is_available",
+        "get_logic_char_token_maps",
+        "preprocess_logic_data",
+        "__init__",
+        "_build_model",
+        "train",
+        "predict",
+        "get_prediction_history",
+        "create_dna_chain",
+        "get_dna_chain",
+        "save_model",
+        "load_model"
+      ],
+      "classes": [
+        "LogicModelResult",
+        "LogicNNModel"
+      ]
+    },
+    "core\\tools\\logic_model\\logic_parser_eval.py": {
+      "functions": [
+        "__init__",
+        "_tokenize",
+        "_parse",
+        "_current_token_type",
+        "_consume",
+        "_parse_atom",
+        "_parse_and",
+        "_parse_or",
+        "_parse_factor",
+        "_parse_and_expression",
+        "_parse_or_expression",
+        "evaluate"
+      ],
+      "classes": [
+        "LogicParserEval"
+      ]
+    },
+    "core\\tools\\logic_model\\simple_logic_generator.py": {
+      "functions": [
+        "generate_simple_logic_dataset",
+        "main"
+      ],
+      "classes": []
+    },
+    "core\\tools\\logic_model\\train_logic_model.py": {
+      "functions": [
+        "load_logic_dataset",
+        "main"
+      ],
+      "classes": []
+    },
+    "core\\tools\\logic_model\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\tools\\math_model\\data_generator.py": {
+      "functions": [
+        "_atomic_write_text",
+        "generate_problem",
+        "_sha256_of_file",
+        "generate_dataset",
+        "_write_summary_report",
+        "_find_project_root"
+      ],
+      "classes": []
+    },
+    "core\\tools\\math_model\\evaluate.py": {
+      "functions": [
+        "load_char_maps",
+        "load_test_dataset_csv",
+        "main"
+      ],
+      "classes": []
+    },
+    "core\\tools\\math_model\\lightweight_math_model.py": {
+      "functions": [
+        "main",
+        "__init__",
+        "evaluate_expression",
+        "_safe_eval",
+        "solve_problem",
+        "_extract_expression",
+        "train_on_dataset",
+        "save_model",
+        "load_model"
+      ],
+      "classes": [
+        "LightweightMathModel"
+      ]
+    },
+    "core\\tools\\math_model\\model.py": {
+      "functions": [
+        "_ensure_tensorflow_is_imported",
+        "_tensorflow_is_available",
+        "get_char_token_maps",
+        "__init__",
+        "_build_inference_models",
+        "_string_to_tokens",
+        "predict_sequence",
+        "get_prediction_history",
+        "create_dna_chain",
+        "get_dna_chain",
+        "load_for_inference"
+      ],
+      "classes": [
+        "MathModelResult",
+        "ArithmeticSeq2Seq"
+      ]
+    },
+    "core\\tools\\math_model\\train.py": {
+      "functions": [
+        "load_dataset",
+        "main"
+      ],
+      "classes": []
+    },
+    "core\\tools\\math_model\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\tools\\parameter_extractor\\extractor.py": {
+      "functions": [
+        "__init__",
+        "download_model_parameters",
+        "map_parameters",
+        "load_parameters_to_model"
+      ],
+      "classes": [
+        "ParameterExtractor"
+      ]
+    },
+    "core\\tools\\parameter_extractor\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\tools\\translation_model\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core\\tools\\translation_model\\data\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\agent_collaboration_manager.py": {
+      "functions": [
+        "__init__",
+        "_handle_agent_result",
+        "get_collaboration_status",
+        "cancel_collaboration_task",
+        "get_available_agents",
+        "register_on_task_result_callback"
+      ],
+      "classes": [
+        "AgentCollaborationManager",
+        "MockAgentManager",
+        "MockHSPConnector"
+      ]
+    },
+    "core_ai\\agent_manager.py": {
+      "functions": [
+        "__init__",
+        "_discover_agent_scripts",
+        "launch_agent",
+        "check_agent_health",
+        "shutdown_agent",
+        "shutdown_all_agents",
+        "get_available_agents",
+        "get_active_agents"
+      ],
+      "classes": [
+        "AgentManager"
+      ]
+    },
+    "core_ai\\audio_processing.py": {
+      "functions": [],
+      "classes": [
+        "AudioProcessing"
+      ]
+    },
+    "core_ai\\crisis_system.py": {
+      "functions": [
+        "__init__",
+        "assess_input_for_crisis",
+        "_trigger_protocol",
+        "get_current_crisis_level",
+        "resolve_crisis",
+        "_load_config_from_file"
+      ],
+      "classes": [
+        "CrisisSystem"
+      ]
+    },
+    "core_ai\\demo_learning_manager.py": {
+      "functions": [
+        "__init__",
+        "_load_config",
+        "detect_demo_credentials",
+        "_get_memory_usage",
+        "_get_storage_usage",
+        "_get_active_connections",
+        "_analyze_interactions",
+        "_analyze_errors",
+        "_analyze_performance",
+        "_generate_recommendations",
+        "_get_collection_period"
+      ],
+      "classes": [
+        "DemoLearningManager"
+      ]
+    },
+    "core_ai\\dependency_manager.py": {
+      "functions": [
+        "print_dependency_report",
+        "__init__",
+        "__init__",
+        "_load_config",
+        "_get_default_config",
+        "_setup_dependency_statuses",
+        "_check_dependency_availability",
+        "get_dependency",
+        "is_available",
+        "get_status",
+        "get_all_status",
+        "get_dependency_report"
+      ],
+      "classes": [
+        "DependencyStatus",
+        "DependencyManager"
+      ]
+    },
+    "core_ai\\emotion_system.py": {
+      "functions": [
+        "__init__",
+        "update_emotion_based_on_input",
+        "get_current_emotion_expression"
+      ],
+      "classes": [
+        "EmotionSystem"
+      ]
+    },
+    "core_ai\\execution_manager.py": {
+      "functions": [
+        "get_execution_manager",
+        "execute_with_smart_monitoring",
+        "__init__",
+        "_load_config_from_system",
+        "_setup_logger",
+        "start_health_monitoring",
+        "stop_health_monitoring",
+        "_health_monitoring_loop",
+        "_check_resource_thresholds",
+        "_handle_resource_issue",
+        "_attempt_resource_recovery",
+        "execute_command",
+        "_should_retry",
+        "get_execution_statistics",
+        "get_system_health_report",
+        "reset_statistics",
+        "__enter__",
+        "__exit__"
+      ],
+      "classes": [
+        "ExecutionManagerConfig",
+        "ExecutionManager"
+      ]
+    },
+    "core_ai\\execution_monitor.py": {
+      "functions": [
+        "get_execution_monitor",
+        "execute_with_monitoring",
+        "__init__",
+        "_setup_logging",
+        "calculate_adaptive_timeout",
+        "check_terminal_responsiveness",
+        "_monitor_terminal",
+        "_monitor_resources",
+        "_start_monitoring",
+        "_stop_monitoring",
+        "execute_command",
+        "timeout_context",
+        "is_process_stuck",
+        "get_system_health",
+        "timeout_handler"
+      ],
+      "classes": [
+        "ExecutionStatus",
+        "TerminalStatus",
+        "ExecutionConfig",
+        "ExecutionResult",
+        "ExecutionMonitor"
+      ]
+    },
+    "core_ai\\genesis.py": {
+      "functions": [
+        "create_genesis_secret",
+        "split_secret_into_shards",
+        "recover_secret_from_shards",
+        "parse_genesis_secret"
+      ],
+      "classes": [
+        "GenesisManager"
+      ]
+    },
+    "core_ai\\simultaneous_translation.py": {
+      "functions": [
+        "__init__",
+        "translate",
+        "stream_translate"
+      ],
+      "classes": [
+        "SimultaneousTranslation"
+      ]
+    },
+    "core_ai\\time_system.py": {
+      "functions": [
+        "__init__",
+        "get_current_time",
+        "get_formatted_current_time",
+        "set_reminder",
+        "check_due_reminders",
+        "get_time_of_day_segment"
+      ],
+      "classes": [
+        "TimeSystem"
+      ]
+    },
+    "core_ai\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\code_understanding\\lightweight_code_model.py": {
+      "functions": [
+        "__init__",
+        "list_tool_files",
+        "_extract_method_parameters",
+        "_calculate_complexity",
+        "analyze_tool_file",
+        "get_tool_structure",
+        "get_analysis_history",
+        "get_code_complexity",
+        "create_dna_chain",
+        "get_dna_chain"
+      ],
+      "classes": [
+        "CodeAnalysisResult",
+        "LightweightCodeModel"
+      ]
+    },
+    "core_ai\\code_understanding\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\compression\\alpha_deep_model.py": {
+      "functions": [
+        "to_dict",
+        "__init__",
+        "add_node",
+        "create_branch",
+        "merge_chain",
+        "__init__",
+        "learn",
+        "_adjust_model_parameters",
+        "compress",
+        "decompress",
+        "get_compression_stats",
+        "create_dna_chain",
+        "get_dna_chain"
+      ],
+      "classes": [
+        "CompressionAlgorithm",
+        "HAMGist",
+        "RelationalContext",
+        "Modalities",
+        "DeepParameter",
+        "DNADataChain",
+        "AlphaDeepModel"
+      ]
+    },
+    "core_ai\\compression\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\concept_models\\adaptive_learning_controller.py": {
+      "functions": [
+        "__init__",
+        "_init_db",
+        "__init__",
+        "_build_policy_network",
+        "_context_to_features",
+        "__init__",
+        "_initialize_strategies",
+        "__init__"
+      ],
+      "classes": [
+        "PerformanceRecord",
+        "LearningStrategy",
+        "TaskContext",
+        "PerformanceTracker",
+        "StrategySelector",
+        "LearningStrategyOptimizer",
+        "AdaptiveLearningController"
+      ]
+    },
+    "core_ai\\concept_models\\alpha_deep_model.py": {
+      "functions": [
+        "to_dict",
+        "__init__",
+        "add_node",
+        "create_branch",
+        "merge_chain",
+        "__init__",
+        "_build_deep_model",
+        "_parameter_to_features",
+        "_feedback_to_target",
+        "create_dna_chain",
+        "get_compression_stats",
+        "get_symbolic_space",
+        "test_alpha_deep_model"
+      ],
+      "classes": [
+        "CompressionAlgorithm",
+        "HAMGist",
+        "RelationalContext",
+        "Modalities",
+        "DeepParameter",
+        "DNADataChain",
+        "AlphaDeepModel"
+      ]
+    },
+    "core_ai\\concept_models\\causal_reasoning_engine.py": {
+      "functions": [
+        "__init__",
+        "_build_causal_discovery_model",
+        "get_relationship",
+        "__init__",
+        "__init__",
+        "__init__"
+      ],
+      "classes": [
+        "CausalRelationship",
+        "Observation",
+        "Intervention",
+        "CounterfactualScenario",
+        "CausalGraph",
+        "InterventionPlanner",
+        "CounterfactualReasoner",
+        "CausalReasoningEngine"
+      ]
+    },
+    "core_ai\\concept_models\\environment_simulator.py": {
+      "functions": [
+        "__init__",
+        "_build_model",
+        "_state_to_features",
+        "_prediction_to_variables",
+        "_state_to_target",
+        "__init__",
+        "__init__",
+        "__init__",
+        "_calculate_prediction_error"
+      ],
+      "classes": [
+        "State",
+        "Action",
+        "Scenario",
+        "StatePredictor",
+        "ActionEffectModel",
+        "UncertaintyEstimator",
+        "EnvironmentSimulator"
+      ]
+    },
+    "core_ai\\concept_models\\integration_test.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "ConceptModelIntegrationTest"
+      ]
+    },
+    "core_ai\\concept_models\\unified_symbolic_space.py": {
+      "functions": [
+        "__init__",
+        "_init_db"
+      ],
+      "classes": [
+        "SymbolType",
+        "Symbol",
+        "Relationship",
+        "UnifiedSymbolicSpace"
+      ]
+    },
+    "core_ai\\concept_models\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\deep_mapper\\mapper.py": {
+      "functions": [
+        "__init__",
+        "load_mapping_rules",
+        "map",
+        "reverse_map",
+        "_recursive_map",
+        "_invert_mapping_rules"
+      ],
+      "classes": [
+        "DeepMapper"
+      ]
+    },
+    "core_ai\\deep_mapper\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\dialogue\\dialogue_manager.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "DialogueManager"
+      ]
+    },
+    "core_ai\\dialogue\\project_coordinator.py": {
+      "functions": [
+        "__init__",
+        "_load_prompts",
+        "handle_task_result",
+        "_substitute_dependencies",
+        "replace_func"
+      ],
+      "classes": [
+        "ProjectCoordinator"
+      ]
+    },
+    "core_ai\\dialogue\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\evaluation\\evaluation_db.py": {
+      "functions": [
+        "__init__",
+        "_init_db",
+        "add_evaluation",
+        "get_evaluations_by_task_id",
+        "get_average_metrics",
+        "close",
+        "delete_db_file"
+      ],
+      "classes": [
+        "EvaluationDB"
+      ]
+    },
+    "core_ai\\evaluation\\task_evaluator.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "MetricsCalculator",
+        "FeedbackAnalyzer",
+        "TaskExecutionEvaluator"
+      ]
+    },
+    "core_ai\\evaluation\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\formula_engine\\types.py": {
+      "functions": [],
+      "classes": [
+        "FormulaConfigEntry"
+      ]
+    },
+    "core_ai\\formula_engine\\__init__.py": {
+      "functions": [
+        "__init__",
+        "_get_project_root",
+        "_load_formulas",
+        "match_input",
+        "execute_formula"
+      ],
+      "classes": [
+        "FormulaEngine"
+      ]
+    },
+    "core_ai\\integration\\unified_control_center.py": {
+      "functions": [
+        "__init__",
+        "_initialize_components",
+        "_establish_inter_component_connections",
+        "get_training_progress",
+        "get_collaborative_training_progress",
+        "health_check",
+        "start_health_monitoring",
+        "_health_check_worker"
+      ],
+      "classes": [
+        "UnifiedControlCenter"
+      ]
+    },
+    "core_ai\\knowledge_graph\\types.py": {
+      "functions": [],
+      "classes": [
+        "KGEntityAttributes",
+        "KGEntity",
+        "KGRelationshipAttributes",
+        "KGRelationship",
+        "KnowledgeGraphMetadata",
+        "KnowledgeGraph"
+      ]
+    },
+    "core_ai\\language_models\\daily_language_model.py": {
+      "functions": [
+        "set_llm_service",
+        "__init__",
+        "_construct_tool_selection_prompt"
+      ],
+      "classes": [
+        "InteractionRecord",
+        "DailyLanguageModel",
+        "PatchedMultiLLMService"
+      ]
+    },
+    "core_ai\\language_models\\registry.py": {
+      "functions": [
+        "to_dict",
+        "__init__",
+        "_is_available",
+        "list_profiles",
+        "profiles_dict"
+      ],
+      "classes": [
+        "ModelProfile",
+        "ModelRegistry"
+      ]
+    },
+    "core_ai\\language_models\\router.py": {
+      "functions": [
+        "__init__",
+        "route"
+      ],
+      "classes": [
+        "RoutingPolicy",
+        "PolicyRouter"
+      ]
+    },
+    "core_ai\\language_models\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\learning\\content_analyzer_module.py": {
+      "functions": [
+        "__init__",
+        "_load_ontology_mappings",
+        "_add_custom_matcher_patterns",
+        "analyze_content",
+        "_get_or_create_entity",
+        "process_hsp_fact_content"
+      ],
+      "classes": [
+        "ProcessedTripleInfo",
+        "CAHSPFactProcessingResult",
+        "ContentAnalyzerModule"
+      ]
+    },
+    "core_ai\\learning\\experience_replay.py": {
+      "functions": [
+        "__init__",
+        "add_experience",
+        "sample_batch",
+        "_calculate_priority"
+      ],
+      "classes": [
+        "ExperienceReplayBuffer"
+      ]
+    },
+    "core_ai\\learning\\fact_extractor_module.py": {
+      "functions": [
+        "__init__",
+        "_construct_fact_extraction_prompt"
+      ],
+      "classes": [
+        "FactExtractorModule",
+        "PatchedMultiLLMServiceForFactExtraction"
+      ]
+    },
+    "core_ai\\learning\\knowledge_distillation.py": {
+      "functions": [
+        "__init__",
+        "__call__",
+        "__init__"
+      ],
+      "classes": [
+        "DistillationLoss",
+        "KnowledgeDistillationManager"
+      ]
+    },
+    "core_ai\\learning\\learning_manager.py": {
+      "functions": [
+        "__init__",
+        "_create_strategy_distillation_prompt",
+        "__init__",
+        "store_experience",
+        "query_core_memory",
+        "extract_facts",
+        "__init__",
+        "publish_fact",
+        "connect",
+        "get_trust_score",
+        "update_trust_score",
+        "process_hsp_fact_content"
+      ],
+      "classes": [
+        "LearningManager",
+        "MockHAMMemoryManager",
+        "MockFactExtractor",
+        "MockHSPConnector",
+        "MockTrustManager",
+        "MockContentAnalyzer"
+      ]
+    },
+    "core_ai\\learning\\self_critique_module.py": {
+      "functions": [
+        "__init__",
+        "_construct_critique_prompt",
+        "critique_interaction",
+        "_get_mock_response"
+      ],
+      "classes": [
+        "SelfCritiqueModule",
+        "PatchedLLMInterfaceForCritique"
+      ]
+    },
+    "core_ai\\learning\\types.py": {
+      "functions": [],
+      "classes": [
+        "UserPreferenceContent",
+        "UserStatementContent",
+        "ExtractedFact",
+        "LearnedFactRecord"
+      ]
+    },
+    "core_ai\\learning\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\lis\\lis_cache_interface.py": {
+      "functions": [
+        "store_incident",
+        "get_incident_by_id",
+        "query_incidents",
+        "find_related_incidents",
+        "get_learned_antibodies",
+        "update_incident_status",
+        "add_antibody",
+        "__init__",
+        "store_incident",
+        "get_incident_by_id",
+        "query_incidents",
+        "find_related_incidents",
+        "get_learned_antibodies",
+        "update_incident_status",
+        "add_antibody"
+      ],
+      "classes": [
+        "LISCacheInterface",
+        "HAMLISCache"
+      ]
+    },
+    "core_ai\\lis\\tonal_repair_engine.py": {
+      "functions": [
+        "repair_output"
+      ],
+      "classes": [
+        "TonalRepairEngine"
+      ]
+    },
+    "core_ai\\lis\\types.py": {
+      "functions": [],
+      "classes": [
+        "LIS_SemanticAnomalyDetectedEvent",
+        "LIS_InterventionReport",
+        "LIS_IncidentRecord",
+        "NarrativeAntibodyObject"
+      ]
+    },
+    "core_ai\\lis\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\memory\\ham_config.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\memory\\ham_db_interface.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\memory\\ham_errors.py": {
+      "functions": [],
+      "classes": [
+        "HAMMemoryError",
+        "HAMQueryError",
+        "HAMStoreError",
+        "VectorStoreError"
+      ]
+    },
+    "core_ai\\memory\\ham_memory_manager.py": {
+      "functions": [
+        "_mock_embed_texts",
+        "__init__",
+        "__call__",
+        "name",
+        "__init__",
+        "_generate_memory_id",
+        "close",
+        "_encrypt",
+        "_decrypt",
+        "_compress",
+        "_decompress",
+        "_abstract_text",
+        "_rehydrate_text_gist",
+        "_normalize_date",
+        "_get_current_disk_usage_gb",
+        "_simulate_disk_lag_and_check_limit",
+        "_save_core_memory_to_file",
+        "_load_core_memory_from_file",
+        "recall_gist",
+        "recall_raw_gist",
+        "_deserialize_memory",
+        "_perform_deletion_check",
+        "query_core_memory",
+        "increment_metadata_field",
+        "_fallback_score"
+      ],
+      "classes": [
+        "MockEmbeddingFunction",
+        "HAMMemoryManager"
+      ]
+    },
+    "core_ai\\memory\\ham_types.py": {
+      "functions": [
+        "__init__",
+        "to_dict",
+        "from_dict",
+        "__init__",
+        "to_dict",
+        "from_dict",
+        "__init__",
+        "to_dict",
+        "from_dict"
+      ],
+      "classes": [
+        "HAMMemory",
+        "HAMRecallResult",
+        "DialogueMemoryEntryMetadata"
+      ]
+    },
+    "core_ai\\memory\\ham_utils.py": {
+      "functions": [
+        "calculate_cosine_similarity",
+        "generate_embedding",
+        "get_current_utc_timestamp",
+        "is_valid_uuid"
+      ],
+      "classes": []
+    },
+    "core_ai\\memory\\importance_scorer.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "ImportanceScorer"
+      ]
+    },
+    "core_ai\\memory\\types.py": {
+      "functions": [],
+      "classes": [
+        "HAMDataPackageInternal",
+        "HAMRecallResult"
+      ]
+    },
+    "core_ai\\memory\\vector_store.py": {
+      "functions": [
+        "__init__",
+        "_initialize_vector_store",
+        "_setup_advanced_features",
+        "_generate_search_id"
+      ],
+      "classes": [
+        "VectorStoreError",
+        "VectorMemoryStore"
+      ]
+    },
+    "core_ai\\memory\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\meta\\adaptive_learning_controller.py": {
+      "functions": [
+        "__init__",
+        "__init__",
+        "_initialize_strategies"
+      ],
+      "classes": [
+        "PerformanceTracker",
+        "StrategySelector",
+        "AdaptiveLearningController"
+      ]
+    },
+    "core_ai\\meta\\learning_log_db.py": {
+      "functions": [
+        "__init__",
+        "_init_db",
+        "add_log_entry",
+        "get_all_log_entries",
+        "close",
+        "delete_db_file"
+      ],
+      "classes": [
+        "LearningLogDB"
+      ]
+    },
+    "core_ai\\meta_formulas\\errx.py": {
+      "functions": [
+        "__init__",
+        "__repr__"
+      ],
+      "classes": [
+        "ErrX"
+      ]
+    },
+    "core_ai\\meta_formulas\\meta_formula.py": {
+      "functions": [
+        "__init__",
+        "execute"
+      ],
+      "classes": [
+        "MetaFormula"
+      ]
+    },
+    "core_ai\\meta_formulas\\undefined_field.py": {
+      "functions": [
+        "__init__",
+        "probe"
+      ],
+      "classes": [
+        "UndefinedField"
+      ]
+    },
+    "core_ai\\meta_formulas\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\optimization\\distributed_processing.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "NodeManager",
+        "TaskScheduler",
+        "LoadBalancer",
+        "DistributedProcessingFramework"
+      ]
+    },
+    "core_ai\\personality\\personality_manager.py": {
+      "functions": [
+        "reload_personality",
+        "__init__",
+        "_scan_profiles",
+        "load_personality",
+        "get_current_personality_trait",
+        "get_initial_prompt",
+        "list_available_profiles",
+        "apply_personality_adjustment"
+      ],
+      "classes": [
+        "PersonalityManager"
+      ]
+    },
+    "core_ai\\personality\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\rag\\rag_manager.py": {
+      "functions": [
+        "__init__",
+        "add_document",
+        "search"
+      ],
+      "classes": [
+        "RAGManager"
+      ]
+    },
+    "core_ai\\reasoning\\causal_reasoning_engine.py": {
+      "functions": [
+        "__init__",
+        "__init__"
+      ],
+      "classes": [
+        "CausalGraph",
+        "InterventionPlanner",
+        "CounterfactualReasoner",
+        "CausalReasoningEngine"
+      ]
+    },
+    "core_ai\\service_discovery\\service_discovery_module.py": {
+      "functions": [
+        "__init__",
+        "start_cleanup_task",
+        "stop_cleanup_task",
+        "_periodic_cleanup",
+        "remove_stale_capabilities",
+        "process_capability_advertisement",
+        "_find_capabilities_sync",
+        "get_capability_by_id",
+        "get_all_capabilities",
+        "is_capability_available",
+        "__init__",
+        "get_trust_score",
+        "update_trust_score"
+      ],
+      "classes": [
+        "ServiceDiscoveryModule",
+        "MockTrustManager"
+      ]
+    },
+    "core_ai\\service_discovery\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\symbolic_space\\unified_symbolic_space.py": {
+      "functions": [
+        "__init__",
+        "_init_db",
+        "add_symbol",
+        "get_symbol",
+        "update_symbol",
+        "add_relationship",
+        "get_relationships",
+        "delete_symbol",
+        "delete_relationship"
+      ],
+      "classes": [
+        "UnifiedSymbolicSpace"
+      ]
+    },
+    "core_ai\\test_utils\\deadlock_detector.py": {
+      "functions": [
+        "deadlock_detection",
+        "loop_detection",
+        "timeout_with_detection",
+        "check_for_infinite_loop",
+        "__init__",
+        "start_detection",
+        "stop_detection",
+        "_detection_loop",
+        "_check_for_deadlocks",
+        "_report_potential_deadlock",
+        "__init__",
+        "check_iteration",
+        "reset",
+        "__init__",
+        "start_monitoring",
+        "check_leaks",
+        "__init__",
+        "start_monitoring",
+        "check_async_leaks",
+        "decorator",
+        "decorator",
+        "test_function",
+        "wrapper",
+        "wrapper",
+        "timeout_handler"
+      ],
+      "classes": [
+        "DetectionType",
+        "DetectionResult",
+        "DeadlockDetector",
+        "LoopDetector",
+        "ResourceLeakDetector",
+        "AsyncLoopDetector"
+      ]
+    },
+    "core_ai\\trust_manager\\trust_manager_module.py": {
+      "functions": [
+        "__init__",
+        "_clamp_score",
+        "get_trust_score",
+        "update_trust_score",
+        "set_default_trust_score",
+        "get_all_trust_scores"
+      ],
+      "classes": [
+        "TrustManager"
+      ]
+    },
+    "core_ai\\trust_manager\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "core_ai\\world_model\\environment_simulator.py": {
+      "functions": [
+        "__init__",
+        "_calculate_prediction_error"
+      ],
+      "classes": [
+        "StatePredictor",
+        "ActionEffectModel",
+        "UncertaintyEstimator",
+        "EnvironmentSimulator"
+      ]
+    },
+    "creation\\creation_engine.py": {
+      "functions": [
+        "__init__",
+        "create",
+        "_create_model",
+        "_create_tool"
+      ],
+      "classes": [
+        "CreationEngine"
+      ]
+    },
+    "data\\models\\unified_model_loader.py": {
+      "functions": [
+        "_get_project_root",
+        "load_math_model",
+        "load_logic_nn_model",
+        "get_model_load_error"
+      ],
+      "classes": []
+    },
+    "economy\\economy_db.py": {
+      "functions": [
+        "__init__",
+        "_init_db",
+        "get_user_balance",
+        "update_user_balance",
+        "close",
+        "delete_db_file"
+      ],
+      "classes": [
+        "EconomyDB"
+      ]
+    },
+    "economy\\economy_manager.py": {
+      "functions": [
+        "__init__",
+        "process_transaction",
+        "get_balance",
+        "update_rules"
+      ],
+      "classes": [
+        "EconomyManager"
+      ]
+    },
+    "economy\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "evaluation\\evaluator.py": {
+      "functions": [
+        "__init__",
+        "evaluate",
+        "_calculate_accuracy",
+        "_calculate_performance",
+        "_calculate_robustness"
+      ],
+      "classes": [
+        "Evaluator"
+      ]
+    },
+    "fragmenta\\fragmenta_orchestrator.py": {
+      "functions": [
+        "__init__",
+        "process_complex_task"
+      ],
+      "classes": [
+        "FragmentaOrchestrator"
+      ]
+    },
+    "fragmenta\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "game\\angela.py": {
+      "functions": [
+        "__init__",
+        "start_appearing",
+        "update",
+        "render",
+        "increase_favorability",
+        "decrease_favorability",
+        "give_gift",
+        "check_for_proactive_interaction"
+      ],
+      "classes": [
+        "Angela"
+      ]
+    },
+    "game\\inventory.py": {
+      "functions": [
+        "__init__",
+        "add_item",
+        "remove_item",
+        "get_item_count"
+      ],
+      "classes": [
+        "Inventory"
+      ]
+    },
+    "game\\items.py": {
+      "functions": [
+        "create_item",
+        "__init__"
+      ],
+      "classes": [
+        "Item"
+      ]
+    },
+    "game\\main.py": {
+      "functions": [
+        "__init__",
+        "load_assets",
+        "render"
+      ],
+      "classes": [
+        "Game"
+      ]
+    },
+    "game\\minigames.py": {
+      "functions": [
+        "__init__",
+        "start",
+        "handle_events",
+        "update",
+        "render",
+        "check_catch"
+      ],
+      "classes": [
+        "FishingGame"
+      ]
+    },
+    "game\\npcs.py": {
+      "functions": [
+        "load_npc_data",
+        "create_npc",
+        "__init__",
+        "render"
+      ],
+      "classes": [
+        "NPC"
+      ]
+    },
+    "game\\player.py": {
+      "functions": [
+        "__init__",
+        "default_appearance",
+        "handle_events",
+        "update",
+        "render"
+      ],
+      "classes": [
+        "Player"
+      ]
+    },
+    "game\\scenes.py": {
+      "functions": [
+        "__init__",
+        "render",
+        "__init__",
+        "load_npcs",
+        "render",
+        "__init__",
+        "render"
+      ],
+      "classes": [
+        "Scene",
+        "VillageScene",
+        "GameStateManager"
+      ]
+    },
+    "game\\tiles.py": {
+      "functions": [
+        "__init__",
+        "__init__",
+        "__init__",
+        "render"
+      ],
+      "classes": [
+        "Rock",
+        "Tile",
+        "TileMap"
+      ]
+    },
+    "game\\ui.py": {
+      "functions": [
+        "__init__",
+        "show",
+        "hide",
+        "render"
+      ],
+      "classes": [
+        "DialogueBox"
+      ]
+    },
+    "game\\utils.py": {
+      "functions": [
+        "generate_uid"
+      ],
+      "classes": []
+    },
+    "game\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "game\\scenes\\village.py": {
+      "functions": [
+        "__init__",
+        "load_npcs",
+        "render"
+      ],
+      "classes": [
+        "VillageScene"
+      ]
+    },
+    "hsp\\connector.py": {
+      "functions": [
+        "get_schema_uri",
+        "__init__",
+        "default_qos",
+        "mqtt_client",
+        "mqtt_client",
+        "subscribed_topics",
+        "on_message",
+        "on_message",
+        "on_fact_received",
+        "on_command_received",
+        "on_connect_callback",
+        "on_disconnect_callback",
+        "_cache_message",
+        "_get_cached_message",
+        "_clean_expired_cache",
+        "_create_envelope",
+        "register_on_fact_callback",
+        "register_on_capability_advertisement_callback",
+        "register_on_task_request_callback",
+        "register_on_task_result_callback",
+        "register_on_connect_callback",
+        "register_on_disconnect_callback",
+        "register_on_acknowledgement_callback",
+        "register_capability_provider",
+        "unsubscribe",
+        "is_connected",
+        "is_connected",
+        "get_communication_status"
+      ],
+      "classes": [
+        "HSPConnector"
+      ]
+    },
+    "hsp\\performance_optimizer.py": {
+      "functions": [
+        "__init__",
+        "cache_message",
+        "get_cached_message",
+        "clean_expired_cache",
+        "add_message_to_batch",
+        "compress_message",
+        "decompress_message",
+        "record_message_metrics",
+        "get_performance_stats",
+        "_calculate_cache_hit_rate",
+        "get_network_efficiency_report",
+        "_calculate_compression_ratio",
+        "_identify_bottlenecks",
+        "_generate_optimization_recommendations",
+        "__init__",
+        "enhance_publish",
+        "enhance_receive"
+      ],
+      "classes": [
+        "MessageMetrics",
+        "HSPPerformanceOptimizer",
+        "HSPPerformanceEnhancer"
+      ]
+    },
+    "hsp\\types.py": {
+      "functions": [],
+      "classes": [
+        "HSPMessage",
+        "HSPFactStatementStructured",
+        "HSPOriginalSourceInfo",
+        "HSPFactPayload",
+        "HSPSecurityParameters",
+        "HSPQoSParameters",
+        "HSPRoutingInfo",
+        "HSPMessageEnvelope",
+        "HSPBeliefPayload",
+        "HSPCapability",
+        "HSPCapabilityAdvertisementPayload",
+        "HSPTaskRequestPayload",
+        "HSPErrorDetails",
+        "HSPTaskResultPayload",
+        "HSPTask",
+        "HSPEnvironmentalStatePayload",
+        "HSPAcknowledgementPayload",
+        "HSPNegativeAcknowledgementPayload",
+        "HSPEventPayload",
+        "HSPCommandPayload",
+        "HSPNotificationPayload",
+        "ChatMessage"
+      ]
+    },
+    "hsp\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "hsp\\bridge\\data_aligner.py": {
+      "functions": [
+        "__init__",
+        "align_message",
+        "_align_envelope",
+        "_align_payload",
+        "_align_fact_payload",
+        "_align_task_request_payload",
+        "_align_task_result_payload",
+        "_align_capability_advertisement_payload",
+        "_create_error_details"
+      ],
+      "classes": [
+        "DataAligner"
+      ]
+    },
+    "hsp\\bridge\\message_bridge.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "MessageBridge"
+      ]
+    },
+    "hsp\\bridge\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "hsp\\external\\external_connector.py": {
+      "functions": [
+        "__init__",
+        "on_connect",
+        "on_disconnect"
+      ],
+      "classes": [
+        "ExternalConnector"
+      ]
+    },
+    "hsp\\external\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "hsp\\fallback\\fallback_protocols.py": {
+      "functions": [
+        "get_fallback_manager",
+        "to_dict",
+        "from_dict",
+        "is_expired",
+        "__init__",
+        "register_handler",
+        "_record_error",
+        "_reset_error_state",
+        "__init__",
+        "__init__",
+        "__init__",
+        "add_endpoint",
+        "__init__",
+        "add_protocol",
+        "get_status"
+      ],
+      "classes": [
+        "ProtocolStatus",
+        "MessagePriority",
+        "FallbackMessage",
+        "BaseFallbackProtocol",
+        "InMemoryProtocol",
+        "FileBasedProtocol",
+        "HTTPProtocol",
+        "FallbackProtocolManager"
+      ]
+    },
+    "hsp\\internal\\internal_bus.py": {
+      "functions": [
+        "__init__",
+        "publish",
+        "subscribe",
+        "unsubscribe"
+      ],
+      "classes": [
+        "InternalBus"
+      ]
+    },
+    "hsp\\internal\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "hsp\\utils\\fallback_config_loader.py": {
+      "functions": [
+        "get_config_loader",
+        "load_fallback_config",
+        "load_hsp_config",
+        "__init__",
+        "_find_config_file",
+        "load_config",
+        "_merge_configs",
+        "get_fallback_config",
+        "get_hsp_config",
+        "is_fallback_enabled",
+        "get_protocol_config",
+        "get_message_config",
+        "get_logging_config",
+        "save_config",
+        "validate_config"
+      ],
+      "classes": [
+        "FallbackConfigLoader"
+      ]
+    },
+    "hsp\\utils\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "integrations\\atlassian_bridge.py": {
+      "functions": [
+        "__init__",
+        "_load_endpoint_configs",
+        "force_endpoint_switch",
+        "get_health_status",
+        "_markdown_to_confluence_storage",
+        "_format_content_for_confluence",
+        "_map_jira_fields"
+      ],
+      "classes": [
+        "EndpointConfig",
+        "CacheEntry",
+        "AtlassianBridge"
+      ]
+    },
+    "integrations\\atlassian_cli_bridge.py": {
+      "functions": [
+        "__init__",
+        "_check_acli_available",
+        "_run_acli_command",
+        "get_jira_projects",
+        "get_jira_issues",
+        "create_jira_issue",
+        "get_confluence_spaces",
+        "search_confluence_content",
+        "get_status"
+      ],
+      "classes": [
+        "AtlassianCLIBridge"
+      ]
+    },
+    "integrations\\confluence_integration.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "ConfluenceIntegration"
+      ]
+    },
+    "integrations\\enhanced_atlassian_bridge.py": {
+      "functions": [
+        "__init__",
+        "detect_demo_credentials",
+        "__init__",
+        "get_demo_status"
+      ],
+      "classes": [
+        "DemoLearningManager",
+        "EnhancedAtlassianBridge"
+      ]
+    },
+    "integrations\\enhanced_rovo_dev_connector.py": {
+      "functions": [
+        "__post_init__",
+        "__post_init__",
+        "__init__",
+        "record_failure",
+        "reset",
+        "hsp_connector",
+        "publish_capability_advertisement",
+        "__init__",
+        "_initialize_endpoint_configs",
+        "_initialize_circuit_breakers",
+        "_get_service_from_url",
+        "_should_retry",
+        "_update_url_with_new_endpoint",
+        "_get_auth_header",
+        "set_cache",
+        "get_stats",
+        "reset_stats",
+        "_get_service_from_url",
+        "_should_retry",
+        "_update_url_with_new_endpoint",
+        "_get_auth_header"
+      ],
+      "classes": [
+        "RetryConfig",
+        "EndpointConfig",
+        "CircuitBreaker",
+        "EnhancedRovoDevConnector"
+      ]
+    },
+    "integrations\\jira_integration.py": {
+      "functions": [
+        "__init__"
+      ],
+      "classes": [
+        "JiraIntegration"
+      ]
+    },
+    "integrations\\rovo_dev_agent.py": {
+      "functions": [
+        "__init__",
+        "_load_capabilities",
+        "_get_capability_parameters",
+        "_update_metrics",
+        "_format_analysis_report",
+        "_generate_documentation_content",
+        "_generate_project_report",
+        "_format_project_report",
+        "get_task_history",
+        "handle_task_error",
+        "_is_retryable_error",
+        "get_recovery_status",
+        "__init__"
+      ],
+      "classes": [
+        "TaskState",
+        "AgentRecoveryState",
+        "RovoDevAgent",
+        "HSPConnector",
+        "HSPMessage",
+        "HSPCapability",
+        "HSPTask",
+        "AgentManager"
+      ]
+    },
+    "integrations\\rovo_dev_connector.py": {
+      "functions": [],
+      "classes": []
+    },
+    "integrations\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "interfaces\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "managers\\agent_collaboration_manager.py": {
+      "functions": [
+        "__init__",
+        "_handle_agent_result",
+        "get_collaboration_status",
+        "cancel_collaboration_task",
+        "get_available_agents",
+        "register_on_task_result_callback"
+      ],
+      "classes": [
+        "AgentCollaborationManager",
+        "MockAgentManager",
+        "MockHSPConnector"
+      ]
+    },
+    "managers\\agent_manager.py": {
+      "functions": [
+        "__init__",
+        "_discover_agent_scripts",
+        "launch_agent",
+        "check_agent_health",
+        "shutdown_agent",
+        "shutdown_all_agents",
+        "get_available_agents",
+        "get_active_agents"
+      ],
+      "classes": [
+        "AgentManager"
+      ]
+    },
+    "managers\\demo_learning_manager.py": {
+      "functions": [
+        "__init__",
+        "_load_config",
+        "detect_demo_credentials",
+        "_get_memory_usage",
+        "_get_storage_usage",
+        "_get_active_connections",
+        "_analyze_interactions",
+        "_analyze_errors",
+        "_analyze_performance",
+        "_generate_recommendations",
+        "_get_collection_period"
+      ],
+      "classes": [
+        "DemoLearningManager"
+      ]
+    },
+    "managers\\dependency_manager.py": {
+      "functions": [
+        "print_dependency_report",
+        "__init__",
+        "__init__",
+        "_load_config",
+        "_get_default_config",
+        "_setup_dependency_statuses",
+        "_check_dependency_availability",
+        "get_dependency",
+        "is_available",
+        "get_status",
+        "get_all_status",
+        "get_dependency_report"
+      ],
+      "classes": [
+        "DependencyStatus",
+        "DependencyManager"
+      ]
+    },
+    "managers\\execution_manager.py": {
+      "functions": [
+        "get_execution_manager",
+        "execute_with_smart_monitoring",
+        "__init__",
+        "_load_config_from_system",
+        "_setup_logger",
+        "start_health_monitoring",
+        "stop_health_monitoring",
+        "_health_monitoring_loop",
+        "_check_resource_thresholds",
+        "_handle_resource_issue",
+        "_attempt_resource_recovery",
+        "execute_command",
+        "_should_retry",
+        "get_execution_statistics",
+        "get_system_health_report",
+        "reset_statistics",
+        "__enter__",
+        "__exit__"
+      ],
+      "classes": [
+        "ExecutionManagerConfig",
+        "ExecutionManager"
+      ]
+    },
+    "managers\\execution_monitor.py": {
+      "functions": [
+        "get_execution_monitor",
+        "execute_with_monitoring",
+        "__init__",
+        "_setup_logging",
+        "calculate_adaptive_timeout",
+        "check_terminal_responsiveness",
+        "_monitor_terminal",
+        "_monitor_resources",
+        "_start_monitoring",
+        "_stop_monitoring",
+        "execute_command",
+        "timeout_context",
+        "is_process_stuck",
+        "get_system_health",
+        "timeout_handler"
+      ],
+      "classes": [
+        "ExecutionStatus",
+        "TerminalStatus",
+        "ExecutionConfig",
+        "ExecutionResult",
+        "ExecutionMonitor"
+      ]
+    },
+    "managers\\genesis.py": {
+      "functions": [
+        "create_genesis_secret",
+        "split_secret_into_shards",
+        "recover_secret_from_shards",
+        "parse_genesis_secret"
+      ],
+      "classes": [
+        "GenesisManager"
+      ]
+    },
+    "mcp\\connector.py": {
+      "functions": [
+        "__init__",
+        "disconnect",
+        "_on_connect",
+        "_on_message",
+        "register_command_handler",
+        "get_communication_status"
+      ],
+      "classes": [
+        "MCPConnector"
+      ]
+    },
+    "mcp\\context7_connector.py": {
+      "functions": [
+        "__init__",
+        "__await__",
+        "is_connected",
+        "get_capabilities",
+        "__init__",
+        "__await__"
+      ],
+      "classes": [
+        "Context7Config",
+        "Context7MCPConnector",
+        "UnifiedAIMCPIntegration"
+      ]
+    },
+    "mcp\\types.py": {
+      "functions": [],
+      "classes": [
+        "MCPEnvelope",
+        "MCPCommandRequest",
+        "MCPCommandResponse",
+        "MCPMessage",
+        "MCPResponse",
+        "MCPCapability",
+        "MCPContextItem",
+        "MCPCollaborationRequest"
+      ]
+    },
+    "mcp\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "mcp\\fallback\\mcp_fallback_protocols.py": {
+      "functions": [
+        "get_mcp_fallback_manager",
+        "to_dict",
+        "from_dict",
+        "is_expired",
+        "__init__",
+        "register_command_handler",
+        "__init__",
+        "__init__",
+        "__init__",
+        "__init__",
+        "__init__",
+        "connection_made",
+        "datagram_received",
+        "error_received",
+        "connection_lost",
+        "__init__",
+        "add_protocol",
+        "register_command_handler",
+        "get_status"
+      ],
+      "classes": [
+        "MCPProtocolStatus",
+        "MCPMessagePriority",
+        "MCPFallbackMessage",
+        "BaseMCPFallbackProtocol",
+        "MCPInMemoryProtocol",
+        "MCPProcessSharedMemoryProtocol",
+        "MCPFileProtocol",
+        "MCPHTTPProtocol",
+        "_DiscoveryProtocol",
+        "MCPFallbackManager"
+      ]
+    },
+    "mcp\\fallback\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "modules_fragmenta\\element_layer.py": {
+      "functions": [
+        "__init__",
+        "process_elements",
+        "_transform_element"
+      ],
+      "classes": [
+        "ElementLayer"
+      ]
+    },
+    "modules_fragmenta\\vision_tone_inverter.py": {
+      "functions": [
+        "__init__",
+        "invert_visual_tone",
+        "_make_brighter",
+        "_simplify_layout"
+      ],
+      "classes": [
+        "VisionToneInverter"
+      ]
+    },
+    "modules_fragmenta\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "monitoring\\system_monitor.py": {
+      "functions": [
+        "to_dict",
+        "__init__",
+        "_init_gpu_monitoring",
+        "get_gpu_info",
+        "collect_metrics",
+        "get_current_load",
+        "get_resource_recommendations",
+        "stop_monitoring",
+        "get_metrics_history",
+        "export_metrics_to_file"
+      ],
+      "classes": [
+        "SystemMetrics",
+        "SystemMonitor"
+      ]
+    },
+    "optimization\\performance_optimizer.py": {
+      "functions": [
+        "get_performance_optimizer",
+        "cache_result",
+        "__init__",
+        "get",
+        "put",
+        "cleanup",
+        "__init__",
+        "_load_config",
+        "_create_default_config",
+        "collect_metrics",
+        "_check_resource_thresholds",
+        "cache_result",
+        "_generate_cache_key",
+        "get_performance_report",
+        "cleanup",
+        "wrapper"
+      ],
+      "classes": [
+        "PerformanceMetrics",
+        "LRUCache",
+        "PerformanceOptimizer"
+      ]
+    },
+    "optimization\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "pet\\pet_manager.py": {
+      "functions": [
+        "__init__",
+        "handle_interaction",
+        "get_current_state",
+        "_update_state_over_time",
+        "update_behavior"
+      ],
+      "classes": [
+        "PetManager"
+      ]
+    },
+    "pet\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "search\\search_engine.py": {
+      "functions": [
+        "__init__",
+        "search",
+        "_search_huggingface",
+        "_search_github"
+      ],
+      "classes": [
+        "SearchEngine"
+      ]
+    },
+    "security\\audit_logger.py": {
+      "functions": [
+        "__init__",
+        "log_event",
+        "log_operation",
+        "log_file_access",
+        "log_network_access",
+        "log_system_command",
+        "log_application_control",
+        "log_data_processing",
+        "log_sandbox_execution",
+        "log_permission_check",
+        "log_security_violation",
+        "log_error",
+        "_flush_buffer",
+        "_rotate_log_if_needed",
+        "get_recent_events",
+        "search_events",
+        "_event_matches_criteria"
+      ],
+      "classes": [
+        "AuditEventType",
+        "AuditEvent",
+        "AuditLogger"
+      ]
+    },
+    "security\\enhanced_sandbox.py": {
+      "functions": [
+        "__init__",
+        "start_monitoring",
+        "stop_monitoring",
+        "_monitor_loop",
+        "_terminate_process",
+        "__init__",
+        "execute",
+        "_validate_code",
+        "_run_in_sandbox"
+      ],
+      "classes": [
+        "SandboxConfig",
+        "ResourceLimits",
+        "ResourceMonitor",
+        "EnhancedSandboxExecutor"
+      ]
+    },
+    "security\\permission_control.py": {
+      "functions": [
+        "__init__",
+        "_load_configuration",
+        "_set_default_rules",
+        "add_user_rule",
+        "check_permission",
+        "_rule_matches_context",
+        "_matches_pattern",
+        "_evaluate_rule",
+        "_log_audit_event",
+        "save_configuration"
+      ],
+      "classes": [
+        "PermissionType",
+        "PermissionLevel",
+        "PermissionRule",
+        "PermissionContext",
+        "PermissionControlSystem"
+      ]
+    },
+    "security\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "services\\ai_editor.py": {
+      "functions": [
+        "__init__",
+        "process_data",
+        "_process_text_data",
+        "_process_code_data",
+        "_process_structured_data",
+        "_process_application_data",
+        "_apply_text_transformations",
+        "_apply_code_transformations",
+        "_apply_structured_transformations",
+        "_apply_application_transformations",
+        "_generate_summary",
+        "_extract_keywords",
+        "_extract_functions",
+        "_extract_classes",
+        "_extract_comments",
+        "_extract_docstrings",
+        "_analyze_complexity",
+        "_calculate_max_nesting",
+        "_calculate_nesting_depth",
+        "_flatten_structure",
+        "__init__",
+        "set_memory_manager",
+        "process_application_data",
+        "process_text_content",
+        "process_code_content",
+        "process_structured_data",
+        "execute_data_transformation_script",
+        "get_processed_data_from_memory",
+        "_flatten"
+      ],
+      "classes": [
+        "DataProcessor",
+        "AIEditorService"
+      ]
+    },
+    "services\\ai_editor_config.py": {
+      "functions": [
+        "get_config",
+        "update_config"
+      ],
+      "classes": [
+        "DataProcessingConfig",
+        "SandboxConfig",
+        "AIEditorConfig"
+      ]
+    },
+    "services\\ai_virtual_input_service.py": {
+      "functions": [
+        "__init__",
+        "load_virtual_ui",
+        "get_current_virtual_ui",
+        "_find_element_by_id",
+        "_log_action",
+        "process_mouse_command",
+        "process_keyboard_command",
+        "get_action_log",
+        "clear_action_log",
+        "get_virtual_state"
+      ],
+      "classes": [
+        "AIVirtualInputService"
+      ]
+    },
+    "services\\api_models.py": {
+      "functions": [],
+      "classes": [
+        "UserInput",
+        "AIOutput",
+        "SessionStartRequest",
+        "SessionStartResponse",
+        "HSPTaskRequestInput",
+        "HSPTaskRequestOutput",
+        "AtlassianConfigModel",
+        "ConfluencePageModel",
+        "JiraIssueModel",
+        "RovoDevTaskModel",
+        "JQLSearchModel",
+        "HotStatusResponse",
+        "HealthResponse",
+        "ReadinessResponse",
+        "HSPServiceDiscoveryResponse"
+      ]
+    },
+    "services\\atlassian_api.py": {
+      "functions": [],
+      "classes": [
+        "AtlassianConfig",
+        "ConfluencePageCreate",
+        "JiraIssueCreate",
+        "TaskAssignment"
+      ]
+    },
+    "services\\audio_service.py": {
+      "functions": [
+        "__init__",
+        "set_peer_services",
+        "_generate_processing_id",
+        "text_to_speech",
+        "_generate_demo_speech_audio"
+      ],
+      "classes": [
+        "AudioService"
+      ]
+    },
+    "services\\hot_reload_service.py": {
+      "functions": [],
+      "classes": []
+    },
+    "services\\main_api_server.py": {
+      "functions": [
+        "read_root"
+      ],
+      "classes": []
+    },
+    "services\\multi_llm_service.py": {
+      "functions": [
+        "get_multi_llm_service",
+        "__init__",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_calculate_cost",
+        "__init__",
+        "_build_prompt",
+        "_calculate_cost",
+        "__init__",
+        "load_config",
+        "_create_provider",
+        "_ensure_router",
+        "_update_usage_stats",
+        "get_available_models",
+        "get_model_info",
+        "get_usage_summary"
+      ],
+      "classes": [
+        "ModelProvider",
+        "ModelConfig",
+        "ChatMessage",
+        "LLMResponse",
+        "BaseLLMProvider",
+        "OpenAIProvider",
+        "AnthropicProvider",
+        "GoogleProvider",
+        "OllamaProvider",
+        "AzureOpenAIProvider",
+        "CohereProvider",
+        "HuggingFaceProvider",
+        "MultiLLMService"
+      ]
+    },
+    "services\\resource_awareness_service.py": {
+      "functions": [
+        "__init__",
+        "_load_profile",
+        "_get_safe_default_profile",
+        "get_simulated_hardware_profile",
+        "get_simulated_disk_config",
+        "get_simulated_cpu_config",
+        "get_simulated_ram_config"
+      ],
+      "classes": [
+        "ResourceAwarenessService"
+      ]
+    },
+    "services\\sandbox_executor.py": {
+      "functions": [
+        "__init__",
+        "run",
+        "__init__"
+      ],
+      "classes": [
+        "SandboxExecutor",
+        "ProcessResult"
+      ]
+    },
+    "services\\types.py": {
+      "functions": [],
+      "classes": [
+        "VirtualInputElementDescription",
+        "VirtualMouseCommand",
+        "VirtualKeyboardCommand",
+        "SimulatedDiskConfig",
+        "SimulatedCPUConfig",
+        "SimulatedRAMConfig",
+        "SimulatedHardwareProfile",
+        "SimulatedResourcesRoot"
+      ]
+    },
+    "services\\vision_service.py": {
+      "functions": [
+        "__init__",
+        "set_peer_services",
+        "_generate_processing_id"
+      ],
+      "classes": [
+        "VisionService"
+      ]
+    },
+    "services\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "shared\\error.py": {
+      "functions": [
+        "project_error_handler",
+        "__init__",
+        "__init__"
+      ],
+      "classes": [
+        "ProjectError",
+        "HSPConnectionError"
+      ]
+    },
+    "shared\\key_manager.py": {
+      "functions": [
+        "__init__",
+        "_load_config",
+        "_detect_demo_mode",
+        "_match_pattern",
+        "get_key",
+        "setup_demo_environment",
+        "_setup_learning",
+        "_setup_initialization",
+        "_setup_cleanup",
+        "generate_ham_key"
+      ],
+      "classes": [
+        "UnifiedKeyManager"
+      ]
+    },
+    "shared\\network_resilience.py": {
+      "functions": [
+        "__init__",
+        "__call__",
+        "__init__",
+        "__call__",
+        "_success",
+        "_fail"
+      ],
+      "classes": [
+        "NetworkError",
+        "ProtocolError",
+        "RetryPolicy",
+        "CircuitBreaker",
+        "CircuitBreakerOpenError"
+      ]
+    },
+    "shared\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "shared\\types\\common_types.py": {
+      "functions": [],
+      "classes": [
+        "ServiceStatus",
+        "ServiceType",
+        "ServiceAdvertisement",
+        "ServiceQuery",
+        "ServiceInstanceHealth",
+        "ToolDispatcherResponse",
+        "LLMConfig",
+        "DialogueTurn",
+        "PendingHSPTaskInfo",
+        "OperationalConfig",
+        "CritiqueResult",
+        "DialogueMemoryEntryMetadata",
+        "ParsedToolIODetails",
+        "OverwriteDecision",
+        "LLMProviderOllamaConfig",
+        "LLMProviderOpenAIConfig",
+        "LLMModelInfo",
+        "HAMRecallResult",
+        "HAMDataPackageInternal"
+      ]
+    },
+    "shared\\types\\mappable_data_object.py": {
+      "functions": [
+        "__init__",
+        "compress",
+        "decompress",
+        "add_layer",
+        "get_layer"
+      ],
+      "classes": [
+        "MappableDataObject"
+      ]
+    },
+    "shared\\types\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "shared\\utils\\cleanup_utils.py": {
+      "functions": [
+        "cleanup_temp_files",
+        "cleanup_cache_data",
+        "cleanup_log_files",
+        "cleanup_demo_artifacts"
+      ],
+      "classes": []
+    },
+    "shared\\utils\\env_utils.py": {
+      "functions": [
+        "setup_env_file",
+        "add_env_variable"
+      ],
+      "classes": []
+    },
+    "system\\deployment_manager.py": {
+      "functions": [
+        "get_deployment_config",
+        "apply_optimal_config",
+        "get_deployment_mode",
+        "__init__",
+        "generate_config",
+        "_determine_deployment_mode",
+        "_generate_model_config",
+        "_generate_compression_config",
+        "_generate_processing_config",
+        "_determine_features",
+        "apply_config",
+        "save_config",
+        "load_config",
+        "get_recommendations"
+      ],
+      "classes": [
+        "DeploymentMode",
+        "ModelSize",
+        "ModelConfig",
+        "CompressionConfig",
+        "ProcessingConfig",
+        "DeploymentConfig",
+        "DeploymentManager"
+      ]
+    },
+    "system\\hardware_probe.py": {
+      "functions": [
+        "get_hardware_profile",
+        "get_performance_tier",
+        "get_ai_capability_score",
+        "__init__",
+        "detect_all",
+        "_detect_cpu",
+        "_detect_gpu",
+        "_detect_memory",
+        "_detect_storage",
+        "_detect_network",
+        "_get_windows_cpu_brand",
+        "_get_macos_cpu_brand",
+        "_get_linux_cpu_brand",
+        "_detect_nvidia_gpu",
+        "_detect_other_gpu",
+        "_detect_integrated_gpu",
+        "_get_cuda_version",
+        "_detect_disk_type",
+        "_calculate_performance_metrics",
+        "_create_fallback_profile",
+        "save_profile",
+        "load_profile"
+      ],
+      "classes": [
+        "CPUInfo",
+        "GPUInfo",
+        "MemoryInfo",
+        "StorageInfo",
+        "NetworkInfo",
+        "HardwareProfile",
+        "HardwareProbe"
+      ]
+    },
+    "system\\__init__.py": {
+      "functions": [
+        "initialize_system"
+      ],
+      "classes": []
+    },
+    "tools\\calculator_tool.py": {
+      "functions": [
+        "eval_expr",
+        "eval_",
+        "calculate"
+      ],
+      "classes": []
+    },
+    "tools\\code_understanding_tool.py": {
+      "functions": [
+        "__init__",
+        "list_tools",
+        "describe_tool",
+        "execute"
+      ],
+      "classes": [
+        "CodeUnderstandingTool"
+      ]
+    },
+    "tools\\csv_tool.py": {
+      "functions": [
+        "__init__",
+        "analyze"
+      ],
+      "classes": [
+        "CsvTool"
+      ]
+    },
+    "tools\\dependency_checker.py": {
+      "functions": [
+        "check_package",
+        "check_dependencies",
+        "get_install_command",
+        "print_status_report",
+        "main",
+        "print_dependency_report"
+      ],
+      "classes": []
+    },
+    "tools\\file_system_tool.py": {
+      "functions": [
+        "list_files",
+        "read_file",
+        "write_file"
+      ],
+      "classes": []
+    },
+    "tools\\image_generation_tool.py": {
+      "functions": [
+        "__init__",
+        "create_image"
+      ],
+      "classes": [
+        "ImageGenerationTool"
+      ]
+    },
+    "tools\\image_recognition_tool.py": {
+      "functions": [
+        "recognize_image",
+        "save_model",
+        "load_model"
+      ],
+      "classes": []
+    },
+    "tools\\logic_tool.py": {
+      "functions": [
+        "__init__",
+        "_get_parser_evaluator",
+        "_get_nn_model_evaluator",
+        "evaluate_expression"
+      ],
+      "classes": [
+        "LogicTool"
+      ]
+    },
+    "tools\\math_tool.py": {
+      "functions": [
+        "_load_math_model",
+        "extract_arithmetic_problem",
+        "calculate"
+      ],
+      "classes": []
+    },
+    "tools\\natural_language_generation_tool.py": {
+      "functions": [
+        "generate_text",
+        "save_model",
+        "load_model"
+      ],
+      "classes": []
+    },
+    "tools\\speech_to_text_tool.py": {
+      "functions": [
+        "recognize_speech",
+        "save_model",
+        "load_model"
+      ],
+      "classes": []
+    },
+    "tools\\tool_dispatcher.py": {
+      "functions": [
+        "_get_ham",
+        "_safe_params_hash",
+        "_log_action_policy",
+        "set_llm_service",
+        "__init__",
+        "_execute_csv_analysis",
+        "_execute_image_creation",
+        "_execute_code_inspection",
+        "_execute_rag_query",
+        "_execute_math_calculation",
+        "_execute_logic_evaluation",
+        "_execute_translation",
+        "reload_tools",
+        "get_available_tools",
+        "add_model",
+        "replace_model",
+        "add_tool",
+        "replace_tool"
+      ],
+      "classes": [
+        "ToolDispatcher"
+      ]
+    },
+    "tools\\translation_tool.py": {
+      "functions": [
+        "_load_dictionary",
+        "_detect_language",
+        "translate",
+        "request_model_upgrade"
+      ],
+      "classes": []
+    },
+    "tools\\web_search_tool.py": {
+      "functions": [
+        "__init__",
+        "_load_config"
+      ],
+      "classes": [
+        "WebSearchTool"
+      ]
+    },
+    "tools\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "tools\\logic_model\\evaluate_logic_model.py": {
+      "functions": [
+        "load_logic_test_dataset",
+        "main"
+      ],
+      "classes": []
+    },
+    "tools\\logic_model\\lightweight_logic_model.py": {
+      "functions": [
+        "main",
+        "__init__",
+        "evaluate_proposition",
+        "_normalize_proposition",
+        "_safe_eval_logic",
+        "solve_logic_problem",
+        "solve_problem",
+        "_extract_logic_expression",
+        "train_on_dataset",
+        "generate_truth_table",
+        "save_model",
+        "load_model"
+      ],
+      "classes": [
+        "LightweightLogicModel"
+      ]
+    },
+    "tools\\logic_model\\logic_data_generator.py": {
+      "functions": [
+        "generate_simple_proposition",
+        "evaluate_proposition",
+        "generate_dataset",
+        "save_dataset"
+      ],
+      "classes": []
+    },
+    "tools\\logic_model\\logic_model_nn.py": {
+      "functions": [
+        "_ensure_tensorflow_is_imported",
+        "_tensorflow_is_available",
+        "get_logic_char_token_maps",
+        "preprocess_logic_data",
+        "__init__",
+        "_build_model",
+        "train",
+        "predict",
+        "get_prediction_history",
+        "create_dna_chain",
+        "get_dna_chain",
+        "save_model",
+        "load_model"
+      ],
+      "classes": [
+        "LogicModelResult",
+        "LogicNNModel"
+      ]
+    },
+    "tools\\logic_model\\logic_parser_eval.py": {
+      "functions": [
+        "__init__",
+        "_tokenize",
+        "_parse",
+        "_current_token_type",
+        "_consume",
+        "_parse_atom",
+        "_parse_and",
+        "_parse_or",
+        "_parse_factor",
+        "_parse_and_expression",
+        "_parse_or_expression",
+        "evaluate"
+      ],
+      "classes": [
+        "LogicParserEval"
+      ]
+    },
+    "tools\\logic_model\\simple_logic_generator.py": {
+      "functions": [
+        "generate_simple_logic_dataset",
+        "main"
+      ],
+      "classes": []
+    },
+    "tools\\logic_model\\train_logic_model.py": {
+      "functions": [
+        "load_logic_dataset",
+        "main"
+      ],
+      "classes": []
+    },
+    "tools\\logic_model\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "tools\\math_model\\data_generator.py": {
+      "functions": [
+        "generate_problem",
+        "generate_dataset"
+      ],
+      "classes": []
+    },
+    "tools\\math_model\\evaluate.py": {
+      "functions": [
+        "load_char_maps",
+        "load_test_dataset_csv",
+        "main"
+      ],
+      "classes": []
+    },
+    "tools\\math_model\\lightweight_math_model.py": {
+      "functions": [
+        "main",
+        "__init__",
+        "evaluate_expression",
+        "_safe_eval",
+        "solve_problem",
+        "_extract_expression",
+        "train_on_dataset",
+        "save_model",
+        "load_model"
+      ],
+      "classes": [
+        "LightweightMathModel"
+      ]
+    },
+    "tools\\math_model\\model.py": {
+      "functions": [
+        "_ensure_tensorflow_is_imported",
+        "_tensorflow_is_available",
+        "get_char_token_maps",
+        "__init__",
+        "_build_inference_models",
+        "_string_to_tokens",
+        "predict_sequence",
+        "get_prediction_history",
+        "create_dna_chain",
+        "get_dna_chain",
+        "load_for_inference"
+      ],
+      "classes": [
+        "MathModelResult",
+        "ArithmeticSeq2Seq"
+      ]
+    },
+    "tools\\math_model\\train.py": {
+      "functions": [
+        "load_dataset",
+        "main"
+      ],
+      "classes": []
+    },
+    "tools\\math_model\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "tools\\parameter_extractor\\extractor.py": {
+      "functions": [
+        "__init__",
+        "download_model_parameters",
+        "map_parameters",
+        "load_parameters_to_model"
+      ],
+      "classes": [
+        "ParameterExtractor"
+      ]
+    },
+    "tools\\parameter_extractor\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "tools\\translation_model\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "tools\\translation_model\\data\\__init__.py": {
+      "functions": [],
+      "classes": []
+    },
+    "utils\\async_utils.py": {
+      "functions": [
+        "timeout_wrapper",
+        "decorator"
+      ],
+      "classes": [
+        "AsyncManager"
+      ]
+    }
+  },
+  "test_files": {
+    "test_ai_editor.py": {
+      "test_functions": [
+        "test_text_processing",
+        "test_text_processing_with_transformations",
+        "test_code_processing",
+        "test_structured_data_processing",
+        "test_application_data_processing",
+        "test_invalid_data_type",
+        "test_text_content_processing",
+        "test_code_content_processing",
+        "test_application_data_processing",
+        "test_structured_data_processing",
+        "test_sandbox_execution",
+        "test_get_config"
+      ],
+      "imported_items": [
+        "DataProcessor",
+        "AIEditorService",
+        "get_config"
+      ]
+    },
+    "test_atlassian_integration.py": {
+      "test_functions": [
+        "test_confluence_integration_initialization",
+        "test_jira_integration_initialization",
+        "test_rovo_dev_agent_initialization",
+        "test_enhanced_connector_initialization",
+        "test_confluence_space_retrieval",
+        "test_jira_project_retrieval"
+      ],
+      "imported_items": [
+        "ConfluenceIntegration",
+        "JiraIntegration",
+        "RovoDevAgent",
+        "EnhancedRovoDevConnector"
+      ]
+    },
+    "test_basic.py": {
+      "test_functions": [
+        "test_python_version",
+        "test_basic_imports",
+        "test_project_structure",
+        "test_slow_example",
+        "test_environment_variables"
+      ],
+      "imported_items": []
+    },
+    "test_dependency_manager.py": {
+      "test_functions": [
+        "test_primary_dependency_available",
+        "test_fallback_dependency_used",
+        "test_all_dependencies_unavailable",
+        "test_import_name_mapping",
+        "test_fallbacks_disabled_in_production",
+        "test_dependency_report_generation",
+        "test_config_file_not_found"
+      ],
+      "imported_items": [
+        "DependencyManager",
+        "DependencyStatus"
+      ]
+    },
+    "test_hsp_connector.py": {
+      "test_functions": [
+        "test_hsp_connector_init",
+        "test_hsp_connector_connect_disconnect_mock_mode",
+        "test_hsp_connector_publish_message",
+        "test_hsp_connector_subscribe_and_receive",
+        "test_hsp_connector_ack_sending",
+        "test_hsp_connector_on_connect_callback",
+        "test_hsp_connector_on_disconnect_callback",
+        "test_hsp_connector_register_specific_callbacks"
+      ],
+      "imported_items": [
+        "HSPConnector",
+        "HSPMessageEnvelope",
+        "HSPFactPayload",
+        "HSPQoSParameters"
+      ]
+    },
+    "test_rovo_integration.py": {
+      "test_functions": [
+        "test_rovo_dev_agent_initialization",
+        "test_enhanced_connector_initialization",
+        "test_capability_loading",
+        "test_capability_parameters"
+      ],
+      "imported_items": [
+        "RovoDevAgent",
+        "EnhancedRovoDevConnector"
+      ]
+    },
+    "test_security.py": {
+      "test_functions": [
+        "test_permission_system_initialization",
+        "test_permission_check_allowed",
+        "test_permission_check_denied",
+        "test_add_user_rule",
+        "test_permission_check_with_resource_pattern",
+        "test_permission_check_with_action_restrictions",
+        "test_audit_logger_initialization",
+        "test_log_event",
+        "test_log_operation",
+        "test_flush_buffer",
+        "test_get_recent_events",
+        "test_sandbox_initialization",
+        "test_code_validation",
+        "test_method",
+        "test_method",
+        "test_safe_code_execution",
+        "test_dangerous_code_blocking"
+      ],
+      "imported_items": []
+    },
+    "test_simple.py": {
+      "test_functions": [
+        "test_simple"
+      ],
+      "imported_items": []
+    },
+    "agents\\test_audio_processing_agent.py": {
+      "test_functions": [
+        "test_audio_processing_agent_init",
+        "test_audio_processing_agent_perform_speech_recognition",
+        "test_audio_processing_agent_classify_audio",
+        "test_audio_processing_agent_enhance_audio",
+        "test_audio_processing_agent_handle_task_request_speech_recognition",
+        "test_audio_processing_agent_handle_task_request_unsupported_capability"
+      ],
+      "imported_items": [
+        "AudioProcessingAgent"
+      ]
+    },
+    "agents\\test_base_agent.py": {
+      "test_functions": [
+        "test_base_agent_init",
+        "test_base_agent_start_stop",
+        "test_base_agent_handle_task_request"
+      ],
+      "imported_items": [
+        "BaseAgent"
+      ]
+    },
+    "agents\\test_creative_writing_agent.py": {
+      "test_functions": [
+        "test_initialization",
+        "test_handle_marketing_copy_request",
+        "test_handle_polish_text_request",
+        "test_unsupported_capability"
+      ],
+      "imported_items": [
+        "CreativeWritingAgent",
+        "HSPTaskRequestPayload",
+        "HSPTaskResultPayload",
+        "HSPMessageEnvelope",
+        "MultiLLMService",
+        "ChatMessage",
+        "LLMResponse"
+      ]
+    },
+    "agents\\test_data_analysis_agent.py": {
+      "test_functions": [
+        "test_initialization",
+        "test_handle_task_request_success",
+        "test_handle_task_request_tool_failure"
+      ],
+      "imported_items": [
+        "DataAnalysisAgent",
+        "HSPTaskRequestPayload",
+        "HSPMessageEnvelope",
+        "ToolDispatcherResponse"
+      ]
+    },
+    "agents\\test_knowledge_graph_agent.py": {
+      "test_functions": [
+        "test_knowledge_graph_agent_init",
+        "test_knowledge_graph_agent_perform_entity_linking",
+        "test_knowledge_graph_agent_extract_relationships",
+        "test_knowledge_graph_agent_query_knowledge_graph",
+        "test_knowledge_graph_agent_handle_task_request_entity_linking",
+        "test_knowledge_graph_agent_handle_task_request_unsupported_capability"
+      ],
+      "imported_items": [
+        "KnowledgeGraphAgent"
+      ]
+    },
+    "core_ai\\test_agent_manager.py": {
+      "test_functions": [
+        "test_initialization",
+        "test_launch_agent_success",
+        "test_launch_agent_not_found",
+        "test_launch_agent_already_running",
+        "test_shutdown_agent_success",
+        "test_shutdown_agent_not_running",
+        "test_shutdown_all_agents"
+      ],
+      "imported_items": [
+        "AgentManager"
+      ]
+    },
+    "core_ai\\test_crisis_system.py": {
+      "test_functions": [
+        "test_01_initialization",
+        "test_02_assess_normal_input",
+        "test_03_assess_crisis_input_escalation",
+        "test_04_resolve_crisis",
+        "test_05_trigger_protocol",
+        "test_06_sentiment_analysis_and_logging"
+      ],
+      "imported_items": [
+        "CrisisSystem"
+      ]
+    },
+    "core_ai\\test_deep_mapper.py": {
+      "test_functions": [
+        "test_map",
+        "test_reverse_map"
+      ],
+      "imported_items": [
+        "DeepMapper",
+        "MappableDataObject"
+      ]
+    },
+    "core_ai\\test_emotion_system.py": {
+      "test_functions": [
+        "test_01_initialization",
+        "test_02_update_emotion_based_on_input",
+        "test_03_get_current_emotion_expression"
+      ],
+      "imported_items": [
+        "EmotionSystem"
+      ]
+    },
+    "core_ai\\test_time_system.py": {
+      "test_functions": [
+        "test_01_initialization",
+        "test_02_get_current_time",
+        "test_03_get_formatted_current_time",
+        "test_04_set_reminder",
+        "test_05_check_due_reminders",
+        "test_06_get_time_of_day_segment"
+      ],
+      "imported_items": [
+        "TimeSystem"
+      ]
+    },
+    "core_ai\\code_understanding\\test_lightweight_code_model.py": {
+      "test_functions": [
+        "test_list_tool_files",
+        "test_list_tool_files_non_existent_dir",
+        "test_analyze_tool_file_simple_class_and_function",
+        "test_analyze_tool_file_no_classes_or_functions",
+        "test_analyze_tool_file_parsing_error",
+        "test_analyze_tool_file_not_found",
+        "test_get_tool_structure_direct_valid_path",
+        "test_get_tool_structure_direct_invalid_path",
+        "test_get_tool_structure_path_looks_like_path_but_not_found",
+        "test_get_tool_structure_resolve_exact_name_dot_py",
+        "test_get_tool_structure_resolve_tool_prefix_pattern",
+        "test_get_tool_structure_resolve_suffix_tool_pattern",
+        "test_get_tool_structure_prefers_exact_over_pattern",
+        "test_get_tool_structure_ambiguous_patterns",
+        "test_get_tool_structure_name_not_found",
+        "test_get_tool_structure_invalid_tools_directory"
+      ],
+      "imported_items": [
+        "LightweightCodeModel"
+      ]
+    },
+    "core_ai\\compression\\test_alpha_deep_model.py": {
+      "test_functions": [
+        "test_compress_decompress_cycle",
+        "test_compression_idempotency",
+        "test_invalid_input_type_raises_error",
+        "test_partial_data_handling",
+        "test_dict_input",
+        "test_different_compression_algorithms",
+        "test_dna_chain_functionality",
+        "test_learning_mechanism",
+        "test_compression_stats"
+      ],
+      "imported_items": [
+        "AlphaDeepModel",
+        "DeepParameter",
+        "HAMGist",
+        "RelationalContext",
+        "Modalities",
+        "CompressionAlgorithm"
+      ]
+    },
+    "core_ai\\dialogue\\test_dialogue_manager.py": {
+      "test_functions": [
+        "test_get_simple_response_project_trigger",
+        "test_get_simple_response_standard_flow",
+        "test_start_session_greeting",
+        "test_handle_incoming_hsp_task_result",
+        "test_get_simple_response_no_project_trigger",
+        "test_get_simple_response_tool_dispatch_success",
+        "test_get_simple_response_tool_dispatch_error"
+      ],
+      "imported_items": [
+        "ToolDispatcherResponse"
+      ]
+    },
+    "core_ai\\dialogue\\test_project_coordinator.py": {
+      "test_functions": [
+        "test_handle_project_happy_path",
+        "test_handle_project_decomposition_fails",
+        "test_execute_task_graph_with_dependencies",
+        "test_dispatch_single_subtask_agent_not_found",
+        "test_dispatch_single_subtask_agent_launch_and_discovery",
+        "test_wait_for_task_result_timeout"
+      ],
+      "imported_items": [
+        "ProjectCoordinator"
+      ]
+    },
+    "core_ai\\formula_engine\\test_formula_engine.py": {
+      "test_functions": [
+        "test_load_formulas_valid_file",
+        "test_load_formulas_file_not_found",
+        "test_load_formulas_malformed_json",
+        "test_load_formulas_empty_list",
+        "test_match_input_simple_match",
+        "test_match_input_case_insensitive",
+        "test_match_input_priority",
+        "test_match_input_no_match",
+        "test_match_input_disabled_formula",
+        "test_match_input_empty_input",
+        "test_execute_formula",
+        "test_execute_formula_no_params"
+      ],
+      "imported_items": [
+        "FormulaEngine",
+        "FormulaConfigEntry"
+      ]
+    },
+    "core_ai\\language_models\\test_daily_language_model.py": {
+      "test_functions": [
+        "test_01_initialization",
+        "test_02_recognize_intent_calculate",
+        "test_03_recognize_intent_evaluate_logic",
+        "test_04_recognize_intent_translate_text",
+        "test_05_no_intent_recognized"
+      ],
+      "imported_items": [
+        "LLMResponse",
+        "ChatMessage",
+        "DailyLanguageModel",
+        "MultiLLMService",
+        "ModelProvider"
+      ]
+    },
+    "core_ai\\learning\\test_content_analyzer_module.py": {
+      "test_functions": [
+        "test_01_initialization",
+        "test_02_simple_entity_extraction",
+        "test_03_no_entities_extraction",
+        "test_04_simple_svo_relationship",
+        "test_05_prep_object_relationship",
+        "test_06_noun_prep_noun_relationship_of",
+        "test_07_noun_of_noun_org_has_attribute",
+        "test_08_noun_of_noun_attribute_of",
+        "test_09_noun_of_noun_org_has_attribute_different_tense",
+        "test_10_works_for_relationship",
+        "test_11_is_a_relationship",
+        "test_12_possessive_relationship"
+      ],
+      "imported_items": [
+        "ContentAnalyzerModule"
+      ]
+    },
+    "core_ai\\lis\\test_ham_lis_cache.py": {
+      "test_functions": [
+        "test_store_incident_success",
+        "test_get_incident_by_id_found",
+        "test_get_incident_by_id_not_found",
+        "test_store_and_get_incident_roundtrip",
+        "test_store_incident_missing_anomaly_event",
+        "test_query_incidents_no_filters",
+        "test_query_incidents_by_anomaly_type",
+        "test_query_incidents_by_status",
+        "test_query_incidents_by_tags_single",
+        "test_query_incidents_by_tags_multiple_all_must_match",
+        "test_query_incidents_by_min_severity",
+        "test_query_incidents_by_time_window",
+        "test_query_incidents_combined_filters",
+        "test_query_incidents_limit_and_sorting",
+        "test_query_incidents_empty_result",
+        "test_add_antibody_success",
+        "test_get_learned_antibodies_no_filters",
+        "test_get_learned_antibodies_filter_by_anomaly_type",
+        "test_get_learned_antibodies_filter_by_effectiveness",
+        "test_add_and_get_antibody_roundtrip"
+      ],
+      "imported_items": [
+        "HAMMemoryManager",
+        "HAMRecallResult"
+      ]
+    },
+    "core_ai\\lis\\test_tonal_repair_engine.py": {
+      "test_functions": [
+        "test_repair_output"
+      ],
+      "imported_items": [
+        "TonalRepairEngine"
+      ]
+    },
+    "core_ai\\memory\\test_ham_chromadb_integration.py": {
+      "test_functions": [
+        "test_01_store_experience_and_verify_chromadb_entry",
+        "test_02_semantic_search_chromadb_first",
+        "test_03_semantic_search_chromadb_failure_fallback"
+      ],
+      "imported_items": [
+        "HAMMemoryManager",
+        "HAMRecallResult"
+      ]
+    },
+    "core_ai\\memory\\test_ham_memory_manager.py": {
+      "test_functions": [
+        "test_01_initialization_and_empty_store",
+        "test_02_store_and_recall_text_experience",
+        "test_03_store_and_recall_generic_data",
+        "test_04_persistence",
+        "test_05_recall_non_existent_memory",
+        "test_06_query_memory_keywords",
+        "test_07_query_memory_data_type",
+        "test_08_query_memory_date_range",
+        "test_09_empty_text_abstraction",
+        "test_10_encryption_decryption",
+        "test_11_checksum_verification",
+        "test_12_advanced_text_abstraction_placeholders",
+        "test_13_store_experience_simulated_disk_full",
+        "test_14_store_experience_simulated_lag_warning",
+        "test_15_store_experience_simulated_lag_critical",
+        "test_16_get_current_disk_usage_gb",
+        "test_17_query_core_memory_return_multiple_candidates",
+        "test_18_encryption_failure",
+        "test_19_disk_full_handling",
+        "test_20_delete_old_experiences",
+        "test_21_concurrent_access",
+        "test_22_recall_raw_gist",
+        "test_23_rehydrate_with_relational_context"
+      ],
+      "imported_items": [
+        "HAMMemoryManager",
+        "HAMRecallResult",
+        "SimulatedDiskConfig",
+        "ResourceAwarenessService"
+      ]
+    },
+    "core_ai\\meta_formulas\\test_meta_formulas.py": {
+      "test_functions": [
+        "test_meta_formula",
+        "test_errx",
+        "test_undefined_field"
+      ],
+      "imported_items": [
+        "MetaFormula",
+        "ErrX",
+        "UndefinedField"
+      ]
+    },
+    "core_ai\\personality\\test_personality_manager.py": {
+      "test_functions": [
+        "test_01_initialization_default_path",
+        "test_02_initialization_custom_path",
+        "test_03_load_personality",
+        "test_04_load_non_existent_profile",
+        "test_05_get_trait"
+      ],
+      "imported_items": [
+        "PersonalityManager"
+      ]
+    },
+    "core_ai\\rag\\test_rag_manager.py": {
+      "test_functions": [],
+      "imported_items": []
+    },
+    "core_ai\\service_discovery\\test_service_discovery_module.py": {
+      "test_functions": [
+        "test_init",
+        "test_process_capability_advertisement_new_and_update",
+        "test_process_capability_advertisement_missing_ids",
+        "test_get_capability_by_id",
+        "test_find_capabilities_no_filters",
+        "test_find_capabilities_by_id",
+        "test_find_capabilities_by_name",
+        "test_find_capabilities_by_tags",
+        "test_find_capabilities_by_min_trust",
+        "test_find_capabilities_sort_by_trust",
+        "test_find_capabilities_combined_filters_and_sort",
+        "test_staleness_checks",
+        "test_get_capability_by_id_staleness_direct_variant",
+        "test_get_all_capabilities",
+        "test_get_all_capabilities_async"
+      ],
+      "imported_items": [
+        "ServiceDiscoveryModule",
+        "TrustManager",
+        "HSPCapabilityAdvertisementPayload",
+        "HSPMessageEnvelope"
+      ]
+    },
+    "creation\\test_creation_engine.py": {
+      "test_functions": [
+        "test_create_model",
+        "test_create_tool"
+      ],
+      "imported_items": [
+        "CreationEngine"
+      ]
+    },
+    "economy\\test_economy_db.py": {
+      "test_functions": [
+        "test_init_db",
+        "test_get_user_balance_new_user",
+        "test_update_user_balance_add",
+        "test_update_user_balance_debit_sufficient_funds",
+        "test_update_user_balance_debit_insufficient_funds",
+        "test_update_user_balance_multiple_updates"
+      ],
+      "imported_items": [
+        "EconomyDB"
+      ]
+    },
+    "economy\\test_economy_manager.py": {
+      "test_functions": [
+        "test_initialization",
+        "test_get_balance",
+        "test_process_transaction_success",
+        "test_process_transaction_insufficient_funds",
+        "test_process_transaction_missing_data",
+        "test_update_rules_valid",
+        "test_update_rules_invalid_tax_rate_high",
+        "test_update_rules_invalid_tax_rate_low",
+        "test_update_rules_invalid_allowance"
+      ],
+      "imported_items": [
+        "EconomyManager",
+        "EconomyDB"
+      ]
+    },
+    "evaluation\\test_evaluation_db.py": {
+      "test_functions": [
+        "test_init_db",
+        "test_add_evaluation",
+        "test_get_evaluations_by_task_id",
+        "test_get_average_metrics",
+        "test_get_average_metrics_no_data"
+      ],
+      "imported_items": [
+        "EvaluationDB"
+      ]
+    },
+    "evaluation\\test_evaluator.py": {
+      "test_functions": [
+        "test_evaluate"
+      ],
+      "imported_items": [
+        "Evaluator"
+      ]
+    },
+    "evaluation\\test_task_evaluator.py": {
+      "test_functions": [
+        "test_calculate_objective_metrics_success",
+        "test_calculate_objective_metrics_failure",
+        "test_analyze_positive_feedback",
+        "test_analyze_negative_feedback",
+        "test_analyze_neutral_feedback",
+        "test_analyze_mixed_feedback",
+        "test_analyze_usability_feedback",
+        "test_evaluate_task_execution_failure",
+        "test_generate_improvements_error",
+        "test_generate_improvements_performance",
+        "test_generate_improvements_quality",
+        "test_generate_improvements_general",
+        "test_evaluate_task_execution_no_expected_output"
+      ],
+      "imported_items": [
+        "TaskExecutionEvaluator",
+        "MetricsCalculator",
+        "FeedbackAnalyzer",
+        "EvaluationDB"
+      ]
+    },
+    "fragmenta\\test_fragmenta_orchestrator.py": {
+      "test_functions": [
+        "test_process_complex_task"
+      ],
+      "imported_items": [
+        "FragmentaOrchestrator",
+        "HAMMemoryManager"
+      ]
+    },
+    "game\\test_assets.py": {
+      "test_functions": [
+        "test_asset_loading",
+        "test_specific_assets_loaded"
+      ],
+      "imported_items": [
+        "Game"
+      ]
+    },
+    "game\\test_main.py": {
+      "test_functions": [
+        "test_game_initialization"
+      ],
+      "imported_items": [
+        "Game"
+      ]
+    },
+    "game\\test_npcs.py": {
+      "test_functions": [
+        "test_npc_creation",
+        "test_npc_creation_invalid_id"
+      ],
+      "imported_items": [
+        "Game",
+        "create_npc",
+        "load_npc_data",
+        "npcs"
+      ]
+    },
+    "hsp\\test_hsp_ack_retry.py": {
+      "test_functions": [
+        "test_scenario_1_successful_ack",
+        "test_scenario_2_delayed_ack",
+        "test_scenario_3_no_ack_max_retries",
+        "test_scenario_4_hsp_unavailable_fallback_success",
+        "test_scenario_5_hsp_unavailable_fallback_failure"
+      ],
+      "imported_items": [
+        "HSPConnector",
+        "HSPMessageEnvelope",
+        "HSPFactPayload",
+        "HSPQoSParameters",
+        "HSPAcknowledgementPayload"
+      ]
+    },
+    "hsp\\test_hsp_advanced_integration.py": {
+      "test_functions": [
+        "test_hsp_connector_concurrent_task_processing",
+        "test_hsp_connector_fact_propagation_with_filtering",
+        "test_hsp_connector_capability_advertisement_and_discovery",
+        "test_hsp_connector_error_recovery_and_retry",
+        "test_hsp_connector_memory_integration",
+        "test_hsp_connector_security_and_authentication"
+      ],
+      "imported_items": [
+        "HSPConnector",
+        "HAMMemoryManager",
+        "LearningManager",
+        "ServiceDiscoveryModule"
+      ]
+    },
+    "hsp\\test_hsp_connector.py": {
+      "test_functions": [
+        "test_hsp_connector_init",
+        "test_hsp_connector_connect_disconnect_mock_mode",
+        "test_hsp_connector_publish_message"
+      ],
+      "imported_items": [
+        "HSPConnector",
+        "HSPMessageEnvelope",
+        "HSPFactPayload",
+        "HSPQoSParameters"
+      ]
+    },
+    "hsp\\test_hsp_enhanced_integration.py": {
+      "test_functions": [
+        "test_hsp_connector_message_queue_overflow",
+        "test_hsp_connector_network_disconnect_recovery",
+        "test_hsp_connector_large_message_handling",
+        "test_hsp_connector_concurrent_subscriptions",
+        "test_hsp_connector_message_ordering",
+        "test_hsp_connector_error_handling",
+        "test_hsp_connector_qos_levels"
+      ],
+      "imported_items": [
+        "HSPConnector",
+        "HAMMemoryManager",
+        "LearningManager",
+        "ServiceDiscoveryModule"
+      ]
+    },
+    "hsp\\test_hsp_integration.py": {
+      "test_functions": [
+        "test_learning_manager_publishes_fact_via_hsp",
+        "test_main_ai_consumes_nl_fact_and_updates_kg_check_trust_influence",
+        "test_main_ai_consumes_structured_fact_updates_kg",
+        "test_ca_semantic_mapping_for_hsp_structured_fact",
+        "test_dm_delegates_task_to_specialist_ai_and_gets_result",
+        "test_dm_handles_hsp_task_failure_and_falls_back"
+      ],
+      "imported_items": [
+        "HSPConnector",
+        "LearningManager",
+        "FactExtractorModule",
+        "ContentAnalyzerModule",
+        "TrustManager",
+        "HAMMemoryManager",
+        "MultiLLMService",
+        "ModelConfig",
+        "ModelProvider",
+        "ChatMessage",
+        "LLMResponse",
+        "DialogueManager",
+        "ToolDispatcher",
+        "FormulaEngine",
+        "ToolDispatcherResponse",
+        "PersonalityManager",
+        "InternalBus",
+        "MessageBridge",
+        "DataAligner"
+      ]
+    },
+    "hsp\\test_hsp_refactored.py": {
+      "test_functions": [
+        "test_message_bridge_external_to_internal",
+        "test_message_bridge_internal_to_external"
+      ],
+      "imported_items": [
+        "ExternalConnector",
+        "InternalBus",
+        "DataAligner",
+        "MessageBridge"
+      ]
+    },
+    "hsp\\test_hsp_simple.py": {
+      "test_functions": [
+        "test_hsp_connector_init",
+        "test_publish_fact"
+      ],
+      "imported_items": [
+        "HSPConnector",
+        "MessageBridge",
+        "InternalBus",
+        "DataAligner",
+        "HSPFactPayload"
+      ]
+    },
+    "hsp\\test_mqtt_broker_startup.py": {
+      "test_functions": [
+        "test_broker_and_connector_startup"
+      ],
+      "imported_items": [
+        "HSPConnector"
+      ]
+    },
+    "integration\\test_agent_collaboration.py": {
+      "test_functions": [
+        "test_handle_complex_project_with_dag",
+        "test_handle_project_no_dependencies",
+        "test_handle_project_failing_subtask",
+        "test_handle_project_dynamic_agent_launch"
+      ],
+      "imported_items": [
+        "initialize_services",
+        "get_services",
+        "shutdown_services",
+        "DialogueManager"
+      ]
+    },
+    "integration\\test_atlassian_integration.py": {
+      "test_functions": [
+        "test_configure_atlassian_success",
+        "test_get_atlassian_status_without_configuration",
+        "test_get_jira_projects_without_configuration",
+        "test_create_confluence_page_without_enhanced_bridge"
+      ],
+      "imported_items": [
+        "app",
+        "AtlassianConfig"
+      ]
+    },
+    "integration\\test_end_to_end_project_flow.py": {
+      "test_functions": [
+        "test_full_project_flow_with_real_agent"
+      ],
+      "imported_items": [
+        "AgentManager",
+        "ProjectCoordinator",
+        "ServiceDiscoveryModule",
+        "TrustManager",
+        "HAMMemoryManager",
+        "PersonalityManager",
+        "HSPConnector",
+        "MultiLLMService",
+        "HSPConnector",
+        "HSPCapabilityAdvertisementPayload",
+        "HSPTaskRequestPayload",
+        "HSPTaskResultPayload"
+      ]
+    },
+    "integration\\test_knowledge_update.py": {
+      "test_functions": [
+        "test_knowledge_update"
+      ],
+      "imported_items": []
+    },
+    "integration\\test_learning_and_trust.py": {
+      "test_functions": [
+        "test_duplicate_fact_increments_corroboration",
+        "test_fact_from_low_trust_source_is_discarded",
+        "test_fact_from_high_trust_source_is_accepted"
+      ],
+      "imported_items": [
+        "LearningManager",
+        "TrustManager",
+        "HAMMemoryManager",
+        "HSPFactPayload",
+        "HSPMessageEnvelope"
+      ]
+    },
+    "integration\\test_self_improvement.py": {
+      "test_functions": [
+        "test_self_improvement"
+      ],
+      "imported_items": []
+    },
+    "integrations\\test_atlassian_api.py": {
+      "test_functions": [
+        "test_atlassian_config_model",
+        "test_atlassian_cli_bridge_initialization",
+        "test_get_jira_projects",
+        "test_enhanced_atlassian_bridge_initialization"
+      ],
+      "imported_items": [
+        "AtlassianConfig",
+        "atlassian_router",
+        "AtlassianCLIBridge",
+        "EnhancedAtlassianBridge"
+      ]
+    },
+    "integrations\\test_atlassian_bridge.py": {
+      "test_functions": [
+        "test_create_confluence_page",
+        "test_search_jira_issues",
+        "test_update_confluence_page",
+        "test_get_confluence_spaces",
+        "test_get_jira_projects",
+        "test_error_handling",
+        "test_content_formatting",
+        "test_jira_field_mapping"
+      ],
+      "imported_items": [
+        "AtlassianBridge",
+        "EnhancedRovoDevConnector"
+      ]
+    },
+    "integrations\\test_atlassian_bridge_fallback.py": {
+      "test_functions": [
+        "test_endpoint_config_loading",
+        "test_successful_primary_endpoint",
+        "test_fallback_to_backup_endpoint",
+        "test_all_endpoints_fail",
+        "test_cache_functionality",
+        "test_expired_cache",
+        "test_offline_queue",
+        "test_offline_queue_processing",
+        "test_health_monitoring",
+        "test_force_endpoint_switch",
+        "test_health_status",
+        "test_confluence_operations_with_fallback",
+        "test_jira_operations_with_fallback",
+        "test_cache_with_get_requests",
+        "test_offline_mode_with_expired_cache"
+      ],
+      "imported_items": [
+        "AtlassianBridge",
+        "EndpointConfig",
+        "CacheEntry",
+        "EnhancedRovoDevConnector"
+      ]
+    },
+    "integrations\\test_rovo_dev_agent.py": {
+      "test_functions": [
+        "test_agent_initialization",
+        "test_capability_parameters",
+        "test_agent_start_stop",
+        "test_code_analysis_task",
+        "test_documentation_generation_task",
+        "test_issue_tracking_task",
+        "test_task_submission_and_processing",
+        "test_task_processing",
+        "test_task_error_handling",
+        "test_metrics_update",
+        "test_status_reporting",
+        "test_task_history",
+        "test_report_formatting",
+        "test_unsupported_capability",
+        "test_full_workflow",
+        "test_real_confluence_integration",
+        "test_real_jira_integration"
+      ],
+      "imported_items": [
+        "RovoDevAgent",
+        "HSPTask",
+        "HSPCapability"
+      ]
+    },
+    "integrations\\test_rovo_dev_agent_recovery.py": {
+      "test_functions": [
+        "test_state_persistence",
+        "test_state_recovery",
+        "test_task_timeout_handling",
+        "test_task_retry_mechanism",
+        "test_degraded_mode_activation",
+        "test_degraded_mode_exit",
+        "test_error_rate_monitoring",
+        "test_retryable_error_detection",
+        "test_task_error_handling",
+        "test_recovery_status",
+        "test_startup_failure_recovery",
+        "test_health_monitoring_loop",
+        "test_checkpoint_functionality",
+        "test_task_health_monitoring"
+      ],
+      "imported_items": [
+        "RovoDevAgent",
+        "TaskState",
+        "AgentRecoveryState",
+        "EnhancedRovoDevConnector",
+        "AtlassianBridge",
+        "HSPTask",
+        "HSPCapability"
+      ]
+    },
+    "integrations\\test_rovo_dev_connector.py": {
+      "test_functions": [
+        "test_context_manager",
+        "test_authentication_success",
+        "test_authentication_failure",
+        "test_make_request_success",
+        "test_make_request_error",
+        "test_caching_mechanism",
+        "test_connection_testing",
+        "test_connection_testing_with_failures",
+        "test_user_info_with_caching"
+      ],
+      "imported_items": [
+        "EnhancedRovoDevConnector"
+      ]
+    },
+    "mcp\\test_context7_connector.py": {
+      "test_functions": [
+        "test_config_creation",
+        "test_config_defaults",
+        "test_connector_initialization",
+        "test_connect_success",
+        "test_disconnect",
+        "test_send_context",
+        "test_request_context",
+        "test_collaborate_with_model",
+        "test_compress_context",
+        "test_connection_required_error",
+        "test_capabilities_discovery",
+        "test_unhandled_message_type",
+        "test_dialogue_manager_integration",
+        "test_ham_memory_integration",
+        "test_context_mapping",
+        "test_mcp_message_structure",
+        "test_mcp_response_structure",
+        "test_mcp_capability_structure",
+        "test_concurrent_context_requests",
+        "test_large_context_handling"
+      ],
+      "imported_items": [
+        "MCPMessage",
+        "MCPResponse",
+        "MCPCapability"
+      ]
+    },
+    "mcp\\test_mcp_connector.py": {
+      "test_functions": [
+        "test_mcp_connector_initialization",
+        "test_connect_and_disconnect",
+        "test_send_command",
+        "test_on_message_callback"
+      ],
+      "imported_items": [
+        "MCPConnector",
+        "MCPCommandRequest"
+      ]
+    },
+    "meta\\test_adaptive_learning_controller.py": {
+      "test_functions": [
+        "test_analyze_trend_improving",
+        "test_analyze_trend_degrading",
+        "test_analyze_trend_stable",
+        "test_analyze_trend_empty_history",
+        "test_select_improving_trend",
+        "test_select_degrading_complex_task",
+        "test_select_degrading_simple_task",
+        "test_select_stable_low_confidence_complex_task",
+        "test_select_stable_high_confidence_simple_task",
+        "test_adapt_learning_strategy",
+        "test_optimize_parameters_degrading_performance",
+        "test_optimize_parameters_improving_performance"
+      ],
+      "imported_items": []
+    },
+    "meta\\test_learning_log_db.py": {
+      "test_functions": [
+        "test_init_db",
+        "test_add_log_entry",
+        "test_get_all_log_entries",
+        "test_get_all_log_entries_empty"
+      ],
+      "imported_items": [
+        "LearningLogDB"
+      ]
+    },
+    "modules_fragmenta\\test_element_layer.py": {
+      "test_functions": [
+        "test_01_initialization",
+        "test_02_process_elements"
+      ],
+      "imported_items": [
+        "ElementLayer"
+      ]
+    },
+    "modules_fragmenta\\test_vision_tone_inverter.py": {
+      "test_functions": [
+        "test_01_initialization",
+        "test_02_invert_visual_tone"
+      ],
+      "imported_items": [
+        "VisionToneInverter"
+      ]
+    },
+    "pet\\test_pet_manager.py": {
+      "test_functions": [
+        "test_initialization",
+        "test_get_current_state",
+        "test_update_state_over_time",
+        "test_handle_interaction_pet",
+        "test_handle_interaction_feed",
+        "test_handle_interaction_play",
+        "test_handle_interaction_rest",
+        "test_handle_interaction_unknown",
+        "test_update_behavior_valid",
+        "test_update_behavior_invalid_type",
+        "test_update_behavior_invalid_key"
+      ],
+      "imported_items": [
+        "PetManager"
+      ]
+    },
+    "search\\test_search_engine.py": {
+      "test_functions": [
+        "test_search"
+      ],
+      "imported_items": [
+        "SearchEngine"
+      ]
+    },
+    "services\\test_ai_virtual_input_service.py": {
+      "test_functions": [
+        "test_initialization_defaults",
+        "test_process_mouse_command_move_relative_to_window",
+        "test_process_mouse_command_move_clamps_coordinates",
+        "test_process_mouse_command_click_simulation",
+        "test_process_mouse_command_unimplemented_action_logs",
+        "test_process_keyboard_command_type_string",
+        "test_process_keyboard_command_type_string_no_target",
+        "test_get_action_log_and_clear",
+        "test_get_virtual_state",
+        "test_load_and_get_virtual_ui",
+        "test_find_element_by_id",
+        "test_process_mouse_command_hover",
+        "test_process_mouse_command_scroll",
+        "test_process_keyboard_command_press_keys_with_target",
+        "test_process_keyboard_command_special_key_with_target"
+      ],
+      "imported_items": [
+        "AIVirtualInputService"
+      ]
+    },
+    "services\\test_audio_service.py": {
+      "test_functions": [
+        "test_01_initialization",
+        "test_02_speech_to_text_success",
+        "test_02_speech_to_text_with_none_input",
+        "test_02_speech_to_text_with_empty_input",
+        "test_03_text_to_speech_success",
+        "test_03_text_to_speech_with_empty_string",
+        "test_03_text_to_speech_with_none",
+        "test_04_speech_to_text_with_sentiment_analysis_demo_mode",
+        "test_04_speech_to_text_with_sentiment_analysis_non_demo_mode",
+        "test_05_audio_service_config_loading"
+      ],
+      "imported_items": [
+        "AudioService",
+        "get_config",
+        "get_simulated_resources"
+      ]
+    },
+    "services\\test_hot_endpoints.py": {
+      "test_functions": [
+        "test_hot_status_endpoint_basic_structure"
+      ],
+      "imported_items": [
+        "app"
+      ]
+    },
+    "services\\test_llm_interface.py": {
+      "test_functions": [
+        "test_01_initialization",
+        "test_02_generate_response",
+        "test_03_list_models"
+      ],
+      "imported_items": [
+        "MultiLLMService"
+      ]
+    },
+    "services\\test_main_api_server.py": {
+      "test_functions": [
+        "test_read_main",
+        "test_get_status"
+      ],
+      "imported_items": [
+        "app",
+        "initialize_services",
+        "shutdown_services"
+      ]
+    },
+    "services\\test_main_api_server_hsp.py": {
+      "test_functions": [
+        "test_list_hsp_services_empty",
+        "test_list_hsp_services_with_advertisements",
+        "test_request_hsp_task_success",
+        "test_request_hsp_task_capability_not_found",
+        "test_get_hsp_task_status_pending",
+        "test_get_hsp_task_status_completed_from_ham",
+        "test_get_hsp_task_status_failed_from_ham",
+        "test_get_hsp_task_status_unknown"
+      ],
+      "imported_items": [
+        "app",
+        "initialize_services",
+        "get_services",
+        "shutdown_services",
+        "DEFAULT_AI_ID",
+        "HSPConnector",
+        "HSPCapabilityAdvertisementPayload",
+        "HSPTaskRequestPayload",
+        "HSPTaskResultPayload",
+        "HSPMessageEnvelope",
+        "ServiceDiscoveryModule",
+        "DialogueManager",
+        "ProjectCoordinator"
+      ]
+    },
+    "services\\test_node_services.py": {
+      "test_functions": [
+        "test_node_service_sends_data_to_python_api",
+        "test_node_service_status_check",
+        "test_node_service_data_exchange_formats",
+        "test_node_service_error_handling",
+        "test_node_service_with_empty_data"
+      ],
+      "imported_items": []
+    },
+    "services\\test_resource_awareness_service.py": {
+      "test_functions": [
+        "test_load_valid_config",
+        "test_load_non_existent_config_falls_back_to_default",
+        "test_load_malformed_yaml_falls_back_to_default",
+        "test_load_incomplete_yaml_falls_back_to_default",
+        "test_default_config_path_loading_if_file_exists"
+      ],
+      "imported_items": [
+        "ResourceAwarenessService",
+        "DEFAULT_CONFIG_PATH"
+      ]
+    },
+    "services\\test_sandbox_executor.py": {
+      "test_functions": [
+        "test_run_successful_execution",
+        "test_method",
+        "test_run_execution_error_in_tool",
+        "test_run_timeout_expired",
+        "test_run_non_json_output",
+        "test_run_stderr_output"
+      ],
+      "imported_items": [
+        "SandboxExecutor",
+        "SANDBOX_RUNNER_SCRIPT_TEMPLATE",
+        "DEFAULT_SANDBOX_TIMEOUT"
+      ]
+    },
+    "services\\test_vision_service.py": {
+      "test_functions": [
+        "test_01_initialization",
+        "test_02_analyze_image",
+        "test_03_compare_images"
+      ],
+      "imported_items": [
+        "VisionService"
+      ]
+    },
+    "shared\\test_key_manager.py": {
+      "test_functions": [
+        "test_get_key_from_environment",
+        "test_get_key_not_in_environment",
+        "test_demo_mode_detection_from_env",
+        "test_get_key_in_demo_mode",
+        "test_not_in_demo_mode",
+        "test_generate_ham_key_not_in_demo_mode",
+        "test_generate_ham_key_in_demo_mode"
+      ],
+      "imported_items": [
+        "UnifiedKeyManager"
+      ]
+    },
+    "shared\\utils\\test_cleanup_utils.py": {
+      "test_functions": [
+        "test_cleanup_temp_files",
+        "test_cleanup_cache_data"
+      ],
+      "imported_items": [
+        "cleanup_utils"
+      ]
+    },
+    "tools\\test_code_understanding_tool.py": {
+      "test_functions": [
+        "test_list_tools_success",
+        "test_list_tools_no_tools_found",
+        "test_describe_tool_found",
+        "test_describe_tool_structure_with_no_docstrings_or_params",
+        "test_describe_tool_not_found",
+        "test_execute_unknown_action",
+        "test_execute_describe_tool_missing_tool_name"
+      ],
+      "imported_items": [
+        "CodeUnderstandingTool",
+        "LightweightCodeModel"
+      ]
+    },
+    "tools\\test_logic_model.py": {
+      "test_functions": [
+        "test_01_logic_data_generator",
+        "test_02_logic_parser_eval",
+        "test_03_logic_model_nn_structure_and_helpers",
+        "test_04_logic_tool_interface",
+        "test_05_tool_dispatcher_logic_routing"
+      ],
+      "imported_items": [
+        "logic_data_generator",
+        "logic_model_nn",
+        "LogicParserEval",
+        "logic_tool",
+        "evaluate_expression as evaluate_logic_via_tool",
+        "ToolDispatcher",
+        "LogicNNModel",
+        "get_logic_char_token_maps",
+        "preprocess_logic_data",
+        "dependency_manager"
+      ]
+    },
+    "tools\\test_math_model.py": {
+      "test_functions": [
+        "test_data_generator_csv",
+        "test_data_generator_json",
+        "test_model_build_and_char_maps",
+        "test_extract_arithmetic_problem",
+        "test_math_tool_calculate_model_unavailable",
+        "test_tool_dispatcher_math_routing"
+      ],
+      "imported_items": [
+        "data_generator",
+        "extract_arithmetic_problem",
+        "calculate as calculate_via_tool",
+        "MODEL_WEIGHTS_PATH",
+        "CHAR_MAPS_PATH",
+        "ToolDispatcher",
+        "ArithmeticSeq2Seq",
+        "get_char_token_maps",
+        "dependency_manager"
+      ]
+    },
+    "tools\\test_parameter_extractor.py": {
+      "test_functions": [
+        "test_download_model_parameters",
+        "test_map_parameters",
+        "test_load_parameters_to_model"
+      ],
+      "imported_items": [
+        "ParameterExtractor"
+      ]
+    },
+    "tools\\test_tool_dispatcher_logging.py": {
+      "test_functions": [
+        "test_tool_dispatcher_action_policy_logged_smoke"
+      ],
+      "imported_items": [
+        "initialize_services",
+        "ham_manager_instance",
+        "tool_dispatcher_instance",
+        "tool_dispatcher_instance as td_instance",
+        "ham_manager_instance as ham_instance"
+      ]
+    },
+    "tools\\test_translation_model.py": {
+      "test_functions": [
+        "test_01_load_dictionary",
+        "test_02_detect_language",
+        "test_03_translate_function",
+        "test_04_request_model_upgrade_hook",
+        "test_05_tool_dispatcher_translation_routing",
+        "test_06_dictionary_load_failure"
+      ],
+      "imported_items": [
+        "translation_tool",
+        "ToolDispatcher"
+      ]
+    }
+  }
+}

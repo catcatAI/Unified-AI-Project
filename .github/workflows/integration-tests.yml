@@ -1,0 +1,122 @@
+# GitHub Actions workflow for integration tests
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # 每天UTC时间0点运行
+    - cron: '0 0 * * *'
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, "3.10", "3.11"]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test]"
+        pip install pytest pytest-asyncio pytest-cov pytest-html pytest-xdist
+    
+    - name: Run integration tests
+      run: |
+        cd apps/backend
+        python -m pytest tests/integration/ -v --tb=short --cov=src --cov-report=xml --cov-report=html --junitxml=test-results.xml -m "not slow and not performance"
+    
+    - name: Run performance tests
+      run: |
+        cd apps/backend
+        python -m pytest tests/integration/ -v --tb=short -m "performance" --benchmark-only --benchmark-json=benchmark-results.json
+      if: matrix.python-version == '3.10'
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-python-${{ matrix.python-version }}
+        path: |
+          apps/backend/test-results.xml
+          apps/backend/coverage.xml
+          apps/backend/htmlcov/
+          apps/backend/benchmark-results.json
+    
+    - name: Publish test results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: apps/backend/test-results.xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      if: matrix.python-version == '3.10'
+      with:
+        file: apps/backend/coverage.xml
+        flags: integration-tests
+        name: codecov-integration-tests
+
+  system-tests:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: success()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test]"
+        pip install pytest pytest-asyncio pytest-cov pytest-html
+    
+    - name: Run system-level integration tests
+      run: |
+        cd apps/backend
+        python -m pytest tests/integration/test_system_level_integration.py -v --tb=short --cov=src --cov-report=xml --junitxml=system-test-results.xml -m "system_integration"
+    
+    - name: Upload system test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: system-test-results
+        path: |
+          apps/backend/system-test-results.xml
+          apps/backend/coverage.xml
+
+  notification:
+    runs-on: ubuntu-latest
+    needs: [integration-tests, system-tests]
+    if: failure()
+    
+    steps:
+    - name: Send failure notification
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: Integration Tests Failed - Unified AI Project
+        body: Integration tests failed on branch ${{ github.ref }}. Please check the test results.
+        to: team@unified-ai-project.org
+        from: github-actions@unified-ai-project.org
+      if: false  # 禁用邮件通知，仅作为示例

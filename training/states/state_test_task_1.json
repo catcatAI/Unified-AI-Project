@@ -1,0 +1,30 @@
+{
+  "task_id": "test_task_1",
+  "model_name": "test_model",
+  "current_epoch": 5,
+  "total_epochs": 10,
+  "metrics": {
+    "loss": 0.45,
+    "accuracy": 0.82
+  },
+  "model_state": {
+    "layer1": [
+      0.1,
+      0.2,
+      0.3
+    ]
+  },
+  "optimizer_state": {
+    "lr": 0.001
+  },
+  "learning_rate": 0.001,
+  "batch_size": 32,
+  "progress": 50.0,
+  "start_time": 1758190534.8050137,
+  "last_update_time": 1758190534.8050137,
+  "config": {
+    "batch_size": 32,
+    "epochs": 10
+  },
+  "additional_data": {}
+}

@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-09-18T22:20:03.680054",
+  "summary": {
+    "total_tests": 150,
+    "passed_tests": 135,
+    "failed_tests": 10,
+    "pass_rate": 0.9
+  },
+  "failure_analysis": [
+    {
+      "pattern": "断言失败",
+      "count": 2,
+      "affected_tests": [
+        "tests/unit/test_user_service.py::test_update_user",
+        "tests/unit/test_payment_service.py::test_refund_payment"
+      ],
+      "suggestion": "检查断言条件是否正确，确保测试数据和预期结果匹配"
+    },
+    {
+      "pattern": "超时错误",
+      "count": 1,
+      "affected_tests": [
+        "tests/unit/test_product_service.py::test_get_product"
+      ],
+      "suggestion": "检查网络连接或增加超时时间，优化被测试代码的性能"
+    },
+    {
+      "pattern": "连接错误",
+      "count": 1,
+      "affected_tests": [
+        "tests/unit/test_order_service.py::test_delete_order"
+      ],
+      "suggestion": "检查服务是否正常运行，网络配置是否正确"
+    }
+  ],
+  "performance_regressions": [],
+  "coverage_trends": {}
+}

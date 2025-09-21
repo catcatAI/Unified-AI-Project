@@ -1,0 +1,23 @@
+import sys
+import os
+import pytest
+
+# 添加项目路径到Python路径
+project_root = os.path.join(os.path.dirname(__file__), '..', '..')
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, 'src'))
+
+# 运行一个简单的测试
+if __name__ == "__main__":
+    # 改变当前工作目录到项目根目录
+    os.chdir(project_root)
+    
+    # 运行测试
+    result = pytest.main([
+        '-v', 
+        '--tb=short',
+        'apps/backend/tests/hsp/test_basic.py::test_basic'
+    ])
+    
+    print(f"Test result: {result}")
+    sys.exit(result)

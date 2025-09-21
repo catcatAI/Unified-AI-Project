@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试结果可视化报告</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .chart-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .summary-table th, .summary-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .summary-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .summary-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>测试结果可视化报告</h1>
+        <p>生成时间: 2025-09-18 22:20:03</p>
+        
+        <h2>测试结果分布</h2>
+        <div class="chart-container">
+            <img src="test_distribution.png" alt="测试结果分布">
+        </div>
+        
+        <h2>测试趋势分析</h2>
+        <div class="chart-container">
+            <img src="test_trends.png" alt="测试趋势分析">
+        </div>
+        
+        <h2>测试摘要</h2>
+        <table class="summary-table">
+            <tr>
+                <th>指标</th>
+                <th>数值</th>
+            </tr>
+            <tr>
+                <td>总测试数</td>
+                <td>150</td>
+            </tr>
+            <tr>
+                <td>通过测试数</td>
+                <td>135</td>
+            </tr>
+            <tr>
+                <td>失败测试数</td>
+                <td>10</td>
+            </tr>
+            <tr>
+                <td>跳过测试数</td>
+                <td>5</td>
+            </tr>
+            <tr>
+                <td>通过率</td>
+                <td>90.00%</td>
+            </tr>
+            <tr>
+                <td>总执行时间</td>
+                <td>180.50 秒</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>
+            

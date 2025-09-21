@@ -1,0 +1,114 @@
+{
+  "timestamp": "2023-01-15T14:30:00",
+  "summary": {
+    "total": 150,
+    "passed": 140,
+    "failed": 5,
+    "skipped": 5,
+    "duration": 160.0,
+    "start_time": "2023-01-15T14:25:00",
+    "end_time": "2023-01-15T14:30:00"
+  },
+  "tests": [
+    {
+      "nodeid": "tests/unit/test_user_service.py::test_create_user",
+      "outcome": "passed",
+      "duration": 0.02
+    },
+    {
+      "nodeid": "tests/unit/test_user_service.py::test_get_user",
+      "outcome": "passed",
+      "duration": 0.01
+    },
+    {
+      "nodeid": "tests/unit/test_user_service.py::test_update_user",
+      "outcome": "passed",
+      "duration": 0.02
+    },
+    {
+      "nodeid": "tests/unit/test_user_service.py::test_delete_user",
+      "outcome": "passed",
+      "duration": 0.02
+    },
+    {
+      "nodeid": "tests/unit/test_product_service.py::test_create_product",
+      "outcome": "passed",
+      "duration": 0.05
+    },
+    {
+      "nodeid": "tests/unit/test_product_service.py::test_get_product",
+      "outcome": "passed",
+      "duration": 0.03
+    },
+    {
+      "nodeid": "tests/unit/test_product_service.py::test_update_product",
+      "outcome": "passed",
+      "duration": 0.03
+    },
+    {
+      "nodeid": "tests/unit/test_product_service.py::test_delete_product",
+      "outcome": "passed",
+      "duration": 0.02
+    },
+    {
+      "nodeid": "tests/unit/test_order_service.py::test_create_order",
+      "outcome": "passed",
+      "duration": 0.1
+    },
+    {
+      "nodeid": "tests/unit/test_order_service.py::test_get_order",
+      "outcome": "passed",
+      "duration": 0.05
+    },
+    {
+      "nodeid": "tests/unit/test_order_service.py::test_update_order",
+      "outcome": "passed",
+      "duration": 0.06
+    },
+    {
+      "nodeid": "tests/unit/test_order_service.py::test_delete_order",
+      "outcome": "passed",
+      "duration": 0.03
+    },
+    {
+      "nodeid": "tests/unit/test_payment_service.py::test_process_payment",
+      "outcome": "passed",
+      "duration": 0.2
+    },
+    {
+      "nodeid": "tests/unit/test_payment_service.py::test_refund_payment",
+      "outcome": "passed",
+      "duration": 0.02
+    },
+    {
+      "nodeid": "tests/unit/test_payment_service.py::test_cancel_payment",
+      "outcome": "passed",
+      "duration": 0.08
+    }
+  ],
+  "benchmarks": {
+    "tests/performance/test_user_performance.py::test_user_creation_performance": {
+      "mean": 0.020,
+      "median": 0.018,
+      "stddev": 0.003,
+      "rounds": 100
+    },
+    "tests/performance/test_product_performance.py::test_product_search_performance": {
+      "mean": 0.12,
+      "median": 0.11,
+      "stddev": 0.01,
+      "rounds": 50
+    },
+    "tests/performance/test_order_performance.py::test_order_processing_performance": {
+      "mean": 0.30,
+      "median": 0.29,
+      "stddev": 0.03,
+      "rounds": 30
+    }
+  },
+  "coverage": {
+    "total_lines": 1200,
+    "covered_lines": 1080,
+    "coverage_rate": 0.90
+  }
+}

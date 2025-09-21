@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试结果反馈</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .summary {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .suggestion {
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            padding: 15px;
+        }
+        .high-priority {
+            border-left: 5px solid #dc3545;
+        }
+        .medium-priority {
+            border-left: 5px solid #ffc107;
+        }
+        .low-priority {
+            border-left: 5px solid #28a745;
+        }
+        .priority-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .high-badge {
+            background-color: #dc3545;
+            color: white;
+        }
+        .medium-badge {
+            background-color: #ffc107;
+            color: black;
+        }
+        .low-badge {
+            background-color: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>测试结果反馈报告</h1>
+        <p>生成时间: {{ timestamp }}</p>
+    </div>
+    
+    <div class="summary">
+        <h2>测试摘要</h2>
+        <p><strong>总测试数:</strong> {{ summary.total_tests }}</p>
+        <p><strong>通过测试数:</strong> {{ summary.passed_tests }}</p>
+        <p><strong>失败测试数:</strong> {{ summary.failed_tests }}</p>
+        <p><strong>通过率:</strong> {{ "%.2f"|format(summary.pass_rate * 100) }}%</p>
+    </div>
+    
+    <h2>改进建议</h2>
+    {% for suggestion in suggestions %}
+    <div class="suggestion {{ suggestion.priority }}-priority">
+        <div>
+            <span class="priority-badge {{ suggestion.priority }}-badge">{{ suggestion.priority }}</span>
+            <strong>{{ suggestion.description }}</strong>
+        </div>
+        <p>{{ suggestion.suggestion }}</p>
+        {% if suggestion.affected_tests %}
+        <p><strong>受影响的测试:</strong> {{ suggestion.affected_tests|join(', ') }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+    
+    <hr>
+    <p><em>此报告由自动化测试系统生成，请及时处理相关问题。</em></p>
+</body>
+</html>
+        

@@ -1,0 +1,21 @@
+{
+  "context_id": "e4165ff3-f9a1-4982-bc37-29c8b8736960",
+  "context_type": "dialogue",
+  "created_at": "2025-09-21T16:16:00.445848",
+  "updated_at": "2025-09-21T16:16:00.445848",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "conversation": {
+      "conversation_id": "test_conv_001",
+      "participants": [
+        "user",
+        "ai"
+      ],
+      "start_time": "2025-09-21T16:16:00.445848",
+      "status": "active"
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}

@@ -1,0 +1,36 @@
+{
+  "context_id": "cc5f07e9-7983-44aa-9fee-c05428ecce7e",
+  "context_type": "model",
+  "created_at": "2025-09-21T04:50:26.737065",
+  "updated_at": "2025-09-21T04:50:26.737065",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "call_record": {
+      "record_id": "call_20250921045026737065",
+      "caller_model_id": "model_A",
+      "callee_model_id": "model_B",
+      "timestamp": "2025-09-21T04:50:26.737065",
+      "parameters": {
+        "task": "test"
+      },
+      "result": "result",
+      "duration": 1.0,
+      "success": true
+    },
+    "performance_metrics": {
+      "caller": {
+        "total_calls": 1,
+        "success_rate": 1.0,
+        "average_duration": 1.0
+      },
+      "callee": {
+        "total_calls": 1,
+        "success_rate": 1.0,
+        "average_duration": 1.0
+      }
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}

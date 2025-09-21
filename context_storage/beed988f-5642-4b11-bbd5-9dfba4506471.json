@@ -1,0 +1,15 @@
+{
+  "context_id": "beed988f-5642-4b11-bbd5-9dfba4506471",
+  "context_type": "model",
+  "created_at": "2025-09-21T18:17:10.329218",
+  "updated_at": "2025-09-21T18:17:10.329218",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "initial": "data",
+    "updated": "data",
+    "new_field": "value"
+  },
+  "version": "1.0",
+  "tags": []
+}

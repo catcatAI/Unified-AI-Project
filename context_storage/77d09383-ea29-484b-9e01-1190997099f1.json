@@ -1,0 +1,20 @@
+{
+  "context_id": "77d09383-ea29-484b-9e01-1190997099f1",
+  "context_type": "dialogue",
+  "created_at": "2025-09-21T22:17:51.775331",
+  "updated_at": "2025-09-21T22:17:51.775331",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "context_summary": {
+      "conversation_id": "test_conv_001",
+      "key_points": [],
+      "entities": [],
+      "sentiment": "neutral",
+      "relevance_score": 0.004,
+      "generated_at": "2025-09-21T22:17:51.775331"
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}
