@@ -139,11 +139,17 @@ async def hsp_connector(mock_broker, event_loop):
     
     # 设置mock broker
     connector.external_connector = mock_broker
-    # Make the external_connector's publish method call the mock broker's actual publish method
+    # 修复递归调用问题，直接将消息放入队列而不是调用publish方法
     async def mock_publish(topic, payload, qos=1, retain=False, **kwargs):
-        await mock_broker.publish(topic, payload, qos, retain, **kwargs)
-        return True
+        # 直接将消息放入队列，避免递归调用
+        if mock_broker.is_running:
+            print(f"DEBUG: mock_publish called with topic: {topic}")
+            await mock_broker.queue.put((topic, payload))
+            return True
+        return False
     connector.external_connector.publish = mock_publish
+    # Add the mqtt_client attribute to make the HSPConnector happy
+    connector.external_connector.mqtt_client = mock_broker
     connector.external_connector.subscribe = AsyncMock(return_value=True)
     connector.external_connector.connect = AsyncMock(return_value=True)
     connector.external_connector.disconnect = AsyncMock(return_value=True)
