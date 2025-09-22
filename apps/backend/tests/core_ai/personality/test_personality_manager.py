@@ -19,7 +19,7 @@ TEST_OUTPUT_DIR = os.path.join(PROJECT_ROOT, "apps", "backend", "tests", "test_o
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from core_ai.personality.personality_manager import PersonalityManager
+from apps.backend.src.ai.personality.personality_manager import PersonalityManager
 
 class TestPersonalityManager(unittest.TestCase):
 

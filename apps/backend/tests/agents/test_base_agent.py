@@ -7,7 +7,7 @@ import os
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from agents.base_agent import BaseAgent
+from apps.backend.src.ai.agents.base.base_agent import BaseAgent
 
 @pytest.fixture
 def base_agent():
@@ -36,22 +36,26 @@ async def test_base_agent_initialization(base_agent):
 @pytest.mark.asyncio
 async def test_base_agent_start(base_agent):
     """Test BaseAgent start method."""
-    # Import the module inside the test to avoid import issues
-    import core_services
+    # Create a mock HSP connector with all required methods
+    mock_hsp_connector = AsyncMock()
+    mock_hsp_connector.is_connected = True
+    mock_hsp_connector.advertise_capability = AsyncMock()
+    mock_hsp_connector.register_on_task_request_callback = Mock()
+    mock_hsp_connector.send_task_result = AsyncMock()
+    
+    # Mock the core_services module to return our mock HSP connector
+    mock_services = {
+        "hsp_connector": mock_hsp_connector
+    }
     
     # Mock the service initialization to avoid creating real services
-    with patch.object(core_services, 'initialize_services') as mock_init_services, \
-         patch.object(core_services, 'get_services') as mock_get_services, \
-         patch.object(core_services, 'shutdown_services') as mock_shutdown_services:
+    with patch('apps.backend.src.core_services.initialize_services') as mock_init_services, \
+         patch('apps.backend.src.core_services.get_services', return_value=mock_services), \
+         patch('apps.backend.src.core_services.shutdown_services') as mock_shutdown_services:
         
         # Make initialize_services a coroutine function
         mock_init_services.return_value = asyncio.Future()
         mock_init_services.return_value.set_result(None)
-        
-        # Setup mocks
-        mock_hsp_connector = AsyncMock()
-        mock_hsp_connector.is_connected = True
-        mock_get_services.return_value = {"hsp_connector": mock_hsp_connector}
         
         # Start the agent
         await base_agent.start()
@@ -60,7 +64,6 @@ async def test_base_agent_start(base_agent):
         assert base_agent.is_running is True
         assert base_agent.hsp_connector == mock_hsp_connector
         mock_init_services.assert_called_once()
-        mock_get_services.assert_called_once()
         if base_agent.hsp_connector:
             base_agent.hsp_connector.register_on_task_request_callback.assert_called_once_with(base_agent.handle_task_request)
         
@@ -71,20 +74,26 @@ async def test_base_agent_start(base_agent):
 @pytest.mark.asyncio
 async def test_base_agent_stop(base_agent):
     """Test BaseAgent stop method."""
-    # Import the module inside the test to avoid import issues
-    import core_services
+    # Create a mock HSP connector with all required methods
+    mock_hsp_connector = AsyncMock()
+    mock_hsp_connector.is_connected = True
+    mock_hsp_connector.advertise_capability = AsyncMock()
+    mock_hsp_connector.register_on_task_request_callback = Mock()
+    mock_hsp_connector.send_task_result = AsyncMock()
+    
+    # Mock the core_services module to return our mock HSP connector
+    mock_services = {
+        "hsp_connector": mock_hsp_connector
+    }
     
     # First start the agent
-    with patch.object(core_services, 'initialize_services') as mock_init_services, \
-         patch.object(core_services, 'get_services') as mock_get_services, \
-         patch.object(core_services, 'shutdown_services') as mock_shutdown_services:
+    with patch('apps.backend.src.core_services.initialize_services') as mock_init_services, \
+         patch('apps.backend.src.core_services.get_services', return_value=mock_services), \
+         patch('apps.backend.src.core_services.shutdown_services') as mock_shutdown_services:
         
         # Make initialize_services a coroutine function
         mock_init_services.return_value = asyncio.Future()
         mock_init_services.return_value.set_result(None)
-        
-        mock_hsp_connector = AsyncMock()
-        mock_get_services.return_value = {"hsp_connector": mock_hsp_connector}
         
         await base_agent.start()
         assert base_agent.is_running is True

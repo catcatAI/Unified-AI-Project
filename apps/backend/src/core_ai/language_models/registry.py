@@ -1,7 +1,7 @@
 from dataclasses import dataclass, asdict
 from typing import Dict, Any, List, Optional
 
-from services.multi_llm_service import ModelConfig, ModelProvider
+from apps.backend.src.core.services.multi_llm_service import ModelConfig, ModelProvider
 
 
 @dataclass

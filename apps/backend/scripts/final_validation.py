@@ -30,7 +30,7 @@ def test_original_problem_imports():
     # 测试问题1: HSPConnector导入问题
     print("\n1. 测试HSPConnector导入:")
     try:
-        from hsp.connector import HSPConnector
+        from apps.backend.src.core.hsp.connector import HSPConnector
         print("✓ HSPConnector 导入成功")
     except ImportError as e:
         print(f"✗ HSPConnector 导入失败: {e}")
@@ -95,7 +95,7 @@ def test_main_api_server():
     print("\n=== 测试主API服务器导入 ===")
     
     try:
-        from services.main_api_server import app
+        from apps.backend.src.core.services.main_api_server import app
         print("✓ 主API服务器导入成功")
         return True
     except ImportError as e:
@@ -110,7 +110,7 @@ def test_dialogue_manager_hsp_connector():
     print("\n=== 测试DialogueManager中的HSPConnector ===")
     
     try:
-        from core_ai.dialogue.dialogue_manager import DialogueManager
+        from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
         print("✓ DialogueManager 导入成功")
         
         # 检查HSPConnector是否在DialogueManager中正确定义

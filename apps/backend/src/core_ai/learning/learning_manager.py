@@ -12,11 +12,11 @@ from content_analyzer_module import ContentAnalyzerModule
 from trust_manager.trust_manager_module import TrustManager
 from .types import LearnedFactRecord
 
-from hsp.types import HSPFactPayload, HSPMessageEnvelope
+from apps.backend.src.core.hsp.types import HSPFactPayload, HSPMessageEnvelope
 from personality.personality_manager import PersonalityManager
 
 if TYPE_CHECKING:
-    from hsp.connector import HSPConnector
+    from apps.backend.src.core.hsp.connector import HSPConnector
 
 
 class LearningManager:
@@ -247,7 +247,7 @@ class LearningManager:
 
         distillation_prompt = self._create_strategy_distillation_prompt(project_case)
         # Use chat_completion instead of generate_response
-        from hsp.types import ChatMessage
+        from apps.backend.src.core.hsp.types import ChatMessage
         messages = [ChatMessage(role="user", content=distillation_prompt)]
         llm_response = await self.fact_extractor.llm_service.chat_completion(messages, params={"temperature": 0.0})
         raw_strategy_output = llm_response.content

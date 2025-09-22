@@ -7,11 +7,11 @@ from enum import Enum
 
 # Use absolute imports instead of relative imports when running as a script
 try:
-    # Try relative imports first (for when running with uvicorn)
-    from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+    # Try absolute imports first (for when running with uvicorn)
+    from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 except ImportError:
-    # Fall back to absolute imports (for when running as a script)
-    from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+    # Fall back to relative imports (for when running as a script)
+    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
 
@@ -63,15 +63,15 @@ class BaseAgent:
         try:
             # Try relative imports first (for when running with uvicorn)
             from ..core_services import initialize_services, get_services, shutdown_services
-            from core_ai.agent_collaboration_manager import AgentCollaborationManager
-            from core_ai.agent_monitoring_manager import AgentMonitoringManager
-            from core_ai.dynamic_agent_registry import DynamicAgentRegistry
+            from apps.backend.src.ai.agent_collaboration_manager import AgentCollaborationManager
+            from apps.backend.src.ai.agent_monitoring_manager import AgentMonitoringManager
+            from apps.backend.src.ai.dynamic_agent_registry import DynamicAgentRegistry
         except ImportError:
             # Fall back to absolute imports (for when running as a script)
             from core_services import initialize_services, get_services, shutdown_services
-            from core_ai.agent_collaboration_manager import AgentCollaborationManager
-            from core_ai.agent_monitoring_manager import AgentMonitoringManager
-            from core_ai.dynamic_agent_registry import DynamicAgentRegistry
+            from apps.backend.src.ai.agent_collaboration_manager import AgentCollaborationManager
+            from apps.backend.src.ai.agent_monitoring_manager import AgentMonitoringManager
+            from apps.backend.src.ai.dynamic_agent_registry import DynamicAgentRegistry
 
         # Initialize core services required by the agent
         # Construct a minimal config for initialize_services

@@ -39,13 +39,12 @@ Unified-AI-Project/
 ├── docs/                  # 文档目录
 ├── data/                  # 数据目录
 ├── tests/                 # 测试目录
-├── cli/                   # CLI 工具 (Python)
 └── venv/                  # Python 虚拟环境
 ```
 
 ### 核心组件
 
-#### AI 代理系统 (`apps/backend/src/ai/agents/base/`)
+#### AI 代理系统 (`apps/backend/src/ai/agents/`)
 - **BaseAgent**: 所有专门化代理的基础类，处理 HSP 连接与任务分发
 - **CreativeWritingAgent**: 创意写作与内容生成代理
 - **ImageGenerationAgent**: 图像生成代理
@@ -54,6 +53,9 @@ Unified-AI-Project/
 - **DataAnalysisAgent**: 数据分析代理
 - **VisionProcessingAgent**: 视觉处理代理
 - **AudioProcessingAgent**: 音频处理代理
+- **KnowledgeGraphAgent**: 知识图谱代理
+- **NLPProcessingAgent**: 自然语言处理代理
+- **PlanningAgent**: 规划代理
 
 **实现状态**: ✅ 全部完成，所有代理导入和创建测试通过，功能验证成功
 
@@ -61,10 +63,12 @@ Unified-AI-Project/
 - 注册机制：新模块/AI 加入网络
 - 信誉系统：评估协作实体可信度
 - 热更新：动态载入新功能模块
+- 消息桥接：实现不同模块间的消息传递
+- 协议转换：支持不同协议间的转换和适配
 
 **实现状态**: ✅ 核心功能完成，MQTT连接稳定性已优化
 
-#### 记忆管理系统 (`apps/backend/src/ai/memory/`)
+#### 记忆管理系统 (`apps/backend/src/core/memory/`)
 - **DeepMapper**: 语义映射与资料核生成
 - **HAMMemoryManager**: 分层语义记忆管理
 - **VectorStore**: 基于 ChromaDB 的向量数据库接口
@@ -176,6 +180,7 @@ pnpm health-check     # 健康检查
 12. Emergency Git Fix - 从Git问题中恢复
 13. Fix Dependencies - 解决依赖问题
 14. System Information - 显示系统信息
+15. Unified Auto Fix - 增强自动修复系统
 ```
 
 ## 训练系统
@@ -273,7 +278,7 @@ unified-ai chat "Hello"
 - ✅ **记忆管理**: 已实现HAMMemoryManager和DeepMapper等核心组件
 
 ### 功能实现
-- ✅ **AI代理系统**: 8个专业代理全部完成，BaseAgent作为基础类
+- ✅ **AI代理系统**: 11个专业代理全部完成，BaseAgent作为基础类
 - ✅ **训练系统**: 完整实现，支持11种训练场景和增量学习
 - ✅ **CLI工具**: 统一命令行界面完成，支持AI交互
 - ✅ **桌面应用**: "Angela's World"游戏客户端完成
@@ -338,7 +343,7 @@ unified-ai chat "Hello"
 
 ---
 
-**最后更新**: 2025年9月11日  
+**最后更新**: 2025年9月22日  
 **项目状态**: 1.0.0 正式版发布  
 **代码现状**: 核心架构完成，所有导入路径、语法问题和代理结构不一致性已修复，核心功能验证通过，测试稳定性优化  
 **目标里程碑**: Level 3 AGI 实现  

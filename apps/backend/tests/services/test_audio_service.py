@@ -8,7 +8,7 @@ import asyncio
 # 添加项目路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from src.services.audio_service import AudioService
+from apps.backend.src.services.audio_service import AudioService
 from config_loader import get_config, get_simulated_resources
 
 class TestAudioService(unittest.TestCase):

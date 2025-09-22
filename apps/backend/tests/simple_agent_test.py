@@ -7,19 +7,19 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 def test_imports():
     """Test that we can import all agent classes."""
     try:
-        from agents.base_agent import BaseAgent
+        from apps.backend.src.ai.agents.base_agent import BaseAgent
         print("✓ BaseAgent imported successfully")
         
-        from agents.code_understanding_agent import CodeUnderstandingAgent
+        from apps.backend.src.ai.agents.code_understanding_agent import CodeUnderstandingAgent
         print("✓ CodeUnderstandingAgent imported successfully")
         
-        from agents.creative_writing_agent import CreativeWritingAgent
+        from apps.backend.src.ai.agents.creative_writing_agent import CreativeWritingAgent
         print("✓ CreativeWritingAgent imported successfully")
         
-        from agents.data_analysis_agent import DataAnalysisAgent
+        from apps.backend.src.ai.agents.data_analysis_agent import DataAnalysisAgent
         print("✓ DataAnalysisAgent imported successfully")
         
-        from agents.audio_processing_agent import AudioProcessingAgent
+        from apps.backend.src.ai.agents.audio_processing_agent import AudioProcessingAgent
         print("✓ AudioProcessingAgent imported successfully")
         
         print("\nAll agents imported successfully!")

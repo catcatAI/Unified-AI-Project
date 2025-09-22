@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 from collections import Counter
 
 from .base_agent import BaseAgent
-from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 class NLPProcessingAgent(BaseAgent):
     """

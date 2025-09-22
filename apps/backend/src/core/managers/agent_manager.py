@@ -133,10 +133,13 @@ class AgentManager:
         for agent_name in list(self.active_agents.keys()):
             self.shutdown_agent(agent_name)
 
-    async def wait_for_agent_ready(self, agent_name: str, timeout: int = 10, service_discovery=None):
+    async def wait_for_agent_ready(self, agent_name: str, timeout: int = 30, service_discovery=None):
         """
         Waits for an agent to be ready by checking for its capability advertisement.
         """
+        print(f"DEBUG: AgentManager.wait_for_agent_ready called for agent: {agent_name}")
+        logging.info(f"[AgentManager] wait_for_agent_ready called for agent: {agent_name}")
+        
         if service_discovery is None:
             # 简单等待一段时间，模拟等待agent启动
             logging.warning("[AgentManager] wait_for_agent_ready is using placeholder sleep as no service_discovery provided.")
@@ -155,7 +158,9 @@ class AgentManager:
         logging.info(f"[AgentManager] Waiting for agent '{agent_name}' to advertise capability '{expected_capability_id}'")
         
         while retry_count < max_retries:
+            logging.debug(f"[AgentManager] Attempting to find capability '{expected_capability_id}' (attempt {retry_count+1}/{max_retries})")
             found_caps = await service_discovery.find_capabilities(capability_id_filter=expected_capability_id)
+            logging.debug(f"[AgentManager] Found {len(found_caps)} capabilities matching ID filter '{expected_capability_id}'")
             if found_caps:
                 logging.info(f"[AgentManager] Agent '{agent_name}' is ready. Found capability: {expected_capability_id}")
                 return
@@ -172,19 +177,11 @@ class AgentManager:
         for cap in all_caps:
             logging.info(f"[AgentManager] Capability: {cap.get('capability_id')} from AI: {cap.get('ai_id')}")
             
-        # 在测试环境中，如果代理已启动但能力未找到，等待更长时间
-        # 这可能是因为HSP消息传递需要更多时间
-        if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
-            logging.info(f"[AgentManager] Agent '{agent_name}' is running. Waiting additional time for capability advertisement...")
-            await asyncio.sleep(2)  # 额外等待2秒
-            found_caps = await service_discovery.find_capabilities(capability_id_filter=expected_capability_id)
-            if found_caps:
-                logging.info(f"[AgentManager] Agent '{agent_name}' is ready after additional wait. Found capability: {expected_capability_id}")
-                return
-        
-        # 即使没有找到能力，也返回成功，因为代理可能已经启动
-        # 在实际应用中，这应该更严格，但在测试环境中我们给代理更多时间
-        logging.info(f"[AgentManager] Proceeding assuming agent '{agent_name}' is ready.")
+        # Additional debugging
+        logging.info(f"[AgentManager] Looking for capability ID: {expected_capability_id}")
+        # Try to find capabilities by name as well
+        found_caps_by_name = await service_discovery.find_capabilities(capability_name_filter=expected_capability_id)
+        logging.info(f"[AgentManager] Found {len(found_caps_by_name)} capabilities by name filter")
     
     def get_available_agents(self) -> List[str]:
         """

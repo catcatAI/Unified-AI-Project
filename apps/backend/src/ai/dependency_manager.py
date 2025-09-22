@@ -58,9 +58,12 @@ class DependencyManager:
         except FileNotFoundError:
             print(f"Warning: Dependency config file not found at {self.config_path}")
             self._use_default_config()
+            return self._config  # 返回默认配置
         except Exception as e:
             print(f"Warning: Could not load dependency config from {self.config_path}: {e}")
             self._use_default_config()
+            return self._config  # 返回默认配置
+        return self._config
     
     def _use_default_config(self):
         """Use default configuration."""

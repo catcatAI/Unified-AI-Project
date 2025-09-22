@@ -12,7 +12,7 @@ from datetime import datetime
 sys.path.insert(0, 'd:\\Projects\\Unified-AI-Project\\apps\\backend\\src')
 
 from integrations.rovo_dev_agent import RovoDevAgent
-from hsp.types import HSPTask, HSPCapability
+from apps.backend.src.core.hsp.types import HSPTask, HSPCapability
 
 
 class TestRovoDevAgent:
@@ -169,15 +169,16 @@ class TestRovoDevAgent:
     # 添加重试装饰器以处理不稳定的测试
     async def test_task_submission_and_processing(self, agent):
         """测试任务提交和处理"""
-        # Mock the dispatch method
-        agent._dispatch_task = AsyncMock(return_value={'status': 'completed'})
+        # Mock dispatch to return a result
+        agent._dispatch_task = AsyncMock(return_value={'result': 'Task completed successfully'})
         
-        task = HSPTask(
-            task_id='test_task_001',
-            capability='code_analysis',
-            parameters={'repository_url': 'https://github.com/test/repo'},
-            requester_id='test_requester'
-        )
+        # 创建正确的 HSPTask 字典对象，而不是使用HSPTask类
+        task = {
+            'task_id': 'test_task_001',
+            'capability': 'code_analysis',
+            'parameters': {'repository_url': 'https://github.com/test/repo'},
+            'requester_id': 'test_requester'
+        }
         
         # Start the agent
         agent.is_active = True
@@ -202,12 +203,13 @@ class TestRovoDevAgent:
         # Mock dispatch to return a result
         agent._dispatch_task = AsyncMock(return_value={'result': 'Task completed successfully'})
         
-        task = HSPTask(
-            task_id='test_task_001',
-            capability='code_analysis',
-            parameters={'repository_url': 'https://github.com/test/repo'},
-            requester_id='test_requester'
-        )
+        # 创建正确的 HSPTask 字典对象，而不是使用HSPTask类
+        task = {
+            'task_id': 'test_task_001',
+            'capability': 'code_analysis',
+            'parameters': {'repository_url': 'https://github.com/test/repo'},
+            'requester_id': 'test_requester'
+        }
         
         # Start the agent
         agent.is_active = True
@@ -232,12 +234,12 @@ class TestRovoDevAgent:
         # Mock dispatch to raise an error
         agent._dispatch_task = AsyncMock(side_effect=Exception("Test error"))
         
-        task = HSPTask(
-            task_id='error_task_001',
-            capability='code_analysis',
-            parameters={'repository_url': 'invalid_url'},
-            requester_id='test_requester'
-        )
+        task = {
+            'task_id': 'error_task_001',
+            'capability': 'code_analysis',
+            'parameters': {'repository_url': 'invalid_url'},
+            'requester_id': 'test_requester'
+        }
         
         agent.is_active = True
         
@@ -333,12 +335,12 @@ class TestRovoDevAgent:
     # 添加重试装饰器以处理不稳定的测试
     async def test_unsupported_capability(self, agent):
         """测试不支持的能力"""
-        task = HSPTask(
-            task_id='unsupported_task',
-            capability='unsupported_capability',
-            parameters={},
-            requester_id='test_requester'
-        )
+        task = {
+            'task_id': 'unsupported_task',
+            'capability': 'unsupported_capability',
+            'parameters': {},
+            'requester_id': 'test_requester'
+        }
         
         with pytest.raises(ValueError, match="不支持的能力"):
             await agent._dispatch_task(task)

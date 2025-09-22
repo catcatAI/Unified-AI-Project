@@ -65,7 +65,7 @@ def extract_arithmetic_problem(text: str) -> str | None:
             return None
     return None
 
-from shared.types.common_types import ToolDispatcherResponse
+from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
 import os
 
 def calculate(input_string: str) -> ToolDispatcherResponse:

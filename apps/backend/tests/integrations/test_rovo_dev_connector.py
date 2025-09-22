@@ -6,6 +6,7 @@ import pytest
 import asyncio
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
+import aiohttp
 
 from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 

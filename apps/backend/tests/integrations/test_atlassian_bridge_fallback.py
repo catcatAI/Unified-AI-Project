@@ -9,8 +9,8 @@ from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
 import pytest_asyncio
 
-from src.integrations.atlassian_bridge import AtlassianBridge, EndpointConfig, CacheEntry
-from src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+from apps.backend.src.integrations.atlassian_bridge import AtlassianBridge, EndpointConfig, CacheEntry
+from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 
 class TestAtlassianBridgeFallback:

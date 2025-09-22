@@ -3,7 +3,7 @@ import uuid
 from typing import Dict, Any, List
 
 from .base_agent import BaseAgent
-from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 from ..tools.tool_dispatcher import ToolDispatcher
 
 class ImageGenerationAgent(BaseAgent):

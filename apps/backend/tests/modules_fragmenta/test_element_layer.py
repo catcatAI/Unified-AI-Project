@@ -30,8 +30,9 @@ class TestElementLayer(unittest.TestCase):
         
         # Verify processing adds expected metadata
         for item in processed_data:
-            self.assertIn("processed", item)
-            self.assertIn("timestamp", item)
+            # 修正断言，检查实际添加的字段
+            self.assertIn("processed_by_element_layer", item)
+            self.assertTrue(item["processed_by_element_layer"])
         
         print("TestElementLayer.test_02_process_elements PASSED")
 

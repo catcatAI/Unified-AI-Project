@@ -16,7 +16,7 @@ from .code_understanding_tool import CodeUnderstandingTool
 from .csv_tool import CsvTool
 from .image_generation_tool import ImageGenerationTool
 from apps.backend.src.ai.language_models.daily_language_model import DailyLanguageModel
-from apps.backend.src.core.services.multi_llm_service import MultiLLMService
+from apps.backend.src.services.multi_llm_service import MultiLLMService
 from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse # Import new response type
 from typing import Literal # For literal status types
 try:

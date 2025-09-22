@@ -265,7 +265,7 @@ class HotReloadService:
                 return {"reloaded": False, "error": "Cannot infer HSP broker settings from existing connector."}
 
             try:
-                from hsp.connector import HSPConnector
+                from apps.backend.src.core.hsp.connector import HSPConnector
                 new_hsp = HSPConnector(ai_id=old_hsp.ai_id, broker_address=broker_address, broker_port=broker_port)
                 connected = await new_hsp.connect()
                 if not connected:

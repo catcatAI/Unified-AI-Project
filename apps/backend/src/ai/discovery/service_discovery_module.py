@@ -106,6 +106,7 @@ class ServiceDiscoveryModule:
                                 (May or may not be the same as payload.get('ai_id')).
             envelope (HSPMessageEnvelope): The full message envelope.
         """
+        print(f"DEBUG: ServiceDiscoveryModule.process_capability_advertisement called with payload: {payload}")
         logger.debug("Entering process_capability_advertisement. Payload: %s, Sender: %s, Envelope: %s", payload, sender_ai_id, envelope)
         
         capability_id = payload.get('capability_id')
@@ -135,6 +136,9 @@ class ServiceDiscoveryModule:
             # Log the current state of known_capabilities for debugging
             logger.debug("Current known_capabilities state after update: %s", 
                         {cap_id: cap_data[0].get('name') for cap_id, cap_data in self.known_capabilities.items()})
+            
+            # Additional debugging
+            logger.debug("Full known_capabilities state after update: %s", self.known_capabilities)
 
     async def find_capabilities(
         self,
@@ -365,8 +369,18 @@ class ServiceDiscoveryModule:
         return self._find_capabilities_sync()
 
     async def get_all_capabilities_async(self) -> List[HSPCapabilityAdvertisementPayload]:
-        """Async version of get_all_capabilities."""
-        return await self.find_capabilities()
+        """
+        Asynchronously retrieves all currently known capabilities.
+        This is a wrapper around the synchronous version for async compatibility.
+        """
+        print(f"DEBUG: ServiceDiscoveryModule.get_all_capabilities_async called")
+        logger.debug("Getting all capabilities (async wrapper)")
+        # In a real async implementation, this might involve async locks or database calls.
+        # For now, we wrap the sync version.
+        result = self._find_capabilities_sync()
+        logger.debug("Returning %d capabilities from async wrapper", len(result))
+        print(f"DEBUG: ServiceDiscoveryModule.get_all_capabilities_async returning {len(result)} capabilities")
+        return result
 
     def is_capability_available(self, capability_id: str) -> bool:
         """

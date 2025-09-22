@@ -41,10 +41,10 @@ try:
     
     # 修复导入路径 - 使用相对导入
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-    from core_ai.memory.vector_store import VectorMemoryStore
-    from core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
-    from services.vision_service import VisionService
-    from services.audio_service import AudioService
+    from apps.backend.src.ai.memory.vector_store import VectorMemoryStore
+    from apps.backend.src.ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
+    from apps.backend.src.core.services.vision_service import VisionService
+    from apps.backend.src.core.services.audio_service import AudioService
 except ImportError as e:
     print(f"Import error: {e}")
     print("Please ensure you're running this from the backend directory")

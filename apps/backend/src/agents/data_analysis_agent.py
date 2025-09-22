@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 from .base_agent import BaseAgent
-from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
 

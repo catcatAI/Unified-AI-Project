@@ -25,7 +25,7 @@ def integration_test_config():
 @pytest.fixture(scope="function")
 def mock_agent_manager():
     """模拟代理管理器"""
-    with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock:
+    with patch('apps.backend.src.managers.agent_manager.AgentManager') as mock:
         mock_instance = Mock()
         mock_instance.start_agent = asyncio.sleep(0) or Mock(return_value=True)
         mock_instance.stop_agent = asyncio.sleep(0) or Mock(return_value=True)
@@ -51,7 +51,7 @@ def mock_hsp_connector():
 @pytest.fixture(scope="function")
 def mock_memory_manager():
     """模拟记忆管理器"""
-    with patch('apps.backend.src.core_ai.memory.ham_memory_manager.HAMMemoryManager') as mock:
+    with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock:
         mock_instance = Mock()
         mock_instance.store_memory = asyncio.sleep(0) or Mock(return_value="test_memory_id")
         mock_instance.retrieve_memory = asyncio.sleep(0) or Mock(return_value={"content": "test content"})
@@ -63,7 +63,7 @@ def mock_memory_manager():
 @pytest.fixture(scope="function")
 def mock_learning_manager():
     """模拟学习管理器"""
-    with patch('apps.backend.src.core_ai.demo_learning_manager.DemoLearningManager') as mock:
+    with patch('apps.backend.src.core_services.DemoLearningManager') as mock:
         mock_instance = Mock()
         mock_instance.start_learning = asyncio.sleep(0) or Mock(return_value=True)
         mock_instance.stop_learning = asyncio.sleep(0) or Mock(return_value=True)
@@ -75,7 +75,7 @@ def mock_learning_manager():
 @pytest.fixture(scope="function")
 def mock_dialogue_manager():
     """模拟对话管理器"""
-    with patch('apps.backend.src.core_ai.dialogue.dialogue_manager.DialogueManager') as mock:
+    with patch('apps.backend.src.ai.dialogue.dialogue_manager.DialogueManager') as mock:
         mock_instance = Mock()
         mock_instance.process_dialogue = asyncio.sleep(0) or Mock(return_value={"status": "success"})
         mock_instance.end_dialogue = asyncio.sleep(0) or Mock(return_value=True)

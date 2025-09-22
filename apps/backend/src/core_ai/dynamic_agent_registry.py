@@ -8,12 +8,12 @@ import time
 # Import necessary types and classes
 try:
     # Try relative imports first (for when running with uvicorn)
-    from hsp.types import HSPCapabilityAdvertisementPayload
-    from hsp.connector import HSPConnector
+    from apps.backend.src.core.hsp.types import HSPCapabilityAdvertisementPayload
+    from apps.backend.src.core.hsp.connector import HSPConnector
 except ImportError:
     # Fall back to absolute imports (for when running as a script)
-    from hsp.types import HSPCapabilityAdvertisementPayload
-    from hsp.connector import HSPConnector
+    from apps.backend.src.core.hsp.types import HSPCapabilityAdvertisementPayload
+    from apps.backend.src.core.hsp.connector import HSPConnector
 
 logger = logging.getLogger(__name__)
 

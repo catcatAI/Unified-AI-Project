@@ -16,7 +16,7 @@ sys.path.insert(0, str(SRC_PATH))
 def test_dataclass_import():
     """测试dataclass导入修复"""
     try:
-        from tools.math_model.model import MathModelResult
+        from apps.backend.src.core.tools.math_model.model import MathModelResult
         print("✅ dataclass导入修复成功")
         return True
     except Exception as e:
@@ -36,7 +36,7 @@ def test_rovo_dev_connector():
 def test_atlassian_integration_import():
     """测试Atlassian集成导入修复"""
     try:
-        from services.main_api_server import app
+        from apps.backend.src.core.services.main_api_server import app
         print("✅ Atlassian集成导入修复成功")
         return True
     except Exception as e:

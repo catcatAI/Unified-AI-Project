@@ -10,7 +10,7 @@ try:
 except ImportError:
     # Try alternative import path
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-    from src.ai.learning.content_analyzer_module import ContentAnalyzerModule
+    from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzerModule
 
 def test_capital_of_pattern():
     # Initialize the ContentAnalyzerModule

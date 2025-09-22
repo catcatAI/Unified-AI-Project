@@ -8,13 +8,13 @@ def test_imports():
     """Test that we can import the necessary modules."""
     print("Starting import tests...")
     try:
-        from agents.base_agent import BaseAgent
+        from apps.backend.src.ai.agents.base_agent import BaseAgent
         print("BaseAgent imported successfully")
         
         from core_services import initialize_services, get_services, shutdown_services
         print("Core services imported successfully")
         
-        from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+        from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
         print("HSP types imported successfully")
         
         print("All imports successful!")

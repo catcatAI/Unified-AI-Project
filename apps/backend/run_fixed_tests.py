@@ -14,11 +14,11 @@ def test_imports():
     """测试导入是否正常工作"""
     try:
         # 测试HAMMemoryManager导入
-        from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+        from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
         print("✅ HAMMemoryManager 导入成功")
         
         # 测试PersonalityManager导入
-        from src.core_ai.personality.personality_manager import PersonalityManager
+        from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
         print("✅ PersonalityManager 导入成功")
         
         return True
@@ -32,7 +32,7 @@ def test_ham_memory_manager():
         # 设置环境变量以禁用向量存储
         os.environ["HAM_DISABLE_VECTOR_STORE"] = "1"
         
-        from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+        from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
         import tempfile
         
         # 创建临时目录进行测试
@@ -55,7 +55,7 @@ def test_ham_memory_manager():
 def test_personality_manager():
     """测试PersonalityManager基本功能"""
     try:
-        from src.core_ai.personality.personality_manager import PersonalityManager
+        from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
         
         # 初始化PersonalityManager
         pm = PersonalityManager()

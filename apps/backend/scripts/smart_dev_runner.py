@@ -73,17 +73,17 @@ def initialize_core_services():
     print("🔧 第1层: 核心服务初始化")
     try:
         # 初始化HAM内存管理
-        from src.ai.memory.ham_memory_manager import HAMMemoryManager
+        from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
         ham_manager = HAMMemoryManager()
         print("✅ HAM内存管理初始化完成")
         
         # 初始化多LLM服务接口
-        from src.services.multi_llm_service import MultiLLMService
+        from apps.backend.src.services.multi_llm_service import MultiLLMService
         llm_service = MultiLLMService()
         print("✅ 多LLM服务初始化完成")
         
         # 初始化服务发现机制
-        from src.core.services.service_discovery import ServiceDiscoveryModule
+        from apps.backend.src.core.services.service_discovery import ServiceDiscoveryModule
         service_discovery = ServiceDiscoveryModule()
         print("✅ 服务发现机制初始化完成")
         
@@ -99,7 +99,7 @@ def start_core_components():
     print("⚙️ 第2层: 核心组件启动")
     try:
         # 初始化HSP连接器
-        from src.hsp.connector import HSPConnector
+        from apps.backend.src.hsp.connector import HSPConnector
         hsp_connector = HSPConnector(
             ai_id="did:hsp:api_server_ai",
             broker_address="localhost",
@@ -108,7 +108,7 @@ def start_core_components():
         print("✅ HSP连接器初始化完成")
         
         # 初始化对话管理器
-        from src.ai.dialogue.dialogue_manager import DialogueManager
+        from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
         dialogue_manager = DialogueManager()
         print("✅ 对话管理器初始化完成")
         
@@ -124,12 +124,12 @@ def load_functional_modules():
     print("🔌 第3层: 功能模块加载")
     try:
         # 加载经济系统
-        from src.economy.economy_manager import EconomyManager
+        from apps.backend.src.economy.economy_manager import EconomyManager
         economy_manager = EconomyManager()
         print("✅ 经济系统初始化完成")
         
         # 加载宠物系统
-        from src.pet.pet_manager import PetManager
+        from apps.backend.src.pet.pet_manager import PetManager
         pet_manager = PetManager()
         print("✅ 宠物系统初始化完成")
         
@@ -159,17 +159,17 @@ def health_check_services():
     print("🩺 服务健康检查")
     try:
         # 检查核心服务
-        from src.ai.memory.ham_memory_manager import HAMMemoryManager
+        from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
         ham_manager = HAMMemoryManager()
         print("✅ HAM内存管理健康检查通过")
         
         # 检查多LLM服务
-        from src.services.multi_llm_service import get_multi_llm_service
+        from apps.backend.src.services.multi_llm_service import get_multi_llm_service
         llm_service = get_multi_llm_service()
         print("✅ 多LLM服务健康检查通过")
         
         # 检查HSP连接器
-        from src.hsp.connector import HSPConnector
+        from apps.backend.src.hsp.connector import HSPConnector
         hsp_connector = HSPConnector(
             ai_id="did:hsp:api_server_ai",
             broker_address="localhost",

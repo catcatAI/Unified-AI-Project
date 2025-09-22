@@ -83,7 +83,7 @@ class TestTrainingWorkflowE2E:
     @pytest.mark.asyncio
     async def test_memory_integration_in_training_workflow(self, demo_learning_manager):
         """测试训练工作流程中与记忆系统的集成"""
-        with patch('apps.backend.src.core_ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
+        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
             # Mock记忆管理器
             mock_memory_instance = mock_memory_manager.return_value
             mock_memory_instance.store_memory = AsyncMock(return_value=True)
@@ -245,7 +245,7 @@ class TestMultiSystemIntegrationE2E:
             assert all(result["status"] == "completed" for result in subtask_results)
             
             # 4. 整合结果并存储记忆
-            with patch('apps.backend.src.core_ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
+            with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
                 mock_memory = mock_memory_manager.return_value
                 mock_memory.store_memory = AsyncMock(return_value=True)
                 

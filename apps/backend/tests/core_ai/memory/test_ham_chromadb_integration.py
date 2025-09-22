@@ -32,8 +32,8 @@ sys.path.insert(0, str(project_root))
 # Mock chromadb to avoid HTTP-only mode issues
 import unittest.mock as mock
 
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.core_ai.memory.types import HAMRecallResult
+from src.ai.memory.ham_memory_manager import HAMMemoryManager
+from src.ai.memory.types import HAMRecallResult
 
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)

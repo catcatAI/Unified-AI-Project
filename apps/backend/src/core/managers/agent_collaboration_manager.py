@@ -5,8 +5,8 @@ from datetime import datetime
 import uuid
 
 from ...core_ai.agent_manager import AgentManager
-from hsp.hsp_connector import HSPConnector
-from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
+from apps.backend.src.core.hsp.hsp_connector import HSPConnector
+from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
 
 logger = logging.getLogger(__name__)
 

@@ -65,18 +65,24 @@ class CodeUnderstandingTool:
 
         if not structure:
             return f"Tool '{tool_name}' not found or could not be analyzed."
+        
+        # Convert CodeAnalysisResult to dictionary if it's not already
+        if hasattr(structure, '__dict__'):
+            structure_dict = structure.__dict__
+        else:
+            structure_dict = structure
 
         # Format the structure into a human-readable string
         description_parts = []
 
-        filepath = structure.get("filepath", tool_name)
+        filepath = structure_dict.get("filepath", tool_name)
         description_parts.append(f"Description for tool '{tool_name}' (from {os.path.basename(filepath)}):")
 
-        if not structure.get("classes") and not structure.get("functions"):
+        if not structure_dict.get("classes") and not structure_dict.get("functions"):
             description_parts.append("  No classes or functions found in this tool file.")
             return "\n".join(description_parts)
 
-        for class_info in structure.get("classes", []):
+        for class_info in structure_dict.get("classes", []):
             description_parts.append(f"\n  Class: {class_info.get('name', 'Unnamed Class')}")
             class_doc = class_info.get('docstring')
             if class_doc:
@@ -110,7 +116,7 @@ class CodeUnderstandingTool:
                     indented_doc = "\n".join([f"        {line.strip()}" for line in method_doc.strip().splitlines()])
                     description_parts.append(f"        Docstring:\n{indented_doc}")
 
-        for func_info in structure.get("functions", []): # Module-level functions
+        for func_info in structure_dict.get("functions", []): # Module-level functions
             description_parts.append(f"\n  Function: {func_info.get('name', 'Unnamed Function')}")
             func_doc = func_info.get('docstring')
             if func_doc:

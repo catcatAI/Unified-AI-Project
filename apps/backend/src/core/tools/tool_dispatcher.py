@@ -16,8 +16,8 @@ from .code_understanding_tool import CodeUnderstandingTool
 from .csv_tool import CsvTool
 from .image_generation_tool import ImageGenerationTool
 from ai.language_models.daily_language_model import DailyLanguageModel
-from services.multi_llm_service import MultiLLMService
-from shared.types.common_types import ToolDispatcherResponse # Import new response type
+from apps.backend.src.core.services.multi_llm_service import MultiLLMService
+from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse # Import new response type
 from typing import Literal # For literal status types
 try:
     from ai.rag.rag_manager import RAGManager
@@ -668,7 +668,7 @@ class ToolDispatcher:
 # Example Usage
 if __name__ == '__main__':
     import asyncio
-    from services.multi_llm_service import MultiLLMService
+    from apps.backend.src.core.services.multi_llm_service import MultiLLMService
 
     async def main_test():
         logging.basicConfig(level=logging.INFO)

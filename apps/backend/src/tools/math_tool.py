@@ -1,5 +1,10 @@
 import os
 import re
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
+import os
 
 # Import statement for the model is now inside a try-except block in the loading function.
 
@@ -65,13 +70,6 @@ def extract_arithmetic_problem(text: str) -> str | None:
         except (ValueError, IndexError):
             return None
     return None
-
-# 修复导入路径
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from core.shared.types.common_types import ToolDispatcherResponse
-import os
 
 def calculate(input_string: str) -> ToolDispatcherResponse:
     """

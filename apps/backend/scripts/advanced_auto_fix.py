@@ -95,10 +95,10 @@ class AdvancedImportFixer:
             r"import\s+apps\.backend\.src\.game\.": "import ",
             
             # 修正相对导入路径
-            r"from\s+\.\.core_ai\.": "from core_ai.",
+            r"from\s+\.\.core_ai\.": "from apps.backend.src.ai.",
             r"from\s+\.\.core\.": "from core.",
-            r"from\s+\.\.services\.": "from services.",
-            r"from\s+\.\.hsp\.": "from hsp.",
+            r"from\s+\.\.services\.": "from apps.backend.src.core.services.",
+            r"from\s+\.\.hsp\.": "from apps.backend.src.core.hsp.",
         }
     
     def backup_file(self, file_path: Path) -> Path:
@@ -314,7 +314,7 @@ class AdvancedImportFixer:
                 "python", "-c", 
                 "import sys; sys.path.insert(0, '.'); "
                 "from core_services import initialize_services; "
-                "from core_ai.agent_manager import AgentManager; "
+                "from apps.backend.src.ai.agent_manager import AgentManager; "
                 "print('关键模块导入测试通过')"
             ], cwd=self.project_root, capture_output=True, text=True, timeout=30)
             

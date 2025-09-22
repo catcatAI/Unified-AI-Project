@@ -10,7 +10,7 @@ print("Python path:", sys.path)
 
 try:
     print("Importing src.services.main_api_server...")
-    import src.services.main_api_server
+    import apps.backend.src.services.main_api_server
     print("Import successful!")
     print("App instance:", src.services.main_api_server.app)
 except Exception as e:

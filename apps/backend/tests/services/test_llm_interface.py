@@ -4,7 +4,7 @@ import os
 import sys
 import asyncio
 
-from services.multi_llm_service import MultiLLMService
+from apps.backend.src.core.services.multi_llm_service import MultiLLMService
 
 class TestLLMInterface(unittest.TestCase):
 

@@ -64,7 +64,7 @@ def fix_imports_in_file(file_path: Path) -> bool:
         # 处理相对导入 - 修正相对导入路径
         content = re.sub(
             r"from\s+\.\.core_ai\.", 
-            "from core_ai.", 
+            "from apps.backend.src.ai.", 
             content
         )
         
@@ -121,19 +121,19 @@ def validate_fixes():
             
         # 尝试导入核心模块 - 使用相对导入
         try:
-            from core_ai.agent_manager import AgentManager
+            from apps.backend.src.ai.agent_manager import AgentManager
             print("✓ Agent管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ Agent管理器模块导入失败: {e}")
             
         try:
-            from core_ai.dialogue.dialogue_manager import DialogueManager
+            from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
             print("✓ 对话管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ 对话管理器模块导入失败: {e}")
             
         try:
-            from core_ai.learning.learning_manager import LearningManager
+            from apps.backend.src.ai.learning.learning_manager import LearningManager
             print("✓ 学习管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ 学习管理器模块导入失败: {e}")

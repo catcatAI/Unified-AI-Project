@@ -8,13 +8,13 @@ from enum import Enum
 try:
     # Try relative imports first (for when running with uvicorn)
     from ..agents.base_agent import BaseAgent
-    from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-    from hsp.connector import HSPConnector
+    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+    from apps.backend.src.core.hsp.connector import HSPConnector
 except ImportError:
     # Fall back to absolute imports (for when running as a script)
-    from agents.base_agent import BaseAgent
-    from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-    from hsp.connector import HSPConnector
+    from apps.backend.src.ai.agents.base_agent import BaseAgent
+    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+    from apps.backend.src.core.hsp.connector import HSPConnector
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +173,7 @@ class AgentCollaborationManager:
             # Replace placeholders with previous results
             for key, value in parameters.items():
                 if isinstance(value, str) and "<output_of_task_" in value:
-                    task_index = int(value.split("<output_of_task_")[1].split(">")[0])
+                    task_index = await int(value.split("<output_of_task_")[1].split(">")[0])
                     if task_index in results:
                         parameters[key] = results[task_index]
             

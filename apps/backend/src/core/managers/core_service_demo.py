@@ -7,13 +7,13 @@ This module demonstrates the usage of the CoreServiceManager.
 
 import asyncio
 import logging
-from src.core.managers.core_service_manager import (
+from apps.backend.src.core.managers.core_service_manager import (
     CoreServiceManager, 
     ServiceConfig, 
     ServiceStatus, 
     ServiceHealth
 )
-from src.core.managers.service_monitor import ServiceMonitor
+from apps.backend.src.core.managers.service_monitor import ServiceMonitor
 
 
 # 配置日志

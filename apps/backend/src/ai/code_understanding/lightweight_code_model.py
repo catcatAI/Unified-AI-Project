@@ -26,7 +26,7 @@ class LightweightCodeModel:
     """
     A model to perform lightweight static analysis of Python code,
     focusing on understanding the structure of tools.
-    Enhanced with DNA衍生数据链技术和代码复杂度 analysis.
+    Enhanced with DNA衍生数据链技术和 code complexity analysis.
     """
 
     def __init__(self, tools_directory: str = "src/tools/"):

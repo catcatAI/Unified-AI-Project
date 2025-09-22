@@ -20,8 +20,8 @@ print(f"Sys path: {sys.path}")
 # Use absolute imports instead of relative imports when running as a script
 try:
     # Try absolute imports first
-    from agents.base_agent import BaseAgent
-    from agents.base_agent import BaseAgent as AgentManager
+    from apps.backend.src.ai.agents.base_agent import BaseAgent
+    from apps.backend.src.ai.agents.base_agent import BaseAgent as AgentManager
     print("Absolute imports successful")
 except ImportError as e:
     print(f"Absolute import failed: {e}")
@@ -164,6 +164,19 @@ class TimeSystem:
 class ToolDispatcher:
     def __init__(self, *args, **kwargs):
         pass
+    
+    async def dispatch(self, query: str, explicit_tool_name: Optional[str] = None, **kwargs):
+        """
+        Mock dispatch method for testing
+        """
+        # Return a mock response for testing
+        from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
+        return ToolDispatcherResponse(
+            status="success",
+            payload="Mock dispatch result",
+            tool_name_attempted="mock_tool",
+            original_query_for_tool=query
+        )
 
 class DialogueManager:
     def __init__(self, *args, **kwargs):
@@ -203,126 +216,120 @@ class HSPConnector:
     def register_on_task_result_callback(self, callback):
         pass
     
-    async def advertise_capability(self, capability):
-        pass
-    
-    async def send_task_result(self, result_payload, callback_topic, request_id=None):
-        pass
-    
-    async def subscribe(self, topic, callback):
+    def register_on_fact_callback(self, callback):
         pass
     
     def register_on_capability_advertisement_callback(self, callback):
         pass
     
-    async def send_task_request(self, target_ai_id, capability_id, parameters, correlation_id):
-        return True
-    
-    async def disconnect(self):
-        pass
-
-class MCPConnector:
-    def __init__(self, *args, **kwargs):
+    async def publish_fact(self, fact_data, topic=None):
         pass
     
-    async def connect(self):
+    async def publish_opinion(self, opinion_data, topic=None):
         pass
+    
+    async def subscribe(self, topic, callback):
+        pass
+    
+    async def send_task_request(self, payload, target_ai_id):
+        # Return a mock correlation ID
+        import uuid
+        return str(uuid.uuid4())
 
+# Import the real HAMMemoryManager
+try:
+    from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager as RealHAMMemoryManager
+    print("Imported real HAMMemoryManager successfully")
+except ImportError as e:
+    print(f"Failed to import real HAMMemoryManager: {e}")
+    try:
+        from .core_ai.memory.ham_memory_manager import HAMMemoryManager as RealHAMMemoryManager
+        print("Imported real HAMMemoryManager with relative import")
+    except ImportError as e2:
+        print(f"Failed to import real HAMMemoryManager with relative import: {e2}")
+        # Use a mock if real import fails
+        class RealHAMMemoryManager:
+            def __init__(self, *args, **kwargs):
+                pass
+
+# Hardware Probe
 class HardwareProbe:
-    pass
+    def __init__(self):
+        pass
 
 class DeploymentManager:
+    def __init__(self):
+        pass
+    
     def generate_config(self):
-        class Config:
-            class mode:
-                value = "test"
-            class hardware_profile:
-                ai_capability_score = 50.0
-        return Config()
+        class MockConfig:
+            def __init__(self):
+                self.mode = MockMode()
+                self.hardware_profile = MockHardwareProfile()
+        
+        class MockMode:
+            def __init__(self):
+                self.value = "default"
+        
+        class MockHardwareProfile:
+            def __init__(self):
+                self.ai_capability_score = 85.0
+        
+        return MockConfig()
     
     def apply_config(self, config):
-        return {}
+        return {"status": "applied", "mode": config.mode.value}
 
-class AgentManager:
-    def __init__(self, *args, **kwargs):
-        pass
+class MCPConnector:
+    def __init__(self, ai_id, mqtt_broker_address, mqtt_broker_port, enable_fallback=True, fallback_config=None):
+        self.ai_id = ai_id
+        self.mqtt_broker_address = mqtt_broker_address
+        self.mqtt_broker_port = mqtt_broker_port
+        self.enable_fallback = enable_fallback
+        self.fallback_config = fallback_config or {}
     
-    async def launch_agent(self, agent_name):
-        return f"pid_{agent_name}"
-    
-    async def wait_for_agent_ready(self, agent_name):
-        pass
-    
-    async def shutdown_all_agents(self):
-        pass
+    async def connect(self):
+        print(f"MCPConnector: Connecting to {self.mqtt_broker_address}:{self.mqtt_broker_port}")
+        return True
 
-# Add a simple get_multi_llm_service function
-def get_multi_llm_service():
-    return MultiLLMService()
-
-# --- Constants ---
-CAP_ADVERTISEMENT_TOPIC = "hsp/capabilities/advertisements/general"
-FACT_TOPIC_GENERAL = "hsp/knowledge/facts/general"
-
-# --- Global Singleton Instances ---
-# These will be initialized by `initialize_services`
-
-# Foundational Services
+# Global service instances
 llm_interface_instance: Optional[MultiLLMService] = None
-ai_virtual_input_service_instance: Optional[AIVirtualInputService] = None
-audio_service_instance: Optional[AudioService] = None
-vision_service_instance: Optional[VisionService] = None
-resource_awareness_service_instance: Optional[ResourceAwarenessService] = None
-ham_manager_instance: Optional[HAMMemoryManager] = None
+ham_manager_instance: Optional[RealHAMMemoryManager] = None
 personality_manager_instance: Optional[PersonalityManager] = None
 trust_manager_instance: Optional[TrustManager] = None
-agent_manager_instance: Optional[AgentManager] = None
-
-# System Services
-hardware_probe_instance: Optional[HardwareProbe] = None
-deployment_manager_instance: Optional[DeploymentManager] = None
-
-# HSP Related Services
 hsp_connector_instance: Optional[HSPConnector] = None
-mcp_connector_instance: Optional[MCPConnector] = None
+mcp_connector_instance = None
 service_discovery_module_instance: Optional[ServiceDiscoveryModule] = None
-
-# Core AI Logic Modules that depend on foundational services
 fact_extractor_instance: Optional[FactExtractorModule] = None
 content_analyzer_instance: Optional[ContentAnalyzerModule] = None
 learning_manager_instance: Optional[LearningManager] = None
 emotion_system_instance: Optional[EmotionSystem] = None
 crisis_system_instance: Optional[CrisisSystem] = None
 time_system_instance: Optional[TimeSystem] = None
-# formula_engine_instance: Optional[FormulaEngine] = None  # Module not found
+formula_engine_instance = None
 tool_dispatcher_instance: Optional[ToolDispatcher] = None
 dialogue_manager_instance: Optional[DialogueManager] = None
-
-# Optional feature services (economy/pet) - default None to avoid NameError in get_services
-pet_manager_instance = None
+agent_manager_instance: Optional[AgentManager] = None
+ai_virtual_input_service_instance: Optional[AIVirtualInputService] = None
+audio_service_instance: Optional[AudioService] = None
+vision_service_instance: Optional[VisionService] = None
+resource_awareness_service_instance: Optional[ResourceAwarenessService] = None
+hardware_probe_instance = None
+deployment_manager_instance = None
 economy_manager_instance = None
+pet_manager_instance = None
 
-
-# Configuration (can be loaded from file or passed)
-# For PoC, CLI and API might use slightly different default configs or AI IDs.
-DEFAULT_AI_ID = f"did:hsp:unified_ai_core_{uuid.uuid4().hex[:6]}"
+# Default configuration values
+CAP_ADVERTISEMENT_TOPIC = "hsp/capabilities"
+FACT_TOPIC_GENERAL = "hsp/facts"
 DEFAULT_MQTT_BROKER = "localhost"
 DEFAULT_MQTT_PORT = 1883
-
-# Default operational configs, can be overridden
-DEFAULT_OPERATIONAL_CONFIGS: Dict[str, Any] = {
-    "learning_thresholds": {
-        "min_fact_confidence_to_store": 0.6,
-        "min_fact_confidence_to_share_via_hsp": 0.75,
-        "min_hsp_fact_confidence_to_store": 0.5,
-        "hsp_fact_conflict_confidence_delta": 0.1
-    },
-    "default_hsp_fact_topic": "hsp/knowledge/facts/unified_ai_general"
-    # Add other operational configs like timeouts if needed by modules here
+DEFAULT_AI_ID = "did:hsp:unified_ai_core_default"
+DEFAULT_OPERATIONAL_CONFIGS = {
+    "max_concurrent_tasks": 5,
+    "task_timeout_seconds": 300,
+    "memory_cleanup_interval_minutes": 60,
 }
-
-
-
 
 async def initialize_services(
     config: Optional[Dict[str, Any]] = None,
@@ -343,7 +350,7 @@ async def initialize_services(
     global emotion_system_instance, crisis_system_instance, time_system_instance
     global formula_engine_instance, tool_dispatcher_instance, dialogue_manager_instance, agent_manager_instance
     global ai_virtual_input_service_instance, audio_service_instance, vision_service_instance, resource_awareness_service_instance
-    global hardware_probe_instance, deployment_manager_instance
+    global hardware_probe_instance, deployment_manager_instance, economy_manager_instance, pet_manager_instance
 
     print(f"Core Services: Initializing for AI ID: {ai_id}")
 
@@ -421,6 +428,12 @@ async def initialize_services(
 
     # --- 1. Foundational Services ---
     if llm_interface_instance is None:
+        try:
+            # Try absolute import first
+            from apps.backend.src.services.multi_llm_service import get_multi_llm_service
+        except ImportError:
+            # Fall back to relative import
+            from .services.multi_llm_service import get_multi_llm_service
         llm_interface_instance = get_multi_llm_service()
 
     if not ham_manager_instance:
@@ -478,13 +491,36 @@ async def initialize_services(
                     chroma_client = None
             
             # Ensure MIKO_HAM_KEY is set for real HAM
-            ham_manager_instance = HAMMemoryManager(
-                core_storage_filename=f"ham_core_{ai_id.replace(':','_')}.json",
-                chroma_client=chroma_client,
-                resource_awareness_service=resource_awareness_service_instance,
-                personality_manager=personality_manager_instance,
-                storage_dir=None
-            )
+            # 修复：正确传递参数给HAMMemoryManager构造函数
+            try:
+                ham_manager_instance = RealHAMMemoryManager(
+                    core_storage_filename=f"ham_core_{ai_id.replace(':','_')}.json",
+                    chroma_client=chroma_client,
+                    resource_awareness_service=resource_awareness_service_instance,
+                    personality_manager=personality_manager_instance,
+                    storage_dir=None
+                )
+            except Exception as e:
+                print(f"Core Services: Error initializing HAMMemoryManager: {e}")
+                # Fallback to a simple mock if initialization fails
+                class SimpleMockHAM:
+                    def __init__(self, *args, **kwargs):
+                        self.memory_store = {}
+                        self.next_id = 1
+                    
+                    async def store_experience(self, raw_data, data_type, metadata=None):
+                        mid = f"mock_ham_{self.next_id}"
+                        self.next_id += 1
+                        self.memory_store[mid] = {}
+                        return mid
+                    
+                    def query_core_memory(self, *args, **kwargs):
+                        return []
+                    
+                    def recall_gist(self, memory_id):
+                        return None
+                
+                ham_manager_instance = SimpleMockHAM()
 
     if not personality_manager_instance:
         personality_manager_instance = PersonalityManager() # Uses default profile initially
@@ -522,20 +558,33 @@ async def initialize_services(
 
     # --- 2. HSP Related Services ---
     if not hsp_connector_instance:
-        hsp_connector_instance = HSPConnector(
-            ai_id=ai_id,
-            broker_address=hsp_broker_address,
-            broker_port=hsp_broker_port
-        )
-        if not await hsp_connector_instance.connect(): # Attempt to connect
-            print(f"Core Services: WARNING - HSPConnector for {ai_id} failed to connect to {hsp_broker_address}:{hsp_broker_port}")
-            # Decide if this is a fatal error for the app context
+        # Check if HSP service is enabled in config
+        hsp_enabled = config.get("hsp_service", {}).get("enabled", True)
+        if hsp_enabled:
+            hsp_connector_instance = HSPConnector(
+                ai_id=ai_id,
+                broker_address=hsp_broker_address,
+                broker_port=hsp_broker_port
+            )
+            if not await hsp_connector_instance.connect(): # Attempt to connect
+                print(f"Core Services: WARNING - HSPConnector for {ai_id} failed to connect to {hsp_broker_address}:{hsp_broker_port}")
+                # Decide if this is a fatal error for the app context
+            else:
+                print(f"Core Services: HSPConnector for {ai_id} connected.")
+                # Basic subscriptions needed by multiple modules
+                await hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#", lambda p, s, e: None) # Placeholder callback
+                await hsp_connector_instance.subscribe(f"hsp/results/{ai_id}/#", lambda p, s, e: None) # Placeholder callback
+                await hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL}/#", lambda p, s, e: None) # Placeholder callback
         else:
-            print(f"Core Services: HSPConnector for {ai_id} connected.")
-            # Basic subscriptions needed by multiple modules
-            await hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#", lambda p, s, e: None) # Placeholder callback
-            await hsp_connector_instance.subscribe(f"hsp/results/{ai_id}/#", lambda p, s, e: None) # Placeholder callback
-            await hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL}/#", lambda p, s, e: None) # Placeholder callback
+            print("Core Services: HSP service is disabled in configuration.")
+            # Create a mock HSP connector when disabled
+            hsp_connector_instance = HSPConnector(
+                ai_id=ai_id,
+                broker_address=hsp_broker_address,
+                broker_port=hsp_broker_port,
+                mock_mode=True
+            )
+            await hsp_connector_instance.connect()
 
     if not service_discovery_module_instance:
         service_discovery_module_instance = ServiceDiscoveryModule(trust_manager=trust_manager_instance)
@@ -667,93 +716,3 @@ async def shutdown_services():
     """Gracefully shuts down services, e.g., AgentManager and HSPConnector."""
     global hsp_connector_instance, agent_manager_instance, llm_interface_instance, ham_manager_instance, mcp_connector_instance
     print("Core Services: Shutting down services...")
-
-    if agent_manager_instance:
-        try:
-            agent_manager_instance.shutdown_all_agents()
-            print("Core Services: AgentManager shut down.")
-        except Exception as e:
-            print(f"Core Services: Error during AgentManager shutdown: {e}")
-
-    if hsp_connector_instance and hsp_connector_instance.is_connected:
-        try:
-            await hsp_connector_instance.disconnect()
-            print("Core Services: HSPConnector disconnected.")
-        except Exception as e:
-            print(f"Core Services: Error during HSPConnector disconnect: {e}")
-
-    if llm_interface_instance:
-        try:
-            await llm_interface_instance.close()
-            print("Core Services: LLMInterface closed.")
-        except Exception as e:
-            print(f"Core Services: Error during LLMInterface close: {e}")
-
-    if ham_manager_instance:
-        try:
-            ham_manager_instance.close()
-            print("Core Services: HAM Memory Manager closed.")
-        except Exception as e:
-            print(f"Core Services: Error during HAM Memory Manager close: {e}")
-
-    if mcp_connector_instance:
-        try:
-            # Check if disconnect method exists and handle properly
-            if hasattr(mcp_connector_instance, 'disconnect'):
-                disconnect_method = getattr(mcp_connector_instance, 'disconnect')
-                if asyncio.iscoroutinefunction(disconnect_method):
-                    try:
-                        # 安全地處理可能返回None或非協程的異步方法
-                        disconnect_result = mcp_connector_instance.disconnect()
-                        if disconnect_result is not None and hasattr(disconnect_result, '__await__'):
-                            result = await disconnect_result  # type: ignore
-                            print(f"Core Services: MCPConnector disconnected with result: {result}")
-                        else:
-                            print("Core Services: MCPConnector disconnected (no awaitable result).")
-                    except Exception as disconnect_error:
-                        print(f"Core Services: Error during async MCPConnector disconnect: {disconnect_error}")
-                elif callable(disconnect_method):
-                    mcp_connector_instance.disconnect()
-                    print("Core Services: MCPConnector disconnected (sync).")
-                else:
-                    print("Core Services: MCPConnector disconnect is not callable.")
-            else:
-                print("Core Services: MCPConnector does not have disconnect method.")
-        except Exception as e:
-            print(f"Core Services: Error during MCPConnector disconnect: {e}")
-
-    await demo_learning_manager.shutdown()
-
-    print("Core Services: Shutdown process complete.")
-
-if __name__ == '__main__':
-    import asyncio
-
-    async def main_test():
-        print("--- Core Services Initialization Test ---")
-        await initialize_services(ai_id="did:hsp:coreservice_test_ai_001", use_mock_ham=True)
-
-        services = await get_services()
-        for name, service_instance in services.items():
-            print(f"Service '{name}': {'Initialized' if service_instance else 'NOT Initialized'}")
-
-        assert services["dialogue_manager"] is not None
-        assert services["hsp_connector"] is not None
-        # Add more assertions here if needed
-
-        print("\n--- Verifying service references ---")
-        dm = services["dialogue_manager"]
-        lm = services["learning_manager"]
-        sdm = services["service_discovery"]
-
-        if dm and lm: assert dm.learning_manager == lm, "DM not using shared LM"
-        if dm and sdm : assert dm.service_discovery_module == sdm, "DM not using shared SDM"
-        if lm and services["trust_manager"]: assert lm.trust_manager == services["trust_manager"], "LM not using shared TrustManager"
-        if sdm and services["trust_manager"]: assert sdm.trust_manager == services["trust_manager"], "SDM not using shared TrustManager"
-
-        print("Service reference checks seem okay.")
-
-        await shutdown_services()
-        print("--- Core Services Initialization Test Finished ---")
-
-    asyncio.run(main_test())

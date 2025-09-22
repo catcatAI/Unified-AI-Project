@@ -2,8 +2,8 @@ import json
 import logging
 from typing import List, Dict, Optional, Any
 
-# 修复相对导入路径，使用正确的相对导入
-from ...services.multi_llm_service import MultiLLMService, ChatMessage
+# 修复相对导入路径，使用正确的导入路径
+from apps.backend.src.services.multi_llm_service import MultiLLMService, ChatMessage
 from .types import ExtractedFact
 # LearnedFactRecord content is what this module aims to extract, but the full record is assembled by LearningManager
 
@@ -106,7 +106,7 @@ class FactExtractorModule:
 if __name__ == '__main__':
     import asyncio
     # 修复导入路径
-    from ...services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, LLMResponse
+    from apps.backend.src.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider, LLMResponse
     from datetime import datetime
 
     # Basic logging setup for demo

@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import Mock, AsyncMock, patch
 
 # 修复导入路径
-from src.core.managers.core_service_manager import (
+from apps.backend.src.core.managers.core_service_manager import (
     CoreServiceManager, 
     ServiceConfig, 
     ServiceStatus, 
@@ -338,7 +338,7 @@ class TestServiceInfo(unittest.TestCase):
             lazy_load=True
         )
         
-        from src.core.managers.core_service_manager import ServiceInfo
+        from apps.backend.src.core.managers.core_service_manager import ServiceInfo
         
         service_info = ServiceInfo(config=config)
         

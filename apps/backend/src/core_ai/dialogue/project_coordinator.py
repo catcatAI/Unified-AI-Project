@@ -9,14 +9,14 @@ from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
 import yaml
 import os
 
-from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload
-from shared.types.common_types import PendingHSPTaskInfo
+from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload
+from apps.backend.src.core.shared.types.common_types import PendingHSPTaskInfo
 from datetime import datetime, timezone
 
 if TYPE_CHECKING:
-    from services.multi_llm_service import MultiLLMService
+    from apps.backend.src.core.services.multi_llm_service import MultiLLMService
     from service_discovery.service_discovery_module import ServiceDiscoveryModule
-    from hsp.connector import HSPConnector
+    from apps.backend.src.core.hsp.connector import HSPConnector
     from agent_manager import AgentManager
     from memory.ham_memory_manager import HAMMemoryManager
     from learning.learning_manager import LearningManager

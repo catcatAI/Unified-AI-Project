@@ -143,7 +143,7 @@ class HotReloadService:
             if ham is not None and hasattr(ham, "query_core_memory"):
                 # Local import of constants to avoid cycles
                 try:
-                    from core_ai.lis.lis_cache_interface import LIS_INCIDENT_DATA_TYPE_PREFIX, LIS_ANTIBODY_DATA_TYPE_PREFIX  # type: ignore
+                    from apps.backend.src.ai.lis.lis_cache_interface import LIS_INCIDENT_DATA_TYPE_PREFIX, LIS_ANTIBODY_DATA_TYPE_PREFIX  # type: ignore
                 except Exception:
                     LIS_INCIDENT_DATA_TYPE_PREFIX = "lis_incident_v0.1_"  # fallback
                     LIS_ANTIBODY_DATA_TYPE_PREFIX = "lis_antibody_v0.1_"
@@ -265,7 +265,7 @@ class HotReloadService:
                 return {"reloaded": False, "error": "Cannot infer HSP broker settings from existing connector."}
 
             try:
-                from hsp.connector import HSPConnector
+                from apps.backend.src.core.hsp.connector import HSPConnector
                 new_hsp = HSPConnector(ai_id=old_hsp.ai_id, broker_address=broker_address, broker_port=broker_port)
                 connected = await new_hsp.connect()
                 if not connected:

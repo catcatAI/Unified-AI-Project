@@ -9,7 +9,7 @@ import os
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzerModule
 
 # Create an instance of the ContentAnalyzerModule
 analyzer = ContentAnalyzerModule()

@@ -5,7 +5,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 # Fix the import path
-from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzerModule
 
 def final_test():
     # Initialize the analyzer

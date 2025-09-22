@@ -19,8 +19,8 @@ sys.modules['hsp.types'] = mock_hsp.types
 # 修复导入路径
 sys.path.insert(0, 'd:\\Projects\\Unified-AI-Project\\apps\\backend\\src')
 
-from agents.base_agent import BaseAgent
-from core_ai.agent_manager import AgentManager
+from apps.backend.src.ai.agents.base.base_agent import BaseAgent
+from apps.backend.src.core_ai.agent_manager import AgentManager
 
 class TestAgentManager:
     """AgentManager单元测试"""

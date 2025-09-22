@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 def test_simple():
     """Simple test to verify imports work."""
     try:
-        from agents.base_agent import BaseAgent
+        from apps.backend.src.ai.agents.base_agent import BaseAgent
         print("BaseAgent imported successfully")
         
         # Create a simple agent instance

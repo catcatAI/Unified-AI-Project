@@ -11,8 +11,7 @@ import signal
 import atexit
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from apps.backend.src.core_ai.memory.vector_store import VectorMemoryStore
-from apps.backend.src.core.memory.vector_store import VectorStore
+from src.ai.memory.vector_store import VectorMemoryStore
 import tempfile
 import shutil
 
@@ -62,16 +61,16 @@ def test_vector_memory_store():
             pass
 
 def test_vector_store():
-    """測試 VectorStore 是否能正常初始化"""
+    """測試 VectorMemoryStore 是否能正常初始化（兼容性測試）"""
     temp_dir = tempfile.mkdtemp()
     try:
         # 設置環境變數強制使用本地模式
         os.environ.pop('CHROMA_API_IMPL', None)
-        store = VectorStore(path=temp_dir)
-        print("✓ VectorStore 初始化成功")
+        store = VectorMemoryStore(persist_directory=temp_dir)
+        print("✓ VectorMemoryStore 初始化成功")
         return True
     except Exception as e:
-        print(f"✗ VectorStore 初始化失敗: {e}")
+        print(f"✗ VectorMemoryStore 初始化失敗: {e}")
         return False
     finally:
         try:

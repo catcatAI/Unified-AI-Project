@@ -6,7 +6,7 @@ from typing import Dict, Any, List
 from datetime import datetime, timedelta
 
 from .base_agent import BaseAgent
-from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 class PlanningAgent(BaseAgent):
     """

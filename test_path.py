@@ -1,21 +1,39 @@
+import sys
 import os
 
-# Define output directory and filenames
-# Assuming script is in src/tools/logic_model/
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-print("SCRIPT_DIR:", SCRIPT_DIR)
+# Print the current sys.path
+print("Current sys.path:")
+for i, path in enumerate(sys.path):
+    print(f"  {i}: {path}")
 
-# 计算项目根目录
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", "..", "..", ".."))
-print("PROJECT_ROOT:", PROJECT_ROOT)
+# Check if we can import apps
+try:
+    import apps
+    print("\nSuccessfully imported apps module")
+    print(f"apps module location: {apps.__file__}")
+except ImportError as e:
+    print(f"\nFailed to import apps module: {e}")
 
-# 修复输出目录路径 - 正确计算项目根目录
-OUTPUT_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "raw_datasets")
-print("OUTPUT_DATA_DIR:", OUTPUT_DATA_DIR)
+# Check if we can import apps.backend
+try:
+    from apps import backend
+    print("\nSuccessfully imported apps.backend module")
+    print(f"backend module location: {backend.__file__}")
+except ImportError as e:
+    print(f"\nFailed to import apps.backend module: {e}")
 
-# 检查目录是否存在
-print("目录是否存在:", os.path.exists(OUTPUT_DATA_DIR))
+# Check if we can import apps.backend.src
+try:
+    from apps.backend import src
+    print("\nSuccessfully imported apps.backend.src module")
+    print(f"src module location: {src.__file__}")
+except ImportError as e:
+    print(f"\nFailed to import apps.backend.src module: {e}")
 
-# 尝试创建目录
-os.makedirs(OUTPUT_DATA_DIR, exist_ok=True)
-print("目录创建成功")
+# Check if we can import the specific module we need
+try:
+    from apps.backend.src.hsp.connector import HSPConnector
+    print("\nSuccessfully imported apps.backend.src.hsp.connector module")
+    print(f"HSPConnector location: {HSPConnector.__module__}")
+except ImportError as e:
+    print(f"\nFailed to import apps.backend.src.hsp.connector module: {e}")

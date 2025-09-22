@@ -28,7 +28,7 @@ except ImportError as e:
     print(f"Failed to import pytest: {e}")
 
 try:
-    from hsp.connector import HSPConnector
+    from apps.backend.src.core.hsp.connector import HSPConnector
     print("Successfully imported HSPConnector")
 except ImportError as e:
     print(f"Failed to import HSPConnector: {e}")

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
 
 from registry import ModelRegistry, ModelProfile
-from services.multi_llm_service import ModelProvider
+from apps.backend.src.core.services.multi_llm_service import ModelProvider
 
 
 @dataclass

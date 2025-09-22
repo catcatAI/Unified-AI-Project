@@ -19,20 +19,29 @@ from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 from .atlassian_bridge import AtlassianBridge
 # Try to import from the full path first, fallback to relative import
 try:
-    # 修复导入路径
-    from hsp.connector import HSPConnector
-    from hsp.types import HSPMessage, HSPCapability, HSPTask
-    from core_ai.agent_manager import AgentManager
+    # 修复导入路径，使用正确的HSPConnector
+    from apps.backend.src.core.hsp.connector import HSPConnector
+    from apps.backend.src.core.hsp.types import HSPMessage, HSPCapability, HSPTask
+    from apps.backend.src.ai.agent_manager import AgentManager
 except ImportError:
     # Fallback to relative imports
     try:
-        from hsp.connector import HSPConnector
-        from hsp.types import HSPMessage, HSPCapability, HSPTask
-        from core_ai.agent_manager import AgentManager
+        from apps.backend.src.core.hsp.connector import HSPConnector
+        from apps.backend.src.core.hsp.types import HSPMessage, HSPCapability, HSPTask
+        from apps.backend.src.ai.agent_manager import AgentManager
     except ImportError:
         # If relative imports also fail, create mock classes
         class HSPConnector:
             def __init__(self, *args, **kwargs):
+                pass
+            
+            async def connect(self):
+                pass
+                
+            async def disconnect(self):
+                pass
+                
+            def register_capability_provider(self, callback):
                 pass
         
         class HSPMessage:

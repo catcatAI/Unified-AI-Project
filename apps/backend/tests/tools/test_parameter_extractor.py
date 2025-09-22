@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from apps.backend.src.tools.parameter_extractor import ParameterExtractor
+
+# 修复导入路径
+from apps.backend.src.tools.parameter_extractor.extractor import ParameterExtractor
 
 class TestParameterExtractor(unittest.TestCase):
 
@@ -17,7 +19,7 @@ class TestParameterExtractor(unittest.TestCase):
         mock_hf_hub_download.assert_called_once_with(
             repo_id="bert-base-uncased",
             filename="pytorch_model.bin",
-            cache_dir="model_cache"
+            cache_dir="model_cache"  # 使用默认值
         )
         self.assertEqual(result, "/fake/path/pytorch_model.bin")
 

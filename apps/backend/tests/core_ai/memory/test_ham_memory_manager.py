@@ -7,9 +7,9 @@ import json
 from unittest.mock import Mock, patch, AsyncMock
 
 # 修复导入路径
-from src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from src.core_ai.memory.ham_types import MemoryItem, MemoryMetadata
-from src.core_ai.memory.importance_scorer import ImportanceScorer
+from src.ai.memory.ham_memory_manager import HAMMemoryManager
+from src.ai.memory.ham_types import DialogueMemoryEntryMetadata
+from src.ai.memory.importance_scorer import ImportanceScorer
 
 class TestHAMMemoryManager:
     """HAMMemoryManager单元测试"""
@@ -24,18 +24,16 @@ class TestHAMMemoryManager:
             yield manager
     
     @pytest.fixture
-    def sample_memory_item(self):
-        """创建示例记忆项"""
-        return MemoryItem(
-            id="test_001",
-            content="This is a test memory item",
-            metadata=MemoryMetadata(
-                created_at="2023-01-01T00:00:00Z",
-                updated_at="2023-01-01T00:00:00Z",
-                importance_score=0.8,
-                tags=["test", "sample"],
-                data_type="text"
-            )
+    def sample_memory_metadata(self):
+        """创建示例记忆元数据"""
+        from datetime import datetime
+        return DialogueMemoryEntryMetadata(
+            timestamp=datetime.fromisoformat("2023-01-01T00:00:00"),
+            speaker="test_user",
+            dialogue_id="test_dialogue_001",
+            turn_id=1,
+            language="en",
+            tags=["test", "sample"]
         )
     
     def test_init(self, memory_manager):
@@ -53,23 +51,23 @@ class TestHAMMemoryManager:
         assert len(id1) > 0
     
     @pytest.mark.asyncio
-    async def test_store_memory(self, memory_manager, sample_memory_item):
+    async def test_store_memory(self, memory_manager, sample_memory_metadata):
         """测试存储记忆"""
         result = await memory_manager.store_experience(
-            sample_memory_item.content, 
-            sample_memory_item.metadata.data_type, 
-            sample_memory_item.metadata
+            "This is a test memory item", 
+            "text", 
+            sample_memory_metadata
         )
         assert result is not None
     
     @pytest.mark.asyncio
-    async def test_recall_gist(self, memory_manager, sample_memory_item):
+    async def test_recall_gist(self, memory_manager, sample_memory_metadata):
         """测试回忆记忆"""
         # 先存储一个记忆
         memory_id = await memory_manager.store_experience(
-            sample_memory_item.content, 
-            sample_memory_item.metadata.data_type, 
-            sample_memory_item.metadata
+            "This is a test memory item", 
+            "text", 
+            sample_memory_metadata
         )
         
         # 然后回忆它
@@ -78,13 +76,13 @@ class TestHAMMemoryManager:
         assert result["id"] == memory_id
     
     @pytest.mark.asyncio
-    async def test_query_core_memory(self, memory_manager, sample_memory_item):
+    async def test_query_core_memory(self, memory_manager, sample_memory_metadata):
         """测试查询核心记忆"""
         # 先存储一个记忆
         await memory_manager.store_experience(
-            sample_memory_item.content, 
-            sample_memory_item.metadata.data_type, 
-            sample_memory_item.metadata
+            "This is a test memory item", 
+            "text", 
+            sample_memory_metadata
         )
         
         # 然后查询它

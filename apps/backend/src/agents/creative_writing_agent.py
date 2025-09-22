@@ -5,7 +5,7 @@ import logging
 from typing import Dict, Any, List
 
 from .base_agent import BaseAgent
-from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, ChatMessage
+from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, ChatMessage
 from core.services.multi_llm_service import MultiLLMService
 
 

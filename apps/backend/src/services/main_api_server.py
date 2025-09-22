@@ -31,12 +31,12 @@ try:
     from pet.pet_manager import PetManager
     from path_config import PROJECT_ROOT
     from core_services import initialize_services, shutdown_services, get_services
-    from services.multi_llm_service import get_multi_llm_service
+    from apps.backend.src.core.services.multi_llm_service import get_multi_llm_service
     from ai.language_models.registry import ModelRegistry
     from ai.language_models.router import PolicyRouter, RoutingPolicy
-    from services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
-    from hsp.connector import HSPConnector
-    from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
+    from apps.backend.src.core.services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
+    from apps.backend.src.core.hsp.connector import HSPConnector
+    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
     from ai.dialogue.dialogue_manager import DialogueManager
     from ai.memory.ham_memory_manager import HAMMemoryManager
     from core.services.atlassian_api import atlassian_router
@@ -78,7 +78,7 @@ async def initialize_services_layered():
         print("✅ HAM服务初始化完成")
         
         # 初始化多LLM服务
-        from services.multi_llm_service import get_multi_llm_service
+        from apps.backend.src.core.services.multi_llm_service import get_multi_llm_service
         llm_interface = get_multi_llm_service()
         print("✅ LLM服务初始化完成")
         
@@ -96,7 +96,7 @@ async def initialize_services_layered():
     print("⚙️ 第2层: 核心组件启动")
     try:
         # 初始化HSP连接器
-        from hsp.connector import HSPConnector
+        from apps.backend.src.core.hsp.connector import HSPConnector
         hsp_connector = HSPConnector(
             ai_id=os.getenv("API_AI_ID", "did:hsp:api_server_ai"),
             broker_address="localhost",
