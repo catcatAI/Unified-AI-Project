@@ -1,0 +1,21 @@
+{
+  "context_id": "7d5f9b0f-5383-4493-9e6d-51016b2d84fc",
+  "context_type": "memory",
+  "created_at": "2025-09-23T17:27:10.674522",
+  "updated_at": "2025-09-23T17:27:10.674522",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "memory": {
+      "memory_id": "mem_20250923172710674522",
+      "content": "测试记忆内容",
+      "memory_type": "short_term",
+      "created_at": "2025-09-23T17:27:10.674522",
+      "metadata": {
+        "test": "metadata"
+      }
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}

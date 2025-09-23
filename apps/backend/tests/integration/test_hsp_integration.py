@@ -212,7 +212,7 @@ class TestMemorySystemIntegration:
     async def test_memory_storage_retrieval_flow(self):
         """测试记忆存储和检索流程"""
         # 由于记忆系统依赖外部数据库，这里使用模拟测试
-        with patch('apps.backend.src.core_ai.memory.ham_memory_manager.HAMMemoryManager') as mock_manager:
+        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_manager:
             # 模拟记忆管理器
             mock_manager_instance = mock_manager.return_value
             mock_manager_instance.store_memory = AsyncMock(return_value=True)
@@ -245,7 +245,7 @@ class TestAgentSystemIntegration:
     @pytest.mark.asyncio
     async def test_agent_lifecycle_flow(self):
         """测试代理生命周期管理流程"""
-        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_manager:
+        with patch('apps.backend.src.core.managers.agent_manager.AgentManager') as mock_manager:
             # 模拟代理管理器
             mock_manager_instance = mock_manager.return_value
             mock_manager_instance.create_agent = AsyncMock(return_value=Mock())

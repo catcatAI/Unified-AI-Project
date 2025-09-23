@@ -10,18 +10,18 @@ import yaml
 import os
 
 # 修复相对导入路径，使用正确的相对导入
-from ...hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload
-from ...shared.types.common_types import PendingHSPTaskInfo
+from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload
+from src.core.shared.types.common_types import PendingHSPTaskInfo
 from datetime import datetime, timezone
 
 if TYPE_CHECKING:
-    from ...services.multi_llm_service import MultiLLMService
-    from ...core_ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
-    from ...hsp.connector import HSPConnector
-    from ...core_ai.agent_manager import AgentManager
-    from ...core_ai.memory.ham_memory_manager import HAMMemoryManager
-    from ...core_ai.learning.learning_manager import LearningManager
-    from ...core_ai.personality.personality_manager import PersonalityManager
+    from src.core.services.multi_llm_service import MultiLLMService
+    from src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
+    from src.hsp.connector import HSPConnector
+    from src.managers.agent_manager import AgentManager
+    from src.ai.memory.ham_memory_manager import HAMMemoryManager
+    from src.ai.learning.learning_manager import LearningManager
+    from src.ai.personality.personality_manager import PersonalityManager
 
 class ProjectCoordinator:
     def __init__(self,

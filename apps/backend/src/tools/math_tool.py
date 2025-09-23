@@ -3,7 +3,7 @@ import re
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
+from core.shared.types.common_types import ToolDispatcherResponse
 import os
 
 # Import statement for the model is now inside a try-except block in the loading function.

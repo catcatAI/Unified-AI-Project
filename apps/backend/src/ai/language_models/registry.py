@@ -7,7 +7,7 @@ try:
     from ...services.multi_llm_service import ModelConfig, ModelProvider
 except ImportError:
     # Fall back to absolute imports (for when running as a script)
-    from apps.backend.src.core.services.multi_llm_service import ModelConfig, ModelProvider
+    from core.services.multi_llm_service import ModelConfig, ModelProvider
 
 
 @dataclass

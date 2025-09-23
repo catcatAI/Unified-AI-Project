@@ -1,0 +1,19 @@
+{
+  "context_id": "4273867e-baa9-4c39-8fe4-29d228a59d5e",
+  "context_type": "memory",
+  "created_at": "2025-09-23T18:14:06.374686",
+  "updated_at": "2025-09-23T18:14:06.374686",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "memory_transfer": {
+      "source_memory_id": "mem_20250923181405437060",
+      "target_memory_id": "mem_20250923181406374686",
+      "source_type": "short_term",
+      "target_type": "long_term",
+      "transfer_time": "2025-09-23T18:14:06.374686"
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}

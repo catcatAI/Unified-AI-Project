@@ -8,53 +8,53 @@ import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from datetime import datetime, timezone
 
-# Use absolute imports instead of relative imports when running as a script
+# Use absolute imports with correct module paths
 try:
     # Try absolute imports first (for when running with uvicorn)
-    from apps.backend.src.agents.base_agent import BaseAgent
-    from apps.backend.src.ai.personality.personality_manager import PersonalityManager
-    from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
-    from apps.backend.src.services.multi_llm_service import MultiLLMService
-    from apps.backend.src.ai.emotion.emotion_system import EmotionSystem
-    from apps.backend.src.ai.crisis.crisis_system import CrisisSystem
-    from apps.backend.src.ai.time.time_system import TimeSystem
-    from apps.backend.src.ai.formula_engine import FormulaEngine
-    from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
-    from apps.backend.src.ai.learning.learning_manager import LearningManager
-    from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
-    from apps.backend.src.services.sandbox_executor import SandboxExecutor
+    from src.agents.base_agent import BaseAgent
+    from src.ai.personality.personality_manager import PersonalityManager
+    from src.ai.memory.ham_memory_manager import HAMMemoryManager
+    from src.core.services.multi_llm_service import MultiLLMService
+    from src.ai.emotion.emotion_system import EmotionSystem
+    from src.ai.crisis.crisis_system import CrisisSystem
+    from src.ai.time.time_system import TimeSystem
+    from src.ai.formula_engine import FormulaEngine
+    from src.tools.tool_dispatcher import ToolDispatcher
+    from src.ai.learning.learning_manager import LearningManager
+    from src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
+    from src.services.sandbox_executor import SandboxExecutor
     import networkx as nx
-    from apps.backend.src.core.shared.types.common_types import (
+    from src.core.shared.types.common_types import (
         OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
     )
-    from apps.backend.src.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
-    from apps.backend.src.ai.dialogue.project_coordinator import ProjectCoordinator
-    from apps.backend.src.managers.agent_manager import AgentManager
-    from apps.backend.src.hsp.connector import HSPConnector
-    print("Absolute imports successful in dialogue_manager")
+    from src.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
+    from src.ai.dialogue.project_coordinator import ProjectCoordinator
+    from src.managers.agent_manager import AgentManager
+    from src.hsp.connector import HSPConnector
+    print("Absolute imports with correct paths successful in dialogue_manager")
 except ImportError as e:
-    print(f"Absolute import failed in dialogue_manager: {e}")
+    print(f"Absolute import with correct paths failed in dialogue_manager: {e}")
     # Fall back to relative imports (for when running with uvicorn)
     try:
         from ..personality.personality_manager import PersonalityManager
         from ..memory.ham_memory_manager import HAMMemoryManager
-        from apps.backend.src.services.multi_llm_service import MultiLLMService
+        from core.services.multi_llm_service import MultiLLMService
         from ..emotion.emotion_system import EmotionSystem
         from ..crisis.crisis_system import CrisisSystem
         from ..time.time_system import TimeSystem
         from ..formula_engine import FormulaEngine
-        from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+        from tools.tool_dispatcher import ToolDispatcher
         from ..learning.learning_manager import LearningManager
         from ..discovery.service_discovery_module import ServiceDiscoveryModule
-        from apps.backend.src.services.sandbox_executor import SandboxExecutor
+        from services.sandbox_executor import SandboxExecutor
         import networkx as nx
-        from ..shared.types.common_types import (
+        from core.shared.types.common_types import (
             OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
         )
-        from ..hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
+        from hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
         from .project_coordinator import ProjectCoordinator
-        from ..managers.agent_manager import AgentManager
-        from ..hsp.connector import HSPConnector
+        from src.managers.agent_manager import AgentManager
+        from src.hsp.connector import HSPConnector
         print("Relative imports successful in dialogue_manager")
     except ImportError as e2:
         print(f"Relative import also failed in dialogue_manager: {e2}")

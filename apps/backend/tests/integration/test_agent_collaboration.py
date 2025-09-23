@@ -210,7 +210,11 @@ class TestAgentCollaboration(unittest.TestCase):
                 hsp_connector_mock.send_task_request = AsyncMock(return_value="test_correlation_id")
 
                 # 6. Mock _wait_for_task_result to avoid timeout issues
-                with patch.object(self.dialogue_manager.project_coordinator, '_wait_for_task_result', new=AsyncMock(return_value={"result": "ok"})):
+                # 使用create_autospec创建一个更精确的模拟
+                from unittest.mock import create_autospec
+                mock_wait_for_task_result = create_autospec(self.dialogue_manager.project_coordinator._wait_for_task_result, return_value={"result": "ok"})
+
+                with patch.object(self.dialogue_manager.project_coordinator, '_wait_for_task_result', new=mock_wait_for_task_result):
 
                     # 7. Run the project (don't mock _dispatch_single_subtask to allow agent launch logic to execute)
                     final_response = asyncio.run(self.dialogue_manager.get_simple_response("project: new agent"))

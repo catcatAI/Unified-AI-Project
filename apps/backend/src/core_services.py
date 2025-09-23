@@ -21,22 +21,32 @@ print(f"Sys path: {sys.path}")
 try:
     # Try absolute imports first
     from apps.backend.src.ai.agents.base_agent import BaseAgent
-    from apps.backend.src.ai.agents.base_agent import BaseAgent as AgentManager
+    from apps.backend.src.core_ai.agent_manager import AgentManager
     print("Absolute imports successful")
+    print(f"AgentManager class: {AgentManager}")
+    print(f"AgentManager.__init__ signature: {AgentManager.__init__}")
 except ImportError as e:
     print(f"Absolute import failed: {e}")
     # Fall back to relative imports (for when running with uvicorn)
     try:
         from .agents.base_agent import BaseAgent
-        from .agents.base_agent import BaseAgent as AgentManager
+        from .core_ai.agent_manager import AgentManager
         print("Relative imports successful")
+        print(f"AgentManager class: {AgentManager}")
+        print(f"AgentManager.__init__ signature: {AgentManager.__init__}")
     except ImportError as e2:
         print(f"Relative import also failed: {e2}")
         # Create mock classes for testing
         class BaseAgent:
             pass
-        AgentManager = BaseAgent
+            
+        class AgentManager:
+            def __init__(self, *args, **kwargs):
+                pass
+                
         print("Using mock classes")
+        print(f"AgentManager class: {AgentManager}")
+        print(f"AgentManager.__init__ signature: {AgentManager.__init__}")
 
 # Add a simple shutdown_all_agents method to BaseAgent if it doesn't exist
 if not hasattr(BaseAgent, 'shutdown_all_agents'):

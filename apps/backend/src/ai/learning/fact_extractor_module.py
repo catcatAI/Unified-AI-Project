@@ -3,8 +3,8 @@ import logging
 from typing import List, Dict, Optional, Any
 
 # 修复相对导入路径，使用正确的导入路径
-from apps.backend.src.services.multi_llm_service import MultiLLMService, ChatMessage
-from .types import ExtractedFact
+from src.core.services.multi_llm_service import MultiLLMService, ChatMessage
+from src.ai.learning.types import ExtractedFact
 # LearnedFactRecord content is what this module aims to extract, but the full record is assembled by LearningManager
 
 logger = logging.getLogger(__name__)

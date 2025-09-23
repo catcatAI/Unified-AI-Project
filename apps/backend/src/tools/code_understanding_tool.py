@@ -3,7 +3,7 @@ import os
 import json # For potentially pretty-printing dicts if needed, though aiming for formatted string.
 from typing import List, Optional, Union, Dict, Any
 
-from apps.backend.src.ai.code_understanding.lightweight_code_model import LightweightCodeModel # Corrected import
+from ai.code_understanding.lightweight_code_model import LightweightCodeModel # Corrected import
 
 class CodeUnderstandingTool:
     """

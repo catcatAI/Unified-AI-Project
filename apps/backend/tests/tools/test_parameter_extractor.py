@@ -6,7 +6,7 @@ from apps.backend.src.tools.parameter_extractor.extractor import ParameterExtrac
 
 class TestParameterExtractor(unittest.TestCase):
 
-    @patch('src.tools.parameter_extractor.extractor.hf_hub_download')
+    @patch('apps.backend.src.tools.parameter_extractor.extractor.hf_hub_download')
     def test_download_model_parameters(self, mock_hf_hub_download):
         # Arrange
         mock_hf_hub_download.return_value = "/fake/path/pytorch_model.bin"

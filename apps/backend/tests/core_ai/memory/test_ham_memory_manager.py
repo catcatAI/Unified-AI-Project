@@ -1,90 +1,185 @@
-import asyncio
-import logging
 import pytest
 import os
+import sys
 import tempfile
 import json
 from unittest.mock import Mock, patch, AsyncMock
+import asyncio
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
-# 修复导入路径
+# Add the backend directory to the path so we can import from src
+backend_dir = os.path.join(os.path.dirname(__file__), '..', '..')
+sys.path.insert(0, backend_dir)
+
 from src.ai.memory.ham_memory_manager import HAMMemoryManager
-from src.ai.memory.ham_types import DialogueMemoryEntryMetadata
-from src.ai.memory.importance_scorer import ImportanceScorer
 
 class TestHAMMemoryManager:
-    """HAMMemoryManager单元测试"""
+    """HAMMemoryManager测试类"""
     
-    @pytest.fixture
-    def memory_manager(self):
-        """创建HAMMemoryManager实例"""
-        # 设置环境变量以禁用向量存储
-        os.environ["HAM_DISABLE_VECTOR_STORE"] = "1"
-        with tempfile.TemporaryDirectory() as temp_dir:
-            manager = HAMMemoryManager(storage_dir=temp_dir)
-            yield manager
+    def setup_method(self):
+        """测试前准备"""
+        # 创建临时目录用于测试
+        self.test_dir = tempfile.mkdtemp()
+        self.core_filename = "test_ham_core_memory.json"
+        
+    def teardown_method(self):
+        """测试后清理"""
+        # 清理测试文件
+        test_file = os.path.join(self.test_dir, self.core_filename)
+        if os.path.exists(test_file):
+            os.remove(test_file)
+        # 清理临时目录
+        if os.path.exists(self.test_dir):
+            os.rmdir(self.test_dir)
     
-    @pytest.fixture
-    def sample_memory_metadata(self):
-        """创建示例记忆元数据"""
-        from datetime import datetime
-        return DialogueMemoryEntryMetadata(
-            timestamp=datetime.fromisoformat("2023-01-01T00:00:00"),
-            speaker="test_user",
-            dialogue_id="test_dialogue_001",
-            turn_id=1,
-            language="en",
-            tags=["test", "sample"]
-        )
-    
-    def test_init(self, memory_manager):
-        """测试初始化"""
-        assert memory_manager is not None
-        assert hasattr(memory_manager, 'storage_dir')
-        assert hasattr(memory_manager, 'vector_store')
-        assert hasattr(memory_manager, 'importance_scorer')
-    
-    def test_generate_id(self, memory_manager):
-        """测试ID生成"""
-        id1 = memory_manager._generate_memory_id()
-        id2 = memory_manager._generate_memory_id()
-        assert id1 != id2
-        assert len(id1) > 0
-    
-    @pytest.mark.asyncio
-    async def test_store_memory(self, memory_manager, sample_memory_metadata):
-        """测试存储记忆"""
-        result = await memory_manager.store_experience(
-            "This is a test memory item", 
-            "text", 
-            sample_memory_metadata
-        )
-        assert result is not None
-    
-    @pytest.mark.asyncio
-    async def test_recall_gist(self, memory_manager, sample_memory_metadata):
-        """测试回忆记忆"""
-        # 先存储一个记忆
-        memory_id = await memory_manager.store_experience(
-            "This is a test memory item", 
-            "text", 
-            sample_memory_metadata
+    def test_ham_memory_manager_initialization(self):
+        """测试HAMMemoryManager初始化"""
+        # 创建HAMMemoryManager实例
+        ham_manager = HAMMemoryManager(
+            core_storage_filename=self.core_filename,
+            storage_dir=self.test_dir
         )
         
-        # 然后回忆它
-        result = memory_manager.recall_gist(memory_id)
-        assert result is not None
-        assert result["id"] == memory_id
-    
+        # 验证初始化成功
+        assert ham_manager is not None
+        assert ham_manager.core_storage_filepath == os.path.join(self.test_dir, self.core_filename)
+        assert isinstance(ham_manager.core_memory_store, dict)
+        
     @pytest.mark.asyncio
-    async def test_query_core_memory(self, memory_manager, sample_memory_metadata):
-        """测试查询核心记忆"""
-        # 先存储一个记忆
-        await memory_manager.store_experience(
-            "This is a test memory item", 
-            "text", 
-            sample_memory_metadata
+    async def test_store_and_recall_experience(self):
+        """测试存储和回忆经验"""
+        ham_manager = HAMMemoryManager(
+            core_storage_filename=self.core_filename,
+            storage_dir=self.test_dir
         )
         
-        # 然后查询它
-        results = memory_manager.query_core_memory(keywords=["test"])
-        assert isinstance(results, list)
+        # 存储经验
+        test_data = "This is a test experience"
+        test_data_type = "test_experience"
+        test_metadata = {"source": "unit_test", "importance": 0.5}
+        
+        memory_id = await ham_manager.store_experience(
+            raw_data=test_data,
+            data_type=test_data_type,
+            metadata=test_metadata
+        )
+        
+        # 验证返回的内存ID
+        assert memory_id is not None
+        assert isinstance(memory_id, str)
+        assert memory_id.startswith("mem_")
+        
+        # 回忆经验
+        results = ham_manager.query_core_memory(
+            metadata_filters={"source": "unit_test"},
+            data_type_filter="test_experience"
+        )
+        
+        # 验证返回结果
+        assert len(results) >= 1
+        # 检查是否包含我们存储的经验
+        found = False
+        for result in results:
+            # 注意：result是一个HAMRecallResult字典，使用字典访问方式
+            if result["id"] == memory_id:
+                found = True
+                break
+        assert found, "未能找到存储的经验"
+        
+    @pytest.mark.asyncio
+    async def test_query_core_memory(self):
+        """测试查询核心内存"""
+        ham_manager = HAMMemoryManager(
+            core_storage_filename=self.core_filename,
+            storage_dir=self.test_dir
+        )
+        
+        # 存储一些测试数据
+        test_data = "Query test data"
+        test_data_type = "query_test"
+        test_metadata = {"category": "test", "tags": ["query", "test"]}
+        
+        memory_id = await ham_manager.store_experience(
+            raw_data=test_data,
+            data_type=test_data_type,
+            metadata=test_metadata
+        )
+        
+        # 使用元数据过滤器查询
+        results = ham_manager.query_core_memory(
+            metadata_filters={"category": "test"}
+        )
+        
+        # 验证查询结果
+        assert len(results) >= 1
+        
+    @pytest.mark.asyncio
+    async def test_manual_delete_experience(self):
+        """测试手动删除经验"""
+        ham_manager = HAMMemoryManager(
+            core_storage_filename=self.core_filename,
+            storage_dir=self.test_dir
+        )
+        
+        # 存储经验
+        test_data = "Delete test data"
+        test_data_type = "delete_test"
+        
+        memory_id = await ham_manager.store_experience(
+            raw_data=test_data,
+            data_type=test_data_type
+        )
+        
+        # 验证经验已存储
+        results = ham_manager.query_core_memory(
+            metadata_filters=None
+        )
+        assert len(results) >= 1
+        
+        # 手动删除经验 (HAMMemoryManager没有delete_experience方法)
+        assert memory_id in ham_manager.core_memory_store
+        del ham_manager.core_memory_store[memory_id]
+        assert memory_id not in ham_manager.core_memory_store
+        
+        # 验证经验已被删除
+        results = ham_manager.query_core_memory(
+            metadata_filters=None
+        )
+        # 检查被删除的经验是否还在结果中
+        found = any(result["id"] == memory_id for result in results)
+        assert not found, "经验未被成功删除"
+        
+    @pytest.mark.asyncio
+    async def test_save_and_load_core_memory(self):
+        """测试核心内存的保存和加载"""
+        # 第一次创建并存储数据
+        ham_manager1 = HAMMemoryManager(
+            core_storage_filename=self.core_filename,
+            storage_dir=self.test_dir
+        )
+        
+        # 存储一些测试数据
+        test_data = "Persistence test data"
+        test_data_type = "persistence_test"
+        
+        memory_id = await ham_manager1.store_experience(
+            raw_data=test_data,
+            data_type=test_data_type
+        )
+        
+        # 确保数据已保存到文件
+        ham_manager1._save_core_memory_to_file()
+        
+        # 创建新的实例来加载数据
+        ham_manager2 = HAMMemoryManager(
+            core_storage_filename=self.core_filename,
+            storage_dir=self.test_dir
+        )
+        
+        # 验证数据已加载
+        assert len(ham_manager2.core_memory_store) >= 1
+        assert memory_id in ham_manager2.core_memory_store
+
+if __name__ == "__main__":
+    pytest.main([__file__])

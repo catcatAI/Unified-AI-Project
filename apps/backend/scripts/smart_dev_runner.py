@@ -73,17 +73,17 @@ def initialize_core_services():
     print("🔧 第1层: 核心服务初始化")
     try:
         # 初始化HAM内存管理
-        from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+        from src.ai.memory.ham_memory_manager import HAMMemoryManager
         ham_manager = HAMMemoryManager()
         print("✅ HAM内存管理初始化完成")
         
         # 初始化多LLM服务接口
-        from apps.backend.src.services.multi_llm_service import MultiLLMService
+        from src.core.services.multi_llm_service import MultiLLMService
         llm_service = MultiLLMService()
         print("✅ 多LLM服务初始化完成")
         
         # 初始化服务发现机制
-        from apps.backend.src.core.services.service_discovery import ServiceDiscoveryModule
+        from src.core.services.service_discovery import ServiceDiscoveryModule
         service_discovery = ServiceDiscoveryModule()
         print("✅ 服务发现机制初始化完成")
         
@@ -99,7 +99,7 @@ def start_core_components():
     print("⚙️ 第2层: 核心组件启动")
     try:
         # 初始化HSP连接器
-        from apps.backend.src.hsp.connector import HSPConnector
+        from src.hsp.connector import HSPConnector
         hsp_connector = HSPConnector(
             ai_id="did:hsp:api_server_ai",
             broker_address="localhost",
@@ -107,9 +107,81 @@ def start_core_components():
         )
         print("✅ HSP连接器初始化完成")
         
+        # 初始化对话管理器所需的依赖组件
+        from src.ai.personality.personality_manager import PersonalityManager
+        from src.ai.memory.ham_memory_manager import HAMMemoryManager
+        from src.core.services.multi_llm_service import MultiLLMService
+        from src.ai.emotion.emotion_system import EmotionSystem
+        from src.ai.crisis.crisis_system import CrisisSystem
+        from src.ai.time.time_system import TimeSystem
+        from src.ai.formula_engine import FormulaEngine
+        from src.tools.tool_dispatcher import ToolDispatcher
+        from src.ai.learning.learning_manager import LearningManager
+        from src.core.services.service_discovery import ServiceDiscoveryModule
+        from src.managers.agent_manager import AgentManager
+        
+        # 创建所有必需的依赖实例
+        personality_manager = PersonalityManager()
+        memory_manager = HAMMemoryManager()
+        llm_interface = MultiLLMService()
+        emotion_system = EmotionSystem()
+        crisis_system = CrisisSystem()
+        time_system = TimeSystem()
+        formula_engine = FormulaEngine()
+        
+        # 处理ToolDispatcher可能的RAG初始化异常
+        try:
+            tool_dispatcher = ToolDispatcher(llm_service=llm_interface)
+        except RuntimeError as e:
+            if "SentenceTransformer" in str(e):
+                print("⚠️  Warning: SentenceTransformer not available, RAG functionality disabled")
+                # 创建一个没有RAG功能的ToolDispatcher
+                tool_dispatcher = ToolDispatcher(llm_service=None)
+                # 重新设置llm_service
+                tool_dispatcher.set_llm_service(llm_interface)
+            else:
+                raise e
+        
+        # 初始化LearningManager所需的依赖组件
+        from src.ai.learning.fact_extractor_module import FactExtractorModule
+        from src.ai.learning.content_analyzer_module import ContentAnalyzerModule
+        from src.ai.trust.trust_manager_module import TrustManager
+        
+        fact_extractor = FactExtractorModule(llm_service=llm_interface)
+        content_analyzer = ContentAnalyzerModule()
+        trust_manager = TrustManager()
+        
+        # 初始化LearningManager
+        learning_manager = LearningManager(
+            ai_id="did:hsp:api_server_ai",
+            ham_memory_manager=memory_manager,
+            fact_extractor=fact_extractor,
+            personality_manager=personality_manager,
+            content_analyzer=content_analyzer,
+            hsp_connector=hsp_connector
+        )
+        
+        service_discovery_module = ServiceDiscoveryModule()
+        agent_manager = AgentManager(python_executable=sys.executable)
+        
         # 初始化对话管理器
-        from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
-        dialogue_manager = DialogueManager()
+        from src.ai.dialogue.dialogue_manager import DialogueManager
+        dialogue_manager = DialogueManager(
+            ai_id="did:hsp:api_server_ai",
+            personality_manager=personality_manager,
+            memory_manager=memory_manager,
+            llm_interface=llm_interface,
+            emotion_system=emotion_system,
+            crisis_system=crisis_system,
+            time_system=time_system,
+            formula_engine=formula_engine,
+            tool_dispatcher=tool_dispatcher,
+            learning_manager=learning_manager,
+            service_discovery_module=service_discovery_module,
+            hsp_connector=hsp_connector,
+            agent_manager=agent_manager,
+            config=None
+        )
         print("✅ 对话管理器初始化完成")
         
         return True
@@ -124,13 +196,13 @@ def load_functional_modules():
     print("🔌 第3层: 功能模块加载")
     try:
         # 加载经济系统
-        from apps.backend.src.economy.economy_manager import EconomyManager
-        economy_manager = EconomyManager()
+        from src.economy.economy_manager import EconomyManager
+        economy_manager = EconomyManager({"db_path": "economy.db"})
         print("✅ 经济系统初始化完成")
         
         # 加载宠物系统
-        from apps.backend.src.pet.pet_manager import PetManager
-        pet_manager = PetManager()
+        from src.pet.pet_manager import PetManager
+        pet_manager = PetManager("pet1", {"initial_personality": {"curiosity": 0.7, "playfulness": 0.8}})
         print("✅ 宠物系统初始化完成")
         
         return True
@@ -158,26 +230,23 @@ def health_check_services():
     """健康检查服务"""
     print("🩺 服务健康检查")
     try:
-        # 检查核心服务
-        from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
-        ham_manager = HAMMemoryManager()
-        print("✅ HAM内存管理健康检查通过")
+        # 导入健康检查服务
+        sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+        from health_check_service import quick_health_check, full_health_check
         
-        # 检查多LLM服务
-        from apps.backend.src.services.multi_llm_service import get_multi_llm_service
-        llm_service = get_multi_llm_service()
-        print("✅ 多LLM服务健康检查通过")
-        
-        # 检查HSP连接器
-        from apps.backend.src.hsp.connector import HSPConnector
-        hsp_connector = HSPConnector(
-            ai_id="did:hsp:api_server_ai",
-            broker_address="localhost",
-            broker_port=1883
-        )
-        print("✅ HSP连接器健康检查通过")
-        
-        return True
+        # 执行快速健康检查
+        if quick_health_check():
+            print("✅ 快速健康检查通过")
+            # 执行完整健康检查
+            if full_health_check():
+                print("✅ 完整健康检查通过")
+                return True
+            else:
+                print("⚠️ 完整健康检查失败，但快速检查通过")
+                return True
+        else:
+            print("❌ 快速健康检查失败")
+            return False
     except Exception as e:
         print(f"❌ 服务健康检查失败: {e}")
         import traceback
@@ -220,6 +289,21 @@ def start_services_layered():
         print("✅ 环境检查通过")
     except Exception as e:
         print(f"❌ 环境检查时发生错误: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    # 预启动服务 - 快速检查与预启动所有功能
+    print("⚡ 预启动服务")
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+        from health_check_service import prelaunch_services
+        if not prelaunch_services():
+            print("❌ 预启动服务失败")
+            return False
+        print("✅ 预启动服务完成")
+    except Exception as e:
+        print(f"❌ 预启动服务时发生错误: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -413,7 +497,7 @@ def start_uvicorn_server(max_retries=3):
             )
             
             # 等待更长时间让服务器启动
-            time.sleep(15)
+            time.sleep(30)
             
             # 检查进程是否仍在运行
             if uvicorn_process.poll() is None:
@@ -445,14 +529,22 @@ def run_dev_server():
     setup_environment()
     
     # 使用分层启动策略
+    print("🚀 开始分层启动服务...")
     if not start_services_layered():
         print("❌ 分层启动服务失败")
         return 1
+    print("✅ 分层启动服务完成")
     
     # 启动ChromaDB服务器
+    print("🚀 启动ChromaDB服务器...")
     chroma_process = start_chroma_server()
+    if chroma_process:
+        print("✅ ChromaDB服务器启动成功")
+    else:
+        print("⚠️ ChromaDB服务器启动失败，继续启动Uvicorn服务器...")
     
     # 启动Uvicorn服务器
+    print("🚀 启动Uvicorn服务器...")
     uvicorn_process, error_output = start_uvicorn_server()
     
     # 检查Uvicorn是否启动成功

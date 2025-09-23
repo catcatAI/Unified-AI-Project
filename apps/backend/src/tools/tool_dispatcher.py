@@ -15,22 +15,22 @@ from .translation_tool import translate as translate_text
 from .code_understanding_tool import CodeUnderstandingTool
 from .csv_tool import CsvTool
 from .image_generation_tool import ImageGenerationTool
-from apps.backend.src.ai.language_models.daily_language_model import DailyLanguageModel
-from apps.backend.src.services.multi_llm_service import MultiLLMService
-from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse # Import new response type
+from ai.language_models.daily_language_model import DailyLanguageModel
+from core.services.multi_llm_service import MultiLLMService
+from core.shared.types.common_types import ToolDispatcherResponse # Import new response type
 from typing import Literal # For literal status types
+RAG_AVAILABLE = False
 try:
-    from apps.backend.src.ai.rag.rag_manager import RAGManager
+    from ai.rag.rag_manager import RAGManager
     RAG_AVAILABLE = True
 except ImportError as e:
     print(f"RAG Manager not available: {e}")
     RAGManager = None
-    RAG_AVAILABLE = False
 
 class ToolDispatcher:
     def _get_ham(self):
         try:
-            from apps.backend.src.core_services import ham_manager_instance
+            from core_services import ham_manager_instance
             return ham_manager_instance
         except Exception:
             return None
@@ -66,16 +66,27 @@ class ToolDispatcher:
         else:
             # Fallback: re-instantiate the wrapper with the new LLM service
             try:
-                from apps.backend.src.ai.language_models.daily_language_model import DailyLanguageModel
+                from ai.language_models.daily_language_model import DailyLanguageModel
                 self.dlm = DailyLanguageModel(llm_service=llm_service)
             except Exception:
                 pass
     def __init__(self, llm_service: Optional[MultiLLMService] = None):
+        global RAG_AVAILABLE
         self.dlm = DailyLanguageModel(llm_service=llm_service)
         self.code_understanding_tool_instance = CodeUnderstandingTool()
         self.csv_tool_instance = CsvTool()
         self.image_generation_tool_instance = ImageGenerationTool()
-        self.rag_manager = RAGManager() if RAG_AVAILABLE else None
+        self.rag_manager = None
+        if RAG_AVAILABLE:
+            try:
+                self.rag_manager = RAGManager()
+            except RuntimeError as e:
+                if "SentenceTransformer is not available" in str(e):
+                    print(f"Warning: {e}")
+                    self.rag_manager = None
+                    RAG_AVAILABLE = False
+                else:
+                    raise e
 
         self.tools: Dict[str, Callable[..., ToolDispatcherResponse]] = { # type: ignore
             "calculate": self._execute_math_calculation,

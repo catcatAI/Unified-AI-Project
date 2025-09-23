@@ -29,7 +29,7 @@ class TestPerformanceBenchmark:
     @pytest.mark.asyncio
     async def test_memory_store_performance(self, benchmark):
         """测试记忆存储性能"""
-        with patch('apps.backend.src.core_ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
+        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
             mock_memory_instance = Mock()
             # 修复AsyncMock的使用方式
             async def mock_store_memory(data):
@@ -49,7 +49,7 @@ class TestPerformanceBenchmark:
     @pytest.mark.asyncio
     async def test_concurrent_agent_operations_performance(self, benchmark):
         """测试并发代理操作性能"""
-        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager:
+        with patch('apps.backend.src.core.managers.agent_manager.AgentManager') as mock_agent_manager:
             mock_agent_instance = Mock()
             # 修复AsyncMock的使用方式
             async def mock_start_agent(agent_id):
@@ -74,7 +74,7 @@ class TestPerformanceBenchmark:
     @pytest.mark.asyncio
     async def test_memory_retrieval_performance(self, benchmark):
         """测试记忆检索性能"""
-        with patch('apps.backend.src.core_ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
+        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
             mock_memory_instance = Mock()
             # 修复AsyncMock的使用方式
             async def mock_retrieve_memory(memory_id):

@@ -8,10 +8,13 @@ from enum import Enum
 # Use absolute imports instead of relative imports when running as a script
 try:
     # Try absolute imports first (for when running with uvicorn)
-    from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+    from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 except ImportError:
     # Fall back to relative imports (for when running as a script)
-    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+    try:
+        from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+    except ImportError:
+        from core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
 

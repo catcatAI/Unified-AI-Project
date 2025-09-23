@@ -1,0 +1,17 @@
+{
+  "context_id": "c6340c28-4349-4baa-b20e-f2cf5fd96034",
+  "context_type": "tool",
+  "created_at": "2025-09-23T17:27:08.054953",
+  "updated_at": "2025-09-23T17:27:08.054953",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "tool_id": "tool_001",
+    "name": "测试工具",
+    "description": "测试工具描述",
+    "category_id": "cat_001",
+    "type": "tool"
+  },
+  "version": "1.0",
+  "tags": []
+}

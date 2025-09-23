@@ -23,12 +23,26 @@ def check_pnpm():
     """检查pnpm是否安装"""
     print("\n检查pnpm...")
     try:
-        result = subprocess.run(["pnpm", "--version"], capture_output=True, text=True)
-        print(f"  pnpm版本: {result.stdout.strip()}")
-        print("  ✅ pnpm已安装")
-        return True
-    except FileNotFoundError:
-        print("  ❌ 未找到pnpm，请先安装pnpm")
+        # 检查pnpm是否在PATH中
+        result = subprocess.run(["pnpm", "--version"], capture_output=True, text=True, shell=True)
+        if result.returncode == 0:
+            print(f"  pnpm版本: {result.stdout.strip()}")
+            print("  ✅ pnpm已安装")
+            return True
+        else:
+            # 如果直接调用失败，尝试通过where命令检查
+            where_result = subprocess.run(["where", "pnpm"], capture_output=True, text=True, shell=True)
+            if where_result.returncode == 0:
+                # 如果找到了pnpm，尝试获取版本
+                version_result = subprocess.run(["pnpm", "--version"], capture_output=True, text=True, shell=True)
+                if version_result.returncode == 0:
+                    print(f"  pnpm版本: {version_result.stdout.strip()}")
+                    print("  ✅ pnpm已安装")
+                    return True
+            print("  ❌ 未找到pnpm，请先安装pnpm")
+            return False
+    except Exception as e:
+        print(f"  ❌ 检查pnpm时出错: {e}")
         return False
 
 def check_pip():

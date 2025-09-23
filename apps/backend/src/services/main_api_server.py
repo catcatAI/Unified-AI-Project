@@ -9,55 +9,49 @@ import uuid
 # Simplified path handling - Add the project root and src directory to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 src_dir = os.path.join(project_root, 'src')
-apps_backend_dir = os.path.join(project_root)
 
 # Ensure paths are added in the correct order
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
-if apps_backend_dir not in sys.path:
-    sys.path.insert(0, apps_backend_dir)
 
 print(f"Project root: {project_root}")
 print(f"Src dir: {src_dir}")
-print(f"Apps backend dir: {apps_backend_dir}")
 print(f"Sys path: {sys.path}")
 
-# Use absolute imports instead of relative imports when running as a script
+# Use absolute imports with correct module paths
 try:
-    # Try absolute imports first (for when running with uvicorn)
-    from economy.economy_manager import EconomyManager
-    from pet.pet_manager import PetManager
-    from path_config import PROJECT_ROOT
-    from core_services import initialize_services, shutdown_services, get_services
-    from apps.backend.src.core.services.multi_llm_service import get_multi_llm_service
-    from ai.language_models.registry import ModelRegistry
-    from ai.language_models.router import PolicyRouter, RoutingPolicy
-    from apps.backend.src.core.services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
-    from apps.backend.src.core.hsp.connector import HSPConnector
-    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
-    from ai.dialogue.dialogue_manager import DialogueManager
-    from ai.memory.ham_memory_manager import HAMMemoryManager
-    from core.services.atlassian_api import atlassian_router
-    print("Absolute imports successful")
+    # Try absolute imports with correct module paths
+    from src.economy.economy_manager import EconomyManager
+    from src.pet.pet_manager import PetManager
+    from src.core_services import initialize_services, shutdown_services, get_services
+    from src.core.services.multi_llm_service import get_multi_llm_service
+    from src.ai.language_models.registry import ModelRegistry
+    from src.ai.language_models.router import PolicyRouter, RoutingPolicy
+    from src.services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
+    from src.hsp.connector import HSPConnector
+    from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
+    from src.ai.dialogue.dialogue_manager import DialogueManager
+    from src.ai.memory.ham_memory_manager import HAMMemoryManager
+    from src.core.services.atlassian_api import atlassian_router
+    print("Absolute imports with correct paths successful")
 except ImportError as e:
-    print(f"Absolute import failed: {e}")
+    print(f"Absolute import with correct paths failed: {e}")
     # Fall back to relative imports (for when running with uvicorn)
     try:
-        from apps.backend.src.economy.economy_manager import EconomyManager
-        from apps.backend.src.pet.pet_manager import PetManager
-        from apps.backend.src.path_config import PROJECT_ROOT
-        from apps.backend.src.core_services import initialize_services, shutdown_services, get_services
-        from apps.backend.src.core.services.multi_llm_service import get_multi_llm_service
-        from apps.backend.src.ai.language_models.registry import ModelRegistry
-        from apps.backend.src.ai.language_models.router import PolicyRouter, RoutingPolicy
-        from apps.backend.src.services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
-        from apps.backend.src.hsp.connector import HSPConnector
-        from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
-        from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
-        from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
-        from apps.backend.src.core.services.atlassian_api import atlassian_router
+        from economy.economy_manager import EconomyManager
+        from pet.pet_manager import PetManager
+        from core_services import initialize_services, shutdown_services, get_services
+        from core.services.multi_llm_service import get_multi_llm_service
+        from ai.language_models.registry import ModelRegistry
+        from ai.language_models.router import PolicyRouter, RoutingPolicy
+        from services.api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
+        from hsp.connector import HSPConnector
+        from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
+        from ai.dialogue.dialogue_manager import DialogueManager
+        from ai.memory.ham_memory_manager import HAMMemoryManager
+        from core.services.atlassian_api import atlassian_router
         print("Relative imports successful")
     except ImportError as e2:
         print(f"Relative import also failed: {e2}")
@@ -78,7 +72,7 @@ async def initialize_services_layered():
         print("✅ HAM服务初始化完成")
         
         # 初始化多LLM服务
-        from apps.backend.src.core.services.multi_llm_service import get_multi_llm_service
+        from core.services.multi_llm_service import get_multi_llm_service
         llm_interface = get_multi_llm_service()
         print("✅ LLM服务初始化完成")
         
@@ -96,7 +90,7 @@ async def initialize_services_layered():
     print("⚙️ 第2层: 核心组件启动")
     try:
         # 初始化HSP连接器
-        from apps.backend.src.core.hsp.connector import HSPConnector
+        from hsp.connector import HSPConnector
         hsp_connector = HSPConnector(
             ai_id=os.getenv("API_AI_ID", "did:hsp:api_server_ai"),
             broker_address="localhost",
@@ -106,7 +100,74 @@ async def initialize_services_layered():
         
         # 初始化对话管理器
         from ai.dialogue.dialogue_manager import DialogueManager
-        dialogue_manager = DialogueManager()
+        # 首先初始化所有依赖组件
+        from ai.personality.personality_manager import PersonalityManager
+        from ai.memory.ham_memory_manager import HAMMemoryManager
+        from core.services.multi_llm_service import get_multi_llm_service
+        from ai.emotion.emotion_system import EmotionSystem
+        from ai.crisis.crisis_system import CrisisSystem
+        from ai.time.time_system import TimeSystem
+        from tools.tool_dispatcher import ToolDispatcher
+        from ai.learning.learning_manager import LearningManager
+        from core.services.service_discovery import ServiceDiscoveryModule
+        
+        # 创建所有必需的依赖实例
+        personality_manager = PersonalityManager()
+        memory_manager = HAMMemoryManager()
+        llm_interface = get_multi_llm_service()
+        emotion_system = EmotionSystem()
+        crisis_system = CrisisSystem()
+        time_system = TimeSystem()
+        # 处理ToolDispatcher可能的RAG初始化异常
+        try:
+            tool_dispatcher = ToolDispatcher(llm_service=llm_interface)
+        except RuntimeError as e:
+            if "SentenceTransformer" in str(e):
+                print("⚠️  Warning: SentenceTransformer not available, RAG functionality disabled")
+                # 创建一个没有RAG功能的ToolDispatcher
+                tool_dispatcher = ToolDispatcher(llm_service=None)
+                # 重新设置llm_service
+                tool_dispatcher.set_llm_service(llm_interface)
+            else:
+                raise e
+                
+        # 初始化LearningManager所需的依赖组件
+        from ai.learning.fact_extractor_module import FactExtractorModule
+        from ai.learning.content_analyzer_module import ContentAnalyzerModule
+        from ai.trust.trust_manager_module import TrustManager
+        
+        fact_extractor = FactExtractorModule(llm_service=llm_interface)
+        content_analyzer = ContentAnalyzerModule()
+        trust_manager = TrustManager()
+        
+        # 初始化LearningManager
+        learning_manager = LearningManager(
+            ai_id=os.getenv("API_AI_ID", "did:hsp:api_server_ai"),
+            ham_memory_manager=memory_manager,
+            fact_extractor=fact_extractor,
+            personality_manager=personality_manager,
+            content_analyzer=content_analyzer,
+            hsp_connector=hsp_connector
+        )
+        service_discovery = ServiceDiscoveryModule()
+        
+        # 现在可以正确初始化DialogueManager
+        dialogue_manager = DialogueManager(
+            ai_id=os.getenv("API_AI_ID", "did:hsp:api_server_ai"),
+            personality_manager=personality_manager,
+            memory_manager=memory_manager,
+            llm_interface=llm_interface,
+            emotion_system=emotion_system,
+            crisis_system=crisis_system,
+            time_system=time_system,
+            formula_engine=None,
+            tool_dispatcher=tool_dispatcher,
+            learning_manager=learning_manager,
+            service_discovery_module=service_discovery,
+            hsp_connector=hsp_connector,
+            agent_manager=None,
+            config=None
+        )
         print("✅ 对话管理器初始化完成")
     except Exception as e:
         print(f"❌ 核心组件启动失败: {e}")
@@ -119,12 +180,12 @@ async def initialize_services_layered():
     try:
         # 加载经济系统
         from economy.economy_manager import EconomyManager
-        economy_manager = EconomyManager()
+        economy_manager = EconomyManager({"db_path": "economy.db"})
         print("✅ 经济系统初始化完成")
         
         # 加载宠物系统
         from pet.pet_manager import PetManager
-        pet_manager = PetManager()
+        pet_manager = PetManager("pet1", {"initial_personality": {"curiosity": 0.7, "playfulness": 0.8}})
         print("✅ 宠物系统初始化完成")
     except Exception as e:
         print(f"⚠️ 功能模块加载失败: {e}")

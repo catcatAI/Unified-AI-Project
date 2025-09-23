@@ -7,14 +7,14 @@ from typing import Optional, List, Dict, Any, TYPE_CHECKING
 import json
 
 # 修复导入路径，使用绝对导入
-from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
-from .fact_extractor_module import FactExtractorModule
-from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzerModule
-from apps.backend.src.ai.trust.trust_manager_module import TrustManager
-from .types import LearnedFactRecord
+from src.ai.memory.ham_memory_manager import HAMMemoryManager
+from src.ai.learning.fact_extractor_module import FactExtractorModule
+from src.ai.learning.content_analyzer_module import ContentAnalyzerModule
+from src.ai.trust.trust_manager_module import TrustManager
+from src.ai.learning.types import LearnedFactRecord
 
-from apps.backend.src.hsp.types import HSPFactPayload, HSPMessageEnvelope
-from apps.backend.src.ai.personality.personality_manager import PersonalityManager
+from src.hsp.types import HSPFactPayload, HSPMessageEnvelope
+from src.ai.personality.personality_manager import PersonalityManager
 
 if TYPE_CHECKING:
     from apps.backend.src.hsp.connector import HSPConnector
