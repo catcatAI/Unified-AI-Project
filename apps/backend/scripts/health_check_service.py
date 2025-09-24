@@ -36,7 +36,7 @@ def quick_health_check():
         # 检查基础依赖
         import fastapi
         import uvicorn
-        import chromadb
+        import chromadb  # type: ignore
         print("✅ 基础依赖检查通过")
         
         return True
@@ -74,8 +74,11 @@ def full_health_check():
             from src.ai.memory.vector_store import VectorMemoryStore
             vector_store = VectorMemoryStore()
             # 尝试执行一个简单的操作来验证连接
-            vector_store.client.heartbeat()
-            print("✅ ChromaDB连接正常")
+            if vector_store.client is not None:
+                vector_store.client.heartbeat()
+                print("✅ ChromaDB连接正常")
+            else:
+                print("⚠️ ChromaDB客户端未初始化")
         except Exception as e:
             print(f"⚠️ ChromaDB连接检查失败: {e}")
         
@@ -99,8 +102,10 @@ def prelaunch_services():
         llm_service = MultiLLMService()
         print("✅ 多LLM服务初始化完成")
         
-        from src.core.services.service_discovery import ServiceDiscoveryModule
-        service_discovery = ServiceDiscoveryModule()
+        from src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
+        from src.ai.trust.trust_manager_module import TrustManager
+        trust_manager = TrustManager()
+        service_discovery = ServiceDiscoveryModule(trust_manager=trust_manager)
         print("✅ 服务发现机制初始化完成")
         
         # 初始化HSP连接器

@@ -78,7 +78,9 @@ async def initialize_services_layered():
         
         # 初始化服务发现
         from core.services.service_discovery import ServiceDiscoveryModule
-        service_discovery = ServiceDiscoveryModule()
+        from ai.trust.trust_manager_module import TrustManager
+        trust_manager = TrustManager()
+        service_discovery = ServiceDiscoveryModule(trust_manager=trust_manager)
         print("✅ 服务发现初始化完成")
     except Exception as e:
         print(f"❌ 核心服务初始化失败: {e}")
@@ -109,7 +111,7 @@ async def initialize_services_layered():
         from ai.time.time_system import TimeSystem
         from tools.tool_dispatcher import ToolDispatcher
         from ai.learning.learning_manager import LearningManager
-        from core.services.service_discovery import ServiceDiscoveryModule
+        from ai.discovery.service_discovery_module import ServiceDiscoveryModule
         
         # 创建所有必需的依赖实例
         personality_manager = PersonalityManager()
@@ -149,7 +151,11 @@ async def initialize_services_layered():
             content_analyzer=content_analyzer,
             hsp_connector=hsp_connector
         )
-        service_discovery = ServiceDiscoveryModule()
+        service_discovery = ServiceDiscoveryModule(trust_manager=trust_manager)
+        
+        # 初始化FormulaEngine
+        from ai.formula_engine import FormulaEngine
+        formula_engine = FormulaEngine()
         
         # 现在可以正确初始化DialogueManager
         dialogue_manager = DialogueManager(
@@ -160,7 +166,7 @@ async def initialize_services_layered():
             emotion_system=emotion_system,
             crisis_system=crisis_system,
             time_system=time_system,
-            formula_engine=None,
+            formula_engine=formula_engine,
             tool_dispatcher=tool_dispatcher,
             learning_manager=learning_manager,
             service_discovery_module=service_discovery,
@@ -350,13 +356,15 @@ async def api_ready(services=Depends(get_services)):
 @app.get("/api/v1/models/available")
 async def get_models_available():
     m = get_multi_llm_service()
-    registry = ModelRegistry(m.model_configs)
+    from typing import Mapping
+    registry = ModelRegistry(m.model_configs)  # type: ignore
     return {"models": registry.profiles_dict()}
 
 @app.post("/api/v1/models/route")
 async def models_route(body: dict):
     m = get_multi_llm_service()
-    registry = ModelRegistry(m.model_configs)
+    from typing import Mapping
+    registry = ModelRegistry(m.model_configs)  # type: ignore
     router = PolicyRouter(registry)
     policy = RoutingPolicy(
         task_type=body.get('task_type', 'general'),

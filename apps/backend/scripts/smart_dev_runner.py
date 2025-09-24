@@ -83,8 +83,10 @@ def initialize_core_services():
         print("✅ 多LLM服务初始化完成")
         
         # 初始化服务发现机制
-        from src.core.services.service_discovery import ServiceDiscoveryModule
-        service_discovery = ServiceDiscoveryModule()
+        from src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
+        from src.ai.trust.trust_manager_module import TrustManager
+        trust_manager = TrustManager()
+        service_discovery = ServiceDiscoveryModule(trust_manager=trust_manager)
         print("✅ 服务发现机制初始化完成")
         
         return True
@@ -117,7 +119,8 @@ def start_core_components():
         from src.ai.formula_engine import FormulaEngine
         from src.tools.tool_dispatcher import ToolDispatcher
         from src.ai.learning.learning_manager import LearningManager
-        from src.core.services.service_discovery import ServiceDiscoveryModule
+        # 修复导入路径，使用AI模块的ServiceDiscoveryModule而不是core模块的
+        from src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
         from src.managers.agent_manager import AgentManager
         
         # 创建所有必需的依赖实例
@@ -161,7 +164,7 @@ def start_core_components():
             hsp_connector=hsp_connector
         )
         
-        service_discovery_module = ServiceDiscoveryModule()
+        service_discovery_module = ServiceDiscoveryModule(trust_manager=trust_manager)
         agent_manager = AgentManager(python_executable=sys.executable)
         
         # 初始化对话管理器
@@ -428,16 +431,21 @@ def run_auto_fix():
         from advanced_auto_fix import AdvancedImportFixer
         
         fixer = AdvancedImportFixer()
-        results = fixer.fix_all_imports()
+        results = fixer.fix_all_files()
         
-        if results["fixed"] > 0:
-            print(f"✅ 自动修复完成，修复了 {results['fixed']} 个文件")
+        # 保存修复报告
+        fixer.save_report()
+        
+        if results.files_fixed > 0:
+            print(f"✅ 自动修复完成，修复了 {results.files_fixed} 个文件，共 {results.fixes_applied} 处修复")
             return True
         else:
             print("⚠️ 未发现需要修复的问题")
             return False
     except Exception as e:
         print(f"❌ 自动修复时出错: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def start_chroma_server():
@@ -523,6 +531,9 @@ def start_uvicorn_server(max_retries=3):
                 time.sleep(5)
             else:
                 return None, str(e)
+    
+    # 如果循环结束还没有返回，返回默认值
+    return None, ""
 
 def run_dev_server():
     """运行开发服务器"""
@@ -572,14 +583,68 @@ def run_dev_server():
             return 1
     else:
         print("✅ 开发服务器启动完成")
-        # 等待服务器进程
+        # 等待服务器进程，并监控运行时错误
         try:
-            uvicorn_process.wait()
+            while True:
+                # 检查进程是否仍在运行
+                if uvicorn_process.poll() is not None:
+                    # 进程已退出，检查返回码
+                    return_code = uvicorn_process.returncode
+                    if return_code != 0:
+                        print(f"❌ Uvicorn服务器异常退出，返回码: {return_code}")
+                        # 尝试获取错误输出
+                        stdout, stderr = uvicorn_process.communicate()
+                        error_output = (stdout or "") + (stderr or "")
+                        print(f"错误输出: {error_output}")
+                        
+                        # 运行运行时自动修复
+                        print("🔧 尝试运行时自动修复...")
+                        sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+                        from runtime_auto_fix import RuntimeAutoFixer
+                        
+                        fixer = RuntimeAutoFixer()
+                        fixer.setup_environment()
+                        
+                        # 创建一个模拟的进程来传递错误信息
+                        import subprocess
+                        from typing import Optional, Tuple
+                        
+                        class MockProcess:
+                            def __init__(self, output: str):
+                                self.output = output
+                                self.stdout = None
+                                self.stderr = None
+                                self.returncode = 1  # 表示进程有错误退出
+                            
+                            def communicate(self, timeout: Optional[float] = None) -> Tuple[str, str]:
+                                return "", self.output
+                                
+                            # 添加poll方法以兼容subprocess.Popen接口
+                            def poll(self) -> Optional[int]:
+                                return 0  # 表示进程已完成
+                        
+                        mock_process: subprocess.Popen = MockProcess(error_output)  # type: ignore
+                        if fixer.monitor_and_fix(mock_process):
+                            print("🔄 运行时修复完成，重新启动开发服务器...")
+                            time.sleep(1)
+                            return run_dev_server()
+                        else:
+                            print("❌ 运行时自动修复失败")
+                            return 1
+                    else:
+                        print("✅ Uvicorn服务器正常退出")
+                        break
+                else:
+                    # 进程仍在运行，短暂休眠
+                    time.sleep(1)
         except KeyboardInterrupt:
             print("🛑 正在停止服务器...")
-            if chroma_process:
+        finally:
+            # 清理进程
+            if chroma_process and chroma_process.poll() is None:
                 chroma_process.terminate()
-            uvicorn_process.terminate()
+            if uvicorn_process and uvicorn_process.poll() is None:
+                uvicorn_process.terminate()
         return 0
 
 def main():
