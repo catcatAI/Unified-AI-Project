@@ -4,7 +4,7 @@ import io
 import logging
 import hashlib
 import asyncio
-from typing import Dict, List, Optional, Union, Any
+from typing import Any, Dict, Optional
 from datetime import datetime
 from config_loader import is_demo_mode
 
@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 class AudioService:
     """音頻服務：提供語音識別、語音合成、情感分析等多模態處理能力"""
     
-    def __init__(self, config: Optional[dict] = None):
-        self.config = config or {}
-        self.peer_services = {}  # 其他多模態服務的引用
-        self.processing_history = []  # 處理歷史記錄
+    def __init__(self, config: Optional[dict] = None) -> None:
+        self.config = config or 
+        self.peer_services =   # 其他多模態服務的引用
+        self.processing_history =   # 處理歷史記錄
         
         # 初始化音頻處理配置
         self.audio_config = self.config.get('audio_config', {
@@ -32,7 +32,7 @@ class AudioService:
     def set_peer_services(self, peer_services: Dict[str, Any]):
         """設置其他多模態服務的引用"""
         self.peer_services = peer_services
-        logger.debug(f"Audio Service connected to peer services: {list(peer_services.keys())}")
+        logger.debug(f"Audio Service connected to peer services: {list(peer_services.keys)}")
 
     async def speech_to_text(self, audio_data: bytes, language: str = "en-US", 
                            enhanced_features: bool = False) -> Dict[str, Any]:
@@ -54,7 +54,7 @@ class AudioService:
                 "processing_id": processing_id,
                 "audio_size": len(audio_data),
                 "language": language,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now.isoformat
             }
             
             # 基本語音識別
@@ -74,7 +74,7 @@ class AudioService:
             self.processing_history.append({
                 "processing_id": processing_id,
                 "operation": "speech_to_text",
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now.isoformat,
                 "language": language,
                 "result": result
             })
@@ -92,14 +92,14 @@ class AudioService:
     def _generate_processing_id(self, audio_data: bytes) -> str:
         """生成唯一的處理ID"""
         hash_object = hashlib.md5(audio_data if audio_data else b"")
-        return f"audio_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}"
+        return f"audio_{hash_object.hexdigest[:8]}_{datetime.now.strftime('%H%M%S')}"
 
     async def _perform_speech_recognition(self, audio_data: bytes, language: str) -> Dict[str, Any]:
         """執行語音識別（模擬實現）"""
         await asyncio.sleep(0.1)  # 模擬處理時間
         
         # 檢查是否為演示模式
-        if is_demo_mode():
+        if is_demo_mode:
             mock_texts = {
                 'en-US': ["Hello, how are you today?", "Thank you for using our service."],
                 'zh-CN': ["你好，今天怎麼樣？", "謝謝您使用我們的服務。"],
@@ -170,7 +170,7 @@ class AudioService:
         
         try:
             # 檢查是否為演示模式
-            demo_mode = is_demo_mode()
+            demo_mode = is_demo_mode
             logger.info(f"Demo mode: {demo_mode}")
             
             # 使用演示模式生成音頻數據
@@ -196,30 +196,12 @@ class AudioService:
         amplitude = np.iinfo(np.int16).max * 0.5
         data = amplitude * np.sin(2 * np.pi * frequency * t)
 
-        buffer = io.BytesIO()
+        buffer = io.BytesIO
         with wave.open(buffer, 'wb') as wf:
             wf.setnchannels(1)
             wf.setsampwidth(2)
             wf.setframerate(sample_rate)
-            wf.writeframes(data.astype(np.int16).tobytes())
-
-        result = buffer.getvalue()
-        logger.info(f"Generated demo audio with {len(result)} bytes")
-        return result
-
-if __name__ == '__main__':
-    audio_config = {"default_voice": "anna"}
-    service = AudioService(config=audio_config)
-
-    # Test STT (with dummy bytes)
-    dummy_audio = b'\x00\x01\x02\x03\x04\x05'
-    transcription = service.speech_to_text(dummy_audio)
-    print(f"Transcription: {transcription}")
-
-    # Test TTS
-    text_for_speech = "Hello, this is a test of the text to speech system."
-    speech_audio = service.text_to_speech(text_for_speech)
-    if speech_audio:
-        print(f"Generated speech audio data (length: {len(speech_audio)} bytes).")
-
-    print("Audio Service script finished.")
+            wf.writeframes(data.astype(np.int16).tobytes)
+        
+        buffer.seek(0)
+        return buffer.read

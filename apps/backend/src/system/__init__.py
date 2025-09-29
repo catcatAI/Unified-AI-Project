@@ -11,65 +11,58 @@ Key Components:
 - Adaptive configuration for different performance tiers
 """
 
+# Hardware Detection
 from .hardware_probe import (
-    HardwareProbe,
-    HardwareProfile,
-    CPUInfo,
-    GPUInfo,
-    MemoryInfo,
-    StorageInfo,
-    NetworkInfo,
-    get_hardware_profile,
-    get_performance_tier,
-    get_ai_capability_score
+HardwareProbe,
+HardwareProfile,
+CPUInfo,
+GPUInfo, 
+MemoryInfo,
+StorageInfo,
+NetworkInfo,
+get_hardware_profile,
 )
 
+# Deployment Management
 from .deployment_manager import (
-    DeploymentManager,
-    DeploymentConfig,
-    DeploymentMode,
-    ModelSize,
-    ModelConfig,
-    CompressionConfig,
-    ProcessingConfig,
-    get_deployment_config,
-    apply_optimal_config,
-    get_deployment_mode
+DeploymentManager,
+DeploymentConfig,
+DeploymentMode,
+ModelSize,
+ModelConfig,
+CompressionConfig,
+ProcessingConfig,
+get_deployment_config,
 )
 
+# Integrated Graphics Optimization
 from .integrated_graphics_optimizer import (
-    IntegratedGraphicsOptimizer,
-    optimize_for_integrated_graphics,
-    get_integrated_graphics_recommendations
+IntegratedGraphicsOptimizer,
+optimize_for_integrated_graphics,
 )
 
 __all__ = [
     # Hardware Detection
-    'HardwareProbe',
-    'HardwareProfile',
-    'CPUInfo',
-    'GPUInfo', 
-    'MemoryInfo',
-    'StorageInfo',
-    'NetworkInfo',
-    'get_hardware_profile',
-    'get_performance_tier',
-    'get_ai_capability_score',
+'HardwareProbe',
+'HardwareProfile',
+'CPUInfo',
+'GPUInfo', 
+'MemoryInfo',
+'StorageInfo',
+'NetworkInfo',
+'get_hardware_profile',
     
     # Deployment Management
-    'DeploymentManager',
-    'DeploymentConfig',
-    'DeploymentMode',
-    'ModelSize',
-    'ModelConfig',
-    'CompressionConfig',
-    'ProcessingConfig',
-    'get_deployment_config',
-    'apply_optimal_config',
-    'get_deployment_mode',
+'DeploymentManager',
+'DeploymentConfig',
+'DeploymentMode',
+'ModelSize',
+'ModelConfig',
+'CompressionConfig',
+'ProcessingConfig',
+'get_deployment_config',
     
     # Integrated Graphics Optimization
-    'IntegratedGraphicsOptimizer',
-    'optimize_for_integrated_graphics',
-    'get_integrated_graphics_recommendations'
+'IntegratedGraphicsOptimizer',
+'optimize_for_integrated_graphics',
 ]

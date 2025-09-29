@@ -68,7 +68,7 @@ Unified-AI-Project/
 
 **实现状态**: ✅ 核心功能完成，MQTT连接稳定性已优化
 
-#### 记忆管理系统 (`apps/backend/src/core/memory/`)
+#### 记忆管理系统 (`apps/backend/src/ai/memory/`)
 - **DeepMapper**: 语义映射与资料核生成
 - **HAMMemoryManager**: 分层语义记忆管理
 - **VectorStore**: 基于 ChromaDB 的向量数据库接口
@@ -343,7 +343,7 @@ unified-ai chat "Hello"
 
 ---
 
-**最后更新**: 2025年9月22日  
+**最后更新**: 2025年9月29日  
 **项目状态**: 1.0.0 正式版发布  
 **代码现状**: 核心架构完成，所有导入路径、语法问题和代理结构不一致性已修复，核心功能验证通过，测试稳定性优化  
 **目标里程碑**: Level 3 AGI 实现  

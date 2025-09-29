@@ -1,9 +1,6 @@
-import numpy as np
 import json
 import os
 import re
-from typing import Dict, List, Tuple, Optional
-
 class LightweightMathModel:
     """
     A lightweight mathematical model that can perform basic arithmetic operations
@@ -11,7 +8,7 @@ class LightweightMathModel:
     Uses simple pattern matching and rule-based evaluation.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.operations = {
             '+': lambda x, y: x + y,
             '-': lambda x, y: x - y,
@@ -36,16 +33,16 @@ class LightweightMathModel:
         """
         try:
             # Clean the expression
-            expression = expression.strip()
+            expression = expression.strip
             
             # Handle simple number
-            if expression.replace('.', '').replace('-', '').isdigit():
+            if expression.replace('.', '').replace('-', '').isdigit:
                 return float(expression)
             
             # Match arithmetic pattern
             match = self.arithmetic_pattern.match(expression)
             if match:
-                num1_str, operator, num2_str = match.groups()
+                num1_str, operator, num2_str = match.groups
                 
                 try:
                     num1 = float(num1_str)
@@ -76,12 +73,12 @@ class LightweightMathModel:
         """
         try:
             # Only allow mathematical operations and numbers
-            allowed_chars = set('0123456789+-*/.() ')
+            allowed_chars = set('0123456789+-*/. ')
             if not all(c in allowed_chars for c in expression):
                 return None
             
             # Evaluate with restricted globals
-            result = eval(expression, {"__builtins__": {}}, {})
+            result = eval(expression, {"__builtins__": }, )
             
             if isinstance(result, (int, float)):
                 return float(result)
@@ -123,17 +120,17 @@ class LightweightMathModel:
         what_is_pattern = re.compile(r'what is\s+([0-9+\-*/.\s]+)', re.IGNORECASE)
         match = what_is_pattern.search(problem)
         if match:
-            return match.group(1).strip()
+            return match.group(1).strip
         
         # If the problem itself looks like an expression
-        if self.arithmetic_pattern.match(problem.strip()):
-            return problem.strip()
+        if self.arithmetic_pattern.match(problem.strip):
+            return problem.strip
         
         return None
     
     def train_on_dataset(self, dataset_path: str) -> Dict[str, any]:
         """
-        'Train' the model on a dataset (actually just validate performance).
+        _ = 'Train' the model on a dataset (actually just validate performance).
         Since this is a rule-based model, no actual training occurs.
         
         Args:
@@ -148,7 +145,7 @@ class LightweightMathModel:
             
             correct = 0
             total = len(dataset)
-            errors = []
+            errors = 
             
             for item in dataset:
                 problem = item.get('problem', '')
@@ -204,7 +201,7 @@ class LightweightMathModel:
             model_config = {
                 'model_type': 'lightweight_math_model',
                 'version': '1.0',
-                'operations': list(self.operations.keys()),
+                'operations': list(self.operations.keys),
                 'description': 'Rule-based lightweight mathematical model'
             }
             
@@ -224,12 +221,12 @@ class LightweightMathModel:
         Load model from configuration file.
         """
         # For rule-based model, just return a new instance
-        return cls()
+        return cls
 
 
-def main():
+def main -> None:
     """Test the lightweight math model."""
-    model = LightweightMathModel()
+    model = LightweightMathModel
     
     # Test basic operations
     test_problems = [
@@ -253,7 +250,7 @@ def main():
     
     # Test on dataset if available
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
+    project_root: str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
     dataset_path = os.path.join(project_root, "data", "raw_datasets", "arithmetic_train_dataset.json")
     
     if os.path.exists(dataset_path):
@@ -275,4 +272,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main

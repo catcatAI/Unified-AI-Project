@@ -7,6 +7,7 @@ Integrates all major components of the system for end-to-end functionality
 import logging
 import sys
 from pathlib import Path
+from typing import Dict, Any
 
 # Add the src directory to the path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -44,7 +45,7 @@ logger = logging.getLogger(__name__)
 class UnifiedAISystem:
     """Main integration point for the Unified AI Project"""
     
-    def __init__(self, config=None):
+    def __init__(self, config=None) -> None:
         self.config = config or {}
         self._initialize_components()
         
@@ -63,7 +64,7 @@ class UnifiedAISystem:
         logger.info("Stopping Unified AI System...")
         logger.info("Unified AI System stopped successfully")
         
-    def process_request(self, user_id: str, request: dict) -> dict:
+    def process_request(self, user_id: str, request: Dict[str, Any]) -> Dict[str, str]:
         """Process a user request through the unified system"""
         try:
             # Log the request

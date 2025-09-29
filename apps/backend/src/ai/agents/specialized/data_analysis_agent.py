@@ -1,11 +1,7 @@
-import asyncio
-import uuid
-import json
 import logging
-from typing import Dict, Any, List
-from pathlib import Path
 import numpy as np
 import pandas as pd
+from typing import Dict, Any
 
 # 修复导入路径
 from ..base.base_agent import BaseAgent
@@ -16,7 +12,7 @@ class DataAnalysisAgent(BaseAgent):
     A specialized agent for data analysis tasks like statistical analysis,
     data visualization, and pattern recognition.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_statistical_analysis_v1.0",
@@ -25,7 +21,7 @@ class DataAnalysisAgent(BaseAgent):
                 "version": "1.0",
                 "parameters": [
                     {"name": "data", "type": "array", "required": True, "description": "Numerical data array for analysis"},
-                    {"name": "analysis_type", "type": "string", "required": False, "description": "Type of analysis (mean, median, std, correlation)"}
+                    # {"name": "analysis_type", "type": "string", "required": False, "description": "Type of analysis (mean, median, std, correlation)"}
                 ],
                 "returns": {"type": "object", "description": "Statistical analysis results."}
             },
@@ -46,7 +42,7 @@ class DataAnalysisAgent(BaseAgent):
                 "version": "1.0",
                 "parameters": [
                     {"name": "data", "type": "array", "required": True, "description": "Time series or sequential data"},
-                    {"name": "pattern_type", "type": "string", "required": False, "description": "Type of pattern to detect (trend, seasonality, anomaly)"}
+                    # {"name": "pattern_type", "type": "string", "required": False, "description": "Type of pattern to detect (trend, seasonality, anomaly)"}
                 ],
                 "returns": {"type": "object", "description": "Identified patterns and insights."}
             }
@@ -55,7 +51,7 @@ class DataAnalysisAgent(BaseAgent):
         logging.info(f"[{self.agent_id}] DataAnalysisAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
-        request_id = task_payload.get("request_id")
+        request_id = task_payload.get("request_id", "")
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", {})
 
@@ -79,7 +75,7 @@ class DataAnalysisAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     def _perform_statistical_analysis(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -231,6 +227,7 @@ class DataAnalysisAgent(BaseAgent):
     def _create_success_payload(self, request_id: str, result: Dict[str, Any]) -> HSPTaskResultPayload:
         """Creates a success result payload."""
         return HSPTaskResultPayload(
+            result_id=f"result_{request_id}",
             request_id=request_id,
             executing_ai_id=self.agent_id,
             status="success",
@@ -240,6 +237,7 @@ class DataAnalysisAgent(BaseAgent):
     def _create_failure_payload(self, request_id: str, error_code: str, error_message: str) -> HSPTaskResultPayload:
         """Creates a failure result payload."""
         return HSPTaskResultPayload(
+            result_id=f"result_{request_id}",
             request_id=request_id,
             executing_ai_id=self.agent_id,
             status="failure",

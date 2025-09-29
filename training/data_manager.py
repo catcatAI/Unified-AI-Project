@@ -8,38 +8,54 @@ import os
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
 import mimetypes
 import hashlib
 from datetime import datetime
 import numpy as np
+from typing import Any, Dict, List, Optional
 
 # 添加项目路径
 import sys
 from pathlib import Path
 project_root = Path(__file__).parent.parent
 backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
-sys.path.insert(0, str(backend_path / "src"))
+_ = sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(backend_path))
+_ = sys.path.insert(0, str(backend_path / "src"))
+_ = sys.path.insert(0, str(backend_path / "src"))
+
+# 创建基本模拟类
+ErrorContext = type('ErrorContext', (), {
+    '__init__': lambda self, component, operation, details=None: (
+        setattr(self, 'component', component),
+        setattr(self, 'operation', operation),
+        setattr(self, 'details', details or {})
+    )[-1]
+})
+
+class GlobalErrorHandler:
+    @staticmethod
+    def handle_error(error, context, strategy=None):
+        print(f"Error in {context.component}.{context.operation}: {error}")
+
+global_error_handler = GlobalErrorHandler()
 
 # 导入路径配置模块
 try:
-    from path_config import (
-        PROJECT_ROOT, 
-        DATA_DIR, 
-        TRAINING_DIR, 
+    from apps.backend.src.path_config import (
+        DATA_DIR as CONFIG_DATA_DIR, 
+        TRAINING_DIR as CONFIG_TRAINING_DIR, 
         get_data_path, 
         resolve_path
     )
+    DATA_DIR = CONFIG_DATA_DIR
+    TRAINING_DIR = CONFIG_TRAINING_DIR
 except ImportError:
     # 如果路径配置模块不可用，使用默认路径处理
     PROJECT_ROOT = project_root
-    DATA_DIR = PROJECT_ROOT / "data"
-    TRAINING_DIR = PROJECT_ROOT / "training"
+    DATA_DIR_LOCAL = PROJECT_ROOT / "data"
+    TRAINING_DIR_LOCAL = PROJECT_ROOT / "training"
 
-from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -47,7 +63,7 @@ logger = logging.getLogger(__name__)
 class DataManager:
     """数据管理器，负责自动检测、分类和处理训练数据"""
     
-    def __init__(self, data_dir: str = None):
+    def __init__(self, data_dir: Optional[str] = None) -> None:
         self.data_dir = Path(data_dir) if data_dir else DATA_DIR
         self.data_catalog = {}
         self.data_quality_scores = {}
@@ -83,7 +99,7 @@ class DataManager:
     def scan_data(self) -> Dict[str, Any]:
         """扫描并分类所有数据"""
         context = ErrorContext("DataManager", "scan_data")
-        logger.info(f"🔍 开始扫描数据目录: {self.data_dir}")
+        _ = logger.info(f"🔍 开始扫描数据目录: {self.data_dir}")
         
         try:
             # 清空之前的数据目录
@@ -117,13 +133,13 @@ class DataManager:
                         # 添加到数据目录
                         self.data_catalog[str(relative_path)] = file_info
                     except Exception as e:
-                        logger.warning(f"⚠️ 无法获取文件信息 {file_path}: {e}")
+                        _ = logger.warning(f"⚠️ 无法获取文件信息 {file_path}: {e}")
             
-            logger.info(f"✅ 数据扫描完成，共发现 {len(self.data_catalog)} 个文件")
+            _ = logger.info(f"✅ 数据扫描完成，共发现 {len(self.data_catalog)} 个文件")
             return self.data_catalog
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 扫描数据失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 扫描数据失败: {e}")
             return {}
     
     def _classify_file(self, file_path: Path) -> str:
@@ -172,8 +188,8 @@ class DataManager:
             # 默认分类为文本
             return 'text'
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 分类文件失败: {file_path} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 分类文件失败: {file_path} - {e}")
             return 'text'  # 默认返回文本类型
     
     def assess_data_quality(self, file_path: str) -> Dict[str, Any]:
@@ -193,10 +209,10 @@ class DataManager:
         try:
             # 文件大小评估
             if quality_info['file_size'] < 10:  # 小于10字节
-                quality_info['issues'].append('文件过小')
+                _ = quality_info['issues'].append('文件过小')
                 quality_info['quality_score'] -= 20
             elif quality_info['file_size'] > 100 * 1024 * 1024:  # 大于100MB
-                quality_info['issues'].append('文件过大')
+                _ = quality_info['issues'].append('文件过大')
                 quality_info['quality_score'] -= 10
             else:
                 quality_info['quality_score'] += 20
@@ -220,7 +236,7 @@ class DataManager:
             
             # 文件完整性检查
             if self._is_file_corrupted(path):
-                quality_info['issues'].append('文件可能已损坏')
+                _ = quality_info['issues'].append('文件可能已损坏')
                 quality_info['quality_score'] -= 30
             else:
                 quality_info['quality_score'] += 10
@@ -231,12 +247,12 @@ class DataManager:
             if days_since_modified < 7:  # 一周内修改的文件
                 quality_info['quality_score'] += 5
             elif days_since_modified > 365:  # 一年以上未修改的文件
-                quality_info['issues'].append('文件长期未更新')
+                _ = quality_info['issues'].append('文件长期未更新')
                 quality_info['quality_score'] -= 10
                 
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            quality_info['issues'].append(f'评估错误: {str(e)}')
+            _ = self.error_handler.handle_error(e, context)
+            _ = quality_info['issues'].append(f'评估错误: {str(e)}')
             quality_info['quality_score'] = 0
         
         # 确保分数在0-100范围内
@@ -255,17 +271,17 @@ class DataManager:
                 width, height = img.size
                 # 检查图像尺寸
                 if width < 10 or height < 10:
-                    quality_info['issues'].append('图像尺寸过小')
+                    _ = quality_info['issues'].append('图像尺寸过小')
                     quality_info['quality_score'] -= 15
                 elif width > 10000 or height > 10000:
-                    quality_info['issues'].append('图像尺寸过大')
+                    _ = quality_info['issues'].append('图像尺寸过大')
                     quality_info['quality_score'] -= 10
                 else:
                     quality_info['quality_score'] += 15
                     
                 # 检查图像模式
                 if img.mode not in ['RGB', 'RGBA', 'L']:
-                    quality_info['issues'].append(f'图像模式不常见: {img.mode}')
+                    _ = quality_info['issues'].append(f'图像模式不常见: {img.mode}')
                 else:
                     quality_info['quality_score'] += 5
                     
@@ -278,7 +294,7 @@ class DataManager:
                     if contrast > 30:  # 高对比度图像
                         quality_info['quality_score'] += 10
                     elif contrast < 10:  # 低对比度图像
-                        quality_info['issues'].append('图像对比度较低')
+                        _ = quality_info['issues'].append('图像对比度较低')
                         quality_info['quality_score'] -= 5
                 
                 # 记录图像信息
@@ -292,8 +308,8 @@ class DataManager:
             # 如果没有PIL，跳过图像特定检查
             pass
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            quality_info['issues'].append(f'图像读取错误: {str(e)}')
+            _ = self.error_handler.handle_error(e, context)
+            _ = quality_info['issues'].append(f'图像读取错误: {str(e)}')
             quality_info['quality_score'] -= 20
         
         return quality_info
@@ -308,10 +324,10 @@ class DataManager:
             if extension in ['.wav', '.mp3', '.flac']:
                 quality_info['quality_score'] += 10
             else:
-                quality_info['issues'].append(f'音频格式可能不支持: {extension}')
+                _ = quality_info['issues'].append(f'音频格式可能不支持: {extension}')
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            quality_info['issues'].append(f'音频检查错误: {str(e)}')
+            _ = self.error_handler.handle_error(e, context)
+            _ = quality_info['issues'].append(f'音频检查错误: {str(e)}')
             quality_info['quality_score'] -= 10
         
         return quality_info
@@ -325,20 +341,20 @@ class DataManager:
                 
             # 检查文件内容
             if len(content.strip()) == 0:
-                quality_info['issues'].append('文件内容为空')
+                _ = quality_info['issues'].append('文件内容为空')
                 quality_info['quality_score'] -= 30
             elif len(content) < 10:
-                quality_info['issues'].append('文件内容过少')
+                _ = quality_info['issues'].append('文件内容过少')
                 quality_info['quality_score'] -= 15
             else:
                 quality_info['quality_score'] += 20
                 
             # 检查编码问题
             try:
-                content.encode('utf-8')
+                _ = content.encode('utf-8')
                 quality_info['quality_score'] += 5
             except UnicodeError:
-                quality_info['issues'].append('编码问题')
+                _ = quality_info['issues'].append('编码问题')
                 quality_info['quality_score'] -= 10
                 
             # 文本质量分析
@@ -372,11 +388,11 @@ class DataManager:
                             quality_info['quality_score'] += 5
                         
         except UnicodeDecodeError:
-            quality_info['issues'].append('文件编码不支持')
+            _ = quality_info['issues'].append('文件编码不支持')
             quality_info['quality_score'] -= 25
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            quality_info['issues'].append(f'文本读取错误: {str(e)}')
+            _ = self.error_handler.handle_error(e, context)
+            _ = quality_info['issues'].append(f'文本读取错误: {str(e)}')
             quality_info['quality_score'] -= 20
         
         return quality_info
@@ -390,7 +406,7 @@ class DataManager:
                 
             # 检查文件内容
             if len(content.strip()) == 0:
-                quality_info['issues'].append('代码文件内容为空')
+                _ = quality_info['issues'].append('代码文件内容为空')
                 quality_info['quality_score'] -= 30
             else:
                 quality_info['quality_score'] += 10
@@ -401,8 +417,8 @@ class DataManager:
                 
                 # 记录代码信息
                 quality_info['code_info'] = {
-                    'line_count': len(lines),
-                    'character_count': len(content),
+                    _ = 'line_count': len(lines),
+                    _ = 'character_count': len(content),
                     'empty_lines': sum(1 for line in lines if not line.strip()),
                     'comment_lines': sum(1 for line in lines if line.strip().startswith('#') or line.strip().startswith('//') or line.strip().startswith('/*') or line.strip().startswith('*'))
                 }
@@ -413,7 +429,7 @@ class DataManager:
                     if 0.1 <= comment_ratio <= 0.5:  # 合理的注释比例
                         quality_info['quality_score'] += 10
                     elif comment_ratio > 0.5:  # 注释过多
-                        quality_info['issues'].append('注释比例过高')
+                        _ = quality_info['issues'].append('注释比例过高')
                         quality_info['quality_score'] -= 5
                         
                 # 检查代码行长度
@@ -421,15 +437,15 @@ class DataManager:
                 if long_lines == 0:
                     quality_info['quality_score'] += 5
                 elif long_lines / len(lines) > 0.3:  # 过多长行
-                    quality_info['issues'].append('代码行过长过多')
+                    _ = quality_info['issues'].append('代码行过长过多')
                     quality_info['quality_score'] -= 10
                     
         except UnicodeDecodeError:
-            quality_info['issues'].append('代码文件编码不支持')
+            _ = quality_info['issues'].append('代码文件编码不支持')
             quality_info['quality_score'] -= 25
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            quality_info['issues'].append(f'代码读取错误: {str(e)}')
+            _ = self.error_handler.handle_error(e, context)
+            _ = quality_info['issues'].append(f'代码读取错误: {str(e)}')
             quality_info['quality_score'] -= 20
         
         return quality_info
@@ -452,15 +468,15 @@ class DataManager:
                 quality_info['model_type'] = 'TensorFlow Lite'
             else:
                 quality_info['model_type'] = 'Unknown'
-                quality_info['issues'].append('未知模型格式')
+                _ = quality_info['issues'].append('未知模型格式')
                 quality_info['quality_score'] -= 10
             
             # 模型文件大小评估
             if quality_info['file_size'] < 1024:  # 小于1KB
-                quality_info['issues'].append('模型文件过小')
+                _ = quality_info['issues'].append('模型文件过小')
                 quality_info['quality_score'] -= 20
             elif quality_info['file_size'] > 1024 * 1024 * 1024:  # 大于1GB
-                quality_info['issues'].append('模型文件过大')
+                _ = quality_info['issues'].append('模型文件过大')
                 quality_info['quality_score'] -= 10
             else:
                 quality_info['quality_score'] += 15
@@ -471,12 +487,12 @@ class DataManager:
                 if len(header) > 0:
                     quality_info['quality_score'] += 5
                 else:
-                    quality_info['issues'].append('模型文件头为空')
+                    _ = quality_info['issues'].append('模型文件头为空')
                     quality_info['quality_score'] -= 15
                     
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            quality_info['issues'].append(f'模型文件读取错误: {str(e)}')
+            _ = self.error_handler.handle_error(e, context)
+            _ = quality_info['issues'].append(f'模型文件读取错误: {str(e)}')
             quality_info['quality_score'] -= 25
         
         return quality_info
@@ -504,15 +520,15 @@ class DataManager:
                 elif isinstance(data, list):
                     quality_info['data_info'] = {
                         'type': 'list',
-                        'size': len(data)
+                        _ = 'size': len(data)
                     }
                     if len(data) > 0:
                         quality_info['quality_score'] += 10
                     else:
-                        quality_info['issues'].append('JSON数据为空')
+                        _ = quality_info['issues'].append('JSON数据为空')
                         quality_info['quality_score'] -= 10
                 else:
-                    quality_info['issues'].append('JSON数据格式不正确')
+                    _ = quality_info['issues'].append('JSON数据格式不正确')
                     quality_info['quality_score'] -= 15
                     
             # CSV数据文件
@@ -524,14 +540,14 @@ class DataManager:
                 
                 quality_info['data_info'] = {
                     'type': 'csv',
-                    'rows': len(rows),
+                    _ = 'rows': len(rows),
                     'columns': len(rows[0]) if rows else 0
                 }
                 
                 if len(rows) > 0:
                     quality_info['quality_score'] += 10
                 else:
-                    quality_info['issues'].append('CSV数据为空')
+                    _ = quality_info['issues'].append('CSV数据为空')
                     quality_info['quality_score'] -= 10
                     
             # 其他数据文件
@@ -543,11 +559,11 @@ class DataManager:
                 quality_info['quality_score'] += 5
                 
         except json.JSONDecodeError:
-            quality_info['issues'].append('JSON格式错误')
+            _ = quality_info['issues'].append('JSON格式错误')
             quality_info['quality_score'] -= 20
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            quality_info['issues'].append(f'数据文件读取错误: {str(e)}')
+            _ = self.error_handler.handle_error(e, context)
+            _ = quality_info['issues'].append(f'数据文件读取错误: {str(e)}')
             quality_info['quality_score'] -= 15
         
         return quality_info
@@ -567,7 +583,7 @@ class DataManager:
                     file_list = zip_file.namelist()
                     quality_info['archive_info'] = {
                         'type': 'zip',
-                        'file_count': len(file_list),
+                        _ = 'file_count': len(file_list),
                         'files': file_list[:10]  # 只记录前10个文件
                     }
             elif extension in ['.tar', '.gz']:
@@ -575,7 +591,7 @@ class DataManager:
                     file_list = tar_file.getnames()
                     quality_info['archive_info'] = {
                         'type': 'tar',
-                        'file_count': len(file_list),
+                        _ = 'file_count': len(file_list),
                         'files': file_list[:10]  # 只记录前10个文件
                     }
             else:
@@ -583,15 +599,15 @@ class DataManager:
                     'type': 'unknown',
                     'file_count': 0
                 }
-                quality_info['issues'].append('不支持的压缩格式')
+                _ = quality_info['issues'].append('不支持的压缩格式')
                 quality_info['quality_score'] -= 10
             
             # 压缩文件大小评估
             if quality_info['file_size'] < 1024:  # 小于1KB
-                quality_info['issues'].append('压缩文件过小')
+                _ = quality_info['issues'].append('压缩文件过小')
                 quality_info['quality_score'] -= 15
             elif quality_info['file_size'] > 500 * 1024 * 1024:  # 大于500MB
-                quality_info['issues'].append('压缩文件过大')
+                _ = quality_info['issues'].append('压缩文件过大')
                 quality_info['quality_score'] -= 5
             else:
                 quality_info['quality_score'] += 10
@@ -601,12 +617,12 @@ class DataManager:
             if file_count > 0:
                 quality_info['quality_score'] += 5
             else:
-                quality_info['issues'].append('压缩文件为空')
+                _ = quality_info['issues'].append('压缩文件为空')
                 quality_info['quality_score'] -= 10
                 
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            quality_info['issues'].append(f'压缩文件读取错误: {str(e)}')
+            _ = self.error_handler.handle_error(e, context)
+            _ = quality_info['issues'].append(f'压缩文件读取错误: {str(e)}')
             quality_info['quality_score'] -= 20
         
         return quality_info
@@ -619,7 +635,7 @@ class DataManager:
             hash_md5 = hashlib.md5()
             with open(file_path, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
-                    hash_md5.update(chunk)
+                    _ = hash_md5.update(chunk)
             
             # 简单检查：如果文件大小为0，则认为已损坏
             if file_path.stat().st_size == 0:
@@ -627,7 +643,7 @@ class DataManager:
                 
             return False
         except Exception as e:
-            self.error_handler.handle_error(e, context)
+            _ = self.error_handler.handle_error(e, context)
             return True
     
     def get_data_by_type(self, data_type: str) -> List[Dict[str, Any]]:
@@ -637,11 +653,11 @@ class DataManager:
             result = []
             for file_info in self.data_catalog.values():
                 if file_info['type'] == data_type:
-                    result.append(file_info)
+                    _ = result.append(file_info)
             return result
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 根据数据类型获取文件列表失败: {data_type} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 根据数据类型获取文件列表失败: {data_type} - {e}")
             return []
     
     def get_high_quality_data(self, min_quality_score: int = 70) -> Dict[str, List[Dict[str, Any]]]:
@@ -652,7 +668,7 @@ class DataManager:
             
             # 先评估所有数据的质量
             for file_path in self.data_catalog.keys():
-                self.assess_data_quality(file_path)
+                _ = self.assess_data_quality(file_path)
             
             # 按类型分组高质量数据
             for file_path, quality_info in self.data_quality_scores.items():
@@ -662,31 +678,31 @@ class DataManager:
                         data_type = file_info['type']
                         if data_type not in high_quality_data:
                             high_quality_data[data_type] = []
-                        high_quality_data[data_type].append(file_info)
+                        _ = high_quality_data[data_type].append(file_info)
             
             return high_quality_data
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 获取高质量数据失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 获取高质量数据失败: {e}")
             return {}
     
     def prepare_training_data(self, model_type: str) -> List[Dict[str, Any]]:
         """为特定模型类型准备训练数据"""
         context = ErrorContext("DataManager", "prepare_training_data", {"model_type": model_type})
-        logger.info(f"📦 为模型 {model_type} 准备训练数据")
+        _ = logger.info(f"📦 为模型 {model_type} 准备训练数据")
         
         try:
             # 获取该模型支持的数据类型
             supported_types = self.model_data_mapping.get(model_type, [])
             if not supported_types:
-                logger.warning(f"⚠️ 未找到模型 {model_type} 的数据映射")
+                _ = logger.warning(f"⚠️ 未找到模型 {model_type} 的数据映射")
                 return []
             
             # 收集支持的数据
             training_data = []
             for data_type in supported_types:
                 data_files = self.get_data_by_type(data_type)
-                training_data.extend(data_files)
+                _ = training_data.extend(data_files)
             
             # 对于概念模型，直接添加概念模型训练数据
             if model_type in ['concept_models', 'environment_simulator', 'causal_reasoning_engine', 
@@ -698,14 +714,14 @@ class DataManager:
                         # 根据模型类型过滤数据
                         if self._is_data_relevant_for_model(json_file.name, model_type):
                             file_info = {
-                                'path': str(json_file),
-                                'relative_path': str(json_file.relative_to(self.data_dir)),
-                                'size': json_file.stat().st_size,
-                                'modified_time': json_file.stat().st_mtime,
+                                _ = 'path': str(json_file),
+                                _ = 'relative_path': str(json_file.relative_to(self.data_dir)),
+                                _ = 'size': json_file.stat().st_size,
+                                _ = 'modified_time': json_file.stat().st_mtime,
                                 'extension': '.json',
                                 'type': 'json'
                             }
-                            training_data.append(file_info)
+                            _ = training_data.append(file_info)
             
             # 过滤高质量数据
             high_quality_data = self.get_high_quality_data()
@@ -716,16 +732,16 @@ class DataManager:
                 if data_type in high_quality_data:
                     high_quality_files = [f['path'] for f in high_quality_data[data_type]]
                     if data_item['path'] in high_quality_files:
-                        filtered_data.append(data_item)
+                        _ = filtered_data.append(data_item)
                 else:
                     # 如果没有高质量数据检查，直接添加
-                    filtered_data.append(data_item)
+                    _ = filtered_data.append(data_item)
             
-            logger.info(f"✅ 为模型 {model_type} 准备了 {len(filtered_data)} 个训练数据文件")
+            _ = logger.info(f"✅ 为模型 {model_type} 准备了 {len(filtered_data)} 个训练数据文件")
             return filtered_data
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 为模型 {model_type} 准备训练数据失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 为模型 {model_type} 准备训练数据失败: {e}")
             return []
     
     def _is_data_relevant_for_model(self, filename: str, model_type: str) -> bool:
@@ -747,8 +763,8 @@ class DataManager:
             
             return False
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 检查数据文件相关性失败: {filename} - {model_type} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 检查数据文件相关性失败: {filename} - {model_type} - {e}")
             return False
 
     def get_data_statistics(self) -> Dict[str, Any]:
@@ -756,13 +772,13 @@ class DataManager:
         context = ErrorContext("DataManager", "get_data_statistics")
         try:
             if not self.data_catalog:
-                self.scan_data()
+                _ = self.scan_data()
             
             stats = {
-                'total_files': len(self.data_catalog),
+                _ = 'total_files': len(self.data_catalog),
                 'file_types': {},
                 'total_size': 0,
-                'last_scan_time': datetime.now().isoformat()
+                _ = 'last_scan_time': datetime.now().isoformat()
             }
             
             # 统计各类文件数量和大小
@@ -777,8 +793,8 @@ class DataManager:
             
             return stats
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 获取数据统计信息失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 获取数据统计信息失败: {e}")
             return {}
 
     def save_data_catalog(self, catalog_path: str = None):
@@ -791,19 +807,19 @@ class DataManager:
             catalog_data = {
                 'catalog': self.data_catalog,
                 'quality_scores': self.data_quality_scores,
-                'statistics': self.get_data_statistics(),
-                'generated_at': datetime.now().isoformat()
+                _ = 'statistics': self.get_data_statistics(),
+                _ = 'generated_at': datetime.now().isoformat()
             }
             
             try:
                 with open(catalog_path, 'w', encoding='utf-8') as f:
                     json.dump(catalog_data, f, ensure_ascii=False, indent=2)
-                logger.info(f"💾 数据目录已保存到: {catalog_path}")
+                _ = logger.info(f"💾 数据目录已保存到: {catalog_path}")
             except Exception as e:
-                logger.error(f"❌ 保存数据目录失败: {e}")
+                _ = logger.error(f"❌ 保存数据目录失败: {e}")
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 保存数据目录失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 保存数据目录失败: {e}")
     
     def load_data_catalog(self, catalog_path: str = None):
         """从文件加载数据目录"""
@@ -813,7 +829,7 @@ class DataManager:
                 catalog_path = TRAINING_DIR / "data_catalog.json"
             
             if not Path(catalog_path).exists():
-                logger.warning(f"⚠️ 数据目录文件不存在: {catalog_path}")
+                _ = logger.warning(f"⚠️ 数据目录文件不存在: {catalog_path}")
                 return False
             
             try:
@@ -822,56 +838,56 @@ class DataManager:
                 
                 self.data_catalog = catalog_data.get('catalog', {})
                 self.data_quality_scores = catalog_data.get('quality_scores', {})
-                logger.info(f"✅ 数据目录已从 {catalog_path} 加载")
+                _ = logger.info(f"✅ 数据目录已从 {catalog_path} 加载")
                 return True
             except Exception as e:
-                logger.error(f"❌ 加载数据目录失败: {e}")
+                _ = logger.error(f"❌ 加载数据目录失败: {e}")
                 return False
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 加载数据目录失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 加载数据目录失败: {e}")
             return False
 
 
-def main():
+def main() -> None:
     """主函数，用于测试DataManager"""
-    print("🔍 测试数据管理器...")
+    _ = print("🔍 测试数据管理器...")
     
     # 初始化数据管理器
     data_manager = DataManager()
     
     # 扫描数据
     catalog = data_manager.scan_data()
-    print(f"📊 扫描到 {len(catalog)} 个文件")
+    _ = print(f"📊 扫描到 {len(catalog)} 个文件")
     
     # 显示数据统计
     stats = data_manager.get_data_statistics()
-    print(f"📈 数据统计:")
-    print(f"  总文件数: {stats['total_files']}")
-    print(f"  总大小: {stats['total_size'] / (1024*1024):.2f} MB")
-    print(f"  文件类型分布:")
+    _ = print(f"📈 数据统计:")
+    _ = print(f"  总文件数: {stats['total_files']}")
+    _ = print(f"  总大小: {stats['total_size'] / (1024*1024):.2f} MB")
+    _ = print(f"  文件类型分布:")
     for file_type, info in stats['file_types'].items():
-        print(f"    {file_type}: {info['count']} 个文件, {info['size'] / (1024*1024):.2f} MB")
+        _ = print(f"    {file_type}: {info['count']} 个文件, {info['size'] / (1024*1024):.2f} MB")
     
     # 评估几个文件的质量
-    print(f"\n🔍 数据质量评估:")
+    _ = print(f"\n🔍 数据质量评估:")
     sample_files = list(catalog.keys())[:3]  # 取前3个文件进行评估
     for file_path in sample_files:
         quality = data_manager.assess_data_quality(file_path)
-        print(f"  {file_path}: 质量评分 {quality['quality_score']}/100")
+        _ = print(f"  {file_path}: 质量评分 {quality['quality_score']}/100")
         if quality['issues']:
-            print(f"    问题: {', '.join(quality['issues'])}")
+            _ = print(f"    问题: {', '.join(quality['issues'])}")
     
     # 为不同模型准备数据
-    print(f"\n📦 训练数据准备:")
+    _ = print(f"\n📦 训练数据准备:")
     for model_type in ['vision_service', 'audio_service', 'causal_reasoning_engine']:
         training_data = data_manager.prepare_training_data(model_type)
-        print(f"  {model_type}: {len(training_data)} 个训练文件")
+        _ = print(f"  {model_type}: {len(training_data)} 个训练文件")
     
     # 保存数据目录
-    data_manager.save_data_catalog()
-    print(f"\n✅ 数据管理器测试完成")
+    _ = data_manager.save_data_catalog()
+    _ = print(f"\n✅ 数据管理器测试完成")
 
 
 if __name__ == "__main__":
-    main()
+    _ = main()

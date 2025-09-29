@@ -16,16 +16,16 @@ def check_env_vars():
     missing_vars = []
     for var in required_vars:
         if not os.getenv(var):
-            missing_vars.append(var)
+            _ = missing_vars.append(var)
     
     if missing_vars:
-        print("缺少以下环境变量:")
+        _ = print("缺少以下环境变量:")
         for var in missing_vars:
-            print(f"  - {var}")
+            _ = print(f"  - {var}")
         return False
     else:
-        print("所有必需的环境变量都已设置")
+        _ = print("所有必需的环境变量都已设置")
         return True
 
 if __name__ == "__main__":
-    check_env_vars()
+    _ = check_env_vars()

@@ -6,7 +6,7 @@ def generate_simple_logic_dataset(num_samples=1000):
     """
     Generate a simple logic dataset with basic propositions.
     """
-    dataset = []
+    dataset = 
     operators = ["AND", "OR"]
     values = ["true", "false"]
     
@@ -79,10 +79,10 @@ def generate_simple_logic_dataset(num_samples=1000):
     
     return dataset
 
-def main():
+def main -> None:
     # Get project root directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
+    project_root: str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
     output_dir = os.path.join(project_root, "data", "raw_datasets")
     
     # Create output directory if it doesn't exist
@@ -117,4 +117,4 @@ def main():
         print(f"  {example['proposition']} => {example['answer']}")
 
 if __name__ == "__main__":
-    main()
+    main

@@ -4,7 +4,6 @@
 实现模型版本管理、比较、标记和回滚功能
 """
 
-import os
 import json
 import logging
 import shutil
@@ -15,15 +14,13 @@ from datetime import datetime
 import sys
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_path))
+project_root: str = Path(__file__).parent.parent
+backend_path: str = project_root / "apps" / "backend"
+_ = sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(backend_path))
 
 # 导入项目模块
 try:
-    from apps.backend.src.path_config import (
-        PROJECT_ROOT, 
         DATA_DIR, 
         TRAINING_DIR, 
         MODELS_DIR,
@@ -37,30 +34,29 @@ except ImportError:
     TRAINING_DIR = PROJECT_ROOT / "training"
     MODELS_DIR = TRAINING_DIR / "models"
 
-from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(TRAINING_DIR / 'model_version_controller.log'),
-        logging.StreamHandler()
+        _ = logging.FileHandler(TRAINING_DIR / 'model_version_controller.log'),
+        _ = logging.StreamHandler()
     ]
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 
 class VersionControlManager:
     """版本控制管理器，负责模型版本管理、比较、标记和回滚操作"""
     
-    def __init__(self, models_dir: str = None):
+    def __init__(self, models_dir: str = None) -> None:
         self.models_dir = Path(models_dir) if models_dir else MODELS_DIR
         self.version_file = self.models_dir / "model_versions.json"
         self.versions = {}
         self.error_handler = global_error_handler  # 错误处理器
-        self._load_versions()
-        logger.info("🔄 版本控制管理器初始化完成")
+        _ = self._load_versions()
+        _ = logger.info("🔄 版本控制管理器初始化完成")
     
     def _load_versions(self):
         """加载版本信息"""
@@ -69,10 +65,10 @@ class VersionControlManager:
             if self.version_file.exists():
                 with open(self.version_file, 'r', encoding='utf-8') as f:
                     self.versions = json.load(f)
-                logger.info(f"✅ 加载版本信息: {self.version_file}")
+                _ = logger.info(f"✅ 加载版本信息: {self.version_file}")
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 加载版本信息失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 加载版本信息失败: {e}")
     
     def _save_versions(self):
         """保存版本信息"""
@@ -84,8 +80,8 @@ class VersionControlManager:
             with open(self.version_file, 'w', encoding='utf-8') as f:
                 json.dump(self.versions, f, ensure_ascii=False, indent=2, default=str)
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 保存版本信息失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 保存版本信息失败: {e}")
     
     def _generate_version_name(self, model_name: str, version_type: str = "release") -> str:
         """
@@ -93,7 +89,7 @@ class VersionControlManager:
         
         Args:
             model_name: 模型名称
-            version_type: 版本类型 (release, beta, alpha)
+            _ = version_type: 版本类型 (release, beta, alpha)
             
         Returns:
             str: 生成的版本名称
@@ -129,8 +125,8 @@ class VersionControlManager:
             
             return version_name
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 生成版本名称失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 生成版本名称失败: {e}")
             # 返回默认版本名称
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             return f"{model_name}_v1.0.0_{timestamp}.pth"
@@ -150,11 +146,11 @@ class VersionControlManager:
             hash_md5 = hashlib.md5()
             with open(file_path, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
-                    hash_md5.update(chunk)
+                    _ = hash_md5.update(chunk)
             return hash_md5.hexdigest()
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 计算文件哈希失败 {file_path}: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 计算文件哈希失败 {file_path}: {e}")
             return ""
     
     def create_version(self, model_name: str, model_path: Path, 
@@ -166,7 +162,7 @@ class VersionControlManager:
             model_name: 模型名称
             model_path: 模型文件路径
             metadata: 版本元数据
-            version_type: 版本类型 (release, beta, alpha)
+            _ = version_type: 版本类型 (release, beta, alpha)
             
         Returns:
             Optional[str]: 版本名称，如果创建失败则返回None
@@ -177,7 +173,7 @@ class VersionControlManager:
         })
         try:
             if not model_path.exists():
-                logger.error(f"❌ 模型文件不存在: {model_path}")
+                _ = logger.error(f"❌ 模型文件不存在: {model_path}")
                 return None
             
             # 生成版本名称
@@ -185,7 +181,7 @@ class VersionControlManager:
             version_path = self.models_dir / version_name
             
             # 复制模型文件
-            shutil.copy2(model_path, version_path)
+            _ = shutil.copy2(model_path, version_path)
             
             # 计算文件哈希
             file_hash = self._calculate_file_hash(version_path)
@@ -196,8 +192,8 @@ class VersionControlManager:
             # 准备版本信息
             version_info = {
                 'version': version_name,
-                'path': str(version_path),
-                'created_at': datetime.now().isoformat(),
+                _ = 'path': str(version_path),
+                _ = 'created_at': datetime.now().isoformat(),
                 'model_name': model_name,
                 'version_type': version_type,
                 'performance_metrics': metadata.get('performance_metrics', {}) if metadata else {},
@@ -214,21 +210,21 @@ class VersionControlManager:
                 self.versions[model_name] = {
                     'versions': [],
                     'latest': version_name,
-                    'created_at': datetime.now().isoformat()
+                    _ = 'created_at': datetime.now().isoformat()
                 }
             
-            self.versions[model_name]['versions'].append(version_info)
+            _ = self.versions[model_name]['versions'].append(version_info)
             self.versions[model_name]['latest'] = version_name
             self.versions[model_name]['updated_at'] = datetime.now().isoformat()
             
             # 保存版本信息
-            self._save_versions()
+            _ = self._save_versions()
             
-            logger.info(f"✅ 创建模型版本: {version_name}")
+            _ = logger.info(f"✅ 创建模型版本: {version_name}")
             return version_name
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 创建模型版本失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 创建模型版本失败: {e}")
             return None
     
     def rollback_to_version(self, model_name: str, target_version: str) -> bool:
@@ -249,7 +245,7 @@ class VersionControlManager:
         try:
             # 检查模型和版本是否存在
             if model_name not in self.versions:
-                logger.error(f"❌ 模型 {model_name} 不存在")
+                _ = logger.error(f"❌ 模型 {model_name} 不存在")
                 return False
             
             # 查找目标版本
@@ -260,12 +256,12 @@ class VersionControlManager:
                     break
             
             if not target_version_info:
-                logger.error(f"❌ 版本 {target_version} 不存在")
+                _ = logger.error(f"❌ 版本 {target_version} 不存在")
                 return False
             
             target_path = Path(target_version_info['path'])
             if not target_path.exists():
-                logger.error(f"❌ 版本文件不存在: {target_path}")
+                _ = logger.error(f"❌ 版本文件不存在: {target_path}")
                 return False
             
             # 备份当前版本（如果存在）
@@ -282,21 +278,21 @@ class VersionControlManager:
                     if current_path.exists():
                         backup_name = f"{current_version}_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pth"
                         backup_path = self.models_dir / backup_name
-                        shutil.copy2(current_path, backup_path)
-                        logger.info(f"💾 备份当前版本到: {backup_name}")
+                        _ = shutil.copy2(current_path, backup_path)
+                        _ = logger.info(f"💾 备份当前版本到: {backup_name}")
             
             # 更新最新版本信息
             self.versions[model_name]['latest'] = target_version
             self.versions[model_name]['updated_at'] = datetime.now().isoformat()
             
             # 保存版本信息
-            self._save_versions()
+            _ = self._save_versions()
             
-            logger.info(f"✅ 回滚到版本 {target_version} 成功")
+            _ = logger.info(f"✅ 回滚到版本 {target_version} 成功")
             return True
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 回滚到版本 {target_version} 失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 回滚到版本 {target_version} 失败: {e}")
             return False
     
     def get_version_history(self, model_name: str) -> List[Dict[str, Any]]:
@@ -315,8 +311,8 @@ class VersionControlManager:
                 return self.versions[model_name].get('versions', [])
             return []
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 获取版本历史失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 获取版本历史失败: {e}")
             return []
     
     def compare_versions(self, model_name: str, version1: str, version2: str) -> Dict[str, Any]:
@@ -358,7 +354,7 @@ class VersionControlManager:
                         version2_info = version_info
             
             if not version1_info or not version2_info:
-                logger.error(f"❌ 无法找到要比较的版本")
+                _ = logger.error(f"❌ 无法找到要比较的版本")
                 return comparison
             
             # 比较性能指标
@@ -387,13 +383,13 @@ class VersionControlManager:
                 elif difference < 0:
                     comparison['degradations'].append({
                         'metric': metric,
-                        'degradation': abs(difference)
+                        _ = 'degradation': abs(difference)
                     })
             
             return comparison
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 比较版本失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 比较版本失败: {e}")
             return {}
     
     def tag_version(self, model_name: str, version: str, tags: List[str]) -> bool:
@@ -415,7 +411,7 @@ class VersionControlManager:
         try:
             # 查找指定版本
             if model_name not in self.versions:
-                logger.error(f"❌ 模型 {model_name} 不存在")
+                _ = logger.error(f"❌ 模型 {model_name} 不存在")
                 return False
             
             version_found = False
@@ -429,17 +425,17 @@ class VersionControlManager:
                     break
             
             if not version_found:
-                logger.error(f"❌ 版本 {version} 不存在")
+                _ = logger.error(f"❌ 版本 {version} 不存在")
                 return False
             
             # 保存版本信息
-            self._save_versions()
+            _ = self._save_versions()
             
-            logger.info(f"✅ 为版本 {version} 添加标签: {tags}")
+            _ = logger.info(f"✅ 为版本 {version} 添加标签: {tags}")
             return True
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 为版本添加标签失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 为版本添加标签失败: {e}")
             return False
     
     def get_versions_by_tag(self, model_name: str, tag: str) -> List[Dict[str, Any]]:
@@ -463,12 +459,12 @@ class VersionControlManager:
             if model_name in self.versions:
                 for version_info in self.versions[model_name]['versions']:
                     if tag in version_info.get('tags', []):
-                        matching_versions.append(version_info)
+                        _ = matching_versions.append(version_info)
             
             return matching_versions
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 根据标签获取版本失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 根据标签获取版本失败: {e}")
             return []
     
     def get_latest_version(self, model_name: str) -> Optional[Dict[str, Any]]:
@@ -491,8 +487,8 @@ class VersionControlManager:
                             return version_info
             return None
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 获取最新版本失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 获取最新版本失败: {e}")
             return None
     
     def delete_version(self, model_name: str, version: str) -> bool:
@@ -513,7 +509,7 @@ class VersionControlManager:
         try:
             # 检查模型和版本是否存在
             if model_name not in self.versions:
-                logger.error(f"❌ 模型 {model_name} 不存在")
+                _ = logger.error(f"❌ 模型 {model_name} 不存在")
                 return False
             
             # 查找并删除版本信息
@@ -524,16 +520,16 @@ class VersionControlManager:
                     # 删除版本文件
                     version_path = Path(version_info['path'])
                     if version_path.exists():
-                        version_path.unlink()
-                        logger.info(f"🗑️  删除版本文件: {version_path}")
+                        _ = version_path.unlink()
+                        _ = logger.info(f"🗑️  删除版本文件: {version_path}")
                     
                     # 从版本列表中移除
-                    versions.pop(i)
+                    _ = versions.pop(i)
                     version_found = True
                     break
             
             if not version_found:
-                logger.error(f"❌ 版本 {version} 不存在")
+                _ = logger.error(f"❌ 版本 {version} 不存在")
                 return False
             
             # 如果删除的是最新版本，更新latest指向
@@ -544,19 +540,19 @@ class VersionControlManager:
                     self.versions[model_name]['latest'] = None
             
             # 保存版本信息
-            self._save_versions()
+            _ = self._save_versions()
             
-            logger.info(f"✅ 删除版本 {version} 成功")
+            _ = logger.info(f"✅ 删除版本 {version} 成功")
             return True
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 删除版本 {version} 失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 删除版本 {version} 失败: {e}")
             return False
 
 
-def main():
+def main() -> None:
     """主函数，用于测试版本控制管理器"""
-    logger.info("🤖 Unified AI Project 模型版本控制管理器测试")
+    _ = logger.info("🤖 Unified AI Project 模型版本控制管理器测试")
     logger.info("=" * 50)
     
     # 创建版本控制管理器
@@ -571,7 +567,7 @@ def main():
         f.write("This is a test model file for version control testing.")
     
     # 测试创建版本
-    logger.info("🧪 测试创建版本...")
+    _ = logger.info("🧪 测试创建版本...")
     metadata = {
         'performance_metrics': {
             'accuracy': 0.95,
@@ -588,9 +584,9 @@ def main():
     
     version1 = version_controller.create_version("test_model", test_model_path, metadata, "release")
     if version1:
-        logger.info(f"✅ 创建版本成功: {version1}")
+        _ = logger.info(f"✅ 创建版本成功: {version1}")
     else:
-        logger.error("❌ 创建版本失败")
+        _ = logger.error("❌ 创建版本失败")
         return
     
     # 修改测试文件并创建第二个版本
@@ -613,62 +609,62 @@ def main():
     
     version2 = version_controller.create_version("test_model", test_model_path, metadata2, "beta")
     if version2:
-        logger.info(f"✅ 创建版本成功: {version2}")
+        _ = logger.info(f"✅ 创建版本成功: {version2}")
     else:
-        logger.error("❌ 创建版本失败")
+        _ = logger.error("❌ 创建版本失败")
         return
     
     # 测试版本历史查询
-    logger.info("📋 测试版本历史查询...")
+    _ = logger.info("📋 测试版本历史查询...")
     history = version_controller.get_version_history("test_model")
-    logger.info(f"   版本历史数量: {len(history)}")
+    _ = logger.info(f"   版本历史数量: {len(history)}")
     for version_info in history:
-        logger.info(f"   - {version_info['version']} ({version_info['version_type']})")
+        _ = logger.info(f"   - {version_info['version']} ({version_info['version_type']})")
     
     # 测试版本比较
-    logger.info("🔍 测试版本比较...")
+    _ = logger.info("🔍 测试版本比较...")
     if version1 and version2:
         comparison = version_controller.compare_versions("test_model", version1, version2)
-        logger.info(f"   比较结果:")
-        logger.info(f"   - 改进指标数量: {len(comparison['improvements'])}")
-        logger.info(f"   - 退步指标数量: {len(comparison['degradations'])}")
+        _ = logger.info(f"   比较结果:")
+        _ = logger.info(f"   - 改进指标数量: {len(comparison['improvements'])}")
+        _ = logger.info(f"   - 退步指标数量: {len(comparison['degradations'])}")
         for improvement in comparison['improvements']:
-            logger.info(f"     + {improvement['metric']}: +{improvement['improvement']:.4f}")
+            _ = logger.info(f"     + {improvement['metric']}: +{improvement['improvement']:.4f}")
     
     # 测试标签功能
-    logger.info("🏷️  测试标签功能...")
+    _ = logger.info("🏷️  测试标签功能...")
     tag_success = version_controller.tag_version("test_model", version2, ["production", "stable"])
     if tag_success:
-        logger.info("✅ 添加标签成功")
+        _ = logger.info("✅ 添加标签成功")
     else:
-        logger.error("❌ 添加标签失败")
+        _ = logger.error("❌ 添加标签失败")
     
     # 根据标签查询版本
     production_versions = version_controller.get_versions_by_tag("test_model", "production")
-    logger.info(f"   标记为'production'的版本数量: {len(production_versions)}")
+    _ = logger.info(f"   标记为'production'的版本数量: {len(production_versions)}")
     
     # 测试回滚功能
-    logger.info("⏪ 测试回滚功能...")
+    _ = logger.info("⏪ 测试回滚功能...")
     rollback_success = version_controller.rollback_to_version("test_model", version1)
     if rollback_success:
-        logger.info("✅ 回滚成功")
+        _ = logger.info("✅ 回滚成功")
     else:
-        logger.error("❌ 回滚失败")
+        _ = logger.error("❌ 回滚失败")
     
     # 获取最新版本
     latest_version = version_controller.get_latest_version("test_model")
     if latest_version:
-        logger.info(f"   当前最新版本: {latest_version['version']}")
+        _ = logger.info(f"   当前最新版本: {latest_version['version']}")
     
     # 清理测试文件
     try:
-        test_model_path.unlink()
-        logger.info("🗑️  清理测试文件完成")
+        _ = test_model_path.unlink()
+        _ = logger.info("🗑️  清理测试文件完成")
     except Exception as e:
-        logger.warning(f"⚠️  清理测试文件失败: {e}")
+        _ = logger.warning(f"⚠️  清理测试文件失败: {e}")
     
-    logger.info("✅ 模型版本控制管理器测试完成")
+    _ = logger.info("✅ 模型版本控制管理器测试完成")
 
 
 if __name__ == "__main__":
-    main()
+    _ = main()

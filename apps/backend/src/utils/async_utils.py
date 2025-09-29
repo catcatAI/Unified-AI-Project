@@ -1,9 +1,7 @@
 import asyncio
 import functools
 import logging
-from typing import Any, Callable, Coroutine
-
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class AsyncManager:
     """統一異步操作管理器"""

@@ -4,27 +4,24 @@
 此脚本用于管理、清理和组织备份目录，确保测试时不会引入备份文件中的错误
 """
 
-import os
 import shutil
-import glob
 from pathlib import Path
 import logging
 from datetime import datetime
-import re
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level: str=logging.INFO, 
+    format: str='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('backup_management.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class BackupManager:
-    def __init__(self, project_root=None):
+    def __init__(self, project_root=None) -> None:
         """初始化备份管理器"""
         self.project_root = Path(project_root) if project_root else Path(__file__).resolve().parent.parent
         self.backend_dir = self.project_root / "apps" / "backend"
@@ -143,7 +140,7 @@ class BackupManager:
             except Exception as e:
                 logger.error(f"移动后端备份到归档失败: {e}")
     
-    def verify_no_backup_in_test_paths(self):
+    def verify_no_backup_in_test_paths(self) -> None:
         """验证测试路径中没有备份目录"""
         test_paths = [
             self.backend_dir / "tests",
@@ -194,7 +191,7 @@ class BackupManager:
             "backup_in_tests": len(backup_in_tests)
         }
 
-def main():
+def main() -> None:
     """主函数"""
     manager = BackupManager()
     results = manager.run_full_cleanup()

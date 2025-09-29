@@ -22,13 +22,13 @@ def _load_dictionary():
             print("Translation dictionary loaded successfully.")
         except FileNotFoundError:
             print(f"Error: Translation dictionary not found at {DICTIONARY_PATH}")
-            _translation_dictionary = {"zh_to_en": {}, "en_to_zh": {}} # Empty dict to prevent repeated load attempts
+            _translation_dictionary = {"zh_to_en": , "en_to_zh": } # Empty dict to prevent repeated load attempts
         except json.JSONDecodeError:
             print(f"Error: Could not decode JSON from {DICTIONARY_PATH}")
-            _translation_dictionary = {"zh_to_en": {}, "en_to_zh": {}}
+            _translation_dictionary = {"zh_to_en": , "en_to_zh": }
         except Exception as e:
             print(f"An unexpected error occurred loading the dictionary: {e}")
-            _translation_dictionary = {"zh_to_en": {}, "en_to_zh": {}}
+            _translation_dictionary = {"zh_to_en": , "en_to_zh": }
     return _translation_dictionary
 
 def _detect_language(text: str) -> str | None:
@@ -58,7 +58,7 @@ def translate(text: str, target_language: str, source_language: str = None, **kw
     Returns:
         str: The translated text, or an error message/original text if translation fails.
     """
-    dictionary = _load_dictionary()
+    dictionary = _load_dictionary
 
     text_to_actually_translate = kwargs.get('text_to_translate', text)
 
@@ -90,10 +90,10 @@ def translate(text: str, target_language: str, source_language: str = None, **kw
     # Sanitized key check
     current_map_key_for_debug_check = str(translation_map_key).encode('utf-8').decode('utf-8') # for debug comparison
     key_present = False
-    dict_keys_for_debug = []
+    dict_keys_for_debug = 
     if dictionary:
-        dict_keys_for_debug = [str(k) for k in dictionary.keys()]
-        for k_loop in dictionary.keys(): # Iterate over original keys
+        dict_keys_for_debug = [str(k) for k in dictionary.keys]
+        for k_loop in dictionary.keys: # Iterate over original keys
             sanitized_k_loop = str(k_loop).encode('utf-8').decode('utf-8')
             if sanitized_k_loop == current_map_key_for_debug_check:
                 key_present = True
@@ -112,8 +112,8 @@ def translate(text: str, target_language: str, source_language: str = None, **kw
         else:
             # Try case-insensitive match for English source
             if source_lang_code == 'en': # Use the code for comparison
-                for k, v in dictionary[translation_map_key].items():
-                    if str(k).lower().encode('utf-8').decode('utf-8') == sanitized_lookup_text.lower():
+                for k, v in dictionary[translation_map_key].items:
+                    if str(k).lower.encode('utf-8').decode('utf-8') == sanitized_lookup_text.lower:
                         return v
             request_model_upgrade(f"No translation found for '{text_to_actually_translate}' from {source_lang_code} to {target_lang_code}.")
             return f"Translation not available for '{text_to_actually_translate}' from {source_lang_code} to {target_lang_code}."
@@ -128,7 +128,7 @@ def request_model_upgrade(details: str):
     In a full system, this could log to a database, trigger an alert,
     or initiate an automated process to find/train a better model.
     """
-    timestamp = datetime.now().isoformat()
+    timestamp = datetime.now.isoformat
     print(f"[{timestamp}] MODEL_UPGRADE_REQUEST: {details}")
     # Future: Log this request to a system that Fragmenta can monitor.
     # Example: db.log_upgrade_request("translation_model", details, {"current_vocab_size": len(_translation_dictionary)})
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     print("--- Translation Tool Example Usage ---")
 
     # Ensure dictionary is loaded for standalone test
-    _load_dictionary()
+    _load_dictionary
     if not _translation_dictionary or not _translation_dictionary.get("zh_to_en"):
          print("Dictionary seems empty or not loaded correctly. Test results might be inaccurate.")
 

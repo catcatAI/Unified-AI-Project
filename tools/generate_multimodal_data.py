@@ -4,12 +4,10 @@
 将不同模态的特征融合生成高层次概念数据
 """
 
-import os
 import sys
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
 import numpy as np
 import torch
 from sklearn.manifold import TSNE
@@ -17,22 +15,22 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
+project_root: str = Path(__file__).parent.parent
+backend_path: str = project_root / "apps" / "backend"
+_ = sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(backend_path))
+_ = sys.path.insert(0, str(backend_path / "src"))
 
 # 导入特征提取器
 from apps.backend.src.core.tools.extract_features import FeatureExtractor
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class MultimodalDataGenerator:
     """多模态数据生成器"""
     
-    def __init__(self, model_dir: str = None, output_dir: str = None):
+    def __init__(self, model_dir: str = None, output_dir: str = None) -> None:
         self.project_root = project_root
         self.model_dir = Path(model_dir) if model_dir else project_root / "training" / "models"
         self.output_dir = Path(output_dir) if output_dir else project_root / "data" / "generated_multimodal_data"
@@ -43,11 +41,11 @@ class MultimodalDataGenerator:
         
         # 设备配置
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        logger.info(f"使用设备: {self.device}")
+        _ = logger.info(f"使用设备: {self.device}")
     
     def load_processed_data(self) -> Dict[str, List[Dict[str, Any]]]:
         """加载处理后的数据"""
-        logger.info("正在加载处理后的数据...")
+        _ = logger.info("正在加载处理后的数据...")
         
         all_data = {}
         data_types = ["vision", "audio", "text", "multimodal"]
@@ -59,11 +57,11 @@ class MultimodalDataGenerator:
                     with open(processed_data_file, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                     all_data[data_type] = data
-                    logger.info(f"成功加载 {len(data)} 条{data_type}数据")
+                    _ = logger.info(f"成功加载 {len(data)} 条{data_type}数据")
                 except Exception as e:
-                    logger.error(f"加载{data_type}数据时出错: {e}")
+                    _ = logger.error(f"加载{data_type}数据时出错: {e}")
             else:
-                logger.warning(f"未找到处理后的{data_type}数据文件: {processed_data_file}")
+                _ = logger.warning(f"未找到处理后的{data_type}数据文件: {processed_data_file}")
         
         return all_data
     
@@ -86,7 +84,7 @@ class MultimodalDataGenerator:
                 pca = PCA(n_components=128)
                 feature = pca.fit_transform(feature)
             
-            feature_list.append(feature)
+            _ = feature_list.append(feature)
         
         if not feature_list:
             return None
@@ -99,12 +97,12 @@ class MultimodalDataGenerator:
             pca = PCA(n_components=256)
             combined_features = pca.fit_transform(combined_features)
         
-        logger.info(f"生成概念特征，形状: {combined_features.shape}")
+        _ = logger.info(f"生成概念特征，形状: {combined_features.shape}")
         return combined_features
     
     def create_multimodal_samples(self, all_data: Dict[str, List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
         """创建多模态样本"""
-        logger.info("正在创建多模态样本...")
+        _ = logger.info("正在创建多模态样本...")
         
         multimodal_samples = []
         
@@ -117,14 +115,14 @@ class MultimodalDataGenerator:
                 "modalities": ["vision"],
                 "content": {
                     "vision": {
-                        "caption": item.get("caption", ""),
-                        "scene_type": item.get("scene_type", "unknown"),
-                        "objects": item.get("objects", [])
+                        _ = "caption": item.get("caption", ""),
+                        _ = "scene_type": item.get("scene_type", "unknown"),
+                        _ = "objects": item.get("objects", [])
                     }
                 },
                 "metadata": {
                     "source": "vision_data",
-                    "timestamp": torch.utils.data.dataset.datetime.datetime.now().isoformat()
+                    _ = "timestamp": torch.utils.data.dataset.datetime.datetime.now().isoformat()
                 }
             }
             
@@ -136,7 +134,7 @@ class MultimodalDataGenerator:
                 if conceptual_features is not None:
                     sample["conceptual_features"] = conceptual_features.tolist()
             
-            multimodal_samples.append(sample)
+            _ = multimodal_samples.append(sample)
         
         # 处理音频数据
         audio_data = all_data.get("audio", [])
@@ -147,15 +145,15 @@ class MultimodalDataGenerator:
                 "modalities": ["audio"],
                 "content": {
                     "audio": {
-                        "transcript": item.get("text", ""),
-                        "language": item.get("language", "unknown"),
-                        "duration": item.get("duration", 0.0),
-                        "speaker_id": item.get("speaker_id", "unknown")
+                        _ = "transcript": item.get("text", ""),
+                        _ = "language": item.get("language", "unknown"),
+                        _ = "duration": item.get("duration", 0.0),
+                        _ = "speaker_id": item.get("speaker_id", "unknown")
                     }
                 },
                 "metadata": {
                     "source": "audio_data",
-                    "timestamp": torch.utils.data.dataset.datetime.datetime.now().isoformat()
+                    _ = "timestamp": torch.utils.data.dataset.datetime.datetime.now().isoformat()
                 }
             }
             
@@ -167,7 +165,7 @@ class MultimodalDataGenerator:
                 if conceptual_features is not None:
                     sample["conceptual_features"] = conceptual_features.tolist()
             
-            multimodal_samples.append(sample)
+            _ = multimodal_samples.append(sample)
         
         # 处理多模态数据
         existing_multimodal_data = all_data.get("multimodal", [])
@@ -175,16 +173,16 @@ class MultimodalDataGenerator:
             sample = {
                 "id": f"multimodal_sample_{i+40:04d}",
                 "type": "multimodal_concept",
-                "modalities": item.get("modalities", []),
+                _ = "modalities": item.get("modalities", []),
                 "content": {
-                    "image_caption": item.get("image_caption", ""),
-                    "audio_transcript": item.get("audio_transcript", ""),
-                    "task_type": item.get("task_type", "unknown")
+                    _ = "image_caption": item.get("image_caption", ""),
+                    _ = "audio_transcript": item.get("audio_transcript", ""),
+                    _ = "task_type": item.get("task_type", "unknown")
                 },
                 "metadata": {
                     "source": "existing_multimodal_data",
-                    "cross_modal_alignment": item.get("cross_modal_alignment", 0.0),
-                    "timestamp": torch.utils.data.dataset.datetime.datetime.now().isoformat()
+                    _ = "cross_modal_alignment": item.get("cross_modal_alignment", 0.0),
+                    _ = "timestamp": torch.utils.data.dataset.datetime.datetime.now().isoformat()
                 }
             }
             
@@ -196,7 +194,7 @@ class MultimodalDataGenerator:
             if conceptual_features is not None:
                 sample["conceptual_features"] = conceptual_features.tolist()
             
-            multimodal_samples.append(sample)
+            _ = multimodal_samples.append(sample)
         
         # 创建跨模态融合样本
         for i in range(min(20, len(vision_data), len(audio_data))):  # 限制处理数量
@@ -209,17 +207,17 @@ class MultimodalDataGenerator:
                 "modalities": ["vision", "audio"],
                 "content": {
                     "vision": {
-                        "caption": vision_item.get("caption", ""),
-                        "scene_type": vision_item.get("scene_type", "unknown")
+                        _ = "caption": vision_item.get("caption", ""),
+                        _ = "scene_type": vision_item.get("scene_type", "unknown")
                     },
                     "audio": {
-                        "transcript": audio_item.get("text", ""),
-                        "language": audio_item.get("language", "unknown")
+                        _ = "transcript": audio_item.get("text", ""),
+                        _ = "language": audio_item.get("language", "unknown")
                     }
                 },
                 "metadata": {
                     "source": "cross_modal_fusion",
-                    "timestamp": torch.utils.data.dataset.datetime.datetime.now().isoformat()
+                    _ = "timestamp": torch.utils.data.dataset.datetime.datetime.now().isoformat()
                 }
             }
             
@@ -237,14 +235,14 @@ class MultimodalDataGenerator:
             if conceptual_features is not None:
                 sample["conceptual_features"] = conceptual_features.tolist()
             
-            multimodal_samples.append(sample)
+            _ = multimodal_samples.append(sample)
         
-        logger.info(f"成功创建 {len(multimodal_samples)} 个多模态样本")
+        _ = logger.info(f"成功创建 {len(multimodal_samples)} 个多模态样本")
         return multimodal_samples
     
     def enhance_with_conceptual_models(self, samples: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """使用概念模型增强数据"""
-        logger.info("正在使用概念模型增强数据...")
+        _ = logger.info("正在使用概念模型增强数据...")
         
         enhanced_samples = []
         
@@ -259,7 +257,7 @@ class MultimodalDataGenerator:
             enhanced_sample["enhanced_by"] = {
                 "concept_models": ["environment_simulator", "causal_reasoning_engine", "adaptive_learning_controller"],
                 "enhancement_type": "conceptual_enrichment",
-                "confidence": np.random.uniform(0.7, 0.95)
+                _ = "confidence": np.random.uniform(0.7, 0.95)
             }
             
             # 添加模拟的概念特征
@@ -271,23 +269,23 @@ class MultimodalDataGenerator:
                 enhanced_features = np.concatenate([features, additional_concepts], axis=1)
                 enhanced_sample["enhanced_conceptual_features"] = enhanced_features.tolist()
             
-            enhanced_samples.append(enhanced_sample)
+            _ = enhanced_samples.append(enhanced_sample)
         
-        logger.info(f"成功增强 {len(enhanced_samples)} 个样本")
+        _ = logger.info(f"成功增强 {len(enhanced_samples)} 个样本")
         return enhanced_samples
     
     def save_multimodal_data(self, samples: List[Dict[str, Any]]):
         """保存多模态数据"""
-        logger.info("正在保存多模态数据...")
+        _ = logger.info("正在保存多模态数据...")
         
         # 保存为JSON格式
         json_file = self.output_dir / "multimodal_conceptual_data.json"
         try:
             with open(json_file, 'w', encoding='utf-8') as f:
                 json.dump(samples, f, ensure_ascii=False, indent=2)
-            logger.info(f"多模态数据已保存到: {json_file}")
+            _ = logger.info(f"多模态数据已保存到: {json_file}")
         except Exception as e:
-            logger.error(f"保存多模态数据时出错: {e}")
+            _ = logger.error(f"保存多模态数据时出错: {e}")
         
         # 保存为单独的文件
         for sample in samples:
@@ -297,17 +295,17 @@ class MultimodalDataGenerator:
                 with open(sample_file, 'w', encoding='utf-8') as f:
                     json.dump(sample, f, ensure_ascii=False, indent=2)
             except Exception as e:
-                logger.error(f"保存样本 {sample_id} 时出错: {e}")
+                _ = logger.error(f"保存样本 {sample_id} 时出错: {e}")
         
         # 生成数据统计报告
-        self.generate_statistics_report(samples)
+        _ = self.generate_statistics_report(samples)
     
     def generate_statistics_report(self, samples: List[Dict[str, Any]]):
         """生成数据统计报告"""
-        logger.info("正在生成数据统计报告...")
+        _ = logger.info("正在生成数据统计报告...")
         
         report = {
-            "total_samples": len(samples),
+            _ = "total_samples": len(samples),
             "sample_types": {},
             "modalities_distribution": {},
             "enhancement_stats": {
@@ -353,23 +351,23 @@ class MultimodalDataGenerator:
         try:
             with open(report_file, 'w', encoding='utf-8') as f:
                 json.dump(report, f, ensure_ascii=False, indent=2)
-            logger.info(f"统计报告已保存到: {report_file}")
+            _ = logger.info(f"统计报告已保存到: {report_file}")
         except Exception as e:
-            logger.error(f"保存统计报告时出错: {e}")
+            _ = logger.error(f"保存统计报告时出错: {e}")
         
         # 打印报告摘要
-        logger.info("数据统计报告摘要:")
-        logger.info(f"  总样本数: {report['total_samples']}")
-        logger.info(f"  样本类型分布: {report['sample_types']}")
-        logger.info(f"  模态分布: {report['modalities_distribution']}")
-        logger.info(f"  增强样本数: {report['enhancement_stats']['enhanced_samples']}")
-        logger.info(f"  平均置信度: {report['enhancement_stats']['average_confidence']:.3f}")
-        logger.info(f"  有特征的样本数: {report['feature_stats']['samples_with_features']}")
-        logger.info(f"  平均特征维度: {report['feature_stats']['average_feature_dimensions']:.1f}")
+        _ = logger.info("数据统计报告摘要:")
+        _ = logger.info(f"  总样本数: {report['total_samples']}")
+        _ = logger.info(f"  样本类型分布: {report['sample_types']}")
+        _ = logger.info(f"  模态分布: {report['modalities_distribution']}")
+        _ = logger.info(f"  增强样本数: {report['enhancement_stats']['enhanced_samples']}")
+        _ = logger.info(f"  平均置信度: {report['enhancement_stats']['average_confidence']:.3f}")
+        _ = logger.info(f"  有特征的样本数: {report['feature_stats']['samples_with_features']}")
+        _ = logger.info(f"  平均特征维度: {report['feature_stats']['average_feature_dimensions']:.1f}")
     
     def generate_visualization(self, samples: List[Dict[str, Any]]):
         """生成数据可视化"""
-        logger.info("正在生成数据可视化...")
+        _ = logger.info("正在生成数据可视化...")
         
         # 收集所有特征用于可视化
         all_features = []
@@ -381,11 +379,11 @@ class MultimodalDataGenerator:
                 # 如果是2D数组，取第一行
                 if len(features.shape) > 1:
                     features = features[0]
-                all_features.append(features)
-                sample_labels.append(sample.get("type", "unknown"))
+                _ = all_features.append(features)
+                _ = sample_labels.append(sample.get("type", "unknown"))
         
         if len(all_features) < 2:
-            logger.warning("样本数量不足，无法生成可视化")
+            _ = logger.warning("样本数量不足，无法生成可视化")
             return
         
         # 转换为numpy数组
@@ -413,24 +411,24 @@ class MultimodalDataGenerator:
                 plt.scatter(features_2d[mask, 0], features_2d[mask, 1], 
                            c=[colors[i]], label=label, alpha=0.7, s=50)
             
-            plt.title("多模态概念数据可视化 (t-SNE)")
-            plt.xlabel("t-SNE维度1")
-            plt.ylabel("t-SNE维度2")
-            plt.legend()
+            _ = plt.title("多模态概念数据可视化 (t-SNE)")
+            _ = plt.xlabel("t-SNE维度1")
+            _ = plt.ylabel("t-SNE维度2")
+            _ = plt.legend()
             plt.grid(True, alpha=0.3)
             
             # 保存图表
             visualization_file = self.output_dir / "multimodal_data_visualization.png"
             plt.savefig(visualization_file, dpi=300, bbox_inches='tight')
-            plt.close()
+            _ = plt.close()
             
-            logger.info(f"数据可视化图表已保存到: {visualization_file}")
+            _ = logger.info(f"数据可视化图表已保存到: {visualization_file}")
         except Exception as e:
-            logger.error(f"生成数据可视化时出错: {e}")
+            _ = logger.error(f"生成数据可视化时出错: {e}")
 
-def main():
+def main() -> None:
     """主函数"""
-    logger.info("开始生成多模态概念数据...")
+    _ = logger.info("开始生成多模态概念数据...")
     
     # 初始化多模态数据生成器
     generator = MultimodalDataGenerator()
@@ -439,26 +437,26 @@ def main():
     all_data = generator.load_processed_data()
     
     if not all_data:
-        logger.error("没有可用的数据用于生成多模态样本")
+        _ = logger.error("没有可用的数据用于生成多模态样本")
         return
     
     # 创建多模态样本
     samples = generator.create_multimodal_samples(all_data)
     
     if not samples:
-        logger.error("未能创建多模态样本")
+        _ = logger.error("未能创建多模态样本")
         return
     
     # 使用概念模型增强数据
     enhanced_samples = generator.enhance_with_conceptual_models(samples)
     
     # 保存多模态数据
-    generator.save_multimodal_data(enhanced_samples)
+    _ = generator.save_multimodal_data(enhanced_samples)
     
     # 生成数据可视化
-    generator.generate_visualization(enhanced_samples)
+    _ = generator.generate_visualization(enhanced_samples)
     
-    logger.info("多模态概念数据生成完成!")
+    _ = logger.info("多模态概念数据生成完成!")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

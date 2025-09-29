@@ -3,7 +3,7 @@ import json
 import os
 
 class NPC:
-    def __init__(self, game, npc_data, portrait=None, sprite=None):
+    def __init__(self, game, npc_data, portrait=None, sprite=None) -> None:
         self.game = game
         self.id = npc_data['id']
         self.name = npc_data['name']
@@ -13,9 +13,9 @@ class NPC:
             self.image.fill((255, 0, 255)) # Magenta for placeholder
         self.portrait = portrait
         self.rect = self.image.get_rect(topleft=(npc_data['x'], npc_data['y']))
-        self.dialogue_tree = npc_data.get('dialogue_tree', {})
+        self.dialogue_tree = npc_data.get('dialogue_tree', )
         self.relationship_level = 0
-        self.event_flags = {}
+        self.event_flags = 
 
     async def interact(self):
         # Placeholder for a more complex dialogue system
@@ -28,7 +28,7 @@ class NPC:
     def render(self, surface):
         surface.blit(self.image, self.rect)
 
-_NPC_DATA = {}
+_NPC_DATA = 
 
 def load_npc_data():
     global _NPC_DATA
@@ -38,21 +38,21 @@ def load_npc_data():
             _NPC_DATA = json.load(f)
     except FileNotFoundError:
         print(f"Warning: npcs.json not found at {path}. Initializing with empty data.")
-        _NPC_DATA = {}
+        _NPC_DATA = 
     except json.JSONDecodeError:
         print(f"Warning: npcs.json at {path} is malformed. Initializing with empty data.")
-        _NPC_DATA = {}
+        _NPC_DATA = 
 
 def create_npc(game, npc_id):
     if not _NPC_DATA:
-        load_npc_data() # Ensure data is loaded if not already
+        load_npc_data # Ensure data is loaded if not already
 
     npc_data = _NPC_DATA.get(npc_id)
     if not npc_data:
         return None
 
     # Create a mutable copy to add 'id' if it's not already present
-    npc_data_copy = npc_data.copy()
+    npc_data_copy = npc_data.copy
     npc_data_copy['id'] = npc_id
     
     portrait = game.assets['images']['portraits'].get(npc_data_copy.get('portrait'))
@@ -61,4 +61,4 @@ def create_npc(game, npc_id):
     return NPC(game, npc_data_copy, portrait, sprite)
 
 # Load data on module import
-load_npc_data()
+load_npc_data

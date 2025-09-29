@@ -13,8 +13,8 @@ from datetime import datetime
 from pathlib import Path
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root: str = Path(__file__).parent.parent
+_ = sys.path.insert(0, str(project_root))
 
 class FeatureStatus(Enum):
     """功能实现状态枚举"""
@@ -87,11 +87,11 @@ class Feature:
 class FeatureStatusTracker:
     """功能状态跟踪器"""
     
-    def __init__(self, tracking_file: str = "feature_status.json"):
+    def __init__(self, tracking_file: str = "feature_status.json") -> None:
         self.project_root = project_root
         self.tracking_file = self.project_root / tracking_file
         self.features: Dict[str, Feature] = {}
-        self.load_tracking_data()
+        _ = self.load_tracking_data()
         
     def load_tracking_data(self):
         """加载跟踪数据"""
@@ -102,20 +102,20 @@ class FeatureStatusTracker:
                     for feature_data in data.get("features", []):
                         feature = Feature.from_dict(feature_data)
                         self.features[feature.id] = feature
-                print(f"✅ 已加载 {len(self.features)} 个功能的跟踪数据")
+                _ = print(f"✅ 已加载 {len(self.features)} 个功能的跟踪数据")
             except Exception as e:
-                print(f"⚠️ 加载跟踪数据时出错: {e}")
+                _ = print(f"⚠️ 加载跟踪数据时出错: {e}")
         else:
-            print("ℹ️ 跟踪文件不存在，将创建新的跟踪数据")
-            self.initialize_default_features()
+            _ = print("ℹ️ 跟踪文件不存在，将创建新的跟踪数据")
+            _ = self.initialize_default_features()
             
     def save_tracking_data(self):
         """保存跟踪数据"""
         try:
             data = {
                 "features": [feature.to_dict() for feature in self.features.values()],
-                "last_updated": datetime.now().isoformat(),
-                "total_features": len(self.features)
+                _ = "last_updated": datetime.now().isoformat(),
+                _ = "total_features": len(self.features)
             }
             
             # 确保目录存在
@@ -123,9 +123,9 @@ class FeatureStatusTracker:
             
             with open(self.tracking_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
-            print(f"✅ 功能状态数据已保存到 {self.tracking_file}")
+            _ = print(f"✅ 功能状态数据已保存到 {self.tracking_file}")
         except Exception as e:
-            print(f"❌ 保存跟踪数据时出错: {e}")
+            _ = print(f"❌ 保存跟踪数据时出错: {e}")
             
     def initialize_default_features(self):
         """初始化默认功能"""
@@ -210,13 +210,13 @@ class FeatureStatusTracker:
             implementation_file="tools/train-manager.bat"
         ))
         
-        print(f"✅ 已初始化 {len(self.features)} 个默认功能")
+        _ = print(f"✅ 已初始化 {len(self.features)} 个默认功能")
         
     def add_feature(self, feature: Feature):
         """添加功能"""
         self.features[feature.id] = feature
-        self.save_tracking_data()
-        print(f"✅ 已添加功能: {feature.name}")
+        _ = self.save_tracking_data()
+        _ = print(f"✅ 已添加功能: {feature.name}")
         
     def update_feature_status(self, feature_id: str, status: FeatureStatus, notes: Optional[str] = None):
         """更新功能状态"""
@@ -226,10 +226,10 @@ class FeatureStatusTracker:
             feature.last_updated = datetime.now().isoformat()
             if notes:
                 feature.notes = notes
-            self.save_tracking_data()
-            print(f"✅ 已更新功能 {feature.name} 的状态为 {status.value}")
+            _ = self.save_tracking_data()
+            _ = print(f"✅ 已更新功能 {feature.name} 的状态为 {status.value}")
         else:
-            print(f"❌ 未找到功能 ID: {feature_id}")
+            _ = print(f"❌ 未找到功能 ID: {feature_id}")
             
     def get_features_by_status(self, status: FeatureStatus) -> List[Feature]:
         """根据状态获取功能"""
@@ -246,23 +246,23 @@ class FeatureStatusTracker:
     def generate_status_report(self) -> str:
         """生成状态报告"""
         report = []
-        report.append("# 功能实现状态报告")
-        report.append(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        report.append(f"总功能数: {len(self.features)}")
-        report.append("")
+        _ = report.append("# 功能实现状态报告")
+        _ = report.append(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        _ = report.append(f"总功能数: {len(self.features)}")
+        _ = report.append("")
         
         # 按状态分组统计
         status_counts = {}
         for feature in self.features.values():
             status_counts[feature.status.value] = status_counts.get(feature.status.value, 0) + 1
             
-        report.append("## 状态统计")
+        _ = report.append("## 状态统计")
         for status, count in status_counts.items():
-            report.append(f"- {status}: {count}")
-        report.append("")
+            _ = report.append(f"- {status}: {count}")
+        _ = report.append("")
         
         # 按类型分组显示
-        report.append("## 详细功能列表")
+        _ = report.append("## 详细功能列表")
         type_names = {
             FeatureType.CORE_MODEL: "核心模型",
             FeatureType.TRAINING_SYSTEM: "训练系统",
@@ -277,7 +277,7 @@ class FeatureStatusTracker:
         for feature_type, type_name in type_names.items():
             features = self.get_features_by_type(feature_type)
             if features:
-                report.append(f"### {type_name}")
+                _ = report.append(f"### {type_name}")
                 for feature in features:
                     status_symbols = {
                         FeatureStatus.PLANNED: "📝",
@@ -288,32 +288,32 @@ class FeatureStatusTracker:
                         FeatureStatus.DEPRECATED: "🗑️"
                     }
                     symbol = status_symbols.get(feature.status, "❓")
-                    report.append(f"- {symbol} {feature.name} ({feature.status.value})")
+                    _ = report.append(f"- {symbol} {feature.name} ({feature.status.value})")
                     if feature.notes:
-                        report.append(f"  - 备注: {feature.notes}")
-                report.append("")
+                        _ = report.append(f"  - 备注: {feature.notes}")
+                _ = report.append("")
                 
         return "\n".join(report)
 
-def main():
+def main() -> None:
     """主函数"""
     # 切换到项目根目录
-    os.chdir(project_root)
+    _ = os.chdir(project_root)
     
     tracker = FeatureStatusTracker("feature_status.json")
     
     # 生成状态报告
     report = tracker.generate_status_report()
-    print(report)
+    _ = print(report)
     
     # 保存报告到文件
     report_file = project_root / "feature_status_report.md"
     try:
         with open(report_file, 'w', encoding='utf-8') as f:
-            f.write(report)
-        print(f"✅ 状态报告已保存到 {report_file}")
+            _ = f.write(report)
+        _ = print(f"✅ 状态报告已保存到 {report_file}")
     except Exception as e:
-        print(f"❌ 保存状态报告时出错: {e}")
+        _ = print(f"❌ 保存状态报告时出错: {e}")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

@@ -4,16 +4,16 @@ from .inventory import Inventory
 PLAYER_SPEED = 5
 
 class Player:
-    def __init__(self, game, name="Player", appearance=None):
+    def __init__(self, game, name="Player", appearance=None) -> None:
         self.game = game
         self.name = name
-        self.appearance = appearance if appearance else self.default_appearance()
+        self.appearance = appearance if appearance else self.default_appearance
         self.image = self.game.assets['sprites']['characters']['player']  # This will need to be animated
-        self.rect = self.image.get_rect()
+        self.rect = self.image.get_rect
         self.rect.x = 100
         self.rect.y = 100
         self.speed = PLAYER_SPEED
-        self.inventory = Inventory()
+        self.inventory = Inventory
         self.covenant_unlocked = False
         self.uid = None
         self.current_action = None
@@ -34,7 +34,7 @@ class Player:
             # Placeholder for handling actions like mining, fishing, etc.
             return
 
-        keys = pygame.key.get_pressed()
+        keys = pygame.key.get_pressed
         if keys[pygame.K_LEFT]:
             self.rect.x -= self.speed
         if keys[pygame.K_RIGHT]:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Orchestrator for project automation:
-- Dataset check and (optional) repair
+_ = - Dataset check and (optional) repair
 - Model and training system inspection
 - Conditional training
 - Docs auto-update with placeholders and validation
@@ -20,7 +20,7 @@ Placeholders supported in Markdown (anywhere in *.md):
   <!-- AUTO:BEGIN key=project_status --> ... <!-- AUTO:END key=project_status -->
   <!-- AUTO:BEGIN key=link_check_summary --> ... <!-- AUTO:END key=link_check_summary -->
 
-The script is dependency-free (stdlib only) and safe by default (dry-run).
+_ = The script is dependency-free (stdlib only) and safe by default (dry-run).
 """
 import argparse
 import os
@@ -28,12 +28,10 @@ import re
 import sys
 import subprocess
 import json
-import urllib.parse
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Tuple, Optional
 # NEW: for plugin loading and discovery
-import importlib.util
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS_DIRS = [ROOT / 'docs', ROOT]
@@ -51,7 +49,7 @@ SECTION_KEYS = [
 
 def log(msg: str):
     now = datetime.now().strftime('%H:%M:%S')
-    print(f"[{now}] {msg}")
+    _ = print(f"[{now}] {msg}")
 
 # NEW: plugin loader for validators
 def load_validators(kind: str) -> List:
@@ -72,9 +70,9 @@ def load_validators(kind: str) -> List:
             spec.loader.exec_module(mod)  # type: ignore
             func = getattr(mod, f'validate_{kind}', None) or getattr(mod, 'validate', None)
             if callable(func):
-                validators.append((p.stem, func))
+                _ = validators.append((p.stem, func))
         except Exception as e:
-            log(f"Validator load failed: {p.name}: {e}")
+            _ = log(f"Validator load failed: {p.name}: {e}")
     return validators
 
 
@@ -97,9 +95,9 @@ def scan_data_generators() -> List[Dict]:
                 # Heuristic: include likely generator scripts
                 if 'generate' in p.stem or 'data' in p.stem or p.parent.name.lower() in {'data_gen', 'generators'}:
                     entries.append({
-                        'path': str(p.relative_to(ROOT)),
-                        'size': p.stat().st_size,
-                        'modified': datetime.fromtimestamp(p.stat().st_mtime).isoformat()
+                        _ = 'path': str(p.relative_to(ROOT)),
+                        _ = 'size': p.stat().st_size,
+                        _ = 'modified': datetime.fromtimestamp(p.stat().st_mtime).isoformat()
                     })
     # de-dup by path
     seen = set()
@@ -107,8 +105,8 @@ def scan_data_generators() -> List[Dict]:
     for it in entries:
         if it['path'] in seen:
             continue
-        seen.add(it['path'])
-        uniq.append(it)
+        _ = seen.add(it['path'])
+        _ = uniq.append(it)
     return sorted(uniq, key=lambda x: x['path'])
 
 
@@ -133,7 +131,7 @@ def scan_datasets() -> Dict:
                     except Exception:
                         sz = -1
                     items.append({
-                        'path': str(p.relative_to(ROOT)),
+                        _ = 'path': str(p.relative_to(ROOT)),
                         'size': sz,
                         'modified': datetime.fromtimestamp(p.stat().st_mtime).isoformat() if sz >= 0 else None
                     })
@@ -155,7 +153,7 @@ def scan_models() -> Dict:
                     except Exception:
                         ts, sz = 0, -1
                     items.append({
-                        'path': str(p.relative_to(ROOT)),
+                        _ = 'path': str(p.relative_to(ROOT)),
                         'size': sz,
                         'modified': datetime.fromtimestamp(ts).isoformat() if ts else None
                     })
@@ -174,9 +172,9 @@ def scan_training() -> Dict:
                         ts = p.stat().st_mtime
                         size = p.stat().st_size
                         logs.append({
-                            'path': str(p.relative_to(ROOT)),
+                            _ = 'path': str(p.relative_to(ROOT)),
                             'size': size,
-                            'modified': datetime.fromtimestamp(ts).isoformat(),
+                            _ = 'modified': datetime.fromtimestamp(ts).isoformat(),
                         })
                     except Exception:
                         pass
@@ -185,11 +183,11 @@ def scan_training() -> Dict:
 # ----------------------------- doc update ------------------------------
 START_PATTERNS = [
     re.compile(r"<!--\s*AUTO:(?:BEGIN|START)\s+key\s*=\s*([a-zA-Z0-9_\-]+)\s*-->", re.IGNORECASE),
-    re.compile(r"<!--\s*auto:([a-zA-Z0-9_\-]+):start\s*-->", re.IGNORECASE),
+    _ = re.compile(r"<!--\s*auto:([a-zA-Z0-9_\-]+):start\s*-->", re.IGNORECASE),
 ]
 END_PATTERNS = [
     re.compile(r"<!--\s*AUTO:(?:END|STOP)\s+key\s*=\s*([a-zA-Z0-9_\-]+)\s*-->", re.IGNORECASE),
-    re.compile(r"<!--\s*auto:([a-zA-Z0-9_\-]+):end\s*-->", re.IGNORECASE),
+    _ = re.compile(r"<!--\s*auto:([a-zA-Z0-9_\-]+):end\s*-->", re.IGNORECASE),
 ]
 
 def render_section(key: str, ctx: Dict) -> str:
@@ -215,7 +213,7 @@ def render_section(key: str, ctx: Dict) -> str:
         lines = ["### Project Status", "- Auto-generated by AI Orchestrator", f"- Time: {datetime.now().isoformat()} "]
         rpt = ROOT / 'doc_update_report.md'
         if rpt.exists():
-            lines.append(f"- Changelog: {rpt}")
+            _ = lines.append(f"- Changelog: {rpt}")
         return "\n".join(lines)
     if key == 'link_check_summary':
         logf = ROOT / 'docs_link_check.log'
@@ -223,11 +221,11 @@ def render_section(key: str, ctx: Dict) -> str:
         if logf.exists():
             try:
                 tail = ''.join(logf.read_text(encoding='utf-8', errors='ignore').splitlines(True)[-40:])
-                lines.append("```\n" + tail + "\n```")
+                _ = lines.append("```\n" + tail + "\n```")
             except Exception as e:
-                lines.append(f"(failed to read log: {e})")
+                _ = lines.append(f"(failed to read log: {e})")
         else:
-            lines.append("(no log found)")
+            _ = lines.append("(no log found)")
         return "\n".join(lines)
     return f"<!-- Unknown section key: {key} -->"
 
@@ -261,7 +259,7 @@ def update_markdown_content(content: str, ctx: Dict) -> Tuple[str, List[str]]:
         # replace between end of start and start of end
         out = out[:m_start.end()] + "\n" + new_block + "\n" + out[m_end.start():]
         pos = m_start.end() + len(new_block) + 2
-        updates.append(key)
+        _ = updates.append(key)
     return out, list(dict.fromkeys(updates))
 
 
@@ -271,13 +269,13 @@ def collect_markdown_files(targets: Optional[List[str]]) -> List[Path]:
         for t in targets:
             p = (ROOT / t).resolve()
             if p.exists() and p.suffix.lower() == '.md' and not should_ignore(p):
-                files.append(p)
+                _ = files.append(p)
     else:
         for d in DOCS_DIRS:
             if d.exists():
                 for p in d.rglob('*.md'):
                     if p.is_file() and not should_ignore(p):
-                        files.append(p)
+                        _ = files.append(p)
     # prioritize root README.md first
     files = sorted(set(files), key=lambda p: (0 if p.name.lower()=="readme.md" and p.parent==ROOT else 1, str(p)))
     return files
@@ -320,18 +318,18 @@ def cmd_check_datasets(args) -> int:
             # normalize result
             ok = bool(res.get('ok', True))
             issues = res.get('issues', []) or []
-            val_results.append({'name': res.get('name') or name, 'ok': ok, 'issues': issues})
+            _ = val_results.append({'name': res.get('name') or name, 'ok': ok, 'issues': issues})
             if not ok:
                 overall_ok = False
         except Exception as e:
-            val_results.append({'name': name, 'ok': False, 'issues': [f'validator error: {e}']})
+            _ = val_results.append({'name': name, 'ok': False, 'issues': [f'validator error: {e}']})
             overall_ok = False
     report = {
         'datasets': d,
         'generators': gens,
         'validators': val_results,
-        'ok': bool(overall_ok),
-        'generated_at': datetime.now().isoformat()
+        _ = 'ok': bool(overall_ok),
+        _ = 'generated_at': datetime.now().isoformat()
     }
     (ROOT / 'dataset_health.json').write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding='utf-8')
     log(f"Datasets: ok={report['ok']} count={d['count']} validators={len(val_results)} (report: dataset_health.json)")
@@ -348,7 +346,7 @@ def cmd_check_models(args) -> int:
 
 def cmd_check_training(args) -> int:
     t = scan_training()
-    log(f"Training logs: {t['count']}")
+    _ = log(f"Training logs: {t['count']}")
     print(json.dumps(t, indent=2, ensure_ascii=False))
     return 0
 
@@ -359,14 +357,14 @@ def cmd_train(args) -> int:
     if args.entry:
         entry = (ROOT / args.entry).resolve()
     if not entry.exists():
-        log(f"Train entry not found: {entry}. Skip.")
+        _ = log(f"Train entry not found: {entry}. Skip.")
         return 0
     cmd = [sys.executable, str(entry)]
     if args.extra:
-        cmd.extend(args.extra)
-    log(f"Running training: {' '.join(cmd)}")
+        _ = cmd.extend(args.extra)
+    _ = log(f"Running training: {' '.join(cmd)}")
     code, out = safe_run(cmd, cwd=ROOT)
-    print(out)
+    _ = print(out)
     return code
 
 
@@ -382,15 +380,15 @@ def cmd_update_docs(args) -> int:
             content = f.read_text(encoding='utf-8', errors='ignore')
             new_content, updated = update_markdown_content(content, ctx)
             if updated:
-                changes.append({'file': str(f.relative_to(ROOT)), 'sections': updated})
+                _ = changes.append({'file': str(f.relative_to(ROOT)), 'sections': updated})
                 if args.apply:
                     f.write_text(new_content, encoding='utf-8')
         except Exception as e:
-            log(f"Failed updating {f}: {e}")
+            _ = log(f"Failed updating {f}: {e}")
     report = {
         'changes': changes,
-        'generated_at': datetime.now().isoformat(),
-        'apply': bool(args.apply),
+        _ = 'generated_at': datetime.now().isoformat(),
+        _ = 'apply': bool(args.apply),
     }
     (ROOT / 'doc_auto_update_report.json').write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding='utf-8')
     log(f"Doc auto-update {'applied' if args.apply else 'dry-run'}; changes: {len(changes)} (report: doc_auto_update_report.json)")
@@ -400,25 +398,25 @@ def cmd_update_docs(args) -> int:
 def cmd_validate_docs(args) -> int:
     script = ROOT / 'scripts' / 'validate_doc_links.py'
     if not script.exists():
-        log("validate_doc_links.py not found")
+        _ = log("validate_doc_links.py not found")
         return 1
     env = os.environ.copy()
     env['DOC_LINK_CHECK_VERBOSE'] = '0'
     # 仅验证 docs 目錄，避免掃到第三方依賴；如需同時檢查根 README，可在後續擴展
     cmds = [
-        [sys.executable, str(script), '--root', 'docs', '--ignore', 'venv,.venv,node_modules,dist,build,archives,backup,.git,__pycache__,.pnpm', '--report-json', 'docs_link_check_errors.json', '--report-text', 'docs_link_check_errors.txt']
+        _ = [sys.executable, str(script), '--root', 'docs', '--ignore', 'venv,.venv,node_modules,dist,build,archives,backup,.git,__pycache__,.pnpm', '--report-json', 'docs_link_check_errors.json', '--report-text', 'docs_link_check_errors.txt']
     ]
     combined_out = []
     rc_final = 0
     for cmd in cmds:
-        log(f"Running: {' '.join(cmd)}")
+        _ = log(f"Running: {' '.join(cmd)}")
         try:
             res = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, env=env)
-            combined_out.append((res.returncode, (res.stdout or '') + (res.stderr or '')))
+            _ = combined_out.append((res.returncode, (res.stdout or '') + (res.stderr or '')))
             if res.returncode != 0:
                 rc_final = 1
         except Exception as e:
-            combined_out.append((1, f"Exception: {e}"))
+            _ = combined_out.append((1, f"Exception: {e}"))
             rc_final = 1
     # 寫入合併日誌
     buf = []
@@ -426,7 +424,7 @@ def cmd_validate_docs(args) -> int:
         buf.append(f"--- validate pass {i} exit={rc} ---\n{out}\n")
     (ROOT / 'docs_link_check.log').write_text(''.join(buf), encoding='utf-8')
     # 同步輸出到控制台
-    print(''.join(buf))
+    _ = print(''.join(buf))
     return rc_final
 
 
@@ -453,24 +451,24 @@ def _generate_name_variants(name: str) -> List[str]:
     nm = name.lower()
     variants = {nm}
     if "." not in nm:
-        variants.add(nm + ".md")
+        _ = variants.add(nm + ".md")
     # hyphen/underscore swaps
-    variants.add(nm.replace("_", "-"))
-    variants.add(nm.replace("-", "_"))
+    _ = variants.add(nm.replace("_", "-"))
+    _ = variants.add(nm.replace("-", "_"))
     # common prefixes to drop (project_, projects_)
     for pref in ("project_", "projects_"):
         if nm.startswith(pref):
             stripped = nm[len(pref):]
-            variants.add(stripped)
+            _ = variants.add(stripped)
             if "." not in stripped:
-                variants.add(stripped + ".md")
-            variants.add(stripped.replace("_", "-"))
-            variants.add(stripped.replace("-", "_"))
+                _ = variants.add(stripped + ".md")
+            _ = variants.add(stripped.replace("_", "-"))
+            _ = variants.add(stripped.replace("-", "_"))
     # ensure .md variants exist
     more = set()
     for v in list(variants):
         if "." not in v:
-            more.add(v + ".md")
+            _ = more.add(v + ".md")
     variants |= more
     return list(variants)
 
@@ -486,9 +484,9 @@ def _build_docs_file_index() -> Dict[str, List[Path]]:
         for p in base.rglob('*.md'):
             try:
                 key = p.name.lower()
-                idx.setdefault(key, []).append(p)
+                _ = idx.setdefault(key, []).append(p)
                 nkey = _normalize_name(key)
-                idx_norm.setdefault(nkey, []).append(p)
+                _ = idx_norm.setdefault(nkey, []).append(p)
             except Exception:
                 continue
     DOCS_FILE_INDEX = idx
@@ -498,26 +496,26 @@ def _build_docs_file_index() -> Dict[str, List[Path]]:
 
 def _lookup_docs_candidates(filename: str) -> List[Path]:
     """Lookup candidate markdown files in docs by filename with tolerant matching."""
-    _build_docs_file_index()
+    _ = _build_docs_file_index()
     name = filename.lower()
     cands: List[Path] = []
     # try direct and simple variants
     for key in _generate_name_variants(name):
         ps = DOCS_FILE_INDEX.get(key)
         if ps:
-            cands.extend(ps)
+            _ = cands.extend(ps)
     # try normalized key match
     nkey = _normalize_name(name)
     if nkey in DOCS_FILE_INDEX_NORM:
-        cands.extend(DOCS_FILE_INDEX_NORM[nkey])
+        _ = cands.extend(DOCS_FILE_INDEX_NORM[nkey])
     # de-duplicate preserving order
     seen = set()
     uniq: List[Path] = []
     for p in cands:
         rp = p.as_posix().lower()
         if rp not in seen:
-            seen.add(rp)
-            uniq.append(p)
+            _ = seen.add(rp)
+            _ = uniq.append(p)
     return uniq
 
 # Fallback relocation for known non-doc targets referenced via file:// or wrong names
@@ -590,7 +588,7 @@ def rewrite_links_in_markdown(md_path: Path) -> Tuple[str, List[Tuple[str, str]]
                             rel = os.path.relpath(abs_real, dirp)
                             newu = rel.replace('\\', '/')
                             if newu != orig:
-                                changes.append((orig, newu))
+                                _ = changes.append((orig, newu))
                                 return f"{before}{newu}{after}"
                     # If file does not exist, try relocation mapping first
                     name = abs_res.name.lower()
@@ -602,7 +600,7 @@ def rewrite_links_in_markdown(md_path: Path) -> Tuple[str, List[Tuple[str, str]]
                                     rel = os.path.relpath(cand.resolve(), dirp)
                                     newu = rel.replace('\\', '/')
                                     if newu != orig:
-                                        changes.append((orig, newu))
+                                        _ = changes.append((orig, newu))
                                         return f"{before}{newu}{after}"
                             except Exception:
                                 continue
@@ -631,7 +629,7 @@ def rewrite_links_in_markdown(md_path: Path) -> Tuple[str, List[Tuple[str, str]]
                                 rel = os.path.relpath(chosen, dirp)
                             newu = rel.replace('\\', '/')
                             if newu != orig:
-                                changes.append((orig, newu))
+                                _ = changes.append((orig, newu))
                                 return f"{before}{newu}{after}"
                 except Exception:
                     pass
@@ -698,9 +696,9 @@ def rewrite_links_in_markdown(md_path: Path) -> Tuple[str, List[Tuple[str, str]]
                 base_name = os.path.basename(url_path_only)
                 if base_name and '.' not in base_name:
                     md_variants = [
-                        (dirp / (url_path_only + '.md')).resolve(),
-                        (ROOT / (url_path_only + '.md')).resolve(),
-                        (ROOT / 'docs' / (url_path_only + '.md')).resolve(),
+                        _ = (dirp / (url_path_only + '.md')).resolve(),
+                        _ = (ROOT / (url_path_only + '.md')).resolve(),
+                        _ = (ROOT / 'docs' / (url_path_only + '.md')).resolve(),
                     ]
                     for c in md_variants:
                         try:
@@ -725,7 +723,7 @@ def rewrite_links_in_markdown(md_path: Path) -> Tuple[str, List[Tuple[str, str]]
                     for fn in ['README.md', 'readme.md', 'Index.md', 'index.md']:
                         p = base_abs / fn
                         if p.exists():
-                            cands.append(p)
+                            _ = cands.append(p)
                     chosen = None
                     if len(cands) == 1:
                         chosen = cands[0]
@@ -786,7 +784,7 @@ def rewrite_links_in_markdown(md_path: Path) -> Tuple[str, List[Tuple[str, str]]
         if new_url and frag:
             new_url = new_url + frag
         if new_url and new_url != orig:
-            changes.append((orig, new_url))
+            _ = changes.append((orig, new_url))
             return f"{before}{new_url}{after}"
         return m.group(0)
 
@@ -796,7 +794,7 @@ def rewrite_links_in_markdown(md_path: Path) -> Tuple[str, List[Tuple[str, str]]
 def cmd_fix_doc_links(args) -> int:
     base = ROOT / 'docs'
     if not base.exists():
-        log('docs directory not found')
+        _ = log('docs directory not found')
         return 0
     total_files = 0
     total_changes = 0
@@ -810,18 +808,18 @@ def cmd_fix_doc_links(args) -> int:
             if changes:
                 total_changes += len(changes)
                 details.append({
-                    'file': str(p.relative_to(ROOT)),
+                    _ = 'file': str(p.relative_to(ROOT)),
                     'changes': [{'from': a, 'to': b} for a, b in changes]
                 })
                 if args.apply:
                     p.write_text(new_text, encoding='utf-8')
         except Exception as e:
-            details.append({'file': str(p.relative_to(ROOT)), 'error': str(e)})
+            _ = details.append({'file': str(p.relative_to(ROOT)), 'error': str(e)})
     report = {
         'total_files': total_files,
         'total_link_rewrites': total_changes,
-        'applied': bool(args.apply),
-        'generated_at': datetime.now().isoformat(),
+        _ = 'applied': bool(args.apply),
+        _ = 'generated_at': datetime.now().isoformat(),
         'items': details[:200]
     }
     (ROOT / 'doc_link_fix_report.json').write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding='utf-8')
@@ -838,9 +836,9 @@ def cmd_run_all(args) -> int:
     # 4) decide training
     need_train = decide_training_needed(d, m) or args.force_train
     summary = {
-        'datasets_ok': d.get('ok'),
-        'models_count': m.get('count'),
-        'need_train': bool(need_train),
+        _ = 'datasets_ok': d.get('ok'),
+        _ = 'models_count': m.get('count'),
+        _ = 'need_train': bool(need_train),
     }
     log(f"Decision: need_train={need_train}")
     train_code = 0
@@ -858,10 +856,10 @@ def cmd_run_all(args) -> int:
         'update_docs_exit_code': upd_code,
         'fix_links_exit_code': fix_code,
         'validate_docs_exit_code': val_code,
-        'finished_at': datetime.now().isoformat(),
+        _ = 'finished_at': datetime.now().isoformat(),
     }
     Path(ROOT / 'ai_orchestrator_report.json').write_text(json.dumps(final, indent=2, ensure_ascii=False), encoding='utf-8')
-    log("Orchestration finished. Report: ai_orchestrator_report.json")
+    _ = log("Orchestration finished. Report: ai_orchestrator_report.json")
     # If any step failed, return non-zero
     return 0 if (train_code == 0 and upd_code == 0 and fix_code == 0 and val_code == 0) else 1
 
@@ -914,4 +912,4 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    _ = sys.exit(main())

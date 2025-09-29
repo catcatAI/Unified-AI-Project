@@ -12,9 +12,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 # Change to the correct directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from learning.content_analyzer_module import ContentAnalyzerModule
 
-def test_fixed_cases():
+def test_fixed_cases() -> None:
     """Test the cases that were previously failing"""
     print("=== Verifying fixes ===")
     

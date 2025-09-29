@@ -8,18 +8,31 @@ import asyncio
 import logging
 import json
 import time
-import os
-from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass, asdict
+from typing import Dict, Any, Optional
 
 # 添加项目路径
 import sys
 project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(project_root))
 
-from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
+# 创建基本模拟类
+ErrorContext = type('ErrorContext', (), {
+    '__init__': lambda self, component, operation, details=None: (
+        setattr(self, 'component', component),
+        setattr(self, 'operation', operation),
+        setattr(self, 'details', details or {})
+    )[-1]
+})
+
+class GlobalErrorHandler:
+    @staticmethod
+    def handle_error(error, context, strategy=None):
+        print(f"Error in {context.component}.{context.operation}: {error}")
+
+global_error_handler = GlobalErrorHandler()
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +56,12 @@ class TrainingState:
     start_time: float
     last_update_time: float
     config: Dict[str, Any]
-    additional_data: Dict[str, Any] = None
+    additional_data: Optional[Dict[str, Any]] = None
 
 class TrainingStateManager:
     """训练状态管理器"""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config = None) -> None:
         self.config = config or {}
         self.error_handler = global_error_handler
         self.local_cache: Dict[str, TrainingState] = {}
@@ -59,9 +72,9 @@ class TrainingStateManager:
         self.sync_task = None
         self.is_syncing = False
         
-        logger.info("训练状态管理器初始化完成")
+        _ = logger.info("训练状态管理器初始化完成")
     
-    async def save_training_state(self, task_id: str, state: Dict[str, Any]) -> bool:
+    async def save_training_state(self, task_id: str, state) -> bool:
         """保存训练状态"""
         context = ErrorContext("TrainingStateManager", "save_training_state", {"task_id": task_id})
         try:
@@ -94,11 +107,11 @@ class TrainingStateManager:
             return True
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"保存训练状态失败: {task_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"保存训练状态失败: {task_id} - {e}")
             return False
     
-    async def load_training_state(self, task_id: str) -> Optional[Dict[str, Any]]:
+    async def load_training_state(self, task_id: str):
         """加载训练状态"""
         context = ErrorContext("TrainingStateManager", "load_training_state", {"task_id": task_id})
         try:
@@ -118,8 +131,8 @@ class TrainingStateManager:
             return None
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"加载训练状态失败: {task_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"加载训练状态失败: {task_id} - {e}")
             return None
     
     async def _sync_state_to_persistent_storage(self, task_id: str) -> bool:
@@ -127,7 +140,7 @@ class TrainingStateManager:
         context = ErrorContext("TrainingStateManager", "_sync_state_to_persistent_storage", {"task_id": task_id})
         try:
             if task_id not in self.local_cache:
-                logger.warning(f"任务 {task_id} 不在本地缓存中，无法同步")
+                _ = logger.warning(f"任务 {task_id} 不在本地缓存中，无法同步")
                 return False
             
             training_state = self.local_cache[task_id]
@@ -138,12 +151,12 @@ class TrainingStateManager:
             elif self.storage_backend == 'remote':
                 return await self._sync_to_remote_storage(training_state)
             else:
-                logger.error(f"不支持的存储后端: {self.storage_backend}")
+                _ = logger.error(f"不支持的存储后端: {self.storage_backend}")
                 return False
                 
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"同步状态到持久化存储失败: {task_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"同步状态到持久化存储失败: {task_id} - {e}")
             return False
     
     async def _sync_to_local_storage(self, training_state: TrainingState) -> bool:
@@ -161,12 +174,12 @@ class TrainingStateManager:
             with open(state_path, 'w', encoding='utf-8') as f:
                 json.dump(state_data, f, ensure_ascii=False, indent=2)
             
-            logger.debug(f"训练状态已同步到本地存储: {training_state.task_id}")
+            _ = logger.debug(f"训练状态已同步到本地存储: {training_state.task_id}")
             return True
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"同步到本地存储失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"同步到本地存储失败: {e}")
             return False
     
     async def _sync_to_remote_storage(self, training_state: TrainingState) -> bool:
@@ -176,18 +189,18 @@ class TrainingStateManager:
             # 这里应该实现实际的远程存储同步逻辑
             # 例如：上传到云存储、数据库等
             
-            logger.debug(f"训练状态已同步到远程存储: {training_state.task_id}")
+            _ = logger.debug(f"训练状态已同步到远程存储: {training_state.task_id}")
             
             # 模拟远程存储同步
-            await asyncio.sleep(0.1)
+            _ = await asyncio.sleep(0.1)
             return True
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"同步到远程存储失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"同步到远程存储失败: {e}")
             return False
     
-    async def _load_state_from_persistent_storage(self, task_id: str) -> Optional[Dict[str, Any]]:
+    async def _load_state_from_persistent_storage(self, task_id: str):
         """从持久化存储加载状态"""
         context = ErrorContext("TrainingStateManager", "_load_state_from_persistent_storage", {"task_id": task_id})
         try:
@@ -197,15 +210,15 @@ class TrainingStateManager:
             elif self.storage_backend == 'remote':
                 return await self._load_from_remote_storage(task_id)
             else:
-                logger.error(f"不支持的存储后端: {self.storage_backend}")
+                _ = logger.error(f"不支持的存储后端: {self.storage_backend}")
                 return None
                 
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"从持久化存储加载状态失败: {task_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"从持久化存储加载状态失败: {task_id} - {e}")
             return None
     
-    async def _load_from_local_storage(self, task_id: str) -> Optional[Dict[str, Any]]:
+    async def _load_from_local_storage(self, task_id: str):
         """从本地存储加载"""
         context = ErrorContext("TrainingStateManager", "_load_from_local_storage", {"task_id": task_id})
         try:
@@ -215,36 +228,36 @@ class TrainingStateManager:
             
             # 检查文件是否存在
             if not state_path.exists():
-                logger.debug(f"本地状态文件不存在: {state_path}")
+                _ = logger.debug(f"本地状态文件不存在: {state_path}")
                 return None
             
             # 读取状态文件
             with open(state_path, 'r', encoding='utf-8') as f:
                 state_data = json.load(f)
             
-            logger.debug(f"从本地存储加载训练状态: {task_id}")
+            _ = logger.debug(f"从本地存储加载训练状态: {task_id}")
             return state_data
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"从本地存储加载失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"从本地存储加载失败: {e}")
             return None
     
-    async def _load_from_remote_storage(self, task_id: str) -> Optional[Dict[str, Any]]:
+    async def _load_from_remote_storage(self, task_id: str):
         """从远程存储加载"""
         context = ErrorContext("TrainingStateManager", "_load_from_remote_storage", {"task_id": task_id})
         try:
             # 这里应该实现实际的远程存储加载逻辑
             
-            logger.debug(f"从远程存储加载训练状态: {task_id}")
+            _ = logger.debug(f"从远程存储加载训练状态: {task_id}")
             
             # 模拟远程存储加载
-            await asyncio.sleep(0.1)
+            _ = await asyncio.sleep(0.1)
             return None  # 实际实现中应返回状态数据
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"从远程存储加载失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"从远程存储加载失败: {e}")
             return None
     
     async def start_auto_sync(self):
@@ -253,14 +266,14 @@ class TrainingStateManager:
             return
         
         self.sync_task = asyncio.create_task(self._auto_sync_loop())
-        logger.info("启动自动状态同步")
+        _ = logger.info("启动自动状态同步")
     
     def stop_auto_sync(self):
         """停止自动同步"""
         if self.sync_task:
-            self.sync_task.cancel()
+            _ = self.sync_task.cancel()
             self.sync_task = None
-        logger.info("停止自动状态同步")
+        _ = logger.info("停止自动状态同步")
     
     async def _auto_sync_loop(self):
         """自动同步循环"""
@@ -270,7 +283,7 @@ class TrainingStateManager:
                 try:
                     if self.sync_enabled and self.local_cache:
                         self.is_syncing = True
-                        logger.debug(f"自动同步 {len(self.local_cache)} 个训练状态")
+                        _ = logger.debug(f"自动同步 {len(self.local_cache)} 个训练状态")
                         
                         # 并行同步所有状态
                         tasks = [
@@ -283,19 +296,19 @@ class TrainingStateManager:
                         self.is_syncing = False
                     
                     # 等待下一个同步周期
-                    await asyncio.sleep(self.sync_interval_seconds)
+                    _ = await asyncio.sleep(self.sync_interval_seconds)
                     
                 except asyncio.CancelledError:
-                    logger.info("自动同步循环被取消")
+                    _ = logger.info("自动同步循环被取消")
                     break
                 except Exception as e:
-                    self.error_handler.handle_error(e, context)
-                    logger.error(f"自动同步循环出错: {e}")
-                    await asyncio.sleep(self.sync_interval_seconds)
+                    _ = self.error_handler.handle_error(e, context)
+                    _ = logger.error(f"自动同步循环出错: {e}")
+                    _ = await asyncio.sleep(self.sync_interval_seconds)
                     
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"自动同步循环异常: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"自动同步循环异常: {e}")
     
     async def remove_training_state(self, task_id: str) -> bool:
         """移除训练状态"""
@@ -310,8 +323,8 @@ class TrainingStateManager:
             return success
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"移除训练状态失败: {task_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"移除训练状态失败: {task_id} - {e}")
             return False
     
     async def _remove_state_from_persistent_storage(self, task_id: str) -> bool:
@@ -324,12 +337,12 @@ class TrainingStateManager:
             elif self.storage_backend == 'remote':
                 return await self._remove_from_remote_storage(task_id)
             else:
-                logger.error(f"不支持的存储后端: {self.storage_backend}")
+                _ = logger.error(f"不支持的存储后端: {self.storage_backend}")
                 return False
                 
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"从持久化存储移除状态失败: {task_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"从持久化存储移除状态失败: {task_id} - {e}")
             return False
     
     async def _remove_from_local_storage(self, task_id: str) -> bool:
@@ -342,14 +355,14 @@ class TrainingStateManager:
             
             # 检查文件是否存在并删除
             if state_path.exists():
-                state_path.unlink()
-                logger.debug(f"从本地存储移除训练状态: {task_id}")
+                _ = state_path.unlink()
+                _ = logger.debug(f"从本地存储移除训练状态: {task_id}")
             
             return True
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"从本地存储移除失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"从本地存储移除失败: {e}")
             return False
     
     async def _remove_from_remote_storage(self, task_id: str) -> bool:
@@ -358,18 +371,18 @@ class TrainingStateManager:
         try:
             # 这里应该实现实际的远程存储移除逻辑
             
-            logger.debug(f"从远程存储移除训练状态: {task_id}")
+            _ = logger.debug(f"从远程存储移除训练状态: {task_id}")
             
             # 模拟远程存储移除
-            await asyncio.sleep(0.1)
+            _ = await asyncio.sleep(0.1)
             return True
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"从远程存储移除失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"从远程存储移除失败: {e}")
             return False
     
-    def get_state_info(self, task_id: str = None) -> Dict[str, Any]:
+    def get_state_info(self, task_id: str = None):
         """获取状态信息"""
         context = ErrorContext("TrainingStateManager", "get_state_info", {"task_id": task_id})
         try:
@@ -406,16 +419,16 @@ class TrainingStateManager:
             return state_info
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"获取状态信息失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"获取状态信息失败: {e}")
             return {}
 
 # 全局训练状态管理器实例
 global_state_manager = TrainingStateManager()
 
-def main():
+def main() -> None:
     """主函数，用于测试训练状态管理器"""
-    print("🔬 测试训练状态管理器...")
+    _ = print("🔬 测试训练状态管理器...")
     
     # 配置日志
     logging.basicConfig(level=logging.INFO)
@@ -429,7 +442,7 @@ def main():
     manager = TrainingStateManager(config)
     
     # 测试保存训练状态
-    print("测试保存训练状态...")
+    _ = print("测试保存训练状态...")
     state = {
         'model_name': 'test_model',
         'current_epoch': 5,
@@ -445,20 +458,20 @@ def main():
     }
     
     success = asyncio.run(manager.save_training_state('test_task_1', state))
-    print(f"保存状态结果: {success}")
+    _ = print(f"保存状态结果: {success}")
     
     # 测试加载训练状态
-    print("\n测试加载训练状态...")
+    _ = print("\n测试加载训练状态...")
     loaded_state = asyncio.run(manager.load_training_state('test_task_1'))
     if loaded_state:
-        print(f"加载的状态模型: {loaded_state.get('model_name')}")
-        print(f"加载的状态epoch: {loaded_state.get('current_epoch')}")
-        print(f"加载的状态进度: {loaded_state.get('progress')}%")
+        _ = print(f"加载的状态模型: {loaded_state.get('model_name')}")
+        _ = print(f"加载的状态epoch: {loaded_state.get('current_epoch')}")
+        _ = print(f"加载的状态进度: {loaded_state.get('progress')}%")
     
     # 显示状态信息
-    print("\n状态信息:")
+    _ = print("\n状态信息:")
     info = manager.get_state_info()
     print(json.dumps(info, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":
-    main()
+    _ = main()

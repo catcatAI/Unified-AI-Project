@@ -4,23 +4,21 @@
 清理重複文件、臨時文件和優化項目結構
 """
 
-import os
-import shutil
 from pathlib import Path
 import logging
 from src.shared.utils.cleanup_utils import cleanup_temp_files, cleanup_cache_data, cleanup_log_files
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 def cleanup_project():
     """清理項目"""
-    project_root = Path(".")
+    project_root: str = Path(".")
     
-    logger.info("開始清理項目...")
+    _ = logger.info("開始清理項目...")
 
     # 使用通用的臨時文件清理
-    cleanup_temp_files(project_root)
+    _ = cleanup_temp_files(project_root)
 
     # 使用通用的緩存數據清理 (例如，保留1天)
     cleanup_cache_data(retention_days=1, project_root=project_root)
@@ -37,10 +35,10 @@ def cleanup_project():
     for test_file in duplicate_tests:
         file_path = project_root / test_file
         if file_path.exists():
-            logger.info(f"刪除重複測試: {file_path}")
-            file_path.unlink()
+            _ = logger.info(f"刪除重複測試: {file_path}")
+            _ = file_path.unlink()
     
-    logger.info("項目清理完成")
+    _ = logger.info("項目清理完成")
 
 if __name__ == "__main__":
-    cleanup_project()
+    _ = cleanup_project()

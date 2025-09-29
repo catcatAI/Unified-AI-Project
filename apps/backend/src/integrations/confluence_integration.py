@@ -4,20 +4,15 @@ Confluence Integration Module
 Handles Confluence API interactions for the AI system
 """
 
-import asyncio
-import aiohttp
-import json
 import logging
-from typing import Dict, Any, Optional, List
-from datetime import datetime
 from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class ConfluenceIntegration:
     """Confluence Integration for AI system"""
     
-    def __init__(self, connector: EnhancedRovoDevConnector):
+    def __init__(self, connector: EnhancedRovoDevConnector) -> None:
         """Initialize Confluence integration
         
         Args:
@@ -47,7 +42,7 @@ class ConfluenceIntegration:
         """
         try:
             if not self.session:
-                await self.connector.start()
+                _ = await self.connector.start
                 
             url = f"{self.base_url}/space"
             params = {
@@ -58,14 +53,14 @@ class ConfluenceIntegration:
             async with self.connector.semaphore:
                 async with self.session.get(url, headers=self.headers, params=params) as response:
                     if response.status == 200:
-                        data = await response.json()
+                        data = await response.json
                         return {
                             "success": True,
-                            "spaces": data.get('results', []),
-                            "count": len(data.get('results', []))
+                            "spaces": data.get('results', ),
+                            "count": len(data.get('results', ))
                         }
                     else:
-                        error_text = await response.text()
+                        error_text = await response.text
                         logger.error(f"Failed to get spaces: {response.status} - {error_text}")
                         return {
                             "success": False,
@@ -89,7 +84,7 @@ class ConfluenceIntegration:
         """
         try:
             if not self.session:
-                await self.connector.start()
+                _ = await self.connector.start
                 
             url = f"{self.base_url}/space/{space_key}"
             params = {
@@ -99,7 +94,7 @@ class ConfluenceIntegration:
             async with self.connector.semaphore:
                 async with self.session.get(url, headers=self.headers, params=params) as response:
                     if response.status == 200:
-                        data = await response.json()
+                        data = await response.json
                         return {
                             "success": True,
                             "space": data
@@ -110,7 +105,7 @@ class ConfluenceIntegration:
                             "error": f"Space with key '{space_key}' not found"
                         }
                     else:
-                        error_text = await response.text()
+                        error_text = await response.text
                         logger.error(f"Failed to get space {space_key}: {response.status} - {error_text}")
                         return {
                             "success": False,
@@ -138,7 +133,7 @@ class ConfluenceIntegration:
         """
         try:
             if not self.session:
-                await self.connector.start()
+                _ = await self.connector.start
                 
             url = f"{self.base_url}/content"
             
@@ -164,15 +159,15 @@ class ConfluenceIntegration:
             async with self.connector.semaphore:
                 async with self.session.post(url, headers=self.headers, json=page_data) as response:
                     if response.status == 200:
-                        data = await response.json()
+                        data = await response.json
                         return {
                             "success": True,
                             "page": data,
                             "page_id": data.get('id'),
-                            "page_url": data.get('_links', {}).get('tinyui')
+                            "page_url": data.get('_links', ).get('tinyui')
                         }
                     else:
-                        error_text = await response.text()
+                        error_text = await response.text
                         logger.error(f"Failed to create page: {response.status} - {error_text}")
                         return {
                             "success": False,
@@ -200,7 +195,7 @@ class ConfluenceIntegration:
         """
         try:
             if not self.session:
-                await self.connector.start()
+                _ = await self.connector.start
                 
             url = f"{self.base_url}/content/{page_id}"
             
@@ -223,15 +218,15 @@ class ConfluenceIntegration:
             async with self.connector.semaphore:
                 async with self.session.put(url, headers=self.headers, json=update_data) as response:
                     if response.status == 200:
-                        data = await response.json()
+                        data = await response.json
                         return {
                             "success": True,
                             "page": data,
                             "page_id": data.get('id'),
-                            "page_url": data.get('_links', {}).get('tinyui')
+                            "page_url": data.get('_links', ).get('tinyui')
                         }
                     else:
-                        error_text = await response.text()
+                        error_text = await response.text
                         logger.error(f"Failed to update page {page_id}: {response.status} - {error_text}")
                         return {
                             "success": False,
@@ -255,7 +250,7 @@ class ConfluenceIntegration:
         """
         try:
             if not self.session:
-                await self.connector.start()
+                _ = await self.connector.start
                 
             url = f"{self.base_url}/content/{page_id}"
             params = {
@@ -265,13 +260,13 @@ class ConfluenceIntegration:
             async with self.connector.semaphore:
                 async with self.session.get(url, headers=self.headers, params=params) as response:
                     if response.status == 200:
-                        data = await response.json()
+                        data = await response.json
                         return {
                             "success": True,
                             "page": data,
                             "title": data.get('title'),
-                            "content": data.get('body', {}).get('storage', {}).get('value'),
-                            "version": data.get('version', {}).get('number')
+                            "content": data.get('body', ).get('storage', ).get('value'),
+                            "version": data.get('version', ).get('number')
                         }
                     elif response.status == 404:
                         return {
@@ -279,7 +274,7 @@ class ConfluenceIntegration:
                             "error": f"Page with ID '{page_id}' not found"
                         }
                     else:
-                        error_text = await response.text()
+                        error_text = await response.text
                         logger.error(f"Failed to get page {page_id}: {response.status} - {error_text}")
                         return {
                             "success": False,
@@ -304,7 +299,7 @@ class ConfluenceIntegration:
         """
         try:
             if not self.session:
-                await self.connector.start()
+                _ = await self.connector.start
                 
             url = f"{self.base_url}/search"
             params = {
@@ -316,15 +311,15 @@ class ConfluenceIntegration:
             async with self.connector.semaphore:
                 async with self.session.get(url, headers=self.headers, params=params) as response:
                     if response.status == 200:
-                        data = await response.json()
+                        data = await response.json
                         return {
                             "success": True,
-                            "results": data.get('results', []),
-                            "count": len(data.get('results', [])),
+                            "results": data.get('results', ),
+                            "count": len(data.get('results', )),
                             "total_size": data.get('totalSize', 0)
                         }
                     else:
-                        error_text = await response.text()
+                        error_text = await response.text
                         logger.error(f"Failed to search content: {response.status} - {error_text}")
                         return {
                             "success": False,
@@ -348,7 +343,7 @@ class ConfluenceIntegration:
         """
         try:
             if not self.session:
-                await self.connector.start()
+                _ = await self.connector.start
                 
             url = f"{self.base_url}/content/{page_id}/child/page"
             params = {
@@ -359,14 +354,14 @@ class ConfluenceIntegration:
             async with self.connector.semaphore:
                 async with self.session.get(url, headers=self.headers, params=params) as response:
                     if response.status == 200:
-                        data = await response.json()
+                        data = await response.json
                         return {
                             "success": True,
-                            "children": data.get('results', []),
-                            "count": len(data.get('results', []))
+                            "children": data.get('results', ),
+                            "count": len(data.get('results', ))
                         }
                     else:
-                        error_text = await response.text()
+                        error_text = await response.text
                         logger.error(f"Failed to get page children for {page_id}: {response.status} - {error_text}")
                         return {
                             "success": False,

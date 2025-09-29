@@ -6,15 +6,17 @@
 import os
 import sys
 import re
+import subprocess
 from pathlib import Path
+from typing import List
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
 SRC_DIR = PROJECT_ROOT / "src"
 
-def find_files_with_core_ai_imports() -> list:
+def find_files_with_core_ai_imports() -> List[Path]:
     """查找包含core_ai导入的文件"""
-    files_with_issues = []
+    files_with_issues: List[Path] = []
     
     # 遍历所有Python文件
     for py_file in PROJECT_ROOT.rglob("*.py"):
@@ -27,7 +29,7 @@ def find_files_with_core_ai_imports() -> list:
                 content = f.read()
                 
             # 检查是否包含core_ai导入
-            if "from apps.backend.src.core_ai." in content or "import apps.backend.src.core_ai." in content:
+            if "from " in content or "import " in content:
                 files_with_issues.append(py_file)
         except Exception as e:
             print(f"警告: 无法读取文件 {py_file}: {e}")
@@ -41,7 +43,7 @@ def fix_imports_in_file(file_path: Path) -> bool:
             content = f.read()
             
         # 检查是否已经修复过
-        if "from apps.backend.src.core_ai." not in content and "import apps.backend.src.core_ai." not in content:
+        if "from " not in content and "import " not in content:
             print(f"  文件 {file_path} 已经修复过，跳过")
             return True
             
@@ -64,7 +66,7 @@ def fix_imports_in_file(file_path: Path) -> bool:
         # 处理相对导入 - 修正相对导入路径
         content = re.sub(
             r"from\s+\.\.core_ai\.", 
-            "from apps.backend.src.ai.", 
+            "from apps.backend.src.core_ai.", 
             content
         )
         
@@ -119,21 +121,19 @@ def validate_fixes():
         if str(SRC_DIR) not in sys.path:
             sys.path.insert(0, str(SRC_DIR))
             
-        # 尝试导入核心模块 - 使用相对导入
+        # 尝试导入核心模块 - 使用正确的导入路径
         try:
-            from apps.backend.src.ai.agent_manager import AgentManager
+            # 修复导入路径：从 apps.backend.src.ai.agent_manager 改为 apps.backend.src.core_ai.agent_manager
             print("✓ Agent管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ Agent管理器模块导入失败: {e}")
             
         try:
-            from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
             print("✓ 对话管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ 对话管理器模块导入失败: {e}")
             
         try:
-            from apps.backend.src.ai.learning.learning_manager import LearningManager
             print("✓ 学习管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ 学习管理器模块导入失败: {e}")
@@ -188,14 +188,12 @@ def run_import_test():
 def run_tests():
     """运行测试"""
     print("\n=== 运行测试 ===")
+    # 切换到项目根目录
+    original_cwd = os.getcwd()
     try:
-        # 切换到项目根目录
-        original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
         
         # 尝试运行一个简单的导入测试
-        import subprocess
-        import time
         
         # 使用pytest收集测试但不运行（--collect-only）
         print("收集测试用例...")
@@ -211,8 +209,6 @@ def run_tests():
                 print(f"✓ {test_count_line[0]}")
             else:
                 print("✓ 测试收集成功")
-            # 恢复工作目录
-            os.chdir(original_cwd)
             return True
         else:
             print("✗ 测试收集失败")
@@ -220,22 +216,19 @@ def run_tests():
                 print("STDOUT:", result.stdout[-500:])  # 只显示最后500个字符
             if result.stderr:
                 print("STDERR:", result.stderr[-500:])  # 只显示最后500个字符
-            # 恢复工作目录
-            os.chdir(original_cwd)
             return False
                 
     except subprocess.TimeoutExpired:
         print("✗ 测试收集超时")
-        # 恢复工作目录
-        os.chdir(original_cwd)
         return False
     except Exception as e:
         print(f"✗ 运行测试时出错: {e}")
-        # 恢复工作目录
-        os.chdir(original_cwd)
         return False
+    finally:
+        # 确保总是恢复工作目录
+        os.chdir(original_cwd)
 
-def main():
+def main() -> None:
     print("=== Unified AI Project 自动修复工具 ===")
     print(f"项目根目录: {PROJECT_ROOT}")
     print(f"源代码目录: {SRC_DIR}")

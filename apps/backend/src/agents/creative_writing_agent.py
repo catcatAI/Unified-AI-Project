@@ -1,8 +1,6 @@
 import asyncio
 import uuid
-import os
 import logging
-from typing import Dict, Any, List
 
 from .base_agent import BaseAgent
 from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, ChatMessage
@@ -14,7 +12,7 @@ class CreativeWritingAgent(BaseAgent):
     A specialized agent for creative writing tasks like generating marketing copy,
     short stories, or polishing text.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_generate_marketing_copy_v1.0",
@@ -66,7 +64,7 @@ class CreativeWritingAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            await self.hsp_connector.send_task_result(result_payload, callback_topic, request_id)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     async def _generate_marketing_copy(self, params: Dict[str, Any]) -> str:
@@ -131,12 +129,12 @@ class CreativeWritingAgent(BaseAgent):
         )
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:creative_writing_agent_{uuid.uuid4().hex[:6]}"
         agent = CreativeWritingAgent(agent_id=agent_id)
         await agent.start()
 
     try:
-        asyncio.run(main())
+        asyncio.run(main)
     except KeyboardInterrupt:
         print("\nCreativeWritingAgent manually stopped.")

@@ -8,57 +8,23 @@ import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from datetime import datetime, timezone
 
-# Use absolute imports with correct module paths
-try:
-    # Try absolute imports first (for when running with uvicorn)
-    from src.agents.base_agent import BaseAgent
-    from src.ai.personality.personality_manager import PersonalityManager
-    from src.ai.memory.ham_memory_manager import HAMMemoryManager
-    from src.core.services.multi_llm_service import MultiLLMService
-    from src.ai.emotion.emotion_system import EmotionSystem
-    from src.ai.crisis.crisis_system import CrisisSystem
-    from src.ai.time.time_system import TimeSystem
-    from src.ai.formula_engine import FormulaEngine
-    from src.tools.tool_dispatcher import ToolDispatcher
-    from src.ai.learning.learning_manager import LearningManager
-    from src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
-    from src.services.sandbox_executor import SandboxExecutor
-    import networkx as nx
-    from src.core.shared.types.common_types import (
-        OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
-    )
-    from src.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
-    from src.ai.dialogue.project_coordinator import ProjectCoordinator
-    from src.managers.agent_manager import AgentManager
-    from src.hsp.connector import HSPConnector
-    print("Absolute imports with correct paths successful in dialogue_manager")
-except ImportError as e:
-    print(f"Absolute import with correct paths failed in dialogue_manager: {e}")
-    # Fall back to relative imports (for when running with uvicorn)
-    try:
-        from ..personality.personality_manager import PersonalityManager
-        from ..memory.ham_memory_manager import HAMMemoryManager
-        from core.services.multi_llm_service import MultiLLMService
-        from ..emotion.emotion_system import EmotionSystem
-        from ..crisis.crisis_system import CrisisSystem
-        from ..time.time_system import TimeSystem
-        from ..formula_engine import FormulaEngine
-        from tools.tool_dispatcher import ToolDispatcher
-        from ..learning.learning_manager import LearningManager
-        from ..discovery.service_discovery_module import ServiceDiscoveryModule
-        from services.sandbox_executor import SandboxExecutor
-        import networkx as nx
-        from core.shared.types.common_types import (
-            OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
-        )
-        from hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
-        from .project_coordinator import ProjectCoordinator
-        from src.managers.agent_manager import AgentManager
-        from src.hsp.connector import HSPConnector
-        print("Relative imports successful in dialogue_manager")
-    except ImportError as e2:
-        print(f"Relative import also failed in dialogue_manager: {e2}")
-        raise e2
+from apps.backend.src.ai.personality.personality_manager import PersonalityManager
+from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.core.services.multi_llm_service import MultiLLMService
+from apps.backend.src.ai.emotion.emotion_system import EmotionSystem
+from apps.backend.src.ai.crisis.crisis_system import CrisisSystem
+from apps.backend.src.ai.time.time_system import TimeSystem
+from apps.backend.src.ai.formula_engine import FormulaEngine
+from apps.backend.src.ai.learning.learning_manager import LearningManager
+from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
+from apps.backend.src.core.shared.types.common_types import (
+    OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
+)
+
+from apps.backend.src.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
+from apps.backend.src.ai.dialogue.project_coordinator import ProjectCoordinator
+from apps.backend.src.managers.agent_manager import AgentManager
+from apps.backend.src.hsp.connector import HSPConnector
 
 if TYPE_CHECKING:
     pass
@@ -93,7 +59,7 @@ class DialogueManager:
         self.learning_manager = learning_manager
         self.service_discovery = service_discovery_module # Store service_discovery_module
         self.hsp_connector = hsp_connector # Store hsp_connector
-        self.config = config or {}
+        self.config = config or {} 
 
         # Load command triggers from config with defaults
         self.triggers = self.config.get("command_triggers", {
@@ -102,8 +68,8 @@ class DialogueManager:
             "context_analysis": "!analyze:"
         })
 
-        self.active_sessions: Dict[str, List[DialogueTurn]] = {}
-        self.pending_hsp_task_requests: Dict[str, Dict[str, Any]] = {} # Initialize pending_hsp_task_requests
+        self.active_sessions: Dict[str, List[DialogueTurn]] = {} 
+        self.pending_hsp_task_requests: Dict[str, Dict[str, Any]] = {}   # Initialize pending_hsp_task_requests
         
         # Initialize ProjectCoordinator
         self.project_coordinator = ProjectCoordinator(
@@ -125,12 +91,12 @@ class DialogueManager:
         Receives all task results and delegates them to the ProjectCoordinator.
         """
         if self.project_coordinator:
-            await self.project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
+            _ = await self.project_coordinator.handle_task_result(result_payload, sender_ai_id, envelope)
         else:
             logging.warning(f"[{self.ai_id}] Received HSP task result but ProjectCoordinator is not available.")
 
     async def get_simple_response(self, user_input: str, session_id: Optional[str] = None, user_id: Optional[str] = None) -> str:
-        ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
+        ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI") or "AI"
 
         # --- Intent Classification ---
         # Use triggers from config to activate special handlers
@@ -145,13 +111,13 @@ class DialogueManager:
         
         try:
             # Attempt to dispatch a tool based on user input
-            history = self.active_sessions.get(session_id, []) if session_id else []
+            history = self.active_sessions.get(session_id, []) if session_id else [] 
             # 确保在调用tool_dispatcher.dispatch时传递history参数
             tool_response = await self.tool_dispatcher.dispatch(user_input, session_id=session_id, user_id=user_id, history=history)
 
             response_text = ""
             if tool_response['status'] == "success":
-                response_text = tool_response['payload']
+                response_text = tool_response['payload'] or ""
             elif tool_response['status'] == "no_tool_found" or tool_response['status'] == "no_tool_inferred":
                 response_text = f"{ai_name}: You said '{user_input}'. This is a simple response."
             else:
@@ -162,15 +128,15 @@ class DialogueManager:
 
         # Store user and AI turns in session and memory
         if session_id and session_id in self.active_sessions:
-            self.active_sessions[session_id].append(DialogueTurn(speaker="user", text=user_input, timestamp=datetime.now(timezone.utc)))
-            self.active_sessions[session_id].append(DialogueTurn(speaker="ai", text=response_text, timestamp=datetime.now(timezone.utc)))
+            self.active_sessions[session_id].append(DialogueTurn(speaker="user", text=user_input, timestamp=datetime.now(timezone.utc).isoformat))
+            self.active_sessions[session_id].append(DialogueTurn(speaker="ai", text=response_text, timestamp=datetime.now(timezone.utc).isoformat))
 
         # Always store in memory if memory manager is available, regardless of session
         if self.memory_manager:
-            user_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id} # type: ignore
+            user_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": datetime.now(timezone.utc).isoformat, "user_id": user_id, "session_id": session_id} # type: ignore
             user_mem_id = self.memory_manager.store_experience(user_input, "user_dialogue_text", user_metadata)
 
-            ai_metadata: DialogueMemoryEntryMetadata = {"speaker": "ai", "timestamp": datetime.now(timezone.utc).isoformat(), "user_id": user_id, "session_id": session_id, "user_input_ref": user_mem_id} # type: ignore
+            ai_metadata: DialogueMemoryEntryMetadata = {"speaker": "ai", "timestamp": datetime.now(timezone.utc).isoformat, "user_id": user_id, "session_id": session_id, "user_input_ref": user_mem_id} # type: ignore
             self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata)
 
         # Analyze for personality adjustment
@@ -183,40 +149,40 @@ class DialogueManager:
 
     async def start_session(self, user_id: Optional[str] = None, session_id: Optional[str] = None) -> str:
         if not session_id:
-            session_id = str(uuid.uuid4())
+            session_id = str(uuid.uuid4)
         logging.info(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}.")
-        self.active_sessions[session_id] = []
-        base_prompt = self.personality_manager.get_initial_prompt()
-        time_segment = self.time_system.get_time_of_day_segment()
+        self.active_sessions[session_id] = [] 
+        base_prompt = self.personality_manager.get_initial_prompt or ""
+        time_segment = self.time_system.get_time_of_day_segment
         greetings = {"morning": "Good morning!", "afternoon": "Good afternoon!", "evening": "Good evening!", "night": "Hello,"}
-        return f"{greetings.get(time_segment, '')} {base_prompt}".strip()
+        return f"{greetings.get(time_segment, '')} {base_prompt}".strip
 
     async def _dispatch_hsp_task_request(self, capability_advertisement, request_parameters, original_user_query, user_id, session_id, request_type="api_initiated_hsp_task"):
         """
-        Dispatch an HSP task request and return (user_message, correlation_id)
+        _ = Dispatch an HSP task request and return (user_message, correlation_id)
         """
         try:
             if not self.hsp_connector or not self.hsp_connector.is_connected:
                 return ("HSP connector is not available or not connected.", None)
             
             # Generate correlation ID
-            correlation_id = str(uuid.uuid4())
+            correlation_id = str(uuid.uuid4)
             
             # Store pending request
             self.pending_hsp_task_requests[correlation_id] = {
-                "capability_id": capability_advertisement.get("capability_id"),
-                "target_ai_id": capability_advertisement.get("ai_id"),
+                "capability_id": capability_advertisement.get("capability_id") or "",
+                "target_ai_id": capability_advertisement.get("ai_id") or "",
                 "parameters": request_parameters,
-                "user_id": user_id,
-                "session_id": session_id,
+                "user_id": user_id or "",
+                "session_id": session_id or "",
                 "request_type": request_type,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat
             }
             
             # Send task via HSP connector
             success = await self.hsp_connector.send_task_request(
-                target_ai_id=capability_advertisement.get("ai_id"),
-                capability_id=capability_advertisement.get("capability_id"),
+                target_ai_id=capability_advertisement.get("ai_id") or "",
+                capability_id=capability_advertisement.get("capability_id") or "",
                 parameters=request_parameters,
                 correlation_id=correlation_id
             )

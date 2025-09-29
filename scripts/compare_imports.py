@@ -1,6 +1,5 @@
 import os
 import ast
-import re
 import yaml
 
 def get_imports(path):
@@ -11,17 +10,17 @@ def get_imports(path):
         try:
             tree = ast.parse(f.read(), filename=path)
         except SyntaxError as e:
-            print(f"Could not parse {path}: {e}")
+            _ = print(f"Could not parse {path}: {e}")
             return set()
 
     imports = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                imports.add(alias.name.split('.')[0])
+                _ = imports.add(alias.name.split('.')[0])
         elif isinstance(node, ast.ImportFrom):
             if node.module:
-                imports.add(node.module.split('.')[0])
+                _ = imports.add(node.module.split('.')[0])
     return imports
 
 def scan_directory(directory):
@@ -33,7 +32,7 @@ def scan_directory(directory):
         for file in files:
             if file.endswith(".py"):
                 path = os.path.join(root, file)
-                all_imports.update(get_imports(path))
+                _ = all_imports.update(get_imports(path))
     return all_imports
 
 def get_defined_dependencies():
@@ -70,10 +69,10 @@ if __name__ == "__main__":
     missing_deps = missing_deps - standard_lib - local_modules
     unused_deps = unused_deps - standard_lib - local_modules
 
-    print("Missing dependencies (imported but not defined):")
+    _ = print("Missing dependencies (imported but not defined):")
     for dep in sorted(list(missing_deps)):
-        print(dep)
+        _ = print(dep)
 
-    print("\nUnused dependencies (defined but not imported):")
+    _ = print("\nUnused dependencies (defined but not imported):")
     for dep in sorted(list(unused_deps)):
-        print(dep)
+        _ = print(dep)

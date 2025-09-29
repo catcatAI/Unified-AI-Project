@@ -4,11 +4,9 @@
 负责管理计算资源（CPU、GPU、内存）并动态分配给不同模型
 """
 
-import os
 import logging
 import psutil
 from pathlib import Path
-from typing import Dict, List, Any, Tuple, Optional
 import json
 from datetime import datetime
 import heapq
@@ -16,17 +14,15 @@ import heapq
 # 添加项目路径
 import sys
 from pathlib import Path
-project_root = Path(__file__).parent.parent
-backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
-sys.path.insert(0, str(backend_path / "src"))
+project_root: str = Path(__file__).parent.parent
+backend_path: str = project_root / "apps" / "backend"
+_ = sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(backend_path))
+_ = sys.path.insert(0, str(backend_path / "src"))
+_ = sys.path.insert(0, str(backend_path / "src"))
 
 # 导入路径配置模块
 try:
-    from apps.backend.src.path_config import (
-        PROJECT_ROOT, 
         DATA_DIR, 
         TRAINING_DIR, 
         get_data_path, 
@@ -51,12 +47,12 @@ except ImportError:
     integrated_graphics_optimizer = None
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class ResourceManager:
     """资源管理器，负责管理计算资源并动态分配给不同模型"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.cpu_count = psutil.cpu_count()
         self.physical_cpu_count = psutil.cpu_count(logical=False)
         self.total_memory = psutil.virtual_memory().total
@@ -70,10 +66,10 @@ class ResourceManager:
         self.smart_allocator = SmartResourceAllocator()
         self.running_tasks = {}  # 正在运行的任务
         
-        logger.info(f"🖥️  系统资源信息:")
-        logger.info(f"   CPU核心数: {self.cpu_count} (物理核心: {self.physical_cpu_count})")
-        logger.info(f"   总内存: {self.total_memory / (1024**3):.2f} GB")
-        logger.info(f"   GPU信息: {self.gpu_info}")
+        _ = logger.info(f"🖥️  系统资源信息:")
+        _ = logger.info(f"   CPU核心数: {self.cpu_count} (物理核心: {self.physical_cpu_count})")
+        _ = logger.info(f"   总内存: {self.total_memory / (1024**3):.2f} GB")
+        _ = logger.info(f"   GPU信息: {self.gpu_info}")
     
     def _detect_gpus(self) -> List[Dict[str, Any]]:
         """检测可用GPU"""
@@ -82,7 +78,7 @@ class ResourceManager:
         # 首先尝试检测NVIDIA GPU
         try:
             import pynvml
-            pynvml.nvmlInit()
+            _ = pynvml.nvmlInit()
             device_count = pynvml.nvmlDeviceGetCount()
             
             for i in range(device_count):
@@ -97,13 +93,13 @@ class ResourceManager:
                     'free_memory': memory_info.free,
                     'used_memory': memory_info.used
                 }
-                gpus.append(gpu_info)
+                _ = gpus.append(gpu_info)
                 
-            logger.info(f"✅ 检测到 {len(gpus)} 个NVIDIA GPU")
+            _ = logger.info(f"✅ 检测到 {len(gpus)} 个NVIDIA GPU")
         except ImportError:
-            logger.warning("⚠️  未安装pynvml库，无法检测NVIDIA GPU")
+            _ = logger.warning("⚠️  未安装pynvml库，无法检测NVIDIA GPU")
         except Exception as e:
-            logger.warning(f"⚠️  检测NVIDIA GPU时出错: {e}")
+            _ = logger.warning(f"⚠️  检测NVIDIA GPU时出错: {e}")
         
         # 如果没有检测到NVIDIA GPU，尝试检测其他GPU（AMD/Intel等）
         if not gpus:
@@ -115,17 +111,17 @@ class ResourceManager:
                         props = torch.cuda.get_device_properties(i)
                         gpu_info = {
                             'id': i,
-                            'name': torch.cuda.get_device_name(i),
+                            _ = 'name': torch.cuda.get_device_name(i),
                             'total_memory': props.total_memory,
                             'free_memory': props.total_memory,  # 简化处理
                             'used_memory': 0
                         }
-                        gpus.append(gpu_info)
-                    logger.info(f"✅ 通过PyTorch检测到 {len(gpus)} 个GPU")
+                        _ = gpus.append(gpu_info)
+                    _ = logger.info(f"✅ 通过PyTorch检测到 {len(gpus)} 个GPU")
             except ImportError:
-                logger.warning("⚠️  未安装torch库，无法检测GPU")
+                _ = logger.warning("⚠️  未安装torch库，无法检测GPU")
             except Exception as e:
-                logger.warning(f"⚠️  通过PyTorch检测GPU时出错: {e}")
+                _ = logger.warning(f"⚠️  通过PyTorch检测GPU时出错: {e}")
         
         # 如果仍然没有检测到GPU，尝试使用系统级检测（针对集成显卡）
         if not gpus:
@@ -168,12 +164,12 @@ class ResourceManager:
                                 'free_memory': memory_total,  # Simplified
                                 'used_memory': 0
                             }
-                            gpus.append(gpu_info)
+                            _ = gpus.append(gpu_info)
                         
-                        logger.info(f"✅ 通过WMI检测到 {len(gpus)} 个GPU设备")
+                        _ = logger.info(f"✅ 通过WMI检测到 {len(gpus)} 个GPU设备")
                         
             except Exception as e:
-                logger.warning(f"⚠️  检测集成显卡时出错: {e}")
+                _ = logger.warning(f"⚠️  检测集成显卡时出错: {e}")
         
         return gpus
     
@@ -191,7 +187,7 @@ class ResourceManager:
                     'count': self.cpu_count,
                     'physical_count': self.physical_cpu_count,
                     'usage_percent': cpu_percent,
-                    'available_cores': self.cpu_count * (100 - cpu_percent) / 100
+                    _ = 'available_cores': self.cpu_count * (100 - cpu_percent) / 100
                 },
                 'memory': {
                     'total': memory_info.total,
@@ -200,17 +196,17 @@ class ResourceManager:
                     'usage_percent': memory_info.percent
                 },
                 'gpu': gpu_info,
-                'timestamp': datetime.now().isoformat()
+                _ = 'timestamp': datetime.now().isoformat()
             }
             
             # 记录资源使用历史
-            self.resource_usage_history.append(resources)
+            _ = self.resource_usage_history.append(resources)
             if len(self.resource_usage_history) > 100:  # 限制历史记录数量
-                self.resource_usage_history.pop(0)
+                _ = self.resource_usage_history.pop(0)
             
             return resources
         except Exception as e:
-            logger.error(f"❌ 获取系统资源信息失败: {e}")
+            _ = logger.error(f"❌ 获取系统资源信息失败: {e}")
             # 返回默认资源信息
             return {
                 'cpu': {
@@ -226,7 +222,7 @@ class ResourceManager:
                     'usage_percent': 0
                 },
                 'gpu': self.gpu_info,
-                'timestamp': datetime.now().isoformat()
+                _ = 'timestamp': datetime.now().isoformat()
             }
     
     def _update_gpu_info(self) -> List[Dict[str, Any]]:
@@ -242,7 +238,7 @@ class ResourceManager:
                 updated_gpu = gpu.copy()
                 updated_gpu['free_memory'] = memory_info.free
                 updated_gpu['used_memory'] = memory_info.used
-                updated_gpus.append(updated_gpu)
+                _ = updated_gpus.append(updated_gpu)
         except Exception:
             # 如果无法更新，返回原有信息
             updated_gpus = self.gpu_info
@@ -342,8 +338,8 @@ class ResourceManager:
         # 创建任务元组：(优先级负值, 预计时间, 任务信息)
         # 使用负值是因为heapq是最小堆，我们需要最大优先级先执行
         task_tuple = (-priority, estimated_time, task_info)
-        heapq.heappush(self.task_queue, task_tuple)
-        logger.info(f"📥 任务已添加到队列: {task_info.get('model_name', 'Unknown')}")
+        _ = heapq.heappush(self.task_queue, task_tuple)
+        _ = logger.info(f"📥 任务已添加到队列: {task_info.get('model_name', 'Unknown')}")
     
     def get_next_task(self) -> Optional[Dict[str, Any]]:
         """获取下一个要执行的任务"""
@@ -365,7 +361,7 @@ class ResourceManager:
             is_integrated_graphics = integrated_graphics_optimizer.is_integrated_graphics_system()
         
         if is_integrated_graphics:
-            logger.info(f"为集成显卡系统调整资源需求: {model_name}")
+            _ = logger.info(f"为集成显卡系统调整资源需求: {model_name}")
             # 应用集成显卡优化建议
             recommendations = integrated_graphics_optimizer.get_optimization_recommendations()
             
@@ -382,13 +378,13 @@ class ResourceManager:
                         requirements['gpu_memory_gb'] = min(requirements['gpu_memory_gb'], 1.0)
                     elif performance_tier == "medium":
                         requirements['gpu_memory_gb'] = min(requirements['gpu_memory_gb'], 2.0)
-                    logger.info(f"GPU内存需求从 {original_gpu_memory}GB 调整为 {requirements['gpu_memory_gb']}GB")
+                    _ = logger.info(f"GPU内存需求从 {original_gpu_memory}GB 调整为 {requirements['gpu_memory_gb']}GB")
                 
                 # 调整CPU核心数需求
                 if performance_tier in ["minimal", "low"]:
                     original_cpu_cores = requirements.get('cpu_cores', 1)
                     requirements['cpu_cores'] = min(requirements.get('cpu_cores', 1), 2)
-                    logger.info(f"CPU核心数需求从 {original_cpu_cores} 调整为 {requirements['cpu_cores']}")
+                    _ = logger.info(f"CPU核心数需求从 {original_cpu_cores} 调整为 {requirements['cpu_cores']}")
         
         # 使用智能资源分配器进行资源分配
         from training.smart_resource_allocator import ResourceRequest
@@ -405,13 +401,13 @@ class ResourceManager:
         )
         
         # 请求资源
-        self.smart_allocator.request_resources(resource_request)
+        _ = self.smart_allocator.request_resources(resource_request)
         
         # 分配资源
         allocations = self.smart_allocator.allocate_resources()
         
         if not allocations:
-            logger.warning(f"⚠️  资源分配失败: {model_name}")
+            _ = logger.warning(f"⚠️  资源分配失败: {model_name}")
             return None
         
         # 获取分配结果
@@ -422,21 +418,21 @@ class ResourceManager:
             'cpu_cores': allocation_result.allocated_cpu_cores,
             'memory_gb': allocation_result.allocated_memory_gb,
             'gpu_memory_gb': allocation_result.allocated_gpu_memory_gb,
-            'allocated_at': datetime.now().isoformat()
+            _ = 'allocated_at': datetime.now().isoformat()
         }
         
         # 记录资源分配
         if model_name:
             self.resource_allocation[model_name] = allocation
         
-        logger.info(f"✅ 资源分配成功: CPU {allocation_result.allocated_cpu_cores} 核心, 内存 {allocation_result.allocated_memory_gb} GB, GPU {allocation_result.allocated_gpu_memory_gb} GB")
+        _ = logger.info(f"✅ 资源分配成功: CPU {allocation_result.allocated_cpu_cores} 核心, 内存 {allocation_result.allocated_memory_gb} GB, GPU {allocation_result.allocated_gpu_memory_gb} GB")
         return allocation
     
     def release_resources(self, model_name: str):
         """释放模型占用的资源"""
         if model_name in self.resource_allocation:
             del self.resource_allocation[model_name]
-            logger.info(f"🔄 释放模型 {model_name} 的资源")
+            _ = logger.info(f"🔄 释放模型 {model_name} 的资源")
     
     def get_resource_utilization(self) -> Dict[str, Any]:
         """获取资源利用率报告"""
@@ -448,14 +444,14 @@ class ResourceManager:
             'cpu_utilization': {
                 'used_cores': self.cpu_count - cpu_info['available_cores'],
                 'total_cores': self.cpu_count,
-                'utilization_percent': (self.cpu_count - cpu_info['available_cores']) / self.cpu_count * 100
+                _ = 'utilization_percent': (self.cpu_count - cpu_info['available_cores']) / self.cpu_count * 100
             },
             'memory_utilization': {
-                'used_gb': (memory_info['total'] - memory_info['available']) / (1024**3),
-                'total_gb': memory_info['total'] / (1024**3),
+                _ = 'used_gb': (memory_info['total'] - memory_info['available']) / (1024**3),
+                _ = 'total_gb': memory_info['total'] / (1024**3),
                 'utilization_percent': memory_info['percent']
             },
-            'allocated_models': list(self.resource_allocation.keys())
+            _ = 'allocated_models': list(self.resource_allocation.keys())
         }
         
         return utilization
@@ -473,49 +469,49 @@ class ResourceManager:
             'total_cpu': self.cpu_count,
             'allocated_cpu': allocated_cpu,
             'available_cpu': self.cpu_count - allocated_cpu,
-            'total_memory_gb': self.total_memory / (1024**3),
+            _ = 'total_memory_gb': self.total_memory / (1024**3),
             'allocated_memory_gb': allocated_memory,
-            'available_memory_gb': (self.total_memory / (1024**3)) - allocated_memory,
+            _ = 'available_memory_gb': (self.total_memory / (1024**3)) - allocated_memory,
             'gpu_info': self.gpu_info,
-            'allocated_models': list(self.resource_allocation.keys()),
-            'pending_tasks': len(self.task_queue)
+            _ = 'allocated_models': list(self.resource_allocation.keys()),
+            _ = 'pending_tasks': len(self.task_queue)
         }
         
         return status
     
     def optimize_resource_allocation(self) -> Dict[str, Any]:
         """优化资源分配"""
-        logger.info("⚙️  开始优化资源分配...")
+        _ = logger.info("⚙️  开始优化资源分配...")
         
         # 获取当前资源使用情况
         status = self.get_resource_allocation_status()
         
         optimization_result = {
-            'timestamp': datetime.now().isoformat(),
+            _ = 'timestamp': datetime.now().isoformat(),
             'actions_taken': [],
             'current_status': status
         }
         
         # 如果有大量空闲资源，可以考虑增加并行任务
         if status['available_cpu'] > status['total_cpu'] * 0.5:
-            optimization_result['actions_taken'].append("系统有大量空闲CPU资源，可以增加并行任务")
+            _ = optimization_result['actions_taken'].append("系统有大量空闲CPU资源，可以增加并行任务")
         
         if status['available_memory_gb'] > status['total_memory_gb'] * 0.5:
-            optimization_result['actions_taken'].append("系统有大量空闲内存资源，可以增加并行任务")
+            _ = optimization_result['actions_taken'].append("系统有大量空闲内存资源，可以增加并行任务")
         
         # 如果资源紧张，考虑暂停低优先级任务
         if status['available_cpu'] < 1 or status['available_memory_gb'] < 1:
-            optimization_result['actions_taken'].append("系统资源紧张，建议暂停低优先级任务")
+            _ = optimization_result['actions_taken'].append("系统资源紧张，建议暂停低优先级任务")
         
-        logger.info("✅ 资源分配优化完成")
+        _ = logger.info("✅ 资源分配优化完成")
         return optimization_result
     
     def dynamic_resource_scaling(self, model_name: str, current_performance: Dict[str, Any]) -> bool:
         """动态调整模型资源分配"""
-        logger.info(f"📈 动态调整模型 {model_name} 的资源分配")
+        _ = logger.info(f"📈 动态调整模型 {model_name} 的资源分配")
         
         if model_name not in self.resource_allocation:
-            logger.warning(f"⚠️  模型 {model_name} 未分配资源")
+            _ = logger.warning(f"⚠️  模型 {model_name} 未分配资源")
             return False
         
         # 获取当前资源分配
@@ -533,30 +529,30 @@ class ResourceManager:
             # 增加CPU核心
             if cpu_cores < self.cpu_count:
                 current_allocation['cpu_cores'] = min(cpu_cores + 1, self.cpu_count)
-                logger.info(f"   增加CPU核心: {cpu_cores} -> {current_allocation['cpu_cores']}")
+                _ = logger.info(f"   增加CPU核心: {cpu_cores} -> {current_allocation['cpu_cores']}")
             
             # 增加内存
             current_allocation['memory_gb'] = memory_gb * 1.2
-            logger.info(f"   增加内存: {memory_gb:.2f}GB -> {current_allocation['memory_gb']:.2f}GB")
+            _ = logger.info(f"   增加内存: {memory_gb:.2f}GB -> {current_allocation['memory_gb']:.2f}GB")
         
         # 如果处理时间过长，增加资源
         elif processing_time > 10.0:  # 超过10秒
             if cpu_cores < self.cpu_count:
                 current_allocation['cpu_cores'] = min(cpu_cores + 1, self.cpu_count)
-                logger.info(f"   增加CPU核心: {cpu_cores} -> {current_allocation['cpu_cores']}")
+                _ = logger.info(f"   增加CPU核心: {cpu_cores} -> {current_allocation['cpu_cores']}")
         
         # 如果准确率高且损失低，可以减少资源以节省资源
         elif accuracy > 0.95 and loss < 0.1:
             # 减少CPU核心
             if cpu_cores > 1:
                 current_allocation['cpu_cores'] = max(cpu_cores - 1, 1)
-                logger.info(f"   减少CPU核心: {cpu_cores} -> {current_allocation['cpu_cores']}")
+                _ = logger.info(f"   减少CPU核心: {cpu_cores} -> {current_allocation['cpu_cores']}")
             
             # 减少内存
             current_allocation['memory_gb'] = max(memory_gb * 0.8, 1.0)
-            logger.info(f"   减少内存: {memory_gb:.2f}GB -> {current_allocation['memory_gb']:.2f}GB")
+            _ = logger.info(f"   减少内存: {memory_gb:.2f}GB -> {current_allocation['memory_gb']:.2f}GB")
         
         # 更新资源分配记录
         self.resource_allocation[model_name] = current_allocation
-        logger.info(f"✅ 模型 {model_name} 资源调整完成")
+        _ = logger.info(f"✅ 模型 {model_name} 资源调整完成")
         return True

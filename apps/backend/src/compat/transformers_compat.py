@@ -4,7 +4,6 @@ Transformers库兼容性模块
 """
 
 import os
-import sys
 import logging
 
 # 设置环境变量以解决Keras兼容性问题
@@ -46,7 +45,7 @@ def ensure_transformers_compatibility():
         return False
 
 # 在模块加载时自动执行兼容性检查
-ensure_transformers_compatibility()
+ensure_transformers_compatibility
 
 # 为SentenceTransformer提供兼容性处理
 def import_sentence_transformers():

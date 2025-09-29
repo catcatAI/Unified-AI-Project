@@ -15,7 +15,7 @@ def load_config(config_path: str = "configs/config.yaml") -> Dict[str, Any]:
         full_config_path = os.path.join(backend_root, config_path)
         with open(full_config_path, 'r') as f:
             _config = yaml.safe_load(f)
-    return _config
+    return _config if _config is not None else {}
 
 def get_config() -> Dict[str, Any]:
     """
@@ -23,7 +23,7 @@ def get_config() -> Dict[str, Any]:
     """
     if _config is None:
         load_config()
-    return _config
+    return _config if _config is not None else {}
 
 def load_simulated_resources(config_path: str = "configs/simulated_resources.yaml") -> Dict[str, Any]:
     """
@@ -35,7 +35,7 @@ def load_simulated_resources(config_path: str = "configs/simulated_resources.yam
         full_config_path = os.path.join(backend_root, config_path)
         with open(full_config_path, 'r') as f:
             _simulated_resources = yaml.safe_load(f)
-    return _simulated_resources
+    return _simulated_resources if _simulated_resources is not None else {}
 
 def get_simulated_resources() -> Dict[str, Any]:
     """
@@ -43,7 +43,7 @@ def get_simulated_resources() -> Dict[str, Any]:
     """
     if _simulated_resources is None:
         load_simulated_resources()
-    return _simulated_resources
+    return _simulated_resources if _simulated_resources is not None else {}
 
 def is_demo_mode() -> bool:
     """
@@ -51,7 +51,7 @@ def is_demo_mode() -> bool:
     """
     config = get_config()
     # Check in the ai_models section where use_simulated_resources is defined
-    ai_models_config = config.get("ai_models", {})
+    ai_models_config = config.get("ai_models", {}) if config else {}
     return ai_models_config.get("use_simulated_resources", False)
 
 def get_mock_placeholder_value(placeholder_type: str, placeholder_key: str) -> Any:
@@ -63,5 +63,5 @@ def get_mock_placeholder_value(placeholder_type: str, placeholder_key: str) -> A
         return None
 
     sim_resources = get_simulated_resources()
-    placeholders = sim_resources.get("simulated_resources", {}).get("placeholders", {})
+    placeholders = sim_resources.get("simulated_resources", {}).get("placeholders", {}) if sim_resources else {}
     return placeholders.get(placeholder_type, {}).get(placeholder_key)

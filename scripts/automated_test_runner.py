@@ -4,8 +4,6 @@
 用于执行完整的测试套件并生成报告
 """
 
-import os
-import sys
 import subprocess
 import argparse
 import json
@@ -16,7 +14,7 @@ from typing import Dict, List, Any
 class AutomatedTestRunner:
     """自动化测试执行器"""
     
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: str = None) -> None:
         """初始化测试执行器"""
         self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent
         self.backend_dir = self.project_root / "apps" / "backend"
@@ -30,7 +28,7 @@ class AutomatedTestRunner:
         Returns:
             测试结果字典
         """
-        print("🔬 开始运行单元测试...")
+        _ = print("🔬 开始运行单元测试...")
         
         cmd = [
             "python", "-m", "pytest",
@@ -72,7 +70,7 @@ class AutomatedTestRunner:
         except Exception as e:
             return {
                 "success": False,
-                "error": str(e),
+                _ = "error": str(e),
                 "test_type": "unit"
             }
     
@@ -83,7 +81,7 @@ class AutomatedTestRunner:
         Returns:
             测试结果字典
         """
-        print("🔗 开始运行集成测试...")
+        _ = print("🔗 开始运行集成测试...")
         
         cmd = [
             "python", "-m", "pytest",
@@ -121,7 +119,7 @@ class AutomatedTestRunner:
         except Exception as e:
             return {
                 "success": False,
-                "error": str(e),
+                _ = "error": str(e),
                 "test_type": "integration"
             }
     
@@ -132,7 +130,7 @@ class AutomatedTestRunner:
         Returns:
             测试结果字典
         """
-        print("🚀 开始运行端到端测试...")
+        _ = print("🚀 开始运行端到端测试...")
         
         cmd = [
             "python", "-m", "pytest",
@@ -167,7 +165,7 @@ class AutomatedTestRunner:
         except Exception as e:
             return {
                 "success": False,
-                "error": str(e),
+                _ = "error": str(e),
                 "test_type": "e2e"
             }
     
@@ -185,10 +183,10 @@ class AutomatedTestRunner:
         report_file = self.reports_dir / f"test_report_{timestamp}.json"
         
         report_data = {
-            "timestamp": datetime.now().isoformat(),
+            _ = "timestamp": datetime.now().isoformat(),
             "test_results": test_results,
             "summary": {
-                "total_tests": len(test_results),
+                _ = "total_tests": len(test_results),
                 "passed_tests": len([r for r in test_results if r.get("success", False)]),
                 "failed_tests": len([r for r in test_results if not r.get("success", True)]),
             }
@@ -198,14 +196,14 @@ class AutomatedTestRunner:
             with open(report_file, 'w', encoding='utf-8') as f:
                 json.dump(report_data, f, ensure_ascii=False, indent=2)
             
-            print(f"📄 测试报告已生成: {report_file}")
+            _ = print(f"📄 测试报告已生成: {report_file}")
             return str(report_file)
             
         except Exception as e:
-            print(f"❌ 生成测试报告失败: {e}")
+            _ = print(f"❌ 生成测试报告失败: {e}")
             return ""
     
-    def send_notification(self, test_results: List[Dict[str, Any]]):
+    def send_notification(self, test_results: List[Dict[str, Any]]) -> None:
         """
         发送测试结果通知
         
@@ -215,13 +213,13 @@ class AutomatedTestRunner:
         failed_tests = [r for r in test_results if not r.get("success", True)]
         
         if failed_tests:
-            print("❌ 部分测试失败:")
+            _ = print("❌ 部分测试失败:")
             for test in failed_tests:
-                print(f"   - {test.get('test_type', 'unknown')}: {test.get('error', 'Unknown error')}")
+                _ = print(f"   - {test.get('test_type', 'unknown')}: {test.get('error', 'Unknown error')}")
                 if "stderr" in test:
-                    print(f"     stderr: {test['stderr'][:200]}...")
+                    _ = print(f"     stderr: {test['stderr'][:200]}...")
         else:
-            print("✅ 所有测试通过!")
+            _ = print("✅ 所有测试通过!")
     
     def run_complete_test_suite(self) -> Dict[str, Any]:
         """
@@ -230,27 +228,27 @@ class AutomatedTestRunner:
         Returns:
             执行结果字典
         """
-        print("🎯 开始执行完整的测试套件...")
+        _ = print("🎯 开始执行完整的测试套件...")
         
         results = []
         
         # 1. 运行单元测试
         unit_result = self.run_unit_tests()
-        results.append(unit_result)
+        _ = results.append(unit_result)
         
         # 2. 运行集成测试
         integration_result = self.run_integration_tests()
-        results.append(integration_result)
+        _ = results.append(integration_result)
         
         # 3. 运行端到端测试
         e2e_result = self.run_e2e_tests()
-        results.append(e2e_result)
+        _ = results.append(e2e_result)
         
         # 生成报告
         report_file = self.generate_test_report(results)
         
         # 发送通知
-        self.send_notification(results)
+        _ = self.send_notification(results)
         
         # 检查是否有失败的测试
         failed_tests = [r for r in results if not r.get("success", True)]
@@ -259,10 +257,10 @@ class AutomatedTestRunner:
             "success": len(failed_tests) == 0,
             "results": results,
             "report_file": report_file,
-            "failed_count": len(failed_tests)
+            _ = "failed_count": len(failed_tests)
         }
 
-def main():
+def main() -> None:
     """主函数"""
     parser = argparse.ArgumentParser(description="自动化测试执行器")
     parser.add_argument("--unit-only", action="store_true", help="仅运行单元测试")
@@ -289,7 +287,7 @@ def main():
         result = runner.run_complete_test_suite()
         print(f"完整测试套件结果: {'通过' if result['success'] else '失败'}")
         if result['report_file']:
-            print(f"详细报告: {result['report_file']}")
+            _ = print(f"详细报告: {result['report_file']}")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

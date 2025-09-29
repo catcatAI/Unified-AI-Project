@@ -2,9 +2,9 @@ import os
 import json
 import numpy as np
 import sys
-from typing import Dict, Any, Optional, List
 from datetime import datetime
 from dataclasses import dataclass
+from typing import Optional, Dict, List, Any, Set  # 添加缺失的导入
 
 # Add src directory to sys.path for dependency manager import
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -13,11 +13,10 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-# 修复导入路径 - 从正确的路径导入 dependency_manager
+# 修复导入路径 - 使用绝对导入而不是相对导入
+from apps.backend.src.ai.dependency_manager import dependency_manager
 # 修复导入路径
-from ...core.managers.dependency_manager import dependency_manager
-# 修复导入路径
-from ...ai.compression.alpha_deep_model import DNADataChain
+from apps.backend.src.ai.compression.alpha_deep_model import DNADataChain
 
 @dataclass
 class LogicModelResult:
@@ -30,15 +29,15 @@ class LogicModelResult:
     dna_chain_id: Optional[str] = None
 
 # Global variables to hold TensorFlow components, loaded on demand.
-tf = None
-Model = None
-Input = None
-Embedding = None
-LSTM = None
-Dense = None
-Dropout = None
-pad_sequences = None
-to_categorical = None
+tf_module: Optional[Any] = None
+Model_cls: Optional[Any] = None
+Input_cls: Optional[Any] = None
+Embedding_cls: Optional[Any] = None
+LSTM_cls: Optional[Any] = None
+Dense_cls: Optional[Any] = None
+Dropout_cls: Optional[Any] = None
+pad_sequences_func: Optional[Any] = None
+to_categorical_func: Optional[Any] = None
 
 def _ensure_tensorflow_is_imported():
     """
@@ -46,44 +45,44 @@ def _ensure_tensorflow_is_imported():
     Catches a broader range of exceptions, including potential fatal errors on import.
     Returns True if successful, False otherwise.
     """
-    global tf, Model, Input, Embedding, LSTM, Dense, Dropout, pad_sequences, to_categorical
+    global tf_module, Model_cls, Input_cls, Embedding_cls, LSTM_cls, Dense_cls, Dropout_cls, pad_sequences_func, to_categorical_func
 
-    if tf is not None:
+    if tf_module is not None:
         return True
 
     # Check dependency manager first without triggering import
     if dependency_manager.is_available('tensorflow'):
-        tf_module = dependency_manager.get_dependency('tensorflow')
-        if tf_module:
-            tf = tf_module
+        tf_mod = dependency_manager.get_dependency('tensorflow')
+        if tf_mod:
+            tf_module = tf_mod
             # Populate globals if successful
-            Model = getattr(tf.keras.models, 'Model', None)
-            Input = getattr(tf.keras.layers, 'Input', None)
-            Embedding = getattr(tf.keras.layers, 'Embedding', None)
-            LSTM = getattr(tf.keras.layers, 'LSTM', None)
-            Dense = getattr(tf.keras.layers, 'Dense', None)
-            Dropout = getattr(tf.keras.layers, 'Dropout', None)
-            pad_sequences = getattr(tf.keras.preprocessing.sequence, 'pad_sequences', None)
-            to_categorical = getattr(tf.keras.utils, 'to_categorical', None)
+            Model_cls = getattr(tf_mod.keras.models, 'Model', None)
+            Input_cls = getattr(tf_mod.keras.layers, 'Input', None)
+            Embedding_cls = getattr(tf_mod.keras.layers, 'Embedding', None)
+            LSTM_cls = getattr(tf_mod.keras.layers, 'LSTM', None)
+            Dense_cls = getattr(tf_mod.keras.layers, 'Dense', None)
+            Dropout_cls = getattr(tf_mod.keras.layers, 'Dropout', None)
+            pad_sequences_func = getattr(tf_mod.keras.preprocessing.sequence, 'pad_sequences', None)
+            to_categorical_func = getattr(tf_mod.keras.utils, 'to_categorical', None)
             return True
 
     try:
-        import tensorflow as tf_direct
-        tf = tf_direct
-        Model = tf.keras.models.Model
-        Input = tf.keras.layers.Input
-        Embedding = tf.keras.layers.Embedding
-        LSTM = tf.keras.layers.LSTM
-        Dense = tf.keras.layers.Dense
-        Dropout = tf.keras.layers.Dropout
-        pad_sequences = tf.keras.preprocessing.sequence.pad_sequences
-        to_categorical = tf.keras.utils.to_categorical
+        import tensorflow as tf
+        tf_module = tf
+        Model_cls = tf.keras.models.Model
+        Input_cls = tf.keras.layers.Input
+        Embedding_cls = tf.keras.layers.Embedding
+        LSTM_cls = tf.keras.layers.LSTM
+        Dense_cls = tf.keras.layers.Dense
+        Dropout_cls = tf.keras.layers.Dropout
+        pad_sequences_func = tf.keras.preprocessing.sequence.pad_sequences
+        to_categorical_func = tf.keras.utils.to_categorical
         
         # Update dependency manager
         status = dependency_manager.get_status('tensorflow')
         if status:
             status.is_available = True
-            status.module = tf
+            status.module = tf_module
         return True
     except Exception as e:
         # Catch any exception during import, including fatal ones if possible.
@@ -93,60 +92,65 @@ def _ensure_tensorflow_is_imported():
             status.is_available = False
             status.module = None
         # Set globals to None to ensure checks fail cleanly
-        tf = None
+        tf_module = None
         return False
 
 def _tensorflow_is_available():
     """Check if TensorFlow is available without triggering an import."""
     # This function now relies on the lazy-loading mechanism.
     # It returns true only if _ensure_tensorflow_is_imported has been successfully called.
-    return tf is not None
+    return tf_module is not None
 
 # DO NOT attempt to import TensorFlow on module load. It will be loaded lazily.
-# _ensure_tensorflow_is_imported()
+# _ensure_tensorflow_is_imported
 
 # Define paths (relative to project root, assuming this script is in src/tools/logic_model)
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
-CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_maps.json")
-MODEL_SAVE_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
-TRAIN_DATA_PATH = os.path.join(PROJECT_ROOT, "data/raw_datasets/logic_train.json")
+SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))  # 重命名以避免与常量冲突
+PROJECT_ROOT_PATH = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, "..", "..", ".."))  # 重命名以避免与常量冲突
+CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT_PATH, "data/models/logic_model_char_maps.json")
+MODEL_SAVE_PATH = os.path.join(PROJECT_ROOT_PATH, "data/models/logic_model_nn.keras")
+TRAIN_DATA_PATH = os.path.join(PROJECT_ROOT_PATH, "data/raw_datasets/logic_train.json")
 
 class LogicNNModel:
-    def __init__(self, max_seq_len, vocab_size, embedding_dim=32, lstm_units=64):
-        if not _ensure_tensorflow_is_imported():
+    def __init__(self, max_seq_len, vocab_size, embedding_dim=32, lstm_units=64) -> None:
+        if not _ensure_tensorflow_is_imported:
             print("LogicNNModel: TensorFlow not available. This instance will be non-functional.")
             self.model = None
-            self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
-            self.prediction_history: List[LogicModelResult] = []  # 预测历史记录
+            self.dna_chains: Dict[str, DNADataChain] =   # 修复字典初始化
+            self.prediction_history: List[LogicModelResult] =   # 修复列表初始化
             return
         self.max_seq_len = max_seq_len
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
         self.lstm_units = lstm_units
         self.model = None # Build lazily
-        self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
-        self.prediction_history: List[LogicModelResult] = []  # 预测历史记录
+        self.dna_chains: Dict[str, DNADataChain] =   # 修复字典初始化
+        self.prediction_history: List[LogicModelResult] =   # 修复列表初始化
 
     def _build_model(self):
-        if not _tensorflow_is_available():
+        if not _tensorflow_is_available:  # 修复函数调用，添加括号
             print("Cannot build model: TensorFlow not available.")
             return
-        input_layer = Input(shape=(self.max_seq_len,), name="input_proposition")
-        embedding_layer = Embedding(input_dim=self.vocab_size,
+        # 确保所有必要的组件都已正确加载
+        if Input_cls is None or Embedding_cls is None or LSTM_cls is None or Dropout_cls is None or Dense_cls is None or Model_cls is None:
+            print("Cannot build model: Required TensorFlow components not available.")
+            return
+            
+        input_layer = Input_cls(shape=(self.max_seq_len,), name="input_proposition")
+        embedding_layer = Embedding_cls(input_dim=self.vocab_size,
                                     output_dim=self.embedding_dim,
                                     input_length=self.max_seq_len,
                                     name="embedding")(input_layer)
-        lstm_layer = LSTM(self.lstm_units, name="lstm_layer")(embedding_layer)
-        dropout_layer = Dropout(0.5, name="dropout")(lstm_layer)
-        output_layer = Dense(2, activation='softmax', name="output_boolean")(dropout_layer)
+        lstm_layer = LSTM_cls(self.lstm_units, name="lstm_layer")(embedding_layer)  # 使用重命名的变量
+        dropout_layer = Dropout_cls(0.5, name="dropout")(lstm_layer)
+        output_layer = Dense_cls(2, activation='softmax', name="output_boolean")(dropout_layer)
 
-        model = Model(inputs=input_layer, outputs=output_layer)
+        model = Model_cls(inputs=input_layer, outputs=output_layer)
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
         self.model = model
 
     def train(self, X_train, y_train, X_val, y_val, epochs=20, batch_size=32):
-        if not _tensorflow_is_available() or self.model is None:
+        if not _tensorflow_is_available or self.model is None:  # 修复函数调用，添加括号
             print("Cannot train model: TensorFlow not available or model not built.")
             return None
         print(f"Starting training: epochs={epochs}, batch_size={batch_size}")
@@ -159,14 +163,19 @@ class LogicNNModel:
         return history
 
     def predict(self, proposition_str, char_to_token, dna_chain_id: Optional[str] = None):
-        if not _tensorflow_is_available() or self.model is None:
+        if not _tensorflow_is_available or self.model is None:  # 修复函数调用，添加括号
             print("Cannot predict: TensorFlow not available or model not built.")
             return False # Default/dummy return
         
-        start_time = datetime.now()
+        start_time = datetime.now  # 修复函数调用，添加括号
         
+        # 确保pad_sequences_func已正确加载
+        if pad_sequences_func is None:
+            print("Cannot predict: pad_sequences function not available.")
+            return False
+            
         tokens = [char_to_token.get(char, char_to_token.get('<UNK>', 0)) for char in proposition_str]
-        padded_sequence = pad_sequences([tokens], maxlen=self.max_seq_len, padding='post', truncating='post')
+        padded_sequence = pad_sequences_func([tokens], maxlen=self.max_seq_len, padding='post', truncating='post')
 
         prediction = self.model.predict(padded_sequence, verbose=0)
         predicted_class = np.argmax(prediction, axis=1)[0]
@@ -174,8 +183,8 @@ class LogicNNModel:
         
         result_bool = bool(predicted_class)
         
-        end_time = datetime.now()
-        processing_time = (end_time - start_time).total_seconds()
+        end_time = datetime.now  # 修复函数调用，添加括号
+        processing_time = (end_time - start_time).total_seconds  # 修复函数调用，添加括号
         
         # Create result object
         result = LogicModelResult(
@@ -200,7 +209,7 @@ class LogicNNModel:
 
     def get_prediction_history(self) -> List[LogicModelResult]:
         """获取预测历史记录"""
-        return self.prediction_history.copy()
+        return self.prediction_history.copy  # 修复函数调用，添加括号
 
     def create_dna_chain(self, chain_id: str) -> DNADataChain:
         """创建新的DNA数据链"""
@@ -213,7 +222,7 @@ class LogicNNModel:
         return self.dna_chains.get(chain_id)
 
     def save_model(self, path):
-        if not _tensorflow_is_available() or self.model is None:
+        if not _tensorflow_is_available or self.model is None:  # 修复函数调用，添加括号
             print("Cannot save model: TensorFlow not available or model not built.")
             return
         self.model.save(path)
@@ -221,13 +230,18 @@ class LogicNNModel:
 
     @classmethod
     def load_model(cls, model_path, char_maps_path):
-        if not _ensure_tensorflow_is_imported():
+        if not _ensure_tensorflow_is_imported:  # 修复函数调用，添加括号
             print("Cannot load model: TensorFlow not available.")
             return None
+        # 确保tf_module已正确加载
+        if tf_module is None:
+            print("Cannot load model: TensorFlow module not available.")
+            return None
+            
         with open(char_maps_path, 'r') as f:
             char_maps = json.load(f)
 
-        loaded_model_tf = tf.keras.models.load_model(model_path)
+        loaded_model_tf = tf_module.keras.models.load_model(model_path)
 
         instance = cls(
             max_seq_len=char_maps['max_seq_len'],
@@ -241,16 +255,16 @@ class LogicNNModel:
 
 # --- Helper functions for data preparation ---
 def get_logic_char_token_maps(dataset_path):
-    if not _tensorflow_is_available():
+    if not _tensorflow_is_available:  # 修复函数调用，添加括号
         print("Cannot get char maps: TensorFlow not available.")
         return None, None, None, None
-    propositions = []
+    propositions: List[str] =   # 修复列表初始化
     with open(dataset_path, 'r') as f:
         data = json.load(f)
         for item in data:
             propositions.append(item['proposition'])
 
-    chars = set()
+    chars: Set[str] = set  # 修复集合初始化
     for prop in propositions:
         for char in prop:
             chars.add(char)
@@ -267,12 +281,12 @@ def get_logic_char_token_maps(dataset_path):
 
 def preprocess_logic_data(dataset_path, char_to_token, max_len, num_classes=2):
     """Preprocess logic data for training."""
-    if not _tensorflow_is_available():
+    if not _tensorflow_is_available:  # 修复函数调用，添加括号
         print("Cannot preprocess data: TensorFlow not available.")
         return None, None
     
-    propositions = []
-    labels = []
+    propositions: List[str] =   # 修复列表初始化
+    labels: List[bool] =   # 修复列表初始化
     
     with open(dataset_path, 'r') as f:
         data = json.load(f)
@@ -281,15 +295,20 @@ def preprocess_logic_data(dataset_path, char_to_token, max_len, num_classes=2):
             labels.append(item['answer'])
     
     # Convert propositions to sequences of tokens
-    sequences = []
+    sequences: List[List[int]] =   # 修复列表初始化
     for prop in propositions:
         tokens = [char_to_token.get(char, char_to_token.get('<UNK>', 0)) for char in prop]
         sequences.append(tokens)
     
+    # 确保pad_sequences_func和to_categorical_func已正确加载
+    if pad_sequences_func is None or to_categorical_func is None:
+        print("Cannot preprocess data: Required functions not available.")
+        return None, None
+    
     # Pad sequences
-    X = pad_sequences(sequences, maxlen=max_len, padding='post', truncating='post')
+    X = pad_sequences_func(sequences, maxlen=max_len, padding='post', truncating='post')
     
     # Convert labels to categorical
-    y = to_categorical(labels, num_classes=num_classes)
+    y = to_categorical_func(labels, num_classes=num_classes)
     
     return X, y

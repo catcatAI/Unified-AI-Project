@@ -12,7 +12,6 @@
 """
 
 import os
-import sys
 import json
 import argparse
 import datetime
@@ -39,7 +38,7 @@ class DocStatus:
 
 
 class DocStatusManager:
-    def __init__(self, status_file=None):
+    def __init__(self, status_file=None) -> None:
         self.status_file = Path(status_file) if status_file else STATUS_FILE
         self.status_data = self._load_status()
     
@@ -50,16 +49,16 @@ class DocStatusManager:
                 with open(self.status_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
-                print(f"錯誤：載入狀態文件失敗: {e}")
+                _ = print(f"錯誤：載入狀態文件失敗: {e}")
                 return self._create_initial_status()
         else:
-            print(f"警告：狀態文件不存在，將創建新文件: {self.status_file}")
+            _ = print(f"警告：狀態文件不存在，將創建新文件: {self.status_file}")
             return self._create_initial_status()
     
     def _create_initial_status(self) -> Dict:
         """創建初始狀態數據"""
         return {
-            "last_update": datetime.datetime.now().isoformat(),
+            _ = "last_update": datetime.datetime.now().isoformat(),
             "files": {},
             "stats": {
                 "total": 0,
@@ -77,7 +76,7 @@ class DocStatusManager:
         
         # 更新統計數據
         stats = {
-            "total": len(self.status_data["files"]),
+            _ = "total": len(self.status_data["files"]),
             "pending": 0,
             "in_progress": 0,
             "completed": 0,
@@ -103,9 +102,9 @@ class DocStatusManager:
         try:
             with open(self.status_file, 'w', encoding='utf-8') as f:
                 json.dump(self.status_data, f, ensure_ascii=False, indent=2)
-            print(f"狀態已保存至 {self.status_file}")
+            _ = print(f"狀態已保存至 {self.status_file}")
         except Exception as e:
-            print(f"錯誤：保存狀態文件失敗: {e}")
+            _ = print(f"錯誤：保存狀態文件失敗: {e}")
     
     def update_status(self, doc_path: str, status: str, notes: str = ""):
         """更新文檔狀態
@@ -120,14 +119,14 @@ class DocStatusManager:
         
         # 檢查狀態是否有效
         if status not in DocStatus.get_all_statuses():
-            print(f"錯誤：無效的狀態值 '{status}'。有效值為: {DocStatus.get_all_statuses()}")
+            _ = print(f"錯誤：無效的狀態值 '{status}'。有效值為: {DocStatus.get_all_statuses()}")
             return
         
         # 更新或添加文檔狀態
         if doc_path not in self.status_data["files"]:
             self.status_data["files"][doc_path] = {
                 "status": status,
-                "last_update": datetime.datetime.now().isoformat(),
+                _ = "last_update": datetime.datetime.now().isoformat(),
                 "notes": notes
             }
         else:
@@ -137,7 +136,7 @@ class DocStatusManager:
                 self.status_data["files"][doc_path]["notes"] = notes
         
         # 保存更新
-        self._save_status()
+        _ = self._save_status()
     
     def get_status(self, doc_path: str) -> Dict:
         """獲取文檔狀態
@@ -179,7 +178,7 @@ class DocStatusManager:
     def list_docs(self, status_filter: Optional[str] = None, directory: Optional[str] = None):
         """列出文檔及其狀態"""
         if not self.status_data["files"]:
-            print("沒有找到任何文檔記錄。請先運行 document_update_plan.py 掃描專案。")
+            _ = print("沒有找到任何文檔記錄。請先運行 document_update_plan.py 掃描專案。")
             return
         
         # 過濾文檔
@@ -204,13 +203,13 @@ class DocStatusManager:
             if directory:
                 filter_desc.append(f"目錄={directory}")
             
-            print(f"沒有找到符合條件的文檔: {', '.join(filter_desc)}")
+            _ = print(f"沒有找到符合條件的文檔: {', '.join(filter_desc)}")
             return
         
         # 打印文檔列表
-        print(f"找到 {len(filtered_docs)} 個文檔:")
-        print("\n{:<4} {:<50} {:<10} {:<15}".format("序號", "文檔路徑", "狀態", "最後更新"))
-        print("-" * 80)
+        _ = print(f"找到 {len(filtered_docs)} 個文檔:")
+        _ = print("\n{:<4} {:<50} {:<10} {:<15}".format("序號", "文檔路徑", "狀態", "最後更新"))
+        _ = print("-" * 80)
         
         for i, (doc_path, doc_info) in enumerate(sorted(filtered_docs.items()), 1):
             status = doc_info.get("status", DocStatus.PENDING)
@@ -228,23 +227,23 @@ class DocStatusManager:
     def show_doc_details(self, doc_path: str):
         """顯示文檔詳細信息"""
         if doc_path not in self.status_data["files"]:
-            print(f"錯誤：找不到文檔 '{doc_path}'")
+            _ = print(f"錯誤：找不到文檔 '{doc_path}'")
             return
         
         doc_info = self.status_data["files"][doc_path]
         
-        print("\n文檔詳情:")
-        print(f"路徑: {doc_path}")
-        print(f"狀態: {doc_info.get('status', DocStatus.PENDING)}")
-        print(f"最後更新: {doc_info.get('last_update', '未更新')}")
+        _ = print("\n文檔詳情:")
+        _ = print(f"路徑: {doc_path}")
+        _ = print(f"狀態: {doc_info.get('status', DocStatus.PENDING)}")
+        _ = print(f"最後更新: {doc_info.get('last_update', '未更新')}")
         
         associated_code = doc_info.get("associated_code", [])
         if associated_code:
-            print(f"\n關聯代碼文件 ({len(associated_code)}):")
+            _ = print(f"\n關聯代碼文件 ({len(associated_code)}):")
             for i, code_path in enumerate(associated_code, 1):
-                print(f"  {i}. {code_path}")
+                _ = print(f"  {i}. {code_path}")
         else:
-            print("\n關聯代碼文件: 無")
+            _ = print("\n關聯代碼文件: 無")
         
         notes = doc_info.get("notes", "")
         print(f"\n註釋: {notes if notes else '無'}")
@@ -252,12 +251,12 @@ class DocStatusManager:
     def update_doc_status(self, doc_path: str, status: str, notes: Optional[str] = None):
         """更新文檔狀態"""
         if doc_path not in self.status_data["files"]:
-            print(f"錯誤：找不到文檔 '{doc_path}'")
+            _ = print(f"錯誤：找不到文檔 '{doc_path}'")
             return False
         
         if status not in DocStatus.get_all_statuses():
-            print(f"錯誤：無效的狀態 '{status}'")
-            print(f"有效狀態: {', '.join(DocStatus.get_all_statuses())}")
+            _ = print(f"錯誤：無效的狀態 '{status}'")
+            _ = print(f"有效狀態: {', '.join(DocStatus.get_all_statuses())}")
             return False
         
         # 更新狀態
@@ -268,24 +267,24 @@ class DocStatusManager:
         if notes is not None:
             self.status_data["files"][doc_path]["notes"] = notes
         
-        self._save_status()
-        print(f"已更新文檔 '{doc_path}' 的狀態為 '{status}'")
+        _ = self._save_status()
+        _ = print(f"已更新文檔 '{doc_path}' 的狀態為 '{status}'")
         return True
     
     def generate_report(self):
         """生成Markdown格式的報告"""
-        print("生成Markdown報告...")
+        _ = print("生成Markdown報告...")
         
         report = []
-        report.append("# 專案文件更新計畫報告")
-        report.append(f"\n生成時間: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        report.append("\n## 概況")
-        report.append(f"- 總文檔數: {self.status_data['stats']['total']}")
-        report.append(f"- 待更新: {self.status_data['stats']['pending']}")
-        report.append(f"- 更新中: {self.status_data['stats']['in_progress']}")
-        report.append(f"- 已更新: {self.status_data['stats']['completed']}")
-        report.append(f"- 需審查: {self.status_data['stats']['needs_review']}")
-        report.append(f"- 無需更新: {self.status_data['stats']['not_needed']}")
+        _ = report.append("# 專案文件更新計畫報告")
+        _ = report.append(f"\n生成時間: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        _ = report.append("\n## 概況")
+        _ = report.append(f"- 總文檔數: {self.status_data['stats']['total']}")
+        _ = report.append(f"- 待更新: {self.status_data['stats']['pending']}")
+        _ = report.append(f"- 更新中: {self.status_data['stats']['in_progress']}")
+        _ = report.append(f"- 已更新: {self.status_data['stats']['completed']}")
+        _ = report.append(f"- 需審查: {self.status_data['stats']['needs_review']}")
+        _ = report.append(f"- 無需更新: {self.status_data['stats']['not_needed']}")
         
         # 按目錄分組
         dir_groups = {}
@@ -293,16 +292,16 @@ class DocStatusManager:
             doc_dir = os.path.dirname(doc_path)
             if doc_dir not in dir_groups:
                 dir_groups[doc_dir] = []
-            dir_groups[doc_dir].append((doc_path, doc_info))
+            _ = dir_groups[doc_dir].append((doc_path, doc_info))
         
         # 生成目錄分組報告
-        report.append("\n## 文檔分組")
+        _ = report.append("\n## 文檔分組")
         
         for dir_path, doc_items in sorted(dir_groups.items()):
             dir_display = dir_path if dir_path else "[根目錄]"
-            report.append(f"\n### {dir_display}")
-            report.append("| 文檔 | 狀態 | 關聯代碼數 | 最後更新 |")
-            report.append("| ---- | ---- | ---------- | -------- |")
+            _ = report.append(f"\n### {dir_display}")
+            _ = report.append("| 文檔 | 狀態 | 關聯代碼數 | 最後更新 |")
+            _ = report.append("| ---- | ---- | ---------- | -------- |")
             
             for doc_path, doc_info in sorted(doc_items):
                 doc_name = os.path.basename(doc_path)
@@ -315,16 +314,16 @@ class DocStatusManager:
                     except:
                         pass
                 
-                report.append(f"| {doc_name} | {status} | {code_count} | {last_update} |")
+                _ = report.append(f"| {doc_name} | {status} | {code_count} | {last_update} |")
         
         # 保存報告
         report_file = PROJECT_ROOT / "doc_update_report.md"
         try:
             with open(report_file, 'w', encoding='utf-8') as f:
-                f.write("\n".join(report))
-            print(f"報告已保存至 {report_file}")
+                _ = f.write("\n".join(report))
+            _ = print(f"報告已保存至 {report_file}")
         except Exception as e:
-            print(f"錯誤：保存報告失敗: {e}")
+            _ = print(f"錯誤：保存報告失敗: {e}")
         
         return "\n".join(report)
 
@@ -357,23 +356,23 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     """主函數"""
     args = parse_args()
     manager = DocStatusManager()
     
     if args.command == "list":
-        manager.list_docs(args.status, args.dir)
+        _ = manager.list_docs(args.status, args.dir)
     elif args.command == "show":
-        manager.show_doc_details(args.doc_path)
+        _ = manager.show_doc_details(args.doc_path)
     elif args.command == "update":
-        manager.update_doc_status(args.doc_path, args.status, args.notes)
+        _ = manager.update_doc_status(args.doc_path, args.status, args.notes)
     elif args.command == "report":
-        manager.generate_report()
+        _ = manager.generate_report()
     else:
-        print("請指定子命令: list, show, update, report")
-        print("使用 -h 或 --help 查看幫助")
+        _ = print("請指定子命令: list, show, update, report")
+        _ = print("使用 -h 或 --help 查看幫助")
 
 
 if __name__ == "__main__":
-    main()
+    _ = main()

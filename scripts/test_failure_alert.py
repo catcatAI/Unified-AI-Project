@@ -4,21 +4,19 @@
 用于监控测试执行结果并在失败时发送告警
 """
 
-import os
 import sys
 import json
 import smtplib
 import requests
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 class TestFailureAlert:
     """测试失败告警器"""
     
-    def __init__(self, config_file: str = None):
+    def __init__(self, config_file: str = None) -> None:
         """初始化告警器"""
         self.config_file = Path(config_file) if config_file else Path(__file__).parent / "alert_config.json"
         self.config = self._load_config()
@@ -60,7 +58,7 @@ class TestFailureAlert:
                             config[key] = value
                     return config
             except Exception as e:
-                print(f"⚠️ 加载配置文件失败，使用默认配置: {e}")
+                _ = print(f"⚠️ 加载配置文件失败，使用默认配置: {e}")
         
         return default_config
     
@@ -104,7 +102,7 @@ class TestFailureAlert:
             # 检查是否需要告警
             if failure_rate > self.config["thresholds"]["failure_rate"]:
                 analysis["should_alert"] = True
-                analysis["alert_reasons"].append(f"失败率过高: {failure_rate:.2%} > {self.config['thresholds']['failure_rate']:.2%}")
+                _ = analysis["alert_reasons"].append(f"失败率过高: {failure_rate:.2%} > {self.config['thresholds']['failure_rate']:.2%}")
             
             if consecutive_failures >= self.config["thresholds"]["consecutive_failures"]:
                 analysis["should_alert"] = True
@@ -113,14 +111,14 @@ class TestFailureAlert:
             return analysis
             
         except Exception as e:
-            print(f"❌ 分析测试结果失败: {e}")
+            _ = print(f"❌ 分析测试结果失败: {e}")
             return {
-                "error": str(e),
+                _ = "error": str(e),
                 "should_alert": True,
                 "alert_reasons": ["测试结果分析失败"]
             }
     
-    def send_email_alert(self, analysis: Dict[str, Any], test_report_file: str):
+    def send_email_alert(self, analysis: Dict[str, Any], test_report_file: str) -> None:
         """
         发送邮件告警
         
@@ -142,14 +140,14 @@ class TestFailureAlert:
             body = f"""
 测试失败告警通知
 
-分析时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-总测试数: {analysis.get('total_tests', 0)}
-失败测试数: {analysis.get('failed_tests', 0)}
-失败率: {analysis.get('failure_rate', 0):.2%}
-连续失败次数: {analysis.get('consecutive_failures', 0)}
+_ = 分析时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+_ = 总测试数: {analysis.get('total_tests', 0)}
+_ = 失败测试数: {analysis.get('failed_tests', 0)}
+_ = 失败率: {analysis.get('failure_rate', 0):.2%}
+_ = 连续失败次数: {analysis.get('consecutive_failures', 0)}
 
 告警原因:
-{chr(10).join(analysis.get('alert_reasons', []))}
+_ = {chr(10).join(analysis.get('alert_reasons', []))}
 
 详细报告请查看附件: {test_report_file}
 
@@ -157,21 +155,21 @@ class TestFailureAlert:
 此邮件由自动化测试系统自动发送
             """
             
-            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+            _ = msg.attach(MIMEText(body, 'plain', 'utf-8'))
             
             # 连接SMTP服务器并发送邮件
             server = smtplib.SMTP(self.config["email"]["smtp_server"], self.config["email"]["smtp_port"])
-            server.starttls()
-            server.login(self.config["email"]["username"], self.config["email"]["password"])
-            server.send_message(msg)
-            server.quit()
+            _ = server.starttls()
+            _ = server.login(self.config["email"]["username"], self.config["email"]["password"])
+            _ = server.send_message(msg)
+            _ = server.quit()
             
-            print("📧 邮件告警已发送")
+            _ = print("📧 邮件告警已发送")
             
         except Exception as e:
-            print(f"❌ 发送邮件告警失败: {e}")
+            _ = print(f"❌ 发送邮件告警失败: {e}")
     
-    def send_webhook_alert(self, analysis: Dict[str, Any], test_report_file: str):
+    def send_webhook_alert(self, analysis: Dict[str, Any], test_report_file: str) -> None:
         """
         发送Webhook告警
         
@@ -185,7 +183,7 @@ class TestFailureAlert:
         try:
             # 构造Webhook数据
             payload = {
-                "timestamp": datetime.now().isoformat(),
+                _ = "timestamp": datetime.now().isoformat(),
                 "event": "test_failure",
                 "analysis": analysis,
                 "report_file": test_report_file
@@ -200,14 +198,14 @@ class TestFailureAlert:
             )
             
             if response.status_code == 200:
-                print("🔗 Webhook告警已发送")
+                _ = print("🔗 Webhook告警已发送")
             else:
-                print(f"❌ Webhook告警发送失败: {response.status_code} - {response.text}")
+                _ = print(f"❌ Webhook告警发送失败: {response.status_code} - {response.text}")
                 
         except Exception as e:
-            print(f"❌ 发送Webhook告警失败: {e}")
+            _ = print(f"❌ 发送Webhook告警失败: {e}")
     
-    def send_slack_alert(self, analysis: Dict[str, Any], test_report_file: str):
+    def send_slack_alert(self, analysis: Dict[str, Any], test_report_file: str) -> None:
         """
         发送Slack告警
         
@@ -228,27 +226,27 @@ class TestFailureAlert:
                         "fields": [
                             {
                                 "title": "分析时间",
-                                "value": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                _ = "value": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                 "short": True
                             },
                             {
                                 "title": "总测试数",
-                                "value": str(analysis.get('total_tests', 0)),
+                                _ = "value": str(analysis.get('total_tests', 0)),
                                 "short": True
                             },
                             {
                                 "title": "失败测试数",
-                                "value": str(analysis.get('failed_tests', 0)),
+                                _ = "value": str(analysis.get('failed_tests', 0)),
                                 "short": True
                             },
                             {
                                 "title": "失败率",
-                                "value": f"{analysis.get('failure_rate', 0):.2%}",
+                                _ = "value": f"{analysis.get('failure_rate', 0):.2%}",
                                 "short": True
                             },
                             {
                                 "title": "告警原因",
-                                "value": "\n".join(analysis.get('alert_reasons', [])),
+                                _ = "value": "\n".join(analysis.get('alert_reasons', [])),
                                 "short": False
                             }
                         ]
@@ -264,14 +262,14 @@ class TestFailureAlert:
             )
             
             if response.status_code == 200:
-                print("💬 Slack告警已发送")
+                _ = print("💬 Slack告警已发送")
             else:
-                print(f"❌ Slack告警发送失败: {response.status_code} - {response.text}")
+                _ = print(f"❌ Slack告警发送失败: {response.status_code} - {response.text}")
                 
         except Exception as e:
-            print(f"❌ 发送Slack告警失败: {e}")
+            _ = print(f"❌ 发送Slack告警失败: {e}")
     
-    def send_alerts(self, analysis: Dict[str, Any], test_report_file: str):
+    def send_alerts(self, analysis: Dict[str, Any], test_report_file: str) -> None:
         """
         发送所有配置的告警
         
@@ -280,29 +278,29 @@ class TestFailureAlert:
             test_report_file: 测试报告文件路径
         """
         if not analysis.get("should_alert", False):
-            print("✅ 测试结果正常，无需发送告警")
+            _ = print("✅ 测试结果正常，无需发送告警")
             return
         
-        print("🚨 检测到测试异常，正在发送告警...")
+        _ = print("🚨 检测到测试异常，正在发送告警...")
         
         # 发送各种告警
-        self.send_email_alert(analysis, test_report_file)
-        self.send_webhook_alert(analysis, test_report_file)
-        self.send_slack_alert(analysis, test_report_file)
+        _ = self.send_email_alert(analysis, test_report_file)
+        _ = self.send_webhook_alert(analysis, test_report_file)
+        _ = self.send_slack_alert(analysis, test_report_file)
         
-        print("🔔 告警发送完成")
+        _ = print("🔔 告警发送完成")
 
-def main():
+def main() -> None:
     """主函数"""
     if len(sys.argv) < 2:
-        print("用法: python test_failure_alert.py <test_report_file>")
-        sys.exit(1)
+        _ = print("用法: python test_failure_alert.py <test_report_file>")
+        _ = sys.exit(1)
     
     test_report_file = sys.argv[1]
     
     if not Path(test_report_file).exists():
-        print(f"❌ 测试报告文件不存在: {test_report_file}")
-        sys.exit(1)
+        _ = print(f"❌ 测试报告文件不存在: {test_report_file}")
+        _ = sys.exit(1)
     
     # 创建告警器
     alert = TestFailureAlert()
@@ -311,13 +309,13 @@ def main():
     analysis = alert.analyze_test_results(test_report_file)
     
     # 发送告警
-    alert.send_alerts(analysis, test_report_file)
+    _ = alert.send_alerts(analysis, test_report_file)
     
     # 如果需要告警，返回非零退出码
     if analysis.get("should_alert", False):
-        sys.exit(1)
+        _ = sys.exit(1)
     else:
-        sys.exit(0)
+        _ = sys.exit(0)
 
 if __name__ == "__main__":
-    main()
+    _ = main()

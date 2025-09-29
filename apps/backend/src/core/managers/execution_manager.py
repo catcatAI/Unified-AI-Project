@@ -9,15 +9,13 @@ monitoring, timeout control, and automatic recovery mechanisms.
 此模組提供統一的執行管理系統，整合監控、超時控制和自動恢復機制。
 """
 
-import asyncio
 import logging
-import os
 import yaml
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, Callable
 from dataclasses import dataclass, asdict
 import threading
 import time
+from typing import Optional, List, Dict, Any, Union
 
 from .execution_monitor import (
     ExecutionMonitor, ExecutionConfig, ExecutionResult, 
@@ -81,9 +79,9 @@ class ExecutionManager:
     - 問題升級處理
     """
     
-    def __init__(self, config: Optional[ExecutionManagerConfig] = None):
-        self.config = config or self._load_config_from_system()
-        self.logger = self._setup_logger()
+    def __init__(self, config: Optional[ExecutionManagerConfig] = None) -> None:
+        self.config = config or self._load_config_from_system
+        self.logger = self._setup_logger
         
         # 初始化執行監控器
         monitor_config = ExecutionConfig(
@@ -110,8 +108,8 @@ class ExecutionManager:
         }
         
         # 問題追蹤
-        self.issues_log: List[Dict[str, Any]] = []
-        self.recovery_actions: List[Dict[str, Any]] = []
+        self.issues_log: List[Dict[str, Any]] = 
+        self.recovery_actions: List[Dict[str, Any]] = 
         
         # 狀態監控
         self._monitoring_active = False
@@ -123,14 +121,14 @@ class ExecutionManager:
         """從系統配置文件加載配置"""
         try:
             config_path = Path("configs/system_config.yaml")
-            if config_path.exists():
+            if config_path.exists:
                 with open(config_path, 'r', encoding='utf-8') as f:
                     system_config = yaml.safe_load(f)
                 
                 # 提取執行監控相關配置
-                operational_configs = system_config.get('operational_configs', {})
-                execution_config = operational_configs.get('execution_monitor', {})
-                timeouts = operational_configs.get('timeouts', {})
+                operational_configs = system_config.get('operational_configs', )
+                execution_config = operational_configs.get('execution_monitor', )
+                timeouts = operational_configs.get('timeouts', )
                 
                 return ExecutionManagerConfig(
                     enabled=execution_config.get('enabled', True),
@@ -143,52 +141,52 @@ class ExecutionManager:
                     max_timeout=timeouts.get('command_execution_max', 300.0),
                     min_timeout=timeouts.get('command_execution_min', 5.0),
                     
-                    cpu_warning=execution_config.get('thresholds', {}).get('cpu_warning', 80.0),
-                    cpu_critical=execution_config.get('thresholds', {}).get('cpu_critical', 90.0),
-                    memory_warning=execution_config.get('thresholds', {}).get('memory_warning', 75.0),
-                    memory_critical=execution_config.get('thresholds', {}).get('memory_critical', 85.0),
-                    disk_warning=execution_config.get('thresholds', {}).get('disk_warning', 80.0),
-                    disk_critical=execution_config.get('thresholds', {}).get('disk_critical', 90.0),
+                    cpu_warning=execution_config.get('thresholds', ).get('cpu_warning', 80.0),
+                    cpu_critical=execution_config.get('thresholds', ).get('cpu_critical', 90.0),
+                    memory_warning=execution_config.get('thresholds', ).get('memory_warning', 75.0),
+                    memory_critical=execution_config.get('thresholds', ).get('memory_critical', 85.0),
+                    disk_warning=execution_config.get('thresholds', ).get('disk_warning', 80.0),
+                    disk_critical=execution_config.get('thresholds', ).get('disk_critical', 90.0),
                     
-                    history_size=execution_config.get('adaptive_timeout_config', {}).get('history_size', 50),
-                    timeout_multiplier=execution_config.get('adaptive_timeout_config', {}).get('timeout_multiplier', 2.5),
-                    slow_terminal_multiplier=execution_config.get('adaptive_timeout_config', {}).get('slow_terminal_multiplier', 1.5),
-                    stuck_terminal_multiplier=execution_config.get('adaptive_timeout_config', {}).get('stuck_terminal_multiplier', 2.0),
-                    cache_size=execution_config.get('adaptive_timeout_config', {}).get('cache_size', 100),
+                    history_size=execution_config.get('adaptive_timeout_config', ).get('history_size', 50),
+                    timeout_multiplier=execution_config.get('adaptive_timeout_config', ).get('timeout_multiplier', 2.5),
+                    slow_terminal_multiplier=execution_config.get('adaptive_timeout_config', ).get('slow_terminal_multiplier', 1.5),
+                    stuck_terminal_multiplier=execution_config.get('adaptive_timeout_config', ).get('stuck_terminal_multiplier', 2.0),
+                    cache_size=execution_config.get('adaptive_timeout_config', ).get('cache_size', 100),
                     
-                    stuck_process_timeout=execution_config.get('recovery_strategies', {}).get('stuck_process_timeout', 30.0),
-                    max_retry_attempts=execution_config.get('recovery_strategies', {}).get('max_retry_attempts', 3),
-                    retry_delay=execution_config.get('recovery_strategies', {}).get('retry_delay', 5.0),
-                    escalation_enabled=execution_config.get('recovery_strategies', {}).get('escalation_enabled', True),
+                    stuck_process_timeout=execution_config.get('recovery_strategies', ).get('stuck_process_timeout', 30.0),
+                    max_retry_attempts=execution_config.get('recovery_strategies', ).get('max_retry_attempts', 3),
+                    retry_delay=execution_config.get('recovery_strategies', ).get('retry_delay', 5.0),
+                    escalation_enabled=execution_config.get('recovery_strategies', ).get('escalation_enabled', True),
                     
-                    log_level=execution_config.get('logging', {}).get('level', 'INFO'),
-                    log_execution_details=execution_config.get('logging', {}).get('log_execution_details', True),
-                    log_resource_usage=execution_config.get('logging', {}).get('log_resource_usage', False),
-                    log_terminal_status=execution_config.get('logging', {}).get('log_terminal_status', False)
+                    log_level=execution_config.get('logging', ).get('level', 'INFO'),
+                    log_execution_details=execution_config.get('logging', ).get('log_execution_details', True),
+                    log_resource_usage=execution_config.get('logging', ).get('log_resource_usage', False),
+                    log_terminal_status=execution_config.get('logging', ).get('log_terminal_status', False)
                 )
             else:
                 # 使用臨時logger或print語句，因為self.logger尚未初始化
                 print("System config not found, using default configuration")
-                return ExecutionManagerConfig()
+                return ExecutionManagerConfig
                 
         except Exception as e:
             # 使用臨時logger或print語句，因為self.logger尚未初始化
             print(f"Failed to load system config: {e}")
-            return ExecutionManagerConfig()
+            return ExecutionManagerConfig
 
     def _setup_logger(self) -> logging.Logger:
         """設置日誌記錄器"""
-        logger = logging.getLogger(f"{__name__}.ExecutionManager")
+        logger: Any = logging.getLogger(f"{__name__}.ExecutionManager")
         
         if not logger.handlers:
-            handler = logging.StreamHandler()
+            handler = logging.StreamHandler
             formatter = logging.Formatter(
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
             handler.setFormatter(formatter)
             logger.addHandler(handler)
             
-        logger.setLevel(getattr(logging, self.config.log_level.upper(), logging.INFO))
+        logger.setLevel(getattr(logging, self.config.log_level.upper, logging.INFO))
         return logger
 
     def start_health_monitoring(self):
@@ -201,7 +199,7 @@ class ExecutionManager:
             target=self._health_monitoring_loop,
             daemon=True
         )
-        self._health_check_thread.start()
+        self._health_check_thread.start
         self.logger.info("Health monitoring started")
 
     def stop_health_monitoring(self):
@@ -215,7 +213,7 @@ class ExecutionManager:
         """健康監控循環"""
         while self._monitoring_active:
             try:
-                health = self.monitor.get_system_health()
+                health = self.monitor.get_system_health
                 
                 # 檢查資源使用情況
                 self._check_resource_thresholds(health)
@@ -257,7 +255,7 @@ class ExecutionManager:
     def _handle_resource_issue(self, resource_type: str, severity: str, value: float):
         """處理資源問題"""
         issue = {
-            'timestamp': time.time(),
+            'timestamp': time.time,
             'type': 'resource_threshold',
             'resource': resource_type,
             'severity': severity,
@@ -277,7 +275,7 @@ class ExecutionManager:
     def _attempt_resource_recovery(self, resource_type: str):
         """嘗試資源恢復"""
         recovery_action = {
-            'timestamp': time.time(),
+            'timestamp': time.time,
             'type': 'resource_recovery',
             'resource': resource_type,
             'action': 'attempted'
@@ -287,7 +285,7 @@ class ExecutionManager:
             if resource_type == 'memory':
                 # 觸發垃圾回收
                 import gc
-                gc.collect()
+                gc.collect
                 recovery_action['details'] = 'garbage_collection'
                 
             elif resource_type == 'cpu':
@@ -430,7 +428,7 @@ class ExecutionManager:
 
     def get_execution_statistics(self) -> Dict[str, Any]:
         """獲取執行統計信息"""
-        stats = self.execution_stats.copy()
+        stats = self.execution_stats.copy
         
         # 計算成功率
         if stats['total_executions'] > 0:
@@ -448,17 +446,17 @@ class ExecutionManager:
 
     def get_system_health_report(self) -> Dict[str, Any]:
         """獲取系統健康報告"""
-        health = self.monitor.get_system_health()
+        health = self.monitor.get_system_health
         
         # 添加問題和恢復記錄
         recent_issues = [issue for issue in self.issues_log 
-                        if time.time() - issue['timestamp'] < 3600]  # 最近1小時
+                        if time.time - issue['timestamp'] < 3600]  # 最近1小時
         recent_recoveries = [action for action in self.recovery_actions 
-                           if time.time() - action['timestamp'] < 3600]  # 最近1小時
+                           if time.time - action['timestamp'] < 3600]  # 最近1小時
         
         return {
             'system_health': health,
-            'execution_stats': self.get_execution_statistics(),
+            'execution_stats': self.get_execution_statistics,
             'recent_issues': recent_issues,
             'recent_recoveries': recent_recoveries,
             'config': asdict(self.config)
@@ -474,18 +472,18 @@ class ExecutionManager:
             'recovered_executions': 0,
             'average_execution_time': 0.0
         }
-        self.issues_log.clear()
-        self.recovery_actions.clear()
+        self.issues_log.clear
+        self.recovery_actions.clear
         self.logger.info("Execution statistics reset")
 
     def __enter__(self):
         """上下文管理器進入"""
-        self.start_health_monitoring()
+        self.start_health_monitoring
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """上下文管理器退出"""
-        self.stop_health_monitoring()
+        self.stop_health_monitoring
 
 
 # 全局執行管理器實例
@@ -524,7 +522,7 @@ def execute_with_smart_monitoring(
     Returns:
         執行結果
     """
-    manager = get_execution_manager()
+    manager = get_execution_manager
     return manager.execute_command(command, timeout, **kwargs)
 
 
@@ -544,7 +542,7 @@ async def execute_async_with_smart_monitoring(
     Returns:
         執行結果
     """
-    manager = get_execution_manager()
+    manager = get_execution_manager
     return await manager.execute_async_command(command, timeout, **kwargs)
 
 
@@ -558,14 +556,14 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
     parser.add_argument("--health-report", action="store_true", help="Show health report")
     
-    args = parser.parse_args()
+    args = parser.parse_args
     
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
     
-    with ExecutionManager() as manager:
+    with ExecutionManager as manager:
         if args.health_report:
-            health_report = manager.get_system_health_report()
+            health_report = manager.get_system_health_report
             print("System Health Report:")
             print(f"CPU: {health_report['system_health'].get('cpu_percent', 'N/A')}%")
             print(f"Memory: {health_report['system_health'].get('memory_percent', 'N/A')}%")

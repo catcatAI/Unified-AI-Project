@@ -6,7 +6,7 @@ This module provides a unified symbolic space implementation for the AI system.
 class UnifiedSymbolicSpace:
     """Unified Symbolic Space for AI reasoning and knowledge representation"""
     
-    def __init__(self, db_path: str = "unified_symbolic_space.db"):
+    def __init__(self, db_path: str = "unified_symbolic_space.db") -> None:
         self.db_path = db_path
         self.symbols = {}
         self.relationships = {}
@@ -15,7 +15,7 @@ class UnifiedSymbolicSpace:
     def add_symbol(self, symbol_id: str, symbol_data: dict):
         """Add a symbol to the symbolic space"""
         self.symbols[symbol_id] = symbol_data
-        print(f"Added symbol: {symbol_id}")
+        _ = print(f"Added symbol: {symbol_id}")
     
     def get_symbol(self, symbol_id: str):
         """Retrieve a symbol from the symbolic space"""
@@ -28,14 +28,14 @@ class UnifiedSymbolicSpace:
             "target": target_symbol,
             "type": relationship_type
         }
-        print(f"Added relationship: {rel_id} ({source_symbol} -> {target_symbol})")
+        _ = print(f"Added relationship: {rel_id} ({source_symbol} -> {target_symbol})")
     
     def get_relationships(self, symbol_id: str):
         """Get all relationships for a symbol"""
         result = []
         for rel_id, rel_data in self.relationships.items():
             if rel_data["source"] == symbol_id or rel_data["target"] == symbol_id:
-                result.append(rel_data)
+                _ = result.append(rel_data)
         return result
 
 # Symbol types enumeration
@@ -65,11 +65,11 @@ if __name__ == "__main__":
     })
     
     # Add a relationship
-    space.add_relationship("rel_001", "entity_001", "concept_001", "instance_of")
+    _ = space.add_relationship("rel_001", "entity_001", "concept_001", "instance_of")
     
     # Retrieve and display
     ai_concept = space.get_symbol("concept_001")
-    print(f"Retrieved symbol: {ai_concept}")
+    _ = print(f"Retrieved symbol: {ai_concept}")
     
     relationships = space.get_relationships("entity_001")
     print(f"Relationships for entity_001: {relationships}")

@@ -1,19 +1,16 @@
 import asyncio
 import uuid
-import json
 import logging
-from typing import Dict, Any, List
 
 from .base_agent import BaseAgent
 from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from ..tools.tool_dispatcher import ToolDispatcher
 
 class KnowledgeGraphAgent(BaseAgent):
     """
     A specialized agent for knowledge graph tasks like entity linking,
     relationship extraction, and graph querying.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_entity_linking_v1.0",
@@ -76,7 +73,7 @@ class KnowledgeGraphAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            await self.hsp_connector.send_task_result(result_payload, callback_topic, request_id)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     def _perform_entity_linking(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -95,7 +92,7 @@ class KnowledgeGraphAgent(BaseAgent):
         # Simple heuristic: assume capitalized words are entities
         for i, word in enumerate(words):
             # Remove punctuation
-            clean_word = word.strip('.,!?;:"()[]{}')
+            clean_word = word.strip('.,!?;:"')
             if clean_word and clean_word[0].isupper() and len(clean_word) > 1:
                 entities.append({
                     "text": clean_word,
@@ -127,8 +124,8 @@ class KnowledgeGraphAgent(BaseAgent):
         for i in range(len(words) - 2):
             # Pattern: "X is Y"
             if words[i+1].lower() in ['is', 'are', 'was', 'were']:
-                subject = words[i].strip('.,!?;:"()[]{}')
-                obj = words[i+2].strip('.,!?;:"()[]{}')
+                subject = words[i].strip('.,!?;:"')
+                obj = words[i+2].strip('.,!?;:"')
                 if subject and obj:
                     relationships.append({
                         "subject": subject,
@@ -139,8 +136,8 @@ class KnowledgeGraphAgent(BaseAgent):
             
             # Pattern: "X has Y"
             elif words[i+1].lower() in ['has', 'have', 'had']:
-                subject = words[i].strip('.,!?;:"()[]{}')
-                obj = words[i+2].strip('.,!?;:"()[]{}')
+                subject = words[i].strip('.,!?;:"')
+                obj = words[i+2].strip('.,!?;:"')
                 if subject and obj:
                     relationships.append({
                         "subject": subject,
@@ -167,21 +164,21 @@ class KnowledgeGraphAgent(BaseAgent):
         results = []
         
         # Simple pattern matching for queries
-        if "capital" in query.lower() and "france" in query.lower():
+        if "capital" in query.lower and "france" in query.lower:
             results.append({
                 "entity": "France",
                 "property": "capital",
                 "value": "Paris",
                 "confidence": 0.95
             })
-        elif "population" in query.lower() and "china" in query.lower():
+        elif "population" in query.lower and "china" in query.lower:
             results.append({
                 "entity": "China",
                 "property": "population",
                 "value": "1.4 billion",
                 "confidence": 0.9
             })
-        elif "located" in query.lower() and "egypt" in query.lower():
+        elif "located" in query.lower and "egypt" in query.lower:
             results.append({
                 "entity": "Egypt",
                 "property": "location",
@@ -217,12 +214,12 @@ class KnowledgeGraphAgent(BaseAgent):
         )
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:knowledge_graph_agent_{uuid.uuid4().hex[:6]}"
         agent = KnowledgeGraphAgent(agent_id=agent_id)
         await agent.start()
 
     try:
-        asyncio.run(main())
+        asyncio.run(main)
     except KeyboardInterrupt:
         print("\nKnowledgeGraphAgent manually stopped.")

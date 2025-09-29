@@ -10,17 +10,17 @@ from pathlib import Path
 
 # Add the backend src directory to the path
 backend_src = Path(__file__).parent.parent.parent / "apps" / "backend" / "src"
-sys.path.insert(0, str(backend_src))
+_ = sys.path.insert(0, str(backend_src))
 
 from apps.backend.src.core.services.ai_editor import AIEditorService
 from apps.backend.src.core.services.ai_editor_config import get_config
 
-@click.group()
+_ = @click.group()
 def editor():
     """AI Editor commands"""
     pass
 
-@editor.command()
+_ = @editor.command()
 @click.option('--text', prompt='Enter text to process', help='Text content to process')
 def process_text(text):
     """Process text content"""
@@ -32,13 +32,13 @@ def process_text(text):
         result = editor_service.process_text_content(text)
         
         # Output the result
-        click.echo("Text processing result:")
+        _ = click.echo("Text processing result:")
         click.echo(json.dumps(result, indent=2, ensure_ascii=False))
     except Exception as e:
         click.echo(f"Error processing text: {e}", err=True)
-        sys.exit(1)
+        _ = sys.exit(1)
 
-@editor.command()
+_ = @editor.command()
 @click.option('--code', prompt='Enter code to process', help='Code content to process')
 def process_code(code):
     """Process code content"""
@@ -50,13 +50,13 @@ def process_code(code):
         result = editor_service.process_code_content(code)
         
         # Output the result
-        click.echo("Code processing result:")
+        _ = click.echo("Code processing result:")
         click.echo(json.dumps(result, indent=2, ensure_ascii=False))
     except Exception as e:
         click.echo(f"Error processing code: {e}", err=True)
-        sys.exit(1)
+        _ = sys.exit(1)
 
-@editor.command()
+_ = @editor.command()
 @click.option('--file', type=click.Path(exists=True), help='File containing data to process')
 @click.option('--type', 'data_type', type=click.Choice(['text', 'code', 'json']), 
               default='text', help='Type of data in the file')
@@ -81,13 +81,13 @@ def process_file(file, data_type):
             result = editor_service.process_structured_data(json_data)
         
         # Output the result
-        click.echo(f"{data_type.capitalize()} processing result:")
+        _ = click.echo(f"{data_type.capitalize()} processing result:")
         click.echo(json.dumps(result, indent=2, ensure_ascii=False))
     except Exception as e:
         click.echo(f"Error processing file: {e}", err=True)
-        sys.exit(1)
+        _ = sys.exit(1)
 
-@editor.command()
+_ = @editor.command()
 def config():
     """Show current configuration"""
     try:
@@ -113,11 +113,11 @@ def config():
         }
         
         # Output the configuration
-        click.echo("Current AI Editor configuration:")
+        _ = click.echo("Current AI Editor configuration:")
         click.echo(json.dumps(config_dict, indent=2, ensure_ascii=False))
     except Exception as e:
         click.echo(f"Error getting configuration: {e}", err=True)
-        sys.exit(1)
+        _ = sys.exit(1)
 
 if __name__ == '__main__':
-    editor()
+    _ = editor()

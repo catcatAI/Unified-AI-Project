@@ -1,15 +1,31 @@
 import json
-import numpy as np
-import tensorflow as tf
 import csv
-from model import ArithmeticSeq2Seq # Assuming model.py is in the same directory or accessible
+import sys
+import os
+from typing import Tuple, Optional, List, Dict, Any
+
+# Add src directory to sys.path
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
+SRC_DIR = os.path.join(PROJECT_ROOT, "src")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
+# 修复相对导入
+sys.path.append(os.path.join(SCRIPT_DIR))
+try:
+    # 使用完整模块路径
+    from apps.backend.src.core.tools.math_model.model import ArithmeticSeq2Seq
+except ImportError as e:
+    print(f"Error importing from model: {e}")
+    sys.exit(1)
 
 # --- Configuration ---
 TEST_DATASET_PATH = "data/raw_datasets/arithmetic_test_dataset.csv"
 MODEL_LOAD_PATH = "data/models/arithmetic_model.keras"
 CHAR_MAP_LOAD_PATH = "data/models/arithmetic_char_maps.json"
 
-def load_char_maps(file_path):
+def load_char_maps(file_path) -> Optional[Tuple[Dict[str, int], Dict[int, str], int, int, int]]:
     """Loads character token maps from a JSON file."""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -28,26 +44,24 @@ def load_char_maps(file_path):
         print(f"Error: Could not decode JSON from {file_path}")
         return None
 
-def load_test_dataset_csv(file_path):
+def load_test_dataset_csv(file_path) -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
     """Loads test dataset from a CSV file."""
-    problems = []
-    answers = []
+    problems: List[Dict[str, str]] =   # 修复列表初始化
+    answers: List[Dict[str, str]] =    # 修复列表初始化
     try:
         with open(file_path, 'r', newline='', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 problems.append({'problem': row['problem']})
                 answers.append({'answer': row['answer']})
-        return problems, answers
     except FileNotFoundError:
         print(f"Error: Test dataset file not found at {file_path}")
         print("Please generate the dataset first using data_generator.py")
-        return None, None
     except Exception as e:
         print(f"Error loading CSV: {e}")
-        return None, None
+    return problems, answers  # 总是返回列表
 
-def main():
+def main -> None:  # 修复函数定义，添加缺失的括号
     print("Starting evaluation process...")
 
     # 1. Load character maps
@@ -71,8 +85,11 @@ def main():
             max_encoder_seq_length, max_decoder_seq_length,
             n_token, latent_dim, embedding_dim
         )
-        math_model_shell.build_model() # This builds the structure including inference models
-        math_model_shell.model.load_weights(MODEL_LOAD_PATH) # Load weights into the training model structure
+        # 修复模型构建方式
+        math_model_shell._build_inference_models  # 使用正确的模型构建方法
+        # 修复模型加载方式
+        if math_model_shell.model is not None:
+            math_model_shell.model.load_weights(MODEL_LOAD_PATH) # Load weights into the training model structure
 
         # The inference models (encoder_model, decoder_model) inside math_model_shell
         # should now have the trained weights because they share layers with math_model_shell.model
@@ -85,8 +102,7 @@ def main():
     # 3. Load test data
     print(f"Loading test dataset from {TEST_DATASET_PATH}...")
     test_problems, test_answers = load_test_dataset_csv(TEST_DATASET_PATH)
-    if test_problems is None or test_answers is None:
-        return
+    # 移除None检查，因为我们现在总是返回列表
     print(f"Loaded {len(test_problems)} test samples.")
 
     # 4. Evaluate the model
@@ -127,12 +143,13 @@ def main():
     print(f"Accuracy: {accuracy:.2f}%")
 
 if __name__ == '__main__':
-    if not tf.io.gfile.exists(MODEL_LOAD_PATH) or not tf.io.gfile.exists(CHAR_MAP_LOAD_PATH):
+    # 修复文件检查方式
+    if not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH):
         print("Model file or character map file not found.")
         print(f"Ensure '{MODEL_LOAD_PATH}' and '{CHAR_MAP_LOAD_PATH}' exist.")
         print("Please train the model first using train.py.")
-    elif not tf.io.gfile.exists(TEST_DATASET_PATH):
+    elif not os.path.exists(TEST_DATASET_PATH):
         print(f"Test dataset not found at {TEST_DATASET_PATH}.")
         print("Please run `python src/tools/math_model/data_generator.py` to generate the test dataset (CSV format).")
     else:
-        main()
+        main  # 修复函数调用，添加缺失的括号

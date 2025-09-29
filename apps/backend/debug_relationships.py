@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from .src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
 
-def test_microsoft_redmond():
+def test_microsoft_redmond() -> None:
     """Test the 'Microsoft is based in Redmond' case."""
     print("=== Testing 'Microsoft is based in Redmond' ===")
     analyzer = ContentAnalyzerModule()
@@ -52,7 +52,7 @@ def test_microsoft_redmond():
     else:
         print("Missing one or both entities!")
 
-def test_apple_jobs():
+def test_apple_jobs() -> None:
     """Test the 'Steve Jobs was a founder of Apple' case."""
     print("\n=== Testing 'Steve Jobs was a founder of Apple' ===")
     analyzer = ContentAnalyzerModule()
@@ -70,7 +70,7 @@ def test_apple_jobs():
         tgt_label = kg_data["entities"].get(rel["target_id"], {}).get("label", rel["target_id"])
         print(f"  - {src_label} --[{rel['type']}]--> {tgt_label} (pattern: {rel['attributes'].get('pattern', 'N/A')})")
 
-def test_works_for():
+def test_works_for() -> None:
     """Test the 'John Doe works for Acme Corp.' case."""
     print("\n=== Testing 'John Doe works for Acme Corp.' ===")
     analyzer = ContentAnalyzerModule()

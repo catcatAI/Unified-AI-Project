@@ -7,9 +7,9 @@ import logging
 import ast
 import re
 import subprocess
-from typing import Dict, List, Optional, Any, Set, Tuple
-from dataclasses import dataclass
+from typing import Any, List, Dict, Optional
 from enum import Enum
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class Defect:
 class StaticAnalyzer:
     """静态代码分析器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.common_patterns = {
             "resource_leak": [
                 r"open\(",  # 未关闭的文件
@@ -86,16 +86,16 @@ class StaticAnalyzer:
                 
             # 进行模式匹配分析
             pattern_defects = self._analyze_patterns(file_path, content, lines)
-            defects.extend(pattern_defects)
+            _ = defects.extend(pattern_defects)
             
             # 进行AST分析
             ast_defects = self._analyze_ast(file_path, content, lines)
-            defects.extend(ast_defects)
+            _ = defects.extend(ast_defects)
             
-            logger.info(f"Found {len(defects)} defects in {file_path}")
+            _ = logger.info(f"Found {len(defects)} defects in {file_path}")
             return defects
         except Exception as e:
-            logger.error(f"Failed to analyze file {file_path}: {e}")
+            _ = logger.error(f"Failed to analyze file {file_path}: {e}")
             return []
             
     def _analyze_patterns(self, file_path: str, content: str, lines: List[str]) -> List[Defect]:
@@ -120,7 +120,7 @@ class StaticAnalyzer:
                             suggestion=self._get_defect_suggestion(DefectType(defect_type)),
                             code_snippet=line.strip()
                         )
-                        defects.append(defect)
+                        _ = defects.append(defect)
                         defect_counter += 1
                         
         return defects
@@ -139,17 +139,17 @@ class StaticAnalyzer:
                 # 检查未使用的变量
                 if isinstance(node, ast.Assign):
                     unused_var_defects = self._check_unused_variables(node, file_path, lines)
-                    defects.extend(unused_var_defects)
+                    _ = defects.extend(unused_var_defects)
                     
                 # 检查过深的嵌套
                 if isinstance(node, ast.If):
                     nesting_defects = self._check_nesting_depth(node, file_path, lines)
-                    defects.extend(nesting_defects)
+                    _ = defects.extend(nesting_defects)
                     
                 # 检查过长的函数
                 if isinstance(node, ast.FunctionDef):
                     long_function_defects = self._check_function_length(node, file_path, lines)
-                    defects.extend(long_function_defects)
+                    _ = defects.extend(long_function_defects)
                     
         except SyntaxError as e:
             # 语法错误
@@ -164,7 +164,7 @@ class StaticAnalyzer:
                 suggestion="Fix the syntax error",
                 code_snippet=lines[e.lineno - 1] if e.lineno and 0 < e.lineno <= len(lines) else ""
             )
-            defects.append(defect)
+            _ = defects.append(defect)
         except Exception as e:
             logger.warning(f"Failed to parse AST for {file_path}: {e}")
             
@@ -231,7 +231,7 @@ class StaticAnalyzer:
 class DynamicAnalyzer:
     """动态分析器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         pass
         
     def run_tests_with_monitoring(self, test_command: str) -> List[Defect]:
@@ -252,11 +252,11 @@ class DynamicAnalyzer:
             if result.returncode != 0:
                 # 测试失败，可能存在缺陷
                 test_defects = self._analyze_test_failure(result.stdout, result.stderr)
-                defects.extend(test_defects)
+                _ = defects.extend(test_defects)
                 
             # 分析内存使用情况
             memory_defects = self._analyze_memory_usage()
-            defects.extend(memory_defects)
+            _ = defects.extend(memory_defects)
             
         except subprocess.TimeoutExpired:
             defect = Defect(
@@ -269,9 +269,9 @@ class DynamicAnalyzer:
                 description="Test execution timed out",
                 suggestion="Optimize the code or increase timeout limits"
             )
-            defects.append(defect)
+            _ = defects.append(defect)
         except Exception as e:
-            logger.error(f"Failed to run dynamic analysis: {e}")
+            _ = logger.error(f"Failed to run dynamic analysis: {e}")
             
         return defects
         
@@ -291,7 +291,7 @@ class DynamicAnalyzer:
                 description="Assertion failed during testing",
                 suggestion="Review the assertion logic and test data"
             )
-            defects.append(defect)
+            _ = defects.append(defect)
             
         if "MemoryError" in stderr:
             defect = Defect(
@@ -304,7 +304,7 @@ class DynamicAnalyzer:
                 description="Memory error during testing",
                 suggestion="Check for memory leaks and optimize memory usage"
             )
-            defects.append(defect)
+            _ = defects.append(defect)
             
         return defects
         
@@ -318,7 +318,7 @@ class DynamicAnalyzer:
 class DefectDetector:
     """缺陷检测器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.static_analyzer = StaticAnalyzer()
         self.dynamic_analyzer = DynamicAnalyzer()
         self.detected_defects: List[Defect] = []
@@ -333,15 +333,15 @@ class DefectDetector:
             all_defects = static_defects
             
             # 保存检测到的缺陷
-            self.detected_defects.extend(all_defects)
+            _ = self.detected_defects.extend(all_defects)
             
-            logger.info(f"Detected {len(all_defects)} defects in {file_path}")
+            _ = logger.info(f"Detected {len(all_defects)} defects in {file_path}")
             return all_defects
         except Exception as e:
-            logger.error(f"Failed to detect defects in {file_path}: {e}")
+            _ = logger.error(f"Failed to detect defects in {file_path}: {e}")
             return []
             
-    def detect_defects_in_project(self, project_path: str, file_patterns: List[str] = None) -> List[Defect]:
+    def detect_defects_in_project(self, project_path: str, file_patterns: Optional[List[str]] = None) -> List[Defect]:
         """检测项目中的缺陷"""
         if file_patterns is None:
             file_patterns = ["*.py"]
@@ -361,12 +361,12 @@ class DefectDetector:
                 for file_path in files:
                     if os.path.isfile(file_path):
                         defects = self.detect_defects_in_file(file_path)
-                        all_defects.extend(defects)
+                        _ = all_defects.extend(defects)
                         
-            logger.info(f"Detected {len(all_defects)} defects in project {project_path}")
+            _ = logger.info(f"Detected {len(all_defects)} defects in project {project_path}")
             return all_defects
         except Exception as e:
-            logger.error(f"Failed to detect defects in project {project_path}: {e}")
+            _ = logger.error(f"Failed to detect defects in project {project_path}: {e}")
             return []
             
     def get_defects_by_severity(self, severity: DefectSeverity) -> List[Defect]:
@@ -418,18 +418,18 @@ Detailed Defects:
         try:
             report = self.generate_defect_report()
             with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(report)
-            logger.info(f"Saved defect report to {output_file}")
+                _ = f.write(report)
+            _ = logger.info(f"Saved defect report to {output_file}")
             return True
         except Exception as e:
-            logger.error(f"Failed to save defect report to {output_file}: {e}")
+            _ = logger.error(f"Failed to save defect report to {output_file}: {e}")
             return False
 
 
 class DefectFixer:
     """缺陷修复器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         pass
         
     def generate_fix_suggestions(self, defects: List[Defect]) -> Dict[str, str]:
@@ -467,10 +467,10 @@ class DefectFixer:
         try:
             # 这里应该实现实际的代码修复逻辑
             # 为简化起见，我们只记录日志
-            logger.info(f"Would apply fixes to {file_path}: {fixes}")
+            _ = logger.info(f"Would apply fixes to {file_path}: {fixes}")
             return True
         except Exception as e:
-            logger.error(f"Failed to apply fixes to {file_path}: {e}")
+            _ = logger.error(f"Failed to apply fixes to {file_path}: {e}")
             return False
 
 
@@ -489,4 +489,4 @@ if __name__ == "__main__":
     # 保存报告
     # detector.save_defect_report("defect_report.txt")
     
-    print("Automated defect detector initialized")
+    _ = print("Automated defect detector initialized")

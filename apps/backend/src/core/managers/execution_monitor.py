@@ -15,14 +15,12 @@ import os
 import psutil
 import signal
 import subprocess
-import sys
 import threading
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Optional, List, Dict, Any, Union
 import logging
 
 
@@ -76,10 +74,10 @@ class ExecutionResult:
 class ExecutionMonitor:
     """執行監控器 - 智能監控執行狀態和終端機響應性"""
     
-    def __init__(self, config: Optional[ExecutionConfig] = None):
-        self.config = config or ExecutionConfig()
+    def __init__(self, config: Optional[ExecutionConfig] = None) -> None:
+        self.config = config or ExecutionConfig
         self.logger = logging.getLogger(__name__)
-        self._setup_logging()
+        self._setup_logging
         
         # 監控狀態
         self._is_monitoring = False
@@ -93,16 +91,16 @@ class ExecutionMonitor:
         
         # 資源使用監控
         self._resource_monitor_thread: Optional[threading.Thread] = None
-        self._resource_usage: Dict[str, Any] = {}
+        self._resource_usage: Dict[str, Any] = 
         
         # 自適應超時
-        self._execution_history: List[float] = []
-        self._adaptive_timeout_cache: Dict[str, float] = {}
+        self._execution_history: List[float] = 
+        self._adaptive_timeout_cache: Dict[str, float] = 
 
     def _setup_logging(self):
         """設置日誌"""
         if not self.logger.handlers:
-            handler = logging.StreamHandler()
+            handler = logging.StreamHandler
             formatter = logging.Formatter(
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
@@ -169,7 +167,7 @@ class ExecutionMonitor:
         """
         try:
             # 測試簡單命令的響應時間
-            start_time = time.time()
+            start_time = time.time
             
             if os.name == 'nt':  # Windows
                 result = subprocess.run(['echo', 'test'], 
@@ -181,7 +179,7 @@ class ExecutionMonitor:
                                       capture_output=True, 
                                       timeout=5.0)
                                       
-            response_time = time.time() - start_time
+            response_time = time.time - start_time
             
             if response_time < 0.1:
                 return TerminalStatus.RESPONSIVE
@@ -202,7 +200,7 @@ class ExecutionMonitor:
         """終端機狀態監控線程"""
         while self._is_monitoring:
             try:
-                self._terminal_status = self.check_terminal_responsiveness()
+                self._terminal_status = self.check_terminal_responsiveness
                 self.logger.debug(f"Terminal status: {self._terminal_status.value}")
                 time.sleep(self.config.terminal_check_interval)
             except Exception as e:
@@ -217,7 +215,7 @@ class ExecutionMonitor:
                 cpu_percent = psutil.cpu_percent(interval=1)
                 
                 # 記憶體使用率
-                memory = psutil.virtual_memory()
+                memory = psutil.virtual_memory
                 memory_percent = memory.percent
                 
                 # 磁碟使用率
@@ -228,7 +226,7 @@ class ExecutionMonitor:
                     'cpu_percent': cpu_percent,
                     'memory_percent': memory_percent,
                     'disk_percent': disk_percent,
-                    'timestamp': time.time()
+                    'timestamp': time.time
                 }
                 
                 # 檢查資源警告
@@ -252,13 +250,13 @@ class ExecutionMonitor:
             self._terminal_check_thread = threading.Thread(
                 target=self._monitor_terminal, daemon=True
             )
-            self._terminal_check_thread.start()
+            self._terminal_check_thread.start
             
         if self.config.enable_process_monitor:
             self._resource_monitor_thread = threading.Thread(
                 target=self._monitor_resources, daemon=True
             )
-            self._resource_monitor_thread.start()
+            self._resource_monitor_thread.start
 
     def _stop_monitoring(self):
         """停止監控"""
@@ -299,8 +297,8 @@ class ExecutionMonitor:
         self.logger.info(f"Executing command with timeout {effective_timeout}s: {command}")
         
         # 開始監控
-        self._start_monitoring()
-        self._start_time = time.time()
+        self._start_monitoring
+        self._start_time = time.time
         self._last_activity = self._start_time
         
         result = ExecutionResult(
@@ -311,7 +309,7 @@ class ExecutionMonitor:
         try:
             # 創建進程
             if isinstance(command, str) and not shell:
-                command = command.split()
+                command = command.split
                 
             self._current_process = subprocess.Popen(
                 command,
@@ -337,13 +335,13 @@ class ExecutionMonitor:
                 self.logger.warning(f"Command timed out after {effective_timeout}s")
                 
                 # 嘗試優雅終止
-                self._current_process.terminate()
+                self._current_process.terminate
                 try:
                     self._current_process.wait(timeout=5.0)
                 except subprocess.TimeoutExpired:
                     # 強制終止
-                    self._current_process.kill()
-                    self._current_process.wait()
+                    self._current_process.kill
+                    self._current_process.wait
                 
                 result.status = ExecutionStatus.TIMEOUT
                 result.error_message = f"Command timed out after {effective_timeout}s"
@@ -355,9 +353,9 @@ class ExecutionMonitor:
             
         finally:
             # 計算執行時間
-            result.execution_time = time.time() - self._start_time
+            result.execution_time = time.time - self._start_time
             result.terminal_status = self._terminal_status
-            result.resource_usage = self._resource_usage.copy()
+            result.resource_usage = self._resource_usage.copy
             
             # 更新執行歷史
             if result.status == ExecutionStatus.COMPLETED:
@@ -367,7 +365,7 @@ class ExecutionMonitor:
                     self._execution_history = self._execution_history[-50:]
             
             # 停止監控
-            self._stop_monitoring()
+            self._stop_monitoring
             self._current_process = None
             
         self.logger.info(f"Command completed: {result.status.value} in {result.execution_time:.2f}s")
@@ -424,7 +422,7 @@ class ExecutionMonitor:
             timeout_used=effective_timeout
         )
         
-        start_time = time.time()
+        start_time = time.time
         
         try:
             if isinstance(command, str):
@@ -447,25 +445,25 @@ class ExecutionMonitor:
             # 等待完成或超時
             try:
                 stdout, stderr = await asyncio.wait_for(
-                    process.communicate(), 
+                    process.communicate, 
                     timeout=effective_timeout
                 )
                 
                 result.status = ExecutionStatus.COMPLETED
                 result.return_code = process.returncode
-                result.stdout = stdout.decode() if stdout else ""
-                result.stderr = stderr.decode() if stderr else ""
+                result.stdout = stdout.decode if stdout else ""
+                result.stderr = stderr.decode if stderr else ""
                 
             except asyncio.TimeoutError:
                 self.logger.warning(f"Async command timed out after {effective_timeout}s")
                 
                 # 終止進程
-                process.terminate()
+                process.terminate
                 try:
-                    await asyncio.wait_for(process.wait(), timeout=5.0)
+                    await asyncio.wait_for(process.wait, timeout=5.0)
                 except asyncio.TimeoutError:
-                    process.kill()
-                    await process.wait()
+                    process.kill
+                    await process.wait
                 
                 result.status = ExecutionStatus.TIMEOUT
                 result.error_message = f"Command timed out after {effective_timeout}s"
@@ -476,7 +474,7 @@ class ExecutionMonitor:
             result.error_message = str(e)
             
         finally:
-            result.execution_time = time.time() - start_time
+            result.execution_time = time.time - start_time
             
         return result
 
@@ -495,14 +493,14 @@ class ExecutionMonitor:
             process = psutil.Process(pid)
             
             # 記錄初始CPU時間
-            initial_cpu_times = process.cpu_times()
-            initial_time = time.time()
+            initial_cpu_times = process.cpu_times
+            initial_time = time.time
             
             time.sleep(check_duration)
             
             # 檢查CPU時間是否有變化
-            final_cpu_times = process.cpu_times()
-            final_time = time.time()
+            final_cpu_times = process.cpu_times
+            final_time = time.time
             
             cpu_time_diff = (final_cpu_times.user + final_cpu_times.system) - \
                            (initial_cpu_times.user + initial_cpu_times.system)
@@ -525,7 +523,7 @@ class ExecutionMonitor:
         """
         try:
             cpu_percent = psutil.cpu_percent(interval=1)
-            memory = psutil.virtual_memory()
+            memory = psutil.virtual_memory
             disk = psutil.disk_usage('/')
             
             return {
@@ -535,8 +533,8 @@ class ExecutionMonitor:
                 'disk_percent': disk.percent,
                 'disk_free_gb': disk.free / (1024**3),
                 'terminal_status': self._terminal_status.value,
-                'load_average': os.getloadavg() if hasattr(os, 'getloadavg') else None,
-                'timestamp': time.time()
+                'load_average': os.getloadavg if hasattr(os, 'getloadavg') else None,
+                'timestamp': time.time
             }
         except Exception as e:
             self.logger.error(f"Failed to get system health: {e}")
@@ -579,7 +577,7 @@ def execute_with_monitoring(
     Returns:
         執行結果
     """
-    monitor = get_execution_monitor()
+    monitor = get_execution_monitor
     return monitor.execute_command(command, timeout, **kwargs)
 
 
@@ -599,7 +597,7 @@ async def execute_async_with_monitoring(
     Returns:
         執行結果
     """
-    monitor = get_execution_monitor()
+    monitor = get_execution_monitor
     return await monitor.execute_async_command(command, timeout, **kwargs)
 
 
@@ -612,12 +610,12 @@ if __name__ == "__main__":
     parser.add_argument("--timeout", type=float, default=30.0, help="Timeout in seconds")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
     
-    args = parser.parse_args()
+    args = parser.parse_args
     
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
     
-    monitor = ExecutionMonitor()
+    monitor = ExecutionMonitor
     result = monitor.execute_command(args.command, timeout=args.timeout)
     
     print(f"Status: {result.status.value}")

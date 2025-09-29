@@ -1,7 +1,10 @@
 import json
+from typing import TYPE_CHECKING
 from .data_aligner import DataAligner
 from ..external.external_connector import ExternalConnector
 from ..internal.internal_bus import InternalBus
+
+if TYPE_CHECKING:
 
 class MessageBridge:
     _message_type_to_internal_topic_map = {
@@ -13,13 +16,31 @@ class MessageBridge:
         "HSP::Acknowledgement_v0.1": "acknowledgement",
     }
 
-    def __init__(self, external_connector: ExternalConnector, internal_bus: InternalBus, data_aligner: DataAligner):
-        self.external_connector = external_connector
-        self.internal_bus = internal_bus
-        self.data_aligner = data_aligner
+    def __init__(self, external_connector: ExternalConnector, internal_bus: InternalBus, data_aligner: DataAligner) -> None:
+        self.external_connector: ExternalConnector = external_connector
+        self.internal_bus: InternalBus = internal_bus
+        self.data_aligner: DataAligner = data_aligner
 
+        # 修复类型问题：使用lambda包装异步方法以确保类型兼容性
         self.external_connector.on_message_callback = self.handle_external_message
-        self.internal_bus.subscribe("hsp.internal.message", self.handle_internal_message)
+        self.internal_bus.subscribe("hsp.internal.message", self._sync_handle_internal_message)
+
+    def _sync_handle_internal_message(self, message: 'Any') -> None:
+        """同步包装器，用于处理内部消息"""
+        # 在事件循环中运行异步方法
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop
+        except RuntimeError:
+            loop = asyncio.new_event_loop
+            asyncio.set_event_loop(loop)
+        
+        if loop.is_running:
+            # 如果事件循环正在运行，创建任务
+            loop.create_task(self.handle_internal_message(message))
+        else:
+            # 否则运行直到完成
+            loop.run_until_complete(self.handle_internal_message(message))
 
     async def handle_external_message(self, topic: str, message: str):
         print(f"DEBUG: MessageBridge.handle_external_message - Incoming topic: {topic}, message: {message}")
@@ -53,7 +74,7 @@ class MessageBridge:
                     aligned_message["sender_ai_id"] = message_dict["sender_ai_id"]
                 # Await the async publish to ensure downstream async handlers complete (important for tests like ACK sending)
                 if hasattr(self.internal_bus, 'publish_async'):
-                    await self.internal_bus.publish_async(internal_channel, aligned_message)
+                    _ = await self.internal_bus.publish_async(internal_channel, aligned_message)
                 else:
                     self.internal_bus.publish(internal_channel, aligned_message)
             else:
@@ -61,24 +82,24 @@ class MessageBridge:
         else:
             print("DEBUG: MessageBridge.handle_external_message - No message type found")
 
-    async def handle_internal_message(self, message):
+    async def handle_internal_message(self, message: 'Any'):
         # Normalize payload to bytes for MQTT publish compatibility
         topic = message.get("topic")
         payload = message.get("payload")
         qos = message.get("qos", 1)
 
         if isinstance(payload, (dict, list)):
-            payload_bytes = json.dumps(payload).encode('utf-8')
+            payload_str = json.dumps(payload)
         elif isinstance(payload, str):
-            payload_bytes = payload.encode('utf-8')
+            payload_str = payload
         elif isinstance(payload, (bytes, bytearray)):
-            payload_bytes = bytes(payload)
+            payload_str = payload.decode('utf-8')
         else:
             # Fallback: try JSON serialization
             try:
-                payload_bytes = json.dumps(payload).encode('utf-8')
+                payload_str = json.dumps(payload)
             except Exception:
-                payload_bytes = str(payload).encode('utf-8')
+                payload_str = str(payload)
 
         # Ensure we await the async publish to avoid "coroutine not awaited" and race conditions in tests
-        await self.external_connector.publish(topic, payload_bytes, qos=qos)
+        await self.external_connector.publish(topic, payload_str, qos=qos)

@@ -1,83 +1,59 @@
 import json # Added for JSON serialization
-from typing import Callable, Dict, Any, Optional, List # Added Optional, List
 from .external.external_connector import ExternalConnector
+
+
 from .internal.internal_bus import InternalBus
 from .bridge.data_aligner import DataAligner
 from .bridge.message_bridge import MessageBridge
-from unittest.mock import MagicMock, AsyncMock # Added for mock_mode
+from unittest.mock import MagicMock, AsyncMock # Added for mock mode
 from .types import HSPMessageEnvelope, HSPFactPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPAcknowledgementPayload, HSPOpinionPayload, HSPQoSParameters
+from ..core.hsp.types import HSPErrorDetails
 import uuid # Added for UUID generation
 from datetime import datetime, timezone # Added for timestamp generation
 import asyncio # Added for asyncio.iscoroutinefunction
 import logging
+
+# Type alias for Future with HSPAcknowledgementPayload result
+AckFuture = asyncio.Future[HSPAcknowledgementPayload]
 import time
-# 修复导入路径
-try:
-    from apps.backend.src.shared.error import HSPConnectionError # Added for unified error handling
-except ImportError:
-    try:
-        # 备用导入路径
-        from ...shared.error import HSPConnectionError
-    except ImportError:
-        # 如果都失败了，创建一个简单的异常类
-        class HSPConnectionError(Exception):
-            pass
-# 修复导入路径
-try:
-    from apps.backend.src.shared.network_resilience import RetryPolicy, CircuitBreaker, NetworkError, ProtocolError, CircuitBreakerOpenError # New imports for resilience
-except ImportError:
-    try:
-        # 备用导入路径
-        from ...shared.network_resilience import RetryPolicy, CircuitBreaker, NetworkError, ProtocolError, CircuitBreakerOpenError
-    except ImportError:
-        # 如果都失败了，创建简单的类
-        class RetryPolicy:
-            def __init__(self, *args, **kwargs):
-                pass
-                
-        class CircuitBreaker:
-            def __init__(self, *args, **kwargs):
-                pass
-                
-            def __call__(self, func):
-                return func
-                
-        class NetworkError(Exception):
-            pass
-            
-        class ProtocolError(Exception):
-            pass
-            
-        class CircuitBreakerOpenError(Exception):
-            pass
-from .fallback.fallback_protocols import get_fallback_manager, FallbackMessage, MessagePriority, initialize_fallback_protocols
-from .utils.fallback_config_loader import get_config_loader
-from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
+# 修复导入路径 - 使用正确的模块路径
+from ..core.shared.error import HSPConnectionError # Added for unified error handling
 from pathlib import Path
+
+# 添加缺失的导入
+from typing import Optional, Dict, Any, List, Callable
+from ..core.hsp.performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
+from ..core.hsp.network_resilience import RetryPolicy, CircuitBreaker
+from ..core.hsp.fallback.fallback_protocols import MessagePriority, FallbackMessage
+from ..core.hsp.utils.fallback_config_loader import get_config_loader
+from ..core.hsp.fallback.fallback_manager import get_fallback_manager
+
+# 定义logger
+logger = logging.getLogger(__name__)
 import os # Added this import
 
 # Define the base path for schemas, ensuring cross-platform compatibility
-SCHEMA_BASE_PATH = Path(__file__).resolve().parent.parent.parent / "schemas"
+SCHEMA_BASE_PATH = Path(__file__).resolve.parent.parent.parent / "schemas"
 
 def get_schema_uri(schema_name: str) -> str:
     """Constructs a file URI for a given schema name."""
     schema_path = SCHEMA_BASE_PATH / schema_name
-    if not schema_path.is_file():
+    if not schema_path.is_file:
         # Fallback for when running in a different environment (like tests)
         # This makes the path relative to the current working directory
         # In a real-world scenario, a more robust solution might be needed
         # like using an environment variable or a configuration setting.
-        project_root = Path.cwd()
+        project_root = Path.cwd
         schema_path = project_root / "apps" / "backend" / "schemas" / schema_name
-        if not schema_path.is_file():
+        if not schema_path.is_file:
              # As a last resort, return a placeholder if the file isn't found
              # This prevents crashes but signals a configuration issue.
-             logging.warning(f"Schema file not found: {schema_name}. Path was: {schema_path}")
+             logger.warning(f"Schema file not found: {schema_name}. Path was: {schema_path}")
              return f"file:///{schema_name}_not_found"
-    return schema_path.as_uri()
+    return str(schema_path.as_uri)
 
 class HSPConnector:
-    def __init__(self, ai_id: str, broker_address: str, broker_port: int = 1883, mock_mode: bool = False, mock_mqtt_client: Optional[MagicMock] = None, internal_bus: Optional[InternalBus] = None, message_bridge: Optional[MessageBridge] = None, enable_fallback: bool = True, **kwargs):
+    def __init__(self, ai_id: str, broker_address: str, broker_port: int = 1883, mock_mode: bool = False, mock_mqtt_client: Optional[MagicMock] = None, internal_bus: Optional[InternalBus] = None, message_bridge: Optional[MessageBridge] = None, enable_fallback: bool = True, **kwargs) -> None:
         self.ai_id = ai_id
         self.mock_mode = mock_mode
         self.broker_address = broker_address
@@ -87,17 +63,18 @@ class HSPConnector:
         self.fallback_initialized = False
         self.logger = logging.getLogger(__name__)
         self.hsp_available = False  # Track HSP availability
+        self._is_connected = False  # Initialize _is_connected attribute
 
         # 性能优化参数
-        self.message_cache: Dict[str, Any] = {}  # 消息缓存
+        self.message_cache: Dict[str, Any] =   # 消息缓存
         self.cache_ttl = 300  # 缓存有效期（秒）
         self.batch_send_enabled = True  # 批量发送
         self.batch_size = 10  # 批量大小
-        self.message_batch: List[Dict[str, Any]] = []  # 消息批处理队列
-        self.last_batch_send = time.time()  # 上次批量发送时间
+        self.message_batch: List[Dict[str, Any]] =   # 消息批处理队列
+        self.last_batch_send = time.time  # 上次批量发送时间
         
         # 性能优化器
-        self.performance_optimizer = HSPPerformanceOptimizer()
+        self.performance_optimizer = HSPPerformanceOptimizer
         self.performance_enhancer = HSPPerformanceEnhancer(self.performance_optimizer)
 
         if self.mock_mode:
@@ -114,7 +91,7 @@ class HSPConnector:
             if mock_mqtt_client:
                 self.external_connector.mqtt_client = mock_mqtt_client
             else:
-                mock_mqtt_client_instance = MagicMock()
+                mock_mqtt_client_instance = MagicMock
                 mock_mqtt_client_instance.publish = AsyncMock(return_value=True)
                 self.external_connector.mqtt_client = mock_mqtt_client_instance
             
@@ -130,11 +107,11 @@ class HSPConnector:
             self.hsp_available = False
 
         if internal_bus is None:
-            self.internal_bus = InternalBus()
+            self.internal_bus = InternalBus
         else:
             self.internal_bus = internal_bus
 
-        self.data_aligner = DataAligner() # DataAligner can be unique per connector
+        self.data_aligner = DataAligner # DataAligner can be unique per connector
 
         if message_bridge is None:
             self.message_bridge = MessageBridge(
@@ -146,39 +123,74 @@ class HSPConnector:
             self.message_bridge = message_bridge
 
         # Callbacks for different message types
-        self._fact_callbacks = []
-        self._opinion_callbacks = []  # 添加这一行
-        self._capability_advertisement_callbacks = []
-        self._task_request_callbacks = []
-        self._task_result_callbacks = []
-        self._acknowledgement_callbacks = [] # New: for incoming ACKs
-        self._connect_callbacks = []
-        self._disconnect_callbacks = []
+        self._fact_callbacks = 
+        self._opinion_callbacks =   # 添加这一行
+        self._capability_advertisement_callbacks = 
+        self._task_request_callbacks = 
+        self._task_result_callbacks = 
+        self._acknowledgement_callbacks =  # New: for incoming ACKs
+        self._connect_callbacks = 
+        self._disconnect_callbacks = 
 
-        self._pending_acks: Dict[str, asyncio.Future] = {} # New: To track messages awaiting ACK
-        self._message_retry_counts: Dict[str, int] = {} # New: To track retry counts for messages
+        self._pending_acks: Dict[str, AckFuture] =  # New: To track messages awaiting ACK
+        self._message_retry_counts: Dict[str, int] =  # New: To track retry counts for messages
         self.ack_timeout_sec = 10 # New: Default timeout for ACK
         self.max_ack_retries = 3 # New: Max retries for messages requiring ACK
         self.retry_policy = RetryPolicy(max_attempts=self.max_ack_retries, backoff_factor=2, max_delay=60) # Initialize retry policy
         self.circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=300) # Initialize circuit breaker
-        self._capability_provider_callback: Optional[Callable[[], List[HSPCapabilityAdvertisementPayload]]] = None # New: Callback to get capabilities
+        self._capability_provider_callback: Optional[Callable[, List[HSPCapabilityAdvertisementPayload]]] = None # New: Callback to get capabilities
         
         # Initialize fallback protocols if enabled
-        # Moved to connect() method to ensure event loop is running
+        # Moved to connect method to ensure event loop is running
 
         # Register internal message bridge handler for external messages
-        self.external_connector.on_message_callback = self.performance_enhancer.enhance_receive(self.message_bridge.handle_external_message)
-
-        # Subscribe to internal bus messages that need to go external
-        self.internal_bus.subscribe("hsp.internal.message", self.message_bridge.handle_internal_message)
+        def sync_handle_external_message(topic, message):
+            """同步包装器，用于处理异步handle_external_message"""
+            if self.message_bridge:
+                asyncio.create_task(self.message_bridge.handle_external_message(topic, message))
+        
+        if hasattr(self.external_connector, 'on_message_callback'):
+            self.external_connector.on_message_callback = self.performance_enhancer.enhance_receive(sync_handle_external_message)
 
         # Subscribe to internal bus messages that are results from external
-        self.internal_bus.subscribe("hsp.external.fact", self._dispatch_fact_to_callbacks)
-        self.internal_bus.subscribe("hsp.external.opinion", self._dispatch_opinion_to_callbacks)  # 添加这一行
-        self.internal_bus.subscribe("hsp.external.capability_advertisement", self._dispatch_capability_advertisement_to_callbacks)
-        self.internal_bus.subscribe("hsp.external.task_request", self._dispatch_task_request_to_callbacks)
-        self.internal_bus.subscribe("hsp.external.task_result", self._dispatch_task_result_to_callbacks)
-        self.internal_bus.subscribe("hsp.external.acknowledgement", self._dispatch_acknowledgement_to_callbacks) # New subscription
+        def sync_handle_internal_message(message):
+            """同步包装器，用于处理异步handle_internal_message"""
+            if self.message_bridge:
+                asyncio.create_task(self.message_bridge.handle_internal_message(message))
+        
+        self.internal_bus.subscribe("hsp.internal.message", sync_handle_internal_message)
+
+        # Subscribe to internal bus messages that are results from external
+        def sync_dispatch_fact(message):
+            """同步包装器，用于处理异步_dispatch_fact_to_callbacks"""
+            asyncio.create_task(self._dispatch_fact_to_callbacks(message))
+        
+        def sync_dispatch_opinion(message):
+            """同步包装器，用于处理异步_dispatch_opinion_to_callbacks"""
+            asyncio.create_task(self._dispatch_opinion_to_callbacks(message))
+            
+        def sync_dispatch_capability(message):
+            """同步包装器，用于处理异步_dispatch_capability_advertisement_to_callbacks"""
+            asyncio.create_task(self._dispatch_capability_advertisement_to_callbacks(message))
+            
+        def sync_dispatch_task_request(message):
+            """同步包装器，用于处理异步_dispatch_task_request_to_callbacks"""
+            asyncio.create_task(self._dispatch_task_request_to_callbacks(message))
+            
+        def sync_dispatch_task_result(message):
+            """同步包装器，用于处理异步_dispatch_task_result_to_callbacks"""
+            asyncio.create_task(self._dispatch_task_result_to_callbacks(message))
+            
+        def sync_dispatch_ack(message):
+            """同步包装器，用于处理异步_dispatch_acknowledgement_to_callbacks"""
+            asyncio.create_task(self._dispatch_acknowledgement_to_callbacks(message))
+
+        self.internal_bus.subscribe("hsp.external.fact", sync_dispatch_fact)
+        self.internal_bus.subscribe("hsp.external.opinion", sync_dispatch_opinion)
+        self.internal_bus.subscribe("hsp.external.capability_advertisement", sync_dispatch_capability)
+        self.internal_bus.subscribe("hsp.external.task_request", sync_dispatch_task_request)
+        self.internal_bus.subscribe("hsp.external.task_result", sync_dispatch_task_result)
+        self.internal_bus.subscribe("hsp.external.acknowledgement", sync_dispatch_ack)
 
     # --- Test compatibility properties ---
     @property
@@ -199,17 +211,18 @@ class HSPConnector:
     @property
     def subscribed_topics(self):
         """Provides access to subscribed topics for test compatibility."""
-        return getattr(self.external_connector, 'subscribed_topics', set())
+        return getattr(self.external_connector, 'subscribed_topics', set)
     
     @property
     def on_message(self):
         """Provides message callback for test compatibility."""
         # Tests expect signature: on_message(client, topic, payload, qos, properties)
         # MessageBridge.handle_external_message expects: handle_external_message(topic, message)
-        async def test_compatible_on_message(client, topic, payload, qos, properties):
-            topic_str = topic.decode() if isinstance(topic, (bytes, bytearray)) else topic
-            payload_str = payload.decode() if isinstance(payload, (bytes, bytearray)) else payload
-            await self.external_connector.on_message_callback(topic_str, payload_str)
+        async def test_compatible_on_message(client, topic, payload, qos, properties) -> None:
+            topic_str = topic.decode if isinstance(topic, (bytes, bytearray)) else topic
+            payload_str = payload.decode if isinstance(payload, (bytes, bytearray)) else payload
+            if self.external_connector.on_message_callback is not None:
+                _ = await self.external_connector.on_message_callback(topic_str, payload_str)
         return test_compatible_on_message
 
     @on_message.setter  
@@ -217,7 +230,7 @@ class HSPConnector:
         """Allows setting message callback for test compatibility."""
         # Wrap a test-provided callback (client, topic, payload, qos, properties)
         async def wrapper(topic, message):
-            await callback(None, topic, message, 1, None)
+            _ = await callback(None, topic, message, 1, None)
         self.external_connector.on_message_callback = wrapper
     
     # --- Backward compatibility methods ---
@@ -245,14 +258,14 @@ class HSPConnector:
         self.logger.info("HSPConnector: Disconnecting external connector...")
         if self.external_connector and hasattr(self.external_connector, 'disconnect'):
             try:
-                await self.external_connector.disconnect()
+                _ = await self.external_connector.disconnect
                 self.logger.info("HSPConnector: External connector disconnected.")
             except Exception as e:
                 self.logger.error(f"HSPConnector: Error during external connector disconnect: {e}")
         
         if self.fallback_manager:
             try:
-                await self.fallback_manager.shutdown()
+                _ = await self.fallback_manager.shutdown
                 self.logger.info("HSPConnector: Fallback manager shut down.")
             except Exception as e:
                 self.logger.error(f"HSPConnector: Error during fallback manager shutdown: {e}")
@@ -272,13 +285,13 @@ class HSPConnector:
         """
         # 获取或创建事件循环
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_event_loop
         except RuntimeError:
-            loop = asyncio.new_event_loop()
+            loop = asyncio.new_event_loop
             asyncio.set_event_loop(loop)
         
         # 运行协程
-        if loop.is_running():
+        if loop.is_running:
             # 如果事件循环正在运行，创建任务
             task = loop.create_task(coro)
             # 等待任务完成
@@ -294,12 +307,12 @@ class HSPConnector:
             self.hsp_available = True
             if self.enable_fallback:
                 # 在事件循环中初始化fallback协议
-                await self._run_in_event_loop(self._initialize_fallback_protocols())
+                _ = await self._run_in_event_loop(self._initialize_fallback_protocols)
             # In mock mode, explicitly subscribe to relevant topics on the mock MQTT client
-            await self.external_connector.subscribe("hsp/knowledge/facts/#", self.external_connector.on_message_callback)
-            await self.external_connector.subscribe("hsp/capabilities/advertisements/#", self.external_connector.on_message_callback)
-            await self.external_connector.subscribe(f"hsp/requests/{self.ai_id}", self.external_connector.on_message_callback)
-            await self.external_connector.subscribe(f"hsp/results/{self.ai_id}", self.external_connector.on_message_callback)
+            _ = await self.external_connector.subscribe("hsp/knowledge/facts/#", self.external_connector.on_message_callback)
+            _ = await self.external_connector.subscribe("hsp/capabilities/advertisements/#", self.external_connector.on_message_callback)
+            _ = await self.external_connector.subscribe(f"hsp/requests/{self.ai_id}", self.external_connector.on_message_callback)
+            _ = await self.external_connector.subscribe(f"hsp/results/{self.ai_id}", self.external_connector.on_message_callback)
             # Set up the mock broker to use our on_message_callback
             if hasattr(self.external_connector, 'mqtt_client') and self.external_connector.mqtt_client:
                 self.external_connector.mqtt_client.on_message_callback = self.external_connector.on_message_callback
@@ -310,37 +323,37 @@ class HSPConnector:
             for attempt in range(3):
                 try:
                     self.logger.info(f"Attempting to connect to HSP... (Attempt {attempt + 1}/3)")
-                    await self.external_connector.connect()
+                    _ = await self.external_connector.connect
                     self.is_connected = self.external_connector.is_connected
                     self.hsp_available = self.is_connected
                     if self.is_connected:
                         self.logger.info("HSP connection successful.")
                         if self.enable_fallback:
                             # 在事件循环中初始化fallback协议
-                            await self._run_in_event_loop(self._initialize_fallback_protocols())
+                            _ = await self._run_in_event_loop(self._initialize_fallback_protocols)
                         break  # Exit loop on successful connection
                 except Exception as e:
                     self.logger.error(f"HSP connection attempt {attempt + 1} failed: {e}")
                     if attempt == 2:
-                        await self._handle_hsp_connection_error(e, attempt + 1)
+                        _ = await self._handle_hsp_connection_error(e, attempt + 1)
                     else:
                         self.logger.warning(f"HSP connection attempt {attempt + 1} failed: {e}. Retrying...")
-                        await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                        _ = await asyncio.sleep(2 ** attempt)  # Exponential backoff
             
             # If still not connected after retries, ensure fallback is initialized
             if not self.is_connected and self.enable_fallback:
                 # 在事件循环中初始化fallback协议
-                await self._run_in_event_loop(self._initialize_fallback_protocols())
+                _ = await self._run_in_event_loop(self._initialize_fallback_protocols)
         
         # 处理连接回调
         for callback in self._connect_callbacks:
             if asyncio.iscoroutinefunction(callback):
-                await self._run_in_event_loop(callback())
+                _ = await self._run_in_event_loop(callback)
             else:
-                callback()
+                callback
 
         # New: Perform post-connection synchronization
-        await self._run_in_event_loop(self._post_connect_synchronization())
+        _ = await self._run_in_event_loop(self._post_connect_synchronization)
 
     async def disconnect(self):
         if self.mock_mode:
@@ -348,7 +361,7 @@ class HSPConnector:
             self.is_connected = False
         else:
             try:
-                await self.external_connector.disconnect()
+                _ = await self.external_connector.disconnect
             except Exception as e:
                 self.logger.warning(f"HSPConnector: external disconnect raised (likely already closed): {e}")
             finally:
@@ -360,7 +373,7 @@ class HSPConnector:
 
         if self.fallback_manager and self.fallback_initialized:
             try:
-                await self.fallback_manager.shutdown()
+                _ = await self.fallback_manager.shutdown
             except Exception as e:
                 self.logger.warning(f"HSPConnector: fallback shutdown error: {e}")
             finally:
@@ -370,9 +383,9 @@ class HSPConnector:
         for callback in self._disconnect_callbacks:
             try:
                 if asyncio.iscoroutinefunction(callback):
-                    await self._run_in_event_loop(callback())
+                    _ = await self._run_in_event_loop(callback)
                 else:
-                    callback()
+                    callback
             except Exception as e:
                 self.logger.warning(f"HSPConnector: disconnect callback error: {e}")
 
@@ -382,9 +395,9 @@ class HSPConnector:
         # 处理连接回调
         for callback in self._connect_callbacks:
             if asyncio.iscoroutinefunction(callback):
-                await self._run_in_event_loop(callback())
+                _ = await self._run_in_event_loop(callback)
             else:
-                callback()
+                callback
 
     async def _handle_mock_disconnect(self):
         """Handle mock disconnection event."""
@@ -393,17 +406,17 @@ class HSPConnector:
         for callback in self._disconnect_callbacks:
             try:
                 if asyncio.iscoroutinefunction(callback):
-                    await self._run_in_event_loop(callback())
+                    _ = await self._run_in_event_loop(callback)
                 else:
-                    callback()
+                    callback
             except Exception as e:
                 self.logger.warning(f"HSPConnector: disconnect callback error: {e}")
 
             try:
                 if asyncio.iscoroutinefunction(callback):
-                    await self._run_in_event_loop(callback())
+                    _ = await self._run_in_event_loop(callback)
                 else:
-                    callback()
+                    callback
             except Exception as e:
                 self.logger.warning(f"HSPConnector: disconnect callback error: {e}")
 
@@ -412,7 +425,7 @@ class HSPConnector:
         """缓存消息以提高性能"""
         self.message_cache[message_id] = {
             'message': message,
-            'timestamp': time.time()
+            'timestamp': time.time
         }
         
     def _get_cached_message(self, message_id: str) -> Optional[Any]:
@@ -420,7 +433,7 @@ class HSPConnector:
         if message_id in self.message_cache:
             cached = self.message_cache[message_id]
             # 检查缓存是否过期
-            if time.time() - cached['timestamp'] < self.cache_ttl:
+            if time.time - cached['timestamp'] < self.cache_ttl:
                 return cached['message']
             else:
                 # 移除过期缓存
@@ -429,9 +442,9 @@ class HSPConnector:
         
     def _clean_expired_cache(self):
         """清理过期缓存"""
-        current_time = time.time()
+        current_time = time.time
         expired_keys = [
-            key for key, value in self.message_cache.items()
+            key for key, value in self.message_cache.items
             if current_time - value['timestamp'] >= self.cache_ttl
         ]
         for key in expired_keys:
@@ -444,7 +457,7 @@ class HSPConnector:
             return
             
         # 检查是否应该发送批量消息
-        current_time = time.time()
+        current_time = time.time
         if (len(self.message_batch) >= self.batch_size or 
             current_time - self.last_batch_send >= 1.0):  # 每秒至少发送一次
             
@@ -460,7 +473,7 @@ class HSPConnector:
                     self.logger.error(f"批量发送消息失败: {e}")
             
             # 清空批处理队列
-            self.message_batch.clear()
+            self.message_batch.clear
             self.last_batch_send = current_time
 
     async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
@@ -469,17 +482,19 @@ class HSPConnector:
         
         message_id = envelope.get("message_id")
         correlation_id = envelope.get("correlation_id") or message_id # Use message_id if correlation_id is not set
-        qos_params = envelope.get("qos_parameters") or {}
+        qos_params = envelope.get("qos_parameters") or 
         requires_ack = qos_params.get("requires_ack", False)
         
         # Track if this is a retry to prevent infinite recursion
-        is_retry = envelope.get("_is_retry", False)
-        retry_count_in_envelope = envelope.get("_retry_count", 0)
+        # 使用消息ID作为键来存储重试信息，而不是直接修改envelope
+        message_id = envelope.get("message_id", "")
+        is_retry = getattr(self, f"_is_retry_{message_id}", False)
+        retry_count_in_envelope = getattr(self, f"_retry_count_{message_id}", 0)
         
         # If ACK is required, set up tracking
         if requires_ack:
             # Create a future to track the ACK
-            ack_future = asyncio.Future()
+            ack_future: Optional[AckFuture] = asyncio.Future
             self._pending_acks[correlation_id] = ack_future
             
             # Track retry count for main publishing
@@ -488,6 +503,8 @@ class HSPConnector:
             # Track fallback retry count separately
             if f"{correlation_id}_fallback" not in self._message_retry_counts:
                 self._message_retry_counts[f"{correlation_id}_fallback"] = 0
+        else:
+            ack_future = None  # type: Optional[AckFuture]
         
         # Try to publish the message with retries
         try:
@@ -496,10 +513,10 @@ class HSPConnector:
             result = await retry_decorated_publish(topic, envelope, qos)
             
             # If ACK is required, wait for it
-            if requires_ack and result:
+            if requires_ack and result and ack_future is not None:
                 try:
                     # Wait for ACK with timeout
-                    await asyncio.wait_for(ack_future, timeout=self.ack_timeout_sec)
+                    await asyncio.wait_for(ack_future, timeout=self.ack_timeout_sec)  # type: ignore
                     print(f"DEBUG: ACK received for message {message_id}")
                     # Clean up tracking
                     self._pending_acks.pop(correlation_id, None)
@@ -515,9 +532,9 @@ class HSPConnector:
                         if retry_count < self.max_ack_retries:
                             print(f"DEBUG: Retrying message {message_id}, attempt {retry_count + 1}")
                             self._message_retry_counts[correlation_id] = retry_count + 1
-                            # Retry the message with retry flag and count
-                            envelope["_is_retry"] = True
-                            envelope["_retry_count"] = retry_count_in_envelope + 1
+                            # 使用属性存储重试信息，而不是直接修改envelope
+                            setattr(self, f"_is_retry_{message_id}", True)
+                            setattr(self, f"_retry_count_{message_id}", retry_count_in_envelope + 1)
                             return await self.publish_message(topic, envelope, qos)
                         else:
                             print(f"DEBUG: Max retries exceeded for message {message_id}")
@@ -554,8 +571,10 @@ class HSPConnector:
                                 self._pending_acks.pop(correlation_id, None)
                                 self._message_retry_counts.pop(correlation_id, None)
                                 # Retry through recursive call with fallback retry count
-                                envelope["_is_retry"] = True
-                                envelope["_retry_count"] = retry_count_in_envelope + 1
+                                # 使用属性存储重试信息，而不是直接修改envelope
+                                setattr(self, f"_is_retry_{message_id}", True)
+                                # 使用属性存储重试信息，而不是直接修改envelope
+                                setattr(self, f"_retry_count_{message_id}", retry_count_in_envelope + 1)
                                 return await self.publish_message(topic, envelope, qos)
                             elif fallback_result:
                                 # Success - clean up tracking
@@ -578,9 +597,9 @@ class HSPConnector:
                     if retry_count < self.max_ack_retries:
                         print(f"DEBUG: Publishing failed, retrying message {message_id}, attempt {retry_count + 1}")
                         self._message_retry_counts[correlation_id] = retry_count + 1
-                        # Retry the message with retry flag and count
-                        envelope["_is_retry"] = True
-                        envelope["_retry_count"] = retry_count_in_envelope + 1
+                        # 使用属性存储重试信息，而不是直接修改envelope
+                        setattr(self, f"_is_retry_{message_id}", True)
+                        setattr(self, f"_retry_count_{message_id}", retry_count_in_envelope + 1)
                         return await self.publish_message(topic, envelope, qos)
                     else:
                         print(f"DEBUG: Max retries exceeded for message {message_id}")
@@ -605,8 +624,10 @@ class HSPConnector:
                                 self._pending_acks.pop(correlation_id, None)
                                 self._message_retry_counts.pop(correlation_id, None)
                                 # Retry through recursive call with fallback retry count
-                                envelope["_is_retry"] = True
-                                envelope["_retry_count"] = retry_count_in_envelope + 1
+                                # 使用属性存储重试信息，而不是直接修改envelope
+                                setattr(self, f"_is_retry_{message_id}", True)
+                                # 使用属性存储重试信息，而不是直接修改envelope
+                                setattr(self, f"_retry_count_{message_id}", retry_count_in_envelope + 1)
                                 return await self.publish_message(topic, envelope, qos)
                             elif fallback_result:
                                 # Success - clean up tracking
@@ -646,8 +667,9 @@ class HSPConnector:
                             self._pending_acks.pop(correlation_id, None)
                             self._message_retry_counts.pop(correlation_id, None)
                             # Retry through recursive call with fallback retry count
-                            envelope["_is_retry"] = True
-                            envelope["_retry_count"] = retry_count_in_envelope + 1
+                            # 使用属性存储重试信息，而不是直接修改envelope
+                            setattr(self, f"_is_retry_{message_id}", True)
+                            setattr(self, f"_retry_count_{message_id}", retry_count_in_envelope + 1)
                             return await self.publish_message(topic, envelope, qos)
                         elif fallback_result:
                             # Success - clean up tracking
@@ -675,9 +697,9 @@ class HSPConnector:
                 if retry_count < self.max_ack_retries:
                     print(f"DEBUG: Error occurred, retrying message {message_id}, attempt {retry_count + 1}")
                     self._message_retry_counts[correlation_id] = retry_count + 1
-                    # Retry the message with retry flag and count
-                    envelope["_is_retry"] = True
-                    envelope["_retry_count"] = retry_count_in_envelope + 1
+                    # 使用属性存储重试信息，而不是直接修改envelope
+                    setattr(self, f"_is_retry_{message_id}", True)
+                    setattr(self, f"_retry_count_{message_id}", retry_count_in_envelope + 1)
                     return await self.publish_message(topic, envelope, qos)
                 else:
                     print(f"DEBUG: Max retries exceeded for message {message_id}")
@@ -698,8 +720,9 @@ class HSPConnector:
                             self._pending_acks.pop(correlation_id, None)
                             self._message_retry_counts.pop(correlation_id, None)
                             # Retry through recursive call with fallback retry count
-                            envelope["_is_retry"] = True
-                            envelope["_retry_count"] = retry_count_in_envelope + 1
+                            # 使用属性存储重试信息，而不是直接修改envelope
+                            setattr(self, f"_is_retry_{message_id}", True)
+                            setattr(self, f"_retry_count_{message_id}", retry_count_in_envelope + 1)
                             return await self.publish_message(topic, envelope, qos)
                         elif fallback_result:
                             # Success - clean up tracking
@@ -739,8 +762,10 @@ class HSPConnector:
                         self._pending_acks.pop(correlation_id, None)
                         self._message_retry_counts.pop(correlation_id, None)
                         # Retry through recursive call with fallback retry count
-                        envelope["_is_retry"] = True
-                        envelope["_retry_count"] = retry_count_in_envelope + 1
+                        # 使用属性存储重试信息，而不是直接修改envelope
+                        setattr(self, f"_is_retry_{message_id}", True)
+                        # 使用属性存储重试信息，而不是直接修改envelope
+                        setattr(self, f"_retry_count_{message_id}", retry_count_in_envelope + 1)
                         return await self.publish_message(topic, envelope, qos)
                     elif fallback_result:
                         # Success - clean up tracking
@@ -778,11 +803,11 @@ class HSPConnector:
         """
         envelope: HSPMessageEnvelope = {  # type: ignore
             "hsp_envelope_version": "0.1",
-            "message_id": str(uuid.uuid4()),
+            "message_id": str(uuid.uuid4),
             "correlation_id": None,
             "sender_ai_id": self.ai_id,
             "recipient_ai_id": "all",
-            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "timestamp_sent": datetime.now(timezone.utc).isoformat,
             "message_type": "HSP::Fact_v0.1",
             "protocol_version": "0.1",
             "communication_pattern": "publish",
@@ -790,7 +815,7 @@ class HSPConnector:
             "qos_parameters": {"requires_ack": False, "priority": "medium"},
             "routing_info": None,
             "payload_schema_uri": get_schema_uri("HSP_Fact_v0.1.schema.json"),
-            "payload": fact_payload
+            "payload": dict(fact_payload)
         }
         print(f"DEBUG: HSPConnector.publish_fact - Publishing to topic: {topic}")
         result = await self.publish_message(topic, envelope, qos)
@@ -811,11 +836,11 @@ class HSPConnector:
         """
         envelope: HSPMessageEnvelope = {  # type: ignore
             "hsp_envelope_version": "0.1",
-            "message_id": str(uuid.uuid4()),
+            "message_id": str(uuid.uuid4),
             "correlation_id": None,
             "sender_ai_id": self.ai_id,
             "recipient_ai_id": "all",
-            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "timestamp_sent": datetime.now(timezone.utc).isoformat,
             "message_type": "HSP::Opinion_v0.1",
             "protocol_version": "0.1",
             "communication_pattern": "publish",
@@ -823,7 +848,7 @@ class HSPConnector:
             "qos_parameters": {"requires_ack": False, "priority": "medium"},
             "routing_info": None,
             "payload_schema_uri": get_schema_uri("HSP_Opinion_v0.1.schema.json"),
-            "payload": opinion_payload
+            "payload": dict(opinion_payload)
         }
         return await self.publish_message(topic, envelope, qos)
 
@@ -852,13 +877,13 @@ class HSPConnector:
         """
         envelope: HSPMessageEnvelope = {
             "hsp_envelope_version": "0.1",
-            "message_id": str(uuid.uuid4()),
+            "message_id": str(uuid.uuid4),
             "correlation_id": None,
             "sender_ai_id": self.ai_id,
             "recipient_ai_id": recipient_ai_id,
-            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "timestamp_sent": datetime.now(timezone.utc).isoformat,
             "message_type": message_type,
-            "protocol_version": "0.1",
+            "protocol_version": self.version_manager.current_version,
             "communication_pattern": communication_pattern,
             "security_parameters": None,
             "qos_parameters": qos_parameters or {"requires_ack": False, "priority": "medium"},
@@ -871,7 +896,7 @@ class HSPConnector:
     async def _raw_publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
         """Internal method for raw message publishing prioritizing mqtt_client.publish for tests, with fallback to external_connector.publish."""
         try:
-            payload_bytes = json.dumps(envelope).encode('utf-8')
+            payload_str = json.dumps(envelope)
             print(f"DEBUG: _raw_publish_message - topic: {topic}, envelope: {envelope}")
             # Access mqtt_client correctly via property which handles external_connector access
             mqtt_client = self.mqtt_client
@@ -882,12 +907,12 @@ class HSPConnector:
                 print(f"DEBUG: _raw_publish_message - Using mqtt_client.publish")
                 if asyncio.iscoroutinefunction(mqtt_client.publish):
                     print(f"DEBUG: _raw_publish_message - mqtt_client.publish is coroutine function")
-                    result = await mqtt_client.publish(topic, payload_bytes, qos=qos)
+                    result = await mqtt_client.publish(topic, payload_str, qos=qos)
                 else:
                     print(f"DEBUG: _raw_publish_message - mqtt_client.publish is not coroutine function")
                     # For synchronous publish methods, run in thread pool to avoid blocking
-                    loop = asyncio.get_event_loop()
-                    result = await loop.run_in_executor(None, mqtt_client.publish, topic, payload_bytes, qos)
+                    loop = asyncio.get_event_loop
+                    result = await loop.run_in_executor(None, mqtt_client.publish, topic, payload_str, qos)
                 self.logger.debug(f"Published message via mqtt_client.publish: {topic}")
                 print(f"DEBUG: Published message via mqtt_client.publish: {topic}")
                 return True
@@ -895,11 +920,11 @@ class HSPConnector:
                 # Fallback to external_connector.publish if mqtt_client is not available
                 print(f"DEBUG: _raw_publish_message - Using external_connector.publish")
                 if asyncio.iscoroutinefunction(self.external_connector.publish):
-                    result = await self.external_connector.publish(topic, payload_bytes, qos=qos)
+                    result = await self.external_connector.publish(topic, payload_str, qos=qos)
                 else:
                     # For synchronous publish methods, run in thread pool to avoid blocking
-                    loop = asyncio.get_event_loop()
-                    result = await loop.run_in_executor(None, self.external_connector.publish, topic, payload_bytes, qos)
+                    loop = asyncio.get_event_loop
+                    result = await loop.run_in_executor(None, self.external_connector.publish, topic, payload_str, qos)
                 self.logger.debug(f"Published message via external_connector.publish: {topic}")
                 print(f"DEBUG: Published message via external_connector.publish: {topic}")
                 return True
@@ -913,14 +938,14 @@ class HSPConnector:
             return False
 
     async def send_task_request(self, payload: HSPTaskRequestPayload, target_ai_id_or_topic: str, qos: int = 1) -> Optional[str]:
-        correlation_id = str(uuid.uuid4())
+        correlation_id = str(uuid.uuid4)
         envelope: HSPMessageEnvelope = { #type: ignore
             "hsp_envelope_version": "0.1",
-            "message_id": str(uuid.uuid4()),
+            "message_id": str(uuid.uuid4),
             "correlation_id": correlation_id,
             "sender_ai_id": self.ai_id,
-            "recipient_ai_id": payload.get("target_ai_id", target_ai_id_or_topic),
-            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "recipient_ai_id": payload.get("target_ai_id", target_ai_id_or_topic) or "unknown",
+            "timestamp_sent": datetime.now(timezone.utc).isoformat,
             "message_type": "HSP::TaskRequest_v0.1",
             "protocol_version": "0.1",
             "communication_pattern": "request",
@@ -928,7 +953,7 @@ class HSPConnector:
             "qos_parameters": {"requires_ack": True, "priority": "high"},
             "routing_info": None,
             "payload_schema_uri": get_schema_uri("HSP_TaskRequest_v0.1.schema.json"),
-            "payload": payload
+            "payload": dict(payload)
         }
         # The topic for task requests is usually hsp/requests/{recipient_ai_id}
         # If target_ai_id_or_topic is a topic, use it directly.
@@ -941,11 +966,11 @@ class HSPConnector:
     async def send_task_result(self, payload: HSPTaskResultPayload, target_ai_id_or_topic: str, correlation_id: str, qos: int = 1) -> bool:
         envelope: HSPMessageEnvelope = { #type: ignore
             "hsp_envelope_version": "0.1",
-            "message_id": str(uuid.uuid4()),
+            "message_id": str(uuid.uuid4),
             "correlation_id": correlation_id,
             "sender_ai_id": self.ai_id,
             "recipient_ai_id": payload.get("requester_ai_id", target_ai_id_or_topic),
-            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "timestamp_sent": datetime.now(timezone.utc).isoformat,
             "message_type": "HSP::TaskResult_v0.1",
             "protocol_version": "0.1",
             "communication_pattern": "response",
@@ -953,7 +978,7 @@ class HSPConnector:
             "qos_parameters": {"requires_ack": False, "priority": "high"},
             "routing_info": None,
             "payload_schema_uri": get_schema_uri("HSP_TaskResult_v0.1.schema.json"),
-            "payload": payload
+            "payload": dict(payload)
         }
         mqtt_topic = target_ai_id_or_topic if "/" in target_ai_id_or_topic else f"hsp/results/{target_ai_id_or_topic}"
         return await self.publish_message(mqtt_topic, envelope, qos)
@@ -962,11 +987,11 @@ class HSPConnector:
         topic = f"hsp/capabilities/advertisements/{self.ai_id}" # Specific topic for this AI's capabilities
         envelope: HSPMessageEnvelope = { #type: ignore
             "hsp_envelope_version": "0.1",
-            "message_id": str(uuid.uuid4()),
+            "message_id": str(uuid.uuid4),
             "correlation_id": None,
             "sender_ai_id": self.ai_id,
             "recipient_ai_id": "all",
-            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            "timestamp_sent": datetime.now(timezone.utc).isoformat,
             "message_type": "HSP::CapabilityAdvertisement_v0.1",
             "protocol_version": "0.1",
             "communication_pattern": "publish",
@@ -974,10 +999,10 @@ class HSPConnector:
             "qos_parameters": {"requires_ack": False, "priority": "medium"},
             "routing_info": None,
             "payload_schema_uri": get_schema_uri("HSP_CapabilityAdvertisement_v0.1.schema.json"),
-            "payload": cap_payload
+            "payload": dict(cap_payload)
         }
         # Also echo to internal bus for in-process consumers/tests
-        await self.internal_bus.publish_async("hsp.external.capability_advertisement", envelope)
+        _ = await self.internal_bus.publish_async("hsp.external.capability_advertisement", envelope)
         return await self.publish_message(topic, envelope, qos)
 
     # --- Registration methods for external modules to receive specific message types ---
@@ -1000,30 +1025,41 @@ class HSPConnector:
     def register_on_task_result_callback(self, callback: Callable[[HSPTaskResultPayload, str, HSPMessageEnvelope], None]):
         self._task_result_callbacks.append(callback)
 
-    def register_on_connect_callback(self, callback: Callable[[], None]):
+    def register_on_connect_callback(self, callback: Callable[, None]):
         self._connect_callbacks.append(callback)
 
-    def register_on_disconnect_callback(self, callback: Callable[[], None]):
+    def register_on_disconnect_callback(self, callback: Callable[, None]):
         self._disconnect_callbacks.append(callback)
 
     def register_on_acknowledgement_callback(self, callback: Callable[[HSPAcknowledgementPayload, str, HSPMessageEnvelope], None]):
         self._acknowledgement_callbacks.append(callback)
 
-    def register_capability_provider(self, callback: Callable[[], List[HSPCapabilityAdvertisementPayload]]):
+    def register_capability_provider(self, callback: Callable[, List[HSPCapabilityAdvertisementPayload]]):
         """Registers a callback function that provides the AI's current capabilities."""
         self._capability_provider_callback = callback
 
     async def advertise_capability(self, capability: HSPCapabilityAdvertisementPayload):
         """Publishes a capability advertisement."""
-        await self.publish_capability_advertisement(capability)
+        _ = await self.publish_capability_advertisement(capability)
 
+    async def _handle_hsp_connection_error(self, error: Exception, attempt: int):
+        """统一 HSP 连接错误处理机制"""
+        error_message = f"HSP connection error (attempt {attempt}): {error}"
+        self.logger.error(error_message)
+        raise HSPConnectionError(error_message)
+        
+    # 添加subscribe_to_facts方法
     async def subscribe_to_facts(self, callback: Callable[[HSPFactPayload, str, HSPMessageEnvelope], None]):
         """订阅事实消息"""
         self.register_on_fact_callback(callback)
+        # 订阅事实主题
+        _ = await self.subscribe("hsp/knowledge/facts/#")
 
     async def subscribe_to_opinions(self, callback: Callable[[HSPOpinionPayload, str, HSPMessageEnvelope], None]):
         """订阅观点消息"""
         self.register_on_opinion_callback(callback)
+        # 订阅观点主题
+        _ = await self.subscribe("hsp/knowledge/opinions/#")
 
     async def subscribe(self, topic: str, qos: int = 1):
         """
@@ -1036,13 +1072,13 @@ class HSPConnector:
         if self.mock_mode:
             # In mock mode, just add to subscribed topics
             if not hasattr(self.external_connector, 'subscribed_topics'):
-                self.external_connector.subscribed_topics = set()
+                self.external_connector.subscribed_topics = set
             self.external_connector.subscribed_topics.add(topic)
             # Also call the mock subscribe method
             if hasattr(self.external_connector, 'subscribe'):
                 # 确保subscribe方法是可等待的
                 if asyncio.iscoroutinefunction(self.external_connector.subscribe):
-                    await self.external_connector.subscribe(topic, qos)
+                    _ = await self.external_connector.subscribe(topic, qos)
                 else:
                     # For synchronous subscribe methods, just call directly
                     self.external_connector.subscribe(topic, qos)
@@ -1050,7 +1086,7 @@ class HSPConnector:
             if hasattr(self.external_connector, 'subscribe'):
                 # 确保subscribe方法是可等待的
                 if asyncio.iscoroutinefunction(self.external_connector.subscribe):
-                    await self.external_connector.subscribe(topic, qos)
+                    _ = await self.external_connector.subscribe(topic, qos)
                 else:
                     # For synchronous subscribe methods, just call directly
                     self.external_connector.subscribe(topic, qos)
@@ -1075,7 +1111,7 @@ class HSPConnector:
             except Exception as e:
                 print(f"DEBUG: HSPConnector._dispatch_fact_to_callbacks - Error creating HSPFactPayload: {e}")
                 import traceback
-                traceback.print_exc()
+                traceback.print_exc
                 return
 
             print(f"DEBUG: HSPConnector._dispatch_fact_to_callbacks - Iterating through {len(self._fact_callbacks)} callbacks")
@@ -1085,12 +1121,12 @@ class HSPConnector:
                 if asyncio.iscoroutinefunction(callback):
                     print(f"DEBUG: HSPConnector._dispatch_fact_to_callbacks - Callback #{i} is coroutine function")
                     try:
-                        await callback(fact_payload, sender_ai_id, message)
+                        _ = await callback(fact_payload, sender_ai_id, message)
                         print(f"DEBUG: HSPConnector._dispatch_fact_to_callbacks - Callback #{i} completed successfully")
                     except Exception as e:
                         print(f"DEBUG: HSPConnector._dispatch_fact_to_callbacks - Error in callback #{i}: {e}")
                         import traceback
-                        traceback.print_exc()
+                        traceback.print_exc
                 else:
                     print(f"DEBUG: HSPConnector._dispatch_fact_to_callbacks - Callback #{i} is regular function")
                     try:
@@ -1099,7 +1135,7 @@ class HSPConnector:
                     except Exception as e:
                         print(f"DEBUG: HSPConnector._dispatch_fact_to_callbacks - Error in callback #{i}: {e}")
                         import traceback
-                        traceback.print_exc()
+                        traceback.print_exc
             print(f"DEBUG: HSPConnector._dispatch_fact_to_callbacks - Finished calling {len(self._fact_callbacks)} callbacks")
         else:
             print(f"DEBUG: HSPConnector._dispatch_fact_to_callbacks - payload or sender_ai_id is None/empty")
@@ -1109,16 +1145,16 @@ class HSPConnector:
         if qos_params and qos_params.get("requires_ack"):
             ack_payload: HSPAcknowledgementPayload = {
                 "status": "received",
-                "ack_timestamp": datetime.now(timezone.utc).isoformat(),
+                "ack_timestamp": datetime.now(timezone.utc).isoformat,
                 "target_message_id": message.get("message_id", "")
             }
             ack_envelope: HSPMessageEnvelope = {
                 "hsp_envelope_version": "0.1",
-                "message_id": str(uuid.uuid4()),
+                "message_id": str(uuid.uuid4),
                 "correlation_id": message.get("message_id"),  # Use original message_id as correlation_id
                 "sender_ai_id": self.ai_id,
                 "recipient_ai_id": sender_ai_id or "unknown",
-                "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+                "timestamp_sent": datetime.now(timezone.utc).isoformat,
                 "message_type": "HSP::Acknowledgement_v0.1",
                 "protocol_version": "0.1",
                 "communication_pattern": "acknowledgement",
@@ -1126,7 +1162,7 @@ class HSPConnector:
                 "qos_parameters": {"requires_ack": False, "priority": "low"},
                 "routing_info": None,
                 "payload_schema_uri": get_schema_uri("HSP_Acknowledgement_v0.1.schema.json"),
-                "payload": ack_payload
+                "payload": dict(ack_payload)
             }
             # Publish ACK to the sender's ACK topic with correct prefix and QoS 1
             ack_topic = f"hsp/acks/{sender_ai_id or 'unknown'}"
@@ -1143,7 +1179,7 @@ class HSPConnector:
             for callback in self._opinion_callbacks:
                 self.logger.debug(f"Calling on_opinion_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(opinion_payload, sender_ai_id, message)
+                    _ = await callback(opinion_payload, sender_ai_id, message)
                 else:
                     callback(opinion_payload, sender_ai_id, message)
 
@@ -1152,16 +1188,16 @@ class HSPConnector:
             if qos_params and qos_params.get("requires_ack"):
                 ack_payload: HSPAcknowledgementPayload = {
                     "status": "received",
-                    "ack_timestamp": datetime.now(timezone.utc).isoformat(),
+                    "ack_timestamp": datetime.now(timezone.utc).isoformat,
                     "target_message_id": message.get("message_id", "")
                 }
                 ack_envelope: HSPMessageEnvelope = {
                     "hsp_envelope_version": "0.1",
-                    "message_id": str(uuid.uuid4()),
+                    "message_id": str(uuid.uuid4),
                     "correlation_id": message.get("message_id"),  # Use original message_id as correlation_id
                     "sender_ai_id": self.ai_id,
                     "recipient_ai_id": sender_ai_id,
-                    "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+                    "timestamp_sent": datetime.now(timezone.utc).isoformat,
                     "message_type": "HSP::Acknowledgement_v0.1",
                     "protocol_version": "0.1",
                     "communication_pattern": "acknowledgement",
@@ -1169,7 +1205,7 @@ class HSPConnector:
                     "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
                     "payload_schema_uri": get_schema_uri("HSP_Acknowledgement_v0.1.schema.json"),
-                    "payload": ack_payload
+                    "payload": dict(ack_payload)
                 }
                 # Publish ACK to the sender's ACK topic with correct prefix and QoS 1
                 ack_topic = f"hsp/acks/{sender_ai_id}"
@@ -1186,7 +1222,7 @@ class HSPConnector:
             for callback in self._capability_advertisement_callbacks:
                 self.logger.debug(f"Calling on_capability_advertisement_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(cap_payload, sender_ai_id, message)
+                    _ = await callback(cap_payload, sender_ai_id, message)
                 else:
                     callback(cap_payload, sender_ai_id, message)
 
@@ -1195,16 +1231,16 @@ class HSPConnector:
             if qos_params and qos_params.get("requires_ack"):
                 ack_payload: HSPAcknowledgementPayload = {
                     "status": "received",
-                    "ack_timestamp": datetime.now(timezone.utc).isoformat(),
+                    "ack_timestamp": datetime.now(timezone.utc).isoformat,
                     "target_message_id": message.get("message_id", "")
                 }
                 ack_envelope: HSPMessageEnvelope = {
                     "hsp_envelope_version": "0.1",
-                    "message_id": str(uuid.uuid4()),
+                    "message_id": str(uuid.uuid4),
                     "correlation_id": message.get("message_id"),  # Use original message_id as correlation_id
                     "sender_ai_id": self.ai_id,
                     "recipient_ai_id": sender_ai_id,
-                    "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+                    "timestamp_sent": datetime.now(timezone.utc).isoformat,
                     "message_type": "HSP::Acknowledgement_v0.1",
                     "protocol_version": "0.1",
                     "communication_pattern": "acknowledgement",
@@ -1212,7 +1248,7 @@ class HSPConnector:
                     "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
                     "payload_schema_uri": get_schema_uri("HSP_Acknowledgement_v0.1.schema.json"),
-                    "payload": ack_payload
+                    "payload": dict(ack_payload)
                 }
                 # Publish ACK to the sender's ACK topic with correct prefix and QoS 1
                 ack_topic = f"hsp/acks/{sender_ai_id}"
@@ -1229,7 +1265,7 @@ class HSPConnector:
             for callback in self._task_request_callbacks:
                 self.logger.debug(f"Calling on_task_request_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(task_request_payload, sender_ai_id, message)
+                    _ = await callback(task_request_payload, sender_ai_id, message)
                 else:
                     callback(task_request_payload, sender_ai_id, message)
 
@@ -1238,16 +1274,16 @@ class HSPConnector:
             if qos_params and qos_params.get("requires_ack"):
                 ack_payload: HSPAcknowledgementPayload = {
                     "status": "received",
-                    "ack_timestamp": datetime.now(timezone.utc).isoformat(),
+                    "ack_timestamp": datetime.now(timezone.utc).isoformat,
                     "target_message_id": message.get("message_id", "")
                 }
                 ack_envelope: HSPMessageEnvelope = {
                     "hsp_envelope_version": "0.1",
-                    "message_id": str(uuid.uuid4()),
+                    "message_id": str(uuid.uuid4),
                     "correlation_id": message.get("message_id"),  # Use original message_id as correlation_id
                     "sender_ai_id": self.ai_id,
                     "recipient_ai_id": sender_ai_id,
-                    "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+                    "timestamp_sent": datetime.now(timezone.utc).isoformat,
                     "message_type": "HSP::Acknowledgement_v0.1",
                     "protocol_version": "0.1",
                     "communication_pattern": "acknowledgement",
@@ -1255,7 +1291,7 @@ class HSPConnector:
                     "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
                     "payload_schema_uri": get_schema_uri("HSP_Acknowledgement_v0.1.schema.json"),
-                    "payload": ack_payload
+                    "payload": dict(ack_payload)
                 }
                 # Publish ACK to the sender's ACK topic with correct prefix and QoS 1
                 ack_topic = f"hsp/acks/{sender_ai_id}"
@@ -1272,7 +1308,7 @@ class HSPConnector:
             for callback in self._task_result_callbacks:
                 self.logger.debug(f"Calling on_task_result_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(task_result_payload, sender_ai_id, message)
+                    _ = await callback(task_result_payload, sender_ai_id, message)
                 else:
                     callback(task_result_payload, sender_ai_id, message)
 
@@ -1281,16 +1317,16 @@ class HSPConnector:
             if qos_params and qos_params.get("requires_ack"):
                 ack_payload: HSPAcknowledgementPayload = {
                     "status": "received",
-                    "ack_timestamp": datetime.now(timezone.utc).isoformat(),
+                    "ack_timestamp": datetime.now(timezone.utc).isoformat,
                     "target_message_id": message.get("message_id", "")
                 }
                 ack_envelope: HSPMessageEnvelope = {
                     "hsp_envelope_version": "0.1",
-                    "message_id": str(uuid.uuid4()),
+                    "message_id": str(uuid.uuid4),
                     "correlation_id": message.get("message_id"),  # Use original message_id as correlation_id
                     "sender_ai_id": self.ai_id,
                     "recipient_ai_id": sender_ai_id,
-                    "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+                    "timestamp_sent": datetime.now(timezone.utc).isoformat,
                     "message_type": "HSP::Acknowledgement_v0.1",
                     "protocol_version": "0.1",
                     "communication_pattern": "acknowledgement",
@@ -1298,7 +1334,7 @@ class HSPConnector:
                     "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
                     "payload_schema_uri": get_schema_uri("HSP_Acknowledgement_v0.1.schema.json"),
-                    "payload": ack_payload
+                    "payload": dict(ack_payload)
                 }
                 # Publish ACK to the sender's ACK topic with correct prefix and QoS 1
                 ack_topic = f"hsp/acks/{sender_ai_id}"
@@ -1319,7 +1355,7 @@ class HSPConnector:
             # Use correlation_id to match with pending ACKs
             if correlation_id and correlation_id in self._pending_acks:
                 ack_future = self._pending_acks[correlation_id]
-                if not ack_future.done():
+                if not ack_future.done:
                     ack_future.set_result(ack_payload)
                     self.logger.debug(f"Resolved pending ACK for correlation_id: {correlation_id}")
                     # Clean up tracking
@@ -1331,11 +1367,11 @@ class HSPConnector:
             for callback in self._acknowledgement_callbacks:
                 self.logger.debug(f"Calling on_acknowledgement_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(ack_payload, sender_ai_id, message)
+                    _ = await callback(ack_payload, sender_ai_id, message)
                 else:
                     callback(ack_payload, sender_ai_id, message)
 
-    def unsubscribe(self, topic: str, callback: Optional[Callable] = None):
+    def unsubscribe(self, topic: str, callback: Optional[Callable[[str], None]] = None):
         if callback is None:
             # Direct MQTT unsubscribe compatibility (best-effort in mock)
             if self.mock_mode and hasattr(self.external_connector, 'subscribed_topics'):
@@ -1369,30 +1405,33 @@ class HSPConnector:
         
         try:
             # Load fallback configuration
-            config_loader = get_config_loader()
-            if not config_loader.is_fallback_enabled():
+            config_loader = get_config_loader
+            if not config_loader.is_fallback_enabled:
                 self.logger.info("Fallback protocols disabled in configuration")
                 return
             
-            fallback_config = config_loader.get_fallback_config()
-            message_config = fallback_config.get("message", {})
+            fallback_config = config_loader.get_fallback_config
+            message_config = fallback_config.get("message", )
             
             # Set logging level for fallback protocols
-            logging_config = fallback_config.get("logging", {})
+            logging_config = fallback_config.get("logging", )
             if logging_config.get("level"):
                 fallback_logger = logging.getLogger("src.hsp.fallback")
                 fallback_logger.setLevel(getattr(logging, logging_config["level"]))
             
-            self.fallback_manager = get_fallback_manager()
+            self.fallback_manager = get_fallback_manager
             
             # Initialize protocols with the loaded configuration
             success = await self._initialize_protocols_with_config(fallback_config)
             
-            if success:
+            if success and self.fallback_manager:
                 self.fallback_initialized = True
                 # Register a handler for incoming fallback messages
-                for _, protocol in self.fallback_manager.protocols:
-                    protocol.register_handler("hsp_message", self._handle_fallback_message)
+                if self.fallback_manager:
+                    for item in self.fallback_manager.protocols:
+                        if isinstance(item, tuple) and len(item) == 2:
+                            _, protocol = item
+                            protocol.register_handler("hsp_message", self._handle_fallback_message)
                 
                 # Set the health check interval for the fallback manager
                 health_interval = message_config.get("health_check_interval", 30)
@@ -1411,19 +1450,19 @@ class HSPConnector:
         try:
             from .fallback.fallback_protocols import InMemoryProtocol, FileBasedProtocol, HTTPProtocol
             
-            protocols_config = config.get("protocols", {})
+            protocols_config = config.get("protocols", )
             
             # Initialize in-memory protocol
-            memory_config = protocols_config.get("memory", {})
-            if memory_config.get("enabled", True):
-                memory_protocol = InMemoryProtocol()
+            memory_config = protocols_config.get("memory", )
+            if memory_config.get("enabled", True) and self.fallback_manager:
+                memory_protocol = InMemoryProtocol
                 priority = memory_config.get("priority", 1)
                 self.fallback_manager.add_protocol(memory_protocol, priority=priority)
                 self.logger.debug(f"Added memory protocol with priority {priority}")
             
             # Initialize file-based protocol
-            file_config = protocols_config.get("file", {})
-            if file_config.get("enabled", True):
+            file_config = protocols_config.get("file", )
+            if file_config.get("enabled", True) and self.fallback_manager:
                 base_path = file_config.get("base_path", "data/fallback_comm")
                 file_protocol = FileBasedProtocol(base_path=base_path)
                 priority = file_config.get("priority", 2)
@@ -1431,8 +1470,8 @@ class HSPConnector:
                 self.logger.debug(f"Added file protocol with priority {priority}")
             
             # Initialize HTTP protocol
-            http_config = protocols_config.get("http", {})
-            if http_config.get("enabled", True):
+            http_config = protocols_config.get("http", )
+            if http_config.get("enabled", True) and self.fallback_manager:
                 host = http_config.get("host", "127.0.0.1")
                 # Check TESTING env var here as well
                 port = 0 if os.environ.get('TESTING') == 'true' else http_config.get("port", 8765)
@@ -1442,9 +1481,12 @@ class HSPConnector:
                 self.logger.debug(f"Added HTTP protocol with priority {priority}")
             
             # Initialize and start the fallback manager
-            if await self.fallback_manager.initialize():
-                await self.fallback_manager.start()
-                return True
+            if self.fallback_manager:
+                if await self.fallback_manager.initialize:
+                    _ = await self.fallback_manager.start
+                    return True
+                else:
+                    return False
             else:
                 return False
                 
@@ -1482,7 +1524,7 @@ class HSPConnector:
                     "envelope": envelope,
                     "qos": qos
                 },
-                timestamp=time.time(),
+                timestamp=time.time,
                 priority=priority,
                 correlation_id=envelope.get("correlation_id")
             )
@@ -1517,7 +1559,7 @@ class HSPConnector:
                 # Route the message to the internal bus, as if it was received from HSP
                 await self.message_bridge.handle_external_message(
                     payload.get("topic", ""), 
-                    json.dumps(envelope).encode('utf-8')
+                    json.dumps(envelope)
                 )
                 self.logger.debug(f"Processed fallback message: {message.id}")
         except Exception as e:
@@ -1535,7 +1577,7 @@ class HSPConnector:
         }
         
         if self.fallback_manager:
-            status["fallback_status"] = self.fallback_manager.get_status()
+            status["fallback_status"] = self.fallback_manager.get_status
         
         return status
 
@@ -1559,7 +1601,7 @@ class HSPConnector:
         # 检查fallback健康状态
         if self.fallback_manager:
             try:
-                fallback_status = self.fallback_manager.get_status()
+                fallback_status = self.fallback_manager.get_status
                 health["fallback_healthy"] = fallback_status.get("active_protocol") is not None
             except:
                 health["fallback_healthy"] = False
@@ -1574,9 +1616,9 @@ class HSPConnector:
         # 1. Re-advertise Capabilities
         if self._capability_provider_callback:
             try:
-                capabilities = self._capability_provider_callback()
+                capabilities = self._capability_provider_callback
                 for cap in capabilities:
-                    await self.publish_capability_advertisement(cap)
+                    _ = await self.publish_capability_advertisement(cap)
                 self.logger.info(f"Re-advertised {len(capabilities)} capabilities.")
             except Exception as e:
                 self.logger.error(f"Error re-advertising capabilities: {e}")
@@ -1584,76 +1626,19 @@ class HSPConnector:
             self.logger.warning("No capability provider registered. Cannot re-advertise capabilities.")
             # 在测试环境中，如果我们没有能力提供者回调，尝试手动广告能力
             # 这是为了确保测试中的代理能够正确广告其能力
-            if hasattr(self, '_test_capabilities') and self._test_capabilities:
-                for cap in self._test_capabilities:
-                    await self.publish_capability_advertisement(cap)
-                self.logger.info(f"Manually advertised {len(self._test_capabilities)} test capabilities.")
+            if hasattr(self, '_test_capabilities'):
+                test_capabilities = getattr(self, '_test_capabilities', )
+                if test_capabilities:
+                    for cap in test_capabilities:
+                        _ = await self.publish_capability_advertisement(cap)
+                    self.logger.info(f"Manually advertised {len(test_capabilities)} test capabilities.")
 
         # 2. (Future) Re-publish important facts or request state updates
         # This would involve more complex logic, potentially interacting with the HAMMemoryManager
         # or a dedicated state synchronization module.
         self.logger.info("Post-connection synchronization complete.")
 
-    async def _handle_hsp_connection_error(self, error: Exception, attempt: int):
-        """统一 HSP 连接错误处理机制"""
-        error_message = f"HSP connection error (attempt {attempt}): {error}"
-        self.logger.error(error_message)
-        raise HSPConnectionError(error_message)
-    # 添加subscribe方法以解决测试中的AttributeError
-    async def subscribe(self, topic: str, qos: int = 1):
-        """
-        Subscribe to a topic.
-        
-        Args:
-            topic: The topic to subscribe to
-            qos: Quality of Service level (default: 1)
-        """
-        if self.mock_mode:
-            # In mock mode, just add to subscribed topics
-            if not hasattr(self.external_connector, 'subscribed_topics'):
-                self.external_connector.subscribed_topics = set()
-            self.external_connector.subscribed_topics.add(topic)
-            # Also call the mock subscribe method
-            if hasattr(self.external_connector, 'subscribe'):
-                # 确保subscribe方法是可等待的
-                if asyncio.iscoroutinefunction(self.external_connector.subscribe):
-                    await self.external_connector.subscribe(topic, qos)
-                else:
-                    # For synchronous subscribe methods, just call directly
-                    self.external_connector.subscribe(topic, qos)
-        else:
-            if hasattr(self.external_connector, 'subscribe'):
-                # 确保subscribe方法是可等待的
-                if asyncio.iscoroutinefunction(self.external_connector.subscribe):
-                    await self.external_connector.subscribe(topic, qos)
-                else:
-                    # For synchronous subscribe methods, just call directly
-                    self.external_connector.subscribe(topic, qos)
-
-    async def subscribe_to_facts(self, callback: Callable):
-        """
-        订阅事实消息
-        
-        Args:
-            callback: 事实消息回调函数
-        """
-        print(f"DEBUG: HSPConnector.subscribe_to_facts - Callback: {callback}")
-        self.register_on_fact_callback(callback)
-        # 订阅事实主题
-        await self.subscribe("hsp/knowledge/facts/#")
-
-    async def subscribe_to_opinions(self, callback: Callable):
-        """
-        订阅观点消息
-        
-        Args:
-            callback: 观点消息回调函数
-        """
-        self.register_on_opinion_callback(callback)  # 修复：使用正确的回调注册方法
-        # 订阅观点主题
-        await self.subscribe("hsp/knowledge/opinions/#")
-
-    async def _handle_fact_message(self, fact_message: Dict[str, Any], sender_ai_id: str = None, full_envelope: Dict[str, Any] = None):
+    async def _handle_fact_message(self, fact_message: Dict[str, Any], sender_ai_id: Optional[str] = None, full_envelope: Optional[Dict[str, Any]] = None):
         """
         Handle a fact message.
         
@@ -1663,9 +1648,9 @@ class HSPConnector:
             full_envelope: The full message envelope (optional for compatibility).
         """
         # Dispatch the fact message to callbacks
-        await self._dispatch_fact_to_callbacks(fact_message)
+        _ = await self._dispatch_fact_to_callbacks(fact_message)
 
-    async def _handle_opinion_message(self, opinion_message: Dict[str, Any], sender_ai_id: str = None, full_envelope: Dict[str, Any] = None):
+    async def _handle_opinion_message(self, opinion_message: Dict[str, Any], sender_ai_id: Optional[str] = None, full_envelope: Optional[Dict[str, Any]] = None):
         """
         Handle an opinion message.
         
@@ -1675,4 +1660,4 @@ class HSPConnector:
             full_envelope: The full message envelope (optional for compatibility).
         """
         # Dispatch the opinion message to callbacks (treated as facts for now)
-        await self._dispatch_opinion_to_callbacks(opinion_message)
+        _ = await self._dispatch_opinion_to_callbacks(opinion_message)

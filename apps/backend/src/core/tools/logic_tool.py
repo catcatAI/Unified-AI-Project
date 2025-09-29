@@ -11,14 +11,14 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 from .logic_model.logic_parser_eval import LogicParserEval
-from core.managers.dependency_manager import dependency_manager
+from apps.backend.src.core.managers.dependency_manager import dependency_manager
 
 # --- Configuration for NN Model ---
 MODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
 CHAR_MAP_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_maps.json")
 
 class LogicTool:
-    def __init__(self):
+    def __init__(self) -> None:
         self.parser_evaluator = None
         self.nn_model_evaluator = None
         self.nn_char_to_token = None
@@ -28,7 +28,7 @@ class LogicTool:
         """Initializes and returns the LogicParserEval instance."""
         if self.parser_evaluator is None:
             logging.info("Initializing LogicParserEval for the first time...")
-            self.parser_evaluator = LogicParserEval()
+            self.parser_evaluator = LogicParserEval
         return self.parser_evaluator
 
     def _get_nn_model_evaluator(self):
@@ -73,7 +73,7 @@ class LogicTool:
         normalized_expression = expression_string.lower()
 
         # Try NN model first
-        nn_model, char_map = self._get_nn_model_evaluator()
+        nn_model, char_map = self._get_nn_model_evaluator
         if nn_model and char_map:
             logging.info(f"LogicTool: Evaluating '{normalized_expression}' using 'nn' method.")
             try:
@@ -86,14 +86,14 @@ class LogicTool:
         # Fallback to parser
         logging.info(f"LogicTool: Evaluating '{normalized_expression}' using 'parser' method.")
         try:
-            parser = self._get_parser_evaluator()
+            parser = self._get_parser_evaluator
             result = parser.evaluate(normalized_expression)
             return result if result is not None else "Error: Invalid expression for parser."
         except Exception as e:
             logging.error(f"Error during parser evaluation for '{normalized_expression}': {e}")
             return "Error: Invalid expression for parser."
 
-logic_tool_instance = LogicTool()
+logic_tool_instance = LogicTool
 evaluate_expression = logic_tool_instance.evaluate_expression
 
 if __name__ == '__main__':

@@ -3,7 +3,6 @@
 最终验证脚本 - 验证所有已知问题是否已解决
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -23,14 +22,13 @@ def setup_environment():
     print(f"源代码目录: {SRC_DIR}")
     print(f"Python路径: {sys.path[:3]}...")  # 只显示前3个路径
 
-def test_original_problem_imports():
+def test_original_problem_imports() -> None:
     """测试原始问题中的导入"""
     print("\n=== 测试原始问题中的导入 ===")
     
     # 测试问题1: HSPConnector导入问题
     print("\n1. 测试HSPConnector导入:")
     try:
-        from apps.backend.src.core.hsp.connector import HSPConnector
         print("✓ HSPConnector 导入成功")
     except ImportError as e:
         print(f"✗ HSPConnector 导入失败: {e}")
@@ -66,16 +64,11 @@ def test_original_problem_imports():
     
     return success_count == len(core_ai_modules)
 
-def test_core_services():
+def test_core_services() -> None:
     """测试核心服务导入"""
     print("\n=== 测试核心服务导入 ===")
     
     try:
-        from core_services import (
-            initialize_services, 
-            get_services, 
-            shutdown_services,
-            AgentManager,
             DialogueManager,
             HSPConnector
         )
@@ -90,12 +83,11 @@ def test_core_services():
         print(f"✗ 核心服务导入时出错: {e}")
         return False
 
-def test_main_api_server():
+def test_main_api_server() -> None:
     """测试主API服务器导入"""
     print("\n=== 测试主API服务器导入 ===")
     
     try:
-        from apps.backend.src.core.services.main_api_server import app
         print("✓ 主API服务器导入成功")
         return True
     except ImportError as e:
@@ -105,12 +97,12 @@ def test_main_api_server():
         print(f"✗ 主API服务器导入时出错: {e}")
         return False
 
-def test_dialogue_manager_hsp_connector():
+def test_dialogue_manager_hsp_connector() -> None:
     """测试DialogueManager中的HSPConnector"""
     print("\n=== 测试DialogueManager中的HSPConnector ===")
     
     try:
-        from apps.backend.src.ai.dialogue.dialogue_manager import DialogueManager
+        from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
         print("✓ DialogueManager 导入成功")
         
         # 检查HSPConnector是否在DialogueManager中正确定义
@@ -198,7 +190,7 @@ def run_comprehensive_import_test():
     
     return True
 
-def main():
+def main() -> None:
     """主函数"""
     print("=== Unified AI Project 最终验证脚本 ===")
     

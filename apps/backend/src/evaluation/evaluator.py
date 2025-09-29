@@ -3,7 +3,7 @@ class Evaluator:
     A class for evaluating models and tools.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def evaluate(self, model_or_tool, dataset):
@@ -60,10 +60,10 @@ class Evaluator:
             The performance of the model or tool.
         """
         import time
-        start_time = time.time()
+        start_time = time.time
         for input, _ in dataset:
             model_or_tool.evaluate(input)
-        end_time = time.time()
+        end_time = time.time
         return end_time - start_time
 
     def _calculate_robustness(self, model_or_tool, dataset):

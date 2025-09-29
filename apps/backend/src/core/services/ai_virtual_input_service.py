@@ -1,19 +1,17 @@
 # src/services/ai_virtual_input_service.py
 """
-AI Virtual Input Service (AVIS)
+_ = AI Virtual Input Service (AVIS)
 
 This service provides a simulated environment for the AI to interact with
-graphical user interfaces (GUIs) by sending virtual mouse and keyboard commands.
+_ = graphical user interfaces (GUIs) by sending virtual mouse and keyboard commands.
 It logs these actions and maintains a simplified virtual state.
 
-Future extensions may allow this service (under strict permissions) to
+_ = Future extensions may allow this service (under strict permissions) to
 control actual system input devices.
 """
 
 from typing import List, Optional, Dict, Any, Tuple
 
-from .types import (
-    VirtualInputPermissionLevel,
     VirtualMouseCommand,
     VirtualKeyboardCommand,
     VirtualMouseEventType,
@@ -32,12 +30,12 @@ class AIVirtualInputService:
     Operates primarily in a simulation mode, with future potential for actual control
     under strict permissions.
     """
-    def __init__(self, initial_mode: VirtualInputPermissionLevel = "simulation_only"):
+    def __init__(self, initial_mode: VirtualInputPermissionLevel = "simulation_only") -> None:
         """
         Initializes the AI Virtual Input Service.
 
         Args:
-            initial_mode (VirtualInputPermissionLevel): The starting operational mode.
+            _ = initial_mode (VirtualInputPermissionLevel): The starting operational mode.
                 Defaults to "simulation_only".
         """
         self.mode: VirtualInputPermissionLevel = initial_mode
@@ -47,10 +45,10 @@ class AIVirtualInputService:
         self.virtual_cursor_position: Tuple[float, float] = (0.5, 0.5) # Start at center
 
         self.virtual_focused_element_id: Optional[str] = None
-        self.action_log: List[Dict[str, Any]] = [] # Stores a log of commands processed
+        self.action_log: List[Dict[str, Any]] =  # Stores a log of commands processed
 
         # Holds the current state of the virtual UI elements
-        self.virtual_ui_elements: List[VirtualInputElementDescription] = []
+        self.virtual_ui_elements: List[VirtualInputElementDescription] = 
 
         print(f"AIVirtualInputService initialized in '{self.mode}' mode.")
         print(f"  Initial virtual cursor: {self.virtual_cursor_position}")
@@ -77,8 +75,8 @@ class AIVirtualInputService:
         (and their children).
 
         Args:
-            element_id (str): The ID of the element to find.
-            search_list (Optional[List[VirtualInputElementDescription]]): The list of elements
+            _ = element_id (str): The ID of the element to find.
+            _ = search_list (Optional[List[VirtualInputElementDescription]]): The list of elements
                 to search within. If None, searches self.virtual_ui_elements.
 
         Returns:
@@ -99,7 +97,7 @@ class AIVirtualInputService:
 
     def _log_action(self, command_type: str, command_details: Dict[str, Any], outcome: Dict[str, Any]) -> None:
         log_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat,
             "command_type": command_type,
             "command_details": command_details,
             "outcome": outcome,
@@ -249,7 +247,7 @@ class AIVirtualInputService:
             print(f"  AVIS Sim: Typing action processed. Text: '{text_to_type}', Target: '{self.virtual_focused_element_id or 'none'}', Value Updated: {type_details['value_updated']}.")
 
         elif action_type == "press_keys":
-            keys_pressed = command.get("keys", [])
+            keys_pressed = command.get("keys", )
             target_element = command.get("target_element_id")
 
             if target_element:
@@ -264,7 +262,7 @@ class AIVirtualInputService:
             print(f"  AVIS Sim: Key press logged: {keys_pressed} on focused '{self.virtual_focused_element_id or 'unknown'}'.")
 
         elif action_type == "special_key":
-            special_keys = command.get("keys", []) # Expecting a list, e.g., ["enter"]
+            special_keys = command.get("keys", ) # Expecting a list, e.g., ["enter"]
             key_name = special_keys[0] if special_keys else "unknown_special_key"
             target_element = command.get("target_element_id")
 
@@ -292,7 +290,7 @@ class AIVirtualInputService:
 
     def clear_action_log(self) -> None:
         """Clears the action log."""
-        self.action_log = []
+        self.action_log = 
         print("AVIS: Action log cleared.")
 
     def get_virtual_state(self) -> Dict[str, Any]:

@@ -10,17 +10,16 @@ import subprocess
 import psutil
 import json
 from pathlib import Path
-from typing import Dict, Any, List
 
 import sys
-sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend" / "src"))
+_ = sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend" / "src"))
 
 from optimization import get_performance_optimizer
 
 class PerformanceBenchmark:
     """性能基准测试器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.results = {}
         self.performance_optimizer = get_performance_optimizer()
     
@@ -62,13 +61,13 @@ class PerformanceBenchmark:
     
     def test_cache_performance(self) -> Dict[str, Any]:
         """测试缓存性能"""
-        print("测试缓存性能...")
+        _ = print("测试缓存性能...")
         
         # 创建一个模拟的耗时函数
         @self.performance_optimizer.cache_result
         def expensive_function(n: int) -> int:
             # 模拟耗时计算
-            time.sleep(0.1)
+            _ = time.sleep(0.1)
             return n * n
         
         # 第一次调用（无缓存）
@@ -84,17 +83,17 @@ class PerformanceBenchmark:
             'first_call_time': first_call_time,
             'second_call_time': second_call_time,
             'third_call_time': third_call_time,
-            'cache_hit_ratio': (first_call_time - second_call_time) / first_call_time * 100,
-            'cache_size': len(self.performance_optimizer.cache.cache)
+            _ = 'cache_hit_ratio': (first_call_time - second_call_time) / first_call_time * 100,
+            _ = 'cache_size': len(self.performance_optimizer.cache.cache)
         }
     
     async def test_parallel_processing_performance(self) -> Dict[str, Any]:
         """测试并行处理性能"""
-        print("测试并行处理性能...")
+        _ = print("测试并行处理性能...")
         
         # 创建模拟任务
         async def mock_task(n: int) -> int:
-            await asyncio.sleep(0.1)  # 模拟I/O操作
+            _ = await asyncio.sleep(0.1)  # 模拟I/O操作
             return n * 2
         
         # 串行执行
@@ -102,7 +101,7 @@ class PerformanceBenchmark:
         serial_results = []
         for i in range(10):
             result = await mock_task(i)
-            serial_results.append(result)
+            _ = serial_results.append(result)
         serial_time = time.time() - start_time
         
         # 并行执行
@@ -120,7 +119,7 @@ class PerformanceBenchmark:
     
     def test_script_execution_performance(self) -> Dict[str, Any]:
         """测试脚本执行性能"""
-        print("测试脚本执行性能...")
+        _ = print("测试脚本执行性能...")
         
         # 测试健康检查脚本
         script_path = Path(__file__).parent / "health_check.py"
@@ -129,7 +128,7 @@ class PerformanceBenchmark:
             start_time = time.time()
             try:
                 result = subprocess.run(
-                    [sys.executable, str(script_path)],
+                    _ = [sys.executable, str(script_path)],
                     capture_output=True,
                     text=True,
                     timeout=30
@@ -149,7 +148,7 @@ class PerformanceBenchmark:
             start_time = time.time()
             try:
                 result = subprocess.run(
-                    [sys.executable, str(optimized_script_path)],
+                    _ = [sys.executable, str(optimized_script_path)],
                     capture_output=True,
                     text=True,
                     timeout=30
@@ -173,7 +172,7 @@ class PerformanceBenchmark:
     
     async def run_all_benchmarks(self) -> Dict[str, Any]:
         """运行所有基准测试"""
-        print("开始性能基准测试...")
+        _ = print("开始性能基准测试...")
         
         results = {}
         
@@ -193,7 +192,7 @@ class PerformanceBenchmark:
             'memory_percent': metrics.memory_percent
         }
         
-        print("性能基准测试完成!")
+        _ = print("性能基准测试完成!")
         return results
     
     def save_results(self, results: Dict[str, Any], filename: str = "performance_benchmark_results.json") -> None:
@@ -207,7 +206,7 @@ class PerformanceBenchmark:
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(serializable_results, f, indent=2, ensure_ascii=False)
         
-        print(f"测试结果已保存到: {output_path}")
+        _ = print(f"测试结果已保存到: {output_path}")
     
     def _make_serializable(self, obj):
         """将对象转换为可序列化的格式"""
@@ -220,12 +219,12 @@ class PerformanceBenchmark:
         else:
             return str(obj)
 
-async def main():
+async def main() -> None:
     """主函数"""
     benchmark = PerformanceBenchmark()
     
     # 启动性能监控
-    await benchmark.performance_optimizer.start_monitoring()
+    _ = await benchmark.performance_optimizer.start_monitoring()
     
     try:
         # 运行所有基准测试
@@ -233,46 +232,46 @@ async def main():
         
         # 打印结果摘要
         print("\n" + "="*60)
-        print("性能基准测试结果摘要")
+        _ = print("性能基准测试结果摘要")
         print("="*60)
         
         # 缓存性能
         cache_perf = results['cache_performance']
-        print(f"\n缓存性能:")
-        print(f"  首次调用时间: {cache_perf['first_call_time']:.3f}s")
-        print(f"  缓存命中时间: {cache_perf['second_call_time']:.3f}s")
-        print(f"  缓存命中率提升: {cache_perf['cache_hit_ratio']:.1f}%")
-        print(f"  当前缓存大小: {cache_perf['cache_size']}")
+        _ = print(f"\n缓存性能:")
+        _ = print(f"  首次调用时间: {cache_perf['first_call_time']:.3f}s")
+        _ = print(f"  缓存命中时间: {cache_perf['second_call_time']:.3f}s")
+        _ = print(f"  缓存命中率提升: {cache_perf['cache_hit_ratio']:.1f}%")
+        _ = print(f"  当前缓存大小: {cache_perf['cache_size']}")
         
         # 并行处理性能
         parallel_perf = results['parallel_processing_performance']
-        print(f"\n并行处理性能:")
-        print(f"  串行执行时间: {parallel_perf['serial_execution_time']:.3f}s")
-        print(f"  并行执行时间: {parallel_perf['parallel_execution_time']:.3f}s")
-        print(f"  加速比: {parallel_perf['speedup_ratio']:.2f}x")
-        print(f"  并行效率: {parallel_perf['parallel_efficiency']:.1f}%")
+        _ = print(f"\n并行处理性能:")
+        _ = print(f"  串行执行时间: {parallel_perf['serial_execution_time']:.3f}s")
+        _ = print(f"  并行执行时间: {parallel_perf['parallel_execution_time']:.3f}s")
+        _ = print(f"  加速比: {parallel_perf['speedup_ratio']:.2f}x")
+        _ = print(f"  并行效率: {parallel_perf['parallel_efficiency']:.1f}%")
         
         # 脚本执行性能
         script_perf = results['script_execution_performance']
-        print(f"\n脚本执行性能:")
-        print(f"  原始脚本执行时间: {script_perf['original_script_time']:.3f}s")
-        print(f"  优化脚本执行时间: {script_perf['optimized_script_time']:.3f}s")
-        print(f"  性能提升: {script_perf['improvement_ratio']:.1f}%")
+        _ = print(f"\n脚本执行性能:")
+        _ = print(f"  原始脚本执行时间: {script_perf['original_script_time']:.3f}s")
+        _ = print(f"  优化脚本执行时间: {script_perf['optimized_script_time']:.3f}s")
+        _ = print(f"  性能提升: {script_perf['improvement_ratio']:.1f}%")
         
         # 系统资源
         system_metrics = results['system_metrics']
-        print(f"\n系统资源使用:")
-        print(f"  CPU使用率: {system_metrics['cpu_percent']:.1f}%")
-        print(f"  内存使用率: {system_metrics['memory_percent']:.1f}%")
+        _ = print(f"\n系统资源使用:")
+        _ = print(f"  CPU使用率: {system_metrics['cpu_percent']:.1f}%")
+        _ = print(f"  内存使用率: {system_metrics['memory_percent']:.1f}%")
         
         print("="*60)
         
         # 保存结果
-        benchmark.save_results(results)
+        _ = benchmark.save_results(results)
         
     finally:
         # 停止性能监控
-        await benchmark.performance_optimizer.stop_monitoring()
+        _ = await benchmark.performance_optimizer.stop_monitoring()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    _ = asyncio.run(main())

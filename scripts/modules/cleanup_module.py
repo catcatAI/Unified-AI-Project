@@ -3,16 +3,13 @@
 清理模块 - 处理项目清理相关的问题
 """
 
-import os
 import shutil
 import time
-import traceback
 import json
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional
 
 class CleanupModule:
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
         self.backend_root = project_root / "apps" / "backend"
         self.frontend_root = project_root / "apps" / "frontend-dashboard"
@@ -76,7 +73,7 @@ class CleanupModule:
         }
         
         self.cleanup_results = {
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            _ = "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "items_removed": 0,
             "space_freed": 0,
             "errors": [],
@@ -98,23 +95,23 @@ class CleanupModule:
                             # 检查修改时间
                             mod_time = time.time() - cache_dir.stat().st_mtime
                             if mod_time > self.retention_policies["cache"] * 86400:  # 转换为秒
-                                shutil.rmtree(cache_dir)
+                                _ = shutil.rmtree(cache_dir)
                                 count += 1
                                 self.cleanup_results["details"].append({
                                     "type": "cache_dir",
-                                    "path": str(cache_dir),
+                                    _ = "path": str(cache_dir),
                                     "action": "removed"
                                 })
-                                print(f"✓ 删除缓存目录: {cache_dir}")
+                                _ = print(f"✓ 删除缓存目录: {cache_dir}")
                         except Exception as e:
                             error_msg = f"删除缓存目录 {cache_dir} 失败: {str(e)}"
-                            self.cleanup_results["errors"].append(error_msg)
-                            print(f"✗ {error_msg}")
+                            _ = self.cleanup_results["errors"].append(error_msg)
+                            _ = print(f"✗ {error_msg}")
                             success = False
             except Exception as e:
                 error_msg = f"搜索缓存目录 {pattern} 失败: {str(e)}"
-                self.cleanup_results["errors"].append(error_msg)
-                print(f"✗ {error_msg}")
+                _ = self.cleanup_results["errors"].append(error_msg)
+                _ = print(f"✗ {error_msg}")
                 success = False
         
         return success, count
@@ -132,25 +129,25 @@ class CleanupModule:
                         try:
                             # 获取文件大小
                             file_size = temp_file.stat().st_size
-                            temp_file.unlink()
+                            _ = temp_file.unlink()
                             count += 1
                             self.cleanup_results["space_freed"] += file_size
                             self.cleanup_results["details"].append({
                                 "type": "temp_file",
-                                "path": str(temp_file),
+                                _ = "path": str(temp_file),
                                 "size": file_size,
                                 "action": "removed"
                             })
-                            print(f"✓ 删除临时文件: {temp_file}")
+                            _ = print(f"✓ 删除临时文件: {temp_file}")
                         except Exception as e:
                             error_msg = f"删除临时文件 {temp_file} 失败: {str(e)}"
-                            self.cleanup_results["errors"].append(error_msg)
-                            print(f"✗ {error_msg}")
+                            _ = self.cleanup_results["errors"].append(error_msg)
+                            _ = print(f"✗ {error_msg}")
                             success = False
             except Exception as e:
                 error_msg = f"搜索临时文件 {pattern} 失败: {str(e)}"
-                self.cleanup_results["errors"].append(error_msg)
-                print(f"✗ {error_msg}")
+                _ = self.cleanup_results["errors"].append(error_msg)
+                _ = print(f"✗ {error_msg}")
                 success = False
         
         return success, count
@@ -171,43 +168,43 @@ class CleanupModule:
                         try:
                             # 获取目录大小
                             dir_size = sum(f.stat().st_size for f in artifact_path.rglob('*') if f.is_file())
-                            shutil.rmtree(artifact_path)
+                            _ = shutil.rmtree(artifact_path)
                             count += 1
                             self.cleanup_results["space_freed"] += dir_size
                             self.cleanup_results["details"].append({
                                 "type": "build_artifact",
-                                "path": str(artifact_path),
+                                _ = "path": str(artifact_path),
                                 "size": dir_size,
                                 "action": "removed"
                             })
-                            print(f"✓ 删除构建目录: {artifact_path}")
+                            _ = print(f"✓ 删除构建目录: {artifact_path}")
                         except Exception as e:
                             error_msg = f"删除构建目录 {artifact_path} 失败: {str(e)}"
-                            self.cleanup_results["errors"].append(error_msg)
-                            print(f"✗ {error_msg}")
+                            _ = self.cleanup_results["errors"].append(error_msg)
+                            _ = print(f"✗ {error_msg}")
                             success = False
                     elif artifact_path.is_file():
                         try:
                             file_size = artifact_path.stat().st_size
-                            artifact_path.unlink()
+                            _ = artifact_path.unlink()
                             count += 1
                             self.cleanup_results["space_freed"] += file_size
                             self.cleanup_results["details"].append({
                                 "type": "build_artifact",
-                                "path": str(artifact_path),
+                                _ = "path": str(artifact_path),
                                 "size": file_size,
                                 "action": "removed"
                             })
-                            print(f"✓ 删除构建文件: {artifact_path}")
+                            _ = print(f"✓ 删除构建文件: {artifact_path}")
                         except Exception as e:
                             error_msg = f"删除构建文件 {artifact_path} 失败: {str(e)}"
-                            self.cleanup_results["errors"].append(error_msg)
-                            print(f"✗ {error_msg}")
+                            _ = self.cleanup_results["errors"].append(error_msg)
+                            _ = print(f"✗ {error_msg}")
                             success = False
             except Exception as e:
                 error_msg = f"搜索构建产物 {pattern} 失败: {str(e)}"
-                self.cleanup_results["errors"].append(error_msg)
-                print(f"✗ {error_msg}")
+                _ = self.cleanup_results["errors"].append(error_msg)
+                _ = print(f"✗ {error_msg}")
                 success = False
         
         return success, count
@@ -226,38 +223,38 @@ class CleanupModule:
                 for ide_path in self.project_root.rglob(pattern):
                     if ide_path.is_dir():
                         try:
-                            shutil.rmtree(ide_path)
+                            _ = shutil.rmtree(ide_path)
                             count += 1
                             self.cleanup_results["details"].append({
                                 "type": "ide_file",
-                                "path": str(ide_path),
+                                _ = "path": str(ide_path),
                                 "action": "removed"
                             })
-                            print(f"✓ 删除IDE目录: {ide_path}")
+                            _ = print(f"✓ 删除IDE目录: {ide_path}")
                         except Exception as e:
                             error_msg = f"删除IDE目录 {ide_path} 失败: {str(e)}"
-                            self.cleanup_results["errors"].append(error_msg)
-                            print(f"✗ {error_msg}")
+                            _ = self.cleanup_results["errors"].append(error_msg)
+                            _ = print(f"✗ {error_msg}")
                             success = False
                     elif ide_path.is_file():
                         try:
-                            ide_path.unlink()
+                            _ = ide_path.unlink()
                             count += 1
                             self.cleanup_results["details"].append({
                                 "type": "ide_file",
-                                "path": str(ide_path),
+                                _ = "path": str(ide_path),
                                 "action": "removed"
                             })
-                            print(f"✓ 删除IDE文件: {ide_path}")
+                            _ = print(f"✓ 删除IDE文件: {ide_path}")
                         except Exception as e:
                             error_msg = f"删除IDE文件 {ide_path} 失败: {str(e)}"
-                            self.cleanup_results["errors"].append(error_msg)
-                            print(f"✗ {error_msg}")
+                            _ = self.cleanup_results["errors"].append(error_msg)
+                            _ = print(f"✗ {error_msg}")
                             success = False
             except Exception as e:
                 error_msg = f"搜索IDE文件 {pattern} 失败: {str(e)}"
-                self.cleanup_results["errors"].append(error_msg)
-                print(f"✗ {error_msg}")
+                _ = self.cleanup_results["errors"].append(error_msg)
+                _ = print(f"✗ {error_msg}")
                 success = False
         
         return success, count
@@ -271,18 +268,18 @@ class CleanupModule:
             file_path = self.project_root / test_file
             if file_path.exists():
                 try:
-                    file_path.unlink()
+                    _ = file_path.unlink()
                     count += 1
                     self.cleanup_results["details"].append({
                         "type": "duplicate_test",
-                        "path": str(file_path),
+                        _ = "path": str(file_path),
                         "action": "removed"
                     })
-                    print(f"✓ 删除重复测试文件: {file_path}")
+                    _ = print(f"✓ 删除重复测试文件: {file_path}")
                 except Exception as e:
                     error_msg = f"删除重复测试文件 {file_path} 失败: {str(e)}"
-                    self.cleanup_results["errors"].append(error_msg)
-                    print(f"✗ {error_msg}")
+                    _ = self.cleanup_results["errors"].append(error_msg)
+                    _ = print(f"✗ {error_msg}")
                     success = False
         
         return success, count
@@ -296,7 +293,7 @@ class CleanupModule:
         try:
             # 查找所有日志文件
             log_files = list(self.project_root.rglob("*.log"))
-            log_files.extend(self.project_root.rglob("*.log.*"))
+            _ = log_files.extend(self.project_root.rglob("*.log.*"))
             
             current_time = time.time()
             cutoff_time = current_time - (retention_days * 86400)  # 转换为秒
@@ -307,25 +304,25 @@ class CleanupModule:
                         file_time = log_file.stat().st_mtime
                         if file_time < cutoff_time:
                             file_size = log_file.stat().st_size
-                            log_file.unlink()
+                            _ = log_file.unlink()
                             count += 1
                             self.cleanup_results["space_freed"] += file_size
                             self.cleanup_results["details"].append({
                                 "type": "log_file",
-                                "path": str(log_file),
+                                _ = "path": str(log_file),
                                 "size": file_size,
                                 "action": "removed"
                             })
-                            print(f"✓ 删除过期日志文件: {log_file}")
+                            _ = print(f"✓ 删除过期日志文件: {log_file}")
                 except Exception as e:
                     error_msg = f"删除日志文件 {log_file} 失败: {str(e)}"
-                    self.cleanup_results["errors"].append(error_msg)
-                    print(f"✗ {error_msg}")
+                    _ = self.cleanup_results["errors"].append(error_msg)
+                    _ = print(f"✗ {error_msg}")
                     success = False
         except Exception as e:
             error_msg = f"搜索日志文件失败: {str(e)}"
-            self.cleanup_results["errors"].append(error_msg)
-            print(f"✗ {error_msg}")
+            _ = self.cleanup_results["errors"].append(error_msg)
+            _ = print(f"✗ {error_msg}")
             success = False
         
         return success, count
@@ -364,18 +361,18 @@ class CleanupModule:
             self.cleanup_results["items_removed"] = total_items
             
             print(f"\n=== 清理完成 ===")
-            print(f"删除项目: {total_items}")
-            print(f"释放空间: {self.cleanup_results['space_freed']} 字节")
+            _ = print(f"删除项目: {total_items}")
+            _ = print(f"释放空间: {self.cleanup_results['space_freed']} 字节")
             
             if self.cleanup_results["errors"]:
-                print(f"错误数量: {len(self.cleanup_results['errors'])}")
+                _ = print(f"错误数量: {len(self.cleanup_results['errors'])}")
                 
             return True
             
         except Exception as e:
             error_msg = f"清理过程中出现错误: {str(e)}"
-            self.cleanup_results["errors"].append(error_msg)
-            print(f"✗ {error_msg}")
+            _ = self.cleanup_results["errors"].append(error_msg)
+            _ = print(f"✗ {error_msg}")
             return False
     
     def get_cleanup_summary(self) -> Dict:
@@ -383,9 +380,9 @@ class CleanupModule:
         return {
             "timestamp": self.cleanup_results["timestamp"],
             "items_removed": self.cleanup_results["items_removed"],
-            "space_freed_mb": round(self.cleanup_results["space_freed"] / (1024 * 1024), 2),
-            "errors_count": len(self.cleanup_results["errors"]),
-            "warnings_count": len(self.cleanup_results["warnings"])
+            _ = "space_freed_mb": round(self.cleanup_results["space_freed"] / (1024 * 1024), 2),
+            _ = "errors_count": len(self.cleanup_results["errors"]),
+            _ = "warnings_count": len(self.cleanup_results["warnings"])
         }
     
     def save_cleanup_report(self, report_path: Optional[Path] = None):
@@ -396,6 +393,6 @@ class CleanupModule:
         try:
             with open(report_path, 'w', encoding='utf-8') as f:
                 json.dump(self.cleanup_results, f, ensure_ascii=False, indent=2)
-            print(f"✓ 清理报告已保存到 {report_path}")
+            _ = print(f"✓ 清理报告已保存到 {report_path}")
         except Exception as e:
-            print(f"✗ 保存清理报告时出错: {e}")
+            _ = print(f"✗ 保存清理报告时出错: {e}")

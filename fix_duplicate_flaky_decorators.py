@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Tuple, Dict
 
 class DuplicateFlakyDecoratorFixer:
-    def __init__(self, project_root: str):
+    def __init__(self, project_root: str) -> None:
         self.project_root = Path(project_root)
         self.backend_tests_dir = self.project_root / "apps" / "backend" / "tests"
         
@@ -23,7 +23,7 @@ class DuplicateFlakyDecoratorFixer:
         for root, dirs, files in os.walk(self.backend_tests_dir):
             for file in files:
                 if file.startswith('test_') and file.endswith('.py'):
-                    test_files.append(Path(root) / file)
+                    _ = test_files.append(Path(root) / file)
         return test_files
     
     def find_duplicate_flaky_decorators(self, file_path: Path) -> List[Tuple[int, str]]:
@@ -35,7 +35,7 @@ class DuplicateFlakyDecoratorFixer:
         flaky_lines = []
         for i, line in enumerate(lines):
             if re.search(r'@pytest\.mark\.flaky', line):
-                flaky_lines.append((i, line.strip()))
+                _ = flaky_lines.append((i, line.strip()))
         
         # If there are more than one, it's potentially duplicate
         return flaky_lines if len(flaky_lines) > 1 else []
@@ -49,7 +49,7 @@ class DuplicateFlakyDecoratorFixer:
         flaky_line_indices = []
         for i, line in enumerate(lines):
             if re.search(r'@pytest\.mark\.flaky', line):
-                flaky_line_indices.append(i)
+                _ = flaky_line_indices.append(i)
         
         # If there's only one or none, no need to fix
         if len(flaky_line_indices) <= 1:
@@ -62,13 +62,13 @@ class DuplicateFlakyDecoratorFixer:
         # Remove from the end to avoid index shifting issues
         for i in reversed(flaky_line_indices[1:]):
             removed_line = lines[i]
-            lines.pop(i)
-            changes_made.append(f"Line {i+1}: Removed duplicate '{removed_line.strip()}'")
+            _ = lines.pop(i)
+            _ = changes_made.append(f"Line {i+1}: Removed duplicate '{removed_line.strip()}'")
             removed_count += 1
         
         # Write the fixed content back to the file
         with open(file_path, 'w', encoding='utf-8') as f:
-            f.writelines(lines)
+            _ = f.writelines(lines)
         
         return removed_count, changes_made
     
@@ -85,7 +85,7 @@ class DuplicateFlakyDecoratorFixer:
                 fixed_count, changes = self.fix_duplicate_decorators(test_file)
                 if fixed_count > 0:
                     total_fixed += fixed_count
-                    files_changed.append(str(test_file.relative_to(self.project_root)))
+                    _ = files_changed.append(str(test_file.relative_to(self.project_root)))
                     all_changes.append({
                         "file": str(test_file.relative_to(self.project_root)),
                         "changes": changes
@@ -99,46 +99,46 @@ class DuplicateFlakyDecoratorFixer:
     
     def run_fixer(self):
         """Run the duplicate flaky decorator fixer."""
-        print("Running duplicate flaky decorator fixer...")
+        _ = print("Running duplicate flaky decorator fixer...")
         
         # Process all files
         results = self.process_all_files()
         
         # Print summary
-        print(f"\nDuplicate Flaky Decorator Fixer Results:")
-        print(f"  Total decorators removed: {results['total_fixed']}")
-        print(f"  Files changed: {len(results['files_changed'])}")
+        _ = print(f"\nDuplicate Flaky Decorator Fixer Results:")
+        _ = print(f"  Total decorators removed: {results['total_fixed']}")
+        _ = print(f"  Files changed: {len(results['files_changed'])}")
         
         if results['detailed_changes']:
-            print(f"\nDetailed changes:")
+            _ = print(f"\nDetailed changes:")
             for change in results['detailed_changes']:
-                print(f"  {change['file']}:")
+                _ = print(f"  {change['file']}:")
                 for c in change['changes']:
-                    print(f"    - {c}")
+                    _ = print(f"    - {c}")
         
         # Save results to file
         import json
         with open('duplicate_flaky_decorator_fix_report.json', 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, default=str)
         
-        print(f"\nDetailed report saved to duplicate_flaky_decorator_fix_report.json")
+        _ = print(f"\nDetailed report saved to duplicate_flaky_decorator_fix_report.json")
         return results
 
-def main():
+def main() -> None:
     """Main function to run the duplicate flaky decorator fixer."""
     # Get project root (assuming script is run from project root)
-    project_root = os.getcwd()
+    project_root: str = os.getcwd()
     
     # Create and run fixer
     fixer = DuplicateFlakyDecoratorFixer(project_root)
     results = fixer.run_fixer()
     
     if results["total_fixed"] > 0:
-        print("\n✅ Duplicate flaky decorator fixer completed successfully")
+        _ = print("\n✅ Duplicate flaky decorator fixer completed successfully")
         return 0
     else:
-        print("\nℹ️  No duplicate flaky decorators found")
+        _ = print("\nℹ️  No duplicate flaky decorators found")
         return 0
 
 if __name__ == "__main__":
-    exit(main())
+    _ = exit(main())

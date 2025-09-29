@@ -6,14 +6,13 @@
 
 import psutil
 import logging
-import time
 import asyncio
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from dataclasses import dataclass, asdict
 import json
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 @dataclass
 class SystemMetrics:
@@ -33,16 +32,16 @@ class SystemMetrics:
 class SystemMonitor:
     """系统监控器"""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        self.config = config or {}
-        self.metrics_history: List[SystemMetrics] = []
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+        self.config = config or 
+        self.metrics_history: List[SystemMetrics] = 
         self.max_history_size = self.config.get('max_history_size', 1000)
         self.monitoring_interval = self.config.get('monitoring_interval', 5)  # 秒
         self.is_monitoring = False
-        self._last_net_io = psutil.net_io_counters()
+        self._last_net_io = psutil.net_io_counters
         
         # GPU监控初始化
-        self.gpu_available = self._init_gpu_monitoring()
+        self.gpu_available = self._init_gpu_monitoring
         
         logger.info("系统监控器初始化完成")
     
@@ -50,7 +49,7 @@ class SystemMonitor:
         """初始化GPU监控"""
         try:
             import pynvml
-            pynvml.nvmlInit()
+            pynvml.nvmlInit
             logger.info("GPU监控初始化成功")
             return True
         except ImportError:
@@ -63,12 +62,12 @@ class SystemMonitor:
     def get_gpu_info(self) -> List[Dict[str, Any]]:
         """获取GPU信息"""
         if not self.gpu_available:
-            return []
+            return 
         
         try:
             import pynvml
-            gpu_info = []
-            device_count = pynvml.nvmlDeviceGetCount()
+            gpu_info = 
+            device_count = pynvml.nvmlDeviceGetCount
             
             for i in range(device_count):
                 handle = pynvml.nvmlDeviceGetHandleByIndex(i)
@@ -90,7 +89,7 @@ class SystemMonitor:
             return gpu_info
         except Exception as e:
             logger.warning(f"获取GPU信息失败: {e}")
-            return []
+            return 
     
     def collect_metrics(self) -> SystemMetrics:
         """收集系统指标"""
@@ -98,7 +97,7 @@ class SystemMonitor:
         cpu_percent = psutil.cpu_percent(interval=1)
         
         # 内存使用情况
-        memory = psutil.virtual_memory()
+        memory = psutil.virtual_memory
         memory_percent = memory.percent
         memory_available_gb = memory.available / (1024**3)
         
@@ -107,16 +106,16 @@ class SystemMonitor:
         disk_usage_percent = disk.used / disk.total * 100
         
         # 网络IO
-        net_io = psutil.net_io_counters()
+        net_io = psutil.net_io_counters
         bytes_sent = net_io.bytes_sent - self._last_net_io.bytes_sent
         bytes_recv = net_io.bytes_recv - self._last_net_io.bytes_recv
         self._last_net_io = net_io
         
         # GPU信息
-        gpu_info = self.get_gpu_info()
+        gpu_info = self.get_gpu_info
         
         metrics = SystemMetrics(
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now.isoformat,
             cpu_percent=cpu_percent,
             memory_percent=memory_percent,
             memory_available_gb=memory_available_gb,
@@ -135,7 +134,7 @@ class SystemMonitor:
     
     def get_current_load(self) -> Dict[str, Any]:
         """获取当前系统负载"""
-        metrics = self.collect_metrics()
+        metrics = self.collect_metrics
         
         load_info = {
             'cpu_load': metrics.cpu_percent,
@@ -153,7 +152,7 @@ class SystemMonitor:
                     'memory_utilization': gpu['memory_utilization']
                 }
                 for gpu in metrics.gpu_info
-            ] if metrics.gpu_info else []
+            ] if metrics.gpu_info else 
         }
         
         return load_info
@@ -161,7 +160,7 @@ class SystemMonitor:
     def get_resource_recommendations(self) -> Dict[str, Any]:
         """获取资源使用建议"""
         if not self.metrics_history:
-            return {}
+            return 
         
         # 计算平均负载
         recent_metrics = self.metrics_history[-10:]  # 最近10个指标
@@ -169,10 +168,10 @@ class SystemMonitor:
         avg_memory = sum(m.memory_percent for m in recent_metrics) / len(recent_metrics)
         
         recommendations = {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now.isoformat,
             'avg_cpu_load': avg_cpu,
             'avg_memory_load': avg_memory,
-            'recommendations': []
+            'recommendations': 
         }
         
         # CPU负载建议
@@ -212,7 +211,7 @@ class SystemMonitor:
         
         while self.is_monitoring:
             try:
-                metrics = self.collect_metrics()
+                metrics = self.collect_metrics
                 logger.debug(f"系统指标: CPU={metrics.cpu_percent:.1f}%, 内存={metrics.memory_percent:.1f}%")
                 
                 # 检查是否需要发出警告
@@ -222,10 +221,10 @@ class SystemMonitor:
                 if metrics.memory_percent > 90:
                     logger.warning(f"内存使用率过高: {metrics.memory_percent:.1f}%")
                 
-                await asyncio.sleep(self.monitoring_interval)
+                _ = await asyncio.sleep(self.monitoring_interval)
             except Exception as e:
                 logger.error(f"监控过程中发生错误: {e}")
-                await asyncio.sleep(self.monitoring_interval)
+                _ = await asyncio.sleep(self.monitoring_interval)
     
     def stop_monitoring(self):
         """停止监控"""
@@ -234,13 +233,13 @@ class SystemMonitor:
     
     def get_metrics_history(self, limit: int = 100) -> List[Dict[str, Any]]:
         """获取历史指标数据"""
-        return [m.to_dict() for m in self.metrics_history[-limit:]]
+        return [m.to_dict for m in self.metrics_history[-limit:]]
     
     def export_metrics_to_file(self, filepath: str):
         """导出指标数据到文件"""
         try:
             with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump([m.to_dict() for m in self.metrics_history], f, ensure_ascii=False, indent=2)
+                json.dump([m.to_dict for m in self.metrics_history], f, ensure_ascii=False, indent=2)
             logger.info(f"指标数据已导出到: {filepath}")
         except Exception as e:
             logger.error(f"导出指标数据失败: {e}")
@@ -248,19 +247,19 @@ class SystemMonitor:
 if __name__ == "__main__":
     # 测试监控器
     logging.basicConfig(level=logging.INFO)
-    monitor = SystemMonitor()
+    monitor = SystemMonitor
     
     try:
         # 收集一次指标
-        metrics = monitor.collect_metrics()
+        metrics = monitor.collect_metrics
         print(f"系统指标: {metrics}")
         
         # 获取负载信息
-        load = monitor.get_current_load()
+        load = monitor.get_current_load
         print(f"当前负载: {load}")
         
         # 获取建议
-        recommendations = monitor.get_resource_recommendations()
+        recommendations = monitor.get_resource_recommendations
         print(f"资源建议: {recommendations}")
         
     except Exception as e:

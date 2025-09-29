@@ -8,51 +8,51 @@ from pathlib import Path
 
 # Add the CLI directory to the path
 cli_path = Path(__file__).parent.parent / "cli"
-sys.path.insert(0, str(cli_path))
+_ = sys.path.insert(0, str(cli_path))
 
-def test_rovo_cli_import():
+def test_rovo_cli_import() -> None:
     """Test that the rovo CLI command can be imported"""
-    print("Testing Rovo CLI command import...")
+    _ = print("Testing Rovo CLI command import...")
     
     try:
         # Try to import the rovo CLI command
         from commands.rovo import rovo
-        print("Rovo CLI command import test passed!")
+        _ = print("Rovo CLI command import test passed!")
         return True
     except Exception as e:
-        print(f"Error during Rovo CLI command import test: {e}")
+        _ = print(f"Error during Rovo CLI command import test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def test_cli_command_structure():
+def test_cli_command_structure() -> None:
     """Test the structure of the CLI commands"""
-    print("Testing CLI command structure...")
+    _ = print("Testing CLI command structure...")
     
     try:
         from commands.rovo import rovo
         
         # Check that the rovo group exists
-        assert hasattr(rovo, 'commands')
+        _ = assert hasattr(rovo, 'commands')
         
         # Check that expected commands exist
         expected_commands = ['create_issue', 'generate_docs', 'analyze_code', 'status']
         for cmd in expected_commands:
             assert cmd in rovo.commands, f"Command {cmd} not found in rovo commands"
         
-        print("CLI command structure test passed!")
+        _ = print("CLI command structure test passed!")
         return True
     except Exception as e:
-        print(f"Error during CLI command structure test: {e}")
+        _ = print(f"Error during CLI command structure test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def main():
+def main() -> None:
     """Main test function"""
-    print("Rovo Dev CLI Commands Test")
+    _ = print("Rovo Dev CLI Commands Test")
     print("=" * 30)
-    print()
+    _ = print()
     
     # Run all tests
     try:
@@ -60,15 +60,15 @@ def main():
         test2 = test_cli_command_structure()
         
         if test1 and test2:
-            print("\nAll CLI tests completed successfully!")
+            _ = print("\nAll CLI tests completed successfully!")
             return True
         else:
-            print("\nSome CLI tests failed!")
+            _ = print("\nSome CLI tests failed!")
             return False
     except Exception as e:
-        print(f"Error during CLI testing: {e}")
+        _ = print(f"Error during CLI testing: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
 if __name__ == "__main__":

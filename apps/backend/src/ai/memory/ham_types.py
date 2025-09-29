@@ -1,8 +1,15 @@
-from typing import Optional, List, Dict, Any
-from datetime import datetime
+"""
+HAM (Hierarchical Associative Memory) Types
+Defines the core data structures and types used by the HAM system.
+"""
 
-class HAMMemory:
-    def __init__(self, id: str, content: str, timestamp: datetime, metadata: Optional[Dict[str, Any]] = None):
+from datetime import datetime
+from typing import Any, Dict, List, Optional, TypedDict, Union
+from typing_extensions import NotRequired
+
+
+class HAMDataPackage:
+    def __init__(self, id: str, content: str, timestamp: datetime, metadata: Optional[Dict[str, Any]] = None) -> None:
         self.id = id
         self.content = content
         self.timestamp = timestamp
@@ -12,7 +19,7 @@ class HAMMemory:
         return {
             "id": self.id,
             "content": self.content,
-            "timestamp": self.timestamp.isoformat(),
+            "timestamp": self.timestamp.isoformat,
             "metadata": self.metadata
         }
 
@@ -26,8 +33,35 @@ class HAMMemory:
         )
 
 
+class HAMDataPackageInternal(TypedDict):
+    """Internal representation of a HAM data package with all required fields."""
+    timestamp: str
+    data_type: str
+    encrypted_package: bytes
+    metadata: Dict[str, Any]
+    relevance: float
+    protected: bool
+
+
+class HAMDataPackageExternal(TypedDict):
+    """External representation of a HAM data package with optional fields."""
+    timestamp: str
+    data_type: str
+    metadata: NotRequired[Dict[str, Any]]
+    relevance: NotRequired[float]
+    protected: NotRequired[bool]
+
+
+class HAMMemory(TypedDict):
+    """Representation of a HAM memory item."""
+    id: str
+    content: str
+    timestamp: datetime
+    metadata: NotRequired[Dict[str, Any]]
+
+
 class HAMRecallResult:
-    def __init__(self, memory_id: str, content: str, score: float, timestamp: datetime, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, memory_id: str, content: str, score: float, timestamp: datetime, metadata: Optional[Dict[str, Any]] = None) -> None:
         self.memory_id = memory_id
         self.content = content
         self.score = score
@@ -39,7 +73,7 @@ class HAMRecallResult:
             "memory_id": self.memory_id,
             "content": self.content,
             "score": self.score,
-            "timestamp": self.timestamp.isoformat(),
+            "timestamp": self.timestamp.isoformat,
             "metadata": self.metadata
         }
 
@@ -52,6 +86,59 @@ class HAMRecallResult:
             timestamp=datetime.fromisoformat(data["timestamp"]),
             metadata=data.get("metadata")
         )
+
+
+class MemoryMetadata:
+    def __init__(self, created_at: str, updated_at: str, importance_score: float, 
+                 tags: List[str], data_type: str):
+        self.created_at = created_at
+        self.updated_at = updated_at
+        self.importance_score = importance_score
+        self.tags = tags
+        self.data_type = data_type
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "importance_score": self.importance_score,
+            "tags": self.tags,
+            "data_type": self.data_type
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        return cls(
+            created_at=data["created_at"],
+            updated_at=data["updated_at"],
+            importance_score=data["importance_score"],
+            tags=data["tags"],
+            data_type=data["data_type"]
+        )
+
+
+class MemoryItem:
+    def __init__(self, id: str, content: str, metadata: MemoryMetadata) -> None:
+        self.id = id
+        self.content = content
+        self.metadata = metadata
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "content": self.content,
+            "metadata": self.metadata.to_dict if self.metadata else None
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        metadata = MemoryMetadata.from_dict(data["metadata"]) if data.get("metadata") else None
+        return cls(
+            id=data["id"],
+            content=data["content"],
+            metadata=metadata
+        )
+
 
 class DialogueMemoryEntryMetadata:
     def __init__(self,
@@ -92,7 +179,7 @@ class DialogueMemoryEntryMetadata:
 
     def to_dict(self) -> Dict[str, Any]:
         data = {
-            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+            "timestamp": self.timestamp.isoformat if self.timestamp else None,
             "speaker": self.speaker,
             "dialogue_id": self.dialogue_id,
             "turn_id": self.turn_id,
@@ -115,7 +202,7 @@ class DialogueMemoryEntryMetadata:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
         timestamp = datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else None
-        kwargs = {k: v for k, v in data.items() if k not in [
+        kwargs = {k: v for k, v in data.items if k not in [
             "timestamp", "speaker", "dialogue_id", "turn_id", "language",
             "sentiment", "emotion", "topic", "keywords", "summary",
             "context_history", "action_taken", "is_sensitive", "source_module",

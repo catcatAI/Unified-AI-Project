@@ -10,8 +10,8 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 # Global instances for models and their errors
-_loaded_models = {}
-_model_load_errors = {}
+_loaded_models = 
+_model_load_errors = 
 
 def _get_project_root():
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -22,8 +22,8 @@ def load_math_model():
     if model_name in _loaded_models or model_name in _model_load_errors:
         return _loaded_models.get(model_name)
 
-    MODEL_WEIGHTS_PATH = os.path.join(_get_project_root(), "data/models/arithmetic_model.keras")
-    CHAR_MAPS_PATH = os.path.join(_get_project_root(), "data/models/arithmetic_char_maps.json")
+    MODEL_WEIGHTS_PATH = os.path.join(_get_project_root, "data/models/arithmetic_model.keras")
+    CHAR_MAPS_PATH = os.path.join(_get_project_root, "data/models/arithmetic_char_maps.json")
 
     try:
         # 修复导入路径
@@ -56,12 +56,12 @@ def load_logic_nn_model():
     if model_name in _loaded_models or model_name in _model_load_errors:
         return _loaded_models.get(model_name), _loaded_models.get("logic_nn_char_to_token")
 
-    MODEL_LOAD_PATH = os.path.join(_get_project_root(), "data/models/logic_model_nn.keras")
-    CHAR_MAP_LOAD_PATH = os.path.join(_get_project_root(), "data/models/logic_model_char_maps.json")
+    MODEL_LOAD_PATH = os.path.join(_get_project_root, "data/models/logic_model_nn.keras")
+    CHAR_MAP_LOAD_PATH = os.path.join(_get_project_root, "data/models/logic_model_char_maps.json")
 
     try:
         # Assuming dependency_manager is available globally or passed in if needed
-        # from apps.backend.src.core_ai.dependency_manager import is_dependency_available
+        # from dependency_manager import is_dependency_available
         # if not is_dependency_available('tensorflow'):
         #     raise ImportError("TensorFlow not available through dependency manager")
 

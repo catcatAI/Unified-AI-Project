@@ -10,9 +10,6 @@ import ast
 import json
 import argparse
 from pathlib import Path
-from typing import List, Tuple, Dict, Set, Optional
-from dataclasses import dataclass, asdict
-from datetime import datetime
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -34,7 +31,7 @@ class FixReport:
 class AdvancedImportFixer:
     """增强版导入修复器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.project_root = PROJECT_ROOT
         self.src_dir = SRC_DIR
         self.backup_dir = BACKUP_DIR
@@ -95,7 +92,7 @@ class AdvancedImportFixer:
             r"import\s+apps\.backend\.src\.game\.": "import ",
             
             # 修正相对导入路径
-            r"from\s+\.\.core_ai\.": "from apps.backend.src.ai.",
+            r"from\s+\.\.core_ai\.": "from apps.backend.src.core_ai.",
             r"from\s+\.\.core\.": "from core.",
             r"from\s+\.\.services\.": "from apps.backend.src.core.services.",
             r"from\s+\.\.hsp\.": "from apps.backend.src.core.hsp.",
@@ -312,10 +309,10 @@ class AdvancedImportFixer:
             import subprocess
             result = subprocess.run([
                 "python", "-c", 
-                "import sys; sys.path.insert(0, '.'); "
+                _ = "import sys; sys.path.insert(0, '.'); "
                 "from core_services import initialize_services; "
-                "from apps.backend.src.ai.agent_manager import AgentManager; "
-                "print('关键模块导入测试通过')"
+                "from apps.backend.src.core_ai.agent_manager import AgentManager; "
+                _ = "print('关键模块导入测试通过')"
             ], cwd=self.project_root, capture_output=True, text=True, timeout=30)
             
             if result.returncode == 0:
@@ -340,7 +337,7 @@ class AdvancedImportFixer:
             os.chdir(original_cwd)
             return False
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="增强版自动修复工具")
     parser.add_argument("--test", action="store_true", help="修复后运行测试")
     parser.add_argument("--no-backup", action="store_true", help="不创建备份")

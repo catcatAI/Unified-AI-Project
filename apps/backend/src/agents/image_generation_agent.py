@@ -1,8 +1,5 @@
 import asyncio
 import uuid
-from typing import Dict, Any, List
-
-from .base_agent import BaseAgent
 from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 from ..tools.tool_dispatcher import ToolDispatcher
 
@@ -10,7 +7,7 @@ class ImageGenerationAgent(BaseAgent):
     """
     A specialized agent for generating images from textual prompts.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_create_image_v1.0",
@@ -56,16 +53,16 @@ class ImageGenerationAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            self.hsp_connector.send_task_result(result_payload, callback_topic)
+            await self.hsp_connector.send_task_result(result_payload, callback_topic, request_id)
             print(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:image_generation_agent_{uuid.uuid4().hex[:6]}"
         agent = ImageGenerationAgent(agent_id=agent_id)
         await agent.start()
 
     try:
-        asyncio.run(main())
+        asyncio.run(main)
     except KeyboardInterrupt:
         print("\nImageGenerationAgent manually stopped.")

@@ -2,9 +2,9 @@ import os
 import json
 import numpy as np
 import sys
-from typing import Dict, Any, Optional, List
 from datetime import datetime
 from dataclasses import dataclass
+from typing import Optional, Dict, List
 
 # Add src directory to sys.path for dependency manager import
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -13,8 +13,8 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from ai.dependency_manager import dependency_manager
-from ai.compression.alpha_deep_model import DNADataChain
+# from ai.dependency_manager import dependency_manager
+# from ai.compression.alpha_deep_model import DNADataChain
 
 @dataclass
 class LogicModelResult:
@@ -100,7 +100,7 @@ def _tensorflow_is_available():
     return tf is not None
 
 # DO NOT attempt to import TensorFlow on module load. It will be loaded lazily.
-# _ensure_tensorflow_is_imported()
+# _ensure_tensorflow_is_imported
 
 # Define paths (relative to project root, assuming this script is in src/tools/logic_model)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -110,23 +110,23 @@ MODEL_SAVE_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
 TRAIN_DATA_PATH = os.path.join(PROJECT_ROOT, "data/raw_datasets/logic_train.json")
 
 class LogicNNModel:
-    def __init__(self, max_seq_len, vocab_size, embedding_dim=32, lstm_units=64):
-        if not _ensure_tensorflow_is_imported():
+    def __init__(self, max_seq_len, vocab_size, embedding_dim=32, lstm_units=64) -> None:
+        if not _ensure_tensorflow_is_imported:
             print("LogicNNModel: TensorFlow not available. This instance will be non-functional.")
             self.model = None
-            self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
-            self.prediction_history: List[LogicModelResult] = []  # 预测历史记录
+            self.dna_chains =   # DNA数据链存储
+            self.prediction_history =   # 预测历史记录
             return
         self.max_seq_len = max_seq_len
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
         self.lstm_units = lstm_units
         self.model = None # Build lazily
-        self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
-        self.prediction_history: List[LogicModelResult] = []  # 预测历史记录
+        self.dna_chains =   # DNA数据链存储
+        self.prediction_history =   # 预测历史记录
 
     def _build_model(self):
-        if not _tensorflow_is_available():
+        if not _tensorflow_is_available:
             print("Cannot build model: TensorFlow not available.")
             return
         input_layer = Input(shape=(self.max_seq_len,), name="input_proposition")
@@ -143,7 +143,7 @@ class LogicNNModel:
         self.model = model
 
     def train(self, X_train, y_train, X_val, y_val, epochs=20, batch_size=32):
-        if not _tensorflow_is_available() or self.model is None:
+        if not _tensorflow_is_available or self.model is None:
             print("Cannot train model: TensorFlow not available or model not built.")
             return None
         print(f"Starting training: epochs={epochs}, batch_size={batch_size}")
@@ -156,11 +156,11 @@ class LogicNNModel:
         return history
 
     def predict(self, proposition_str, char_to_token, dna_chain_id: Optional[str] = None):
-        if not _tensorflow_is_available() or self.model is None:
+        if not _tensorflow_is_available or self.model is None:
             print("Cannot predict: TensorFlow not available or model not built.")
             return False # Default/dummy return
         
-        start_time = datetime.now()
+        start_time = datetime.now
         
         tokens = [char_to_token.get(char, char_to_token.get('<UNK>', 0)) for char in proposition_str]
         padded_sequence = pad_sequences([tokens], maxlen=self.max_seq_len, padding='post', truncating='post')
@@ -171,8 +171,8 @@ class LogicNNModel:
         
         result_bool = bool(predicted_class)
         
-        end_time = datetime.now()
-        processing_time = (end_time - start_time).total_seconds()
+        end_time = datetime.now
+        processing_time = (end_time - start_time).total_seconds
         
         # Create result object
         result = LogicModelResult(
@@ -197,7 +197,7 @@ class LogicNNModel:
 
     def get_prediction_history(self) -> List[LogicModelResult]:
         """获取预测历史记录"""
-        return self.prediction_history.copy()
+        return self.prediction_history.copy
 
     def create_dna_chain(self, chain_id: str) -> DNADataChain:
         """创建新的DNA数据链"""
@@ -210,7 +210,7 @@ class LogicNNModel:
         return self.dna_chains.get(chain_id)
 
     def save_model(self, path):
-        if not _tensorflow_is_available() or self.model is None:
+        if not _tensorflow_is_available or self.model is None:
             print("Cannot save model: TensorFlow not available or model not built.")
             return
         self.model.save(path)
@@ -218,7 +218,7 @@ class LogicNNModel:
 
     @classmethod
     def load_model(cls, model_path, char_maps_path):
-        if not _ensure_tensorflow_is_imported():
+        if not _ensure_tensorflow_is_imported:
             print("Cannot load model: TensorFlow not available.")
             return None
         with open(char_maps_path, 'r') as f:
@@ -238,16 +238,16 @@ class LogicNNModel:
 
 # --- Helper functions for data preparation ---
 def get_logic_char_token_maps(dataset_path):
-    if not _tensorflow_is_available():
+    if not _tensorflow_is_available:
         print("Cannot get char maps: TensorFlow not available.")
         return None, None, None, None
-    propositions = []
+    propositions = 
     with open(dataset_path, 'r') as f:
         data = json.load(f)
         for item in data:
             propositions.append(item['proposition'])
 
-    chars = set()
+    chars = set
     for prop in propositions:
         for char in prop:
             chars.add(char)
@@ -264,12 +264,12 @@ def get_logic_char_token_maps(dataset_path):
 
 def preprocess_logic_data(dataset_path, char_to_token, max_len, num_classes=2):
     """Preprocess logic data for training."""
-    if not _tensorflow_is_available():
+    if not _tensorflow_is_available:
         print("Cannot preprocess data: TensorFlow not available.")
         return None, None
     
-    propositions = []
-    labels = []
+    propositions = 
+    labels = 
     
     with open(dataset_path, 'r') as f:
         data = json.load(f)
@@ -278,7 +278,7 @@ def preprocess_logic_data(dataset_path, char_to_token, max_len, num_classes=2):
             labels.append(item['answer'])
     
     # Convert propositions to sequences of tokens
-    sequences = []
+    sequences = 
     for prop in propositions:
         tokens = [char_to_token.get(char, char_to_token.get('<UNK>', 0)) for char in prop]
         sequences.append(tokens)

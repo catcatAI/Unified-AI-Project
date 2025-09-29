@@ -1,33 +1,26 @@
 #!/usr/bin/env python3
 """
-智能自动修复系统 (Smart Auto-Fix System)
+_ = 智能自动修复系统 (Smart Auto-Fix System)
 新一代智能自动修复工具，支持多种类型问题的检测、分析和修复
 """
 
-import os
 import sys
 import re
 import json
 import argparse
-import traceback
 import subprocess
-import ast
 from pathlib import Path
-from typing import List, Tuple, Dict, Set, Optional, Any
-from dataclasses import dataclass, asdict
-from datetime import datetime
 from enum import Enum
 
 # 添加项目根目录到路径
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.error_analyzer import ErrorAnalyzer, ErrorType, ErrorInfo
 
 # 配置日志
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class FixType(Enum):
     """修复类型枚举"""
@@ -65,7 +58,7 @@ class SmartFixReport:
 class SmartAutoFixer:
     """智能自动修复器"""
     
-    def __init__(self, project_root: Path = None):
+    def __init__(self, project_root: Path = None) -> None:
         self.project_root = project_root or PROJECT_ROOT
         self.backup_dir = self.project_root / "backup" / f"smart_fix_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         self.fix_report = SmartFixReport(
@@ -358,7 +351,7 @@ class SmartAutoFixer:
         logger.info(f"修复报告已保存到: {report_file}")
         return str(report_file)
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="智能自动修复系统")
     parser.add_argument("--fix", action="store_true", help="执行自动修复")
     parser.add_argument("--validate", action="store_true", help="验证修复效果")

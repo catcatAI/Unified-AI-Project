@@ -1,22 +1,17 @@
-import os
 import logging
 import asyncio
-from typing import Dict, Any, Optional
-import numpy as np
-import scipy.io.wavfile as wavfile
-from scipy import signal
 
 # 修复导入路径
 from apps.backend.src.config_loader import is_demo_mode, get_mock_placeholder_value
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class AudioService:
     """音频服务，处理语音识别、语音合成和音频处理任务"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.is_initialized = False
-        self.demo_mode = is_demo_mode()
+        self.demo_mode = is_demo_mode
         logger.info(f"AudioService initialized in {'demo' if self.demo_mode else 'normal'} mode")
     
     async def initialize(self):
@@ -56,7 +51,7 @@ class AudioService:
             # 在正常模式下，这里应该调用实际的语音识别API
             # 例如：使用Google Speech-to-Text API、Azure Speech Service等
             # 为简化起见，我们在这里模拟处理过程
-            await asyncio.sleep(0.5)  # 模拟处理时间
+            _ = await asyncio.sleep(0.5)  # 模拟处理时间
             
             # 模拟语音识别结果
             result = {
@@ -93,7 +88,7 @@ class AudioService:
             # 在正常模式下，这里应该调用实际的文本转语音API
             # 例如：使用Google Text-to-Speech API、Azure Speech Service等
             # 为简化起见，我们在这里模拟处理过程
-            await asyncio.sleep(0.3)  # 模拟处理时间
+            _ = await asyncio.sleep(0.3)  # 模拟处理时间
             
             # 生成简单的模拟音频数据
             audio_data = b"simulated_audio_data"
@@ -122,7 +117,7 @@ class AudioService:
             # 在正常模式下，这里应该执行实际的音频增强处理
             # 例如：降噪、回声消除、音量标准化等
             # 为简化起见，我们在这里模拟处理过程
-            await asyncio.sleep(0.2)  # 模拟处理时间
+            _ = await asyncio.sleep(0.2)  # 模拟处理时间
             
             # 返回处理后的音频数据（模拟）
             enhanced_audio_data = b"simulated_enhanced_audio_data"
@@ -159,7 +154,7 @@ class AudioService:
             # 在正常模式下，这里应该执行实际的音频特征检测
             # 例如：计算音频的时长、采样率、响度、频谱质心等
             # 为简化起见，我们在这里模拟处理过程
-            await asyncio.sleep(0.1)  # 模拟处理时间
+            _ = await asyncio.sleep(0.1)  # 模拟处理时间
             
             # 返回模拟的音频特征
             features = {

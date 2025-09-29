@@ -41,13 +41,13 @@ def get_timeout_for_file(file_path):
 
     return TIMEOUTS['basic']  # 默認基本超時
 
-def is_pytest_test(file_path):
+def is_pytest_test(file_path) -> None:
     """檢查文件是否包含 pytest 風格的測試"""
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     return '@pytest.mark.' in content or 'import pytest' in content
 
-def add_pytest_timeout(file_path, timeout_seconds):
+def add_pytest_timeout(file_path, timeout_seconds) -> None:
     """為 pytest 測試文件添加超時裝飾器"""
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -69,35 +69,35 @@ def add_pytest_timeout(file_path, timeout_seconds):
             
             if not has_timeout:
                 # 添加超時裝飾器
-                lines.insert(i, f'@pytest.mark.timeout({timeout_seconds})\n')
+                _ = lines.insert(i, f'@pytest.mark.timeout({timeout_seconds})\n')
                 i += 1  # 因為我們添加了一行
                 modified = True
         i += 1
     
     if modified:
         with open(file_path, 'w', encoding='utf-8') as f:
-            f.writelines(lines)
+            _ = f.writelines(lines)
         print(f"Updated {file_path} with {timeout_seconds}s timeout")
         return True
     
-    print(f"No test functions found in {file_path}")
+    _ = print(f"No test functions found in {file_path}")
     return False
 
-def add_unittest_timeout(file_path, timeout_seconds):
+def add_unittest_timeout(file_path, timeout_seconds) -> None:
     """為 unittest 測試文件添加超時設置"""
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
     # 檢查是否已經有超時設置
     if 'timeout=' in content:
-        print(f"Skipping {file_path} - already has timeout setting")
+        _ = print(f"Skipping {file_path} - already has timeout setting")
         return False
     
     # 解析 AST 找到測試方法
     try:
         tree = ast.parse(content)
     except SyntaxError as e:
-        print(f"Error parsing {file_path}: {e}")
+        _ = print(f"Error parsing {file_path}: {e}")
         return False
     
     modified = False
@@ -109,8 +109,8 @@ def add_unittest_timeout(file_path, timeout_seconds):
                     item.name.startswith('test_')):
                     # 檢查是否已經有裝飾器
                     has_decorator = any(
-                        isinstance(dec, ast.Call) and 
-                        isinstance(dec.func, ast.Attribute) and 
+                        _ = isinstance(dec, ast.Call) and 
+                        _ = isinstance(dec.func, ast.Attribute) and 
                         dec.func.attr == 'timeout'
                         for dec in item.decorator_list
                     )
@@ -136,15 +136,15 @@ def add_unittest_timeout(file_path, timeout_seconds):
         new_content = astunparse.unparse(tree)
         
         with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(new_content)
+            _ = f.write(new_content)
         
         print(f"Updated {file_path} with {timeout_seconds}s timeout")
         return True
     
-    print(f"No test methods found in {file_path}")
+    _ = print(f"No test methods found in {file_path}")
     return False
 
-def process_test_file(file_path):
+def process_test_file(file_path) -> None:
     """處理單個測試文件"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -158,18 +158,18 @@ def process_test_file(file_path):
         else:
             return add_unittest_timeout(file_path, timeout_seconds)
     except Exception as e:
-        print(f"Error processing {file_path}: {e}")
+        _ = print(f"Error processing {file_path}: {e}")
         return False
 
-def main():
+def main() -> None:
     """主函數"""
     # 安裝 astunparse 如果沒有安裝
     try:
         import astunparse
     except ImportError:
-        print("Installing astunparse...")
+        _ = print("Installing astunparse...")
         import subprocess
-        subprocess.check_call(["pip", "install", "astunparse"])
+        _ = subprocess.check_call(["pip", "install", "astunparse"])
         import astunparse
     
     # 查找所有測試文件
@@ -177,7 +177,7 @@ def main():
     for root, _, files in os.walk(TEST_DIR):
         for file in files:
             if file.startswith('test_') and file.endswith('.py'):
-                test_files.append(os.path.join(root, file))
+                _ = test_files.append(os.path.join(root, file))
     
     # 處理每個測試文件
     updated_count = 0
@@ -188,4 +188,4 @@ def main():
     print(f"\nUpdated {updated_count} test files with timeout settings")
 
 if __name__ == '__main__':
-    main()
+    _ = main()

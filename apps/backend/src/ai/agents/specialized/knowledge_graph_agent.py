@@ -1,19 +1,15 @@
-import asyncio
 import uuid
-import json
 import logging
-from typing import Dict, Any, List
-
-from apps.backend.src.ai.agents.base.base_agent import BaseAgent
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+# 修复导入路径问题 - 从 ..memory.ham_memory_manager 改为 ...memory.ham_memory_manager
+from ..base.base_agent import BaseAgent
 
 class KnowledgeGraphAgent(BaseAgent):
     """
     A specialized agent for knowledge graph tasks like entity linking,
     relationship extraction, and graph querying.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_entity_linking_v1.0",
@@ -48,36 +44,39 @@ class KnowledgeGraphAgent(BaseAgent):
                 "returns": {"type": "object", "description": "Results of the knowledge graph query."}
             }
         ]
-        super().__init__(agent_id=agent_id, capabilities=capabilities)
+        super.__init__(agent_id=agent_id, capabilities=capabilities)
         logging.info(f"[{self.agent_id}] KnowledgeGraphAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
-        request_id = task_payload.get("request_id")
+        request_id = task_payload.get("request_id", str(uuid.uuid4))
         capability_id = task_payload.get("capability_id_filter", "")
-        params = task_payload.get("parameters", {})
+        params = task_payload.get("parameters", )
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
 
         try:
-            if "entity_linking" in capability_id:
+            # 使用 isinstance 确保 capability_id 是字符串类型
+            if isinstance(capability_id, str) and "entity_linking" in capability_id:
                 result = self._perform_entity_linking(params)
                 result_payload = self._create_success_payload(request_id, result)
-            elif "relationship_extraction" in capability_id:
+            elif isinstance(capability_id, str) and "relationship_extraction" in capability_id:
                 result = self._extract_relationships(params)
                 result_payload = self._create_success_payload(request_id, result)
-            elif "graph_query" in capability_id:
+            elif isinstance(capability_id, str) and "graph_query" in capability_id:
                 result = self._query_knowledge_graph(params)
                 result_payload = self._create_success_payload(request_id, result)
             else:
-                result_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
+                capability_id_str = capability_id if isinstance(capability_id, str) else ""
+                result_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id_str}' is not supported by this agent.")
         except Exception as e:
             logging.error(f"[{self.agent_id}] Error processing task {request_id}: {e}")
             result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR", str(e))
 
-        if self.hsp_connector and task_payload.get("callback_address"):
-            callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
+        # 安全访问 callback_address
+        callback_address = task_payload.get("callback_address")
+        if self.hsp_connector and callback_address:
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_address)
+            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_address}")
 
     def _perform_entity_linking(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Links entities in text to a knowledge base."""
@@ -95,8 +94,8 @@ class KnowledgeGraphAgent(BaseAgent):
         # Simple heuristic: assume capitalized words are entities
         for i, word in enumerate(words):
             # Remove punctuation
-            clean_word = word.strip('.,!?;:"()[]{}')
-            if clean_word and clean_word[0].isupper() and len(clean_word) > 1:
+            clean_word = word.strip('.,!?;:"')
+            if clean_word and clean_word[0].isupper and len(clean_word) > 1:
                 entities.append({
                     "text": clean_word,
                     "start": text.find(clean_word),
@@ -127,8 +126,8 @@ class KnowledgeGraphAgent(BaseAgent):
         for i in range(len(words) - 2):
             # Pattern: "X is Y"
             if words[i+1].lower() in ['is', 'are', 'was', 'were']:
-                subject = words[i].strip('.,!?;:"()[]{}')
-                obj = words[i+2].strip('.,!?;:"()[]{}')
+                subject = words[i].strip('.,!?;:"')
+                obj = words[i+2].strip('.,!?;:"')
                 if subject and obj:
                     relationships.append({
                         "subject": subject,
@@ -139,8 +138,8 @@ class KnowledgeGraphAgent(BaseAgent):
             
             # Pattern: "X has Y"
             elif words[i+1].lower() in ['has', 'have', 'had']:
-                subject = words[i].strip('.,!?;:"()[]{}')
-                obj = words[i+2].strip('.,!?;:"()[]{}')
+                subject = words[i].strip('.,!?;:"')
+                obj = words[i+2].strip('.,!?;:"')
                 if subject and obj:
                     relationships.append({
                         "subject": subject,
@@ -164,7 +163,7 @@ class KnowledgeGraphAgent(BaseAgent):
         
         # Simple knowledge graph query implementation
         # In a real implementation, this would interface with a proper knowledge graph database
-        results = []
+        results = [] 
         
         # Simple pattern matching for queries
         if "capital" in query.lower() and "france" in query.lower():

@@ -3,7 +3,7 @@ from .base_agent import BaseAgent
 from ..tools.web_search_tool import WebSearchTool
 
 class WebSearchAgent(BaseAgent):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self.web_search_tool = WebSearchTool()
 
@@ -17,16 +17,35 @@ class WebSearchAgent(BaseAgent):
             }
         }
 
-    async def handle_task_request(self, capability_name, parameters):
-        if capability_name == "search_web":
+    async def handle_task_request(self, task_payload, sender_ai_id, envelope):
+        capability_name = task_payload.get("capability_id_filter", "")
+        parameters = task_payload.get("parameters", {})
+        
+        if "search_web" in capability_name:
             query = parameters.get("query")
             if query:
-                return await self.web_search_tool.search(query)
+                result = await self.web_search_tool.search(query)
+                return {
+                    "status": "success",
+                    "payload": result
+                }
             else:
-                return {"error": "Missing query parameter."}
+                return {
+                    "status": "failure",
+                    "error_details": {
+                        "error_code": "MISSING_PARAMETER",
+                        "error_message": "Missing query parameter."
+                    }
+                }
         else:
-            return {"error": f"Unknown capability: {capability_name}"}
+            return {
+                "status": "failure",
+                "error_details": {
+                    "error_code": "UNKNOWN_CAPABILITY",
+                    "error_message": f"Unknown capability: {capability_name}"
+                }
+            }
 
 if __name__ == "__main__":
     agent = WebSearchAgent(agent_id="web_search_agent_1")
-    asyncio.run(agent.run())
+    asyncio.run(agent.start())

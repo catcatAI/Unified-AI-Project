@@ -1,8 +1,5 @@
 import asyncio
 import uuid
-from typing import Dict, Any, List
-
-from .base.base_agent import BaseAgent
 from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 from ....tools.tool_dispatcher import ToolDispatcher
 
@@ -10,7 +7,7 @@ class ImageGenerationAgent(BaseAgent):
     """
     A specialized agent for generating images from textual prompts.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_create_image_v1.0",
@@ -24,13 +21,13 @@ class ImageGenerationAgent(BaseAgent):
                 "returns": {"type": "object", "description": "An object containing the image URL and alt text."}
             }
         ]
-        super().__init__(agent_id=agent_id, capabilities=capabilities)
+        super.__init__(agent_id=agent_id, capabilities=capabilities)
 
-        self.tool_dispatcher = ToolDispatcher()
+        self.tool_dispatcher = ToolDispatcher
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id")
-        params = task_payload.get("parameters", {})
+        params = task_payload.get("parameters", )
 
         print(f"[{self.agent_id}] Handling image creation task {request_id}")
 
@@ -60,12 +57,7 @@ class ImageGenerationAgent(BaseAgent):
             print(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:image_generation_agent_{uuid.uuid4().hex[:6]}"
         agent = ImageGenerationAgent(agent_id=agent_id)
-        await agent.start()
-
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nImageGenerationAgent manually stopped.")
+        _ = await agent.start()

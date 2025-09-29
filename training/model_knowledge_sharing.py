@@ -8,18 +8,15 @@ import asyncio
 import logging
 import json
 from pathlib import Path
-from typing import Dict, Any, List, Optional
 from datetime import datetime
 import numpy as np
-import torch
-import torch.nn as nn
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class KnowledgeRepresentation:
     """知识表示"""
     
-    def __init__(self, source_model: str, knowledge_type: str, content: Dict[str, Any]):
+    def __init__(self, source_model: str, knowledge_type: str, content: Dict[str, Any]) -> None:
         self.source_model = source_model
         self.knowledge_type = knowledge_type  # "metrics", "parameters", "strategies", "patterns"
         self.content = content
@@ -33,7 +30,7 @@ class KnowledgeRepresentation:
             "source_model": self.source_model,
             "knowledge_type": self.knowledge_type,
             "content": self.content,
-            "timestamp": self.timestamp.isoformat()
+            _ = "timestamp": self.timestamp.isoformat()
         }
         
     @classmethod
@@ -47,7 +44,7 @@ class KnowledgeRepresentation:
 class KnowledgeFusionEngine:
     """知识融合引擎"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.fusion_strategies = {
             "metrics": self._fuse_metrics,
             "parameters": self._fuse_parameters,
@@ -58,14 +55,14 @@ class KnowledgeFusionEngine:
     async def fuse_knowledge(self, knowledge_list: List[KnowledgeRepresentation]) -> KnowledgeRepresentation:
         """融合多个知识"""
         if not knowledge_list:
-            raise ValueError("知识列表不能为空")
+            _ = raise ValueError("知识列表不能为空")
             
         # 按类型分组
         knowledge_by_type = {}
         for knowledge in knowledge_list:
             if knowledge.knowledge_type not in knowledge_by_type:
                 knowledge_by_type[knowledge.knowledge_type] = []
-            knowledge_by_type[knowledge.knowledge_type].append(knowledge)
+            _ = knowledge_by_type[knowledge.knowledge_type].append(knowledge)
             
         # 融合每种类型的知识
         fused_content = {}
@@ -87,7 +84,7 @@ class KnowledgeFusionEngine:
         """融合指标知识"""
         metrics_data = []
         for knowledge in knowledge_list:
-            metrics_data.append(knowledge.content)
+            _ = metrics_data.append(knowledge.content)
             
         # 计算平均指标
         fused_metrics = {}
@@ -102,7 +99,7 @@ class KnowledgeFusionEngine:
         """融合参数知识"""
         param_data = []
         for knowledge in knowledge_list:
-            param_data.append(knowledge.content)
+            _ = param_data.append(knowledge.content)
             
         # 计算平均参数
         fused_params = {}
@@ -117,7 +114,7 @@ class KnowledgeFusionEngine:
         """融合策略知识"""
         strategy_data = []
         for knowledge in knowledge_list:
-            strategy_data.append(knowledge.content)
+            _ = strategy_data.append(knowledge.content)
             
         # 选择最佳策略
         best_strategy = strategy_data[0] if strategy_data else {}
@@ -131,7 +128,7 @@ class KnowledgeFusionEngine:
         """融合模式知识"""
         pattern_data = []
         for knowledge in knowledge_list:
-            pattern_data.extend(knowledge.content.get("patterns", []))
+            _ = pattern_data.extend(knowledge.content.get("patterns", []))
             
         # 去重并统计频率
         pattern_freq = {}
@@ -145,7 +142,7 @@ class KnowledgeFusionEngine:
             if freq > len(knowledge_list) * 0.5:  # 超过一半模型认同的模式
                 try:
                     pattern = eval(pattern_key)  # 注意：实际应用中应使用更安全的方法
-                    fused_patterns.append(pattern)
+                    _ = fused_patterns.append(pattern)
                 except:
                     pass
                     
@@ -154,7 +151,7 @@ class KnowledgeFusionEngine:
 class KnowledgeTransferMechanism:
     """知识传递机制"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.transfer_strategies = {
             "direct": self._direct_transfer,
             "adaptive": self._adaptive_transfer,
@@ -165,7 +162,7 @@ class KnowledgeTransferMechanism:
                                target_model: str, transfer_strategy: str = "adaptive") -> bool:
         """传递知识到目标模型"""
         if transfer_strategy not in self.transfer_strategies:
-            logger.warning(f"未知的传递策略: {transfer_strategy}，使用自适应策略")
+            _ = logger.warning(f"未知的传递策略: {transfer_strategy}，使用自适应策略")
             transfer_strategy = "adaptive"
             
         try:
@@ -173,37 +170,37 @@ class KnowledgeTransferMechanism:
                 source_knowledge, target_model
             )
             if success:
-                logger.info(f"✅ 知识从 {source_knowledge.source_model} 传递到 {target_model} 成功")
+                _ = logger.info(f"✅ 知识从 {source_knowledge.source_model} 传递到 {target_model} 成功")
             else:
-                logger.warning(f"⚠️ 知识从 {source_knowledge.source_model} 传递到 {target_model} 失败")
+                _ = logger.warning(f"⚠️ 知识从 {source_knowledge.source_model} 传递到 {target_model} 失败")
             return success
         except Exception as e:
-            logger.error(f"❌ 知识传递过程中发生错误: {e}")
+            _ = logger.error(f"❌ 知识传递过程中发生错误: {e}")
             return False
             
     async def _direct_transfer(self, source_knowledge: KnowledgeRepresentation, target_model: str) -> bool:
         """直接传递"""
         # 直接将知识应用到目标模型
         # 这里应该与具体的模型训练过程集成
-        logger.debug(f"直接传递知识到 {target_model}")
+        _ = logger.debug(f"直接传递知识到 {target_model}")
         return True
         
     async def _adaptive_transfer(self, source_knowledge: KnowledgeRepresentation, target_model: str) -> bool:
         """自适应传递"""
         # 根据目标模型的特点自适应调整知识
-        logger.debug(f"自适应传递知识到 {target_model}")
+        _ = logger.debug(f"自适应传递知识到 {target_model}")
         return True
         
     async def _selective_transfer(self, source_knowledge: KnowledgeRepresentation, target_model: str) -> bool:
         """选择性传递"""
         # 只传递对目标模型有用的知识
-        logger.debug(f"选择性传递知识到 {target_model}")
+        _ = logger.debug(f"选择性传递知识到 {target_model}")
         return True
 
 class ModelKnowledgeSharing:
     """模型间知识共享系统"""
     
-    def __init__(self, storage_path: str = "knowledge_sharing"):
+    def __init__(self, storage_path: str = "knowledge_sharing") -> None:
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(exist_ok=True)
         
@@ -213,7 +210,7 @@ class ModelKnowledgeSharing:
         self.transfer_mechanism = KnowledgeTransferMechanism()
         
         # 加载已有的知识
-        self._load_knowledge()
+        _ = self._load_knowledge()
         
     async def share_knowledge(self, source_model: str, knowledge_type: str, 
                             content: Dict[str, Any], target_models: List[str]) -> Dict[str, bool]:
@@ -222,10 +219,10 @@ class ModelKnowledgeSharing:
         knowledge = KnowledgeRepresentation(source_model, knowledge_type, content)
         
         # 存储知识
-        self._store_knowledge(knowledge)
+        _ = self._store_knowledge(knowledge)
         
         # 更新知识图
-        self._update_knowledge_graph(source_model, target_models, knowledge_type)
+        _ = self._update_knowledge_graph(source_model, target_models, knowledge_type)
         
         # 传递知识到目标模型
         results = {}
@@ -234,7 +231,7 @@ class ModelKnowledgeSharing:
                 success = await self.transfer_mechanism.transfer_knowledge(knowledge, target_model)
                 results[target_model] = success
                 
-        logger.info(f"📤 {source_model} 向 {len(target_models)} 个模型分享了 {knowledge_type} 知识")
+        _ = logger.info(f"📤 {source_model} 向 {len(target_models)} 个模型分享了 {knowledge_type} 知识")
         return results
         
     async def request_knowledge(self, requesting_model: str, knowledge_types: List[str], 
@@ -246,9 +243,9 @@ class ModelKnowledgeSharing:
             if source_model in self.knowledge_base:
                 for knowledge in self.knowledge_base[source_model]:
                     if knowledge.knowledge_type in knowledge_types:
-                        requested_knowledge.append(knowledge)
+                        _ = requested_knowledge.append(knowledge)
                         
-        logger.info(f"📥 {requesting_model} 请求了 {len(requested_knowledge)} 个知识")
+        _ = logger.info(f"📥 {requesting_model} 请求了 {len(requested_knowledge)} 个知识")
         return requested_knowledge
         
     async def fuse_knowledge_from_models(self, model_names: List[str], 
@@ -260,22 +257,22 @@ class ModelKnowledgeSharing:
             if model_name in self.knowledge_base:
                 for knowledge in self.knowledge_base[model_name]:
                     if knowledge.knowledge_type in knowledge_types:
-                        knowledge_to_fuse.append(knowledge)
+                        _ = knowledge_to_fuse.append(knowledge)
                         
         if knowledge_to_fuse:
             fused_knowledge = await self.fusion_engine.fuse_knowledge(knowledge_to_fuse)
-            self._store_knowledge(fused_knowledge)
-            logger.info(f"🔄 融合了 {len(knowledge_to_fuse)} 个知识，生成新的融合知识")
+            _ = self._store_knowledge(fused_knowledge)
+            _ = logger.info(f"🔄 融合了 {len(knowledge_to_fuse)} 个知识，生成新的融合知识")
             return fused_knowledge
         else:
-            logger.warning("没有找到可融合的知识")
+            _ = logger.warning("没有找到可融合的知识")
             return None
             
     def _store_knowledge(self, knowledge: KnowledgeRepresentation):
         """存储知识"""
         if knowledge.source_model not in self.knowledge_base:
             self.knowledge_base[knowledge.source_model] = []
-        self.knowledge_base[knowledge.source_model].append(knowledge)
+        _ = self.knowledge_base[knowledge.source_model].append(knowledge)
         
         # 保存到文件
         knowledge_file = self.storage_path / f"knowledge_{knowledge.id}.json"
@@ -283,7 +280,7 @@ class ModelKnowledgeSharing:
             with open(knowledge_file, 'w', encoding='utf-8') as f:
                 json.dump(knowledge.to_dict(), f, ensure_ascii=False, indent=2)
         except Exception as e:
-            logger.error(f"保存知识到文件失败: {e}")
+            _ = logger.error(f"保存知识到文件失败: {e}")
             
     def _update_knowledge_graph(self, source_model: str, target_models: List[str], knowledge_type: str):
         """更新知识图"""
@@ -295,7 +292,7 @@ class ModelKnowledgeSharing:
                 self.knowledge_graph[source_model][target_model] = []
             self.knowledge_graph[source_model][target_model].append({
                 "type": knowledge_type,
-                "timestamp": datetime.now().isoformat()
+                _ = "timestamp": datetime.now().isoformat()
             })
             
     def _load_knowledge(self):
@@ -308,11 +305,11 @@ class ModelKnowledgeSharing:
                         knowledge = KnowledgeRepresentation.from_dict(data)
                         if knowledge.source_model not in self.knowledge_base:
                             self.knowledge_base[knowledge.source_model] = []
-                        self.knowledge_base[knowledge.source_model].append(knowledge)
+                        _ = self.knowledge_base[knowledge.source_model].append(knowledge)
                 except Exception as e:
-                    logger.error(f"加载知识文件 {knowledge_file} 失败: {e}")
+                    _ = logger.error(f"加载知识文件 {knowledge_file} 失败: {e}")
         except Exception as e:
-            logger.error(f"扫描知识文件失败: {e}")
+            _ = logger.error(f"扫描知识文件失败: {e}")
             
     def get_knowledge_statistics(self) -> Dict[str, Any]:
         """获取知识统计信息"""
@@ -348,7 +345,7 @@ if __name__ == "__main__":
     knowledge_sharing = ModelKnowledgeSharing()
     
     # 创建测试数据
-    async def test_knowledge_sharing():
+    async def test_knowledge_sharing() -> None:
         # 分享指标知识
         metrics_content = {
             "accuracy": 0.85,
@@ -361,7 +358,7 @@ if __name__ == "__main__":
         results = await knowledge_sharing.share_knowledge(
             "model_a", "metrics", metrics_content, target_models
         )
-        print(f"知识分享结果: {results}")
+        _ = print(f"知识分享结果: {results}")
         
         # 分享参数知识
         params_content = {
@@ -378,18 +375,18 @@ if __name__ == "__main__":
         requested_knowledge = await knowledge_sharing.request_knowledge(
             "model_c", ["metrics", "parameters"], ["model_a", "model_b"]
         )
-        print(f"请求到 {len(requested_knowledge)} 个知识")
+        _ = print(f"请求到 {len(requested_knowledge)} 个知识")
         
         # 融合知识
         fused_knowledge = await knowledge_sharing.fuse_knowledge_from_models(
             ["model_a", "model_b"], ["metrics"]
         )
         if fused_knowledge:
-            print(f"融合知识: {fused_knowledge.content}")
+            _ = print(f"融合知识: {fused_knowledge.content}")
         
         # 获取统计信息
         stats = knowledge_sharing.get_knowledge_statistics()
-        print(f"知识统计: {stats}")
+        _ = print(f"知识统计: {stats}")
     
     # 运行测试
-    asyncio.run(test_knowledge_sharing())
+    _ = asyncio.run(test_knowledge_sharing())

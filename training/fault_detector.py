@@ -15,12 +15,11 @@ from dataclasses import dataclass, asdict
 # 添加项目路径
 import sys
 from pathlib import Path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root: str = Path(__file__).parent.parent
+_ = sys.path.insert(0, str(project_root))
 
-from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 @dataclass
 class NodeHealthStatus:
@@ -38,7 +37,7 @@ class NodeHealthStatus:
 class FaultDetector:
     """增强的故障检测器"""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = config or {}
         self.error_handler = global_error_handler
         self.nodes_status: Dict[str, NodeHealthStatus] = {}
@@ -55,7 +54,7 @@ class FaultDetector:
         self.memory_threshold_warning = self.config.get('memory_threshold_warning', 85.0)  # 内存警告阈值
         self.memory_threshold_critical = self.config.get('memory_threshold_critical', 95.0)  # 内存危险阈值
         
-        logger.info("增强的故障检测器初始化完成")
+        _ = logger.info("增强的故障检测器初始化完成")
     
     def register_node(self, node_id: str, initial_info: Dict[str, Any] = None):
         """注册节点"""
@@ -68,10 +67,10 @@ class FaultDetector:
                 assigned_tasks=initial_info.get('assigned_tasks', []) if initial_info else [],
                 last_check_time=time.time()
             )
-            logger.info(f"注册节点: {node_id}")
+            _ = logger.info(f"注册节点: {node_id}")
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"注册节点失败: {node_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"注册节点失败: {node_id} - {e}")
     
     def unregister_node(self, node_id: str):
         """注销节点"""
@@ -79,17 +78,17 @@ class FaultDetector:
         try:
             if node_id in self.nodes_status:
                 del self.nodes_status[node_id]
-                logger.info(f"注销节点: {node_id}")
+                _ = logger.info(f"注销节点: {node_id}")
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"注销节点失败: {node_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"注销节点失败: {node_id} - {e}")
     
     def update_node_heartbeat(self, node_id: str, metrics: Dict[str, Any] = None):
         """更新节点心跳"""
         context = ErrorContext("FaultDetector", "update_node_heartbeat", {"node_id": node_id})
         try:
             if node_id not in self.nodes_status:
-                self.register_node(node_id)
+                _ = self.register_node(node_id)
             
             node_status = self.nodes_status[node_id]
             node_status.last_heartbeat = time.time()
@@ -101,12 +100,12 @@ class FaultDetector:
                 node_status.gpu_usage = metrics.get('gpu_usage', 0.0)
                 
                 # 根据指标更新节点状态
-                self._update_node_health_status(node_status)
+                _ = self._update_node_health_status(node_status)
             
             node_status.last_check_time = time.time()
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"更新节点心跳失败: {node_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"更新节点心跳失败: {node_id} - {e}")
     
     def _update_node_health_status(self, node_status: NodeHealthStatus):
         """更新节点健康状态"""
@@ -126,24 +125,24 @@ class FaultDetector:
     
     def register_failure_callback(self, callback: Callable):
         """注册故障回调函数"""
-        self.failure_callbacks.append(callback)
+        _ = self.failure_callbacks.append(callback)
     
     async def start_monitoring(self):
         """启动监控"""
         if self.monitoring_enabled:
-            logger.warning("监控已启动")
+            _ = logger.warning("监控已启动")
             return
         
         self.monitoring_enabled = True
         self.monitoring_task = asyncio.create_task(self._monitoring_loop())
-        logger.info("启动故障监控")
+        _ = logger.info("启动故障监控")
     
     def stop_monitoring(self):
         """停止监控"""
         self.monitoring_enabled = False
         if self.monitoring_task:
-            self.monitoring_task.cancel()
-        logger.info("停止故障监控")
+            _ = self.monitoring_task.cancel()
+        _ = logger.info("停止故障监控")
     
     async def _monitoring_loop(self):
         """监控循环"""
@@ -152,20 +151,20 @@ class FaultDetector:
             while self.monitoring_enabled:
                 try:
                     # 检测节点故障
-                    await self._detect_node_failures()
+                    _ = await self._detect_node_failures()
                     
                     # 等待下一个检查周期
-                    await asyncio.sleep(self.health_check_interval)
+                    _ = await asyncio.sleep(self.health_check_interval)
                 except asyncio.CancelledError:
-                    logger.info("监控循环被取消")
+                    _ = logger.info("监控循环被取消")
                     break
                 except Exception as e:
-                    self.error_handler.handle_error(e, context)
-                    logger.error(f"监控循环出错: {e}")
-                    await asyncio.sleep(self.health_check_interval)
+                    _ = self.error_handler.handle_error(e, context)
+                    _ = logger.error(f"监控循环出错: {e}")
+                    _ = await asyncio.sleep(self.health_check_interval)
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"监控循环异常: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"监控循环异常: {e}")
     
     async def _detect_node_failures(self):
         """检测节点故障"""
@@ -183,19 +182,19 @@ class FaultDetector:
                     # 如果之前状态不是failed，则标记为故障
                     if node_status.status != "failed":
                         node_status.status = "failed"
-                        logger.warning(f"检测到节点故障: {node_id}")
-                        failed_nodes.append(node_id)
+                        _ = logger.warning(f"检测到节点故障: {node_id}")
+                        _ = failed_nodes.append(node_id)
                         
                         # 触发故障回调
-                        await self._trigger_failure_callbacks(node_id)
+                        _ = await self._trigger_failure_callbacks(node_id)
             
             # 如果有故障节点，记录详细信息
             if failed_nodes:
-                logger.info(f"检测到 {len(failed_nodes)} 个故障节点: {failed_nodes}")
+                _ = logger.info(f"检测到 {len(failed_nodes)} 个故障节点: {failed_nodes}")
                 
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"检测节点故障失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"检测节点故障失败: {e}")
     
     async def _trigger_failure_callbacks(self, node_id: str):
         """触发故障回调函数"""
@@ -210,7 +209,7 @@ class FaultDetector:
                 'status': node_status.status,
                 'failure_count': node_status.failure_count,
                 'assigned_tasks': node_status.assigned_tasks,
-                'timestamp': datetime.now().isoformat()
+                _ = 'timestamp': datetime.now().isoformat()
             }
             
             # 并行执行所有回调函数
@@ -219,8 +218,8 @@ class FaultDetector:
                 await asyncio.gather(*tasks, return_exceptions=True)
                 
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"触发故障回调失败: {node_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"触发故障回调失败: {node_id} - {e}")
     
     def get_node_status(self, node_id: str) -> Optional[Dict[str, Any]]:
         """获取节点状态"""
@@ -230,8 +229,8 @@ class FaultDetector:
                 return asdict(self.nodes_status[node_id])
             return None
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"获取节点状态失败: {node_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"获取节点状态失败: {node_id} - {e}")
             return None
     
     def get_cluster_status(self) -> Dict[str, Any]:
@@ -239,8 +238,8 @@ class FaultDetector:
         context = ErrorContext("FaultDetector", "get_cluster_status")
         try:
             status = {
-                'timestamp': datetime.now().isoformat(),
-                'total_nodes': len(self.nodes_status),
+                _ = 'timestamp': datetime.now().isoformat(),
+                _ = 'total_nodes': len(self.nodes_status),
                 'healthy_nodes': len([n for n in self.nodes_status.values() if n.status == 'healthy']),
                 'warning_nodes': len([n for n in self.nodes_status.values() if n.status == 'warning']),
                 'critical_nodes': len([n for n in self.nodes_status.values() if n.status == 'critical']),
@@ -249,16 +248,16 @@ class FaultDetector:
             }
             return status
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"获取集群状态失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"获取集群状态失败: {e}")
             return {}
 
 # 全局故障检测器实例
 global_fault_detector = FaultDetector()
 
-def main():
+def main() -> None:
     """主函数，用于测试故障检测器"""
-    print("🔬 测试增强的故障检测器...")
+    _ = print("🔬 测试增强的故障检测器...")
     
     # 配置日志
     logging.basicConfig(level=logging.INFO)
@@ -272,8 +271,8 @@ def main():
     detector = FaultDetector(config)
     
     # 注册测试节点
-    detector.register_node('node1', {'assigned_tasks': ['task1', 'task2']})
-    detector.register_node('node2', {'assigned_tasks': ['task3']})
+    _ = detector.register_node('node1', {'assigned_tasks': ['task1', 'task2']})
+    _ = detector.register_node('node2', {'assigned_tasks': ['task3']})
     
     # 模拟心跳更新
     detector.update_node_heartbeat('node1', {
@@ -289,21 +288,21 @@ def main():
     })
     
     # 显示初始状态
-    print("初始集群状态:")
+    _ = print("初始集群状态:")
     status = detector.get_cluster_status()
     print(json.dumps(status, indent=2, ensure_ascii=False))
     
     # 模拟节点故障
-    print("\n模拟节点故障...")
+    _ = print("\n模拟节点故障...")
     # 不再更新node2的心跳，模拟节点故障
     
     # 等待一段时间
-    time.sleep(35)
+    _ = time.sleep(35)
     
     # 显示故障后的状态
-    print("\n故障后集群状态:")
+    _ = print("\n故障后集群状态:")
     status = detector.get_cluster_status()
     print(json.dumps(status, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":
-    main()
+    _ = main()

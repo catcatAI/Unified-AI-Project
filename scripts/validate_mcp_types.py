@@ -10,13 +10,12 @@ legacy MCP and Context7 MCP implementations.
 import ast
 import sys
 from pathlib import Path
-from typing import Dict, List, Set, Any
 
 
 class MCPTypeValidator:
     """Validator for MCP type definitions."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.errors: List[str] = []
         self.warnings: List[str] = []
         self.type_definitions: Dict[str, Dict[str, Any]] = {}
@@ -26,7 +25,7 @@ class MCPTypeValidator:
         mcp_types_file = Path('src/mcp/types.py')
         
         if not mcp_types_file.exists():
-            self.errors.append("MCP types file not found: src/mcp/types.py")
+            _ = self.errors.append("MCP types file not found: src/mcp/types.py")
             return
         
         try:
@@ -34,12 +33,12 @@ class MCPTypeValidator:
                 content = f.read()
             
             tree = ast.parse(content)
-            self._extract_type_definitions(tree)
-            self._validate_type_compatibility()
-            self._validate_context7_types()
+            _ = self._extract_type_definitions(tree)
+            _ = self._validate_type_compatibility()
+            _ = self._validate_context7_types()
             
         except Exception as e:
-            self.errors.append(f"Failed to parse MCP types: {e}")
+            _ = self.errors.append(f"Failed to parse MCP types: {e}")
     
     def _extract_type_definitions(self, tree: ast.AST) -> None:
         """Extract TypedDict definitions from AST."""
@@ -48,7 +47,7 @@ class MCPTypeValidator:
                 # Check if it's a TypedDict
                 for base in node.bases:
                     if isinstance(base, ast.Name) and base.id == 'TypedDict':
-                        self._analyze_typed_dict(node)
+                        _ = self._analyze_typed_dict(node)
     
     def _analyze_typed_dict(self, node: ast.ClassDef) -> None:
         """Analyze a TypedDict class definition."""
@@ -64,7 +63,7 @@ class MCPTypeValidator:
         self.type_definitions[class_name] = {
             'fields': fields,
             'is_legacy': 'MCP' in class_name and 'Context' not in class_name,
-            'is_context7': 'Context' in class_name or class_name.startswith('MCP') and len(fields) > 5
+            _ = 'is_context7': 'Context' in class_name or class_name.startswith('MCP') and len(fields) > 5
         }
     
     def _validate_type_compatibility(self) -> None:
@@ -79,14 +78,14 @@ class MCPTypeValidator:
         missing_legacy = required_legacy - set(legacy_types.keys())
         
         if missing_legacy:
-            self.errors.append(f"Missing required legacy MCP types: {missing_legacy}")
+            _ = self.errors.append(f"Missing required legacy MCP types: {missing_legacy}")
         
         # Check for required Context7 types
         required_context7 = {'MCPMessage', 'MCPResponse', 'MCPCapability'}
         missing_context7 = required_context7 - set(context7_types.keys())
         
         if missing_context7:
-            self.errors.append(f"Missing required Context7 MCP types: {missing_context7}")
+            _ = self.errors.append(f"Missing required Context7 MCP types: {missing_context7}")
     
     def _validate_context7_types(self) -> None:
         """Validate Context7-specific type requirements."""
@@ -101,7 +100,7 @@ class MCPTypeValidator:
             
             missing_fields = required_fields - actual_fields
             if missing_fields:
-                self.errors.append(f"MCPMessage missing required fields: {missing_fields}")
+                _ = self.errors.append(f"MCPMessage missing required fields: {missing_fields}")
         
         # Validate MCPResponse structure
         if 'MCPResponse' in context7_types:
@@ -111,7 +110,7 @@ class MCPTypeValidator:
             
             missing_fields = required_fields - actual_fields
             if missing_fields:
-                self.errors.append(f"MCPResponse missing required fields: {missing_fields}")
+                _ = self.errors.append(f"MCPResponse missing required fields: {missing_fields}")
         
         # Check for proper Optional typing
         for type_name, type_info in context7_types.items():
@@ -126,14 +125,14 @@ class MCPTypeValidator:
         # Check legacy connector
         legacy_connector = Path('src/mcp/connector.py')
         if legacy_connector.exists():
-            self._validate_connector_file(legacy_connector, 'Legacy')
+            _ = self._validate_connector_file(legacy_connector, 'Legacy')
         
         # Check Context7 connector
         context7_connector = Path('src/mcp/context7_connector.py')
         if context7_connector.exists():
-            self._validate_connector_file(context7_connector, 'Context7')
+            _ = self._validate_connector_file(context7_connector, 'Context7')
         else:
-            self.warnings.append("Context7 connector not found")
+            _ = self.warnings.append("Context7 connector not found")
     
     def _validate_connector_file(self, filepath: Path, connector_type: str) -> None:
         """Validate a specific connector file."""
@@ -149,52 +148,52 @@ class MCPTypeValidator:
             
             for method in required_methods:
                 if f"def {method}" not in content and f"async def {method}" not in content:
-                    self.errors.append(f"{connector_type} connector missing method: {method}")
+                    _ = self.errors.append(f"{connector_type} connector missing method: {method}")
             
             # Check for proper error handling
             if 'try:' not in content or 'except' not in content:
-                self.warnings.append(f"{connector_type} connector should have error handling")
+                _ = self.warnings.append(f"{connector_type} connector should have error handling")
                 
         except Exception as e:
-            self.errors.append(f"Failed to validate {connector_type} connector: {e}")
+            _ = self.errors.append(f"Failed to validate {connector_type} connector: {e}")
     
     def report(self) -> int:
         """Generate validation report."""
         total_issues = len(self.errors) + len(self.warnings)
         
-        print("🔍 MCP Type Validation Report")
+        _ = print("🔍 MCP Type Validation Report")
         print("=" * 40)
         
         if self.errors:
-            print("\n🚨 ERRORS:")
+            _ = print("\n🚨 ERRORS:")
             for error in self.errors:
-                print(f"  ❌ {error}")
+                _ = print(f"  ❌ {error}")
         
         if self.warnings:
-            print("\n⚠️  WARNINGS:")
+            _ = print("\n⚠️  WARNINGS:")
             for warning in self.warnings:
-                print(f"  ⚠️  {warning}")
+                _ = print(f"  ⚠️  {warning}")
         
         if total_issues == 0:
-            print("\n✅ All MCP types are valid!")
+            _ = print("\n✅ All MCP types are valid!")
             return 0
         else:
-            print(f"\n📊 Found {len(self.errors)} errors and {len(self.warnings)} warnings")
+            _ = print(f"\n📊 Found {len(self.errors)} errors and {len(self.warnings)} warnings")
             return 1 if self.errors else 0
 
 
-def main():
+def main() -> None:
     """Main entry point."""
     validator = MCPTypeValidator()
     
-    print("Validating MCP type definitions...")
-    validator.validate_mcp_types()
+    _ = print("Validating MCP type definitions...")
+    _ = validator.validate_mcp_types()
     
-    print("Validating MCP connectors...")
-    validator.validate_mcp_connectors()
+    _ = print("Validating MCP connectors...")
+    _ = validator.validate_mcp_connectors()
     
     return validator.report()
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    _ = sys.exit(main())

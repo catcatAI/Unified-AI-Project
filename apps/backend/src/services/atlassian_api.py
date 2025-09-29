@@ -3,9 +3,6 @@ Atlassian API - 处理Atlassian集成请求
 """
 import os
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel
-import logging
 
 from ..integrations.atlassian_cli_bridge import AtlassianCLIBridge
 from ..integrations.enhanced_atlassian_bridge import EnhancedAtlassianBridge
@@ -13,7 +10,7 @@ from ..integrations.rovo_dev_connector import RovoDevConnector
 from ..core_services import get_services
 
 # 配置日志
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 # 创建路由器
 atlassian_router = APIRouter(prefix="/api/v1/atlassian", tags=["Atlassian"])
@@ -90,7 +87,7 @@ async def get_atlassian_status():
     
     try:
         # 获取Atlassian CLI状态
-        status = atlassian_bridge.get_status()
+        status = atlassian_bridge.get_status
         
         # 构建服务状态
         services = [
@@ -122,7 +119,7 @@ async def get_atlassian_health():
     
     try:
         # 这里可以实现更详细的健康检查逻辑
-        status = atlassian_bridge.get_status()
+        status = atlassian_bridge.get_status
         return {
             "status": "healthy" if status["acli_available"] else "unhealthy",
             "details": status
@@ -139,7 +136,7 @@ async def get_confluence_spaces():
         raise HTTPException(status_code=400, detail="Atlassian integration not configured")
     
     try:
-        result = atlassian_bridge.get_confluence_spaces()
+        result = atlassian_bridge.get_confluence_spaces
         if result["success"]:
             return {"spaces": result["spaces"], "count": result["count"]}
         else:
@@ -195,7 +192,7 @@ async def get_jira_projects():
         raise HTTPException(status_code=400, detail="Atlassian integration not configured")
     
     try:
-        result = atlassian_bridge.get_jira_projects()
+        result = atlassian_bridge.get_jira_projects
         if result["success"]:
             return {"projects": result["projects"], "count": result["count"]}
         else:

@@ -5,8 +5,8 @@ import logging
 from datetime import datetime
 
 class CrisisSystem:
-    def __init__(self, config: dict = None, emotion_system_ref=None, memory_system_ref=None, log_file: str = "crisis_log.txt"):
-        self.config = config or {}
+    def __init__(self, config: dict = None, emotion_system_ref=None, memory_system_ref=None, log_file: str = "crisis_log.txt") -> None:
+        self.config = config or {} 
         self.emotion_system = emotion_system_ref # Reference to an EmotionSystem instance
         self.memory_system = memory_system_ref   # Reference to a MemoryManager instance
         self.crisis_level = 0 # 0 = No crisis, higher numbers indicate severity
@@ -14,13 +14,13 @@ class CrisisSystem:
 
         # Load configuration from file if not provided
         if not self.config:
-            self._load_config_from_file()
+            self._load_config_from_file
 
         # Default crisis keywords if not provided in config
-        self.crisis_keywords = self.config.get("crisis_keywords", [])
-        self.negative_words = self.config.get("negative_words", [])
+        self.crisis_keywords = self.config.get("crisis_keywords", )
+        self.negative_words = self.config.get("negative_words", )
         self.default_crisis_level = self.config.get("default_crisis_level_on_keyword", 1)
-        self.crisis_protocols = self.config.get("crisis_protocols", {})
+        self.crisis_protocols = self.config.get("crisis_protocols", )
         logging.info(f"CrisisSystem initialized. Keywords: {self.crisis_keywords}")
 
     def assess_input_for_crisis(self, input_data: dict, context: dict = None) -> int:
@@ -78,7 +78,7 @@ class CrisisSystem:
         if action_details == "log_and_monitor_basic_crisis_response":
             try:
                 with open(self.log_file, "a") as f:
-                    f.write(f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n")
+                    f.write(f"[{datetime.now}] CRISIS_LOG: Level {level} event. Details: {details}\n")
                 logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
             except Exception as e:
                 logging.error(f"Failed to write to crisis log file: {e}")
@@ -91,7 +91,7 @@ class CrisisSystem:
             if level > 0:
                 try:
                     with open(self.log_file, "a") as f:
-                        f.write(f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n")
+                        f.write(f"[{datetime.now}] CRISIS_LOG: Level {level} event. Details: {details}\n")
                     logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
                 except Exception as e:
                     logging.error(f"Failed to write to crisis log file: {e}")
@@ -116,7 +116,7 @@ class CrisisSystem:
                 self.config = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logging.error(f"Error loading crisis system config: {e}")
-            self.config = {}
+            self.config = {} 
 
 
 if __name__ == '__main__':
@@ -134,15 +134,15 @@ if __name__ == '__main__':
     }
     crisis_sys = CrisisSystem(config=example_config)
 
-    logging.info(f"Initial crisis level: {crisis_sys.get_current_crisis_level()}")
+    logging.info(f"Initial crisis level: {crisis_sys.get_current_crisis_level}")
 
     sample_input_normal = {"text": "Tell me a joke."}
     crisis_sys.assess_input_for_crisis(sample_input_normal)
-    logging.info(f"Crisis level after normal input: {crisis_sys.get_current_crisis_level()}")
+    logging.info(f"Crisis level after normal input: {crisis_sys.get_current_crisis_level}")
 
     sample_input_crisis = {"text": "I need emergency help right now!"}
     crisis_sys.assess_input_for_crisis(sample_input_crisis)
-    logging.info(f"Crisis level after crisis input: {crisis_sys.get_current_crisis_level()}")
+    logging.info(f"Crisis level after crisis input: {crisis_sys.get_current_crisis_level}")
 
     crisis_sys.resolve_crisis("User confirmed they are okay, false alarm.")
-    logging.info(f"Crisis level after resolution: {crisis_sys.get_current_crisis_level()}")
+    logging.info(f"Crisis level after resolution: {crisis_sys.get_current_crisis_level}")

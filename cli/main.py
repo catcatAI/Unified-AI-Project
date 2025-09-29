@@ -5,24 +5,23 @@ Unified AI Project CLI 主入口点
 """
 
 import sys
-import os
 from pathlib import Path
 
 # 添加项目根目录到Python路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root: str = Path(__file__).parent.parent
+_ = sys.path.insert(0, str(project_root))
 
 try:
     import click
     from cli.commands import dev, test, git, deps, system, editor, rovo, security
     from cli.utils import logger
 except ImportError as e:
-    print(f"缺少必要的依赖包: {e}")
-    print("请运行: pip install click")
-    sys.exit(1)
+    _ = print(f"缺少必要的依赖包: {e}")
+    _ = print("请运行: pip install click")
+    _ = sys.exit(1)
 
 
-@click.group()
+_ = @click.group()
 @click.version_option(version='1.0.0')
 @click.option('--verbose', '-v', is_flag=True, help='启用详细输出')
 def cli(verbose):
@@ -37,33 +36,33 @@ def cli(verbose):
     """
     # 设置日志级别
     if verbose:
-        logger.set_level('DEBUG')
+        _ = logger.set_level('DEBUG')
 
 
 # 注册各功能模块命令
-cli.add_command(dev)
-cli.add_command(test)
-cli.add_command(git)
-cli.add_command(deps.deps)
-cli.add_command(system.system)
-cli.add_command(editor)
-cli.add_command(rovo)
-cli.add_command(security)
+_ = cli.add_command(dev)
+_ = cli.add_command(test)
+_ = cli.add_command(git)
+_ = cli.add_command(deps.deps)
+_ = cli.add_command(system.system)
+_ = cli.add_command(editor)
+_ = cli.add_command(rovo)
+_ = cli.add_command(security)
 
 
-@cli.command()
+_ = @cli.command()
 def help():
     """显示帮助信息"""
     ctx = click.get_current_context()
-    click.echo(cli.get_help(ctx))
+    _ = click.echo(cli.get_help(ctx))
 
 
 if __name__ == '__main__':
     try:
-        cli()
+        _ = cli()
     except Exception as e:
-        logger.error(f"程序执行出错: {e}")
+        _ = logger.error(f"程序执行出错: {e}")
         if logger.get_level() == 'DEBUG':
             import traceback
-            traceback.print_exc()
-        sys.exit(1)
+            _ = traceback.print_exc()
+        _ = sys.exit(1)

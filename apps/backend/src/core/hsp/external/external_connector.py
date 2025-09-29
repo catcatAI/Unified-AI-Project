@@ -1,8 +1,8 @@
 import asyncio
 import logging
 import ssl
-from typing import Callable, Optional
-import gmqtt
+from typing import Callable, Optional, Awaitable
+import gmqtt  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +13,8 @@ class ExternalConnector:
         self.broker_port = broker_port
         self.mqtt_client_id = f"{self.ai_id}-{client_id_suffix}"
         self.is_connected = False
-        self.subscribed_topics = set()
-        self.on_message_callback = None
+        self.subscribed_topics = set
+        self.on_message_callback: Optional[Callable[[str, str], Awaitable[None]]] = None
 
         self.mqtt_client = gmqtt.Client(self.mqtt_client_id)
         if username:
@@ -47,7 +47,7 @@ class ExternalConnector:
             # Check if the mqtt_client and its transport are still valid
             if (hasattr(self.mqtt_client, '_transport') and 
                 self.mqtt_client._transport is not None):
-                await self.mqtt_client.disconnect()
+                await self.mqtt_client.disconnect
             else:
                 logger.debug("MQTT client transport already closed, marking as disconnected")
                 self.is_connected = False
@@ -82,4 +82,4 @@ class ExternalConnector:
 
     async def on_message(self, client, topic, payload, qos, properties):
         if self.on_message_callback:
-            await self.on_message_callback(topic.decode(), payload.decode())
+            await self.on_message_callback(topic.decode, payload.decode)

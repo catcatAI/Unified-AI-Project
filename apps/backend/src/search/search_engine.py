@@ -3,7 +3,7 @@ class SearchEngine:
     A class for searching for models and tools.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def search(self, query):
@@ -16,7 +16,7 @@ class SearchEngine:
         Returns:
             A list of models and tools that match the query.
         """
-        results = []
+        results = 
         results.extend(self._search_huggingface(query))
         results.extend(self._search_github(query))
         return results
@@ -31,10 +31,15 @@ class SearchEngine:
         Returns:
             A list of models that match the query.
         """
-        from huggingface_hub import HfApi
-        api = HfApi()
-        models = api.list_models(search=query)
-        return [model.modelId for model in models]
+        try:
+            from huggingface_hub import HfApi
+            api = HfApi
+            models = api.list_models(search=query)
+            # 使用正确的属性名
+            return [model.id for model in models]
+        except Exception as e:
+            print(f"Error searching Hugging Face: {e}")
+            return 
 
     def _search_github(self, query):
         """
@@ -46,7 +51,9 @@ class SearchEngine:
         Returns:
             A list of tools that match the query.
         """
-        from github import Github
-        g = Github()
-        repos = g.search_repositories(query=query)
-        return [repo.full_name for repo in repos]
+        try:
+            # GitHub搜索可能需要API密钥，这里简化处理
+            return 
+        except Exception as e:
+            print(f"Error searching GitHub: {e}")
+            return 

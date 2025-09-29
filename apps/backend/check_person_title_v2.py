@@ -37,7 +37,7 @@ matcher.add("SIMPLE_PATTERN", [simple_pattern])
 person_title_org_pattern = [
     {"ENT_TYPE": "PERSON"},
     {"LEMMA": "be"},
-    {"POS": {"IN": ["NOUN", "ADJ", "DET"]}, "OP": "*"},  # TITLE (e.g., "a CEO", "the founder")
+    _ = {"POS": {"IN": ["NOUN", "ADJ", "DET"]}, "OP": "*"},  # TITLE (e.g., "a CEO", "the founder")
     {"LOWER": "of"},
     {"ENT_TYPE": "ORG"}
 ]

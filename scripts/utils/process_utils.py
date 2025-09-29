@@ -8,9 +8,7 @@ import sys
 import time
 import signal
 import psutil
-import traceback
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional, Union, Any, Callable
 from enum import Enum
 
 class ProcessStatus(Enum):
@@ -30,7 +28,7 @@ class ExecutionMode(Enum):
 
 class ProcessResult:
     """进程执行结果类"""
-    def __init__(self):
+    def __init__(self) -> None:
         self.command = ""
         self.return_code = 0
         self.stdout = ""
@@ -47,7 +45,7 @@ class ProcessResult:
 class ProcessUtils:
     """进程工具类"""
     
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
         
         # 进程管理
@@ -71,7 +69,7 @@ class ProcessUtils:
         """运行命令"""
         # 合并配置
         config = self.default_config.copy()
-        config.update(kwargs)
+        _ = config.update(kwargs)
         
         # 准备命令
         if isinstance(command, str) and not config["shell"]:
@@ -92,7 +90,7 @@ class ProcessUtils:
             elif mode == ExecutionMode.BACKGROUND:
                 result = self._run_background(command, config, result)
             else:
-                raise ValueError(f"不支持的执行模式: {mode.value}")
+                _ = raise ValueError(f"不支持的执行模式: {mode.value}")
             
         except Exception as e:
             result.status = ProcessStatus.FAILED
@@ -130,7 +128,7 @@ class ProcessUtils:
                     result.status = ProcessStatus.FAILED
                     
             except subprocess.TimeoutExpired:
-                process.kill()
+                _ = process.kill()
                 stdout, stderr = process.communicate()
                 result.return_code = -1
                 result.stdout = stdout
@@ -271,16 +269,16 @@ class ProcessUtils:
                 process = self.managed_processes[pid]
                 
                 if force:
-                    process.kill()
+                    _ = process.kill()
                 else:
-                    process.terminate()
+                    _ = process.terminate()
                 
                 # 等待进程结束
                 try:
                     process.wait(timeout=self.default_config["kill_timeout"])
                 except subprocess.TimeoutExpired:
-                    process.kill()
-                    process.wait()
+                    _ = process.kill()
+                    _ = process.wait()
                 
                 # 更新结果
                 if pid in self.process_results:
@@ -302,7 +300,7 @@ class ProcessUtils:
                     return False
                     
         except Exception as e:
-            print(f"✗ 终止进程 {pid} 失败: {e}")
+            _ = print(f"✗ 终止进程 {pid} 失败: {e}")
             return False
     
     def get_process_info(self, pid: int) -> Optional[Dict[str, Any]]:
@@ -326,16 +324,16 @@ class ProcessUtils:
                 process = psutil.Process(pid)
                 return {
                     "pid": pid,
-                    "command": " ".join(process.cmdline()),
+                    _ = "command": " ".join(process.cmdline()),
                     "status": "running" if process.is_running() else "stopped",
-                    "start_time": process.create_time(),
-                    "duration": time.time() - process.create_time(),
-                    "cpu_percent": process.cpu_percent(),
-                    "memory_percent": process.memory_percent(),
+                    _ = "start_time": process.create_time(),
+                    _ = "duration": time.time() - process.create_time(),
+                    _ = "cpu_percent": process.cpu_percent(),
+                    _ = "memory_percent": process.memory_percent(),
                     "managed": False
                 }
         except Exception as e:
-            print(f"✗ 获取进程 {pid} 信息失败: {e}")
+            _ = print(f"✗ 获取进程 {pid} 信息失败: {e}")
             return None
     
     def list_managed_processes(self) -> List[Dict[str, Any]]:
@@ -345,7 +343,7 @@ class ProcessUtils:
         for pid in self.managed_processes:
             info = self.get_process_info(pid)
             if info:
-                processes.append(info)
+                _ = processes.append(info)
         
         return processes
     
@@ -356,11 +354,11 @@ class ProcessUtils:
         for process in psutil.process_iter(['pid', 'name', 'cmdline']):
             try:
                 if name.lower() in process.info['name'].lower():
-                    pids.append(process.info['pid'])
+                    _ = pids.append(process.info['pid'])
                 elif process.info['cmdline']:
                     cmdline = " ".join(process.info['cmdline'])
                     if name.lower() in cmdline.lower():
-                        pids.append(process.info['pid'])
+                        _ = pids.append(process.info['pid'])
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
         
@@ -382,19 +380,19 @@ class ProcessUtils:
         """获取系统信息"""
         try:
             return {
-                "cpu_count": psutil.cpu_count(),
-                "cpu_percent": psutil.cpu_percent(),
-                "memory_total": psutil.virtual_memory().total,
-                "memory_available": psutil.virtual_memory().available,
-                "memory_percent": psutil.virtual_memory().percent,
-                "disk_total": psutil.disk_usage('/').total,
-                "disk_free": psutil.disk_usage('/').free,
-                "disk_percent": psutil.disk_usage('/').percent,
-                "boot_time": psutil.boot_time(),
-                "process_count": len(psutil.pids())
+                _ = "cpu_count": psutil.cpu_count(),
+                _ = "cpu_percent": psutil.cpu_percent(),
+                _ = "memory_total": psutil.virtual_memory().total,
+                _ = "memory_available": psutil.virtual_memory().available,
+                _ = "memory_percent": psutil.virtual_memory().percent,
+                _ = "disk_total": psutil.disk_usage('/').total,
+                _ = "disk_free": psutil.disk_usage('/').free,
+                _ = "disk_percent": psutil.disk_usage('/').percent,
+                _ = "boot_time": psutil.boot_time(),
+                _ = "process_count": len(psutil.pids())
             }
         except Exception as e:
-            print(f"✗ 获取系统信息失败: {e}")
+            _ = print(f"✗ 获取系统信息失败: {e}")
             return {}
     
     def monitor_process(self, pid: int, interval: float = 1.0, 
@@ -404,16 +402,16 @@ class ProcessUtils:
             while self.is_process_running(pid):
                 info = self.get_process_info(pid)
                 if info and callback:
-                    callback(info)
+                    _ = callback(info)
                 
-                time.sleep(interval)
+                _ = time.sleep(interval)
             
             return True
             
         except KeyboardInterrupt:
             return False
         except Exception as e:
-            print(f"✗ 监控进程 {pid} 失败: {e}")
+            _ = print(f"✗ 监控进程 {pid} 失败: {e}")
             return False
     
     def cleanup_processes(self):
@@ -423,7 +421,7 @@ class ProcessUtils:
         for pid in pids:
             self.kill_process(pid, force=True)
         
-        print(f"✓ 已清理 {len(pids)} 个管理的进程")
+        _ = print(f"✓ 已清理 {len(pids)} 个管理的进程")
     
     def run_python_script(self, script_path: Path, args: Optional[List[str]] = None,
                           mode: ExecutionMode = ExecutionMode.SYNC,
@@ -432,7 +430,7 @@ class ProcessUtils:
         command = [sys.executable, str(script_path)]
         
         if args:
-            command.extend(args)
+            _ = command.extend(args)
         
         return self.run_command(command, mode, **kwargs)
     
@@ -443,7 +441,7 @@ class ProcessUtils:
         command = ["node", str(script_path)]
         
         if args:
-            command.extend(args)
+            _ = command.extend(args)
         
         return self.run_command(command, mode, **kwargs)
     
@@ -455,7 +453,7 @@ class ProcessUtils:
         cmd = ["pnpm", command]
         
         if args:
-            cmd.extend(args)
+            _ = cmd.extend(args)
         
         if cwd:
             kwargs["cwd"] = cwd
@@ -469,6 +467,6 @@ class ProcessUtils:
         cmd = [sys.executable, "-m", "pip", command]
         
         if args:
-            cmd.extend(args)
+            _ = cmd.extend(args)
         
         return self.run_command(cmd, mode, **kwargs)

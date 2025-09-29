@@ -1,12 +1,10 @@
 import asyncio
 import logging
-from typing import List, Dict, Any
 import sys
 import os
-import time
 
 # Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+project_root: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, project_root)
 
 try:
@@ -15,17 +13,17 @@ try:
     from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 except ImportError:
     # Fall back to absolute imports (for when running as a script)
-    from apps.backend.src.ai.agents.base_agent import BaseAgent
+    from apps.backend.src.core_ai.agents.base_agent import BaseAgent
     from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class RegistryDemoAgent(BaseAgent):
     """
     A demo agent that showcases the dynamic agent registration and discovery features.
     """
     
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         # Define capabilities for this agent
         capabilities = [
             {
@@ -42,7 +40,7 @@ class RegistryDemoAgent(BaseAgent):
             }
         ]
         
-        super().__init__(agent_id, capabilities, "RegistryDemoAgent")
+        super.__init__(agent_id, capabilities, "RegistryDemoAgent")
     
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         """
@@ -51,11 +49,11 @@ class RegistryDemoAgent(BaseAgent):
         logger.info(f"[{self.agent_id}] Handling task request from {sender_ai_id}")
         
         # Refresh agent status
-        await self.refresh_agent_status()
+        _ = await self.refresh_agent_status
         
         request_id = task_payload.get("request_id", "")
         capability_id = task_payload.get("capability_id_filter", "")
-        parameters = task_payload.get("parameters", {})
+        parameters = task_payload.get("parameters", )
         
         try:
             # Process based on capability
@@ -100,7 +98,7 @@ class RegistryDemoAgent(BaseAgent):
         
         if action == "stats":
             # Get registry statistics
-            stats = await self.get_agent_registry_stats()
+            stats = await self.get_agent_registry_stats
             return {
                 "status": "success",
                 "registry_stats": stats,
@@ -109,7 +107,7 @@ class RegistryDemoAgent(BaseAgent):
         
         elif action == "list_agents":
             # Get all active agents
-            agents = await self.get_all_active_agents()
+            agents = await self.get_all_active_agents
             return {
                 "status": "success",
                 "active_agents": agents,
@@ -203,26 +201,26 @@ class RegistryDemoAgent(BaseAgent):
                 "message": f"Unknown discovery type: {discovery_type}"
             }
 
-async def main():
+async def main -> None:
     """
     Main function to run the registry demo agent.
     """
     import uuid
     
     # Create agent with a unique ID
-    agent_id = f"did:hsp:registry_demo_agent_{uuid.uuid4().hex[:8]}"
+    agent_id = f"did:hsp:registry_demo_agent_{uuid.uuid4.hex[:8]}"
     agent = RegistryDemoAgent(agent_id)
     
     try:
         # Start the agent
-        await agent.start()
+        _ = await agent.start
         logger.info(f"Registry Demo Agent {agent_id} started successfully")
         
         # Keep the agent running and periodically refresh status
         while agent.is_running:
             # Refresh agent status every 10 seconds
-            await agent.refresh_agent_status()
-            await asyncio.sleep(10)
+            _ = await agent.refresh_agent_status
+            _ = await asyncio.sleep(10)
             
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt, shutting down...")
@@ -230,15 +228,15 @@ async def main():
         logger.error(f"Error in main: {e}")
     finally:
         # Stop the agent
-        await agent.stop()
+        _ = await agent.stop
         logger.info("Registry Demo Agent stopped")
 
 if __name__ == "__main__":
     # Set up logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
     # Run the agent
-    asyncio.run(main())
+    asyncio.run(main)

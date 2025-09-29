@@ -7,12 +7,11 @@
 import subprocess
 import sys
 import time
-import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 # 添加项目根目录到Python路径
-project_root = Path(__file__).parent.parent
+project_root: Path = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # 使用相对导入
@@ -22,7 +21,7 @@ from scripts.fix_executor import FixExecutor
 
 
 class WorkflowController:
-    def __init__(self):
+    def __init__(self) -> None:
         self.test_runner = TestRunner()
         self.error_analyzer = ErrorAnalyzer("test_results/latest_test_results.json")
         self.fix_executor = FixExecutor()
@@ -67,7 +66,9 @@ class WorkflowController:
     def _run_tests(self, pytest_args: Optional[str] = None) -> bool:
         """运行测试"""
         print("[WORKFLOW] 步骤 1: 运行测试")
-        test_results = self.test_runner.run_tests(pytest_args)
+        # 将字符串参数转换为列表
+        test_paths: List[str] = [pytest_args] if pytest_args else []
+        test_results = self.test_runner.run_tests(test_paths if test_paths else [])
         
         # 如果测试通过，直接返回
         if test_results.get("exit_code", -1) == 0:
@@ -77,7 +78,7 @@ class WorkflowController:
         print("[WORKFLOW] ✗ 测试失败，继续错误分析")
         return True
     
-    def _analyze_errors(self) -> list:
+    def _analyze_errors(self) -> List[Dict[str, Any]]:
         """分析错误"""
         print("[WORKFLOW] 步骤 2: 分析测试错误")
         report = self.error_analyzer.generate_error_report()
@@ -104,7 +105,7 @@ class WorkflowController:
         
         return success
     
-    def run_in_separate_terminals(self, pytest_args: Optional[str] = None):
+    def run_in_separate_terminals(self, pytest_args: Optional[str] = None) -> bool:
         """
         在不同终端中运行测试和修复
         使用PowerShell启动并行任务
@@ -154,7 +155,7 @@ Start-Process powershell -ArgumentList @(
             return False
 
 
-def main():
+def main() -> None:
     controller = WorkflowController()
     
     # 检查命令行参数

@@ -3,7 +3,6 @@
 整理和清理项目根目录下的备份目录
 """
 
-import os
 import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -16,7 +15,7 @@ def classify_backup_directories(backup_root):
     
     backup_path = Path(backup_root)
     if not backup_path.exists():
-        print(f"备份根目录 {backup_root} 不存在")
+        _ = print(f"备份根目录 {backup_root} 不存在")
         return auto_backups, manual_backups
     
     # 遍历备份目录
@@ -24,13 +23,13 @@ def classify_backup_directories(backup_root):
         if item.is_dir():
             # 检查是否为自动备份目录 (auto_fix_ 开头)
             if item.name.startswith("auto_fix_"):
-                auto_backups.append(item)
+                _ = auto_backups.append(item)
             # 检查是否为日期格式的备份目录
             elif re.match(r"backup_\d{8}", item.name):
-                auto_backups.append(item)
+                _ = auto_backups.append(item)
             # 其他备份目录视为手动备份
             else:
-                manual_backups.append(item)
+                _ = manual_backups.append(item)
     
     return auto_backups, manual_backups
 
@@ -46,13 +45,13 @@ def clean_old_auto_backups(auto_backups, days_to_keep=30):
             
             # 如果目录超过保留天数，则删除
             if mod_time < cutoff_date:
-                print(f"删除旧自动备份目录: {backup_dir.name}")
-                shutil.rmtree(backup_dir)
+                _ = print(f"删除旧自动备份目录: {backup_dir.name}")
+                _ = shutil.rmtree(backup_dir)
                 deleted_count += 1
         except Exception as e:
-            print(f"删除目录 {backup_dir.name} 时出错: {e}")
+            _ = print(f"删除目录 {backup_dir.name} 时出错: {e}")
     
-    print(f"已删除 {deleted_count} 个旧自动备份目录")
+    _ = print(f"已删除 {deleted_count} 个旧自动备份目录")
     return deleted_count
 
 def organize_manual_backups(manual_backups):
@@ -76,21 +75,21 @@ def organize_manual_backups(manual_backups):
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 destination = archive_dir / f"{backup_dir.name}_{timestamp}"
             
-            print(f"整理手动备份目录: {backup_dir.name} -> {destination}")
-            shutil.move(str(backup_dir), str(destination))
+            _ = print(f"整理手动备份目录: {backup_dir.name} -> {destination}")
+            _ = shutil.move(str(backup_dir), str(destination))
             organized_count += 1
         except Exception as e:
-            print(f"整理目录 {backup_dir.name} 时出错: {e}")
+            _ = print(f"整理目录 {backup_dir.name} 时出错: {e}")
     
-    print(f"已整理 {organized_count} 个手动备份目录")
+    _ = print(f"已整理 {organized_count} 个手动备份目录")
     return organized_count
 
-def update_pytest_config():
+def update_pytest_config() -> None:
     """更新pytest配置以忽略备份目录"""
     pytest_ini_path = Path("pytest.ini")
     
     if not pytest_ini_path.exists():
-        print("pytest.ini 文件不存在")
+        _ = print("pytest.ini 文件不存在")
         return False
     
     try:
@@ -147,13 +146,13 @@ def update_pytest_config():
         
         # 写回文件
         with open(pytest_ini_path, 'w', encoding='utf-8') as f:
-            f.write(content)
+            _ = f.write(content)
         
-        print("已更新 pytest.ini 配置")
+        _ = print("已更新 pytest.ini 配置")
         return True
         
     except Exception as e:
-        print(f"更新 pytest.ini 配置时出错: {e}")
+        _ = print(f"更新 pytest.ini 配置时出错: {e}")
         return False
 
 def create_backup_cleanup_script():
@@ -169,8 +168,8 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 # 添加项目根目录到路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root: str = Path(__file__).parent.parent
+_ = sys.path.insert(0, str(project_root))
 
 def clean_backups():
     """清理备份目录"""
@@ -184,28 +183,28 @@ def clean_backups():
         # 清理旧的自动备份（保留30天）
         clean_old_auto_backups(auto_backups, days_to_keep=30)
         
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - 备份清理完成")
+        _ = print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - 备份清理完成")
         
     except Exception as e:
-        print(f"清理备份时出错: {e}")
+        _ = print(f"清理备份时出错: {e}")
 
 if __name__ == "__main__":
-    clean_backups()
+    _ = clean_backups()
 '''
     
     script_path = Path("scripts/clean_backups.py")
     try:
         with open(script_path, 'w', encoding='utf-8') as f:
-            f.write(script_content)
-        print(f"已创建备份清理脚本: {script_path}")
+            _ = f.write(script_content)
+        _ = print(f"已创建备份清理脚本: {script_path}")
         return True
     except Exception as e:
-        print(f"创建备份清理脚本时出错: {e}")
+        _ = print(f"创建备份清理脚本时出错: {e}")
         return False
 
-def main():
+def main() -> None:
     """主函数"""
-    print("开始整理和清理备份目录...")
+    _ = print("开始整理和清理备份目录...")
     
     # 项目备份根目录
     backup_root = "backup"
@@ -213,22 +212,22 @@ def main():
     # 分类备份目录
     auto_backups, manual_backups = classify_backup_directories(backup_root)
     
-    print(f"发现 {len(auto_backups)} 个自动备份目录")
-    print(f"发现 {len(manual_backups)} 个手动备份目录")
+    _ = print(f"发现 {len(auto_backups)} 个自动备份目录")
+    _ = print(f"发现 {len(manual_backups)} 个手动备份目录")
     
     # 清理旧的自动备份
     clean_old_auto_backups(auto_backups, days_to_keep=30)
     
     # 整理手动备份
-    organize_manual_backups(manual_backups)
+    _ = organize_manual_backups(manual_backups)
     
     # 更新pytest配置
-    update_pytest_config()
+    _ = update_pytest_config()
     
     # 创建定期清理脚本
-    create_backup_cleanup_script()
+    _ = create_backup_cleanup_script()
     
-    print("备份目录整理和清理完成")
+    _ = print("备份目录整理和清理完成")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

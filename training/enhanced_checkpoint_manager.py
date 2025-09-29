@@ -4,7 +4,6 @@
 负责管理训练过程中的检查点保存、恢复和清理
 """
 
-import asyncio
 import logging
 import json
 import time
@@ -16,10 +15,24 @@ from dataclasses import dataclass, asdict
 
 # 添加项目路径
 import sys
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root: str = Path(__file__).parent.parent
+_ = sys.path.insert(0, str(project_root))
 
-from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
+# 创建基本模拟类
+ErrorContext = type('ErrorContext', (), {
+    '__init__': lambda self, component, operation, details=None: (
+        setattr(self, 'component', component),
+        setattr(self, 'operation', operation),
+        setattr(self, 'details', details or {})
+    )[-1]
+})
+
+class GlobalErrorHandler:
+    @staticmethod
+    def handle_error(error, context, strategy=None):
+        print(f"Error in {context.component}.{context.operation}: {error}")
+
+global_error_handler = GlobalErrorHandler()
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +56,7 @@ class CheckpointInfo:
 class EnhancedCheckpointManager:
     """增强的检查点管理器"""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = config or {}
         self.error_handler = global_error_handler
         self.checkpoints: Dict[str, CheckpointInfo] = {}
@@ -58,7 +71,7 @@ class EnhancedCheckpointManager:
         self.compression_threshold_mb = self.config.get('compression_threshold_mb', 100)  # 压缩阈值（MB）
         self.last_time_checkpoint = time.time()  # 上次时间检查点时间
         
-        logger.info("增强的检查点管理器初始化完成")
+        _ = logger.info("增强的检查点管理器初始化完成")
     
     def should_save_checkpoint(self, epoch: int, metrics: Dict[str, Any], task_id: str = None) -> Dict[str, Any]:
         """判断是否应该保存检查点"""
@@ -74,7 +87,7 @@ class EnhancedCheckpointManager:
                 if epoch % self.epoch_interval == 0:
                     should_save = True
                     checkpoint_type = "epoch"
-                    reasons.append(f"Epoch {epoch} 是 {self.epoch_interval} 的倍数")
+                    _ = reasons.append(f"Epoch {epoch} 是 {self.epoch_interval} 的倍数")
             
             elif self.strategy == 'time_based':
                 # 仅在时间间隔时保存
@@ -82,7 +95,7 @@ class EnhancedCheckpointManager:
                 if (current_time - self.last_time_checkpoint) >= (self.time_interval_minutes * 60):
                     should_save = True
                     checkpoint_type = "time_based"
-                    reasons.append(f"距离上次检查点已超过 {self.time_interval_minutes} 分钟")
+                    _ = reasons.append(f"距离上次检查点已超过 {self.time_interval_minutes} 分钟")
                     self.last_time_checkpoint = current_time
             
             elif self.strategy == 'hybrid':
@@ -98,13 +111,13 @@ class EnhancedCheckpointManager:
                     should_save = True
                     if epoch_checkpoint and time_checkpoint:
                         checkpoint_type = "epoch_and_time"
-                        reasons.append(f"Epoch {epoch} 是 {self.epoch_interval} 的倍数且时间间隔已到")
+                        _ = reasons.append(f"Epoch {epoch} 是 {self.epoch_interval} 的倍数且时间间隔已到")
                     elif epoch_checkpoint:
                         checkpoint_type = "epoch"
-                        reasons.append(f"Epoch {epoch} 是 {self.epoch_interval} 的倍数")
+                        _ = reasons.append(f"Epoch {epoch} 是 {self.epoch_interval} 的倍数")
                     else:
                         checkpoint_type = "time_based"
-                        reasons.append(f"距离上次检查点已超过 {self.time_interval_minutes} 分钟")
+                        _ = reasons.append(f"距离上次检查点已超过 {self.time_interval_minutes} 分钟")
             
             # 特殊事件触发检查点（例如验证损失改善）
             if metrics and 'val_loss' in metrics:
@@ -112,7 +125,7 @@ class EnhancedCheckpointManager:
                 if self._should_save_for_improvement(metrics, task_id):
                     should_save = True
                     checkpoint_type = "event_triggered"
-                    reasons.append("验证损失显著改善")
+                    _ = reasons.append("验证损失显著改善")
             
             return {
                 'should_save': should_save,
@@ -121,8 +134,8 @@ class EnhancedCheckpointManager:
             }
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"判断是否保存检查点失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"判断是否保存检查点失败: {e}")
             return {'should_save': False, 'checkpoint_type': 'regular', 'reasons': []}
     
     def _should_save_for_improvement(self, metrics: Dict[str, Any], task_id: str = None) -> bool:
@@ -147,7 +160,7 @@ class EnhancedCheckpointManager:
             
             return False
         except Exception as e:
-            logger.warning(f"检查改善情况时出错: {e}")
+            _ = logger.warning(f"检查改善情况时出错: {e}")
             return False
     
     def save_checkpoint(self, state: Dict[str, Any], task_id: str = None, checkpoint_type: str = 'regular') -> Optional[str]:
@@ -166,13 +179,13 @@ class EnhancedCheckpointManager:
             checkpoint_data = {
                 'checkpoint_id': checkpoint_id,
                 'task_id': task_id or 'default',
-                'epoch': state.get('epoch', 0),
-                'timestamp': time.time(),
-                'metrics': state.get('metrics', {}),
-                'model_state': state.get('model_state', {}),
-                'optimizer_state': state.get('optimizer_state', {}),
-                'config': state.get('config', {}),
-                'additional_data': state.get('additional_data', {})
+                _ = 'epoch': state.get('epoch', 0),
+                _ = 'timestamp': time.time(),
+                _ = 'metrics': state.get('metrics', {}),
+                _ = 'model_state': state.get('model_state', {}),
+                _ = 'optimizer_state': state.get('optimizer_state', {}),
+                _ = 'config': state.get('config', {}),
+                _ = 'additional_data': state.get('additional_data', {})
             }
             
             # 压缩大数据
@@ -201,18 +214,18 @@ class EnhancedCheckpointManager:
             
             # 记录检查点
             self.checkpoints[checkpoint_id] = checkpoint_info
-            self.checkpoint_history.append(checkpoint_info)
+            _ = self.checkpoint_history.append(checkpoint_info)
             
-            logger.info(f"保存检查点: {checkpoint_id} (类型: {checkpoint_type}, 大小: {file_size} 字节)")
+            _ = logger.info(f"保存检查点: {checkpoint_id} (类型: {checkpoint_type}, 大小: {file_size} 字节)")
             
             # 清理旧检查点
-            self._cleanup_old_checkpoints(task_id)
+            _ = self._cleanup_old_checkpoints(task_id)
             
             return checkpoint_id
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"保存检查点失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"保存检查点失败: {e}")
             return None
     
     def _compress_checkpoint_data(self, checkpoint_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -243,13 +256,13 @@ class EnhancedCheckpointManager:
                     target_checkpoint = max(self.checkpoint_history, key=lambda x: x.timestamp)
             
             if not target_checkpoint:
-                logger.warning("未找到要加载的检查点")
+                _ = logger.warning("未找到要加载的检查点")
                 return None
             
             # 读取检查点文件
             checkpoint_path = Path(target_checkpoint.file_path)
             if not checkpoint_path.exists():
-                logger.error(f"检查点文件不存在: {checkpoint_path}")
+                _ = logger.error(f"检查点文件不存在: {checkpoint_path}")
                 return None
             
             with open(checkpoint_path, 'r', encoding='utf-8') as f:
@@ -259,19 +272,19 @@ class EnhancedCheckpointManager:
             if checkpoint_data.get('_compressed'):
                 checkpoint_data = self._decompress_checkpoint_data(checkpoint_data)
             
-            logger.info(f"加载检查点: {target_checkpoint.checkpoint_id}")
+            _ = logger.info(f"加载检查点: {target_checkpoint.checkpoint_id}")
             return checkpoint_data
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"加载检查点失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"加载检查点失败: {e}")
             return None
     
     def _decompress_checkpoint_data(self, checkpoint_data: Dict[str, Any]) -> Dict[str, Any]:
         """解压缩检查点数据"""
         # 这里应该实现实际的数据解压缩逻辑
         # 为了示例，我们只是移除压缩标记
-        checkpoint_data.pop('_compressed', None)
+        _ = checkpoint_data.pop('_compressed', None)
         return checkpoint_data
     
     def _cleanup_old_checkpoints(self, task_id: str = None):
@@ -297,8 +310,8 @@ class EnhancedCheckpointManager:
                         # 删除文件
                         checkpoint_path = Path(checkpoint_info.file_path)
                         if checkpoint_path.exists():
-                            checkpoint_path.unlink()
-                            logger.info(f"删除旧检查点文件: {checkpoint_path}")
+                            _ = checkpoint_path.unlink()
+                            _ = logger.info(f"删除旧检查点文件: {checkpoint_path}")
                         
                         # 从记录中移除
                         if checkpoint_info.checkpoint_id in self.checkpoints:
@@ -306,15 +319,15 @@ class EnhancedCheckpointManager:
                         
                         # 从历史记录中移除
                         if checkpoint_info in self.checkpoint_history:
-                            self.checkpoint_history.remove(checkpoint_info)
+                            _ = self.checkpoint_history.remove(checkpoint_info)
                     except Exception as e:
-                        logger.warning(f"删除检查点失败: {checkpoint_info.checkpoint_id} - {e}")
+                        _ = logger.warning(f"删除检查点失败: {checkpoint_info.checkpoint_id} - {e}")
                 
-                logger.info(f"清理了 {len(checkpoints_to_remove)} 个旧检查点")
+                _ = logger.info(f"清理了 {len(checkpoints_to_remove)} 个旧检查点")
                 
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"清理旧检查点失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"清理旧检查点失败: {e}")
     
     def get_checkpoint_info(self, checkpoint_id: str = None, task_id: str = None) -> Dict[str, Any]:
         """获取检查点信息"""
@@ -331,26 +344,26 @@ class EnhancedCheckpointManager:
                 task_checkpoints = [cp for cp in self.checkpoint_history if cp.task_id == task_id]
                 return {
                     'task_id': task_id,
-                    'total_checkpoints': len(task_checkpoints),
+                    _ = 'total_checkpoints': len(task_checkpoints),
                     'checkpoints': [asdict(cp) for cp in task_checkpoints]
                 }
             else:
                 return {
-                    'total_checkpoints': len(self.checkpoints),
+                    _ = 'total_checkpoints': len(self.checkpoints),
                     'checkpoints': [asdict(cp) for cp in self.checkpoint_history]
                 }
                 
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"获取检查点信息失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"获取检查点信息失败: {e}")
             return {}
 
 # 全局检查点管理器实例
 global_checkpoint_manager = EnhancedCheckpointManager()
 
-def main():
+def main() -> None:
     """主函数，用于测试检查点管理器"""
-    print("🔬 测试增强的检查点管理器...")
+    _ = print("🔬 测试增强的检查点管理器...")
     
     # 配置日志
     logging.basicConfig(level=logging.INFO)
@@ -366,12 +379,12 @@ def main():
     manager = EnhancedCheckpointManager(config)
     
     # 测试检查点保存判断
-    print("测试检查点保存判断...")
+    _ = print("测试检查点保存判断...")
     decision = manager.should_save_checkpoint(5, {'val_loss': 0.5}, 'test_task')
-    print(f"检查点决策: {decision}")
+    _ = print(f"检查点决策: {decision}")
     
     # 测试保存检查点
-    print("\n测试保存检查点...")
+    _ = print("\n测试保存检查点...")
     state = {
         'epoch': 5,
         'metrics': {'loss': 0.45, 'accuracy': 0.82, 'val_loss': 0.5},
@@ -381,19 +394,19 @@ def main():
     }
     
     checkpoint_id = manager.save_checkpoint(state, 'test_task', 'epoch')
-    print(f"保存检查点ID: {checkpoint_id}")
+    _ = print(f"保存检查点ID: {checkpoint_id}")
     
     # 测试加载检查点
-    print("\n测试加载检查点...")
+    _ = print("\n测试加载检查点...")
     loaded_state = manager.load_checkpoint(checkpoint_id)
     if loaded_state:
-        print(f"加载的检查点epoch: {loaded_state.get('epoch')}")
-        print(f"加载的检查点metrics: {loaded_state.get('metrics')}")
+        _ = print(f"加载的检查点epoch: {loaded_state.get('epoch')}")
+        _ = print(f"加载的检查点metrics: {loaded_state.get('metrics')}")
     
     # 显示检查点信息
-    print("\n检查点信息:")
+    _ = print("\n检查点信息:")
     info = manager.get_checkpoint_info(task_id='test_task')
     print(json.dumps(info, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":
-    main()
+    _ = main()

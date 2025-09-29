@@ -1,8 +1,7 @@
 import asyncio
 import uuid
-import json
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 from .base.base_agent import BaseAgent
 from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
@@ -12,7 +11,7 @@ class AudioProcessingAgent(BaseAgent):
     A specialized agent for audio processing tasks like speech recognition,
     audio classification, and audio enhancement.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_speech_recognition_v1.0",
@@ -47,24 +46,27 @@ class AudioProcessingAgent(BaseAgent):
                 "returns": {"type": "object", "description": "Path to the enhanced audio file."}
             }
         ]
-        super().__init__(agent_id=agent_id, capabilities=capabilities)
+        super.__init__(agent_id=agent_id, capabilities=capabilities)
         logging.info(f"[{self.agent_id}] AudioProcessingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
-        request_id = task_payload.get("request_id")
+        request_id = task_payload.get("request_id", "")
         capability_id = task_payload.get("capability_id_filter", "")
-        params = task_payload.get("parameters", {})
+        params = task_payload.get("parameters", )
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
 
         try:
-            if "speech_recognition" in capability_id:
+            # Convert capability_id to string to avoid type issues
+            capability_str = str(capability_id) if capability_id is not None else ""
+            
+            if "speech_recognition" in capability_str:
                 result = self._perform_speech_recognition(params)
                 result_payload = self._create_success_payload(request_id, result)
-            elif "audio_classification" in capability_id:
+            elif "audio_classification" in capability_str:
                 result = self._classify_audio(params)
                 result_payload = self._create_success_payload(request_id, result)
-            elif "audio_enhancement" in capability_id:
+            elif "audio_enhancement" in capability_str:
                 result = self._enhance_audio(params)
                 result_payload = self._create_success_payload(request_id, result)
             else:
@@ -73,9 +75,10 @@ class AudioProcessingAgent(BaseAgent):
             logging.error(f"[{self.agent_id}] Error processing task {request_id}: {e}")
             result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR", str(e))
 
-        if self.hsp_connector and task_payload.get("callback_address"):
-            callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+        callback_address = task_payload.get("callback_address")
+        if self.hsp_connector and callback_address:
+            callback_topic = str(callback_address) if callback_address is not None else ""
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     def _perform_speech_recognition(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -95,7 +98,7 @@ class AudioProcessingAgent(BaseAgent):
             "transcription": transcription,
             "language": language,
             "confidence": 0.85,
-            "words": transcription.split(),
+            "words": transcription.split,
             "duration": "00:00:05"  # Placeholder duration
         }
 
@@ -160,12 +163,12 @@ class AudioProcessingAgent(BaseAgent):
         )
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:audio_processing_agent_{uuid.uuid4().hex[:6]}"
         agent = AudioProcessingAgent(agent_id=agent_id)
-        await agent.start()
+        _ = await agent.start()
 
     try:
-        asyncio.run(main())
+        asyncio.run(main)
     except KeyboardInterrupt:
         print("\nAudioProcessingAgent manually stopped.")

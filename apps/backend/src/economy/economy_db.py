@@ -2,41 +2,41 @@ import sqlite3
 import logging
 import os
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class EconomyDB:
-    def __init__(self, db_path: str = "economy.db"):
+    def __init__(self, db_path: str = "economy.db") -> None:
         self.db_path = db_path
-        self._init_db()
+        self._init_db
 
     def _init_db(self):
         """Initializes the SQLite database and creates the 'balances' table if it doesn't exist."""
         conn = None
         try:
             conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+            cursor = conn.cursor
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS balances (
                     user_id TEXT PRIMARY KEY,
                     balance REAL NOT NULL DEFAULT 0.0
                 )
             """)
-            conn.commit()
+            conn.commit
             logger.info(f"EconomyDB initialized at {self.db_path}")
         except sqlite3.Error as e:
             logger.error(f"Error initializing EconomyDB at {self.db_path}: {e}")
             raise
         finally:
             if conn:
-                conn.close()
+                conn.close
 
     def get_user_balance(self, user_id: str) -> float:
         """Retrieves the balance for a given user_id. Returns 0.0 if user not found."""
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        cursor = conn.cursor
         cursor.execute("SELECT balance FROM balances WHERE user_id = ?", (user_id,))
-        result = cursor.fetchone()
-        conn.close()
+        result = cursor.fetchone
+        conn.close
         if result:
             return result[0]
         return 0.0
@@ -48,22 +48,22 @@ class EconomyDB:
         Returns True on success, False on failure (e.g., insufficient funds for a debit).
         """
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        cursor = conn.cursor
         
         current_balance = self.get_user_balance(user_id)
         new_balance = current_balance + amount
 
         if new_balance < 0:
             logger.warning(f"Attempted to debit {user_id} with {amount}, but balance would be negative ({new_balance}). Transaction aborted.")
-            conn.close()
+            conn.close
             return False
 
         cursor.execute("""
-            INSERT OR REPLACE INTO balances (user_id, balance)
-            VALUES (?, ?)
-        """, (user_id, new_balance))
-        conn.commit()
-        conn.close()
+            _ = INSERT OR REPLACE INTO balances (user_id, balance)
+            _ = VALUES (?, ?)
+        _ = """, (user_id, new_balance))
+        conn.commit
+        conn.close
         logger.debug(f"User {user_id} balance updated from {current_balance} to {new_balance}")
         return True
 

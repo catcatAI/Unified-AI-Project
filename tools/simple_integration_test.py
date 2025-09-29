@@ -5,20 +5,18 @@ Tests the integration of major components without complex imports
 """
 
 import sys
-import json
 from pathlib import Path
 
 # Add the backend src directory to the path
 backend_src = Path(__file__).parent.parent / "apps" / "backend" / "src"
-sys.path.insert(0, str(backend_src))
+_ = sys.path.insert(0, str(backend_src))
 
-def test_security_components():
+def test_security_components() -> None:
     """Test security components functionality"""
-    print("Testing security components...")
+    _ = print("Testing security components...")
     
     try:
         from security.permission_control import PermissionControlSystem, PermissionContext, PermissionType
-        from security.audit_logger import AuditLogger, AuditEventType
         from security.enhanced_sandbox import EnhancedSandboxExecutor, SandboxConfig
         
         # Test permission control
@@ -30,7 +28,7 @@ def test_security_components():
             action="read"
         )
         permission_result = permission_system.check_permission(context)
-        print(f"  Permission check result: {permission_result}")
+        _ = print(f"  Permission check result: {permission_result}")
         
         # Test audit logging
         audit_logger = AuditLogger()
@@ -41,30 +39,30 @@ def test_security_components():
             action="test_action",
             success=True
         )
-        print(f"  Audit log recorded {len(audit_logger.log_buffer)} events")
+        _ = print(f"  Audit log recorded {len(audit_logger.log_buffer)} events")
         
         # Test sandbox
         sandbox_config = SandboxConfig()
         sandbox = EnhancedSandboxExecutor(sandbox_config)
         test_code = '''
 class TestClass:
-    def test_method(self, data):
+    def test_method(self, data) -> None:
         return {"result": "success", "data": data}
 '''
         result, error = sandbox._validate_code(test_code)
-        print(f"  Sandbox code validation: {result}, {error}")
+        _ = print(f"  Sandbox code validation: {result}, {error}")
         
-        print("Security components test passed!")
+        _ = print("Security components test passed!")
         return True
     except Exception as e:
-        print(f"Error during security components test: {e}")
+        _ = print(f"Error during security components test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def test_service_components():
+def test_service_components() -> None:
     """Test service components functionality"""
-    print("Testing service components...")
+    _ = print("Testing service components...")
     
     try:
         from apps.backend.src.core.services.ai_editor import AIEditorService
@@ -74,44 +72,44 @@ def test_service_components():
         editor_service = AIEditorService()
         test_data = {"text": "This is a test text for processing."}
         processed_data = editor_service.process_data(test_data)
-        print(f"  AI Editor processed data: {processed_data is not None}")
+        _ = print(f"  AI Editor processed data: {processed_data is not None}")
         
         # Test Atlassian Bridge (initialization only)
         atlassian_bridge = EnhancedAtlassianBridge()
-        print(f"  Atlassian Bridge initialized: {atlassian_bridge is not None}")
+        _ = print(f"  Atlassian Bridge initialized: {atlassian_bridge is not None}")
         
-        print("Service components test passed!")
+        _ = print("Service components test passed!")
         return True
     except Exception as e:
-        print(f"Error during service components test: {e}")
+        _ = print(f"Error during service components test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def test_tool_components():
+def test_tool_components() -> None:
     """Test tool components functionality"""
-    print("Testing tool components...")
+    _ = print("Testing tool components...")
     
     try:
         from apps.backend.src.core.tools.tool_dispatcher import ToolDispatcher
         
         # Test Tool Dispatcher
         tool_dispatcher = ToolDispatcher()
-        print(f"  Tool Dispatcher initialized: {tool_dispatcher is not None}")
+        _ = print(f"  Tool Dispatcher initialized: {tool_dispatcher is not None}")
         
-        print("Tool components test passed!")
+        _ = print("Tool components test passed!")
         return True
     except Exception as e:
-        print(f"Error during tool components test: {e}")
+        _ = print(f"Error during tool components test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def main():
+def main() -> None:
     """Main test function"""
-    print("Simple System Integration Test")
+    _ = print("Simple System Integration Test")
     print("=" * 40)
-    print()
+    _ = print()
     
     # Run all tests
     try:
@@ -120,15 +118,15 @@ def main():
         test3 = test_tool_components()
         
         if test1 and test2 and test3:
-            print("\nAll simple integration tests completed successfully!")
+            _ = print("\nAll simple integration tests completed successfully!")
             return True
         else:
-            print("\nSome simple integration tests failed!")
+            _ = print("\nSome simple integration tests failed!")
             return False
     except Exception as e:
-        print(f"Error during simple integration testing: {e}")
+        _ = print(f"Error during simple integration testing: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
 if __name__ == "__main__":

@@ -1,8 +1,7 @@
-import os
 from pathlib import Path
 import logging
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 def setup_env_file(project_root: Path = Path("."), env_example_name: str = ".env.example", env_name: str = ".env") -> bool:
     """設置环境变量文件。
@@ -21,15 +20,15 @@ def setup_env_file(project_root: Path = Path("."), env_example_name: str = ".env
     env_example_path = project_root / env_example_name
     env_file_path = project_root / env_name
     
-    if not env_example_path.exists():
+    if not env_example_path.exists:
         logger.error(f"❌ {env_example_path} 文件不存在")
         return False
     
-    if not env_file_path.exists():
+    if not env_file_path.exists:
         try:
             # 複製示例文件
             with open(env_example_path, 'r', encoding='utf-8') as f_example:
-                content = f_example.read()
+                content = f_example.read
             
             with open(env_file_path, 'w', encoding='utf-8') as f_env:
                 f_env.write(content)
@@ -57,12 +56,12 @@ def add_env_variable(key: str, value: str, project_root: Path = Path("."), env_n
         bool: 如果成功添加或更新，則為 True，否則為 False。
     """
     env_file_path = project_root / env_name
-    if not env_file_path.exists():
+    if not env_file_path.exists:
         logger.warning(f"⚠️  {env_file_path} 不存在，無法添加环境变量 {key}")
         return False
 
     try:
-        lines = []
+        lines = 
         updated = False
         with open(env_file_path, 'r', encoding='utf-8') as f:
             for line in f:

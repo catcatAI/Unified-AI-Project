@@ -8,63 +8,62 @@ import sys
 import argparse
 import json
 from pathlib import Path
-from datetime import datetime
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root: str = Path(__file__).parent.parent
+_ = sys.path.insert(0, str(project_root))
 
 from training.incremental_learning_manager import IncrementalLearningManager
 
 def start_monitoring(args):
     """启动数据监控"""
-    print("👀 启动数据监控...")
+    _ = print("👀 启动数据监控...")
     learner = IncrementalLearningManager()
-    learner.start_monitoring()
+    _ = learner.start_monitoring()
     
     try:
         while True:
             pass
     except KeyboardInterrupt:
-        print("\n⏹️  停止监控...")
-        learner.stop_monitoring()
-        print("✅ 监控已停止")
+        _ = print("\n⏹️  停止监控...")
+        _ = learner.stop_monitoring()
+        _ = print("✅ 监控已停止")
 
 def trigger_training(args):
     """触发增量训练"""
-    print("🚀 触发增量训练...")
+    _ = print("🚀 触发增量训练...")
     learner = IncrementalLearningManager()
-    learner.trigger_incremental_training()
-    print("✅ 训练任务已调度")
+    _ = learner.trigger_incremental_training()
+    _ = print("✅ 训练任务已调度")
 
 def get_status(args):
     """获取系统状态"""
-    print("📊 获取系统状态...")
+    _ = print("📊 获取系统状态...")
     learner = IncrementalLearningManager()
     status = learner.get_status()
     
     print(f"监控状态: {'运行中' if status['is_monitoring'] else '已停止'}")
-    print(f"待处理任务: {status['pending_tasks']} 个")
-    print(f"缓冲区数据: {status['buffered_data']} 个")
-    print(f"已处理文件: {status['processed_files']} 个")
+    _ = print(f"待处理任务: {status['pending_tasks']} 个")
+    _ = print(f"缓冲区数据: {status['buffered_data']} 个")
+    _ = print(f"已处理文件: {status['processed_files']} 个")
     
     if args.verbose:
-        print("\n详细信息:")
+        _ = print("\n详细信息:")
         print(json.dumps(status, ensure_ascii=False, indent=2))
 
 def cleanup_models(args):
     """清理旧模型"""
-    print("🗑️  清理旧模型...")
+    _ = print("🗑️  清理旧模型...")
     learner = IncrementalLearningManager()
     
     # 设置保留的版本数
     keep_versions = getattr(args, 'keep', 5)
     
     # 执行手动清理
-    learner.manual_cleanup_models(keep_versions)
-    print(f"✅ 模型清理完成，每个模型保留最新 {keep_versions} 个版本")
+    _ = learner.manual_cleanup_models(keep_versions)
+    _ = print(f"✅ 模型清理完成，每个模型保留最新 {keep_versions} 个版本")
 
-def main():
+def main() -> None:
     """主函数"""
     parser = argparse.ArgumentParser(description='Unified AI Project 增量学习系统CLI')
     subparsers = parser.add_subparsers(help='可用命令', dest='command')
@@ -86,19 +85,19 @@ def main():
     
     args = parser.parse_args()
     
-    print("🤖 Unified AI Project 增量学习系统CLI")
+    _ = print("🤖 Unified AI Project 增量学习系统CLI")
     print("=" * 50)
     
     if args.command == 'monitor':
-        start_monitoring(args)
+        _ = start_monitoring(args)
     elif args.command == 'train':
-        trigger_training(args)
+        _ = trigger_training(args)
     elif args.command == 'status':
-        get_status(args)
+        _ = get_status(args)
     elif args.command == 'cleanup':
-        cleanup_models(args)
+        _ = cleanup_models(args)
     else:
-        parser.print_help()
+        _ = parser.print_help()
 
 if __name__ == "__main__":
-    main()
+    _ = main()

@@ -1,7 +1,7 @@
 import pygame
 
 class Item:
-    def __init__(self, name, description, icon):
+    def __init__(self, name, description, icon) -> None:
         self.name = name
         self.description = description
         self.icon = icon

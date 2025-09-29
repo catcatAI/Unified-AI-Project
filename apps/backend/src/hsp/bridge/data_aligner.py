@@ -1,9 +1,7 @@
-from typing import Any, Dict, Literal, Optional, Union
-from ..types import HSPMessageEnvelope, HSPFactPayload, HSPErrorDetails, HSPTaskRequestPayload, HSPTaskResultPayload, HSPCapabilityAdvertisementPayload
 
 class DataAligner:
-    def __init__(self, schema_registry: Optional[Dict[str, Any]] = None):
-        self.schema_registry = schema_registry or {}
+    def __init__(self, schema_registry: Optional[Dict[str, Any]] = None) -> None:
+        self.schema_registry = schema_registry or 
 
     def align_message(self, message: Dict[str, Any]) -> (Optional[HSPMessageEnvelope], Optional[HSPErrorDetails]):
         # Basic validation
@@ -18,7 +16,7 @@ class DataAligner:
         # Align and validate the payload based on message_type
         message_type = aligned_message.get("message_type")
         if message_type:
-            payload = aligned_message.get("payload", {})
+            payload = aligned_message.get("payload", )
             aligned_payload, payload_error = self._align_payload(payload, message_type)
             if payload_error:
                 return None, payload_error

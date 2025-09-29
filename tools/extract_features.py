@@ -4,25 +4,20 @@
 用于从训练好的模型中提取特征
 """
 
-import os
 import sys
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
-import numpy as np
-import torch
-import torch.nn as nn
 from PIL import Image
 import librosa
 import pickle
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
+project_root: str = Path(__file__).parent.parent
+backend_path: str = project_root / "apps" / "backend"
+_ = sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(backend_path))
+_ = sys.path.insert(0, str(backend_path / "src"))
 
 # 导入模型定义
 from apps.backend.src.core.tools.train_vision_model import SimpleVisionModel
@@ -30,16 +25,16 @@ from apps.backend.src.core.tools.train_audio_model import SimpleAudioModel
 from apps.backend.src.core.tools.train_text_model import SimpleTextModel
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class FeatureExtractor:
     """特征提取器"""
     
-    def __init__(self, model_dir: str = None):
+    def __init__(self, model_dir: str = None) -> None:
         self.project_root = project_root
         self.model_dir = Path(model_dir) if model_dir else project_root / "training" / "models"
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        logger.info(f"使用设备: {self.device}")
+        _ = logger.info(f"使用设备: {self.device}")
         
         # 加载模型和相关组件
         self.vision_model = None
@@ -47,11 +42,11 @@ class FeatureExtractor:
         self.text_model = None
         self.text_vectorizer = None
         
-        self._load_models()
+        _ = self._load_models()
     
     def _load_models(self):
         """加载训练好的模型"""
-        logger.info("正在加载训练好的模型...")
+        _ = logger.info("正在加载训练好的模型...")
         
         # 加载视觉模型
         vision_model_path = self.model_dir / "vision_model.pth"
@@ -64,12 +59,12 @@ class FeatureExtractor:
                 
                 self.vision_model = SimpleVisionModel(num_classes=num_classes).to(self.device)
                 self.vision_model.load_state_dict(torch.load(vision_model_path, map_location=self.device))
-                self.vision_model.eval()
-                logger.info("视觉模型加载成功")
+                _ = self.vision_model.eval()
+                _ = logger.info("视觉模型加载成功")
             except Exception as e:
-                logger.error(f"加载视觉模型时出错: {e}")
+                _ = logger.error(f"加载视觉模型时出错: {e}")
         else:
-            logger.warning("未找到视觉模型文件")
+            _ = logger.warning("未找到视觉模型文件")
         
         # 加载音频模型
         audio_model_path = self.model_dir / "audio_model.pth"
@@ -82,12 +77,12 @@ class FeatureExtractor:
                 
                 self.audio_model = SimpleAudioModel(num_classes=num_classes).to(self.device)
                 self.audio_model.load_state_dict(torch.load(audio_model_path, map_location=self.device))
-                self.audio_model.eval()
-                logger.info("音频模型加载成功")
+                _ = self.audio_model.eval()
+                _ = logger.info("音频模型加载成功")
             except Exception as e:
-                logger.error(f"加载音频模型时出错: {e}")
+                _ = logger.error(f"加载音频模型时出错: {e}")
         else:
-            logger.warning("未找到音频模型文件")
+            _ = logger.warning("未找到音频模型文件")
         
         # 加载文本模型和向量化器
         text_model_path = self.model_dir / "text_model.pth"
@@ -103,22 +98,22 @@ class FeatureExtractor:
                 
                 self.text_model = SimpleTextModel(input_size=input_size, num_classes=num_classes).to(self.device)
                 self.text_model.load_state_dict(torch.load(text_model_path, map_location=self.device))
-                self.text_model.eval()
+                _ = self.text_model.eval()
                 
                 # 加载向量化器
                 with open(text_vectorizer_path, 'rb') as f:
                     self.text_vectorizer = pickle.load(f)
                 
-                logger.info("文本模型和向量化器加载成功")
+                _ = logger.info("文本模型和向量化器加载成功")
             except Exception as e:
-                logger.error(f"加载文本模型时出错: {e}")
+                _ = logger.error(f"加载文本模型时出错: {e}")
         else:
-            logger.warning("未找到文本模型文件或向量化器")
+            _ = logger.warning("未找到文本模型文件或向量化器")
     
     def extract_vision_features(self, image_path: str) -> np.ndarray:
         """从图像中提取视觉特征"""
         if self.vision_model is None:
-            logger.warning("视觉模型未加载")
+            _ = logger.warning("视觉模型未加载")
             return None
         
         try:
@@ -137,16 +132,16 @@ class FeatureExtractor:
                 features = features.view(features.size(0), -1)
                 features = features.cpu().numpy()
             
-            logger.info(f"成功提取视觉特征，形状: {features.shape}")
+            _ = logger.info(f"成功提取视觉特征，形状: {features.shape}")
             return features
         except Exception as e:
-            logger.error(f"提取视觉特征时出错: {e}")
+            _ = logger.error(f"提取视觉特征时出错: {e}")
             return None
     
     def extract_audio_features(self, audio_path: str) -> np.ndarray:
         """从音频中提取音频特征"""
         if self.audio_model is None:
-            logger.warning("音频模型未加载")
+            _ = logger.warning("音频模型未加载")
             return None
         
         try:
@@ -181,16 +176,16 @@ class FeatureExtractor:
                 features = x.view(x.size(0), -1)
                 features = features.cpu().numpy()
             
-            logger.info(f"成功提取音频特征，形状: {features.shape}")
+            _ = logger.info(f"成功提取音频特征，形状: {features.shape}")
             return features
         except Exception as e:
-            logger.error(f"提取音频特征时出错: {e}")
+            _ = logger.error(f"提取音频特征时出错: {e}")
             return None
     
     def extract_text_features(self, text: str) -> np.ndarray:
         """从文本中提取文本特征"""
         if self.text_model is None or self.text_vectorizer is None:
-            logger.warning("文本模型或向量化器未加载")
+            _ = logger.warning("文本模型或向量化器未加载")
             return None
         
         try:
@@ -206,10 +201,10 @@ class FeatureExtractor:
                 features = self.text_model.relu(self.text_model.fc2(x))
                 features = features.cpu().numpy()
             
-            logger.info(f"成功提取文本特征，形状: {features.shape}")
+            _ = logger.info(f"成功提取文本特征，形状: {features.shape}")
             return features
         except Exception as e:
-            logger.error(f"提取文本特征时出错: {e}")
+            _ = logger.error(f"提取文本特征时出错: {e}")
             return None
     
     def extract_multimodal_features(self, image_path: str = None, audio_path: str = None, text: str = None) -> Dict[str, np.ndarray]:
@@ -233,9 +228,9 @@ class FeatureExtractor:
         
         return features
 
-def main():
+def main() -> None:
     """主函数"""
-    logger.info("开始特征提取...")
+    _ = logger.info("开始特征提取...")
     
     # 初始化特征提取器
     extractor = FeatureExtractor()
@@ -259,7 +254,7 @@ def main():
     #     text="这是一段示例文本"
     # )
     
-    logger.info("特征提取模块初始化完成!")
+    _ = logger.info("特征提取模块初始化完成!")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

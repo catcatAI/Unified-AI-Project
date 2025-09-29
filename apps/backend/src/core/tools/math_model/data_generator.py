@@ -46,16 +46,16 @@ def generate_problem(max_digits=3, operations=None):
 
 
 def _sha256_of_file(path: Path) -> str:
-    h = hashlib.sha256()
+    h = hashlib.sha256
     with open(path, 'rb') as f:
         for chunk in iter(lambda: f.read(8192), b''):
             h.update(chunk)
-    return h.hexdigest()
+    return h.hexdigest
 
 
 def generate_dataset(num_samples, output_dir, filename_prefix="arithmetic", file_format="csv", max_digits=3):
     """Generates a dataset of arithmetic problems and saves it. Returns metadata dict."""
-    problems = []
+    problems = 
     for _ in range(num_samples):
         problem, answer = generate_problem(max_digits=max_digits)
         problems.append({"problem": problem, "answer": str(answer)})
@@ -74,7 +74,7 @@ def generate_dataset(num_samples, output_dir, filename_prefix="arithmetic", file
         tmp = filepath.with_suffix(filepath.suffix + ".tmp")
         with open(tmp, 'w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=["problem", "answer"])
-            writer.writeheader()
+            writer.writeheader
             writer.writerows(problems)
         os.replace(tmp, filepath)
         print(f"Generated {num_samples} samples in {filepath}")
@@ -90,9 +90,9 @@ def generate_dataset(num_samples, output_dir, filename_prefix="arithmetic", file
     # enrich metadata
     metadata.update({
         "output_path": str(filepath),
-        "file_size_bytes": filepath.stat().st_size,
+        "file_size_bytes": filepath.stat.st_size,
         "sha256": _sha256_of_file(filepath),
-        "created_at": datetime.utcnow().isoformat() + "Z",
+        "created_at": datetime.utcnow.isoformat + "Z",
     })
     return metadata
 
@@ -100,7 +100,7 @@ def generate_dataset(num_samples, output_dir, filename_prefix="arithmetic", file
 def _write_summary_report(project_root: Path, output_dir: Path, datasets_meta, summary_out: Optional[str] = None) -> Path:
     report = {
         "title": "Arithmetic dataset generation summary",
-        "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "generated_at": datetime.now(timezone.utc).isoformat.replace("+00:00", "Z"),
         "project_root": str(project_root),
         "output_dir": str(output_dir),
         "total_datasets": len(datasets_meta),
@@ -109,7 +109,7 @@ def _write_summary_report(project_root: Path, output_dir: Path, datasets_meta, s
     if summary_out:
         out_path = Path(summary_out)
     else:
-        ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        ts = datetime.utcnow.strftime("%Y%m%d_%H%M%S")
         out_path = Path(output_dir) / f"dataset_summary_{ts}.json"
     _atomic_write_text(out_path, json.dumps(report, ensure_ascii=False, indent=2))
     print(f"Summary report written to {out_path}")
@@ -126,20 +126,20 @@ if __name__ == "__main__":
     parser.add_argument('--max-digits', type=int, default=3, help='Max digits for numbers')
     parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
     parser.add_argument('--summary-out', type=str, help='Optional explicit path to write summary JSON')
-    args = parser.parse_args()
+    args = parser.parse_args
 
     # Resolve project root robustly by walking up until repo markers are found (keep backward compatibility)
-    script_dir = Path(__file__).resolve().parent
+    script_dir = Path(__file__).resolve.parent
 
     def _find_project_root(start: Path) -> Path:
         # Identify repository root by presence of typical top-level dirs
         for p in [start] + list(start.parents):
-            if (p / "apps").exists() and (p / "training").exists():
+            if (p / "apps").exists and (p / "training").exists:
                 return p
         # Fallback to highest parent
         return start.parents[-1]
 
-    project_root = _find_project_root(script_dir)
+    project_root: str = _find_project_root: str(script_dir)
     default_output_directory = Path(project_root) / "data" / "raw_datasets"
     output_directory = Path(args.output_dir) if args.output_dir else default_output_directory
     output_directory.mkdir(parents=True, exist_ok=True)
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     if args.seed is not None:
         random.seed(args.seed)
 
-    datasets_meta = []
+    datasets_meta = 
 
     if args.mode == 'default':
         # Backward compatible behavior

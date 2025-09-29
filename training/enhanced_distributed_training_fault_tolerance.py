@@ -8,28 +8,22 @@ import asyncio
 import logging
 import json
 import time
-from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
 
 # 添加项目路径
 import sys
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root: str = Path(__file__).parent.parent
+_ = sys.path.insert(0, str(project_root))
 
-from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
-from training.enhanced_checkpoint_manager import EnhancedCheckpointManager, global_checkpoint_manager
-from training.training_state_manager import TrainingStateManager, global_state_manager
-from training.fault_detector import FaultDetector, global_fault_detector
-from training.task_migrator import TaskMigrator, initialize_task_migrator
 from training.distributed_optimizer import DistributedOptimizer
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class EnhancedDistributedTrainingFaultTolerance:
     """增强的分布式训练容错机制"""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = config or {}
         self.error_handler = global_error_handler
         
@@ -50,7 +44,7 @@ class EnhancedDistributedTrainingFaultTolerance:
         self.is_running = False
         self.monitoring_task = None
         
-        logger.info("增强的分布式训练容错机制初始化完成")
+        _ = logger.info("增强的分布式训练容错机制初始化完成")
     
     async def initialize_components(self):
         """初始化所有组件"""
@@ -65,16 +59,16 @@ class EnhancedDistributedTrainingFaultTolerance:
             self.task_migrator = initialize_task_migrator(self.distributed_optimizer, migrator_config)
             
             # 启动自动同步
-            await self.state_manager.start_auto_sync()
+            _ = await self.state_manager.start_auto_sync()
             
             # 启动监控
-            await self.fault_detector.start_monitoring()
+            _ = await self.fault_detector.start_monitoring()
             
-            logger.info("所有组件初始化完成")
+            _ = logger.info("所有组件初始化完成")
             return True
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"初始化组件失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"初始化组件失败: {e}")
             return False
     
     async def register_training_node(self, node_id: str, node_info: Dict[str, Any]):
@@ -82,7 +76,7 @@ class EnhancedDistributedTrainingFaultTolerance:
         context = ErrorContext("EnhancedDistributedTrainingFaultTolerance", "register_training_node", {"node_id": node_id})
         try:
             if not self.distributed_optimizer:
-                logger.warning("分布式优化器未初始化")
+                _ = logger.warning("分布式优化器未初始化")
                 return False
             
             # 注册到分布式优化器
@@ -90,13 +84,13 @@ class EnhancedDistributedTrainingFaultTolerance:
             
             if success:
                 # 注册到故障检测器
-                self.fault_detector.register_node(node_id, node_info)
-                logger.info(f"注册训练节点: {node_id}")
+                _ = self.fault_detector.register_node(node_id, node_info)
+                _ = logger.info(f"注册训练节点: {node_id}")
             
             return success
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"注册训练节点失败: {node_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"注册训练节点失败: {node_id} - {e}")
             return False
     
     async def unregister_training_node(self, node_id: str):
@@ -104,7 +98,7 @@ class EnhancedDistributedTrainingFaultTolerance:
         context = ErrorContext("EnhancedDistributedTrainingFaultTolerance", "unregister_training_node", {"node_id": node_id})
         try:
             if not self.distributed_optimizer:
-                logger.warning("分布式优化器未初始化")
+                _ = logger.warning("分布式优化器未初始化")
                 return False
             
             # 从分布式优化器注销
@@ -112,13 +106,13 @@ class EnhancedDistributedTrainingFaultTolerance:
             
             if success:
                 # 从故障检测器注销
-                self.fault_detector.unregister_node(node_id)
-                logger.info(f"注销训练节点: {node_id}")
+                _ = self.fault_detector.unregister_node(node_id)
+                _ = logger.info(f"注销训练节点: {node_id}")
             
             return success
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"注销训练节点失败: {node_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"注销训练节点失败: {node_id} - {e}")
             return False
     
     async def handle_node_heartbeat(self, node_id: str, metrics: Dict[str, Any]):
@@ -126,7 +120,7 @@ class EnhancedDistributedTrainingFaultTolerance:
         context = ErrorContext("EnhancedDistributedTrainingFaultTolerance", "handle_node_heartbeat", {"node_id": node_id})
         try:
             if not self.distributed_optimizer:
-                logger.warning("分布式优化器未初始化")
+                _ = logger.warning("分布式优化器未初始化")
                 return False
             
             # 更新分布式优化器中的心跳
@@ -134,12 +128,12 @@ class EnhancedDistributedTrainingFaultTolerance:
             
             if success:
                 # 更新故障检测器中的心跳
-                self.fault_detector.update_node_heartbeat(node_id, metrics)
+                _ = self.fault_detector.update_node_heartbeat(node_id, metrics)
             
             return success
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"处理节点心跳失败: {node_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"处理节点心跳失败: {node_id} - {e}")
             return False
     
     async def save_training_checkpoint(self, task_id: str, state: Dict[str, Any], 
@@ -151,14 +145,14 @@ class EnhancedDistributedTrainingFaultTolerance:
             checkpoint_id = self.checkpoint_manager.save_checkpoint(state, task_id, checkpoint_type)
             
             if checkpoint_id:
-                logger.info(f"保存训练检查点成功: {checkpoint_id}")
+                _ = logger.info(f"保存训练检查点成功: {checkpoint_id}")
             else:
-                logger.error(f"保存训练检查点失败: {task_id}")
+                _ = logger.error(f"保存训练检查点失败: {task_id}")
             
             return checkpoint_id
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"保存训练检查点失败: {task_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"保存训练检查点失败: {task_id} - {e}")
             return None
     
     async def load_training_checkpoint(self, task_id: str) -> Optional[Dict[str, Any]]:
@@ -169,14 +163,14 @@ class EnhancedDistributedTrainingFaultTolerance:
             checkpoint_data = self.checkpoint_manager.load_checkpoint(task_id=task_id)
             
             if checkpoint_data:
-                logger.info(f"加载训练检查点成功: {task_id}")
+                _ = logger.info(f"加载训练检查点成功: {task_id}")
             else:
-                logger.info(f"未找到训练检查点: {task_id}")
+                _ = logger.info(f"未找到训练检查点: {task_id}")
             
             return checkpoint_data
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"加载训练检查点失败: {task_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"加载训练检查点失败: {task_id} - {e}")
             return None
     
     async def save_training_state(self, task_id: str, state: Dict[str, Any]) -> bool:
@@ -187,14 +181,14 @@ class EnhancedDistributedTrainingFaultTolerance:
             success = await self.state_manager.save_training_state(task_id, state)
             
             if success:
-                logger.info(f"保存训练状态成功: {task_id}")
+                _ = logger.info(f"保存训练状态成功: {task_id}")
             else:
-                logger.error(f"保存训练状态失败: {task_id}")
+                _ = logger.error(f"保存训练状态失败: {task_id}")
             
             return success
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"保存训练状态失败: {task_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"保存训练状态失败: {task_id} - {e}")
             return False
     
     async def load_training_state(self, task_id: str) -> Optional[Dict[str, Any]]:
@@ -205,14 +199,14 @@ class EnhancedDistributedTrainingFaultTolerance:
             state_data = await self.state_manager.load_training_state(task_id)
             
             if state_data:
-                logger.info(f"加载训练状态成功: {task_id}")
+                _ = logger.info(f"加载训练状态成功: {task_id}")
             else:
-                logger.info(f"未找到训练状态: {task_id}")
+                _ = logger.info(f"未找到训练状态: {task_id}")
             
             return state_data
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"加载训练状态失败: {task_id} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"加载训练状态失败: {task_id} - {e}")
             return None
     
     async def start_monitoring(self):
@@ -220,15 +214,15 @@ class EnhancedDistributedTrainingFaultTolerance:
         context = ErrorContext("EnhancedDistributedTrainingFaultTolerance", "start_monitoring")
         try:
             if self.is_running:
-                logger.warning("监控已在运行中")
+                _ = logger.warning("监控已在运行中")
                 return
             
             self.is_running = True
             self.monitoring_task = asyncio.create_task(self._monitoring_loop())
-            logger.info("启动增强的分布式训练容错监控")
+            _ = logger.info("启动增强的分布式训练容错监控")
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"启动监控失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"启动监控失败: {e}")
     
     def stop_monitoring(self):
         """停止监控"""
@@ -236,19 +230,19 @@ class EnhancedDistributedTrainingFaultTolerance:
         try:
             self.is_running = False
             if self.monitoring_task:
-                self.monitoring_task.cancel()
+                _ = self.monitoring_task.cancel()
             
             # 停止其他组件的监控
             if self.fault_detector:
-                self.fault_detector.stop_monitoring()
+                _ = self.fault_detector.stop_monitoring()
             
             if self.state_manager:
-                self.state_manager.stop_auto_sync()
+                _ = self.state_manager.stop_auto_sync()
             
-            logger.info("停止增强的分布式训练容错监控")
+            _ = logger.info("停止增强的分布式训练容错监控")
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"停止监控失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"停止监控失败: {e}")
     
     async def _monitoring_loop(self):
         """监控循环"""
@@ -257,23 +251,23 @@ class EnhancedDistributedTrainingFaultTolerance:
             while self.is_running:
                 try:
                     # 执行定期检查点保存
-                    await self._perform_periodic_checkpointing()
+                    _ = await self._perform_periodic_checkpointing()
                     
                     # 检查集群健康状态
-                    await self._check_cluster_health()
+                    _ = await self._check_cluster_health()
                     
                     # 等待下一个检查周期
-                    await asyncio.sleep(self.health_check_interval)
+                    _ = await asyncio.sleep(self.health_check_interval)
                 except asyncio.CancelledError:
-                    logger.info("监控循环被取消")
+                    _ = logger.info("监控循环被取消")
                     break
                 except Exception as e:
-                    self.error_handler.handle_error(e, context)
-                    logger.error(f"监控循环出错: {e}")
-                    await asyncio.sleep(self.health_check_interval)
+                    _ = self.error_handler.handle_error(e, context)
+                    _ = logger.error(f"监控循环出错: {e}")
+                    _ = await asyncio.sleep(self.health_check_interval)
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"监控循环异常: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"监控循环异常: {e}")
     
     async def _perform_periodic_checkpointing(self):
         """执行定期检查点保存"""
@@ -294,12 +288,12 @@ class EnhancedDistributedTrainingFaultTolerance:
                     )
                     
                     if checkpoint_decision['should_save']:
-                        logger.info(f"根据策略保存检查点: {checkpoint_decision['reasons']}")
+                        _ = logger.info(f"根据策略保存检查点: {checkpoint_decision['reasons']}")
                         # 这里应该实际保存检查点，但需要任务的具体状态数据
                         # 为示例起见，我们只记录日志
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"执行定期检查点保存失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"执行定期检查点保存失败: {e}")
     
     async def _check_cluster_health(self):
         """检查集群健康状态"""
@@ -311,34 +305,34 @@ class EnhancedDistributedTrainingFaultTolerance:
             # 检查是否有故障节点
             failed_nodes = cluster_status.get('failed_nodes', 0)
             if failed_nodes > 0:
-                logger.warning(f"检测到 {failed_nodes} 个故障节点")
+                _ = logger.warning(f"检测到 {failed_nodes} 个故障节点")
                 
                 # 如果启用了自动恢复，触发恢复流程
                 if self.auto_recovery_enabled:
-                    await self._trigger_auto_recovery(cluster_status)
+                    _ = await self._trigger_auto_recovery(cluster_status)
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"检查集群健康状态失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"检查集群健康状态失败: {e}")
     
     async def _trigger_auto_recovery(self, cluster_status: Dict[str, Any]):
         """触发自动恢复"""
         context = ErrorContext("EnhancedDistributedTrainingFaultTolerance", "_trigger_auto_recovery")
         try:
-            logger.info("触发自动恢复流程")
+            _ = logger.info("触发自动恢复流程")
             
             # 这里应该实现具体的自动恢复逻辑
             # 例如：重新分配任务、启动备用节点等
-            await asyncio.sleep(0.1)  # 模拟恢复过程
+            _ = await asyncio.sleep(0.1)  # 模拟恢复过程
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"触发自动恢复失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"触发自动恢复失败: {e}")
     
     def get_system_status(self) -> Dict[str, Any]:
         """获取系统状态"""
         context = ErrorContext("EnhancedDistributedTrainingFaultTolerance", "get_system_status")
         try:
             status = {
-                'timestamp': datetime.now().isoformat(),
+                _ = 'timestamp': datetime.now().isoformat(),
                 'enabled': self.enabled,
                 'is_running': self.is_running,
                 'auto_recovery_enabled': self.auto_recovery_enabled,
@@ -356,16 +350,16 @@ class EnhancedDistributedTrainingFaultTolerance:
             
             return status
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"获取系统状态失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"获取系统状态失败: {e}")
             return {}
 
 # 全局增强的分布式训练容错机制实例
 global_enhanced_fault_tolerance = EnhancedDistributedTrainingFaultTolerance()
 
-async def main():
+async def main() -> None:
     """主函数，用于测试增强的分布式训练容错机制"""
-    print("🔬 测试增强的分布式训练容错机制...")
+    _ = print("🔬 测试增强的分布式训练容错机制...")
     
     # 配置日志
     logging.basicConfig(level=logging.INFO)
@@ -388,14 +382,14 @@ async def main():
     fault_tolerance = EnhancedDistributedTrainingFaultTolerance(config)
     
     # 初始化组件
-    print("初始化组件...")
+    _ = print("初始化组件...")
     init_success = await fault_tolerance.initialize_components()
     if not init_success:
-        print("❌ 组件初始化失败")
+        _ = print("❌ 组件初始化失败")
         return
     
     # 注册测试节点
-    print("注册测试节点...")
+    _ = print("注册测试节点...")
     await fault_tolerance.register_training_node('node1', {
         'cpu_cores': 8,
         'memory_gb': 16,
@@ -409,7 +403,7 @@ async def main():
     })
     
     # 模拟节点心跳
-    print("模拟节点心跳...")
+    _ = print("模拟节点心跳...")
     await fault_tolerance.handle_node_heartbeat('node1', {
         'cpu_usage': 45.0,
         'memory_usage': 60.0,
@@ -423,7 +417,7 @@ async def main():
     })
     
     # 模拟保存训练状态
-    print("模拟保存训练状态...")
+    _ = print("模拟保存训练状态...")
     training_state = {
         'model_name': 'test_model',
         'current_epoch': 5,
@@ -434,39 +428,39 @@ async def main():
         'learning_rate': 0.001,
         'batch_size': 32,
         'progress': 50.0,
-        'start_time': time.time(),
+        _ = 'start_time': time.time(),
         'config': {'batch_size': 32, 'epochs': 10}
     }
     
     save_success = await fault_tolerance.save_training_state('test_task_1', training_state)
-    print(f"保存训练状态结果: {save_success}")
+    _ = print(f"保存训练状态结果: {save_success}")
     
     # 模拟保存检查点
-    print("模拟保存检查点...")
+    _ = print("模拟保存检查点...")
     checkpoint_id = await fault_tolerance.save_training_checkpoint(
         'test_task_1', 
         training_state, 
         'epoch'
     )
-    print(f"保存检查点ID: {checkpoint_id}")
+    _ = print(f"保存检查点ID: {checkpoint_id}")
     
     # 启动监控
-    print("启动监控...")
-    await fault_tolerance.start_monitoring()
+    _ = print("启动监控...")
+    _ = await fault_tolerance.start_monitoring()
     
     # 等待一段时间观察监控效果
-    await asyncio.sleep(5)
+    _ = await asyncio.sleep(5)
     
     # 获取系统状态
-    print("\n系统状态:")
+    _ = print("\n系统状态:")
     status = fault_tolerance.get_system_status()
     print(json.dumps(status, indent=2, ensure_ascii=False))
     
     # 停止监控
-    print("\n停止监控...")
-    fault_tolerance.stop_monitoring()
+    _ = print("\n停止监控...")
+    _ = fault_tolerance.stop_monitoring()
     
-    print("\n✅ 增强的分布式训练容错机制测试完成")
+    _ = print("\n✅ 增强的分布式训练容错机制测试完成")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    _ = asyncio.run(main())

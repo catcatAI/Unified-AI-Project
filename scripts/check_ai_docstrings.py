@@ -10,17 +10,12 @@ following the unified project standards and Context7 MCP integration requirement
 """
 
 import ast
-import os
 import sys
 from pathlib import Path
-from typing import List, Dict, Set, Optional, Tuple
-import re
-
-
 class AIDocstringChecker:
     """AI組件文檔字符串檢查器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.errors: List[str] = []
         self.warnings: List[str] = []
         self.checked_files = 0
@@ -57,12 +52,12 @@ class AIDocstringChecker:
             
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef):
-                    self._check_class_docstring(node, file_path)
+                    _ = self._check_class_docstring(node, file_path)
                 elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    self._check_function_docstring(node, file_path)
+                    _ = self._check_function_docstring(node, file_path)
                     
         except Exception as e:
-            self.errors.append(f"Error parsing {file_path}: {e}")
+            _ = self.errors.append(f"Error parsing {file_path}: {e}")
 
     def _check_class_docstring(self, node: ast.ClassDef, file_path: Path) -> None:
         """檢查類的文檔字符串"""
@@ -125,7 +120,7 @@ class AIDocstringChecker:
         # 檢查基本格式
         if len(docstring.strip()) < 10:
             self.warnings.append(
-                f"{file_path}:{lineno} - {item_type.title()} '{name}' has very short docstring"
+                _ = f"{file_path}:{lineno} - {item_type.title()} '{name}' has very short docstring"
             )
             
         # 檢查必需的章節
@@ -133,7 +128,7 @@ class AIDocstringChecker:
         for section in required_sections:
             if not self._has_section(docstring, section):
                 self.errors.append(
-                    f"{file_path}:{lineno} - {item_type.title()} '{name}' missing '{section}' section"
+                    _ = f"{file_path}:{lineno} - {item_type.title()} '{name}' missing '{section}' section"
                 )
                 
         # 檢查中英文雙語要求（針對AI組件）
@@ -190,7 +185,7 @@ class AIDocstringChecker:
         """檢查文檔字符串是否包含指定章節"""
         patterns = [
             f"{section}:",
-            f"{section.lower()}:",
+            _ = f"{section.lower()}:",
             f"**{section}**",
             f"## {section}"
         ]
@@ -220,36 +215,36 @@ class AIDocstringChecker:
             # 跳過__pycache__和.git目錄
             if '__pycache__' in str(py_file) or '.git' in str(py_file):
                 continue
-            self.check_file(py_file)
+            _ = self.check_file(py_file)
 
     def print_report(self) -> None:
         """打印檢查報告"""
         print("=" * 60)
-        print("AI Component Docstring Check Report")
-        print("AI組件文檔字符串檢查報告")
+        _ = print("AI Component Docstring Check Report")
+        _ = print("AI組件文檔字符串檢查報告")
         print("=" * 60)
         
-        print(f"Files checked: {self.checked_files}")
-        print(f"Classes checked: {self.checked_classes}")
-        print(f"Functions checked: {self.checked_functions}")
-        print()
+        _ = print(f"Files checked: {self.checked_files}")
+        _ = print(f"Classes checked: {self.checked_classes}")
+        _ = print(f"Functions checked: {self.checked_functions}")
+        _ = print()
         
         if self.errors:
-            print(f"❌ ERRORS ({len(self.errors)}):")
+            _ = print(f"❌ ERRORS ({len(self.errors)}):")
             for error in self.errors:
-                print(f"  {error}")
-            print()
+                _ = print(f"  {error}")
+            _ = print()
             
         if self.warnings:
-            print(f"⚠️  WARNINGS ({len(self.warnings)}):")
+            _ = print(f"⚠️  WARNINGS ({len(self.warnings)}):")
             for warning in self.warnings:
-                print(f"  {warning}")
-            print()
+                _ = print(f"  {warning}")
+            _ = print()
             
         if not self.errors and not self.warnings:
-            print("✅ All AI components have proper docstrings!")
+            _ = print("✅ All AI components have proper docstrings!")
         elif not self.errors:
-            print("✅ No critical errors found, only warnings.")
+            _ = print("✅ No critical errors found, only warnings.")
         
         print("=" * 60)
 
@@ -258,42 +253,42 @@ class AIDocstringChecker:
         return len(self.errors) > 0
 
 
-def main():
+def main() -> None:
     """主函數"""
     checker = AIDocstringChecker()
     
     # 檢查src/core_ai目錄
     core_ai_path = Path("src/core_ai")
     if core_ai_path.exists():
-        print(f"Checking AI components in {core_ai_path}...")
-        checker.check_directory(core_ai_path)
+        _ = print(f"Checking AI components in {core_ai_path}...")
+        _ = checker.check_directory(core_ai_path)
     else:
-        print(f"Warning: {core_ai_path} not found")
+        _ = print(f"Warning: {core_ai_path} not found")
         
     # 檢查src/mcp目錄（Context7 MCP相關）
     mcp_path = Path("src/mcp")
     if mcp_path.exists():
-        print(f"Checking MCP components in {mcp_path}...")
-        checker.check_directory(mcp_path)
+        _ = print(f"Checking MCP components in {mcp_path}...")
+        _ = checker.check_directory(mcp_path)
     else:
-        print(f"Warning: {mcp_path} not found")
+        _ = print(f"Warning: {mcp_path} not found")
         
     # 檢查src/agents目錄
     agents_path = Path("src/agents")
     if agents_path.exists():
-        print(f"Checking agent components in {agents_path}...")
-        checker.check_directory(agents_path)
+        _ = print(f"Checking agent components in {agents_path}...")
+        _ = checker.check_directory(agents_path)
     else:
-        print(f"Info: {agents_path} not found (optional)")
+        _ = print(f"Info: {agents_path} not found (optional)")
     
-    checker.print_report()
+    _ = checker.print_report()
     
     # 如果有錯誤，返回非零退出碼
     if checker.has_errors():
-        sys.exit(1)
+        _ = sys.exit(1)
     else:
-        sys.exit(0)
+        _ = sys.exit(0)
 
 
 if __name__ == "__main__":
-    main()
+    _ = main()

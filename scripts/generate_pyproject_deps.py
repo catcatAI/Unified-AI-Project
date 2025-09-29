@@ -19,9 +19,9 @@ def generate_pyproject_deps():
     pyproject_data["project"]["optional-dependencies"] = optional_deps
 
     with open("pyproject.toml", "w") as f:
-        toml.dump(pyproject_data, f)
+        _ = toml.dump(pyproject_data, f)
 
     print("pyproject.toml has been updated with dependencies from dependency_config.yaml")
 
 if __name__ == "__main__":
-    generate_pyproject_deps()
+    _ = generate_pyproject_deps()

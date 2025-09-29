@@ -5,8 +5,8 @@ from datetime import datetime
 from dataclasses import dataclass
 
 # Assuming 'src' is in PYTHONPATH, making 'services' and 'shared' top-level packages
-from core.services.multi_llm_service import MultiLLMService, ChatMessage, LLMResponse, ModelProvider
-from ai.compression.alpha_deep_model import DNADataChain
+from ...core.services.multi_llm_service import MultiLLMService, ChatMessage, LLMResponse, ModelProvider
+from ..compression.alpha_deep_model import DNADataChain
 
 @dataclass
 class InteractionRecord:
@@ -19,10 +19,10 @@ class InteractionRecord:
 
 class DailyLanguageModel:
     def set_llm_service(self, llm_service: MultiLLMService):
-        """Inject or replace the LLM service at runtime (used by hot reload)."""
+        _ = """Inject or replace the LLM service at runtime (used by hot reload)."""
         self.llm_service = llm_service
     
-    def __init__(self, llm_service: Optional[MultiLLMService] = None, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, llm_service: Optional[MultiLLMService] = None, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = config or {}
         self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
         self.interaction_history: List[InteractionRecord] = []  # 交互历史记录
@@ -44,17 +44,17 @@ class DailyLanguageModel:
         prompt += "Given the user query and a list of available tools, select the most appropriate tool and extract necessary parameters.\n"
         prompt += "If no tool is appropriate, respond with \"NO_TOOL\".\n\n"
         prompt += "Available tools:\n"
-        for i, (tool_name, description) in enumerate(available_tools.items()):
+        for i, (tool_name, description) in enumerate(available_tools.items):
             prompt += f"{i+1}. {tool_name}: {description}\n"
 
         prompt += f"\nUser Query: \"{text}\"\n\n"
         prompt += "Respond ONLY with a valid JSON object adhering to the following structure:\n"
         prompt += "{\n"
         prompt += "  \"tool_name\": \"<selected_tool_name_or_NO_TOOL>\",\n"
-        prompt += "  \"parameters\": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }\n" # Using {{}} for object placeholder in text
+        prompt += "  \"parameters\": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }\n" # Using  for object placeholder in text
         prompt += "}\n\n"
         prompt += "Specific instructions for the 'parameters' object based on 'tool_name':\n"
-        prompt += "- If 'NO_TOOL' is selected, 'parameters' should be null or an empty {}.\n"
+        prompt += "- If 'NO_TOOL' is selected, 'parameters' should be null or an empty .\n"
         prompt += "- For 'calculate': 'parameters' must be an object like {\"query\": \"<the_full_arithmetic_expression_to_calculate>\"}. Example: {\"query\": \"2 + 2 / 5\"}.\n"
         prompt += "- For 'evaluate_logic': 'parameters' must be an object like {\"query\": \"<the_logical_expression_to_evaluate>\"}. If the user specifies an evaluation method (e.g., \"using nn\"), include {\"method\": \"nn\"}. Otherwise, you can omit 'method' or use {\"method\": \"parser\"}. Example: {\"query\": \"(true AND false) OR NOT true\"}.\n"
         prompt += "- For 'translate_text': 'parameters' must be an object containing {\"text_to_translate\": \"<text_to_be_translated>\"} and {\"target_language\": \"<target_language_code_or_name>\"}. If the user specifies a source language, also include {\"source_language\": \"<source_language_code_or_name>\"}. Example: {\"text_to_translate\": \"Hello world\", \"target_language\": \"Spanish\"}.\n\n"
@@ -139,6 +139,7 @@ if __name__ == '__main__':
                             # Keep it simple, assume it's mostly the expression
                             expression = original_query
 
+                        expression = original_query
                         return LLMResponse(
                             content=json.dumps({"tool_name": "calculate", "parameters": {"query": expression.strip("?")}}),
                             model="dlm-intent-mock", provider=ModelProvider.GOOGLE, usage={}, cost=0.0, latency=0.0, timestamp=datetime.now(), metadata={}
@@ -190,7 +191,7 @@ if __name__ == '__main__':
                                                "parameters": {"text_to_translate": "bonjour",
                                                               "source_language": "french",
                                                               "target_language": "english"}}),
-                            model="dlm-intent-mock", provider=ModelProvider.GOOGLE, usage={}, cost=00.0, latency=0.0, timestamp=datetime.now(), metadata={}
+                            model="dlm-intent-mock", provider=ModelProvider.GOOGLE, usage={}, cost=0.0, latency=0.0, timestamp=datetime.now(), metadata={}
                         )
 
                     # NO_TOOL examples
@@ -227,7 +228,7 @@ if __name__ == '__main__':
                         return LLMResponse(
                             content=json.dumps({"tool_name": "evaluate_logic",
                                                "parameters": {"query": "(true or false) and true", "method": "parser"}}),
-                            model="dlm-intent-mock", provider=ModelProvider.GOOGLE, usage={}, cost=00.0, latency=0.0, timestamp=datetime.now(), metadata={}
+                            model="dlm-intent-mock", provider=ModelProvider.GOOGLE, usage={}, cost=0.0, latency=0.0, timestamp=datetime.now(), metadata={}
                         )
 
                     else:
@@ -247,9 +248,9 @@ if __name__ == '__main__':
                 )
 
         # Use the patched service for testing
-        dlm = DailyLanguageModel(llm_service=PatchedMultiLLMService())
+        dlm = DailyLanguageModel(llm_service=PatchedMultiLLMService)
 
-        # Mock available_tools as ToolDispatcher().get_available_tools() would provide
+        # Mock available_tools as ToolDispatcher.get_available_tools would provide
         # This is needed for dlm.recognize_intent(query, available_tools)
         mock_available_tools = {
             "calculate": "Performs arithmetic calculations. Example: 'calculate 10 + 5', or 'what is 20 / 4?'",

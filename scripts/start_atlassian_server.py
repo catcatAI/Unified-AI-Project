@@ -5,36 +5,35 @@
 
 import sys
 import os
-import asyncio
 import logging
 from pathlib import Path
 
 # 添加项目根目录到 Python 路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root: str = Path(__file__).parent.parent
+_ = sys.path.insert(0, str(project_root))
 
 from src.services.atlassian_api_server import app
 
 def setup_logging():
     """设置日志"""
     logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level: str=logging.INFO,
+        format: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler('logs/atlassian_api_server.log')
+            _ = logging.StreamHandler(),
+            _ = logging.FileHandler('logs/atlassian_api_server.log')
         ]
     )
 
-def main():
+def main() -> None:
     """主函数"""
-    print("🚀 启动 Atlassian API 服务器...")
+    _ = print("🚀 启动 Atlassian API 服务器...")
     
     # 确保日志目录存在
     os.makedirs('logs', exist_ok=True)
     
     # 设置日志
-    setup_logging()
+    _ = setup_logging()
     
     # 启动服务器
     import uvicorn
@@ -47,4 +46,4 @@ def main():
     )
 
 if __name__ == "__main__":
-    main()
+    _ = main()

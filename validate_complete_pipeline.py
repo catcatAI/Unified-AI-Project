@@ -4,7 +4,6 @@
 """
 
 import sys
-import os
 import subprocess
 import time
 from pathlib import Path
@@ -13,21 +12,21 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent
 BACKEND_PATH = PROJECT_ROOT / "apps" / "backend"
 SRC_PATH = BACKEND_PATH / "src"
-sys.path.insert(0, str(BACKEND_PATH))
-sys.path.insert(0, str(SRC_PATH))
+_ = sys.path.insert(0, str(BACKEND_PATH))
+_ = sys.path.insert(0, str(SRC_PATH))
 
 def print_section(title):
     """打印章节标题"""
     print(f"\n{'='*60}")
-    print(f"  {title}")
+    _ = print(f"  {title}")
     print(f"{'='*60}")
 
 def check_environment():
     """检查环境配置"""
-    print_section("环境检查")
+    _ = print_section("环境检查")
     
     # 检查Python版本
-    print(f"Python版本: {sys.version}")
+    _ = print(f"Python版本: {sys.version}")
     
     # 检查必需的包
     required_packages = ["tensorflow", "numpy"]
@@ -36,25 +35,25 @@ def check_environment():
     for package in required_packages:
         try:
             __import__(package)
-            print(f"✅ {package} 已安装")
+            _ = print(f"✅ {package} 已安装")
         except ImportError:
-            print(f"❌ {package} 未安装")
-            missing_packages.append(package)
+            _ = print(f"❌ {package} 未安装")
+            _ = missing_packages.append(package)
     
     if missing_packages:
-        print(f"❌ 缺少以下包: {', '.join(missing_packages)}")
+        _ = print(f"❌ 缺少以下包: {', '.join(missing_packages)}")
         return False
     
     return True
 
 def check_data_files():
     """检查数据文件"""
-    print_section("数据文件检查")
+    _ = print_section("数据文件检查")
     
     # 检查训练数据
     data_dir = BACKEND_PATH / "data" / "raw_datasets"
     if not data_dir.exists():
-        print(f"❌ 数据目录不存在: {data_dir}")
+        _ = print(f"❌ 数据目录不存在: {data_dir}")
         return False
     
     required_files = [
@@ -67,25 +66,25 @@ def check_data_files():
         file_path = data_dir / file_name
         if file_path.exists():
             size = file_path.stat().st_size
-            print(f"✅ {file_name} ({size} bytes)")
+            _ = print(f"✅ {file_name} ({size} bytes)")
         else:
-            print(f"❌ {file_name} 不存在")
-            missing_files.append(file_name)
+            _ = print(f"❌ {file_name} 不存在")
+            _ = missing_files.append(file_name)
     
     return len(missing_files) == 0
 
 def run_training():
     """运行训练"""
-    print_section("运行训练")
+    _ = print_section("运行训练")
     
     # 使用之前创建的完整训练脚本
     training_script = PROJECT_ROOT / "run_complete_training.py"
     if not training_script.exists():
-        print(f"❌ 训练脚本不存在: {training_script}")
+        _ = print(f"❌ 训练脚本不存在: {training_script}")
         return False
     
     try:
-        print("🚀 启动完整训练流程...")
+        _ = print("🚀 启动完整训练流程...")
         start_time = time.time()
         
         cmd = [sys.executable, str(training_script)]
@@ -95,30 +94,30 @@ def run_training():
         training_time = end_time - start_time
         
         if result.returncode == 0:
-            print("✅ 训练完成")
-            print(f"⏱️  训练耗时: {training_time:.2f} 秒")
+            _ = print("✅ 训练完成")
+            _ = print(f"⏱️  训练耗时: {training_time:.2f} 秒")
             return True
         else:
-            print("❌ 训练失败")
+            _ = print("❌ 训练失败")
             if result.stderr:
-                print(f"📝 错误信息: {result.stderr}")
+                _ = print(f"📝 错误信息: {result.stderr}")
             return False
     except Exception as e:
-        print(f"❌ 运行训练时发生错误: {e}")
+        _ = print(f"❌ 运行训练时发生错误: {e}")
         return False
 
-def test_models():
+def test_models() -> bool:
     """测试模型"""
-    print_section("测试模型")
+    _ = print_section("测试模型")
     
     # 使用之前创建的测试脚本
     test_script = PROJECT_ROOT / "test_trained_models.py"
     if not test_script.exists():
-        print(f"❌ 测试脚本不存在: {test_script}")
+        _ = print(f"❌ 测试脚本不存在: {test_script}")
         return False
     
     try:
-        print("🚀 启动模型测试...")
+        _ = print("🚀 启动模型测试...")
         start_time = time.time()
         
         cmd = [sys.executable, str(test_script)]
@@ -128,26 +127,26 @@ def test_models():
         test_time = end_time - start_time
         
         if result.returncode == 0:
-            print("✅ 模型测试完成")
-            print(f"⏱️  测试耗时: {test_time:.2f} 秒")
+            _ = print("✅ 模型测试完成")
+            _ = print(f"⏱️  测试耗时: {test_time:.2f} 秒")
             return True
         else:
-            print("❌ 模型测试失败")
+            _ = print("❌ 模型测试失败")
             if result.stderr:
-                print(f"📝 错误信息: {result.stderr}")
+                _ = print(f"📝 错误信息: {result.stderr}")
             return False
     except Exception as e:
-        print(f"❌ 运行模型测试时发生错误: {e}")
+        _ = print(f"❌ 运行模型测试时发生错误: {e}")
         return False
 
-def test_tool_integration():
+def test_tool_integration() -> bool:
     """测试工具集成"""
-    print_section("测试工具集成")
+    _ = print_section("测试工具集成")
     
     try:
         # 测试数学工具
-        print("测试数学工具...")
-        from tools.math_tool import calculate
+        _ = print("测试数学工具...")
+        from apps.backend.src.core.tools.math_tool import calculate
         
         math_test_cases = ["10 + 5", "20 - 8"]
         for case in math_test_cases:
@@ -155,32 +154,33 @@ def test_tool_integration():
             print(f"  {case} = {result}")
         
         # 测试逻辑工具
-        print("测试逻辑工具...")
-        from tools.logic_tool import evaluate_expression
+        _ = print("测试逻辑工具...")
+        from apps.backend.src.core.tools.logic_tool import LogicTool
         
+        logic_tool = LogicTool()
         logic_test_cases = ["true AND false", "true OR false"]
         for case in logic_test_cases:
-            result = evaluate_expression(case)
+            result = logic_tool.evaluate_expression(case)
             print(f"  {case} = {result}")
         
         # 测试工具调度器
-        print("测试工具调度器...")
-        from tools.tool_dispatcher import ToolDispatcher
+        _ = print("测试工具调度器...")
+        from apps.backend.src.core.tools.tool_dispatcher import ToolDispatcher
         
         dispatcher = ToolDispatcher()
         available_tools = dispatcher.get_available_tools()
-        print(f"  可用工具数量: {len(available_tools)}")
+        _ = print(f"  可用工具数量: {len(available_tools)}")
         
-        print("✅ 工具集成测试完成")
+        _ = print("✅ 工具集成测试完成")
         return True
         
     except Exception as e:
-        print(f"❌ 工具集成测试失败: {e}")
+        _ = print(f"❌ 工具集成测试失败: {e}")
         return False
 
 def generate_final_report(success, details):
     """生成最终报告"""
-    print_section("最终报告")
+    _ = print_section("最终报告")
     
     reports_dir = PROJECT_ROOT / "training" / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
@@ -212,14 +212,14 @@ def generate_final_report(success, details):
     
     try:
         with open(report_file, 'w', encoding='utf-8') as f:
-            f.write(report_content)
-        print(f"✅ 最终报告已生成: {report_file}")
+            _ = f.write(report_content)
+        _ = print(f"✅ 最终报告已生成: {report_file}")
         return True
     except Exception as e:
-        print(f"❌ 生成最终报告失败: {e}")
+        _ = print(f"❌ 生成最终报告失败: {e}")
         return False
 
-def main():
+def main() -> bool:
     print("=== Unified AI Project - 完整流程验证 ===")
     
     # 记录开始时间
@@ -228,27 +228,27 @@ def main():
     # 执行验证步骤
     env_ok = check_environment()
     if not env_ok:
-        generate_final_report(False, "环境检查失败")
+        _ = generate_final_report(False, "环境检查失败")
         return False
     
     data_ok = check_data_files()
     if not data_ok:
-        generate_final_report(False, "数据文件检查失败")
+        _ = generate_final_report(False, "数据文件检查失败")
         return False
     
     training_ok = run_training()
     if not training_ok:
-        generate_final_report(False, "模型训练失败")
+        _ = generate_final_report(False, "模型训练失败")
         return False
     
     models_ok = test_models()
     if not models_ok:
-        generate_final_report(False, "模型测试失败")
+        _ = generate_final_report(False, "模型测试失败")
         return False
     
     integration_ok = test_tool_integration()
     if not integration_ok:
-        generate_final_report(False, "工具集成测试失败")
+        _ = generate_final_report(False, "工具集成测试失败")
         return False
     
     # 记录结束时间
@@ -263,10 +263,10 @@ def main():
 - 工具集成: 通过
 - 总耗时: {total_time:.2f} 秒"""
     
-    generate_final_report(True, details)
+    _ = generate_final_report(True, details)
     
-    print(f"\n🎉 完整流程验证成功完成！")
-    print(f"⏱️  总耗时: {total_time:.2f} 秒")
+    _ = print(f"\n🎉 完整流程验证成功完成！")
+    _ = print(f"⏱️  总耗时: {total_time:.2f} 秒")
     
     return True
 

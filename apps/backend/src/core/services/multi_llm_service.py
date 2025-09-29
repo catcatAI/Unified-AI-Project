@@ -7,26 +7,25 @@ import asyncio
 import logging
 import json
 import os
-from typing import Dict, Any, Optional, List, Union, AsyncGenerator, Coroutine
 from datetime import datetime
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional, Coroutine, AsyncGenerator
 
 import aiohttp
 import openai
-from openai.types.chat import ChatCompletionMessageParam, ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam
-from anthropic import AsyncAnthropic
-import google.generativeai as genai
-from google.generativeai.types import GenerationConfig
 import cohere
+import google.generativeai as genai
+from anthropic import AsyncAnthropic
 from azure.identity import DefaultAzureCredential
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.inference import ChatCompletionsClient
 from azure.ai.inference.models import SystemMessage, UserMessage
+from google.generativeai.types import GenerationConfig
 from aiolimiter import AsyncLimiter
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class ModelProvider(Enum):
     """模型提供商枚举"""
@@ -78,7 +77,7 @@ class LLMResponse:
 class BaseLLMProvider(ABC):
     """LLM 提供商基类"""
     
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: ModelConfig) -> None:
         self.config = config
         self.session: Optional[aiohttp.ClientSession] = None
     
@@ -96,24 +95,24 @@ class BaseLLMProvider(ABC):
         self, 
         messages: List[ChatMessage], 
         **kwargs
-    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+    ) -> AsyncGenerator[str, None]:
         """流式聊天完成"""
         pass
     
     async def __aenter__(self):
         if not self.session:
-            self.session = aiohttp.ClientSession()
+            self.session = aiohttp.ClientSession
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.session:
-            await self.session.close()
+            _ = await self.session.close
 
 class OpenAIProvider(BaseLLMProvider):
     """OpenAI GPT 提供商"""
     
-    def __init__(self, config: ModelConfig):
-        super().__init__(config)
+    def __init__(self, config: ModelConfig) -> None:
+        super.__init__(config)
         # 修复：使用正确的 OpenAI 客户端初始化方式
         self.client = openai.AsyncOpenAI(
             api_key=config.api_key,
@@ -125,7 +124,7 @@ class OpenAIProvider(BaseLLMProvider):
         messages: List[ChatMessage], 
         **kwargs
     ) -> LLMResponse:
-        start_time = datetime.now()
+        start_time = datetime.now
         
         try:
             openai_messages = []
@@ -146,7 +145,7 @@ class OpenAIProvider(BaseLLMProvider):
                     usage={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
                     cost=0.0,
                     latency=0.1,
-                    timestamp=datetime.now(),
+                    timestamp=datetime.now,
                     metadata={}
                 )
             response = await self.client.chat.completions.create(
@@ -160,8 +159,8 @@ class OpenAIProvider(BaseLLMProvider):
                 timeout=self.config.timeout
             )
             
-            latency = (datetime.now() - start_time).total_seconds()
-            usage_dict = response.usage.model_dump() if response.usage else {}
+            latency = (datetime.now - start_time).total_seconds
+            usage_dict = response.usage.model_dump if response.usage else {} 
             usage: Dict[str, int] = {
                 "prompt_tokens": usage_dict.get("prompt_tokens", 0),
                 "completion_tokens": usage_dict.get("completion_tokens", 0),
@@ -176,7 +175,7 @@ class OpenAIProvider(BaseLLMProvider):
                 usage=usage,
                 cost=cost,
                 latency=latency,
-                timestamp=datetime.now(),
+                timestamp=datetime.now,
                 metadata={"finish_reason": response.choices[0].finish_reason}
             )
             
@@ -188,9 +187,10 @@ class OpenAIProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
-    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+    ) -> AsyncGenerator[str, None]:
         # 直接返回异步生成器协程
-        return self._stream_impl(messages, **kwargs)
+        async for item in self._stream_impl(messages, **kwargs):
+            yield item
     
     async def _stream_impl(
         self, 
@@ -231,8 +231,8 @@ class OpenAIProvider(BaseLLMProvider):
 class AnthropicProvider(BaseLLMProvider):
     """Anthropic Claude 提供商"""
     
-    def __init__(self, config: ModelConfig):
-        super().__init__(config)
+    def __init__(self, config: ModelConfig) -> None:
+        super.__init__(config)
         self.client = AsyncAnthropic(api_key=config.api_key)
     
     async def chat_completion(
@@ -240,10 +240,9 @@ class AnthropicProvider(BaseLLMProvider):
         messages: List[ChatMessage], 
         **kwargs
     ) -> LLMResponse:
-        start_time = datetime.now()
+        start_time = datetime.now
         
         try:
-            # 转换消息格式
             claude_messages = []
             system_message = None
             
@@ -274,7 +273,7 @@ class AnthropicProvider(BaseLLMProvider):
                 messages=claude_messages
             )
             
-            latency = (datetime.now() - start_time).total_seconds()
+            latency = (datetime.now - start_time).total_seconds
             usage = {
                 "prompt_tokens": response.usage.input_tokens,
                 "completion_tokens": response.usage.output_tokens,
@@ -297,7 +296,7 @@ class AnthropicProvider(BaseLLMProvider):
                 usage=usage,
                 cost=cost,
                 latency=latency,
-                timestamp=datetime.now(),
+                timestamp=datetime.now,
                 metadata={"stop_reason": response.stop_reason}
             )
             
@@ -309,9 +308,10 @@ class AnthropicProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
-    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+    ) -> AsyncGenerator[str, None]:
         # 直接返回异步生成器协程
-        return self._stream_impl(messages, **kwargs)
+        async for item in self._stream_impl(messages, **kwargs):
+            yield item
     
     async def _stream_impl(
         self, 
@@ -364,8 +364,8 @@ class AnthropicProvider(BaseLLMProvider):
 class GoogleProvider(BaseLLMProvider):
     """Google Gemini 提供商"""
     
-    def __init__(self, config: ModelConfig):
-        super().__init__(config)
+    def __init__(self, config: ModelConfig) -> None:
+        super.__init__(config)
         genai.configure(api_key=config.api_key)
         self.model = genai.GenerativeModel(config.model_name)
     
@@ -374,7 +374,7 @@ class GoogleProvider(BaseLLMProvider):
         messages: List[ChatMessage], 
         **kwargs
     ) -> LLMResponse:
-        start_time = datetime.now()
+        start_time = datetime.now
         
         try:
             # 转换消息格式
@@ -426,7 +426,7 @@ class GoogleProvider(BaseLLMProvider):
                 )
             )
             
-            latency = (datetime.now() - start_time).total_seconds()
+            latency = (datetime.now - start_time).total_seconds
             
             # Gemini 不提供详细的 token 使用信息
             usage = {
@@ -443,7 +443,7 @@ class GoogleProvider(BaseLLMProvider):
                 usage=usage,
                 cost=cost,
                 latency=latency,
-                timestamp=datetime.now(),
+                timestamp=datetime.now,
                 metadata={"finish_reason": "stop"}
             )
             
@@ -455,9 +455,10 @@ class GoogleProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
-    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+    ) -> AsyncGenerator[str, None]:
         # 直接返回异步生成器协程
-        return self._stream_impl(messages, **kwargs)
+        async for item in self._stream_impl(messages, **kwargs):
+            yield item
     
     async def _stream_impl(
         self, 
@@ -526,8 +527,8 @@ class GoogleProvider(BaseLLMProvider):
 class OllamaProvider(BaseLLMProvider):
     """Ollama 本地模型提供商"""
     
-    def __init__(self, config: ModelConfig):
-        super().__init__(config)
+    def __init__(self, config: ModelConfig) -> None:
+        super.__init__(config)
         self.base_url = config.base_url or "http://localhost:11434"
     
     async def chat_completion(
@@ -535,11 +536,11 @@ class OllamaProvider(BaseLLMProvider):
         messages: List[ChatMessage], 
         **kwargs
     ) -> LLMResponse:
-        start_time = datetime.now()
+        start_time = datetime.now
         
         # 确保会话已初始化
         if not self.session:
-            self.session = aiohttp.ClientSession()
+            self.session = aiohttp.ClientSession
         
         try:
             ollama_messages = [
@@ -566,9 +567,9 @@ class OllamaProvider(BaseLLMProvider):
                 if response.status != 200:
                     raise Exception(f"Ollama API 错误: {response.status}")
                 
-                result = await response.json()
+                result = await response.json
                 
-                latency = (datetime.now() - start_time).total_seconds()
+                latency = (datetime.now - start_time).total_seconds
                 
                 # Ollama 提供的使用统计
                 usage = {
@@ -584,7 +585,7 @@ class OllamaProvider(BaseLLMProvider):
                     usage=usage,
                     cost=0.0,  # 本地模型无成本
                     latency=latency,
-                    timestamp=datetime.now(),
+                    timestamp=datetime.now,
                     metadata={
                         "done": result.get("done", True),
                         "total_duration": result.get("total_duration", 0),
@@ -602,9 +603,10 @@ class OllamaProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
-    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+    ) -> AsyncGenerator[str, None]:
         # 直接返回异步生成器协程
-        return self._stream_impl(messages, **kwargs)
+        async for item in self._stream_impl(messages, **kwargs):
+            yield item
     
     async def _stream_impl(
         self, 
@@ -613,7 +615,7 @@ class OllamaProvider(BaseLLMProvider):
     ) -> AsyncGenerator[str, None]:
         # 确保会话已初始化
         if not self.session:
-            self.session = aiohttp.ClientSession()
+            self.session = aiohttp.ClientSession
             
         ollama_messages = [
             {"role": msg.role, "content": msg.content}
@@ -644,7 +646,7 @@ class OllamaProvider(BaseLLMProvider):
                     if line:
                         try:
                             chunk = json.loads(line.decode('utf-8'))
-                            if chunk.get("message", {}).get("content"):
+                            if chunk.get("message", ).get("content"):
                                 yield chunk["message"]["content"]
                         except json.JSONDecodeError:
                             continue
@@ -660,13 +662,13 @@ class OllamaProvider(BaseLLMProvider):
 class AzureOpenAIProvider(BaseLLMProvider):
     """Azure OpenAI 提供商"""
     
-    def __init__(self, config: ModelConfig):
-        super().__init__(config)
+    def __init__(self, config: ModelConfig) -> None:
+        super.__init__(config)
         # 修复凭据处理
         if config.api_key:
             credential = AzureKeyCredential(config.api_key)
         else:
-            credential = DefaultAzureCredential()
+            credential = DefaultAzureCredential
             
         self.client = ChatCompletionsClient(
             endpoint=config.base_url or "",
@@ -679,7 +681,7 @@ class AzureOpenAIProvider(BaseLLMProvider):
         messages: List[ChatMessage], 
         **kwargs
     ) -> LLMResponse:
-        start_time = datetime.now()
+        start_time = datetime.now
         
         try:
             azure_messages = []
@@ -698,7 +700,7 @@ class AzureOpenAIProvider(BaseLLMProvider):
                 top_p=kwargs.get('top_p', self.config.top_p),
             )
             
-            latency = (datetime.now() - start_time).total_seconds()
+            latency = (datetime.now - start_time).total_seconds
             usage = {
                 "prompt_tokens": response.usage.prompt_tokens,
                 "completion_tokens": response.usage.completion_tokens,
@@ -713,7 +715,7 @@ class AzureOpenAIProvider(BaseLLMProvider):
                 usage=usage,
                 cost=cost,
                 latency=latency,
-                timestamp=datetime.now(),
+                timestamp=datetime.now,
                 metadata={"finish_reason": response.choices[0].finish_reason}
             )
             
@@ -725,9 +727,10 @@ class AzureOpenAIProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
-    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+    ) -> AsyncGenerator[str, None]:
         # 直接返回异步生成器协程
-        return self._stream_impl(messages, **kwargs)
+        async for item in self._stream_impl(messages, **kwargs):
+            yield item
     
     async def _stream_impl(
         self, 
@@ -767,8 +770,8 @@ class AzureOpenAIProvider(BaseLLMProvider):
 class CohereProvider(BaseLLMProvider):
     """Cohere 提供商"""
     
-    def __init__(self, config: ModelConfig):
-        super().__init__(config)
+    def __init__(self, config: ModelConfig) -> None:
+        super.__init__(config)
         self.client = cohere.AsyncClient(api_key=config.api_key)
     
     async def chat_completion(
@@ -776,7 +779,7 @@ class CohereProvider(BaseLLMProvider):
         messages: List[ChatMessage], 
         **kwargs
     ) -> LLMResponse:
-        start_time = datetime.now()
+        start_time = datetime.now
         
         try:
             # 转换消息格式
@@ -799,12 +802,12 @@ class CohereProvider(BaseLLMProvider):
                 model=self.config.model_name,
                 message=user_message or "Hello",
                 chat_history=chat_history,
-                preamble=locals().get('preamble', ''),
+                preamble=locals.get('preamble', ''),
                 max_tokens=kwargs.get('max_tokens', self.config.max_tokens),
                 temperature=kwargs.get('temperature', self.config.temperature),
             )
             
-            latency = (datetime.now() - start_time).total_seconds()
+            latency = (datetime.now - start_time).total_seconds
             
             # Cohere 不提供详细的 token 使用信息
             usage = {
@@ -821,7 +824,7 @@ class CohereProvider(BaseLLMProvider):
                 usage=usage,
                 cost=cost,
                 latency=latency,
-                timestamp=datetime.now(),
+                timestamp=datetime.now,
                 metadata={"finish_reason": "COMPLETE"}
             )
             
@@ -833,9 +836,10 @@ class CohereProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
-    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+    ) -> AsyncGenerator[str, None]:
         # 直接返回异步生成器协程
-        return self._stream_impl(messages, **kwargs)
+        async for item in self._stream_impl(messages, **kwargs):
+            yield item
     
     async def _stream_impl(
         self, 
@@ -862,7 +866,7 @@ class CohereProvider(BaseLLMProvider):
                 model=self.config.model_name,
                 message=user_message or "Hello",
                 chat_history=chat_history,
-                preamble=locals().get('preamble', ''),
+                preamble=locals.get('preamble', ''),
                 max_tokens=kwargs.get('max_tokens', self.config.max_tokens),
                 temperature=kwargs.get('temperature', self.config.temperature),
             )
@@ -883,8 +887,8 @@ class CohereProvider(BaseLLMProvider):
 class HuggingFaceProvider(BaseLLMProvider):
     """Hugging Face 提供商"""
     
-    def __init__(self, config: ModelConfig):
-        super().__init__(config)
+    def __init__(self, config: ModelConfig) -> None:
+        super.__init__(config)
         self.base_url = config.base_url or "https://api-inference.huggingface.co/models/"
         self.headers = {
             "Authorization": f"Bearer {config.api_key}",
@@ -896,11 +900,11 @@ class HuggingFaceProvider(BaseLLMProvider):
         messages: List[ChatMessage], 
         **kwargs
     ) -> LLMResponse:
-        start_time = datetime.now()
+        start_time = datetime.now
         
         # 确保会话已初始化
         if not self.session:
-            self.session = aiohttp.ClientSession()
+            self.session = aiohttp.ClientSession
         
         try:
             # 构建提示文本
@@ -925,9 +929,9 @@ class HuggingFaceProvider(BaseLLMProvider):
                 if response.status != 200:
                     raise Exception(f"Hugging Face API 错误: {response.status}")
                 
-                result = await response.json()
+                result = await response.json
                 
-                latency = (datetime.now() - start_time).total_seconds()
+                latency = (datetime.now - start_time).total_seconds
                 
                 # 提取生成的文本
                 generated_text = result[0]["generated_text"] if isinstance(result, list) else result["generated_text"]
@@ -946,7 +950,7 @@ class HuggingFaceProvider(BaseLLMProvider):
                     usage=usage,
                     cost=0.0,  # Hugging Face Inference API 通常免费
                     latency=latency,
-                    timestamp=datetime.now(),
+                    timestamp=datetime.now,
                     metadata={"finish_reason": "stop"}
                 )
                 
@@ -958,9 +962,10 @@ class HuggingFaceProvider(BaseLLMProvider):
         self, 
         messages: List[ChatMessage], 
         **kwargs
-    ) -> Coroutine[Any, Any, AsyncGenerator[str, None]]:
+    ) -> AsyncGenerator[str, None]:
         # 直接返回异步生成器协程
-        return self._stream_impl(messages, **kwargs)
+        async for item in self._stream_impl(messages, **kwargs):
+            yield item
     
     async def _stream_impl(
         self, 
@@ -969,20 +974,20 @@ class HuggingFaceProvider(BaseLLMProvider):
     ) -> AsyncGenerator[str, None]:
         # 确保会话已初始化
         if not self.session:
-            self.session = aiohttp.ClientSession()
+            self.session = aiohttp.ClientSession
             
         # Hugging Face Inference API 不直接支持流式，这里模拟实现
         response = await self.chat_completion(messages, **kwargs)
         
         # 将完整响应分块返回
-        words = response.content.split()
+        words = response.content.split
         for i, word in enumerate(words):
             yield word + (" " if i < len(words) - 1 else "")
-            await asyncio.sleep(0.05)  # 模拟流式延迟
+            _ = await asyncio.sleep(0.05)  # 模拟流式延迟
     
     def _build_prompt(self, messages: List[ChatMessage]) -> str:
         """构建提示文本"""
-        prompt_parts = []
+        prompt_parts = [] 
         
         for msg in messages:
             if msg.role == "system":
@@ -1004,12 +1009,12 @@ LLM_ROUTER_ENABLED = os.getenv('LLM_ROUTER_ENABLED', 'true').lower() == 'true'
 class MultiLLMService:
     """多模型 LLM 服务"""
     
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None) -> None:
         self.providers: Dict[str, BaseLLMProvider] = {}
         self.model_configs: Dict[str, ModelConfig] = {}
         self.default_model: Optional[str] = None
         self.usage_stats: Dict[str, Dict[str, Any]] = {}
-        self.limiters: Dict[str, AsyncLimiter] = {}
+        self.limiters: Dict[str, AsyncLimiter] = {} 
         
         if config_path:
             self.load_config(config_path)
@@ -1023,13 +1028,13 @@ class MultiLLMService:
             self.default_model = config.get('default_model')
 
             # Load rate limiting config
-            rate_limit_config = config.get('rate_limiting', {})
+            rate_limit_config = config.get('rate_limiting', )
             if rate_limit_config.get('enabled', False):
-                rpm_map = rate_limit_config.get('requests_per_minute', {})
-                for provider_name, rpm in rpm_map.items():
+                rpm_map = rate_limit_config.get('requests_per_minute', )
+                for provider_name, rpm in rpm_map.items:
                     self.limiters[provider_name] = AsyncLimiter(rpm, 60)
             
-            for model_id, model_config in config.get('models', {}).items():
+            for model_id, model_config in config.get('models', ).items:
                 provider = ModelProvider(model_config['provider'])
                 
                 self.model_configs[model_id] = ModelConfig(
@@ -1132,7 +1137,7 @@ class MultiLLMService:
                 # 确保响应是LLMResponse对象而不是字典
                 if isinstance(response, dict):
                     # 如果是字典，转换为LLMResponse对象
-                    usage_data = response.get('usage', {})
+                    usage_data = response.get('usage', )
                     # 确保usage是一个字典
                     if not isinstance(usage_data, dict):
                         usage_data = {'total_tokens': 0}
@@ -1144,8 +1149,8 @@ class MultiLLMService:
                         usage=usage_data,
                         cost=response.get('cost', 0.0),
                         latency=response.get('latency', 0.0),
-                        timestamp=response.get('timestamp', datetime.now()),
-                        metadata=response.get('metadata', {})
+                        timestamp=response.get('timestamp', datetime.now),
+                        metadata=response.get('metadata', )
                     )
                 
                 # 更新使用统计
@@ -1225,7 +1230,7 @@ class MultiLLMService:
     def get_available_models(self) -> List[str]:
         """获取可用模型列表"""
         return [
-            model_id for model_id, config in self.model_configs.items()
+            model_id for model_id, config in self.model_configs.items
             if config.enabled
         ]
     
@@ -1235,7 +1240,7 @@ class MultiLLMService:
             raise ValueError(f"模型 {model_id} 不存在")
         
         config = self.model_configs[model_id]
-        stats = self.usage_stats.get(model_id, {})
+        stats = self.usage_stats.get(model_id, )
         
         return {
             'model_id': model_id,
@@ -1250,10 +1255,10 @@ class MultiLLMService:
     
     def get_usage_summary(self) -> Dict[str, Any]:
         """获取使用摘要"""
-        total_requests = sum(stats['total_requests'] for stats in self.usage_stats.values())
-        total_tokens = sum(stats['total_tokens'] for stats in self.usage_stats.values())
-        total_cost = sum(stats['total_cost'] for stats in self.usage_stats.values())
-        total_errors = sum(stats['error_count'] for stats in self.usage_stats.values())
+        total_requests = sum(stats['total_requests'] for stats in self.usage_stats.values)
+        total_tokens = sum(stats['total_tokens'] for stats in self.usage_stats.values)
+        total_cost = sum(stats['total_cost'] for stats in self.usage_stats.values)
+        total_errors = sum(stats['error_count'] for stats in self.usage_stats.values)
         
         return {
             'total_requests': total_requests,
@@ -1262,15 +1267,15 @@ class MultiLLMService:
             'total_errors': total_errors,
             'models': {
                 model_id: self.get_model_info(model_id)
-                for model_id in self.model_configs.keys()
+                for model_id in self.model_configs.keys
             }
         }
     
     async def health_check(self) -> Dict[str, Any]:
         """健康检查"""
-        health_status = {}
+        health_status = {} 
         
-        for model_id, config in self.model_configs.items():
+        for model_id, config in self.model_configs.items:
             if not config.enabled:
                 health_status[model_id] = {'status': 'disabled'}
                 continue
@@ -1316,11 +1321,11 @@ class MultiLLMService:
 
     async def close(self):
         """关闭所有连接"""
-        for provider in self.providers.values():
+        for provider in self.providers.values:
             if hasattr(provider, 'session') and provider.session:
-                await provider.session.close()
+                _ = await provider.session.close
         
-        self.providers.clear()
+        self.providers.clear
 
 # 全局服务实例
 _multi_llm_service: Optional[MultiLLMService] = None

@@ -4,16 +4,15 @@ Test script for system integration
 """
 
 import sys
-import json
 from pathlib import Path
 
 # Add the backend src directory to the path
 backend_src = Path(__file__).parent.parent / "apps" / "backend" / "src"
-sys.path.insert(0, str(backend_src))
+_ = sys.path.insert(0, str(backend_src))
 
-def test_system_initialization():
+def test_system_initialization() -> None:
     """Test system initialization"""
-    print("Testing system initialization...")
+    _ = print("Testing system initialization...")
     
     try:
         from system_integration import UnifiedAISystem
@@ -22,28 +21,28 @@ def test_system_initialization():
         unified_ai = UnifiedAISystem()
         
         # Check that all components are initialized
-        assert hasattr(unified_ai, 'agent_manager'), "Agent manager not initialized"
-        assert hasattr(unified_ai, 'execution_manager'), "Execution manager not initialized"
-        assert hasattr(unified_ai, 'ham_memory_manager'), "HAM memory manager not initialized"
-        assert hasattr(unified_ai, 'multi_llm_service'), "Multi LLM service not initialized"
-        assert hasattr(unified_ai, 'ai_editor_service'), "AI editor service not initialized"
-        assert hasattr(unified_ai, 'atlassian_bridge'), "Atlassian bridge not initialized"
-        assert hasattr(unified_ai, 'permission_control'), "Permission control not initialized"
-        assert hasattr(unified_ai, 'audit_logger'), "Audit logger not initialized"
-        assert hasattr(unified_ai, 'sandbox_executor'), "Sandbox executor not initialized"
-        assert hasattr(unified_ai, 'tool_dispatcher'), "Tool dispatcher not initialized"
+        _ = assert hasattr(unified_ai, 'agent_manager'), "Agent manager not initialized"
+        _ = assert hasattr(unified_ai, 'execution_manager'), "Execution manager not initialized"
+        _ = assert hasattr(unified_ai, 'ham_memory_manager'), "HAM memory manager not initialized"
+        _ = assert hasattr(unified_ai, 'multi_llm_service'), "Multi LLM service not initialized"
+        _ = assert hasattr(unified_ai, 'ai_editor_service'), "AI editor service not initialized"
+        _ = assert hasattr(unified_ai, 'atlassian_bridge'), "Atlassian bridge not initialized"
+        _ = assert hasattr(unified_ai, 'permission_control'), "Permission control not initialized"
+        _ = assert hasattr(unified_ai, 'audit_logger'), "Audit logger not initialized"
+        _ = assert hasattr(unified_ai, 'sandbox_executor'), "Sandbox executor not initialized"
+        _ = assert hasattr(unified_ai, 'tool_dispatcher'), "Tool dispatcher not initialized"
         
-        print("System initialization test passed!")
+        _ = print("System initialization test passed!")
         return True
     except Exception as e:
-        print(f"Error during system initialization test: {e}")
+        _ = print(f"Error during system initialization test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def test_request_processing():
+def test_request_processing() -> None:
     """Test request processing"""
-    print("Testing request processing...")
+    _ = print("Testing request processing...")
     
     try:
         from system_integration import UnifiedAISystem
@@ -59,7 +58,7 @@ def test_request_processing():
         }
         
         result = unified_ai.process_request("test_user", dialogue_request)
-        print(f"Dialogue request result: {result}")
+        _ = print(f"Dialogue request result: {result}")
         
         # Test tool request
         tool_request = {
@@ -69,7 +68,7 @@ def test_request_processing():
         }
         
         result = unified_ai.process_request("test_user", tool_request)
-        print(f"Tool request result: {result}")
+        _ = print(f"Tool request result: {result}")
         
         # Test Atlassian request
         atlassian_request = {
@@ -79,7 +78,7 @@ def test_request_processing():
         }
         
         result = unified_ai.process_request("test_user", atlassian_request)
-        print(f"Atlassian request result: {result}")
+        _ = print(f"Atlassian request result: {result}")
         
         # Test editor request
         editor_request = {
@@ -89,21 +88,21 @@ def test_request_processing():
         }
         
         result = unified_ai.process_request("test_user", editor_request)
-        print(f"Editor request result: {result}")
+        _ = print(f"Editor request result: {result}")
         
-        print("Request processing test passed!")
+        _ = print("Request processing test passed!")
         return True
     except Exception as e:
-        print(f"Error during request processing test: {e}")
+        _ = print(f"Error during request processing test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def main():
+def main() -> None:
     """Main test function"""
-    print("System Integration Test")
+    _ = print("System Integration Test")
     print("=" * 30)
-    print()
+    _ = print()
     
     # Run all tests
     try:
@@ -111,15 +110,15 @@ def main():
         test2 = test_request_processing()
         
         if test1 and test2:
-            print("\nAll integration tests completed successfully!")
+            _ = print("\nAll integration tests completed successfully!")
             return True
         else:
-            print("\nSome integration tests failed!")
+            _ = print("\nSome integration tests failed!")
             return False
     except Exception as e:
-        print(f"Error during integration testing: {e}")
+        _ = print(f"Error during integration testing: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
 if __name__ == "__main__":

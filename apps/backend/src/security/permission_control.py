@@ -5,7 +5,6 @@ Implements multi-level permission control for AI operations
 """
 
 import logging
-from typing import Dict, Any, List, Set
 from enum import Enum
 from dataclasses import dataclass, field
 import json
@@ -13,7 +12,7 @@ import os
 from pathlib import Path
 import fnmatch
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class PermissionType(Enum):
     """Types of permissions"""
@@ -52,18 +51,18 @@ class PermissionContext:
 class PermissionControlSystem:
     """Main permission control system"""
     
-    def __init__(self, config_path: str = None):
-        self.rules: Dict[str, List[PermissionRule]] = {}
-        self.default_rules: List[PermissionRule] = []
+    def __init__(self, config_path: str = None) -> None:
+        self.rules: Dict[str, List[PermissionRule]] = 
+        self.default_rules: List[PermissionRule] = 
         self.audit_log_enabled = True
         self.config_path = config_path or "configs/permission_config.json"
         
         # Load configuration if available
-        self._load_configuration()
+        self._load_configuration
         
         # Set default rules if none loaded
         if not self.default_rules:
-            self._set_default_rules()
+            self._set_default_rules
             
         logger.info("PermissionControlSystem initialized")
         
@@ -79,24 +78,24 @@ class PermissionControlSystem:
                     for rule_data in config['default_rules']:
                         rule = PermissionRule(
                             permission_type=PermissionType(rule_data['permission_type']),
-                            level=PermissionLevel(rule_data['level']),
+                            level=PermissionLevel(rule_data['level: str']),
                             resource_pattern=rule_data.get('resource_pattern', '*'),
-                            allowed_actions=rule_data.get('allowed_actions', []),
-                            denied_actions=rule_data.get('denied_actions', [])
+                            allowed_actions=rule_data.get('allowed_actions', ),
+                            denied_actions=rule_data.get('denied_actions', )
                         )
                         self.default_rules.append(rule)
                         
                 # Load user-specific rules
                 if 'user_rules' in config:
-                    for user_id, rules_data in config['user_rules'].items():
-                        self.rules[user_id] = []
+                    for user_id, rules_data in config['user_rules'].items:
+                        self.rules[user_id] = 
                         for rule_data in rules_data:
                             rule = PermissionRule(
                                 permission_type=PermissionType(rule_data['permission_type']),
-                                level=PermissionLevel(rule_data['level']),
+                                level=PermissionLevel(rule_data['level: str']),
                                 resource_pattern=rule_data.get('resource_pattern', '*'),
-                                allowed_actions=rule_data.get('allowed_actions', []),
-                                denied_actions=rule_data.get('denied_actions', [])
+                                allowed_actions=rule_data.get('allowed_actions', ),
+                                denied_actions=rule_data.get('denied_actions', )
                             )
                             self.rules[user_id].append(rule)
                             
@@ -163,7 +162,7 @@ class PermissionControlSystem:
     def add_user_rule(self, user_id: str, rule: PermissionRule):
         """Add a permission rule for a specific user"""
         if user_id not in self.rules:
-            self.rules[user_id] = []
+            self.rules[user_id] = 
             
         self.rules[user_id].append(rule)
         logger.info(f"Added permission rule for user {user_id}: {rule}")
@@ -256,8 +255,8 @@ class PermissionControlSystem:
             
             # Convert rules to serializable format
             config = {
-                "default_rules": [],
-                "user_rules": {}
+                "default_rules": ,
+                "user_rules": 
             }
             
             # Save default rules
@@ -269,11 +268,11 @@ class PermissionControlSystem:
                     "allowed_actions": rule.allowed_actions,
                     "denied_actions": rule.denied_actions
                 }
-                config["default_rules"].append(rule_data)
+                _ = config["default_rules"].append(rule_data)
                 
             # Save user rules
-            for user_id, rules in self.rules.items():
-                config["user_rules"][user_id] = []
+            for user_id, rules in self.rules.items:
+                config["user_rules"][user_id] = 
                 for rule in rules:
                     rule_data = {
                         "permission_type": rule.permission_type.value,
@@ -282,7 +281,7 @@ class PermissionControlSystem:
                         "allowed_actions": rule.allowed_actions,
                         "denied_actions": rule.denied_actions
                     }
-                    config["user_rules"][user_id].append(rule_data)
+                    _ = config["user_rules"][user_id].append(rule_data)
                     
             # Write to file
             with open(config_path, 'w', encoding='utf-8') as f:
@@ -298,7 +297,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
     # Create permission control system
-    pcs = PermissionControlSystem()
+    pcs = PermissionControlSystem
     
     # Test permission checking
     context = PermissionContext(

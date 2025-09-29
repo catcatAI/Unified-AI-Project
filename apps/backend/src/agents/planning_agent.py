@@ -1,8 +1,6 @@
 import asyncio
 import uuid
 import logging
-import json
-from typing import Dict, Any, List
 from datetime import datetime, timedelta
 
 from .base_agent import BaseAgent
@@ -12,7 +10,7 @@ class PlanningAgent(BaseAgent):
     """
     A specialized agent for task planning, scheduling, and project management.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_task_planning_v1.0",
@@ -78,7 +76,7 @@ class PlanningAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            await self.hsp_connector.send_task_result(result_payload, callback_topic, request_id)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     def _create_task_plan(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -138,7 +136,7 @@ class PlanningAgent(BaseAgent):
         ])
         
         # Apply constraints
-        start_date = constraints.get('start_date', datetime.now().isoformat())
+        start_date = constraints.get('start_date', datetime.now.isoformat)
         deadline = constraints.get('deadline')
         
         # Create timeline
@@ -172,12 +170,12 @@ class PlanningAgent(BaseAgent):
             current_date = task_end
         
         return {
-            "plan_id": f"plan_{uuid.uuid4().hex[:8]}",
+            "plan_id": f"plan_{uuid.uuid4.hex[:8]}",
             "goal": goal,
             "plan_type": plan_type,
-            "created_date": datetime.now().isoformat(),
+            "created_date": datetime.now.isoformat,
             "start_date": start_date,
-            "estimated_end_date": current_date.isoformat(),
+            "estimated_end_date": current_date.isoformat,
             "deadline": deadline,
             "tasks": timeline,
             "total_duration_days": sum(task['duration'] for task in tasks),
@@ -211,7 +209,7 @@ class PlanningAgent(BaseAgent):
         for task in sorted_tasks:
             assigned_resource = None
             # Find first available resource
-            for res_name, res_info in resource_assignments.items():
+            for res_name, res_info in resource_assignments.items:
                 if len(res_info['assigned_tasks']) < res_info['capacity']:
                     assigned_resource = res_name
                     break
@@ -263,8 +261,8 @@ class PlanningAgent(BaseAgent):
 
     def _track_progress(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Tracks project progress."""
-        plan = params.get('plan', {})
-        current_status = params.get('current_status', {})
+        plan = params.get('plan', )
+        current_status = params.get('current_status', )
         
         if not plan or not current_status:
             raise ValueError("Plan and current status are required for progress tracking")
@@ -325,7 +323,7 @@ class PlanningAgent(BaseAgent):
             
             for task in plan_tasks:
                 task_name = task.get('name')
-                completion_percentage = status_tasks.get(task_name, {}).get('completion', 0)
+                completion_percentage = status_tasks.get(task_name, ).get('completion', 0)
                 task_duration = task.get('duration_days', 1)
                 weighted_completion += (completion_percentage / 100) * task_duration
             
@@ -352,7 +350,7 @@ class PlanningAgent(BaseAgent):
             "not_started_tasks": not_started_tasks,
             "delayed_tasks": delayed_tasks,
             "progress_details": task_details,
-            "report_date": datetime.now().isoformat(),
+            "report_date": datetime.now.isoformat,
             "estimated_completion_date": self._estimate_completion_date(plan, current_status)
         }
 
@@ -361,7 +359,7 @@ class PlanningAgent(BaseAgent):
         # Simplified estimation - in a real implementation, this would be more sophisticated
         plan_end_date = plan.get('estimated_end_date')
         if not plan_end_date:
-            return datetime.now().isoformat()
+            return datetime.now.isoformat
         
         try:
             plan_end_dt = datetime.fromisoformat(plan_end_date.replace('Z', '+00:00'))
@@ -369,11 +367,11 @@ class PlanningAgent(BaseAgent):
             current_progress = current_status.get('overall_completion_percentage', 50)
             if current_progress < 50:
                 # Add 20% more time if less than halfway
-                buffer_days = (plan_end_dt - datetime.now()).days * 0.2
+                buffer_days = (plan_end_dt - datetime.now).days * 0.2
                 plan_end_dt += timedelta(days=buffer_days)
-            return plan_end_dt.isoformat()
+            return plan_end_dt.isoformat
         except:
-            return datetime.now().isoformat()
+            return datetime.now.isoformat
 
     def _create_success_payload(self, request_id: str, result: Any) -> HSPTaskResultPayload:
         return HSPTaskResultPayload(
@@ -391,12 +389,12 @@ class PlanningAgent(BaseAgent):
 
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:planning_agent_{uuid.uuid4().hex[:6]}"
         agent = PlanningAgent(agent_id=agent_id)
         await agent.start()
 
     try:
-        asyncio.run(main())
+        asyncio.run(main)
     except KeyboardInterrupt:
         print("\nPlanningAgent manually stopped.")

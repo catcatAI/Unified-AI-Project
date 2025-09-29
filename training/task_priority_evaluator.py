@@ -6,20 +6,17 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
 from pathlib import Path
 import sys
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_path))
+project_root: str = Path(__file__).parent.parent
+backend_path: str = project_root / "apps" / "backend"
+_ = sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(backend_path))
 
 # 导入项目模块
 try:
-    from apps.backend.src.path_config import (
-        PROJECT_ROOT, 
         DATA_DIR, 
         TRAINING_DIR, 
         MODELS_DIR,
@@ -33,24 +30,23 @@ except ImportError:
     TRAINING_DIR = PROJECT_ROOT / "training"
     MODELS_DIR = TRAINING_DIR / "models"
 
-from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(TRAINING_DIR / 'task_priority_evaluator.log'),
-        logging.StreamHandler()
+        _ = logging.FileHandler(TRAINING_DIR / 'task_priority_evaluator.log'),
+        _ = logging.StreamHandler()
     ]
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 
 class TaskPriorityEvaluator:
     """任务优先级评估器，负责计算和更新任务优先级"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.error_handler = global_error_handler  # 错误处理器
         # 定义优先级权重
         self.priority_weights = {
@@ -84,7 +80,7 @@ class TaskPriorityEvaluator:
             'disk_space_gb': 10
         }
         
-        logger.info("🔄 任务优先级评估器初始化完成")
+        _ = logger.info("🔄 任务优先级评估器初始化完成")
     
     def calculate_priority(self, task: Dict[str, Any]) -> float:
         """
@@ -115,15 +111,15 @@ class TaskPriorityEvaluator:
             # 确保优先级在合理范围内
             priority = max(0, min(100, priority))
             
-            logger.debug(f"📊 任务 {task.get('task_id', 'unknown')} 优先级评估: "
+            _ = logger.debug(f"📊 任务 {task.get('task_id', 'unknown')} 优先级评估: "
                         f"业务={business_score:.1f}, 资源={resource_score:.1f}, "
                         f"紧急={urgency_score:.1f}, 依赖={dependency_score:.1f}, "
                         f"综合={priority:.1f}")
             
             return priority
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 计算任务优先级失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 计算任务优先级失败: {e}")
             return 50.0  # 返回默认优先级
     
     def _evaluate_business_priority(self, task: Dict[str, Any]) -> float:
@@ -150,8 +146,8 @@ class TaskPriorityEvaluator:
             
             return business_priority_score
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 评估业务优先级失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 评估业务优先级失败: {e}")
             return 50.0
     
     def _evaluate_resource_requirements(self, task: Dict[str, Any]) -> float:
@@ -194,8 +190,8 @@ class TaskPriorityEvaluator:
             
             return resource_score
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 评估资源需求失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 评估资源需求失败: {e}")
             return 70.0  # 返回中等资源需求得分
     
     def _evaluate_urgency(self, task: Dict[str, Any]) -> float:
@@ -241,8 +237,8 @@ class TaskPriorityEvaluator:
                     
                     urgency_score += data_freshness_score * 0.3
                 except Exception as e:
-                    self.error_handler.handle_error(e, context)
-                    logger.warning(f"⚠️  评估数据新鲜度失败: {e}")
+                    _ = self.error_handler.handle_error(e, context)
+                    _ = logger.warning(f"⚠️  评估数据新鲜度失败: {e}")
             
             # 2. 评估上次训练时间（训练时间越久远，越需要重新训练）
             if last_training_time:
@@ -264,8 +260,8 @@ class TaskPriorityEvaluator:
                     
                     urgency_score += training_age_score * 0.3
                 except Exception as e:
-                    self.error_handler.handle_error(e, context)
-                    logger.warning(f"⚠️  评估上次训练时间失败: {e}")
+                    _ = self.error_handler.handle_error(e, context)
+                    _ = logger.warning(f"⚠️  评估上次训练时间失败: {e}")
             
             # 3. 评估性能下降程度
             if performance_drop > 0:
@@ -282,8 +278,8 @@ class TaskPriorityEvaluator:
             
             return urgency_score
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 评估紧急程度失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 评估紧急程度失败: {e}")
             return 50.0
     
     def _evaluate_dependencies(self, task: Dict[str, Any]) -> float:
@@ -319,8 +315,8 @@ class TaskPriorityEvaluator:
             
             return dependency_score
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 评估依赖关系失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 评估依赖关系失败: {e}")
             return 50.0
     
     def update_priority_weights(self, new_weights: Dict[str, float]):
@@ -336,19 +332,19 @@ class TaskPriorityEvaluator:
             required_keys = ['business_priority', 'resource_requirements', 'urgency', 'dependencies']
             for key in required_keys:
                 if key not in new_weights:
-                    raise ValueError(f"缺少必需的权重配置项: {key}")
+                    _ = raise ValueError(f"缺少必需的权重配置项: {key}")
             
             # 验证权重总和是否为1.0（允许小误差）
             total_weight = sum(new_weights.values())
             if abs(total_weight - 1.0) > 0.01:
-                raise ValueError(f"权重总和必须为1.0，当前总和: {total_weight}")
+                _ = raise ValueError(f"权重总和必须为1.0，当前总和: {total_weight}")
             
             # 更新权重配置
-            self.priority_weights.update(new_weights)
-            logger.info(f"✅ 更新优先级权重配置: {new_weights}")
+            _ = self.priority_weights.update(new_weights)
+            _ = logger.info(f"✅ 更新优先级权重配置: {new_weights}")
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 更新优先级权重配置失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 更新优先级权重配置失败: {e}")
     
     def get_model_importance(self, model_name: str) -> int:
         """
@@ -373,23 +369,23 @@ class TaskPriorityEvaluator:
         context = ErrorContext("TaskPriorityEvaluator", "set_model_importance", {"model_name": model_name})
         try:
             if not 1 <= importance <= 10:
-                raise ValueError("重要性评分必须在1-10之间")
+                _ = raise ValueError("重要性评分必须在1-10之间")
             
             self.model_importance[model_name] = importance
-            logger.info(f"✅ 设置模型 {model_name} 重要性评分为 {importance}")
+            _ = logger.info(f"✅ 设置模型 {model_name} 重要性评分为 {importance}")
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 设置模型重要性评分失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 设置模型重要性评分失败: {e}")
 
 
 class PriorityAwareTaskQueue:
     """优先级感知的任务队列"""
     
-    def __init__(self, priority_evaluator: TaskPriorityEvaluator = None):
+    def __init__(self, priority_evaluator: TaskPriorityEvaluator = None) -> None:
         self.tasks = []
         self.priority_evaluator = priority_evaluator or TaskPriorityEvaluator()
         self.error_handler = global_error_handler  # 错误处理器
-        logger.info("🔄 优先级感知任务队列初始化完成")
+        _ = logger.info("🔄 优先级感知任务队列初始化完成")
     
     def add_task(self, task: Dict[str, Any]):
         """
@@ -405,14 +401,14 @@ class PriorityAwareTaskQueue:
             task['priority'] = priority
             
             # 添加到任务队列
-            self.tasks.append(task)
-            logger.info(f"✅ 添加任务到队列: {task.get('task_id', 'unknown')} (优先级: {priority:.1f})")
+            _ = self.tasks.append(task)
+            _ = logger.info(f"✅ 添加任务到队列: {task.get('task_id', 'unknown')} (优先级: {priority:.1f})")
             
             # 重新排序任务队列
-            self._sort_tasks_by_priority()
+            _ = self._sort_tasks_by_priority()
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 添加任务到队列失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 添加任务到队列失败: {e}")
     
     def _sort_tasks_by_priority(self):
         """根据优先级排序任务"""
@@ -420,10 +416,10 @@ class PriorityAwareTaskQueue:
         try:
             # 按优先级降序排列（优先级高的在前）
             self.tasks.sort(key=lambda x: x.get('priority', 0), reverse=True)
-            logger.debug(f"🔄 任务队列已按优先级排序，共 {len(self.tasks)} 个任务")
+            _ = logger.debug(f"🔄 任务队列已按优先级排序，共 {len(self.tasks)} 个任务")
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 按优先级排序任务失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 按优先级排序任务失败: {e}")
     
     def get_next_task(self) -> Dict[str, Any]:
         """
@@ -436,14 +432,14 @@ class PriorityAwareTaskQueue:
         try:
             if self.tasks:
                 next_task = self.tasks.pop(0)
-                logger.info(f"🚀 获取下一个任务: {next_task.get('task_id', 'unknown')} (优先级: {next_task.get('priority', 0):.1f})")
+                _ = logger.info(f"🚀 获取下一个任务: {next_task.get('task_id', 'unknown')} (优先级: {next_task.get('priority', 0):.1f})")
                 return next_task
             else:
-                logger.debug("📭 任务队列为空")
+                _ = logger.debug("📭 任务队列为空")
                 return None
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 获取下一个任务失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 获取下一个任务失败: {e}")
             return None
     
     def update_task_priority(self, task_id: str):
@@ -463,17 +459,17 @@ class PriorityAwareTaskQueue:
                     old_priority = task.get('priority', 0)
                     task['priority'] = new_priority
                     
-                    logger.info(f"🔄 更新任务优先级: {task_id} ({old_priority:.1f} -> {new_priority:.1f})")
+                    _ = logger.info(f"🔄 更新任务优先级: {task_id} ({old_priority:.1f} -> {new_priority:.1f})")
                     break
             else:
-                logger.warning(f"⚠️  未找到任务: {task_id}")
+                _ = logger.warning(f"⚠️  未找到任务: {task_id}")
                 return
             
             # 重新排序任务队列
-            self._sort_tasks_by_priority()
+            _ = self._sort_tasks_by_priority()
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 更新任务优先级失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 更新任务优先级失败: {e}")
     
     def get_task_queue_status(self) -> Dict[str, Any]:
         """
@@ -485,7 +481,7 @@ class PriorityAwareTaskQueue:
         context = ErrorContext("PriorityAwareTaskQueue", "get_task_queue_status")
         try:
             status = {
-                'total_tasks': len(self.tasks),
+                _ = 'total_tasks': len(self.tasks),
                 'tasks_by_priority': [],
                 'average_priority': 0
             }
@@ -503,14 +499,14 @@ class PriorityAwareTaskQueue:
             
             return status
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 获取任务队列状态失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 获取任务队列状态失败: {e}")
             return {}
 
 
-def main():
+def main() -> None:
     """主函数，用于测试任务优先级评估器"""
-    logger.info("🤖 Unified AI Project 任务优先级评估器测试")
+    _ = logger.info("🤖 Unified AI Project 任务优先级评估器测试")
     logger.info("=" * 50)
     
     # 创建任务优先级评估器
@@ -569,38 +565,38 @@ def main():
     ]
     
     # 评估每个任务的优先级
-    logger.info("📊 任务优先级评估结果:")
+    _ = logger.info("📊 任务优先级评估结果:")
     for task in test_tasks:
         priority = evaluator.calculate_priority(task)
-        logger.info(f"   任务 {task['task_id']}: {priority:.1f} 分")
+        _ = logger.info(f"   任务 {task['task_id']}: {priority:.1f} 分")
     
     # 创建优先级感知任务队列
     task_queue = PriorityAwareTaskQueue(evaluator)
     
     # 添加任务到队列
     for task in test_tasks:
-        task_queue.add_task(task)
+        _ = task_queue.add_task(task)
     
     # 显示队列状态
     queue_status = task_queue.get_task_queue_status()
-    logger.info(f"📋 任务队列状态:")
-    logger.info(f"   总任务数: {queue_status['total_tasks']}")
-    logger.info(f"   平均优先级: {queue_status['average_priority']:.1f}")
-    logger.info(f"   高优先级任务: {queue_status['tasks_by_priority']['high']}")
-    logger.info(f"   中优先级任务: {queue_status['tasks_by_priority']['medium']}")
-    logger.info(f"   低优先级任务: {queue_status['tasks_by_priority']['low']}")
+    _ = logger.info(f"📋 任务队列状态:")
+    _ = logger.info(f"   总任务数: {queue_status['total_tasks']}")
+    _ = logger.info(f"   平均优先级: {queue_status['average_priority']:.1f}")
+    _ = logger.info(f"   高优先级任务: {queue_status['tasks_by_priority']['high']}")
+    _ = logger.info(f"   中优先级任务: {queue_status['tasks_by_priority']['medium']}")
+    _ = logger.info(f"   低优先级任务: {queue_status['tasks_by_priority']['low']}")
     
     # 按优先级顺序获取任务
-    logger.info("🚀 按优先级顺序执行任务:")
+    _ = logger.info("🚀 按优先级顺序执行任务:")
     while True:
         task = task_queue.get_next_task()
         if task:
-            logger.info(f"   执行任务: {task['task_id']} (优先级: {task['priority']:.1f})")
+            _ = logger.info(f"   执行任务: {task['task_id']} (优先级: {task['priority']:.1f})")
         else:
             break
     
-    logger.info("✅ 任务优先级评估器测试完成")
+    _ = logger.info("✅ 任务优先级评估器测试完成")
 
 
 if __name__ == "__main__":
-    main()
+    _ = main()

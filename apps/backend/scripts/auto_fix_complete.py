@@ -6,8 +6,9 @@
 import os
 import sys
 import re
+import subprocess
 from pathlib import Path
-from typing import List, Tuple, Dict, Set
+from typing import List, Tuple, Dict, Literal
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -16,8 +17,8 @@ SRC_DIR = PROJECT_ROOT / "apps" / "backend" / "src"
 # 需要修复的导入映射 - 适应新的目录结构
 IMPORT_MAPPINGS = {
     # core_ai模块的修复 - 从绝对导入修复为相对导入
-    "from apps.backend.src.ai.": "from ",
-    "import apps.backend.src.ai.": "import ",
+    "from apps.backend.src.core_ai.": "from ",
+    "import apps.backend.src.core_ai.": "import ",
     
     # core模块的修复 - 从绝对导入修复为相对导入
     "from apps.backend.src.core.": "from ..",
@@ -48,8 +49,8 @@ IMPORT_MAPPINGS = {
     "import apps.backend.src.core.shared.": "import ",
     
     # agents模块的修复 - 从绝对导入修复为相对导入
-    "from apps.backend.src.ai.agents.": "from ",
-    "import apps.backend.src.ai.agents.": "import ",
+    "from apps.backend.src.core_ai.agents.": "from ",
+    "import apps.backend.src.core_ai.agents.": "import ",
     
     # game模块的修复 - 从绝对导入修复为相对导入
     "from apps.backend.src.game.": "from ",
@@ -62,7 +63,7 @@ IMPORT_MAPPINGS = {
 
 def find_python_files() -> List[Path]:
     """查找所有Python文件"""
-    python_files = []
+    python_files: List[Path] = []
     
     # 遍历所有Python文件
     for py_file in PROJECT_ROOT.rglob("*.py"):
@@ -76,7 +77,7 @@ def find_python_files() -> List[Path]:
 
 def find_module_file(module_name: str) -> List[Path]:
     """查找模块文件"""
-    module_paths = []
+    module_paths: List[Path] = []
     
     # 将模块名转换为路径
     module_path = module_name.replace('.', os.sep)
@@ -106,7 +107,7 @@ def fix_imports_in_file(file_path: Path) -> Tuple[bool, List[str]]:
             content = f.read()
             
         original_content = content
-        fixes_made = []
+        fixes_made: List[str] = []
         
         # 应用所有导入映射
         for old_import, new_import in IMPORT_MAPPINGS.items():
@@ -116,11 +117,10 @@ def fix_imports_in_file(file_path: Path) -> Tuple[bool, List[str]]:
                     content = content.replace(old_import, new_import)
                     fixes_made.append(f"{old_import} -> {new_import}")
         
-        # 处理特殊情况：相对导入问题
         # 修复相对导入问题
         relative_imports = re.findall(r'from\s+\.\.core_ai\.', content)
         for match in relative_imports:
-            new_import = match.replace('from apps.backend.src.ai.', 'from apps.backend.src.ai.')
+            new_import = match.replace('from apps.backend.src.core_ai.', 'from apps.backend.src.core_ai.')
             content = content.replace(match, new_import)
             fixes_made.append(f"{match} -> {new_import}")
         
@@ -130,13 +130,13 @@ def fix_imports_in_file(file_path: Path) -> Tuple[bool, List[str]]:
             (r'from\s+\.\.tools\.', 'from apps.backend.src.core.tools.'),
             (r'from\s+\.\.hsp\.', 'from apps.backend.src.core.hsp.'),
             (r'from\s+\.\.shared\.', 'from apps.backend.src.core.shared.'),
-            (r'from\s+\.\.agents\.', 'from apps.backend.src.ai.agents.'),
-            (r'import\s+\.\.core_ai\.', 'import apps.backend.src.ai.'),
+            (r'from\s+\.\.agents\.', 'from apps.backend.src.core_ai.agents.'),
+            (r'import\s+\.\.core_ai\.', 'import apps.backend.src.core_ai.'),
             (r'import\s+\.\.services\.', 'import apps.backend.src.core.services.'),
             (r'import\s+\.\.tools\.', 'import apps.backend.src.core.tools.'),
             (r'import\s+\.\.hsp\.', 'import apps.backend.src.core.hsp.'),
             (r'import\s+\.\.shared\.', 'import apps.backend.src.core.shared.'),
-            (r'import\s+\.\.agents\.', 'import apps.backend.src.ai.agents.'),
+            (r'import\s+\.\.agents\.', 'import apps.backend.src.core_ai.agents.'),
         ]
         
         for pattern, replacement in relative_patterns:
@@ -236,25 +236,21 @@ def validate_fixes() -> bool:
             
         # 尝试导入核心模块 - 适应新的目录结构
         try:
-            from core_services import initialize_services
             print("✓ 核心服务模块导入成功")
         except ImportError as e:
             print(f"⚠ 核心服务模块导入失败: {e}")
             
         try:
-            from ai.agents.base.base_agent import BaseAgent
             print("✓ Agent管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ Agent管理器模块导入失败: {e}")
             
         try:
-            from core.hsp.connector import HSPConnector
             print("✓ HSP连接器模块导入成功")
         except ImportError as e:
             print(f"⚠ HSP连接器模块导入失败: {e}")
             
         try:
-            from ai.dialogue.dialogue_manager import DialogueManager
             print("✓ 对话管理器模块导入成功")
         except ImportError as e:
             print(f"⚠ 对话管理器模块导入失败: {e}")
@@ -310,14 +306,14 @@ def run_import_test() -> bool:
 def run_tests() -> bool:
     """运行测试"""
     print("\n=== 运行测试 ===")
+    # 初始化变量
+    original_cwd = os.getcwd()
     try:
         # 切换到项目根目录
-        original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
         
         # 尝试运行一个简单的导入测试
         import subprocess
-        import time
         
         # 使用pytest收集测试但不运行（--collect-only）
         print("收集测试用例...")
@@ -342,11 +338,12 @@ def run_tests() -> bool:
                 print("STDERR:", result.stderr[-500:])  # 只显示最后500个字符
             return False
                 
-    except subprocess.TimeoutExpired:
-        print("✗ 测试收集超时")
-        return False
     except Exception as e:
-        print(f"✗ 运行测试时出错: {e}")
+        # 检查是否是超时错误
+        if "timeout" in str(e).lower():
+            print("✗ 测试收集超时")
+        else:
+            print(f"✗ 运行测试时出错: {e}")
         return False
     finally:
         # 恢复工作目录
@@ -355,7 +352,7 @@ def run_tests() -> bool:
         except:
             pass
 
-def main():
+def main() -> Literal[0, 1]:
     print("=== Unified AI Project 完整自动修复工具 ===")
     print(f"项目根目录: {PROJECT_ROOT}")
     print(f"源代码目录: {SRC_DIR}")

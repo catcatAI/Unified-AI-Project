@@ -4,19 +4,17 @@
 此脚本用于清理和整理备份目录，防止测试时出现导入错误
 """
 
-import os
 import shutil
-import glob
 from pathlib import Path
 import logging
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 def cleanup_backup_directories():
     """清理备份目录"""
-    project_root = Path(__file__).resolve().parent.parent
+    project_root: str = Path(__file__).resolve().parent.parent
     backup_root = project_root / "backup"
     backend_backup_root = project_root / "apps" / "backend" / "backup"
     
@@ -38,7 +36,7 @@ def cleanup_backup_directories():
 
 def organize_backup_directories():
     """整理备份目录"""
-    project_root = Path(__file__).resolve().parent.parent
+    project_root: str = Path(__file__).resolve().parent.parent
     backend_dir = project_root / "apps" / "backend"
     
     # 查找所有自动备份目录
@@ -56,7 +54,7 @@ def organize_backup_directories():
             except Exception as e:
                 logger.error(f"删除旧备份目录失败 {old_backup}: {e}")
 
-def main():
+def main() -> None:
     """主函数"""
     logger.info("开始清理备份目录...")
     cleanup_backup_directories()

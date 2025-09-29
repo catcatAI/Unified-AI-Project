@@ -1,6 +1,4 @@
-import os
 import shutil
-import json
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 import datetime
@@ -11,7 +9,7 @@ class ProjectSetupUtils:
     including directory creation and backing up existing project data.
     """
 
-    def __init__(self, project_root: Union[str, Path], backup_base_dir: Union[str, Path] = "project_backups"):
+    def __init__(self, project_root: Union[str, Path], backup_base_dir: Union[str, Path] = "project_backups") -> None:
         self.project_root = Path(project_root).resolve()
         # Store backups in a directory named 'project_backups' at the same level as the project_root
         # e.g., if project_root is /path/to/Unified-AI-Project, backups go to /path/to/project_backups
@@ -92,7 +90,7 @@ class ProjectSetupUtils:
                 # print(f"Directory already exists: {dir_path}") # Verbose
 
             if isinstance(subdirs, dict) and subdirs:
-                self._create_directories_recursive(dir_path, subdirs)
+                _ = self._create_directories_recursive(dir_path, subdirs)
 
             # Create __init__.py for Python package directories
             if base_path.name == "src" or "src" in str(base_path) or base_path.name == "tests" or "tests" in str(base_path) :
@@ -104,7 +102,7 @@ class ProjectSetupUtils:
                     if name not in ["js", "node_services", "electron_app", "js_tool_dispatcher"] and "src" not in name: # avoid electron_app/src
                          # also avoid for folders not intended to be python packages like electron_app/config
                         if "config" not in name and "renderer" not in name and "ipc" not in name and "ui_components" not in name:
-                            (dir_path / "__init__.py").touch()
+                            _ = (dir_path / "__init__.py").touch()
 
 
     def setup_project_directories(self, root_path_override: Optional[Path] = None):
@@ -113,20 +111,20 @@ class ProjectSetupUtils:
         The root_path_override is useful if the script is not in the expected scripts/ folder.
         """
         target_root = root_path_override if root_path_override else self.project_root
-        print(f"Setting up project directories in: {target_root}")
+        _ = print(f"Setting up project directories in: {target_root}")
 
         if not target_root.exists():
             target_root.mkdir(parents=True, exist_ok=True)
-            print(f"Created project root: {target_root}")
+            _ = print(f"Created project root: {target_root}")
 
-        self._create_directories_recursive(target_root, self.unified_project_structure)
+        _ = self._create_directories_recursive(target_root, self.unified_project_structure)
 
         # Ensure top-level src and tests also get __init__.py if they don't have one
         for main_py_dir in ["src", "tests"]:
             if not (target_root / main_py_dir / "__init__.py").exists():
-                 (target_root / main_py_dir / "__init__.py").touch()
+                 _ = (target_root / main_py_dir / "__init__.py").touch()
 
-        print("✅ Project directory structure setup complete.")
+        _ = print("✅ Project directory structure setup complete.")
 
     def create_backup(self, source_dirs_to_backup: List[Union[str, Path]], backup_name_prefix: str = "migration_backup") -> Optional[Path]:
         """
@@ -153,7 +151,7 @@ class ProjectSetupUtils:
         try:
             if not specific_backup_path.exists():
                 specific_backup_path.mkdir(parents=True, exist_ok=True)
-            print(f"📦 Creating backup at: {specific_backup_path}")
+            _ = print(f"📦 Creating backup at: {specific_backup_path}")
 
             any_source_backed_up = False
             for src_dir_item in source_dirs_to_backup:
@@ -162,35 +160,35 @@ class ProjectSetupUtils:
                 if src_path.exists() and src_path.is_dir():
                     # Destination will be like: project_backups/migration_backup_20230101_120000/MikoAI-Project-Codebase
                     destination = specific_backup_path / src_path.name
-                    print(f"  -> Backing up {src_path} to {destination}...")
+                    _ = print(f"  -> Backing up {src_path} to {destination}...")
                     shutil.copytree(src_path, destination, dirs_exist_ok=True)
-                    print(f"  ✅ Successfully backed up {src_path.name}")
+                    _ = print(f"  ✅ Successfully backed up {src_path.name}")
                     any_source_backed_up = True
                 else:
-                    print(f"  ⚠️ Source directory not found or not a directory: {src_path}")
+                    _ = print(f"  ⚠️ Source directory not found or not a directory: {src_path}")
 
             if not any_source_backed_up:
-                print("No valid source directories were found to back up.")
+                _ = print("No valid source directories were found to back up.")
                 if specific_backup_path.exists(): # Check if backup dir was created
                     try:
                         # Try to remove it only if it's empty
                         next(specific_backup_path.iterdir()) # Check if empty
                     except StopIteration: # Directory is empty
-                        specific_backup_path.rmdir()
-                        print(f"Removed empty backup directory: {specific_backup_path}")
+                        _ = specific_backup_path.rmdir()
+                        _ = print(f"Removed empty backup directory: {specific_backup_path}")
                 return None
 
-            print(f"🎉 Backup completed successfully: {specific_backup_path}")
+            _ = print(f"🎉 Backup completed successfully: {specific_backup_path}")
             return specific_backup_path
 
         except Exception as e:
-            print(f"❌ Error during backup: {e}")
+            _ = print(f"❌ Error during backup: {e}")
             if specific_backup_path.exists():
                 try:
-                    shutil.rmtree(specific_backup_path)
-                    print(f"Cleaned up partial backup directory: {specific_backup_path}")
+                    _ = shutil.rmtree(specific_backup_path)
+                    _ = print(f"Cleaned up partial backup directory: {specific_backup_path}")
                 except Exception as e_clean:
-                    print(f"Error cleaning up partial backup: {e_clean}")
+                    _ = print(f"Error cleaning up partial backup: {e_clean}")
             return None
 
 def example_run():
@@ -198,7 +196,7 @@ def example_run():
     Example usage of the ProjectSetupUtils.
     This function is for demonstration and testing the utils.
     """
-    print("Running ProjectSetupUtils example...")
+    _ = print("Running ProjectSetupUtils example...")
 
     # Determine the root of the Unified-AI-Project.
     # Assumes this script is in scripts/
@@ -210,8 +208,8 @@ def example_run():
     utils = ProjectSetupUtils(project_root=unified_project_root)
 
     # 1. Setup the directory structure for Unified-AI-Project
-    print("\n--- Setting up project directories ---")
-    utils.setup_project_directories()
+    _ = print("\n--- Setting up project directories ---")
+    _ = utils.setup_project_directories()
 
     # 2. Example of creating a backup
     # These paths should point to the actual old project directories that need to be merged.
@@ -227,22 +225,22 @@ def example_run():
     # Create Miko dummy
     if not (dummy_miko_path / "src").exists():
         (dummy_miko_path / "src").mkdir(parents=True, exist_ok=True)
-        (dummy_miko_path / "src" / "main_miko.py").write_text("print('Miko old main')")
-        (dummy_miko_path / "README.md").write_text("Old MikoAI Project")
-        print(f"Created dummy project: {dummy_miko_path}")
+        _ = (dummy_miko_path / "src" / "main_miko.py").write_text("print('Miko old main')")
+        _ = (dummy_miko_path / "README.md").write_text("Old MikoAI Project")
+        _ = print(f"Created dummy project: {dummy_miko_path}")
 
     # Create Fragmenta dummy
     if not (dummy_fragmenta_path / "modules").exists():
         (dummy_fragmenta_path / "modules").mkdir(parents=True, exist_ok=True)
-        (dummy_fragmenta_path / "modules" / "core_fragment.js").write_text("console.log('Fragmenta core');")
-        (dummy_fragmenta_path / "README.md").write_text("Old Fragmenta Project")
-        print(f"Created dummy project: {dummy_fragmenta_path}")
+        _ = (dummy_fragmenta_path / "modules" / "core_fragment.js").write_text("console.log('Fragmenta core');")
+        _ = (dummy_fragmenta_path / "README.md").write_text("Old Fragmenta Project")
+        _ = print(f"Created dummy project: {dummy_fragmenta_path}")
 
-    print("\n--- Running backup example ---")
+    _ = print("\n--- Running backup example ---")
     # Provide absolute paths of the dummy old projects to the backup function
     sources_to_backup = [
-        dummy_miko_path.resolve(),
-        dummy_fragmenta_path.resolve()
+        _ = dummy_miko_path.resolve(),
+        _ = dummy_fragmenta_path.resolve()
     ]
 
     backup_location = utils.create_backup(source_dirs_to_backup=sources_to_backup, backup_name_prefix="pre_merge_demo")
@@ -253,15 +251,15 @@ def example_run():
         print("Backup for demo failed or no sources were backed up.")
 
     # Clean up dummy old project directories after example
-    print("\n--- Cleaning up dummy old project structures ---")
+    _ = print("\n--- Cleaning up dummy old project structures ---")
     if dummy_miko_path.exists():
-        shutil.rmtree(dummy_miko_path)
-        print(f"Removed dummy project: {dummy_miko_path}")
+        _ = shutil.rmtree(dummy_miko_path)
+        _ = print(f"Removed dummy project: {dummy_miko_path}")
     if dummy_fragmenta_path.exists():
-        shutil.rmtree(dummy_fragmenta_path)
-        print(f"Removed dummy project: {dummy_fragmenta_path}")
+        _ = shutil.rmtree(dummy_fragmenta_path)
+        _ = print(f"Removed dummy project: {dummy_fragmenta_path}")
 
-    print("\nProjectSetupUtils example finished.")
+    _ = print("\nProjectSetupUtils example finished.")
 
 if __name__ == "__main__":
     # This allows the script to be run directly.
@@ -270,11 +268,11 @@ if __name__ == "__main__":
 
     # Option 2: Directly use the class to set up the Unified-AI-Project structure in the current repo.
     # This is what you'd typically want when actually setting up the project.
-    print("Executing direct setup of Unified-AI-Project structure...")
+    _ = print("Executing direct setup of Unified-AI-Project structure...")
     current_script_path = Path(__file__).resolve()
     project_root_for_setup = current_script_path.parent.parent # Assumes script is in scripts/
 
     setup_tool = ProjectSetupUtils(project_root=project_root_for_setup)
-    setup_tool.setup_project_directories()
-    print(f"Unified-AI-Project directories should now be set up in {project_root_for_setup}")
+    _ = setup_tool.setup_project_directories()
+    _ = print(f"Unified-AI-Project directories should now be set up in {project_root_for_setup}")
     print("You can now use the `create_backup` method separately if needed, providing paths to old projects.")

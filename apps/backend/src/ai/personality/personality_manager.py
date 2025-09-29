@@ -1,40 +1,33 @@
-# Placeholder for Personality Manager
-# This module will be responsible for loading, managing, and applying personality profiles.
-# It will interact with the emotion system and influence dialogue generation.
+"""
+Personality Manager
+Handles loading and managing different personality profiles for the AI.
+"""
 
 import json
-import os
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 class PersonalityManager:
-    def reload_personality(self, profile_name: str | None = None) -> bool:
-        """Reload current or specified personality profile and rescan available profiles."""
-        self.available_profiles = self._scan_profiles()
-        name = profile_name or (self.current_personality.get("profile_name") if self.current_personality else self.default_profile_name)
-        return self.load_personality(name)
-    def __init__(self, personality_profiles_dir: str = None, default_profile_name: str = "miko_base"):
-        if personality_profiles_dir:
-            self.profiles_dir = Path(personality_profiles_dir)
-        else:
-            # Default path: Unified-AI-Project/configs/personality_profiles/
-            current_script_path = Path(__file__).resolve() # src/core_ai/personality/personality_manager.py
-            project_root = current_script_path.parent.parent.parent.parent # Unified-AI-Project/
-            self.profiles_dir = project_root / "configs" / "personality_profiles"
+    def __init__(self, profiles_dir: Optional[Path] = None, default_profile_name: str = "default") -> None:
+        """
+        Initializes the PersonalityManager.
 
+        Args:
+            profiles_dir (Path, optional): Directory containing personality profile JSON files.
+                                          Defaults to "personalities" in the current working directory.
+            default_profile_name (str): Name of the default personality profile to load.
+        """
+        self.profiles_dir = profiles_dir or Path(__file__).parent / "personalities"
         self.default_profile_name = default_profile_name
-        self.current_personality = None
-        self.available_profiles = self._scan_profiles()
-
-        if not self.available_profiles:
-            print(f"PersonalityManager: Warning - No personality profiles found in {self.profiles_dir}")
-
+        self.available_profiles = self._scan_profiles
+        self.current_personality: Optional[Dict[str, Any]] = None
+        # Try to load the default personality
         self.load_personality(self.default_profile_name)
-        print(f"PersonalityManager initialized. Profiles dir: {self.profiles_dir}")
 
-    def _scan_profiles(self) -> dict:
+    def _scan_profiles(self) -> Dict[str, Dict[str, str]]:
         """Scans the profiles directory for available JSON personality files."""
-        profiles = {}
-        if not self.profiles_dir.exists() or not self.profiles_dir.is_dir():
+        profiles: Dict[str, Dict[str, str]] = {} 
+        if not self.profiles_dir.exists or not self.profiles_dir.is_dir:
             return profiles
 
         for file_path in self.profiles_dir.glob("*.json"):
@@ -70,7 +63,7 @@ class PersonalityManager:
             self.current_personality = None
             return False
 
-    def get_current_personality_trait(self, trait_name: str, default_value=None):
+    def get_current_personality_trait(self, trait_name: str, default_value=None) -> Any:
         """Gets a specific trait from the current personality."""
         if not self.current_personality:
             return default_value
@@ -86,15 +79,16 @@ class PersonalityManager:
 
     def get_initial_prompt(self) -> str:
         """Returns the initial prompt for the current personality."""
-        return self.get_current_personality_trait("initial_prompt", "Hello!")
+        result = self.get_current_personality_trait("initial_prompt", "Hello!")
+        return result if result is not None else "Hello!"
 
-    def list_available_profiles(self) -> list:
+    def list_available_profiles(self) -> List[Dict[str, str]]:
         return [
             {"name": name, "display_name": info.get("display_name", name)}
-            for name, info in self.available_profiles.items()
+            for name, info in self.available_profiles.items
         ]
 
-    def apply_personality_adjustment(self, adjustment: dict):
+    def apply_personality_adjustment(self, adjustment: Dict[str, Any]):
         """
         Applies a personality adjustment to the current personality.
 
@@ -104,21 +98,21 @@ class PersonalityManager:
         if not self.current_personality:
             return
 
-        for key, value in adjustment.items():
+        for key, value in adjustment.items:
             keys = key.split('.')
             target = self.current_personality
             for k in keys[:-1]:
-                target = target.setdefault(k, {})
+                target = target.setdefault(k, )
             target[keys[-1]] = value
 
 if __name__ == '__main__':
-    pm = PersonalityManager()
+    pm = PersonalityManager
 
-    print(f"\nAvailable profiles: {pm.list_available_profiles()}")
+    print(f"\nAvailable profiles: {pm.list_available_profiles}")
 
     if pm.current_personality:
         print(f"\nLoaded personality: {pm.current_personality.get('profile_name')}")
-        print(f"Initial prompt: {pm.get_initial_prompt()}")
+        print(f"Initial prompt: {pm.get_initial_prompt}")
         print(f"Default tone: {pm.get_current_personality_trait('communication_style.tone_presets.default', 'neutral')}")
         print(f"A non-existent trait: {pm.get_current_personality_trait('fictional.trait', 'not set')}")
     else:
@@ -127,7 +121,7 @@ if __name__ == '__main__':
     # Test loading another profile if available (e.g., if a "formal_miko.json" existed)
     # pm.load_personality("formal_miko")
     # if pm.current_personality and pm.current_personality.get("profile_name") == "formal_miko":
-    #     print(f"\nSwitched to formal_miko: {pm.get_initial_prompt()}")
+    #     print(f"\nSwitched to formal_miko: {pm.get_initial_prompt}")
     # else:
     #     print("\nCould not switch to 'formal_miko' (likely not found).")
 
@@ -141,4 +135,5 @@ if __name__ == '__main__':
     # Ensure it falls back to default if current was None or failed to load
     if not pm.current_personality and pm.default_profile_name in pm.available_profiles:
         pm.load_personality(pm.default_profile_name) # Explicitly reload default if needed
-        print(f"Reverted to default profile: {pm.current_personality.get('profile_name')}")
+        if pm.current_personality:
+            print(f"Reverted to default profile: {pm.current_personality.get('profile_name')}")

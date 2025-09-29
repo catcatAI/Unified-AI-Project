@@ -1,5 +1,4 @@
 import subprocess
-import sys
 import os
 import logging
 import threading
@@ -11,7 +10,7 @@ class AgentManager:
     Manages the lifecycle of specialized sub-agents.
     It can launch and terminate sub-agent processes.
     """
-    def __init__(self, python_executable: str, agents_dir: Optional[str] = None):
+    def __init__(self, python_executable: str, agents_dir: Optional[str] = None) -> None:
         """
         Initializes the AgentManager.
 
@@ -21,25 +20,25 @@ class AgentManager:
             agents_dir (Optional[str]): The directory where agent scripts are located.
         """
         self.python_executable = python_executable
-        self.active_agents: Dict[str, subprocess.Popen] = {}
+        self.active_agents: Dict[str, subprocess.Popen] = 
         self.agent_script_map: Dict[str, str] = self._discover_agent_scripts(agents_dir)
-        self.launch_lock = threading.Lock()
+        self.launch_lock = threading.Lock
 
-        logging.info(f"AgentManager initialized. Found agent scripts: {list(self.agent_script_map.keys())}")
+        logging.info(f"AgentManager initialized. Found agent scripts: {list(self.agent_script_map.keys)}")
 
     def _discover_agent_scripts(self, agents_dir: Optional[str] = None) -> Dict[str, str]:
         """
         Discovers available agent scripts in the specified directory.
         Returns a map of agent names to their script paths.
         """
-        agent_map = {}
+        agent_map = 
         try:
             if not agents_dir:
                 agents_dir = os.path.join(os.path.dirname(__file__), '..', 'agents')
 
             if not os.path.isdir(agents_dir):
                 logging.warning(f"[AgentManager] Agents directory not found: {agents_dir}")
-                return {}
+                return 
 
             for filename in os.listdir(agents_dir):
                 if filename.endswith("_agent.py") and filename != "base_agent.py":
@@ -49,7 +48,7 @@ class AgentManager:
             return agent_map
         except Exception as e:
             logging.error(f"[AgentManager] Error discovering agent scripts: {e}")
-            return {}
+            return 
 
     def launch_agent(self, agent_name: str, args: Optional[List[str]] = None) -> Optional[str]:
         """
@@ -67,7 +66,7 @@ class AgentManager:
                 logging.error(f"[AgentManager] Error: Agent '{agent_name}' not found.")
                 return None
 
-            if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
+            if agent_name in self.active_agents and self.active_agents[agent_name].poll is None:
                 logging.info(f"[AgentManager] Info: Agent '{agent_name}' is already running with PID {self.active_agents[agent_name].pid}.")
                 return str(self.active_agents[agent_name].pid)
 
@@ -92,7 +91,7 @@ class AgentManager:
         Checks if an agent is healthy.
         This is a placeholder for a more robust health check mechanism.
         """
-        if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
+        if agent_name in self.active_agents and self.active_agents[agent_name].poll is None:
             # In a real implementation, this would involve sending a health check
             # message to the agent and waiting for a response.
             return True
@@ -108,16 +107,16 @@ class AgentManager:
         Returns:
             bool: True if the agent was terminated successfully, False otherwise.
         """
-        if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
+        if agent_name in self.active_agents and self.active_agents[agent_name].poll is None:
             process = self.active_agents[agent_name]
             logging.info(f"[AgentManager] Shutting down '{agent_name}' (PID: {process.pid})...")
-            process.terminate() # Sends SIGTERM
+            process.terminate  # Sends SIGTERM
             try:
-                process.wait(timeout=5) # Wait for the process to terminate
+                process.wait(timeout=5)  # Wait for the process to terminate
                 logging.info(f"[AgentManager] Agent '{agent_name}' terminated.")
             except subprocess.TimeoutExpired:
                 logging.warning(f"[AgentManager] Agent '{agent_name}' did not terminate gracefully, killing.")
-                process.kill() # Sends SIGKILL
+                process.kill  # Sends SIGKILL
             del self.active_agents[agent_name]
             return True
         else:
@@ -130,7 +129,7 @@ class AgentManager:
         """
         logging.info("[AgentManager] Shutting down all active agents...")
         # Create a copy of keys to iterate over, as the dictionary will be modified
-        for agent_name in list(self.active_agents.keys()):
+        for agent_name in list(self.active_agents.keys):
             self.shutdown_agent(agent_name)
 
     async def wait_for_agent_ready(self, agent_name: str, timeout: int = 30, service_discovery=None):
@@ -151,7 +150,7 @@ class AgentManager:
         expected_capability_id = "data_analysis_v1"  # 简化处理，实际应该从代理配置中获取
         
         # 等待代理启动并广告其能力
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_event_loop.time
         retry_count = 0
         max_retries = timeout * 2  # 每0.5秒检查一次
         
@@ -172,7 +171,7 @@ class AgentManager:
         logging.warning(f"[AgentManager] Agent '{agent_name}' not ready within {timeout} seconds. Checking all capabilities...")
         
         # 如果特定能力没找到，检查所有能力
-        all_caps = await service_discovery.get_all_capabilities_async()
+        all_caps = await service_discovery.get_all_capabilities_async
         logging.info(f"[AgentManager] All known capabilities: {len(all_caps)}")
         for cap in all_caps:
             logging.info(f"[AgentManager] Capability: {cap.get('capability_id')} from AI: {cap.get('ai_id')}")
@@ -187,14 +186,14 @@ class AgentManager:
         """
         Returns a list of available agent names.
         """
-        return list(self.agent_script_map.keys())
+        return list(self.agent_script_map.keys)
     
     def get_active_agents(self) -> Dict[str, int]:
         """
         Returns a dictionary of active agents and their PIDs.
         """
-        active_agents = {}
-        for agent_name, process in self.active_agents.items():
-            if process.poll() is None:  # Agent is still running
+        active_agents = 
+        for agent_name, process in self.active_agents.items:
+            if process.poll is None:  # Agent is still running
                 active_agents[agent_name] = process.pid
         return active_agents

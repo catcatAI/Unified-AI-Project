@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class PerformanceMetrics:
     """性能指标"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.timestamp: datetime = datetime.now()  # 时间戳
         self.response_time: float = 0.0  # 响应时间(秒)
         self.throughput: float = 0.0  # 吞吐量(请求/秒)
@@ -33,7 +33,7 @@ class PerformanceMetrics:
 class PerformanceBenchmark:
     """性能基准测试器"""
     
-    def __init__(self, project_root: str = "."):
+    def __init__(self, project_root: str = ".") -> None:
         self.project_root = project_root
         self.benchmark_history: List[PerformanceMetrics] = []
         self.thresholds: Dict[str, float] = {
@@ -62,20 +62,20 @@ class PerformanceBenchmark:
             result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_root)
             
             if result.returncode != 0:
-                logger.error(f"API benchmark failed: {result.stderr}")
+                _ = logger.error(f"API benchmark failed: {result.stderr}")
                 return None
                 
             # 解析测试结果
             metrics = self._parse_api_benchmark_results(result.stdout, api_endpoint, concurrency)
             
             if metrics:
-                self.benchmark_history.append(metrics)
+                _ = self.benchmark_history.append(metrics)
                 logger.info(f"API benchmark completed: response_time={metrics.response_time:.3f}s, "
                            f"throughput={metrics.throughput:.2f} req/s, error_rate={metrics.error_rate:.2f}%")
                            
             return metrics
         except Exception as e:
-            logger.error(f"Failed to run API benchmark: {e}")
+            _ = logger.error(f"Failed to run API benchmark: {e}")
             return None
             
     def run_component_benchmark(self, component_name: str, test_function: Callable, iterations: int = 1000) -> Optional[PerformanceMetrics]:
@@ -93,9 +93,9 @@ class PerformanceBenchmark:
             
             for i in range(iterations):
                 try:
-                    test_function()
+                    _ = test_function()
                 except Exception as e:
-                    logger.warning(f"Error in iteration {i}: {e}")
+                    _ = logger.warning(f"Error in iteration {i}: {e}")
                     errors += 1
                     
             end_time = time.time()
@@ -122,14 +122,14 @@ class PerformanceBenchmark:
             metrics.test_name = f"Component Benchmark: {component_name}"
             metrics.test_description = f"Component benchmark for {component_name} with {iterations} iterations"
             
-            self.benchmark_history.append(metrics)
+            _ = self.benchmark_history.append(metrics)
             
             logger.info(f"Component benchmark completed: response_time={metrics.response_time:.6f}s, "
                        f"throughput={metrics.throughput:.2f} ops/s, error_rate={metrics.error_rate:.2f}%")
                        
             return metrics
         except Exception as e:
-            logger.error(f"Failed to run component benchmark: {e}")
+            _ = logger.error(f"Failed to run component benchmark: {e}")
             return None
             
     def _parse_api_benchmark_results(self, output: str, api_endpoint: str, concurrency: int) -> Optional[PerformanceMetrics]:
@@ -172,7 +172,7 @@ class PerformanceBenchmark:
             
             return metrics
         except Exception as e:
-            logger.error(f"Failed to parse API benchmark results: {e}")
+            _ = logger.error(f"Failed to parse API benchmark results: {e}")
             return None
             
     def run_regression_detection(self, current_metrics: PerformanceMetrics, baseline_metrics: PerformanceMetrics, 
@@ -245,7 +245,7 @@ class PerformanceBenchmark:
             logger.info(f"Regression detection completed: has_regression={regression_results['has_regression']}")
             return regression_results
         except Exception as e:
-            logger.error(f"Failed to run regression detection: {e}")
+            _ = logger.error(f"Failed to run regression detection: {e}")
             return {"has_regression": False, "regressions": [], "improvements": []}
             
     def get_benchmark_trend(self, limit: int = 10) -> List[PerformanceMetrics]:
@@ -265,7 +265,7 @@ class PerformanceBenchmark:
         report = f"""
 性能基准测试报告
 ================
-生成时间: {metrics.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
+_ = 生成时间: {metrics.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
 测试名称: {metrics.test_name}
 
 性能指标:
@@ -307,10 +307,10 @@ class PerformanceBenchmark:
             with open(filepath, 'w') as f:
                 json.dump(result_data, f, indent=2)
                 
-            logger.info(f"Saved benchmark results to {filepath}")
+            _ = logger.info(f"Saved benchmark results to {filepath}")
             return True
         except Exception as e:
-            logger.error(f"Failed to save benchmark results: {e}")
+            _ = logger.error(f"Failed to save benchmark results: {e}")
             return False
             
     def set_performance_thresholds(self, response_time_threshold: float = None, 
@@ -322,4 +322,4 @@ class PerformanceBenchmark:
             self.thresholds["throughput"] = throughput_threshold
         if error_rate_threshold is not None:
             self.thresholds["error_rate"] = error_rate_threshold
-        logger.info(f"Updated performance thresholds: {self.thresholds}")
+        _ = logger.info(f"Updated performance thresholds: {self.thresholds}")

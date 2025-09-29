@@ -1,7 +1,6 @@
 import asyncio
 import uuid
 import logging
-from typing import Dict, Any, List
 import pandas as pd
 import numpy as np
 
@@ -15,7 +14,7 @@ class DataAnalysisAgent(BaseAgent):
     A specialized agent for data analysis tasks like statistical analysis,
     data visualization, and data processing.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_statistical_analysis_v1.0",
@@ -65,7 +64,7 @@ class DataAnalysisAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            await self.hsp_connector.send_task_result(result_payload, callback_topic, request_id)
             logger.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     def _perform_statistical_analysis(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -91,7 +90,7 @@ class DataAnalysisAgent(BaseAgent):
             
             # Add additional metrics
             results["missing_values"] = df.isnull().sum().to_dict()
-            results["data_types"] = df.dtypes.astype(str).to_dict()
+            results["data_types"] = df.dtypes.astype(str).to_dict
             
         elif analysis_type == "correlation":
             # Perform correlation analysis
@@ -176,12 +175,12 @@ class DataAnalysisAgent(BaseAgent):
 
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:data_analysis_agent_{uuid.uuid4().hex[:6]}"
         agent = DataAnalysisAgent(agent_id=agent_id)
         await agent.start()
 
     try:
-        asyncio.run(main())
+        asyncio.run(main)
     except KeyboardInterrupt:
         print("\nDataAnalysisAgent manually stopped.")

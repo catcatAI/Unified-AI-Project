@@ -4,11 +4,11 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import uuid
 
-from apps.backend.src.ai.agent_manager import AgentManager
+from apps.backend.src.core_ai.agent_manager import AgentManager
 from apps.backend.src.core.hsp.hsp_connector import HSPConnector
 from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class AgentCollaborationManager:
     """
@@ -16,12 +16,12 @@ class AgentCollaborationManager:
     and result integration.
     """
     
-    def __init__(self, agent_manager: AgentManager, hsp_connector: HSPConnector):
+    def __init__(self, agent_manager: AgentManager, hsp_connector: HSPConnector) -> None:
         self.agent_manager = agent_manager
         self.hsp_connector = hsp_connector
-        self.collaboration_tasks = {}  # Track ongoing collaborative tasks
-        self.task_results = {}  # Store results from individual agents
-        self.task_dependencies = {}  # Track dependencies between tasks
+        self.collaboration_tasks =   # Track ongoing collaborative tasks
+        self.task_results =   # Store results from individual agents
+        self.task_dependencies =   # Track dependencies between tasks
         
         # Register callback for task results
         if self.hsp_connector:
@@ -36,7 +36,7 @@ class AgentCollaborationManager:
         
         Args:
             task_id (str): Unique identifier for the collaborative task
-            subtasks (List[Dict[str, Any]]): List of subtasks to be distributed
+            _ = subtasks (List[Dict[str, Any]]): List of subtasks to be distributed
             
         Returns:
             Dict[str, Any]: Integrated results from all subtasks
@@ -48,12 +48,12 @@ class AgentCollaborationManager:
             "subtasks": subtasks,
             "completed_subtasks": 0,
             "total_subtasks": len(subtasks),
-            "start_time": datetime.now(),
-            "results": {}
+            "start_time": datetime.now,
+            "results": 
         }
         
         # Launch all subtasks
-        task_futures = []
+        task_futures = 
         for i, subtask in enumerate(subtasks):
             subtask_id = f"{task_id}_subtask_{i}"
             future = asyncio.create_task(self._execute_subtask(subtask_id, subtask))
@@ -64,7 +64,7 @@ class AgentCollaborationManager:
             results = await asyncio.gather(*task_futures, return_exceptions=True)
             
             # Process results
-            integrated_results = {}
+            integrated_results = 
             for i, result in enumerate(results):
                 subtask_id = f"{task_id}_subtask_{i}"
                 if isinstance(result, Exception):
@@ -76,7 +76,7 @@ class AgentCollaborationManager:
                     self.task_results[subtask_id] = result
             
             # Mark task as complete
-            self.collaboration_tasks[task_id]["end_time"] = datetime.now()
+            self.collaboration_tasks[task_id]["end_time"] = datetime.now
             self.collaboration_tasks[task_id]["results"] = integrated_results
             
             logger.info(f"[Collaboration] Collaborative task {task_id} completed")
@@ -92,13 +92,13 @@ class AgentCollaborationManager:
         
         Args:
             subtask_id (str): Unique identifier for the subtask
-            subtask (Dict[str, Any]): Subtask definition
+            _ = subtask (Dict[str, Any]): Subtask definition
             
         Returns:
             Dict[str, Any]: Result from the agent
         """
         capability_needed = subtask.get("capability_needed")
-        task_parameters = subtask.get("task_parameters", {})
+        task_parameters = subtask.get("task_parameters", )
         task_description = subtask.get("task_description", "")
         
         logger.info(f"[Collaboration] Executing subtask {subtask_id}: {task_description}")
@@ -116,7 +116,7 @@ class AgentCollaborationManager:
         # For now, we'll simulate the process
         try:
             # Simulate task execution delay
-            await asyncio.sleep(0.1)
+            _ = await asyncio.sleep(0.1)
             
             # Simulate successful task completion
             result = {
@@ -124,7 +124,7 @@ class AgentCollaborationManager:
                 "subtask_id": subtask_id,
                 "capability": capability_needed,
                 "result": f"Result for {task_description}",
-                "execution_time": f"{datetime.now()}"
+                "execution_time": f"{datetime.now}"
             }
             
             logger.info(f"[Collaboration] Subtask {subtask_id} completed successfully")
@@ -143,8 +143,8 @@ class AgentCollaborationManager:
         Handles results returned by agents.
         
         Args:
-            result_payload (HSPTaskResultPayload): Result payload from agent
-            sender_ai_id (str): ID of the agent that sent the result
+            _ = result_payload (HSPTaskResultPayload): Result payload from agent
+            _ = sender_ai_id (str): ID of the agent that sent the result
         """
         request_id = result_payload.get("request_id")
         status = result_payload.get("status")
@@ -155,7 +155,7 @@ class AgentCollaborationManager:
         self.task_results[request_id] = result_payload
         
         # Check if this completes a collaborative task
-        for task_id, task_info in self.collaboration_tasks.items():
+        for task_id, task_info in self.collaboration_tasks.items:
             if request_id.startswith(f"{task_id}_subtask_"):
                 task_info["completed_subtasks"] += 1
                 task_info["results"][request_id] = result_payload
@@ -174,10 +174,10 @@ class AgentCollaborationManager:
         """
         # In a real implementation, this would query agents for their capabilities
         # For now, we'll return a static mapping based on known agents
-        capabilities = {}
+        capabilities = 
         
         # Get available agents
-        available_agents = self.agent_manager.get_available_agents()
+        available_agents = self.agent_manager.get_available_agents
         
         # Simulate capabilities for each agent
         for agent in available_agents:
@@ -216,7 +216,7 @@ class AgentCollaborationManager:
         Routes a task to the most appropriate agent based on capabilities.
         
         Args:
-            task_request (HSPTaskRequestPayload): Task request to route
+            _ = task_request (HSPTaskRequestPayload): Task request to route
             
         Returns:
             Optional[str]: Agent ID if successfully routed, None otherwise
@@ -224,11 +224,11 @@ class AgentCollaborationManager:
         capability_filter = task_request.get("capability_id_filter", "")
         
         # Get available agents and their capabilities
-        agent_capabilities = await self.get_agent_capabilities()
+        agent_capabilities = await self.get_agent_capabilities
         
         # Find the best agent for this capability
         best_agent = None
-        for agent_name, capabilities in agent_capabilities.items():
+        for agent_name, capabilities in agent_capabilities.items:
             # Check if the agent has the required capability
             for capability in capabilities:
                 if capability_filter in capability:
@@ -251,7 +251,7 @@ class AgentCollaborationManager:
         Gets the status of a collaborative task.
         
         Args:
-            task_id (str): ID of the collaborative task
+            _ = task_id (str): ID of the collaborative task
             
         Returns:
             Optional[Dict[str, Any]]: Task status information
@@ -263,7 +263,7 @@ class AgentCollaborationManager:
         Cancels an ongoing collaborative task.
         
         Args:
-            task_id (str): ID of the task to cancel
+            _ = task_id (str): ID of the task to cancel
             
         Returns:
             bool: True if cancellation was successful, False otherwise
@@ -271,7 +271,7 @@ class AgentCollaborationManager:
         if task_id in self.collaboration_tasks:
             task_info = self.collaboration_tasks[task_id]
             task_info["cancelled"] = True
-            task_info["end_time"] = datetime.now()
+            task_info["end_time"] = datetime.now
             logger.info(f"[Collaboration] Cancelled collaborative task {task_id}")
             return True
         else:
@@ -281,7 +281,7 @@ class AgentCollaborationManager:
 # Example usage
 if __name__ == "__main__":
     # This would typically be run within the larger application context
-    async def main():
+    async def main -> None:
         # Mock agent manager and HSP connector for demonstration
         class MockAgentManager:
             def get_available_agents(self):
@@ -291,14 +291,14 @@ if __name__ == "__main__":
             def register_on_task_result_callback(self, callback):
                 pass
         
-        agent_manager = MockAgentManager()
-        hsp_connector = MockHSPConnector()
+        agent_manager = MockAgentManager
+        hsp_connector = MockHSPConnector
         
         # Create collaboration manager
         collaboration_manager = AgentCollaborationManager(agent_manager, hsp_connector)
         
         # Example collaborative task
-        task_id = f"collab_task_{uuid.uuid4().hex[:8]}"
+        task_id = f"collab_task_{uuid.uuid4.hex[:8]}"
         subtasks = [
             {
                 "capability_needed": "generate_marketing_copy_v1.0",
@@ -327,4 +327,4 @@ if __name__ == "__main__":
             print(f"Error in collaborative task: {e}")
     
     # Run the example
-    asyncio.run(main())
+    asyncio.run(main)

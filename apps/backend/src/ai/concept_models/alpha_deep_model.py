@@ -1,31 +1,36 @@
-"""
-Alpha深度模型
-实现高级数据表示和压缩功能
-"""
-
-import asyncio
 import logging
 import json
-import sqlite3
 import zlib
 import bz2
 import lzma
-from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
+from typing import List, Dict, Any, Optional
+
+# 導入統一符號空間
+try:
+    from training.unified_symbolic_space import UnifiedSymbolicSpace, SymbolType
+    SYMBOLIC_SPACE_AVAILABLE = True
+except ImportError:
+    SYMBOLIC_SPACE_AVAILABLE = False
+    print("Warning: UnifiedSymbolicSpace not available, using fallback implementation")
+    
+    class SymbolType:
+        MEMORY = "Memory"
+        GIST = "Gist"
+        ENTITY = "Entity"
+        UNKNOWN = "Unknown"
+        FEEDBACK = "Feedback"
+
+import msgpack
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
-from datetime import datetime
 
-logger = logging.getLogger(__name__)
-
-# 导入统一符号空间
-from training.unified_symbolic_space import UnifiedSymbolicSpace, SymbolType
+logger: Any = logging.getLogger(__name__)
 
 class CompressionAlgorithm(Enum):
-    """支持的压缩算法"""
+    """支持的壓縮算法"""
     ZLIB = "zlib"
     BZ2 = "bz2"
     LZMA = "lzma"
@@ -40,20 +45,20 @@ class HAMGist:
 
 @dataclass
 class RelationalContext:
-    """关系上下文"""
+    """關係上下文"""
     entities: List[str]
     relationships: List[Dict[str, Any]]  # 例如: {"subject": "A", "verb": "likes", "object": "B"}
 
 @dataclass
 class Modalities:
-    """多模态数据"""
+    """多模態數據"""
     text_confidence: float
     audio_features: Optional[Dict[str, Any]] = None
     image_features: Optional[Dict[str, Any]] = None
 
 @dataclass
 class DeepParameter:
-    """深度参数结构"""
+    """深度參數結構"""
     source_memory_id: str
     timestamp: str
     base_gist: HAMGist
@@ -63,25 +68,25 @@ class DeepParameter:
     dna_chain_id: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典"""
+        """轉換為字典"""
         return asdict(self)
 
 class DNADataChain:
-    """DNA衍生数据链"""
+    """DNA衍生數據鏈"""
     
-    def __init__(self, chain_id: str):
+    def __init__(self, chain_id: str) -> None:
         self.chain_id = chain_id
-        self.nodes: List[str] = []  # 内存ID链
+        self.nodes: List[str] = []  # 內存ID鏈
         self.branches: Dict[str, 'DNADataChain'] = {}  # 分支
-        self.metadata: Dict[str, Any] = {}
+        self.metadata: Dict[str, Any] = {} 
         
     def add_node(self, memory_id: str):
-        """添加内存节点到链中"""
+        """添加內存節點到鏈中"""
         if memory_id not in self.nodes:
             self.nodes.append(memory_id)
             
     def create_branch(self, branch_id: str, from_node: str) -> 'DNADataChain':
-        """从特定节点创建分支"""
+        """從特定節點創建分支"""
         if from_node not in self.nodes:
             raise ValueError(f"Node {from_node} not found in chain")
             
@@ -92,39 +97,43 @@ class DNADataChain:
         return branch
         
     def merge_chain(self, other_chain: 'DNADataChain', at_node: str) -> bool:
-        """在特定节点合并另一个链"""
+        """在特定節點合併另一個鏈"""
         if at_node not in self.nodes:
             return False
             
-        # 添加其他链的节点
+        # 添加其他鏈的節點
         for node in other_chain.nodes:
             if node not in self.nodes:
                 self.nodes.append(node)
                 
-        # 合并分支
+        # 合併分支
         self.branches.update(other_chain.branches)
         return True
 
 class AlphaDeepModel:
     """Alpha深度模型"""
     
-    def __init__(self, symbolic_space_db: str = 'alpha_deep_model_symbolic_space.db'):
+    def __init__(self, symbolic_space_db: str = 'alpha_deep_model_symbolic_space.db') -> None:
         """初始化Alpha深度模型"""
-        self.symbolic_space = UnifiedSymbolicSpace(symbolic_space_db)
+        if SYMBOLIC_SPACE_AVAILABLE:
+            self.symbolic_space = UnifiedSymbolicSpace(symbolic_space_db)
+        else:
+            # Fallback implementation
+            self.symbolic_space = None
         self.dna_chains: Dict[str, DNADataChain] = {}
         self.compression_stats: Dict[str, Dict[str, Any]] = {}
         self.logger = logging.getLogger(__name__)
         
-        # 添加深度学习模型
+        # 添加深度學習模型
         self.deep_model = self._build_deep_model()
         self.optimizer = optim.Adam(self.deep_model.parameters(), lr=0.001)
         self.criterion = nn.MSELoss()
-        
+    
     def _build_deep_model(self):
-        """构建深度学习模型"""
-        # 简单的深度网络用于处理符号空间数据
+        """構建深度學習模型"""
+        # 簡單的深度網絡用於處理符號空間數據
         model = nn.Sequential(
-            nn.Linear(128, 256),  # 假设有128维输入
+            nn.Linear(128, 256),  # 假設有128維輸入
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
@@ -136,13 +145,18 @@ class AlphaDeepModel:
     
     async def learn(self, deep_parameter: DeepParameter, 
               feedback: Optional[Dict[str, Any]] = None) -> Optional[Any]:
-        """学习机制，基于新的深度参数和可选反馈更新模型"""
+        """學習機制，基於新的深度參數和可選反饋更新模型"""
         self.logger.info(f"Learning from deep parameter: {deep_parameter.source_memory_id}")
         if feedback:
             self.logger.info(f"Received feedback: {feedback}")
             
-        # 1. 基于深度参数更新符号空间
-        # 确保主内存符号存在或创建它
+        # 如果符號空間不可用，直接返回
+        if not SYMBOLIC_SPACE_AVAILABLE or self.symbolic_space is None:
+            self.logger.warning("Symbolic space not available, skipping symbolic learning")
+            return None
+            
+        # 1. 基於深度參數更新符號空間
+        # 確保主內存符號存在或創建它
         memory_symbol = await self.symbolic_space.get_symbol_by_name(deep_parameter.source_memory_id)
         if not memory_symbol:
             await self.symbolic_space.add_symbol(
@@ -156,7 +170,7 @@ class AlphaDeepModel:
                 properties={'timestamp': deep_parameter.timestamp}
             )
 
-        # 添加或更新摘要作为符号并与内存关联
+        # 添加或更新摘要作為符號並與內存關聯
         gist_symbol_name = deep_parameter.base_gist.summary
         await self.symbolic_space.add_symbol(
             gist_symbol_name, 
@@ -174,7 +188,7 @@ class AlphaDeepModel:
                 'contains_gist'
             )
 
-        # 处理关系上下文
+        # 處理關係上下文
         entity_symbols = {}
         for entity in deep_parameter.relational_context.entities:
             entity_symbol = await self.symbolic_space.get_symbol_by_name(entity)
@@ -185,7 +199,7 @@ class AlphaDeepModel:
                 entity_symbols[entity] = entity_symbol.id
                 
         for rel in deep_parameter.relational_context.relationships:
-            # 确保主体和客体符号存在
+            # 確保主體和客體符號存在
             subject_symbol = await self.symbolic_space.get_symbol_by_name(rel['subject'])
             if not subject_symbol:
                 subject_symbol_id = await self.symbolic_space.add_symbol(rel['subject'], SymbolType.UNKNOWN)
@@ -204,14 +218,14 @@ class AlphaDeepModel:
                     rel
                 )
 
-        # 处理多模态数据
+        # 處理多模態數據
         if memory_symbol:
             await self.symbolic_space.update_symbol(
                 memory_symbol.id, 
                 properties={'modalities': asdict(deep_parameter.modalities)}
             )
 
-        # 合并动作反馈到符号空间
+        # 合併動作反饋到符號空間
         if deep_parameter.action_feedback:
             feedback_id = f"feedback_{deep_parameter.source_memory_id}"
             feedback_symbol_id = await self.symbolic_space.add_symbol(
@@ -227,7 +241,7 @@ class AlphaDeepModel:
                     'has_feedback'
                 )
 
-        # 创建或更新DNA数据链
+        # 創建或更新DNA數據鏈
         if deep_parameter.dna_chain_id:
             if deep_parameter.dna_chain_id not in self.dna_chains:
                 self.dna_chains[deep_parameter.dna_chain_id] = DNADataChain(
@@ -237,28 +251,28 @@ class AlphaDeepModel:
                 deep_parameter.source_memory_id
             )
             
-        # 基于反馈更新学习
+        # 基於反饋更新學習
         if feedback:
-            # 根据反馈调整模型参数
+            # 根據反饋調整模型參數
             self._adjust_model_parameters(deep_parameter, feedback)
-            # 返回反馈符号
+            # 返回反饋符號
             feedback_symbol_name = f"feedback_{deep_parameter.source_memory_id}"
             return await self.symbolic_space.get_symbol_by_name(feedback_symbol_name)
             
         self.logger.info(f"Symbolic space updated for {deep_parameter.source_memory_id}")
         return None
         
-    async def _adjust_model_parameters(self, deep_parameter: DeepParameter, 
+    def _adjust_model_parameters(self, deep_parameter: DeepParameter, 
                                 feedback: Dict[str, Any]):
-        """根据反馈调整模型参数"""
-        # 这是一个占位符，用于更复杂的参数调整逻辑
-        # 在实际实现中，这将调整压缩或学习策略
+        """根據反饋調整模型參數"""
+        # 這是一個占位符，用於更複雜的參數調整邏輯
+        # 在實際實現中，這將調整壓縮或學習策略
         
-        # 准备训练数据
+        # 準備訓練數據
         input_features = self._parameter_to_features(deep_parameter)
         target_value = self._feedback_to_target(feedback)
         
-        # 训练模型
+        # 訓練模型
         self.deep_model.train()
         self.optimizer.zero_grad()
         
@@ -271,25 +285,25 @@ class AlphaDeepModel:
         self.deep_model.eval()
         
     def _parameter_to_features(self, deep_parameter: DeepParameter) -> torch.Tensor:
-        """将深度参数转换为特征向量"""
-        # 简化实现，实际应用中需要更复杂的特征工程
+        """將深度參數轉換為特徵向量"""
+        # 簡化實現，實際應用中需要更複雜的特徵工程
         features = []
         
-        # 添加时间特征
-        # 简化时间戳处理
+        # 添加時間特徵
+        # 簡化時間戳處理
         features.extend([0.0] * 10)  # 占位符
         
-        # 添加摘要特征
+        # 添加摘要特徵
         gist_features = [float(len(deep_parameter.base_gist.keywords))]
         gist_features.append(float(deep_parameter.base_gist.original_length))
         features.extend(gist_features)
         
-        # 添加关系上下文特征
+        # 添加關係上下文特徵
         entity_count = len(deep_parameter.relational_context.entities)
         relationship_count = len(deep_parameter.relational_context.relationships)
         features.extend([float(entity_count), float(relationship_count)])
         
-        # 添加模态特征
+        # 添加模態特徵
         modality_features = [
             deep_parameter.modalities.text_confidence,
             deep_parameter.modalities.audio_features['pitch'] if deep_parameter.modalities.audio_features else 0.0,
@@ -297,41 +311,46 @@ class AlphaDeepModel:
         ]
         features.extend(modality_features)
         
-        # 填充到固定长度（128个特征）
+        # 填充到固定長度（128個特徵）
         while len(features) < 128:
             features.append(0.0)
             
         return torch.FloatTensor(features).unsqueeze(0)
     
     def _feedback_to_target(self, feedback: Dict[str, Any]) -> torch.Tensor:
-        """将反馈转换为训练目标"""
+        """將反饋轉換為訓練目標"""
         target = []
         
-        # 添加反馈特征
+        # 添加反饋特徵
         target.append(float(feedback.get("accuracy", 0.0)))
         target.append(float(feedback.get("response_time", 0.0)))
         
-        # 填充到固定长度（32个特征）
+        # 填充到固定長度（32個特徵）
         while len(target) < 32:
             target.append(0.0)
             
         return torch.FloatTensor(target).unsqueeze(0)
 
-    async def compress(self, deep_parameter: Any, 
+    def compress(self, deep_parameter: Any, 
                  algorithm: CompressionAlgorithm = CompressionAlgorithm.ZLIB) -> bytes:
-        """将深度参数对象压缩为高度压缩的二进制格式"""
+        """將深度參數對象壓縮為高度壓縮的二進制格式"""
         if hasattr(deep_parameter, 'to_dict'):
             param_dict = deep_parameter.to_dict()
         elif isinstance(deep_parameter, dict):
             param_dict = deep_parameter
         else:
-            raise ValueError("deep_parameter must be a dataclass with to_dict method or a dict")
+            # 使用msgpack作為備用序列化方法
+            try:
+                packed_data = msgpack.packb(deep_parameter, use_bin_type=True)
+                param_dict = msgpack.unpackb(packed_data, raw=False)
+            except Exception as e:
+                raise ValueError(f"deep_parameter must be a dataclass with to_dict method, a dict, or msgpack serializable: {e}")
             
-        # 将字典序列化为JSON字符串
+        # 將字典序列化為JSON字符串
         json_str = json.dumps(param_dict, ensure_ascii=False)
         json_bytes = json_str.encode('utf-8')
         
-        # 根据指定算法进行压缩
+        # 根據指定算法進行壓縮
         if algorithm == CompressionAlgorithm.ZLIB:
             compressed_data = zlib.compress(json_bytes)
         elif algorithm == CompressionAlgorithm.BZ2:
@@ -339,22 +358,28 @@ class AlphaDeepModel:
         elif algorithm == CompressionAlgorithm.LZMA:
             compressed_data = lzma.compress(json_bytes)
         elif algorithm == CompressionAlgorithm.MSGPACK_ONLY:
-            # 不压缩，只使用msgpack（这里简化为JSON）
-            compressed_data = json_bytes
+            # 不壓縮，只使用msgpack
+            compressed_data = msgpack.packb(param_dict, use_bin_type=True)
         else:
             raise ValueError(f"Unsupported compression algorithm: {algorithm}")
             
-        # 更新压缩统计信息
-        original_size = len(json_bytes)
+        # 更新壓縮統計信息
+        original_size = len(json_bytes) if algorithm != CompressionAlgorithm.MSGPACK_ONLY else len(msgpack.packb(param_dict, use_bin_type=True))
         compressed_size = len(compressed_data)
         compression_ratio = original_size / compressed_size if compressed_size > 0 else 0
         
-        self.compression_stats[algorithm.value] = {
-            'original_size': original_size,
-            'compressed_size': compressed_size,
-            'compression_ratio': compression_ratio,
-            'algorithm': algorithm.value
-        }
+        if algorithm.value not in self.compression_stats:
+            self.compression_stats[algorithm.value] = {
+                'total_compressions': 0,
+                'total_original_size': 0,
+                'total_compressed_size': 0,
+                'last_compression_ratio': 0
+            }
+            
+        self.compression_stats[algorithm.value]['total_compressions'] += 1
+        self.compression_stats[algorithm.value]['total_original_size'] += original_size
+        self.compression_stats[algorithm.value]['total_compressed_size'] += compressed_size
+        self.compression_stats[algorithm.value]['last_compression_ratio'] = compression_ratio
         
         self.logger.info(f"Compressed data using {algorithm.value}. "
                         f"Original size: {original_size}, "
@@ -363,54 +388,59 @@ class AlphaDeepModel:
         
         return compressed_data
         
-    async def decompress(self, compressed_data: bytes, 
+    def decompress(self, compressed_data: bytes, 
                    algorithm: CompressionAlgorithm = CompressionAlgorithm.ZLIB) -> Dict[str, Any]:
-        """解压缩数据为字典"""
-        # 根据指定算法进行解压缩
+        """解壓縮數據為字典"""
+        # 根據指定算法進行解壓縮
         if algorithm == CompressionAlgorithm.ZLIB:
             decompressed_bytes = zlib.decompress(compressed_data)
+            # 將字節數據解碼為JSON字符串，然後解析為字典
+            json_str = decompressed_bytes.decode('utf-8')
+            decompressed_dict = json.loads(json_str)
         elif algorithm == CompressionAlgorithm.BZ2:
             decompressed_bytes = bz2.decompress(compressed_data)
+            # 將字節數據解碼為JSON字符串，然後解析為字典
+            json_str = decompressed_bytes.decode('utf-8')
+            decompressed_dict = json.loads(json_str)
         elif algorithm == CompressionAlgorithm.LZMA:
             decompressed_bytes = lzma.decompress(compressed_data)
+            # 將字節數據解碼為JSON字符串，然後解析為字典
+            json_str = decompressed_bytes.decode('utf-8')
+            decompressed_dict = json.loads(json_str)
         elif algorithm == CompressionAlgorithm.MSGPACK_ONLY:
-            # 不解压缩，直接使用数据
-            decompressed_bytes = compressed_data
+            # 不解壓縮，直接使用數據
+            decompressed_dict = msgpack.unpackb(compressed_data, raw=False)
         else:
             raise ValueError(f"Unsupported compression algorithm: {algorithm}")
             
-        # 将字节数据解码为JSON字符串，然后解析为字典
-        json_str = decompressed_bytes.decode('utf-8')
-        decompressed_dict = json.loads(json_str)
-        
         self.logger.info(f"Decompressed data using {algorithm.value}")
         return decompressed_dict
         
     def create_dna_chain(self, chain_id: str) -> DNADataChain:
-        """创建DNA数据链"""
+        """創建DNA數據鏈"""
         if chain_id not in self.dna_chains:
             self.dna_chains[chain_id] = DNADataChain(chain_id)
         return self.dna_chains[chain_id]
         
     def get_compression_stats(self) -> Dict[str, Dict[str, Any]]:
-        """获取压缩统计信息"""
+        """獲取壓縮統計信息"""
         return self.compression_stats
         
-    def get_symbolic_space(self) -> UnifiedSymbolicSpace:
-        """获取符号空间"""
+    def get_symbolic_space(self):
+        """獲取符號空間"""
         return self.symbolic_space
 
-# 测试代码
+# 測試代碼
 if __name__ == "__main__":
-    # 设置日志
+    # 設置日誌
     logging.basicConfig(level=logging.INFO)
     
-    # 创建Alpha深度模型
+    # 創建Alpha深度模型
     model = AlphaDeepModel()
     
-    # 创建测试数据
+    # 創建測試數據
     def test_alpha_deep_model():
-        # 创建深度参数
+        # 創建深度參數
         deep_param = DeepParameter(
             source_memory_id="mem_000123",
             timestamp="2025-08-31T10:00:00Z",
@@ -435,36 +465,38 @@ if __name__ == "__main__":
             dna_chain_id="chain_001"
         )
         
-        # 测试学习机制
-        print("Testing learning mechanism...")
-        feedback_symbol = model.learn(deep_param, {"accuracy": 0.95, "response_time": 0.5})
-        print(f"Feedback symbol: {feedback_symbol}")
+        # 測試學習機制（僅在符號空間可用時）
+        if SYMBOLIC_SPACE_AVAILABLE:
+            print("Testing learning mechanism...")
+            import asyncio
+            feedback_symbol = asyncio.run(model.learn(deep_param, {"accuracy": 0.95, "response_time": 0.5}))
+            print(f"Feedback symbol: {feedback_symbol}")
         
-        # 测试压缩
+        # 測試壓縮
         print("\nTesting compression...")
         for algorithm in CompressionAlgorithm:
             try:
                 compressed = model.compress(deep_param, algorithm)
                 print(f"Compressed with {algorithm.value}: {len(compressed)} bytes")
                 
-                # 测试解压缩
+                # 測試解壓縮
                 decompressed = model.decompress(compressed, algorithm)
                 print(f"Decompressed with {algorithm.value}: {len(str(decompressed))} characters")
                 
-                # 验证数据完整性
+                # 驗證數據完整性
                 original_dict = deep_param.to_dict()
                 assert original_dict == decompressed, f"Data mismatch for {algorithm.value}"
                 print(f"Compression/decompression with {algorithm.value} successful!")
             except Exception as e:
                 print(f"Error with {algorithm.value}: {e}")
         
-        # 测试DNA数据链
+        # 測試DNA數據鏈
         print("\nTesting DNA data chain...")
         chain = model.create_dna_chain("test_chain")
         chain.add_node("mem_000456")
         chain.add_node("mem_000457")
         
-        # 创建分支
+        # 創建分支
         branch = chain.create_branch("branch_001", "mem_000456")
         branch.add_node("mem_000458")
         
@@ -472,27 +504,29 @@ if __name__ == "__main__":
         print(f"Branch nodes: {branch.nodes}")
         print(f"Branches: {list(chain.branches.keys())}")
         
-        # 显示压缩统计
+        # 顯示壓縮統計
         print("\nCompression stats:")
         stats = model.get_compression_stats()
         for algo, stat in stats.items():
-            print(f"  {algo}: ratio={stat['compression_ratio']:.2f}")
+            avg_ratio = stat['total_original_size'] / stat['total_compressed_size'] if stat['total_compressed_size'] > 0 else 0
+            print(f"  {algo}: {stat['total_compressions']} compressions, avg ratio={avg_ratio:.2f}")
         
-        # 测试符号空间
-        print("\nTesting symbolic space...")
-        symbolic_space = model.get_symbolic_space()
-        
-        # 检查符号和关系
-        memory_symbol = symbolic_space.get_symbol("mem_000123")
-        print(f"Memory symbol: {memory_symbol}")
-        
-        gist_symbol = symbolic_space.get_symbol("User asked about weather")
-        print(f"Gist symbol: {gist_symbol}")
-        
-        relationships = symbolic_space.get_relationships("mem_000123")
-        print(f"Relationships: {len(relationships)} found")
-        for rel in relationships:
-            print(f"  {rel['source']} --{rel['type']}--> {rel['target']}")
+        # 測試符號空間（僅在符號空間可用時）
+        if SYMBOLIC_SPACE_AVAILABLE:
+            print("\nTesting symbolic space...")
+            symbolic_space = model.get_symbolic_space()
+            
+            # 檢查符號和關係
+            memory_symbol = symbolic_space.get_symbol("mem_000123")
+            print(f"Memory symbol: {memory_symbol}")
+            
+            gist_symbol = symbolic_space.get_symbol("User asked about weather")
+            print(f"Gist symbol: {gist_symbol}")
+            
+            relationships = symbolic_space.get_relationships("mem_000123")
+            print(f"Relationships: {len(relationships)} found")
+            for rel in relationships:
+                print(f"  {rel['source']} --{rel['type']}--> {rel['target']}")
     
-    # 运行测试
+    # 運行測試
     test_alpha_deep_model()

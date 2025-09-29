@@ -3,7 +3,7 @@
 Simple verification of test logic
 """
 
-def check_test_logic_05():
+def check_test_logic_05() -> None:
     """Verify the logic for test_05_prep_object_relationship"""
     print("=== Verifying test_05 logic ===")
     
@@ -40,7 +40,7 @@ def check_test_logic_05():
     assert found_rel_object is not None, "Expected relationship like 'located_in' not found"
     print("✓ Test logic verification PASSED")
 
-def check_test_logic_06():
+def check_test_logic_06() -> None:
     """Verify the logic for test_06_noun_prep_noun_relationship_of"""
     print("\n=== Verifying test_06 logic ===")
     
@@ -79,7 +79,7 @@ def check_test_logic_06():
     assert typed_dict_rel_found, "Expected 'founder of' type relationship not found"
     print("✓ Test logic verification PASSED")
 
-def check_test_logic_12():
+def check_test_logic_12() -> None:
     """Verify the logic for test_12_matcher_works_for"""
     print("\n=== Verifying test_12 logic ===")
     

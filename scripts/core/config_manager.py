@@ -5,12 +5,8 @@
 
 import json
 import yaml
-import os
 import time
-import traceback
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union, Tuple
-from enum import Enum
 
 class ConfigType(Enum):
     """配置类型枚举"""
@@ -36,7 +32,7 @@ class ConfigFormat(Enum):
 class ConfigManager:
     """配置管理器"""
     
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
         self.backend_root = project_root / "apps" / "backend"
         self.frontend_root = project_root / "apps" / "frontend-dashboard"
@@ -200,11 +196,11 @@ class ConfigManager:
                     elif config_path.suffix.lower() == '.json':
                         config = json.load(f)
                     else:
-                        raise ValueError(f"不支持的配置文件格式: {config_path.suffix}")
+                        _ = raise ValueError(f"不支持的配置文件格式: {config_path.suffix}")
                 
                 # 验证配置
                 if not self.validate_config(config_type, config):
-                    print(f"⚠ 配置 {config_type.value} 验证失败，使用默认配置")
+                    _ = print(f"⚠ 配置 {config_type.value} 验证失败，使用默认配置")
                     config = self.default_configs.get(config_type, {})
                 
                 # 合并默认配置
@@ -213,7 +209,7 @@ class ConfigManager:
             else:
                 # 配置文件不存在，使用默认配置
                 config = self.default_configs.get(config_type, {})
-                print(f"⚠ 配置文件 {config_path} 不存在，使用默认配置")
+                _ = print(f"⚠ 配置文件 {config_path} 不存在，使用默认配置")
             
             # 缓存配置
             if use_cache:
@@ -222,7 +218,7 @@ class ConfigManager:
             return config
             
         except Exception as e:
-            print(f"✗ 加载配置 {config_type.value} 失败: {e}")
+            _ = print(f"✗ 加载配置 {config_type.value} 失败: {e}")
             return self.default_configs.get(config_type, {})
     
     def save_config(self, config_type: ConfigType, config: Dict[str, Any], 
@@ -238,7 +234,7 @@ class ConfigManager:
             
             # 验证配置
             if not self.validate_config(config_type, config):
-                print(f"✗ 配置 {config_type.value} 验证失败，无法保存")
+                _ = print(f"✗ 配置 {config_type.value} 验证失败，无法保存")
                 return False
             
             # 确保目录存在
@@ -251,16 +247,16 @@ class ConfigManager:
                 elif config_path.suffix.lower() == '.json':
                     json.dump(config, f, ensure_ascii=False, indent=2)
                 else:
-                    raise ValueError(f"不支持的配置文件格式: {config_path.suffix}")
+                    _ = raise ValueError(f"不支持的配置文件格式: {config_path.suffix}")
             
             # 清除缓存
-            self.clear_cache(config_type)
+            _ = self.clear_cache(config_type)
             
-            print(f"✓ 配置 {config_type.value} 已保存到 {config_path}")
+            _ = print(f"✓ 配置 {config_type.value} 已保存到 {config_path}")
             return True
             
         except Exception as e:
-            print(f"✗ 保存配置 {config_type.value} 失败: {e}")
+            _ = print(f"✗ 保存配置 {config_type.value} 失败: {e}")
             return False
     
     def validate_config(self, config_type: ConfigType, config: Dict[str, Any]) -> bool:
@@ -272,7 +268,7 @@ class ConfigManager:
             if "required_keys" in rules:
                 for key in rules["required_keys"]:
                     if not self._get_nested_value(config, key):
-                        print(f"✗ 缺少必需的配置键: {key}")
+                        _ = print(f"✗ 缺少必需的配置键: {key}")
                         return False
             
             # 检查键类型
@@ -280,13 +276,13 @@ class ConfigManager:
                 for key_path, expected_type in rules["key_types"].items():
                     value = self._get_nested_value(config, key_path)
                     if value is not None and not isinstance(value, expected_type):
-                        print(f"✗ 配置键 {key_path} 类型错误，期望 {expected_type.__name__}，实际 {type(value).__name__}")
+                        _ = print(f"✗ 配置键 {key_path} 类型错误，期望 {expected_type.__name__}，实际 {type(value).__name__}")
                         return False
             
             return True
             
         except Exception as e:
-            print(f"✗ 验证配置时出错: {e}")
+            _ = print(f"✗ 验证配置时出错: {e}")
             return False
     
     def merge_configs(self, default_config: Dict, user_config: Dict) -> Dict:
@@ -360,7 +356,7 @@ class ConfigManager:
         if config_type in self.default_configs:
             return self.save_config(config_type, self.default_configs[config_type], create_backup=False)
         else:
-            print(f"✗ 配置类型 {config_type.value} 没有默认配置")
+            _ = print(f"✗ 配置类型 {config_type.value} 没有默认配置")
             return False
     
     def backup_config(self, config_type: ConfigType, backup_path: Optional[Path] = None) -> bool:
@@ -368,7 +364,7 @@ class ConfigManager:
         config_path = self.get_config_path(config_type)
         
         if not config_path.exists():
-            print(f"✗ 配置文件 {config_path} 不存在")
+            _ = print(f"✗ 配置文件 {config_path} 不存在")
             return False
         
         if backup_path is None:
@@ -377,10 +373,10 @@ class ConfigManager:
         
         try:
             backup_path.write_text(config_path.read_text(encoding='utf-8'), encoding='utf-8')
-            print(f"✓ 配置 {config_type.value} 已备份到 {backup_path}")
+            _ = print(f"✓ 配置 {config_type.value} 已备份到 {backup_path}")
             return True
         except Exception as e:
-            print(f"✗ 备份配置 {config_type.value} 失败: {e}")
+            _ = print(f"✗ 备份配置 {config_type.value} 失败: {e}")
             return False
     
     def restore_config(self, config_type: ConfigType, backup_path: Path) -> bool:
@@ -388,7 +384,7 @@ class ConfigManager:
         config_path = self.get_config_path(config_type)
         
         if not backup_path.exists():
-            print(f"✗ 备份文件 {backup_path} 不存在")
+            _ = print(f"✗ 备份文件 {backup_path} 不存在")
             return False
         
         try:
@@ -399,23 +395,23 @@ class ConfigManager:
                 elif backup_path.suffix.lower() == '.json':
                     backup_config = json.load(f)
                 else:
-                    raise ValueError(f"不支持的备份文件格式: {backup_path.suffix}")
+                    _ = raise ValueError(f"不支持的备份文件格式: {backup_path.suffix}")
             
             if not self.validate_config(config_type, backup_config):
-                print(f"✗ 备份配置验证失败")
+                _ = print(f"✗ 备份配置验证失败")
                 return False
             
             # 恢复配置
             config_path.write_text(backup_path.read_text(encoding='utf-8'), encoding='utf-8')
             
             # 清除缓存
-            self.clear_cache(config_type)
+            _ = self.clear_cache(config_type)
             
-            print(f"✓ 配置 {config_type.value} 已从 {backup_path} 恢复")
+            _ = print(f"✓ 配置 {config_type.value} 已从 {backup_path} 恢复")
             return True
             
         except Exception as e:
-            print(f"✗ 恢复配置 {config_type.value} 失败: {e}")
+            _ = print(f"✗ 恢复配置 {config_type.value} 失败: {e}")
             return False
     
     def clear_cache(self, config_type: Optional[ConfigType] = None):
@@ -427,28 +423,28 @@ class ConfigManager:
                 del self.config_cache[key]
         else:
             # 清除所有缓存
-            self.config_cache.clear()
+            _ = self.config_cache.clear()
         
-        print("✓ 配置缓存已清除")
+        _ = print("✓ 配置缓存已清除")
     
     def reload_config(self, config_type: ConfigType) -> Dict[str, Any]:
         """重新加载配置"""
-        self.clear_cache(config_type)
+        _ = self.clear_cache(config_type)
         return self.load_config(config_type, use_cache=False)
     
     def get_config_summary(self) -> Dict[str, Any]:
         """获取配置摘要"""
         summary = {
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            _ = "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "configs": {},
-            "cache_size": len(self.config_cache)
+            _ = "cache_size": len(self.config_cache)
         }
         
         for config_type in ConfigType:
             config_path = self.get_config_path(config_type)
             summary["configs"][config_type.value] = {
-                "exists": config_path.exists(),
-                "path": str(config_path),
+                _ = "exists": config_path.exists(),
+                _ = "path": str(config_path),
                 "size": config_path.stat().st_size if config_path.exists() else 0,
                 "modified": time.strftime("%Y-%m-%d %H:%M:%S", 
                                        time.localtime(config_path.stat().st_mtime)) if config_path.exists() else None
@@ -470,13 +466,13 @@ class ConfigManager:
                 elif output_format == ConfigFormat.JSON:
                     json.dump(config, f, ensure_ascii=False, indent=2)
                 else:
-                    raise ValueError(f"不支持的导出格式: {output_format.value}")
+                    _ = raise ValueError(f"不支持的导出格式: {output_format.value}")
             
-            print(f"✓ 配置 {config_type.value} 已导出到 {output_path}")
+            _ = print(f"✓ 配置 {config_type.value} 已导出到 {output_path}")
             return True
             
         except Exception as e:
-            print(f"✗ 导出配置 {config_type.value} 失败: {e}")
+            _ = print(f"✗ 导出配置 {config_type.value} 失败: {e}")
             return False
     
     def import_config(self, config_type: ConfigType, input_path: Path) -> bool:
@@ -488,16 +484,16 @@ class ConfigManager:
                 elif input_path.suffix.lower() == '.json':
                     imported_config = json.load(f)
                 else:
-                    raise ValueError(f"不支持的导入文件格式: {input_path.suffix}")
+                    _ = raise ValueError(f"不支持的导入文件格式: {input_path.suffix}")
             
             # 验证导入的配置
             if not self.validate_config(config_type, imported_config):
-                print(f"✗ 导入的配置验证失败")
+                _ = print(f"✗ 导入的配置验证失败")
                 return False
             
             # 保存配置
             return self.save_config(config_type, imported_config)
             
         except Exception as e:
-            print(f"✗ 导入配置 {config_type.value} 失败: {e}")
+            _ = print(f"✗ 导入配置 {config_type.value} 失败: {e}")
             return False

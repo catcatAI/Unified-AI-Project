@@ -1,0 +1,142 @@
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+
+class HAMMemory:
+    def __init__(self, id: str, content: str, timestamp: datetime, metadata: Optional[Dict[str, Any]] = None) -> None:
+        self.id = id
+        self.content = content
+        self.timestamp = timestamp
+        self.metadata = metadata if metadata is not None else 
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "content": self.content,
+            "timestamp": self.timestamp.isoformat,
+            "metadata": self.metadata
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        return cls(
+            id=data["id"],
+            content=data["content"],
+            timestamp=datetime.fromisoformat(data["timestamp"]),
+            metadata=data.get("metadata")
+        )
+
+
+class HAMRecallResult:
+    def __init__(self, memory_id: str, content: str, score: float, timestamp: datetime, metadata: Optional[Dict[str, Any]] = None) -> None:
+        self.memory_id = memory_id
+        self.content = content
+        self.score = score
+        self.timestamp = timestamp
+        self.metadata = metadata if metadata is not None else 
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "memory_id": self.memory_id,
+            "content": self.content,
+            "score": self.score,
+            "timestamp": self.timestamp.isoformat,
+            "metadata": self.metadata
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        return cls(
+            memory_id=data["memory_id"],
+            content=data["content"],
+            score=data["score"],
+            timestamp=datetime.fromisoformat(data["timestamp"]),
+            metadata=data.get("metadata")
+        )
+
+class DialogueMemoryEntryMetadata:
+    def __init__(self,
+                 timestamp: datetime,
+                 speaker: str,
+                 dialogue_id: str,
+                 turn_id: int,
+                 language: str = "en",
+                 sentiment: Optional[str] = None,
+                 emotion: Optional[Dict[str, float]] = None,
+                 topic: Optional[List[str]] = None,
+                 keywords: Optional[List[str]] = None,
+                 summary: Optional[str] = None,
+                 context_history: Optional[List[str]] = None,
+                 action_taken: Optional[str] = None,
+                 is_sensitive: bool = False,
+                 source_module: Optional[str] = None,
+                 external_references: Optional[List[str]] = None,
+                 user_feedback: Optional[Dict[str, Any]] = None,
+                 **kwargs):
+        self.timestamp = timestamp
+        self.speaker = speaker
+        self.dialogue_id = dialogue_id
+        self.turn_id = turn_id
+        self.language = language
+        self.sentiment = sentiment
+        self.emotion = emotion
+        self.topic = topic
+        self.keywords = keywords
+        self.summary = summary
+        self.context_history = context_history
+        self.action_taken = action_taken
+        self.is_sensitive = is_sensitive
+        self.source_module = source_module
+        self.external_references = external_references
+        self.user_feedback = user_feedback
+        self.additional_metadata = kwargs
+
+    def to_dict(self) -> Dict[str, Any]:
+        data = {
+            "timestamp": self.timestamp.isoformat if self.timestamp else None,
+            "speaker": self.speaker,
+            "dialogue_id": self.dialogue_id,
+            "turn_id": self.turn_id,
+            "language": self.language,
+            "sentiment": self.sentiment,
+            "emotion": self.emotion,
+            "topic": self.topic,
+            "keywords": self.keywords,
+            "summary": self.summary,
+            "context_history": self.context_history,
+            "action_taken": self.action_taken,
+            "is_sensitive": self.is_sensitive,
+            "source_module": self.source_module,
+            "external_references": self.external_references,
+            "user_feedback": self.user_feedback,
+        }
+        data.update(self.additional_metadata)
+        return data
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        timestamp = datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else None
+        kwargs = {k: v for k, v in data.items if k not in [
+            "timestamp", "speaker", "dialogue_id", "turn_id", "language",
+            "sentiment", "emotion", "topic", "keywords", "summary",
+            "context_history", "action_taken", "is_sensitive", "source_module",
+            "external_references", "user_feedback"
+        ]}
+        return cls(
+            timestamp=timestamp,
+            speaker=data.get("speaker"),
+            dialogue_id=data.get("dialogue_id"),
+            turn_id=data.get("turn_id"),
+            language=data.get("language", "en"),
+            sentiment=data.get("sentiment"),
+            emotion=data.get("emotion"),
+            topic=data.get("topic"),
+            keywords=data.get("keywords"),
+            summary=data.get("summary"),
+            context_history=data.get("context_history"),
+            action_taken=data.get("action_taken"),
+            is_sensitive=data.get("is_sensitive", False),
+            source_module=data.get("source_module"),
+            external_references=data.get("external_references"),
+            user_feedback=data.get("user_feedback"),
+            **kwargs
+        )

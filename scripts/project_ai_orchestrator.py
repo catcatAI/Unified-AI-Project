@@ -27,12 +27,11 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 import uuid
 import hashlib
 import shutil
 import signal
-import time
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
@@ -96,18 +95,18 @@ def check_datasets(verbose=False) -> Dict[str, Any]:
     """檢查資料集狀態。"""
     status: Dict[str, Any] = {
         "concept_models": {
-            "dir_exists": CONCEPT_DATA_DIR.exists(),
-            "config_exists": CONCEPT_DATA_CONFIG.exists(),
-            "config_mtime": file_mtime(CONCEPT_DATA_CONFIG),
+            _ = "dir_exists": CONCEPT_DATA_DIR.exists(),
+            _ = "config_exists": CONCEPT_DATA_CONFIG.exists(),
+            _ = "config_mtime": file_mtime(CONCEPT_DATA_CONFIG),
         },
         "math_model": {
-            "dataset_exists": MATH_DATASET_JSON.exists(),
-            "dataset_mtime": file_mtime(MATH_DATASET_JSON),
+            _ = "dataset_exists": MATH_DATASET_JSON.exists(),
+            _ = "dataset_mtime": file_mtime(MATH_DATASET_JSON),
         },
     }
     if verbose:
-        print("[DATA] 概念模型資料目錄:", status["concept_models"]) 
-        print("[DATA] 數學模型資料:", status["math_model"]) 
+        _ = print("[DATA] 概念模型資料目錄:", status["concept_models"]) 
+        _ = print("[DATA] 數學模型資料:", status["math_model"]) 
     return status
 
 
@@ -124,11 +123,11 @@ def decide_data_generation(data_status: Dict[str, Any], verbose=False) -> Dict[s
     if not mm.get("dataset_exists"):
         needs["math_model"] = True
     if verbose:
-        print("[DECIDE] 資料生成需求:", needs)
+        _ = print("[DECIDE] 資料生成需求:", needs)
     return needs
 
 
-def generate_or_fix_data(needs: Dict[str, bool], *, verbose=False, dry_run=False, math_args: list = None) -> Dict[str, int]:
+def generate_or_fix_data(needs: Dict[str, bool], *, verbose=False, dry_run=False, math_args: Optional[List[str]] = None) -> Dict[str, int]:
     """視需要執行資料生成腳本。"""
     results = {"concept_models": 0, "math_model": 0}
     if needs.get("concept_models"):
@@ -136,7 +135,7 @@ def generate_or_fix_data(needs: Dict[str, bool], *, verbose=False, dry_run=False
             code = run_cmd([sys.executable, str(PREPARE_CONCEPT_DATA_SCRIPT)], cwd=PROJECT_ROOT, verbose=verbose, dry_run=dry_run)
             results["concept_models"] = code
         else:
-            print("[WARN] 缺少概念模型數據生成腳本:", PREPARE_CONCEPT_DATA_SCRIPT)
+            _ = print("[WARN] 缺少概念模型數據生成腳本:", PREPARE_CONCEPT_DATA_SCRIPT)
             results["concept_models"] = 1
     # 允許當提供了 math_args 時強制觸發數學資料生成（即便 needs["math_model"] 為 False），以支援可選參數透傳的顯式請求
     if needs.get("math_model") or (math_args is not None and len(math_args) > 0):
@@ -147,7 +146,7 @@ def generate_or_fix_data(needs: Dict[str, bool], *, verbose=False, dry_run=False
             code = run_cmd(cmd, cwd=APPS_BACKEND_DIR, verbose=verbose, dry_run=dry_run)
             results["math_model"] = code
         else:
-            print("[WARN] 缺少數學模型數據生成腳本:", MATH_DATA_GENERATOR)
+            _ = print("[WARN] 缺少數學模型數據生成腳本:", MATH_DATA_GENERATOR)
             results["math_model"] = 1
     return results
 
@@ -157,16 +156,16 @@ def check_models_and_training(verbose=False) -> Dict[str, Any]:
     models_dir = TRAINING_DIR / "models"
     checkpoints_dir = TRAINING_DIR / "checkpoints"
     status = {
-        "train_script_exists": TRAIN_MODEL_SCRIPT.exists(),
-        "models_dir_exists": models_dir.exists(),
-        "checkpoints_dir_exists": checkpoints_dir.exists(),
+        _ = "train_script_exists": TRAIN_MODEL_SCRIPT.exists(),
+        _ = "models_dir_exists": models_dir.exists(),
+        _ = "checkpoints_dir_exists": checkpoints_dir.exists(),
         "has_models": any(models_dir.glob("**/*")) if models_dir.exists() else False,
         "has_checkpoints": any(checkpoints_dir.glob("**/*")) if checkpoints_dir.exists() else False,
-        "latest_model_mtime": _latest_mtime_in_dir(models_dir),
-        "latest_checkpoint_mtime": _latest_mtime_in_dir(checkpoints_dir),
+        _ = "latest_model_mtime": _latest_mtime_in_dir(models_dir),
+        _ = "latest_checkpoint_mtime": _latest_mtime_in_dir(checkpoints_dir),
     }
     if verbose:
-        print("[TRAIN] 訓練狀態:", status)
+        _ = print("[TRAIN] 訓練狀態:", status)
     return status
 
 
@@ -179,8 +178,8 @@ def decide_training(data_status: Dict[str, Any], train_status: Dict[str, Any], v
     mm_ok = data_status.get("math_model", {}).get("dataset_exists")
 
     data_latest = max(
-        data_status.get("concept_models", {}).get("config_mtime", 0.0),
-        data_status.get("math_model", {}).get("dataset_mtime", 0.0),
+        _ = data_status.get("concept_models", {}).get("config_mtime", 0.0),
+        _ = data_status.get("math_model", {}).get("dataset_mtime", 0.0),
     )
     model_latest = train_status.get("latest_model_mtime", 0.0)
 
@@ -202,27 +201,27 @@ def decide_training(data_status: Dict[str, Any], train_status: Dict[str, Any], v
     return {"need_train": need_train, "can_resume": can_resume}
 
 
-def run_training(*, preset: str = None, resume: bool = False, verbose=False, dry_run=False) -> int:
+def run_training(*, preset: Optional[str] = None, resume: bool = False, verbose=False, dry_run=False) -> int:
     if not TRAIN_MODEL_SCRIPT.exists():
-        print("[ERROR] 找不到訓練腳本:", TRAIN_MODEL_SCRIPT)
+        _ = print("[ERROR] 找不到訓練腳本:", TRAIN_MODEL_SCRIPT)
         return 1
     cmd = [sys.executable, str(TRAIN_MODEL_SCRIPT)]
-    if preset:
-        cmd.extend(["--preset", preset])
+    if preset is not None:
+        _ = cmd.extend(["--preset", preset])
     if resume:
-        cmd.append("--resume")
+        _ = cmd.append("--resume")
     return run_cmd(cmd, cwd=TRAINING_DIR, verbose=verbose, dry_run=dry_run)
 
 
 def check_docs_links(verbose=False, dry_run=False) -> Dict[str, Any]:
     if not VALIDATE_LINKS_SCRIPT.exists():
-        print("[ERROR] 缺少文檔鏈接校驗腳本:", VALIDATE_LINKS_SCRIPT)
+        _ = print("[ERROR] 缺少文檔鏈接校驗腳本:", VALIDATE_LINKS_SCRIPT)
         return {"ok": False, "broken": -1}
     json_report = PROJECT_ROOT / "docs_link_check_errors.json"
     text_report = PROJECT_ROOT / "docs_link_check_errors.txt"
     cmd = [sys.executable, str(VALIDATE_LINKS_SCRIPT), "--root", str(DOCS_DIR), "--report-json", str(json_report), "--report-text", str(text_report)]
     if verbose:
-        cmd.append("-v")
+        _ = cmd.append("-v")
     code = run_cmd(cmd, cwd=PROJECT_ROOT, verbose=verbose, dry_run=dry_run)
     result = {"ok": code == 0, "json_report": str(json_report), "text_report": str(text_report)}
     if json_report.exists():
@@ -230,8 +229,8 @@ def check_docs_links(verbose=False, dry_run=False) -> Dict[str, Any]:
             with open(json_report, "r", encoding="utf-8") as f:
                 data = json.load(f)
             result.update({
-                "total": data.get("total_links"),
-                "broken": data.get("broken_count"),
+                _ = "total": data.get("total_links"),
+                _ = "broken": data.get("broken_count"),
             })
         except Exception:
             pass
@@ -243,11 +242,10 @@ def _load_relocated_links_mapping() -> Dict[str, str]:
     mapping: Dict[str, str] = {}
     # 首選：嘗試從 validate_doc_links.py 模組內取得常見名稱的映射
     try:
-        import importlib.util  # 延遲導入以避免全域污染
         spec = importlib.util.spec_from_file_location("validate_doc_links", str(VALIDATE_LINKS_SCRIPT))
         if spec and spec.loader:
             mod = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(mod)  # type: ignore[attr-defined]
+            _ = spec.loader.exec_module(mod)  # type: ignore[attr-defined]
             candidates = (
                 "RELOCATED_LINKS",
                 "RELOCATED",
@@ -264,7 +262,7 @@ def _load_relocated_links_mapping() -> Dict[str, str]:
                         mapping.update({str(k): str(v) for k, v in raw.items()})
     except Exception as e:
         if not mapping:
-            print("[WARN] 無法自 validate_doc_links 載入映射:", e)
+            _ = print("[WARN] 無法自 validate_doc_links 載入映射:", e)
 
     # 次選：scripts/doc_link_mapping.json（可由維護者維護）
     json_candidate = PROJECT_ROOT / "scripts" / "doc_link_mapping.json"
@@ -275,10 +273,10 @@ def _load_relocated_links_mapping() -> Dict[str, str]:
             if isinstance(j, dict):
                 mapping.update({str(k): str(v) for k, v in j.items()})
         except Exception as e:
-            print("[WARN] 讀取 doc_link_mapping.json 失敗:", e)
+            _ = print("[WARN] 讀取 doc_link_mapping.json 失敗:", e)
 
     if not mapping:
-        print("[INFO] 未發現任何重定位映射，將以空映射繼續（不會對 MD 做變更）")
+        _ = print("[INFO] 未發現任何重定位映射，將以空映射繼續（不會對 MD 做變更）")
     return mapping
  
  
@@ -287,7 +285,7 @@ def save_run_report(payload: Dict[str, Any]) -> Path:
     out = REPORTS_DIR / f"project_ai_run_{ts}.json"
     # 使用原子寫入避免中斷造成半寫文件
     _atomic_write_text(out, json.dumps(payload, ensure_ascii=False, indent=2))
-    print("[REPORT] 已生成:", out)
+    _ = print("[REPORT] 已生成:", out)
     return out
 
  
@@ -308,7 +306,7 @@ def _list_markdown_files_with_scope(*, scope: str, custom_dirs: List[str], exclu
                 continue
             p = (PROJECT_ROOT / d).resolve()
             if p.exists() and p.is_dir():
-                roots.append(p)
+                _ = roots.append(p)
     else:
         roots = [DOCS_DIR]
     exclude_set = set([e.strip().strip("/") for e in excludes if e.strip()])
@@ -324,7 +322,7 @@ def _list_markdown_files_with_scope(*, scope: str, custom_dirs: List[str], exclu
                     skip = True
                     break
             if not skip:
-                files.append(p)
+                _ = files.append(p)
     return files
 
 # 新增：原子寫入 + 檔案哈希
@@ -334,8 +332,8 @@ def _sha256_text(s: str) -> str:
 def _atomic_write_text(path: Path, content: str) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")
     with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-        f.write(content)
-    os.replace(tmp, path)
+        _ = f.write(content)
+    _ = os.replace(tmp, path)
 
 # 新增：Checkpoint/Run 狀態管理
 from datetime import timezone
@@ -363,15 +361,15 @@ def _save_run_state(state_dir: Path, run_id: str, state: Dict[str, Any]) -> None
     fp.parent.mkdir(parents=True, exist_ok=True)
     _atomic_write_text(fp, json.dumps(state, ensure_ascii=False, indent=2))
 
-def _checkpoint(state_dir: Path, run_id: str, step: str, status: str, payload: Dict[str, Any] = None) -> None:
+def _checkpoint(state_dir: Path, run_id: str, step: str, status: str, payload: Optional[Dict[str, Any]] = None) -> None:
     st = _load_run_state(state_dir, run_id)
-    st.setdefault("run_id", run_id)
-    st.setdefault("created_at", _now_iso())
-    st.setdefault("steps", {})
+    _ = st.setdefault("run_id", run_id)
+    _ = st.setdefault("created_at", _now_iso())
+    _ = st.setdefault("steps", {})
     st["steps"][step] = {
         "status": status,
-        "updated_at": _now_iso(),
-        "payload": payload or {}
+        _ = "updated_at": _now_iso(),
+        "payload": payload if payload is not None else {}
     }
     _save_run_state(state_dir, run_id, st)
 
@@ -386,12 +384,12 @@ def record_decision(run_id: str, decision: Dict[str, Any]) -> None:
     path = _decision_log_path(run_id)
     line = json.dumps({"ts": _now_iso(), **decision}, ensure_ascii=False)
     with open(path, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+        _ = f.write(line + "\n")
 
-def fix_markdown_links_in_place(mapping: Dict[str, str], *, verbose=False, dry_run=False, files: List[Path] = None) -> Dict[str, Any]:
+def fix_markdown_links_in_place(mapping: Dict[str, str], *, verbose=False, dry_run=False, files: Optional[List[Path]] = None) -> Dict[str, Any]:
     """
     以 validate_doc_links 的重定位映射為依據，批量修正 MD 連結目標。
-    僅做目標替換，不變動錨點與顯示文本。例如 (old.md) -> (new.md)，(old.md#sec) -> (new.md#sec)
+    _ = 僅做目標替換，不變動錨點與顯示文本。例如 (old.md) -> (new.md)，(old.md#sec) -> (new.md#sec)
     可傳入 files 覆蓋要處理的檔案清單。
     """
     changes: List[Tuple[str, int]] = []  # (file, replacements)
@@ -425,11 +423,11 @@ def fix_markdown_links_in_place(mapping: Dict[str, str], *, verbose=False, dry_r
         new_lines: List[str] = []
         for line in text.splitlines(keepends=False):
             nl, c = _apply_mapping_to_line(line)
-            new_lines.append(nl)
+            _ = new_lines.append(nl)
             replaced += c
         if replaced > 0:
             rel = str(fp.relative_to(PROJECT_ROOT))
-            changes.append((rel, replaced))
+            _ = changes.append((rel, replaced))
             total_replacements += replaced
             if verbose:
                 print(f"[DOCS] {fp}: replacements={replaced}")
@@ -437,15 +435,15 @@ def fix_markdown_links_in_place(mapping: Dict[str, str], *, verbose=False, dry_r
                 try:
                     # 先備份
                     backup = fp.with_suffix(fp.suffix + ".bak")
-                    shutil.copyfile(fp, backup)
+                    _ = shutil.copyfile(fp, backup)
                     # 原子寫入
                     _atomic_write_text(fp, "\n".join(new_lines) + "\n")
                 except Exception as e:
-                    print(f"[WARN] 無法寫入 {fp}: {e}")
+                    _ = print(f"[WARN] 無法寫入 {fp}: {e}")
 
     return {"changed_files": len(changes), "total_replacements": total_replacements, "detail": changes}
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Project AI Orchestrator")
     parser.add_argument("--dry-run", action="store_true", help="僅分析規劃，不執行重任務")
     parser.add_argument("--verbose", "-v", action="store_true")
@@ -473,7 +471,7 @@ def main():
     # 新增：MD 掃描範圍設定
     parser.add_argument("--md-scope", type=str, default="docs", choices=["docs", "all", "custom"], help="Markdown 掃描範圍")
     parser.add_argument("--md-dirs", type=str, default="", help="自訂掃描根目錄（逗號分隔），在 --md-scope custom 時生效")
-    parser.add_argument("--md-excludes", type=str, default=".git,node_modules,build,dist,venv,automation_reports,data", help="排除目錄（逗號分隔）")
+    parser.add_argument("--md-excludes", type=str, default="git,node_modules,build,dist,venv,automation_reports,data", help="排除目錄（逗號分隔）")
 
     args = parser.parse_args()
 
@@ -500,9 +498,9 @@ def main():
         try:
             _checkpoint(state_dir, run_id, "__interrupted__", "stopped", {"reason": "SIGINT"})
         finally:
-            sys.exit(130)
+            _ = sys.exit(130)
     try:
-        signal.signal(signal.SIGINT, _on_sigint)
+        _ = signal.signal(signal.SIGINT, _on_sigint)
     except Exception:
         pass
 
@@ -612,7 +610,7 @@ def main():
         summary["steps"]["docs_fix"] = run_state.get("steps", {}).get("docs_fix", {}).get("payload", {})
 
     # 總結與輸出
-    save_run_report(summary)
+    _ = save_run_report(summary)
     if args.verbose:
         print(json.dumps(summary, ensure_ascii=False, indent=2))
 
@@ -627,4 +625,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    _ = sys.exit(main())

@@ -1,9 +1,7 @@
 import asyncio
 import uuid
-import json
 import logging
 import re
-from typing import Dict, Any, List
 from collections import Counter
 
 from .base_agent import BaseAgent
@@ -14,7 +12,7 @@ class NLPProcessingAgent(BaseAgent):
     A specialized agent for natural language processing tasks like text summarization,
     sentiment analysis, entity extraction, and language translation.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_text_summarization_v1.0",
@@ -89,7 +87,7 @@ class NLPProcessingAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            await self.hsp_connector.send_task_result(result_payload, callback_topic, request_id)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     def _generate_text_summary(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -298,7 +296,7 @@ class NLPProcessingAgent(BaseAgent):
         # If confidence is low, check for common English words
         if confidence < 0.3:
             common_english_words = {'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at'}
-            words = re.findall(r'\b\w+\b', text.lower())
+            words = re.findall(r'\b\w+\b', text.lower)
             english_word_count = sum(1 for word in words if word in common_english_words)
             if len(words) > 0 and english_word_count / len(words) > 0.2:
                 detected_language = "English"
@@ -332,12 +330,12 @@ class NLPProcessingAgent(BaseAgent):
 
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:nlp_processing_agent_{uuid.uuid4().hex[:6]}"
         agent = NLPProcessingAgent(agent_id=agent_id)
         await agent.start()
 
     try:
-        asyncio.run(main())
+        asyncio.run(main)
     except KeyboardInterrupt:
         print("\nNLPProcessingAgent manually stopped.")

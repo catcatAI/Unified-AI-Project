@@ -8,17 +8,14 @@ beyond what standard linters provide.
 """
 
 import ast
-import os
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple, Dict, Any
-
 
 class UnifiedAIStyleChecker:
     """Custom style checker for Unified AI Project."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.errors: List[Tuple[str, int, str]] = []
         self.warnings: List[Tuple[str, int, str]] = []
         
@@ -31,31 +28,31 @@ class UnifiedAIStyleChecker:
             # Parse AST for deeper analysis
             try:
                 tree = ast.parse(content)
-                self._check_ast(filepath, tree)
+                _ = self._check_ast(filepath, tree)
             except SyntaxError as e:
-                self.errors.append((str(filepath), e.lineno or 0, f"Syntax error: {e}"))
+                _ = self.errors.append((str(filepath), e.lineno or 0, f"Syntax error: {e}"))
                 return
                 
             # Check content patterns
-            self._check_content_patterns(filepath, content)
+            _ = self._check_content_patterns(filepath, content)
             
         except Exception as e:
-            self.errors.append((str(filepath), 0, f"Failed to read file: {e}"))
+            _ = self.errors.append((str(filepath), 0, f"Failed to read file: {e}"))
     
     def _check_ast(self, filepath: Path, tree: ast.AST) -> None:
         """Check AST for structural violations."""
         for node in ast.walk(tree):
             # Check class naming conventions
             if isinstance(node, ast.ClassDef):
-                self._check_class_naming(filepath, node)
+                _ = self._check_class_naming(filepath, node)
                 
             # Check function naming conventions
             elif isinstance(node, ast.FunctionDef):
-                self._check_function_naming(filepath, node)
+                _ = self._check_function_naming(filepath, node)
                 
             # Check AI-specific patterns
             elif isinstance(node, ast.Import) or isinstance(node, ast.ImportFrom):
-                self._check_import_patterns(filepath, node)
+                _ = self._check_import_patterns(filepath, node)
     
     def _check_class_naming(self, filepath: Path, node: ast.ClassDef) -> None:
         """Check class naming conventions."""
@@ -65,14 +62,14 @@ class UnifiedAIStyleChecker:
         if 'core_ai' in str(filepath):
             if class_name.endswith('Manager') and not re.match(r'^[A-Z][a-zA-Z]*Manager$', class_name):
                 self.warnings.append((
-                    str(filepath), 
+                    _ = str(filepath), 
                     node.lineno, 
                     f"AI Manager class '{class_name}' should follow pattern: XxxManager"
                 ))
                 
             if class_name.endswith('Engine') and not re.match(r'^[A-Z][a-zA-Z]*Engine$', class_name):
                 self.warnings.append((
-                    str(filepath), 
+                    _ = str(filepath), 
                     node.lineno, 
                     f"AI Engine class '{class_name}' should follow pattern: XxxEngine"
                 ))
@@ -86,7 +83,7 @@ class UnifiedAIStyleChecker:
             # AI processing functions should be descriptive
             if len(func_name) < 3 and not func_name.startswith('_'):
                 self.warnings.append((
-                    str(filepath), 
+                    _ = str(filepath), 
                     node.lineno, 
                     f"AI function '{func_name}' should have descriptive name (>= 3 chars)"
                 ))
@@ -100,7 +97,7 @@ class UnifiedAIStyleChecker:
                 current_module = str(filepath).replace('/', '.').replace('.py', '')
                 if module in current_module:
                     self.errors.append((
-                        str(filepath), 
+                        _ = str(filepath), 
                         node.lineno, 
                         f"Potential circular import: {module}"
                     ))
@@ -113,16 +110,16 @@ class UnifiedAIStyleChecker:
             # Check for TODO/FIXME patterns
             if re.search(r'#\s*(TODO|FIXME|XXX|HACK)', line, re.IGNORECASE):
                 self.warnings.append((
-                    str(filepath), 
+                    _ = str(filepath), 
                     i, 
-                    f"Found development marker: {line.strip()}"
+                    _ = f"Found development marker: {line.strip()}"
                 ))
             
             # Check for hardcoded paths
             if re.search(r'["\'][A-Za-z]:[\\\/]', line) or re.search(r'["\']/[a-zA-Z]', line):
                 if 'test' not in str(filepath).lower():
                     self.warnings.append((
-                        str(filepath), 
+                        _ = str(filepath), 
                         i, 
                         "Potential hardcoded path found"
                     ))
@@ -131,9 +128,9 @@ class UnifiedAIStyleChecker:
             if re.search(r'\bprint\s*\(', line) and 'test' not in str(filepath).lower():
                 if 'debug' not in line.lower() and 'example' not in str(filepath).lower():
                     self.warnings.append((
-                        str(filepath), 
+                        _ = str(filepath), 
                         i, 
-                        "Consider using logging instead of print()"
+                        _ = "Consider using logging instead of print()"
                     ))
             
             # Check for AI-specific patterns
@@ -141,7 +138,7 @@ class UnifiedAIStyleChecker:
                 # AI components should have proper error handling
                 if re.search(r'except\s*:', line):
                     self.warnings.append((
-                        str(filepath), 
+                        _ = str(filepath), 
                         i, 
                         "AI components should use specific exception handling"
                     ))
@@ -157,46 +154,46 @@ class UnifiedAIStyleChecker:
             
             # Only check common text file types
             if file_path.suffix in ['.py', '.md', '.txt', '.yaml', '.json', '.js', '.ts', '.tsx', '.jsx', '.css', '.html']:
-                self.check_file(file_path)
+                _ = self.check_file(file_path)
     
     def report(self) -> int:
         """Generate report and return exit code."""
         total_issues = len(self.errors) + len(self.warnings)
         
         if self.errors:
-            print("🚨 ERRORS:")
+            _ = print("🚨 ERRORS:")
             for filepath, lineno, message in self.errors:
-                print(f"  {filepath}:{lineno} - {message}")
-            print()
+                _ = print(f"  {filepath}:{lineno} - {message}")
+            _ = print()
         
         if self.warnings:
-            print("⚠️  WARNINGS:")
+            _ = print("⚠️  WARNINGS:")
             for filepath, lineno, message in self.warnings:
-                print(f"  {filepath}:{lineno} - {message}")
-            print()
+                _ = print(f"  {filepath}:{lineno} - {message}")
+            _ = print()
         
         if total_issues == 0:
-            print("✅ No style issues found!")
+            _ = print("✅ No style issues found!")
             return 0
         else:
-            print(f"📊 Found {len(self.errors)} errors and {len(self.warnings)} warnings")
+            _ = print(f"📊 Found {len(self.errors)} errors and {len(self.warnings)} warnings")
             return 1 if self.errors else 0
 
 
-def main():
+def main() -> None:
     """Main entry point."""
     checker = UnifiedAIStyleChecker()
     
     # Check project root directory
-    project_root = Path(__file__).resolve().parent.parent # Assumes script is in project_root/scripts
+    project_root: str = Path(__file__).resolve().parent.parent # Assumes script is in project_root: str/scripts
     if project_root.exists():
-        checker.check_directory(project_root)
+        _ = checker.check_directory(project_root)
     else:
-        print(f"❌ Project root directory not found at {project_root}")
+        _ = print(f"❌ Project root directory not found at {project_root}")
         return 1
     
     return checker.report()
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    _ = sys.exit(main())

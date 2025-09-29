@@ -1,6 +1,8 @@
 import json
 import random
 import os
+import ast
+from typing import Optional
 
 # Define output directory and filenames
 # Assuming script is in src/tools/logic_model/
@@ -21,8 +23,8 @@ def generate_simple_proposition(max_nesting=1, current_nesting=0):
     Generates a simple logical proposition.
     Example: "true AND false", "NOT true", "(true OR false) AND true"
     """
-    if current_nesting >= max_nesting or random.random() < 0.4: # Base case: simple value or unary op
-        if random.random() < 0.3 and current_nesting < max_nesting: # Add NOT
+    if current_nesting >= max_nesting or random.random < 0.4: # Base case: simple value or unary op
+        if random.random < 0.3 and current_nesting < max_nesting: # Add NOT
             return f"NOT {generate_simple_proposition(max_nesting, current_nesting + 1)}"
         else:
             return random.choice(VALUES)
@@ -40,39 +42,77 @@ def generate_simple_proposition(max_nesting=1, current_nesting=0):
 
         return f"{left_expr} {op} {right_expr}"
 
-def evaluate_proposition(prop_str: str) -> bool | None:
+def evaluate_proposition(prop_str: str) -> Optional[bool]:
     """
     Evaluates a simple logical proposition string.
-    Uses Python's eval after replacing 'true'/'false' and 'AND'/'OR'/'NOT'.
-    This is a simplified and potentially unsafe evaluator for controlled inputs.
-    A proper parser would be more robust for complex or untrusted inputs.
+    Uses safe evaluation instead of Python's eval.
     """
     try:
         # Replace keywords with Python equivalents
-        py_prop_str = prop_str.lower() # Python bools are capitalized, but let's be flexible
-        py_prop_str = py_prop_str.replace("true", "True")
-        py_prop_str = py_prop_str.replace("false", "False")
-        py_prop_str = py_prop_str.replace("and", "and") # Python 'and' is lowercase
-        py_prop_str = py_prop_str.replace("or", "or")   # Python 'or' is lowercase
-        py_prop_str = py_prop_str.replace("not", "not ") # Python 'not' needs a space after
+        normalized_str = prop_str.lower()
+        normalized_str = normalized_str.replace("true", "True")
+        normalized_str = normalized_str.replace("false", "False")
+        normalized_str = normalized_str.replace("and", " and ")  # Python 'and' is lowercase
+        normalized_str = normalized_str.replace("or", " or ")   # Python 'or' is lowercase
+        normalized_str = normalized_str.replace("not", " not ") # Python 'not' needs spaces
 
-        # Ensure that only allowed characters and keywords are present for some safety
-        # This is a very basic sanitization attempt.
-        allowed_chars = set("TrueFalseandornt() ")
-        if not all(c in allowed_chars for c in py_prop_str):
-            # print(f"Warning: Potentially unsafe characters in: {py_prop_str}")
-            # For generated data, this should be fine, but good to be aware.
-            pass
+        # 定义支持的操作符和值
+        def safe_eval(node):
+            if isinstance(node, ast.Constant):  # Python 3.8+
+                # 确保只返回布尔值或None
+                if isinstance(node.value, bool):
+                    return node.value
+                elif node.value is None:
+                    return None
+                else:
+                    # 对于其他类型的常量值，我们需要根据上下文决定如何处理
+                    # 在逻辑表达式中，我们只关心布尔值
+                    raise ValueError(f"Unexpected constant value type: {type(node.value)}")
+            elif isinstance(node, ast.NameConstant):  # Python < 3.8
+                # 确保只返回布尔值或None
+                if isinstance(node.value, bool):
+                    return node.value
+                elif node.value is None:
+                    return None
+                else:
+                    # 对于其他类型的常量值，我们需要根据上下文决定如何处理
+                    raise ValueError(f"Unexpected name constant value type: {type(node.value)}")
+            elif isinstance(node, ast.Name):
+                if node.id == 'True':
+                    return True
+                elif node.id == 'False':
+                    return False
+                else:
+                    raise ValueError(f"Unknown name: {node.id}")
+            elif isinstance(node, ast.BoolOp):
+                values = [safe_eval(value) for value in node.values]
+                if isinstance(node.op, ast.And):
+                    return all(values)
+                elif isinstance(node.op, ast.Or):
+                    return any(values)
+            elif isinstance(node, ast.UnaryOp):
+                if isinstance(node.op, ast.Not):
+                    return not safe_eval(node.operand)
+            else:
+                raise ValueError(f"Unsupported operation: {type(node)}")
+        
+        # 确保只包含允许的字符和关键字
+        allowed_chars = set("TrueFalseandornt ")
+        if not all(c in allowed_chars for c in normalized_str):
+            return None
 
-        return eval(py_prop_str)
+        # 解析并安全计算表达式
+        tree = ast.parse(normalized_str.strip, mode='eval')
+        return safe_eval(tree.body)
+        
     except Exception as e:
-        # print(f"Could not evaluate: {prop_str} (Python form: {py_prop_str}) - Error: {e}")
-        return None # Indicates an error in evaluation or invalid expression
+        # print(f"Could not evaluate: {prop_str} - Error: {e}")
+        return None  # Indicates an error in evaluation or invalid expression
 
 def generate_dataset(num_samples: int, max_nesting: int = 2):
     """Generates a dataset of logical propositions and their answers."""
-    dataset = []
-    generated_propositions = set() # To avoid duplicates
+    dataset =   # 修复列表初始化
+    generated_propositions = set  # 修复集合初始化
 
     while len(dataset) < num_samples:
         prop = generate_simple_proposition(max_nesting=max_nesting)

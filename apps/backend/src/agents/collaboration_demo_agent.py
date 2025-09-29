@@ -1,11 +1,10 @@
 import asyncio
 import logging
-from typing import List, Dict, Any
 import sys
 import os
 
 # Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+project_root: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, project_root)
 
 try:
@@ -14,17 +13,17 @@ try:
     from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 except ImportError:
     # Fall back to absolute imports (for when running as a script)
-    from apps.backend.src.ai.agents.base_agent import BaseAgent
+    from apps.backend.src.core_ai.agents.base_agent import BaseAgent
     from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class CollaborationDemoAgent(BaseAgent):
     """
     A demo agent that showcases the collaboration features between agents.
     """
     
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         # Define capabilities for this agent
         capabilities = [
             {
@@ -41,7 +40,7 @@ class CollaborationDemoAgent(BaseAgent):
             }
         ]
         
-        super().__init__(agent_id, capabilities, "CollaborationDemoAgent")
+        super.__init__(agent_id, capabilities, "CollaborationDemoAgent")
     
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         """
@@ -51,7 +50,7 @@ class CollaborationDemoAgent(BaseAgent):
         
         request_id = task_payload.get("request_id", "")
         capability_id = task_payload.get("capability_id_filter", "")
-        parameters = task_payload.get("parameters", {})
+        parameters = task_payload.get("parameters", )
         
         try:
             # Process based on capability
@@ -99,7 +98,7 @@ class CollaborationDemoAgent(BaseAgent):
                     "capability_id": "data_analysis_v1",
                     "parameters": {
                         "action": "analyze",
-                        "data": parameters.get("data", [])
+                        "data": parameters.get("data", )
                     }
                 },
                 {
@@ -129,7 +128,7 @@ class CollaborationDemoAgent(BaseAgent):
         # Simple collaboration example
         elif parameters.get("delegate_task"):
             target_agent = parameters.get("target_agent", "")
-            task_params = parameters.get("task_parameters", {})
+            task_params = parameters.get("task_parameters", )
             
             if target_agent and task_params:
                 try:
@@ -164,7 +163,7 @@ class CollaborationDemoAgent(BaseAgent):
         logger.info(f"[{self.agent_id}] Handling data processing request")
         
         # Simple data processing example
-        data = parameters.get("data", [])
+        data = parameters.get("data", )
         operation = parameters.get("operation", "count")
         
         if operation == "count":
@@ -182,24 +181,24 @@ class CollaborationDemoAgent(BaseAgent):
             "operation": operation
         }
 
-async def main():
+async def main -> None:
     """
     Main function to run the collaboration demo agent.
     """
     import uuid
     
     # Create agent with a unique ID
-    agent_id = f"did:hsp:collaboration_demo_agent_{uuid.uuid4().hex[:8]}"
+    agent_id = f"did:hsp:collaboration_demo_agent_{uuid.uuid4.hex[:8]}"
     agent = CollaborationDemoAgent(agent_id)
     
     try:
         # Start the agent
-        await agent.start()
+        _ = await agent.start
         logger.info(f"Collaboration Demo Agent {agent_id} started successfully")
         
         # Keep the agent running
         while agent.is_running:
-            await asyncio.sleep(1)
+            _ = await asyncio.sleep(1)
             
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt, shutting down...")
@@ -207,15 +206,15 @@ async def main():
         logger.error(f"Error in main: {e}")
     finally:
         # Stop the agent
-        await agent.stop()
+        _ = await agent.stop
         logger.info("Collaboration Demo Agent stopped")
 
 if __name__ == "__main__":
     # Set up logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
     # Run the agent
-    asyncio.run(main())
+    asyncio.run(main)

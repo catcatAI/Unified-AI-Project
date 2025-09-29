@@ -10,18 +10,15 @@ import asyncio
 import importlib
 import logging
 import time
-import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Callable, Awaitable
-from contextlib import asynccontextmanager
-
+from typing import Any, Dict, List, Optional, Callable
 from .dependency_manager import DependencyManager
-from .execution_manager import ExecutionManager, ExecutionResult
+from .execution_manager import ExecutionManager
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
@@ -82,25 +79,25 @@ class HealthCheckFunction(ABC):
 class CoreServiceManager:
     """核心服务管理器 - 统一管理核心服务的生命周期"""
     
-    def __init__(self, dependency_manager: Optional[DependencyManager] = None):
-        self._services: Dict[str, ServiceInfo] = {}
-        self._service_configs: Dict[str, ServiceConfig] = {}
-        self._dependency_manager = dependency_manager or DependencyManager()
-        self._execution_manager = ExecutionManager()
-        self._health_check_functions: Dict[str, HealthCheckFunction] = {}
+    def __init__(self, dependency_manager: Optional[DependencyManager] = None) -> None:
+        self._services: Dict[str, ServiceInfo] = 
+        self._service_configs: Dict[str, ServiceConfig] = 
+        self._dependency_manager = dependency_manager or DependencyManager
+        self._execution_manager = ExecutionManager
+        self._health_check_functions: Dict[str, HealthCheckFunction] = 
         self._event_handlers: Dict[str, List[Callable]] = {
-            'service_loaded': [],
-            'service_unloaded': [],
-            'service_health_changed': [],
-            'service_error': []
+            'service_loaded': ,
+            'service_unloaded': ,
+            'service_health_changed': ,
+            'service_error': 
         }
-        self._lock = asyncio.Lock()
+        self._lock = asyncio.Lock
         self._is_running = False
         self._monitoring_task: Optional[asyncio.Task] = None
-        self._resource_cleanup_callbacks: Dict[str, List[Callable]] = {}  # 资源清理回调
+        self._resource_cleanup_callbacks: Dict[str, List[Callable]] =   # 资源清理回调
         
         # 注册默认的健康检查函数
-        self._register_default_health_checks()
+        self._register_default_health_checks
         
         logger.info("CoreServiceManager initialized")
 
@@ -181,13 +178,13 @@ class CoreServiceManager:
                     return False
             
             # 动态导入模块
-            start_time = time.time()
+            start_time = time.time
             module = importlib.import_module(config.module_path)
             service_class = getattr(module, config.class_name)
             
             # 创建服务实例
             # 传递依赖实例
-            kwargs = config.config.copy()
+            kwargs = config.config.copy
             for dep_name in config.dependencies:
                 dep_info = self._services.get(dep_name)
                 if dep_info and dep_info.instance:
@@ -195,7 +192,7 @@ class CoreServiceManager:
                     kwargs[dep_name] = dep_info.instance
             
             service_info.instance = service_class(**kwargs)
-            service_info.load_time = time.time() - start_time
+            service_info.load_time = time.time - start_time
             
             # 更新状态
             service_info.status = ServiceStatus.LOADED
@@ -234,7 +231,7 @@ class CoreServiceManager:
 
     async def load_services(self, service_names: List[str], force: bool = False) -> Dict[str, bool]:
         """批量加载服务"""
-        results = {}
+        results = 
         # 收集所有需要加载的服务及其依赖
         all_services = set(service_names)
         for name in service_names:
@@ -253,9 +250,9 @@ class CoreServiceManager:
     def _sort_services_by_dependencies(self, service_names: List[str]) -> List[str]:
         """按依赖关系排序服务"""
         # 简单的拓扑排序实现
-        sorted_services = []
-        visited = set()
-        temp_visited = set()
+        sorted_services = 
+        visited = set
+        temp_visited = set
         
         def visit(name: str):
             if name in temp_visited:
@@ -308,7 +305,7 @@ class CoreServiceManager:
                 
                 # 停止健康检查任务
                 if service_info.health_check_task:
-                    service_info.health_check_task.cancel()
+                    service_info.health_check_task.cancel
                     try:
                         await service_info.health_check_task
                     except asyncio.CancelledError:
@@ -329,14 +326,14 @@ class CoreServiceManager:
                 # 调用服务的关闭方法（如果存在）
                 if service_info.instance and hasattr(service_info.instance, 'shutdown'):
                     if asyncio.iscoroutinefunction(service_info.instance.shutdown):
-                        await service_info.instance.shutdown()
+                        await service_info.instance.shutdown
                     else:
-                        service_info.instance.shutdown()
+                        service_info.instance.shutdown
                 elif service_info.instance and hasattr(service_info.instance, 'close'):
                     if asyncio.iscoroutinefunction(service_info.instance.close):
-                        await service_info.instance.close()
+                        await service_info.instance.close
                     else:
-                        service_info.instance.close()
+                        service_info.instance.close
                 
                 # 清理资源
                 service_info.instance = None
@@ -358,8 +355,8 @@ class CoreServiceManager:
 
     def _get_dependent_services(self, service_name: str) -> List[str]:
         """获取依赖指定服务的其他服务"""
-        dependent_services = []
-        for name, service_info in self._services.items():
+        dependent_services = 
+        for name, service_info in self._services.items:
             if service_name in service_info.config.dependencies:
                 dependent_services.append(name)
         return dependent_services
@@ -387,7 +384,7 @@ class CoreServiceManager:
             # 更新健康状态
             old_health = service_info.health
             service_info.health = health
-            service_info.last_health_check = time.time()
+            service_info.last_health_check = time.time
             
             # 如果健康状态改变，触发事件
             if old_health != health:
@@ -413,10 +410,10 @@ class CoreServiceManager:
         while self._is_running:
             try:
                 # 检查所有已加载服务的健康状态
-                for service_name, service_info in self._services.items():
+                for service_name, service_info in self._services.items:
                     if service_info.status == ServiceStatus.LOADED:
                         # 检查是否需要进行健康检查
-                        if (time.time() - service_info.last_health_check > 
+                        if (time.time - service_info.last_health_check > 
                             service_info.config.health_check_interval):
                             await self._check_service_health(service_name)
                 
@@ -431,14 +428,14 @@ class CoreServiceManager:
         """启动健康监控"""
         if not self._is_running:
             self._is_running = True
-            self._monitoring_task = asyncio.create_task(self._health_monitoring_loop())
+            self._monitoring_task = asyncio.create_task(self._health_monitoring_loop)
             logger.info("Health monitoring started")
 
     async def stop_health_monitoring(self):
         """停止健康监控"""
         self._is_running = False
         if self._monitoring_task:
-            self._monitoring_task.cancel()
+            self._monitoring_task.cancel
             try:
                 await self._monitoring_task
             except asyncio.CancelledError:
@@ -483,8 +480,8 @@ class CoreServiceManager:
 
     def get_all_services_status(self) -> Dict[str, Dict[str, Any]]:
         """获取所有服务的状态信息"""
-        status_info = {}
-        for name, service_info in self._services.items():
+        status_info = 
+        for name, service_info in self._services.items:
             status_info[name] = {
                 'status': service_info.status.value,
                 'health': service_info.health.value,
@@ -496,14 +493,14 @@ class CoreServiceManager:
 
     async def __aenter__(self):
         """异步上下文管理器入口"""
-        await self.start_health_monitoring()
+        await self.start_health_monitoring
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """异步上下文管理器出口"""
-        await self.stop_health_monitoring()
+        await self.stop_health_monitoring
         # 卸载所有服务
-        for service_name in list(self._services.keys()):
+        for service_name in list(self._services.keys):
             await self.unload_service(service_name, force=True)
 
 
@@ -511,11 +508,11 @@ class CoreServiceManager:
 _global_core_service_manager: Optional[CoreServiceManager] = None
 
 
-def get_core_service_manager() -> CoreServiceManager:
+def get_core_service_manager -> CoreServiceManager:
     """获取全局核心服务管理器实例"""
     global _global_core_service_manager
     if _global_core_service_manager is None:
-        _global_core_service_manager = CoreServiceManager()
+        _global_core_service_manager = CoreServiceManager
     return _global_core_service_manager
 
 
@@ -531,9 +528,9 @@ class ExampleHealthCheck(HealthCheckFunction):
             # 如果服务有is_healthy方法，调用它
             if hasattr(service_instance, 'is_healthy'):
                 if asyncio.iscoroutinefunction(service_instance.is_healthy):
-                    is_healthy = await service_instance.is_healthy()
+                    is_healthy = await service_instance.is_healthy
                 else:
-                    is_healthy = service_instance.is_healthy()
+                    is_healthy = service_instance.is_healthy
                     
                 return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY
             else:
@@ -546,15 +543,15 @@ class ExampleHealthCheck(HealthCheckFunction):
 
 if __name__ == "__main__":
     # 简单测试
-    async def main():
-        manager = CoreServiceManager()
+    async def main -> None:
+        manager = CoreServiceManager
         
         # 注册一个示例服务
         config = ServiceConfig(
             name="example_service",
             module_path="core_services",  # 假设的模块路径
             class_name="MultiLLMService",  # 假设的类名
-            dependencies=[],
+            dependencies=,
             lazy_load=False,
             auto_restart=True
         )
@@ -563,9 +560,9 @@ if __name__ == "__main__":
         print("Service registered")
         
         # 获取服务状态
-        status = manager.get_all_services_status()
+        status = manager.get_all_services_status
         print(f"Service status: {status}")
         
         print("CoreServiceManager basic test completed")
 
-    asyncio.run(main())
+    asyncio.run(main)

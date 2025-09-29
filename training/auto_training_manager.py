@@ -4,28 +4,24 @@
 实现自动识别训练数据、自动建立训练和自动训练的功能
 """
 
-import os
 import sys
 import json
 import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-import time
 import threading
 from collections import defaultdict
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
+project_root: str = Path(__file__).parent.parent
+backend_path: str = project_root / "apps" / "backend"
+_ = sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(backend_path))
+_ = sys.path.insert(0, str(backend_path / "src"))
 
 # 导入项目模块
 try:
-    from path_config import (
-        PROJECT_ROOT, 
         DATA_DIR, 
         TRAINING_DIR, 
         MODELS_DIR,
@@ -42,7 +38,6 @@ except ImportError:
 # 导入数据管理器
 from training.data_manager import DataManager
 from training.collaborative_training_manager import CollaborativeTrainingManager
-from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
 from training.task_priority_evaluator import TaskPriorityEvaluator
 
 # 延迟导入ModelTrainer以避免循环导入
@@ -50,19 +45,19 @@ ModelTrainer = None
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(TRAINING_DIR / 'auto_training.log'),
-        logging.StreamHandler()
+        _ = logging.FileHandler(TRAINING_DIR / 'auto_training.log'),
+        _ = logging.StreamHandler()
     ]
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class TrainingMonitor:
     """训练监控器，用于监控训练过程的进度和性能"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.training_progress = defaultdict(dict)
         self.training_metrics = defaultdict(list)
         self.training_logs = defaultdict(list)
@@ -78,17 +73,17 @@ class TrainingMonitor:
                     'epoch': epoch,
                     'progress': progress,
                     'metrics': metrics,
-                    'updated_at': datetime.now().isoformat()
+                    _ = 'updated_at': datetime.now().isoformat()
                 }
                 self.training_metrics[scenario_name].append({
                     'epoch': epoch,
                     'progress': progress,
                     'metrics': metrics,
-                    'timestamp': datetime.now().isoformat()
+                    _ = 'timestamp': datetime.now().isoformat()
                 })
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 更新训练进度失败: {scenario_name} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 更新训练进度失败: {scenario_name} - {e}")
     
     def log_event(self, scenario_name: str, event_type: str, message: str, details: Dict[str, Any] = None):
         """记录训练事件"""
@@ -96,17 +91,17 @@ class TrainingMonitor:
         try:
             with self.lock:
                 log_entry = {
-                    'timestamp': datetime.now().isoformat(),
+                    _ = 'timestamp': datetime.now().isoformat(),
                     'event_type': event_type,
                     'message': message,
                     'details': details or {}
                 }
-                self.training_logs[scenario_name].append(log_entry)
+                _ = self.training_logs[scenario_name].append(log_entry)
                 # 同时打印到控制台
-                logger.info(f"[{scenario_name}] {event_type}: {message}")
+                _ = logger.info(f"[{scenario_name}] {event_type}: {message}")
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 记录训练事件失败: {scenario_name} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 记录训练事件失败: {scenario_name} - {e}")
     
     def get_progress(self, scenario_name: str) -> Dict[str, Any]:
         """获取训练进度"""
@@ -115,8 +110,8 @@ class TrainingMonitor:
             with self.lock:
                 return self.training_progress.get(scenario_name, {})
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 获取训练进度失败: {scenario_name} - {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 获取训练进度失败: {scenario_name} - {e}")
             return {}
     
     def get_all_progress(self) -> Dict[str, Dict[str, Any]]:
@@ -126,8 +121,8 @@ class TrainingMonitor:
             with self.lock:
                 return dict(self.training_progress)
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 获取所有训练进度失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 获取所有训练进度失败: {e}")
             return {}
     
     def get_logs(self, scenario_name: str = None) -> Dict[str, List]:
@@ -139,8 +134,8 @@ class TrainingMonitor:
                     return {scenario_name: self.training_logs.get(scenario_name, [])}
                 return dict(self.training_logs)
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 获取训练日志失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 获取训练日志失败: {e}")
             return {}
     
     def reset(self):
@@ -148,17 +143,17 @@ class TrainingMonitor:
         context = ErrorContext("TrainingMonitor", "reset")
         try:
             with self.lock:
-                self.training_progress.clear()
-                self.training_metrics.clear()
-                self.training_logs.clear()
+                _ = self.training_progress.clear()
+                _ = self.training_metrics.clear()
+                _ = self.training_logs.clear()
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 重置监控器失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 重置监控器失败: {e}")
 
 class AutoTrainingManager:
     """自动训练管理器，实现自动识别训练数据、自动建立训练和自动训练的功能"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.project_root = PROJECT_ROOT
         self.training_dir = TRAINING_DIR
         self.data_dir = DATA_DIR
@@ -175,9 +170,9 @@ class AutoTrainingManager:
         self.priority_evaluator = TaskPriorityEvaluator()
         
         # 确保必要的目录存在
-        self._ensure_directories()
+        _ = self._ensure_directories()
         
-        logger.info("🔄 自动训练管理器初始化完成")
+        _ = logger.info("🔄 自动训练管理器初始化完成")
     
     def _ensure_directories(self):
         """确保必要的目录存在"""
@@ -194,8 +189,8 @@ class AutoTrainingManager:
             for directory in directories:
                 directory.mkdir(parents=True, exist_ok=True)
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 确保目录存在失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 确保目录存在失败: {e}")
     
     def auto_identify_training_data(self) -> Dict[str, Any]:
         """
@@ -203,7 +198,7 @@ class AutoTrainingManager:
         返回数据分类和统计信息
         """
         context = ErrorContext("AutoTrainingManager", "auto_identify_training_data")
-        logger.info("🔍 开始自动识别训练数据...")
+        _ = logger.info("🔍 开始自动识别训练数据...")
         
         try:
             # 扫描数据
@@ -221,12 +216,12 @@ class AutoTrainingManager:
                     }
                 data_stats[data_type]['count'] += 1
                 data_stats[data_type]['total_size'] += file_info['size']
-                data_stats[data_type]['files'].append(file_info)
+                _ = data_stats[data_type]['files'].append(file_info)
             
             # 评估数据质量
-            logger.info("📊 评估数据质量...")
+            _ = logger.info("📊 评估数据质量...")
             for file_path in data_catalog.keys():
-                self.data_manager.assess_data_quality(file_path)
+                _ = self.data_manager.assess_data_quality(file_path)
             
             # 获取高质量数据
             high_quality_data = self.data_manager.get_high_quality_data()
@@ -235,15 +230,15 @@ class AutoTrainingManager:
                 'data_catalog': data_catalog,
                 'data_stats': data_stats,
                 'high_quality_data': high_quality_data,
-                'total_files': len(data_catalog),
-                'scan_time': datetime.now().isoformat()
+                _ = 'total_files': len(data_catalog),
+                _ = 'scan_time': datetime.now().isoformat()
             }
             
-            logger.info(f"✅ 数据识别完成，共发现 {len(data_catalog)} 个文件")
+            _ = logger.info(f"✅ 数据识别完成，共发现 {len(data_catalog)} 个文件")
             return result
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 自动识别训练数据失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 自动识别训练数据失败: {e}")
             return {}
     
     def auto_create_training_config(self, data_analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -251,12 +246,12 @@ class AutoTrainingManager:
         根据识别的数据自动创建训练配置
         """
         context = ErrorContext("AutoTrainingManager", "auto_create_training_config")
-        logger.info("⚙️  开始自动创建训练配置...")
+        _ = logger.info("⚙️  开始自动创建训练配置...")
         
         try:
             # 分析可用的数据类型和质量
             available_data_types = list(data_analysis['data_stats'].keys())
-            logger.info(f"📋 可用数据类型: {available_data_types}")
+            _ = logger.info(f"📋 可用数据类型: {available_data_types}")
             
             # 获取高质量数据信息
             high_quality_data = data_analysis.get('high_quality_data', {})
@@ -274,11 +269,11 @@ class AutoTrainingManager:
                     vision_data_count += len(high_quality_data['document'])
                 
                 if vision_data_count > 100:
-                    training_scenarios.append('vision_focus')
+                    _ = training_scenarios.append('vision_focus')
                 elif vision_data_count > 50:
-                    training_scenarios.append('comprehensive_training')
+                    _ = training_scenarios.append('comprehensive_training')
                 elif vision_data_count > 10:
-                    training_scenarios.append('quick_start')
+                    _ = training_scenarios.append('quick_start')
                 
             # 检查音频数据
             if 'audio' in available_data_types:
@@ -286,11 +281,11 @@ class AutoTrainingManager:
                 audio_data_count = len(high_quality_data.get('audio', []))
                 
                 if audio_data_count > 50:
-                    training_scenarios.append('audio_focus')
+                    _ = training_scenarios.append('audio_focus')
                 elif audio_data_count > 20:
-                    training_scenarios.append('comprehensive_training')
+                    _ = training_scenarios.append('comprehensive_training')
                 elif audio_data_count > 5:
-                    training_scenarios.append('quick_start')
+                    _ = training_scenarios.append('quick_start')
                 
             # 检查文本数据
             if 'text' in available_data_types:
@@ -298,58 +293,58 @@ class AutoTrainingManager:
                 text_data_count = len(high_quality_data.get('text', []))
                 
                 if text_data_count > 200:
-                    training_scenarios.extend(['math_model_training', 'logic_model_training', 'comprehensive_training', 'causal_reasoning_training'])
+                    _ = training_scenarios.extend(['math_model_training', 'logic_model_training', 'comprehensive_training', 'causal_reasoning_training'])
                 elif text_data_count > 100:
-                    training_scenarios.extend(['math_model_training', 'logic_model_training', 'comprehensive_training'])
+                    _ = training_scenarios.extend(['math_model_training', 'logic_model_training', 'comprehensive_training'])
                 elif text_data_count > 50:
-                    training_scenarios.extend(['math_model_training', 'logic_model_training'])
+                    _ = training_scenarios.extend(['math_model_training', 'logic_model_training'])
                 elif text_data_count > 10:
-                    training_scenarios.append('quick_start')
+                    _ = training_scenarios.append('quick_start')
                 
             # 检查代码数据
             if 'code' in available_data_types:
                 code_data_count = len(high_quality_data.get('code', []))
                 
                 if code_data_count > 100:
-                    training_scenarios.extend(['code_model_training', 'comprehensive_training'])
+                    _ = training_scenarios.extend(['code_model_training', 'comprehensive_training'])
                 elif code_data_count > 50:
-                    training_scenarios.append('code_model_training')
+                    _ = training_scenarios.append('code_model_training')
                 elif code_data_count > 10:
-                    training_scenarios.append('quick_start')
+                    _ = training_scenarios.append('quick_start')
                 
             # 检查概念模型相关数据
             if 'json' in available_data_types:
                 json_data_count = len(high_quality_data.get('json', []))
                 
                 if json_data_count > 50:
-                    training_scenarios.extend(['concept_models_training', 'environment_simulator_training', 'causal_reasoning_training'])
+                    _ = training_scenarios.extend(['concept_models_training', 'environment_simulator_training', 'causal_reasoning_training'])
                 elif json_data_count > 30:
-                    training_scenarios.append('concept_models_training')
+                    _ = training_scenarios.append('concept_models_training')
                 elif json_data_count > 10:
-                    training_scenarios.append('quick_start')
+                    _ = training_scenarios.append('quick_start')
                 
             # 检查模型数据
             if 'model' in available_data_types:
                 model_data_count = len(high_quality_data.get('model', []))
                 
                 if model_data_count > 10:
-                    training_scenarios.append('collaborative_training')
+                    _ = training_scenarios.append('collaborative_training')
                 
             # 检查数据文件
             if 'data' in available_data_types:
                 data_file_count = len(high_quality_data.get('data', []))
                 
                 if data_file_count > 50:
-                    training_scenarios.append('data_analysis_model_training')
+                    _ = training_scenarios.append('data_analysis_model_training')
                 elif data_file_count > 10:
-                    training_scenarios.append('quick_start')
+                    _ = training_scenarios.append('quick_start')
                     
             # 如果有多种高质量数据类型，使用综合训练
             high_quality_types = [t for t in high_quality_data.keys() if len(high_quality_data[t]) > 10]
             if len(high_quality_types) > 3:
-                training_scenarios.append('comprehensive_training')
+                _ = training_scenarios.append('comprehensive_training')
             elif len(high_quality_types) > 2:
-                training_scenarios.append('full_dataset_training')
+                _ = training_scenarios.append('full_dataset_training')
                 
             # 根据数据量选择训练场景
             total_files = data_analysis['total_files']
@@ -357,16 +352,16 @@ class AutoTrainingManager:
             
             # 如果高质量数据充足，使用完整数据集训练
             if high_quality_file_count > 1000:
-                training_scenarios.append('full_dataset_training')
+                _ = training_scenarios.append('full_dataset_training')
             elif high_quality_file_count > 500:
-                training_scenarios.append('comprehensive_training')
+                _ = training_scenarios.append('comprehensive_training')
             elif high_quality_file_count > 100:
-                training_scenarios.append('quick_start')
+                _ = training_scenarios.append('quick_start')
             elif high_quality_file_count > 20:
-                training_scenarios.append('quick_start')
+                _ = training_scenarios.append('quick_start')
             else:
                 # 如果数据较少，使用快速训练
-                training_scenarios.append('quick_start')
+                _ = training_scenarios.append('quick_start')
                 
             # 去重并排序训练场景
             training_scenarios = sorted(list(set(training_scenarios)))
@@ -381,23 +376,23 @@ class AutoTrainingManager:
             # 创建训练配置
             training_config = {
                 'selected_scenarios': training_scenarios,
-                'data_mapping': self._map_data_to_models(available_data_types),
-                'resource_requirements': self._estimate_resource_requirements(data_analysis),
-                'estimated_training_time': self._estimate_training_time(data_analysis),
+                _ = 'data_mapping': self._map_data_to_models(available_data_types),
+                _ = 'resource_requirements': self._estimate_resource_requirements(data_analysis),
+                _ = 'estimated_training_time': self._estimate_training_time(data_analysis),
                 'training_params': training_params,  # 新增优化的训练参数
                 'data_quality_info': {
                     'total_files': total_files,
                     'high_quality_files': high_quality_file_count,
                     'quality_ratio': high_quality_file_count / total_files if total_files > 0 else 0
                 },
-                'created_at': datetime.now().isoformat()
+                _ = 'created_at': datetime.now().isoformat()
             }
             
-            logger.info(f"✅ 训练配置创建完成，推荐训练场景: {training_scenarios}")
+            _ = logger.info(f"✅ 训练配置创建完成，推荐训练场景: {training_scenarios}")
             return training_config
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 自动创建训练配置失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 自动创建训练配置失败: {e}")
             return {}
     
     def _map_data_to_models(self, data_types: List[str]) -> Dict[str, List[str]]:
@@ -435,8 +430,8 @@ class AutoTrainingManager:
                 
             return model_mapping
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 映射数据到模型失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 映射数据到模型失败: {e}")
             return {}
     
     def _estimate_resource_requirements(self, data_analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -478,17 +473,17 @@ class AutoTrainingManager:
                 'cpu_cores': cpu_cores,
                 'memory_gb': memory_gb,
                 'gpu_memory_gb': gpu_memory_gb,
-                'estimated_disk_space_gb': (effective_size * 3) / (1024 * 1024 * 1024),  # 估算需要3倍空间
+                _ = 'estimated_disk_space_gb': (effective_size * 3) / (1024 * 1024 * 1024),  # 估算需要3倍空间
                 'data_quality_info': {
                     'total_files': total_files,
                     'high_quality_files': effective_files,
-                    'total_size_gb': total_size / (1024 * 1024 * 1024),
-                    'high_quality_size_gb': effective_size / (1024 * 1024 * 1024)
+                    _ = 'total_size_gb': total_size / (1024 * 1024 * 1024),
+                    _ = 'high_quality_size_gb': effective_size / (1024 * 1024 * 1024)
                 }
             }
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 估算资源需求失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 估算资源需求失败: {e}")
             return {}
     
     def _estimate_training_time(self, data_analysis: Dict[str, Any]) -> Dict[str, float]:
@@ -548,8 +543,8 @@ class AutoTrainingManager:
                 }
             }
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 估算训练时间失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 估算训练时间失败: {e}")
             return {}
     
     def _optimize_training_parameters(self, data_analysis: Dict[str, Any], training_scenarios: List[str]) -> Dict[str, Any]:
@@ -611,11 +606,11 @@ class AutoTrainingManager:
                 'learning_rate': learning_rate,
                 'epochs': epochs,
                 'gpu_available': gpu_available,
-                'optimized_at': datetime.now().isoformat()
+                _ = 'optimized_at': datetime.now().isoformat()
             }
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 优化训练参数失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 优化训练参数失败: {e}")
             return {}
     
     def auto_train(self, training_config: Dict[str, Any]) -> Dict[str, Any]:
@@ -623,11 +618,11 @@ class AutoTrainingManager:
         根据训练配置自动执行训练（支持优先级调度）
         """
         context = ErrorContext("AutoTrainingManager", "auto_train")
-        logger.info("🚀 开始自动训练（支持优先级调度）...")
+        _ = logger.info("🚀 开始自动训练（支持优先级调度）...")
         
         try:
             # 重置训练监控器
-            self.training_monitor.reset()
+            _ = self.training_monitor.reset()
             
             results = {}
             
@@ -655,7 +650,7 @@ class AutoTrainingManager:
             
             for scenario_name in sorted_scenarios:
                 priority = scenario_priorities.get(scenario_name, 50)
-                logger.info(f"🏋️  开始训练场景: {scenario_name} (优先级: {priority:.1f})")
+                _ = logger.info(f"🏋️  开始训练场景: {scenario_name} (优先级: {priority:.1f})")
                 
                 try:
                     # 根据场景类型执行不同的训练策略
@@ -680,31 +675,31 @@ class AutoTrainingManager:
                     results[scenario_name] = {
                         'success': success,
                         'priority': priority,
-                        'completed_at': datetime.now().isoformat(),
-                        'model_path': str(self.models_dir),
+                        _ = 'completed_at': datetime.now().isoformat(),
+                        _ = 'model_path': str(self.models_dir),
                         'scenario_type': scenario_name,
-                        'training_progress': self.training_monitor.get_progress(scenario_name)
+                        _ = 'training_progress': self.training_monitor.get_progress(scenario_name)
                     }
                     
                     if success:
-                        logger.info(f"✅ 训练场景 {scenario_name} 完成")
+                        _ = logger.info(f"✅ 训练场景 {scenario_name} 完成")
                     else:
-                        logger.error(f"❌ 训练场景 {scenario_name} 失败")
+                        _ = logger.error(f"❌ 训练场景 {scenario_name} 失败")
                         
                 except Exception as e:
-                    logger.error(f"❌ 训练场景 {scenario_name} 执行出错: {e}")
+                    _ = logger.error(f"❌ 训练场景 {scenario_name} 执行出错: {e}")
                     results[scenario_name] = {
                         'success': False,
                         'priority': priority,
-                        'error': str(e),
-                        'completed_at': datetime.now().isoformat(),
+                        _ = 'error': str(e),
+                        _ = 'completed_at': datetime.now().isoformat(),
                         'scenario_type': scenario_name,
-                        'training_progress': self.training_monitor.get_progress(scenario_name)
+                        _ = 'training_progress': self.training_monitor.get_progress(scenario_name)
                     }
             
             # 执行协作式训练（如果有多个模型，传递优先级信息）
             if len(scenarios) > 1:
-                logger.info("🔄 开始协作式训练（支持优先级调度）...")
+                _ = logger.info("🔄 开始协作式训练（支持优先级调度）...")
                 try:
                     # 构建任务优先级信息
                     task_priorities = {}
@@ -724,27 +719,27 @@ class AutoTrainingManager:
                     })
                     results['collaborative_training'] = {
                         'success': collaborative_success,
-                        'completed_at': datetime.now().isoformat(),
-                        'training_progress': self.training_monitor.get_progress('collaborative_training')
+                        _ = 'completed_at': datetime.now().isoformat(),
+                        _ = 'training_progress': self.training_monitor.get_progress('collaborative_training')
                     }
                     if collaborative_success:
-                        logger.info("✅ 协作式训练完成")
+                        _ = logger.info("✅ 协作式训练完成")
                     else:
-                        logger.error("❌ 协作式训练失败")
+                        _ = logger.error("❌ 协作式训练失败")
                 except Exception as e:
-                    logger.error(f"❌ 协作式训练执行出错: {e}")
+                    _ = logger.error(f"❌ 协作式训练执行出错: {e}")
                     results['collaborative_training'] = {
                         'success': False,
-                        'error': str(e),
-                        'completed_at': datetime.now().isoformat(),
-                        'training_progress': self.training_monitor.get_progress('collaborative_training')
+                        _ = 'error': str(e),
+                        _ = 'completed_at': datetime.now().isoformat(),
+                        _ = 'training_progress': self.training_monitor.get_progress('collaborative_training')
                     }
             
-            logger.info("🏁 自动训练流程完成")
+            _ = logger.info("🏁 自动训练流程完成")
             return results
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 自动训练失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 自动训练失败: {e}")
             return {}
     
     def _train_real_model(self, scenario_name: str, data_mapping: Dict[str, list]) -> bool:
@@ -752,7 +747,7 @@ class AutoTrainingManager:
         训练真实模型（代码模型、数据分析模型等）
         """
         context = ErrorContext("AutoTrainingManager", "_train_real_model", {"scenario_name": scenario_name})
-        logger.info(f"🔬 开始真实模型训练: {scenario_name}")
+        _ = logger.info(f"🔬 开始真实模型训练: {scenario_name}")
         
         try:
             # 根据场景名称确定目标模型
@@ -765,7 +760,7 @@ class AutoTrainingManager:
             if target_model:
                 # 准备训练数据
                 training_data = self.data_manager.prepare_training_data(target_model)
-                logger.info(f"📦 为 {target_model} 准备了 {len(training_data)} 个训练文件")
+                _ = logger.info(f"📦 为 {target_model} 准备了 {len(training_data)} 个训练文件")
                 
                 # 执行真实训练
                 success = self.model_trainer.train_with_preset(scenario_name)
@@ -775,8 +770,8 @@ class AutoTrainingManager:
                 return self.model_trainer.train_with_preset(scenario_name)
                 
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 真实模型训练失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 真实模型训练失败: {e}")
             return False
     
     def _train_concept_model(self, scenario_name: str) -> bool:
@@ -784,15 +779,15 @@ class AutoTrainingManager:
         训练概念模型的特定场景
         """
         context = ErrorContext("AutoTrainingManager", "_train_concept_model", {"scenario_name": scenario_name})
-        logger.info(f"🧠 开始概念模型训练: {scenario_name}")
+        _ = logger.info(f"🧠 开始概念模型训练: {scenario_name}")
         
         try:
             # 执行概念模型训练
             success = self.model_trainer.train_with_preset(scenario_name)
             return success
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 概念模型训练失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 概念模型训练失败: {e}")
             return False
     
     def _train_math_logic_model(self, scenario_name: str) -> bool:
@@ -800,15 +795,15 @@ class AutoTrainingManager:
         训练数学和逻辑模型
         """
         context = ErrorContext("AutoTrainingManager", "_train_math_logic_model", {"scenario_name": scenario_name})
-        logger.info(f"🧮 开始数学/逻辑模型训练: {scenario_name}")
+        _ = logger.info(f"🧮 开始数学/逻辑模型训练: {scenario_name}")
         
         try:
             # 执行数学/逻辑模型训练
             success = self.model_trainer.train_with_preset(scenario_name)
             return success
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 数学/逻辑模型训练失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 数学/逻辑模型训练失败: {e}")
             return False
     
     def _train_collaborative_model(self, training_params: Dict[str, Any], scenario_priorities: Dict[str, float] = None) -> bool:
@@ -816,14 +811,14 @@ class AutoTrainingManager:
         执行协作式训练（支持优先级调度）
         """
         context = ErrorContext("AutoTrainingManager", "_train_collaborative_model")
-        logger.info("🔄 开始协作式训练（支持优先级调度）...")
+        _ = logger.info("🔄 开始协作式训练（支持优先级调度）...")
         
         try:
             # 构建协作式训练配置
             collaborative_config = {
-                'epochs': training_params.get('epochs', 10),
-                'batch_size': training_params.get('batch_size', 16),
-                'learning_rate': training_params.get('learning_rate', 0.001)
+                _ = 'epochs': training_params.get('epochs', 10),
+                _ = 'batch_size': training_params.get('batch_size', 16),
+                _ = 'learning_rate': training_params.get('learning_rate', 0.001)
             }
             
             # 如果有场景优先级信息，添加到配置中
@@ -834,8 +829,8 @@ class AutoTrainingManager:
             success = self.collaborative_manager.start_collaborative_training(collaborative_config)
             return success
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 协作式训练失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 协作式训练失败: {e}")
             return False
     
     def _calculate_scenario_priority(self, scenario_name: str, training_config: Dict[str, Any]) -> float:
@@ -883,8 +878,8 @@ class AutoTrainingManager:
             
             return final_priority
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 计算场景优先级失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 计算场景优先级失败: {e}")
             return 50.0
     
     def _calculate_model_priority(self, model_name: str, training_config: Dict[str, Any]) -> float:
@@ -914,8 +909,8 @@ class AutoTrainingManager:
             
             return priority
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 计算模型优先级失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 计算模型优先级失败: {e}")
             return 50.0
     
     def run_full_auto_training_pipeline(self) -> Dict[str, Any]:
@@ -926,7 +921,7 @@ class AutoTrainingManager:
         3. 自动执行训练
         """
         context = ErrorContext("AutoTrainingManager", "run_full_auto_training_pipeline")
-        logger.info("🚀 启动完整的自动训练流水线...")
+        _ = logger.info("🚀 启动完整的自动训练流水线...")
         
         try:
             # 步骤1: 自动识别训练数据
@@ -943,16 +938,16 @@ class AutoTrainingManager:
             
             # 生成报告
             report = {
-                'pipeline_completed_at': datetime.now().isoformat(),
+                _ = 'pipeline_completed_at': datetime.now().isoformat(),
                 'data_analysis': data_analysis,
                 'training_config': training_config,
                 'training_results': training_results,
                 'result_analysis': result_analysis,
                 'summary': {
-                    'total_scenarios': len(training_config.get('selected_scenarios', [])),
+                    _ = 'total_scenarios': len(training_config.get('selected_scenarios', [])),
                     'successful_scenarios': len([r for r in training_results.values() if r.get('success', False)]),
                     'failed_scenarios': len([r for r in training_results.values() if not r.get('success', True)]),
-                    'overall_success_rate': result_analysis.get('overall_success_rate', 0)
+                    _ = 'overall_success_rate': result_analysis.get('overall_success_rate', 0)
                 }
             }
             
@@ -964,14 +959,14 @@ class AutoTrainingManager:
             # 生成详细报告
             detailed_report_path = self._generate_detailed_report(report)
             
-            logger.info(f"✅ 自动训练流水线完成，报告已保存至: {report_path}")
+            _ = logger.info(f"✅ 自动训练流水线完成，报告已保存至: {report_path}")
             if detailed_report_path:
-                logger.info(f"📋 详细报告已保存至: {detailed_report_path}")
+                _ = logger.info(f"📋 详细报告已保存至: {detailed_report_path}")
             
             return report
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 运行完整自动训练流水线失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 运行完整自动训练流水线失败: {e}")
             return {}
     
     def _analyze_training_results(self, training_results: Dict[str, Any]) -> Dict[str, Any]:
@@ -979,11 +974,11 @@ class AutoTrainingManager:
         分析训练结果
         """
         context = ErrorContext("AutoTrainingManager", "_analyze_training_results")
-        logger.info("🔍 开始分析训练结果...")
+        _ = logger.info("🔍 开始分析训练结果...")
         
         try:
             analysis = {
-                'total_scenarios': len(training_results),
+                _ = 'total_scenarios': len(training_results),
                 'successful_scenarios': 0,
                 'failed_scenarios': 0,
                 'success_rate_by_type': {},
@@ -1015,9 +1010,9 @@ class AutoTrainingManager:
                     if progress and 'metrics' in progress:
                         metrics = progress['metrics']
                         analysis['model_performance'][scenario_name] = {
-                            'final_loss': metrics.get('loss', 0),
-                            'final_accuracy': metrics.get('accuracy', 0),
-                            'training_completed': result.get('success', False)
+                            _ = 'final_loss': metrics.get('loss', 0),
+                            _ = 'final_accuracy': metrics.get('accuracy', 0),
+                            _ = 'training_completed': result.get('success', False)
                         }
             
             # 计算总体成功率
@@ -1045,11 +1040,11 @@ class AutoTrainingManager:
                 'accuracy': best_accuracy
             }
             
-            logger.info(f"✅ 训练结果分析完成: {analysis['successful_scenarios']}/{analysis['total_scenarios']} 场景成功")
+            _ = logger.info(f"✅ 训练结果分析完成: {analysis['successful_scenarios']}/{analysis['total_scenarios']} 场景成功")
             return analysis
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 分析训练结果失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 分析训练结果失败: {e}")
             return {}
     
     def _generate_detailed_report(self, report: Dict[str, Any]) -> Optional[Path]:
@@ -1133,18 +1128,18 @@ class AutoTrainingManager:
             # 保存详细报告
             detailed_report_path = self.training_dir / "reports" / f"detailed_auto_training_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
             with open(detailed_report_path, 'w', encoding='utf-8') as f:
-                f.write(detailed_report)
+                _ = f.write(detailed_report)
             
             return detailed_report_path
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 生成详细报告时出错: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 生成详细报告时出错: {e}")
             return None
 
-def main():
+def main() -> None:
     """主函数"""
-    logger.info("🤖 Unified AI Project 自动训练系统启动")
+    _ = logger.info("🤖 Unified AI Project 自动训练系统启动")
     
     # 创建自动训练管理器
     auto_trainer = AutoTrainingManager()
@@ -1154,12 +1149,12 @@ def main():
     
     # 输出摘要
     summary = report.get('summary', {})
-    logger.info("📋 训练摘要:")
-    logger.info(f"   总训练场景数: {summary.get('total_scenarios', 0)}")
-    logger.info(f"   成功场景数: {summary.get('successful_scenarios', 0)}")
-    logger.info(f"   失败场景数: {summary.get('failed_scenarios', 0)}")
+    _ = logger.info("📋 训练摘要:")
+    _ = logger.info(f"   总训练场景数: {summary.get('total_scenarios', 0)}")
+    _ = logger.info(f"   成功场景数: {summary.get('successful_scenarios', 0)}")
+    _ = logger.info(f"   失败场景数: {summary.get('failed_scenarios', 0)}")
     
-    logger.info("🏁 自动训练系统执行完成")
+    _ = logger.info("🏁 自动训练系统执行完成")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

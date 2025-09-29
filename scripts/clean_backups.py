@@ -3,14 +3,12 @@
 定期清理备份目录的脚本
 """
 
-import os
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
 
 # 添加项目根目录到路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root: str = Path(__file__).parent.parent
+_ = sys.path.insert(0, str(project_root))
 
 def clean_backups():
     """清理备份目录"""
@@ -24,10 +22,10 @@ def clean_backups():
         # 清理旧的自动备份（保留30天）
         clean_old_auto_backups(auto_backups, days_to_keep=30)
         
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - 备份清理完成")
+        _ = print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - 备份清理完成")
         
     except Exception as e:
-        print(f"清理备份时出错: {e}")
+        _ = print(f"清理备份时出错: {e}")
 
 if __name__ == "__main__":
-    clean_backups()
+    _ = clean_backups()

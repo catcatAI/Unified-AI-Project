@@ -4,7 +4,6 @@
 用于测试项目在不同硬件配置下的运行效果，包括核显支持
 """
 
-import os
 import sys
 import logging
 from pathlib import Path
@@ -12,30 +11,29 @@ import json
 from datetime import datetime
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
+project_root: str = Path(__file__).parent.parent
+backend_path: str = project_root / "apps" / "backend"
+_ = sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(backend_path))
+_ = sys.path.insert(0, str(backend_path / "src"))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(project_root / 'hardware_compatibility_test.log'),
-        logging.StreamHandler()
+        _ = logging.FileHandler(project_root / 'hardware_compatibility_test.log'),
+        _ = logging.StreamHandler()
     ]
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
-def test_hardware_detection():
+def test_hardware_detection() -> None:
     """测试硬件检测功能"""
     logger.info("=== 测试硬件检测功能 ===")
     
     try:
         # 直接导入而不是通过apps.backend.src.system
-        from apps.backend.src.system.hardware_probe import (
             HardwareProbe,
             get_hardware_profile
         )
@@ -44,38 +42,38 @@ def test_hardware_detection():
         probe = HardwareProbe()
         profile = probe.detect_all()
         
-        logger.info(f"硬件检测结果:")
-        logger.info(f"  平台: {profile.platform} {profile.os_version}")
-        logger.info(f"  性能等级: {profile.performance_tier}")
-        logger.info(f"  AI能力评分: {profile.ai_capability_score:.1f}/100")
-        logger.info(f"  CPU: {profile.cpu.brand} ({profile.cpu.cores_logical}逻辑核心)")
-        logger.info(f"  内存: {profile.memory.total} MB 总计, {profile.memory.available} MB 可用")
-        logger.info(f"  存储: {profile.storage.total} GB {profile.storage.disk_type}")
+        _ = logger.info(f"硬件检测结果:")
+        _ = logger.info(f"  平台: {profile.platform} {profile.os_version}")
+        _ = logger.info(f"  性能等级: {profile.performance_tier}")
+        _ = logger.info(f"  AI能力评分: {profile.ai_capability_score:.1f}/100")
+        _ = logger.info(f"  CPU: {profile.cpu.brand} ({profile.cpu.cores_logical}逻辑核心)")
+        _ = logger.info(f"  内存: {profile.memory.total} MB 总计, {profile.memory.available} MB 可用")
+        _ = logger.info(f"  存储: {profile.storage.total} GB {profile.storage.disk_type}")
         
         if profile.gpu:
             for i, gpu in enumerate(profile.gpu):
-                logger.info(f"  GPU {i}: {gpu.name} ({gpu.memory_total} MB)")
+                _ = logger.info(f"  GPU {i}: {gpu.name} ({gpu.memory_total} MB)")
                 # 检查是否为集成显卡
                 integrated_keywords = ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated']
                 is_integrated = any(keyword in gpu.name.lower() for keyword in integrated_keywords)
-                logger.info(f"    集成显卡: {is_integrated}")
+                _ = logger.info(f"    集成显卡: {is_integrated}")
         
         # 保存硬件配置文件
-        probe.save_profile(profile)
-        logger.info("✅ 硬件检测测试通过")
+        _ = probe.save_profile(profile)
+        _ = logger.info("✅ 硬件检测测试通过")
         return profile
     except Exception as e:
-        logger.error(f"❌ 硬件检测测试失败: {e}")
+        _ = logger.error(f"❌ 硬件检测测试失败: {e}")
         import traceback
-        logger.error(f"详细错误信息: {traceback.format_exc()}")
+        _ = logger.error(f"详细错误信息: {traceback.format_exc()}")
         return None
 
-def test_integrated_graphics_optimization(profile):
+def test_integrated_graphics_optimization(profile) -> None:
     """测试集成显卡优化功能"""
     logger.info("=== 测试集成显卡优化功能 ===")
     
     if not profile:
-        logger.warning("跳过集成显卡优化测试，没有硬件配置文件")
+        _ = logger.warning("跳过集成显卡优化测试，没有硬件配置文件")
         return False
     
     try:
@@ -89,7 +87,7 @@ def test_integrated_graphics_optimization(profile):
         
         # 检查是否为集成显卡系统
         is_ig_system = optimizer.is_integrated_graphics_system()
-        logger.info(f"集成显卡系统: {is_ig_system}")
+        _ = logger.info(f"集成显卡系统: {is_ig_system}")
         
         if is_ig_system:
             # 获取优化建议
@@ -103,29 +101,29 @@ def test_integrated_graphics_optimization(profile):
             # 测试批处理大小调整
             original_batch_size = 32
             adjusted_batch_size = optimizer.adjust_batch_size_for_integrated_graphics(original_batch_size)
-            logger.info(f"批处理大小调整: {original_batch_size} -> {adjusted_batch_size}")
+            _ = logger.info(f"批处理大小调整: {original_batch_size} -> {adjusted_batch_size}")
             
             # 测试精度调整
             precision_config = optimizer.enable_precision_adjustment()
-            logger.info(f"精度配置: {precision_config}")
+            _ = logger.info(f"精度配置: {precision_config}")
             
             # 测试CPU-GPU协调
             coordination_config = optimizer.coordinate_cpu_gpu_usage()
-            logger.info(f"CPU-GPU协调配置: {coordination_config}")
+            _ = logger.info(f"CPU-GPU协调配置: {coordination_config}")
             
             # 测试模型压缩
             compression_config = optimizer.apply_model_compression()
-            logger.info(f"模型压缩配置: {compression_config}")
+            _ = logger.info(f"模型压缩配置: {compression_config}")
         
-        logger.info("✅ 集成显卡优化测试通过")
+        _ = logger.info("✅ 集成显卡优化测试通过")
         return True
     except Exception as e:
-        logger.error(f"❌ 集成显卡优化测试失败: {e}")
+        _ = logger.error(f"❌ 集成显卡优化测试失败: {e}")
         import traceback
-        logger.error(f"详细错误信息: {traceback.format_exc()}")
+        _ = logger.error(f"详细错误信息: {traceback.format_exc()}")
         return False
 
-def test_simple_integrated_graphics_check():
+def test_simple_integrated_graphics_check() -> None:
     """简单的集成显卡检查测试"""
     logger.info("=== 简单集成显卡检查测试 ===")
     
@@ -156,29 +154,29 @@ def test_simple_integrated_graphics_check():
                 for gpu_info in gpu_list:
                     name = gpu_info.get('Name', '').lower()
                     if any(keyword in name for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics']):
-                        logger.info(f"检测到集成显卡: {gpu_info.get('Name')}")
+                        _ = logger.info(f"检测到集成显卡: {gpu_info.get('Name')}")
                         integrated_graphics_found = True
                 
                 if integrated_graphics_found:
-                    logger.info("✅ 简单集成显卡检查测试通过")
+                    _ = logger.info("✅ 简单集成显卡检查测试通过")
                     return True
                 else:
-                    logger.info("未检测到集成显卡")
+                    _ = logger.info("未检测到集成显卡")
                     return False
             else:
-                logger.warning("无法获取GPU信息")
+                _ = logger.warning("无法获取GPU信息")
                 return False
         else:
-            logger.info("非Windows系统，跳过集成显卡检查")
+            _ = logger.info("非Windows系统，跳过集成显卡检查")
             return True
             
     except Exception as e:
-        logger.error(f"❌ 简单集成显卡检查测试失败: {e}")
+        _ = logger.error(f"❌ 简单集成显卡检查测试失败: {e}")
         return False
 
-def main():
+def main() -> None:
     """主测试函数"""
-    logger.info("开始硬件兼容性测试")
+    _ = logger.info("开始硬件兼容性测试")
     start_time = datetime.now()
     
     # 运行测试
@@ -186,18 +184,18 @@ def main():
     
     # 测试简单集成显卡检查
     simple_check_result = test_simple_integrated_graphics_check()
-    results.append(("简单集成显卡检查", simple_check_result))
+    _ = results.append(("简单集成显卡检查", simple_check_result))
     
     # 如果简单检查通过，再测试完整功能
     if simple_check_result:
         # 测试硬件检测
         hardware_profile = test_hardware_detection()
-        results.append(("硬件检测", hardware_profile is not None))
+        _ = results.append(("硬件检测", hardware_profile is not None))
         
         # 测试集成显卡优化
         if hardware_profile:
             ig_optimization_result = test_integrated_graphics_optimization(hardware_profile)
-            results.append(("集成显卡优化", ig_optimization_result))
+            _ = results.append(("集成显卡优化", ig_optimization_result))
     
     # 输出测试结果摘要
     logger.info("=== 测试结果摘要 ===")
@@ -206,7 +204,7 @@ def main():
     
     for test_name, result in results:
         status = "✅ 通过" if result else "❌ 失败"
-        logger.info(f"{test_name}: {status}")
+        _ = logger.info(f"{test_name}: {status}")
         if result:
             passed += 1
         else:
@@ -216,17 +214,17 @@ def main():
     duration = end_time - start_time
     
     logger.info(f"=== 测试完成 ===")
-    logger.info(f"总测试数: {len(results)}")
-    logger.info(f"通过: {passed}")
-    logger.info(f"失败: {failed}")
-    logger.info(f"测试耗时: {duration}")
+    _ = logger.info(f"总测试数: {len(results)}")
+    _ = logger.info(f"通过: {passed}")
+    _ = logger.info(f"失败: {failed}")
+    _ = logger.info(f"测试耗时: {duration}")
     
     if failed == 0:
-        logger.info("🎉 所有测试通过！项目在当前硬件配置下运行正常。")
+        _ = logger.info("🎉 所有测试通过！项目在当前硬件配置下运行正常。")
         return 0
     else:
-        logger.error(f"⚠️  {failed} 个测试失败，请检查相关功能。")
+        _ = logger.error(f"⚠️  {failed} 个测试失败，请检查相关功能。")
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    _ = sys.exit(main())

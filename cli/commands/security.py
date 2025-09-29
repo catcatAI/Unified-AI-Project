@@ -10,18 +10,15 @@ from pathlib import Path
 
 # Add the backend src directory to the path
 backend_src = Path(__file__).parent.parent.parent / "apps" / "backend" / "src"
-sys.path.insert(0, str(backend_src))
+_ = sys.path.insert(0, str(backend_src))
 
-from security.permission_control import PermissionControlSystem, PermissionContext, PermissionType, PermissionLevel
-from security.audit_logger import AuditLogger, AuditEventType
-from security.enhanced_sandbox import EnhancedSandboxExecutor, SandboxConfig
 
-@click.group()
+_ = @click.group()
 def security():
     """Security commands"""
     pass
 
-@security.command()
+_ = @security.command()
 @click.option('--user-id', prompt='User ID', help='User ID to check permissions for')
 @click.option('--operation', prompt='Operation', help='Operation to check')
 @click.option('--resource', prompt='Resource', help='Resource to check')
@@ -44,7 +41,7 @@ def check_permission(user_id, operation, resource, action):
         result = pcs.check_permission(context)
         
         # Output the result
-        click.echo(f"Permission check result: {result}")
+        _ = click.echo(f"Permission check result: {result}")
         click.echo(json.dumps({
             "user_id": user_id,
             "operation": operation,
@@ -54,9 +51,9 @@ def check_permission(user_id, operation, resource, action):
         }, indent=2, ensure_ascii=False))
     except Exception as e:
         click.echo(f"Error checking permission: {e}", err=True)
-        sys.exit(1)
+        _ = sys.exit(1)
 
-@security.command()
+_ = @security.command()
 @click.option('--user-id', default='test_user', help='User ID for the test')
 @click.option('--limit', default=10, help='Number of recent events to show')
 def audit_log(user_id, limit):
@@ -73,7 +70,7 @@ def audit_log(user_id, limit):
             events = [event for event in events if event.user_id == user_id]
             
         # Output the events
-        click.echo(f"Recent audit events ({len(events)} found):")
+        _ = click.echo(f"Recent audit events ({len(events)} found):")
         for event in events:
             click.echo(json.dumps({
                 "timestamp": event.timestamp,
@@ -86,9 +83,9 @@ def audit_log(user_id, limit):
             }, indent=2, ensure_ascii=False))
     except Exception as e:
         click.echo(f"Error retrieving audit log: {e}", err=True)
-        sys.exit(1)
+        _ = sys.exit(1)
 
-@security.command()
+_ = @security.command()
 @click.option('--user-id', prompt='User ID', help='User ID for sandbox execution')
 @click.option('--code', prompt='Code to execute', help='Python code to execute in sandbox')
 def sandbox_test(user_id, code):
@@ -101,7 +98,7 @@ def sandbox_test(user_id, code):
         # Test code
         test_code = f'''
 class TestExecutor:
-    def __init__(self, config=None):
+    def __init__(self, config=None) -> None:
         pass
         
     def execute(self, input_data):
@@ -119,15 +116,15 @@ class TestExecutor:
         
         # Output the result
         if error:
-            click.echo(f"Error: {error}")
+            _ = click.echo(f"Error: {error}")
         else:
-            click.echo("Sandbox execution result:")
+            _ = click.echo("Sandbox execution result:")
             click.echo(json.dumps(result, indent=2, ensure_ascii=False))
     except Exception as e:
         click.echo(f"Error in sandbox test: {e}", err=True)
-        sys.exit(1)
+        _ = sys.exit(1)
 
-@security.command()
+_ = @security.command()
 def config_show():
     """Show current security configuration"""
     try:
@@ -163,11 +160,11 @@ def config_show():
                 })
         
         # Output the configuration
-        click.echo("Current security configuration:")
+        _ = click.echo("Current security configuration:")
         click.echo(json.dumps(config_dict, indent=2, ensure_ascii=False))
     except Exception as e:
         click.echo(f"Error getting configuration: {e}", err=True)
-        sys.exit(1)
+        _ = sys.exit(1)
 
 if __name__ == '__main__':
-    security()
+    _ = security()

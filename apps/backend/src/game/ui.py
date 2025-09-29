@@ -1,7 +1,7 @@
 import pygame
 
 class DialogueBox:
-    def __init__(self, game):
+    def __init__(self, game) -> None:
         self.game = game
         self.is_active = False
         self.text = ""

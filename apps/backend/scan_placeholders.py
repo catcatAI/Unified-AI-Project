@@ -4,14 +4,13 @@ Placeholder Scanner Script
 Scans the codebase for TODO placeholders and generates a report.
 """
 
-import os
 import re
 from pathlib import Path
 from typing import List, Dict
 from datetime import datetime
 
 class PlaceholderScanner:
-    def __init__(self, root_dir: str = "."):
+    def __init__(self, root_dir: str = ".") -> None:
         self.root_dir = Path(root_dir)
         # Regex to find TODOs like `TODO(type): description`
         self.placeholder_pattern = re.compile(r'#\s*TODO\((?P<type>\w+)\):\s*(?P<description>.+)', re.IGNORECASE)
@@ -28,11 +27,11 @@ class PlaceholderScanner:
                 match = self.placeholder_pattern.search(line)
                 if match:
                     placeholders.append({
-                        'file': str(file_path),
+                        _ = 'file': str(file_path),
                         'line': line_num,
-                        'type': match.group('type').lower(),
-                        'description': match.group('description').strip(),
-                        'content': line.strip(),
+                        _ = 'type': match.group('type').lower(),
+                        _ = 'description': match.group('description').strip(),
+                        _ = 'content': line.strip(),
                     })
         except Exception as e:
             print(f"❌ Error scanning file: {file_path} - {e}")
@@ -72,9 +71,9 @@ class PlaceholderScanner:
         for placeholder in self.results:
             category = placeholder.get('type', 'unknown')
             if category in categories:
-                categories[category].append(placeholder)
+                _ = categories[category].append(placeholder)
             else:
-                categories['unknown'].append(placeholder)
+                _ = categories['unknown'].append(placeholder)
 
         return categories
 
@@ -99,7 +98,7 @@ class PlaceholderScanner:
 
         return report
 
-def main():
+def main() -> None:
     """Main function to run the scanner."""
     print("🚀 Initializing Placeholder Scanner...")
 

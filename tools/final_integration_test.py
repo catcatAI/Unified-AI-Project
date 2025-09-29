@@ -5,16 +5,15 @@ Tests the integration of components that we've verified work correctly
 """
 
 import sys
-import json
 from pathlib import Path
 
 # Add the backend src directory to the path
 backend_src = Path(__file__).parent.parent / "apps" / "backend" / "src"
-sys.path.insert(0, str(backend_src))
+_ = sys.path.insert(0, str(backend_src))
 
-def test_security_integration():
+def test_security_integration() -> None:
     """Test the integration of security components"""
-    print("Testing security components integration...")
+    _ = print("Testing security components integration...")
     
     try:
         # Import security components
@@ -53,7 +52,7 @@ def test_security_integration():
         if has_permission:
             safe_code = '''
 class DataProcessor:
-    def __init__(self, config=None):
+    def __init__(self, config=None) -> None:
         pass
         
     def process(self, data):
@@ -80,33 +79,33 @@ class DataProcessor:
                 details={"operation": "data_processing", "result_available": (result is not None)}
             )
             
-            print(f"  Permission granted: {has_permission}")
-            print(f"  Sandbox execution successful: {error is None}")
-            print(f"  Result: {result}")
+            _ = print(f"  Permission granted: {has_permission}")
+            _ = print(f"  Sandbox execution successful: {error is None}")
+            _ = print(f"  Result: {result}")
         else:
             print(f"  Permission denied for operation")
             
         # 5. Check audit logs
         recent_events = audit_logger.get_recent_events(5)
-        print(f"  Audit events recorded: {len(recent_events)}")
+        _ = print(f"  Audit events recorded: {len(recent_events)}")
         
-        print("Security integration test passed!")
+        _ = print("Security integration test passed!")
         return True
         
     except Exception as e:
-        print(f"Error during security integration test: {e}")
+        _ = print(f"Error during security integration test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def test_ai_editor_integration():
+def test_ai_editor_integration() -> None:
     """Test the integration of AI editor components"""
-    print("Testing AI editor components integration...")
+    _ = print("Testing AI editor components integration...")
     
     try:
         # Import AI editor components
-        from core.services.ai_editor import DataProcessor
-        from core.services.ai_virtual_input_service import AIVirtualInputService
+        from apps.backend.src.core.services.ai_editor import DataProcessor
+        from apps.backend.src.core.services.ai_virtual_input_service import AIVirtualInputService
         
         # Create AI editor components
         data_processor = DataProcessor()
@@ -119,7 +118,7 @@ def test_ai_editor_integration():
         text_data = "This is a sample text for testing the AI Editor functionality. It contains multiple sentences and should be processed correctly."
         
         processed_text = data_processor.process_data(text_data, 'text')
-        print(f"  Text processing completed: {processed_text is not None}")
+        _ = print(f"  Text processing completed: {processed_text is not None}")
         
         # 2. Process structured data
         structured_data = {
@@ -131,7 +130,7 @@ def test_ai_editor_integration():
         }
         
         processed_structured = data_processor.process_data(structured_data, 'structured')
-        print(f"  Structured data processing completed: {processed_structured is not None}")
+        _ = print(f"  Structured data processing completed: {processed_structured is not None}")
         
         # 3. Simulate virtual input interaction
         virtual_input.process_mouse_command({
@@ -139,26 +138,26 @@ def test_ai_editor_integration():
             "relative_x": 0.5,
             "relative_y": 0.5
         })
-        print(f"  Virtual cursor moved to center")
+        _ = print(f"  Virtual cursor moved to center")
         
-        print("AI editor integration test passed!")
+        _ = print("AI editor integration test passed!")
         return True
         
     except Exception as e:
-        print(f"Error during AI editor integration test: {e}")
+        _ = print(f"Error during AI editor integration test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def test_component_compatibility():
+def test_component_compatibility() -> None:
     """Test that components can work together"""
-    print("Testing component compatibility...")
+    _ = print("Testing component compatibility...")
     
     try:
         # Import components
         from security.permission_control import PermissionControlSystem, PermissionContext, PermissionType
         from security.audit_logger import AuditLogger
-        from core.services.ai_editor import DataProcessor
+        from apps.backend.src.core.services.ai_editor import DataProcessor
         
         # Create components
         permission_system = PermissionControlSystem()
@@ -201,24 +200,24 @@ def test_component_compatibility():
                 details={"word_count": result.get("processed_data", {}).get("word_count", 0) if result else 0}
             )
             
-            print(f"  Components work together: {result is not None}")
+            _ = print(f"  Components work together: {result is not None}")
         else:
             print(f"  Permission denied for integration test")
             
-        print("Component compatibility test passed!")
+        _ = print("Component compatibility test passed!")
         return True
         
     except Exception as e:
-        print(f"Error during component compatibility test: {e}")
+        _ = print(f"Error during component compatibility test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def main():
+def main() -> None:
     """Main test function"""
-    print("Final System Integration Test")
+    _ = print("Final System Integration Test")
     print("=" * 40)
-    print()
+    _ = print()
     
     # Run all tests
     try:
@@ -227,16 +226,16 @@ def main():
         test3 = test_component_compatibility()
         
         if test1 and test2 and test3:
-            print("\nAll final integration tests completed successfully!")
-            print("The Unified AI Project components are properly integrated!")
+            _ = print("\nAll final integration tests completed successfully!")
+            _ = print("The Unified AI Project components are properly integrated!")
             return True
         else:
-            print("\nSome final integration tests failed!")
+            _ = print("\nSome final integration tests failed!")
             return False
     except Exception as e:
-        print(f"Error during final integration testing: {e}")
+        _ = print(f"Error during final integration testing: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
 if __name__ == "__main__":

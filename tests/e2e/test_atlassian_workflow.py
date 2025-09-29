@@ -4,8 +4,6 @@ Atlassian 端到端工作流程测试
 import pytest
 import requests
 import time
-from typing import Dict, Any
-
 # 假设后端服务运行在本地
 BASE_URL = "http://localhost:8000"
 
@@ -19,9 +17,9 @@ class TestAtlassianEndToEndWorkflow:
             response = requests.get(f"{BASE_URL}/health")
             assert response.status_code == 200
         except requests.exceptions.ConnectionError:
-            pytest.skip("后端服务未运行，跳过端到端测试")
+            _ = pytest.skip("后端服务未运行，跳过端到端测试")
     
-    def test_atlassian_full_workflow(self):
+    def test_atlassian_full_workflow(self) -> None:
         """测试完整的 Atlassian 工作流程"""
         # 1. 配置 Atlassian 集成
         config_data = {
@@ -38,7 +36,7 @@ class TestAtlassianEndToEndWorkflow:
         assert config_result["success"] is True
         
         # 2. 检查服务状态
-        time.sleep(1)  # 等待配置生效
+        _ = time.sleep(1)  # 等待配置生效
         
         response = requests.get(f"{BASE_URL}/api/v1/atlassian/status")
         assert response.status_code == 200
@@ -67,7 +65,7 @@ class TestAtlassianEndToEndWorkflow:
             assert "spaces" in spaces_result
             assert "count" in spaces_result
     
-    def test_offline_mode_handling(self):
+    def test_offline_mode_handling(self) -> None:
         """测试离线模式处理"""
         # 模拟离线状态下的配置尝试
         config_data = {
@@ -87,4 +85,4 @@ class TestAtlassianEndToEndWorkflow:
         assert response.status_code == 200
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    _ = pytest.main([__file__])

@@ -9,7 +9,7 @@ import os
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzerModule
+from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
 
 # Create an instance of the ContentAnalyzerModule
 analyzer = ContentAnalyzerModule()
@@ -33,7 +33,7 @@ for rel in kg_data['relationships']:
 
 print(f"Found has_capital relationship: {found_relationship}")
 
-def test_content_analyzer():
+def test_content_analyzer() -> None:
     # Initialize the ContentAnalyzerModule
     analyzer = ContentAnalyzerModule()
     

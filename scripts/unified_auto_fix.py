@@ -4,28 +4,20 @@
 支持: 單純測試、測試後自動修復、單純自動修復、自動修復後自動測試
 """
 
-import os
 import sys
 import json
 import traceback
 import argparse
 import time
 from pathlib import Path
-from typing import List, Tuple, Dict, Set, Optional
-from enum import Enum
-
-# 导入新架构模块
-from core.fix_engine import FixEngine, FixType, FixStatus
-from core.test_runner import TestRunner, TestType, TestScope
-from core.environment_checker import EnvironmentChecker, EnvironmentComponent
-from core.report_generator import ReportGenerator, ReportType, ReportFormat
-from core.config_manager import ConfigManager, ConfigType
+from apps.backend.src.core.fix_engine import FixEngine, FixType, FixStatus
+from apps.backend.src.core.test_runner import TestRunner, TestType, TestScope
+from apps.backend.src.core.environment_checker import EnvironmentChecker, EnvironmentComponent
 from modules.import_fixer import ImportFixer
 from modules.dependency_fixer import DependencyFixer
 from modules.syntax_fixer import SyntaxFixer
 from modules.cleanup_module import CleanupModule
 from utils.file_utils import FileUtils
-from utils.process_utils import ProcessUtils, ExecutionMode
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -50,7 +42,7 @@ class ExecutionScope(Enum):
 class UnifiedAutoFix:
     """统一自动修复系统 - 使用新架构"""
     
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
         self.backend_root = project_root / "apps" / "backend"
         self.src_dir = self.backend_root / "src"
@@ -73,23 +65,23 @@ class UnifiedAutoFix:
         self.cleanup_module = CleanupModule(project_root)
         
         # 注册修复模块到修复引擎
-        self.fix_engine.register_fix_module("import_fixer", self.import_fixer)
-        self.fix_engine.register_fix_module("dependency_fixer", self.dependency_fixer)
-        self.fix_engine.register_fix_module("syntax_fixer", self.syntax_fixer)
-        self.fix_engine.register_fix_module("cleanup_module", self.cleanup_module)
+        _ = self.fix_engine.register_fix_module("import_fixer", self.import_fixer)
+        _ = self.fix_engine.register_fix_module("dependency_fixer", self.dependency_fixer)
+        _ = self.fix_engine.register_fix_module("syntax_fixer", self.syntax_fixer)
+        _ = self.fix_engine.register_fix_module("cleanup_module", self.cleanup_module)
         
         # 设置默认启用的修复类型
-        self.fix_engine.enable_fix_type(FixType.IMPORT)
-        self.fix_engine.enable_fix_type(FixType.DEPENDENCY)
-        self.fix_engine.enable_fix_type(FixType.SYNTAX)
-        self.fix_engine.enable_fix_type(FixType.CLEANUP)
+        _ = self.fix_engine.enable_fix_type(FixType.IMPORT)
+        _ = self.fix_engine.enable_fix_type(FixType.DEPENDENCY)
+        _ = self.fix_engine.enable_fix_type(FixType.SYNTAX)
+        _ = self.fix_engine.enable_fix_type(FixType.CLEANUP)
         
         self.operation_mode = OperationMode.PURE_TEST
         self.execution_scope = ExecutionScope.PROJECT_WIDE
         self.specific_target = None
         
         self.report = {
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            _ = "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "operation_mode": None,
             "execution_scope": None,
             "specific_target": None,
@@ -156,8 +148,8 @@ class UnifiedAutoFix:
                 
         except Exception as e:
             error_msg = f"运行测试时出错: {str(e)}"
-            print(f"✗ {error_msg}")
-            self.report["errors"].append(error_msg)
+            _ = print(f"✗ {error_msg}")
+            _ = self.report["errors"].append(error_msg)
             return False
                 
     def run_auto_fix(self) -> bool:
@@ -170,7 +162,7 @@ class UnifiedAutoFix:
             
             # 记录修复结果
             self.report["fix_results"] = {
-                "total_fixes": len(fix_results),
+                _ = "total_fixes": len(fix_results),
                 "successful_fixes": sum(1 for r in fix_results if r.status == FixStatus.SUCCESS),
                 "failed_fixes": sum(1 for r in fix_results if r.status == FixStatus.FAILED),
                 "fixes_details": [
@@ -191,25 +183,25 @@ class UnifiedAutoFix:
             successful = self.report["fix_results"]["successful_fixes"]
             failed = self.report["fix_results"]["failed_fixes"]
             
-            print(f"修复完成: {successful}/{total} 成功, {failed} 失败")
+            _ = print(f"修复完成: {successful}/{total} 成功, {failed} 失败")
             
             return self.report["fix_results"]["success"]
                 
         except Exception as e:
             error_msg = f"运行自动修复时出错: {str(e)}"
-            print(f"✗ {error_msg}")
-            self.report["errors"].append(error_msg)
+            _ = print(f"✗ {error_msg}")
+            _ = self.report["errors"].append(error_msg)
             return False
                 
     def execute(self) -> bool:
         """执行选定的操作模式 - 使用新架构"""
         print(f"\n=== 开始执行 {self.operation_mode.value} 模式 ===")
-        print(f"执行范围: {self.execution_scope.value}")
+        _ = print(f"执行范围: {self.execution_scope.value}")
         if self.specific_target:
-            print(f"特定目标: {self.specific_target}")
+            _ = print(f"特定目标: {self.specific_target}")
         
         # 首先检查环境
-        print("检查执行环境...")
+        _ = print("检查执行环境...")
         env_success = self.check_environment()
         
         success = False
@@ -219,7 +211,7 @@ class UnifiedAutoFix:
             if env_success:
                 success = self.run_tests()
             else:
-                print("环境检查失败，跳过测试")
+                _ = print("环境检查失败，跳过测试")
                 success = False
             
         elif self.operation_mode == OperationMode.TEST_THEN_FIX:
@@ -227,13 +219,13 @@ class UnifiedAutoFix:
             if env_success:
                 test_success = self.run_tests()
                 if not test_success:
-                    print("测试失败，开始自动修复...")
+                    _ = print("测试失败，开始自动修复...")
                     success = self.run_auto_fix()
                 else:
-                    print("测试通过，跳过修复")
+                    _ = print("测试通过，跳过修复")
                     success = True
             else:
-                print("环境检查失败，跳过测试和修复")
+                _ = print("环境检查失败，跳过测试和修复")
                 success = False
                 
         elif self.operation_mode == OperationMode.PURE_FIX:
@@ -241,7 +233,7 @@ class UnifiedAutoFix:
             if env_success:
                 success = self.run_auto_fix()
             else:
-                print("环境检查失败，跳过修复")
+                _ = print("环境检查失败，跳过修复")
                 success = False
             
         elif self.operation_mode == OperationMode.FIX_THEN_TEST:
@@ -249,20 +241,20 @@ class UnifiedAutoFix:
             if env_success:
                 fix_success = self.run_auto_fix()
                 if fix_success:
-                    print("修复完成，开始测试...")
+                    _ = print("修复完成，开始测试...")
                     success = self.run_tests()
                 else:
-                    print("修复失败，跳过测试")
+                    _ = print("修复失败，跳过测试")
                     success = False
             else:
-                print("环境检查失败，跳过修复和测试")
+                _ = print("环境检查失败，跳过修复和测试")
                 success = False
                 
         # 生成总结报告
-        self._generate_summary(success)
+        _ = self._generate_summary(success)
         
         # 保存详细报告
-        self._save_detailed_reports()
+        _ = self._save_detailed_reports()
         
         return success
         
@@ -291,7 +283,7 @@ class UnifiedAutoFix:
             
             # 记录环境检查结果
             self.report["environment_results"] = {
-                "summary": self.environment_checker.get_environment_summary(),
+                _ = "summary": self.environment_checker.get_environment_summary(),
                 "details": {
                     component: {
                         "status": result.status,
@@ -307,14 +299,14 @@ class UnifiedAutoFix:
             
             # 输出环境摘要
             summary = self.report["environment_results"]["summary"]
-            print(f"环境检查: {summary['healthy_components']}/{summary['total_components']} 健康")
+            _ = print(f"环境检查: {summary['healthy_components']}/{summary['total_components']} 健康")
             
             return self.report["environment_results"]["success"]
                 
         except Exception as e:
             error_msg = f"检查环境时出错: {str(e)}"
-            print(f"✗ {error_msg}")
-            self.report["errors"].append(error_msg)
+            _ = print(f"✗ {error_msg}")
+            _ = self.report["errors"].append(error_msg)
             return False
         
     def _generate_summary(self, success: bool):
@@ -324,7 +316,7 @@ class UnifiedAutoFix:
             "operation_mode": self.operation_mode.value,
             "execution_scope": self.execution_scope.value,
             "specific_target": self.specific_target,
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+            _ = "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
         }
         
         if self.report["test_results"]:
@@ -336,10 +328,10 @@ class UnifiedAutoFix:
         self.report["summary"] = summary
         
         print(f"\n=== 执行总结 ===")
-        print(f"操作模式: {summary['operation_mode']}")
-        print(f"执行范围: {summary['execution_scope']}")
+        _ = print(f"操作模式: {summary['operation_mode']}")
+        _ = print(f"执行范围: {summary['execution_scope']}")
         if summary['specific_target']:
-            print(f"特定目标: {summary['specific_target']}")
+            _ = print(f"特定目标: {summary['specific_target']}")
         print(f"总体结果: {'✓ 成功' if success else '✗ 失败'}")
         
         if "test_success" in summary:
@@ -356,9 +348,9 @@ class UnifiedAutoFix:
         try:
             with open(report_path, 'w', encoding='utf-8') as f:
                 json.dump(self.report, f, ensure_ascii=False, indent=2)
-            print(f"✓ 执行报告已保存到 {report_path}")
+            _ = print(f"✓ 执行报告已保存到 {report_path}")
         except Exception as e:
-            print(f"✗ 保存执行报告时出错: {e}")
+            _ = print(f"✗ 保存执行报告时出错: {e}")
     
     def _save_detailed_reports(self):
         """保存详细报告 - 使用新架构"""
@@ -377,7 +369,7 @@ class UnifiedAutoFix:
                     "tests_skipped": self.report["test_results"]["tests_skipped"],
                     "success": self.report["test_results"]["success"]
                 }]
-                self.report_generator.generate_test_report(test_results_data)
+                _ = self.report_generator.generate_test_report(test_results_data)
             
             # 保存修复报告
             if self.report.get("fix_results"):
@@ -387,7 +379,7 @@ class UnifiedAutoFix:
                     "files_fixed": self.report["fix_results"]["successful_fixes"],
                     "overall_success": self.report["fix_results"]["success"]
                 }
-                self.report_generator.generate_fix_report(fix_results_data)
+                _ = self.report_generator.generate_fix_report(fix_results_data)
             
             # 保存环境检查报告
             if self.report.get("environment_results"):
@@ -395,26 +387,26 @@ class UnifiedAutoFix:
                     "results": self.report["environment_results"]["details"],
                     "summary": self.report["environment_results"]["summary"]
                 }
-                self.report_generator.generate_environment_report(env_results_data)
+                _ = self.report_generator.generate_environment_report(env_results_data)
             
             # 生成HTML和Markdown报告
             if self.report.get("test_results") or self.report.get("fix_results"):
                 summary_data = {
                     "title": "Unified AI Project 执行报告",
                     "generated_at": self.report["timestamp"],
-                    "project_root": str(self.project_root),
-                    "summary": self.report.get("summary", {}),
-                    "test_results": self.report.get("test_results", {}),
-                    "fix_results": self.report.get("fix_results", {}),
-                    "environment_results": self.report.get("environment_results", {})
+                    _ = "project_root": str(self.project_root),
+                    _ = "summary": self.report.get("summary", {}),
+                    _ = "test_results": self.report.get("test_results", {}),
+                    _ = "fix_results": self.report.get("fix_results", {}),
+                    _ = "environment_results": self.report.get("environment_results", {})
                 }
                 
-                self.report_generator.generate_html_report(summary_data)
-                self.report_generator.generate_markdown_report(summary_data)
+                _ = self.report_generator.generate_html_report(summary_data)
+                _ = self.report_generator.generate_markdown_report(summary_data)
                 
         except Exception as e:
-            print(f"✗ 保存详细报告时出错: {e}")
-            self.report["errors"].append(f"保存详细报告失败: {e}")
+            _ = print(f"✗ 保存详细报告时出错: {e}")
+            _ = self.report["errors"].append(f"保存详细报告失败: {e}")
 
 def parse_arguments():
     """解析命令行参数"""
@@ -476,12 +468,12 @@ def parse_arguments():
     
     return parser.parse_args()
 
-def main():
+def main() -> None:
     """主函数 - 使用新架构"""
     args = parse_arguments()
     
     print("=== Unified AI Project 统一自动修复工具 (新架构) ===")
-    print(f"项目根目录: {PROJECT_ROOT}")
+    _ = print(f"项目根目录: {PROJECT_ROOT}")
     
     try:
         # 创建统一自动修复实例
@@ -489,38 +481,38 @@ def main():
         
         # 设置操作模式
         mode = OperationMode(args.mode)
-        auto_fix.set_operation_mode(mode)
+        _ = auto_fix.set_operation_mode(mode)
         
         # 设置执行范围
         scope = ExecutionScope(args.scope)
-        auto_fix.set_execution_scope(scope, args.target)
+        _ = auto_fix.set_execution_scope(scope, args.target)
         
         # 加载配置
         config = auto_fix.config_manager.load_config(ConfigType.FIX)
         if config.get("fix_settings", {}).get("verbose", False):
-            print("详细模式已启用")
+            _ = print("详细模式已启用")
         
         # 执行操作
         success = auto_fix.execute()
         
         # 保存报告
         report_path = Path(args.report) if args.report else None
-        auto_fix.save_report(report_path)
+        _ = auto_fix.save_report(report_path)
         
         # 清理资源
-        auto_fix.process_utils.cleanup_processes()
+        _ = auto_fix.process_utils.cleanup_processes()
         
         # 返回适当的退出码
         return 0 if success else 1
         
     except KeyboardInterrupt:
-        print("\n用户中断操作")
+        _ = print("\n用户中断操作")
         return 1
     except Exception as e:
-        print(f"执行过程中出现错误: {e}")
+        _ = print(f"执行过程中出现错误: {e}")
         if hasattr(args, 'verbose') and args.verbose:
-            traceback.print_exc()
+            _ = traceback.print_exc()
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    _ = sys.exit(main())

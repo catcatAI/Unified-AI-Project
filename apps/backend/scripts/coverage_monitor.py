@@ -4,28 +4,26 @@
 用于监控测试覆盖率趋势并设置告警机制
 """
 
-import os
 import sys
 import json
 import sqlite3
 from pathlib import Path
-from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 import logging
 
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 
 class CoverageMonitor:
     """测试覆盖率监控器"""
     
-    def __init__(self, project_root: str = None, db_path: str = None):
+    def __init__(self, project_root: str = None, db_path: str = None) -> None:
         """
         初始化覆盖率监控器
         
@@ -70,7 +68,7 @@ class CoverageMonitor:
                     line_rate REAL NOT NULL,
                     branch_rate REAL,
                     class_count INTEGER,
-                    FOREIGN KEY (history_id) REFERENCES coverage_history (id)
+                    _ = FOREIGN KEY (history_id) REFERENCES coverage_history (id)
                 )
             """)
             
@@ -84,7 +82,7 @@ class CoverageMonitor:
                     filename TEXT,
                     line_rate REAL NOT NULL,
                     branch_rate REAL,
-                    FOREIGN KEY (history_id) REFERENCES coverage_history (id)
+                    _ = FOREIGN KEY (history_id) REFERENCES coverage_history (id)
                 )
             """)
             
@@ -122,7 +120,7 @@ class CoverageMonitor:
                 INSERT INTO coverage_history 
                 (timestamp, line_rate, branch_rate, complexity, lines_valid, lines_covered,
                  branches_valid, branches_covered, commit_hash, build_number, environment)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                _ = VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 timestamp,
                 summary.get("line_rate", 0),
@@ -145,7 +143,7 @@ class CoverageMonitor:
                 cursor.execute("""
                     INSERT INTO module_coverage 
                     (history_id, module_name, line_rate, branch_rate, class_count)
-                    VALUES (?, ?, ?, ?, ?)
+                    _ = VALUES (?, ?, ?, ?, ?)
                 """, (
                     history_id,
                     module_name,
@@ -160,7 +158,7 @@ class CoverageMonitor:
                 cursor.execute("""
                     INSERT INTO low_coverage_areas 
                     (history_id, package, class_name, filename, line_rate, branch_rate)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    _ = VALUES (?, ?, ?, ?, ?, ?)
                 """, (
                     history_id,
                     area.get("package", ""),
@@ -211,7 +209,7 @@ class CoverageMonitor:
             query = f"""
                 SELECT timestamp, line_rate, branch_rate, complexity, commit_hash, build_number
                 FROM coverage_history
-                WHERE {" AND ".join(query_conditions)}
+                _ = WHERE {" AND ".join(query_conditions)}
                 ORDER BY timestamp ASC
             """
             
@@ -322,7 +320,7 @@ class CoverageMonitor:
                 JOIN module_coverage m ON h.id = m.history_id
                 WHERE h.timestamp >= ? AND h.timestamp <= ? AND m.module_name = ?
                 ORDER BY h.timestamp ASC
-            """, (start_date, end_date, module_name))
+            _ = """, (start_date, end_date, module_name))
             
             rows = cursor.fetchall()
             conn.close()
@@ -457,7 +455,7 @@ class CoverageMonitor:
             cursor.execute("""
                 DELETE FROM coverage_history
                 WHERE timestamp < ?
-            """, (cutoff_date,))
+            _ = """, (cutoff_date,))
             
             deleted_count = cursor.rowcount
             
@@ -473,7 +471,7 @@ class CoverageMonitor:
             return False
 
 
-def main():
+def main() -> None:
     """主函数"""
     import argparse
     

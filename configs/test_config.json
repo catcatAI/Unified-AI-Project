@@ -1,0 +1,16 @@
+{
+  "test_users": {
+    "default_email": "test@example.com",
+    "admin_email": "admin@example.com",
+    "user_email": "user@example.com"
+  },
+  "test_data": {
+    "default_project_key": "TEST",
+    "default_space_key": "TST",
+    "default_issue_key": "TEST-1"
+  },
+  "api_endpoints": {
+    "confluence_base_url": "https://test.atlassian.net/wiki",
+    "jira_base_url": "https://test.atlassian.net"
+  }
+}

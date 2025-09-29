@@ -1,12 +1,10 @@
 import asyncio
 import logging
-from typing import List, Dict, Any
 import sys
 import os
-import time
 
 # Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+project_root: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, project_root)
 
 try:
@@ -15,17 +13,17 @@ try:
     from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 except ImportError:
     # Fall back to absolute imports (for when running as a script)
-    from apps.backend.src.ai.agents.base_agent import BaseAgent
+    from apps.backend.src.core_ai.agents.base_agent import BaseAgent
     from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class MonitoringDemoAgent(BaseAgent):
     """
     A demo agent that showcases the monitoring and health check features.
     """
     
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         # Define capabilities for this agent
         capabilities = [
             {
@@ -42,7 +40,7 @@ class MonitoringDemoAgent(BaseAgent):
             }
         ]
         
-        super().__init__(agent_id, capabilities, "MonitoringDemoAgent")
+        super.__init__(agent_id, capabilities, "MonitoringDemoAgent")
         self._simulated_errors = 0  # For demo purposes
     
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
@@ -52,11 +50,11 @@ class MonitoringDemoAgent(BaseAgent):
         logger.info(f"[{self.agent_id}] Handling task request from {sender_ai_id}")
         
         # Send heartbeat to monitoring system
-        await self.send_heartbeat()
+        _ = await self.send_heartbeat
         
         request_id = task_payload.get("request_id", "")
         capability_id = task_payload.get("capability_id_filter", "")
-        parameters = task_payload.get("parameters", {})
+        parameters = task_payload.get("parameters", )
         
         try:
             # Process based on capability
@@ -101,7 +99,7 @@ class MonitoringDemoAgent(BaseAgent):
         
         if action == "status":
             # Get health report
-            health_report = await self.get_health_report()
+            health_report = await self.get_health_report
             return {
                 "status": "success",
                 "health_report": health_report,
@@ -115,7 +113,7 @@ class MonitoringDemoAgent(BaseAgent):
             
             # Report error to monitoring system
             if self.monitoring_manager:
-                await self.monitoring_manager.report_error(self.agent_id, error_msg)
+                _ = await self.monitoring_manager.report_error(self.agent_id, error_msg)
             
             return {
                 "status": "error_simulated",
@@ -129,7 +127,7 @@ class MonitoringDemoAgent(BaseAgent):
             duration = parameters.get("duration", random.uniform(0.1, 1.0))
             
             # Sleep to simulate work
-            await asyncio.sleep(duration)
+            _ = await asyncio.sleep(duration)
             
             # Report task result to monitoring system
             if self.monitoring_manager:
@@ -158,15 +156,15 @@ class MonitoringDemoAgent(BaseAgent):
         logger.info(f"[{self.agent_id}] Handling health check request")
         
         # Get detailed health information
-        health_report = await self.get_health_report()
+        health_report = await self.get_health_report
         
         # Add additional health information
         health_info = {
             "agent_id": self.agent_id,
             "agent_name": self.agent_name,
-            "is_healthy": self.is_healthy(),
+            "is_healthy": self.is_healthy,
             "is_running": self.is_running,
-            "uptime_seconds": asyncio.get_event_loop().time() - self._start_time if self._start_time else 0,
+            "uptime_seconds": asyncio.get_event_loop.time - self._start_time if self._start_time else 0,
             "task_count": self._task_counter,
             "simulated_errors": self._simulated_errors,
             "hsp_connected": self.hsp_connector.is_connected if self.hsp_connector else False
@@ -181,26 +179,26 @@ class MonitoringDemoAgent(BaseAgent):
             "message": "Health check completed"
         }
 
-async def main():
+async def main -> None:
     """
     Main function to run the monitoring demo agent.
     """
     import uuid
     
     # Create agent with a unique ID
-    agent_id = f"did:hsp:monitoring_demo_agent_{uuid.uuid4().hex[:8]}"
+    agent_id = f"did:hsp:monitoring_demo_agent_{uuid.uuid4.hex[:8]}"
     agent = MonitoringDemoAgent(agent_id)
     
     try:
         # Start the agent
-        await agent.start()
+        _ = await agent.start
         logger.info(f"Monitoring Demo Agent {agent_id} started successfully")
         
         # Keep the agent running and periodically send heartbeats
         while agent.is_running:
             # Send heartbeat every 5 seconds
-            await agent.send_heartbeat()
-            await asyncio.sleep(5)
+            _ = await agent.send_heartbeat
+            _ = await asyncio.sleep(5)
             
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt, shutting down...")
@@ -208,15 +206,15 @@ async def main():
         logger.error(f"Error in main: {e}")
     finally:
         # Stop the agent
-        await agent.stop()
+        _ = await agent.stop
         logger.info("Monitoring Demo Agent stopped")
 
 if __name__ == "__main__":
     # Set up logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
     # Run the agent
-    asyncio.run(main())
+    asyncio.run(main)

@@ -8,17 +8,14 @@ import logging
 import time
 import pickle
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
 from dataclasses import dataclass
 from pathlib import Path
-import json
-import re
 import aiohttp
 import hashlib
 
 from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector as RovoDevConnector
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 @dataclass
 class EndpointConfig:
@@ -40,48 +37,48 @@ class CacheEntry:
 class AtlassianBridge:
     """Atlassian 服务统一桥接层"""
     
-    def __init__(self, connector: RovoDevConnector):
+    def __init__(self, connector: RovoDevConnector) -> None:
         """初始化桥接层
         
         Args:
             connector: Rovo Dev 连接器实例
         """
         self.connector = connector
-        self.config = connector.config.get('atlassian', {})
+        self.config = connector.config.get('atlassian', )
         
         # 備用機制配置
-        self.fallback_config = self.config.get('rovo_dev', {}).get('fallback', {})
+        self.fallback_config = self.config.get('rovo_dev', ).get('fallback', )
         self.fallback_enabled = self.fallback_config.get('enabled', True)
         self.max_fallback_attempts = self.fallback_config.get('max_fallback_attempts', 5)
         self.fallback_delay = self.fallback_config.get('fallback_delay', 2.0)
         
         # 端點配置
-        self.endpoints = self._load_endpoint_configs()
-        self.current_endpoints = {}  # 當前使用的端點
-        self.endpoint_health = {}    # 端點健康狀態
+        self.endpoints = self._load_endpoint_configs
+        self.current_endpoints =   # 當前使用的端點
+        self.endpoint_health =     # 端點健康狀態
         
         # 緩存配置
         self.cache_enabled = self.fallback_config.get('local_cache_enabled', True)
-        self.cache = {}
+        self.cache = 
         self.cache_dir = Path("data/atlassian_cache")
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         
         # 離線模式
         self.offline_mode = self.fallback_config.get('offline_mode', False)
-        self.offline_queue = []
+        self.offline_queue = 
         
         # 添加缺失的属性
         self.health_monitoring_task = None
     
     async def start(self):
         if self.fallback_enabled:
-            self.health_monitoring_task = asyncio.create_task(self._start_health_monitoring())
+            self.health_monitoring_task = asyncio.create_task(self._start_health_monitoring)
 
     async def close(self):
         """關閉橋接層，清理資源"""
         # 停止健康監控任務（如果有的話）
-        if self.health_monitoring_task and not self.health_monitoring_task.done():
-            self.health_monitoring_task.cancel()
+        if self.health_monitoring_task and not self.health_monitoring_task.done:
+            self.health_monitoring_task.cancel
             try:
                 await self.health_monitoring_task
             except asyncio.CancelledError:
@@ -89,21 +86,21 @@ class AtlassianBridge:
         # 注意：這裡不需要關閉 self.connector.session，因為它由 connector 自己管理
     
     async def __aenter__(self):
-        await self.start()
+        _ = await self.start
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()
+        _ = await self.close
 
     def _load_endpoint_configs(self) -> Dict[str, EndpointConfig]:
         """加載端點配置"""
-        endpoints = {}
+        endpoints = 
         
         # Confluence 配置
-        confluence_config = self.config.get('confluence', {})
+        confluence_config = self.config.get('confluence', )
         endpoints['confluence'] = EndpointConfig(
             primary_url=confluence_config.get('base_url', ''),
-            backup_urls=confluence_config.get('backup_urls', []),
+            backup_urls=confluence_config.get('backup_urls', ),
             timeout=confluence_config.get('timeout', 30.0),
             max_retries=confluence_config.get('max_retries', 3),
             retry_delay=confluence_config.get('retry_delay', 1.0),
@@ -111,10 +108,10 @@ class AtlassianBridge:
         )
         
         # Jira 配置
-        jira_config = self.config.get('jira', {})
+        jira_config = self.config.get('jira', )
         endpoints['jira'] = EndpointConfig(
             primary_url=jira_config.get('base_url', ''),
-            backup_urls=jira_config.get('backup_urls', []),
+            backup_urls=jira_config.get('backup_urls', ),
             timeout=jira_config.get('timeout', 30.0),
             max_retries=jira_config.get('max_retries', 3),
             retry_delay=jira_config.get('retry_delay', 1.0),
@@ -122,10 +119,10 @@ class AtlassianBridge:
         )
         
         # Bitbucket 配置
-        bitbucket_config = self.config.get('bitbucket', {})
+        bitbucket_config = self.config.get('bitbucket', )
         endpoints['bitbucket'] = EndpointConfig(
             primary_url=bitbucket_config.get('base_url', ''),
-            backup_urls=bitbucket_config.get('backup_urls', []),
+            backup_urls=bitbucket_config.get('backup_urls', ),
             timeout=bitbucket_config.get('timeout', 30.0),
             max_retries=bitbucket_config.get('max_retries', 3),
             retry_delay=bitbucket_config.get('retry_delay', 1.0),
@@ -150,7 +147,7 @@ class AtlassianBridge:
         for attempt, base_url in enumerate(urls_to_try):
             if attempt > 0:
                 logger.info(f"嘗試備用端點 {attempt}: {service}")
-                await asyncio.sleep(self.fallback_delay)
+                _ = await asyncio.sleep(self.fallback_delay)
         
             try:
                 # 構建完整 URL
@@ -160,7 +157,7 @@ class AtlassianBridge:
                     full_url = f"{base_url.rstrip('/')}/{endpoint.lstrip('/')}"
             
                 # 檢查緩存
-                if method.upper() == 'GET' and self.cache_enabled:
+                if method.upper == 'GET' and self.cache_enabled:
                     cached_result = await self._get_from_cache(full_url)
                     if cached_result:
                         logger.debug(f"從緩存返回結果: {full_url}")
@@ -172,13 +169,13 @@ class AtlassianBridge:
                 # 更新端點健康狀態
                 self.endpoint_health[f"{service}_{base_url}"] = {
                     'status': 'healthy',
-                    'last_check': datetime.now(),
-                    'response_time': time.time()
+                    'last_check': datetime.now,
+                    'response_time': time.time
                 }
             
                 # 緩存 GET 請求結果
-                if method.upper() == 'GET' and self.cache_enabled:
-                    await self._save_to_cache(full_url, result)
+                if method.upper == 'GET' and self.cache_enabled:
+                    _ = await self._save_to_cache(full_url, result)
             
                 # 更新當前端點
                 self.current_endpoints[service] = base_url
@@ -192,21 +189,21 @@ class AtlassianBridge:
                 # 更新端點健康狀態
                 self.endpoint_health[f"{service}_{base_url}"] = {
                     'status': 'unhealthy',
-                    'last_check': datetime.now(),
+                    'last_check': datetime.now,
                     'error': str(e)
                 }
             
                 # 如果是最後一個端點，檢查離線模式
                 if attempt == len(urls_to_try) - 1:
-                    if self.offline_mode and method.upper() == 'GET':
+                    if self.offline_mode and method.upper == 'GET':
                         cached_result = await self._get_from_cache(endpoint, allow_expired=True)
                         if cached_result:
                             logger.info(f"離線模式：從過期緩存返回結果")
                             return cached_result
                 
                     # 如果是寫操作，加入離線隊列
-                    if method.upper() in ['POST', 'PUT', 'DELETE']:
-                        await self._add_to_offline_queue(service, method, endpoint, kwargs)
+                    if method.upper in ['POST', 'PUT', 'DELETE']:
+                        _ = await self._add_to_offline_queue(service, method, endpoint, kwargs)
         
         # 所有端點都失敗
         if last_exception:
@@ -216,21 +213,21 @@ class AtlassianBridge:
     
     async def _get_from_cache(self, key: str, allow_expired: bool = False) -> Optional[Dict[str, Any]]:
         """從緩存獲取數據"""
-        cache_key = hashlib.md5(key.encode()).hexdigest()
+        cache_key = hashlib.md5(key.encode).hexdigest
         
         # 內存緩存
         if cache_key in self.cache:
             entry = self.cache[cache_key]
-            if allow_expired or (datetime.now() - entry.timestamp).seconds < entry.ttl:
+            if allow_expired or (datetime.now - entry.timestamp).seconds < entry.ttl:
                 return entry.data
         
         # 文件緩存
         cache_file = self.cache_dir / f"{cache_key}.pkl"
-        if cache_file.exists():
+        if cache_file.exists:
             try:
                 with open(cache_file, 'rb') as f:
                     entry = pickle.load(f)
-                if allow_expired or (datetime.now() - entry.timestamp).seconds < entry.ttl:
+                if allow_expired or (datetime.now - entry.timestamp).seconds < entry.ttl:
                     # 更新內存緩存
                     self.cache[cache_key] = entry
                     return entry.data
@@ -241,8 +238,8 @@ class AtlassianBridge:
     
     async def _save_to_cache(self, key: str, data: Dict[str, Any], ttl: int = 300):
         """保存數據到緩存"""
-        cache_key = hashlib.md5(key.encode()).hexdigest()
-        entry = CacheEntry(data=data, timestamp=datetime.now(), ttl=ttl)
+        cache_key = hashlib.md5(key.encode).hexdigest
+        entry = CacheEntry(data=data, timestamp=datetime.now, ttl=ttl)
         
         # 內存緩存
         self.cache[cache_key] = entry
@@ -262,7 +259,7 @@ class AtlassianBridge:
             'method': method,
             'endpoint': endpoint,
             'kwargs': kwargs,
-            'timestamp': datetime.now(),
+            'timestamp': datetime.now,
             'retry_count': 0
         }
         self.offline_queue.append(queue_item)
@@ -272,51 +269,51 @@ class AtlassianBridge:
         """啟動健康監控"""
         while True:
             try:
-                await self._check_endpoints_health()
-                await asyncio.sleep(60)  # 每分鐘檢查一次
+                _ = await self._check_endpoints_health
+                _ = await asyncio.sleep(60)  # 每分鐘檢查一次
             except Exception as e:
                 logger.error(f"健康檢查錯誤: {e}")
-                await asyncio.sleep(60)
+                _ = await asyncio.sleep(60)
     
     async def _check_endpoints_health(self):
         """檢查端點健康狀態"""
-        for service, config in self.endpoints.items():
+        for service, config in self.endpoints.items:
             # 檢查主端點
-            await self._check_endpoint_health(service, config.primary_url)
+            _ = await self._check_endpoint_health(service, config.primary_url)
             
             # 檢查備用端點
             for backup_url in config.backup_urls:
-                await self._check_endpoint_health(service, backup_url)
+                _ = await self._check_endpoint_health(service, backup_url)
     
     async def _check_endpoint_health(self, service: str, url: str):
         """檢查單個端點健康狀態"""
         try:
-            start_time = time.time()
+            start_time = time.time
             
             # 簡單的健康檢查請求
             health_endpoint = f"{url}/rest/api/space" if 'confluence' in url else f"{url}/rest/api/3/myself"
             
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession as session:
                 async with session.get(health_endpoint, timeout=10) as response:
-                    response_time = time.time() - start_time
+                    response_time = time.time - start_time
                     
                     if response.status == 200:
                         self.endpoint_health[f"{service}_{url}"] = {
                             'status': 'healthy',
-                            'last_check': datetime.now(),
+                            'last_check': datetime.now,
                             'response_time': response_time
                         }
                     else:
                         self.endpoint_health[f"{service}_{url}"] = {
                             'status': 'unhealthy',
-                            'last_check': datetime.now(),
+                            'last_check': datetime.now,
                             'status_code': response.status
                         }
                         
         except Exception as e:
             self.endpoint_health[f"{service}_{url}"] = {
                 'status': 'unhealthy',
-                'last_check': datetime.now(),
+                'last_check': datetime.now,
                 'error': str(e)
             }
     
@@ -325,7 +322,7 @@ class AtlassianBridge:
         if not self.offline_queue:
             return
         
-        processed_items = []
+        processed_items = 
         for item in self.offline_queue:
             try:
                 await self._make_request_with_fallback(
@@ -506,7 +503,7 @@ class AtlassianBridge:
         }
         
         result = await self._make_request_with_fallback('confluence', 'GET', endpoint, params=params)
-        return result.get('results', [])
+        return result.get('results', )
         
     # ==================== Jira 操作 ====================
     
@@ -623,7 +620,7 @@ class AtlassianBridge:
         endpoint = "rest/api/3/search"
         result = await self._make_request_with_fallback('jira', 'POST', endpoint, data=payload)
         
-        return result.get('issues', [])
+        return result.get('issues', )
         
     async def transition_jira_issue(
         self, 
@@ -693,7 +690,7 @@ class AtlassianBridge:
         endpoint = f"repositories/{workspace}"
         result = await self._make_request_with_fallback('bitbucket', 'GET', endpoint)
         
-        return result.get('values', [])
+        return result.get('values', )
         
     async def get_bitbucket_pull_requests(
         self, 
@@ -715,7 +712,7 @@ class AtlassianBridge:
         params = {'state': state}
         
         result = await self._make_request_with_fallback('bitbucket', 'GET', endpoint, params=params)
-        return result.get('values', [])
+        return result.get('values', )
         
     # ==================== 辅助方法 ====================
     
@@ -830,7 +827,7 @@ class AtlassianBridge:
         """
         endpoint = "rest/api/space"
         response = await self._make_request_with_fallback('confluence', 'GET', endpoint)
-        return response.get('results', [])
+        return response.get('results', )
     
     async def get_jira_projects(self) -> List[Dict[str, Any]]:
         """获取 Jira 项目列表

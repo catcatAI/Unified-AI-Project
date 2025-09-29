@@ -14,8 +14,8 @@ from datetime import datetime
 from pathlib import Path
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root: str = Path(__file__).parent.parent
+_ = sys.path.insert(0, str(project_root))
 
 class DebtType(Enum):
     """技术债务类型枚举"""
@@ -107,11 +107,11 @@ class TechnicalDebt:
 class TechnicalDebtTracker:
     """技术债务跟踪器"""
     
-    def __init__(self, tracking_file: str = "technical_debt.json"):
+    def __init__(self, tracking_file: str = "technical_debt.json") -> None:
         self.project_root = project_root
         self.tracking_file = self.project_root / tracking_file
         self.debts: Dict[str, TechnicalDebt] = {}
-        self.load_tracking_data()
+        _ = self.load_tracking_data()
         
     def load_tracking_data(self):
         """加载跟踪数据"""
@@ -122,20 +122,20 @@ class TechnicalDebtTracker:
                     for debt_data in data.get("debts", []):
                         debt = TechnicalDebt.from_dict(debt_data)
                         self.debts[debt.id] = debt
-                print(f"✅ 已加载 {len(self.debts)} 项技术债务数据")
+                _ = print(f"✅ 已加载 {len(self.debts)} 项技术债务数据")
             except Exception as e:
-                print(f"⚠️ 加载技术债务数据时出错: {e}")
+                _ = print(f"⚠️ 加载技术债务数据时出错: {e}")
         else:
-            print("ℹ️ 技术债务跟踪文件不存在，将创建新的跟踪数据")
-            self.initialize_default_debts()
+            _ = print("ℹ️ 技术债务跟踪文件不存在，将创建新的跟踪数据")
+            _ = self.initialize_default_debts()
             
     def save_tracking_data(self):
         """保存跟踪数据"""
         try:
             data = {
                 "debts": [debt.to_dict() for debt in self.debts.values()],
-                "last_updated": datetime.now().isoformat(),
-                "total_debts": len(self.debts)
+                _ = "last_updated": datetime.now().isoformat(),
+                _ = "total_debts": len(self.debts)
             }
             
             # 确保目录存在
@@ -143,9 +143,9 @@ class TechnicalDebtTracker:
             
             with open(self.tracking_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
-            print(f"✅ 技术债务数据已保存到 {self.tracking_file}")
+            _ = print(f"✅ 技术债务数据已保存到 {self.tracking_file}")
         except Exception as e:
-            print(f"❌ 保存技术债务数据时出错: {e}")
+            _ = print(f"❌ 保存技术债务数据时出错: {e}")
             
     def initialize_default_debts(self):
         """初始化默认技术债务"""
@@ -235,13 +235,13 @@ class TechnicalDebtTracker:
             assigned_to="架构团队"
         ))
         
-        print(f"✅ 已初始化 {len(self.debts)} 项默认技术债务")
+        _ = print(f"✅ 已初始化 {len(self.debts)} 项默认技术债务")
         
     def add_debt(self, debt: TechnicalDebt):
         """添加技术债务"""
         self.debts[debt.id] = debt
-        self.save_tracking_data()
-        print(f"✅ 已添加技术债务: {debt.title}")
+        _ = self.save_tracking_data()
+        _ = print(f"✅ 已添加技术债务: {debt.title}")
         
     def update_debt_status(self, debt_id: str, status: str, resolution: Optional[str] = None):
         """更新技术债务状态"""
@@ -252,10 +252,10 @@ class TechnicalDebtTracker:
                 debt.resolved_date = datetime.now().isoformat()
             if resolution:
                 debt.resolution = resolution
-            self.save_tracking_data()
-            print(f"✅ 已更新技术债务 {debt.title} 的状态为 {status}")
+            _ = self.save_tracking_data()
+            _ = print(f"✅ 已更新技术债务 {debt.title} 的状态为 {status}")
         else:
-            print(f"❌ 未找到技术债务 ID: {debt_id}")
+            _ = print(f"❌ 未找到技术债务 ID: {debt_id}")
             
     def get_debts_by_priority(self, priority: DebtPriority) -> List[TechnicalDebt]:
         """根据优先级获取技术债务"""
@@ -276,50 +276,50 @@ class TechnicalDebtTracker:
     def generate_debt_report(self) -> str:
         """生成技术债务报告"""
         report = []
-        report.append("# 技术债务报告")
-        report.append(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        report.append(f"总债务数: {len(self.debts)}")
-        report.append("")
+        _ = report.append("# 技术债务报告")
+        _ = report.append(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        _ = report.append(f"总债务数: {len(self.debts)}")
+        _ = report.append("")
         
         # 按状态分组统计
         status_counts = {}
         for debt in self.debts.values():
             status_counts[debt.status] = status_counts.get(debt.status, 0) + 1
             
-        report.append("## 状态统计")
+        _ = report.append("## 状态统计")
         for status, count in status_counts.items():
-            report.append(f"- {status}: {count}")
-        report.append("")
+            _ = report.append(f"- {status}: {count}")
+        _ = report.append("")
         
         # 按优先级分组统计
         priority_counts = {}
         for debt in self.debts.values():
             priority_counts[debt.priority.value] = priority_counts.get(debt.priority.value, 0) + 1
             
-        report.append("## 优先级统计")
+        _ = report.append("## 优先级统计")
         for priority, count in priority_counts.items():
-            report.append(f"- {priority}: {count}")
-        report.append("")
+            _ = report.append(f"- {priority}: {count}")
+        _ = report.append("")
         
         # 按类型分组统计
         type_counts = {}
         for debt in self.debts.values():
             type_counts[debt.debt_type.value] = type_counts.get(debt.debt_type.value, 0) + 1
             
-        report.append("## 类型统计")
+        _ = report.append("## 类型统计")
         for debt_type, count in type_counts.items():
-            report.append(f"- {debt_type}: {count}")
-        report.append("")
+            _ = report.append(f"- {debt_type}: {count}")
+        _ = report.append("")
         
         # 详细债务列表
-        report.append("## 详细债务列表")
+        _ = report.append("## 详细债务列表")
         status_order = ["open", "in_progress", "resolved", "wont_fix"]
         priority_order = [DebtPriority.CRITICAL, DebtPriority.HIGH, DebtPriority.MEDIUM, DebtPriority.LOW]
         
         for status in status_order:
             debts_by_status = self.get_debts_by_status(status)
             if debts_by_status:
-                report.append(f"### {status.upper()} ({len(debts_by_status)} 项)")
+                _ = report.append(f"### {status.upper()} ({len(debts_by_status)} 项)")
                 
                 # 按优先级排序
                 for priority in priority_order:
@@ -331,7 +331,7 @@ class TechnicalDebtTracker:
                             DebtPriority.MEDIUM: "中",
                             DebtPriority.LOW: "低"
                         }
-                        report.append(f"#### {priority_names[priority]}优先级")
+                        _ = report.append(f"#### {priority_names[priority]}优先级")
                         for debt in debts_by_priority:
                             priority_symbols = {
                                 DebtPriority.CRITICAL: "🔴",
@@ -353,45 +353,45 @@ class TechnicalDebtTracker:
                             }
                             debt_type_name = type_names.get(debt.debt_type, debt.debt_type.value)
                             
-                            report.append(f"- {symbol} {debt.title}")
-                            report.append(f"  - ID: {debt.id}")
-                            report.append(f"  - 类型: {debt_type_name}")
-                            report.append(f"  - 优先级: {priority_names[debt.priority]}")
-                            report.append(f"  - 文件: {debt.file_path or 'N/A'}")
+                            _ = report.append(f"- {symbol} {debt.title}")
+                            _ = report.append(f"  - ID: {debt.id}")
+                            _ = report.append(f"  - 类型: {debt_type_name}")
+                            _ = report.append(f"  - 优先级: {priority_names[debt.priority]}")
+                            _ = report.append(f"  - 文件: {debt.file_path or 'N/A'}")
                             if debt.estimated_hours:
-                                report.append(f"  - 预估工时: {debt.estimated_hours} 小时")
+                                _ = report.append(f"  - 预估工时: {debt.estimated_hours} 小时")
                             if debt.assigned_to:
-                                report.append(f"  - 负责人: {debt.assigned_to}")
+                                _ = report.append(f"  - 负责人: {debt.assigned_to}")
                             if debt.description:
-                                report.append(f"  - 描述: {debt.description}")
-                            report.append("")
-                report.append("")
+                                _ = report.append(f"  - 描述: {debt.description}")
+                            _ = report.append("")
+                _ = report.append("")
                 
         return "\n".join(report)
         
     def scan_for_debt_indicators(self):
         """扫描代码库中的技术债务指示器"""
-        print("🔍 正在扫描代码库中的技术债务指示器...")
+        _ = print("🔍 正在扫描代码库中的技术债务指示器...")
         
         # 常见的技术债务指示器
         debt_indicators = {
             "TODO": {
-                "pattern": r"#\s*TODO[:\s](.+)",
+                _ = "pattern": r"#\s*TODO[:\s](.+)",
                 "type": DebtType.MAINTAINABILITY,
                 "priority": DebtPriority.MEDIUM
             },
             "FIXME": {
-                "pattern": r"#\s*FIXME[:\s](.+)",
+                _ = "pattern": r"#\s*FIXME[:\s](.+)",
                 "type": DebtType.CODE_QUALITY,
                 "priority": DebtPriority.HIGH
             },
             "HACK": {
-                "pattern": r"#\s*HACK[:\s](.+)",
+                _ = "pattern": r"#\s*HACK[:\s](.+)",
                 "type": DebtType.CODE_QUALITY,
                 "priority": DebtPriority.HIGH
             },
             "DEBT": {
-                "pattern": r"#\s*DEBT[:\s](.+)",
+                _ = "pattern": r"#\s*DEBT[:\s](.+)",
                 "type": DebtType.CODE_QUALITY,
                 "priority": DebtPriority.MEDIUM
             }
@@ -399,7 +399,7 @@ class TechnicalDebtTracker:
         
         # 扫描Python文件
         python_files = list(self.project_root.rglob("*.py"))
-        print(f"🔍 找到 {len(python_files)} 个Python文件")
+        _ = print(f"🔍 找到 {len(python_files)} 个Python文件")
         
         new_debts_found = 0
         
@@ -431,36 +431,36 @@ class TechnicalDebtTracker:
                                 line_number=line_number,
                                 estimated_hours=2.0  # 默认估时
                             )
-                            self.add_debt(debt)
+                            _ = self.add_debt(debt)
                             new_debts_found += 1
                             
             except Exception as e:
-                print(f"⚠️ 扫描文件 {py_file} 时出错: {e}")
+                _ = print(f"⚠️ 扫描文件 {py_file} 时出错: {e}")
                 
-        print(f"✅ 扫描完成，发现 {new_debts_found} 项新的技术债务")
+        _ = print(f"✅ 扫描完成，发现 {new_debts_found} 项新的技术债务")
 
-def main():
+def main() -> None:
     """主函数"""
     # 切换到项目根目录
-    os.chdir(project_root)
+    _ = os.chdir(project_root)
     
     tracker = TechnicalDebtTracker("technical_debt.json")
     
     # 扫描代码库中的技术债务指示器
-    tracker.scan_for_debt_indicators()
+    _ = tracker.scan_for_debt_indicators()
     
     # 生成技术债务报告
     report = tracker.generate_debt_report()
-    print(report)
+    _ = print(report)
     
     # 保存报告到文件
     report_file = project_root / "technical_debt_report.md"
     try:
         with open(report_file, 'w', encoding='utf-8') as f:
-            f.write(report)
-        print(f"✅ 技术债务报告已保存到 {report_file}")
+            _ = f.write(report)
+        _ = print(f"✅ 技术债务报告已保存到 {report_file}")
     except Exception as e:
-        print(f"❌ 保存技术债务报告时出错: {e}")
+        _ = print(f"❌ 保存技术债务报告时出错: {e}")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

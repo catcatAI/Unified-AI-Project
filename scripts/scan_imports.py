@@ -1,6 +1,5 @@
 import os
 import ast
-import re
 
 def get_imports(path):
     """
@@ -10,17 +9,17 @@ def get_imports(path):
         try:
             tree = ast.parse(f.read(), filename=path)
         except SyntaxError as e:
-            print(f"Could not parse {path}: {e}")
+            _ = print(f"Could not parse {path}: {e}")
             return set()
 
     imports = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                imports.add(alias.name.split('.')[0])
+                _ = imports.add(alias.name.split('.')[0])
         elif isinstance(node, ast.ImportFrom):
             if node.module:
-                imports.add(node.module.split('.')[0])
+                _ = imports.add(node.module.split('.')[0])
     return imports
 
 def scan_directory(directory):
@@ -32,7 +31,7 @@ def scan_directory(directory):
         for file in files:
             if file.endswith(".py"):
                 path = os.path.join(root, file)
-                all_imports.update(get_imports(path))
+                _ = all_imports.update(get_imports(path))
     return all_imports
 
 if __name__ == "__main__":
@@ -41,6 +40,6 @@ if __name__ == "__main__":
 
     all_imports = sorted(list(src_imports.union(tests_imports)))
 
-    print("All imported packages:")
+    _ = print("All imported packages:")
     for package in all_imports:
-        print(package)
+        _ = print(package)

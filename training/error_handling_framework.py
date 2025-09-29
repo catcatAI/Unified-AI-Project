@@ -6,18 +6,16 @@
 
 import logging
 import traceback
-from typing import Dict, Any, Optional, Callable
-from datetime import datetime
 import json
 import threading
 from pathlib import Path
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class ErrorRecoveryStrategy:
     """错误恢复策略枚举"""
@@ -29,7 +27,7 @@ class ErrorRecoveryStrategy:
 class ErrorContext:
     """错误上下文信息"""
     
-    def __init__(self, component: str, operation: str, details: Dict[str, Any] = None):
+    def __init__(self, component: str, operation: str, details: Dict[str, Any] = None) -> None:
         self.component = component
         self.operation = operation
         self.details = details or {}
@@ -40,7 +38,7 @@ class ErrorContext:
 class ErrorHandler:
     """错误处理器"""
     
-    def __init__(self, log_file: str = None):
+    def __init__(self, log_file: str = None) -> None:
         self.log_file = Path(log_file) if log_file else None
         self.error_history = []
         self.max_history_size = 1000
@@ -85,22 +83,22 @@ class ErrorHandler:
         with self.lock:
             # 记录错误信息
             error_info = {
-                'timestamp': datetime.now().isoformat(),
+                _ = 'timestamp': datetime.now().isoformat(),
                 'component': context.component,
                 'operation': context.operation,
-                'error_type': type(error).__name__,
-                'error_message': str(error),
+                _ = 'error_type': type(error).__name__,
+                _ = 'error_message': str(error),
                 'details': context.details,
-                'traceback': traceback.format_exc()
+                _ = 'traceback': traceback.format_exc()
             }
             
             # 添加到错误历史
-            self.error_history.append(error_info)
+            _ = self.error_history.append(error_info)
             if len(self.error_history) > self.max_history_size:
-                self.error_history.pop(0)
+                _ = self.error_history.pop(0)
             
             # 记录到日志文件
-            self._log_error(error_info)
+            _ = self._log_error(error_info)
             
             # 确定恢复策略
             if recovery_strategy is None:
@@ -117,7 +115,7 @@ class ErrorHandler:
                 'error_info': error_info
             }
             
-            logger.error(f"错误已处理 [{context.component}.{context.operation}]: {type(error).__name__} - {str(error)}")
+            _ = logger.error(f"错误已处理 [{context.component}.{context.operation}]: {type(error).__name__} - {str(error)}")
             return result
     
     def _determine_recovery_strategy(self, error: Exception) -> ErrorRecoveryStrategy:
@@ -162,10 +160,10 @@ class ErrorHandler:
         except Exception as recovery_error:
             recovery_result['details'] = {
                 'message': '恢复操作失败',
-                'recovery_error': str(recovery_error)
+                _ = 'recovery_error': str(recovery_error)
             }
             recovery_result['success'] = False
-            logger.error(f"恢复操作失败: {recovery_error}")
+            _ = logger.error(f"恢复操作失败: {recovery_error}")
         
         return recovery_result
     
@@ -195,7 +193,7 @@ class ErrorHandler:
                 with open(self.log_file, 'a', encoding='utf-8') as f:
                     f.write(json.dumps(error_info, ensure_ascii=False) + '\n')
             except Exception as log_error:
-                logger.error(f"记录错误日志失败: {log_error}")
+                _ = logger.error(f"记录错误日志失败: {log_error}")
     
     def get_error_statistics(self) -> Dict[str, Any]:
         """获取错误统计信息"""
@@ -215,7 +213,7 @@ class ErrorHandler:
                 components[component] = components.get(component, 0) + 1
             
             return {
-                'total_errors': len(self.error_history),
+                _ = 'total_errors': len(self.error_history),
                 'error_types': error_types,
                 'components': components,
                 'most_common_error': max(error_types.items(), key=lambda x: x[1]) if error_types else None,
@@ -225,8 +223,8 @@ class ErrorHandler:
     def clear_error_history(self):
         """清空错误历史"""
         with self.lock:
-            self.error_history.clear()
-            logger.info("错误历史已清空")
+            _ = self.error_history.clear()
+            _ = logger.info("错误历史已清空")
 
 class ResilientOperation:
     """弹性操作装饰器"""
@@ -245,7 +243,7 @@ class ResilientOperation:
         if exc_type is not None:
             # 处理异常
             error = exc_type(exc_value)
-            self.error_handler.handle_error(error, self.context)
+            _ = self.error_handler.handle_error(error, self.context)
             # 不抑制异常，让调用者决定如何处理
             return False
         return True
@@ -277,7 +275,7 @@ def resilient_operation(error_handler: ErrorHandler, component: str, operation: 
                         delay = retry_delay or error_handler.retry_config['delay_seconds']
                         if error_handler.retry_config['exponential_backoff']:
                             delay *= (2 ** retry_count)
-                        time.sleep(delay)
+                        _ = time.sleep(delay)
                         retry_count += 1
                         continue
                     else:

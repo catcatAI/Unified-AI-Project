@@ -1,8 +1,9 @@
-import numpy as np
 import json
 import os
 import re
-from typing import Dict, List, Tuple, Optional
+import ast
+import operator
+from typing import Optional, Dict, List, Union, Callable, Any
 
 class LightweightMathModel:
     """
@@ -11,7 +12,7 @@ class LightweightMathModel:
     Uses simple pattern matching and rule-based evaluation.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.operations = {
             '+': lambda x, y: x + y,
             '-': lambda x, y: x - y,
@@ -72,19 +73,77 @@ class LightweightMathModel:
     
     def _safe_eval(self, expression: str) -> Optional[float]:
         """
-        Safely evaluate mathematical expressions using eval with restricted scope.
+        Safely evaluate mathematical expressions without using eval.
         """
         try:
-            # Only allow mathematical operations and numbers
-            allowed_chars = set('0123456789+-*/.() ')
+            # 定义支持的操作符
+            operators = {
+                ast.Add: operator.add,
+                ast.Sub: operator.sub,
+                ast.Mult: operator.mul,
+                ast.Div: operator.truediv,
+                ast.Pow: operator.pow,
+                ast.Mod: operator.mod,
+                ast.USub: operator.neg,
+                ast.UAdd: operator.pos,
+            }  # type: Dict[type, Callable[..., Any]]
+            
+            def eval_node(node):
+                if isinstance(node, ast.Constant):  # Python 3.8+
+                    value = node.value
+                    # 处理复数类型，取实部
+                    if isinstance(value, complex):
+                        return float(value.real)
+                    # 确保值是数字类型
+                    if isinstance(value, (int, float)):
+                        return float(value)
+                    raise ValueError(f"Unsupported constant value type: {type(value)}")
+                elif isinstance(node, ast.Num):  # Python < 3.8
+                    n_value = node.n
+                    # 处理复数类型，取实部
+                    if isinstance(n_value, complex):
+                        return float(n_value.real)
+                    # 确保值是数字类型
+                    if isinstance(n_value, (int, float)):
+                        return float(n_value)
+                    raise ValueError(f"Unsupported number type: {type(n_value)}")
+                elif isinstance(node, ast.BinOp):
+                    left = eval_node(node.left)
+                    right = eval_node(node.right)
+                    op_type = type(node.op)
+                    if op_type in operators:
+                        op_func = operators[op_type]
+                        result = op_func(float(left), float(right))
+                        return float(result)
+                    else:
+                        raise ValueError(f"Unsupported binary operation: {op_type}")
+                elif isinstance(node, ast.UnaryOp):
+                    operand = eval_node(node.operand)
+                    op_type = type(node.op)
+                    if op_type in operators:
+                        op_func = operators[op_type]
+                        result = op_func(float(operand))
+                        return float(result)
+                    else:
+                        raise ValueError(f"Unsupported unary operation: {op_type}")
+                else:
+                    raise ValueError(f"Unsupported operation: {type(node)}")
+            
+            # 只允许数学运算和数字
+            allowed_chars = set('0123456789+-*/. ')
             if not all(c in allowed_chars for c in expression):
                 return None
             
-            # Evaluate with restricted globals
-            result = eval(expression, {"__builtins__": {}}, {})
+            # 解析并计算表达式
+            tree = ast.parse(expression, mode='eval')
+            result = eval_node(tree.body)
             
+            # 确保返回的是 float 类型
             if isinstance(result, (int, float)):
                 return float(result)
+            elif isinstance(result, complex):
+                # 处理复数类型，取实部
+                return float(result.real)
             return None
             
         except Exception:
@@ -131,9 +190,9 @@ class LightweightMathModel:
         
         return None
     
-    def train_on_dataset(self, dataset_path: str) -> Dict[str, any]:
+    def train_on_dataset(self, dataset_path: str) -> Dict[str, Union[str, int, float, List[Dict[str, str]]]]:
         """
-        'Train' the model on a dataset (actually just validate performance).
+        _ = 'Train' the model on a dataset (actually just validate performance).
         Since this is a rule-based model, no actual training occurs.
         
         Args:
@@ -148,7 +207,7 @@ class LightweightMathModel:
             
             correct = 0
             total = len(dataset)
-            errors = []
+            errors = []  # 修复列表初始化
             
             for item in dataset:
                 problem = item.get('problem', '')
@@ -204,7 +263,7 @@ class LightweightMathModel:
             model_config = {
                 'model_type': 'lightweight_math_model',
                 'version': '1.0',
-                'operations': list(self.operations.keys()),
+                'operations': list(self.operations.keys()),  # 修复方法调用，添加括号
                 'description': 'Rule-based lightweight mathematical model'
             }
             
@@ -224,12 +283,12 @@ class LightweightMathModel:
         Load model from configuration file.
         """
         # For rule-based model, just return a new instance
-        return cls()
+        return cls
 
 
-def main():
+def main() -> None:  # 修复函数定义，添加缺失的括号
     """Test the lightweight math model."""
-    model = LightweightMathModel()
+    model = LightweightMathModel()  # 修复实例化，添加括号
     
     # Test basic operations
     test_problems = [
@@ -253,7 +312,7 @@ def main():
     
     # Test on dataset if available
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
+    project_root: str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
     dataset_path = os.path.join(project_root, "data", "raw_datasets", "arithmetic_train_dataset.json")
     
     if os.path.exists(dataset_path):
@@ -264,7 +323,8 @@ def main():
         
         if stats.get('errors'):
             print("\nSample errors:")
-            for error in stats['errors'][:3]:
+            errors = cast(List[Dict[str, str]], stats['errors'])
+            for error in errors[:3]:
                 print(f"  Problem: {error['problem']}")
                 print(f"  Expected: {error['expected']}, Got: {error['predicted']}")
     
@@ -275,4 +335,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()  # 修复函数调用，添加缺失的括号

@@ -7,21 +7,21 @@ import sys
 from pathlib import Path
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root: str = Path(__file__).parent.parent
+_ = sys.path.insert(0, str(project_root))
 
-def test_imports():
+def test_imports() -> None:
     """测试导入功能"""
     try:
         from training.auto_training_manager import AutoTrainingManager
         from training.data_manager import DataManager
-        print("✅ 导入测试通过")
+        _ = print("✅ 导入测试通过")
         return True
     except Exception as e:
-        print(f"❌ 导入测试失败: {e}")
+        _ = print(f"❌ 导入测试失败: {e}")
         return False
 
-def test_data_manager_enhancements():
+def test_data_manager_enhancements() -> None:
     """测试数据管理器增强功能"""
     try:
         from training.data_manager import DataManager
@@ -32,18 +32,18 @@ def test_data_manager_enhancements():
         expected_types = ['model', 'archive', 'binary']
         for data_type in expected_types:
             if data_type in supported_formats:
-                print(f"✅ 新数据类型 '{data_type}' 已添加")
+                _ = print(f"✅ 新数据类型 '{data_type}' 已添加")
             else:
-                print(f"❌ 新数据类型 '{data_type}' 未找到")
+                _ = print(f"❌ 新数据类型 '{data_type}' 未找到")
                 return False
         
-        print("✅ 数据管理器增强功能测试通过")
+        _ = print("✅ 数据管理器增强功能测试通过")
         return True
     except Exception as e:
-        print(f"❌ 数据管理器增强功能测试失败: {e}")
+        _ = print(f"❌ 数据管理器增强功能测试失败: {e}")
         return False
 
-def test_auto_training_enhancements():
+def test_auto_training_enhancements() -> None:
     """测试自动训练增强功能"""
     try:
         from training.auto_training_manager import AutoTrainingManager
@@ -52,20 +52,20 @@ def test_auto_training_enhancements():
         # 测试训练监控器是否有新功能
         monitor = atm.training_monitor
         if hasattr(monitor, 'log_event') and hasattr(monitor, 'get_logs'):
-            print("✅ 训练监控器增强功能已添加")
+            _ = print("✅ 训练监控器增强功能已添加")
         else:
-            print("❌ 训练监控器增强功能缺失")
+            _ = print("❌ 训练监控器增强功能缺失")
             return False
         
-        print("✅ 自动训练增强功能测试通过")
+        _ = print("✅ 自动训练增强功能测试通过")
         return True
     except Exception as e:
-        print(f"❌ 自动训练增强功能测试失败: {e}")
+        _ = print(f"❌ 自动训练增强功能测试失败: {e}")
         return False
 
-def main():
+def main() -> None:
     """主函数"""
-    print("🚀 快速测试增强后的自动训练系统")
+    _ = print("🚀 快速测试增强后的自动训练系统")
     print("=" * 40)
     
     tests = [
@@ -78,17 +78,17 @@ def main():
     for test in tests:
         if test():
             passed += 1
-        print()
+        _ = print()
     
     print("=" * 40)
-    print(f"测试结果: {passed}/{len(tests)} 通过")
+    _ = print(f"测试结果: {passed}/{len(tests)} 通过")
     
     if passed == len(tests):
-        print("🎉 所有测试通过! 增强功能已正确实现。")
+        _ = print("🎉 所有测试通过! 增强功能已正确实现。")
         return 0
     else:
-        print("💥 部分测试失败! 请检查实现。")
+        _ = print("💥 部分测试失败! 请检查实现。")
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    _ = sys.exit(main())

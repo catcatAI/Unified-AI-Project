@@ -6,7 +6,6 @@ Unified AI Project 一键式环境修复工具
 import os
 import sys
 import subprocess
-import json
 from pathlib import Path
 
 # 项目根目录
@@ -15,7 +14,7 @@ APPS_BACKEND_DIR = PROJECT_ROOT / "apps" / "backend"
 
 def fix_python_path():
     """修复PYTHONPATH环境变量"""
-    print("🔧 修复PYTHONPATH环境变量...")
+    _ = print("🔧 修复PYTHONPATH环境变量...")
     
     # 获取当前PYTHONPATH
     current_pythonpath = os.environ.get("PYTHONPATH", "")
@@ -27,7 +26,7 @@ def fix_python_path():
     paths_needed = []
     for path in paths_to_add:
         if path not in current_pythonpath:
-            paths_needed.append(path)
+            _ = paths_needed.append(path)
     
     if paths_needed:
         new_paths = paths_needed + [current_pythonpath] if current_pythonpath else paths_needed
@@ -35,18 +34,18 @@ def fix_python_path():
         
         # 设置环境变量（仅在当前会话中有效）
         os.environ["PYTHONPATH"] = new_pythonpath
-        print(f"✅ PYTHONPATH 已更新: {new_pythonpath}")
+        _ = print(f"✅ PYTHONPATH 已更新: {new_pythonpath}")
         
         # 如果需要永久设置，可以写入系统环境变量
         # 这里我们只在当前会话中设置
         return True
     else:
-        print("✅ PYTHONPATH 已经包含所需路径")
+        _ = print("✅ PYTHONPATH 已经包含所需路径")
         return True
 
 def install_missing_python_packages():
     """安装缺失的Python包"""
-    print("🔧 检查并安装缺失的Python包...")
+    _ = print("🔧 检查并安装缺失的Python包...")
     
     required_packages = [
         "fastapi",
@@ -68,14 +67,14 @@ def install_missing_python_packages():
             else:
                 __import__(package.split('[')[0])  # 处理带选项的包名
         except ImportError:
-            missing_packages.append(package)
+            _ = missing_packages.append(package)
     
     if missing_packages:
-        print(f"📦 安装缺失的Python包: {', '.join(missing_packages)}")
+        _ = print(f"📦 安装缺失的Python包: {', '.join(missing_packages)}")
         try:
             # 切换到后端目录
             original_cwd = os.getcwd()
-            os.chdir(APPS_BACKEND_DIR)
+            _ = os.chdir(APPS_BACKEND_DIR)
             
             # 安装包
             for package in missing_packages:
@@ -84,95 +83,95 @@ def install_missing_python_packages():
                 ], capture_output=True, text=True)
                 
                 if result.returncode != 0:
-                    print(f"❌ 安装 {package} 失败: {result.stderr}")
-                    os.chdir(original_cwd)
+                    _ = print(f"❌ 安装 {package} 失败: {result.stderr}")
+                    _ = os.chdir(original_cwd)
                     return False
                 else:
-                    print(f"✅ {package} 安装成功")
+                    _ = print(f"✅ {package} 安装成功")
             
-            os.chdir(original_cwd)
-            print("✅ 所有缺失的Python包安装完成")
+            _ = os.chdir(original_cwd)
+            _ = print("✅ 所有缺失的Python包安装完成")
             return True
         except Exception as e:
-            print(f"❌ 安装Python包时出错: {e}")
+            _ = print(f"❌ 安装Python包时出错: {e}")
             return False
     else:
-        print("✅ 所有必需的Python包都已安装")
+        _ = print("✅ 所有必需的Python包都已安装")
         return True
 
 def install_node_packages():
     """安装Node.js依赖"""
-    print("🔧 检查并安装Node.js依赖...")
+    _ = print("🔧 检查并安装Node.js依赖...")
     
     try:
         # 切换到项目根目录
         original_cwd = os.getcwd()
-        os.chdir(PROJECT_ROOT)
+        _ = os.chdir(PROJECT_ROOT)
         
         # 运行pnpm install
-        print("📦 运行 pnpm install...")
+        _ = print("📦 运行 pnpm install...")
         result = subprocess.run([
             "pnpm", "install"
         ], capture_output=True, text=True)
         
         if result.returncode != 0:
-            print(f"❌ pnpm install 失败: {result.stderr}")
-            os.chdir(original_cwd)
+            _ = print(f"❌ pnpm install 失败: {result.stderr}")
+            _ = os.chdir(original_cwd)
             return False
         else:
-            print("✅ Node.js依赖安装成功")
-            os.chdir(original_cwd)
+            _ = print("✅ Node.js依赖安装成功")
+            _ = os.chdir(original_cwd)
             return True
     except Exception as e:
-        print(f"❌ 安装Node.js依赖时出错: {e}")
+        _ = print(f"❌ 安装Node.js依赖时出错: {e}")
         return False
 
 def setup_backend_environment():
     """设置后端环境"""
-    print("🔧 设置后端环境...")
+    _ = print("🔧 设置后端环境...")
     
     try:
         # 切换到后端目录
         original_cwd = os.getcwd()
-        os.chdir(APPS_BACKEND_DIR)
+        _ = os.chdir(APPS_BACKEND_DIR)
         
         # 创建虚拟环境（如果不存在）
         venv_path = APPS_BACKEND_DIR / "venv"
         if not venv_path.exists():
-            print("🐍 创建Python虚拟环境...")
+            _ = print("🐍 创建Python虚拟环境...")
             result = subprocess.run([
                 sys.executable, "-m", "venv", "venv"
             ], capture_output=True, text=True)
             
             if result.returncode != 0:
-                print(f"❌ 创建虚拟环境失败: {result.stderr}")
-                os.chdir(original_cwd)
+                _ = print(f"❌ 创建虚拟环境失败: {result.stderr}")
+                _ = os.chdir(original_cwd)
                 return False
             else:
-                print("✅ Python虚拟环境创建成功")
+                _ = print("✅ Python虚拟环境创建成功")
         
         # 升级pip
-        print("⬆️ 升级pip...")
+        _ = print("⬆️ 升级pip...")
         result = subprocess.run([
             sys.executable, "-m", "pip", "install", "--upgrade", "pip"
         ], capture_output=True, text=True)
         
         if result.returncode != 0:
-            print(f"❌ 升级pip失败: {result.stderr}")
-            os.chdir(original_cwd)
+            _ = print(f"❌ 升级pip失败: {result.stderr}")
+            _ = os.chdir(original_cwd)
             return False
         else:
-            print("✅ pip升级成功")
+            _ = print("✅ pip升级成功")
         
-        os.chdir(original_cwd)
+        _ = os.chdir(original_cwd)
         return True
     except Exception as e:
-        print(f"❌ 设置后端环境时出错: {e}")
+        _ = print(f"❌ 设置后端环境时出错: {e}")
         return False
 
 def kill_port_processes():
     """终止占用端口的进程"""
-    print("🔧 检查并终止占用端口的进程...")
+    _ = print("🔧 检查并终止占用端口的进程...")
     
     ports = {
         3000: "前端仪表板",
@@ -189,26 +188,26 @@ def kill_port_processes():
                 try:
                     for conn in proc.connections():
                         if conn.laddr.port == port:
-                            print(f"⚠️ 发现占用端口 {port} ({description}) 的进程: {proc.info['name']} (PID: {proc.info['pid']})")
+                            _ = print(f"⚠️ 发现占用端口 {port} ({description}) 的进程: {proc.info['name']} (PID: {proc.info['pid']})")
                             # 终止进程
-                            proc.terminate()
+                            _ = proc.terminate()
                             proc.wait(timeout=3)
-                            print(f"✅ 已终止进程 PID {proc.info['pid']}")
+                            _ = print(f"✅ 已终止进程 PID {proc.info['pid']}")
                 except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                     pass
         
-        print("✅ 端口检查完成")
+        _ = print("✅ 端口检查完成")
         return True
     except ImportError:
-        print("⚠️ 未安装psutil包，跳过端口进程检查")
+        _ = print("⚠️ 未安装psutil包，跳过端口进程检查")
         return True
     except Exception as e:
-        print(f"❌ 检查端口进程时出错: {e}")
+        _ = print(f"❌ 检查端口进程时出错: {e}")
         return False
 
-def main():
+def main() -> None:
     """主函数"""
-    print("🚀 Unified AI Project 一键式环境修复工具")
+    _ = print("🚀 Unified AI Project 一键式环境修复工具")
     print("=" * 50)
     
     fixes = [
@@ -223,23 +222,23 @@ def main():
     for fix in fixes:
         try:
             result = fix()
-            results.append(result)
-            print()
+            _ = results.append(result)
+            _ = print()
         except Exception as e:
-            print(f"❌ 执行修复 {fix.__name__} 时出错: {e}")
-            results.append(False)
-            print()
+            _ = print(f"❌ 执行修复 {fix.__name__} 时出错: {e}")
+            _ = results.append(False)
+            _ = print()
     
     print("=" * 50)
     passed = sum(results)
     total = len(results)
     
     if passed == total:
-        print(f"🎉 所有修复完成 ({passed}/{total})！环境已修复。")
+        _ = print(f"🎉 所有修复完成 ({passed}/{total})！环境已修复。")
         return 0
     else:
-        print(f"⚠️  {passed}/{total} 项修复完成。请查看上面的警告和错误信息。")
+        _ = print(f"⚠️  {passed}/{total} 项修复完成。请查看上面的警告和错误信息。")
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    _ = sys.exit(main())

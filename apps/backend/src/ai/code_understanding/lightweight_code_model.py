@@ -2,14 +2,12 @@ import ast
 import os
 import glob
 import logging # Added logging
-from typing import List, Dict, Any, Optional, Union
 from datetime import datetime
-from dataclasses import dataclass, asdict
 
 # Import DNADataChain from alpha_deep_model
-from ai.compression.alpha_deep_model import DNADataChain
+from ..compression.alpha_deep_model import DNADataChain
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 @dataclass
 class CodeAnalysisResult:
@@ -26,21 +24,21 @@ class LightweightCodeModel:
     """
     A model to perform lightweight static analysis of Python code,
     focusing on understanding the structure of tools.
-    Enhanced with DNA衍生数据链技术和 code complexity analysis.
+    Enhanced with DNA衍生数据链技术和代码复杂度 analysis.
     """
 
-    def __init__(self, tools_directory: str = "src/tools/"):
+    def __init__(self, tools_directory: str = "src/tools/") -> None:
         """
         Initializes the LightweightCodeModel.
 
         Args:
-            tools_directory (str): The root directory where tool files are located.
+            _ = tools_directory (str): The root directory where tool files are located.
         """
         self.tools_directory = tools_directory
         self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
         self.analysis_history: List[CodeAnalysisResult] = []  # 分析历史记录
         self.code_complexity_cache: Dict[str, float] = {}  # 代码复杂度缓存
-        
+
         if not os.path.isdir(tools_directory):
             logger.warning(f"Tools directory '{tools_directory}' does not exist or is not a directory.")
             # Consider raising an error or ensuring tools_directory is always valid upon instantiation.
@@ -52,7 +50,7 @@ class LightweightCodeModel:
         Excludes __init__.py and tool_dispatcher.py.
         """
         if not os.path.isdir(self.tools_directory):
-            return []
+            return 
 
         # Search for .py files recursively in the tools_directory
         pattern = os.path.join(self.tools_directory, "**", "*.py")
@@ -60,7 +58,7 @@ class LightweightCodeModel:
 
         excluded_files = ["__init__.py", "tool_dispatcher.py"] # Basenames to exclude
 
-        tool_files = []
+        tool_files = 
         for f_path in py_files:
             if os.path.basename(f_path) not in excluded_files:
                 tool_files.append(f_path)
@@ -71,7 +69,7 @@ class LightweightCodeModel:
         """
         Helper to extract parameter details from an ast.FunctionDef node.
         """
-        params_details = []
+        params_details = 
         args = method_node.args
 
         # Positional and keyword-only arguments
@@ -126,7 +124,7 @@ class LightweightCodeModel:
         Calculate code complexity score based on AST node.
         """
         complexity = 0
-        
+
         # Count control flow statements
         for child in ast.walk(node):
             if isinstance(child, (ast.If, ast.For, ast.While, ast.With, ast.Try)):
@@ -139,7 +137,7 @@ class LightweightCodeModel:
                 complexity += 2  # Functions add complexity
             elif isinstance(child, ast.ClassDef):
                 complexity += 3  # Classes add more complexity
-        
+
         return complexity
 
     def analyze_tool_file(self, filepath: str, dna_chain_id: Optional[str] = None) -> Optional[CodeAnalysisResult]:
@@ -148,12 +146,12 @@ class LightweightCodeModel:
         Enhanced with DNA数据链支持.
 
         Args:
-            filepath (str): The absolute or relative path to the Python tool file.
-            dna_chain_id (Optional[str]): DNA链ID，用于关联分析结果
+            _ = filepath (str): The absolute or relative path to the Python tool file.
+            _ = dna_chain_id (Optional[str]): DNA链ID，用于关联分析结果
 
         Returns:
             Optional[CodeAnalysisResult]: A dataclass containing structural information
-                                          and analysis results, or None if the file cannot 
+                                          and analysis results, or None if the file cannot
                                           be parsed or analyzed.
         """
         if not os.path.isfile(filepath):
@@ -162,7 +160,7 @@ class LightweightCodeModel:
 
         try:
             with open(filepath, "r", encoding="utf-8") as source_file:
-                source_code = source_file.read()
+                source_code = source_file.read
             tree = ast.parse(source_code, filename=filepath)
         except Exception as e:
             logger.error(f"Error parsing Python file '{filepath}': {e}", exc_info=True)
@@ -170,9 +168,9 @@ class LightweightCodeModel:
 
         # Calculate complexity
         complexity_score = self._calculate_complexity(tree)
-        
+
         # Extract dependencies
-        dependencies = []
+        dependencies = 
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
@@ -183,8 +181,8 @@ class LightweightCodeModel:
 
         file_structure: Dict[str, Any] = {
             "filepath": filepath,
-            "classes": [],
-            "functions": [] # For module-level functions
+            "classes": ,
+            "functions":   # For module-level functions
         }
 
         for node in tree.body:
@@ -192,7 +190,7 @@ class LightweightCodeModel:
                 class_info = {
                     "name": node.name,
                     "docstring": ast.get_docstring(node),
-                    "methods": []
+                    "methods": 
                 }
                 for item in node.body:
                     if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -206,8 +204,8 @@ class LightweightCodeModel:
                         # Basic return type hint
                         if item.returns:
                             method_info["returns"] = ast.unparse(item.returns) if hasattr(ast, 'unparse') else "TypeHint (unparse unavailable)"
-                        class_info["methods"].append(method_info)
-                file_structure["classes"].append(class_info)
+                        _ = class_info["methods"].append(method_info)
+                _ = file_structure["classes"].append(class_info)
 
             elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)): # Module-level functions
                 func_info = {
@@ -219,31 +217,31 @@ class LightweightCodeModel:
                 }
                 if node.returns:
                      func_info["returns"] = ast.unparse(node.returns) if hasattr(ast, 'unparse') else "TypeHint (unparse unavailable)"
-                file_structure["functions"].append(func_info)
+                _ = file_structure["functions"].append(func_info)
 
         # Create analysis result
         analysis_result = CodeAnalysisResult(
             filepath=filepath,
-            analysis_timestamp=datetime.now(),
+            analysis_timestamp=datetime.now,
             classes=file_structure["classes"],
             functions=file_structure["functions"],
             dependencies=list(set(dependencies)),  # Remove duplicates
             complexity_score=complexity_score,
             dna_chain_id=dna_chain_id
         )
-        
+
         # Add to analysis history
         self.analysis_history.append(analysis_result)
-        
+
         # Update complexity cache
         self.code_complexity_cache[filepath] = complexity_score
-        
+
         # Add to DNA chain if provided
         if dna_chain_id:
             if dna_chain_id not in self.dna_chains:
                 self.dna_chains[dna_chain_id] = DNADataChain(dna_chain_id)
             self.dna_chains[dna_chain_id].add_node(filepath)
-        
+
         return analysis_result
 
     def get_tool_structure(self, tool_name_or_filepath: str, dna_chain_id: Optional[str] = None) -> Optional[CodeAnalysisResult]:
@@ -260,8 +258,8 @@ class LightweightCodeModel:
            - Resolution fails if the name is ambiguous (multiple pattern matches) or no match is found.
 
         Args:
-            tool_name_or_filepath (str): The name of the tool or direct filepath to the tool's Python file.
-            dna_chain_id (Optional[str]): DNA链ID，用于关联分析结果
+            _ = tool_name_or_filepath (str): The name of the tool or direct filepath to the tool's Python file.
+            _ = dna_chain_id (Optional[str]): DNA链ID，用于关联分析结果
 
         Returns:
             Optional[CodeAnalysisResult]: A dataclass containing structural information and analysis results
@@ -302,7 +300,7 @@ class LightweightCodeModel:
                 logger.info(f"Tool name '{tool_name_input}' resolved to '{resolved_path}' by direct match in {self.tools_directory}.")
             else:
                 base_name = os.path.splitext(tool_name_input)[0]
-                found_pattern_matches: List[str] = []
+                found_pattern_matches: List[str] = 
 
                 try:
                     for filename in os.listdir(self.tools_directory):
@@ -338,7 +336,7 @@ class LightweightCodeModel:
 
     def get_analysis_history(self) -> List[CodeAnalysisResult]:
         """获取代码分析历史记录"""
-        return self.analysis_history.copy()
+        return self.analysis_history.copy
 
     def get_code_complexity(self, filepath: str) -> Optional[float]:
         """获取文件的代码复杂度"""
@@ -371,13 +369,13 @@ if __name__ == '__main__':
     # model = LightweightCodeModel(tools_directory=tools_dir_test)
 
     # A more direct way if running script from project root:
-    model = LightweightCodeModel() # Uses default "src/tools/"
+    model = LightweightCodeModel # Uses default "src/tools/"
 
     print("LightweightCodeModel initialized (enhanced version).")
     print(f"Looking for tools in: {model.tools_directory}")
 
     # The following will print warnings or return None as methods are placeholders.
-    # tool_files = model.list_tool_files()
+    # tool_files = model.list_tool_files
     # print(f"Found tool files (enhanced): {tool_files}")
 
     # math_tool_path_rel = "src/tools/math_tool.py" # Relative to project root

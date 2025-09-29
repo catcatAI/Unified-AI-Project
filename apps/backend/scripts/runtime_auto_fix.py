@@ -3,20 +3,17 @@
 运行时自动修复工具 - 在程序运行时检测和修复错误
 """
 
-import os
 import sys
 import re
-import traceback
 from pathlib import Path
 from typing import List, Dict, Any
 import subprocess
 import time
-import json
 import logging
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -25,7 +22,7 @@ SRC_DIR = PROJECT_ROOT / "src"
 class RuntimeAutoFixer:
     """运行时自动修复器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.project_root = PROJECT_ROOT
         self.src_dir = SRC_DIR
         self.error_patterns = {
@@ -87,7 +84,7 @@ class RuntimeAutoFixer:
         try:
             # 尝试使用高级修复工具修复
             sys.path.insert(0, str(self.project_root / "scripts"))
-            from advanced_auto_fix import AdvancedImportFixer
+            from .advanced_auto_fix import AdvancedImportFixer
             
             fixer = AdvancedImportFixer()
             results = fixer.fix_all_files()
@@ -158,7 +155,7 @@ class RuntimeAutoFixer:
             logger.error(f"监控进程时出错: {e}")
             return False
 
-def main():
+def main() -> None:
     """主函数"""
     if len(sys.argv) < 2:
         print("用法: runtime_auto_fix.py <command> [args...]")

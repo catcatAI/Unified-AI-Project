@@ -21,14 +21,7 @@ except ImportError as e:
     EarlyStopping = ModelCheckpoint = ReduceLROnPlateau = Sequential = Dense = Dropout = BatchNormalization = Adam = None
     KERAS_AVAILABLE = False
 
-import numpy as np
 import json
-import logging
-from pathlib import Path
-from typing import Dict, Any, List, Tuple
-
-from model import ArithmeticSeq2Seq, get_char_token_maps, prepare_data
-
 # --- Configuration ---
 # Get absolute paths
 import os
@@ -69,7 +62,7 @@ def load_dataset(file_path):
         return None, None
 
 
-def main():
+def main -> None:
     print("Starting training process...")
 
     # 1. Load data
@@ -120,7 +113,7 @@ def main():
         latent_dim=LATENT_DIM,
         embedding_dim=EMBEDDING_DIM
     )
-    math_model.build_model()
+    math_model.build_model
 
     # Compile the model
     # Using RMSprop as it's often good for RNNs, can also try Adam
@@ -156,7 +149,7 @@ def main():
     # plt.title('Model Loss')
     # plt.ylabel('Loss')
     # plt.xlabel('Epoch')
-    # plt.legend()
+    # plt.legend
     # plt.savefig('training_loss_plot.png')
     # print("Training loss plot saved to training_loss_plot.png")
 
@@ -170,4 +163,4 @@ if __name__ == '__main__':
         # Or, we can modify load_dataset to handle CSV. For simplicity, assume JSON.
         print("Please ensure `data_generator.py` produces a JSON dataset for training (e.g., arithmetic_train_dataset.json).")
     else:
-        main()
+        main

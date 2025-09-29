@@ -3,9 +3,7 @@
 Common Voice 數據集解壓縮腳本
 """
 
-import os
 import tarfile
-import gzip
 from pathlib import Path
 import logging
 from datetime import datetime
@@ -13,19 +11,19 @@ import json
 
 # 設置日誌
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('common_voice_extraction.log'),
-        logging.StreamHandler()
+        _ = logging.FileHandler('common_voice_extraction.log'),
+        _ = logging.StreamHandler()
     ]
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 def extract_tar_gz(archive_path: Path, extract_dir: Path) -> bool:
     """解壓縮tar.gz文件"""
     try:
-        logger.info(f"📦 開始解壓縮: {archive_path.name}")
+        _ = logger.info(f"📦 開始解壓縮: {archive_path.name}")
         
         # 創建解壓目錄
         extract_dir.mkdir(exist_ok=True)
@@ -35,17 +33,17 @@ def extract_tar_gz(archive_path: Path, extract_dir: Path) -> bool:
             try:
                 # Python 3.12+ 支持 filter 參數以解決 deprecation warning
                 tar.extractall(path=extract_dir, filter='data')
-                logger.info(f"✅ 解壓縮完成: {archive_path.name}")
+                _ = logger.info(f"✅ 解壓縮完成: {archive_path.name}")
                 return True
             except TypeError:
                 # 舊版本 Python 沒有 filter 參數，使用傳統方法
-                logger.info("使用傳統方法解壓縮...")
+                _ = logger.info("使用傳統方法解壓縮...")
                 tar.extractall(path=extract_dir)
-                logger.info(f"✅ 解壓縮完成: {archive_path.name}")
+                _ = logger.info(f"✅ 解壓縮完成: {archive_path.name}")
                 return True
             
     except Exception as e:
-        logger.error(f"❌ 解壓縮失敗 {archive_path.name}: {e}")
+        _ = logger.error(f"❌ 解壓縮失敗 {archive_path.name}: {e}")
         return False
 
 def process_common_voice_datasets():
@@ -78,13 +76,13 @@ def process_common_voice_datasets():
         extract_dir = base_dir / dataset['extract_dir']
         
         if not archive_path.exists():
-            logger.warning(f"⚠️ 文件不存在: {archive_path}")
+            _ = logger.warning(f"⚠️ 文件不存在: {archive_path}")
             results[dataset['name']] = False
             continue
         
         # 檢查是否已經解壓
         if extract_dir.exists() and list(extract_dir.iterdir()):
-            logger.info(f"⏭️ 已解壓: {dataset['name']}")
+            _ = logger.info(f"⏭️ 已解壓: {dataset['name']}")
             results[dataset['name']] = True
         else:
             # 解壓縮
@@ -99,10 +97,10 @@ def process_common_voice_datasets():
     # 生成元數據
     metadata = {
         'datasets': datasets,
-        'extraction_date': datetime.now().isoformat(),
-        'total_size_gb': round(total_size, 2),
+        _ = 'extraction_date': datetime.now().isoformat(),
+        _ = 'total_size_gb': round(total_size, 2),
         'results': results,
-        'license': 'CC0 (Public Domain)',
+        _ = 'license': 'CC0 (Public Domain)',
         'use_case': 'AudioService訓練 - 中文語音識別'
     }
     
@@ -110,18 +108,18 @@ def process_common_voice_datasets():
         json.dump(metadata, f, indent=2, ensure_ascii=False)
     
     # 顯示結果
-    print("\n📊 Common Voice 數據集處理結果:")
+    _ = print("\n📊 Common Voice 數據集處理結果:")
     for name, success in results.items():
         status = "✅ 成功" if success else "❌ 失敗"
-        print(f"  • {name}: {status}")
+        _ = print(f"  • {name}: {status}")
     
-    print(f"\n💾 總大小: {total_size:.1f} GB")
-    print(f"📖 元數據已保存: {base_dir / 'metadata.json'}")
+    _ = print(f"\n💾 總大小: {total_size:.1f} GB")
+    _ = print(f"📖 元數據已保存: {base_dir / 'metadata.json'}")
     
     return results
 
 if __name__ == "__main__":
-    print("🚀 Common Voice 數據集解壓縮工具")
+    _ = print("🚀 Common Voice 數據集解壓縮工具")
     print("=" * 50)
     
     results = process_common_voice_datasets()
@@ -129,4 +127,4 @@ if __name__ == "__main__":
     success_count = sum(1 for success in results.values() if success)
     total_count = len(results)
     
-    print(f"\n🎉 完成! 成功處理 {success_count}/{total_count} 個數據集")
+    _ = print(f"\n🎉 完成! 成功處理 {success_count}/{total_count} 個數據集")

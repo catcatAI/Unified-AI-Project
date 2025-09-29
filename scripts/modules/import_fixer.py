@@ -3,17 +3,14 @@
 导入修复模块 - 处理导入路径问题
 """
 
-import os
-import sys
 import re
 import traceback
 from pathlib import Path
-from typing import List, Tuple, Dict, Set
 
 class ImportFixer:
     """导入修复器"""
     
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
         self.backend_root = project_root / "apps" / "backend"
         self.src_dir = self.backend_root / "src"
@@ -71,22 +68,22 @@ class ImportFixer:
         # 相对导入修复模式
         self.relative_patterns = [
             # 单点相对导入
-            (r'from\s+\.\s+core_ai\s*\.', 'from apps.backend.src.ai.'),
-            (r'from\s+\.\s+core\s*\.', 'from apps.backend.src.core.'),
-            (r'from\s+\.\s+services\s*\.', 'from apps.backend.src.core.services.'),
-            (r'from\s+\.\s+tools\s*\.', 'from apps.backend.src.core.tools.'),
-            (r'from\s+\.\s+hsp\s*\.', 'from apps.backend.src.core.hsp.'),
-            (r'from\s+\.\s+shared\s*\.', 'from apps.backend.src.core.shared.'),
-            (r'from\s+\.\s+agents\s*\.', 'from apps.backend.src.ai.agents.'),
+            _ = (r'from\s+\.\s+core_ai\s*\.', 'from apps.backend.src.ai.'),
+            _ = (r'from\s+\.\s+core\s*\.', 'from apps.backend.src.core.'),
+            _ = (r'from\s+\.\s+services\s*\.', 'from apps.backend.src.core.services.'),
+            _ = (r'from\s+\.\s+tools\s*\.', 'from apps.backend.src.core.tools.'),
+            _ = (r'from\s+\.\s+hsp\s*\.', 'from apps.backend.src.core.hsp.'),
+            _ = (r'from\s+\.\s+shared\s*\.', 'from apps.backend.src.core.shared.'),
+            _ = (r'from\s+\.\s+agents\s*\.', 'from apps.backend.src.ai.agents.'),
             
             # 双点相对导入
-            (r'from\s+\.\.\s+core_ai\s*\.', 'from apps.backend.src.ai.'),
-            (r'from\s+\.\.\s+core\s*\.', 'from apps.backend.src.core.'),
-            (r'from\s+\.\.\s+services\s*\.', 'from apps.backend.src.core.services.'),
-            (r'from\s+\.\.\s+tools\s*\.', 'from apps.backend.src.core.tools.'),
-            (r'from\s+\.\.\s+hsp\s*\.', 'from apps.backend.src.core.hsp.'),
-            (r'from\s+\.\.\s+shared\s*\.', 'from apps.backend.src.core.shared.'),
-            (r'from\s+\.\.\s+agents\s*\.', 'from apps.backend.src.ai.agents.'),
+            _ = (r'from\s+\.\.\s+core_ai\s*\.', 'from apps.backend.src.ai.'),
+            _ = (r'from\s+\.\.\s+core\s*\.', 'from apps.backend.src.core.'),
+            _ = (r'from\s+\.\.\s+services\s*\.', 'from apps.backend.src.core.services.'),
+            _ = (r'from\s+\.\.\s+tools\s*\.', 'from apps.backend.src.core.tools.'),
+            _ = (r'from\s+\.\.\s+hsp\s*\.', 'from apps.backend.src.core.hsp.'),
+            _ = (r'from\s+\.\.\s+shared\s*\.', 'from apps.backend.src.core.shared.'),
+            _ = (r'from\s+\.\.\s+agents\s*\.', 'from apps.backend.src.ai.agents.'),
         ]
         
     def find_python_files(self, target: str = None) -> List[Path]:
@@ -102,9 +99,9 @@ class ImportFixer:
                 search_path = self.project_root / target
                 
             if search_path.is_file() and search_path.suffix == '.py':
-                python_files.append(search_path)
+                _ = python_files.append(search_path)
             elif search_path.is_dir():
-                python_files.extend(search_path.rglob("*.py"))
+                _ = python_files.extend(search_path.rglob("*.py"))
         else:
             # 搜索整个项目
             for py_file in self.project_root.rglob("*.py"):
@@ -114,7 +111,7 @@ class ImportFixer:
                     ".git", "dist", "build", ".pytest_cache"
                 ]):
                     continue
-                python_files.append(py_file)
+                _ = python_files.append(py_file)
                 
         return python_files
         
@@ -131,7 +128,7 @@ class ImportFixer:
             for old_import, new_import in self.import_mappings.items():
                 if old_import in content and new_import not in content:
                     content = content.replace(old_import, new_import)
-                    fixes_made.append(f"映射替换: {old_import} -> {new_import}")
+                    _ = fixes_made.append(f"映射替换: {old_import} -> {new_import}")
             
             # 应用相对导入修复
             for pattern, replacement in self.relative_patterns:
@@ -139,16 +136,16 @@ class ImportFixer:
                 if matches:
                     content = re.sub(pattern, replacement, content)
                     for match in matches:
-                        fixes_made.append(f"相对导入修复: {match} -> {replacement}")
+                        _ = fixes_made.append(f"相对导入修复: {match} -> {replacement}")
             
             # 如果内容有变化，写入文件
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(content)
+                    _ = f.write(content)
                     
                 details = {
-                    "file": str(file_path),
-                    "fixes_count": len(fixes_made),
+                    _ = "file": str(file_path),
+                    _ = "fixes_count": len(fixes_made),
                     "fixes_made": fixes_made
                 }
                 
@@ -158,22 +155,22 @@ class ImportFixer:
                 
         except Exception as e:
             error_details = {
-                "file": str(file_path),
-                "error": str(e),
-                "traceback": traceback.format_exc()
+                _ = "file": str(file_path),
+                _ = "error": str(e),
+                _ = "traceback": traceback.format_exc()
             }
             return False, f"修复文件时出错: {str(e)}", error_details
             
     def fix(self, target: str = None, **kwargs) -> Tuple[bool, str, Dict]:
         """执行导入修复"""
-        print("开始执行导入修复...")
+        _ = print("开始执行导入修复...")
         
         python_files = self.find_python_files(target)
         
         if not python_files:
             return True, "未找到需要修复的Python文件", {"files_processed": 0}
             
-        print(f"发现 {len(python_files)} 个Python文件")
+        _ = print(f"发现 {len(python_files)} 个Python文件")
         
         files_fixed = 0
         total_fixes = 0
@@ -187,29 +184,29 @@ class ImportFixer:
                     if details.get("fixes_count", 0) > 0:
                         files_fixed += 1
                         total_fixes += details["fixes_count"]
-                        print(f"✓ 修复了文件: {file_path} ({details['fixes_count']} 处)")
+                        _ = print(f"✓ 修复了文件: {file_path} ({details['fixes_count']} 处)")
                     else:
-                        print(f"- 跳过文件: {file_path} (无需修复)")
+                        _ = print(f"- 跳过文件: {file_path} (无需修复)")
                 else:
                     errors.append({
-                        "file": str(file_path),
+                        _ = "file": str(file_path),
                         "error": message,
                         "details": details
                     })
-                    print(f"✗ 修复文件失败: {file_path} - {message}")
+                    _ = print(f"✗ 修复文件失败: {file_path} - {message}")
                     
             except Exception as e:
                 error_msg = f"处理文件时发生异常: {str(e)}"
                 errors.append({
-                    "file": str(file_path),
+                    _ = "file": str(file_path),
                     "error": error_msg,
-                    "traceback": traceback.format_exc()
+                    _ = "traceback": traceback.format_exc()
                 })
-                print(f"✗ 处理文件异常: {file_path} - {error_msg}")
+                _ = print(f"✗ 处理文件异常: {file_path} - {error_msg}")
         
         # 生成结果摘要
         result_details = {
-            "files_processed": len(python_files),
+            _ = "files_processed": len(python_files),
             "files_fixed": files_fixed,
             "total_fixes": total_fixes,
             "errors": errors
@@ -226,17 +223,17 @@ class ImportFixer:
             else:
                 return True, "导入修复完成: 所有文件都正常", result_details
 
-def main():
+def main() -> None:
     """测试函数"""
     from pathlib import Path
     
-    project_root = Path(__file__).parent.parent.parent
+    project_root: str = Path(__file__).parent.parent.parent
     fixer = ImportFixer(project_root)
     
     success, message, details = fixer.fix()
-    print(f"结果: {success}")
-    print(f"消息: {message}")
-    print(f"详情: {details}")
+    _ = print(f"结果: {success}")
+    _ = print(f"消息: {message}")
+    _ = print(f"详情: {details}")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

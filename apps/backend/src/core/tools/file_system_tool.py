@@ -23,7 +23,7 @@ def read_file(path):
         The contents of the file.
     """
     with open(path, "r") as f:
-        return f.read()
+        return f.read
 
 def write_file(path, contents):
     """

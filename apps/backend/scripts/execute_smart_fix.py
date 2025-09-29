@@ -4,14 +4,13 @@
 执行完整的智能修复流程，包括问题检测、修复、验证和报告生成
 """
 
-import os
 import sys
 import subprocess
 import json
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, List, Literal, Optional
 
 # 添加项目根目录到路径
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
@@ -24,7 +23,7 @@ logger = logging.getLogger(__name__)
 class SmartFixExecutor:
     """智能修复执行器"""
     
-    def __init__(self, project_root: Path = None):
+    def __init__(self, project_root: Optional[Path] = None) -> None:
         self.project_root = project_root or PROJECT_ROOT
         self.reports_dir = self.project_root / "reports"
         self.reports_dir.mkdir(exist_ok=True)
@@ -88,13 +87,16 @@ class SmartFixExecutor:
     def run_tests(self) -> Dict[str, Any]:
         """运行测试并返回结果"""
         logger.info("开始运行测试...")
-        test_results = {
+        test_results: Dict[str, Any] = {
             "success": False,
             "passed": 0,
             "failed": 0,
-            "errors": [],
+            "errors": [],  # type: List[str]
             "output": ""
         }
+        
+        # 明确指定 errors 列表的类型
+        errors_list: List[str] = test_results["errors"]
         
         try:
             # 运行后端测试
@@ -124,14 +126,17 @@ class SmartFixExecutor:
                         break
             else:
                 logger.error("✗ 测试执行失败")
-                test_results["errors"].append(result.stderr[-1000:])  # 只保留最后1000个字符
+                errors_list.append(result.stderr[-1000:])  # 只保留最后1000个字符
+                test_results["errors"] = errors_list
                 
         except subprocess.TimeoutExpired:
             logger.error("✗ 测试执行超时")
-            test_results["errors"].append("测试执行超时")
+            errors_list.append("测试执行超时")
+            test_results["errors"] = errors_list
         except Exception as e:
             logger.error(f"✗ 运行测试时出错: {e}")
-            test_results["errors"].append(str(e))
+            errors_list.append(str(e))
+            test_results["errors"] = errors_list
             
         return test_results
     
@@ -198,7 +203,7 @@ class SmartFixExecutor:
             print("✗ 部分测试失败，请检查错误信息")
             return False
 
-def main():
+def main() -> Literal[0, 1]:
     """主函数"""
     print("=== 智能修复执行器 ===")
     

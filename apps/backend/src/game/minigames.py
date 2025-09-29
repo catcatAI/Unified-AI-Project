@@ -2,7 +2,7 @@ import pygame
 import random
 
 class FishingGame:
-    def __init__(self, game):
+    def __init__(self, game) -> None:
         self.game = game
         self.is_active = False
         self.timer = 0
@@ -22,7 +22,7 @@ class FishingGame:
     def handle_events(self, event):
         if self.is_active and event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                self.check_catch()
+                self.check_catch
 
     def update(self):
         if self.is_active:

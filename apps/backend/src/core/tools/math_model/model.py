@@ -1,7 +1,6 @@
 import os
 import sys
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 import numpy as np
 
@@ -66,7 +65,7 @@ def _tensorflow_is_available():
     return dependency_manager.is_available('tensorflow')
 
 # Attempt to import TensorFlow on module load
-_ensure_tensorflow_is_imported()
+_ensure_tensorflow_is_imported
 
 def get_char_token_maps(problems, answers):
     """Create character to token mappings for the arithmetic model.
@@ -79,7 +78,7 @@ def get_char_token_maps(problems, answers):
         tuple: (char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length)
     """
     # Collect all characters from problems and answers
-    chars = set()
+    chars = set
     
     # Add special tokens
     chars.add('\t')  # Start token
@@ -137,7 +136,7 @@ def get_char_token_maps(problems, answers):
     return char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length
 
 class ArithmeticSeq2Seq:
-    def __init__(self, char_to_token, token_to_char, max_encoder_seq_length, max_decoder_seq_length, n_token, latent_dim=256, embedding_dim=128):
+    def __init__(self, char_to_token, token_to_char, max_encoder_seq_length, max_decoder_seq_length, n_token, latent_dim=256, embedding_dim=128) -> None:
         if not dependency_manager.is_available('tensorflow'):
             print("ArithmeticSeq2Seq: TensorFlow not available. This instance will be non-functional.")
             self.char_to_token = char_to_token
@@ -150,8 +149,8 @@ class ArithmeticSeq2Seq:
             self.model = None
             self.encoder_model = None
             self.decoder_model = None
-            self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
-            self.prediction_history: List[MathModelResult] = []  # 预测历史记录
+            self.dna_chains: Dict[str, DNADataChain] =   # DNA数据链存储
+            self.prediction_history: List[MathModelResult] =   # 预测历史记录
             return
 
         self.char_to_token = char_to_token
@@ -165,8 +164,8 @@ class ArithmeticSeq2Seq:
         self.model = None
         self.encoder_model = None
         self.decoder_model = None
-        self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
-        self.prediction_history: List[MathModelResult] = []  # 预测历史记录
+        self.dna_chains: Dict[str, DNADataChain] =   # DNA数据链存储
+        self.prediction_history: List[MathModelResult] =   # 预测历史记录
         # Model is built on-demand when needed (e.g., during predict or load)
         # to avoid requiring TensorFlow at initialization.
 
@@ -175,7 +174,7 @@ class ArithmeticSeq2Seq:
         if not dependency_manager.is_available('tensorflow'):
             print("Cannot build inference models: TensorFlow not available.")
             return
-        _ensure_tensorflow_is_imported() # Lazy import of TensorFlow
+        _ensure_tensorflow_is_imported # Lazy import of TensorFlow
 
         # Encoder
         encoder_inputs = Input(shape=(None,), name="encoder_inputs")
@@ -189,7 +188,7 @@ class ArithmeticSeq2Seq:
         decoder_embedding_layer_instance = Embedding(self.n_token, self.embedding_dim, name="decoder_embedding")
         decoder_embedding = decoder_embedding_layer_instance(decoder_inputs)
         decoder_lstm_layer = LSTM(self.latent_dim, return_sequences=True, return_state=True, name="decoder_lstm")
-        decoder_outputs, _, _ = decoder_lstm_layer(decoder_embedding, initial_state=encoder_states)
+        decoder_outputs, _, decoder_lstm_layer(decoder_embedding, initial_state=encoder_states)
 
         decoder_dense_layer = Dense(self.n_token, activation='softmax', name="decoder_dense")
         decoder_outputs = decoder_dense_layer(decoder_outputs)
@@ -218,7 +217,7 @@ class ArithmeticSeq2Seq:
     def _string_to_tokens(self, input_string, max_len, is_target=False):
         if not dependency_manager.is_available('tensorflow'):
             print("Cannot convert string to tokens: TensorFlow not available.")
-            return np.array([])
+            return np.array
         tokens = np.zeros((1, max_len), dtype='float32')
         if is_target:
             processed_string = '\t' + input_string + '\n'
@@ -236,11 +235,11 @@ class ArithmeticSeq2Seq:
         return tokens
 
     def predict_sequence(self, input_seq_str: str, dna_chain_id: Optional[str] = None) -> str:
-        if not _tensorflow_is_available() or not self.encoder_model or not self.decoder_model:
+        if not _tensorflow_is_available or not self.encoder_model or not self.decoder_model:
             print("Cannot predict sequence: TensorFlow not available or models not built.")
             return "Error: Math model is not available."
 
-        start_time = datetime.now()
+        start_time = datetime.now
         
         input_seq = self._string_to_tokens(input_seq_str, self.max_encoder_seq_length, is_target=False)
         if input_seq.size == 0: # Handle case where _string_to_tokens failed due to TF unavailability
@@ -274,8 +273,8 @@ class ArithmeticSeq2Seq:
             target_seq[0, 0] = sampled_token_index
             states_value = [h, c]
 
-        end_time = datetime.now()
-        processing_time = (end_time - start_time).total_seconds()
+        end_time = datetime.now
+        processing_time = (end_time - start_time).total_seconds
         
         # Create result object
         result = MathModelResult(
@@ -300,7 +299,7 @@ class ArithmeticSeq2Seq:
 
     def get_prediction_history(self) -> List[MathModelResult]:
         """获取预测历史记录"""
-        return self.prediction_history.copy()
+        return self.prediction_history.copy
 
     def create_dna_chain(self, chain_id: str) -> DNADataChain:
         """创建新的DNA数据链"""
@@ -318,7 +317,7 @@ class ArithmeticSeq2Seq:
         if not dependency_manager.is_available('tensorflow'):
             print("Cannot load model for inference: TensorFlow not available.")
             return None
-        _ensure_tensorflow_is_imported() # Lazy import of TensorFlow
+        _ensure_tensorflow_is_imported # Lazy import of TensorFlow
         try:
             with open(char_maps_path, 'r', encoding='utf-8') as f:
                 char_to_token, token_to_char = json.load(f)
@@ -327,19 +326,19 @@ class ArithmeticSeq2Seq:
             instance = cls.__new__(cls)  # Create instance without calling __init__
             instance.char_to_token = char_to_token
             instance.token_to_char = token_to_char  # Note: variable name swap in saved file
-            instance.max_encoder_seq_length = max(len(k) for k in char_to_token.keys())
-            instance.max_decoder_seq_length = max(len(k) for k in token_to_char.keys())
+            instance.max_encoder_seq_length = max(len(k) for k in char_to_token.keys)
+            instance.max_decoder_seq_length = max(len(k) for k in token_to_char.keys)
             instance.n_token = len(char_to_token)
             instance.latent_dim = 256  # Default, should be saved/loaded
             instance.embedding_dim = 128  # Default, should be saved/loaded
             instance.model = None
             instance.encoder_model = None
             instance.decoder_model = None
-            instance.dna_chains = {}
-            instance.prediction_history = []
+            instance.dna_chains = 
+            instance.prediction_history = 
             
             # Build model structure
-            instance._build_inference_models()
+            instance._build_inference_models
             instance.model.load_weights(model_weights_path)
             
             return instance

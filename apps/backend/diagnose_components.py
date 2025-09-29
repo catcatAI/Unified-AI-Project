@@ -7,21 +7,25 @@ import sys
 import os
 import asyncio
 import logging
+from typing import Any, Dict
 
-# 添加src路徑
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# 添加项目根路径和src路径
+project_root: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+backend_src_path = os.path.join(os.path.dirname(__file__), 'src')
+sys.path.insert(0, project_root)
+sys.path.insert(0, backend_src_path)
 
 # 設置日誌
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 class ComponentDiagnostic:
     """組件診斷類"""
     
-    def __init__(self):
-        self.test_results = {}
+    def __init__(self) -> None:
+        self.test_results: Dict[str, str] = {}
     
-    async def diagnose_all_components(self):
+    async def diagnose_all_components(self) -> None:
         """診斷所有核心組件"""
         logger.info("🔍 開始組件診斷...")
         
@@ -34,11 +38,12 @@ class ComponentDiagnostic:
         # 報告結果
         self.report_diagnosis()
     
-    async def diagnose_audio_service(self):
+    async def diagnose_audio_service(self) -> None:
         """診斷音頻服務"""
         logger.info("🎵 診斷音頻服務...")
         try:
-            from .src.services.audio_service import AudioService
+            # 修復導入問題：使用絕對導入
+            from apps.backend.src.services.audio_service import AudioService
             
             # 創建服務實例
             audio_service = AudioService()
@@ -59,11 +64,12 @@ class ComponentDiagnostic:
             logger.error(f"❌ AudioService 診斷失敗: {e}")
             self.test_results['audio_service'] = f'ERROR: {e}'
     
-    async def diagnose_vision_service(self):
+    async def diagnose_vision_service(self) -> None:
         """診斷視覺服務"""
         logger.info("👁️ 診斷視覺服務...")
         try:
-            from .src.services.vision_service import VisionService
+            # 修復導入問題：使用絕對導入
+            from apps.backend.src.services.vision_service import VisionService
             
             # 創建服務實例
             vision_service = VisionService()
@@ -84,11 +90,12 @@ class ComponentDiagnostic:
             logger.error(f"❌ VisionService 診斷失敗: {e}")
             self.test_results['vision_service'] = f'ERROR: {e}'
     
-    async def diagnose_vector_store(self):
+    async def diagnose_vector_store(self) -> None:
         """診斷向量存儲"""
         logger.info("🧠 診斷向量存儲...")
         try:
-            from .src.core_ai.memory.vector_store import VectorMemoryStore
+            # 修復導入問題：使用絕對導入
+            from apps.backend.src.core_ai.memory.vector_store import VectorMemoryStore
             
             # 創建向量存儲實例
             vector_store = VectorMemoryStore(persist_directory="./test_vector_db")
@@ -120,11 +127,12 @@ class ComponentDiagnostic:
             logger.error(f"❌ VectorMemoryStore 診斷失敗: {e}")
             self.test_results['vector_store'] = f'ERROR: {e}'
     
-    async def diagnose_causal_reasoning(self):
+    async def diagnose_causal_reasoning(self) -> None:
         """診斷因果推理引擎"""
         logger.info("🔗 診斷因果推理引擎...")
         try:
-            from .src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
+            # 修復導入問題：使用絕對導入
+            from apps.backend.src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
             
             # 創建推理引擎實例
             causal_engine = CausalReasoningEngine(config={'causality_threshold': 0.5})
@@ -153,7 +161,7 @@ class ComponentDiagnostic:
             logger.error(f"❌ CausalReasoningEngine 診斷失敗: {e}")
             self.test_results['causal_reasoning'] = f'ERROR: {e}'
     
-    def report_diagnosis(self):
+    def report_diagnosis(self) -> None:
         """報告診斷結果"""
         logger.info("\n" + "="*60)
         logger.info("📊 組件診斷報告")
@@ -174,7 +182,7 @@ class ComponentDiagnostic:
         else:
             logger.warning("⚠️ 某些組件需要修復")
 
-async def main():
+async def main() -> None:
     """主函數"""
     diagnostic = ComponentDiagnostic()
     await diagnostic.diagnose_all_components()

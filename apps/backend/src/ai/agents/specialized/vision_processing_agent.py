@@ -3,10 +3,6 @@ import uuid
 import logging
 import base64
 import io
-from typing import Dict, Any, List
-from PIL import Image, ImageDraw, ImageFont
-import numpy as np
-
 from .base.base_agent import BaseAgent
 from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
@@ -15,7 +11,7 @@ class VisionProcessingAgent(BaseAgent):
     A specialized agent for computer vision tasks like image classification,
     object detection, and image enhancement.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_image_classification_v1.0",
@@ -45,12 +41,12 @@ class VisionProcessingAgent(BaseAgent):
                 "version": "1.0",
                 "parameters": [
                     {"name": "image_data", "type": "string", "required": True, "description": "Base64 encoded image data"},
-                    {"name": "enhancement_type", "type": "string", "required": False, "description": "Type of enhancement (sharpen, denoise, brighten)"}
+                    # {"name": "enhancement_type", "type": "string", "required": False, "description": "Type of enhancement (sharpen, denoise, brighten)"}
                 ],
                 "returns": {"type": "string", "description": "Base64 encoded enhanced image data."}
             }
         ]
-        super().__init__(agent_id=agent_id, capabilities=capabilities)
+        super.__init__(agent_id=agent_id, capabilities=capabilities)
         logging.info(f"[{self.agent_id}] VisionProcessingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
@@ -78,7 +74,7 @@ class VisionProcessingAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     def _classify_image(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -132,7 +128,7 @@ class VisionProcessingAgent(BaseAgent):
         # Simulate object detection results
         import random
         num_objects = random.randint(0, 5)
-        detected_objects = []
+        detected_objects = [] 
         
         for i in range(num_objects):
             obj = {
@@ -197,9 +193,9 @@ class VisionProcessingAgent(BaseAgent):
                 enhanced_image = image.filter(ImageFilter.SHARPEN)
             
             # Encode the enhanced image back to base64
-            buffered = io.BytesIO()
+            buffered = io.BytesIO
             enhanced_image.save(buffered, format=image.format or 'PNG')
-            enhanced_image_data = base64.b64encode(buffered.getvalue()).decode()
+            enhanced_image_data = base64.b64encode(buffered.getvalue).decode
             
             return {
                 "enhanced_image_data": enhanced_image_data,
@@ -231,12 +227,12 @@ class VisionProcessingAgent(BaseAgent):
 
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:vision_processing_agent_{uuid.uuid4().hex[:6]}"
         agent = VisionProcessingAgent(agent_id=agent_id)
-        await agent.start()
+        _ = await agent.start()
 
     try:
-        asyncio.run(main())
+        asyncio.run(main)
     except KeyboardInterrupt:
         print("\nVisionProcessingAgent manually stopped.")

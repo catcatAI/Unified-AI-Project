@@ -4,16 +4,15 @@ Full integration test for Atlassian functionality
 """
 
 import sys
-import json
 from pathlib import Path
 
 # Add the backend src directory to the path
 backend_src = Path(__file__).parent.parent / "apps" / "backend" / "src"
-sys.path.insert(0, str(backend_src))
+_ = sys.path.insert(0, str(backend_src))
 
-def test_confluence_integration():
+def test_confluence_integration() -> None:
     """Test Confluence integration"""
-    print("Testing Confluence integration...")
+    _ = print("Testing Confluence integration...")
     
     try:
         from integrations.confluence_integration import ConfluenceIntegration
@@ -33,17 +32,17 @@ def test_confluence_integration():
         connector = EnhancedRovoDevConnector(config)
         integration = ConfluenceIntegration(connector)
         
-        print("Confluence integration test passed!")
+        _ = print("Confluence integration test passed!")
         return True
     except Exception as e:
-        print(f"Error during Confluence integration test: {e}")
+        _ = print(f"Error during Confluence integration test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def test_jira_integration():
+def test_jira_integration() -> None:
     """Test Jira integration"""
-    print("Testing Jira integration...")
+    _ = print("Testing Jira integration...")
     
     try:
         from integrations.jira_integration import JiraIntegration
@@ -63,25 +62,24 @@ def test_jira_integration():
         connector = EnhancedRovoDevConnector(config)
         integration = JiraIntegration(connector)
         
-        print("Jira integration test passed!")
+        _ = print("Jira integration test passed!")
         return True
     except Exception as e:
-        print(f"Error during Jira integration test: {e}")
+        _ = print(f"Error during Jira integration test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def test_rovo_dev_agent():
+def test_rovo_dev_agent() -> None:
     """Test Rovo Dev agent"""
-    print("Testing Rovo Dev agent...")
+    _ = print("Testing Rovo Dev agent...")
     
     try:
         # Mock the HSPConnector import since it's not available in this context
         class MockHSPConnector:
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args, **kwargs) -> None:
                 pass
         
-        import integrations.rovo_dev_agent
         integrations.rovo_dev_agent.HSPConnector = MockHSPConnector
         
         from integrations.rovo_dev_agent import RovoDevAgent
@@ -106,26 +104,26 @@ def test_rovo_dev_agent():
         
         # Mock the dependencies
         with patch('integrations.rovo_dev_agent.EnhancedRovoDevConnector'), \
-             patch('integrations.rovo_dev_agent.AtlassianBridge'), \
+             _ = patch('integrations.rovo_dev_agent.AtlassianBridge'), \
              patch('integrations.rovo_dev_agent.HSPConnector', MockHSPConnector):
             # Create the Rovo Dev agent
             agent = RovoDevAgent(config)
             
             # Check that the agent was created correctly
             assert agent.agent_id == "test-rovo-agent"
-            print("Rovo Dev agent test passed!")
+            _ = print("Rovo Dev agent test passed!")
             return True
     except Exception as e:
-        print(f"Error during Rovo Dev agent test: {e}")
+        _ = print(f"Error during Rovo Dev agent test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def main():
+def main() -> None:
     """Main test function"""
-    print("Atlassian Full Integration Test")
+    _ = print("Atlassian Full Integration Test")
     print("=" * 35)
-    print()
+    _ = print()
     
     # Run all tests
     try:
@@ -134,15 +132,15 @@ def main():
         test3 = test_rovo_dev_agent()
         
         if test1 and test2 and test3:
-            print("\nAll Atlassian integration tests completed successfully!")
+            _ = print("\nAll Atlassian integration tests completed successfully!")
             return True
         else:
-            print("\nSome Atlassian integration tests failed!")
+            _ = print("\nSome Atlassian integration tests failed!")
             return False
     except Exception as e:
-        print(f"Error during Atlassian integration testing: {e}")
+        _ = print(f"Error during Atlassian integration testing: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
 if __name__ == "__main__":

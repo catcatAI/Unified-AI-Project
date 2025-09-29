@@ -1,4 +1,13 @@
 from typing import TypedDict, Dict, Any
+from enum import Enum
+
+class MemoryType(Enum):
+    """Enumeration of different memory types."""
+    CORE = "core"
+    EPISODIC = "episodic"
+    SEMANTIC = "semantic"
+    PROCEDURAL = "procedural"
+    WORKING = "working"
 
 class HAMDataPackageInternal(TypedDict):
     timestamp: str  # ISO 8601 UTC string

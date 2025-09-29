@@ -4,19 +4,18 @@
 """
 
 import logging
-import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from apps.backend.src.core_ai.context.manager import ContextManager
 from apps.backend.src.core_ai.context.storage.base import ContextType
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 
 class ToolCallChain:
     """工具调用链"""
     
-    def __init__(self, chain_id: str, root_tool_id: str):
+    def __init__(self, chain_id: str, root_tool_id: str) -> None:
         self.chain_id: str = chain_id  # 调用链唯一标识
         self.root_tool_id: str = root_tool_id  # 根工具ID
         self.root_call_id: str = ""  # 根调用ID
@@ -32,7 +31,7 @@ class ToolCallChain:
 class ToolCallNode:
     """工具调用节点"""
     
-    def __init__(self, tool_id: str, call_id: str):
+    def __init__(self, tool_id: str, call_id: str) -> None:
         self.call_id: str = call_id  # 调用唯一标识
         self.tool_id: str = tool_id  # 工具ID
         self.parent_id: Optional[str] = None  # 父调用ID
@@ -50,7 +49,7 @@ class ToolCallNode:
 class ToolCallChainContext:
     """工具调用链上下文管理器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.current_chain: Optional[ToolCallChain] = None
         self.current_call_stack: List[ToolCallNode] = []  # 当前调用栈
         self.call_id_counter: int = 0  # 调用ID计数器
@@ -67,7 +66,7 @@ class ToolCallChainContext:
             if self.current_chain.created_at:
                 self.current_chain.duration = (
                     self.current_chain.completed_at - self.current_chain.created_at
-                ).total_seconds()
+                _ = ).total_seconds()
         chain = self.current_chain
         self.current_chain = None
         self.current_call_stack = []
@@ -76,7 +75,7 @@ class ToolCallChainContext:
     def start_call(self, tool_id: str, parameters: Dict[str, Any]) -> ToolCallNode:
         """开始一个工具调用"""
         if not self.current_chain:
-            raise RuntimeError("No active call chain")
+            _ = raise RuntimeError("No active call chain")
             
         # 生成调用ID
         self.call_id_counter += 1
@@ -91,21 +90,21 @@ class ToolCallChainContext:
         if self.current_call_stack:
             parent_call = self.current_call_stack[-1]
             call_node.parent_id = parent_call.call_id
-            parent_call.child_calls.append(call_id)
+            _ = parent_call.child_calls.append(call_id)
         else:
             # 根调用
             self.current_chain.root_call_id = call_id
             
         # 添加到调用链和调用栈
         self.current_chain.calls[call_id] = call_node
-        self.current_call_stack.append(call_node)
+        _ = self.current_call_stack.append(call_node)
         
         return call_node
         
     def end_call(self, result: Any = None, success: bool = True, error_message: Optional[str] = None) -> ToolCallNode:
         """结束当前工具调用"""
         if not self.current_call_stack:
-            raise RuntimeError("No active call to end")
+            _ = raise RuntimeError("No active call to end")
             
         # 获取当前调用节点
         call_node = self.current_call_stack.pop()
@@ -116,7 +115,7 @@ class ToolCallChainContext:
         if call_node.started_at:
             call_node.duration = (
                 call_node.completed_at - call_node.started_at
-            ).total_seconds()
+            _ = ).total_seconds()
         
         # 更新调用链的成功状态
         if not success and self.current_chain:
@@ -130,7 +129,7 @@ class ToolCallChainContext:
 class ToolCallChainTracker:
     """工具调用链追踪器"""
     
-    def __init__(self, context_manager: ContextManager):
+    def __init__(self, context_manager: ContextManager) -> None:
         self.context_manager = context_manager
         self.chain_context = ToolCallChainContext()
         self.stored_chains: Dict[str, ToolCallChain] = {}  # 存储的调用链
@@ -140,7 +139,7 @@ class ToolCallChainTracker:
         chain_id = f"chain-{int(datetime.now().timestamp() * 1000000)}"
         chain = self.chain_context.start_chain(chain_id, root_tool_id)
         if metadata:
-            chain.metadata.update(metadata)
+            _ = chain.metadata.update(metadata)
         logger.info(f"Started tool call chain {chain_id} for tool {root_tool_id}")
         return chain_id
         
@@ -149,10 +148,10 @@ class ToolCallChainTracker:
         chain = self.chain_context.end_chain()
         if chain:
             # 存储调用链到上下文管理器
-            self._store_chain_to_context(chain)
+            _ = self._store_chain_to_context(chain)
             # 保存到本地存储
             self.stored_chains[chain.chain_id] = chain
-            logger.info(f"Ended tool call chain {chain.chain_id}")
+            _ = logger.info(f"Ended tool call chain {chain.chain_id}")
             return chain.chain_id
         return None
         
@@ -160,7 +159,7 @@ class ToolCallChainTracker:
         """开始工具调用追踪"""
         call_node = self.chain_context.start_call(tool_id, parameters)
         if metadata:
-            call_node.metadata.update(metadata)
+            _ = call_node.metadata.update(metadata)
         logger.debug(f"Started tool call {call_node.call_id} for tool {tool_id}")
         return call_node.call_id
         
@@ -207,7 +206,7 @@ class ToolCallChainTracker:
             context_id = self.context_manager.create_context(ContextType.TOOL, context_content)
             logger.info(f"Stored tool call chain {chain.chain_id} with context {context_id}")
         except Exception as e:
-            logger.error(f"Failed to store tool call chain {chain.chain_id}: {e}")
+            _ = logger.error(f"Failed to store tool call chain {chain.chain_id}: {e}")
 
     def get_call_chain_by_id(self, chain_id: str) -> Optional[ToolCallChain]:
         """根据调用链ID获取调用链"""
@@ -218,12 +217,12 @@ class ToolCallChainTracker:
         result = []
         for chain in self.stored_chains.values():
             if chain.root_tool_id == tool_id:
-                result.append(chain)
+                _ = result.append(chain)
             else:
                 # 检查是否有调用节点使用了该工具
                 for call in chain.calls.values():
                     if call.tool_id == tool_id:
-                        result.append(chain)
+                        _ = result.append(chain)
                         break
         return result
 
@@ -232,7 +231,7 @@ class ToolCallChainTracker:
         result = []
         for chain in self.stored_chains.values():
             if chain.duration > threshold:
-                result.append(chain)
+                _ = result.append(chain)
         return result
 
     def get_error_chains(self) -> List[ToolCallChain]:
@@ -240,5 +239,5 @@ class ToolCallChainTracker:
         result = []
         for chain in self.stored_chains.values():
             if not chain.success:
-                result.append(chain)
+                _ = result.append(chain)
         return result

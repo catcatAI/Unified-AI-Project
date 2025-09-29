@@ -1,6 +1,7 @@
 import json
 import random
 import os
+from typing import Optional
 
 # Define output directory and filenames
 # Assuming script is in src/tools/logic_model/
@@ -21,8 +22,8 @@ def generate_simple_proposition(max_nesting=1, current_nesting=0):
     Generates a simple logical proposition.
     Example: "true AND false", "NOT true", "(true OR false) AND true"
     """
-    if current_nesting >= max_nesting or random.random() < 0.4: # Base case: simple value or unary op
-        if random.random() < 0.3 and current_nesting < max_nesting: # Add NOT
+    if current_nesting >= max_nesting or random.random < 0.4: # Base case: simple value or unary op
+        if random.random < 0.3 and current_nesting < max_nesting: # Add NOT
             return f"NOT {generate_simple_proposition(max_nesting, current_nesting + 1)}"
         else:
             return random.choice(VALUES)
@@ -40,7 +41,7 @@ def generate_simple_proposition(max_nesting=1, current_nesting=0):
 
         return f"{left_expr} {op} {right_expr}"
 
-def evaluate_proposition(prop_str: str) -> bool | None:
+def evaluate_proposition(prop_str: str) -> Optional[bool]:
     """
     Evaluates a simple logical proposition string.
     Uses Python's eval after replacing 'true'/'false' and 'AND'/'OR'/'NOT'.
@@ -58,7 +59,7 @@ def evaluate_proposition(prop_str: str) -> bool | None:
 
         # Ensure that only allowed characters and keywords are present for some safety
         # This is a very basic sanitization attempt.
-        allowed_chars = set("TrueFalseandornt() ")
+        allowed_chars = set("TrueFalseandornt ")
         if not all(c in allowed_chars for c in py_prop_str):
             # print(f"Warning: Potentially unsafe characters in: {py_prop_str}")
             # For generated data, this should be fine, but good to be aware.
@@ -71,8 +72,8 @@ def evaluate_proposition(prop_str: str) -> bool | None:
 
 def generate_dataset(num_samples: int, max_nesting: int = 2):
     """Generates a dataset of logical propositions and their answers."""
-    dataset = []
-    generated_propositions = set() # To avoid duplicates
+    dataset = 
+    generated_propositions = set # To avoid duplicates
 
     while len(dataset) < num_samples:
         prop = generate_simple_proposition(max_nesting=max_nesting)

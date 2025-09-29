@@ -1,34 +1,34 @@
 import paho.mqtt.client as mqtt
-from typing import Optional, Callable, Dict, Any
+from typing import Optional, Callable, Dict, Any, Awaitable
 import json
 import uuid
 import logging
 import asyncio
 from datetime import datetime, timezone
 
-from .types import MCPEnvelope, MCPCommandRequest, MCPCommandResponse
 from ..shared.error import ProjectError, project_error_handler
+from .types import MCPCommandRequest, MCPEnvelope
 
 class MCPConnector:
     def __init__(self, ai_id: str, mqtt_broker_address: str, mqtt_broker_port: int, 
                  enable_fallback: bool = True, fallback_config: Optional[Dict[str, Any]] = None, loop: Optional[asyncio.AbstractEventLoop] = None):
         self.ai_id = ai_id
-        self.client = mqtt.Client(client_id=f"mcp-client-{ai_id}-{uuid.uuid4()}")
+        self.client = mqtt.Client(client_id=f"mcp-client-{ai_id}-{uuid.uuid4}")
         self.broker_address = mqtt_broker_address
         self.broker_port = mqtt_broker_port
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message
-        self.command_handlers: dict[str, Callable] = {}
+        self.command_handlers: Dict[str, Callable[..., Awaitable[Any]]] = 
         
         # Fallback支持
         self.enable_fallback = enable_fallback
-        self.fallback_config = fallback_config or {}
+        self.fallback_config = fallback_config or 
         self.fallback_manager = None
         self.fallback_initialized = False
         self.mcp_available = False
         self.is_connected = False
         self.logger = logging.getLogger(__name__)
-        self.loop = loop if loop else asyncio.get_event_loop() # Store the event loop
+        self.loop = loop if loop else asyncio.get_event_loop # Store the event loop
 
     async def connect(self):
         print(f"MCPConnector for {self.ai_id} connecting to {self.broker_address}:{self.broker_port}")
@@ -37,11 +37,11 @@ class MCPConnector:
             # For testing purposes, we might mock this or ensure it runs in a dedicated thread/process
             # In a real application, you'd typically use an async MQTT client library
             self.client.connect(self.broker_address, self.broker_port, 60)
-            self.client.loop_start()
+            self.client.loop_start
             self.is_connected = True
             self.mcp_available = True
             if self.enable_fallback:
-                await self._initialize_fallback_protocols()
+                _ = await self._initialize_fallback_protocols
         except Exception as e:
             project_error_handler(ProjectError(f"MCP MQTT connection failed: {e}", code=503))
             self.is_connected = False
@@ -50,8 +50,8 @@ class MCPConnector:
                 self.logger.info("MCP將使用fallback協議")
 
     def disconnect(self):
-        self.client.loop_stop()
-        self.client.disconnect()
+        self.client.loop_stop
+        self.client.disconnect
         print("MCPConnector disconnected.")
 
     def _on_connect(self, client, userdata, flags, rc):
@@ -68,7 +68,7 @@ class MCPConnector:
             self.mcp_available = False
 
     def _on_message(self, client, userdata, msg):
-        print(f"MCP message received on topic {msg.topic}: {msg.payload.decode()}")
+        print(f"MCP message received on topic {msg.topic}: {msg.payload.decode}")
         try:
             data = json.loads(msg.payload)
             topic_parts = msg.topic.split('/')
@@ -88,13 +88,13 @@ class MCPConnector:
             project_error_handler(ProjectError(f"Error processing MCP message: {e}", code=500))
 
 
-    async def send_command(self, target_id: str, command_name: str, parameters: dict) -> str:
-        request_id = str(uuid.uuid4())
+    async def send_command(self, target_id: str, command_name: str, parameters: Dict[str, Any]) -> str:
+        request_id = str(uuid.uuid4)
         
         # 嘗試使用MQTT發送
         if self.mcp_available and self.is_connected:
             try:
-                payload: MCPCommandRequest = {
+                payload = {
                     "command_name": command_name,
                     "parameters": parameters
                 }
@@ -103,7 +103,7 @@ class MCPConnector:
                     "message_id": request_id,
                     "sender_id": self.ai_id,
                     "recipient_id": target_id,
-                    "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+                    "timestamp_sent": datetime.now(timezone.utc).isoformat,
                     "message_type": "MCP::CommandRequest_v0.1",
                     "protocol_version": "0.1",
                     "payload": payload,
@@ -120,7 +120,7 @@ class MCPConnector:
         # 使用fallback協議發送
         if self.enable_fallback and self.fallback_initialized and self.fallback_manager:
             try:
-                await self._send_via_fallback(target_id, command_name, parameters, request_id)
+                _ = await self._send_via_fallback(target_id, command_name, parameters, request_id)
                 print(f"Sent MCP command '{command_name}' to {target_id} via fallback with request_id {request_id}")
                 return request_id
             except Exception as e:
@@ -137,7 +137,7 @@ class MCPConnector:
         try:
             from .fallback.mcp_fallback_protocols import get_mcp_fallback_manager, initialize_mcp_fallback_protocols
             
-            self.fallback_manager = get_mcp_fallback_manager()
+            self.fallback_manager = get_mcp_fallback_manager
 
             # 檢查是否在多進程環境中運行
             # 這裡我們使用一個簡單的標誌，實際應用中可能需要更複雜的檢測
@@ -148,7 +148,7 @@ class MCPConnector:
             if success:
                 self.fallback_initialized = True
                 # 註冊命令處理器
-                for command_name, handler in self.command_handlers.items():
+                for command_name, handler in self.command_handlers.items:
                     self.fallback_manager.register_command_handler(command_name, handler)
                 
                 self.logger.info("MCP fallback protocols initialized successfully")
@@ -159,7 +159,7 @@ class MCPConnector:
             project_error_handler(ProjectError(f"Error initializing MCP fallback protocols: {e}", code=500))
             self.fallback_initialized = False
 
-    async def _send_via_fallback(self, target_id: str, command_name: str, parameters: dict, request_id: str):
+    async def _send_via_fallback(self, target_id: str, command_name: str, parameters: Dict[str, Any], request_id: str):
         """通過fallback協議發送命令"""
         if not self.fallback_manager:
             return False
@@ -186,7 +186,7 @@ class MCPConnector:
             self.logger.error(f"Error sending MCP command via fallback: {e}")
             return False
 
-    def register_command_handler(self, command_name: str, handler: Callable):
+    def register_command_handler(self, command_name: str, handler: Callable[..., Awaitable[Any]]):
         """註冊命令處理器（同時註冊到fallback）"""
         self.command_handlers[command_name] = handler
         
@@ -202,7 +202,7 @@ class MCPConnector:
 
     def get_communication_status(self) -> Dict[str, Any]:
         """獲取通訊狀態"""
-        status = {
+        status: Dict[str, Any] = {
             "mcp_available": self.mcp_available,
             "is_connected": self.is_connected,
             "fallback_enabled": self.enable_fallback,
@@ -210,7 +210,8 @@ class MCPConnector:
         }
         
         if self.fallback_manager:
-            status["fallback_status"] = self.fallback_manager.get_status()
+            fallback_status = self.fallback_manager.get_status
+            status["fallback_status"] = fallback_status
         
         return status
 
@@ -233,7 +234,7 @@ class MCPConnector:
         # 檢查fallback健康狀態
         if self.fallback_manager:
             try:
-                fallback_status = self.fallback_manager.get_status()
+                fallback_status = self.fallback_manager.get_status
                 health["fallback_healthy"] = fallback_status.get("active_protocol") is not None
             except:
                 health["fallback_healthy"] = False

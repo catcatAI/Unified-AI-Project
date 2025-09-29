@@ -5,7 +5,6 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from .src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-import spacy
 
 def check_patterns():
     # Initialize the analyzer

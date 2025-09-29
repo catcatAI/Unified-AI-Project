@@ -6,7 +6,6 @@
 
 import json
 import re
-from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
@@ -35,7 +34,7 @@ class ErrorInfo:
 
 
 class ErrorAnalyzer:
-    def __init__(self, test_results_file: str = "test_results/latest_test_results.json"):
+    def __init__(self, test_results_file: str = "test_results/latest_test_results.json") -> None:
         self.test_results_file = test_results_file
         self.error_patterns = {
             ErrorType.ASYNC_WARNING: r"RuntimeWarning: coroutine '.*' was never awaited",

@@ -5,7 +5,7 @@ import json
 import time
 import hashlib
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional, Callable # Added Callable
+from typing import Dict, Any, Optional, Callable, List
 
 # Assuming 'src' is in PYTHONPATH, making 'tools', 'core_ai', 'services' top-level packages
 # Correcting imports to be absolute from project root (assuming /app is project root)
@@ -18,14 +18,16 @@ from .image_generation_tool import ImageGenerationTool
 from ai.language_models.daily_language_model import DailyLanguageModel
 from apps.backend.src.core.services.multi_llm_service import MultiLLMService
 from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse # Import new response type
-from typing import Literal # For literal status types
-try:
-    from ai.rag.rag_manager import RAGManager
-    RAG_AVAILABLE = True
-except ImportError as e:
-    print(f"RAG Manager not available: {e}")
-    RAGManager = None
-    RAG_AVAILABLE = False
+
+# Global flag for RAG availability
+if '_RAG_AVAILABLE_FLAG' not in globals:
+    _RAG_AVAILABLE_FLAG = False
+    try:
+        from ai.rag.rag_manager import RAGManager
+        _RAG_AVAILABLE_FLAG = True
+    except ImportError as e:
+        print(f"RAG Manager not available: {e}")
+        RAGManager = None
 
 class ToolDispatcher:
     def _get_ham(self):
@@ -37,14 +39,14 @@ class ToolDispatcher:
 
     def _safe_params_hash(self, params: Dict[str, Any]) -> str:
         try:
-            s = json.dumps(params or {}, sort_keys=True, ensure_ascii=False, default=str)
-            return hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
+            s = json.dumps(params or , sort_keys=True, ensure_ascii=False, default=str)
+            return hashlib.sha256(s.encode("utf-8")).hexdigest[:16]
         except Exception:
             return ""
 
     def _log_action_policy(self, record: Dict[str, Any]) -> None:
         try:
-            ham = self._get_ham()
+            ham = self._get_ham
             if not ham:
                 return
             raw_data = json.dumps(record, ensure_ascii=False, default=str)
@@ -55,13 +57,14 @@ class ToolDispatcher:
                 "ham_meta_timestamp": record.get("timestamp"),
             }
             # Use a distinct data_type for action policy events
-            ham.store_experience(raw_data, "action_policy_v0.1", metadata)  # type: ignore[attr-defined]
+            if hasattr(ham, 'store_experience'):
+                ham.store_experience(raw_data, "action_policy_v0.1", metadata)  # type: ignore[attr-defined]
         except Exception as e:
             logging.debug(f"ToolDispatcher: failed to log action policy: {e}")
 
     def set_llm_service(self, llm_service: Optional[MultiLLMService]):
         """Inject or replace the LLM service at runtime (used by hot reload)."""
-        if hasattr(self, 'dlm') and hasattr(self.dlm, 'set_llm_service'):
+        if hasattr(self, 'dlm') and hasattr(self.dlm, 'set_llm_service') and llm_service is not None:
             self.dlm.set_llm_service(llm_service)
         else:
             # Fallback: re-instantiate the wrapper with the new LLM service
@@ -70,12 +73,13 @@ class ToolDispatcher:
                 self.dlm = DailyLanguageModel(llm_service=llm_service)
             except Exception:
                 pass
-    def __init__(self, llm_service: Optional[MultiLLMService] = None):
+
+    def __init__(self, llm_service: Optional[MultiLLMService] = None) -> None:
         self.dlm = DailyLanguageModel(llm_service=llm_service)
-        self.code_understanding_tool_instance = CodeUnderstandingTool()
-        self.csv_tool_instance = CsvTool()
-        self.image_generation_tool_instance = ImageGenerationTool()
-        self.rag_manager = RAGManager() if RAG_AVAILABLE else None
+        self.code_understanding_tool_instance = CodeUnderstandingTool
+        self.csv_tool_instance = CsvTool
+        self.image_generation_tool_instance = ImageGenerationTool
+        self.rag_manager: Optional[Any] = RAGManager if _RAG_AVAILABLE_FLAG and RAGManager is not None else None
 
         self.tools: Dict[str, Callable[..., ToolDispatcherResponse]] = { # type: ignore
             "calculate": self._execute_math_calculation,
@@ -87,7 +91,7 @@ class ToolDispatcher:
         }
         
         # Add RAG query tool if available
-        if RAG_AVAILABLE and self.rag_manager:
+        if _RAG_AVAILABLE_FLAG and self.rag_manager:
             self.tools["rag_query"] = self._execute_rag_query
         self.tool_descriptions = {
             "calculate": "Performs arithmetic calculations. Example: 'calculate 10 + 5', or 'what is 20 / 4?'",
@@ -99,22 +103,22 @@ class ToolDispatcher:
         }
         
         # Add RAG query description if available
-        if RAG_AVAILABLE and self.rag_manager:
+        if _RAG_AVAILABLE_FLAG and self.rag_manager:
             self.tool_descriptions["rag_query"] = "Performs a retrieval-augmented generation query. Example: 'rag_query what is the main purpose of HAM?'"
-        self.models = []
+        self.models: List[Any] = 
         logging.info("ToolDispatcher initialized.")
-        logging.info(f"Available tools: {list(self.tools.keys())}")
+        logging.info(f"Available tools: {list(self.tools.keys)}")
 
-    async def dispatch_tool_request(self, tool_name: str, parameters: dict) -> dict:
+    async def dispatch_tool_request(self, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Dispatch a tool request with the given tool name and parameters
         """
-        start_ts = time.perf_counter()
+        start_ts = time.perf_counter
         try:
             if tool_name not in self.tools:
                 return {
                     "status": "error",
-                    "error_message": f"Tool '{tool_name}' not found. Available tools: {list(self.tools.keys())}"
+                    "error_message": f"Tool '{tool_name}' not found. Available tools: {list(self.tools.keys)}"
                 }
             
             # Call the tool function with proper parameter handling
@@ -145,7 +149,7 @@ class ToolDispatcher:
             else:
                 # Standard tools (calculate, evaluate_logic) expect a query parameter
                 query = parameters.get("query", parameters.get("code", ""))
-                result = tool_function(query, **{k: v for k, v in parameters.items() if k not in ["query", "code"]})
+                result = tool_function(query, **{k: v for k, v in parameters.items if k not in ["query", "code"]})
             
             # Handle both sync and async results
             if hasattr(result, '__await__'):
@@ -165,9 +169,9 @@ class ToolDispatcher:
                 "cost_units": 0,
                 "user_context": {"user_id": parameters.get("user_id"), "session_id": parameters.get("session_id")},
                 "correlation_id": parameters.get("correlation_id"),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat,
             }
-            record["latency_ms"] = round((time.perf_counter() - start_ts) * 1000.0, 2)
+            record["latency_ms"] = round((time.perf_counter - start_ts) * 1000.0, 2)
             self._log_action_policy(record)
 
             return {
@@ -188,9 +192,9 @@ class ToolDispatcher:
                 "cost_units": 0,
                 "user_context": {"user_id": parameters.get("user_id"), "session_id": parameters.get("session_id")},
                 "correlation_id": parameters.get("correlation_id"),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat,
             }
-            record["latency_ms"] = round((time.perf_counter() - start_ts) * 1000.0, 2)
+            record["latency_ms"] = round((time.perf_counter - start_ts) * 1000.0, 2)
             self._log_action_policy(record)
 
             return {
@@ -217,7 +221,9 @@ class ToolDispatcher:
             )
 
         try:
-            result = self.csv_tool_instance.analyze(csv_content=csv_content, query=analysis_query)
+            # Create an instance of the tool
+            csv_tool_instance = CsvTool
+            result = csv_tool_instance.analyze(csv_content=csv_content, query=analysis_query)
             return ToolDispatcherResponse(
                 status=result["status"],
                 payload=result.get("result"),
@@ -254,7 +260,9 @@ class ToolDispatcher:
             )
 
         try:
-            result = self.image_generation_tool_instance.create_image(prompt=prompt, style=style)
+            # Create an instance of the tool
+            image_tool_instance = ImageGenerationTool
+            result = image_tool_instance.create_image(prompt=prompt, style=style)
             return ToolDispatcherResponse(
                 status=result["status"],
                 payload=result.get("result"),
@@ -297,7 +305,9 @@ class ToolDispatcher:
             )
 
         try:
-            result_payload = self.code_understanding_tool_instance.execute(action=action, tool_name=tool_name_param)
+            # Create an instance of the tool
+            code_tool_instance = CodeUnderstandingTool
+            result_payload = code_tool_instance.execute(action=action, tool_name=tool_name_param)
             return ToolDispatcherResponse(
                 status="success",
                 payload=result_payload,
@@ -322,13 +332,22 @@ class ToolDispatcher:
         try:
             # Assuming the query is the text to search for.
             # The RAGManager might evolve to take more complex parameters.
-            results = self.rag_manager.search(query)
-            return ToolDispatcherResponse(
-                status="success",
-                payload=results,
-                tool_name_attempted="rag_query",
-                original_query_for_tool=query
-            )
+            if self.rag_manager is not None:
+                results = self.rag_manager.search(query)
+                return ToolDispatcherResponse(
+                    status="success",
+                    payload=results,
+                    tool_name_attempted="rag_query",
+                    original_query_for_tool=query
+                )
+            else:
+                return ToolDispatcherResponse(
+                    status="error_dispatcher_issue",
+                    payload=None,
+                    tool_name_attempted="rag_query",
+                    original_query_for_tool=query,
+                    error_message="RAG manager is not available."
+                )
         except Exception as e:
             error_msg = f"Error in RAG query: {str(e)[:100]}"
             logging.error(f"ToolDispatcher: {error_msg}")
@@ -382,12 +401,13 @@ class ToolDispatcher:
             # e.g., "logic: (true OR false)" -> "(true OR false)"
             match_evaluate = re.match(r"(?:evaluate|logic:)\s*(.*)", query, re.IGNORECASE)
             if match_evaluate:
-                expression_to_evaluate = match_evaluate.group(1).strip()
+                expression_to_evaluate = match_evaluate.group(1).strip
             else:
                 expression_to_evaluate = query # Assume the query is the expression
 
             logging.debug(f"ToolDispatcher DEBUG (_execute_logic_evaluation): expression_to_evaluate='{expression_to_evaluate}'")
-            result = logic_evaluate(expression_to_evaluate)
+            result = logic_evaluate(expression_to_evaluate, expression_string=expression_to_evaluate)
+
             # The logic_evaluate tool returns a boolean, or a string error message.
             if isinstance(result, bool):
                 return ToolDispatcherResponse(
@@ -444,7 +464,7 @@ class ToolDispatcher:
                 pattern1_match = re.search(r"translate\s+(?:['\"](.+?)['\"]|(.+?))\s+to\s+([a-zA-Z\-]+)", query, re.IGNORECASE)
                 if pattern1_match:
                     text_to_translate = pattern1_match.group(1) or pattern1_match.group(2)
-                    text_to_translate = text_to_translate.strip()
+                    text_to_translate = text_to_translate.strip
                     lang_name_or_code = pattern1_match.group(3).lower()
                     if lang_name_or_code in ["chinese", "zh"]: resolved_target_lang = "zh"
                     elif lang_name_or_code in ["english", "en"]: resolved_target_lang = "en"
@@ -454,7 +474,7 @@ class ToolDispatcher:
                     pattern2_match = re.search(r"(?:['\"](.+?)['\"]|(.+?))\s+in\s+([a-zA-Z\-]+)", query, re.IGNORECASE)
                     if pattern2_match:
                         text_to_translate = pattern2_match.group(1) or pattern2_match.group(2)
-                        text_to_translate = text_to_translate.strip()
+                        text_to_translate = text_to_translate.strip
                         lang_name_or_code = pattern2_match.group(3).lower()
                         if lang_name_or_code in ["chinese", "zh"]: resolved_target_lang = "zh"
                         elif lang_name_or_code in ["english", "en"]: resolved_target_lang = "en"
@@ -473,9 +493,9 @@ class ToolDispatcher:
 
                         text_simple_match = re.match(r"translate\s+(.+)", query, re.IGNORECASE)
                         if text_simple_match:
-                            text_to_translate = text_simple_match.group(1).strip()
+                            text_to_translate = text_simple_match.group(1).strip
                             # Remove "to lang" part if it was part of this simple match
-                            if to_lang_match_general and text_to_translate.lower().endswith(f" to {to_lang_match_general.group(1).lower()}"):
+                            if to_lang_match_general and text_to_translate.lower.endswith(f" to {to_lang_match_general.group(1).lower}"):
                                 text_to_translate = text_to_translate[:-(len(f" to {to_lang_match_general.group(1).lower()}"))].strip()
 
                         else: # Cannot determine text to translate from query string if not using kwargs
@@ -551,11 +571,11 @@ class ToolDispatcher:
                 )
 
         # Use DLM for intent recognition
-        intent = await self.dlm.recognize_intent(query, available_tools=self.get_available_tools())
+        intent = await self.dlm.recognize_intent(query, available_tools=self.get_available_tools)
 
         if intent and intent.get("tool_name") in self.tools:
             tool_name_from_dlm = intent["tool_name"]
-            tool_params = intent.get("parameters", {})
+            tool_params = intent.get("parameters", )
             # The 'query' in parameters is the specific data for the tool
             # The top-level 'query' is the user's original full query
             tool_specific_query = tool_params.get("query", query)
@@ -592,10 +612,10 @@ class ToolDispatcher:
     def reload_tools(self, only: Optional[str] = None) -> Dict[str, Any]:
         """
         Hot-reload tool implementations by re-importing known modules and updating bindings.
-        If 'only' is provided, reload only that tool key (e.g., 'calculate').
+        _ = If 'only' is provided, reload only that tool key (e.g., 'calculate').
         Returns a summary dict with reloaded/updated/failed keys.
         """
-        summary = {"reloaded": [], "updated": [], "failed": []}
+        summary = {"reloaded": , "updated": , "failed": }
         # Map dispatcher keys to module import paths and callables to bind
         mapping = {
             "calculate": (".math_tool", "calculate", self._execute_math_calculation),
@@ -606,10 +626,10 @@ class ToolDispatcher:
             "analyze_csv": (".csv_tool", "CsvTool", None),
             "create_image": (".image_generation_tool", "ImageGenerationTool", None),
         }
-        targets = [only] if only else list(mapping.keys())
+        targets = [only] if only else list(mapping.keys)
         for key in targets:
             if key not in mapping:
-                summary["failed"].append({key: "unknown tool key"})
+                _ = summary["failed"].append({key: "unknown tool key"})
                 continue
             module_path, symbol_name, wrapper = mapping[key]
             try:
@@ -619,20 +639,20 @@ class ToolDispatcher:
                 # Bind function-based tools directly
                 if callable(new_symbol) and wrapper is not None:
                     # Keep dispatcher wrapper; underlying function called by wrapper picks up new impl implicitly
-                    summary["updated"].append(key)
+                    _ = summary["updated"].append(key)
                 else:
                     # Class-based tools: re-instantiate stored instances and update tool map
                     if key == "inspect_code":
-                        self.code_understanding_tool_instance = new_symbol()
+                        self.code_understanding_tool_instance = new_symbol
                     elif key == "analyze_csv":
-                        self.csv_tool_instance = new_symbol()
+                        self.csv_tool_instance = new_symbol
                     elif key == "create_image":
-                        self.image_generation_tool_instance = new_symbol()
-                    summary["updated"].append(key)
-                summary["reloaded"].append(key)
+                        self.image_generation_tool_instance = new_symbol
+                    _ = summary["updated"].append(key)
+                _ = summary["reloaded"].append(key)
             except Exception as e:
                 logging.error(f"ToolDispatcher.reload_tools: failed to reload {key}: {e}")
-                summary["failed"].append({key: str(e)})
+                _ = summary["failed"].append({key: str(e)})
         return summary
 
     def get_available_tools(self):
@@ -641,9 +661,9 @@ class ToolDispatcher:
 
     def add_model(self, model_code):
         """Adds a new model to the dispatcher."""
-        exec(model_code, globals())
+        exec(model_code, globals)
         model_name = re.search(r"class (\w+):", model_code).group(1)
-        self.models.append(globals()[model_name]())
+        self.models.append(globals[model_name])
 
     def replace_model(self, old_model, new_model):
         """Replaces an existing model with a new one."""
@@ -654,62 +674,60 @@ class ToolDispatcher:
 
     def add_tool(self, tool_code):
         """Adds a new tool to the dispatcher."""
-        exec(tool_code, globals())
+        exec(tool_code, globals)
         tool_name = re.search(r"def (\w+)\(input\):", tool_code).group(1)
-        self.tools[tool_name] = globals()[tool_name]
+        self.tools[tool_name] = globals[tool_name]
 
     def replace_tool(self, old_tool, new_tool):
         """Replaces an existing tool with a new one."""
-        for tool_name, tool in self.tools.items():
+        for tool_name, tool in self.tools.items:
             if tool == old_tool:
                 self.tools[tool_name] = new_tool
                 break
 
 # Example Usage
-if __name__ == '__main__':
+if __name__ == "__main__":
     import asyncio
-    from apps.backend.src.core.services.multi_llm_service import MultiLLMService
+    asyncio.run(main_test)
 
-    async def main_test():
-        logging.basicConfig(level=logging.INFO)
-        logging.info("--- ToolDispatcher Test ---")
-        # Initialize MultiLLMService (it will use its default config or load from file)
-        llm_service_instance = MultiLLMService()
-        dispatcher = ToolDispatcher(llm_service=llm_service_instance)
+async def main_test():
+    logging.basicConfig(level=logging.INFO)
+    logging.info("--- ToolDispatcher Test ---")
+    # Initialize MultiLLMService (it will use its default config or load from file)
+    llm_service_instance = MultiLLMService
+    dispatcher = ToolDispatcher(llm_service=llm_service_instance)
 
-        logging.info("\nAvailable tools:")
-        for name, desc in dispatcher.get_available_tools().items():
-            logging.info(f"- {name}: {desc}")
+    logging.info("\nAvailable tools:")
+    for name, desc in dispatcher.get_available_tools.items:
+        logging.info(f"- {name}: {desc}")
 
-        queries = [
-            "calculate 123 + 456",
-            "what is 7 * 6?",
-            "compute 100 / 4",
-            "What is the weather like?", # Should not be handled by math
-            "Solve 2x + 5 = 10", # More complex, current math tool won't solve algebra
-            "10 - 3"
-        ]
+    queries = [
+        "calculate 123 + 456",
+        "what is 7 * 6?",
+        "compute 100 / 4",
+        "What is the weather like?", # Should not be handled by math
+        "Solve 2x + 5 = 10", # More complex, current math tool won't solve algebra
+        "10 - 3"
+    ]
 
-        for q in queries:
-            logging.info(f"\nQuery: \"{q}\"")
-            result = await dispatcher.dispatch(q)
-            if result:
-                logging.info(f"Tool Dispatcher Result: {result}")
-            else:
-                logging.info("Tool Dispatcher: No tool could handle this query or no specific tool inferred.")
-
-        logging.info("\nTesting explicit tool dispatch:")
-        explicit_query = "what is 50 + 50"
-        logging.info(f"Query: \"{explicit_query}\", Tool: calculate")
-        result = await dispatcher.dispatch(explicit_query, explicit_tool_name="calculate")
-        logging.info(f"Tool Dispatcher Result: {result}")
-
-        non_tool_query = "hello world"
-        logging.info(f"\nQuery: \"{non_tool_query}\"")
-        result = await dispatcher.dispatch(non_tool_query)
+    for q in queries:
+        logging.info(f"\nQuery: \"{q}\"")
+        result = await dispatcher.dispatch(q)
         if result:
             logging.info(f"Tool Dispatcher Result: {result}")
         else:
             logging.info("Tool Dispatcher: No tool could handle this query or no specific tool inferred.")
 
-    asyncio.run(main_test())
+    logging.info("\nTesting explicit tool dispatch:")
+    explicit_query = "what is 50 + 50"
+    logging.info(f"Query: \"{explicit_query}\", Tool: calculate")
+    result = await dispatcher.dispatch(explicit_query, explicit_tool_name="calculate")
+    logging.info(f"Tool Dispatcher Result: {result}")
+
+    non_tool_query = "hello world"
+    logging.info(f"\nQuery: \"{non_tool_query}\"")
+    result = await dispatcher.dispatch(non_tool_query)
+    if result:
+        logging.info(f"Tool Dispatcher Result: {result}")
+    else:
+        logging.info("Tool Dispatcher: No tool could handle this query or no specific tool inferred.")

@@ -7,8 +7,6 @@ This module demonstrates the usage of the CoreServiceManager.
 
 import asyncio
 import logging
-from apps.backend.src.core.managers.core_service_manager import (
-    CoreServiceManager, 
     ServiceConfig, 
     ServiceStatus, 
     ServiceHealth
@@ -18,15 +16,15 @@ from apps.backend.src.core.managers.service_monitor import ServiceMonitor
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 
-async def main():
+async def main -> None:
     """主函数"""
     logger.info("Starting Core Service Manager Demo")
     
     # 创建核心服务管理器
-    manager = CoreServiceManager()
+    manager = CoreServiceManager
     
     # 创建服务监控器
     monitor = ServiceMonitor(manager, "service_demo.log")
@@ -39,11 +37,11 @@ async def main():
             name="llm_service",
             module_path="core_services",
             class_name="MultiLLMService",
-            dependencies=[],
+            dependencies=,
             lazy_load=True,
             auto_restart=True,
             health_check_interval=30.0,
-            config={}
+            config=
         )
         manager.register_service(llm_config)
         
@@ -52,11 +50,11 @@ async def main():
             name="ham_manager",
             module_path="core_services",
             class_name="HAMMemoryManager",
-            dependencies=[],
+            dependencies=,
             lazy_load=True,
             auto_restart=True,
             health_check_interval=60.0,
-            config={}
+            config=
         )
         manager.register_service(ham_config)
         
@@ -65,7 +63,7 @@ async def main():
             name="hsp_connector",
             module_path="core_services",
             class_name="HSPConnector",
-            dependencies=[],
+            dependencies=,
             lazy_load=True,
             auto_restart=True,
             health_check_interval=15.0,
@@ -86,7 +84,7 @@ async def main():
             lazy_load=True,
             auto_restart=True,
             health_check_interval=30.0,
-            config={}
+            config=
         )
         manager.register_service(dialogue_config)
         
@@ -99,7 +97,7 @@ async def main():
             lazy_load=True,
             auto_restart=True,
             health_check_interval=60.0,
-            config={}
+            config=
         )
         manager.register_service(learning_config)
         
@@ -133,7 +131,7 @@ async def main():
         logger.info(f"Dialogue manager load result: {success}")
         
         # 检查所有服务状态
-        status = manager.get_all_services_status()
+        status = manager.get_all_services_status
         logger.info(f"Service status: {status}")
         
         # 演示服务重启
@@ -154,19 +152,19 @@ async def main():
         logger.info(f"Batch load results: {results}")
         
         # 检查状态
-        status = manager.get_all_services_status()
+        status = manager.get_all_services_status
         logger.info(f"Service status after batch load: {status}")
         
         # 等待一段时间以观察健康检查
         logger.info("Waiting for health checks...")
-        await asyncio.sleep(20)
+        _ = await asyncio.sleep(20)
         
         # 获取监控报告
-        report = monitor.get_service_report()
+        report = monitor.get_service_report
         logger.info(f"Service report: {report}")
         
         logger.info("Demo completed successfully")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main)

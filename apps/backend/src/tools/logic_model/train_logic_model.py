@@ -5,38 +5,69 @@
 使用Keras构建和训练逻辑推理模型
 """
 
-# 添加兼容性导入
-try:
-    # 设置环境变量以解决Keras兼容性问题
-    import os
-    os.environ['TF_USE_LEGACY_KERAS'] = '1'
-    
-    from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-    from tensorflow.keras.models import Sequential
-    from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
-    from tensorflow.keras.optimizers import Adam
-    KERAS_AVAILABLE = True
-except ImportError as e:
-    print(f"Warning: Could not import keras: {e}")
-    EarlyStopping = ModelCheckpoint = ReduceLROnPlateau = Sequential = Dense = Dropout = BatchNormalization = Adam = None
-    KERAS_AVAILABLE = False
-
-import numpy as np
 import json
-import logging
-from pathlib import Path
-from typing import Dict, Any, List, Tuple
+import os
+import sys
 
-# Add src directory to sys.path to allow imports
+# Add src directory to sys.path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
+# 添加兼容性导入
+# 使用小写变量名避免常量重定义错误
+keras_available = False
+EarlyStopping = None
+ModelCheckpoint = None
+ReduceLROnPlateau = None
+Sequential = None
+Dense = None
+Dropout = None
+BatchNormalization = None
+Adam = None
+tf = None
+
 try:
-    # 修复导入路径
-    from .logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
+    # 设置环境变量以解决Keras兼容性问题
+    os.environ['TF_USE_LEGACY_KERAS'] = '1'
+    
+    import tensorflow as tf_imported
+    tf = tf_imported
+    
+    # 尝试导入Keras组件
+    if hasattr(tf_imported, 'keras'):
+        keras_module = tf_imported.keras
+        if hasattr(keras_module, 'callbacks'):
+            callbacks_module = keras_module.callbacks
+            EarlyStopping = getattr(callbacks_module, 'EarlyStopping', None)
+            ModelCheckpoint = getattr(callbacks_module, 'ModelCheckpoint', None)
+            ReduceLROnPlateau = getattr(callbacks_module, 'ReduceLROnPlateau', None)
+        
+        if hasattr(keras_module, 'models'):
+            models_module = keras_module.models
+            Sequential = getattr(models_module, 'Sequential', None)
+            
+        if hasattr(keras_module, 'layers'):
+            layers_module = keras_module.layers
+            Dense = getattr(layers_module, 'Dense', None)
+            Dropout = getattr(layers_module, 'Dropout', None)
+            BatchNormalization = getattr(layers_module, 'BatchNormalization', None)
+            
+        if hasattr(keras_module, 'optimizers'):
+            optimizers_module = keras_module.optimizers
+            Adam = getattr(optimizers_module, 'Adam', None)
+        
+        keras_available = True
+except ImportError as e:
+    print(f"Warning: Could not import tensorflow: {e}")
+    # 保持默认值为None和False
+
+# 修复导入路径
+sys.path.append(os.path.join(SCRIPT_DIR))
+try:
+    from logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
 except ImportError as e:
     print(f"Error importing from logic_model_nn: {e}")
     print("Ensure logic_model_nn.py is in the same directory and src is in sys.path.")
@@ -72,7 +103,7 @@ def load_logic_dataset(file_path):
         print(f"Error: {e}")
     return None
 
-def main():
+def main -> None:  # 修复函数定义，添加缺失的括号
     print("Starting Logic NN Model training process...")
 
     # 1. Load data
@@ -94,6 +125,11 @@ def main():
     # 3. Preprocess data
     print("Preprocessing data for the model...")
     X, y_categorical = preprocess_logic_data(TRAIN_DATA_PATH, char_to_token, max_seq_len, num_classes=2)
+    
+    # 检查数据是否成功加载
+    if X is None or y_categorical is None:
+        print("Error: Failed to preprocess data.")
+        return
 
     print(f"X (input data) shape: {X.shape}")
     print(f"y (target data) shape: {y_categorical.shape}")
@@ -117,20 +153,38 @@ def main():
     # 6. Train the model
     print("Starting model training...")
 
-    callbacks = [
-        EarlyStopping(monitor='val_loss', patience=5, verbose=1, restore_best_weights=True),
-        ModelCheckpoint(MODEL_SAVE_PATH, monitor='val_loss', save_best_only=True, verbose=1),
-        ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=0.00001, verbose=1)
-    ]
+    # 检查Keras组件是否可用
+    if not keras_available:
+        print("Error: Keras components not available.")
+        return
 
-    history = logic_nn_model.model.fit(
-        X, y_categorical, # Using all data, with validation_split in fit()
-        epochs=EPOCHS,
-        batch_size=BATCH_SIZE,
-        validation_split=VALIDATION_SPLIT, # Uses last 10% of data for validation
-        callbacks=callbacks,
-        shuffle=True
-    )
+    # 创建回调函数列表，检查各个组件是否可用
+    callbacks = 
+    if EarlyStopping is not None:
+        callbacks.append(EarlyStopping(monitor='val_loss', patience=5, verbose=1, restore_best_weights=True))
+    if ModelCheckpoint is not None:
+        callbacks.append(ModelCheckpoint(MODEL_SAVE_PATH, monitor='val_loss', save_best_only=True, verbose=1))
+    if ReduceLROnPlateau is not None:
+        callbacks.append(ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=0.00001, verbose=1))
+    
+    # 如果没有可用的回调函数，创建一个空列表
+    if not callbacks:
+        print("Warning: No Keras callbacks available.")
+        callbacks = 
+
+    # 确保模型存在且可调用
+    if hasattr(logic_nn_model, 'model') and logic_nn_model.model is not None:
+        history = logic_nn_model.model.fit(
+            X, y_categorical, # Using all data, with validation_split in fit
+            epochs=EPOCHS,
+            batch_size=BATCH_SIZE,
+            validation_split=VALIDATION_SPLIT, # Uses last 10% of data for validation
+            callbacks=callbacks,
+            shuffle=True
+        )
+    else:
+        print("Error: Model is not available for training.")
+        return
 
     print("Training complete.")
     # The ModelCheckpoint callback saves the best model automatically to MODEL_SAVE_PATH
@@ -146,7 +200,7 @@ def main():
     # plt.title('Model Accuracy')
     # plt.ylabel('Accuracy')
     # plt.xlabel('Epoch')
-    # plt.legend()
+    # plt.legend
     # plt.savefig('logic_model_training_accuracy.png')
     # print("Training accuracy plot saved to logic_model_training_accuracy.png")
 
@@ -156,4 +210,4 @@ if __name__ == '__main__':
         print(f"Training data JSON file not found at {TRAIN_DATA_PATH}.")
         print("Please run `logic_data_generator.py` first to create 'logic_train.json'.")
     else:
-        main()
+        main  # 修复函数调用，添加缺失的括号

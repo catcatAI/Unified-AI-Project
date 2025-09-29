@@ -1,7 +1,6 @@
 import asyncio
 import uuid
 import logging
-from typing import Dict, Any, List
 
 from .base.base_agent import BaseAgent
 from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
@@ -11,7 +10,7 @@ class WebSearchAgent(BaseAgent):
     """
     A specialized agent for web search tasks.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_web_search_v1.0",
@@ -25,14 +24,14 @@ class WebSearchAgent(BaseAgent):
                 "returns": {"type": "object", "description": "Search results with titles, URLs, and snippets."}
             }
         ]
-        super().__init__(agent_id=agent_id, capabilities=capabilities)
-        self.web_search_tool = WebSearchTool()
+        super.__init__(agent_id=agent_id, capabilities=capabilities)
+        self.web_search_tool = WebSearchTool
         logging.info(f"[{self.agent_id}] WebSearchAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id")
         capability_id = task_payload.get("capability_id_filter", "")
-        params = task_payload.get("parameters", {})
+        params = task_payload.get("parameters", )
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
 
@@ -48,7 +47,7 @@ class WebSearchAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     async def _perform_web_search(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -84,12 +83,12 @@ class WebSearchAgent(BaseAgent):
         )
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:web_search_agent_{uuid.uuid4().hex[:6]}"
         agent = WebSearchAgent(agent_id=agent_id)
-        await agent.start()
+        _ = await agent.start()
 
     try:
-        asyncio.run(main())
+        asyncio.run(main)
     except KeyboardInterrupt:
         print("\nWebSearchAgent manually stopped.")

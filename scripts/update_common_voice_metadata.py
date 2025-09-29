@@ -10,7 +10,7 @@ from datetime import datetime
 import logging
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 def generate_common_voice_metadata():
     """生成Common Voice元數據"""
@@ -49,8 +49,8 @@ def generate_common_voice_metadata():
             'name': dataset['name'],
             'file': dataset['file'],
             'extract_dir': dataset['extract_dir'],
-            'downloaded': archive_path.exists(),
-            'extracted': extract_dir.exists() and bool(list(extract_dir.iterdir())),
+            _ = 'downloaded': archive_path.exists(),
+            _ = 'extracted': extract_dir.exists() and bool(list(extract_dir.iterdir())),
             'file_size_gb': 0,
             'expected_size_gb': dataset['expected_size_gb']
         }
@@ -60,16 +60,16 @@ def generate_common_voice_metadata():
             file_info['file_size_gb'] = round(file_size, 2)
             total_size_gb += file_size
         
-        files_info.append(file_info)
+        _ = files_info.append(file_info)
         logger.info(f"📊 {dataset['name']}: 下載={file_info['downloaded']}, 解壓={file_info['extracted']}")
     
     # 生成完整元數據
     metadata = {
         'dataset_name': 'Common Voice 中文數據集',
         'version': '22.0 + 7.0',
-        'download_date': datetime.now().isoformat(),
-        'total_size_gb': round(total_size_gb, 2), 
-        'license': 'CC0 (Public Domain)',
+        _ = 'download_date': datetime.now().isoformat(),
+        _ = 'total_size_gb': round(total_size_gb, 2), 
+        _ = 'license': 'CC0 (Public Domain)',
         'use_case': 'AudioService訓練 - 中文語音識別',
         'languages': ['zh-CN', 'zh-TW'],
         'datasets': files_info,
@@ -82,22 +82,22 @@ def generate_common_voice_metadata():
     with open(metadata_path, 'w', encoding='utf-8') as f:
         json.dump(metadata, f, indent=2, ensure_ascii=False)
     
-    logger.info(f"📝 元數據已保存: {metadata_path}")
+    _ = logger.info(f"📝 元數據已保存: {metadata_path}")
     
     # 顯示摘要
-    print("\n📊 Common Voice 數據集狀態摘要:")
-    print(f"💾 總大小: {total_size_gb:.1f} GB")
+    _ = print("\n📊 Common Voice 數據集狀態摘要:")
+    _ = print(f"💾 總大小: {total_size_gb:.1f} GB")
     
     for info in files_info:
         status_download = "✅" if info['downloaded'] else "❌"
         status_extract = "✅" if info['extracted'] else "❌" 
-        print(f"  {status_download} {status_extract} {info['name']} ({info['file_size_gb']:.1f}GB)")
+        _ = print(f"  {status_download} {status_extract} {info['name']} ({info['file_size_gb']:.1f}GB)")
     
     return metadata
 
 if __name__ == "__main__":
-    print("🚀 Common Voice 元數據生成器")
+    _ = print("🚀 Common Voice 元數據生成器")
     print("=" * 40)
     
     metadata = generate_common_voice_metadata()
-    print("\n🎉 元數據更新完成!")
+    _ = print("\n🎉 元數據更新完成!")

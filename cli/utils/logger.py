@@ -5,20 +5,19 @@
 
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
 
 
 class UnifiedLogger:
-    def __init__(self, name="unified-ai", level=logging.INFO):
+    def __init__(self, name="unified-ai", level=logging.INFO) -> None:
         self.logger = logging.getLogger(name)
-        self.logger.setLevel(level)
+        _ = self.logger.setLevel(level)
         
         # 避免重复添加处理器
         if not self.logger.handlers:
             # 创建控制台处理器
             console_handler = logging.StreamHandler(sys.stdout)
-            console_handler.setLevel(level)
+            _ = console_handler.setLevel(level)
             
             # 创建文件处理器
             log_dir = Path(__file__).parent.parent.parent / "logs"
@@ -26,33 +25,33 @@ class UnifiedLogger:
             log_file = log_dir / "unified-ai.log"
             
             file_handler = logging.FileHandler(log_file, encoding='utf-8')
-            file_handler.setLevel(level)
+            _ = file_handler.setLevel(level)
             
             # 创建格式器
             formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                _ = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
-            console_handler.setFormatter(formatter)
-            file_handler.setFormatter(formatter)
+            _ = console_handler.setFormatter(formatter)
+            _ = file_handler.setFormatter(formatter)
             
             # 添加处理器
-            self.logger.addHandler(console_handler)
-            self.logger.addHandler(file_handler)
+            _ = self.logger.addHandler(console_handler)
+            _ = self.logger.addHandler(file_handler)
     
     def debug(self, message):
-        self.logger.debug(message)
+        _ = self.logger.debug(message)
     
     def info(self, message):
-        self.logger.info(message)
+        _ = self.logger.info(message)
     
     def warning(self, message):
-        self.logger.warning(message)
+        _ = self.logger.warning(message)
     
     def error(self, message):
-        self.logger.error(message)
+        _ = self.logger.error(message)
     
     def critical(self, message):
-        self.logger.critical(message)
+        _ = self.logger.critical(message)
     
     def set_level(self, level):
         """设置日志级别"""
@@ -65,10 +64,10 @@ class UnifiedLogger:
         }
         
         numeric_level = level_map.get(level.upper(), logging.INFO)
-        self.logger.setLevel(numeric_level)
+        _ = self.logger.setLevel(numeric_level)
         
         for handler in self.logger.handlers:
-            handler.setLevel(numeric_level)
+            _ = handler.setLevel(numeric_level)
     
     def get_level(self):
         """获取当前日志级别"""

@@ -4,7 +4,6 @@
 用于验证集成显卡支持和硬件兼容性改进
 """
 
-import os
 import sys
 import logging
 from pathlib import Path
@@ -13,23 +12,23 @@ import platform
 import psutil
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
+project_root: str = Path(__file__).parent.parent
+backend_path: str = project_root / "apps" / "backend"
+_ = sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(backend_path))
+_ = sys.path.insert(0, str(backend_path / "src"))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler()
+        _ = logging.StreamHandler()
     ]
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
-def test_system_info():
+def test_system_info() -> None:
     """测试系统基本信息"""
     logger.info("=== 系统基本信息 ===")
     
@@ -38,16 +37,16 @@ def test_system_info():
     
     # 内存信息
     memory = psutil.virtual_memory()
-    logger.info(f"总内存: {memory.total / (1024**3):.2f} GB")
-    logger.info(f"可用内存: {memory.available / (1024**3):.2f} GB")
+    _ = logger.info(f"总内存: {memory.total / (1024**3):.2f} GB")
+    _ = logger.info(f"可用内存: {memory.available / (1024**3):.2f} GB")
     
     # 系统信息
-    logger.info(f"操作系统: {platform.system()} {platform.release()}")
-    logger.info(f"架构: {platform.machine()}")
+    _ = logger.info(f"操作系统: {platform.system()} {platform.release()}")
+    _ = logger.info(f"架构: {platform.machine()}")
     
     return True
 
-def test_integrated_graphics_detection():
+def test_integrated_graphics_detection() -> None:
     """测试集成显卡检测"""
     logger.info("=== 集成显卡检测 ===")
     
@@ -55,7 +54,7 @@ def test_integrated_graphics_detection():
         system = platform.system().lower()
         
         if system == "windows":
-            logger.info("Windows系统，尝试检测集成显卡...")
+            _ = logger.info("Windows系统，尝试检测集成显卡...")
             
             # 使用更简单的命令
             import subprocess
@@ -65,11 +64,11 @@ def test_integrated_graphics_detection():
                 result = subprocess.run(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"], 
                                       capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
-                    logger.info("检测到NVIDIA GPU:")
+                    _ = logger.info("检测到NVIDIA GPU:")
                     for line in result.stdout.strip().split('\n'):
-                        logger.info(f"  NVIDIA: {line.strip()}")
+                        _ = logger.info(f"  NVIDIA: {line.strip()}")
             except:
-                logger.info("未检测到NVIDIA GPU或nvidia-smi不可用")
+                _ = logger.info("未检测到NVIDIA GPU或nvidia-smi不可用")
             
             # 检测所有显卡
             try:
@@ -82,59 +81,59 @@ def test_integrated_graphics_detection():
                     # 过滤掉空行和标题行
                     gpu_names = [line.strip() for line in lines if line.strip() and not line.startswith('Name')]
                     
-                    logger.info(f"检测到 {len(gpu_names)} 个GPU:")
+                    _ = logger.info(f"检测到 {len(gpu_names)} 个GPU:")
                     for gpu_name in gpu_names:
-                        logger.info(f"  GPU: {gpu_name}")
+                        _ = logger.info(f"  GPU: {gpu_name}")
                         
                         # 检查是否为集成显卡
                         integrated_keywords = ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated']
                         is_integrated = any(keyword in gpu_name.lower() for keyword in integrated_keywords)
                         if is_integrated:
-                            logger.info(f"    -> 集成显卡: 是")
+                            _ = logger.info(f"    -> 集成显卡: 是")
                         else:
-                            logger.info(f"    -> 集成显卡: 否")
+                            _ = logger.info(f"    -> 集成显卡: 否")
                 else:
-                    logger.warning("无法通过wmic获取GPU信息")
+                    _ = logger.warning("无法通过wmic获取GPU信息")
             except Exception as e:
-                logger.error(f"检测GPU时出错: {e}")
+                _ = logger.error(f"检测GPU时出错: {e}")
         else:
-            logger.info(f"非Windows系统 ({system})，跳过集成显卡检测")
+            _ = logger.info(f"非Windows系统 ({system})，跳过集成显卡检测")
             
         return True
     except Exception as e:
-        logger.error(f"集成显卡检测失败: {e}")
+        _ = logger.error(f"集成显卡检测失败: {e}")
         return False
 
-def test_imports():
+def test_imports() -> None:
     """测试关键模块导入"""
     logger.info("=== 模块导入测试 ===")
     
     modules_to_test = [
-        ("硬件探测模块", "apps.backend.src.system.hardware_probe"),
-        ("集成显卡优化器", "apps.backend.src.system.integrated_graphics_optimizer"),
-        ("部署管理器", "apps.backend.src.system.deployment_manager"),
-        ("训练模型", "training.train_model"),
-        ("GPU优化器", "training.gpu_optimizer"),
-        ("资源管理器", "training.resource_manager"),
-        ("智能资源分配器", "training.smart_resource_allocator")
+        _ = ("硬件探测模块", "apps.backend.src.system.hardware_probe"),
+        _ = ("集成显卡优化器", "apps.backend.src.system.integrated_graphics_optimizer"),
+        _ = ("部署管理器", "apps.backend.src.system.deployment_manager"),
+        _ = ("训练模型", "training.train_model"),
+        _ = ("GPU优化器", "training.gpu_optimizer"),
+        _ = ("资源管理器", "training.resource_manager"),
+        _ = ("智能资源分配器", "training.smart_resource_allocator")
     ]
     
     results = []
     for name, module in modules_to_test:
         try:
             __import__(module)
-            logger.info(f"  {name}: ✅ 导入成功")
-            results.append(True)
+            _ = logger.info(f"  {name}: ✅ 导入成功")
+            _ = results.append(True)
         except ImportError as e:
-            logger.warning(f"  {name}: ❌ 导入失败 - {e}")
-            results.append(False)
+            _ = logger.warning(f"  {name}: ❌ 导入失败 - {e}")
+            _ = results.append(False)
         except Exception as e:
-            logger.error(f"  {name}: ❌ 导入出错 - {e}")
-            results.append(False)
+            _ = logger.error(f"  {name}: ❌ 导入出错 - {e}")
+            _ = results.append(False)
     
     return all(results) if results else False
 
-def test_integrated_graphics_optimizer():
+def test_integrated_graphics_optimizer() -> None:
     """测试集成显卡优化器功能"""
     logger.info("=== 集成显卡优化器测试 ===")
     
@@ -143,7 +142,7 @@ def test_integrated_graphics_optimizer():
         from apps.backend.src.system.integrated_graphics_optimizer import (
             IntegratedGraphicsOptimizer
         )
-        logger.info("集成显卡优化器导入成功")
+        _ = logger.info("集成显卡优化器导入成功")
         
         # 创建一个模拟的硬件配置文件（集成显卡）
         from apps.backend.src.system.hardware_probe import (
@@ -207,54 +206,54 @@ def test_integrated_graphics_optimizer():
         # 测试优化器
         optimizer = IntegratedGraphicsOptimizer(hardware_profile)
         
-        logger.info(f"是否为集成显卡系统: {optimizer.is_integrated_graphics_system()}")
+        _ = logger.info(f"是否为集成显卡系统: {optimizer.is_integrated_graphics_system()}")
         
         recommendations = optimizer.get_optimization_recommendations()
         logger.info(f"优化建议: {json.dumps(recommendations, ensure_ascii=False, indent=2)}")
         
         batch_size = optimizer.adjust_batch_size_for_integrated_graphics(32)
-        logger.info(f"调整后的批处理大小: {batch_size}")
+        _ = logger.info(f"调整后的批处理大小: {batch_size}")
         
         precision_config = optimizer.enable_precision_adjustment()
-        logger.info(f"精度配置: {precision_config}")
+        _ = logger.info(f"精度配置: {precision_config}")
         
         coordination_config = optimizer.coordinate_cpu_gpu_usage()
-        logger.info(f"CPU-GPU协调配置: {coordination_config}")
+        _ = logger.info(f"CPU-GPU协调配置: {coordination_config}")
         
         compression_config = optimizer.apply_model_compression()
-        logger.info(f"模型压缩配置: {compression_config}")
+        _ = logger.info(f"模型压缩配置: {compression_config}")
         
         all_results = optimizer.apply_all_optimizations()
-        logger.info("所有优化测试通过")
+        _ = logger.info("所有优化测试通过")
         
         return True
     except Exception as e:
-        logger.error(f"集成显卡优化器测试失败: {e}")
+        _ = logger.error(f"集成显卡优化器测试失败: {e}")
         import traceback
-        logger.error(f"详细错误信息: {traceback.format_exc()}")
+        _ = logger.error(f"详细错误信息: {traceback.format_exc()}")
         return False
 
-def main():
+def main() -> None:
     """主测试函数"""
-    logger.info("开始快速硬件兼容性测试")
+    _ = logger.info("开始快速硬件兼容性测试")
     
     # 运行所有测试
     tests = [
-        ("系统信息", test_system_info),
-        ("集成显卡检测", test_integrated_graphics_detection),
-        ("模块导入", test_imports),
-        ("集成显卡优化器", test_integrated_graphics_optimizer)
+        _ = ("系统信息", test_system_info),
+        _ = ("集成显卡检测", test_integrated_graphics_detection),
+        _ = ("模块导入", test_imports),
+        _ = ("集成显卡优化器", test_integrated_graphics_optimizer)
     ]
     
     results = []
     for test_name, test_func in tests:
         try:
-            logger.info(f"\n--- 运行 {test_name} 测试 ---")
+            _ = logger.info(f"\n--- 运行 {test_name} 测试 ---")
             result = test_func()
-            results.append((test_name, result))
+            _ = results.append((test_name, result))
         except Exception as e:
-            logger.error(f"{test_name} 测试出错: {e}")
-            results.append((test_name, False))
+            _ = logger.error(f"{test_name} 测试出错: {e}")
+            _ = results.append((test_name, False))
     
     # 输出测试结果摘要
     logger.info("\n=== 测试结果摘要 ===")
@@ -263,23 +262,23 @@ def main():
     
     for test_name, result in results:
         status = "✅ 通过" if result else "❌ 失败"
-        logger.info(f"{test_name}: {status}")
+        _ = logger.info(f"{test_name}: {status}")
         if result:
             passed += 1
         else:
             failed += 1
     
     logger.info(f"\n=== 测试完成 ===")
-    logger.info(f"总测试数: {len(results)}")
-    logger.info(f"通过: {passed}")
-    logger.info(f"失败: {failed}")
+    _ = logger.info(f"总测试数: {len(results)}")
+    _ = logger.info(f"通过: {passed}")
+    _ = logger.info(f"失败: {failed}")
     
     if failed == 0:
-        logger.info("\n🎉 所有测试通过！硬件兼容性改进已正确实现。")
+        _ = logger.info("\n🎉 所有测试通过！硬件兼容性改进已正确实现。")
         return 0
     else:
-        logger.error(f"\n⚠️  {failed} 个测试失败，请检查相关功能。")
+        _ = logger.error(f"\n⚠️  {failed} 个测试失败，请检查相关功能。")
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    _ = sys.exit(main())

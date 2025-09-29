@@ -9,9 +9,8 @@ import re
 import json
 import traceback
 from pathlib import Path
-from typing import List, Tuple, Dict, Set
+from typing import List, Tuple, Dict, Set, Any, Optional
 import argparse
-import ast
 import subprocess
 import time
 
@@ -116,14 +115,14 @@ FULL_REPLACEMENT_MAPPINGS = {
 }
 
 class EnhancedImportFixer:
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
         self.backend_root = project_root / "apps" / "backend"
         self.src_dir = self.backend_root / "src"
         self.fixed_files: Set[str] = set()
         self.failed_files: Set[str] = set()
         self.module_cache: Dict[str, List[Path]] = {}
-        self.fix_report: Dict = {
+        self.fix_report: Dict[str, Any] = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "files_processed": 0,
             "files_fixed": 0,
@@ -142,7 +141,7 @@ class EnhancedImportFixer:
             if any(part in str(py_file) for part in ["backup", "node_modules", "__pycache__", "venv", ".git", "dist", "build"]):
                 continue
                 
-            python_files.append(py_file)
+            _ = python_files.append(py_file)
             
         return python_files
 
@@ -159,13 +158,13 @@ class EnhancedImportFixer:
             for old_import, new_import in FULL_REPLACEMENT_MAPPINGS.items():
                 if old_import in content:
                     content = content.replace(old_import, new_import)
-                    fixes_made.append(f"完全替换: {old_import} -> {new_import}")
+                    _ = fixes_made.append(f"完全替换: {old_import} -> {new_import}")
             
             # 应用新的导入映射
             for old_import, new_import in NEW_IMPORT_MAPPINGS.items():
                 if old_import in content and new_import not in content:
                     content = content.replace(old_import, new_import)
-                    fixes_made.append(f"映射替换: {old_import} -> {new_import}")
+                    _ = fixes_made.append(f"映射替换: {old_import} -> {new_import}")
             
             # 处理相对导入问题
             # 修复相对导入问题 (从 .core_ai 到新的结构)
@@ -206,12 +205,12 @@ class EnhancedImportFixer:
                 if matches:
                     content = re.sub(pattern, replacement, content)
                     for match in matches:
-                        fixes_made.append(f"相对导入修复: {match} -> {replacement}")
+                        _ = fixes_made.append(f"相对导入修复: {match} -> {replacement}")
             
             # 如果内容有变化，写入文件
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(content)
+                    _ = f.write(content)
                 return True, fixes_made
             else:
                 return False, []
@@ -228,14 +227,14 @@ class EnhancedImportFixer:
 
     def fix_all_imports(self) -> Dict[str, int]:
         """修复所有导入问题"""
-        print("开始扫描项目中的导入问题...")
+        _ = print("开始扫描项目中的导入问题...")
         python_files = self.find_python_files()
         
         if not python_files:
-            print("未找到Python文件。")
+            _ = print("未找到Python文件。")
             return {"fixed": 0, "skipped": 0, "errors": 0}
             
-        print(f"发现 {len(python_files)} 个Python文件。")
+        _ = print(f"发现 {len(python_files)} 个Python文件。")
         self.fix_report["files_processed"] = len(python_files)
         
         total_fixes = 0
@@ -249,9 +248,9 @@ class EnhancedImportFixer:
                 if fixed:
                     files_fixed += 1
                     total_fixes += len(fixes_made)
-                    print(f"✓ 修复了文件 {file_path}")
+                    _ = print(f"✓ 修复了文件 {file_path}")
                     for fix in fixes_made:
-                        print(f"  - {fix}")
+                        _ = print(f"  - {fix}")
                         self.fix_report["fixes_made"].append({
                             "file": str(file_path),
                             "fix": fix
@@ -263,7 +262,7 @@ class EnhancedImportFixer:
                     pass
             except Exception as e:
                 error_msg = f"处理文件 {file_path} 时出错: {str(e)}"
-                print(f"✗ {error_msg}")
+                _ = print(f"✗ {error_msg}")
                 self.fix_report["errors"].append({
                     "file": str(file_path),
                     "error": str(e),
@@ -282,12 +281,17 @@ class EnhancedImportFixer:
     def validate_fixes(self) -> bool:
         """验证修复是否成功"""
         print("\n=== 验证修复 ===")
+        original_cwd = None
         try:
+            # 切换到项目根目录
+            original_cwd = os.getcwd()
+            _ = os.chdir(self.project_root)
+            
             # 添加项目路径
             if str(self.project_root) not in sys.path:
-                sys.path.insert(0, str(self.project_root))
+                _ = sys.path.insert(0, str(self.project_root))
             if str(self.src_dir) not in sys.path:
-                sys.path.insert(0, str(self.src_dir))
+                _ = sys.path.insert(0, str(self.src_dir))
                 
             # 尝试导入核心模块
             test_modules = [
@@ -309,41 +313,49 @@ class EnhancedImportFixer:
             for module in test_modules:
                 try:
                     __import__(module)
-                    print(f"✓ {module} 导入成功")
+                    _ = print(f"✓ {module} 导入成功")
                     success_count += 1
                 except ImportError as e:
                     warning_msg = f"⚠ {module} 导入失败: {e}"
-                    print(warning_msg)
-                    self.fix_report["warnings"].append(warning_msg)
+                    _ = print(warning_msg)
+                    _ = self.fix_report["warnings"].append(warning_msg)
                 except Exception as e:
                     error_msg = f"✗ {module} 导入时出现错误: {e}"
-                    print(error_msg)
+                    _ = print(error_msg)
                     self.fix_report["errors"].append({
                         "module": module,
                         "error": str(e),
                         "type": "import_validation"
                     })
             
-            print(f"关键模块导入验证: {success_count}/{len(test_modules)} 成功")
+            _ = print(f"关键模块导入验证: {success_count}/{len(test_modules)} 成功")
             return success_count > 0
                 
         except Exception as e:
             error_msg = f"验证过程中出现错误: {str(e)}"
-            print(f"✗ {error_msg}")
+            _ = print(f"✗ {error_msg}")
             self.fix_report["errors"].append({
                 "error": str(e),
                 "type": "validation",
                 "traceback": traceback.format_exc()
             })
             return False
+        finally:
+            # 恢复工作目录
+            try:
+                if original_cwd is not None:
+                    _ = os.chdir(original_cwd)
+            except:
+                pass
 
     def run_import_test(self) -> bool:
         """运行导入测试"""
         print("\n=== 运行导入测试 ===")
+        original_cwd = None
         try:
             # 切换到项目根目录
             original_cwd = os.getcwd()
-            os.chdir(self.project_root)
+            _ = os.chdir(self.project_root)
             
             # 尝试导入几个关键模块
             test_modules = [
@@ -357,34 +369,36 @@ class EnhancedImportFixer:
             for module in test_modules:
                 try:
                     __import__(module)
-                    print(f"✓ {module} 导入成功")
+                    _ = print(f"✓ {module} 导入成功")
                     success_count += 1
                 except ImportError as e:
-                    print(f"✗ {module} 导入失败: {e}")
+                    _ = print(f"✗ {module} 导入失败: {e}")
                 except Exception as e:
-                    print(f"✗ {module} 导入时出现错误: {e}")
+                    _ = print(f"✗ {module} 导入时出现错误: {e}")
         
             # 恢复工作目录
-            os.chdir(original_cwd)
+            if original_cwd is not None:
+                _ = os.chdir(original_cwd)
             
             if success_count == len(test_modules):
-                print("所有测试模块导入成功。")
+                _ = print("所有测试模块导入成功。")
                 return True
             else:
-                print(f"导入测试: {success_count}/{len(test_modules)} 成功")
+                _ = print(f"导入测试: {success_count}/{len(test_modules)} 成功")
                 return success_count > 0
                 
         except Exception as e:
-            print(f"✗ 运行导入测试时出错: {e}")
+            _ = print(f"✗ 运行导入测试时出错: {e}")
             return False
         finally:
             # 恢复工作目录
             try:
-                os.chdir(original_cwd)
+                if original_cwd is not None:
+                    _ = os.chdir(original_cwd)
             except:
                 pass
 
-    def save_fix_report(self, report_path: Path = None):
+    def save_fix_report(self, report_path: Optional[Path] = None):
         """保存修复报告"""
         if report_path is None:
             report_path = self.project_root / "enhanced_auto_fix_report.json"
@@ -392,20 +406,21 @@ class EnhancedImportFixer:
         try:
             with open(report_path, 'w', encoding='utf-8') as f:
                 json.dump(self.fix_report, f, ensure_ascii=False, indent=2)
-            print(f"✓ 修复报告已保存到 {report_path}")
+            _ = print(f"✓ 修复报告已保存到 {report_path}")
         except Exception as e:
-            print(f"✗ 保存修复报告时出错: {e}")
+            _ = print(f"✗ 保存修复报告时出错: {e}")
 
     def run_tests(self) -> bool:
         """运行测试"""
         print("\n=== 运行测试 ===")
+        original_cwd = None
         try:
             # 切换到项目根目录
             original_cwd = os.getcwd()
-            os.chdir(self.project_root)
+            _ = os.chdir(self.project_root)
             
             # 尝试运行一个简单的导入测试
-            print("收集测试用例...")
+            _ = print("收集测试用例...")
             result = subprocess.run([
                 "python", "-m", "pytest", "--collect-only", "-q", "--tb=no"
             ], cwd=self.project_root, capture_output=True, text=True, timeout=120)
@@ -415,32 +430,33 @@ class EnhancedImportFixer:
                 output_lines = result.stdout.strip().split('\n')
                 test_count_line = [line for line in output_lines if 'tests collected' in line]
                 if test_count_line:
-                    print(f"✓ {test_count_line[0]}")
+                    _ = print(f"✓ {test_count_line[0]}")
                 else:
-                    print("✓ 测试收集成功")
+                    _ = print("✓ 测试收集成功")
                 return True
             else:
-                print("✗ 测试收集失败")
+                _ = print("✗ 测试收集失败")
                 if result.stdout:
-                    print("STDOUT:", result.stdout[-500:])  # 只显示最后500个字符
+                    _ = print("STDOUT:", result.stdout[-500:])  # 只显示最后500个字符
                 if result.stderr:
-                    print("STDERR:", result.stderr[-500:])  # 只显示最后500个字符
+                    _ = print("STDERR:", result.stderr[-500:])  # 只显示最后500个字符
                 return False
                 
         except subprocess.TimeoutExpired:
-            print("✗ 测试收集超时")
+            _ = print("✗ 测试收集超时")
             return False
         except Exception as e:
-            print(f"✗ 运行测试时出错: {e}")
+            _ = print(f"✗ 运行测试时出错: {e}")
             return False
         finally:
             # 恢复工作目录
             try:
-                os.chdir(original_cwd)
+                if original_cwd is not None:
+                    _ = os.chdir(original_cwd)
             except:
                 pass
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser(description="增强版自动修复工具 - 适应新的目录结构")
     parser.add_argument("--fix", action="store_true", help="修复导入路径问题")
     parser.add_argument("--validate", action="store_true", help="验证修复结果")
@@ -451,9 +467,9 @@ def main():
     args = parser.parse_args()
     
     print("=== Unified AI Project 增强版自动修复工具 ===")
-    print(f"项目根目录: {PROJECT_ROOT}")
-    print(f"后端根目录: {BACKEND_ROOT}")
-    print(f"源代码目录: {SRC_DIR}")
+    _ = print(f"项目根目录: {PROJECT_ROOT}")
+    _ = print(f"后端根目录: {BACKEND_ROOT}")
+    _ = print(f"源代码目录: {SRC_DIR}")
     
     # 创建导入修复器
     fixer = EnhancedImportFixer(PROJECT_ROOT)
@@ -461,25 +477,25 @@ def main():
     # 执行操作
     if args.fix or args.all:
         results = fixer.fix_all_imports()
-        print(f"\n修复统计:")
-        print(f"  处理了: {results['fixed']} 个文件")
-        print(f"  总共修复: {results['total_fixes']} 处导入")
-        print(f"  错误: {results['errors']} 个文件")
+        _ = print(f"\n修复统计:")
+        _ = print(f"  处理了: {results['fixed']} 个文件")
+        _ = print(f"  总共修复: {results['total_fixes']} 处导入")
+        _ = print(f"  错误: {results['errors']} 个文件")
     
     if args.validate or args.all:
         if not fixer.validate_fixes():
-            print("修复验证失败。")
+            _ = print("修复验证失败。")
     
     if args.test or args.all:
         if not fixer.run_tests():
-            print("测试失败。")
+            _ = print("测试失败。")
             return 1
     
     # 保存修复报告
-    fixer.save_fix_report(Path(args.report))
+    _ = fixer.save_fix_report(Path(args.report))
     
     print("\n=== 所有操作完成 ===")
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+    _ = sys.exit(main())

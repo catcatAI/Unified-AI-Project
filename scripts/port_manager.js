@@ -154,6 +154,7 @@ async function killExistingProcess(serviceName) {
     }
   }
   
+  console.log(`No existing process found for ${serviceName}`);
   return false;
 }
 

@@ -2,13 +2,13 @@ import pygame
 import random
 
 class Rock:
-    def __init__(self, x, y):
+    def __init__(self, x, y) -> None:
         self.x = x
         self.y = y
         self.health = 100
 
 class Tile:
-    def __init__(self, x, y, tile_type='grass'):
+    def __init__(self, x, y, tile_type='grass') -> None:
         self.x = x
         self.y = y
         self.tile_type = tile_type # 'grass', 'tilled', 'planted', 'rock'
@@ -19,11 +19,11 @@ class Tile:
             self.rock = Rock(x, y)
 
 class TileMap:
-    def __init__(self, game, width, height):
+    def __init__(self, game, width, height) -> None:
         self.game = game
         self.width = width
         self.height = height
-        self.tiles = [[Tile(x, y, 'rock' if random.random() < 0.1 else 'grass') for y in range(height)] for x in range(width)]
+        self.tiles = [[Tile(x, y, 'rock' if random.random < 0.1 else 'grass') for y in range(height)] for x in range(width)]
 
     def render(self, surface):
         for x in range(self.width):

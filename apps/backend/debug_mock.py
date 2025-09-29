@@ -2,18 +2,15 @@
 """
 調試 mock_open 問題
 """
-import unittest
 import yaml
-from pathlib import Path
 from unittest.mock import patch, mock_open, MagicMock
 import sys
 import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 
-from .src.core_ai.dependency_manager import DependencyManager, DependencyStatus
 
-def test_mock_open_behavior():
+def test_mock_open_behavior() -> None:
     """測試 mock_open 是否正確工作"""
     test_config = {
         'dependencies': {

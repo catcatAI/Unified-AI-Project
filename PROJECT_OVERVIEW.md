@@ -11,7 +11,7 @@ Unified AI Project 是一个面向 AGI（Level 3-4）的混合式 AI 生态系�
 - **总体进度**: 100% 完成 (275/275 任务)
 - **核心功能**: 全部实现并通过测试
 - **训练系统**: 完整实现，支持多场景训练
-- **AI代理系统**: 8个专业代理全部完成，结构一致性已修复
+- **AI代理系统**: 11个专业代理全部完成，结构一致性已修复
 - **CLI工具**: 统一命令行界面完成
 - **桌面应用**: "Angela's World" 游戏客户端完成
 - **文档系统**: 完整文档体系建立
@@ -57,16 +57,22 @@ Unified-AI-Project/
 
 ### 2.2 核心组件
 
-#### 2.2.1 AI 代理系统 (`apps/backend/src/agents/`)
+#### 2.2.1 AI 代理系统 (`apps/backend/src/ai/agents/`)
 - **BaseAgent**：所有专门化代理的基础类，处理 HSP 连接与任务分发
 - **CreativeWritingAgent**：创意写作与内容生成代理
 - **ImageGenerationAgent**：图像生成代理
 - **WebSearchAgent**：网络搜索代理
+- **CodeUnderstandingAgent**：代码理解代理
 - **DataAnalysisAgent**：数据分析与处理代理
+- **VisionProcessingAgent**：视觉处理代理
+- **AudioProcessingAgent**：音频处理代理
+- **KnowledgeGraphAgent**：知识图谱代理
+- **NLPProcessingAgent**：自然语言处理代理
+- **PlanningAgent**：规划代理
 
 **实现状态**: ✅ 已实现并通过创建与功能测试；其他专门化能力由 ai 模块提供（如代码理解、音频处理等）
 
-#### 2.2.2 HSP 高速同步协议 (`apps/backend/src/hsp/`)
+#### 2.2.2 HSP 高速同步协议 (`apps/backend/src/core/hsp/`)
 支持内部模块与外部 AI 实体的可信协作，包含：
 - 注册机制：新模块/AI 加入网络
 - 信譽系统：评估协作实体可信度
@@ -158,10 +164,17 @@ Unified-AI-Project/
 ├── apps/
 │   ├── backend/
 │   │   ├── src/
-│   │   │   ├── agents/              # AI 代理系统
-│   │   │   ├── ai/                  # 核心 AI 组件（memory、reasoning、world_model 等）
-│   │   │   ├── hsp/                 # HSP 协议
-│   │   │   ├── services/            # 核心服务
+│   │   │   ├── core/                # 基礎設施組件
+│   │   │   │   ├── hsp/             # HSP 協議實現
+│   │   │   │   ├── services/        # 核心服務
+│   │   │   │   └── tools/           # 工具組件
+│   │   │   ├── ai/                  # AI 核心組件
+│   │   │   │   ├── memory/          # 記憶系統 (HAM)
+│   │   │   │   ├── agents/          # 代理系統
+│   │   │   │   │   ├── base/        # 代理基礎類
+│   │   │   │   │   └── specialized/ # 專業代理實現
+│   │   │   │   ├── context/         # 上下文系統
+│   │   │   │   └── concept_models/  # 概念模型
 │   │   │   └── ...
 │   │   ├── configs/                 # 配置文件
 │   │   └── README.md
@@ -271,7 +284,7 @@ training\incremental_train.bat train
 - ✅ **记忆管理**: 已实现 HAMMemoryManager、DeepMapper、VectorStore 等核心组件
 
 ### 8.2 功能实现
-- ✅ **AI代理系统**: 8个专业代理全部完成，BaseAgent作为基础类
+- ✅ **AI代理系统**: 11个专业代理全部完成，BaseAgent作为基础类
 - ✅ **训练系统**: 完整实现，支持11种训练场景和增量学习
 - ✅ **CLI工具**: 统一命令行界面完成，支持AI交互
 - ✅ **桌面应用**: "Angela's World"游戏客户端完成

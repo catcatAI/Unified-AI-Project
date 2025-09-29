@@ -4,7 +4,6 @@ import json
 import pathlib
 import sys
 
-import urllib.request
 
 BASE_URL = os.environ.get('API_BASE_URL', 'http://localhost:8000')
 OPENAPI_URL = BASE_URL.rstrip('/') + '/api/v1/openapi'
@@ -17,9 +16,9 @@ try:
     with urllib.request.urlopen(OPENAPI_URL, timeout=10) as resp:
         data = resp.read().decode('utf-8')
         # validate json
-        json.loads(data)
+        _ = json.loads(data)
         out_path.write_text(data, encoding='utf-8')
-        print(f'✅ Exported OpenAPI to {out_path}')
+        _ = print(f'✅ Exported OpenAPI to {out_path}')
 except Exception as e:
-    print(f'❌ Failed to export OpenAPI from {OPENAPI_URL}: {e}')
-    sys.exit(1)
+    _ = print(f'❌ Failed to export OpenAPI from {OPENAPI_URL}: {e}')
+    _ = sys.exit(1)

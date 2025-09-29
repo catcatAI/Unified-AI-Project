@@ -12,8 +12,7 @@ control actual system input devices.
 
 from typing import List, Optional, Dict, Any, Tuple
 
-from .types import (
-    VirtualInputPermissionLevel,
+from .virtual_input_types import (
     VirtualMouseCommand,
     VirtualKeyboardCommand,
     VirtualMouseEventType,
@@ -32,7 +31,7 @@ class AIVirtualInputService:
     Operates primarily in a simulation mode, with future potential for actual control
     under strict permissions.
     """
-    def __init__(self, initial_mode: VirtualInputPermissionLevel = "simulation_only"):
+    def __init__(self, initial_mode: VirtualInputPermissionLevel = "simulation_only") -> None:
         """
         Initializes the AI Virtual Input Service.
 
@@ -47,10 +46,10 @@ class AIVirtualInputService:
         self.virtual_cursor_position: Tuple[float, float] = (0.5, 0.5) # Start at center
 
         self.virtual_focused_element_id: Optional[str] = None
-        self.action_log: List[Dict[str, Any]] = [] # Stores a log of commands processed
+        self.action_log: List[Dict[str, Any]] =  # Stores a log of commands processed
 
         # Holds the current state of the virtual UI elements
-        self.virtual_ui_elements: List[VirtualInputElementDescription] = []
+        self.virtual_ui_elements: List[VirtualInputElementDescription] = 
 
         print(f"AIVirtualInputService initialized in '{self.mode}' mode.")
         print(f"  Initial virtual cursor: {self.virtual_cursor_position}")
@@ -99,7 +98,7 @@ class AIVirtualInputService:
 
     def _log_action(self, command_type: str, command_details: Dict[str, Any], outcome: Dict[str, Any]) -> None:
         log_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat,
             "command_type": command_type,
             "command_details": command_details,
             "outcome": outcome,
@@ -249,7 +248,7 @@ class AIVirtualInputService:
             print(f"  AVIS Sim: Typing action processed. Text: '{text_to_type}', Target: '{self.virtual_focused_element_id or 'none'}', Value Updated: {type_details['value_updated']}.")
 
         elif action_type == "press_keys":
-            keys_pressed = command.get("keys", [])
+            keys_pressed = command.get("keys", )
             target_element = command.get("target_element_id")
 
             if target_element:
@@ -264,7 +263,7 @@ class AIVirtualInputService:
             print(f"  AVIS Sim: Key press logged: {keys_pressed} on focused '{self.virtual_focused_element_id or 'unknown'}'.")
 
         elif action_type == "special_key":
-            special_keys = command.get("keys", []) # Expecting a list, e.g., ["enter"]
+            special_keys = command.get("keys", ) # Expecting a list, e.g., ["enter"]
             key_name = special_keys[0] if special_keys else "unknown_special_key"
             target_element = command.get("target_element_id")
 
@@ -292,7 +291,7 @@ class AIVirtualInputService:
 
     def clear_action_log(self) -> None:
         """Clears the action log."""
-        self.action_log = []
+        self.action_log = 
         print("AVIS: Action log cleared.")
 
     def get_virtual_state(self) -> Dict[str, Any]:

@@ -9,11 +9,11 @@ import asyncio
 import traceback
 
 # Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
+_ = sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
-def test_imports():
+def test_imports() -> None:
     """Test importing key modules"""
-    print("Testing imports...")
+    _ = print("Testing imports...")
     
     tests = [
         ("BaseAgent", "apps.backend.src.ai.agents.base.base_agent"),
@@ -37,17 +37,17 @@ def test_imports():
         try:
             module = __import__(module_path, fromlist=[name])
             cls = getattr(module, name)
-            print(f"✓ {name} import successful")
+            _ = print(f"✓ {name} import successful")
             passed += 1
         except Exception as e:
-            print(f"✗ {name} import failed: {e}")
+            _ = print(f"✗ {name} import failed: {e}")
     
-    print(f"\nImport test results: {passed}/{total} passed")
+    _ = print(f"\nImport test results: {passed}/{total} passed")
     return passed == total
 
-def test_agent_creation():
+def test_agent_creation() -> None:
     """Test creating agents"""
-    print("\nTesting agent creation...")
+    _ = print("\nTesting agent creation...")
     
     tests = [
         ("AudioProcessingAgent", "apps.backend.src.ai.agents.specialized.audio_processing_agent"),
@@ -70,18 +70,18 @@ def test_agent_creation():
             module = __import__(module_path, fromlist=[name])
             cls = getattr(module, name)
             agent = cls(f"test_{name.lower()}")
-            print(f"✓ {name} creation successful")
+            _ = print(f"✓ {name} creation successful")
             passed += 1
         except Exception as e:
-            print(f"✗ {name} creation failed: {e}")
-            traceback.print_exc()
+            _ = print(f"✗ {name} creation failed: {e}")
+            _ = traceback.print_exc()
     
-    print(f"\nAgent creation test results: {passed}/{total} passed")
+    _ = print(f"\nAgent creation test results: {passed}/{total} passed")
     return passed == total
 
-def test_agent_capabilities():
+def test_agent_capabilities() -> None:
     """Test agent capabilities"""
-    print("\nTesting agent capabilities...")
+    _ = print("\nTesting agent capabilities...")
     
     tests = [
         ("AudioProcessingAgent", "apps.backend.src.ai.agents.specialized.audio_processing_agent", 3),
@@ -106,23 +106,23 @@ def test_agent_capabilities():
             agent = cls(f"test_{name.lower()}")
             
             if len(agent.capabilities) == expected_caps:
-                print(f"✓ {name} has {len(agent.capabilities)} capabilities (expected {expected_caps})")
+                _ = print(f"✓ {name} has {len(agent.capabilities)} capabilities (expected {expected_caps})")
                 passed += 1
             else:
-                print(f"✗ {name} has {len(agent.capabilities)} capabilities (expected {expected_caps})")
+                _ = print(f"✗ {name} has {len(agent.capabilities)} capabilities (expected {expected_caps})")
         except Exception as e:
-            print(f"✗ {name} capabilities test failed: {e}")
+            _ = print(f"✗ {name} capabilities test failed: {e}")
     
-    print(f"\nAgent capabilities test results: {passed}/{total} passed")
+    _ = print(f"\nAgent capabilities test results: {passed}/{total} passed")
     return passed == total
 
-def test_agent_functionality():
+def test_agent_functionality() -> None:
     """Test basic agent functionality"""
-    print("\nTesting agent functionality...")
+    _ = print("\nTesting agent functionality...")
     
     try:
         # Test DataAnalysisAgent
-        from apps.backend.src.ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
+        from apps.backend.src.core_ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
         data_agent = DataAnalysisAgent("test_data_agent")
         
         result = data_agent._perform_statistical_analysis({
@@ -131,13 +131,13 @@ def test_agent_functionality():
         })
         
         if 'mean' in result and 'median' in result:
-            print("✓ DataAnalysisAgent statistical analysis works")
+            _ = print("✓ DataAnalysisAgent statistical analysis works")
         else:
-            print("✗ DataAnalysisAgent statistical analysis failed")
+            _ = print("✗ DataAnalysisAgent statistical analysis failed")
             return False
         
         # Test KnowledgeGraphAgent
-        from apps.backend.src.ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
+        from apps.backend.src.core_ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
         kg_agent = KnowledgeGraphAgent("test_kg_agent")
         
         result = kg_agent._perform_entity_linking({
@@ -145,22 +145,22 @@ def test_agent_functionality():
         })
         
         if 'entities' in result:
-            print("✓ KnowledgeGraphAgent entity linking works")
+            _ = print("✓ KnowledgeGraphAgent entity linking works")
         else:
-            print("✗ KnowledgeGraphAgent entity linking failed")
+            _ = print("✗ KnowledgeGraphAgent entity linking failed")
             return False
         
-        print("✓ Basic functionality tests passed")
+        _ = print("✓ Basic functionality tests passed")
         return True
         
     except Exception as e:
-        print(f"✗ Functionality test failed: {e}")
-        traceback.print_exc()
+        _ = print(f"✗ Functionality test failed: {e}")
+        _ = traceback.print_exc()
         return False
 
 async def run_all_tests():
     """Run all tests"""
-    print("Running core functionality verification...\n")
+    _ = print("Running core functionality verification...\n")
     
     tests = [
         ("Import Tests", test_imports),
@@ -174,27 +174,27 @@ async def run_all_tests():
     
     for test_name, test_func in tests:
         print(f"\n{'='*50}")
-        print(f"Running {test_name}")
+        _ = print(f"Running {test_name}")
         print(f"{'='*50}")
         
         try:
             if test_func():
                 passed += 1
-                print(f"✓ {test_name} PASSED")
+                _ = print(f"✓ {test_name} PASSED")
             else:
-                print(f"✗ {test_name} FAILED")
+                _ = print(f"✗ {test_name} FAILED")
         except Exception as e:
-            print(f"✗ {test_name} ERROR: {e}")
+            _ = print(f"✗ {test_name} ERROR: {e}")
     
     print(f"\n{'='*50}")
-    print(f"SUMMARY: {passed}/{total} test suites passed")
+    _ = print(f"SUMMARY: {passed}/{total} test suites passed")
     print(f"{'='*50}")
     
     if passed == total:
-        print("✓ All core functionality tests passed!")
+        _ = print("✓ All core functionality tests passed!")
         return True
     else:
-        print("✗ Some core functionality tests failed!")
+        _ = print("✗ Some core functionality tests failed!")
         return False
 
 if __name__ == "__main__":

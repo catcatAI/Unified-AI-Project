@@ -8,7 +8,6 @@ import asyncio
 import logging
 import json
 import time
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, List
 import aiohttp
@@ -16,16 +15,16 @@ import argparse
 
 # 設置日誌
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 
 class HealthMonitor:
     """系統健康監控器"""
     
-    def __init__(self, config_path: str = "configs/atlassian_config.yaml", system_config_path: str = "configs/system_config.yaml"):
+    def __init__(self, config_path: str = "configs/atlassian_config.yaml", system_config_path: str = "configs/system_config.yaml") -> None:
         self.config_path = config_path
         self.system_config_path = system_config_path
         self.config = self._load_config(self.config_path)
@@ -52,7 +51,7 @@ class HealthMonitor:
             with open(path, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f)
         except Exception as e:
-            logger.error(f"加載配置失敗: {e}")
+            _ = logger.error(f"加載配置失敗: {e}")
             return {}
     
     async def check_atlassian_services(self) -> Dict[str, Any]:
@@ -66,8 +65,8 @@ class HealthMonitor:
         if confluence_config:
             services_health['confluence'] = await self._check_service_health(
                 'confluence',
-                confluence_config.get('base_url', ''),
-                confluence_config.get('backup_urls', [])
+                _ = confluence_config.get('base_url', ''),
+                _ = confluence_config.get('backup_urls', [])
             )
         
         # 檢查 Jira
@@ -75,8 +74,8 @@ class HealthMonitor:
         if jira_config:
             services_health['jira'] = await self._check_service_health(
                 'jira',
-                jira_config.get('base_url', ''),
-                jira_config.get('backup_urls', [])
+                _ = jira_config.get('base_url', ''),
+                _ = jira_config.get('backup_urls', [])
             )
         
         # 檢查 Bitbucket
@@ -84,8 +83,8 @@ class HealthMonitor:
         if bitbucket_config:
             services_health['bitbucket'] = await self._check_service_health(
                 'bitbucket',
-                bitbucket_config.get('base_url', ''),
-                bitbucket_config.get('backup_urls', [])
+                _ = bitbucket_config.get('base_url', ''),
+                _ = bitbucket_config.get('backup_urls', [])
             )
         
         return services_health
@@ -99,7 +98,7 @@ class HealthMonitor:
             'status': 'unknown',
             'response_time': 0,
             'active_endpoint': None,
-            'last_check': datetime.now().isoformat(),
+            _ = 'last_check': datetime.now().isoformat(),
             'errors': []
         }
         
@@ -122,7 +121,7 @@ class HealthMonitor:
                 
                 async with aiohttp.ClientSession() as session:
                     async with session.get(
-                        health_endpoint.replace(primary_url, url),
+                        _ = health_endpoint.replace(primary_url, url),
                         timeout=aiohttp.ClientTimeout(total=10)
                     ) as response:
                         response_time = (time.time() - start_time) * 1000
@@ -135,10 +134,10 @@ class HealthMonitor:
                             })
                             break
                         else:
-                            health_info['errors'].append(f"{url}: HTTP {response.status}")
+                            _ = health_info['errors'].append(f"{url}: HTTP {response.status}")
                             
             except Exception as e:
-                health_info['errors'].append(f"{url}: {str(e)}")
+                _ = health_info['errors'].append(f"{url}: {str(e)}")
                 continue
         
         # 如果所有端點都失敗
@@ -164,7 +163,7 @@ class HealthMonitor:
             
             if not api_host or not api_port:
                 api_health_info['status'] = 'unconfigured'
-                api_health_info['errors'].append("API server host or port not configured in system_config.yaml")
+                _ = api_health_info['errors'].append("API server host or port not configured in system_config.yaml")
                 return api_health_info
 
             api_endpoint = f"http://{api_host}:{api_port}/api/v1/health"
@@ -181,17 +180,17 @@ class HealthMonitor:
                         })
                     else:
                         api_health_info['status'] = 'unhealthy'
-                        api_health_info['errors'].append(f"HTTP Status: {response.status}, Content: {await response.text()}")
+                        _ = api_health_info['errors'].append(f"HTTP Status: {response.status}, Content: {await response.text()}")
                         
         except asyncio.TimeoutError:
             api_health_info['status'] = 'timeout'
-            api_health_info['errors'].append("API server request timed out.")
+            _ = api_health_info['errors'].append("API server request timed out.")
         except aiohttp.ClientError as e:
             api_health_info['status'] = 'unreachable'
-            api_health_info['errors'].append(f"API server unreachable: {e}")
+            _ = api_health_info['errors'].append(f"API server unreachable: {e}")
         except Exception as e:
             api_health_info['status'] = 'error'
-            api_health_info['errors'].append(f"An unexpected error occurred: {e}")
+            _ = api_health_info['errors'].append(f"An unexpected error occurred: {e}")
             
         return api_health_info
     
@@ -204,7 +203,7 @@ class HealthMonitor:
             'task_queue_size': 0,
             'active_tasks': 0,
             'metrics': {},
-            'last_check': datetime.now().isoformat()
+            _ = 'last_check': datetime.now().isoformat()
         }
         
         try:
@@ -216,7 +215,7 @@ class HealthMonitor:
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
-                        agent_health.update(data)
+                        _ = agent_health.update(data)
                         agent_health['status'] = 'healthy'
                     else:
                         agent_health['status'] = 'unhealthy'
@@ -233,11 +232,11 @@ class HealthMonitor:
         
         return {
             'cpu_percent': psutil.cpu_percent(interval=1),
-            'memory_percent': psutil.virtual_memory().percent,
-            'disk_percent': psutil.disk_usage('/').percent,
-            'network_io': psutil.net_io_counters()._asdict(),
-            'process_count': len(psutil.pids()),
-            'last_check': datetime.now().isoformat()
+            _ = 'memory_percent': psutil.virtual_memory().percent,
+            _ = 'disk_percent': psutil.disk_usage('/').percent,
+            _ = 'network_io': psutil.net_io_counters()._asdict(),
+            _ = 'process_count': len(psutil.pids()),
+            _ = 'last_check': datetime.now().isoformat()
         }
     
     def analyze_health_data(self, health_data: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -253,14 +252,14 @@ class HealthMonitor:
                     'service': service,
                     'message': f"{service} 服務不可用",
                     'details': info['errors'],
-                    'timestamp': datetime.now().isoformat()
+                    _ = 'timestamp': datetime.now().isoformat()
                 })
             elif info['response_time'] > self.alert_thresholds['response_time']:
                 alerts.append({
                     'level': 'warning',
                     'service': service,
                     'message': f"{service} 響應時間過長: {info['response_time']:.0f}ms",
-                    'timestamp': datetime.now().isoformat()
+                    _ = 'timestamp': datetime.now().isoformat()
                 })
         
         # 檢查主 API 伺服器
@@ -269,24 +268,24 @@ class HealthMonitor:
             alerts.append({
                 'level': 'critical',
                 'service': 'main_api_server',
-                'message': f"主 API 伺服器不可用或響應異常: {api_server_health.get('status')}",
-                'details': api_server_health.get('errors', ''),
-                'timestamp': datetime.now().isoformat()
+                _ = 'message': f"主 API 伺服器不可用或響應異常: {api_server_health.get('status')}",
+                _ = 'details': api_server_health.get('errors', ''),
+                _ = 'timestamp': datetime.now().isoformat()
             })
         elif api_server_health.get('status') == 'unconfigured':
             alerts.append({
                 'level': 'warning',
                 'service': 'main_api_server',
                 'message': "主 API 伺服器未配置",
-                'details': api_server_health.get('errors', ''),
-                'timestamp': datetime.now().isoformat()
+                _ = 'details': api_server_health.get('errors', ''),
+                _ = 'timestamp': datetime.now().isoformat()
             })
         elif api_server_health.get('response_time', 0) > self.alert_thresholds['response_time']:
             alerts.append({
                 'level': 'warning',
                 'service': 'main_api_server',
-                'message': f"主 API 伺服器響應時間過長: {api_server_health.get('response_time', 0):.0f}ms",
-                'timestamp': datetime.now().isoformat()
+                _ = 'message': f"主 API 伺服器響應時間過長: {api_server_health.get('response_time', 0):.0f}ms",
+                _ = 'timestamp': datetime.now().isoformat()
             })
 
         # 檢查 Firebase 憑證
@@ -296,16 +295,16 @@ class HealthMonitor:
                 'level': 'critical',
                 'service': 'firebase_credentials',
                 'message': "Firebase 憑證環境變數未設置",
-                'details': firebase_credentials_health.get('errors', ''),
-                'timestamp': datetime.now().isoformat()
+                _ = 'details': firebase_credentials_health.get('errors', ''),
+                _ = 'timestamp': datetime.now().isoformat()
             })
         elif firebase_credentials_health.get('status') == 'not_found':
             alerts.append({
                 'level': 'critical',
                 'service': 'firebase_credentials',
                 'message': "Firebase 憑證檔案未找到",
-                'details': firebase_credentials_health.get('errors', ''),
-                'timestamp': datetime.now().isoformat()
+                _ = 'details': firebase_credentials_health.get('errors', ''),
+                _ = 'timestamp': datetime.now().isoformat()
             })
 
         # 檢查代理狀態
@@ -315,15 +314,15 @@ class HealthMonitor:
                 'level': 'critical',
                 'service': 'rovo_dev_agent',
                 'message': 'Rovo Dev Agent 不可用',
-                'details': agent_health.get('error', ''),
-                'timestamp': datetime.now().isoformat()
+                _ = 'details': agent_health.get('error', ''),
+                _ = 'timestamp': datetime.now().isoformat()
             })
         elif agent_health.get('degraded_mode'):
             alerts.append({
                 'level': 'warning',
                 'service': 'rovo_dev_agent',
                 'message': 'Rovo Dev Agent 運行在降級模式',
-                'timestamp': datetime.now().isoformat()
+                _ = 'timestamp': datetime.now().isoformat()
             })
         
         # 檢查任務隊列
@@ -333,7 +332,7 @@ class HealthMonitor:
                 'level': 'warning',
                 'service': 'task_queue',
                 'message': f'任務隊列積壓: {queue_size} 個任務',
-                'timestamp': datetime.now().isoformat()
+                _ = 'timestamp': datetime.now().isoformat()
             })
         
         # 檢查系統資源
@@ -343,7 +342,7 @@ class HealthMonitor:
                 'level': 'warning',
                 'service': 'system',
                 'message': f"CPU 使用率過高: {system_resources['cpu_percent']:.1f}%",
-                'timestamp': datetime.now().isoformat()
+                _ = 'timestamp': datetime.now().isoformat()
             })
         
         if system_resources.get('memory_percent', 0) > 85:
@@ -351,7 +350,7 @@ class HealthMonitor:
                 'level': 'warning',
                 'service': 'system',
                 'message': f"內存使用率過高: {system_resources['memory_percent']:.1f}%",
-                'timestamp': datetime.now().isoformat()
+                _ = 'timestamp': datetime.now().isoformat()
             })
         
         return alerts
@@ -374,16 +373,16 @@ class HealthMonitor:
         # 更新最新狀態文件
         latest_file = self.output_dir / "latest_health_status.json"
         summary = {
-            'timestamp': datetime.now().isoformat(),
-            'overall_status': self._calculate_overall_status(health_data),
-            'alerts_count': len(alerts),
+            _ = 'timestamp': datetime.now().isoformat(),
+            _ = 'overall_status': self._calculate_overall_status(health_data),
+            _ = 'alerts_count': len(alerts),
             'critical_alerts': len([a for a in alerts if a['level'] == 'critical']),
             'warning_alerts': len([a for a in alerts if a['level'] == 'warning']),
             'services_status': {
-                service: info.get('status', 'unknown')
+                _ = service: info.get('status', 'unknown')
                 for service, info in health_data.get('atlassian_services', {}).items()
             },
-            'agent_status': health_data.get('agent_health', {}).get('status', 'unknown')
+            _ = 'agent_status': health_data.get('agent_health', {}).get('status', 'unknown')
         }
         
         with open(latest_file, 'w', encoding='utf-8') as f:
@@ -427,7 +426,7 @@ class HealthMonitor:
     def print_health_summary(self, health_data: Dict[str, Any], alerts: List[Dict[str, Any]]):
         """打印健康狀態摘要"""
         print("\n" + "="*60)
-        print(f"系統健康監控報告 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        _ = print(f"系統健康監控報告 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("="*60)
         
         # 整體狀態
@@ -436,96 +435,96 @@ class HealthMonitor:
             'healthy': '\033[92m',    # 綠色
             'degraded': '\033[93m',   # 黃色
             'unhealthy': '\033[91m'   # 紅色
-        }.get(overall_status, '\033[0m')
+        _ = }.get(overall_status, '\033[0m')
         
-        print(f"整體狀態: {status_color}{overall_status.upper()}\033[0m")
+        _ = print(f"整體狀態: {status_color}{overall_status.upper()}\033[0m")
         
         # 主 API 伺服器狀態
         api_server_health = health_data.get('main_api_server', {})
-        print(f"\n主 API 伺服器: {api_server_health.get('status', 'unknown')} ({api_server_health.get('response_time', 0):.0f}ms)")
+        _ = print(f"\n主 API 伺服器: {api_server_health.get('status', 'unknown')} ({api_server_health.get('response_time', 0):.0f}ms)")
 
         # Firebase 憑證狀態
         firebase_credentials_health = health_data.get('firebase_credentials', {})
-        print(f"Firebase 憑證: {firebase_credentials_health.get('status', 'unknown')}")
+        _ = print(f"Firebase 憑證: {firebase_credentials_health.get('status', 'unknown')}")
 
         # Atlassian 服務狀態
-        print("\nAtlassian 服務:")
+        _ = print("\nAtlassian 服務:")
         atlassian_services = health_data.get('atlassian_services', {})
         for service, info in atlassian_services.items():
             status = info.get('status', 'unknown')
             response_time = info.get('response_time', 0)
-            print(f"  {service.capitalize()}: {status} ({response_time:.0f}ms)")
+            _ = print(f"  {service.capitalize()}: {status} ({response_time:.0f}ms)")
         
         # 代理狀態
         agent_health = health_data.get('agent_health', {})
-        print(f"\nRovo Dev Agent: {agent_health.get('status', 'unknown')}")
+        _ = print(f"\nRovo Dev Agent: {agent_health.get('status', 'unknown')}")
         if agent_health.get('degraded_mode'):
-            print("  ⚠️  運行在降級模式")
+            _ = print("  ⚠️  運行在降級模式")
         
         # 系統資源
         system_resources = health_data.get('system_resources', {})
-        print(f"\n系統資源:")
-        print(f"  CPU: {system_resources.get('cpu_percent', 0):.1f}%")
-        print(f"  內存: {system_resources.get('memory_percent', 0):.1f}%")
-        print(f"  磁盤: {system_resources.get('disk_percent', 0):.1f}%")
+        _ = print(f"\n系統資源:")
+        _ = print(f"  CPU: {system_resources.get('cpu_percent', 0):.1f}%")
+        _ = print(f"  內存: {system_resources.get('memory_percent', 0):.1f}%")
+        _ = print(f"  磁盤: {system_resources.get('disk_percent', 0):.1f}%")
         
         # 告警
         if alerts:
-            print(f"\n告警 ({len(alerts)}):")
+            _ = print(f"\n告警 ({len(alerts)}):")
             for alert in alerts:
                 level_color = {
                     'critical': '\033[91m',  # 紅色
                     'warning': '\033[93m'    # 黃色
-                }.get(alert['level'], '\033[0m')
-                print(f"  {level_color}[{alert['level'].upper()}]\033[0m {alert['message']}")
+                _ = }.get(alert['level'], '\033[0m')
+                _ = print(f"  {level_color}[{alert['level'].upper()}]\033[0m {alert['message']}")
         else:
-            print("\n✅ 無告警")
+            _ = print("\n✅ 無告警")
         
         print("="*60)
     
     async def run_single_check(self):
         """執行單次健康檢查"""
-        logger.info("開始健康檢查...")
+        _ = logger.info("開始健康檢查...")
         
         # 收集健康數據
         health_data = {
-            'timestamp': datetime.now().isoformat(),
-            'atlassian_services': await self.check_atlassian_services(),
-            'main_api_server': await self._check_api_server_health(),
-            'firebase_credentials': await self._check_firebase_credentials_existence(),
-            'agent_health': await self.check_agent_health(),
-            'system_resources': await self.check_system_resources()
+            _ = 'timestamp': datetime.now().isoformat(),
+            _ = 'atlassian_services': await self.check_atlassian_services(),
+            _ = 'main_api_server': await self._check_api_server_health(),
+            _ = 'firebase_credentials': await self._check_firebase_credentials_existence(),
+            _ = 'agent_health': await self.check_agent_health(),
+            _ = 'system_resources': await self.check_system_resources()
         }
         
         # 分析並生成告警
         alerts = self.analyze_health_data(health_data)
         
         # 保存報告
-        self.save_health_report(health_data, alerts)
+        _ = self.save_health_report(health_data, alerts)
         
         # 打印摘要
-        self.print_health_summary(health_data, alerts)
+        _ = self.print_health_summary(health_data, alerts)
         
-        logger.info("健康檢查完成")
+        _ = logger.info("健康檢查完成")
         return health_data, alerts
     
     async def run_continuous_monitoring(self):
         """運行持續監控"""
-        logger.info(f"開始持續監控，檢查間隔: {self.check_interval}秒")
+        _ = logger.info(f"開始持續監控，檢查間隔: {self.check_interval}秒")
         
         while True:
             try:
-                await self.run_single_check()
-                await asyncio.sleep(self.check_interval)
+                _ = await self.run_single_check()
+                _ = await asyncio.sleep(self.check_interval)
             except KeyboardInterrupt:
-                logger.info("監控已停止")
+                _ = logger.info("監控已停止")
                 break
             except Exception as e:
-                logger.error(f"監控錯誤: {e}")
-                await asyncio.sleep(self.check_interval)
+                _ = logger.error(f"監控錯誤: {e}")
+                _ = await asyncio.sleep(self.check_interval)
 
 
-async def main():
+async def main() -> None:
     """主函數"""
     parser = argparse.ArgumentParser(description='Rovo Dev 系統健康監控')
     parser.add_argument('--config', default='configs/atlassian_config.yaml', help='配置文件路徑')
@@ -538,10 +537,10 @@ async def main():
     monitor.check_interval = args.interval
     
     if args.once:
-        await monitor.run_single_check()
+        _ = await monitor.run_single_check()
     else:
-        await monitor.run_continuous_monitoring()
+        _ = await monitor.run_continuous_monitoring()
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    _ = asyncio.run(main())

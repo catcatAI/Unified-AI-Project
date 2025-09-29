@@ -66,14 +66,14 @@ class HealthResponse(BaseModel):
     status: str
     timestamp: str
     services_initialized: Dict[str, bool]
-    components: Dict[str, Any] = {}
+    components: Dict[str, Any] = 
 
 # --- Readiness Models ---
 class ReadinessResponse(BaseModel):
     ready: bool
     timestamp: str
     services_initialized: Dict[str, bool]
-    signals: Dict[str, Any] = {}
+    signals: Dict[str, Any] = 
     reason: Optional[str] = None
 
 # --- HSP Service Discovery Models ---
@@ -84,6 +84,6 @@ class HSPServiceDiscoveryResponse(BaseModel):
     version: str
     ai_id: str
     availability_status: str
-    tags: List[str] = []
-    supported_interfaces: List[str] = []
-    metadata: Dict[str, Any] = {}
+    tags: List[str] = 
+    supported_interfaces: List[str] = 
+    metadata: Dict[str, Any] = 

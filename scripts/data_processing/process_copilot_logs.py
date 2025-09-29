@@ -28,7 +28,7 @@ def process_csv(file_path):
         with open(file_path, 'r', newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             if not reader.fieldnames or "Prompt" not in reader.fieldnames or "Date" not in reader.fieldnames:
-                print(f"Error: CSV file at {file_path} is missing required columns ('Prompt', 'Date').")
+                _ = print(f"Error: CSV file at {file_path} is missing required columns ('Prompt', 'Date').")
                 return None
 
             for row_num, row in enumerate(reader):
@@ -54,10 +54,10 @@ def process_csv(file_path):
                     "language": language,
                     "source": "copilot_history"
                 })
-        print(f"Successfully processed {len(extracted_data)} entries from {file_path}")
+        _ = print(f"Successfully processed {len(extracted_data)} entries from {file_path}")
         return extracted_data
     except FileNotFoundError:
-        print(f"Error: CSV file not found at {file_path}")
+        _ = print(f"Error: CSV file not found at {file_path}")
         return None
     except Exception as e:
         print(f"An error occurred while processing the CSV file: {e}")
@@ -66,7 +66,7 @@ def process_csv(file_path):
 def save_processed_data(data, output_path):
     """Saves the processed data to a JSON file."""
     if data is None:
-        print("No data to save.")
+        _ = print("No data to save.")
         return
 
     try:
@@ -75,7 +75,7 @@ def save_processed_data(data, output_path):
 
         with open(output_path, 'w', encoding='utf-8') as jsonfile:
             json.dump(data, jsonfile, indent=2)
-        print(f"Processed data saved to {output_path}")
+        _ = print(f"Processed data saved to {output_path}")
     except Exception as e:
         print(f"An error occurred while saving the processed data: {e}")
 
@@ -84,8 +84,8 @@ if __name__ == "__main__":
     # First, ensure the target directory for the CSV exists, if we were to simulate its creation
     # For this script, it's an input, so we just check if it's there.
     if not os.path.exists(CSV_FILE_PATH):
-        print(f"Input CSV file {CSV_FILE_PATH} does not exist.")
-        print("Please ensure 'copilot-activity-history.csv' is in 'data/logs/'.")
+        _ = print(f"Input CSV file {CSV_FILE_PATH} does not exist.")
+        _ = print("Please ensure 'copilot-activity-history.csv' is in 'data/logs/'.")
         # As a fallback for testing the script's logic if the file isn't found due to `ls` issues:
         # Create a dummy CSV for the script to process if it's missing.
         # This is ONLY for allowing the script to run in a sandbox where file state is uncertain.
@@ -101,14 +101,14 @@ if __name__ == "__main__":
         # Ensure the logs directory exists for the dummy file
         os.makedirs(os.path.dirname(CSV_FILE_PATH), exist_ok=True)
         with open(CSV_FILE_PATH, 'w', newline='', encoding='utf-8') as dummy_f:
-            dummy_f.write(dummy_csv_content)
+            _ = dummy_f.write(dummy_csv_content)
         print(f"Dummy CSV created at {CSV_FILE_PATH} for testing purposes.")
 
 
     processed_entries = process_csv(CSV_FILE_PATH)
     if processed_entries:
-        save_processed_data(processed_entries, OUTPUT_JSON_PATH)
+        _ = save_processed_data(processed_entries, OUTPUT_JSON_PATH)
     else:
-        print("No entries were processed.")
+        _ = print("No entries were processed.")
 
-    print("\nScript finished.")
+    _ = print("\nScript finished.")

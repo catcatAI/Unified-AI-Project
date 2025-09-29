@@ -15,7 +15,7 @@ from enum import Enum
 
 from .hardware_probe import HardwareProfile, get_hardware_profile
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class DeploymentMode(Enum):
     """Deployment modes based on hardware capabilities"""
@@ -76,8 +76,8 @@ class DeploymentConfig:
 class DeploymentManager:
     """Manages deployment configuration based on hardware capabilities"""
     
-    def __init__(self, hardware_profile: Optional[HardwareProfile] = None):
-        self.hardware_profile = hardware_profile or get_hardware_profile()
+    def __init__(self, hardware_profile: Optional[HardwareProfile] = None) -> None:
+        self.hardware_profile = hardware_profile or get_hardware_profile
         self.config_cache: Optional[DeploymentConfig] = None
         
         # Define feature requirements (minimum scores needed)
@@ -98,7 +98,7 @@ class DeploymentManager:
             return self.config_cache
         
         # Determine deployment mode
-        mode = self._determine_deployment_mode()
+        mode = self._determine_deployment_mode
         
         # Generate component configurations
         model_config = self._generate_model_config(mode)
@@ -106,7 +106,7 @@ class DeploymentManager:
         processing_config = self._generate_processing_config(mode)
         
         # Determine enabled/disabled features
-        features_enabled, features_disabled = self._determine_features()
+        features_enabled, features_disabled = self._determine_features
         
         config = DeploymentConfig(
             mode=mode,
@@ -137,7 +137,7 @@ class DeploymentManager:
             gpu_available = best_gpu_memory_gb > 1.0  # More than 1GB likely indicates usable GPU
             
             # Check if this is integrated graphics
-            integrated_graphics = any(keyword in best_gpu.name.lower() 
+            integrated_graphics = any(keyword in best_gpu.name.lower 
                                     for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
         
         cpu_cores = self.hardware_profile.cpu.cores_logical
@@ -148,7 +148,7 @@ class DeploymentManager:
             try:
                 from .integrated_graphics_optimizer import IntegratedGraphicsOptimizer
                 ig_optimizer = IntegratedGraphicsOptimizer(self.hardware_profile)
-                performance_tier = ig_optimizer.get_integrated_graphics_performance_tier()
+                performance_tier = ig_optimizer.get_integrated_graphics_performance_tier
                 
                 # 根据集成显卡性能等级调整配置
                 if performance_tier == "minimal":
@@ -244,7 +244,7 @@ class DeploymentManager:
             gpu_available = gpu_memory_gb > 1.0
             
             # Check if this is integrated graphics
-            integrated_graphics = any(keyword in best_gpu.name.lower() 
+            integrated_graphics = any(keyword in best_gpu.name.lower 
                                     for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
         
         configs = {
@@ -290,8 +290,8 @@ class DeploymentManager:
     def _determine_features(self) -> Tuple[List[str], List[str]]:
         """Determine which features to enable/disable based on hardware"""
         score = self.hardware_profile.ai_capability_score
-        enabled = []
-        disabled = []
+        enabled = 
+        disabled = 
         
         # Check GPU capabilities
         gpu_available = False
@@ -304,10 +304,10 @@ class DeploymentManager:
             gpu_available = gpu_memory_gb > 1.0  # More than 1GB
             
             # Check if this is integrated graphics
-            integrated_graphics = any(keyword in best_gpu.name.lower() 
+            integrated_graphics = any(keyword in best_gpu.name.lower 
                                     for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
         
-        for feature, min_score in self.feature_requirements.items():
+        for feature, min_score in self.feature_requirements.items:
             # Special handling for GPU-dependent features
             if feature == "gpu_acceleration":
                 # Enable GPU acceleration for both discrete and integrated graphics
@@ -377,7 +377,7 @@ class DeploymentManager:
     def _determine_deployment_mode(self) -> DeploymentMode:
         """Determine optimal deployment mode based on hardware"""
         score = self.hardware_profile.ai_capability_score
-        tier = self.hardware_profile.performance_tier.lower()
+        tier = self.hardware_profile.performance_tier.lower
         
         # Check GPU capabilities
         gpu_available = False
@@ -390,7 +390,7 @@ class DeploymentManager:
             gpu_available = gpu_memory_gb > 1.0
             
             # Check if this is integrated graphics
-            integrated_graphics = any(keyword in best_gpu.name.lower() 
+            integrated_graphics = any(keyword in best_gpu.name.lower 
                                     for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
         
         # 为集成显卡系统特殊处理
@@ -399,7 +399,7 @@ class DeploymentManager:
             try:
                 from .integrated_graphics_optimizer import IntegratedGraphicsOptimizer
                 ig_optimizer = IntegratedGraphicsOptimizer(self.hardware_profile)
-                performance_tier = ig_optimizer.get_integrated_graphics_performance_tier()
+                performance_tier = ig_optimizer.get_integrated_graphics_performance_tier
                 
                 # 根据集成显卡性能等级确定部署模式
                 if performance_tier == "minimal":
@@ -483,7 +483,7 @@ class DeploymentManager:
     def apply_config(self, config: Optional[DeploymentConfig] = None) -> Dict[str, Any]:
         """Apply configuration to system and return settings dict"""
         if config is None:
-            config = self.generate_config()
+            config = self.generate_config
         
         # Generate environment variables and settings
         settings = {
@@ -514,7 +514,7 @@ class DeploymentManager:
         
         # Apply to environment
         import os
-        for key, value in settings.items():
+        for key, value in settings.items:
             os.environ[key] = str(value)
         
         logger.info(f"Applied {config.mode.value} deployment configuration")
@@ -593,7 +593,7 @@ class DeploymentManager:
             # For hardware_profile, we'll create a minimal version since full deserialization
             # would require more complex handling of nested objects
             # In a real implementation, you might want to serialize/deserialize this properly
-            hardware_profile = get_hardware_profile()
+            hardware_profile = get_hardware_profile
             
             # Create DeploymentConfig
             config = DeploymentConfig(
@@ -615,7 +615,7 @@ class DeploymentManager:
     
     def get_recommendations(self) -> List[str]:
         """Get hardware upgrade recommendations"""
-        recommendations = []
+        recommendations = 
         profile = self.hardware_profile
         score = profile.ai_capability_score
         
@@ -642,26 +642,26 @@ class DeploymentManager:
 # Convenience functions
 def get_deployment_config(force_refresh: bool = False) -> DeploymentConfig:
     """Get optimal deployment configuration"""
-    manager = DeploymentManager()
+    manager = DeploymentManager
     return manager.generate_config(force_refresh)
 
-def apply_optimal_config() -> Dict[str, Any]:
+def apply_optimal_config -> Dict[str, Any]:
     """Apply optimal configuration and return settings"""
-    manager = DeploymentManager()
-    config = manager.generate_config()
+    manager = DeploymentManager
+    config = manager.generate_config
     return manager.apply_config(config)
 
-def get_deployment_mode() -> DeploymentMode:
+def get_deployment_mode -> DeploymentMode:
     """Get recommended deployment mode"""
-    config = get_deployment_config()
+    config = get_deployment_config
     return config.mode
 
 if __name__ == "__main__":
     # Test the deployment manager
     logging.basicConfig(level=logging.INFO)
     
-    manager = DeploymentManager()
-    config = manager.generate_config()
+    manager = DeploymentManager
+    config = manager.generate_config
     
     print(f"\n=== Deployment Configuration ===")
     print(f"Mode: {config.mode.value}")
@@ -677,7 +677,7 @@ if __name__ == "__main__":
     print(f"\nApplied {len(settings)} configuration settings")
     
     # Get recommendations
-    recommendations = manager.get_recommendations()
+    recommendations = manager.get_recommendations
     if recommendations:
         print(f"\nRecommendations:")
         for rec in recommendations:

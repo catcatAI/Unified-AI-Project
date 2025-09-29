@@ -1,11 +1,9 @@
 import pygame
-from .player import Player
-from .angela import Angela
 from .ui import DialogueBox
 from .npcs import create_npc
 
 class Scene:
-    def __init__(self, game):
+    def __init__(self, game) -> None:
         self.game = game
 
     async def handle_events(self, event):
@@ -18,12 +16,12 @@ class Scene:
         pass
 
 class VillageScene(Scene):
-    def __init__(self, game):
-        super().__init__(game)
+    def __init__(self, game) -> None:
+        super.__init__(game)
         self.background = self.game.assets['sprites'].get('terrains-grassland_tiles')
         self.player = self.game.player
-        self.npcs = []
-        self.load_npcs()
+        self.npcs = 
+        self.load_npcs
         self.dialogue_box = DialogueBox(self.game)
 
     def load_npcs(self):
@@ -33,22 +31,22 @@ class VillageScene(Scene):
         self.npcs.append(create_npc(self.game, "hibiki"))
 
     async def handle_events(self, event):
-        await super().handle_events(event)
+        _ = await super.handle_events(event)
         if self.dialogue_box.is_active:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
-                self.dialogue_box.hide()
+                self.dialogue_box.hide
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
                 for npc in self.npcs:
                     if self.player.rect.colliderect(npc.rect.inflate(20, 20)):
-                        await npc.interact()
+                        _ = await npc.interact
                         dialogue_text = npc.dialogue[npc.dialogue_index - 1] if npc.dialogue_index > 0 else npc.dialogue[0]
                         self.dialogue_box.show(dialogue_text, npc.name, npc.portrait)
                         break
 
     async def update(self):
-        await super().update()
-        self.player.update()
+        _ = await super.update
+        self.player.update
         for npc in self.npcs:
             # NPCs will just stand still for now
             pass
@@ -64,11 +62,11 @@ class VillageScene(Scene):
             npc.render(surface)
 
         self.dialogue_box.render(surface)
-        super().render(surface)
+        super.render(surface)
 
 
 class GameStateManager:
-    def __init__(self, game):
+    def __init__(self, game) -> None:
         self.game = game
         self.states = {
             'village': VillageScene(game),
@@ -76,10 +74,10 @@ class GameStateManager:
         self.current_state = 'village'
 
     async def handle_events(self, event):
-        await self.states[self.current_state].handle_events(event)
+        _ = await self.states[self.current_state].handle_events(event)
 
     async def update(self):
-        await self.states[self.current_state].update()
+        _ = await self.states[self.current_state].update
 
     def render(self, surface):
         self.states[self.current_state].render(surface)

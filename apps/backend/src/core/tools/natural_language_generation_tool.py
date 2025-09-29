@@ -7,7 +7,7 @@ try:
     # 使用我们的兼容性模块
     try:
         from apps.backend.src.compat.transformers_compat import import_transformers_pipeline
-        pipeline, TRANSFORMERS_AVAILABLE = import_transformers_pipeline()
+        pipeline, TRANSFORMERS_AVAILABLE = import_transformers_pipeline
         if not TRANSFORMERS_AVAILABLE:
             print("Warning: Could not import transformers pipeline")
     except ImportError as e:

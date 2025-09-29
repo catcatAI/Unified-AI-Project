@@ -10,10 +10,10 @@ import time
 import json
 from typing import Dict, Any, List, Optional
 from collections import defaultdict, deque
-from dataclasses import dataclass, asdict
 from datetime import datetime
+from dataclasses import dataclass
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 @dataclass
 class MessageMetrics:
@@ -28,7 +28,7 @@ class MessageMetrics:
 class HSPPerformanceOptimizer:
     """HSP协议性能优化器"""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = config or {}
         self.message_cache = {}  # 消息缓存
         self.cache_ttl = self.config.get('cache_ttl', 300)  # 缓存有效期（秒）
@@ -53,8 +53,8 @@ class HSPPerformanceOptimizer:
         cache_ttl = ttl or self.cache_ttl
         self.message_cache[message_id] = {
             'message': message,
-            'timestamp': time.time(),
-            'expires_at': time.time() + cache_ttl
+            'timestamp': time.time,
+            'expires_at': time.time + cache_ttl
         }
         
         logger.debug(f"消息已缓存: {message_id}")
@@ -64,7 +64,7 @@ class HSPPerformanceOptimizer:
         if message_id in self.message_cache:
             cached = self.message_cache[message_id]
             # 检查缓存是否过期
-            if time.time() < cached['expires_at']:
+            if time.time < cached['expires_at']:
                 logger.debug(f"从缓存获取消息: {message_id}")
                 return cached['message']
             else:
@@ -76,9 +76,9 @@ class HSPPerformanceOptimizer:
     
     def clean_expired_cache(self):
         """清理过期缓存"""
-        current_time = time.time()
+        current_time = time.time
         expired_keys = [
-            key for key, value in self.message_cache.items()
+            key for key, value in self.message_cache.items
             if current_time >= value['expires_at']
         ]
         
@@ -94,7 +94,7 @@ class HSPPerformanceOptimizer:
             return
         
         # 检查是否应该发送批量消息
-        current_time = time.time()
+        current_time = time.time
         if (len(self.message_queue) >= self.batch_size or 
             current_time - self.last_batch_send >= 1.0):  # 每秒至少发送一次
             
@@ -103,7 +103,7 @@ class HSPPerformanceOptimizer:
             self.message_queue = self.message_queue[self.batch_size:]
             
             try:
-                await send_callback(batch_messages)
+                _ = await send_callback(batch_messages)
                 self.network_stats['messages_sent'] += len(batch_messages)
                 self.last_batch_send = current_time
                 logger.debug(f"批量发送 {len(batch_messages)} 条消息")
@@ -165,7 +165,7 @@ class HSPPerformanceOptimizer:
     def get_performance_stats(self) -> Dict[str, Any]:
         """获取性能统计信息"""
         if not self.message_metrics:
-            return {}
+            return 
         
         # 计算平均处理时间
         total_time = sum(m.processing_time_ms for m in self.message_metrics)
@@ -178,7 +178,7 @@ class HSPPerformanceOptimizer:
         # 按消息类型统计
         type_stats = defaultdict(list)
         for m in self.message_metrics:
-            type_stats[m.message_type].append(m)
+            _ = type_stats[m.message_type].append(m)
         
         type_performance = {}
         for msg_type, metrics_list in type_stats.items():
@@ -193,7 +193,7 @@ class HSPPerformanceOptimizer:
             }
         
         stats = {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now.isoformat,
             'total_messages': len(self.message_metrics),
             'avg_processing_time_ms': avg_processing_time,
             'success_rate': success_rate,
@@ -201,7 +201,7 @@ class HSPPerformanceOptimizer:
             'message_type_performance': type_performance,
             'cache_stats': {
                 'cached_messages': len(self.message_cache),
-                'cache_hit_rate': self._calculate_cache_hit_rate()
+                'cache_hit_rate': self._calculate_cache_hit_rate
             }
         }
         
@@ -244,22 +244,22 @@ class HSPPerformanceOptimizer:
     
     def get_network_efficiency_report(self) -> Dict[str, Any]:
         """获取网络效率报告"""
-        stats = self.get_performance_stats()
+        stats = self.get_performance_stats
         
         if not stats:
-            return {}
+            return 
         
         # 计算网络效率指标
-        network_stats = stats.get('network_stats', {})
+        network_stats = stats.get('network_stats', )
         total_messages = stats.get('total_messages', 0)
         
         report = {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now.isoformat,
             'efficiency_metrics': {
                 'messages_per_second': total_messages / 60 if total_messages > 0 else 0,  # 假设统计周期为60秒
                 'average_message_size_bytes': network_stats.get('bytes_sent', 0) / total_messages if total_messages > 0 else 0,
-                'compression_ratio': self._calculate_compression_ratio(),
-                'cache_efficiency': stats.get('cache_stats', {}).get('cache_hit_rate', 0)
+                'compression_ratio': self._calculate_compression_ratio,
+                'cache_efficiency': stats.get('cache_stats', ).get('cache_hit_rate', 0)
             },
             'bottlenecks': self._identify_bottlenecks(stats),
             'recommendations': self._generate_optimization_recommendations(stats)
@@ -285,7 +285,7 @@ class HSPPerformanceOptimizer:
     
     def _identify_bottlenecks(self, stats: Dict[str, Any]) -> List[str]:
         """识别性能瓶颈"""
-        bottlenecks = []
+        bottlenecks = [] 
         
         # 检查处理时间
         avg_processing_time = stats.get('avg_processing_time_ms', 0)
@@ -298,7 +298,7 @@ class HSPPerformanceOptimizer:
             bottlenecks.append('low_success_rate')
         
         # 检查缓存效率
-        cache_hit_rate = stats.get('cache_stats', {}).get('cache_hit_rate', 0)
+        cache_hit_rate = stats.get('cache_stats', ).get('cache_hit_rate', 0)
         if cache_hit_rate < 0.7:  # 缓存命中率低于70%
             bottlenecks.append('low_cache_efficiency')
         
@@ -306,7 +306,7 @@ class HSPPerformanceOptimizer:
     
     def _generate_optimization_recommendations(self, stats: Dict[str, Any]) -> List[Dict[str, Any]]:
         """生成优化建议"""
-        recommendations = []
+        recommendations = [] 
         
         # 基于瓶颈生成建议
         bottlenecks = self._identify_bottlenecks(stats)
@@ -347,14 +347,14 @@ class HSPPerformanceOptimizer:
 class HSPPerformanceEnhancer:
     """HSP连接器性能增强器"""
     
-    def __init__(self, optimizer: HSPPerformanceOptimizer):
+    def __init__(self, optimizer: HSPPerformanceOptimizer) -> None:
         self.optimizer = optimizer
     
     def enhance_publish(self, original_publish_func):
         """增强发布函数"""
         async def enhanced_publish(*args, **kwargs):
             # 记录开始时间
-            start_time = time.time()
+            start_time = time.time
             
             # 执行原始发布函数
             try:
@@ -366,7 +366,7 @@ class HSPPerformanceEnhancer:
                 logger.error(f"消息发布失败: {e}")
             
             # 记录结束时间
-            end_time = time.time()
+            end_time = time.time
             processing_time = (end_time - start_time) * 1000  # 转换为毫秒
             
             # 记录消息指标
@@ -380,7 +380,7 @@ class HSPPerformanceEnhancer:
                     message_type=message_type,
                     size_bytes=len(json.dumps(envelope).encode('utf-8')),
                     processing_time_ms=processing_time,
-                    timestamp=time.time(),
+                    timestamp=time.time,
                     success=success
                 )
                 
@@ -394,7 +394,7 @@ class HSPPerformanceEnhancer:
         """增强接收函数"""
         async def enhanced_receive(*args, **kwargs):
             # 记录开始时间
-            start_time = time.time()
+            start_time = time.time
             
             # 执行原始接收函数
             try:
@@ -406,7 +406,7 @@ class HSPPerformanceEnhancer:
                 logger.error(f"消息接收失败: {e}")
             
             # 记录结束时间
-            end_time = time.time()
+            end_time = time.time
             processing_time = (end_time - start_time) * 1000  # 转换为毫秒
             
             # 记录消息指标（如果可以获取消息信息）
@@ -420,7 +420,7 @@ if __name__ == "__main__":
     # 测试HSP性能优化器
     logging.basicConfig(level=logging.INFO)
     
-    async def test_hsp_optimizer():
+    async def test_hsp_optimizer() -> None:
         optimizer = HSPPerformanceOptimizer()
         
         # 测试消息缓存
@@ -446,17 +446,17 @@ if __name__ == "__main__":
             message_type='HSP::Fact_v0.1',
             size_bytes=100,
             processing_time_ms=50.0,
-            timestamp=time.time(),
+            timestamp=time.time,
             success=True
         )
         optimizer.record_message_metrics(metrics)
         
-        stats = optimizer.get_performance_stats()
+        stats = optimizer.get_performance_stats
         print(f"性能统计: {json.dumps(stats, indent=2, ensure_ascii=False)}")
         
         # 测试网络效率报告
-        report = optimizer.get_network_efficiency_report()
+        report = optimizer.get_network_efficiency_report
         print(f"网络效率报告: {json.dumps(report, indent=2, ensure_ascii=False)}")
     
     # 运行测试
-    asyncio.run(test_hsp_optimizer())
+    asyncio.run(test_hsp_optimizer)

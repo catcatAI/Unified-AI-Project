@@ -3,7 +3,6 @@
 生成小規模訓練數據用於測試和初步訓練
 """
 
-import os
 import json
 import random
 from pathlib import Path
@@ -11,12 +10,12 @@ from datetime import datetime
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class MockDataGenerator:
     """模擬數據生成器"""
     
-    def __init__(self, base_dir: str = "d:/Projects/Unified-AI-Project/data"):
+    def __init__(self, base_dir: str = "d:/Projects/Unified-AI-Project/data") -> None:
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
     
@@ -38,23 +37,23 @@ class MockDataGenerator:
                     {
                         "label": category,
                         "bbox": [
-                            random.randint(0, 100),
-                            random.randint(0, 100), 
-                            random.randint(100, 300),
-                            random.randint(100, 300)
+                            _ = random.randint(0, 100),
+                            _ = random.randint(0, 100), 
+                            _ = random.randint(100, 300),
+                            _ = random.randint(100, 300)
                         ],
-                        "confidence": random.uniform(0.8, 0.98)
+                        _ = "confidence": random.uniform(0.8, 0.98)
                     }
                 ],
-                "scene_type": random.choice(["indoor", "outdoor", "urban", "nature"])
+                _ = "scene_type": random.choice(["indoor", "outdoor", "urban", "nature"])
             }
-            samples.append(sample)
+            _ = samples.append(sample)
         
         # 保存數據
         with open(vision_dir / "annotations.json", 'w', encoding='utf-8') as f:
             json.dump(samples, f, indent=2, ensure_ascii=False)
         
-        logger.info(f"✅ 生成視覺數據樣本: {len(samples)}個")
+        _ = logger.info(f"✅ 生成視覺數據樣本: {len(samples)}個")
         return vision_dir
     
     def generate_audio_data(self):
@@ -80,16 +79,16 @@ class MockDataGenerator:
                 "audio_id": f"audio_{i:03d}",
                 "text": text,
                 "language": "zh-CN",
-                "duration": random.uniform(2.0, 8.0),
-                "quality": random.choice(["high", "medium"]),
-                "speaker_id": f"speaker_{random.randint(1, 10):02d}"
+                _ = "duration": random.uniform(2.0, 8.0),
+                _ = "quality": random.choice(["high", "medium"]),
+                _ = "speaker_id": f"speaker_{random.randint(1, 10):02d}"
             }
-            samples.append(sample)
+            _ = samples.append(sample)
         
         with open(audio_dir / "transcripts.json", 'w', encoding='utf-8') as f:
             json.dump(samples, f, indent=2, ensure_ascii=False)
         
-        logger.info(f"✅ 生成音頻數據樣本: {len(samples)}個")
+        _ = logger.info(f"✅ 生成音頻數據樣本: {len(samples)}個")
         return audio_dir
     
     def generate_reasoning_data(self):
@@ -100,14 +99,14 @@ class MockDataGenerator:
         # 生成因果關係樣本
         samples = []
         cause_effect_pairs = [
-            ("rain", "wet_ground"),
-            ("study", "good_grades"),
-            ("exercise", "health"),
-            ("temperature_increase", "ice_melting"),
-            ("practice", "skill_improvement"),
-            ("lack_sleep", "fatigue"),
-            ("economic_growth", "job_creation"),
-            ("pollution", "health_problems")
+            _ = ("rain", "wet_ground"),
+            _ = ("study", "good_grades"),
+            _ = ("exercise", "health"),
+            _ = ("temperature_increase", "ice_melting"),
+            _ = ("practice", "skill_improvement"),
+            _ = ("lack_sleep", "fatigue"),
+            _ = ("economic_growth", "job_creation"),
+            _ = ("pollution", "health_problems")
         ]
         
         for i, (cause, effect) in enumerate(cause_effect_pairs * 3):
@@ -115,17 +114,17 @@ class MockDataGenerator:
                 "scenario_id": f"scenario_{i:03d}",
                 "cause": cause,
                 "effect": effect,
-                "strength": random.uniform(0.6, 0.95),
+                _ = "strength": random.uniform(0.6, 0.95),
                 "context": f"Observing relationship between {cause} and {effect}",
                 "variables": [cause, effect],
-                "confounders": random.sample(["time", "location", "season"], random.randint(0, 2))
+                _ = "confounders": random.sample(["time", "location", "season"], random.randint(0, 2))
             }
-            samples.append(sample)
+            _ = samples.append(sample)
         
         with open(reasoning_dir / "causal_relations.json", 'w', encoding='utf-8') as f:
             json.dump(samples, f, indent=2, ensure_ascii=False)
         
-        logger.info(f"✅ 生成推理數據樣本: {len(samples)}個")
+        _ = logger.info(f"✅ 生成推理數據樣本: {len(samples)}個")
         return reasoning_dir
     
     def generate_multimodal_data(self):
@@ -139,21 +138,21 @@ class MockDataGenerator:
                 "sample_id": f"multimodal_{i:03d}",
                 "image_caption": f"Sample image {i} showing various objects",
                 "audio_transcript": f"Audio description of image {i}",
-                "cross_modal_alignment": random.uniform(0.7, 0.95),
+                _ = "cross_modal_alignment": random.uniform(0.7, 0.95),
                 "modalities": ["vision", "audio", "text"],
-                "task_type": random.choice(["captioning", "vqa", "retrieval"])
+                _ = "task_type": random.choice(["captioning", "vqa", "retrieval"])
             }
-            samples.append(sample)
+            _ = samples.append(sample)
         
         with open(multimodal_dir / "multimodal_pairs.json", 'w', encoding='utf-8') as f:
             json.dump(samples, f, indent=2, ensure_ascii=False)
         
-        logger.info(f"✅ 生成多模態數據樣本: {len(samples)}個")
+        _ = logger.info(f"✅ 生成多模態數據樣本: {len(samples)}個")
         return multimodal_dir
 
-def main():
+def main() -> None:
     """主函數"""
-    print("🚀 生成小規模訓練數據")
+    _ = print("🚀 生成小規模訓練數據")
     print("=" * 40)
     
     generator = MockDataGenerator()
@@ -166,12 +165,12 @@ def main():
     
     # 生成總體配置
     config = {
-        "generated_date": datetime.now().isoformat(),
+        _ = "generated_date": datetime.now().isoformat(),
         "data_paths": {
-            "vision": str(vision_dir),
-            "audio": str(audio_dir),
-            "reasoning": str(reasoning_dir),
-            "multimodal": str(multimodal_dir)
+            _ = "vision": str(vision_dir),
+            _ = "audio": str(audio_dir),
+            _ = "reasoning": str(reasoning_dir),
+            _ = "multimodal": str(multimodal_dir)
         },
         "total_samples": {
             "vision": 100,
@@ -186,15 +185,15 @@ def main():
     with open(config_path, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
     
-    print(f"\n🎉 數據生成完成!")
-    print(f"📁 數據位置: {generator.base_dir}")
-    print(f"📄 配置文件: {config_path}")
+    _ = print(f"\n🎉 數據生成完成!")
+    _ = print(f"📁 數據位置: {generator.base_dir}")
+    _ = print(f"📄 配置文件: {config_path}")
     
     # 生成使用說明
     readme_content = f"""# 訓練數據說明
 
 ## 數據概覽
-- 生成時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+_ = - 生成時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 - 數據類型: 模擬訓練數據
 - 用途: 系統測試和初步訓練
 
@@ -244,9 +243,9 @@ with open('audio_samples/transcripts.json', 'r') as f:
     
     readme_path = generator.base_dir / "README.md"
     with open(readme_path, 'w', encoding='utf-8') as f:
-        f.write(readme_content)
+        _ = f.write(readme_content)
     
-    print(f"📖 說明文檔: {readme_path}")
+    _ = print(f"📖 說明文檔: {readme_path}")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

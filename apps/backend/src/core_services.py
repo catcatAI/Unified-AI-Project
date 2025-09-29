@@ -7,7 +7,7 @@ import sys
 import os
 
 # Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+project_root: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 src_dir = os.path.join(project_root, 'src')
 sys.path.insert(0, project_root)
 sys.path.insert(0, src_dir)
@@ -22,34 +22,45 @@ print(f"Sys path: {sys.path}")
 def get_BaseAgent():
     """获取BaseAgent类"""
     try:
-        from apps.backend.src.ai.agents.base.base_agent import BaseAgent as ActualBaseAgent
-        return ActualBaseAgent
+        # 使用延迟导入避免循环导入
+        import importlib
+        module = importlib.import_module('apps.backend.src.ai.agents.base.base_agent')
+        return getattr(module, 'BaseAgent')
     except ImportError:
         try:
-            from .ai.agents.base.base_agent import BaseAgent as ActualBaseAgent
-            return ActualBaseAgent
+            # 尝试相对导入
+            import importlib
+            module = importlib.import_module('.ai.agents.base.base_agent', package='apps.backend.src')
+            return getattr(module, 'BaseAgent')
         except ImportError:
             # 创建一个简单的模拟类
             class BaseAgentImpl:
-                def __init__(self, *args, **kwargs):
+                def __init__(self, *args, **kwargs) -> None:
                     pass
             return BaseAgentImpl
 
 def get_AgentManager():
     """获取AgentManager类"""
     try:
-        from apps.backend.src.core_ai.agent_manager import AgentManager as ActualAgentManager
+        # 尝试使用完整的模块路径导入AgentManager
+        from apps.backend.src.managers.agent_manager import AgentManager as ActualAgentManager
         return ActualAgentManager
     except ImportError:
         try:
-            from .core_ai.agent_manager import AgentManager as ActualAgentManager
+            # 尝试相对导入AgentManager
+            from .managers.agent_manager import AgentManager as ActualAgentManager
             return ActualAgentManager
         except ImportError:
-            # 创建一个简单的模拟类
-            class AgentManagerImpl:
-                def __init__(self, *args, **kwargs):
-                    pass
-            return AgentManagerImpl
+            try:
+                # 尝试从core_ai目录导入AgentManager
+                from .ai.agent_manager import AgentManager as ActualAgentManager
+                return ActualAgentManager
+            except ImportError:
+                # 创建一个简单的模拟类
+                class AgentManagerImpl:
+                    def __init__(self, *args, **kwargs) -> None:
+                        pass
+                return AgentManagerImpl
 
 def get_HAMMemoryManager():
     """获取HAMMemoryManager类"""
@@ -63,7 +74,7 @@ def get_HAMMemoryManager():
         except ImportError:
             # 创建一个简单的模拟类
             class HAMMemoryManagerImpl:
-                def __init__(self, *args, **kwargs):
+                def __init__(self, *args, **kwargs) -> None:
                     pass
             return HAMMemoryManagerImpl
 
@@ -77,12 +88,12 @@ class DemoLearningManager:
     async def shutdown(self):
         pass
 
-demo_learning_manager = DemoLearningManager()
+demo_learning_manager = DemoLearningManager
 
 # Services
 # Add type definitions for the services we're using
 class MultiLLMService:
-    def __init__(self):
+    def __init__(self) -> None:
         # Don't initialize response_count here, let the test patching handle it
         pass
     
@@ -104,9 +115,9 @@ class MultiLLMService:
     
     async def chat_completion(self, messages):
         class MockResponse:
-            def __init__(self, content="Mock response"):
+            def __init__(self, content="Mock response") -> None:
                 self.content = content
-        return MockResponse()
+        return MockResponse
     
     async def close(self):
         pass
@@ -124,7 +135,7 @@ class ResourceAwarenessService:
     pass
 
 class PersonalityManager:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.current_personality = {
             "display_name": "Test AI"
         }
@@ -145,46 +156,46 @@ class TrustManager:
     pass
 
 class ServiceDiscoveryModule:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         pass
     
     def process_capability_advertisement(self, capability):
         pass
     
     async def get_all_capabilities_async(self):
-        return []
+        return 
     
     async def find_capabilities(self, *args, **kwargs):
-        return []
+        return 
 
 class FactExtractorModule:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         pass
 
 class ContentAnalyzerModule:
     pass
 
 class LearningManager:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         pass
     
     async def learn_from_project_case(self, case_data):
         pass
 
 class EmotionSystem:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         pass
 
 class CrisisSystem:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         pass
 
 class TimeSystem:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         pass
 
 class ToolDispatcher:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         pass
     
     async def dispatch(self, query: str, explicit_tool_name: Optional[str] = None, **kwargs):
@@ -193,7 +204,6 @@ class ToolDispatcher:
         """
         # Return a mock response for testing
         try:
-            from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
             # 创建一个字典而不是直接调用构造函数来避免类型检查错误
             response_data = {
                 "status": "success",
@@ -203,11 +213,11 @@ class ToolDispatcher:
             }
             # 使用type创建一个动态类来模拟ToolDispatcherResponse
             MockResponse = type('ToolDispatcherResponse', (), response_data)
-            return MockResponse()
+            return MockResponse
         except ImportError:
             # 如果无法导入，创建一个简单的模拟响应
             class MockToolDispatcherResponse:
-                def __init__(self, status, payload, tool_name_attempted, original_query_for_tool):
+                def __init__(self, status, payload, tool_name_attempted, original_query_for_tool) -> None:
                     self.status = status
                     self.payload = payload
                     self.tool_name_attempted = tool_name_attempted
@@ -220,7 +230,7 @@ class ToolDispatcher:
             )
 
 class DialogueManager:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         # Initialize with actual implementation
         try:
             # Try absolute import first
@@ -242,7 +252,7 @@ class DialogueManager:
         return getattr(self._real_instance, name)
 
 class HSPConnector:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.is_connected = False
         # Add missing ai_id attribute
         self.ai_id = kwargs.get('ai_id', 'test_ai_id')
@@ -275,43 +285,43 @@ class HSPConnector:
     async def send_task_request(self, payload, target_ai_id):
         # Return a mock correlation ID
         import uuid
-        return str(uuid.uuid4())
+        return str(uuid.uuid4)
 
 # Hardware Probe
 class HardwareProbe:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
 class DeploymentManager:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
     
     def generate_config(self):
         class MockConfig:
-            def __init__(self):
-                self.mode = MockMode()
-                self.hardware_profile = MockHardwareProfile()
+            def __init__(self) -> None:
+                self.mode = MockMode
+                self.hardware_profile = MockHardwareProfile
         
         class MockMode:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.value = "default"
         
         class MockHardwareProfile:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.ai_capability_score = 85.0
         
-        return MockConfig()
+        return MockConfig
     
     def apply_config(self, config):
         return {"status": "applied", "mode": config.mode.value}
 
 class MCPConnector:
-    def __init__(self, ai_id, mqtt_broker_address, mqtt_broker_port, enable_fallback=True, fallback_config=None):
+    def __init__(self, ai_id, mqtt_broker_address, mqtt_broker_port, enable_fallback=True, fallback_config=None) -> None:
         self.ai_id = ai_id
         self.mqtt_broker_address = mqtt_broker_address
         self.mqtt_broker_port = mqtt_broker_port
         self.enable_fallback = enable_fallback
-        self.fallback_config = fallback_config or {}
+        self.fallback_config = fallback_config or {} 
     
     async def connect(self):
         print(f"MCPConnector: Connecting to {self.mqtt_broker_address}:{self.mqtt_broker_port}")
@@ -384,7 +394,7 @@ async def initialize_services(
     # to optimize subsequent service configurations
     if not hardware_probe_instance:
         try:
-            hardware_probe_instance = HardwareProbe()
+            hardware_probe_instance = HardwareProbe
             print(f"Core Services: Hardware probe initialized")
         except Exception as e:
             print(f"Core Services: Warning - Hardware probe initialization failed: {e}")
@@ -392,9 +402,9 @@ async def initialize_services(
     
     if not deployment_manager_instance and hardware_probe_instance:
         try:
-            deployment_manager_instance = DeploymentManager()
+            deployment_manager_instance = DeploymentManager
             # Apply optimal configuration based on hardware
-            deployment_config = deployment_manager_instance.generate_config()
+            deployment_config = deployment_manager_instance.generate_config
             applied_settings = deployment_manager_instance.apply_config(deployment_config)
             print(f"Core Services: Applied {deployment_config.mode.value} deployment mode")
             print(f"Core Services: AI Capability Score: {deployment_config.hardware_profile.ai_capability_score:.1f}/100")
@@ -402,7 +412,6 @@ async def initialize_services(
             print(f"Core Services: Warning - Deployment manager initialization failed: {e}")
             deployment_manager_instance = None
     import os
-    import yaml
 
     # Provide default config if none passed
     if config is None:
@@ -411,13 +420,13 @@ async def initialize_services(
                 "mqtt_broker_address": DEFAULT_MQTT_BROKER,
                 "mqtt_broker_port": DEFAULT_MQTT_PORT,
                 "enable_fallback": True,
-                "fallback_config": {}
+                "fallback_config": {} 
             },
             "is_multiprocess": False
         }
 
     # Collect all potential credentials for demo detection
-    all_credentials = {}
+    all_credentials = {} 
 
     # From environment variables
     env_vars_to_check = [
@@ -440,7 +449,7 @@ async def initialize_services(
                         all_credentials[f"{provider.upper()}_{key.upper()}"] = value
 
     # Activate demo mode if demo credentials are detected
-    await demo_learning_manager.activate_demo_mode(all_credentials)
+    _ = await demo_learning_manager.activate_demo_mode(all_credentials)
 
     # --- 1. Configurations ---
     effective_op_configs = operational_configs if operational_configs else DEFAULT_OPERATIONAL_CONFIGS
@@ -459,7 +468,7 @@ async def initialize_services(
         except ImportError:
             # Fall back to relative import
             from .services.multi_llm_service import get_multi_llm_service
-        llm_interface_instance = get_multi_llm_service()
+        llm_interface_instance = get_multi_llm_service
 
     if not ham_manager_instance:
         if use_mock_ham:
@@ -468,7 +477,7 @@ async def initialize_services(
             # For now, this illustrates the concept.
             class TempMockHAM:
                 """簡化的Mock HAM實現，避免繼承問題"""
-                def __init__(self, *args, **kwargs): 
+                def __init__(self, *args, **kwargs) -> None: 
                     self.memory_store = {}
                     self.next_id = 1
                     print("CoreServices: Using TempMockHAM.")
@@ -484,7 +493,7 @@ async def initialize_services(
                                     user_id_for_facts=None, limit=10, 
                                     sort_by_confidence=False, return_multiple_candidates=False,
                                     include_raw_data=False, semantic_query=None): 
-                    return []
+                    return 
                 
                 def recall_gist(self, memory_id): 
                     return None
@@ -511,7 +520,7 @@ async def initialize_services(
                     # Fallback to EphemeralClient if HttpClient fails
                     import importlib
                     chromadb = importlib.import_module('chromadb')
-                    chroma_client = chromadb.EphemeralClient()
+                    chroma_client = chromadb.EphemeralClient
                     print(f"Core Services: ChromaDB EphemeralClient initialized successfully.")
                 except Exception as e2:
                     print(f"Core Services: Warning - ChromaDB EphemeralClient initialization failed: {e2}. HAM will work without vector search.")
@@ -521,7 +530,7 @@ async def initialize_services(
             # 修复：正确传递参数给HAMMemoryManager构造函数
             try:
                 # 在这里获取HAMMemoryManager类
-                HAMMemoryManagerClass = get_HAMMemoryManager()
+                HAMMemoryManagerClass = get_HAMMemoryManager
                 ham_manager_instance = HAMMemoryManagerClass(
                     core_storage_filename=f"ham_core_{ai_id.replace(':','_')}.json",
                     chroma_client=chroma_client,
@@ -533,7 +542,7 @@ async def initialize_services(
                 print(f"Core Services: Error initializing HAMMemoryManager: {e}")
                 # Fallback to a simple mock if initialization fails
                 class SimpleMockHAM:
-                    def __init__(self, *args, **kwargs):
+                    def __init__(self, *args, **kwargs) -> None:
                         self.memory_store = {}
                         self.next_id = 1
                     
@@ -544,18 +553,18 @@ async def initialize_services(
                         return mid
                     
                     def query_core_memory(self, *args, **kwargs):
-                        return []
+                        return 
                     
                     def recall_gist(self, memory_id):
                         return None
                 
-                ham_manager_instance = SimpleMockHAM()
+                ham_manager_instance = SimpleMockHAM
 
     if not personality_manager_instance:
-        personality_manager_instance = PersonalityManager() # Uses default profile initially
+        personality_manager_instance = PersonalityManager # Uses default profile initially
 
     if not trust_manager_instance:
-        trust_manager_instance = TrustManager()
+        trust_manager_instance = TrustManager
 
     if not mcp_connector_instance:
         # 判斷是否為多進程環境
@@ -571,19 +580,19 @@ async def initialize_services(
             enable_fallback=config['mcp'].get('enable_fallback', True),
             fallback_config=fallback_config
         )
-        await mcp_connector_instance.connect()
+        _ = await mcp_connector_instance.connect
 
     if not ai_virtual_input_service_instance:
-        ai_virtual_input_service_instance = AIVirtualInputService()
+        ai_virtual_input_service_instance = AIVirtualInputService
 
     if not audio_service_instance:
-        audio_service_instance = AudioService()
+        audio_service_instance = AudioService
 
     if not vision_service_instance:
-        vision_service_instance = VisionService()
+        vision_service_instance = VisionService
 
     if not resource_awareness_service_instance:
-        resource_awareness_service_instance = ResourceAwarenessService()
+        resource_awareness_service_instance = ResourceAwarenessService
 
     # --- 2. HSP Related Services ---
     if not hsp_connector_instance:
@@ -595,15 +604,15 @@ async def initialize_services(
                 broker_address=hsp_broker_address,
                 broker_port=hsp_broker_port
             )
-            if not await hsp_connector_instance.connect(): # Attempt to connect
+            if not await hsp_connector_instance.connect: # Attempt to connect
                 print(f"Core Services: WARNING - HSPConnector for {ai_id} failed to connect to {hsp_broker_address}:{hsp_broker_port}")
                 # Decide if this is a fatal error for the app context
             else:
                 print(f"Core Services: HSPConnector for {ai_id} connected.")
                 # Basic subscriptions needed by multiple modules
-                await hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#", lambda p, s, e: None) # Placeholder callback
-                await hsp_connector_instance.subscribe(f"hsp/results/{ai_id}/#", lambda p, s, e: None) # Placeholder callback
-                await hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL}/#", lambda p, s, e: None) # Placeholder callback
+                _ = await hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC}/#", lambda p, s, e: None) # Placeholder callback
+                _ = await hsp_connector_instance.subscribe(f"hsp/results/{ai_id}/#", lambda p, s, e: None) # Placeholder callback
+                _ = await hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL}/#", lambda p, s, e: None) # Placeholder callback
         else:
             print("Core Services: HSP service is disabled in configuration.")
             # Create a mock HSP connector when disabled
@@ -613,7 +622,7 @@ async def initialize_services(
                 broker_port=hsp_broker_port,
                 mock_mode=True
             )
-            await hsp_connector_instance.connect()
+            _ = await hsp_connector_instance.connect
 
     if not service_discovery_module_instance:
         service_discovery_module_instance = ServiceDiscoveryModule(trust_manager=trust_manager_instance)
@@ -626,58 +635,69 @@ async def initialize_services(
 
     # --- 3. Core AI Logic Modules ---
     if not fact_extractor_instance:
-        fact_extractor_instance = FactExtractorModule(llm_service=llm_interface_instance)
+        # 确保llm_interface_instance不为None再创建FactExtractorModule
+        if llm_interface_instance is not None:
+            fact_extractor_instance = FactExtractorModule(llm_service=llm_interface_instance)
+        else:
+            # 如果llm_interface_instance为None，记录错误但不创建FactExtractorModule
+            print("Warning: llm_interface_instance is None, cannot create FactExtractorModule")
+            fact_extractor_instance = None
 
     if not content_analyzer_instance:
         try:
-            content_analyzer_instance = ContentAnalyzerModule()
+            content_analyzer_instance = ContentAnalyzerModule
         except Exception as e:
             # Assuming project_error_handler and ProjectError are defined elsewhere
             # project_error_handler(ProjectError(f"ContentAnalyzerModule failed to initialize: {e}", code=500))
             content_analyzer_instance = None
 
     if not learning_manager_instance and ham_manager_instance:
-        learning_manager_instance = LearningManager(
-            ai_id=ai_id,
-            ham_memory_manager=ham_manager_instance,  # type: ignore
-            fact_extractor=fact_extractor_instance,
-            personality_manager=personality_manager_instance,
-            content_analyzer=content_analyzer_instance,
-            hsp_connector=hsp_connector_instance,
-            trust_manager=trust_manager_instance,
-            operational_config=effective_op_configs # Pass just the op_configs part
-        )
-        # 只有當learning_manager_instance確實存在且有需要的方法時才註冊回調
-        if (hsp_connector_instance and learning_manager_instance and 
-            hasattr(learning_manager_instance, 'process_and_store_hsp_fact') and 
-            callable(getattr(learning_manager_instance, 'process_and_store_hsp_fact', None))): 
-            
-            def sync_fact_callback(hsp_fact_payload, hsp_sender_ai_id, hsp_envelope):
-                """同步回调包装器，处理异步方法调用"""
-                # 捕获当前的learning_manager_instance值
-                current_learning_manager = learning_manager_instance
-                if current_learning_manager is None:
-                    print("Learning manager is not available")
-                    return None
-                    
-                try:
-                    # 检查方法是否存在
-                    if hasattr(current_learning_manager, 'process_and_store_hsp_fact') and \
-                       callable(getattr(current_learning_manager, 'process_and_store_hsp_fact', None)):
-                        # 使用统一的方法创建异步任务
-                        asyncio.create_task(
-                            current_learning_manager.process_and_store_hsp_fact(
-                                hsp_fact_payload, hsp_sender_ai_id, hsp_envelope
-                            )
-                        )
-                    else:
-                        print("Learning manager does not have process_and_store_hsp_fact method")
+        # 只有当fact_extractor_instance不为None时才创建LearningManager
+        if fact_extractor_instance is not None:
+            learning_manager_instance = LearningManager(
+                ai_id=ai_id,
+                ham_memory_manager=ham_manager_instance,  # type: ignore
+                fact_extractor=fact_extractor_instance,
+                personality_manager=personality_manager_instance,
+                content_analyzer=content_analyzer_instance,
+                hsp_connector=hsp_connector_instance,
+                trust_manager=trust_manager_instance,
+                operational_config=effective_op_configs # Pass just the op_configs part
+            )
+            # 只有當learning_manager_instance確實存在且有需要的方法時才註冊回調
+            if (hsp_connector_instance and learning_manager_instance and 
+                hasattr(learning_manager_instance, 'process_and_store_hsp_fact') and 
+                callable(getattr(learning_manager_instance, 'process_and_store_hsp_fact', None))): 
+                
+                def sync_fact_callback(hsp_fact_payload, hsp_sender_ai_id, hsp_envelope):
+                    """同步回调包装器，处理异步方法调用"""
+                    # 捕获当前的learning_manager_instance值
+                    current_learning_manager = learning_manager_instance
+                    if current_learning_manager is None:
+                        print("Learning manager is not available")
                         return None
-                except Exception as e:
-                    print(f"Error in fact callback: {e}")
-                    return None
-            
-            hsp_connector_instance.register_on_fact_callback(sync_fact_callback)
+                        
+                    try:
+                        # 检查方法是否存在
+                        if hasattr(current_learning_manager, 'process_and_store_hsp_fact') and \
+                           callable(getattr(current_learning_manager, 'process_and_store_hsp_fact', None)):
+                            # 使用统一的方法创建异步任务
+                            asyncio.create_task(
+                                current_learning_manager.process_and_store_hsp_fact(
+                                    hsp_fact_payload, hsp_sender_ai_id, hsp_envelope
+                                )
+                            )
+                        else:
+                            print("Learning manager does not have process_and_store_hsp_fact method")
+                            return None
+                    except Exception as e:
+                        print(f"Error in fact callback: {e}")
+                        return None
+                
+                hsp_connector_instance.register_on_fact_callback(sync_fact_callback)
+        else:
+            print("Warning: fact_extractor_instance is None, cannot create LearningManager")
+            learning_manager_instance = None
 
     if not emotion_system_instance:
         # Get personality profile safely
@@ -699,7 +719,7 @@ async def initialize_services(
         except ImportError:
             # Fall back to relative import
             from .ai.formula_engine import FormulaEngine
-        formula_engine_instance = FormulaEngine() # Uses default formulas path
+        formula_engine_instance = FormulaEngine # Uses default formulas path
 
     if not tool_dispatcher_instance:
         tool_dispatcher_instance = ToolDispatcher(llm_service=llm_interface_instance)
@@ -708,7 +728,7 @@ async def initialize_services(
         # AgentManager needs the python executable path. We assume it's the same one running this script.
         import sys
         # 在这里获取AgentManager类
-        AgentManagerClass = get_AgentManager()
+        AgentManagerClass = get_AgentManager
         agent_manager_instance = AgentManagerClass(python_executable=sys.executable)
 
     if not dialogue_manager_instance and ham_manager_instance and learning_manager_instance:
@@ -768,3 +788,4 @@ async def shutdown_services():
     print("Core Services: Shutting down services...")
     
     # Add shutdown logic here if needed
+    pass

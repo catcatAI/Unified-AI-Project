@@ -4,17 +4,15 @@ Atlassian CLI Bridge - 连接Atlassian CLI到统一AI后端
 import subprocess
 import json
 import logging
-import os
 from typing import Dict, List, Optional, Any
-from pathlib import Path
 
 class AtlassianCLIBridge:
-    def __init__(self, acli_path: str = "acli.exe"):
+    def __init__(self, acli_path: str = "acli.exe") -> None:
         self.acli_path = acli_path
         self.logger = logging.getLogger(__name__)
         
         # 检查ACLI是否可用
-        if not self._check_acli_available():
+        if not self._check_acli_available:
             self.logger.warning("Atlassian CLI not available")
     
     def _check_acli_available(self) -> bool:
@@ -131,7 +129,7 @@ class AtlassianCLIBridge:
         if priority:
             command.extend(["--priority", priority])
         if labels:
-            labels_str = ",".join([str(x).strip() for x in labels if str(x).strip()])
+            labels_str = ",".join([str(x).strip for x in labels if str(x).strip])
             if labels_str:
                 command.extend(["--labels", labels_str])
         
@@ -188,7 +186,7 @@ class AtlassianCLIBridge:
         command = [
             "confluence", "content", "search",
             "--query", query,
-            "--limit", str(limit),
+            _ = "--limit", str(limit),
             "--output-format", "json"
         ]
         
@@ -220,7 +218,7 @@ class AtlassianCLIBridge:
         version_result = self._run_acli_command(["--version"])
         
         return {
-            "acli_available": self._check_acli_available(),
-            "version": version_result["stdout"].strip() if version_result["success"] else "Unknown",
+            "acli_available": self._check_acli_available,
+            "version": version_result["stdout"].strip if version_result["success"] else "Unknown",
             "path": self.acli_path
         }

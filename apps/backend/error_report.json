@@ -1,8 +1,10 @@
 {
-  "total_errors": 30,
+  "total_errors": 45,
   "errors_by_type": {
-    "未知错误": 2,
+    "未知错误": 7,
     "异步测试协程警告": 24,
+    "导入路径错误": 2,
+    "断言失败": 8,
     "连接错误": 4
   },
   "error_details": [
@@ -10,27 +12,72 @@
       "type": "未知错误",
       "file_path": null,
       "line_number": null,
-      "message": "测试 tests/integration/test_agent_collaboration.py::TestAgentCollaboration::test_handle_complex_project_with_dag 失败",
+      "message": "测试 tests/services/test_hsp_endpoints.py::test_hsp_create_and_pending_then_complete 失败",
       "details": {
-        "test_name": "tests/integration/test_agent_collaboration.py::TestAgentCollaboration::test_handle_complex_project_with_dag"
+        "test_name": "tests/services/test_hsp_endpoints.py::test_hsp_create_and_pending_then_complete"
       }
     },
     {
       "type": "未知错误",
       "file_path": null,
       "line_number": null,
-      "message": "测试 tests/test_core_services.py::TestCoreServices::test_initialize_services 失败",
+      "message": "测试 tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_empty 失败",
       "details": {
-        "test_name": "tests/test_core_services.py::TestCoreServices::test_initialize_services"
+        "test_name": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_empty"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_with_advertisements 失败",
+      "details": {
+        "test_name": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_list_hsp_services_with_advertisements"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_request_hsp_task_success 失败",
+      "details": {
+        "test_name": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_request_hsp_task_success"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_pending 失败",
+      "details": {
+        "test_name": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_pending"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_completed_from_ham 失败",
+      "details": {
+        "test_name": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_completed_from_ham"
+      }
+    },
+    {
+      "type": "未知错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "测试 tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_failed_from_ham 失败",
+      "details": {
+        "test_name": "tests/services/test_main_api_server_hsp.py::TestHSPEndpoints::test_get_hsp_task_status_failed_from_ham"
       }
     },
     {
       "type": "异步测试协程警告",
-      "file_path": "Project\\apps\\backend\\src\\ai\\dialogue\\project_coordinator.py",
+      "file_path": "Project\\apps\\backend\\scripts\\..\\src\\ai\\dialogue\\project_coordinator.py",
       "line_number": 129,
       "message": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited",
       "details": {
-        "context": "    self._load_plugins(namespace)\n\ntests/integration/test_agent_collaboration.py::TestAgentCollaboration::test_handle_project_dynamic_agent_launch\n  D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\ai\\dialogue\\project_coordinator.py:129: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited\n    result = await self._dispatch_single_subtask(subtask_data)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
+        "context": "    self._load_plugins(namespace)\n\ntests/integration/test_agent_collaboration.py::TestAgentCollaboration::test_handle_project_dynamic_agent_launch\n  D:\\Projects\\Unified-AI-Project\\apps\\backend\\scripts\\..\\src\\ai\\dialogue\\project_coordinator.py:129: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited\n    result = await self._dispatch_single_subtask(subtask_data)\n  Enable tracemalloc to get traceback where the object was allocated.\n  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.",
         "full_match": "RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited"
       }
     },
@@ -265,12 +312,112 @@
       }
     },
     {
+      "type": "导入路径错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "No module named 'hsp.connector'; 'hsp' is not a package",
+      "details": {
+        "context": "TrustManager initialized. Default score for new AIs: 0.5\n✅ 服务发现初始化完成\n⚙️ 第2层: 核心组件启动\n❌ 核心组件启动失败: No module named 'hsp.connector'; 'hsp' is not a package\nCore Services: Initializing for AI ID: did:hsp:api_server_ai\nCore Services: All services initialized (or attempted).\nServices initialized successfully with fallback approach",
+        "full_match": "No module named 'hsp.connector'; 'hsp' is not a package"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "vector_store.py",
+      "line_number": 96,
+      "message": "No module named 'hsp.connector'; 'hsp' is not a package",
+      "details": {
+        "context": "Traceback (most recent call last):\n  File \"D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\services\\main_api_server.py\", line 95, in initialize_services_layered\n    from hsp.connector import HSPConnector\nModuleNotFoundError: No module named 'hsp.connector'; 'hsp' is not a package\n----------------------------- Captured log setup ------------------------------\nERROR    ai.memory.vector_store:vector_store.py:96 VectorMemoryStore: An unexpected error occurred during initialization (Chroma is running in http-only client mode, and can only be run with 'chromadb.api.fastapi.FastAPI' as the chroma_api_impl.             see https://docs.trychroma.com/usage-guide?lang=py#using-the-python-http-only-client for more information.). Vector search will be disabled.\nWARNING  ai.memory.ham_memory_manager:ham_memory_manager.py:176 VectorMemoryStore client not available for direct ChromaDB collection access.",
+        "full_match": "No module named 'hsp.connector'; 'hsp' is not a package"
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py",
+      "line_number": 247,
+      "message": "assert len(data) ==",
+      "details": {
+        "context": "DEBUG: Final caps: []\n_________ TestHSPEndpoints.test_list_hsp_services_with_advertisements _________\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py:247: in test_list_hsp_services_with_advertisements\n    assert len(data) == 1\nE   assert 0 == 1\nE    +  where 0 = len([])\n---------------------------- Captured stdout call -----------------------------",
+        "full_match": "assert len(data) =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py",
+      "line_number": 247,
+      "message": "assert 0 ==",
+      "details": {
+        "context": "_________ TestHSPEndpoints.test_list_hsp_services_with_advertisements _________\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py:247: in test_list_hsp_services_with_advertisements\n    assert len(data) == 1\nE   assert 0 == 1\nE    +  where 0 = len([])\n---------------------------- Captured stdout call -----------------------------\nDEBUG: list_hsp_services called",
+        "full_match": "assert 0 =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py",
+      "line_number": 365,
+      "message": "assert status_data[\"status\"] ==",
+      "details": {
+        "context": "E     ?                                                                +++++++++\n______________ TestHSPEndpoints.test_get_hsp_task_status_pending ______________\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py:365: in test_get_hsp_task_status_pending\n    assert status_data[\"status\"] == \"pending\"\nE   AssertionError: assert 'unknown_or_expired' == 'pending'\nE     \nE     - pending",
+        "full_match": "assert status_data[\"status\"] =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py",
+      "line_number": 365,
+      "message": "AssertionError: assert 'unknown_or_expired' ==",
+      "details": {
+        "context": "______________ TestHSPEndpoints.test_get_hsp_task_status_pending ______________\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py:365: in test_get_hsp_task_status_pending\n    assert status_data[\"status\"] == \"pending\"\nE   AssertionError: assert 'unknown_or_expired' == 'pending'\nE     \nE     - pending\nE     + unknown_or_expired",
+        "full_match": "AssertionError: assert 'unknown_or_expired' =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py",
+      "line_number": 398,
+      "message": "assert status_data[\"status\"] ==",
+      "details": {
+        "context": "E     + unknown_or_expired\n________ TestHSPEndpoints.test_get_hsp_task_status_completed_from_ham _________\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py:398: in test_get_hsp_task_status_completed_from_ham\n    assert status_data[\"status\"] == \"completed\", f\"Expected status 'completed', but got {status_data['status']}\"\nE   AssertionError: Expected status 'completed', but got unknown_or_expired\nE   assert 'unknown_or_expired' == 'completed'\nE     ",
+        "full_match": "assert status_data[\"status\"] =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py",
+      "line_number": 398,
+      "message": "assert 'unknown_or_expired' ==",
+      "details": {
+        "context": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py:398: in test_get_hsp_task_status_completed_from_ham\n    assert status_data[\"status\"] == \"completed\", f\"Expected status 'completed', but got {status_data['status']}\"\nE   AssertionError: Expected status 'completed', but got unknown_or_expired\nE   assert 'unknown_or_expired' == 'completed'\nE     \nE     - completed\nE     + unknown_or_expired",
+        "full_match": "assert 'unknown_or_expired' =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py",
+      "line_number": 430,
+      "message": "assert status_data[\"status\"] ==",
+      "details": {
+        "context": "E     + unknown_or_expired\n__________ TestHSPEndpoints.test_get_hsp_task_status_failed_from_ham __________\nD:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py:430: in test_get_hsp_task_status_failed_from_ham\n    assert status_data[\"status\"] == \"failed\", f\"Expected status 'failed', but got {status_data['status']}\"\nE   AssertionError: Expected status 'failed', but got unknown_or_expired\nE   assert 'unknown_or_expired' == 'failed'\nE     ",
+        "full_match": "assert status_data[\"status\"] =="
+      }
+    },
+    {
+      "type": "断言失败",
+      "file_path": "Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py",
+      "line_number": 430,
+      "message": "assert 'unknown_or_expired' ==",
+      "details": {
+        "context": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py:430: in test_get_hsp_task_status_failed_from_ham\n    assert status_data[\"status\"] == \"failed\", f\"Expected status 'failed', but got {status_data['status']}\"\nE   AssertionError: Expected status 'failed', but got unknown_or_expired\nE   assert 'unknown_or_expired' == 'failed'\nE     \nE     - failed\nE     + unknown_or_expired",
+        "full_match": "assert 'unknown_or_expired' =="
+      }
+    },
+    {
       "type": "连接错误",
       "file_path": null,
       "line_number": null,
       "message": "connection",
       "details": {
-        "context": "tests/integration/test_hsp_integration.py::TestHSPIntegration::test_agent_communication_flow PASSED [ 49%]\ntests/integration/test_hsp_integration.py::TestMemorySystemIntegration::test_memory_storage_retrieval_flow PASSED [ 50%]\ntests/integration/test_hsp_integration.py::TestAgentSystemIntegration::test_agent_lifecycle_flow PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPProtocolIntegration::test_hsp_connection_integration PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPProtocolIntegration::test_hsp_message_publish_subscribe_integration PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPProtocolIntegration::test_hsp_agent_communication_integration PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPMessageRoutingIntegration::test_hsp_message_routing_integration PASSED [ 50%]",
+        "context": "tests/integration/test_hsp_integration.py::TestHSPIntegration::test_agent_communication_flow PASSED [ 49%]\ntests/integration/test_hsp_integration.py::TestMemorySystemIntegration::test_memory_storage_retrieval_flow PASSED [ 49%]\ntests/integration/test_hsp_integration.py::TestAgentSystemIntegration::test_agent_lifecycle_flow PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPProtocolIntegration::test_hsp_connection_integration PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPProtocolIntegration::test_hsp_message_publish_subscribe_integration PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPProtocolIntegration::test_hsp_agent_communication_integration PASSED [ 50%]\ntests/integration/test_hsp_protocol_integration.py::TestHSPMessageRoutingIntegration::test_hsp_message_routing_integration PASSED [ 50%]",
         "full_match": "connection"
       }
     },
@@ -280,7 +427,7 @@
       "line_number": null,
       "message": "connection",
       "details": {
-        "context": "tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_make_request_success PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_make_request_error PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_caching_mechanism PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing_with_failures PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_user_info_with_caching PASSED [ 65%]\ntests/mcp/test_context7_connector.py::TestContext7Config::test_config_creation PASSED [ 65%]",
+        "context": "tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_make_request_success PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_make_request_error PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_caching_mechanism PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing_with_failures PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_user_info_with_caching PASSED [ 64%]\ntests/mcp/test_context7_connector.py::TestContext7Config::test_config_creation PASSED [ 64%]",
         "full_match": "connection"
       }
     },
@@ -290,7 +437,7 @@
       "line_number": null,
       "message": "connection",
       "details": {
-        "context": "tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_make_request_error PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_caching_mechanism PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing_with_failures PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_user_info_with_caching PASSED [ 65%]\ntests/mcp/test_context7_connector.py::TestContext7Config::test_config_creation PASSED [ 65%]\ntests/mcp/test_context7_connector.py::TestContext7Config::test_config_defaults PASSED [ 65%]",
+        "context": "tests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_make_request_error PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_caching_mechanism PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_connection_testing_with_failures PASSED [ 64%]\ntests/integrations/test_rovo_dev_connector.py::TestEnhancedRovoDevConnector::test_user_info_with_caching PASSED [ 64%]\ntests/mcp/test_context7_connector.py::TestContext7Config::test_config_creation PASSED [ 64%]\ntests/mcp/test_context7_connector.py::TestContext7Config::test_config_defaults PASSED [ 64%]",
         "full_match": "connection"
       }
     },
@@ -300,7 +447,7 @@
       "line_number": null,
       "message": "connection",
       "details": {
-        "context": "tests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_request_context PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_collaborate_with_model PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_compress_context PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_connection_required_error PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_capabilities_discovery PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_unhandled_message_type PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestUnifiedAIMCPIntegration::test_dialogue_manager_integration PASSED [ 66%]",
+        "context": "tests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_request_context PASSED [ 65%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_collaborate_with_model PASSED [ 65%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_compress_context PASSED [ 65%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_connection_required_error PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_capabilities_discovery PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestContext7MCPConnector::test_unhandled_message_type PASSED [ 66%]\ntests/mcp/test_context7_connector.py::TestUnifiedAIMCPIntegration::test_dialogue_manager_integration PASSED [ 66%]",
         "full_match": "connection"
       }
     }

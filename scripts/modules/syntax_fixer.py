@@ -3,18 +3,15 @@
 语法修复模块 - 处理语法和缩进问题
 """
 
-import os
-import sys
 import re
 import ast
 import traceback
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional
 
 class SyntaxFixer:
     """语法修复器"""
     
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
         self.backend_root = project_root / "apps" / "backend"
         
@@ -49,9 +46,9 @@ class SyntaxFixer:
                 search_path = self.project_root / target
                 
             if search_path.is_file() and search_path.suffix == '.py':
-                python_files.append(search_path)
+                _ = python_files.append(search_path)
             elif search_path.is_dir():
-                python_files.extend(search_path.rglob("*.py"))
+                _ = python_files.extend(search_path.rglob("*.py"))
         else:
             # 搜索整个项目
             for py_file in self.project_root.rglob("*.py"):
@@ -61,7 +58,7 @@ class SyntaxFixer:
                     ".git", "dist", "build", ".pytest_cache"
                 ]):
                     continue
-                python_files.append(py_file)
+                _ = python_files.append(py_file)
                 
         return python_files
         
@@ -112,8 +109,8 @@ class SyntaxFixer:
         except Exception as e:
             errors.append({
                 "type": "FileReadError",
-                "message": f"读取文件时出错: {str(e)}",
-                "file": str(file_path)
+                _ = "message": f"读取文件时出错: {str(e)}",
+                _ = "file": str(file_path)
             })
             
         return errors
@@ -132,21 +129,21 @@ class SyntaxFixer:
                 matches = re.findall(pattern, content)
                 if matches:
                     content = re.sub(pattern, replacement, content)
-                    fixes_made.append(f"缩进修复: 应用模式 {pattern}")
+                    _ = fixes_made.append(f"缩进修复: 应用模式 {pattern}")
             
             # 修复混合缩进（将制表符转换为空格）
             if '\t' in content:
                 content = content.replace('\t', '    ')
-                fixes_made.append("缩进修复: 制表符转换为4个空格")
+                _ = fixes_made.append("缩进修复: 制表符转换为4个空格")
             
             # 如果内容有变化，写入文件
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(content)
+                    _ = f.write(content)
                     
                 details = {
-                    "file": str(file_path),
-                    "fixes_count": len(fixes_made),
+                    _ = "file": str(file_path),
+                    _ = "fixes_count": len(fixes_made),
                     "fixes_made": fixes_made
                 }
                 
@@ -156,9 +153,9 @@ class SyntaxFixer:
                 
         except Exception as e:
             details = {
-                "file": str(file_path),
-                "error": str(e),
-                "traceback": traceback.format_exc()
+                _ = "file": str(file_path),
+                _ = "error": str(e),
+                _ = "traceback": traceback.format_exc()
             }
             return False, f"修复缩进时出错: {str(e)}", details
             
@@ -176,16 +173,16 @@ class SyntaxFixer:
                 matches = re.findall(pattern, content)
                 if matches:
                     content = re.sub(pattern, replacement, content)
-                    fixes_made.append(f"语法修复: 应用模式 {pattern}")
+                    _ = fixes_made.append(f"语法修复: 应用模式 {pattern}")
             
             # 如果内容有变化，写入文件
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(content)
+                    _ = f.write(content)
                     
                 details = {
-                    "file": str(file_path),
-                    "fixes_count": len(fixes_made),
+                    _ = "file": str(file_path),
+                    _ = "fixes_count": len(fixes_made),
                     "fixes_made": fixes_made
                 }
                 
@@ -195,9 +192,9 @@ class SyntaxFixer:
                 
         except Exception as e:
             details = {
-                "file": str(file_path),
-                "error": str(e),
-                "traceback": traceback.format_exc()
+                _ = "file": str(file_path),
+                _ = "error": str(e),
+                _ = "traceback": traceback.format_exc()
             }
             return False, f"修复语法时出错: {str(e)}", details
             
@@ -223,20 +220,20 @@ class SyntaxFixer:
         except Exception as e:
             errors = [{
                 "type": "ValidationError",
-                "message": f"验证时出错: {str(e)}"
+                _ = "message": f"验证时出错: {str(e)}"
             }]
             return False, errors
             
     def fix(self, target: str = None, **kwargs) -> Tuple[bool, str, Dict]:
         """执行语法修复"""
-        print("开始执行语法修复...")
+        _ = print("开始执行语法修复...")
         
         python_files = self.find_python_files(target)
         
         if not python_files:
             return True, "未找到需要修复的Python文件", {"files_processed": 0}
             
-        print(f"发现 {len(python_files)} 个Python文件")
+        _ = print(f"发现 {len(python_files)} 个Python文件")
         
         files_processed = 0
         indentation_fixed = 0
@@ -252,43 +249,43 @@ class SyntaxFixer:
                 syntax_errors = self.check_syntax_errors(file_path)
                 
                 if syntax_errors:
-                    print(f"发现语法问题: {file_path}")
+                    _ = print(f"发现语法问题: {file_path}")
                     
                     # 修复缩进问题
                     success, message, details = self.fix_indentation_issues(file_path)
                     if success and details.get("fixes_count", 0) > 0:
                         indentation_fixed += 1
-                        print(f"  ✓ 修复缩进: {message}")
+                        _ = print(f"  ✓ 修复缩进: {message}")
                     
                     # 修复语法错误
                     success, message, details = self.fix_syntax_errors(file_path)
                     if success and details.get("fixes_count", 0) > 0:
                         syntax_fixed += 1
-                        print(f"  ✓ 修复语法: {message}")
+                        _ = print(f"  ✓ 修复语法: {message}")
                     
                     # 验证修复结果
                     is_valid, remaining_errors = self.validate_syntax(file_path)
                     if is_valid:
                         validation_passed += 1
-                        print(f"  ✓ 验证通过: {file_path}")
+                        _ = print(f"  ✓ 验证通过: {file_path}")
                     else:
                         errors.append({
-                            "file": str(file_path),
+                            _ = "file": str(file_path),
                             "errors": remaining_errors
                         })
-                        print(f"  ✗ 验证失败: {file_path}")
+                        _ = print(f"  ✗ 验证失败: {file_path}")
                 else:
                     validation_passed += 1
-                    print(f"- 无语法问题: {file_path}")
+                    _ = print(f"- 无语法问题: {file_path}")
                     
             except Exception as e:
                 error_msg = f"处理文件时发生异常: {str(e)}"
                 errors.append({
-                    "file": str(file_path),
+                    _ = "file": str(file_path),
                     "error": error_msg,
-                    "traceback": traceback.format_exc()
+                    _ = "traceback": traceback.format_exc()
                 })
-                print(f"✗ 处理文件异常: {file_path} - {error_msg}")
+                _ = print(f"✗ 处理文件异常: {file_path} - {error_msg}")
         
         # 生成结果摘要
         result_details = {
@@ -306,17 +303,17 @@ class SyntaxFixer:
         else:
             return False, f"语法修复失败: {len(errors)} 个文件仍有语法问题", result_details
 
-def main():
+def main() -> None:
     """测试函数"""
     from pathlib import Path
     
-    project_root = Path(__file__).parent.parent.parent
+    project_root: str = Path(__file__).parent.parent.parent
     fixer = SyntaxFixer(project_root)
     
     success, message, details = fixer.fix()
-    print(f"结果: {success}")
-    print(f"消息: {message}")
-    print(f"详情: {details}")
+    _ = print(f"结果: {success}")
+    _ = print(f"消息: {message}")
+    _ = print(f"详情: {details}")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

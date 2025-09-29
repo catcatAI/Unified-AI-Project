@@ -9,17 +9,14 @@ Hardware: CPU, GPU, RAM, Storage, Network
 """
 
 import os
-import sys
 import platform
 import psutil
 import json
 import subprocess
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, asdict
 from pathlib import Path
 import logging
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 @dataclass
 class CPUInfo:
@@ -83,18 +80,18 @@ class HardwareProfile:
 class HardwareProbe:
     """Main hardware detection and profiling class"""
     
-    def __init__(self):
-        self.platform_name = platform.system().lower()
-        self.os_version = platform.version()
+    def __init__(self) -> None:
+        self.platform_name = platform.system.lower
+        self.os_version = platform.version
         
     def detect_all(self) -> HardwareProfile:
         """Detect all hardware components and create profile"""
         try:
-            cpu_info = self._detect_cpu()
-            gpu_info = self._detect_gpu()
-            memory_info = self._detect_memory()
-            storage_info = self._detect_storage()
-            network_info = self._detect_network()
+            cpu_info = self._detect_cpu
+            gpu_info = self._detect_gpu
+            memory_info = self._detect_memory
+            storage_info = self._detect_storage
+            network_info = self._detect_network
             
             # Calculate performance tier and AI capability score
             performance_tier, ai_score = self._calculate_performance_metrics(
@@ -118,12 +115,12 @@ class HardwareProbe:
             
         except Exception as e:
             logger.error(f"Hardware detection failed: {e}")
-            return self._create_fallback_profile()
+            return self._create_fallback_profile
     
     def _detect_cpu(self) -> CPUInfo:
         """Detect CPU information"""
         try:
-            cpu_freq = psutil.cpu_freq()
+            cpu_freq = psutil.cpu_freq
             cpu_count_physical = psutil.cpu_count(logical=False) or 1
             cpu_count_logical = psutil.cpu_count(logical=True) or 1
             cpu_usage = psutil.cpu_percent(interval=1)
@@ -131,44 +128,44 @@ class HardwareProbe:
             # Get CPU brand/model
             brand = "Unknown"
             if self.platform_name == "windows":
-                brand = self._get_windows_cpu_brand()
+                brand = self._get_windows_cpu_brand
             elif self.platform_name == "darwin":
-                brand = self._get_macos_cpu_brand()
+                brand = self._get_macos_cpu_brand
             elif self.platform_name == "linux":
-                brand = self._get_linux_cpu_brand()
+                brand = self._get_linux_cpu_brand
             
             return CPUInfo(
                 cores_physical=cpu_count_physical,
                 cores_logical=cpu_count_logical,
                 frequency_max=cpu_freq.max if cpu_freq else 0.0,
                 frequency_current=cpu_freq.current if cpu_freq else 0.0,
-                architecture=platform.machine(),
+                architecture=platform.machine,
                 brand=brand,
                 usage_percent=cpu_usage
             )
             
         except Exception as e:
             logger.warning(f"CPU detection failed: {e}")
-            return CPUInfo(1, 1, 0.0, 0.0, platform.machine(), "Unknown", 0.0)
+            return CPUInfo(1, 1, 0.0, 0.0, platform.machine, "Unknown", 0.0)
     
     def _detect_gpu(self) -> List[GPUInfo]:
         """Detect GPU information"""
-        gpus = []
+        gpus = 
         
         try:
             # Try NVIDIA first
-            nvidia_gpus = self._detect_nvidia_gpu()
+            nvidia_gpus = self._detect_nvidia_gpu
             gpus.extend(nvidia_gpus)
             
             # Try AMD/Intel/other GPUs
-            other_gpus = self._detect_other_gpu()
+            other_gpus = self._detect_other_gpu
             gpus.extend(other_gpus)
             
             # If we found GPUs through WMI or other methods, use them
             # Otherwise, fall back to integrated graphics detection
             if not gpus:
                 # Fallback to integrated graphics detection
-                gpus.append(self._detect_integrated_gpu())
+                gpus.append(self._detect_integrated_gpu)
                 
         except Exception as e:
             logger.warning(f"GPU detection failed: {e}")
@@ -179,7 +176,7 @@ class HardwareProbe:
     def _detect_memory(self) -> MemoryInfo:
         """Detect memory information"""
         try:
-            memory = psutil.virtual_memory()
+            memory = psutil.virtual_memory
             return MemoryInfo(
                 total=int(memory.total / (1024 * 1024)),  # Convert to MB
                 available=int(memory.available / (1024 * 1024)),
@@ -200,7 +197,7 @@ class HardwareProbe:
                 disk_path = "/"
             
             disk_usage = psutil.disk_usage(disk_path)
-            disk_type = self._detect_disk_type()
+            disk_type = self._detect_disk_type
             
             return StorageInfo(
                 total=int(disk_usage.total / (1024 * 1024 * 1024)),  # Convert to GB
@@ -213,7 +210,7 @@ class HardwareProbe:
             return StorageInfo(0, 0, 0, "Unknown")
     
     def _detect_network(self) -> NetworkInfo:
-        """Detect network information (basic implementation)"""
+        _ = """Detect network information (basic implementation)"""
         try:
             # Basic network info - can be enhanced with actual speed tests
             return NetworkInfo(
@@ -235,7 +232,7 @@ class HardwareProbe:
             
             for line in result.stdout.split('\n'):
                 if line.startswith('Name='):
-                    return line.split('=', 1)[1].strip()
+                    return line.split('=', 1)[1].strip
         except Exception:
             pass
         return "Unknown Windows CPU"
@@ -246,7 +243,7 @@ class HardwareProbe:
             result = subprocess.run([
                 "sysctl", "-n", "machdep.cpu.brand_string"
             ], capture_output=True, text=True, timeout=10)
-            return result.stdout.strip() or "Unknown macOS CPU"
+            return result.stdout.strip or "Unknown macOS CPU"
         except Exception:
             return "Unknown macOS CPU"
     
@@ -256,14 +253,14 @@ class HardwareProbe:
             with open('/proc/cpuinfo', 'r') as f:
                 for line in f:
                     if line.startswith('model name'):
-                        return line.split(':', 1)[1].strip()
+                        return line.split(':', 1)[1].strip
         except Exception:
             pass
         return "Unknown Linux CPU"
     
     def _detect_nvidia_gpu(self) -> List[GPUInfo]:
         """Detect NVIDIA GPUs using nvidia-smi"""
-        gpus = []
+        gpus = 
         try:
             result = subprocess.run([
                 "nvidia-smi", "--query-gpu=name,memory.total,memory.free,driver_version",
@@ -271,9 +268,9 @@ class HardwareProbe:
             ], capture_output=True, text=True, timeout=10)
             
             if result.returncode == 0:
-                for line in result.stdout.strip().split('\n'):
-                    if line.strip():
-                        parts = [p.strip() for p in line.split(',')]
+                for line in result.stdout.strip.split('\n'):
+                    if line.strip:
+                        parts = [p.strip for p in line.split(',')]
                         if len(parts) >= 4:
                             name = parts[0]
                             memory_total = int(parts[1])
@@ -281,7 +278,7 @@ class HardwareProbe:
                             driver_version = parts[3]
                             
                             # Try to get CUDA version
-                            cuda_version = self._get_cuda_version()
+                            cuda_version = self._get_cuda_version
                             
                             gpus.append(GPUInfo(
                                 name=name,
@@ -299,7 +296,7 @@ class HardwareProbe:
     
     def _detect_other_gpu(self) -> List[GPUInfo]:
         """Detect AMD/Intel and other GPUs"""
-        gpus = []
+        gpus = 
         
         try:
             # For Windows, use WMI to detect integrated graphics
@@ -337,14 +334,14 @@ class HardwareProbe:
                         memory_available = min(memory_total, 512)  # Default estimate for integrated graphics
                         
                         # Check if this is integrated graphics
-                        is_integrated = any(keyword in name.lower() or keyword in adapter_compatibility.lower() 
+                        is_integrated = any(keyword in name.lower or keyword in adapter_compatibility.lower 
                                           for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
                         
                         # For integrated graphics, memory is shared with system RAM
                         if is_integrated:
                             # Get system memory to estimate shared GPU memory
                             try:
-                                system_memory = psutil.virtual_memory().total
+                                system_memory = psutil.virtual_memory.total
                                 # Estimate shared memory as a portion of system memory (typically 1/4 to 1/2)
                                 estimated_shared = min(int(system_memory / (1024 * 1024 * 4)), 2048)  # Cap at 2GB
                                 memory_available = min(estimated_shared, memory_total)
@@ -378,7 +375,7 @@ class HardwareProbe:
         # Try to get more accurate integrated GPU information
         try:
             import platform
-            system = platform.system().lower()
+            system = platform.system.lower
             
             if system == "windows":
                 # Windows系统使用WMI检测
@@ -390,7 +387,7 @@ class HardwareProbe:
                     "Get-WmiObject -Class Win32_VideoController | Where-Object {$_.Name -like '*Intel*' -or $_.Name -like '*AMD*' -or $_.Name -like '*Radeon*' -or $_.Name -like '*HD Graphics*' -or $_.Name -like '*UHD Graphics*'} | Select-Object Name, AdapterRAM, DriverVersion | ConvertTo-Json"
                 ], capture_output=True, text=True, timeout=10)
                 
-                if result.returncode == 0 and result.stdout.strip():
+                if result.returncode == 0 and result.stdout.strip:
                     gpu_data = json.loads(result.stdout)
                     
                     # Handle both single GPU and multiple GPU cases
@@ -405,7 +402,7 @@ class HardwareProbe:
                             "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM, DriverVersion | ConvertTo-Json"
                         ], capture_output=True, text=True, timeout=10)
                         
-                        if result.returncode == 0 and result.stdout.strip():
+                        if result.returncode == 0 and result.stdout.strip:
                             gpu_data = json.loads(result.stdout)
                             if isinstance(gpu_data, list) and len(gpu_data) > 0:
                                 gpu_info = gpu_data[0]
@@ -456,7 +453,7 @@ class HardwareProbe:
             if result.returncode == 0:
                 # Parse CUDA version from output
                 for line in result.stdout.split('\n'):
-                    if 'release' in line.lower():
+                    if 'release' in line.lower:
                         import re
                         match = re.search(r'release (\d+\.\d+)', line)
                         if match:
@@ -474,7 +471,7 @@ class HardwareProbe:
                     if device.startswith(('sd', 'nvme')):
                         try:
                             with open(f'/sys/block/{device}/queue/rotational', 'r') as f:
-                                if f.read().strip() == '0':
+                                if f.read.strip == '0':
                                     return "SSD"
                         except:
                             continue
@@ -524,7 +521,7 @@ class HardwareProbe:
             best_gpu = max(gpu, key=lambda g: g.memory_total)
             
             # Check if this is a discrete GPU or integrated graphics
-            is_discrete = not any(keyword in best_gpu.name.lower() 
+            is_discrete = not any(keyword in best_gpu.name.lower 
                                 for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
             
             # CUDA support bonus (typically only for NVIDIA discrete GPUs)
@@ -586,7 +583,7 @@ class HardwareProbe:
     def _create_fallback_profile(self) -> HardwareProfile:
         """Create a minimal fallback profile when detection fails"""
         return HardwareProfile(
-            cpu=CPUInfo(1, 1, 0.0, 0.0, platform.machine(), "Unknown", 0.0),
+            cpu=CPUInfo(1, 1, 0.0, 0.0, platform.machine, "Unknown", 0.0),
             gpu=[GPUInfo("Unknown GPU", 0, 0, "Unknown")],
             memory=MemoryInfo(4096, 2048, 2048, 50.0),  # Assume 4GB
             storage=StorageInfo(100, 50, 50, "Unknown"),
@@ -645,35 +642,35 @@ class HardwareProbe:
 
 # Convenience functions
 def get_hardware_profile(force_refresh: bool = False) -> HardwareProfile:
-    """Get hardware profile (cached or fresh)"""
-    probe = HardwareProbe()
+    _ = """Get hardware profile (cached or fresh)"""
+    probe = HardwareProbe
     
     if not force_refresh:
-        cached_profile = probe.load_profile()
+        cached_profile = probe.load_profile
         if cached_profile:
             return cached_profile
     
     # Generate new profile
-    profile = probe.detect_all()
+    profile = probe.detect_all
     probe.save_profile(profile)
     return profile
 
-def get_performance_tier() -> str:
+def get_performance_tier -> str:
     """Quick function to get just the performance tier"""
-    profile = get_hardware_profile()
+    profile = get_hardware_profile
     return profile.performance_tier
 
-def get_ai_capability_score() -> float:
+def get_ai_capability_score -> float:
     """Quick function to get just the AI capability score"""
-    profile = get_hardware_profile()
+    profile = get_hardware_profile
     return profile.ai_capability_score
 
 if __name__ == "__main__":
     # Test the hardware probe
     logging.basicConfig(level=logging.INFO)
     
-    probe = HardwareProbe()
-    profile = probe.detect_all()
+    probe = HardwareProbe
+    profile = probe.detect_all
     
     print(f"\n=== Hardware Profile ===")
     print(f"Platform: {profile.platform} {profile.os_version}")

@@ -1,4 +1,3 @@
-from skimage import data
 from skimage.feature import match_template
 import numpy as np
 

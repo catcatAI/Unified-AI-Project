@@ -2,14 +2,14 @@
 # This system will manage the AI's emotional state, responses, and link to personality profiles.
 
 class EmotionSystem:
-    def __init__(self, personality_profile: dict = None, config: dict = None):
-        self.personality = personality_profile or {} # Allow None for basic operation
+    def __init__(self, personality_profile: dict = None, config: dict = None) -> None:
+        self.personality = personality_profile or {}  # Allow None for basic operation
         self.config = config or {}
 
         # Default emotion from personality, or overall default
         default_tone = "neutral"
         if self.personality:
-            default_tone = self.personality.get("communication_style", {}).get("default_tone", "neutral")
+            default_tone = self.personality.get("communication_style", ).get("default_tone", "neutral")
 
         self.current_emotion = default_tone
 
@@ -43,7 +43,7 @@ class EmotionSystem:
             # For now, if no strong cue, keep current or revert to personality default.
             default_personality_tone = "neutral"
             if self.personality:
-                 default_personality_tone = self.personality.get("communication_style", {}).get("default_tone", "neutral")
+                 default_personality_tone = self.personality.get("communication_style", ).get("default_tone", "neutral")
             new_emotion = default_personality_tone # Revert to default if no specific trigger
 
         if new_emotion != self.current_emotion:
@@ -75,8 +75,8 @@ if __name__ == '__main__':
     }
 
     emotion_sys = EmotionSystem(personality_profile=example_personality)
-    print(f"Initial emotion expression: {emotion_sys.get_current_emotion_expression()}")
+    print(f"Initial emotion expression: {emotion_sys.get_current_emotion_expression}")
 
     sample_input = {"text": "I am feeling a bit sad today."}
     emotion_sys.update_emotion_based_on_input(sample_input)
-    print(f"Emotion expression after input: {emotion_sys.get_current_emotion_expression()}")
+    print(f"Emotion expression after input: {emotion_sys.get_current_emotion_expression}")

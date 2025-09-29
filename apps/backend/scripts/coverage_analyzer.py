@@ -4,28 +4,26 @@
 用于分析、统计和报告集成测试的代码覆盖率
 """
 
-import os
 import sys
 import subprocess
 import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
 import logging
 
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 
 class CoverageAnalyzer:
     """测试覆盖率分析器"""
     
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: str = None) -> None:
         """
         初始化覆盖率分析器
         
@@ -227,7 +225,7 @@ class CoverageAnalyzer:
             sources_elem = root.find("sources")
             if sources_elem is not None:
                 for source_elem in sources_elem.findall("source"):
-                    coverage_data["sources"].append(source_elem.text)
+                    _ = coverage_data["sources"].append(source_elem.text)
             
             # 解析包信息
             packages_elem = root.find("packages")
@@ -274,7 +272,7 @@ class CoverageAnalyzer:
                                             "condition_coverage": line_elem.get("condition-coverage", "")
                                         })
                                 
-                                class_data["methods"].append(method_data)
+                                _ = class_data["methods"].append(method_data)
                         
                         # 解析类行信息
                         lines_elem = class_elem.find("lines")
@@ -287,9 +285,9 @@ class CoverageAnalyzer:
                                     "condition_coverage": line_elem.get("condition-coverage", "")
                                 })
                         
-                        package_data["classes"].append(class_data)
+                        _ = package_data["classes"].append(class_data)
                     
-                    coverage_data["packages"].append(package_data)
+                    _ = coverage_data["packages"].append(package_data)
             
             self.coverage_data = coverage_data
             return coverage_data
@@ -451,13 +449,13 @@ class CoverageAnalyzer:
             module = area["package"]
             if module not in module_areas:
                 module_areas[module] = []
-            module_areas[module].append(area)
+            _ = module_areas[module].append(area)
         
         # 为每个模块生成建议
         for module, areas in module_areas.items():
             avg_line_rate = sum(area["line_rate"] for area in areas) / len(areas)
             recommendations.append(
-                f"Module '{module}' has low coverage ({avg_line_rate:.2%}). "
+                _ = f"Module '{module}' has low coverage ({avg_line_rate:.2%}). "
                 f"Consider adding tests for {len(areas)} classes."
             )
         
@@ -474,7 +472,7 @@ class CoverageAnalyzer:
         return recommendations
 
 
-def main():
+def main() -> None:
     """主函数"""
     import argparse
     from datetime import datetime

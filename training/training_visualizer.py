@@ -9,22 +9,31 @@ import json
 import time
 import random
 from pathlib import Path
-from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
+from typing import List, Dict, Any, Optional
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from matplotlib.figure import Figure
 from matplotlib.axes import Axes
-import seaborn as sns
 
 # 添加项目路径
 import sys
 project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(project_root))
 
-from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler
-from training.training_monitor import global_training_monitor
+# 创建基本模拟类
+class ErrorContext:
+    def __init__(self, component, operation, details=None):
+        self.component = component
+        self.operation = operation
+        self.details = details or {}
+
+class GlobalErrorHandler:
+    @staticmethod
+    def handle_error(error, context, strategy=None):
+        print(f"Error in {context.component}.{context.operation}: {error}")
+
+global_error_handler = GlobalErrorHandler()
 
 # 配置日志
 logging.basicConfig(
@@ -44,20 +53,24 @@ plt.rcParams['axes.unicode_minus'] = False
 class TrainingVisualizer:
     """训练可视化器"""
     
-    def __init__(self, log_file: str = None):
+    def __init__(self, log_file = None) -> None:
         self.log_file = Path(log_file) if log_file else project_root / 'training' / 'logs' / 'training_monitor.log'
         self.error_handler = global_error_handler
         self.output_dir = project_root / 'training' / 'visualizations'
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        logger.info("📊 训练可视化器初始化完成")
+        # 确保日志目录存在
+        log_dir = project_root / 'training' / 'logs'
+        log_dir.mkdir(parents=True, exist_ok=True)
+        
+        _ = logger.info("📊 训练可视化器初始化完成")
     
-    def load_training_data(self) -> List[Dict[str, Any]]:
+    def load_training_data(self):
         """加载训练日志数据"""
         context = ErrorContext("TrainingVisualizer", "load_training_data")
         try:
             if not self.log_file.exists():
-                logger.warning(f"⚠️  训练日志文件不存在: {self.log_file}")
+                _ = logger.warning(f"⚠️  训练日志文件不存在: {self.log_file}")
                 return []
             
             training_data = []
@@ -66,26 +79,26 @@ class TrainingVisualizer:
                     try:
                         entry = json.loads(line.strip())
                         if entry.get('type') in ['training_metrics', 'system_resources']:
-                            training_data.append(entry)
+                            _ = training_data.append(entry)
                     except json.JSONDecodeError:
                         # 跳过无效行
                         continue
             
-            logger.info(f"✅ 加载了 {len(training_data)} 条训练数据记录")
+            _ = logger.info(f"✅ 加载了 {len(training_data)} 条训练数据记录")
             return training_data
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 加载训练数据失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 加载训练数据失败: {e}")
             return []
     
-    def create_training_progress_plot(self, training_data: List[Dict]) -> str:
+    def create_training_progress_plot(self, training_data) -> Optional[str]:
         """创建训练进度图"""
         if not training_data:
-            logger.warning("⚠️  没有找到训练指标数据")
+            _ = logger.warning("⚠️  没有找到训练指标数据")
             return None
             
         try:
-            plt.style.use('seaborn-v0_8')
+            _ = plt.style.use('seaborn-v0_8')
             fig, axes = plt.subplots(2, 2, figsize=(15, 10))
             fig.suptitle('训练进度监控', fontsize=16, fontweight='bold')
             
@@ -99,7 +112,7 @@ class TrainingVisualizer:
                 scenario = data['scenario']
                 if scenario not in scenarios:
                     scenarios[scenario] = []
-                scenarios[scenario].append(data)
+                _ = scenarios[scenario].append(data)
             
             # 为每个场景绘制损失和准确率曲线
             colors = ['blue', 'red', 'green', 'orange', 'purple']
@@ -108,25 +121,25 @@ class TrainingVisualizer:
                 epochs = [d['epoch'] for d in data_list]
                 losses = [d['metrics']['loss'] for d in data_list]
                 accuracies = [d['metrics']['accuracy'] for d in data_list]
-                val_losses = [d['metrics'].get('val_loss', l * 1.1) for l in losses]
-                val_accuracies = [d['metrics'].get('val_accuracy', a * 0.95) for a in accuracies]
+                val_losses = [data['metrics'].get('val_loss', l * 1.1) for l in losses]
+                val_accuracies = [data['metrics'].get('val_accuracy', a * 0.95) for a in accuracies]
                 
                 # 损失曲线
                 axes[0, 0].plot(epochs, losses, color=color, marker='o', label=f'{scenario} (训练)', linewidth=2)
                 axes[0, 0].plot(epochs, val_losses, color=color, marker='s', label=f'{scenario} (验证)', linestyle='--', alpha=0.7)
                 axes[0, 0].set_title('损失函数变化', fontsize=14)
-                axes[0, 0].set_xlabel('Epoch')
-                axes[0, 0].set_ylabel('Loss')
-                axes[0, 0].legend()
+                _ = axes[0, 0].set_xlabel('Epoch')
+                _ = axes[0, 0].set_ylabel('Loss')
+                _ = axes[0, 0].legend()
                 axes[0, 0].grid(True, alpha=0.3)
                 
                 # 准确率曲线
                 axes[0, 1].plot(epochs, accuracies, color=color, marker='o', label=f'{scenario} (训练)', linewidth=2)
                 axes[0, 1].plot(epochs, val_accuracies, color=color, marker='s', label=f'{scenario} (验证)', linestyle='--', alpha=0.7)
                 axes[0, 1].set_title('准确率变化', fontsize=14)
-                axes[0, 1].set_xlabel('Epoch')
-                axes[0, 1].set_ylabel('Accuracy')
-                axes[0, 1].legend()
+                _ = axes[0, 1].set_xlabel('Epoch')
+                _ = axes[0, 1].set_ylabel('Accuracy')
+                _ = axes[0, 1].legend()
                 axes[0, 1].grid(True, alpha=0.3)
                 
                 # 学习率变化
@@ -134,9 +147,9 @@ class TrainingVisualizer:
                     learning_rates = [d['metrics']['learning_rate'] for d in data_list]
                     axes[1, 0].plot(epochs, learning_rates, color=color, marker='o', label=scenario, linewidth=2)
                     axes[1, 0].set_title('学习率变化', fontsize=14)
-                    axes[1, 0].set_xlabel('Epoch')
-                    axes[1, 0].set_ylabel('Learning Rate')
-                    axes[1, 0].legend()
+                    _ = axes[1, 0].set_xlabel('Epoch')
+                    _ = axes[1, 0].set_ylabel('Learning Rate')
+                    _ = axes[1, 0].legend()
                     axes[1, 0].grid(True, alpha=0.3)
                 else:
                     axes[1, 0].set_title('学习率变化', fontsize=14)
@@ -147,42 +160,42 @@ class TrainingVisualizer:
                     durations = []
                     for j in range(1, len(data_list)):
                         # 这里我们模拟训练时间，实际项目中应该从数据中获取
-                        durations.append(random.uniform(0.5, 2.0))
+                        _ = durations.append(random.uniform(0.5, 2.0))
                     if durations:
                         axes[1, 1].plot(range(2, len(durations) + 2), durations, color=color, marker='o', label=scenario, linewidth=2)
                         axes[1, 1].set_title('每Epoch训练时间', fontsize=14)
-                        axes[1, 1].set_xlabel('Epoch')
-                        axes[1, 1].set_ylabel('时间 (秒)')
-                        axes[1, 1].legend()
+                        _ = axes[1, 1].set_xlabel('Epoch')
+                        _ = axes[1, 1].set_ylabel('时间 (秒)')
+                        _ = axes[1, 1].legend()
                         axes[1, 1].grid(True, alpha=0.3)
                 else:
                     axes[1, 1].set_title('每Epoch训练时间', fontsize=14)
                     axes[1, 1].text(0.5, 0.5, '数据不足', ha='center', va='center', transform=axes[1, 1].transAxes)
             
-            plt.tight_layout()
+            _ = plt.tight_layout()
             
             # 保存图像
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f'training_progress_{timestamp}.png'
             filepath = self.output_dir / filename
             plt.savefig(filepath, dpi=300, bbox_inches='tight')
-            plt.close()
+            _ = plt.close()
             
-            logger.info(f"✅ 训练进度图已保存: {filepath}")
+            _ = logger.info(f"✅ 训练进度图已保存: {filepath}")
             return str(filepath)
             
         except Exception as e:
-            logger.error(f"❌ 创建训练进度图失败: {e}")
+            _ = logger.error(f"❌ 创建训练进度图失败: {e}")
             return None
     
-    def plot_training_progress(self, training_data: List[Dict]) -> str:
+    def plot_training_progress(self, training_data) -> Optional[str]:
         """生成训练进度图（兼容方法名）"""
         return self.create_training_progress_plot(training_data)
     
-    def create_system_resources_plot(self) -> str:
+    def create_system_resources_plot(self) -> Optional[str]:
         """创建系统资源使用图"""
         try:
-            plt.style.use('seaborn-v0_8')
+            _ = plt.style.use('seaborn-v0_8')
             fig, axes = plt.subplots(2, 2, figsize=(15, 10))
             fig.suptitle('系统资源监控', fontsize=16, fontweight='bold')
             
@@ -200,65 +213,65 @@ class TrainingVisualizer:
             # CPU使用率
             axes[0, 0].plot(timestamps, cpu_usage, color='blue', marker='o', linewidth=2)
             axes[0, 0].set_title('CPU使用率', fontsize=14)
-            axes[0, 0].set_ylabel('使用率 (%)')
+            _ = axes[0, 0].set_ylabel('使用率 (%)')
             axes[0, 0].tick_params(axis='x', rotation=45)
             axes[0, 0].grid(True, alpha=0.3)
             axes[0, 0].axhline(y=80, color='red', linestyle='--', alpha=0.7, label='警告线 (80%)')
-            axes[0, 0].legend()
+            _ = axes[0, 0].legend()
             
             # 内存使用率
             axes[0, 1].plot(timestamps, memory_usage, color='green', marker='s', linewidth=2)
             axes[0, 1].set_title('内存使用率', fontsize=14)
-            axes[0, 1].set_ylabel('使用率 (%)')
+            _ = axes[0, 1].set_ylabel('使用率 (%)')
             axes[0, 1].tick_params(axis='x', rotation=45)
             axes[0, 1].grid(True, alpha=0.3)
             axes[0, 1].axhline(y=85, color='red', linestyle='--', alpha=0.7, label='警告线 (85%)')
-            axes[0, 1].legend()
+            _ = axes[0, 1].legend()
             
             # 磁盘使用率
             axes[1, 0].plot(timestamps, disk_usage, color='orange', marker='^', linewidth=2)
             axes[1, 0].set_title('磁盘使用率', fontsize=14)
-            axes[1, 0].set_ylabel('使用率 (%)')
-            axes[1, 0].set_xlabel('时间')
+            _ = axes[1, 0].set_ylabel('使用率 (%)')
+            _ = axes[1, 0].set_xlabel('时间')
             axes[1, 0].tick_params(axis='x', rotation=45)
             axes[1, 0].grid(True, alpha=0.3)
             
             # 网络IO
             axes[1, 1].plot(timestamps, network_io, color='purple', marker='d', linewidth=2)
             axes[1, 1].set_title('网络IO', fontsize=14)
-            axes[1, 1].set_ylabel('数据量 (MB/s)')
-            axes[1, 1].set_xlabel('时间')
+            _ = axes[1, 1].set_ylabel('数据量 (MB/s)')
+            _ = axes[1, 1].set_xlabel('时间')
             axes[1, 1].tick_params(axis='x', rotation=45)
             axes[1, 1].grid(True, alpha=0.3)
             
-            plt.tight_layout()
+            _ = plt.tight_layout()
             
             # 保存图像
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f'system_resources_{timestamp}.png'
             filepath = self.output_dir / filename
             plt.savefig(filepath, dpi=300, bbox_inches='tight')
-            plt.close()
+            _ = plt.close()
             
-            logger.info(f"✅ 系统资源图已保存: {filepath}")
+            _ = logger.info(f"✅ 系统资源图已保存: {filepath}")
             return str(filepath)
             
         except Exception as e:
-            logger.error(f"❌ 创建系统资源图失败: {e}")
+            _ = logger.error(f"❌ 创建系统资源图失败: {e}")
             return None
     
-    def plot_system_resources(self) -> str:
+    def plot_system_resources(self) -> Optional[str]:
         """生成系统资源使用图（兼容方法名）"""
         return self.create_system_resources_plot()
     
-    def create_anomaly_detection_heatmap(self, training_data: List[Dict]) -> str:
+    def create_anomaly_detection_heatmap(self, training_data) -> Optional[str]:
         """创建异常检测热力图"""
         if not training_data:
-            logger.warning("⚠️  没有找到训练指标数据用于异常检测")
+            _ = logger.warning("⚠️  没有找到训练指标数据用于异常检测")
             return None
             
         try:
-            plt.style.use('seaborn-v0_8')
+            _ = plt.style.use('seaborn-v0_8')
             fig, ax = plt.subplots(1, 1, figsize=(12, 8))
             
             # 设置中文字体支持
@@ -271,7 +284,7 @@ class TrainingVisualizer:
                 scenario = data['scenario']
                 if scenario not in scenarios:
                     scenarios[scenario] = []
-                scenarios[scenario].append(data)
+                _ = scenarios[scenario].append(data)
             
             # 准备热力图数据
             scenario_names = list(scenarios.keys())
@@ -299,10 +312,10 @@ class TrainingVisualizer:
             im = ax.imshow(anomaly_matrix, cmap='YlOrRd', aspect='auto')
             
             # 设置标签
-            ax.set_xticks(np.arange(len(metrics_names)))
-            ax.set_yticks(np.arange(len(scenario_names)))
-            ax.set_xticklabels(metrics_names)
-            ax.set_yticklabels(scenario_names)
+            _ = ax.set_xticks(np.arange(len(metrics_names)))
+            _ = ax.set_yticks(np.arange(len(scenario_names)))
+            _ = ax.set_xticklabels(metrics_names)
+            _ = ax.set_yticklabels(scenario_names)
             
             # 旋转x轴标签
             plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
@@ -310,11 +323,11 @@ class TrainingVisualizer:
             # 在每个格子中添加文本
             for i in range(len(scenario_names)):
                 for j in range(len(metrics_names)):
-                    text = ax.text(j, i, int(anomaly_matrix[i, j]),
+                    text = ax.text(j, i, str(int(anomaly_matrix[i, j])),
                                   ha="center", va="center", color="black", fontweight='bold')
             
             ax.set_title('训练异常检测热力图', fontsize=16, fontweight='bold')
-            fig.tight_layout()
+            _ = fig.tight_layout()
             
             # 添加颜色条
             cbar = plt.colorbar(im, ax=ax)
@@ -325,23 +338,23 @@ class TrainingVisualizer:
             filename = f'anomaly_detection_heatmap_{timestamp}.png'
             filepath = self.output_dir / filename
             plt.savefig(filepath, dpi=300, bbox_inches='tight')
-            plt.close()
+            _ = plt.close()
             
-            logger.info(f"✅ 异常检测热力图已保存: {filepath}")
+            _ = logger.info(f"✅ 异常检测热力图已保存: {filepath}")
             return str(filepath)
             
         except Exception as e:
-            logger.error(f"❌ 创建异常检测热力图失败: {e}")
+            _ = logger.error(f"❌ 创建异常检测热力图失败: {e}")
             return None
     
-    def plot_anomaly_detection_heatmap(self, training_data: List[Dict]) -> str:
+    def plot_anomaly_detection_heatmap(self, training_data) -> Optional[str]:
         """生成异常检测热力图（兼容方法名）"""
         return self.create_anomaly_detection_heatmap(training_data)
     
-    def create_training_report(self, training_data: List[Dict]) -> str:
+    def create_training_report(self, training_data) -> Optional[str]:
         """创建综合训练报告"""
         if not training_data:
-            logger.warning("⚠️  没有找到训练指标数据")
+            _ = logger.warning("⚠️  没有找到训练指标数据")
             return None
             
         try:
@@ -359,7 +372,7 @@ class TrainingVisualizer:
                 scenario = data['scenario']
                 if scenario not in scenarios:
                     scenarios[scenario] = []
-                scenarios[scenario].append(data)
+                _ = scenarios[scenario].append(data)
             
             for scenario, data_list in scenarios.items():
                 # 获取最后一个epoch的数据作为最终结果
@@ -383,14 +396,14 @@ class TrainingVisualizer:
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(report_data, f, ensure_ascii=False, indent=2)
             
-            logger.info(f"✅ 训练报告已保存: {filepath}")
+            _ = logger.info(f"✅ 训练报告已保存: {filepath}")
             return str(filepath)
             
         except Exception as e:
-            logger.error(f"❌ 生成训练报告失败: {e}")
+            _ = logger.error(f"❌ 生成训练报告失败: {e}")
             return None
     
-    def generate_training_report(self, training_data: List[Dict]) -> str:
+    def generate_training_report(self, training_data) -> Optional[str]:
         """生成综合训练报告（兼容方法名）"""
         return self.create_training_report(training_data)
     
@@ -405,26 +418,26 @@ class TrainingVisualizer:
             
             # 训练进度子图
             ax1 = plt.subplot2grid((3, 2), (0, 0), colspan=2)
-            self._plot_training_progress_on_ax(ax1, training_data)
+            _ = self._plot_training_progress_on_ax(ax1, training_data)
             
             # 系统资源子图
             ax2 = plt.subplot2grid((3, 2), (1, 0))
-            self._plot_system_resources_on_ax(ax2, training_data)
+            _ = self._plot_system_resources_on_ax(ax2, training_data)
             
             # 异常检测子图
             ax3 = plt.subplot2grid((3, 2), (1, 1))
-            self._plot_anomalies_on_ax(ax3, training_data)
+            _ = self._plot_anomalies_on_ax(ax3, training_data)
             
             # 性能统计子图
             ax4 = plt.subplot2grid((3, 2), (2, 0), colspan=2)
-            self._plot_performance_stats_on_ax(ax4, training_data)
+            _ = self._plot_performance_stats_on_ax(ax4, training_data)
             
-            plt.tight_layout()
+            _ = plt.tight_layout()
             fig.savefig(output_file, dpi=300, bbox_inches='tight')
-            plt.close(fig)
+            _ = plt.close(fig)
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 创建综合报告失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 创建综合报告失败: {e}")
     
     def _plot_training_progress_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]]):
         """在指定轴上绘制训练进度"""
@@ -440,20 +453,20 @@ class TrainingVisualizer:
             accuracies = []
             
             for entry in metrics_data:
-                epochs.append(entry.get('epoch', 0))
+                _ = epochs.append(entry.get('epoch', 0))
                 metrics = entry.get('metrics', {})
-                losses.append(metrics.get('loss', 0))
-                accuracies.append(metrics.get('accuracy', 0))
+                _ = losses.append(metrics.get('loss', 0))
+                _ = accuracies.append(metrics.get('accuracy', 0))
             
             ax.plot(epochs, losses, 'r-o', linewidth=2, markersize=4, label='Loss')
-            ax.set_yscale('log')
+            _ = ax.set_yscale('log')
             ax.set_title('训练进度 - 损失函数', fontsize=12)
-            ax.set_xlabel('Epoch')
-            ax.set_ylabel('Loss')
+            _ = ax.set_xlabel('Epoch')
+            _ = ax.set_ylabel('Loss')
             ax.grid(True, alpha=0.3)
-            ax.legend()
+            _ = ax.legend()
         except Exception as e:
-            logger.error(f"绘制训练进度图时出错: {e}")
+            _ = logger.error(f"绘制训练进度图时出错: {e}")
     
     def _plot_system_resources_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]]):
         """在指定轴上绘制系统资源"""
@@ -470,23 +483,23 @@ class TrainingVisualizer:
             
             for entry in resources_data:
                 data = entry.get('data', {})
-                timestamps.append(datetime.fromisoformat(entry['timestamp'].replace('Z', '+00:00')))
-                cpu_usage.append(data.get('cpu_percent', 0))
-                memory_usage.append(data.get('memory_percent', 0))
+                _ = timestamps.append(datetime.fromisoformat(entry['timestamp'].replace('Z', '+00:00')))
+                _ = cpu_usage.append(data.get('cpu_percent', 0))
+                _ = memory_usage.append(data.get('memory_percent', 0))
             
             ax.plot(timestamps, cpu_usage, 'r-', linewidth=2, label='CPU')
             ax.plot(timestamps, memory_usage, 'b-', linewidth=2, label='内存')
             
             ax.set_title('系统资源使用', fontsize=12)
-            ax.set_ylabel('使用率 (%)')
+            _ = ax.set_ylabel('使用率 (%)')
             ax.grid(True, alpha=0.3)
-            ax.legend()
+            _ = ax.legend()
             
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+            _ = ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
             ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=10))
             plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
         except Exception as e:
-            logger.error(f"绘制系统资源图时出错: {e}")
+            _ = logger.error(f"绘制系统资源图时出错: {e}")
     
     def _plot_anomalies_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]]):
         """在指定轴上绘制异常检测"""
@@ -501,23 +514,23 @@ class TrainingVisualizer:
             anomalies_count = []
             
             for entry in metrics_data:
-                epochs.append(entry.get('epoch', 0))
+                _ = epochs.append(entry.get('epoch', 0))
                 anomalies = entry.get('anomalies', [])
-                anomalies_count.append(len(anomalies))
+                _ = anomalies_count.append(len(anomalies))
             
             # 创建热力图
             data = np.array(anomalies_count).reshape(1, -1)
             im = ax.imshow(data, cmap='Reds', aspect='auto')
             
             ax.set_title('异常检测热力图', fontsize=12)
-            ax.set_xlabel('Epoch')
-            ax.set_yticks([0])
-            ax.set_yticklabels(['异常'])
+            _ = ax.set_xlabel('Epoch')
+            _ = ax.set_yticks([0])
+            _ = ax.set_yticklabels(['异常'])
             
             # 添加颜色条
             plt.colorbar(im, ax=ax)
         except Exception as e:
-            logger.error(f"绘制异常检测图时出错: {e}")
+            _ = logger.error(f"绘制异常检测图时出错: {e}")
     
     def _plot_performance_stats_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]]):
         """在指定轴上绘制性能统计"""
@@ -550,18 +563,18 @@ class TrainingVisualizer:
             ax.text(0.1, 0.9, stats_text, transform=ax.transAxes, fontsize=10,
                     verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
             ax.set_title('性能统计', fontsize=12)
-            ax.axis('off')
+            _ = ax.axis('off')
         except Exception as e:
-            logger.error(f"绘制性能统计时出错: {e}")
+            _ = logger.error(f"绘制性能统计时出错: {e}")
     
     def real_time_visualization(self, scenario_name: str = "default"):
         """实时可视化训练过程"""
         context = ErrorContext("TrainingVisualizer", "real_time_visualization")
         try:
-            logger.info("🔄 启动实时训练可视化...")
+            _ = logger.info("🔄 启动实时训练可视化...")
             
             # 创建实时显示图表
-            plt.ion()  # 开启交互模式
+            _ = plt.ion()  # 开启交互模式
             fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
             fig.suptitle('实时训练监控面板', fontsize=16, fontweight='bold')
             
@@ -583,45 +596,45 @@ class TrainingVisualizer:
                 memory = 40 + 15 * np.cos(i/8) + np.random.normal(0, 3)
                 
                 # 更新数据
-                epochs.append(epoch)
-                losses.append(loss)
-                accuracies.append(accuracy)
-                cpu_usage.append(max(0, min(100, cpu)))
-                memory_usage.append(max(0, min(100, memory)))
-                timestamps.append(datetime.now())
+                _ = epochs.append(epoch)
+                _ = losses.append(loss)
+                _ = accuracies.append(accuracy)
+                _ = cpu_usage.append(max(0, min(100, cpu)))
+                _ = memory_usage.append(max(0, min(100, memory)))
+                _ = timestamps.append(datetime.now())
                 
                 # 清除并重新绘制
-                ax1.clear()
+                _ = ax1.clear()
                 ax1.plot(epochs, losses, 'r-o', linewidth=2, markersize=4)
-                ax1.set_title('实时损失监控')
-                ax1.set_xlabel('Epoch')
-                ax1.set_ylabel('Loss')
+                _ = ax1.set_title('实时损失监控')
+                _ = ax1.set_xlabel('Epoch')
+                _ = ax1.set_ylabel('Loss')
                 ax1.grid(True, alpha=0.3)
-                ax1.set_yscale('log')
+                _ = ax1.set_yscale('log')
                 
-                ax2.clear()
+                _ = ax2.clear()
                 ax2.plot(epochs, accuracies, 'b-s', linewidth=2, markersize=4)
-                ax2.set_title('实时准确率监控')
-                ax2.set_xlabel('Epoch')
-                ax2.set_ylabel('Accuracy')
+                _ = ax2.set_title('实时准确率监控')
+                _ = ax2.set_xlabel('Epoch')
+                _ = ax2.set_ylabel('Accuracy')
                 ax2.grid(True, alpha=0.3)
-                ax2.set_ylim(0, 1)
+                _ = ax2.set_ylim(0, 1)
                 
-                ax3.clear()
+                _ = ax3.clear()
                 ax3.plot(timestamps[-20:] if len(timestamps) > 20 else timestamps, 
                         cpu_usage[-20:] if len(cpu_usage) > 20 else cpu_usage, 'r-', linewidth=2, label='CPU')
                 ax3.plot(timestamps[-20:] if len(timestamps) > 20 else timestamps, 
                         memory_usage[-20:] if len(memory_usage) > 20 else memory_usage, 'b-', linewidth=2, label='内存')
-                ax3.set_title('实时系统资源')
-                ax3.set_ylabel('使用率 (%)')
+                _ = ax3.set_title('实时系统资源')
+                _ = ax3.set_ylabel('使用率 (%)')
                 ax3.grid(True, alpha=0.3)
-                ax3.legend()
+                _ = ax3.legend()
                 
                 # 格式化时间轴
-                ax3.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+                _ = ax3.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
                 plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45)
                 
-                ax4.clear()
+                _ = ax4.clear()
                 # 显示统计信息
                 stats_text = f"当前Epoch: {epoch}\n"
                 stats_text += f"当前损失: {loss:.4f}\n"
@@ -631,30 +644,30 @@ class TrainingVisualizer:
                 
                 ax4.text(0.1, 0.9, stats_text, transform=ax4.transAxes, fontsize=10,
                         verticalalignment='top', bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.7))
-                ax4.set_title('当前状态')
-                ax4.axis('off')
+                _ = ax4.set_title('当前状态')
+                _ = ax4.axis('off')
                 
-                plt.tight_layout()
-                plt.draw()
-                plt.pause(0.1)  # 暂停以更新显示
+                _ = plt.tight_layout()
+                _ = plt.draw()
+                _ = plt.pause(0.1)  # 暂停以更新显示
                 
                 # 模拟训练时间
-                time.sleep(0.05)
+                _ = time.sleep(0.05)
             
-            plt.ioff()  # 关闭交互模式
-            plt.show()
+            _ = plt.ioff()  # 关闭交互模式
+            _ = plt.show()
             
-            logger.info("✅ 实时训练可视化完成")
+            _ = logger.info("✅ 实时训练可视化完成")
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 实时训练可视化失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 实时训练可视化失败: {e}")
 
-    def generate_visualization_script(self, output_path: str = None):
+    def generate_visualization_script(self, output_path = None):
         """生成独立的可视化脚本"""
         context = ErrorContext("TrainingVisualizer", "generate_visualization_script")
         try:
             if not output_path:
-                output_path = project_root / 'training' / 'visualize_progress.py'
+                output_path = str(project_root / 'training' / 'visualize_progress.py')
             
             script_content = '''#!/usr/bin/env python3
 """
@@ -672,7 +685,7 @@ from pathlib import Path
 def load_training_data(log_file="logs/training_monitor.log"):
     """加载训练日志数据"""
     if not Path(log_file).exists():
-        print(f"日志文件不存在: {log_file}")
+        _ = print(f"日志文件不存在: {log_file}")
         return []
     
     training_data = []
@@ -682,19 +695,19 @@ def load_training_data(log_file="logs/training_monitor.log"):
                 try:
                     entry = json.loads(line.strip())
                     if entry.get('type') in ['training_metrics', 'system_resources']:
-                        training_data.append(entry)
+                        _ = training_data.append(entry)
                 except json.JSONDecodeError:
                     continue
         return training_data
     except Exception as e:
-        print(f"加载日志数据失败: {e}")
+        _ = print(f"加载日志数据失败: {e}")
         return []
 
 def create_progress_plot(training_data, output_file="progress_visualization.png"):
     """创建训练进度图"""
     metrics_data = [entry for entry in training_data if entry.get('type') == 'training_metrics']
     if not metrics_data:
-        print("没有找到训练指标数据")
+        _ = print("没有找到训练指标数据")
         return False
     
     # 按时间排序
@@ -706,10 +719,10 @@ def create_progress_plot(training_data, output_file="progress_visualization.png"
     accuracies = []
     
     for entry in metrics_data:
-        epochs.append(entry.get('epoch', 0))
+        _ = epochs.append(entry.get('epoch', 0))
         metrics = entry.get('metrics', {})
-        losses.append(metrics.get('loss', 0))
-        accuracies.append(metrics.get('accuracy', 0))
+        _ = losses.append(metrics.get('loss', 0))
+        _ = accuracies.append(metrics.get('accuracy', 0))
     
     # 创建图表
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
@@ -718,34 +731,34 @@ def create_progress_plot(training_data, output_file="progress_visualization.png"
     # 损失曲线
     ax1.plot(epochs, losses, 'r-o', linewidth=2, markersize=4)
     ax1.set_title('损失函数变化', fontsize=14)
-    ax1.set_xlabel('Epoch')
-    ax1.set_ylabel('Loss')
+    _ = ax1.set_xlabel('Epoch')
+    _ = ax1.set_ylabel('Loss')
     ax1.grid(True, alpha=0.3)
-    ax1.set_yscale('log')
+    _ = ax1.set_yscale('log')
     
     # 准确率曲线
     ax2.plot(epochs, accuracies, 'b-s', linewidth=2, markersize=4)
     ax2.set_title('准确率变化', fontsize=14)
-    ax2.set_xlabel('Epoch')
-    ax2.set_ylabel('Accuracy')
+    _ = ax2.set_xlabel('Epoch')
+    _ = ax2.set_ylabel('Accuracy')
     ax2.grid(True, alpha=0.3)
-    ax2.set_ylim(0, 1)
+    _ = ax2.set_ylim(0, 1)
     
-    plt.tight_layout()
+    _ = plt.tight_layout()
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
-    plt.close()
+    _ = plt.close()
     
-    print(f"训练进度可视化已保存到: {output_file}")
+    _ = print(f"训练进度可视化已保存到: {output_file}")
     return True
 
-def main():
+def main() -> None:
     """主函数"""
-    print("开始生成训练进度可视化...")
+    _ = print("开始生成训练进度可视化...")
     
     # 加载训练数据
     training_data = load_training_data()
     if not training_data:
-        print("没有找到训练数据，生成示例图表...")
+        _ = print("没有找到训练数据，生成示例图表...")
         # 生成示例数据
         epochs = list(range(1, 51))
         losses = [max(0.01, 1.0 * np.exp(-i/10) + np.random.normal(0, 0.05)) for i in epochs]
@@ -755,7 +768,7 @@ def main():
         training_data = []
         for i, epoch in enumerate(epochs):
             training_data.append({
-                'timestamp': datetime.now().isoformat(),
+                _ = 'timestamp': datetime.now().isoformat(),
                 'type': 'training_metrics',
                 'epoch': epoch,
                 'metrics': {'loss': losses[i], 'accuracy': accuracies[i]},
@@ -765,42 +778,42 @@ def main():
     # 生成可视化图表
     success = create_progress_plot(training_data)
     if success:
-        print("训练进度可视化生成成功!")
+        _ = print("训练进度可视化生成成功!")
     else:
-        print("训练进度可视化生成失败!")
+        _ = print("训练进度可视化生成失败!")
 
 if __name__ == '__main__':
-    main()
+    _ = main()
 '''
             
             # 写入脚本文件
             with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(script_content)
+                _ = f.write(script_content)
             
-            logger.info(f"✅ 可视化脚本已生成: {output_path}")
+            _ = logger.info(f"✅ 可视化脚本已生成: {output_path}")
             return True
             
         except Exception as e:
-            self.error_handler.handle_error(e, context)
-            logger.error(f"❌ 生成可视化脚本失败: {e}")
+            _ = self.error_handler.handle_error(e, context)
+            _ = logger.error(f"❌ 生成可视化脚本失败: {e}")
             return False
 
 # 全局训练可视化器实例
 global_training_visualizer = TrainingVisualizer()
 
-def main():
+def main() -> None:
     """主函数，用于测试可视化器"""
-    print("📊 测试训练可视化器...")
+    _ = print("📊 测试训练可视化器...")
     
     # 创建可视化器实例
     visualizer = TrainingVisualizer()
     
     # 生成可视化脚本
-    print("📝 生成可视化脚本...")
-    visualizer.generate_visualization_script()
+    _ = print("📝 生成可视化脚本...")
+    _ = visualizer.generate_visualization_script()
     
     # 模拟一些训练数据
-    print("🔄 生成模拟训练数据...")
+    _ = print("🔄 生成模拟训练数据...")
     
     # 模拟训练指标数据
     training_data = []
@@ -836,22 +849,20 @@ def main():
                 'data': resources
             })
         
-        time.sleep(0.01)  # 模拟时间间隔
+        _ = time.sleep(0.01)  # 模拟时间间隔
     
-    print(f"✅ 生成了 {len(training_data)} 条模拟数据")
+    _ = print(f"✅ 生成了 {len(training_data)} 条模拟数据")
     
     # 生成可视化报告
-    print("📊 生成可视化报告...")
-    generated_files = visualizer.generate_visualization_report(training_data, "test_scenario")
+    _ = print("📊 生成可视化报告...")
+    generated_file = visualizer.create_training_progress_plot(training_data)
     
-    if generated_files:
-        print(f"✅ 生成了 {len(generated_files)} 个可视化文件:")
-        for file in generated_files:
-            print(f"   - {file}")
+    if generated_file:
+        _ = print(f"✅ 生成了可视化文件: {generated_file}")
     else:
-        print("❌ 未能生成可视化文件")
+        _ = print("❌ 未能生成可视化文件")
     
-    print("\n🎉 训练可视化器测试完成")
+    _ = print("\n🎉 训练可视化器测试完成")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

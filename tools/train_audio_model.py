@@ -4,12 +4,10 @@
 使用现有音频数据训练基础音频模型
 """
 
-import os
 import sys
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
@@ -18,19 +16,19 @@ from torch.utils.data import Dataset, DataLoader
 import librosa
 
 # 添加项目路径
-project_root = Path(__file__).parent.parent
-backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
+project_root: str = Path(__file__).parent.parent
+backend_path: str = project_root / "apps" / "backend"
+_ = sys.path.insert(0, str(project_root))
+_ = sys.path.insert(0, str(backend_path))
+_ = sys.path.insert(0, str(backend_path / "src"))
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class AudioDataset(Dataset):
     """音频数据集"""
     
-    def __init__(self, data: List[Dict[str, Any]], sample_rate: int = 16000):
+    def __init__(self, data: List[Dict[str, Any]], sample_rate: int = 16000) -> None:
         self.data = data
         self.sample_rate = sample_rate
         self.labels = self._create_labels()
@@ -44,14 +42,14 @@ class AudioDataset(Dataset):
         labels = []
         for item in self.data:
             language = item.get("language", "unknown")
-            labels.append(lang_to_label[language])
+            _ = labels.append(lang_to_label[language])
             
         return labels
     
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.data)
     
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Any:
         item = self.data[idx]
         audio_path = item.get("audio_path")
         
@@ -61,7 +59,7 @@ class AudioDataset(Dataset):
                 # 加载音频文件
                 audio, _ = librosa.load(audio_path, sr=self.sample_rate)
             except Exception as e:
-                logger.warning(f"无法加载音频 {audio_path}: {e}")
+                _ = logger.warning(f"无法加载音频 {audio_path}: {e}")
                 # 创建模拟音频数据
                 duration = item.get("duration", 3.0)
                 audio = np.random.randn(int(self.sample_rate * duration)).astype(np.float32)
@@ -94,8 +92,8 @@ class AudioDataset(Dataset):
 class SimpleAudioModel(nn.Module):
     """简单的音频模型"""
     
-    def __init__(self, num_classes: int = 2, input_size: int = 13):
-        super(SimpleAudioModel, self).__init__()
+    def __init__(self, num_classes: int = 2, input_size: int = 13) -> None:
+        _ = super(SimpleAudioModel, self).__init__()
         self.conv1 = nn.Conv1d(input_size, 32, kernel_size=3, padding=1)
         self.conv2 = nn.Conv1d(32, 64, kernel_size=3, padding=1)
         self.pool = nn.MaxPool1d(2)
@@ -107,7 +105,7 @@ class SimpleAudioModel(nn.Module):
         self.fc2 = nn.Linear(128, num_classes)
         self.dropout = nn.Dropout(0.5)
     
-    def forward(self, x):
+    def forward(self, x) -> Any:
         x = self.relu(self.conv1(x))
         x = self.pool(x)
         x = self.relu(self.conv2(x))
@@ -121,41 +119,41 @@ class SimpleAudioModel(nn.Module):
 class AudioModelTrainer:
     """音频模型训练器"""
     
-    def __init__(self, model_save_dir: str = None):
+    def __init__(self, model_save_dir: str = None) -> None:
         self.project_root = project_root
         self.model_save_dir = Path(model_save_dir) if model_save_dir else project_root / "training" / "models"
         self.model_save_dir.mkdir(parents=True, exist_ok=True)
         
         # 设备配置
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        logger.info(f"使用设备: {self.device}")
+        _ = logger.info(f"使用设备: {self.device}")
     
     def load_data(self) -> List[Dict[str, Any]]:
         """加载处理后的音频数据"""
-        logger.info("正在加载处理后的音频数据...")
+        _ = logger.info("正在加载处理后的音频数据...")
         
         processed_data_file = self.project_root / "data" / "processed_traditional_data" / "audio_processed.json"
         if processed_data_file.exists():
             try:
                 with open(processed_data_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                logger.info(f"成功加载 {len(data)} 条音频数据")
+                _ = logger.info(f"成功加载 {len(data)} 条音频数据")
                 return data
             except Exception as e:
-                logger.error(f"加载音频数据时出错: {e}")
+                _ = logger.error(f"加载音频数据时出错: {e}")
                 return []
         else:
-            logger.warning(f"未找到处理后的音频数据文件: {processed_data_file}")
+            _ = logger.warning(f"未找到处理后的音频数据文件: {processed_data_file}")
             return []
     
     def train_model(self, epochs: int = 10, batch_size: int = 8, learning_rate: float = 0.001):
         """训练音频模型"""
-        logger.info("开始训练音频模型...")
+        _ = logger.info("开始训练音频模型...")
         
         # 加载数据
         data = self.load_data()
         if not data:
-            logger.error("没有可用的训练数据")
+            _ = logger.error("没有可用的训练数据")
             return False
         
         # 创建数据集和数据加载器
@@ -171,7 +169,7 @@ class AudioModelTrainer:
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
         
         # 训练循环
-        model.train()
+        _ = model.train()
         for epoch in range(epochs):
             running_loss = 0.0
             correct = 0
@@ -185,9 +183,9 @@ class AudioModelTrainer:
                 loss = criterion(outputs, labels)
                 
                 # 反向传播和优化
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                _ = optimizer.zero_grad()
+                _ = loss.backward()
+                _ = optimizer.step()
                 
                 # 统计信息
                 running_loss += loss.item()
@@ -198,16 +196,16 @@ class AudioModelTrainer:
                 # 每5个批次打印一次信息
                 if batch_idx % 5 == 0:
                     logger.info(f'Epoch: {epoch+1}/{epochs}, Batch: {batch_idx}, '
-                              f'Loss: {loss.item():.4f}, Accuracy: {100.*correct/total:.2f}%')
+                              _ = f'Loss: {loss.item():.4f}, Accuracy: {100.*correct/total:.2f}%')
             
             # 每个epoch结束时打印信息
             epoch_loss = running_loss / len(dataloader)
             epoch_acc = 100. * correct / total
-            logger.info(f'Epoch {epoch+1} finished - Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.2f}%')
+            _ = logger.info(f'Epoch {epoch+1} finished - Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.2f}%')
         
         # 保存模型
-        self.save_model(model, num_classes)
-        logger.info("音频模型训练完成!")
+        _ = self.save_model(model, num_classes)
+        _ = logger.info("音频模型训练完成!")
         return True
     
     def save_model(self, model: nn.Module, num_classes: int):
@@ -216,26 +214,26 @@ class AudioModelTrainer:
         metadata_path = self.model_save_dir / "audio_model_metadata.json"
         
         # 保存模型权重
-        torch.save(model.state_dict(), model_path)
-        logger.info(f"模型已保存到: {model_path}")
+        _ = torch.save(model.state_dict(), model_path)
+        _ = logger.info(f"模型已保存到: {model_path}")
         
         # 保存元数据
         metadata = {
             "model_type": "SimpleAudioModel",
             "num_classes": num_classes,
             "input_shape": [13, 100],  # 13个MFCC特征，100帧
-            "training_date": torch.utils.data.dataset.datetime.datetime.now().isoformat(),
+            _ = "training_date": torch.utils.data.dataset.datetime.datetime.now().isoformat(),
             "framework": "PyTorch",
             "version": "1.0"
         }
         
         with open(metadata_path, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, ensure_ascii=False, indent=2)
-        logger.info(f"模型元数据已保存到: {metadata_path}")
+        _ = logger.info(f"模型元数据已保存到: {metadata_path}")
 
-def main():
+def main() -> None:
     """主函数"""
-    logger.info("开始训练音频模型...")
+    _ = logger.info("开始训练音频模型...")
     
     # 初始化训练器
     trainer = AudioModelTrainer()
@@ -244,9 +242,9 @@ def main():
     success = trainer.train_model(epochs=5, batch_size=4, learning_rate=0.001)
     
     if success:
-        logger.info("音频模型训练成功完成!")
+        _ = logger.info("音频模型训练成功完成!")
     else:
-        logger.error("音频模型训练失败!")
+        _ = logger.error("音频模型训练失败!")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

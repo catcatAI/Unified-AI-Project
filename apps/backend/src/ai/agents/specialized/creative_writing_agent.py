@@ -1,10 +1,9 @@
 import asyncio
 import uuid
 import yaml
-import os
 import logging
-from typing import Dict, Any, List
 from pathlib import Path # Import Path
+from typing import Dict, Any
 
 from .base.base_agent import BaseAgent
 from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
@@ -15,7 +14,7 @@ class CreativeWritingAgent(BaseAgent):
     A specialized agent for creative writing tasks like generating marketing copy,
     short stories, or polishing text.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_generate_marketing_copy_v1.0",
@@ -40,7 +39,7 @@ class CreativeWritingAgent(BaseAgent):
                 "returns": {"type": "string", "description": "The polished text."}
             }
         ]
-        super().__init__(agent_id=agent_id, capabilities=capabilities)
+        super.__init__(agent_id=agent_id, capabilities=capabilities)
 
         # This agent directly uses the LLMInterface initialized in its services.
         # Be defensive in case tests patch initialize_services to return None.
@@ -48,7 +47,7 @@ class CreativeWritingAgent(BaseAgent):
         self.llm_interface: MultiLLMService = services.get("llm_interface") if isinstance(services, dict) else None
         self._load_prompts()
 
-    def _load_prompts(self):
+    def _load_prompts(self) -> None:
         """Loads prompts from the YAML file."""
         # Get the project root dynamically
         current_dir = Path(__file__).parent
@@ -58,18 +57,16 @@ class CreativeWritingAgent(BaseAgent):
 
         try:
             with open(prompts_path, 'r', encoding='utf-8') as f:
-                all_prompts = yaml.safe_load(f)
-                self.prompts = all_prompts.get('creative_writing_agent', {})
-        except FileNotFoundError:
-            self.prompts = {}
+                all_prompts = yaml.safe_load(f) or {}
+            self.prompts = all_prompts.get('creative_writing_agent', {}) 
         except Exception as e:
             logging.error(f"Error loading prompts from {prompts_path}: {e}")
             self.prompts = {}
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
-        request_id = task_payload.get("request_id")
+        request_id = task_payload.get("request_id", "")
         capability_id = task_payload.get("capability_id_filter", "")
-        params = task_payload.get("parameters", {})
+        params = task_payload.get("parameters", )
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
 
@@ -92,43 +89,17 @@ class CreativeWritingAgent(BaseAgent):
             except Exception as e:
                 result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR", str(e))
 
-        if self.hsp_connector and task_payload.get("callback_address"):
-            callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+        callback_address = task_payload.get("callback_address")
+        if self.hsp_connector and callback_address:
+            callback_topic = str(callback_address) if callback_address is not None else ""
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
-    def _create_marketing_copy_prompt(self, params: Dict[str, Any]) -> str:
-        product = params.get('product_description', 'an unspecified product')
-        audience = params.get('target_audience', 'a general audience')
-        style = params.get('style', 'persuasive')
-        prompt_template = self.prompts.get('generate_marketing_copy', "Generate marketing copy for {product}.")
-        return prompt_template.format(style=style, product=product, audience=audience)
-
-    def _create_polish_text_prompt(self, params: Dict[str, Any]) -> str:
-        text = params.get('text_to_polish', '')
-        prompt_template = self.prompts.get('polish_text', "Please proofread and polish the following text for grammar, style, and clarity. Return only the improved text: {text}")
-        return prompt_template.format(text=text)
-
-    def _create_success_payload(self, request_id: str, result: Any) -> HSPTaskResultPayload:
-        return HSPTaskResultPayload(
-            request_id=request_id,
-            status="success",
-            payload=result
-        )
-
-    def _create_failure_payload(self, request_id: str, error_code: str, error_message: str) -> HSPTaskResultPayload:
-        return HSPTaskResultPayload(
-            request_id=request_id,
-            status="failure",
-            error_details={"error_code": error_code, "error_message": error_message}
-        )
-
-
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:creative_writing_agent_{uuid.uuid4().hex[:6]}"
         agent = CreativeWritingAgent(agent_id=agent_id)
-        await agent.start()
+        _ = await agent.start()
 
     try:
         asyncio.run(main())

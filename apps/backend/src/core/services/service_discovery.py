@@ -7,11 +7,11 @@
 import asyncio
 import logging
 from typing import List, Dict, Any, Optional, Callable
-from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta
 from enum import Enum
+from dataclasses import dataclass
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class ServiceStatus(Enum):
     """服务状态枚举"""
@@ -29,32 +29,32 @@ class ServiceCapability:
     version: str
     ai_id: str
     availability_status: str = "unknown"
-    tags: List[str] = None
-    supported_interfaces: List[str] = None
-    metadata: Dict[str, Any] = None
-    last_updated: datetime = None
+    tags: Optional[List[str]] = None
+    supported_interfaces: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
+    last_updated: Optional[datetime] = None
     trust_score: float = 0.0
     response_time_ms: float = 0.0
     error_rate: float = 0.0
 
     def __post_init__(self):
         if self.tags is None:
-            self.tags = []
+            self.tags = 
         if self.supported_interfaces is None:
-            self.supported_interfaces = []
+            self.supported_interfaces = 
         if self.metadata is None:
-            self.metadata = {}
+            self.metadata = 
         if self.last_updated is None:
-            self.last_updated = datetime.now()
+            self.last_updated = datetime.now
 
 class ServiceDiscoveryModule:
     """服务发现模块"""
     
-    def __init__(self, trust_manager=None):
-        self.capabilities: Dict[str, ServiceCapability] = {}
+    def __init__(self, trust_manager=None) -> None:
+        self.capabilities: Dict[str, ServiceCapability] = 
         self.trust_manager = trust_manager
-        self._on_capability_advertisement_callbacks: List[Callable] = []
-        self._lock = asyncio.Lock()
+        self._on_capability_advertisement_callbacks: List[Callable[[ServiceCapability], None]] = 
+        self._lock = asyncio.Lock
     
     def process_capability_advertisement(self, capability_data: Dict[str, Any]):
         """处理能力广告消息"""
@@ -65,29 +65,32 @@ class ServiceDiscoveryModule:
                 logger.warning("收到无效的能力广告消息，缺少capability_id")
                 return
             
+            # 确保capability_id是字符串类型
+            capability_id_str = str(capability_id) if capability_id is not None else ""
+            
             # 更新现有能力或创建新能力
-            if capability_id in self.capabilities:
-                capability = self.capabilities[capability_id]
+            if capability_id_str in self.capabilities:
+                capability = self.capabilities[capability_id_str]
                 # 更新现有字段
-                for key, value in capability_data.items():
+                for key, value in capability_data.items:
                     if hasattr(capability, key):
                         setattr(capability, key, value)
-                capability.last_updated = datetime.now()
+                capability.last_updated = datetime.now
             else:
                 # 创建新能力
                 capability = ServiceCapability(
-                    capability_id=capability_data.get('capability_id'),
+                    capability_id=capability_id_str,
                     name=capability_data.get('name', ''),
                     description=capability_data.get('description', ''),
                     version=capability_data.get('version', '1.0'),
                     ai_id=capability_data.get('ai_id', ''),
                     availability_status=capability_data.get('availability_status', 'unknown'),
-                    tags=capability_data.get('tags', []),
-                    supported_interfaces=capability_data.get('supported_interfaces', []),
-                    metadata=capability_data.get('metadata', {}),
-                    last_updated=datetime.now()
+                    tags=capability_data.get('tags', ),
+                    supported_interfaces=capability_data.get('supported_interfaces', ),
+                    metadata=capability_data.get('metadata', ),
+                    last_updated=datetime.now
                 )
-                self.capabilities[capability_id] = capability
+                self.capabilities[capability_id_str] = capability
             
             # 更新信任分数（如果可用）
             if self.trust_manager and capability.ai_id:
@@ -101,7 +104,7 @@ class ServiceDiscoveryModule:
                 except Exception as e:
                     logger.error(f"处理能力广告回调时出错: {e}")
                     
-            logger.info(f"处理了能力广告: {capability_id}")
+            logger.info(f"处理了能力广告: {capability_id_str}")
             
         except Exception as e:
             logger.error(f"处理能力广告消息时出错: {e}")
@@ -109,11 +112,11 @@ class ServiceDiscoveryModule:
     async def get_all_capabilities_async(self) -> List[ServiceCapability]:
         """异步获取所有能力"""
         async with self._lock:
-            return list(self.capabilities.values())
+            return list(self.capabilities.values)
     
     def get_all_capabilities(self) -> List[ServiceCapability]:
         """获取所有能力"""
-        return list(self.capabilities.values())
+        return list(self.capabilities.values)
     
     async def find_capabilities(self, 
                               capability_id_filter: Optional[str] = None,
@@ -124,8 +127,8 @@ class ServiceDiscoveryModule:
         """查找符合筛选条件的能力"""
         async with self._lock:
             # 应用筛选条件
-            filtered_capabilities = []
-            for capability in self.capabilities.values():
+            filtered_capabilities = 
+            for capability in self.capabilities.values:
                 # 检查能力ID筛选
                 if capability_id_filter and capability.capability_id != capability_id_filter:
                     continue
@@ -136,7 +139,8 @@ class ServiceDiscoveryModule:
                 
                 # 检查标签筛选
                 if tags_filter:
-                    if not any(tag in capability.tags for tag in tags_filter):
+                    capability_tags = capability.tags or 
+                    if not any(tag in capability_tags for tag in tags_filter):
                         continue
                 
                 # 检查最小信任分数
@@ -151,7 +155,7 @@ class ServiceDiscoveryModule:
             
             return filtered_capabilities
     
-    def register_on_capability_advertisement_callback(self, callback: Callable):
+    def register_on_capability_advertisement_callback(self, callback: Callable[[ServiceCapability], None]):
         """注册能力广告回调函数"""
         self._on_capability_advertisement_callbacks.append(callback)
     
@@ -161,10 +165,10 @@ class ServiceDiscoveryModule:
     
     def remove_stale_capabilities(self, max_age_minutes: int = 30):
         """移除过期的能力"""
-        cutoff_time = datetime.now() - timedelta(minutes=max_age_minutes)
+        cutoff_time = datetime.now - timedelta(minutes=max_age_minutes)
         stale_capabilities = [
-            cap_id for cap_id, cap in self.capabilities.items()
-            if cap.last_updated < cutoff_time
+            cap_id for cap_id, cap in self.capabilities.items
+            if cap.last_updated and cap.last_updated < cutoff_time
         ]
         
         for cap_id in stale_capabilities:

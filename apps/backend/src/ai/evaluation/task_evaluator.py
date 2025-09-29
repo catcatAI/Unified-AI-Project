@@ -1,9 +1,8 @@
 import asyncio
 import logging
-import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
 import os
+from typing import List, Dict, Any
 from .evaluation_db import EvaluationDB
 
 logger = logging.getLogger(__name__)
@@ -12,12 +11,12 @@ logger = logging.getLogger(__name__)
 class MetricsCalculator:
     async def calculate_objective_metrics(self, task: Any, execution_result: Any) -> Dict[str, Any]:
         logger.debug("Calculating objective metrics...")
-        await asyncio.sleep(0.01) # Simulate async work
+        _ = await asyncio.sleep(0.01) # Simulate async work
 
         completion_time = execution_result.get("execution_time", 0)
         success = execution_result.get("success", False)
         success_rate = 1.0 if success else 0.0
-        error_count = len(execution_result.get("errors", []))
+        error_count = len(execution_result.get("errors", ))
         
         # Simulate resource usage calculation
         base_cpu = 0.1 # Base CPU usage
@@ -39,12 +38,12 @@ class MetricsCalculator:
 class FeedbackAnalyzer:
     async def analyze(self, user_feedback: Dict[str, Any]) -> Dict[str, Any]:
         logger.debug("Analyzing user feedback...")
-        await asyncio.sleep(0.01) # Simulate async work
+        _ = await asyncio.sleep(0.01) # Simulate async work
 
         feedback_text = user_feedback.get("text", "").lower()
         sentiment = "neutral"
         sentiment_score = 0
-        categories = []
+        categories = [] 
 
         # Expanded keyword lists for sentiment
         positive_keywords = ["good", "excellent", "great", "perfect", "awesome", "fantastic", "love", "happy", "satisfied", "well done"]
@@ -79,7 +78,7 @@ class FeedbackAnalyzer:
 class TaskExecutionEvaluator:
     """任務執行評估器"""
     
-    def __init__(self, config: Dict[str, Any], storage_path: str = "logs/evaluations"):
+    def __init__(self, config: Dict[str, Any], storage_path: str = "logs/evaluations") -> None:
         self.config = config
         self.metrics_calculator = MetricsCalculator()
         self.feedback_analyzer = FeedbackAnalyzer()
@@ -119,7 +118,7 @@ class TaskExecutionEvaluator:
         )
         
         # 存儲評估結果
-        await self._store_evaluation(evaluation)
+        _ = await self._store_evaluation(evaluation)
         
         self.logger.info(f"Task {task.get('id')} evaluated. Status: {evaluation['metrics'].get('success_rate')}")
         return evaluation
@@ -176,13 +175,13 @@ class TaskExecutionEvaluator:
     async def _assess_output_quality(self, output: Any, execution_result: Dict[str, Any]) -> float:
         """Assesses output quality based on success and errors for MVP."""
         self.logger.debug("Assessing output quality...")
-        await asyncio.sleep(0.005) # Simulate work
+        _ = await asyncio.sleep(0.005) # Simulate work
 
         success = execution_result.get("success", False)
         errors = execution_result.get("errors", [])
 
         # If expected_output is provided, perform a comparison
-        expected_output = task.get("expected_output")
+        expected_output = execution_result.get("expected_output")
         if expected_output is not None and output is not None:
             # Simple string comparison for MVP
             if str(output).strip().lower() == str(expected_output).strip().lower():

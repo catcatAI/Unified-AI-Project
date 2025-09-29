@@ -4,13 +4,11 @@ import logging
 import time
 import uuid
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Callable, Union
 from enum import Enum
 from dataclasses import dataclass, asdict
-from datetime import datetime
 import os # Added this import
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class ProtocolStatus(Enum):
     """协议状态枚举"""
@@ -58,15 +56,15 @@ class FallbackMessage:
         """检查消息是否过期"""
         if self.ttl is None:
             return False
-        return time.time() - self.ttl > self.ttl
+        return time.time - self.ttl > self.ttl
 
 class BaseFallbackProtocol(ABC):
     """备用协议基类"""
     
-    def __init__(self, protocol_name: str):
+    def __init__(self, protocol_name: str) -> None:
         self.protocol_name = protocol_name
         self.status = ProtocolStatus.DISABLED
-        self.message_handlers: Dict[str, List[Callable]] = {}
+        self.message_handlers: Dict[str, List[Callable]] = 
         self.stats = {
             'messages_sent': 0,
             'messages_received': 0,
@@ -74,7 +72,7 @@ class BaseFallbackProtocol(ABC):
             'last_activity': None
         }
         # 错误处理和恢复机制
-        self.error_history: List[Dict[str, Any]] = []  # 错误历史记录
+        self.error_history: List[Dict[str, Any]] =   # 错误历史记录
         self.consecutive_errors = 0  # 连续错误计数
         self.max_consecutive_errors = 5  # 最大连续错误数
         self.degradation_threshold = 3  # 降级阈值
@@ -108,27 +106,27 @@ class BaseFallbackProtocol(ABC):
     def register_handler(self, message_type: str, handler: Callable):
         """注册消息处理器"""
         if message_type not in self.message_handlers:
-            self.message_handlers[message_type] = []
+            self.message_handlers[message_type] = 
         self.message_handlers[message_type].append(handler)
     
     async def handle_message(self, message: FallbackMessage):
         """处理接收到的消息"""
         try:
             # 检查消息是否过期
-            if message.is_expired():
+            if message.is_expired:
                 logger.warning(f"丢弃过期消息: {message.id}")
                 return
             
             # 更新统计
             self.stats['messages_received'] += 1
-            self.stats['last_activity'] = time.time()
+            self.stats['last_activity'] = time.time
             
             # 调用处理器
-            handlers = self.message_handlers.get(message.message_type, [])
+            handlers = self.message_handlers.get(message.message_type, )
             for handler in handlers:
                 try:
                     if asyncio.iscoroutinefunction(handler):
-                        await handler(message)
+                        _ = await handler(message)
                     else:
                         handler(message)
                 except Exception as e:
@@ -144,11 +142,11 @@ class BaseFallbackProtocol(ABC):
     def _record_error(self, error_message: str):
         """记录错误信息"""
         self.consecutive_errors += 1
-        self.last_error_time = time.time()
+        self.last_error_time = time.time
         
         # 记录错误历史
         self.error_history.append({
-            'timestamp': time.time(),
+            'timestamp': time.time,
             'error': error_message
         })
         
@@ -176,10 +174,10 @@ class BaseFallbackProtocol(ABC):
 class InMemoryProtocol(BaseFallbackProtocol):
     """内存协议 - 最基础的备用协议"""
     
-    def __init__(self):
-        super().__init__("in_memory")
-        self.message_queue: asyncio.Queue = asyncio.Queue()
-        self.subscribers: Dict[str, List[Callable]] = {}
+    def __init__(self) -> None:
+        super.__init__("in_memory")
+        self.message_queue: asyncio.Queue = asyncio.Queue
+        self.subscribers: Dict[str, List[Callable]] = 
         self.running = False
         self.listener_task: Optional[asyncio.Task] = None
     
@@ -198,11 +196,11 @@ class InMemoryProtocol(BaseFallbackProtocol):
     async def send_message(self, message: FallbackMessage) -> bool:
         """发送消息到内存队列"""
         try:
-            await self.message_queue.put(message)
+            _ = await self.message_queue.put(message)
             self.stats['messages_sent'] += 1
-            self.stats['last_activity'] = time.time()
+            self.stats['last_activity'] = time.time
             # 重置错误状态
-            self._reset_error_state()
+            self._reset_error_state
             logger.debug(f"消息已发送到内存队列: {message.id}")
             return True
         except Exception as e:
@@ -217,14 +215,14 @@ class InMemoryProtocol(BaseFallbackProtocol):
             return
         
         self.running = True
-        self.listener_task = asyncio.create_task(self._message_listener())
+        self.listener_task = asyncio.create_task(self._message_listener)
         logger.info("内存协议开始监听")
     
     async def stop_listening(self):
         """停止监听消息"""
         self.running = False
         if self.listener_task:
-            self.listener_task.cancel()
+            self.listener_task.cancel
             try:
                 await self.listener_task
             except asyncio.CancelledError:
@@ -237,18 +235,18 @@ class InMemoryProtocol(BaseFallbackProtocol):
             try:
                 # 等待消息，设置超时避免无限阻塞
                 message = await asyncio.wait_for(
-                    self.message_queue.get(), 
+                    self.message_queue.get, 
                     timeout=1.0
                 )
-                await self.handle_message(message)
+                _ = await self.handle_message(message)
                 # 重置错误状态
-                self._reset_error_state()
+                self._reset_error_state
             except asyncio.TimeoutError:
                 continue
             except Exception as e:
                 logger.error(f"消息监听器错误: {e}")
                 self._record_error(f"消息监听器错误: {e}")
-                await asyncio.sleep(1)
+                _ = await asyncio.sleep(1)
     
     async def health_check(self) -> bool:
         """健康检查"""
@@ -257,14 +255,14 @@ class InMemoryProtocol(BaseFallbackProtocol):
 class FileBasedProtocol(BaseFallbackProtocol):
     """基于文件的协议 - 用于跨进程通讯"""
     
-    def __init__(self, base_path: str = "data/fallback_comm"):
-        super().__init__("file_based")
+    def __init__(self, base_path: str = "data/fallback_comm") -> None:
+        super.__init__("file_based")
         self.base_path = base_path
         self.inbox_path = f"{base_path}/inbox"
         self.outbox_path = f"{base_path}/outbox"
         self.running = False
         self.listener_task: Optional[asyncio.Task] = None
-        self.node_id = str(uuid.uuid4())[:8]
+        self.node_id = str(uuid.uuid4)[:8]
         self.max_file_size = 10485760  # 10MB
     
     async def initialize(self) -> bool:
@@ -288,7 +286,7 @@ class FileBasedProtocol(BaseFallbackProtocol):
         try:
             import os
             # 检查消息大小
-            message_data = json.dumps(message.to_dict(), ensure_ascii=False)
+            message_data = json.dumps(message.to_dict, ensure_ascii=False)
             if len(message_data.encode('utf-8')) > self.max_file_size:
                 logger.error(f"消息过大，超过限制 {self.max_file_size} 字节")
                 self._record_error("消息过大")
@@ -298,12 +296,12 @@ class FileBasedProtocol(BaseFallbackProtocol):
             filepath = os.path.join(self.outbox_path, filename)
             
             with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(message.to_dict(), f, ensure_ascii=False, indent=2)
+                json.dump(message.to_dict, f, ensure_ascii=False, indent=2)
             
             self.stats['messages_sent'] += 1
-            self.stats['last_activity'] = time.time()
+            self.stats['last_activity'] = time.time
             # 重置错误状态
-            self._reset_error_state()
+            self._reset_error_state
             logger.debug(f"消息已写入文件: {filepath}")
             return True
         except Exception as e:
@@ -318,14 +316,14 @@ class FileBasedProtocol(BaseFallbackProtocol):
             return
         
         self.running = True
-        self.listener_task = asyncio.create_task(self._file_listener())
+        self.listener_task = asyncio.create_task(self._file_listener)
         logger.info("文件协议开始监听")
     
     async def stop_listening(self):
         """停止监听文件"""
         self.running = False
         if self.listener_task:
-            self.listener_task.cancel()
+            self.listener_task.cancel
             try:
                 await self.listener_task
             except asyncio.CancelledError:
@@ -335,7 +333,7 @@ class FileBasedProtocol(BaseFallbackProtocol):
     async def _file_listener(self):
         """文件监听器"""
         import os
-        processed_files = set()
+        processed_files = set
         
         while self.running:
             try:
@@ -355,7 +353,7 @@ class FileBasedProtocol(BaseFallbackProtocol):
                                     data = json.load(f)
                                 
                                 message = FallbackMessage.from_dict(data)
-                                await self.handle_message(message)
+                                _ = await self.handle_message(message)
                                 
                                 # 标记为已处理
                                 processed_files.add(filename)
@@ -364,18 +362,18 @@ class FileBasedProtocol(BaseFallbackProtocol):
                                 os.remove(filepath)
                                 
                                 # 重置错误状态
-                                self._reset_error_state()
+                                self._reset_error_state
                                 
                             except Exception as e:
                                 logger.error(f"处理文件消息失败 {filepath}: {e}")
                                 self._record_error(f"处理文件消息失败 {filepath}: {e}")
                 
-                await asyncio.sleep(0.5)  # 轮询间隔
+                _ = await asyncio.sleep(0.5)  # 轮询间隔
                 
             except Exception as e:
                 logger.error(f"文件监听器错误: {e}")
                 self._record_error(f"文件监听器错误: {e}")
-                await asyncio.sleep(1)
+                _ = await asyncio.sleep(1)
     
     async def health_check(self) -> bool:
         """健康检查"""
@@ -390,13 +388,13 @@ class FileBasedProtocol(BaseFallbackProtocol):
 class HTTPProtocol(BaseFallbackProtocol):
     """基于 HTTP 的协议"""
     
-    def __init__(self, host: str = "127.0.0.1", port: int = 8765):
-        super().__init__("http")
+    def __init__(self, host: str = "127.0.0.1", port: int = 8765) -> None:
+        super.__init__("http")
         self.host = host
         self.port = port
         self.server = None
         self.session = None
-        self.endpoints: Dict[str, str] = {}  # 其他节点的端点
+        self.endpoints: Dict[str, str] =   # 其他节点的端点
         self.request_timeout = 30  # 请求超时时间（秒）
     
     async def initialize(self) -> bool:
@@ -410,15 +408,15 @@ class HTTPProtocol(BaseFallbackProtocol):
             self.session = aiohttp.ClientSession(timeout=timeout)
             
             # 创建 Web 应用
-            app = web.Application()
+            app = web.Application
             app.router.add_post('/message', self._handle_http_message)
             app.router.add_get('/health', self._handle_health_check)
             
             # 启动服务器
             runner = web.AppRunner(app)
-            await runner.setup()
+            _ = await runner.setup
             site = web.TCPSite(runner, self.host, self.port)
-            await site.start()
+            _ = await site.start
             
             self.server = runner
             self.status = ProtocolStatus.ACTIVE
@@ -441,12 +439,12 @@ class HTTPProtocol(BaseFallbackProtocol):
                 return False
             
             url = f"{endpoint}/message"
-            async with self.session.post(url, json=message.to_dict()) as response:
+            async with self.session.post(url, json=message.to_dict) as response:
                 if response.status == 200:
                     self.stats['messages_sent'] += 1
-                    self.stats['last_activity'] = time.time()
+                    self.stats['last_activity'] = time.time
                     # 重置错误状态
-                    self._reset_error_state()
+                    self._reset_error_state
                     return True
                 else:
                     logger.error(f"HTTP 发送失败: {response.status}")
@@ -463,11 +461,11 @@ class HTTPProtocol(BaseFallbackProtocol):
         """处理 HTTP 消息请求"""
         try:
             from aiohttp import web
-            data = await request.json()
+            data = await request.json
             message = FallbackMessage.from_dict(data)
-            await self.handle_message(message)
+            _ = await self.handle_message(message)
             # 重置错误状态
-            self._reset_error_state()
+            self._reset_error_state
             return web.json_response({"status": "ok"})
         except Exception as e:
             logger.error(f"处理 HTTP 消息失败: {e}")
@@ -489,9 +487,9 @@ class HTTPProtocol(BaseFallbackProtocol):
     async def stop_listening(self):
         """停止 HTTP 服务器"""
         if self.server:
-            await self.server.cleanup()
+            _ = await self.server.cleanup
         if self.session:
-            await self.session.close()
+            _ = await self.session.close
     
     async def health_check(self) -> bool:
         """健康检查"""
@@ -504,10 +502,10 @@ class HTTPProtocol(BaseFallbackProtocol):
 class FallbackProtocolManager:
     """备用协议管理器"""
     
-    def __init__(self):
-        self.protocols: List[BaseFallbackProtocol] = []
+    def __init__(self) -> None:
+        self.protocols: List[BaseFallbackProtocol] = 
         self.active_protocol: Optional[BaseFallbackProtocol] = None
-        self.message_queue: asyncio.Queue = asyncio.Queue()
+        self.message_queue: asyncio.Queue = asyncio.Queue
         self.running = False
         self.manager_task: Optional[asyncio.Task] = None
         self.health_check_interval = 30  # 健康检查间隔（秒）
@@ -526,7 +524,7 @@ class FallbackProtocolManager:
         
         for priority, protocol in self.protocols:
             try:
-                if await protocol.initialize():
+                if await protocol.initialize:
                     success_count += 1
                     logger.info(f"协议 {protocol.protocol_name} 初始化成功")
                     
@@ -538,7 +536,7 @@ class FallbackProtocolManager:
                 logger.error(f"协议 {protocol.protocol_name} 初始化异常: {e}")
         
         if success_count > 0:
-            await self._select_active_protocol()
+            _ = await self._select_active_protocol
             return True
         
         logger.error("所有协议初始化失败")
@@ -553,14 +551,14 @@ class FallbackProtocolManager:
             return
         
         for priority, protocol in self.protocols:
-            if await protocol.health_check():
+            if await protocol.health_check:
                 if self.active_protocol != protocol:
                     # 切换协议
                     if self.active_protocol:
-                        await self.active_protocol.stop_listening()
+                        _ = await self.active_protocol.stop_listening
                     
                     self.active_protocol = protocol
-                    await protocol.start_listening()
+                    _ = await protocol.start_listening
                     self.protocol_switch_count += 1
                     logger.info(f"切换到协议: {protocol.protocol_name} (切换次数: {self.protocol_switch_count})")
                 return
@@ -576,12 +574,12 @@ class FallbackProtocolManager:
                           correlation_id: Optional[str] = None) -> bool:
         """发送消息"""
         message = FallbackMessage(
-            id=str(uuid.uuid4()),
+            id=str(uuid.uuid4),
             sender_id="system",  # 可以配置
             recipient_id=recipient_id,
             message_type=message_type,
             payload=payload,
-            timestamp=time.time(),
+            timestamp=time.time,
             priority=priority,
             correlation_id=correlation_id
         )
@@ -591,7 +589,7 @@ class FallbackProtocolManager:
     async def send_fallback_message(self, message: FallbackMessage) -> bool:
         """发送备用消息"""
         if not self.active_protocol:
-            await self._select_active_protocol()
+            _ = await self._select_active_protocol
         
         if not self.active_protocol:
             logger.error("没有可用的协议发送消息")
@@ -603,10 +601,10 @@ class FallbackProtocolManager:
         if not success and message.retry_count < message.max_retries:
             # 重试机制
             message.retry_count += 1
-            await asyncio.sleep(1)  # 等待1秒后重试
+            _ = await asyncio.sleep(1)  # 等待1秒后重试
             
             # 尝试切换协议
-            await self._select_active_protocol()
+            _ = await self._select_active_protocol
             if self.active_protocol:
                 success = await self.active_protocol.send_message(message)
         
@@ -615,15 +613,15 @@ class FallbackProtocolManager:
     async def _handle_protocol_message(self, message: FallbackMessage):
         """处理协议消息"""
         # 将消息放入队列供外部处理
-        await self.message_queue.put(message)
+        _ = await self.message_queue.put(message)
     
     async def get_message(self, timeout: Optional[float] = None) -> Optional[FallbackMessage]:
         """获取消息"""
         try:
             if timeout:
-                return await asyncio.wait_for(self.message_queue.get(), timeout=timeout)
+                return await asyncio.wait_for(self.message_queue.get, timeout=timeout)
             else:
-                return await self.message_queue.get()
+                return await self.message_queue.get
         except asyncio.TimeoutError:
             return None
     
@@ -633,7 +631,7 @@ class FallbackProtocolManager:
             return
         
         self.running = True
-        self.manager_task = asyncio.create_task(self._health_monitor())
+        self.manager_task = asyncio.create_task(self._health_monitor)
         logger.info("备用协议管理器启动")
     
     async def shutdown(self):
@@ -641,7 +639,7 @@ class FallbackProtocolManager:
         self.running = False
         
         if self.manager_task:
-            self.manager_task.cancel()
+            self.manager_task.cancel
             try:
                 await self.manager_task
             except asyncio.CancelledError:
@@ -650,7 +648,7 @@ class FallbackProtocolManager:
         # 停止所有协议
         for priority, protocol in self.protocols:
             try:
-                await protocol.stop_listening()
+                _ = await protocol.stop_listening
             except Exception as e:
                 logger.error(f"停止协议 {protocol.protocol_name} 失败: {e}")
         
@@ -660,17 +658,17 @@ class FallbackProtocolManager:
         """健康监控"""
         while self.running:
             try:
-                await self._select_active_protocol()
-                await asyncio.sleep(self.health_check_interval)
+                _ = await self._select_active_protocol
+                _ = await asyncio.sleep(self.health_check_interval)
             except Exception as e:
                 logger.error(f"健康监控错误: {e}")
-                await asyncio.sleep(5)
+                _ = await asyncio.sleep(5)
     
     def get_status(self) -> Dict[str, Any]:
         """获取状态信息"""
         status = {
             "active_protocol": self.active_protocol.protocol_name if self.active_protocol else None,
-            "protocols": [],
+            "protocols": ,
             "protocol_switch_count": self.protocol_switch_count
         }
         
@@ -680,7 +678,7 @@ class FallbackProtocolManager:
                 "priority": priority,
                 "status": protocol.status.value,
                 "stats": protocol.stats,
-                "error_history": protocol.error_history[-5:] if hasattr(protocol, 'error_history') else []  # 最近5个错误
+                "error_history": protocol.error_history[-5:] if hasattr(protocol, 'error_history') else   # 最近5个错误
             })
         
         return status
@@ -688,29 +686,29 @@ class FallbackProtocolManager:
 # 全局实例
 _fallback_manager: Optional[FallbackProtocolManager] = None
 
-def get_fallback_manager() -> FallbackProtocolManager:
+def get_fallback_manager -> FallbackProtocolManager:
     """获取全局备用协议管理器"""
     global _fallback_manager
     if _fallback_manager is None:
-        _fallback_manager = FallbackProtocolManager()
+        _fallback_manager = FallbackProtocolManager
     return _fallback_manager
 
-async def initialize_fallback_protocols() -> bool:
+async def initialize_fallback_protocols -> bool:
     """初始化备用协议"""
-    manager = get_fallback_manager()
+    manager = get_fallback_manager
     
     # Determine port based on testing environment
     http_port = 0 if os.environ.get('TESTING') == 'true' else 8765 # Modified line
     print(f"DEBUG: initialize_fallback_protocols - TESTING env var: {os.environ.get('TESTING')}, HTTP Port: {http_port}") # Added debug print
     
     # 添加协议（按优先级）
-    manager.add_protocol(InMemoryProtocol(), priority=1)  # 最低优先级
-    manager.add_protocol(FileBasedProtocol(), priority=2)  # 中等优先级
+    manager.add_protocol(InMemoryProtocol, priority=1)  # 最低优先级
+    manager.add_protocol(FileBasedProtocol, priority=2)  # 中等优先级
     manager.add_protocol(HTTPProtocol(port=http_port), priority=3)  # 最高优先级 # Modified line
     
     # 初始化并启动
-    if await manager.initialize():
-        await manager.start()
+    if await manager.initialize:
+        _ = await manager.start
         logger.info("备用协议系统初始化成功")
         return True
     else:

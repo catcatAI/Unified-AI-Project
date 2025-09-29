@@ -11,21 +11,20 @@ import json
 import logging
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
-from pathlib import Path
 
 from .ai_virtual_input_service import AIVirtualInputService
 from .sandbox_executor import SandboxExecutor
-# from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+# from memory.ham_memory_manager import HAMMemoryManager
 # Temporarily disable HAMMemoryManager import due to import issues
 
 # Configure logger
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 class DataProcessor:
     """Handles data processing and transformation for the AI editor"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.processors = {
             'text': self._process_text_data,
             'code': self._process_code_data,
@@ -59,8 +58,8 @@ class DataProcessor:
         result = {
             "processed_data": processed_data,
             "data_type": data_type,
-            "processing_timestamp": datetime.now().isoformat(),
-            "transformation_rules_applied": transformation_rules or {}
+            "processing_timestamp": datetime.now.isoformat,
+            "transformation_rules_applied": transformation_rules or 
         }
         
         logger.info(f"Data processing completed for {data_type}")
@@ -73,10 +72,10 @@ class DataProcessor:
         # Basic text processing
         processed = {
             "raw_text": data,
-            "word_count": len(data.split()),
+            "word_count": len(data.split),
             "char_count": len(data),
             "lines": data.count('\n') + 1,
-            "paragraphs": len([p for p in data.split('\n\n') if p.strip()])
+            "paragraphs": len([p for p in data.split('\n\n') if p.strip])
         }
         
         # Apply transformation rules if provided
@@ -92,7 +91,7 @@ class DataProcessor:
         # Basic code analysis
         processed = {
             "raw_code": data,
-            "line_count": len(data.splitlines()),
+            "line_count": len(data.splitlines),
             "char_count": len(data),
             "functions": self._extract_functions(data),
             "classes": self._extract_classes(data),
@@ -106,7 +105,7 @@ class DataProcessor:
         return processed
         
     def _process_structured_data(self, data: Union[Dict, List], transformation_rules: Optional[Dict] = None) -> Dict[str, Any]:
-        """Process structured data (JSON, XML, etc.)"""
+        _ = """Process structured data (JSON, XML, etc.)"""
         logger.debug("Processing structured data")
         
         # Convert to dict if it's a list
@@ -115,7 +114,7 @@ class DataProcessor:
             
         processed = {
             "raw_structure": data,
-            "keys": list(data.keys()) if isinstance(data, dict) else [],
+            "keys": list(data.keys) if isinstance(data, dict) else ,
             "size": len(data) if isinstance(data, (dict, list)) else 0,
             "nested_levels": self._calculate_nesting_depth(data)
         }
@@ -127,15 +126,15 @@ class DataProcessor:
         return processed
         
     def _process_application_data(self, data: Dict[str, Any], transformation_rules: Optional[Dict] = None) -> Dict[str, Any]:
-        """Process application data (UI elements, etc.)"""
+        _ = """Process application data (UI elements, etc.)"""
         logger.debug("Processing application data")
         
         processed = {
-            "ui_elements": data.get("ui_elements", []),
+            "ui_elements": data.get("ui_elements", ),
             "screen_size": data.get("screen_size", {"width": 0, "height": 0}),
             "focused_element": data.get("focused_element"),
             "active_window": data.get("active_window"),
-            "element_count": len(data.get("ui_elements", []))
+            "element_count": len(data.get("ui_elements", ))
         }
         
         # Apply transformation rules if provided
@@ -195,7 +194,7 @@ class DataProcessor:
     def _extract_keywords(self, text: str) -> List[str]:
         """Extract keywords from text"""
         # Simple keyword extraction (first 10 words)
-        words = text.split()
+        words = text.split
         return words[:10]
         
     def _extract_functions(self, code: str) -> List[str]:
@@ -218,7 +217,7 @@ class DataProcessor:
         """Extract comments from code"""
         # Simple extraction of # comments
         lines = code.split('\n')
-        comments = [line.strip() for line in lines if line.strip().startswith('#')]
+        comments = [line.strip for line in lines if line.strip.startswith('#')]
         return comments
         
     def _extract_docstrings(self, code: str) -> List[str]:
@@ -233,9 +232,9 @@ class DataProcessor:
         """Perform basic complexity analysis"""
         lines = code.split('\n')
         return {
-            "lines_of_code": len([l for l in lines if l.strip() and not l.strip().startswith('#')]),
-            "comment_lines": len([l for l in lines if l.strip().startswith('#')]),
-            "empty_lines": len([l for l in lines if not l.strip()]),
+            "lines_of_code": len([l for l in lines if l.strip and not l.strip.startswith('#')]),
+            "comment_lines": len([l for l in lines if l.strip.startswith('#')]),
+            "empty_lines": len([l for l in lines if not l.strip]),
             "nesting_depth": self._calculate_max_nesting(code)
         }
         
@@ -257,7 +256,7 @@ class DataProcessor:
         if isinstance(data, dict):
             if not data:
                 return 1
-            return 1 + max((self._calculate_nesting_depth(v) for v in data.values()), default=0)
+            return 1 + max((self._calculate_nesting_depth(v) for v in data.values), default=0)
         elif isinstance(data, list):
             if not data:
                 return 1
@@ -267,11 +266,11 @@ class DataProcessor:
             
     def _flatten_structure(self, data: Any) -> Dict[str, Any]:
         """Flatten nested structure"""
-        result = {}
+        result = 
         
         def _flatten(obj, prefix=''):
             if isinstance(obj, dict):
-                for key, value in obj.items():
+                for key, value in obj.items:
                     new_prefix = f"{prefix}.{key}" if prefix else key
                     _flatten(value, new_prefix)
             elif isinstance(obj, list):
@@ -290,10 +289,10 @@ class AIEditorService:
     Main AI Editor Service that integrates data processing, virtual input, and sandbox execution.
     """
     
-    def __init__(self):
-        self.virtual_input_service = AIVirtualInputService()
-        self.sandbox_executor = SandboxExecutor()
-        self.data_processor = DataProcessor()
+    def __init__(self) -> None:
+        self.virtual_input_service = AIVirtualInputService
+        self.sandbox_executor = SandboxExecutor
+        self.data_processor = DataProcessor
         self.memory_manager = None  # Will be set when available
         # Temporarily disable HAMMemoryManager due to import issues
         
@@ -473,7 +472,7 @@ class AIEditorService:
             # Process the result
             processed_result = {
                 "execution_result": result,
-                "execution_timestamp": datetime.now().isoformat(),
+                "execution_timestamp": datetime.now.isoformat,
                 "script_parameters": params
             }
             
@@ -521,7 +520,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
     # Create the AI editor service
-    editor = AIEditorService()
+    editor = AIEditorService
     
     # Test text processing
     sample_text = "This is a sample text for processing. It contains multiple sentences. This is the third sentence."
@@ -535,7 +534,7 @@ def hello_world():
     print("Hello, World!")
     
 class SampleClass:
-    def __init__(self):
+    def __init__(self) -> None:
         self.value = 42
 """
     code_result = editor.process_code_content(sample_code)

@@ -6,12 +6,11 @@
 import click
 import subprocess
 import sys
-import os
 from pathlib import Path
 from cli.utils import logger, environment
 
 
-@click.group()
+_ = @click.group()
 def dev():
     """开发环境管理命令
     
@@ -26,7 +25,7 @@ def dev():
     pass
 
 
-@dev.command()
+_ = @dev.command()
 @click.option('--backend', is_flag=True, help='仅启动后端服务')
 @click.option('--frontend', is_flag=True, help='仅启动前端服务')
 @click.option('--desktop', is_flag=True, help='仅启动桌面应用')
@@ -43,50 +42,50 @@ def start(backend, frontend, desktop, all):
       unified-ai-cli dev start --desktop # 仅启动桌面应用
     """
     try:
-        logger.info("正在启动开发环境...")
+        _ = logger.info("正在启动开发环境...")
         
         # 检查环境
         if not environment.check_environment():
-            logger.error("环境检查失败，请运行 health-check 命令检查环境")
+            _ = logger.error("环境检查失败，请运行 health-check 命令检查环境")
             return
         
-        project_root = Path(__file__).parent.parent.parent.parent
+        project_root: str = Path(__file__).parent.parent.parent.parent
         
         if all or (not backend and not frontend and not desktop):
             # 启动所有服务
-            logger.info("启动后端服务...")
+            _ = logger.info("启动后端服务...")
             _start_backend(project_root)
             
-            logger.info("启动前端服务...")
+            _ = logger.info("启动前端服务...")
             _start_frontend(project_root)
             
-            logger.info("启动桌面应用...")
+            _ = logger.info("启动桌面应用...")
             _start_desktop(project_root)
         else:
             if backend:
-                logger.info("启动后端服务...")
+                _ = logger.info("启动后端服务...")
                 _start_backend(project_root)
             
             if frontend:
-                logger.info("启动前端服务...")
+                _ = logger.info("启动前端服务...")
                 _start_frontend(project_root)
             
             if desktop:
-                logger.info("启动桌面应用...")
+                _ = logger.info("启动桌面应用...")
                 _start_desktop(project_root)
         
-        logger.info("开发环境启动完成")
-        logger.info("后端API: http://localhost:8000")
-        logger.info("前端仪表板: http://localhost:3000")
+        _ = logger.info("开发环境启动完成")
+        _ = logger.info("后端API: http://localhost:8000")
+        _ = logger.info("前端仪表板: http://localhost:3000")
         
     except Exception as e:
-        logger.error(f"启动开发环境时出错: {e}")
-        sys.exit(1)
+        _ = logger.error(f"启动开发环境时出错: {e}")
+        _ = sys.exit(1)
 
 
 def _start_backend(project_root):
     """启动后端服务"""
-    backend_path = project_root / "apps" / "backend"
+    backend_path: str = project_root / "apps" / "backend"
     
     # 激活虚拟环境并启动服务
     if sys.platform == "win32":
@@ -95,7 +94,7 @@ def _start_backend(project_root):
         
         # 等待ChromaDB启动
         import time
-        time.sleep(2)
+        _ = time.sleep(2)
         
         cmd = f"cd /d {backend_path} && venv\\Scripts\\activate.bat && uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000"
         subprocess.Popen(cmd, shell=True)
@@ -116,7 +115,7 @@ def _start_desktop(project_root):
     subprocess.Popen(cmd, shell=True)
 
 
-@dev.command()
+_ = @dev.command()
 def stop():
     """停止开发环境
     
@@ -126,7 +125,7 @@ def stop():
       unified-ai-cli dev stop
     """
     try:
-        logger.info("正在停止开发环境...")
+        _ = logger.info("正在停止开发环境...")
         
         # 停止Python进程
         if sys.platform == "win32":
@@ -140,13 +139,13 @@ def stop():
         else:
             subprocess.run("pkill -f node", shell=True, capture_output=True)
         
-        logger.info("开发环境已停止")
+        _ = logger.info("开发环境已停止")
         
     except Exception as e:
-        logger.error(f"停止开发环境时出错: {e}")
+        _ = logger.error(f"停止开发环境时出错: {e}")
 
 
-@dev.command()
+_ = @dev.command()
 def status():
     """查看开发环境状态
     
@@ -156,7 +155,7 @@ def status():
       unified-ai-cli dev status
     """
     try:
-        logger.info("检查开发环境状态...")
+        _ = logger.info("检查开发环境状态...")
         
         # 检查后端服务
         backend_status = _check_backend_status()
@@ -171,7 +170,7 @@ def status():
         logger.info(f"桌面应用: {'运行中' if desktop_status else '未运行'}")
         
     except Exception as e:
-        logger.error(f"检查开发环境状态时出错: {e}")
+        _ = logger.error(f"检查开发环境状态时出错: {e}")
 
 
 def _check_backend_status():
@@ -200,7 +199,7 @@ def _check_desktop_status():
     return False
 
 
-@dev.command()
+_ = @dev.command()
 def restart():
     """重启开发环境
     
@@ -210,22 +209,22 @@ def restart():
       unified-ai-cli dev restart
     """
     try:
-        logger.info("正在重启开发环境...")
+        _ = logger.info("正在重启开发环境...")
         
         # 停止现有服务
         ctx = click.get_current_context()
-        ctx.invoke(stop)
+        _ = ctx.invoke(stop)
         
         # 启动服务
-        ctx.invoke(start)
+        _ = ctx.invoke(start)
         
-        logger.info("开发环境重启完成")
+        _ = logger.info("开发环境重启完成")
         
     except Exception as e:
-        logger.error(f"重启开发环境时出错: {e}")
+        _ = logger.error(f"重启开发环境时出错: {e}")
 
 
-@dev.command()
+_ = @dev.command()
 def setup():
     """设置开发环境
     
@@ -235,20 +234,20 @@ def setup():
       unified-ai-cli dev setup
     """
     try:
-        logger.info("正在设置开发环境...")
+        _ = logger.info("正在设置开发环境...")
         
-        project_root = Path(__file__).parent.parent.parent.parent
+        project_root: str = Path(__file__).parent.parent.parent.parent
         
         # 安装Node.js依赖
-        logger.info("安装Node.js依赖...")
+        _ = logger.info("安装Node.js依赖...")
         subprocess.run(["pnpm", "install"], cwd=project_root, check=True)
         
         # 设置Python环境
-        backend_path = project_root / "apps" / "backend"
+        backend_path: str = project_root / "apps" / "backend"
         
         # 创建虚拟环境
         if not (backend_path / "venv").exists():
-            logger.info("创建Python虚拟环境...")
+            _ = logger.info("创建Python虚拟环境...")
             subprocess.run([sys.executable, "-m", "venv", "venv"], cwd=backend_path, check=True)
         
         # 激活虚拟环境并安装Python依赖
@@ -257,17 +256,17 @@ def setup():
         else:
             pip_cmd = str(backend_path / "venv" / "bin" / "pip")
         
-        logger.info("安装Python依赖...")
+        _ = logger.info("安装Python依赖...")
         subprocess.run([pip_cmd, "install", "--upgrade", "pip"], cwd=backend_path, check=True)
         subprocess.run([pip_cmd, "install", "-r", "requirements.txt"], cwd=backend_path, check=True)
         subprocess.run([pip_cmd, "install", "-r", "requirements-dev.txt"], cwd=backend_path, check=True)
         
-        logger.info("开发环境设置完成")
+        _ = logger.info("开发环境设置完成")
         
     except Exception as e:
-        logger.error(f"设置开发环境时出错: {e}")
-        sys.exit(1)
+        _ = logger.error(f"设置开发环境时出错: {e}")
+        _ = sys.exit(1)
 
 
 if __name__ == '__main__':
-    dev()
+    _ = dev()

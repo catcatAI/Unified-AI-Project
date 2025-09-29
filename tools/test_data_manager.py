@@ -4,7 +4,6 @@
 用于管理测试数据的生成、加载和清理
 """
 
-import os
 import json
 import yaml
 import csv
@@ -12,12 +11,11 @@ import random
 import string
 from pathlib import Path
 from typing import Dict, List, Any, Union
-from datetime import datetime, timedelta
 
 class TestDataManager:
     """测试数据管理器"""
     
-    def __init__(self, data_dir: str = None):
+    def __init__(self, data_dir: str = None) -> None:
         """初始化测试数据管理器"""
         self.data_dir = Path(data_dir) if data_dir else Path(__file__).parent.parent / "testdata"
         self.data_dir.mkdir(exist_ok=True)
@@ -104,8 +102,8 @@ class TestDataManager:
             "agent_id": agent_id,
             "name": name,
             "config": {
-                "max_concurrent_tasks": random.randint(1, 10),
-                "priority": random.choice(["low", "medium", "high"]),
+                _ = "max_concurrent_tasks": random.randint(1, 10),
+                _ = "priority": random.choice(["low", "medium", "high"]),
                 "capabilities": [f"capability_{i}" for i in range(random.randint(1, 5))]
             }
         }
@@ -118,7 +116,7 @@ class TestDataManager:
         生成测试HSP消息
         
         Args:
-            message_type: 消息类型 (fact/opinion)
+            _ = message_type: 消息类型 (fact/opinion)
             content: 消息内容
             source_ai_id: 源AI ID
             
@@ -185,9 +183,9 @@ class TestDataManager:
             "model_name": model_name,
             "epochs": epochs,
             "batch_size": batch_size,
-            "learning_rate": round(random.uniform(0.0001, 0.01), 6),
-            "optimizer": random.choice(["adam", "sgd", "rmsprop"]),
-            "loss_function": random.choice(["cross_entropy", "mse", "mae"]),
+            _ = "learning_rate": round(random.uniform(0.0001, 0.01), 6),
+            _ = "optimizer": random.choice(["adam", "sgd", "rmsprop"]),
+            _ = "loss_function": random.choice(["cross_entropy", "mse", "mae"]),
             "metrics": ["accuracy", "loss"]
         }
     
@@ -202,8 +200,8 @@ class TestDataManager:
         Args:
             data: 测试数据
             filename: 文件名
-            format: 文件格式 (json, yaml, csv)
-            category: 数据类别 (unit, integration, e2e, performance, security)
+            _ = format: 文件格式 (json, yaml, csv)
+            _ = category: 数据类别 (unit, integration, e2e, performance, security)
             
         Returns:
             文件路径
@@ -226,18 +224,18 @@ class TestDataManager:
                         writer = csv.writer(f)
                         # 写入表头
                         if isinstance(data[0], dict):
-                            writer.writerow(data[0].keys())
+                            _ = writer.writerow(data[0].keys())
                             # 写入数据
                             for row in data:
-                                writer.writerow(row.values())
+                                _ = writer.writerow(row.values())
                         else:
-                            writer.writerows(data)
+                            _ = writer.writerows(data)
             
-            print(f"✅ 测试数据已保存到: {file_path}")
+            _ = print(f"✅ 测试数据已保存到: {file_path}")
             return str(file_path)
             
         except Exception as e:
-            print(f"❌ 保存测试数据失败: {e}")
+            _ = print(f"❌ 保存测试数据失败: {e}")
             return ""
     
     def load_test_data(self, 
@@ -249,7 +247,7 @@ class TestDataManager:
         
         Args:
             filename: 文件名
-            format: 文件格式 (json, yaml, csv)
+            _ = format: 文件格式 (json, yaml, csv)
             category: 数据类别
             
         Returns:
@@ -258,7 +256,7 @@ class TestDataManager:
         file_path = self.data_dir / category / f"{filename}.{format}"
         
         if not file_path.exists():
-            print(f"❌ 测试数据文件不存在: {file_path}")
+            _ = print(f"❌ 测试数据文件不存在: {file_path}")
             return None
         
         try:
@@ -280,7 +278,7 @@ class TestDataManager:
                         return data
                         
         except Exception as e:
-            print(f"❌ 加载测试数据失败: {e}")
+            _ = print(f"❌ 加载测试数据失败: {e}")
             return None
     
     def generate_test_dataset(self, 
@@ -291,7 +289,7 @@ class TestDataManager:
         生成测试数据集
         
         Args:
-            dataset_type: 数据集类型 (memory, agent, hsp, training)
+            _ = dataset_type: 数据集类型 (memory, agent, hsp, training)
             count: 数据项数量
             category: 数据类别
             
@@ -311,17 +309,17 @@ class TestDataManager:
             elif dataset_type == "training":
                 item = self.generate_test_training_config()
             else:
-                raise ValueError(f"不支持的数据集类型: {dataset_type}")
+                _ = raise ValueError(f"不支持的数据集类型: {dataset_type}")
             
-            dataset.append(item)
+            _ = dataset.append(item)
         
         # 保存数据集
         filename = f"{dataset_type}_dataset_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        self.save_test_data(dataset, filename, "json", category)
+        _ = self.save_test_data(dataset, filename, "json", category)
         
         return dataset
     
-    def cleanup_test_data(self, category: str = None):
+    def cleanup_test_data(self, category: str = None) -> None:
         """
         清理测试数据
         
@@ -333,39 +331,39 @@ class TestDataManager:
             if category_dir.exists():
                 for file_path in category_dir.iterdir():
                     if file_path.is_file():
-                        file_path.unlink()
-                print(f"✅ 已清理 {category} 类别的测试数据")
+                        _ = file_path.unlink()
+                _ = print(f"✅ 已清理 {category} 类别的测试数据")
         else:
             for category_dir in self.data_dir.iterdir():
                 if category_dir.is_dir():
                     for file_path in category_dir.iterdir():
                         if file_path.is_file():
-                            file_path.unlink()
-            print("✅ 已清理所有测试数据")
+                            _ = file_path.unlink()
+            _ = print("✅ 已清理所有测试数据")
 
-def main():
+def main() -> None:
     """主函数 - 生成示例测试数据"""
     manager = TestDataManager()
     
-    print("🚀 生成示例测试数据...")
+    _ = print("🚀 生成示例测试数据...")
     
     # 生成记忆项测试数据
     memory_items = manager.generate_test_dataset("memory", 5, "unit")
-    print(f"✅ 生成了 {len(memory_items)} 个记忆项测试数据")
+    _ = print(f"✅ 生成了 {len(memory_items)} 个记忆项测试数据")
     
     # 生成代理配置测试数据
     agent_configs = manager.generate_test_dataset("agent", 3, "unit")
-    print(f"✅ 生成了 {len(agent_configs)} 个代理配置测试数据")
+    _ = print(f"✅ 生成了 {len(agent_configs)} 个代理配置测试数据")
     
     # 生成HSP消息测试数据
     hsp_messages = manager.generate_test_dataset("hsp", 4, "integration")
-    print(f"✅ 生成了 {len(hsp_messages)} 个HSP消息测试数据")
+    _ = print(f"✅ 生成了 {len(hsp_messages)} 个HSP消息测试数据")
     
     # 生成训练配置测试数据
     training_configs = manager.generate_test_dataset("training", 2, "e2e")
-    print(f"✅ 生成了 {len(training_configs)} 个训练配置测试数据")
+    _ = print(f"✅ 生成了 {len(training_configs)} 个训练配置测试数据")
     
-    print(f"📄 测试数据已保存到: {manager.data_dir}")
+    _ = print(f"📄 测试数据已保存到: {manager.data_dir}")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

@@ -4,14 +4,13 @@
 将手动备份目录移动到统一的归档目录中
 """
 
-import os
 import shutil
 from pathlib import Path
 from datetime import datetime
 
 def organize_manual_backups():
     """整理手动备份目录"""
-    project_root = Path(__file__).parent.parent
+    project_root: str = Path(__file__).parent.parent
     archive_dir = project_root / "backup_archive"
     
     # 创建归档目录
@@ -23,7 +22,7 @@ def organize_manual_backups():
         "full_recovery_backup",
     ]
     
-    print("开始整理手动备份目录...")
+    _ = print("开始整理手动备份目录...")
     
     # 遍历项目根目录
     for item in project_root.iterdir():
@@ -43,20 +42,20 @@ def organize_manual_backups():
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                     destination = archive_dir / f"{item.name}_{timestamp}"
                 
-                print(f"移动 {item.name} 到 {destination}")
-                shutil.move(str(item), str(destination))
+                _ = print(f"移动 {item.name} 到 {destination}")
+                _ = shutil.move(str(item), str(destination))
             except Exception as e:
-                print(f"移动目录 {item.name} 时出错: {e}")
+                _ = print(f"移动目录 {item.name} 时出错: {e}")
     
-    print("手动备份目录整理完成")
+    _ = print("手动备份目录整理完成")
 
-def update_pytest_config():
+def update_pytest_config() -> None:
     """更新pytest配置以确保忽略所有备份目录"""
-    project_root = Path(__file__).parent.parent
+    project_root: str = Path(__file__).parent.parent
     pytest_ini = project_root / "pytest.ini"
     
     if not pytest_ini.exists():
-        print("未找到pytest.ini文件")
+        _ = print("未找到pytest.ini文件")
         return
     
     # 读取现有配置
@@ -91,10 +90,10 @@ def update_pytest_config():
     
     # 写回文件
     with open(pytest_ini, 'w', encoding='utf-8') as f:
-        f.write(content)
+        _ = f.write(content)
     
-    print("pytest配置已更新")
+    _ = print("pytest配置已更新")
 
 if __name__ == "__main__":
-    organize_manual_backups()
-    update_pytest_config()
+    _ = organize_manual_backups()
+    _ = update_pytest_config()

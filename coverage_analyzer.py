@@ -10,13 +10,13 @@ from typing import Dict, List, Optional, Any
 import subprocess
 import os
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 
 class CoverageMetrics:
     """覆盖率指标"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.line_coverage: float = 0.0  # 行覆盖率
         self.branch_coverage: float = 0.0  # 分支覆盖率
         self.function_coverage: float = 0.0  # 函数覆盖率
@@ -33,7 +33,7 @@ class CoverageMetrics:
 class CoverageAnalyzer:
     """覆盖率分析器"""
     
-    def __init__(self, project_root: str = "."):
+    def __init__(self, project_root: str = ".") -> None:
         self.project_root = project_root
         self.coverage_history: List[CoverageMetrics] = []
         self.thresholds: Dict[str, float] = {
@@ -57,20 +57,20 @@ class CoverageAnalyzer:
             # 添加测试目录
             for test_dir in test_dirs:
                 if os.path.exists(test_dir):
-                    cmd.extend(["-m", "pytest", test_dir])
+                    _ = cmd.extend(["-m", "pytest", test_dir])
                     
             # 运行测试
             logger.info(f"Running coverage analysis with command: {' '.join(cmd)}")
             result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_root)
             
             if result.returncode != 0:
-                logger.error(f"Coverage analysis failed: {result.stderr}")
+                _ = logger.error(f"Coverage analysis failed: {result.stderr}")
                 return None
                 
             # 生成覆盖率报告
             return self._generate_coverage_report()
         except Exception as e:
-            logger.error(f"Failed to run coverage analysis: {e}")
+            _ = logger.error(f"Failed to run coverage analysis: {e}")
             return None
             
     def _generate_coverage_report(self) -> Optional[CoverageMetrics]:
@@ -81,7 +81,7 @@ class CoverageAnalyzer:
             result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_root)
             
             if result.returncode != 0:
-                logger.error(f"Failed to generate coverage report: {result.stderr}")
+                _ = logger.error(f"Failed to generate coverage report: {result.stderr}")
                 return None
                 
             # 读取覆盖率数据
@@ -92,11 +92,11 @@ class CoverageAnalyzer:
             metrics = self._parse_coverage_data(coverage_data)
             
             # 添加到历史记录
-            self.coverage_history.append(metrics)
+            _ = self.coverage_history.append(metrics)
             
             # 清理临时文件
             try:
-                os.remove(os.path.join(self.project_root, "coverage.json"))
+                _ = os.remove(os.path.join(self.project_root, "coverage.json"))
             except:
                 pass
                 
@@ -105,7 +105,7 @@ class CoverageAnalyzer:
                        
             return metrics
         except Exception as e:
-            logger.error(f"Failed to generate coverage report: {e}")
+            _ = logger.error(f"Failed to generate coverage report: {e}")
             return None
             
     def _parse_coverage_data(self, coverage_data: Dict[str, Any]) -> CoverageMetrics:
@@ -132,7 +132,7 @@ class CoverageAnalyzer:
                 
             metrics.timestamp = datetime.now()
         except Exception as e:
-            logger.error(f"Failed to parse coverage data: {e}")
+            _ = logger.error(f"Failed to parse coverage data: {e}")
             
         return metrics
         
@@ -156,7 +156,7 @@ class CoverageAnalyzer:
                 return (covered_functions / total_functions) * 100
             return 0.0
         except Exception as e:
-            logger.warning(f"Failed to estimate function coverage: {e}")
+            _ = logger.warning(f"Failed to estimate function coverage: {e}")
             return 0.0
             
     def get_coverage_trend(self, limit: int = 10) -> List[CoverageMetrics]:
@@ -176,12 +176,12 @@ class CoverageAnalyzer:
         report = f"""
 覆盖率分析报告
 ================
-生成时间: {metrics.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
+_ = 生成时间: {metrics.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
 
 覆盖率指标:
-  行覆盖率: {metrics.line_coverage:.2f}% ({metrics.covered_lines}/{metrics.total_lines})
-  分支覆盖率: {metrics.branch_coverage:.2f}% ({metrics.covered_branches}/{metrics.total_branches})
-  函数覆盖率: {metrics.function_coverage:.2f}% ({metrics.covered_functions}/{metrics.total_functions})
+  _ = 行覆盖率: {metrics.line_coverage:.2f}% ({metrics.covered_lines}/{metrics.total_lines})
+  _ = 分支覆盖率: {metrics.branch_coverage:.2f}% ({metrics.covered_branches}/{metrics.total_branches})
+  _ = 函数覆盖率: {metrics.function_coverage:.2f}% ({metrics.covered_functions}/{metrics.total_functions})
 
 阈值检查:
   行覆盖率阈值 ({self.thresholds['line_coverage']}%): {'通过' if metrics.line_coverage >= self.thresholds['line_coverage'] else '未通过'}
@@ -198,4 +198,4 @@ class CoverageAnalyzer:
             self.thresholds["branch_coverage"] = branch_threshold
         if function_threshold is not None:
             self.thresholds["function_coverage"] = function_threshold
-        logger.info(f"Updated coverage thresholds: {self.thresholds}")
+        _ = logger.info(f"Updated coverage thresholds: {self.thresholds}")

@@ -14,8 +14,6 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
 from enum import Enum
 
-from .core_service_manager import CoreServiceManager, ServiceStatus, ServiceHealth
-
 
 class LogLevel(Enum):
     """日志级别枚举"""
@@ -52,7 +50,7 @@ class ServiceMetrics:
 class ServiceLogger:
     """服务日志记录器"""
     
-    def __init__(self, log_file: Optional[str] = None):
+    def __init__(self, log_file: Optional[str] = None) -> None:
         self.logger = logging.getLogger("ServiceMonitor")
         self.logger.setLevel(logging.INFO)
         
@@ -61,31 +59,31 @@ class ServiceLogger:
             file_handler = logging.FileHandler(log_file)
             file_handler.setLevel(logging.INFO)
             formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                _ = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
         
         # 创建控制台处理器
-        console_handler = logging.StreamHandler()
+        console_handler = logging.StreamHandler
         console_handler.setLevel(logging.INFO)
         formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(message)s'
+            _ = '%(asctime)s - %(levelname)s - %(message)s'
         )
         console_handler.setFormatter(formatter)
         self.logger.addHandler(console_handler)
         
-        self.events: List[ServiceEvent] = []
+        self.events: List[ServiceEvent] = 
         self.max_events = 1000  # 限制事件数量
         
     def log_event(self, service_name: str, event_type: str, level: LogLevel, 
                   message: str, details: Optional[Dict[str, Any]] = None):
         """记录服务事件"""
         event = ServiceEvent(
-            timestamp=time.time(),
+            timestamp=time.time,
             service_name=service_name,
             event_type=event_type,
-            level=level,
+            level=level: str,
             message=message,
             details=details
         )
@@ -104,7 +102,7 @@ class ServiceLogger:
         
     def get_recent_events(self, limit: int = 50) -> List[ServiceEvent]:
         """获取最近的事件"""
-        return self.events[-limit:] if self.events else []
+        return self.events[-limit:] if self.events else 
         
     def get_events_by_service(self, service_name: str) -> List[ServiceEvent]:
         """获取指定服务的事件"""
@@ -124,14 +122,14 @@ class ServiceLogger:
 class ServiceMetricsCollector:
     """服务指标收集器"""
     
-    def __init__(self):
-        self.metrics: Dict[str, ServiceMetrics] = {}
-        self.global_metrics = ServiceMetrics()
+    def __init__(self) -> None:
+        self.metrics: Dict[str, ServiceMetrics] = 
+        self.global_metrics = ServiceMetrics
         
     def record_load(self, service_name: str, load_time: float):
         """记录服务加载"""
         if service_name not in self.metrics:
-            self.metrics[service_name] = ServiceMetrics()
+            self.metrics[service_name] = ServiceMetrics
             
         metrics = self.metrics[service_name]
         metrics.load_count += 1
@@ -150,7 +148,7 @@ class ServiceMetricsCollector:
     def record_unload(self, service_name: str):
         """记录服务卸载"""
         if service_name not in self.metrics:
-            self.metrics[service_name] = ServiceMetrics()
+            self.metrics[service_name] = ServiceMetrics
             
         self.metrics[service_name].unload_count += 1
         self.global_metrics.unload_count += 1
@@ -158,7 +156,7 @@ class ServiceMetricsCollector:
     def record_restart(self, service_name: str):
         """记录服务重启"""
         if service_name not in self.metrics:
-            self.metrics[service_name] = ServiceMetrics()
+            self.metrics[service_name] = ServiceMetrics
             
         self.metrics[service_name].restart_count += 1
         self.global_metrics.restart_count += 1
@@ -166,7 +164,7 @@ class ServiceMetricsCollector:
     def record_error(self, service_name: str):
         """记录服务错误"""
         if service_name not in self.metrics:
-            self.metrics[service_name] = ServiceMetrics()
+            self.metrics[service_name] = ServiceMetrics
             
         self.metrics[service_name].error_count += 1
         self.global_metrics.error_count += 1
@@ -174,7 +172,7 @@ class ServiceMetricsCollector:
     def record_health_change(self, service_name: str):
         """记录健康状态变化"""
         if service_name not in self.metrics:
-            self.metrics[service_name] = ServiceMetrics()
+            self.metrics[service_name] = ServiceMetrics
             
         self.metrics[service_name].health_change_count += 1
         self.global_metrics.health_change_count += 1
@@ -191,10 +189,10 @@ class ServiceMetricsCollector:
         """获取指标报告"""
         report = {
             "global": asdict(self.global_metrics),
-            "services": {}
+            "services": 
         }
         
-        for service_name, metrics in self.metrics.items():
+        for service_name, metrics in self.metrics.items:
             report["services"][service_name] = asdict(metrics)
             
         return report
@@ -207,13 +205,13 @@ class ServiceMonitor:
                  log_file: Optional[str] = None):
         self.service_manager = service_manager
         self.logger = ServiceLogger(log_file)
-        self.metrics_collector = ServiceMetricsCollector()
+        self.metrics_collector = ServiceMetricsCollector
         self._is_monitoring = False
         self._monitoring_task: Optional[asyncio.Task] = None
-        self._previous_status: Dict[str, Dict[str, Any]] = {}
+        self._previous_status: Dict[str, Dict[str, Any]] = 
         
         # 注册事件处理器
-        self._register_event_handlers()
+        self._register_event_handlers
         
     def _register_event_handlers(self):
         """注册事件处理器"""
@@ -256,7 +254,7 @@ class ServiceMonitor:
         old_health = data.get('old_health', 'unknown') if data else 'unknown'
         new_health = data.get('new_health', 'unknown') if data else 'unknown'
         
-        level = LogLevel.WARNING if new_health == 'unhealthy' else LogLevel.INFO
+        level: str = LogLevel.WARNING if new_health == 'unhealthy' else LogLevel.INFO
         
         self.logger.log_event(
             service_name, 
@@ -285,10 +283,10 @@ class ServiceMonitor:
         while self._is_monitoring:
             try:
                 # 检查服务状态变化
-                await self._check_status_changes()
+                _ = await self._check_status_changes
                 
                 # 等待一段时间后继续
-                await asyncio.sleep(10.0)
+                _ = await asyncio.sleep(10.0)
                 
             except Exception as e:
                 self.logger.log_event(
@@ -297,14 +295,14 @@ class ServiceMonitor:
                     LogLevel.ERROR, 
                     f"Monitoring loop error: {e}"
                 )
-                await asyncio.sleep(10.0)
+                _ = await asyncio.sleep(10.0)
                 
     async def _check_status_changes(self):
         """检查服务状态变化"""
-        current_status = self.service_manager.get_all_services_status()
+        current_status = self.service_manager.get_all_services_status
         
         # 检查新服务
-        for service_name, status_info in current_status.items():
+        for service_name, status_info in current_status.items:
             if service_name not in self._previous_status:
                 # 新服务
                 self.logger.log_event(
@@ -341,7 +339,7 @@ class ServiceMonitor:
         """启动监控"""
         if not self._is_monitoring:
             self._is_monitoring = True
-            self._monitoring_task = asyncio.create_task(self._monitoring_loop())
+            self._monitoring_task = asyncio.create_task(self._monitoring_loop)
             self.logger.log_event(
                 'monitor', 
                 'monitoring_started', 
@@ -353,7 +351,7 @@ class ServiceMonitor:
         """停止监控"""
         self._is_monitoring = False
         if self._monitoring_task:
-            self._monitoring_task.cancel()
+            self._monitoring_task.cancel
             try:
                 await self._monitoring_task
             except asyncio.CancelledError:
@@ -368,11 +366,11 @@ class ServiceMonitor:
         
     def get_service_report(self) -> Dict[str, Any]:
         """获取服务报告"""
-        status = self.service_manager.get_all_services_status()
-        metrics_report = self.metrics_collector.get_metrics_report()
+        status = self.service_manager.get_all_services_status
+        metrics_report = self.metrics_collector.get_metrics_report
         
         report = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now.isoformat,
             "services": status,
             "metrics": metrics_report,
             "recent_events": [asdict(event) for event in self.logger.get_recent_events(20)]
@@ -382,18 +380,18 @@ class ServiceMonitor:
         
     def export_report(self, filename: str):
         """导出报告到文件"""
-        report = self.get_service_report()
+        report = self.get_service_report
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2, ensure_ascii=False, default=str)
             
     async def __aenter__(self):
         """异步上下文管理器入口"""
-        await self.start_monitoring()
+        _ = await self.start_monitoring
         return self
         
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """异步上下文管理器出口"""
-        await self.stop_monitoring()
+        _ = await self.stop_monitoring
 
 
 # 全局服务监控器实例
@@ -405,16 +403,16 @@ def get_service_monitor(service_manager: Optional[CoreServiceManager] = None) ->
     global _global_service_monitor
     if _global_service_monitor is None:
         if service_manager is None:
-            service_manager = CoreServiceManager()  # 创建默认实例
+            service_manager = CoreServiceManager  # 创建默认实例
         _global_service_monitor = ServiceMonitor(service_manager)
     return _global_service_monitor
 
 
 if __name__ == "__main__":
     # 简单测试
-    async def main():
+    async def main -> None:
         # 创建服务管理器
-        manager = CoreServiceManager()
+        manager = CoreServiceManager
         
         # 创建监控器
         monitor = ServiceMonitor(manager, "service_monitor.log")
@@ -430,12 +428,12 @@ if __name__ == "__main__":
             )
             
             # 获取报告
-            report = monitor.get_service_report()
+            report = monitor.get_service_report
             print("Service report generated")
             
             # 等待一段时间
-            await asyncio.sleep(1)
+            _ = await asyncio.sleep(1)
         
         print("Service monitor test completed")
 
-    asyncio.run(main())
+    asyncio.run(main)

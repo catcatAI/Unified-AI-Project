@@ -3,10 +3,6 @@ import uuid
 import logging
 import base64
 import io
-from typing import Dict, Any, List
-from PIL import Image, ImageDraw, ImageFont
-import numpy as np
-
 from .base_agent import BaseAgent
 from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
@@ -15,7 +11,7 @@ class VisionProcessingAgent(BaseAgent):
     A specialized agent for computer vision tasks like image classification,
     object detection, and image enhancement.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_image_classification_v1.0",
@@ -78,7 +74,7 @@ class VisionProcessingAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     def _classify_image(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -231,12 +227,12 @@ class VisionProcessingAgent(BaseAgent):
 
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:vision_processing_agent_{uuid.uuid4().hex[:6]}"
         agent = VisionProcessingAgent(agent_id=agent_id)
         await agent.start()
 
     try:
-        asyncio.run(main())
+        asyncio.run(main)
     except KeyboardInterrupt:
         print("\nVisionProcessingAgent manually stopped.")

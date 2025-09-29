@@ -2,7 +2,6 @@ import json
 import os
 import sys
 import numpy as np
-import tensorflow as tf
 from sklearn.metrics import classification_report, accuracy_score
 
 # Add src directory to sys.path
@@ -13,7 +12,7 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 try:
-    from logic_model.logic_model_nn import LogicNNModel, preprocess_logic_data # Assuming load_model is part of LogicNNModel
+    from logic_model_nn import LogicNNModel, pad_sequences
 except ImportError as e:
     print(f"Error importing from logic_model_nn: {e}")
     sys.exit(1)
@@ -40,7 +39,7 @@ def load_logic_test_dataset(file_path):
         print(f"Error: {e}")
     return None
 
-def main():
+def main -> None:
     print("Starting Logic NN Model evaluation process...")
 
     # 1. Load character maps (needed for model loading and preprocessing)
@@ -120,7 +119,7 @@ def main():
 
     print("\nClassification Report:")
     # target_names should correspond to how classes are indexed (e.g., 0: False, 1: True)
-    print(classification_report(y_test_true_int, y_test_pred_int, target_names=['False', 'True'], zero_division_report=0))
+    print(classification_report(y_test_true_int, y_test_pred_int, target_names=['False', 'True'], zero_division=0))
 
     print("\nSample Predictions (first 5):")
     for i in range(min(5, len(test_dataset))):
@@ -149,6 +148,6 @@ if __name__ == '__main__':
         files_ok = False
 
     if files_ok:
-        main()
+        main
     else:
         print("Evaluation cannot proceed due to missing files. Please train the model and generate test data first.")

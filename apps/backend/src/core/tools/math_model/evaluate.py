@@ -1,5 +1,4 @@
 import json
-import numpy as np
 import tensorflow as tf
 import csv
 from model import ArithmeticSeq2Seq # Assuming model.py is in the same directory or accessible
@@ -28,10 +27,10 @@ def load_char_maps(file_path):
         print(f"Error: Could not decode JSON from {file_path}")
         return None
 
-def load_test_dataset_csv(file_path):
+def load_test_dataset_csv(file_path) -> None:
     """Loads test dataset from a CSV file."""
-    problems = []
-    answers = []
+    problems = 
+    answers = 
     try:
         with open(file_path, 'r', newline='', encoding='utf-8') as f:
             reader = csv.DictReader(f)
@@ -47,7 +46,7 @@ def load_test_dataset_csv(file_path):
         print(f"Error loading CSV: {e}")
         return None, None
 
-def main():
+def main -> None:
     print("Starting evaluation process...")
 
     # 1. Load character maps
@@ -71,7 +70,7 @@ def main():
             max_encoder_seq_length, max_decoder_seq_length,
             n_token, latent_dim, embedding_dim
         )
-        math_model_shell.build_model() # This builds the structure including inference models
+        math_model_shell.build_model # This builds the structure including inference models
         math_model_shell.model.load_weights(MODEL_LOAD_PATH) # Load weights into the training model structure
 
         # The inference models (encoder_model, decoder_model) inside math_model_shell
@@ -135,4 +134,4 @@ if __name__ == '__main__':
         print(f"Test dataset not found at {TEST_DATASET_PATH}.")
         print("Please run `python src/tools/math_model/data_generator.py` to generate the test dataset (CSV format).")
     else:
-        main()
+        main

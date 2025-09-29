@@ -14,7 +14,7 @@ from enum import Enum
 import threading
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class AuditEventType(Enum):
     """Types of audit events"""
@@ -47,12 +47,12 @@ class AuditEvent:
 class AuditLogger:
     """Main audit logging system"""
     
-    def __init__(self, log_file_path: str = None, max_log_size: int = 10000):
+    def __init__(self, log_file_path: Optional[str] = None, max_log_size: int = 10000) -> None:
         self.log_file_path = log_file_path or "logs/audit.log"
         self.max_log_size = max_log_size
-        self.log_buffer: List[AuditEvent] = []
-        self.buffer_lock = threading.Lock()
-        self.file_lock = threading.Lock()
+        self.log_buffer: List[AuditEvent] = 
+        self.buffer_lock = threading.Lock
+        self.file_lock = threading.Lock
         
         # Ensure log directory exists
         log_dir = Path(self.log_file_path).parent
@@ -69,25 +69,25 @@ class AuditLogger:
                 
             # Flush if buffer is full
             if len(self.log_buffer) >= 100:  # Flush every 100 events
-                self._flush_buffer()
+                self._flush_buffer
                 
         except Exception as e:
             logger.error(f"Error logging audit event: {e}")
             
     def log_operation(self, user_id: str, operation: str, resource: str, 
-                     action: str, success: bool, details: Dict[str, Any] = None,
-                     session_id: str = None, ip_address: str = None, 
-                     user_agent: str = None):
+                     action: str, success: bool, details: Optional[Dict[str, Any]] = None,
+                     session_id: Optional[str] = None, ip_address: Optional[str] = None, 
+                     user_agent: Optional[str] = None):
         """Log a general operation"""
         event = AuditEvent(
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now.isoformat,
             event_type=AuditEventType.OPERATION,
             user_id=user_id,
             operation=operation,
             resource=resource,
             action=action,
             success=success,
-            details=details or {},
+            details=details or ,
             session_id=session_id,
             ip_address=ip_address,
             user_agent=user_agent
@@ -95,19 +95,19 @@ class AuditLogger:
         self.log_event(event)
         
     def log_file_access(self, user_id: str, file_path: str, action: str, 
-                       success: bool, details: Dict[str, Any] = None,
-                       session_id: str = None, ip_address: str = None, 
-                       user_agent: str = None):
+                       success: bool, details: Optional[Dict[str, Any]] = None,
+                       session_id: Optional[str] = None, ip_address: Optional[str] = None, 
+                       user_agent: Optional[str] = None):
         """Log file access"""
         event = AuditEvent(
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now.isoformat,
             event_type=AuditEventType.FILE_ACCESS,
             user_id=user_id,
             operation="file_access",
             resource=file_path,
             action=action,
             success=success,
-            details=details or {},
+            details=details or ,
             session_id=session_id,
             ip_address=ip_address,
             user_agent=user_agent
@@ -115,19 +115,19 @@ class AuditLogger:
         self.log_event(event)
         
     def log_network_access(self, user_id: str, url: str, action: str, 
-                          success: bool, details: Dict[str, Any] = None,
-                          session_id: str = None, ip_address: str = None, 
-                          user_agent: str = None):
+                          success: bool, details: Optional[Dict[str, Any]] = None,
+                          session_id: Optional[str] = None, ip_address: Optional[str] = None, 
+                          user_agent: Optional[str] = None):
         """Log network access"""
         event = AuditEvent(
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now.isoformat,
             event_type=AuditEventType.NETWORK_ACCESS,
             user_id=user_id,
             operation="network_access",
             resource=url,
             action=action,
             success=success,
-            details=details or {},
+            details=details or ,
             session_id=session_id,
             ip_address=ip_address,
             user_agent=user_agent
@@ -135,19 +135,19 @@ class AuditLogger:
         self.log_event(event)
         
     def log_system_command(self, user_id: str, command: str, success: bool, 
-                          details: Dict[str, Any] = None,
-                          session_id: str = None, ip_address: str = None, 
-                          user_agent: str = None):
+                          details: Optional[Dict[str, Any]] = None,
+                          session_id: Optional[str] = None, ip_address: Optional[str] = None, 
+                          user_agent: Optional[str] = None):
         """Log system command execution"""
         event = AuditEvent(
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now.isoformat,
             event_type=AuditEventType.SYSTEM_COMMAND,
             user_id=user_id,
             operation="system_command",
             resource=command,
             action="execute",
             success=success,
-            details=details or {},
+            details=details or ,
             session_id=session_id,
             ip_address=ip_address,
             user_agent=user_agent
@@ -155,19 +155,19 @@ class AuditLogger:
         self.log_event(event)
         
     def log_application_control(self, user_id: str, app_name: str, action: str, 
-                               success: bool, details: Dict[str, Any] = None,
-                               session_id: str = None, ip_address: str = None, 
-                               user_agent: str = None):
+                               success: bool, details: Optional[Dict[str, Any]] = None,
+                               session_id: Optional[str] = None, ip_address: Optional[str] = None, 
+                               user_agent: Optional[str] = None):
         """Log application control"""
         event = AuditEvent(
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now.isoformat,
             event_type=AuditEventType.APPLICATION_CONTROL,
             user_id=user_id,
             operation="application_control",
             resource=app_name,
             action=action,
             success=success,
-            details=details or {},
+            details=details or ,
             session_id=session_id,
             ip_address=ip_address,
             user_agent=user_agent
@@ -175,19 +175,19 @@ class AuditLogger:
         self.log_event(event)
         
     def log_data_processing(self, user_id: str, data_type: str, action: str, 
-                           success: bool, details: Dict[str, Any] = None,
-                           session_id: str = None, ip_address: str = None, 
-                           user_agent: str = None):
+                           success: bool, details: Optional[Dict[str, Any]] = None,
+                           session_id: Optional[str] = None, ip_address: Optional[str] = None, 
+                           user_agent: Optional[str] = None):
         """Log data processing"""
         event = AuditEvent(
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now.isoformat,
             event_type=AuditEventType.DATA_PROCESSING,
             user_id=user_id,
             operation="data_processing",
             resource=data_type,
             action=action,
             success=success,
-            details=details or {},
+            details=details or ,
             session_id=session_id,
             ip_address=ip_address,
             user_agent=user_agent
@@ -195,19 +195,19 @@ class AuditLogger:
         self.log_event(event)
         
     def log_sandbox_execution(self, user_id: str, script_hash: str, success: bool, 
-                             details: Dict[str, Any] = None,
-                             session_id: str = None, ip_address: str = None, 
-                             user_agent: str = None):
+                             details: Optional[Dict[str, Any]] = None,
+                             session_id: Optional[str] = None, ip_address: Optional[str] = None, 
+                             user_agent: Optional[str] = None):
         """Log sandbox execution"""
         event = AuditEvent(
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now.isoformat,
             event_type=AuditEventType.SANDBOX_EXECUTION,
             user_id=user_id,
             operation="sandbox_execution",
             resource=script_hash,
             action="execute",
             success=success,
-            details=details or {},
+            details=details or ,
             session_id=session_id,
             ip_address=ip_address,
             user_agent=user_agent
@@ -216,12 +216,12 @@ class AuditLogger:
         
     def log_permission_check(self, user_id: str, permission_type: str, 
                             resource: str, action: str, granted: bool,
-                            details: Dict[str, Any] = None,
-                            session_id: str = None, ip_address: str = None, 
-                            user_agent: str = None):
+                            details: Optional[Dict[str, Any]] = None,
+                            session_id: Optional[str] = None, ip_address: Optional[str] = None, 
+                            user_agent: Optional[str] = None):
         """Log permission check"""
         event = AuditEvent(
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now.isoformat,
             event_type=AuditEventType.PERMISSION_CHECK,
             user_id=user_id,
             operation="permission_check",
@@ -231,7 +231,7 @@ class AuditLogger:
             details={
                 "permission_type": permission_type,
                 "granted": granted,
-                **(details or {})
+                **(details or )
             },
             session_id=session_id,
             ip_address=ip_address,
@@ -240,19 +240,19 @@ class AuditLogger:
         self.log_event(event)
         
     def log_security_violation(self, user_id: str, violation_type: str, 
-                              resource: str, details: Dict[str, Any] = None,
-                              session_id: str = None, ip_address: str = None, 
-                              user_agent: str = None):
+                              resource: str, details: Optional[Dict[str, Any]] = None,
+                              session_id: Optional[str] = None, ip_address: Optional[str] = None, 
+                              user_agent: Optional[str] = None):
         """Log security violation"""
         event = AuditEvent(
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now.isoformat,
             event_type=AuditEventType.SECURITY_VIOLATION,
             user_id=user_id,
             operation="security_violation",
             resource=resource,
             action=violation_type,
             success=False,
-            details=details or {},
+            details=details or ,
             session_id=session_id,
             ip_address=ip_address,
             user_agent=user_agent
@@ -260,12 +260,12 @@ class AuditLogger:
         self.log_event(event)
         
     def log_error(self, user_id: str, error_type: str, resource: str, 
-                 error_message: str, details: Dict[str, Any] = None,
-                 session_id: str = None, ip_address: str = None, 
-                 user_agent: str = None):
+                 error_message: str, details: Optional[Dict[str, Any]] = None,
+                 session_id: Optional[str] = None, ip_address: Optional[str] = None, 
+                 user_agent: Optional[str] = None):
         """Log error"""
         event = AuditEvent(
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now.isoformat,
             event_type=AuditEventType.ERROR,
             user_id=user_id,
             operation="error",
@@ -274,7 +274,7 @@ class AuditLogger:
             success=False,
             details={
                 "error_message": error_message,
-                **(details or {})
+                **(details or )
             },
             session_id=session_id,
             ip_address=ip_address,
@@ -289,13 +289,13 @@ class AuditLogger:
                 if not self.log_buffer:
                     return
                     
-                events_to_write = self.log_buffer.copy()
-                self.log_buffer.clear()
+                events_to_write = self.log_buffer.copy
+                self.log_buffer.clear
                 
             # Write to file with file locking
             with self.file_lock:
                 # Check file size and rotate if necessary
-                self._rotate_log_if_needed()
+                self._rotate_log_if_needed
                 
                 # Append events to log file
                 with open(self.log_file_path, 'a', encoding='utf-8') as f:
@@ -315,7 +315,7 @@ class AuditLogger:
                 file_size = os.path.getsize(self.log_file_path)
                 if file_size > self.max_log_size:
                     # Rotate log file
-                    rotated_path = f"{self.log_file_path}.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    rotated_path = f"{self.log_file_path}.{datetime.now.strftime('%Y%m%d_%H%M%S')}"
                     os.rename(self.log_file_path, rotated_path)
                     logger.info(f"Rotated audit log file to {rotated_path}")
         except Exception as e:
@@ -324,7 +324,7 @@ class AuditLogger:
     def get_recent_events(self, limit: int = 100) -> List[AuditEvent]:
         """Get recent audit events from buffer and file"""
         try:
-            events = []
+            events = 
             
             # Get events from buffer
             with self.buffer_lock:
@@ -333,10 +333,10 @@ class AuditLogger:
             # Get events from file
             if os.path.exists(self.log_file_path):
                 with open(self.log_file_path, 'r', encoding='utf-8') as f:
-                    lines = f.readlines()
+                    lines = f.readlines
                     for line in reversed(lines[-(limit-len(events)):]):
                         try:
-                            event_data = json.loads(line.strip())
+                            event_data = json.loads(line.strip)
                             # Convert event_type back to enum
                             event_data['event_type'] = AuditEventType(event_data['event_type'])
                             event = AuditEvent(**event_data)
@@ -347,14 +347,14 @@ class AuditLogger:
             return events[-limit:]
         except Exception as e:
             logger.error(f"Error getting recent audit events: {e}")
-            return []
+            return 
             
-    def search_events(self, user_id: str = None, event_type: AuditEventType = None, 
-                     resource: str = None, start_time: str = None, 
-                     end_time: str = None) -> List[AuditEvent]:
+    def search_events(self, user_id: Optional[str] = None, event_type: Optional[AuditEventType] = None, 
+                     resource: Optional[str] = None, start_time: Optional[str] = None, 
+                     end_time: Optional[str] = None) -> List[AuditEvent]:
         """Search audit events based on criteria"""
         try:
-            events = []
+            events = 
             
             # Search in buffer
             with self.buffer_lock:
@@ -367,7 +367,7 @@ class AuditLogger:
                 with open(self.log_file_path, 'r', encoding='utf-8') as f:
                     for line in f:
                         try:
-                            event_data = json.loads(line.strip())
+                            event_data = json.loads(line.strip)
                             # Convert event_type back to enum
                             event_data['event_type'] = AuditEventType(event_data['event_type'])
                             event = AuditEvent(**event_data)
@@ -379,11 +379,11 @@ class AuditLogger:
             return events
         except Exception as e:
             logger.error(f"Error searching audit events: {e}")
-            return []
+            return 
             
-    def _event_matches_criteria(self, event: AuditEvent, user_id: str = None, 
-                               event_type: AuditEventType = None, resource: str = None,
-                               start_time: str = None, end_time: str = None) -> bool:
+    def _event_matches_criteria(self, event: AuditEvent, user_id: Optional[str] = None, 
+                               event_type: Optional[AuditEventType] = None, resource: Optional[str] = None,
+                               start_time: Optional[str] = None, end_time: Optional[str] = None) -> bool:
         """Check if an event matches search criteria"""
         # Check user_id
         if user_id and event.user_id != user_id:

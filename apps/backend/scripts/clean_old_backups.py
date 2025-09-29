@@ -3,7 +3,6 @@
 定期清理旧备份目录的脚本
 """
 
-import os
 import shutil
 from pathlib import Path
 from datetime import datetime, timedelta

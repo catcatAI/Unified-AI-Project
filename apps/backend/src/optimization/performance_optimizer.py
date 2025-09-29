@@ -10,13 +10,17 @@ import time
 import psutil
 import functools
 import hashlib
-from typing import Dict, Any, Callable, Optional
+from typing import Dict, Any, Callable, Optional, List, Tuple, TypeVar, cast
 from dataclasses import dataclass, asdict
 from collections import OrderedDict
 import yaml
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
+
+# 定义类型变量
+T = TypeVar('T')
+F = TypeVar('F', bound=Callable[..., Any])
 
 @dataclass
 class PerformanceMetrics:
@@ -33,8 +37,8 @@ class PerformanceMetrics:
 class LRUCache:
     """LRU缓存实现"""
     
-    def __init__(self, max_size: int = 1000):
-        self.cache = OrderedDict()
+    def __init__(self, max_size: int = 1000) -> None:
+        self.cache = OrderedDict
         self.max_size = max_size
     
     def get(self, key: str) -> Any:
@@ -54,7 +58,7 @@ class LRUCache:
         # 添加新值
         self.cache[key] = {
             'value': value,
-            'expires': time.time() + ttl
+            'expires': time.time + ttl
         }
         
         # 移动到末尾表示最近使用
@@ -66,9 +70,9 @@ class LRUCache:
     
     def cleanup(self) -> None:
         """清理过期缓存"""
-        current_time = time.time()
+        current_time = time.time
         expired_keys = [
-            key for key, value in self.cache.items() 
+            key for key, value in self.cache.items 
             if value['expires'] < current_time
         ]
         
@@ -78,14 +82,14 @@ class LRUCache:
 class PerformanceOptimizer:
     """性能优化器"""
     
-    def __init__(self, config_path: str = "configs/performance_config.yaml"):
+    def __init__(self, config_path: str = "configs/performance_config.yaml") -> None:
         self.config_path = config_path
-        self.config = self._load_config()
-        self.metrics_history = []
+        self.config = self._load_config
+        self.metrics_history = 
         self.max_metrics_history = 1000
         self.cache = LRUCache(self.config['performance']['caching']['max_cache_size'])
-        self._last_disk_io = psutil.disk_io_counters()
-        self._last_net_io = psutil.net_io_counters()
+        self._last_disk_io = psutil.disk_io_counters
+        self._last_net_io = psutil.net_io_counters
         
         # 初始化性能监控
         self.is_monitoring = False
@@ -97,15 +101,15 @@ class PerformanceOptimizer:
         """加载配置文件"""
         try:
             config_path = Path(self.config_path)
-            if not config_path.exists():
+            if not config_path.exists:
                 # 创建默认配置
-                return self._create_default_config()
+                return self._create_default_config
             
             with open(config_path, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f)
         except Exception as e:
             logger.warning(f"加载性能配置失败，使用默认配置: {e}")
-            return self._create_default_config()
+            return self._create_default_config
     
     def _create_default_config(self) -> Dict[str, Any]:
         """创建默认配置"""
@@ -113,7 +117,11 @@ class PerformanceOptimizer:
             'performance': {
                 'resource_monitoring': {
                     'enabled': True,
-                    'check_interval': 5
+                    'check_interval': 5,
+                    'cpu_warning_threshold': 80,
+                    'cpu_critical_threshold': 90,
+                    'memory_warning_threshold': 80,
+                    'memory_critical_threshold': 90
                 },
                 'caching': {
                     'enabled': True,
@@ -135,14 +143,14 @@ class PerformanceOptimizer:
             return
         
         self.is_monitoring = True
-        self.monitoring_task = asyncio.create_task(self._monitor_loop())
+        self.monitoring_task = asyncio.create_task(self._monitor_loop)
         logger.info("性能监控已启动")
     
     async def stop_monitoring(self) -> None:
         """停止性能监控"""
         self.is_monitoring = False
         if self.monitoring_task:
-            self.monitoring_task.cancel()
+            self.monitoring_task.cancel
             try:
                 await self.monitoring_task
             except asyncio.CancelledError:
@@ -153,9 +161,13 @@ class PerformanceOptimizer:
         """监控循环"""
         check_interval = self.config['performance']['resource_monitoring']['check_interval']
         
+        # 初始化上一次的IO计数器
+        self._last_disk_io = psutil.disk_io_counters
+        self._last_net_io = psutil.net_io_counters
+        
         while self.is_monitoring:
             try:
-                metrics = self.collect_metrics()
+                metrics = self.collect_metrics
                 self.metrics_history.append(metrics)
                 
                 # 保持历史记录在限制范围内
@@ -165,10 +177,10 @@ class PerformanceOptimizer:
                 # 检查资源使用情况
                 self._check_resource_thresholds(metrics)
                 
-                await asyncio.sleep(check_interval)
+                _ = await asyncio.sleep(check_interval)
             except Exception as e:
                 logger.error(f"性能监控错误: {e}")
-                await asyncio.sleep(check_interval)
+                _ = await asyncio.sleep(check_interval)
     
     def collect_metrics(self) -> PerformanceMetrics:
         """收集性能指标"""
@@ -176,23 +188,29 @@ class PerformanceOptimizer:
         cpu_percent = psutil.cpu_percent(interval=1)
         
         # 内存使用情况
-        memory = psutil.virtual_memory()
+        memory = psutil.virtual_memory
         memory_percent = memory.percent
         
         # 磁盘IO
-        disk_io = psutil.disk_io_counters()
-        disk_io_read = disk_io.read_bytes - self._last_disk_io.read_bytes
-        disk_io_write = disk_io.write_bytes - self._last_disk_io.write_bytes
-        self._last_disk_io = disk_io
+        disk_io_read = 0
+        disk_io_write = 0
+        current_disk_io = psutil.disk_io_counters
+        if current_disk_io is not None and self._last_disk_io is not None:
+            disk_io_read = current_disk_io.read_bytes - self._last_disk_io.read_bytes
+            disk_io_write = current_disk_io.write_bytes - self._last_disk_io.write_bytes
+        self._last_disk_io = current_disk_io
         
         # 网络IO
-        net_io = psutil.net_io_counters()
-        network_bytes_sent = net_io.bytes_sent - self._last_net_io.bytes_sent
-        network_bytes_recv = net_io.bytes_recv - self._last_net_io.bytes_recv
-        self._last_net_io = net_io
+        network_bytes_sent = 0
+        network_bytes_recv = 0
+        current_net_io = psutil.net_io_counters
+        if current_net_io is not None and self._last_net_io is not None:
+            network_bytes_sent = current_net_io.bytes_sent - self._last_net_io.bytes_sent
+            network_bytes_recv = current_net_io.bytes_recv - self._last_net_io.bytes_recv
+        self._last_net_io = current_net_io
         
         metrics = PerformanceMetrics(
-            timestamp=time.time(),
+            timestamp=time.time,
             cpu_percent=cpu_percent,
             memory_percent=memory_percent,
             disk_io_read=disk_io_read,
@@ -208,21 +226,21 @@ class PerformanceOptimizer:
         thresholds = self.config['performance']['resource_monitoring']
         
         # 检查CPU使用率
-        if metrics.cpu_percent > thresholds['cpu_critical_threshold']:
+        if metrics.cpu_percent > thresholds.get('cpu_critical_threshold', 90):
             logger.critical(f"CPU使用率过高: {metrics.cpu_percent:.1f}%")
-        elif metrics.cpu_percent > thresholds['cpu_warning_threshold']:
+        elif metrics.cpu_percent > thresholds.get('cpu_warning_threshold', 80):
             logger.warning(f"CPU使用率较高: {metrics.cpu_percent:.1f}%")
         
         # 检查内存使用率
-        if metrics.memory_percent > thresholds['memory_critical_threshold']:
+        if metrics.memory_percent > thresholds.get('memory_critical_threshold', 90):
             logger.critical(f"内存使用率过高: {metrics.memory_percent:.1f}%")
-        elif metrics.memory_percent > thresholds['memory_warning_threshold']:
+        elif metrics.memory_percent > thresholds.get('memory_warning_threshold', 80):
             logger.warning(f"内存使用率较高: {metrics.memory_percent:.1f}%")
     
-    def cache_result(self, func: Callable) -> Callable:
+    def cache_result(self, func: F) -> F:
         """缓存装饰器"""
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Tuple[Any, ...], **kwargs: Dict[str, Any]) -> Any:
             if not self.config['performance']['caching']['enabled']:
                 return func(*args, **kwargs)
             
@@ -243,16 +261,16 @@ class PerformanceOptimizer:
             
             return result
         
-        return wrapper
+        return cast(F, wrapper)
     
-    def _generate_cache_key(self, func_name: str, args: tuple, kwargs: dict) -> str:
+    def _generate_cache_key(self, func_name: str, args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> str:
         """生成缓存键"""
         # 创建一个包含函数名、参数的字符串
-        key_string = f"{func_name}:{str(args)}:{str(sorted(kwargs.items()))}"
+        key_string = f"{func_name}:{str(args)}:{str(sorted(kwargs.items))}"
         # 使用MD5生成哈希值作为缓存键
-        return hashlib.md5(key_string.encode()).hexdigest()
+        return hashlib.md5(key_string.encode).hexdigest
     
-    async def run_parallel_tasks(self, tasks: list) -> list:
+    async def run_parallel_tasks(self, tasks: List[asyncio.Task[Any]]) -> List[Any]:
         """并行执行任务"""
         max_workers = self.config['performance']['parallel_processing']['max_workers']
         timeout = self.config['performance']['parallel_processing']['timeout']
@@ -260,7 +278,7 @@ class PerformanceOptimizer:
         # 使用信号量限制并发数
         semaphore = asyncio.Semaphore(max_workers)
         
-        async def run_with_semaphore(task):
+        async def run_with_semaphore(task: asyncio.Task[Any]) -> Any:
             async with semaphore:
                 return await asyncio.wait_for(task, timeout=timeout)
         
@@ -275,7 +293,7 @@ class PerformanceOptimizer:
     def get_performance_report(self) -> Dict[str, Any]:
         """获取性能报告"""
         if not self.metrics_history:
-            return {}
+            return 
         
         # 计算平均指标
         recent_metrics = self.metrics_history[-10:]  # 最近10个指标
@@ -286,7 +304,7 @@ class PerformanceOptimizer:
         latest_metrics = self.metrics_history[-1]
         
         report = {
-            'timestamp': time.time(),
+            'timestamp': time.time,
             'average_metrics': {
                 'cpu_percent': avg_cpu,
                 'memory_percent': avg_memory
@@ -303,46 +321,46 @@ class PerformanceOptimizer:
     def cleanup(self) -> None:
         """清理资源"""
         # 清理过期缓存
-        self.cache.cleanup()
+        self.cache.cleanup
         logger.info("性能优化器资源清理完成")
 
 # 全局性能优化器实例
 _performance_optimizer: Optional[PerformanceOptimizer] = None
 
-def get_performance_optimizer() -> PerformanceOptimizer:
+def get_performance_optimizer -> PerformanceOptimizer:
     """获取全局性能优化器实例"""
     global _performance_optimizer
     if _performance_optimizer is None:
-        _performance_optimizer = PerformanceOptimizer()
+        _performance_optimizer = PerformanceOptimizer
     return _performance_optimizer
 
-def cache_result(func: Callable) -> Callable:
+def cache_result(func: F) -> F:
     """全局缓存装饰器"""
-    optimizer = get_performance_optimizer()
-    return optimizer.cache_result(func)
+    optimizer = get_performance_optimizer
+    return cast(F, optimizer.cache_result(func))
 
-async def start_performance_monitoring() -> None:
+async def start_performance_monitoring -> None:
     """启动全局性能监控"""
-    optimizer = get_performance_optimizer()
-    await optimizer.start_monitoring()
+    optimizer = get_performance_optimizer
+    _ = await optimizer.start_monitoring
 
-async def stop_performance_monitoring() -> None:
+async def stop_performance_monitoring -> None:
     """停止全局性能监控"""
-    optimizer = get_performance_optimizer()
-    await optimizer.stop_monitoring()
+    optimizer = get_performance_optimizer
+    _ = await optimizer.stop_monitoring
 
 if __name__ == "__main__":
     # 测试性能优化器
     logging.basicConfig(level=logging.INFO)
-    optimizer = PerformanceOptimizer()
+    optimizer = PerformanceOptimizer
     
     try:
         # 收集一次指标
-        metrics = optimizer.collect_metrics()
+        metrics = optimizer.collect_metrics
         print(f"性能指标: {metrics}")
         
         # 获取性能报告
-        report = optimizer.get_performance_report()
+        report = optimizer.get_performance_report
         print(f"性能报告: {report}")
         
     except Exception as e:

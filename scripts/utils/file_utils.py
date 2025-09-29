@@ -3,16 +3,11 @@
 文件工具模块 - 提供文件操作相关的通用功能
 """
 
-import os
 import shutil
 import hashlib
 import fnmatch
 import time
-import traceback
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional, Union, Any, Callable
-from enum import Enum
-
 class FileType(Enum):
     """文件类型枚举"""
     PYTHON = "python"              # Python文件
@@ -37,7 +32,7 @@ class FileOperation(Enum):
 class FileUtils:
     """文件工具类"""
     
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
         
         # 文件类型映射
@@ -116,7 +111,7 @@ class FileUtils:
             with open(file_path, 'r', encoding=encoding) as f:
                 return f.read()
         except Exception as e:
-            print(f"✗ 读取文件 {file_path} 失败: {e}")
+            _ = print(f"✗ 读取文件 {file_path} 失败: {e}")
             return None
     
     def write_file(self, file_path: Path, content: str, encoding: str = 'utf-8',
@@ -127,22 +122,22 @@ class FileUtils:
                 file_path.parent.mkdir(parents=True, exist_ok=True)
             
             with open(file_path, 'w', encoding=encoding) as f:
-                f.write(content)
+                _ = f.write(content)
             
             return True
         except Exception as e:
-            print(f"✗ 写入文件 {file_path} 失败: {e}")
+            _ = print(f"✗ 写入文件 {file_path} 失败: {e}")
             return False
     
     def append_file(self, file_path: Path, content: str, encoding: str = 'utf-8') -> bool:
         """追加文件内容"""
         try:
             with open(file_path, 'a', encoding=encoding) as f:
-                f.write(content)
+                _ = f.write(content)
             
             return True
         except Exception as e:
-            print(f"✗ 追加文件 {file_path} 失败: {e}")
+            _ = print(f"✗ 追加文件 {file_path} 失败: {e}")
             return False
     
     def copy_file(self, src_path: Path, dst_path: Path, 
@@ -152,10 +147,10 @@ class FileUtils:
             if create_dirs:
                 dst_path.parent.mkdir(parents=True, exist_ok=True)
             
-            shutil.copy2(src_path, dst_path)
+            _ = shutil.copy2(src_path, dst_path)
             return True
         except Exception as e:
-            print(f"✗ 复制文件 {src_path} 到 {dst_path} 失败: {e}")
+            _ = print(f"✗ 复制文件 {src_path} 到 {dst_path} 失败: {e}")
             return False
     
     def move_file(self, src_path: Path, dst_path: Path, 
@@ -165,20 +160,20 @@ class FileUtils:
             if create_dirs:
                 dst_path.parent.mkdir(parents=True, exist_ok=True)
             
-            shutil.move(str(src_path), str(dst_path))
+            _ = shutil.move(str(src_path), str(dst_path))
             return True
         except Exception as e:
-            print(f"✗ 移动文件 {src_path} 到 {dst_path} 失败: {e}")
+            _ = print(f"✗ 移动文件 {src_path} 到 {dst_path} 失败: {e}")
             return False
     
     def delete_file(self, file_path: Path) -> bool:
         """删除文件"""
         try:
             if file_path.exists():
-                file_path.unlink()
+                _ = file_path.unlink()
             return True
         except Exception as e:
-            print(f"✗ 删除文件 {file_path} 失败: {e}")
+            _ = print(f"✗ 删除文件 {file_path} 失败: {e}")
             return False
     
     def create_directory(self, dir_path: Path, parents: bool = True) -> bool:
@@ -187,17 +182,17 @@ class FileUtils:
             dir_path.mkdir(parents=parents, exist_ok=True)
             return True
         except Exception as e:
-            print(f"✗ 创建目录 {dir_path} 失败: {e}")
+            _ = print(f"✗ 创建目录 {dir_path} 失败: {e}")
             return False
     
     def delete_directory(self, dir_path: Path) -> bool:
         """删除目录"""
         try:
             if dir_path.exists():
-                shutil.rmtree(dir_path)
+                _ = shutil.rmtree(dir_path)
             return True
         except Exception as e:
-            print(f"✗ 删除目录 {dir_path} 失败: {e}")
+            _ = print(f"✗ 删除目录 {dir_path} 失败: {e}")
             return False
     
     def find_files(self, root_path: Path, pattern: str = "*", 
@@ -211,11 +206,11 @@ class FileUtils:
         if recursive:
             for file_path in root_path.rglob(pattern):
                 if not self._is_excluded(file_path, exclude_patterns):
-                    files.append(file_path)
+                    _ = files.append(file_path)
         else:
             for file_path in root_path.glob(pattern):
                 if not self._is_excluded(file_path, exclude_patterns):
-                    files.append(file_path)
+                    _ = files.append(file_path)
         
         return sorted(files)
     
@@ -227,7 +222,7 @@ class FileUtils:
         files = []
         for ext in extensions:
             pattern = f"*{ext}"
-            files.extend(self.find_files(root_path, pattern, recursive))
+            _ = files.extend(self.find_files(root_path, pattern, recursive))
         
         return files
     
@@ -249,10 +244,10 @@ class FileUtils:
                 if content:
                     if case_sensitive:
                         if search_text in content:
-                            matching_files.append(file_path)
+                            _ = matching_files.append(file_path)
                     else:
                         if search_text.lower() in content.lower():
-                            matching_files.append(file_path)
+                            _ = matching_files.append(file_path)
         
         return matching_files
     
@@ -265,20 +260,20 @@ class FileUtils:
             stat = file_path.stat()
             
             return {
-                "path": str(file_path),
+                _ = "path": str(file_path),
                 "name": file_path.name,
                 "size": stat.st_size,
-                "size_mb": round(stat.st_size / (1024 * 1024), 2),
-                "type": self.get_file_type(file_path).value,
-                "is_text": self.is_text_file(file_path),
-                "is_binary": self.is_binary_file(file_path),
-                "created": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_ctime)),
-                "modified": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime)),
-                "accessed": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_atime)),
-                "permissions": oct(stat.st_mode)[-3:]
+                _ = "size_mb": round(stat.st_size / (1024 * 1024), 2),
+                _ = "type": self.get_file_type(file_path).value,
+                _ = "is_text": self.is_text_file(file_path),
+                _ = "is_binary": self.is_binary_file(file_path),
+                _ = "created": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_ctime)),
+                _ = "modified": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime)),
+                _ = "accessed": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_atime)),
+                _ = "permissions": oct(stat.st_mode)[-3:]
             }
         except Exception as e:
-            print(f"✗ 获取文件信息 {file_path} 失败: {e}")
+            _ = print(f"✗ 获取文件信息 {file_path} 失败: {e}")
             return {}
     
     def get_directory_info(self, dir_path: Path) -> Dict[str, Any]:
@@ -298,20 +293,20 @@ class FileUtils:
                 file_types[file_type.value] = file_types.get(file_type.value, 0) + 1
             
             return {
-                "path": str(dir_path),
+                _ = "path": str(dir_path),
                 "name": dir_path.name,
-                "files_count": len(files),
-                "directories_count": len(directories),
+                _ = "files_count": len(files),
+                _ = "directories_count": len(directories),
                 "total_size": total_size,
-                "total_size_mb": round(total_size / (1024 * 1024), 2),
+                _ = "total_size_mb": round(total_size / (1024 * 1024), 2),
                 "file_types": file_types,
                 "created": time.strftime("%Y-%m-%d %H:%M:%S", 
-                                       time.localtime(dir_path.stat().st_ctime)),
+                                       _ = time.localtime(dir_path.stat().st_ctime)),
                 "modified": time.strftime("%Y-%m-%d %H:%M:%S", 
-                                       time.localtime(dir_path.stat().st_mtime))
+                                       _ = time.localtime(dir_path.stat().st_mtime))
             }
         except Exception as e:
-            print(f"✗ 获取目录信息 {dir_path} 失败: {e}")
+            _ = print(f"✗ 获取目录信息 {dir_path} 失败: {e}")
             return {}
     
     def calculate_file_hash(self, file_path: Path, algorithm: str = "md5") -> Optional[str]:
@@ -324,11 +319,11 @@ class FileUtils:
             
             with open(file_path, 'rb') as f:
                 for chunk in iter(lambda: f.read(4096), b""):
-                    hash_func.update(chunk)
+                    _ = hash_func.update(chunk)
             
             return hash_func.hexdigest()
         except Exception as e:
-            print(f"✗ 计算文件哈希 {file_path} 失败: {e}")
+            _ = print(f"✗ 计算文件哈希 {file_path} 失败: {e}")
             return None
     
     def compare_files(self, file1: Path, file2: Path) -> Dict[str, Any]:
@@ -358,7 +353,7 @@ class FileUtils:
                 "identical": size_equal and content_equal
             }
         except Exception as e:
-            print(f"✗ 比较文件 {file1} 和 {file2} 失败: {e}")
+            _ = print(f"✗ 比较文件 {file1} 和 {file2} 失败: {e}")
             return {"error": str(e)}
     
     def backup_file(self, file_path: Path, backup_dir: Optional[Path] = None) -> Optional[Path]:
@@ -378,11 +373,11 @@ class FileUtils:
             backup_path = backup_dir / backup_name
             
             # 复制文件
-            shutil.copy2(file_path, backup_path)
+            _ = shutil.copy2(file_path, backup_path)
             
             return backup_path
         except Exception as e:
-            print(f"✗ 备份文件 {file_path} 失败: {e}")
+            _ = print(f"✗ 备份文件 {file_path} 失败: {e}")
             return None
     
     def restore_file(self, backup_path: Path, target_path: Optional[Path] = None) -> bool:
@@ -401,11 +396,11 @@ class FileUtils:
                     return False
             
             # 复制备份文件
-            shutil.copy2(backup_path, target_path)
+            _ = shutil.copy2(backup_path, target_path)
             
             return True
         except Exception as e:
-            print(f"✗ 恢复文件 {backup_path} 失败: {e}")
+            _ = print(f"✗ 恢复文件 {backup_path} 失败: {e}")
             return False
     
     def _is_excluded(self, file_path: Path, exclude_patterns: List[str]) -> bool:

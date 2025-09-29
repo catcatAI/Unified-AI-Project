@@ -2,8 +2,8 @@ import json
 import os
 import sys
 import numpy as np
-import tensorflow as tf
 from sklearn.metrics import classification_report, accuracy_score
+from typing import List, Dict, Any, Optional  # 添加类型导入
 
 # Add src directory to sys.path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -12,8 +12,12 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
+# 修复相对导入
 try:
-    from .logic_model_nn import LogicNNModel, preprocess_logic_data # Assuming load_model is part of LogicNNModel
+    from .logic_model_nn import LogicNNModel
+    # Import pad_sequences_func as a global variable from logic_model_nn module
+    from . import logic_model_nn
+    pad_sequences = logic_model_nn.pad_sequences_func
 except ImportError as e:
     print(f"Error importing from logic_model_nn: {e}")
     sys.exit(1)
@@ -23,7 +27,7 @@ TEST_DATA_PATH = os.path.join(PROJECT_ROOT, "data/raw_datasets/logic_test.json")
 MODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
 CHAR_MAP_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_maps.json")
 
-def load_logic_test_dataset(file_path):
+def load_logic_test_dataset(file_path) -> Optional[List[Dict[str, Any]]]:  # 修复返回类型
     """Loads the logic test dataset from a JSON file."""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -40,7 +44,7 @@ def load_logic_test_dataset(file_path):
         print(f"Error: {e}")
     return None
 
-def main():
+def main -> None:
     print("Starting Logic NN Model evaluation process...")
 
     # 1. Load character maps (needed for model loading and preprocessing)
@@ -96,11 +100,12 @@ def main():
     # 4. Preprocess test data
     print("Preprocessing test data...")
     # Extract propositions and actual answers (booleans)
-    test_propositions_str = [item['proposition'] for item in test_dataset]
-    test_answers_bool = [item['answer'] for item in test_dataset]
+    test_propositions_str: List[str] = [item['proposition'] for item in test_dataset]
+    test_answers_bool: List[bool] = [item['answer'] for item in test_dataset]
 
     # Tokenize and pad propositions
     sequences = [[char_to_token.get(char, char_to_token['<UNK>']) for char in prop] for prop in test_propositions_str]
+    # Use the imported pad_sequences function
     X_test = pad_sequences(sequences, maxlen=max_seq_len, padding='post', value=char_to_token['<PAD>'])
 
     # True answers as integers (0 or 1) for scikit-learn metrics
@@ -120,7 +125,7 @@ def main():
 
     print("\nClassification Report:")
     # target_names should correspond to how classes are indexed (e.g., 0: False, 1: True)
-    print(classification_report(y_test_true_int, y_test_pred_int, target_names=['False', 'True'], zero_division_report=0))
+    print(classification_report(y_test_true_int, y_test_pred_int, target_names=['False', 'True'], zero_division='warn'))
 
     print("\nSample Predictions (first 5):")
     for i in range(min(5, len(test_dataset))):
@@ -149,6 +154,6 @@ if __name__ == '__main__':
         files_ok = False
 
     if files_ok:
-        main()
+        main
     else:
         print("Evaluation cannot proceed due to missing files. Please train the model and generate test data first.")

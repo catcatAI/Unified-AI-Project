@@ -11,7 +11,7 @@ from pathlib import Path
 from cli.utils import logger
 
 
-@click.group()
+_ = @click.group()
 def test():
     """测试管理命令
     
@@ -26,7 +26,7 @@ def test():
     pass
 
 
-@test.command()
+_ = @test.command()
 @click.option('--backend', is_flag=True, help='仅运行后端测试')
 @click.option('--frontend', is_flag=True, help='仅运行前端测试')
 @click.option('--desktop', is_flag=True, help='仅运行桌面应用测试')
@@ -49,16 +49,16 @@ def run(backend, frontend, desktop, all, quick, slow, workflow):
       unified-ai-cli test run --workflow   # 使用工作流控制器运行测试（推荐）
     """
     try:
-        logger.info("正在运行测试...")
+        _ = logger.info("正在运行测试...")
         
         # 正确计算项目根目录
         current_file = Path(__file__).resolve()
-        project_root = current_file.parent.parent.parent
-        backend_path = project_root / "apps" / "backend"
+        project_root: str = current_file.parent.parent.parent
+        backend_path: str = project_root / "apps" / "backend"
         
         # 检查后端路径是否存在
         if not backend_path.exists():
-            logger.error(f"后端路径不存在: {backend_path}")
+            _ = logger.error(f"后端路径不存在: {backend_path}")
             return
         
         if workflow:
@@ -79,59 +79,59 @@ def run(backend, frontend, desktop, all, quick, slow, workflow):
             if desktop:
                 _run_desktop_tests(project_root)
         
-        logger.info("测试运行完成")
+        _ = logger.info("测试运行完成")
         
     except Exception as e:
-        logger.error(f"运行测试时出错: {e}")
-        sys.exit(1)
+        _ = logger.error(f"运行测试时出错: {e}")
+        _ = sys.exit(1)
 
 
 def _run_workflow_tests(backend_path):
     """使用工作流控制器运行测试"""
-    logger.info("使用工作流控制器运行测试...")
+    _ = logger.info("使用工作流控制器运行测试...")
     
     # 检查工作流控制器是否存在
     workflow_script = backend_path / "scripts" / "workflow_controller.py"
     if workflow_script.exists():
-        logger.info("使用workflow_controller.py运行测试...")
+        _ = logger.info("使用workflow_controller.py运行测试...")
         cmd = [sys.executable, str(workflow_script)]
         result = subprocess.run(cmd, cwd=str(backend_path))
         
         if result.returncode != 0:
-            logger.error("工作流测试失败")
+            _ = logger.error("工作流测试失败")
         else:
-            logger.info("工作流测试完成")
+            _ = logger.info("工作流测试完成")
     else:
-        logger.warning("工作流控制器不存在，使用默认测试方法...")
+        _ = logger.warning("工作流控制器不存在，使用默认测试方法...")
         _run_backend_tests(backend_path, False, False)
 
 
 def _run_backend_tests(backend_path, quick, slow):
     """运行后端测试"""
-    logger.info("运行后端测试...")
+    _ = logger.info("运行后端测试...")
     
     # 检查后端路径是否存在
     if not backend_path.exists():
-        logger.error(f"后端路径不存在: {backend_path}")
+        _ = logger.error(f"后端路径不存在: {backend_path}")
         return
     
     try:
         # 使用项目中已有的测试脚本
         test_script = backend_path / "scripts" / "smart_test_runner.py"
         if test_script.exists():
-            logger.info("使用smart_test_runner.py运行测试...")
+            _ = logger.info("使用smart_test_runner.py运行测试...")
             cmd = [sys.executable, str(test_script)]
             
             # 添加选项
             if quick:
-                cmd.append("--quick")
+                _ = cmd.append("--quick")
             elif slow:
-                cmd.append("--slow")
+                _ = cmd.append("--slow")
             
             result = subprocess.run(cmd, cwd=str(backend_path))
         else:
             # 如果没有smart_test_runner.py，则直接使用pytest
-            logger.info("直接使用pytest运行测试...")
+            _ = logger.info("直接使用pytest运行测试...")
             
             # 激活虚拟环境
             original_path = os.environ.get('PATH', '')
@@ -147,9 +147,9 @@ def _run_backend_tests(backend_path, quick, slow):
                 cmd = [sys.executable, "-m", "pytest", "--tb=short", "-v"]
                 
                 if quick:
-                    cmd.extend(["-m", "not slow"])
+                    _ = cmd.extend(["-m", "not slow"])
                 elif slow:
-                    cmd.extend(["-m", "slow"])
+                    _ = cmd.extend(["-m", "slow"])
                 
                 # 执行测试
                 result = subprocess.run(cmd, cwd=str(backend_path))
@@ -158,17 +158,17 @@ def _run_backend_tests(backend_path, quick, slow):
                 os.environ['PATH'] = original_path
         
         if result.returncode != 0:
-            logger.error("后端测试失败")
+            _ = logger.error("后端测试失败")
         else:
-            logger.info("后端测试通过")
+            _ = logger.info("后端测试通过")
             
     except Exception as e:
-        logger.error(f"运行后端测试时出错: {e}")
+        _ = logger.error(f"运行后端测试时出错: {e}")
 
 
 def _run_frontend_tests(project_root):
     """运行前端测试"""
-    logger.info("运行前端测试...")
+    _ = logger.info("运行前端测试...")
     
     try:
         result = subprocess.run(
@@ -177,17 +177,17 @@ def _run_frontend_tests(project_root):
         )
         
         if result.returncode != 0:
-            logger.error("前端测试失败")
+            _ = logger.error("前端测试失败")
         else:
-            logger.info("前端测试通过")
+            _ = logger.info("前端测试通过")
             
     except Exception as e:
-        logger.error(f"运行前端测试时出错: {e}")
+        _ = logger.error(f"运行前端测试时出错: {e}")
 
 
 def _run_desktop_tests(project_root):
     """运行桌面应用测试"""
-    logger.info("运行桌面应用测试...")
+    _ = logger.info("运行桌面应用测试...")
     
     try:
         result = subprocess.run(
@@ -196,15 +196,15 @@ def _run_desktop_tests(project_root):
         )
         
         if result.returncode != 0:
-            logger.error("桌面应用测试失败")
+            _ = logger.error("桌面应用测试失败")
         else:
-            logger.info("桌面应用测试通过")
+            _ = logger.info("桌面应用测试通过")
             
     except Exception as e:
-        logger.error(f"运行桌面应用测试时出错: {e}")
+        _ = logger.error(f"运行桌面应用测试时出错: {e}")
 
 
-@test.command()
+_ = @test.command()
 def watch():
     """监视模式运行测试
     
@@ -214,27 +214,27 @@ def watch():
       unified-ai-cli test watch
     """
     try:
-        logger.info("以监视模式运行测试...")
+        _ = logger.info("以监视模式运行测试...")
         
         # 正确计算项目根目录
         current_file = Path(__file__).resolve()
-        project_root = current_file.parent.parent.parent
-        backend_path = project_root / "apps" / "backend"
+        project_root: str = current_file.parent.parent.parent
+        backend_path: str = project_root / "apps" / "backend"
         
         # 检查后端路径是否存在
         if not backend_path.exists():
-            logger.error(f"后端路径不存在: {backend_path}")
+            _ = logger.error(f"后端路径不存在: {backend_path}")
             return
         
         # 使用项目中已有的测试脚本
         test_script = backend_path / "scripts" / "smart_test_runner.py"
         if test_script.exists():
-            logger.info("使用smart_test_runner.py运行监视模式测试...")
+            _ = logger.info("使用smart_test_runner.py运行监视模式测试...")
             cmd = [sys.executable, str(test_script), "--watch"]
             subprocess.run(cmd, cwd=str(backend_path))
         else:
             # 如果没有smart_test_runner.py，则直接使用pytest
-            logger.info("直接使用pytest运行监视模式测试...")
+            _ = logger.info("直接使用pytest运行监视模式测试...")
             
             # 激活虚拟环境
             original_path = os.environ.get('PATH', '')
@@ -254,10 +254,10 @@ def watch():
                 os.environ['PATH'] = original_path
             
     except Exception as e:
-        logger.error(f"监视模式运行测试时出错: {e}")
+        _ = logger.error(f"监视模式运行测试时出错: {e}")
 
 
-@test.command()
+_ = @test.command()
 @click.option('--html', is_flag=True, help='生成HTML格式的覆盖率报告')
 @click.option('--term', is_flag=True, help='在终端显示覆盖率报告')
 def coverage(html, term):
@@ -271,33 +271,33 @@ def coverage(html, term):
       unified-ai-cli test coverage --term # 在终端显示报告
     """
     try:
-        logger.info("生成测试覆盖率报告...")
+        _ = logger.info("生成测试覆盖率报告...")
         
         # 正确计算项目根目录
         current_file = Path(__file__).resolve()
-        project_root = current_file.parent.parent.parent
-        backend_path = project_root / "apps" / "backend"
+        project_root: str = current_file.parent.parent.parent
+        backend_path: str = project_root / "apps" / "backend"
         
         # 检查后端路径是否存在
         if not backend_path.exists():
-            logger.error(f"后端路径不存在: {backend_path}")
+            _ = logger.error(f"后端路径不存在: {backend_path}")
             return
         
         # 使用项目中已有的测试脚本
         test_script = backend_path / "scripts" / "smart_test_runner.py"
         if test_script.exists():
-            logger.info("使用smart_test_runner.py生成覆盖率报告...")
+            _ = logger.info("使用smart_test_runner.py生成覆盖率报告...")
             cmd = [sys.executable, str(test_script), "--coverage"]
             
             if html:
-                cmd.append("--html")
+                _ = cmd.append("--html")
             if term:
-                cmd.append("--term")
+                _ = cmd.append("--term")
             
             subprocess.run(cmd, cwd=str(backend_path))
         else:
             # 如果没有smart_test_runner.py，则直接使用pytest
-            logger.info("直接使用pytest生成覆盖率报告...")
+            _ = logger.info("直接使用pytest生成覆盖率报告...")
             
             # 激活虚拟环境
             original_path = os.environ.get('PATH', '')
@@ -322,17 +322,17 @@ def coverage(html, term):
                 subprocess.run(cmd, cwd=str(backend_path))
                 
                 if html:
-                    logger.info("HTML覆盖率报告已生成，请查看 htmlcov/index.html")
+                    _ = logger.info("HTML覆盖率报告已生成，请查看 htmlcov/index.html")
                     
             finally:
                 # 恢复环境变量
                 os.environ['PATH'] = original_path
             
     except Exception as e:
-        logger.error(f"生成测试覆盖率报告时出错: {e}")
+        _ = logger.error(f"生成测试覆盖率报告时出错: {e}")
 
 
-@test.command()
+_ = @test.command()
 def list():
     """列出可用测试
     
@@ -342,27 +342,27 @@ def list():
       unified-ai-cli test list
     """
     try:
-        logger.info("列出可用测试...")
+        _ = logger.info("列出可用测试...")
         
         # 正确计算项目根目录
         current_file = Path(__file__).resolve()
-        project_root = current_file.parent.parent.parent
-        backend_path = project_root / "apps" / "backend"
+        project_root: str = current_file.parent.parent.parent
+        backend_path: str = project_root / "apps" / "backend"
         
         # 检查后端路径是否存在
         if not backend_path.exists():
-            logger.error(f"后端路径不存在: {backend_path}")
+            _ = logger.error(f"后端路径不存在: {backend_path}")
             return
         
         # 使用项目中已有的测试脚本
         test_script = backend_path / "scripts" / "smart_test_runner.py"
         if test_script.exists():
-            logger.info("使用smart_test_runner.py列出测试...")
+            _ = logger.info("使用smart_test_runner.py列出测试...")
             cmd = [sys.executable, str(test_script), "--list"]
             subprocess.run(cmd, cwd=str(backend_path))
         else:
             # 如果没有smart_test_runner.py，则直接使用pytest
-            logger.info("直接使用pytest列出测试...")
+            _ = logger.info("直接使用pytest列出测试...")
             
             # 激活虚拟环境
             original_path = os.environ.get('PATH', '')
@@ -382,8 +382,8 @@ def list():
                 os.environ['PATH'] = original_path
             
     except Exception as e:
-        logger.error(f"列出测试时出错: {e}")
+        _ = logger.error(f"列出测试时出错: {e}")
 
 
 if __name__ == '__main__':
-    test()
+    _ = test()

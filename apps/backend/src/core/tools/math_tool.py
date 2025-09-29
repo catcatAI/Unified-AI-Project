@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Optional
 
 # Import statement for the model is now inside a try-except block in the loading function.
 
@@ -18,7 +19,7 @@ def _load_math_model():
         return _model_instance
 
     try:
-        from math_model.model import ArithmeticSeq2Seq
+        from .math_model.model import ArithmeticSeq2Seq
         print("Loading arithmetic model for the first time...")
         if not os.path.exists(MODEL_WEIGHTS_PATH) or not os.path.exists(CHAR_MAPS_PATH):
             raise FileNotFoundError("Model or char map file not found.")
@@ -43,11 +44,11 @@ def _load_math_model():
         
     return _model_instance
 
-def extract_arithmetic_problem(text: str) -> str | None:
+def extract_arithmetic_problem(text: str) -> Optional[str]:
     """
     Extracts a basic arithmetic problem from a string.
     """
-    normalized_text = text.lower().replace("plus", "+").replace("add", "+").replace("minus", "-").replace("subtract", "-")\
+    normalized_text = text.lower.replace("plus", "+").replace("add", "+").replace("minus", "-").replace("subtract", "-")\
                            .replace("times", "*").replace("multiply by", "*").replace("multiplied by", "*")\
                            .replace("divided by", "/").replace("divide by", "/")
 
@@ -57,10 +58,10 @@ def extract_arithmetic_problem(text: str) -> str | None:
     match = re.search(problem_pattern_grouped, normalized_text)
     if match:
         try:
-            num1_str, op_str, num2_str = match.groups()
+            num1_str, op_str, num2_str = match.groups
             float(num1_str)
             float(num2_str)
-            return f"{num1_str.strip()} {op_str} {num2_str.strip()}"
+            return f"{num1_str.strip} {op_str} {num2_str.strip}"
         except (ValueError, IndexError):
             return None
     return None
@@ -73,7 +74,7 @@ def calculate(input_string: str) -> ToolDispatcherResponse:
     Takes a natural language string, extracts an arithmetic problem,
     and returns the calculated answer using the trained model.
     """
-    model = _load_math_model()
+    model = _load_math_model
     if model is None:
         error_msg = "Error: Math model is not available."
         if _tensorflow_import_error:
@@ -103,7 +104,7 @@ def calculate(input_string: str) -> ToolDispatcherResponse:
         predicted_answer = model.predict_sequence(problem_to_solve)
         try:
             val = float(predicted_answer)
-            result_str = str(int(val)) if val.is_integer() else str(val)
+            result_str = str(int(val)) if val.is_integer else str(val)
             return ToolDispatcherResponse(
                 status="success",
                 payload=result_str,

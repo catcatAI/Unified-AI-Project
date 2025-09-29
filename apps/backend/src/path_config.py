@@ -3,11 +3,10 @@
 用于处理项目中的所有路径配置，确保跨平台兼容性
 """
 
-import os
 from pathlib import Path
 
 # 项目根目录
-PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 # 数据目录
 DATA_DIR = PROJECT_ROOT / "data"
@@ -59,7 +58,7 @@ def resolve_path(path_str: str) -> Path:
         Path: 解析后的路径对象
     """
     path = Path(path_str)
-    if path.is_absolute():
+    if path.is_absolute:
         return path
     else:
         return PROJECT_ROOT / path

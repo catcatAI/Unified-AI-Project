@@ -6,8 +6,8 @@ import sys
 import os
 
 # 添加项目路径
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-backend_path = os.path.join(project_root, 'apps', 'backend')
+project_root: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+backend_path: str = os.path.join(project_root, 'apps', 'backend')
 sys.path.insert(0, backend_path)
 sys.path.insert(0, os.path.join(backend_path, 'src'))
 
@@ -205,7 +205,7 @@ def fix_service_discovery():
         print(f"✗ 修复服务发现模块时出错: {e}")
         return False
 
-def main():
+def main() -> None:
     """主函数"""
     print("开始修复HSP集成测试中的问题...")
     print("=" * 50)

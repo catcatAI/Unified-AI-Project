@@ -1,7 +1,5 @@
 # scripts/mock_hsp_peer.py
 import asyncio
-import json
-import time
 import uuid
 from datetime import datetime, timezone
 
@@ -9,7 +7,7 @@ from datetime import datetime, timezone
 # This adds the project root to sys.path
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+_ = sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.hsp.connector import HSPConnector
 from src.hsp.types import HSPMessageEnvelope, HSPFactPayload #, HSPTaskRequestPayload, HSPTaskResultPayload # Add more as needed
@@ -19,7 +17,7 @@ from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPEnviro
 
 
 class MockHSPPeer:
-    def __init__(self, ai_id: str, broker_address: str, broker_port: int = 1883):
+    def __init__(self, ai_id: str, broker_address: str, broker_port: int = 1883) -> None:
         self.ai_id = ai_id
         self.connector = HSPConnector(
             ai_id=self.ai_id,
@@ -27,12 +25,12 @@ class MockHSPPeer:
             broker_port=broker_port,
             client_id_suffix="mock_peer" # Unique suffix for MQTT client ID
         )
-        self.connector.register_on_generic_message_callback(self.handle_generic_hsp_message)
-        self.connector.register_on_fact_callback(self.handle_fact_message)
-        self.connector.register_on_task_request_callback(self.handle_task_request) # Register new handler
+        _ = self.connector.register_on_generic_message_callback(self.handle_generic_hsp_message)
+        _ = self.connector.register_on_fact_callback(self.handle_fact_message)
+        _ = self.connector.register_on_task_request_callback(self.handle_task_request) # Register new handler
 
         self.mock_capabilities: Dict[str, HSPCapabilityAdvertisementPayload] = {}
-        self._define_mock_capabilities()
+        _ = self._define_mock_capabilities()
         self.alt_ai_id_1 = f"did:hsp:mock_peer_alt1_{uuid.uuid4().hex[:4]}"
         self.alt_ai_id_2 = f"did:hsp:mock_peer_alt2_{uuid.uuid4().hex[:4]}"
 
@@ -99,22 +97,22 @@ class MockHSPPeer:
 
 
     def handle_generic_hsp_message(self, envelope: HSPMessageEnvelope, topic: str) -> None:
-        print(f"\n[MockPeer-{self.ai_id}] Received generic HSP message on MQTT topic '{topic}':")
-        print(f"  Msg ID  : {envelope.get('message_id')}")
-        print(f"  Sender  : {envelope.get('sender_ai_id')}")
-        print(f"  Type    : {envelope.get('message_type')}")
+        _ = print(f"\n[MockPeer-{self.ai_id}] Received generic HSP message on MQTT topic '{topic}':")
+        _ = print(f"  Msg ID  : {envelope.get('message_id')}")
+        _ = print(f"  Sender  : {envelope.get('sender_ai_id')}")
+        _ = print(f"  Type    : {envelope.get('message_type')}")
         # Avoid printing large payloads in generic handler unless debugging
         # print(f"  Payload: {json.dumps(envelope.get('payload'), indent=2)}")
 
     def handle_fact_message(self, fact_payload: HSPFactPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope) -> None:
-        print(f"\n[MockPeer-{self.ai_id}] Received FACT from '{sender_ai_id}' (MQTT topic: '{full_envelope.get('recipient_ai_id')}'):")
+        _ = print(f"\n[MockPeer-{self.ai_id}] Received FACT from '{sender_ai_id}' (MQTT topic: '{full_envelope.get('recipient_ai_id')}'):")
         statement_nl = fact_payload.get('statement_nl', 'N/A')
         statement_structured = fact_payload.get('statement_structured', {})
         statement_to_print = statement_nl if statement_nl != 'N/A' else statement_structured
 
-        print(f"  Fact ID    : {fact_payload.get('id')}")
-        print(f"  Statement  : {statement_to_print}")
-        print(f"  Confidence : {fact_payload.get('confidence_score')}")
+        _ = print(f"  Fact ID    : {fact_payload.get('id')}")
+        _ = print(f"  Statement  : {statement_to_print}")
+        _ = print(f"  Confidence : {fact_payload.get('confidence_score')}")
 
     def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, full_envelope: HSPMessageEnvelope):
         print(f"\n[MockPeer-{self.ai_id}] Received TASK REQUEST from '{sender_ai_id}' for capability '{task_payload.get('capability_id_filter')}'. CorrID: {full_envelope.get('correlation_id')}")
@@ -125,7 +123,7 @@ class MockHSPPeer:
         reply_to_address = task_payload.get('callback_address') # Address to send the result
 
         if not requested_cap_id or not correlation_id or not reply_to_address:
-            print(f"  MockPeer: Invalid TaskRequest - missing capability_id, correlation_id, or callback_address.")
+            _ = print(f"  MockPeer: Invalid TaskRequest - missing capability_id, correlation_id, or callback_address.")
             # Optionally send a failure TaskResult
             return
 
@@ -202,7 +200,7 @@ class MockHSPPeer:
                             confidence_score=mock_fact.get("confidence", 0.75),
                             tags=["mock_kb_derived", mock_fact.get("type", "general")]
                         )
-                        found_facts_for_hsp.append(hsp_fact)
+                        _ = found_facts_for_hsp.append(hsp_fact)
                         if len(found_facts_for_hsp) >= max_results:
                             break
 
@@ -230,7 +228,7 @@ class MockHSPPeer:
 
         if response_payload:
             print(f"  MockPeer: Sending TaskResult (status: {response_payload.get('status')}) to '{reply_to_address}' for CorrID '{correlation_id}'.")
-            await self.connector.send_task_result(response_payload, reply_to_address, correlation_id)
+            _ = await self.connector.send_task_result(response_payload, reply_to_address, correlation_id)
 
 
     async def run_loop(self):
@@ -238,17 +236,17 @@ class MockHSPPeer:
         fact_counter = 0
         env_counter = 0
         while self.connector.is_connected:
-            await asyncio.sleep(15) # Action every 15 seconds
+            _ = await asyncio.sleep(15) # Action every 15 seconds
 
             # Alternate between publishing a fact and an environmental state
             if fact_counter <= env_counter:
                 fact_counter += 1
-                print(f"\n[MockPeer-{self.ai_id}] Periodic action: Publishing sample fact {fact_counter}...")
-                await self.publish_sample_fact(fact_counter)
+                _ = print(f"\n[MockPeer-{self.ai_id}] Periodic action: Publishing sample fact {fact_counter}...")
+                _ = await self.publish_sample_fact(fact_counter)
             elif env_counter < fact_counter : # Publish env state if fewer env states have been sent
                 env_counter += 1
-                print(f"\n[MockPeer-{self.ai_id}] Periodic action: Publishing sample environment state {env_counter}...")
-                await self.publish_sample_environmental_state(env_counter)
+                _ = print(f"\n[MockPeer-{self.ai_id}] Periodic action: Publishing sample environment state {env_counter}...")
+                _ = await self.publish_sample_environmental_state(env_counter)
             # else: pass
 
 
@@ -271,7 +269,7 @@ class MockHSPPeer:
                 tags=["type1_conflict", "original"] #type: ignore
             )
             self.published_conflicting_fact_ids[conflict_test_fact_original_id] = fact_payload
-            print(f"  Publishing Type 1 ORIGINAL: ID '{fact_payload['id']}', Conf: {fact_payload['confidence_score']}")
+            _ = print(f"  Publishing Type 1 ORIGINAL: ID '{fact_payload['id']}', Conf: {fact_payload['confidence_score']}")
         elif counter == 4 and conflict_test_fact_original_id in self.published_conflicting_fact_ids: # Update with higher confidence
             fact_payload = HSPFactPayload(
                 id=conflict_test_fact_original_id, statement_type="natural_language",
@@ -279,7 +277,7 @@ class MockHSPPeer:
                 source_ai_id=self.ai_id, timestamp_created=datetime.now(timezone.utc).isoformat(), confidence_score=0.9,
                 tags=["type1_conflict", "update_high_conf"] #type: ignore
             )
-            print(f"  Publishing Type 1 UPDATE (HighConf): ID '{fact_payload['id']}', Conf: {fact_payload['confidence_score']}")
+            _ = print(f"  Publishing Type 1 UPDATE (HighConf): ID '{fact_payload['id']}', Conf: {fact_payload['confidence_score']}")
         elif counter == 6 and conflict_test_fact_original_id in self.published_conflicting_fact_ids: # Update with different value, similar confidence
             fact_payload = HSPFactPayload(
                 id=conflict_test_fact_original_id, statement_type="natural_language",
@@ -287,7 +285,7 @@ class MockHSPPeer:
                 source_ai_id=self.ai_id, timestamp_created=datetime.now(timezone.utc).isoformat(), confidence_score=0.72, # Similar to original 0.7
                 tags=["type1_conflict", "update_diff_value_similar_conf"] #type: ignore
             )
-            print(f"  Publishing Type 1 UPDATE (DiffValue): ID '{fact_payload['id']}', Conf: {fact_payload['confidence_score']}")
+            _ = print(f"  Publishing Type 1 UPDATE (DiffValue): ID '{fact_payload['id']}', Conf: {fact_payload['confidence_score']}")
 
         # --- Type 2 Semantic Conflict Test Facts (S/P based) & Numerical Merge ---
         # Scenario 1: Semantic conflict, new one more confident
@@ -366,7 +364,7 @@ class MockHSPPeer:
                     source_ai_id=self.ai_id, timestamp_created=timestamp, confidence_score=0.98,
                     tags=["sample_fact", "structured_mappable"] #type: ignore
                 )
-                print(f"  Publishing REGULAR STRUCTURED (mappable) fact: ID '{fact_payload['id']}'")
+                _ = print(f"  Publishing REGULAR STRUCTURED (mappable) fact: ID '{fact_payload['id']}'")
             else: # Regular NL fact
                 fact_payload = HSPFactPayload(
                     id=fact_id_reg, statement_type="natural_language",
@@ -374,7 +372,7 @@ class MockHSPPeer:
                     source_ai_id=self.ai_id, timestamp_created=timestamp, confidence_score=0.92,
                     tags=["sample_fact", "natural_language"] #type: ignore
                 )
-                print(f"  Publishing REGULAR NL fact: ID '{fact_payload['id']}'")
+                _ = print(f"  Publishing REGULAR NL fact: ID '{fact_payload['id']}'")
 
         if fact_payload:
             self.connector.publish_fact(fact_payload, topic=topic)
@@ -399,15 +397,15 @@ class MockHSPPeer:
             scope_type="global"
         )
         topic = "hsp/environment/peer_updates" # CLI peer doesn't subscribe to this by default
-        print(f"[MockPeer-{self.ai_id}] Publishing sample environmental state to '{topic}' (ID: {payload['update_id']})")
+        _ = print(f"[MockPeer-{self.ai_id}] Publishing sample environmental state to '{topic}' (ID: {payload['update_id']})")
 
         envelope: HSPMessageEnvelope = { # type: ignore
             "hsp_envelope_version": "0.1",
-            "message_id": str(uuid.uuid4()),
+            _ = "message_id": str(uuid.uuid4()),
             "correlation_id": None,
             "sender_ai_id": self.ai_id,
             "recipient_ai_id": "all",
-            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
+            _ = "timestamp_sent": datetime.now(timezone.utc).isoformat(),
             "message_type": "HSP::EnvironmentalState_v0.1",
             "protocol_version": "0.1",
             "communication_pattern": "publish",
@@ -421,64 +419,64 @@ class MockHSPPeer:
 
 
     async def start(self):
-        print(f"[MockPeer-{self.ai_id}] Attempting to connect...")
-        await self.connector.connect()
+        _ = print(f"[MockPeer-{self.ai_id}] Attempting to connect...")
+        _ = await self.connector.connect()
         # Allow a brief moment for any async post-connect initialization
-        await asyncio.sleep(0.2)
+        _ = await asyncio.sleep(0.2)
 
         if self.connector.is_connected:
-            print(f"[MockPeer-{self.ai_id}] Successfully connected to MQTT broker.")
+            _ = print(f"[MockPeer-{self.ai_id}] Successfully connected to MQTT broker.")
 
             # 1. Publish capabilities
-            print(f"[MockPeer-{self.ai_id}] Publishing capabilities...")
+            _ = print(f"[MockPeer-{self.ai_id}] Publishing capabilities...")
             for cap_id, cap_payload in self.mock_capabilities.items():
-                await self.connector.publish_capability_advertisement(cap_payload)
-                print(f"  MockPeer: Advertised capability '{cap_id}'.")
+                _ = await self.connector.publish_capability_advertisement(cap_payload)
+                _ = print(f"  MockPeer: Advertised capability '{cap_id}'.")
 
             # 2. Subscribe to relevant topics
             topics_to_subscribe = [
                 "hsp/knowledge/facts/#", # All facts
                 f"hsp/requests/{self.ai_id}/#", # Task requests specifically for this mock AI
             ]
-            print(f"[MockPeer-{self.ai_id}] Subscribing to topics: {topics_to_subscribe}")
+            _ = print(f"[MockPeer-{self.ai_id}] Subscribing to topics: {topics_to_subscribe}")
             for topic in topics_to_subscribe:
-                await self.connector.subscribe(topic)
+                _ = await self.connector.subscribe(topic)
 
-            print(f"[MockPeer-{self.ai_id}] Subscriptions complete. Listening...")
+            _ = print(f"[MockPeer-{self.ai_id}] Subscriptions complete. Listening...")
 
             # Start a task for periodic publishing (facts, heartbeats, etc.)
-            asyncio.create_task(self.run_loop())
+            _ = asyncio.create_task(self.run_loop())
 
             # Keep the main start task alive
             while True:
-                await asyncio.sleep(1)
+                _ = await asyncio.sleep(1)
         else:
-            print(f"[MockPeer-{self.ai_id}] Failed to establish connection after connect() call.")
+            _ = print(f"[MockPeer-{self.ai_id}] Failed to establish connection after connect() call.")
 
     async def stop(self):
-        print(f"[MockPeer-{self.ai_id}] Stopping...")
-        await self.connector.disconnect()
-        print(f"[MockPeer-{self.ai_id}] Disconnected.")
+        _ = print(f"[MockPeer-{self.ai_id}] Stopping...")
+        _ = await self.connector.disconnect()
+        _ = print(f"[MockPeer-{self.ai_id}] Disconnected.")
 
 
 async def main_async_runner():
     peer_id = f"did:hsp:mock_peer_{uuid.uuid4().hex[:8]}"
-    print(f"--- Starting Mock HSP Peer --- \nID: {peer_id}")
+    _ = print(f"--- Starting Mock HSP Peer --- \nID: {peer_id}")
     # Ensure MQTT broker is running at localhost:1883
     peer = MockHSPPeer(ai_id=peer_id, broker_address="localhost", broker_port=1883)
 
     try:
-        await peer.start()
+        _ = await peer.start()
     except KeyboardInterrupt:
-        print(f"\n[MockPeer-{peer_id}] KeyboardInterrupt received.")
+        _ = print(f"\n[MockPeer-{peer_id}] KeyboardInterrupt received.")
     except Exception as e:
-        print(f"[MockPeer-{peer_id}] An error occurred: {e}")
+        _ = print(f"[MockPeer-{peer_id}] An error occurred: {e}")
     finally:
-        print(f"[MockPeer-{peer_id}] Shutting down...")
-        await peer.stop()
+        _ = print(f"[MockPeer-{peer_id}] Shutting down...")
+        _ = await peer.stop()
         # Allow time for MQTT disconnect to complete
-        await asyncio.sleep(1)
-        print(f"[MockPeer-{peer_id}] Exited.")
+        _ = await asyncio.sleep(1)
+        _ = print(f"[MockPeer-{peer_id}] Exited.")
 
 if __name__ == "__main__":
     # To run this:
@@ -488,9 +486,8 @@ if __name__ == "__main__":
 
     # Add a simple check for paho-mqtt
     try:
-        import paho.mqtt.client
     except ImportError:
-        print("Error: paho-mqtt library not found. Please install it: pip install paho-mqtt")
-        sys.exit(1)
+        _ = print("Error: paho-mqtt library not found. Please install it: pip install paho-mqtt")
+        _ = sys.exit(1)
 
-    asyncio.run(main_async_runner())
+    _ = asyncio.run(main_async_runner())

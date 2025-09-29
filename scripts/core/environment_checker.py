@@ -8,12 +8,7 @@ import sys
 import json
 import subprocess
 import time
-import traceback
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional, Union, Any
-from enum import Enum
-
-class EnvironmentComponent(Enum):
     """环境组件枚举"""
     PYTHON = "python"              # Python环境
     VENV = "venv"                  # 虚拟环境
@@ -36,7 +31,7 @@ class EnvironmentStatus(Enum):
 
 class EnvironmentCheckResult:
     """环境检查结果类"""
-    def __init__(self, component: EnvironmentComponent):
+    def __init__(self, component: EnvironmentComponent) -> None:
         self.component = component.value
         self.status = EnvironmentStatus.HEALTHY.value
         self.details = ""
@@ -50,7 +45,7 @@ class EnvironmentCheckResult:
 class EnvironmentChecker:
     """环境检查器"""
     
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
         self.backend_root = project_root / "apps" / "backend"
         self.frontend_root = project_root / "apps" / "frontend-dashboard"
@@ -61,8 +56,8 @@ class EnvironmentChecker:
         
         # 环境配置
         self.env_config = {
-            "python_min_version": (3, 8),
-            "node_min_version": (16, 0),
+            _ = "python_min_version": (3, 8),
+            _ = "node_min_version": (16, 0),
             "required_env_vars": [
                 "FIREBASE_CREDENTIALS_PATH"
             ],
@@ -97,11 +92,11 @@ class EnvironmentChecker:
             else:
                 result.status = EnvironmentStatus.ERROR.value
                 result.details = f"Python版本 {result.version} 不满足最低要求 {min_version[0]}.{min_version[1]}"
-                result.suggestions.append(f"请升级Python到{min_version[0]}.{min_version[1]}或更高版本")
+                _ = result.suggestions.append(f"请升级Python到{min_version[0]}.{min_version[1]}或更高版本")
             
         except Exception as e:
             result.status = EnvironmentStatus.ERROR.value
-            result.errors.append(f"检查Python环境时出错: {str(e)}")
+            _ = result.errors.append(f"检查Python环境时出错: {str(e)}")
             result.details = "无法检查Python环境"
         
         return result
@@ -131,17 +126,17 @@ class EnvironmentChecker:
                     else:
                         result.status = EnvironmentStatus.WARNING.value
                         result.details = f"虚拟环境存在但未激活: {venv_path}"
-                        result.suggestions.append("请激活虚拟环境后再运行")
+                        _ = result.suggestions.append("请激活虚拟环境后再运行")
                     break
             
             if not venv_found:
                 result.status = EnvironmentStatus.WARNING.value
                 result.details = "未找到虚拟环境"
-                result.suggestions.append("建议创建虚拟环境以隔离依赖")
+                _ = result.suggestions.append("建议创建虚拟环境以隔离依赖")
             
         except Exception as e:
             result.status = EnvironmentStatus.ERROR.value
-            result.errors.append(f"检查虚拟环境时出错: {str(e)}")
+            _ = result.errors.append(f"检查虚拟环境时出错: {str(e)}")
             result.details = "无法检查虚拟环境"
         
         return result
@@ -171,21 +166,21 @@ class EnvironmentChecker:
                     if tuple(version_parts[:2]) < min_version:
                         result.status = EnvironmentStatus.WARNING.value
                         result.details += f"，但建议升级到{min_version[0]}.{min_version[1]}或更高版本"
-                        result.suggestions.append(f"建议升级Node.js到{min_version[0]}.{min_version[1]}或更高版本")
+                        _ = result.suggestions.append(f"建议升级Node.js到{min_version[0]}.{min_version[1]}或更高版本")
                 except:
                     pass
             else:
                 result.status = EnvironmentStatus.ERROR.value
                 result.details = "Node.js未安装或无法访问"
-                result.suggestions.append("请安装Node.js")
+                _ = result.suggestions.append("请安装Node.js")
             
         except subprocess.TimeoutExpired:
             result.status = EnvironmentStatus.ERROR.value
-            result.errors.append("检查Node.js版本超时")
+            _ = result.errors.append("检查Node.js版本超时")
             result.details = "无法检查Node.js版本"
         except Exception as e:
             result.status = EnvironmentStatus.ERROR.value
-            result.errors.append(f"检查Node.js环境时出错: {str(e)}")
+            _ = result.errors.append(f"检查Node.js环境时出错: {str(e)}")
             result.details = "无法检查Node.js环境"
         
         return result
@@ -210,15 +205,15 @@ class EnvironmentChecker:
             else:
                 result.status = EnvironmentStatus.WARNING.value
                 result.details = "pnpm未安装或无法访问"
-                result.suggestions.append("建议安装pnpm: npm install -g pnpm")
+                _ = result.suggestions.append("建议安装pnpm: npm install -g pnpm")
             
         except subprocess.TimeoutExpired:
             result.status = EnvironmentStatus.ERROR.value
-            result.errors.append("检查pnpm版本超时")
+            _ = result.errors.append("检查pnpm版本超时")
             result.details = "无法检查pnpm版本"
         except Exception as e:
             result.status = EnvironmentStatus.ERROR.value
-            result.errors.append(f"检查pnpm时出错: {str(e)}")
+            _ = result.errors.append(f"检查pnpm时出错: {str(e)}")
             result.details = "无法检查pnpm"
         
         return result
@@ -247,7 +242,7 @@ class EnvironmentChecker:
                         result.details += f"找到依赖文件: {req_file}\n"
                     except Exception as e:
                         python_deps_ok = False
-                        result.errors.append(f"读取依赖文件 {req_file} 失败: {str(e)}")
+                        _ = result.errors.append(f"读取依赖文件 {req_file} 失败: {str(e)}")
             
             # 检查Node.js依赖
             package_json_files = [
@@ -265,8 +260,8 @@ class EnvironmentChecker:
                         result.details += f"找到node_modules: {node_modules_dir}\n"
                     else:
                         node_deps_ok = False
-                        result.warnings.append(f"未找到node_modules: {node_modules_dir}")
-                        result.suggestions.append(f"请在 {pkg_file.parent} 目录运行 pnpm install")
+                        _ = result.warnings.append(f"未找到node_modules: {node_modules_dir}")
+                        _ = result.suggestions.append(f"请在 {pkg_file.parent} 目录运行 pnpm install")
             
             if python_deps_ok and node_deps_ok:
                 result.status = EnvironmentStatus.HEALTHY.value
@@ -280,7 +275,7 @@ class EnvironmentChecker:
             
         except Exception as e:
             result.status = EnvironmentStatus.ERROR.value
-            result.errors.append(f"检查依赖包时出错: {str(e)}")
+            _ = result.errors.append(f"检查依赖包时出错: {str(e)}")
             result.details = "无法检查依赖包"
         
         return result
@@ -295,14 +290,14 @@ class EnvironmentChecker:
             if not firebase_creds_path:
                 result.status = EnvironmentStatus.WARNING.value
                 result.details = "FIREBASE_CREDENTIALS_PATH环境变量未设置"
-                result.suggestions.append("请设置FIREBASE_CREDENTIALS_PATH环境变量")
+                _ = result.suggestions.append("请设置FIREBASE_CREDENTIALS_PATH环境变量")
                 return result
             
             creds_file = Path(firebase_creds_path)
             if not creds_file.exists():
                 result.status = EnvironmentStatus.ERROR.value
                 result.details = f"Firebase凭据文件不存在: {firebase_creds_path}"
-                result.suggestions.append("请确保Firebase凭据文件存在")
+                _ = result.suggestions.append("请确保Firebase凭据文件存在")
                 return result
             
             # 尝试连接Firebase
@@ -312,12 +307,12 @@ class EnvironmentChecker:
                 
                 if not firebase_admin._apps:
                     cred = credentials.Certificate(firebase_creds_path)
-                    firebase_admin.initialize_app(cred)
+                    _ = firebase_admin.initialize_app(cred)
                 
                 db = firestore.client()
                 # 简单的连接测试
                 doc_ref = db.collection('health_check').document('ping')
-                doc_ref.set({'timestamp': firestore.SERVER_TIMESTAMP})
+                _ = doc_ref.set({'timestamp': firestore.SERVER_TIMESTAMP})
                 doc = doc_ref.get()
                 
                 if doc.exists:
@@ -330,15 +325,15 @@ class EnvironmentChecker:
             except ImportError:
                 result.status = EnvironmentStatus.WARNING.value
                 result.details = "Firebase Admin SDK未安装"
-                result.suggestions.append("请安装firebase-admin包")
+                _ = result.suggestions.append("请安装firebase-admin包")
             except Exception as e:
                 result.status = EnvironmentStatus.ERROR.value
                 result.details = f"Firebase数据库连接失败: {str(e)}"
-                result.errors.append(f"数据库连接错误: {str(e)}")
+                _ = result.errors.append(f"数据库连接错误: {str(e)}")
             
         except Exception as e:
             result.status = EnvironmentStatus.ERROR.value
-            result.errors.append(f"检查数据库时出错: {str(e)}")
+            _ = result.errors.append(f"检查数据库时出错: {str(e)}")
             result.details = "无法检查数据库"
         
         return result
@@ -374,7 +369,7 @@ class EnvironmentChecker:
             else:
                 result.status = EnvironmentStatus.ERROR.value
                 result.details = f"API服务器响应异常: HTTP {response.status_code}"
-                result.suggestions.append("请检查API服务器日志")
+                _ = result.suggestions.append("请检查API服务器日志")
                 
         except FileNotFoundError:
             result.status = EnvironmentStatus.ERROR.value
@@ -382,14 +377,14 @@ class EnvironmentChecker:
         except ImportError:
             result.status = EnvironmentStatus.WARNING.value
             result.details = "缺少必要的依赖包（requests, yaml）"
-            result.suggestions.append("请安装requests和pyyaml包")
+            _ = result.suggestions.append("请安装requests和pyyaml包")
         except requests.RequestException as e:
             result.status = EnvironmentStatus.ERROR.value
             result.details = f"无法连接到API服务器: {str(e)}"
-            result.suggestions.append("请确保API服务器正在运行")
+            _ = result.suggestions.append("请确保API服务器正在运行")
         except Exception as e:
             result.status = EnvironmentStatus.ERROR.value
-            result.errors.append(f"检查API服务器时出错: {str(e)}")
+            _ = result.errors.append(f"检查API服务器时出错: {str(e)}")
             result.details = "无法检查API服务器"
         
         return result
@@ -418,8 +413,8 @@ class EnvironmentChecker:
             import paho.mqtt.client as mqtt
             
             mqtt_client = mqtt.Client()
-            mqtt_client.connect(broker_address, broker_port, 60)
-            mqtt_client.disconnect()
+            _ = mqtt_client.connect(broker_address, broker_port, 60)
+            _ = mqtt_client.disconnect()
             
             result.status = EnvironmentStatus.HEALTHY.value
             result.details = f"MQTT代理连接正常: {broker_address}:{broker_port}"
@@ -430,12 +425,12 @@ class EnvironmentChecker:
         except ImportError:
             result.status = EnvironmentStatus.WARNING.value
             result.details = "缺少paho-mqtt包"
-            result.suggestions.append("请安装paho-mqtt包")
+            _ = result.suggestions.append("请安装paho-mqtt包")
         except Exception as e:
             result.status = EnvironmentStatus.ERROR.value
             result.details = f"无法连接到MQTT代理: {str(e)}"
-            result.errors.append(f"MQTT连接错误: {str(e)}")
-            result.suggestions.append("请确保MQTT代理正在运行")
+            _ = result.errors.append(f"MQTT连接错误: {str(e)}")
+            _ = result.suggestions.append("请确保MQTT代理正在运行")
         
         return result
     
@@ -450,21 +445,21 @@ class EnvironmentChecker:
             for config_file in self.env_config["required_config_files"]:
                 file_path = self.project_root / config_file
                 if file_path.exists():
-                    existing_files.append(config_file)
+                    _ = existing_files.append(config_file)
                 else:
-                    missing_files.append(config_file)
+                    _ = missing_files.append(config_file)
             
             if missing_files:
                 result.status = EnvironmentStatus.ERROR.value
                 result.details = f"缺少配置文件: {', '.join(missing_files)}"
-                result.suggestions.append("请确保所有配置文件都存在")
+                _ = result.suggestions.append("请确保所有配置文件都存在")
             else:
                 result.status = EnvironmentStatus.HEALTHY.value
                 result.details = f"所有配置文件都存在: {', '.join(existing_files)}"
             
         except Exception as e:
             result.status = EnvironmentStatus.ERROR.value
-            result.errors.append(f"检查配置文件时出错: {str(e)}")
+            _ = result.errors.append(f"检查配置文件时出错: {str(e)}")
             result.details = "无法检查配置文件"
         
         return result
@@ -490,7 +485,7 @@ class EnvironmentChecker:
             components = [component]
         
         for comp in components:
-            print(f"检查 {comp.value}...")
+            _ = print(f"检查 {comp.value}...")
             
             if comp == EnvironmentComponent.PYTHON:
                 result = self.check_python_environment()
@@ -517,15 +512,15 @@ class EnvironmentChecker:
             
             # 打印检查结果
             status_icon = "✓" if result.status == EnvironmentStatus.HEALTHY.value else "⚠" if result.status == EnvironmentStatus.WARNING.value else "✗"
-            print(f"{status_icon} {comp.value}: {result.details}")
+            _ = print(f"{status_icon} {comp.value}: {result.details}")
             
             if result.warnings:
                 for warning in result.warnings:
-                    print(f"  警告: {warning}")
+                    _ = print(f"  警告: {warning}")
             
             if result.suggestions:
                 for suggestion in result.suggestions:
-                    print(f"  建议: {suggestion}")
+                    _ = print(f"  建议: {suggestion}")
         
         return self.check_results
     
@@ -554,8 +549,8 @@ class EnvironmentChecker:
             report_path = self.project_root / f"environment_check_report_{int(time.time())}.json"
         
         report_data = {
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "summary": self.get_environment_summary(),
+            _ = "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            _ = "summary": self.get_environment_summary(),
             "results": {}
         }
         
@@ -574,11 +569,11 @@ class EnvironmentChecker:
         try:
             with open(report_path, 'w', encoding='utf-8') as f:
                 json.dump(report_data, f, ensure_ascii=False, indent=2)
-            print(f"✓ 环境检查报告已保存到 {report_path}")
+            _ = print(f"✓ 环境检查报告已保存到 {report_path}")
         except Exception as e:
-            print(f"✗ 保存环境检查报告时出错: {e}")
+            _ = print(f"✗ 保存环境检查报告时出错: {e}")
     
     def clear_results(self):
         """清除检查结果"""
-        self.check_results.clear()
-        print("✓ 环境检查结果已清除")
+        _ = self.check_results.clear()
+        _ = print("✓ 环境检查结果已清除")

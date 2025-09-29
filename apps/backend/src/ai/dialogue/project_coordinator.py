@@ -1,4 +1,3 @@
-from __future__ import annotations
 import asyncio
 import json
 import re
@@ -9,19 +8,17 @@ from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
 import yaml
 import os
 
-# 修复相对导入路径，使用正确的相对导入
-from src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload
-from src.core.shared.types.common_types import PendingHSPTaskInfo
+from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload
+from apps.backend.src.core.shared.types.common_types import PendingHSPTaskInfo
 from datetime import datetime, timezone
 
 if TYPE_CHECKING:
-    from src.core.services.multi_llm_service import MultiLLMService
-    from src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
-    from src.hsp.connector import HSPConnector
-    from src.managers.agent_manager import AgentManager
-    from src.ai.memory.ham_memory_manager import HAMMemoryManager
-    from src.ai.learning.learning_manager import LearningManager
-    from src.ai.personality.personality_manager import PersonalityManager
+    from apps.backend.src.core.service_discovery.service_discovery_module import ServiceDiscoveryModule
+    from apps.backend.src.core.hsp.connector import HSPConnector
+    from apps.backend.src.core.managers.agent_manager import AgentManager
+    from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+    from apps.backend.src.core.learning.learning_manager import LearningManager
+    from apps.backend.src.core.personality.personality_manager import PersonalityManager
 
 class ProjectCoordinator:
     def __init__(self,
@@ -44,11 +41,11 @@ class ProjectCoordinator:
         self.config = dialogue_manager_config
 
         self.turn_timeout_seconds = self.config.get("turn_timeout_seconds", 120)
-        self.pending_hsp_task_requests: Dict[str, PendingHSPTaskInfo] = {}
-        self.task_completion_events: Dict[str, asyncio.Event] = {}
-        self.task_results: Dict[str, Any] = {}
+        self.pending_hsp_task_requests: Dict[str, PendingHSPTaskInfo] = 
+        self.task_completion_events: Dict[str, asyncio.Event] = 
+        self.task_results: Dict[str, Any] = 
         self.ai_id = self.hsp_connector.ai_id if self.hsp_connector else "project_coordinator"
-        self._load_prompts()
+        self._load_prompts
         logging.info("ProjectCoordinator initialized.")
 
     def _load_prompts(self):
@@ -68,7 +65,7 @@ class ProjectCoordinator:
             self.task_results[correlation_id] = {"error": result_payload.get("error_details", "Unknown error")}
 
         if correlation_id in self.task_completion_events:
-            self.task_completion_events[correlation_id].set()
+            self.task_completion_events[correlation_id].set
 
     async def handle_project(self, project_query: str, session_id: Optional[str], user_id: Optional[str]) -> str:
         ai_name = self.personality_manager.get_current_personality_trait("display_name", "AI")
@@ -78,7 +75,7 @@ class ProjectCoordinator:
 
         logging.info(f"[{self.ai_id}] Phase 0/1: Decomposing project query...")
         # Use the async version of get_all_capabilities
-        available_capabilities = await self.service_discovery.get_all_capabilities_async()
+        available_capabilities = await self.service_discovery.get_all_capabilities_async
         subtasks = await self._decompose_user_intent_into_subtasks(project_query, available_capabilities)
 
         if not subtasks:
@@ -103,11 +100,11 @@ class ProjectCoordinator:
         return f"{ai_name}: Here's the result of your project request:\n\n{final_response}"
 
     async def _execute_task_graph(self, subtasks: List[Dict[str, Any]]) -> Dict[int, Any]:
-        task_graph = nx.DiGraph()
+        task_graph = nx.DiGraph
         for i, subtask in enumerate(subtasks):
             task_graph.add_node(i, data=subtask)
             if isinstance(subtask.get("task_parameters"), dict):
-                for param_value in subtask["task_parameters"].values():
+                for param_value in subtask["task_parameters"].values:
                     if isinstance(param_value, str):
                         dependencies = re.findall(r"<output_of_task_(\d+)>", param_value)
                         for dep_index_str in dependencies:
@@ -119,9 +116,9 @@ class ProjectCoordinator:
             raise ValueError("Circular dependency detected.")
 
         execution_order = list(nx.topological_sort(task_graph))
-        task_results = {}
+        task_results = 
         for task_index in execution_order:
-            subtask_data = task_graph.nodes[task_index]['data'].copy()
+            subtask_data = task_graph.nodes[task_index]['data'].copy
 
             if isinstance(subtask_data.get("task_parameters"), dict):
                 subtask_data["task_parameters"] = self._substitute_dependencies(subtask_data["task_parameters"], task_results)
@@ -131,8 +128,8 @@ class ProjectCoordinator:
         return task_results
 
     def _substitute_dependencies(self, params: Dict[str, Any], results: Dict[int, Any]) -> Dict[str, Any]:
-        substituted_params = params.copy()
-        for key, value in substituted_params.items():
+        substituted_params = params.copy
+        for key, value in substituted_params.items:
             if isinstance(value, str):
                 def replace_func(match):
                     dep_idx = int(match.group(1))
@@ -145,7 +142,7 @@ class ProjectCoordinator:
 
     async def _dispatch_single_subtask(self, subtask: Dict[str, Any]) -> Any:
         capability_name = subtask.get("capability_needed")
-        params = subtask.get("task_parameters", {})
+        params = subtask.get("task_parameters", )
         
         # Check if capability_name is None
         if not capability_name:
@@ -175,7 +172,7 @@ class ProjectCoordinator:
 
         if not found_caps:
             # Log all available capabilities for debugging
-            all_caps = await self.service_discovery.get_all_capabilities_async()
+            all_caps = await self.service_discovery.get_all_capabilities_async
             logging.info(f"[ProjectCoordinator] No capabilities found. All known capabilities: {len(all_caps)}")
             for cap in all_caps:
                 logging.info(f"[ProjectCoordinator] Available capability: {cap.get('capability_id')} - {cap.get('name')} from AI: {cap.get('ai_id')}")
@@ -196,7 +193,7 @@ class ProjectCoordinator:
         if not target_ai_id or not capability_id or not self.hsp_connector:
             return None, None
 
-        request_id = f"taskreq_{uuid.uuid4().hex}"
+        request_id = f"taskreq_{uuid.uuid4.hex}"
         callback_topic = f"hsp/results/{self.ai_id}/{request_id}"
 
         hsp_task_payload = HSPTaskRequestPayload(
@@ -210,7 +207,7 @@ class ProjectCoordinator:
         if correlation_id:
             self.pending_hsp_task_requests[correlation_id] = PendingHSPTaskInfo(
                 user_id="project_subtask", session_id="project_subtask", original_query_text=description,
-                request_timestamp=datetime.now(timezone.utc).isoformat(),
+                request_timestamp=datetime.now(timezone.utc).isoformat,
                 capability_id=capability_id, target_ai_id=target_ai_id,
                 expected_callback_topic=callback_topic, request_type="project_subtask"
             )
@@ -218,10 +215,10 @@ class ProjectCoordinator:
         return correlation_id, "Task request sent successfully"
 
     async def _wait_for_task_result(self, correlation_id: str, capability_name: str) -> Any:
-        completion_event = asyncio.Event()
+        completion_event = asyncio.Event
         self.task_completion_events[correlation_id] = completion_event
         try:
-            await asyncio.wait_for(completion_event.wait(), timeout=self.turn_timeout_seconds)
+            await asyncio.wait_for(completion_event.wait, timeout=self.turn_timeout_seconds)
             return self.task_results.pop(correlation_id, {"error": "Result not found after event."})
         except asyncio.TimeoutError:
             return {"error": f"Task for '{capability_name}' timed out."}
@@ -250,7 +247,7 @@ class ProjectCoordinator:
                         "data": "test data for analysis"
                     },
                     "task_description": "Analyze test data",
-                    "dependencies": []
+                    "dependencies": 
                 },
                 {
                     "capability_needed": "data_analysis_v1",
@@ -259,7 +256,7 @@ class ProjectCoordinator:
                         "expression": "5+10"
                     },
                     "task_description": "Calculate simple expression",
-                    "dependencies": []
+                    "dependencies": 
                 }
             ]
         
@@ -275,10 +272,10 @@ class ProjectCoordinator:
                             "data": [1, 2, 3, 4, 5]  # Default data for testing
                         },
                         "task_description": "Perform calculation",
-                        "dependencies": []
+                        "dependencies": 
                     }
                 ]
-            return []
+            return 
             
         # Try to parse as JSON
         try:
@@ -295,7 +292,7 @@ class ProjectCoordinator:
                     if isinstance(subtasks, list) and all(isinstance(item, dict) for item in subtasks):
                         logging.info(f"[ProjectCoordinator] Extracted subtasks from dict: {subtasks}")
                         return subtasks
-                return []
+                return 
         except json.JSONDecodeError as e:
             logging.error(f"[ProjectCoordinator] Failed to parse LLM response as JSON: {e}")
             logging.error(f"[ProjectCoordinator] Raw LLM output: {raw_llm_output}")
@@ -327,7 +324,7 @@ class ProjectCoordinator:
                             "data": [1, 2, 3, 4, 5]  # Default data for testing
                         },
                         "task_description": "Perform calculation",
-                        "dependencies": []
+                        "dependencies": 
                     }
                 ]
             elif "analyze" in user_query.lower() or "data" in user_query.lower():
@@ -339,10 +336,10 @@ class ProjectCoordinator:
                             "data": "test data for analysis"
                         },
                         "task_description": "Analyze test data",
-                        "dependencies": []
+                        "dependencies": 
                     }
                 ]
-            return []
+            return 
 
     async def _integrate_subtask_results(self, original_query: str, results: Dict[int, Any]) -> str:
         prompt = self.prompts['integrate_subtask_results'].format(

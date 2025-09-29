@@ -5,16 +5,11 @@
 
 import asyncio
 import aiohttp
-import json
 import logging
 import time
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
-from dataclasses import dataclass
-import os
-from pathlib import Path
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 @dataclass
 class RetryConfig:
@@ -38,12 +33,12 @@ class EndpointConfig:
     
     def __post_init__(self):
         if self.backup_urls is None:
-            self.backup_urls = []
+            self.backup_urls = 
 
 class CircuitBreaker:
     """斷路器實現"""
     
-    def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 60.0):
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 60.0) -> None:
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.failure_count = 0
@@ -53,24 +48,24 @@ class CircuitBreaker:
     async def call(self, func):
         """執行函數調用"""
         if self.state == 'open':
-            if time.time() - self.last_failure_time > self.recovery_timeout:
+            if time.time - self.last_failure_time > self.recovery_timeout:
                 self.state = 'half-open'
             else:
                 raise Exception("Circuit breaker is open")
         
         try:
-            result = await func()
+            result = await func
             if self.state == 'half-open':
-                self.reset()
+                self.reset
             return result
         except Exception as e:
-            self.record_failure()
+            self.record_failure
             raise e
     
     def record_failure(self):
         """記錄失敗"""
         self.failure_count += 1
-        self.last_failure_time = time.time()
+        self.last_failure_time = time.time
         
         if self.failure_count >= self.failure_threshold:
             self.state = 'open'
@@ -105,19 +100,19 @@ class EnhancedRovoDevConnector:
             endpoint_configs: 端點配置
         """
         self.config = config
-        self.api_token = config.get('atlassian', {}).get('api_token')
-        self.cloud_id = config.get('atlassian', {}).get('cloud_id')
-        self.user_email = config.get('atlassian', {}).get('user_email')
+        self.api_token = config.get('atlassian', ).get('api_token')
+        self.cloud_id = config.get('atlassian', ).get('cloud_id')
+        self.user_email = config.get('atlassian', ).get('user_email')
         
         # 容錯配置
-        self.retry_config = retry_config or RetryConfig()
-        self.endpoint_configs = endpoint_configs or {}
-        self.current_endpoints = {}  # 當前使用的端點
-        self.endpoint_failures = {}  # 端點失敗計數
-        self.circuit_breakers = {}  # 斷路器
+        self.retry_config = retry_config or RetryConfig
+        self.endpoint_configs = endpoint_configs or 
+        self.current_endpoints =   # 當前使用的端點
+        self.endpoint_failures =   # 端點失敗計數
+        self.circuit_breakers =   # 斷路器
         
         # 構建基礎 URL
-        domain = config.get('atlassian', {}).get('domain', 'your-domain')
+        domain = config.get('atlassian', ).get('domain', 'your-domain')
         self.base_urls = {
             'confluence': f"https://{domain}.atlassian.net/wiki/rest/api",
             'jira': f"https://{domain}.atlassian.net/rest/api/3",
@@ -129,12 +124,12 @@ class EnhancedRovoDevConnector:
         self.authenticated = False
         
         # 緩存配置
-        self.cache_ttl = config.get('atlassian', {}).get('rovo_dev', {}).get('cache_ttl', 300)
-        self.cache = {}
-        self.cache_timestamps = {}
+        self.cache_ttl = config.get('atlassian', ).get('rovo_dev', ).get('cache_ttl', 300)
+        self.cache = 
+        self.cache_timestamps = 
         
         # 限流配置
-        self.max_concurrent = config.get('atlassian', {}).get('rovo_dev', {}).get('max_concurrent_requests', 5)
+        self.max_concurrent = config.get('atlassian', ).get('rovo_dev', ).get('max_concurrent_requests', 5)
         self.semaphore = asyncio.Semaphore(self.max_concurrent)
         
         # 統計信息
@@ -150,23 +145,23 @@ class EnhancedRovoDevConnector:
         }
         
         # 初始化端點配置和斷路器
-        self._initialize_endpoint_configs()
-        self._initialize_circuit_breakers()
+        self._initialize_endpoint_configs
+        self._initialize_circuit_breakers
     
     def _initialize_endpoint_configs(self):
         """初始化端點配置"""
-        for service, url in self.base_urls.items():
+        for service, url in self.base_urls.items:
             if service not in self.endpoint_configs:
                 # 創建默認端點配置
-                backup_urls = []
+                backup_urls = 
                 if service == 'jira':
                     backup_urls = [
-                        f"https://{self.config.get('atlassian', {}).get('domain', 'your-domain')}.atlassian.net/rest/api/3",
+                        f"https://{self.config.get('atlassian', ).get('domain', 'your-domain')}.atlassian.net/rest/api/3",
                         "https://api.atlassian.com/ex/jira"
                     ]
                 elif service == 'confluence':
                     backup_urls = [
-                        f"https://{self.config.get('atlassian', {}).get('domain', 'your-domain')}.atlassian.net/wiki/rest/api",
+                        f"https://{self.config.get('atlassian', ).get('domain', 'your-domain')}.atlassian.net/wiki/rest/api",
                         "https://api.atlassian.com/ex/confluence"
                     ]
                 
@@ -181,9 +176,9 @@ class EnhancedRovoDevConnector:
     
     def _initialize_circuit_breakers(self):
         """初始化斷路器"""
-        for service in self.base_urls.keys():
-            self.circuit_breakers[service] = CircuitBreaker()
-        self.circuit_breakers['unknown'] = CircuitBreaker() # Add a circuit breaker for unknown services
+        for service in self.base_urls.keys:
+            self.circuit_breakers[service] = CircuitBreaker
+        self.circuit_breakers['unknown'] = CircuitBreaker # Add a circuit breaker for unknown services
     
     async def start(self):
         """啟動連接器"""
@@ -192,20 +187,20 @@ class EnhancedRovoDevConnector:
             self.session = aiohttp.ClientSession(timeout=timeout)
         
         # 測試認證
-        await self._authenticate()
+        _ = await self._authenticate
     
     async def close(self):
         """關閉會話"""
         if self.session:
-            await self.session.close()
+            _ = await self.session.close
             self.session = None
 
     async def __aenter__(self):
-        await self.start()
+        _ = await self.start
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()
+        _ = await self.close
     
     async def _authenticate(self):
         """認證：調用 Jira /myself 檢查憑證是否有效，200 視為成功，其他視為失敗
@@ -284,7 +279,7 @@ class EnhancedRovoDevConnector:
                             self.retry_config.base_delay * (self.retry_config.backoff_factor ** attempt),
                             self.retry_config.max_delay
                         )
-                        await asyncio.sleep(delay)
+                        _ = await asyncio.sleep(delay)
                         continue
                 
                 # 最後一次嘗試失敗
@@ -295,9 +290,9 @@ class EnhancedRovoDevConnector:
         """單次HTTP請求（無重試）
         與測試用例對齊：當狀態碼 >= 400 時，拋出包含 "API 錯誤: <status>" 的異常。
         """
-        headers = kwargs.get('headers', {})
+        headers = kwargs.get('headers', )
         headers.update({
-            'Authorization': f'Basic {self._get_auth_header()}',
+            'Authorization': f'Basic {self._get_auth_header}',
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         })
@@ -323,7 +318,7 @@ class EnhancedRovoDevConnector:
                     response = resp
             elif hasattr(cm_or_resp, "__aenter__"):
                 # 只有 __aenter__ 的 mock 對象
-                aenter_result = cm_or_resp.__aenter__()
+                aenter_result = cm_or_resp.__aenter__
                 if inspect.isawaitable(aenter_result):
                     response = await aenter_result
                 else:
@@ -336,7 +331,7 @@ class EnhancedRovoDevConnector:
             if response.status >= 400:
                 err_text = None
                 try:
-                    err_text = await response.text()
+                    err_text = await response.text
                 except Exception:
                     err_text = None
                 status = response.status
@@ -345,13 +340,13 @@ class EnhancedRovoDevConnector:
                     msg = f"{msg} - {err_text}"
                 raise Exception(msg)
             
-            return await response.json()
+            return await response.json
 
     async def _make_single_request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
         """單次HTTP請求"""
-        headers = kwargs.get('headers', {})
+        headers = kwargs.get('headers', )
         headers.update({
-            'Authorization': f'Basic {self._get_auth_header()}',
+            'Authorization': f'Basic {self._get_auth_header}',
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         })
@@ -373,7 +368,7 @@ class EnhancedRovoDevConnector:
                         history=getattr(response, 'history', None),
                         status=response.status
                     )
-                return await response.json()
+                return await response.json
 
             # 同樣地，對 mock 對象進行寬容檢查
             try:
@@ -385,7 +380,7 @@ class EnhancedRovoDevConnector:
                             return await handle_response(response)
                     except Exception:
                         try:
-                            aenter_result = cm_or_resp.__aenter__()
+                            aenter_result = cm_or_resp.__aenter__
                             if inspect.isawaitable(aenter_result):
                                 response = await aenter_result
                             else:
@@ -396,7 +391,7 @@ class EnhancedRovoDevConnector:
                             return await handle_response(response)
                 elif has_aenter:
                     try:
-                        aenter_result = cm_or_resp.__aenter__()
+                        aenter_result = cm_or_resp.__aenter__
                         if inspect.isawaitable(aenter_result):
                             response = await aenter_result
                         else:
@@ -415,7 +410,7 @@ class EnhancedRovoDevConnector:
     # 輔助方法：放在便利函數之前，作為類的一部分
     def _get_service_from_url(self, url: str) -> str:
         """從URL獲取服務名稱"""
-        for service, base_url in self.base_urls.items():
+        for service, base_url in self.base_urls.items:
             if base_url in url:
                 return service
         return 'unknown'
@@ -456,7 +451,7 @@ class EnhancedRovoDevConnector:
         """獲取認證頭"""
         import base64
         credentials = f"{self.user_email}:{self.api_token}"
-        return base64.b64encode(credentials.encode()).decode()
+        return base64.b64encode(credentials.encode).decode
 
     async def get_cached_response(self, cache_key: str) -> Optional[Dict[str, Any]]:
         """獲取緩存響應"""
@@ -465,10 +460,10 @@ class EnhancedRovoDevConnector:
             # 兼容 datetime 或 float
             from datetime import datetime as _dt
             if isinstance(timestamp, _dt):
-                ts_val = timestamp.timestamp()
+                ts_val = timestamp.timestamp
             else:
                 ts_val = float(timestamp)
-            if (time.time() - ts_val) < self.cache_ttl:
+            if (time.time - ts_val) < self.cache_ttl:
                 self.stats['cache_hits'] += 1
                 return self.cache[cache_key]
             else:
@@ -482,22 +477,22 @@ class EnhancedRovoDevConnector:
     def set_cache(self, cache_key: str, data: Dict[str, Any]):
         """設置緩存"""
         self.cache[cache_key] = data
-        self.cache_timestamps[cache_key] = time.time()
+        self.cache_timestamps[cache_key] = time.time
     
     async def test_connection(self) -> Dict[str, bool]:
         """測試與各個 Atlassian 服務的連接"""
-        results = {}
+        results = 
         
         # 測試 Jira
         try:
-            await self._make_request_with_retry('GET', f"{self.current_endpoints['jira']}/myself")
+            _ = await self._make_request_with_retry('GET', f"{self.current_endpoints['jira']}/myself")
             results['jira'] = True
         except:
             results['jira'] = False
             
         # 測試 Confluence
         try:
-            await self._make_request_with_retry('GET', f"{self.current_endpoints['confluence']}/space")
+            _ = await self._make_request_with_retry('GET', f"{self.current_endpoints['confluence']}/space")
             results['confluence'] = True
         except:
             results['confluence'] = False
@@ -521,18 +516,18 @@ class EnhancedRovoDevConnector:
             'authenticated': self.authenticated,
             'session_active': self.session is not None,
             'cache_size': len(self.cache),
-            'services': await self.test_connection(),
+            'services': await self.test_connection,
             'stats': self.stats,
             'circuit_breakers': {
                 service: breaker.state 
-                for service, breaker in self.circuit_breakers.items()
+                for service, breaker in self.circuit_breakers.items
             },
             'current_endpoints': self.current_endpoints
         }
     
     def get_stats(self) -> Dict[str, Any]:
         """獲取統計信息"""
-        return self.stats.copy()
+        return self.stats.copy
     
     def reset_stats(self):
         """重置統計信息"""
@@ -608,12 +603,12 @@ async def create_enhanced_connector(config: Dict[str, Any],
                                   retry_config: Optional[RetryConfig] = None) -> EnhancedRovoDevConnector:
     """創建增強版連接器"""
     connector = EnhancedRovoDevConnector(config, retry_config)
-    await connector.start()
+    _ = await connector.start
     return connector
 
     def _get_service_from_url(self, url: str) -> str:
         """從URL獲取服務名稱"""
-        for service, base_url in self.base_urls.items():
+        for service, base_url in self.base_urls.items:
             if base_url in url:
                 return service
         return 'unknown'
@@ -662,4 +657,4 @@ async def create_enhanced_connector(config: Dict[str, Any],
         """獲取認證頭"""
         import base64
         credentials = f"{self.user_email}:{self.api_token}"
-        return base64.b64encode(credentials.encode()).decode()
+        return base64.b64encode(credentials.encode).decode

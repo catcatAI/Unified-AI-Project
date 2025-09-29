@@ -12,7 +12,7 @@ class MessageBridge:
         "HSP::Acknowledgement_v0.1": "acknowledgement",
     }
 
-    def __init__(self, external_connector: ExternalConnector, internal_bus: InternalBus, data_aligner: DataAligner):
+    def __init__(self, external_connector: ExternalConnector, internal_bus: InternalBus, data_aligner: DataAligner) -> None:
         self.external_connector = external_connector
         self.internal_bus = internal_bus
         self.data_aligner = data_aligner
@@ -46,7 +46,7 @@ class MessageBridge:
                 print(f"DEBUG: MessageBridge.handle_external_message - Publishing to internal bus channel: {internal_channel} with aligned_message: {aligned_message}")
                 # Await the async publish to ensure downstream async handlers complete (important for tests like ACK sending)
                 if hasattr(self.internal_bus, 'publish_async'):
-                    await self.internal_bus.publish_async(internal_channel, aligned_message)
+                    _ = await self.internal_bus.publish_async(internal_channel, aligned_message)
                 else:
                     self.internal_bus.publish(internal_channel, aligned_message)
             else:

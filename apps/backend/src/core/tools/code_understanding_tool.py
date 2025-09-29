@@ -1,9 +1,7 @@
 # src/tools/code_understanding_tool.py
 import os
-import json # For potentially pretty-printing dicts if needed, though aiming for formatted string.
-from typing import List, Optional, Union, Dict, Any
-
-from ai.code_understanding.lightweight_code_model import LightweightCodeModel # Corrected import
+from typing import Optional
+from apps.backend.src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
 
 class CodeUnderstandingTool:
     """
@@ -11,12 +9,12 @@ class CodeUnderstandingTool:
     within the project using LightweightCodeModel.
     """
 
-    def __init__(self, tools_directory: str = "src/tools/"):
+    def __init__(self, tools_directory: str = "src/tools/") -> None:
         """
         Initializes the CodeUnderstandingTool.
 
         Args:
-            tools_directory (str): The root directory where tool files are located.
+            _ = tools_directory (str): The root directory where tool files are located.
                                    This is passed to the LightweightCodeModel.
         """
         self.code_model = LightweightCodeModel(tools_directory=tools_directory)
@@ -29,14 +27,14 @@ class CodeUnderstandingTool:
         Returns:
             str: A message listing the tool names, or indicating if none are found.
         """
-        tool_files = self.code_model.list_tool_files()
+        tool_files = self.code_model.list_tool_files
         if not tool_files:
             return "No Python tools found in the tools directory."
 
-        tool_names = []
+        tool_names = 
         for f_path in tool_files:
             base_name = os.path.basename(f_path)
-            tool_name, _ = os.path.splitext(base_name)
+            tool_name, os.path.splitext(base_name)
             tool_names.append(tool_name)
 
         if not tool_names: # Should not happen if tool_files is not empty and files have names
@@ -49,7 +47,7 @@ class CodeUnderstandingTool:
         Describes the structure of a specified Python tool.
 
         Args:
-            tool_name (str): The name of the tool (e.g., "math_tool").
+            _ = tool_name (str): The name of the tool (e.g., "math_tool").
 
         Returns:
             str: A human-readable description of the tool's structure,
@@ -67,7 +65,7 @@ class CodeUnderstandingTool:
             return f"Tool '{tool_name}' not found or could not be analyzed."
 
         # Format the structure into a human-readable string
-        description_parts = []
+        description_parts = 
 
         filepath = structure.get("filepath", tool_name)
         description_parts.append(f"Description for tool '{tool_name}' (from {os.path.basename(filepath)}):")
@@ -76,21 +74,21 @@ class CodeUnderstandingTool:
             description_parts.append("  No classes or functions found in this tool file.")
             return "\n".join(description_parts)
 
-        for class_info in structure.get("classes", []):
+        for class_info in structure.get("classes", ):
             description_parts.append(f"\n  Class: {class_info.get('name', 'Unnamed Class')}")
             class_doc = class_info.get('docstring')
             if class_doc:
-                description_parts.append(f"    Docstring: {class_doc.strip()}")
+                description_parts.append(f"    Docstring: {class_doc.strip}")
 
             if not class_info.get("methods"):
                 description_parts.append("    (No methods found in this class)")
                 continue
 
             description_parts.append("    Methods:")
-            for method_info in class_info.get("methods", []):
+            for method_info in class_info.get("methods", ):
                 method_name = method_info.get('name', 'unnamed_method')
-                param_list = []
-                for p in method_info.get("parameters", []):
+                param_list = 
+                for p in method_info.get("parameters", ):
                     p_str = p.get('name', '')
                     if p.get('annotation'):
                         p_str += f": {p['annotation']}"
@@ -107,17 +105,17 @@ class CodeUnderstandingTool:
                 method_doc = method_info.get('docstring')
                 if method_doc:
                     # Indent docstring lines for readability
-                    indented_doc = "\n".join([f"        {line.strip()}" for line in method_doc.strip().splitlines()])
+                    indented_doc = "\n".join([f"        {line.strip}" for line in method_doc.strip.splitlines])
                     description_parts.append(f"        Docstring:\n{indented_doc}")
 
-        for func_info in structure.get("functions", []): # Module-level functions
+        for func_info in structure.get("functions", ): # Module-level functions
             description_parts.append(f"\n  Function: {func_info.get('name', 'Unnamed Function')}")
             func_doc = func_info.get('docstring')
             if func_doc:
-                description_parts.append(f"    Docstring: {func_doc.strip()}")
+                description_parts.append(f"    Docstring: {func_doc.strip}")
 
-            param_list = []
-            for p in func_info.get("parameters", []):
+            param_list = 
+            for p in func_info.get("parameters", ):
                 p_str = p.get('name', '')
                 if p.get('annotation'):
                     p_str += f": {p['annotation']}"
@@ -140,7 +138,7 @@ class CodeUnderstandingTool:
         Routes to specific methods based on action.
         """
         if action == "list_tools":
-            return self.list_tools()
+            return self.list_tools
         elif action == "describe_tool":
             if not tool_name:
                 return "Error: 'tool_name' parameter is required for the 'describe_tool' action."
@@ -165,7 +163,7 @@ if __name__ == '__main__':
     dummy_tool_content = """
 class MyDummyTool:
     \"\"\"This is a dummy tool for testing.\"\"\"
-    def __init__(self):
+    def __init__(self) -> None:
         pass
     def run(self, input_val: str) -> str:
         \"\"\"Runs the dummy tool.\"\"\"
@@ -180,10 +178,10 @@ class MyDummyTool:
     # Test with a specific path to the tools directory if needed, e.g. if running this file directly
     # from its own location and `src/tools` is not found relative to CWD.
     # For now, relying on default path or that script is run from project root.
-    tool_inspector = CodeUnderstandingTool()
+    tool_inspector = CodeUnderstandingTool
 
     print("--- Testing list_tools ---")
-    tool_list_output = tool_inspector.execute("list_tools")
+    tool_list_output = tool_inspector.execute(action="list_tools")
     print(tool_list_output)
 
     print("\n--- Testing describe_tool (for an existing tool, e.g., 'math_tool') ---")
@@ -193,18 +191,18 @@ class MyDummyTool:
     # The dummy_example_tool.py created above should be found if pathing is right.
 
     # Try describing the dummy tool first
-    desc_output_dummy = tool_inspector.execute("describe_tool", tool_name="dummy_example_tool")
+    desc_output_dummy = tool_inspector.execute(action="describe_tool", tool_name="dummy_example_tool")
     print(desc_output_dummy)
 
     # Try describing a potentially existing tool like 'math_tool'
     # This relies on 'math_tool.py' being in the default 'src/tools/' directory
     # and being parsable by LightweightCodeModel.
     print("\n--- Testing describe_tool (for 'math_tool', assuming it exists) ---")
-    desc_output_math = tool_inspector.execute("describe_tool", tool_name="math_tool")
+    desc_output_math = tool_inspector.execute(action="describe_tool", tool_name="math_tool")
     print(desc_output_math)
 
     print("\n--- Testing describe_tool (for a non-existent tool) ---")
-    desc_output_non_existent = tool_inspector.execute("describe_tool", tool_name="non_existent_tool_xyz")
+    desc_output_non_existent = tool_inspector.execute(action="describe_tool", tool_name="non_existent_tool_xyz")
     print(desc_output_non_existent)
 
     # Clean up dummy tool file if created by this test script

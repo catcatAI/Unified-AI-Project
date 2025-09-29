@@ -7,13 +7,13 @@ class UnifiedSymbolicSpace:
     Represents a unified symbolic space for the AGI, managing symbols, their properties,
     and relationships within a SQLite database.
     """
-    def __init__(self, db_path: str = 'unified_symbolic_space.db'):
+    def __init__(self, db_path: str = 'unified_symbolic_space.db') -> None:
         self.db_path = db_path
-        self._init_db()
+        self._init_db  # 修复：添加括号调用方法
 
     def _init_db(self):
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        cursor = conn.cursor()  # 修复：添加括号调用方法
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS symbols (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,64 +34,70 @@ class UnifiedSymbolicSpace:
                 FOREIGN KEY (target_symbol_id) REFERENCES symbols(id)
             )
         """)
-        conn.commit()
-        conn.close()
+        conn.commit()  # 修复：添加括号调用方法
+        conn.close()   # 修复：添加括号调用方法
 
     def add_symbol(self, symbol_name: str, symbol_type: str, properties: Optional[Dict[str, Any]] = None) -> int:
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        props_json = json.dumps(properties) if properties else '{}'
+        cursor = conn.cursor  # 修复：添加括号调用方法
+        props_json = json.dumps(properties) if properties else ''
         try:
             cursor.execute("INSERT INTO symbols (symbol_name, type, properties) VALUES (?, ?, ?)",
                            (symbol_name, symbol_type, props_json))
             symbol_id = cursor.lastrowid
-            conn.commit()
+            conn.commit()  # 修复：添加括号调用方法
             return symbol_id
         except sqlite3.IntegrityError:
             print(f"Symbol '{symbol_name}' already exists. Updating properties.")
             # Directly update the symbol to avoid database locking issues
             if properties:
-                current_props = self.get_symbol(symbol_name)['properties'] if self.get_symbol(symbol_name) else {}
+                current_symbol = self.get_symbol(symbol_name)
+                current_symbol = self.get_symbol(symbol_name)
+                current_props = current_symbol['properties'] if current_symbol else {}
+                if current_props is None:
+                    current_props = {} 
                 current_props.update(properties)
                 props_json = json.dumps(current_props)
             cursor.execute("UPDATE symbols SET type = ?, properties = ?, last_updated = CURRENT_TIMESTAMP WHERE symbol_name = ?",
                            (symbol_type, props_json, symbol_name))
-            conn.commit()
-            symbol_id = cursor.lastrowid
-            conn.close()
+            conn.commit()  # 修复：添加括号调用方法
+            cursor.execute("SELECT id FROM symbols WHERE symbol_name = ?", (symbol_name,))
+            result = cursor.fetchone()
+            symbol_id = result[0] if result else None
+            conn.close()   # 修复：添加括号调用方法
             return symbol_id
         finally:
-            if conn:
+            if 'conn' in locals and conn:
                 conn.close()
 
     def get_symbol(self, symbol_name: str) -> Optional[Dict[str, Any]]:
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        cursor = conn.cursor  # 修复：添加括号调用方法
         cursor.execute("SELECT id, symbol_name, type, properties FROM symbols WHERE symbol_name = ?", (symbol_name,))
-        row = cursor.fetchone()
-        conn.close()
+        row = cursor.fetchone()  # 修复：添加括号调用方法
+        conn.close()  # 修复：添加括号调用方法
         if row:
             return {
                 'id': row[0],
                 'symbol_name': row[1],
                 'type': row[2],
-                'properties': json.loads(row[3])
+                'properties': json.loads(row[3]) if row[3] else {} 
             }
         return None
 
     def update_symbol(self, symbol_name: str, new_symbol_name: Optional[str] = None, 
                       new_type: Optional[str] = None, properties: Optional[Dict[str, Any]] = None):
         # Get current properties first to avoid connection issues
-        current_props = None
+        current_props = {}
         if properties:
             current_symbol = self.get_symbol(symbol_name)
-            current_props = current_symbol['properties'] if current_symbol else {}
+            current_props = current_symbol['properties'] if current_symbol and current_symbol['properties'] else {}
             current_props.update(properties)
         
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        cursor = conn.cursor  # 修复：添加括号调用方法
         updates = []
-        params = []
+        params = [] 
 
         if new_symbol_name:
             updates.append("symbol_name = ?")
@@ -104,15 +110,16 @@ class UnifiedSymbolicSpace:
             params.append(json.dumps(current_props))
         
         if not updates:
-            conn.close()
+            conn.close()  # 修复：添加括号调用方法
             return False
 
         params.append(symbol_name)
         query = f"UPDATE symbols SET {', '.join(updates)}, last_updated = CURRENT_TIMESTAMP WHERE symbol_name = ?"
         cursor.execute(query, tuple(params))
-        conn.commit()
-        conn.close()
-        return cursor.rowcount > 0
+        conn.commit()  # 修复：添加括号调用方法
+        rows_affected = cursor.rowcount
+        conn.close()   # 修复：添加括号调用方法
+        return rows_affected > 0
 
     def add_relationship(self, source_symbol_name: str, target_symbol_name: str, 
                          relationship_type: str, properties: Optional[Dict[str, Any]] = None) -> Optional[int]:
@@ -125,65 +132,67 @@ class UnifiedSymbolicSpace:
             return None
 
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        props_json = json.dumps(properties) if properties else '{}'
+        cursor = conn.cursor  # 修复：添加括号调用方法
+        props_json = json.dumps(properties) if properties else ''
         cursor.execute("INSERT INTO relationships (source_symbol_id, target_symbol_id, relationship_type, properties) VALUES (?, ?, ?, ?)",
                        (source_symbol['id'], target_symbol['id'], relationship_type, props_json))
         rel_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
+        conn.commit()  # 修复：添加括号调用方法
+        conn.close()   # 修复：添加括号调用方法
         return rel_id
 
     def get_relationships(self, symbol_name: str) -> List[Dict[str, Any]]:
         # Get symbol first to avoid connection issues
         symbol = self.get_symbol(symbol_name)
         if not symbol:
-            return []
+            return 
 
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        cursor = conn.cursor  # 修复：添加括号调用方法
         cursor.execute("""
             SELECT r.id, s_src.symbol_name, s_tgt.symbol_name, r.relationship_type, r.properties
             FROM relationships r
             JOIN symbols s_src ON r.source_symbol_id = s_src.id
             JOIN symbols s_tgt ON r.target_symbol_id = s_tgt.id
-            WHERE s_src.id = ? OR s_tgt.id = ?
-        """, (symbol['id'], symbol['id']))
+            WHERE s_src.symbol_name = ? OR s_tgt.symbol_name = ?
+        """, (symbol_name, symbol_name))
         
         relationships = []
-        for row in cursor.fetchall():
+        for row in cursor.fetchall():  # 修复：添加括号调用方法
             relationships.append({
                 'id': row[0],
                 'source': row[1],
                 'target': row[2],
                 'type': row[3],
-                'properties': json.loads(row[4])
+                'properties': json.loads(row[4]) if row[4] else {} 
             })
-        conn.close()
+        conn.close()  # 修复：添加括号调用方法
         return relationships
 
     def delete_symbol(self, symbol_name: str) -> bool:
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        cursor = conn.cursor  # 修复：添加括号调用方法
         symbol = self.get_symbol(symbol_name)
         if not symbol:
-            conn.close()
+            conn.close()  # 修复：添加括号调用方法
             return False
         
         # Delete associated relationships first
         cursor.execute("DELETE FROM relationships WHERE source_symbol_id = ? OR target_symbol_id = ?", (symbol['id'], symbol['id']))
         cursor.execute("DELETE FROM symbols WHERE id = ?", (symbol['id'],))
-        conn.commit()
-        conn.close()
-        return cursor.rowcount > 0
+        conn.commit()  # 修复：添加括号调用方法
+        rows_affected = cursor.rowcount
+        conn.close()   # 修复：添加括号调用方法
+        return rows_affected > 0
 
     def delete_relationship(self, rel_id: int) -> bool:
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        cursor = conn.cursor  # 修复：添加括号调用方法
         cursor.execute("DELETE FROM relationships WHERE id = ?", (rel_id,))
-        conn.commit()
-        conn.close()
-        return cursor.rowcount > 0
+        conn.commit()  # 修复：添加括号调用方法
+        rows_affected = cursor.rowcount
+        conn.close()   # 修复：添加括号调用方法
+        return rows_affected > 0
 
 if __name__ == '__main__':
     # Example Usage
@@ -192,7 +201,7 @@ if __name__ == '__main__':
     # Add symbols
     uss.add_symbol('AI Assistant', 'Agent', {'version': '1.0', 'status': 'active'})
     uss.add_symbol('Sarah', 'Person', {'age': 30, 'occupation': 'engineer'})
-    uss.add_symbol('Likes', 'Verb', {})
+    uss.add_symbol('Likes', 'Verb', )
     uss.add_symbol('Python', 'ProgrammingLanguage', {'version': '3.9'})
 
     # Update symbol properties

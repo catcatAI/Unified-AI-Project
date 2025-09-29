@@ -1,9 +1,10 @@
 import os
 import sys
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from typing import Optional, Dict, List
 import numpy as np
+import json  # 添加json导入
 
 # Add the src directory to the path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -13,9 +14,9 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 # 修复导入路径
-from ...core_ai.dependency_manager import dependency_manager
+from apps.backend.src.core.managers.dependency_manager import dependency_manager
 # 修复导入路径
-from ...core_ai.compression.alpha_deep_model import DNADataChain
+from apps.backend.src.core_ai.compression.alpha_deep_model import DNADataChain
 
 @dataclass
 class MathModelResult:
@@ -31,7 +32,7 @@ class MathModelResult:
 tf = None
 Model = None
 Input = None
-LSTM = None
+LSTM_LAYER = None  # 重命名以避免与常量冲突
 Dense = None
 Embedding = None
 
@@ -40,7 +41,7 @@ def _ensure_tensorflow_is_imported():
     Lazily imports TensorFlow and its Keras components using dependency manager.
     Returns True if successful, False otherwise.
     """
-    global tf, Model, Input, LSTM, Dense, Embedding
+    global tf, Model, Input, LSTM_LAYER, Dense, Embedding
     
     if tf is not None:
         return True
@@ -52,7 +53,7 @@ def _ensure_tensorflow_is_imported():
             tf = tf_module
             Model = tf.keras.models.Model
             Input = tf.keras.layers.Input
-            LSTM = tf.keras.layers.LSTM
+            LSTM_LAYER = tf.keras.layers.LSTM  # 重命名以避免与常量冲突
             Dense = tf.keras.layers.Dense
             Embedding = tf.keras.layers.Embedding
             return True
@@ -81,7 +82,7 @@ def get_char_token_maps(problems, answers):
         tuple: (char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length)
     """
     # Collect all characters from problems and answers
-    chars = set()
+    chars = set()  # 修复集合初始化
     
     # Add special tokens
     chars.add('\t')  # Start token
@@ -139,7 +140,7 @@ def get_char_token_maps(problems, answers):
     return char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length
 
 class ArithmeticSeq2Seq:
-    def __init__(self, char_to_token, token_to_char, max_encoder_seq_length, max_decoder_seq_length, n_token, latent_dim=256, embedding_dim=128):
+    def __init__(self, char_to_token, token_to_char, max_encoder_seq_length, max_decoder_seq_length, n_token, latent_dim=256, embedding_dim=128) -> None:
         if not dependency_manager.is_available('tensorflow'):
             print("ArithmeticSeq2Seq: TensorFlow not available. This instance will be non-functional.")
             self.char_to_token = char_to_token
@@ -177,12 +178,17 @@ class ArithmeticSeq2Seq:
         if not dependency_manager.is_available('tensorflow'):
             print("Cannot build inference models: TensorFlow not available.")
             return
-        _ensure_tensorflow_is_imported() # Lazy import of TensorFlow
+        _ensure_tensorflow_is_imported # Lazy import of TensorFlow
+
+        # Check if TensorFlow components are available
+        if tf is None or Model is None or Input is None or LSTM_LAYER is None or Dense is None or Embedding is None:
+            print("Cannot build inference models: TensorFlow components not available.")
+            return
 
         # Encoder
         encoder_inputs = Input(shape=(None,), name="encoder_inputs")
         encoder_embedding = Embedding(self.n_token, self.embedding_dim, name="encoder_embedding")(encoder_inputs)
-        encoder_lstm_layer = LSTM(self.latent_dim, return_state=True, name="encoder_lstm")
+        encoder_lstm_layer = LSTM_LAYER(self.latent_dim, return_state=True, name="encoder_lstm")  # 使用重命名的变量
         _, state_h, state_c = encoder_lstm_layer(encoder_embedding)
         encoder_states = [state_h, state_c]
 
@@ -190,7 +196,7 @@ class ArithmeticSeq2Seq:
         decoder_inputs = Input(shape=(None,), name="decoder_inputs")
         decoder_embedding_layer_instance = Embedding(self.n_token, self.embedding_dim, name="decoder_embedding")
         decoder_embedding = decoder_embedding_layer_instance(decoder_inputs)
-        decoder_lstm_layer = LSTM(self.latent_dim, return_sequences=True, return_state=True, name="decoder_lstm")
+        decoder_lstm_layer = LSTM_LAYER(self.latent_dim, return_sequences=True, return_state=True, name="decoder_lstm")  # 使用重命名的变量
         decoder_outputs, _, _ = decoder_lstm_layer(decoder_embedding, initial_state=encoder_states)
 
         decoder_dense_layer = Dense(self.n_token, activation='softmax', name="decoder_dense")
@@ -220,7 +226,7 @@ class ArithmeticSeq2Seq:
     def _string_to_tokens(self, input_string, max_len, is_target=False):
         if not dependency_manager.is_available('tensorflow'):
             print("Cannot convert string to tokens: TensorFlow not available.")
-            return np.array([])
+            return np.array()
         tokens = np.zeros((1, max_len), dtype='float32')
         if is_target:
             processed_string = '\t' + input_string + '\n'
@@ -238,7 +244,7 @@ class ArithmeticSeq2Seq:
         return tokens
 
     def predict_sequence(self, input_seq_str: str, dna_chain_id: Optional[str] = None) -> str:
-        if not _tensorflow_is_available() or not self.encoder_model or not self.decoder_model:
+        if not _tensorflow_is_available or not self.encoder_model or not self.decoder_model:
             print("Cannot predict sequence: TensorFlow not available or models not built.")
             return "Error: Math model is not available."
 
@@ -337,8 +343,8 @@ class ArithmeticSeq2Seq:
             instance.model = None
             instance.encoder_model = None
             instance.decoder_model = None
-            instance.dna_chains = {}
-            instance.prediction_history = []
+            instance.dna_chains = {}  
+            instance.prediction_history = []  
             
             # Build model structure
             instance._build_inference_models()

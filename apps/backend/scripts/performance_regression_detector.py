@@ -4,12 +4,10 @@
 用于检测和报告性能回归问题
 """
 
-import os
 import sys
 import json
 import sqlite3
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
 from datetime import datetime, timedelta
 import logging
 import numpy as np
@@ -18,16 +16,16 @@ import scipy.stats as stats
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 
 class PerformanceRegressionDetector:
     """性能回归检测器"""
     
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: str = None) -> None:
         """
         初始化性能回归检测器
         
@@ -82,13 +80,13 @@ class PerformanceRegressionDetector:
                 regression_result = self._analyze_benchmark_regression(benchmark_name)
                 if regression_result:
                     if regression_result["status"] == "regression":
-                        detection_results["regressions"].append(regression_result)
+                        _ = detection_results["regressions"].append(regression_result)
                         detection_results["regressions_found"] += 1
                     elif regression_result["status"] == "improvement":
-                        detection_results["improvements"].append(regression_result)
+                        _ = detection_results["improvements"].append(regression_result)
                         detection_results["improvements_found"] += 1
                     else:
-                        detection_results["unchanged"].append(regression_result)
+                        _ = detection_results["unchanged"].append(regression_result)
                         detection_results["no_change_benchmarks"] += 1
             
             logger.info(
@@ -244,7 +242,7 @@ class PerformanceRegressionDetector:
                 FROM benchmark_history
                 WHERE name = ?
                 ORDER BY timestamp ASC
-            """, (benchmark_name,))
+            _ = """, (benchmark_name,))
             
             rows = cursor.fetchall()
             conn.close()
@@ -384,7 +382,7 @@ class PerformanceRegressionDetector:
             logger.warning(
                 f"PERFORMANCE REGRESSION DETECTED!\n"
                 f"Benchmark: {regression_result['benchmark_name']}\n"
-                f"Severity: {regression_result.get('severity', 'unknown')}\n"
+                _ = f"Severity: {regression_result.get('severity', 'unknown')}\n"
                 f"Performance Change: {regression_result['analysis']['performance_change_percentage']}\n"
                 f"Latest Time: {regression_result['latest']['mean_time']:.6f}s\n"
                 f"Baseline Time: {regression_result['baseline']['mean_time']:.6f}s"
@@ -426,7 +424,7 @@ class PerformanceRegressionDetector:
             return {"status": "error", "error": str(e)}
 
 
-def main():
+def main() -> None:
     """主函数"""
     import argparse
     

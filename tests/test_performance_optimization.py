@@ -7,16 +7,15 @@
 import unittest
 import asyncio
 import tempfile
-import os
 from pathlib import Path
 
 # 添加项目路径
 import sys
-project_root = Path(__file__).parent.parent
-backend_path = project_root / "apps" / "backend"
-sys.path.insert(0, str(backend_path))
-sys.path.insert(0, str(backend_path / "src"))
-sys.path.insert(0, str(project_root / "training"))
+project_root: str = Path(__file__).parent.parent
+backend_path: str = project_root / "apps" / "backend"
+_ = sys.path.insert(0, str(backend_path))
+_ = sys.path.insert(0, str(backend_path / "src"))
+_ = sys.path.insert(0, str(project_root / "training"))
 
 class TestPerformanceOptimization(unittest.TestCase):
     """性能优化测试类"""
@@ -30,55 +29,55 @@ class TestPerformanceOptimization(unittest.TestCase):
         import shutil
         shutil.rmtree(self.test_dir, ignore_errors=True)
     
-    def test_gpu_optimizer_initialization(self):
+    def test_gpu_optimizer_initialization(self) -> None:
         """测试GPU优化器初始化"""
         try:
             from training.gpu_optimizer import GPUOptimizer
             optimizer = GPUOptimizer()
-            self.assertIsNotNone(optimizer)
+            _ = self.assertIsNotNone(optimizer)
         except Exception as e:
-            self.skipTest(f"GPU优化器测试跳过: {e}")
+            _ = self.skipTest(f"GPU优化器测试跳过: {e}")
     
-    def test_system_monitor_initialization(self):
+    def test_system_monitor_initialization(self) -> None:
         """测试系统监控器初始化"""
         try:
             from apps.backend.src.monitoring.system_monitor import SystemMonitor
             monitor = SystemMonitor()
-            self.assertIsNotNone(monitor)
+            _ = self.assertIsNotNone(monitor)
         except Exception as e:
-            self.skipTest(f"系统监控器测试跳过: {e}")
+            _ = self.skipTest(f"系统监控器测试跳过: {e}")
     
-    def test_hsp_performance_optimizer_initialization(self):
+    def test_hsp_performance_optimizer_initialization(self) -> None:
         """测试HSP性能优化器初始化"""
         try:
             from apps.backend.src.hsp.performance_optimizer import HSPPerformanceOptimizer
             optimizer = HSPPerformanceOptimizer()
-            self.assertIsNotNone(optimizer)
+            _ = self.assertIsNotNone(optimizer)
         except Exception as e:
-            self.skipTest(f"HSP性能优化器测试跳过: {e}")
+            _ = self.skipTest(f"HSP性能优化器测试跳过: {e}")
     
-    def test_smart_resource_allocator_initialization(self):
+    def test_smart_resource_allocator_initialization(self) -> None:
         """测试智能资源分配器初始化"""
         try:
             from training.smart_resource_allocator import SmartResourceAllocator
             allocator = SmartResourceAllocator()
-            self.assertIsNotNone(allocator)
+            _ = self.assertIsNotNone(allocator)
         except Exception as e:
-            self.skipTest(f"智能资源分配器测试跳过: {e}")
+            _ = self.skipTest(f"智能资源分配器测试跳过: {e}")
     
-    def test_distributed_optimizer_initialization(self):
+    def test_distributed_optimizer_initialization(self) -> None:
         """测试分布式优化器初始化"""
         try:
             from training.distributed_optimizer import DistributedOptimizer
             optimizer = DistributedOptimizer()
-            self.assertIsNotNone(optimizer)
+            _ = self.assertIsNotNone(optimizer)
         except Exception as e:
-            self.skipTest(f"分布式优化器测试跳过: {e}")
+            _ = self.skipTest(f"分布式优化器测试跳过: {e}")
 
 class TestGPUOptimization(unittest.TestCase):
     """GPU优化测试类"""
     
-    def test_gpu_memory_optimization(self):
+    def test_gpu_memory_optimization(self) -> None:
         """测试GPU内存优化"""
         try:
             from training.gpu_optimizer import GPUOptimizer
@@ -87,11 +86,11 @@ class TestGPUOptimization(unittest.TestCase):
             # 测试GPU内存优化功能
             result = optimizer.optimize_gpu_memory()
             # 如果GPU不可用，应该返回False而不是抛出异常
-            self.assertIsInstance(result, bool)
+            _ = self.assertIsInstance(result, bool)
         except Exception as e:
-            self.skipTest(f"GPU内存优化测试跳过: {e}")
+            _ = self.skipTest(f"GPU内存优化测试跳过: {e}")
     
-    def test_mixed_precision_enable(self):
+    def test_mixed_precision_enable(self) -> None:
         """测试混合精度启用"""
         try:
             from training.gpu_optimizer import GPUOptimizer
@@ -100,14 +99,14 @@ class TestGPUOptimization(unittest.TestCase):
             # 测试混合精度启用功能
             result = optimizer.enable_mixed_precision()
             # 如果GPU不可用，应该返回False而不是抛出异常
-            self.assertIsInstance(result, bool)
+            _ = self.assertIsInstance(result, bool)
         except Exception as e:
-            self.skipTest(f"混合精度启用测试跳过: {e}")
+            _ = self.skipTest(f"混合精度启用测试跳过: {e}")
 
 class TestSystemMonitoring(unittest.TestCase):
     """系统监控测试类"""
     
-    def test_system_metrics_collection(self):
+    def test_system_metrics_collection(self) -> None:
         """测试系统指标收集"""
         try:
             from apps.backend.src.monitoring.system_monitor import SystemMonitor
@@ -115,15 +114,15 @@ class TestSystemMonitoring(unittest.TestCase):
             
             # 收集一次指标
             metrics = monitor.collect_metrics()
-            self.assertIsNotNone(metrics)
+            _ = self.assertIsNotNone(metrics)
             
             # 检查指标字段
-            self.assertTrue(hasattr(metrics, 'cpu_percent'))
-            self.assertTrue(hasattr(metrics, 'memory_percent'))
+            _ = self.assertTrue(hasattr(metrics, 'cpu_percent'))
+            _ = self.assertTrue(hasattr(metrics, 'memory_percent'))
         except Exception as e:
-            self.skipTest(f"系统指标收集测试跳过: {e}")
+            _ = self.skipTest(f"系统指标收集测试跳过: {e}")
     
-    def test_resource_recommendations(self):
+    def test_resource_recommendations(self) -> None:
         """测试资源使用建议"""
         try:
             from apps.backend.src.monitoring.system_monitor import SystemMonitor
@@ -131,14 +130,14 @@ class TestSystemMonitoring(unittest.TestCase):
             
             # 获取资源建议
             recommendations = monitor.get_resource_recommendations()
-            self.assertIsNotNone(recommendations)
+            _ = self.assertIsNotNone(recommendations)
         except Exception as e:
-            self.skipTest(f"资源使用建议测试跳过: {e}")
+            _ = self.skipTest(f"资源使用建议测试跳过: {e}")
 
 class TestHSPPerformanceOptimization(unittest.TestCase):
     """HSP性能优化测试类"""
     
-    def test_message_caching(self):
+    def test_message_caching(self) -> None:
         """测试消息缓存"""
         try:
             from apps.backend.src.hsp.performance_optimizer import HSPPerformanceOptimizer
@@ -146,15 +145,15 @@ class TestHSPPerformanceOptimization(unittest.TestCase):
             
             # 测试消息缓存
             test_message = {'data': 'test'}
-            optimizer.cache_message('test_id', test_message)
+            _ = optimizer.cache_message('test_id', test_message)
             
             # 测试获取缓存消息
             cached_message = optimizer.get_cached_message('test_id')
-            self.assertEqual(cached_message, test_message)
+            _ = self.assertEqual(cached_message, test_message)
         except Exception as e:
-            self.skipTest(f"消息缓存测试跳过: {e}")
+            _ = self.skipTest(f"消息缓存测试跳过: {e}")
     
-    def test_message_compression(self):
+    def test_message_compression(self) -> None:
         """测试消息压缩"""
         try:
             from apps.backend.src.hsp.performance_optimizer import HSPPerformanceOptimizer
@@ -168,18 +167,18 @@ class TestHSPPerformanceOptimization(unittest.TestCase):
             }
             
             compressed = optimizer.compress_message(test_message)
-            self.assertIsInstance(compressed, bytes)
+            _ = self.assertIsInstance(compressed, bytes)
             
             # 测试消息解压缩
             decompressed = optimizer.decompress_message(compressed)
-            self.assertEqual(decompressed, test_message)
+            _ = self.assertEqual(decompressed, test_message)
         except Exception as e:
-            self.skipTest(f"消息压缩测试跳过: {e}")
+            _ = self.skipTest(f"消息压缩测试跳过: {e}")
 
 class TestResourceAllocation(unittest.TestCase):
     """资源分配测试类"""
     
-    def test_smart_resource_allocation(self):
+    def test_smart_resource_allocation(self) -> None:
         """测试智能资源分配"""
         try:
             from training.smart_resource_allocator import SmartResourceAllocator, ResourceRequest
@@ -197,15 +196,15 @@ class TestResourceAllocation(unittest.TestCase):
             )
             
             # 请求资源
-            allocator.request_resources(request)
+            _ = allocator.request_resources(request)
             
             # 分配资源
             allocations = allocator.allocate_resources()
-            self.assertIsInstance(allocations, list)
+            _ = self.assertIsInstance(allocations, list)
         except Exception as e:
-            self.skipTest(f"智能资源分配测试跳过: {e}")
+            _ = self.skipTest(f"智能资源分配测试跳过: {e}")
     
-    def test_resource_utilization_monitoring(self):
+    def test_resource_utilization_monitoring(self) -> None:
         """测试资源利用率监控"""
         try:
             from training.smart_resource_allocator import SmartResourceAllocator
@@ -213,14 +212,14 @@ class TestResourceAllocation(unittest.TestCase):
             
             # 获取资源利用率
             utilization = allocator.get_resource_utilization()
-            self.assertIsNotNone(utilization)
+            _ = self.assertIsNotNone(utilization)
         except Exception as e:
-            self.skipTest(f"资源利用率监控测试跳过: {e}")
+            _ = self.skipTest(f"资源利用率监控测试跳过: {e}")
 
 class TestDistributedOptimization(unittest.TestCase):
     """分布式优化测试类"""
     
-    def test_node_registration(self):
+    def test_node_registration(self) -> None:
         """测试节点注册"""
         try:
             from training.distributed_optimizer import DistributedOptimizer
@@ -229,11 +228,11 @@ class TestDistributedOptimization(unittest.TestCase):
             # 注册节点
             node_info = {'cpu_cores': 8, 'memory_gb': 16}
             result = asyncio.run(optimizer.register_node('test_node', node_info))
-            self.assertTrue(result)
+            _ = self.assertTrue(result)
         except Exception as e:
-            self.skipTest(f"节点注册测试跳过: {e}")
+            _ = self.skipTest(f"节点注册测试跳过: {e}")
     
-    def test_cluster_status(self):
+    def test_cluster_status(self) -> None:
         """测试集群状态"""
         try:
             from training.distributed_optimizer import DistributedOptimizer
@@ -241,9 +240,9 @@ class TestDistributedOptimization(unittest.TestCase):
             
             # 获取集群状态
             status = optimizer.get_cluster_status()
-            self.assertIsNotNone(status)
+            _ = self.assertIsNotNone(status)
         except Exception as e:
-            self.skipTest(f"集群状态测试跳过: {e}")
+            _ = self.skipTest(f"集群状态测试跳过: {e}")
 
 if __name__ == '__main__':
     # 运行测试

@@ -7,10 +7,9 @@
 import asyncio
 import logging
 import sys
-from typing import Dict, Any, Optional, Callable, List
+from typing import Dict, Any, Optional, Callable, List, Awaitable
 from pathlib import Path
 from datetime import datetime
-import threading
 import time
 import json
 
@@ -21,44 +20,111 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
 
 # 导入项目模块
-try:
-    from apps.backend.src.path_config import (
-        PROJECT_ROOT, 
-        DATA_DIR, 
-        TRAINING_DIR, 
-        MODELS_DIR,
-        get_data_path, 
-        resolve_path
-    )
-except ImportError:
-    # 如果路径配置模块不可用，使用默认路径处理
-    PROJECT_ROOT = project_root
-    DATA_DIR = PROJECT_ROOT / "data"
-    TRAINING_DIR = PROJECT_ROOT / "training"
-    MODELS_DIR = TRAINING_DIR / "models"
+import sys
+
+class _PathConfig:
+    def __init__(self):
+        self.DATA_DIR = None
+        self.TRAINING_DIR = None
+        self.MODELS_DIR = None
+        self._initialize_paths()
+    
+    def _initialize_paths(self):
+        try:
+            from apps.backend.src.path_config import (
+                DATA_DIR as CONFIG_DATA_DIR, 
+                TRAINING_DIR as CONFIG_TRAINING_DIR, 
+                MODELS_DIR as CONFIG_MODELS_DIR,
+                get_data_path, 
+                resolve_path
+            )
+            # 使用导入的常量
+            self.DATA_DIR = CONFIG_DATA_DIR
+            self.TRAINING_DIR = CONFIG_TRAINING_DIR
+            self.MODELS_DIR = CONFIG_MODELS_DIR
+        except ImportError:
+            # 如果路径配置模块不可用，使用默认路径处理
+            PROJECT_ROOT = project_root
+            # 使用不同的变量名避免常量重新定义错误
+            _data_dir = PROJECT_ROOT / "data"
+            _training_dir = PROJECT_ROOT / "training"
+            _models_dir = _training_dir / "models"
+            # 赋值
+            self.DATA_DIR = _data_dir
+            self.TRAINING_DIR = _training_dir
+            self.MODELS_DIR = _models_dir
+
+# 初始化路径配置
+_path_config = _PathConfig()
+DATA_DIR = _path_config.DATA_DIR
+TRAINING_DIR = _path_config.TRAINING_DIR
+MODELS_DIR = _path_config.MODELS_DIR
 
 # 导入错误处理框架
 try:
-    from training.error_handling_framework import ErrorHandler, ErrorContext, global_error_handler, ErrorRecoveryStrategy
-except ImportError:
-    # 如果无法导入，创建模拟类
-    class ErrorHandler:
+    from apps.backend.src.shared.error import ProjectError, project_error_handler
+    # 创建别名以避免重复定义
+    class ErrorHandlerImplReal:
         def handle_error(self, error, context, strategy=None):
-            print(f"Error handled: {error} in {context.component}.{context.operation}")
+            project_error_handler(ProjectError(str(error), code=500))
     
-    class ErrorContext:
-        def __init__(self, component, operation, details=None):
+    class ErrorContextImplReal:
+        def __init__(self, component, operation, details=None) -> None:
             self.component = component
             self.operation = operation
             self.details = details or {}
     
-    class ErrorRecoveryStrategy:
+    class ErrorRecoveryStrategyImplReal:
         RETRY = "retry"
         FALLBACK = "fallback"
         SKIP = "skip"
         ABORT = "abort"
     
-    global_error_handler = ErrorHandler()
+    global_error_handler = ErrorHandlerImplReal()
+except ImportError:
+    # 如果无法导入，创建模拟类
+    class ErrorHandlerImplMock:
+        def handle_error(self, error, context, strategy=None):
+            print(f"Error handled: {error} in {context.component}.{context.operation}")
+    
+    class ErrorContextImplMock:
+        def __init__(self, component, operation, details=None) -> None:
+            self.component = component
+            self.operation = operation
+            self.details = details or {}
+    
+    class ErrorRecoveryStrategyImplMock:
+        RETRY = "retry"
+        FALLBACK = "fallback"
+        SKIP = "skip"
+        ABORT = "abort"
+    
+    global_error_handler = ErrorHandlerImplMock()
+
+# 为兼容性创建原始类名的别名
+# 确保所有类都已定义
+ErrorHandlerImpl = globals().get('ErrorHandlerImplReal') or globals().get('ErrorHandlerImplMock') or type('ErrorHandlerImpl', (), {
+    'handle_error': lambda self, error, context, strategy=None: print(f"Error handled: {error}")
+})
+
+ErrorContextImpl = globals().get('ErrorContextImplReal') or globals().get('ErrorContextImplMock') or type('ErrorContextImpl', (), {
+    '__init__': lambda self, component, operation, details=None: (
+        setattr(self, 'component', component),
+        setattr(self, 'operation', operation),
+        setattr(self, 'details', details or {})
+    )[-1]
+})
+
+ErrorRecoveryStrategyImpl = globals().get('ErrorRecoveryStrategyImplReal') or globals().get('ErrorRecoveryStrategyImplMock') or type('ErrorRecoveryStrategyImpl', (), {
+    'RETRY': "retry",
+    'FALLBACK': "fallback",
+    'SKIP': "skip",
+    'ABORT': "abort"
+})
+
+ErrorHandler = ErrorHandlerImpl
+ErrorContext = ErrorContextImpl
+ErrorRecoveryStrategy = ErrorRecoveryStrategyImpl
 
 # 配置日志
 logging.basicConfig(
@@ -103,7 +169,7 @@ class ExecutionContext:
         self.metrics = {}
         self.status = "initialized"  # initialized, running, completed, failed, paused
         self.progress = 0.0
-        self.checkpoint_path = None
+        self.checkpoint_path: Optional[str] = None
         self.error_handler = global_error_handler
 
 class ExecutionResult:
@@ -124,24 +190,24 @@ class ExecutionResult:
 class UnifiedExecutor:
     """统一执行器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.tasks = {}
         self.results = {}
         self.error_handler = global_error_handler
         self.logger = logging.getLogger(__name__)
         
     async def execute_training_task(self, context: ExecutionContext, 
-                                  training_function: Callable) -> ExecutionResult:
+                                  training_function: Callable[..., Awaitable[Any]]) -> ExecutionResult:
         """执行训练任务"""
         context.status = "running"
         start_time = time.time()
         
         try:
-            self.logger.info(f"🚀 开始执行训练任务: {context.task_id}")
-            self.logger.info(f"   模型: {context.model_name}")
-            self.logger.info(f"   数据源: {context.data_sources}")
-            self.logger.info(f"   批次大小: {context.config.batch_size}")
-            self.logger.info(f"   训练轮数: {context.config.epochs}")
+            _ = self.logger.info(f"🚀 开始执行训练任务: {context.task_id}")
+            _ = self.logger.info(f"   模型: {context.model_name}")
+            _ = self.logger.info(f"   数据源: {context.data_sources}")
+            _ = self.logger.info(f"   批次大小: {context.config.batch_size}")
+            _ = self.logger.info(f"   训练轮数: {context.config.epochs}")
             
             # 执行训练函数
             result = await training_function(context)
@@ -150,8 +216,8 @@ class UnifiedExecutor:
             context.status = "completed"
             execution_time = time.time() - start_time
             
-            self.logger.info(f"✅ 训练任务完成: {context.task_id}")
-            self.logger.info(f"   执行时间: {execution_time:.2f} 秒")
+            _ = self.logger.info(f"✅ 训练任务完成: {context.task_id}")
+            _ = self.logger.info(f"   执行时间: {execution_time:.2f} 秒")
             
             return ExecutionResult(
                 task_id=context.task_id,
@@ -174,11 +240,11 @@ class UnifiedExecutor:
                 }
             )
             
-            self.error_handler.handle_error(e, error_context)
+            _ = self.error_handler.handle_error(e, error_context)
             
-            self.logger.error(f"❌ 训练任务失败: {context.task_id}")
-            self.logger.error(f"   错误: {str(e)}")
-            self.logger.error(f"   执行时间: {execution_time:.2f} 秒")
+            _ = self.logger.error(f"❌ 训练任务失败: {context.task_id}")
+            _ = self.logger.error(f"   错误: {str(e)}")
+            _ = self.logger.error(f"   执行时间: {execution_time:.2f} 秒")
             
             return ExecutionResult(
                 task_id=context.task_id,
@@ -188,14 +254,14 @@ class UnifiedExecutor:
             )
             
     async def execute_data_processing_task(self, context: ExecutionContext,
-                                         processing_function: Callable) -> ExecutionResult:
+                                         processing_function: Callable[..., Awaitable[Any]]) -> ExecutionResult:
         """执行数据处理任务"""
         context.status = "running"
         start_time = time.time()
         
         try:
-            self.logger.info(f"📦 开始执行数据处理任务: {context.task_id}")
-            self.logger.info(f"   数据源: {context.data_sources}")
+            _ = self.logger.info(f"📦 开始执行数据处理任务: {context.task_id}")
+            _ = self.logger.info(f"   数据源: {context.data_sources}")
             
             # 执行处理函数
             result = await processing_function(context)
@@ -204,8 +270,8 @@ class UnifiedExecutor:
             context.status = "completed"
             execution_time = time.time() - start_time
             
-            self.logger.info(f"✅ 数据处理任务完成: {context.task_id}")
-            self.logger.info(f"   执行时间: {execution_time:.2f} 秒")
+            _ = self.logger.info(f"✅ 数据处理任务完成: {context.task_id}")
+            _ = self.logger.info(f"   执行时间: {execution_time:.2f} 秒")
             
             return ExecutionResult(
                 task_id=context.task_id,
@@ -228,11 +294,11 @@ class UnifiedExecutor:
                 }
             )
             
-            self.error_handler.handle_error(e, error_context)
+            _ = self.error_handler.handle_error(e, error_context)
             
-            self.logger.error(f"❌ 数据处理任务失败: {context.task_id}")
-            self.logger.error(f"   错误: {str(e)}")
-            self.logger.error(f"   执行时间: {execution_time:.2f} 秒")
+            _ = self.logger.error(f"❌ 数据处理任务失败: {context.task_id}")
+            _ = self.logger.error(f"   错误: {str(e)}")
+            _ = self.logger.error(f"   执行时间: {execution_time:.2f} 秒")
             
             return ExecutionResult(
                 task_id=context.task_id,
@@ -242,15 +308,15 @@ class UnifiedExecutor:
             )
             
     async def execute_model_inference_task(self, context: ExecutionContext,
-                                         inference_function: Callable) -> ExecutionResult:
+                                         inference_function: Callable[..., Awaitable[Any]]) -> ExecutionResult:
         """执行模型推理任务"""
         context.status = "running"
         start_time = time.time()
         
         try:
-            self.logger.info(f"🧠 开始执行模型推理任务: {context.task_id}")
-            self.logger.info(f"   模型: {context.model_name}")
-            self.logger.info(f"   数据源: {context.data_sources}")
+            _ = self.logger.info(f"🧠 开始执行模型推理任务: {context.task_id}")
+            _ = self.logger.info(f"   模型: {context.model_name}")
+            _ = self.logger.info(f"   数据源: {context.data_sources}")
             
             # 执行推理函数
             result = await inference_function(context)
@@ -259,8 +325,8 @@ class UnifiedExecutor:
             context.status = "completed"
             execution_time = time.time() - start_time
             
-            self.logger.info(f"✅ 模型推理任务完成: {context.task_id}")
-            self.logger.info(f"   执行时间: {execution_time:.2f} 秒")
+            _ = self.logger.info(f"✅ 模型推理任务完成: {context.task_id}")
+            _ = self.logger.info(f"   执行时间: {execution_time:.2f} 秒")
             
             return ExecutionResult(
                 task_id=context.task_id,
@@ -283,11 +349,11 @@ class UnifiedExecutor:
                 }
             )
             
-            self.error_handler.handle_error(e, error_context)
+            _ = self.error_handler.handle_error(e, error_context)
             
-            self.logger.error(f"❌ 模型推理任务失败: {context.task_id}")
-            self.logger.error(f"   错误: {str(e)}")
-            self.logger.error(f"   执行时间: {execution_time:.2f} 秒")
+            _ = self.logger.error(f"❌ 模型推理任务失败: {context.task_id}")
+            _ = self.logger.error(f"   错误: {str(e)}")
+            _ = self.logger.error(f"   执行时间: {execution_time:.2f} 秒")
             
             return ExecutionResult(
                 task_id=context.task_id,
@@ -297,17 +363,17 @@ class UnifiedExecutor:
             )
             
     async def execute_concept_model_training_task(self, context: ExecutionContext,
-                                                training_function: Callable) -> ExecutionResult:
+                                                training_function: Callable[..., Awaitable[Any]]) -> ExecutionResult:
         """执行概念模型训练任务"""
         context.status = "running"
         start_time = time.time()
         
         try:
-            self.logger.info(f"🧠 开始执行概念模型训练任务: {context.task_id}")
-            self.logger.info(f"   模型: {context.model_name}")
-            self.logger.info(f"   数据源: {context.data_sources}")
-            self.logger.info(f"   批次大小: {context.config.batch_size}")
-            self.logger.info(f"   训练轮数: {context.config.epochs}")
+            _ = self.logger.info(f"🧠 开始执行概念模型训练任务: {context.task_id}")
+            _ = self.logger.info(f"   模型: {context.model_name}")
+            _ = self.logger.info(f"   数据源: {context.data_sources}")
+            _ = self.logger.info(f"   批次大小: {context.config.batch_size}")
+            _ = self.logger.info(f"   训练轮数: {context.config.epochs}")
             
             # 执行训练函数
             result = await training_function(context)
@@ -316,8 +382,8 @@ class UnifiedExecutor:
             context.status = "completed"
             execution_time = time.time() - start_time
             
-            self.logger.info(f"✅ 概念模型训练任务完成: {context.task_id}")
-            self.logger.info(f"   执行时间: {execution_time:.2f} 秒")
+            _ = self.logger.info(f"✅ 概念模型训练任务完成: {context.task_id}")
+            _ = self.logger.info(f"   执行时间: {execution_time:.2f} 秒")
             
             return ExecutionResult(
                 task_id=context.task_id,
@@ -340,11 +406,11 @@ class UnifiedExecutor:
                 }
             )
             
-            self.error_handler.handle_error(e, error_context)
+            _ = self.error_handler.handle_error(e, error_context)
             
-            self.logger.error(f"❌ 概念模型训练任务失败: {context.task_id}")
-            self.logger.error(f"   错误: {str(e)}")
-            self.logger.error(f"   执行时间: {execution_time:.2f} 秒")
+            _ = self.logger.error(f"❌ 概念模型训练任务失败: {context.task_id}")
+            _ = self.logger.error(f"   错误: {str(e)}")
+            _ = self.logger.error(f"   执行时间: {execution_time:.2f} 秒")
             
             return ExecutionResult(
                 task_id=context.task_id,
@@ -354,17 +420,17 @@ class UnifiedExecutor:
             )
             
     async def execute_collaborative_training_task(self, context: ExecutionContext,
-                                                training_function: Callable) -> ExecutionResult:
+                                                training_function: Callable[..., Awaitable[Any]]) -> ExecutionResult:
         """执行协作式训练任务"""
         context.status = "running"
         start_time = time.time()
         
         try:
-            self.logger.info(f"🤝 开始执行协作式训练任务: {context.task_id}")
-            self.logger.info(f"   模型: {context.model_name}")
-            self.logger.info(f"   数据源: {context.data_sources}")
-            self.logger.info(f"   批次大小: {context.config.batch_size}")
-            self.logger.info(f"   训练轮数: {context.config.epochs}")
+            _ = self.logger.info(f"🤝 开始执行协作式训练任务: {context.task_id}")
+            _ = self.logger.info(f"   模型: {context.model_name}")
+            _ = self.logger.info(f"   数据源: {context.data_sources}")
+            _ = self.logger.info(f"   批次大小: {context.config.batch_size}")
+            _ = self.logger.info(f"   训练轮数: {context.config.epochs}")
             
             # 执行训练函数
             result = await training_function(context)
@@ -373,8 +439,8 @@ class UnifiedExecutor:
             context.status = "completed"
             execution_time = time.time() - start_time
             
-            self.logger.info(f"✅ 协作式训练任务完成: {context.task_id}")
-            self.logger.info(f"   执行时间: {execution_time:.2f} 秒")
+            _ = self.logger.info(f"✅ 协作式训练任务完成: {context.task_id}")
+            _ = self.logger.info(f"   执行时间: {execution_time:.2f} 秒")
             
             return ExecutionResult(
                 task_id=context.task_id,
@@ -397,11 +463,11 @@ class UnifiedExecutor:
                 }
             )
             
-            self.error_handler.handle_error(e, error_context)
+            _ = self.error_handler.handle_error(e, error_context)
             
-            self.logger.error(f"❌ 协作式训练任务失败: {context.task_id}")
-            self.logger.error(f"   错误: {str(e)}")
-            self.logger.error(f"   执行时间: {execution_time:.2f} 秒")
+            _ = self.logger.error(f"❌ 协作式训练任务失败: {context.task_id}")
+            _ = self.logger.error(f"   错误: {str(e)}")
+            _ = self.logger.error(f"   执行时间: {execution_time:.2f} 秒")
             
             return ExecutionResult(
                 task_id=context.task_id,
@@ -415,10 +481,10 @@ class UnifiedExecutor:
         if task_id in self.tasks:
             context = self.tasks[task_id]
             context.status = "paused"
-            self.logger.info(f"⏸️  任务已暂停: {task_id}")
+            _ = self.logger.info(f"⏸️  任务已暂停: {task_id}")
             return True
         else:
-            self.logger.warning(f"⚠️  未找到任务: {task_id}")
+            _ = self.logger.warning(f"⚠️  未找到任务: {task_id}")
             return False
             
     def resume_task(self, task_id: str) -> bool:
@@ -427,13 +493,13 @@ class UnifiedExecutor:
             context = self.tasks[task_id]
             if context.status == "paused":
                 context.status = "running"
-                self.logger.info(f"▶️  任务已恢复: {task_id}")
+                _ = self.logger.info(f"▶️  任务已恢复: {task_id}")
                 return True
             else:
-                self.logger.warning(f"⚠️  任务状态不允许恢复: {task_id} (当前状态: {context.status})")
+                _ = self.logger.warning(f"⚠️  任务状态不允许恢复: {task_id} (当前状态: {context.status})")
                 return False
         else:
-            self.logger.warning(f"⚠️  未找到任务: {task_id}")
+            _ = self.logger.warning(f"⚠️  未找到任务: {task_id}")
             return False
             
     def cancel_task(self, task_id: str) -> bool:
@@ -441,10 +507,10 @@ class UnifiedExecutor:
         if task_id in self.tasks:
             context = self.tasks[task_id]
             context.status = "cancelled"
-            self.logger.info(f"⏹️  任务已取消: {task_id}")
+            _ = self.logger.info(f"⏹️  任务已取消: {task_id}")
             return True
         else:
-            self.logger.warning(f"⚠️  未找到任务: {task_id}")
+            _ = self.logger.warning(f"⚠️  未找到任务: {task_id}")
             return False
             
     def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
@@ -500,7 +566,7 @@ class UnifiedExecutor:
                 json.dump(checkpoint_data, f, ensure_ascii=False, indent=2)
                 
             context.checkpoint_path = checkpoint_path
-            self.logger.info(f"💾 检查点已保存: {checkpoint_path}")
+            _ = self.logger.info(f"💾 检查点已保存: {checkpoint_path}")
             return True
             
         except Exception as e:
@@ -513,8 +579,8 @@ class UnifiedExecutor:
                 }
             )
             
-            self.error_handler.handle_error(e, error_context)
-            self.logger.error(f"❌ 保存检查点失败: {e}")
+            _ = self.error_handler.handle_error(e, error_context)
+            _ = self.logger.error(f"❌ 保存检查点失败: {e}")
             return False
             
     def load_checkpoint(self, context: ExecutionContext, checkpoint_path: str) -> bool:
@@ -527,7 +593,7 @@ class UnifiedExecutor:
             context.metrics = checkpoint_data.get("metrics", {})
             context.checkpoint_path = checkpoint_path
             
-            self.logger.info(f"📂 检查点已加载: {checkpoint_path}")
+            _ = self.logger.info(f"📂 检查点已加载: {checkpoint_path}")
             return True
             
         except Exception as e:
@@ -540,14 +606,14 @@ class UnifiedExecutor:
                 }
             )
             
-            self.error_handler.handle_error(e, error_context)
-            self.logger.error(f"❌ 加载检查点失败: {e}")
+            _ = self.error_handler.handle_error(e, error_context)
+            _ = self.logger.error(f"❌ 加载检查点失败: {e}")
             return False
 
 class ResourceManager:
     """资源管理器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.allocated_resources = {}
         self.logger = logging.getLogger(__name__)
         
@@ -562,11 +628,11 @@ class ResourceManager:
                 "allocated_at": datetime.now().isoformat()
             }
             
-            self.logger.info(f"🖥️  已分配CPU资源: {task_id} - {cores} 核心")
+            _ = self.logger.info(f"🖥️  已分配CPU资源: {task_id} - {cores} 核心")
             return True
             
         except Exception as e:
-            self.logger.error(f"❌ 分配CPU资源失败: {e}")
+            _ = self.logger.error(f"❌ 分配CPU资源失败: {e}")
             return False
             
     def allocate_memory_resources(self, task_id: str, memory_gb: float) -> bool:
@@ -580,11 +646,11 @@ class ResourceManager:
                 "allocated_at": datetime.now().isoformat()
             }
             
-            self.logger.info(f"🧠 已分配内存资源: {task_id} - {memory_gb} GB")
+            _ = self.logger.info(f"🧠 已分配内存资源: {task_id} - {memory_gb} GB")
             return True
             
         except Exception as e:
-            self.logger.error(f"❌ 分配内存资源失败: {e}")
+            _ = self.logger.error(f"❌ 分配内存资源失败: {e}")
             return False
             
     def allocate_gpu_resources(self, task_id: str, gpus: int) -> bool:
@@ -598,11 +664,11 @@ class ResourceManager:
                 "allocated_at": datetime.now().isoformat()
             }
             
-            self.logger.info(f"🎮 已分配GPU资源: {task_id} - {gpus} GPU")
+            _ = self.logger.info(f"🎮 已分配GPU资源: {task_id} - {gpus} GPU")
             return True
             
         except Exception as e:
-            self.logger.error(f"❌ 分配GPU资源失败: {e}")
+            _ = self.logger.error(f"❌ 分配GPU资源失败: {e}")
             return False
             
     def release_resources(self, task_id: str) -> bool:
@@ -612,10 +678,10 @@ class ResourceManager:
             resource_type = resource_info["type"]
             
             del self.allocated_resources[task_id]
-            self.logger.info(f"🔄 已释放{resource_type.upper()}资源: {task_id}")
+            _ = self.logger.info(f"🔄 已释放{resource_type.upper()}资源: {task_id}")
             return True
         else:
-            self.logger.warning(f"⚠️  未找到资源分配记录: {task_id}")
+            _ = self.logger.warning(f"⚠️  未找到资源分配记录: {task_id}")
             return False
             
     def get_resource_usage(self) -> Dict[str, Any]:
@@ -703,7 +769,7 @@ def create_collaborative_training_context(task_id: str, model_name: str, data_so
 # 示例训练函数
 async def example_training_function(context: ExecutionContext) -> Dict[str, Any]:
     """示例训练函数"""
-    logger.info(f"正在训练模型: {context.model_name}")
+    _ = logger.info(f"正在训练模型: {context.model_name}")
     
     # 模拟训练过程
     for epoch in range(context.config.epochs):
@@ -724,28 +790,28 @@ async def example_training_function(context: ExecutionContext) -> Dict[str, Any]
                    f"Accuracy: {context.metrics['accuracy']:.4f}")
         
         # 模拟训练时间
-        await asyncio.sleep(0.1)
+        _ = await asyncio.sleep(0.1)
         
         # 检查是否需要保存检查点
         if (epoch + 1) % context.config.checkpoint_interval == 0:
             checkpoint_path = f"checkpoints/{context.task_id}_epoch_{epoch + 1}.json"
-            global_executor.save_checkpoint(context, checkpoint_path)
+            _ = global_executor.save_checkpoint(context, checkpoint_path)
     
     return {"status": "completed", "final_metrics": context.metrics}
 
 # 示例数据处理函数
 async def example_data_processing_function(context: ExecutionContext) -> Dict[str, Any]:
     """示例数据处理函数"""
-    logger.info(f"正在处理数据源: {context.data_sources}")
+    _ = logger.info(f"正在处理数据源: {context.data_sources}")
     
     # 模拟数据处理过程
     for i in range(10):
         context.progress = (i + 1) / 10 * 100
         
-        logger.info(f"数据处理进度: {context.progress:.1f}%")
+        _ = logger.info(f"数据处理进度: {context.progress:.1f}%")
         
         # 模拟处理时间
-        await asyncio.sleep(0.05)
+        _ = await asyncio.sleep(0.05)
     
     context.metrics = {
         "processed_files": 100,
@@ -758,16 +824,16 @@ async def example_data_processing_function(context: ExecutionContext) -> Dict[st
 # 示例推理函数
 async def example_inference_function(context: ExecutionContext) -> Dict[str, Any]:
     """示例推理函数"""
-    logger.info(f"正在使用模型 {context.model_name} 进行推理")
+    _ = logger.info(f"正在使用模型 {context.model_name} 进行推理")
     
     # 模拟推理过程
     for i in range(5):
         context.progress = (i + 1) / 5 * 100
         
-        logger.info(f"推理进度: {context.progress:.1f}%")
+        _ = logger.info(f"推理进度: {context.progress:.1f}%")
         
         # 模拟推理时间
-        await asyncio.sleep(0.1)
+        _ = await asyncio.sleep(0.1)
     
     context.metrics = {
         "inference_time": 2.5,
@@ -780,7 +846,7 @@ async def example_inference_function(context: ExecutionContext) -> Dict[str, Any
 # 示例概念模型训练函数
 async def example_concept_model_training_function(context: ExecutionContext) -> Dict[str, Any]:
     """示例概念模型训练函数"""
-    logger.info(f"正在训练概念模型: {context.model_name}")
+    _ = logger.info(f"正在训练概念模型: {context.model_name}")
     
     # 模拟训练过程
     for epoch in range(context.config.epochs):
@@ -801,19 +867,19 @@ async def example_concept_model_training_function(context: ExecutionContext) -> 
                    f"Accuracy: {context.metrics['accuracy']:.4f}")
         
         # 模拟训练时间
-        await asyncio.sleep(0.15)
+        _ = await asyncio.sleep(0.15)
         
         # 检查是否需要保存检查点
         if (epoch + 1) % context.config.checkpoint_interval == 0:
             checkpoint_path = f"checkpoints/{context.task_id}_epoch_{epoch + 1}.json"
-            global_executor.save_checkpoint(context, checkpoint_path)
+            _ = global_executor.save_checkpoint(context, checkpoint_path)
     
     return {"status": "completed", "final_metrics": context.metrics}
 
 # 示例协作式训练函数
 async def example_collaborative_training_function(context: ExecutionContext) -> Dict[str, Any]:
     """示例协作式训练函数"""
-    logger.info(f"正在进行协作式训练: {context.model_name}")
+    _ = logger.info(f"正在进行协作式训练: {context.model_name}")
     
     # 模拟训练过程
     for epoch in range(context.config.epochs):
@@ -835,18 +901,18 @@ async def example_collaborative_training_function(context: ExecutionContext) -> 
                    f"协作分数: {context.metrics['collaboration_score']:.4f}")
         
         # 模拟训练时间
-        await asyncio.sleep(0.2)
+        _ = await asyncio.sleep(0.2)
         
         # 检查是否需要保存检查点
         if (epoch + 1) % context.config.checkpoint_interval == 0:
             checkpoint_path = f"checkpoints/{context.task_id}_epoch_{epoch + 1}.json"
-            global_executor.save_checkpoint(context, checkpoint_path)
+            _ = global_executor.save_checkpoint(context, checkpoint_path)
     
     return {"status": "completed", "final_metrics": context.metrics}
 
-def main():
+def main() -> None:
     """主函数 - 演示统一执行框架的使用"""
-    logger.info("🔄 启动统一执行框架演示")
+    _ = logger.info("🔄 启动统一执行框架演示")
     
     # 创建执行器和资源管理器
     executor = global_executor

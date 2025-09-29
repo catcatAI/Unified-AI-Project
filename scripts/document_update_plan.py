@@ -14,24 +14,19 @@
 """
 
 import os
-import re
 import json
 import logging
 import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Set, Optional
-import glob
-
-# 設置日誌
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("document_update.log"),
-        logging.StreamHandler()
+        _ = logging.FileHandler("document_update.log"),
+        _ = logging.StreamHandler()
     ]
 )
-logger = logging.getLogger("document_update")
+logger: Any = logging.getLogger("document_update")
 
 # 專案根目錄
 PROJECT_ROOT = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -77,7 +72,7 @@ class DocStatus:
     NOT_NEEDED = "無需更新"
 
 class DocumentUpdatePlan:
-    def __init__(self):
+    def __init__(self) -> None:
         self.code_files = {}
         self.doc_files = {}
         self.associations = {}
@@ -90,7 +85,7 @@ class DocumentUpdatePlan:
                 with open(STATUS_FILE, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
-                logger.error(f"載入狀態文件失敗: {e}")
+                _ = logger.error(f"載入狀態文件失敗: {e}")
                 return self._create_initial_status()
         else:
             return self._create_initial_status()
@@ -98,7 +93,7 @@ class DocumentUpdatePlan:
     def _create_initial_status(self) -> Dict:
         """創建初始狀態數據"""
         return {
-            "last_update": datetime.datetime.now().isoformat(),
+            _ = "last_update": datetime.datetime.now().isoformat(),
             "files": {},
             "stats": {
                 "total": 0,
@@ -116,7 +111,7 @@ class DocumentUpdatePlan:
         
         # 更新統計數據
         stats = {
-            "total": len(self.status_data["files"]),
+            _ = "total": len(self.status_data["files"]),
             "pending": 0,
             "in_progress": 0,
             "completed": 0,
@@ -142,13 +137,13 @@ class DocumentUpdatePlan:
         try:
             with open(STATUS_FILE, 'w', encoding='utf-8') as f:
                 json.dump(self.status_data, f, ensure_ascii=False, indent=2)
-            logger.info(f"狀態已保存至 {STATUS_FILE}")
+            _ = logger.info(f"狀態已保存至 {STATUS_FILE}")
         except Exception as e:
-            logger.error(f"保存狀態文件失敗: {e}")
+            _ = logger.error(f"保存狀態文件失敗: {e}")
     
     def scan_project(self):
         """掃描專案目錄，建立檔案清單與路徑映射表"""
-        logger.info("開始掃描專案目錄...")
+        _ = logger.info("開始掃描專案目錄...")
         
         for root, dirs, files in os.walk(PROJECT_ROOT):
             # 跳過忽略的目錄
@@ -168,7 +163,7 @@ class DocumentUpdatePlan:
                 if ext.lower() in CODE_EXTENSIONS:
                     self.code_files[rel_file_path] = {
                         "path": file_path,
-                        "type": CODE_EXTENSIONS[ext.lower()],
+                        _ = "type": CODE_EXTENSIONS[ext.lower()],
                         "rel_path": rel_file_path
                     }
                 
@@ -176,15 +171,15 @@ class DocumentUpdatePlan:
                 if ext.lower() in DOC_EXTENSIONS:
                     self.doc_files[rel_file_path] = {
                         "path": file_path,
-                        "type": DOC_EXTENSIONS[ext.lower()],
+                        _ = "type": DOC_EXTENSIONS[ext.lower()],
                         "rel_path": rel_file_path
                     }
         
-        logger.info(f"掃描完成。找到 {len(self.code_files)} 個代碼文件和 {len(self.doc_files)} 個文檔文件。")
+        _ = logger.info(f"掃描完成。找到 {len(self.code_files)} 個代碼文件和 {len(self.doc_files)} 個文檔文件。")
     
     def create_associations(self):
         """建立代碼文件與MD文檔的關聯組"""
-        logger.info("開始建立代碼文件與文檔的關聯...")
+        _ = logger.info("開始建立代碼文件與文檔的關聯...")
         
         # 1. 基於路徑相似性建立關聯
         for code_path, code_info in self.code_files.items():
@@ -199,9 +194,9 @@ class DocumentUpdatePlan:
                 
                 # 同目錄且名稱相似
                 if doc_dir == code_dir and (doc_name.lower() == code_name.lower() or 
-                                           code_name.lower() in doc_name.lower() or 
+                                           _ = code_name.lower() in doc_name.lower() or 
                                            doc_name.lower() == "readme"):
-                    same_dir_docs.append(doc_path)
+                    _ = same_dir_docs.append(doc_path)
             
             # 尋找上層目錄的文檔
             parent_dir_docs = []
@@ -213,7 +208,7 @@ class DocumentUpdatePlan:
                     # 上層目錄且名稱相似或為README
                     if doc_dir and code_dir.startswith(doc_dir) and (doc_name.lower() == os.path.basename(code_dir).lower() or 
                                                                     doc_name.lower() == "readme"):
-                        parent_dir_docs.append(doc_path)
+                        _ = parent_dir_docs.append(doc_path)
             
             # 關聯文檔
             associated_docs = same_dir_docs + parent_dir_docs
@@ -233,10 +228,10 @@ class DocumentUpdatePlan:
                         if "associated_code" not in self.status_data["files"][doc_path]:
                             self.status_data["files"][doc_path]["associated_code"] = []
                         if code_path not in self.status_data["files"][doc_path]["associated_code"]:
-                            self.status_data["files"][doc_path]["associated_code"].append(code_path)
+                            _ = self.status_data["files"][doc_path]["associated_code"].append(code_path)
             else:
                 # 沒有關聯文檔，可能需要創建
-                logger.warning(f"代碼文件 {code_path} 沒有關聯文檔")
+                _ = logger.warning(f"代碼文件 {code_path} 沒有關聯文檔")
         
         # 2. 處理沒有關聯代碼的文檔
         for doc_path, doc_info in self.doc_files.items():
@@ -248,12 +243,12 @@ class DocumentUpdatePlan:
                     "notes": "沒有關聯代碼文件"
                 }
         
-        logger.info(f"關聯建立完成。{len(self.associations)} 個代碼文件有關聯文檔。")
-        self._save_status()
+        _ = logger.info(f"關聯建立完成。{len(self.associations)} 個代碼文件有關聯文檔。")
+        _ = self._save_status()
     
     def generate_update_plan(self):
         """生成文檔更新計畫"""
-        logger.info("生成文檔更新計畫...")
+        _ = logger.info("生成文檔更新計畫...")
         
         # 按目錄分組
         dir_groups = {}
@@ -261,12 +256,12 @@ class DocumentUpdatePlan:
             doc_dir = os.path.dirname(doc_path)
             if doc_dir not in dir_groups:
                 dir_groups[doc_dir] = []
-            dir_groups[doc_dir].append(doc_path)
+            _ = dir_groups[doc_dir].append(doc_path)
         
         # 生成更新計畫
         update_plan = {
-            "generated_at": datetime.datetime.now().isoformat(),
-            "total_docs": len(self.status_data["files"]),
+            _ = "generated_at": datetime.datetime.now().isoformat(),
+            _ = "total_docs": len(self.status_data["files"]),
             "stats": self.status_data["stats"],
             "groups": []
         }
@@ -282,37 +277,37 @@ class DocumentUpdatePlan:
                 group["documents"].append({
                     "path": doc_path,
                     "status": doc_info["status"],
-                    "associated_code_count": len(doc_info.get("associated_code", [])),
+                    _ = "associated_code_count": len(doc_info.get("associated_code", [])),
                     "last_update": doc_info["last_update"]
                 })
             
-            update_plan["groups"].append(group)
+            _ = update_plan["groups"].append(group)
         
         # 保存更新計畫
         plan_file = PROJECT_ROOT / "doc_update_plan.json"
         try:
             with open(plan_file, 'w', encoding='utf-8') as f:
                 json.dump(update_plan, f, ensure_ascii=False, indent=2)
-            logger.info(f"更新計畫已保存至 {plan_file}")
+            _ = logger.info(f"更新計畫已保存至 {plan_file}")
         except Exception as e:
-            logger.error(f"保存更新計畫失敗: {e}")
+            _ = logger.error(f"保存更新計畫失敗: {e}")
         
         return update_plan
     
     def generate_markdown_report(self):
         """生成Markdown格式的報告"""
-        logger.info("生成Markdown報告...")
+        _ = logger.info("生成Markdown報告...")
         
         report = []
-        report.append("# 專案文件更新計畫報告")
-        report.append(f"\n生成時間: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        report.append("\n## 概況")
-        report.append(f"- 總文檔數: {self.status_data['stats']['total']}")
-        report.append(f"- 待更新: {self.status_data['stats']['pending']}")
-        report.append(f"- 更新中: {self.status_data['stats']['in_progress']}")
-        report.append(f"- 已更新: {self.status_data['stats']['completed']}")
-        report.append(f"- 需審查: {self.status_data['stats']['needs_review']}")
-        report.append(f"- 無需更新: {self.status_data['stats']['not_needed']}")
+        _ = report.append("# 專案文件更新計畫報告")
+        _ = report.append(f"\n生成時間: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        _ = report.append("\n## 概況")
+        _ = report.append(f"- 總文檔數: {self.status_data['stats']['total']}")
+        _ = report.append(f"- 待更新: {self.status_data['stats']['pending']}")
+        _ = report.append(f"- 更新中: {self.status_data['stats']['in_progress']}")
+        _ = report.append(f"- 已更新: {self.status_data['stats']['completed']}")
+        _ = report.append(f"- 需審查: {self.status_data['stats']['needs_review']}")
+        _ = report.append(f"- 無需更新: {self.status_data['stats']['not_needed']}")
         
         # 按目錄分組
         dir_groups = {}
@@ -320,16 +315,16 @@ class DocumentUpdatePlan:
             doc_dir = os.path.dirname(doc_path)
             if doc_dir not in dir_groups:
                 dir_groups[doc_dir] = []
-            dir_groups[doc_dir].append((doc_path, doc_info))
+            _ = dir_groups[doc_dir].append((doc_path, doc_info))
         
         # 生成目錄分組報告
-        report.append("\n## 文檔分組")
+        _ = report.append("\n## 文檔分組")
         
         for dir_path, doc_items in sorted(dir_groups.items()):
             dir_display = dir_path if dir_path else "[根目錄]"
-            report.append(f"\n### {dir_display}")
-            report.append("| 文檔 | 狀態 | 關聯代碼數 | 最後更新 |")
-            report.append("| ---- | ---- | ---------- | -------- |")
+            _ = report.append(f"\n### {dir_display}")
+            _ = report.append("| 文檔 | 狀態 | 關聯代碼數 | 最後更新 |")
+            _ = report.append("| ---- | ---- | ---------- | -------- |")
             
             for doc_path, doc_info in sorted(doc_items):
                 doc_name = os.path.basename(doc_path)
@@ -337,16 +332,16 @@ class DocumentUpdatePlan:
                 code_count = len(doc_info.get("associated_code", []))
                 last_update = doc_info["last_update"] if doc_info["last_update"] else "未更新"
                 
-                report.append(f"| {doc_name} | {status} | {code_count} | {last_update} |")
+                _ = report.append(f"| {doc_name} | {status} | {code_count} | {last_update} |")
         
         # 保存報告
         report_file = PROJECT_ROOT / "doc_update_report.md"
         try:
             with open(report_file, 'w', encoding='utf-8') as f:
-                f.write("\n".join(report))
-            logger.info(f"報告已保存至 {report_file}")
+                _ = f.write("\n".join(report))
+            _ = logger.info(f"報告已保存至 {report_file}")
         except Exception as e:
-            logger.error(f"保存報告失敗: {e}")
+            _ = logger.error(f"保存報告失敗: {e}")
         
         return "\n".join(report)
     
@@ -360,71 +355,71 @@ class DocumentUpdatePlan:
         doc_name = os.path.splitext(os.path.basename(doc_path))[0]
         
         template = []
-        template.append(f"# {doc_name}")
-        template.append("\n## 概述")
-        template.append("[在此描述此模組的主要功能和用途]")
+        _ = template.append(f"# {doc_name}")
+        _ = template.append("\n## 概述")
+        _ = template.append("[在此描述此模組的主要功能和用途]")
         
-        template.append("\n## 功能特性")
-        template.append("- [功能點1]")
-        template.append("- [功能點2]")
-        template.append("- [功能點3]")
+        _ = template.append("\n## 功能特性")
+        _ = template.append("- [功能點1]")
+        _ = template.append("- [功能點2]")
+        _ = template.append("- [功能點3]")
         
         if associated_code:
-            template.append("\n## 相關代碼文件")
+            _ = template.append("\n## 相關代碼文件")
             for code_path in associated_code:
-                template.append(f"- `{code_path}`")
+                _ = template.append(f"- `{code_path}`")
             
-            template.append("\n## 主要接口")
-            template.append("```python")
-            template.append("# 示例代碼")
+            _ = template.append("\n## 主要接口")
+            _ = template.append("```python")
+            _ = template.append("# 示例代碼")
             template.append("def example_function(param1, param2):")
-            template.append("    # 函數說明")
-            template.append("    # 實現細節")
-            template.append("    pass")
-            template.append("```")
+            _ = template.append("    # 函數說明")
+            _ = template.append("    # 實現細節")
+            _ = template.append("    pass")
+            _ = template.append("```")
         
-        template.append("\n## 使用示例")
-        template.append("```python")
-        template.append("# 使用示例代碼")
-        template.append("```")
+        _ = template.append("\n## 使用示例")
+        _ = template.append("```python")
+        _ = template.append("# 使用示例代碼")
+        _ = template.append("```")
         
-        template.append("\n## 依賴關係")
-        template.append("- [依賴項1]")
-        template.append("- [依賴項2]")
+        _ = template.append("\n## 依賴關係")
+        _ = template.append("- [依賴項1]")
+        _ = template.append("- [依賴項2]")
         
-        template.append("\n## 未來規劃")
-        template.append("- [規劃項1]")
-        template.append("- [規劃項2]")
+        _ = template.append("\n## 未來規劃")
+        _ = template.append("- [規劃項1]")
+        _ = template.append("- [規劃項2]")
         
-        template.append("\n## 注意事項")
-        template.append("- [注意事項1]")
-        template.append("- [注意事項2]")
+        _ = template.append("\n## 注意事項")
+        _ = template.append("- [注意事項1]")
+        _ = template.append("- [注意事項2]")
         
         return "\n".join(template)
     
     def run(self):
         # 執行文檔更新計畫
-        logger.info("開始執行文檔更新計畫...")
+        _ = logger.info("開始執行文檔更新計畫...")
         
         # 1. 掃描專案目錄
-        self.scan_project()
+        _ = self.scan_project()
         
         # 2. 建立關聯
-        self.create_associations()
+        _ = self.create_associations()
         
         # 3. 生成更新計畫
-        self.generate_update_plan()
+        _ = self.generate_update_plan()
         
         # 4. 生成報告
-        self.generate_markdown_report()
+        _ = self.generate_markdown_report()
         
-        logger.info("文檔更新計畫執行完成。")
+        _ = logger.info("文檔更新計畫執行完成。")
 
 
-def main():
+def main() -> None:
     # 主函數
     plan = DocumentUpdatePlan()
-    plan.run()
+    _ = plan.run()
 
 
 def scan_directory(directory, patterns):
@@ -442,7 +437,7 @@ def scan_directory(directory, patterns):
         # 使用glob模式匹配文件
         pattern_path = os.path.join(directory, pattern)
         files = glob.glob(pattern_path)
-        result.extend(files)
+        _ = result.extend(files)
     return result
 
 def associate_files(code_files, doc_files):
@@ -467,7 +462,7 @@ def associate_files(code_files, doc_files):
             
             # 如果文檔文件名包含代碼文件名，則建立關聯
             if code_basename == doc_basename or code_basename in doc_basename:
-                associated_docs.append(doc_file)
+                _ = associated_docs.append(doc_file)
         
         if associated_docs:
             associations[code_file] = associated_docs
@@ -475,4 +470,4 @@ def associate_files(code_files, doc_files):
     return associations
 
 if __name__ == "__main__":
-    main()
+    _ = main()

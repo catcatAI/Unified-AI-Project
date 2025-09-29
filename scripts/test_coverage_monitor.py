@@ -4,7 +4,6 @@
 用于监控和报告项目的测试覆盖率
 """
 
-import os
 import sys
 import json
 import subprocess
@@ -16,7 +15,7 @@ from typing import Dict, List, Any
 class TestCoverageMonitor:
     """测试覆盖率监控器"""
     
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: str = None) -> None:
         """初始化监控器"""
         self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent
         self.coverage_dir = self.project_root / "coverage_reports"
@@ -27,12 +26,12 @@ class TestCoverageMonitor:
         运行覆盖率分析
         
         Args:
-            output_format: 输出格式 (json, html, xml)
+            _ = output_format: 输出格式 (json, html, xml)
             
         Returns:
             覆盖率分析结果
         """
-        print("🚀 开始运行覆盖率分析...")
+        _ = print("🚀 开始运行覆盖率分析...")
         
         # 构建pytest-cov命令
         cmd = [
@@ -57,7 +56,7 @@ class TestCoverageMonitor:
             )
             
             if result.returncode != 0:
-                print(f"❌ 测试执行失败: {result.stderr}")
+                _ = print(f"❌ 测试执行失败: {result.stderr}")
                 return {"error": "Test execution failed", "details": result.stderr}
             
             # 解析覆盖率数据
@@ -65,14 +64,14 @@ class TestCoverageMonitor:
             coverage_data["timestamp"] = datetime.now().isoformat()
             coverage_data["test_output"] = result.stdout
             
-            print("✅ 覆盖率分析完成")
+            _ = print("✅ 覆盖率分析完成")
             return coverage_data
             
         except subprocess.TimeoutExpired:
-            print("❌ 覆盖率分析超时")
+            _ = print("❌ 覆盖率分析超时")
             return {"error": "Coverage analysis timeout"}
         except Exception as e:
-            print(f"❌ 覆盖率分析出错: {e}")
+            _ = print(f"❌ 覆盖率分析出错: {e}")
             return {"error": str(e)}
     
     def _parse_coverage_data(self) -> Dict[str, Any]:
@@ -90,21 +89,21 @@ class TestCoverageMonitor:
             # 提取关键指标
             summary = data.get("meta", {}).get("summary", {})
             coverage_stats = {
-                "total_coverage": summary.get("percent_covered", 0),
-                "covered_lines": summary.get("covered_lines", 0),
-                "missing_lines": summary.get("missing_lines", 0),
-                "total_lines": summary.get("num_statements", 0),
-                "files_count": len(data.get("files", {}))
+                _ = "total_coverage": summary.get("percent_covered", 0),
+                _ = "covered_lines": summary.get("covered_lines", 0),
+                _ = "missing_lines": summary.get("missing_lines", 0),
+                _ = "total_lines": summary.get("num_statements", 0),
+                _ = "files_count": len(data.get("files", {}))
             }
             
             # 按文件分析覆盖率
             file_coverage = {}
             for file_path, file_data in data.get("files", {}).items():
                 file_coverage[file_path] = {
-                    "coverage": file_data.get("summary", {}).get("percent_covered", 0),
-                    "covered_lines": file_data.get("summary", {}).get("covered_lines", 0),
-                    "missing_lines": file_data.get("summary", {}).get("missing_lines", 0),
-                    "total_lines": file_data.get("summary", {}).get("num_statements", 0)
+                    _ = "coverage": file_data.get("summary", {}).get("percent_covered", 0),
+                    _ = "covered_lines": file_data.get("summary", {}).get("covered_lines", 0),
+                    _ = "missing_lines": file_data.get("summary", {}).get("missing_lines", 0),
+                    _ = "total_lines": file_data.get("summary", {}).get("num_statements", 0)
                 }
             
             coverage_stats["file_coverage"] = file_coverage
@@ -112,7 +111,7 @@ class TestCoverageMonitor:
             return coverage_stats
             
         except Exception as e:
-            print(f"❌ 解析覆盖率数据出错: {e}")
+            _ = print(f"❌ 解析覆盖率数据出错: {e}")
             return {"error": f"Failed to parse coverage data: {e}"}
     
     def check_coverage_thresholds(self, coverage_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -180,11 +179,11 @@ class TestCoverageMonitor:
                 with open(report_file, 'w', encoding='utf-8') as f:
                     f.write(json.dumps(coverage_data, ensure_ascii=False, indent=2))
             
-            print(f"✅ 覆盖率报告已生成: {report_file}")
+            _ = print(f"✅ 覆盖率报告已生成: {report_file}")
             return str(report_file)
             
         except Exception as e:
-            print(f"❌ 生成覆盖率报告失败: {e}")
+            _ = print(f"❌ 生成覆盖率报告失败: {e}")
             return ""
     
     def get_coverage_trend(self) -> List[Dict[str, Any]]:
@@ -202,13 +201,13 @@ class TestCoverageMonitor:
                             "coverage": data["total_coverage"]
                         })
             except Exception as e:
-                print(f"⚠️ 读取历史报告失败 {report_file}: {e}")
+                _ = print(f"⚠️ 读取历史报告失败 {report_file}: {e}")
         
         # 按时间排序
         trend_data.sort(key=lambda x: x["timestamp"])
         return trend_data
 
-def main():
+def main() -> None:
     """主函数"""
     parser = argparse.ArgumentParser(description="测试覆盖率监控工具")
     parser.add_argument("--format", choices=["json", "html", "xml"], 
@@ -227,8 +226,8 @@ def main():
     coverage_data = monitor.run_coverage_analysis(args.format)
     
     if "error" in coverage_data:
-        print(f"❌ 覆盖率分析失败: {coverage_data['error']}")
-        sys.exit(1)
+        _ = print(f"❌ 覆盖率分析失败: {coverage_data['error']}")
+        _ = sys.exit(1)
     
     # 生成报告
     report_path = monitor.generate_coverage_report(coverage_data, args.format)
@@ -236,8 +235,8 @@ def main():
     # 检查阈值
     if args.check_thresholds:
         threshold_results = monitor.check_coverage_thresholds(coverage_data)
-        print("\n📊 覆盖率阈值检查结果:")
-        print(f"   当前覆盖率: {threshold_results['current_coverage']:.2f}%")
+        _ = print("\n📊 覆盖率阈值检查结果:")
+        _ = print(f"   当前覆盖率: {threshold_results['current_coverage']:.2f}%")
         print(f"   满足最低要求(85%): {'✅' if threshold_results['meets_minimum'] else '❌'}")
         print(f"   满足目标要求(90%): {'✅' if threshold_results['meets_target'] else '❌'}")
         print(f"   达到优秀水平(95%): {'✅' if threshold_results['meets_excellent'] else '❌'}")
@@ -245,11 +244,11 @@ def main():
     # 生成趋势
     if args.generate_trend:
         trend_data = monitor.get_coverage_trend()
-        print(f"\n📈 覆盖率趋势 (共{len(trend_data)}个数据点):")
+        _ = print(f"\n📈 覆盖率趋势 (共{len(trend_data)}个数据点):")
         for point in trend_data[-5:]:  # 显示最近5个数据点
-            print(f"   {point['timestamp']}: {point['coverage']:.2f}%")
+            _ = print(f"   {point['timestamp']}: {point['coverage']:.2f}%")
     
-    print(f"\n📄 详细报告已保存到: {report_path}")
+    _ = print(f"\n📄 详细报告已保存到: {report_path}")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

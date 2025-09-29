@@ -13,7 +13,7 @@ from pathlib import Path
 def check_python_version():
     """检查Python版本"""
     if sys.version_info < (3, 8):
-        print("错误: 需要Python 3.8或更高版本")
+        _ = print("错误: 需要Python 3.8或更高版本")
         return False
     return True
 
@@ -23,28 +23,28 @@ def check_pnpm():
         subprocess.run(["pnpm", "--version"], check=True, capture_output=True)
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("错误: 未找到pnpm。请先安装pnpm: npm install -g pnpm")
+        _ = print("错误: 未找到pnpm。请先安装pnpm: npm install -g pnpm")
         return False
 
 def setup_backend():
     """设置后端环境"""
     backend_dir = Path("apps/backend")
     if not backend_dir.exists():
-        print("错误: 未找到后端目录")
+        _ = print("错误: 未找到后端目录")
         return False
     
     # 创建虚拟环境
     venv_path = backend_dir / "venv"
     if not venv_path.exists():
-        print("创建Python虚拟环境...")
+        _ = print("创建Python虚拟环境...")
         try:
             subprocess.run([sys.executable, "-m", "venv", str(venv_path)], check=True)
         except subprocess.CalledProcessError:
-            print("错误: 创建虚拟环境失败")
+            _ = print("错误: 创建虚拟环境失败")
             return False
     
     # 激活虚拟环境并安装依赖
-    print("安装Python依赖...")
+    _ = print("安装Python依赖...")
     pip_path = venv_path / "Scripts" / "pip.exe" if os.name == "nt" else venv_path / "bin" / "pip"
     
     try:
@@ -63,17 +63,17 @@ def setup_backend():
             
         return True
     except subprocess.CalledProcessError:
-        print("错误: 安装Python依赖失败")
+        _ = print("错误: 安装Python依赖失败")
         return False
 
 def setup_frontend():
     """设置前端环境"""
-    print("安装Node.js依赖...")
+    _ = print("安装Node.js依赖...")
     try:
         subprocess.run(["pnpm", "install"], check=True)
         return True
     except subprocess.CalledProcessError:
-        print("错误: 安装Node.js依赖失败")
+        _ = print("错误: 安装Node.js依赖失败")
         return False
 
 def create_env_files():
@@ -106,46 +106,46 @@ MQTT_USERNAME=
 MQTT_PASSWORD=
 """
         with open(env_example_path, "w", encoding="utf-8") as f:
-            f.write(env_example_content)
-        print("已创建 .env.example 文件")
+            _ = f.write(env_example_content)
+        _ = print("已创建 .env.example 文件")
     
     # 如果.env不存在，从.env.example复制
     if not env_path.exists() and env_example_path.exists():
-        shutil.copy(env_example_path, env_path)
-        print("已创建 .env 文件，请根据需要修改配置")
+        _ = shutil.copy(env_example_path, env_path)
+        _ = print("已创建 .env 文件，请根据需要修改配置")
 
-def main():
+def main() -> None:
     """主函数"""
-    print("Unified AI Project 设置脚本")
+    _ = print("Unified AI Project 设置脚本")
     print("=" * 40)
     
     # 检查环境
     if not check_python_version():
-        sys.exit(1)
+        _ = sys.exit(1)
     
     if not check_pnpm():
-        sys.exit(1)
+        _ = sys.exit(1)
     
     # 创建环境变量文件
-    print("\n1. 创建环境变量文件...")
-    create_env_files()
+    _ = print("\n1. 创建环境变量文件...")
+    _ = create_env_files()
     
     # 设置后端
-    print("\n2. 设置后端环境...")
+    _ = print("\n2. 设置后端环境...")
     if not setup_backend():
-        sys.exit(1)
+        _ = sys.exit(1)
     
     # 设置前端
-    print("\n3. 设置前端环境...")
+    _ = print("\n3. 设置前端环境...")
     if not setup_frontend():
-        sys.exit(1)
+        _ = sys.exit(1)
     
-    print("\n设置完成!")
-    print("\n下一步:")
-    print("1. 请检查并修改 apps/backend/.env 文件中的配置")
-    print("2. 运行数据库初始化: cd apps/backend && python scripts/init_database.py")
-    print("3. 启动开发服务器: pnpm dev")
-    print("4. 查看详细配置指南: PROJECT_CONFIGURATION_AND_SETUP_GUIDE.md")
+    _ = print("\n设置完成!")
+    _ = print("\n下一步:")
+    _ = print("1. 请检查并修改 apps/backend/.env 文件中的配置")
+    _ = print("2. 运行数据库初始化: cd apps/backend && python scripts/init_database.py")
+    _ = print("3. 启动开发服务器: pnpm dev")
+    _ = print("4. 查看详细配置指南: PROJECT_CONFIGURATION_AND_SETUP_GUIDE.md")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

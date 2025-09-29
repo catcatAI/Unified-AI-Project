@@ -21,13 +21,11 @@ except ImportError as e:
     EarlyStopping = ModelCheckpoint = ReduceLROnPlateau = Sequential = Dense = Dropout = BatchNormalization = Adam = None
     KERAS_AVAILABLE = False
 
-import numpy as np
 import json
-import logging
-from pathlib import Path
-from typing import Dict, Any, List, Tuple
+import os
+import sys
 
-# Add src directory to sys.path to allow imports
+# Add src directory to sys.path for dependency manager import
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
@@ -35,7 +33,7 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 try:
-    from logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
+    from .logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
 except ImportError as e:
     print(f"Error importing from logic_model_nn: {e}")
     print("Ensure logic_model_nn.py is in the same directory and src is in sys.path.")
@@ -71,7 +69,7 @@ def load_logic_dataset(file_path):
         print(f"Error: {e}")
     return None
 
-def main():
+def main -> None:
     print("Starting Logic NN Model training process...")
 
     # 1. Load data
@@ -123,7 +121,7 @@ def main():
     ]
 
     history = logic_nn_model.model.fit(
-        X, y_categorical, # Using all data, with validation_split in fit()
+        X, y_categorical, # Using all data, with validation_split in fit
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
         validation_split=VALIDATION_SPLIT, # Uses last 10% of data for validation
@@ -145,7 +143,7 @@ def main():
     # plt.title('Model Accuracy')
     # plt.ylabel('Accuracy')
     # plt.xlabel('Epoch')
-    # plt.legend()
+    # plt.legend
     # plt.savefig('logic_model_training_accuracy.png')
     # print("Training accuracy plot saved to logic_model_training_accuracy.png")
 
@@ -155,4 +153,4 @@ if __name__ == '__main__':
         print(f"Training data JSON file not found at {TRAIN_DATA_PATH}.")
         print("Please run `logic_data_generator.py` first to create 'logic_train.json'.")
     else:
-        main()
+        main

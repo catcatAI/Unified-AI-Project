@@ -1,6 +1,6 @@
 class Inventory:
-    def __init__(self):
-        self.items = {}
+    def __init__(self) -> None:
+        self.items = 
 
     def add_item(self, item_name, quantity=1):
         if item_name in self.items:

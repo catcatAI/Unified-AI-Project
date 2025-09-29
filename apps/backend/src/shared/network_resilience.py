@@ -1,9 +1,8 @@
 import asyncio
 import time
 import logging
-from typing import Callable, Any
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class NetworkError(Exception):
     """Indicates a network-related failure that might be transient."""
@@ -16,7 +15,7 @@ class ProtocolError(Exception):
 class RetryPolicy:
     """實現帶有指數退避和最大嘗試次數的重試策略。"""
 
-    def __init__(self, max_attempts: int = 3, backoff_factor: float = 2.0, max_delay: float = 30.0):
+    def __init__(self, max_attempts: int = 3, backoff_factor: float = 2.0, max_delay: float = 30.0) -> None:
         self.max_attempts = max_attempts
         self.backoff_factor = backoff_factor
         self.max_delay = max_delay
@@ -29,7 +28,7 @@ class RetryPolicy:
                 except NetworkError as e:
                     delay = min(self.max_delay, self.backoff_factor ** attempt)
                     logger.warning(f"Attempt {attempt + 1}/{self.max_attempts}: Network error during {func.__name__}. Retrying in {delay:.2f}s... Error: {e}")
-                    await asyncio.sleep(delay)
+                    _ = await asyncio.sleep(delay)
                 except ProtocolError:
                     logger.error(f"Protocol error during {func.__name__}. Not retrying.")
                     raise # Re-raise non-retryable errors immediately
@@ -43,7 +42,7 @@ class RetryPolicy:
 class CircuitBreaker:
     """實現熔斷模式以防止重複訪問失敗的服務。"""
 
-    def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 60):
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 60) -> None:
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.failures = 0
@@ -54,7 +53,7 @@ class CircuitBreaker:
     def __call__(self, func: Callable) -> Callable:
         async def wrapper(*args, **kwargs):
             if self.state == "OPEN":
-                if time.time() - self.last_failure_time > self.recovery_timeout:
+                if time.time - self.last_failure_time > self.recovery_timeout:
                     self.state = "HALF_OPEN"
                     self.logger.info("Circuit Breaker: State changed to HALF_OPEN. Probing service...")
                 else:
@@ -62,10 +61,10 @@ class CircuitBreaker:
 
             try:
                 result = await func(*args, **kwargs)
-                self._success()
+                self._success
                 return result
             except Exception as e:
-                self._fail()
+                self._fail
                 raise # Re-raise original exception
 
         return wrapper
@@ -78,7 +77,7 @@ class CircuitBreaker:
 
     def _fail(self):
         self.failures += 1
-        self.last_failure_time = time.time()
+        self.last_failure_time = time.time
         if self.failures >= self.failure_threshold:
             self.state = "OPEN"
             self.logger.warning(f"Circuit Breaker: Failure threshold reached ({self.failures} failures). State changed to OPEN.")

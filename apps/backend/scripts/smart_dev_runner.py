@@ -9,13 +9,20 @@ import subprocess
 import re
 import time
 from pathlib import Path
+from typing import List
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
 SRC_DIR = PROJECT_ROOT / "src"
 
+# 添加项目路径到sys.path
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(SRC_DIR))
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
 def setup_environment():
     """设置环境"""
+    print("🔧 设置开发环境...")
     # 添加项目路径
     if str(PROJECT_ROOT) not in sys.path:
         sys.path.insert(0, str(PROJECT_ROOT))
@@ -25,16 +32,13 @@ def setup_environment():
     # 激活虚拟环境
     venv_path = PROJECT_ROOT / "venv"
     if venv_path.exists():
-        if sys.platform == "win32":
-            activate_script = venv_path / "Scripts" / "activate.bat"
-        else:
-            activate_script = venv_path / "bin" / "activate"
-        
         # 设置环境变量
         if sys.platform == "win32":
             os.environ["PATH"] = f"{venv_path / 'Scripts'}{os.pathsep}{os.environ['PATH']}"
         else:
             os.environ["PATH"] = f"{venv_path / 'bin'}{os.pathsep}{os.environ['PATH']}"
+    
+    print("✅ 环境设置完成")
 
 def check_environment():
     """检查基础环境"""
@@ -43,11 +47,14 @@ def check_environment():
         # 检查Python环境和依赖包
         import fastapi
         import uvicorn
+        # 使用导入的模块以避免未使用导入的警告
+        fastapi.__version__
+        uvicorn.__version__
         print("✅ Python环境检查通过")
         
         # 验证必要的环境变量
-        required_vars = []
-        missing_vars = [var for var in required_vars if var not in os.environ]
+        required_vars: List[str] = []
+        missing_vars: List[str] = [var for var in required_vars if var not in os.environ]
         if missing_vars:
             print(f"⚠️ 缺少环境变量: {missing_vars}")
         else:
@@ -62,6 +69,10 @@ def check_environment():
             print("✅ 配置文件检查通过")
             
         return True
+    except ImportError as e:
+        print(f"❌ Python环境检查失败: 缺少必要的依赖包 {e}")
+        print("💡 请运行 'pip install -r requirements.txt' 安装依赖包")
+        return False
     except Exception as e:
         print(f"❌ 环境检查失败: {e}")
         import traceback
@@ -73,21 +84,25 @@ def initialize_core_services():
     print("🔧 第1层: 核心服务初始化")
     try:
         # 初始化HAM内存管理
-        from src.ai.memory.ham_memory_manager import HAMMemoryManager
+        from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
         ham_manager = HAMMemoryManager()
-        print("✅ HAM内存管理初始化完成")
+        # 使用ham_manager执行一些基本操作以避免未使用变量警告
+        print(f"✅ HAM内存管理初始化完成，内存ID起始值: {ham_manager.next_memory_id}")
         
         # 初始化多LLM服务接口
-        from src.core.services.multi_llm_service import MultiLLMService
+        from apps.backend.src.core.services.multi_llm_service import MultiLLMService
         llm_service = MultiLLMService()
-        print("✅ 多LLM服务初始化完成")
+        # 使用llm_service执行一些基本操作以避免未使用变量警告
+        available_models = llm_service.get_available_models()
+        print(f"✅ 多LLM服务初始化完成，可用模型: {available_models}")
         
         # 初始化服务发现机制
-        from src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
-        from src.ai.trust.trust_manager_module import TrustManager
+        from apps.backend.src.core_ai.discovery.service_discovery_module import ServiceDiscoveryModule
+        from apps.backend.src.core_ai.trust.trust_manager_module import TrustManager
         trust_manager = TrustManager()
         service_discovery = ServiceDiscoveryModule(trust_manager=trust_manager)
-        print("✅ 服务发现机制初始化完成")
+        # 使用service_discovery执行一些基本操作以避免未使用变量警告
+        print(f"✅ 服务发现机制初始化完成，模块: {service_discovery.__class__.__name__}")
         
         return True
     except Exception as e:
@@ -101,7 +116,7 @@ def start_core_components():
     print("⚙️ 第2层: 核心组件启动")
     try:
         # 初始化HSP连接器
-        from src.hsp.connector import HSPConnector
+        from apps.backend.src.core.hsp.connector import HSPConnector
         hsp_connector = HSPConnector(
             ai_id="did:hsp:api_server_ai",
             broker_address="localhost",
@@ -110,18 +125,18 @@ def start_core_components():
         print("✅ HSP连接器初始化完成")
         
         # 初始化对话管理器所需的依赖组件
-        from src.ai.personality.personality_manager import PersonalityManager
-        from src.ai.memory.ham_memory_manager import HAMMemoryManager
-        from src.core.services.multi_llm_service import MultiLLMService
-        from src.ai.emotion.emotion_system import EmotionSystem
-        from src.ai.crisis.crisis_system import CrisisSystem
-        from src.ai.time.time_system import TimeSystem
-        from src.ai.formula_engine import FormulaEngine
-        from src.tools.tool_dispatcher import ToolDispatcher
-        from src.ai.learning.learning_manager import LearningManager
+        from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
+        from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+        from apps.backend.src.core.services.multi_llm_service import MultiLLMService
+        from apps.backend.src.core_ai.emotion.emotion_system import EmotionSystem
+        from apps.backend.src.core_ai.crisis.crisis_system import CrisisSystem
+        from apps.backend.src.core_ai.time.time_system import TimeSystem
+        from apps.backend.src.core_ai.formula_engine import FormulaEngine
+        from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+        from apps.backend.src.core_ai.learning.learning_manager import LearningManager
         # 修复导入路径，使用AI模块的ServiceDiscoveryModule而不是core模块的
-        from src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
-        from src.managers.agent_manager import AgentManager
+        from apps.backend.src.core_ai.discovery.service_discovery_module import ServiceDiscoveryModule
+        from apps.backend.src.managers.agent_manager import AgentManager
         
         # 创建所有必需的依赖实例
         personality_manager = PersonalityManager()
@@ -146,9 +161,9 @@ def start_core_components():
                 raise e
         
         # 初始化LearningManager所需的依赖组件
-        from src.ai.learning.fact_extractor_module import FactExtractorModule
-        from src.ai.learning.content_analyzer_module import ContentAnalyzerModule
-        from src.ai.trust.trust_manager_module import TrustManager
+        from apps.backend.src.core_ai.learning.fact_extractor_module import FactExtractorModule
+        from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+        from apps.backend.src.core_ai.trust.trust_manager_module import TrustManager
         
         fact_extractor = FactExtractorModule(llm_service=llm_interface)
         content_analyzer = ContentAnalyzerModule()
@@ -161,14 +176,16 @@ def start_core_components():
             fact_extractor=fact_extractor,
             personality_manager=personality_manager,
             content_analyzer=content_analyzer,
-            hsp_connector=hsp_connector
+            hsp_connector=None  # 先设置为None，稍后再设置
         )
+        # 设置HSP连接器
+        learning_manager.hsp_connector = hsp_connector
         
         service_discovery_module = ServiceDiscoveryModule(trust_manager=trust_manager)
         agent_manager = AgentManager(python_executable=sys.executable)
         
         # 初始化对话管理器
-        from src.ai.dialogue.dialogue_manager import DialogueManager
+        from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
         dialogue_manager = DialogueManager(
             ai_id="did:hsp:api_server_ai",
             personality_manager=personality_manager,
@@ -186,6 +203,8 @@ def start_core_components():
             config=None
         )
         print("✅ 对话管理器初始化完成")
+        # 使用dialogue_manager执行一些基本操作以避免未使用变量警告
+        print(f"✅ 对话管理器初始化完成，AI ID: {dialogue_manager.ai_id}")
         
         return True
     except Exception as e:
@@ -199,14 +218,18 @@ def load_functional_modules():
     print("🔌 第3层: 功能模块加载")
     try:
         # 加载经济系统
-        from src.economy.economy_manager import EconomyManager
+        from apps.backend.src.economy.economy_manager import EconomyManager
         economy_manager = EconomyManager({"db_path": "economy.db"})
         print("✅ 经济系统初始化完成")
+        # 使用economy_manager执行一些基本操作以避免未使用变量警告
+        print(f"✅ 经济系统初始化完成，规则: {economy_manager.rules}")
         
         # 加载宠物系统
-        from src.pet.pet_manager import PetManager
+        from apps.backend.src.pet.pet_manager import PetManager
         pet_manager = PetManager("pet1", {"initial_personality": {"curiosity": 0.7, "playfulness": 0.8}})
         print("✅ 宠物系统初始化完成")
+        # 使用pet_manager执行一些基本操作以避免未使用变量警告
+        print(f"✅ 宠物系统初始化完成，宠物ID: {pet_manager.pet_id}")
         
         return True
     except Exception as e:
@@ -235,7 +258,7 @@ def health_check_services():
     try:
         # 导入健康检查服务
         sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-        from health_check_service import quick_health_check, full_health_check
+        from apps.backend.scripts.health_check_service import quick_health_check, full_health_check
         
         # 执行快速健康检查
         if quick_health_check():
@@ -300,7 +323,7 @@ def start_services_layered():
     print("⚡ 预启动服务")
     try:
         sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-        from health_check_service import prelaunch_services
+        from apps.backend.scripts.health_check_service import prelaunch_services
         if not prelaunch_services():
             print("❌ 预启动服务失败")
             return False
@@ -379,9 +402,9 @@ def start_services_layered():
     
     return True
 
-def detect_dev_errors(stderr_output, stdout_output):
+def detect_dev_errors(stderr_output: str, stdout_output: str) -> List[str]:
     """检测开发服务器启动错误"""
-    errors = []
+    errors: List[str] = []
     
     # 合并输出
     full_output = (stdout_output or "") + (stderr_output or "")
@@ -428,7 +451,7 @@ def run_auto_fix():
     try:
         # 导入并运行增强版修复工具
         sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-        from advanced_auto_fix import AdvancedImportFixer
+        from apps.backend.scripts.advanced_auto_fix import AdvancedImportFixer
         
         fixer = AdvancedImportFixer()
         results = fixer.fix_all_files()
@@ -600,7 +623,7 @@ def run_dev_server():
                         # 运行运行时自动修复
                         print("🔧 尝试运行时自动修复...")
                         sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-                        from runtime_auto_fix import RuntimeAutoFixer
+                        from apps.backend.scripts.runtime_auto_fix import RuntimeAutoFixer
                         
                         fixer = RuntimeAutoFixer()
                         fixer.setup_environment()
@@ -610,11 +633,12 @@ def run_dev_server():
                         from typing import Optional, Tuple
                         
                         class MockProcess:
-                            def __init__(self, output: str):
+                            def __init__(self, output: str) -> None:
                                 self.output = output
                                 self.stdout = None
                                 self.stderr = None
-                                self.returncode = 1  # 表示进程有错误退出
+                                self.returncode: int = 1  # 表示进程有错误退出
+                                self.pid: int = 12345  # 添加pid属性
                             
                             def communicate(self, timeout: Optional[float] = None) -> Tuple[str, str]:
                                 return "", self.output
@@ -622,8 +646,17 @@ def run_dev_server():
                             # 添加poll方法以兼容subprocess.Popen接口
                             def poll(self) -> Optional[int]:
                                 return 0  # 表示进程已完成
-                        
-                        mock_process: subprocess.Popen = MockProcess(error_output)  # type: ignore
+                                
+                            def wait(self, timeout: Optional[float] = None) -> int:
+                                return self.returncode
+                                
+                            def terminate(self) -> None:
+                                pass
+                                
+                            def kill(self) -> None:
+                                pass
+                                
+                        mock_process = MockProcess(error_output)  # noqa
                         if fixer.monitor_and_fix(mock_process):
                             print("🔄 运行时修复完成，重新启动开发服务器...")
                             time.sleep(1)
@@ -647,11 +680,28 @@ def run_dev_server():
                 uvicorn_process.terminate()
         return 0
 
-def main():
+def main() -> None:
     """主函数"""
+    print("🚀 开始启动Unified AI Project后端服务...")
+    print(f"📁 项目根目录: {PROJECT_ROOT}")
+    print(f"📁 源代码目录: {SRC_DIR}")
+    
     # 运行开发服务器
-    exit_code = run_dev_server()
-    sys.exit(exit_code)
+    try:
+        exit_code = run_dev_server()
+        if exit_code == 0:
+            print("✅ 后端服务启动完成")
+        else:
+            print("❌ 后端服务启动失败")
+        sys.exit(exit_code)
+    except KeyboardInterrupt:
+        print("\n🛑 用户中断了服务启动")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ 启动过程中发生未预期的错误: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

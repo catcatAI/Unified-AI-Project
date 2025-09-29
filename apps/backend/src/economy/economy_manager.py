@@ -2,14 +2,14 @@ import logging
 from .economy_db import EconomyDB
 from typing import Dict, Any
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class EconomyManager:
     """Manages the in-game economy, including currency, transactions, and market dynamics.
     Designed to be adaptable, allowing rules to be updated dynamically by the core AI.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]) -> None:
         """Initializes the EconomyManager with a given configuration."""
         self.config = config
         self.rules = {

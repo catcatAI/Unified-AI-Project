@@ -1,6 +1,6 @@
 import json
 
-def analyze_test_failures():
+def analyze_test_failures() -> None:
     with open('latest_test_results.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
     

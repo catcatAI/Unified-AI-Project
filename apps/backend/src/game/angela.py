@@ -1,21 +1,17 @@
-from unittest.mock import MagicMock, patch
-import pytest
 
-import pygame
-from ..ai.dialogue.dialogue_manager import DialogueManager
 
 class Angela:
-    def __init__(self, game):
+    def __init__(self, game) -> None:
         self.game = game
         self.image = self.game.assets['images']['portraits']['angela']
-        self.rect = self.image.get_rect()
+        self.rect = self.image.get_rect
         self.rect.x = 400
         self.rect.y = 500
         self.is_appearing = False
         self.appear_speed = 2
         self.favorability = 0
         # 使用mock对象初始化DialogueManager以避免初始化错误
-        self.dialogue_manager = MagicMock()
+        self.dialogue_manager = MagicMock
 
     def start_appearing(self):
         self.is_appearing = True
@@ -27,7 +23,7 @@ class Angela:
                 self.is_appearing = False
 
         # Placeholder for proactive interaction logic
-        self.check_for_proactive_interaction()
+        self.check_for_proactive_interaction
 
     def render(self, surface):
         if self.is_appearing:
@@ -55,6 +51,6 @@ class Angela:
         # proactively interact with the player.
         #
         # Example logic:
-        # if self.game.player.is_tired() and self.favorability > 50:
+        # if self.game.player.is_tired and self.favorability > 50:
         #     self.game.dialogue_box.show("You look tired. Remember to rest.", "Angela", self.portrait)
         pass

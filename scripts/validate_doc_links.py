@@ -61,7 +61,7 @@ def extract_links(file_path: Path) -> List[Tuple[str, str]]:
         matches = re.findall(pattern, content)
         return matches
     except Exception as e:
-        print(f"❌ 读取文件失败: {file_path} - {e}")
+        _ = print(f"❌ 读取文件失败: {file_path} - {e}")
         return []
 
 
@@ -110,11 +110,11 @@ def validate_link(base_path: Path, link: str) -> bool:
             relocated_resolved = relocated_path
         if relocated_resolved.exists():
             if VERBOSE:
-                print(f"  🔁 路径重定位: '{link_path}' → '{relocated}' → 存在 ✅")
+                _ = print(f"  🔁 路径重定位: '{link_path}' → '{relocated}' → 存在 ✅")
             return True
         else:
             if VERBOSE:
-                print(f"  🔁 路径重定位失败: '{link_path}' → '{relocated}' → 不存在 ❌")
+                _ = print(f"  🔁 路径重定位失败: '{link_path}' → '{relocated}' → 不存在 ❌")
 
     # 均未通过 → 无效
     return False
@@ -131,7 +131,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     """主函数"""
     global IGNORE_PARTS, VERBOSE
     args = parse_args()
@@ -140,7 +140,7 @@ def main():
     extra_ignores = {part.strip() for part in args.ignore.split(',') if part.strip()}
     IGNORE_PARTS = set(IGNORE_PARTS) | extra_ignores
 
-    print("🔍 开始验证文档链接...")
+    _ = print("🔍 开始验证文档链接...")
     
     root_dir = args.root
     markdown_files = find_markdown_files(root_dir)
@@ -149,31 +149,31 @@ def main():
     total_links = 0
     
     for md_file in markdown_files:
-        print(f"\n📄 检查文件: {md_file}")
+        _ = print(f"\n📄 检查文件: {md_file}")
         links = extract_links(md_file)
         
         for text, link in links:
             total_links += 1
             if not validate_link(md_file, link):
-                broken_links.append((md_file, text, link))
-                print(f"  ❌ 无效链接: [{text}]({link})")
+                _ = broken_links.append((md_file, text, link))
+                _ = print(f"  ❌ 无效链接: [{text}]({link})")
             else:
                 if VERBOSE:
-                    print(f"  ✅ 有效链接: [{text}]({link})")
+                    _ = print(f"  ✅ 有效链接: [{text}]({link})")
     
-    print(f"\n📊 验证结果:")
-    print(f"总链接数: {total_links}")
-    print(f"无效链接数: {len(broken_links)}")
+    _ = print(f"\n📊 验证结果:")
+    _ = print(f"总链接数: {total_links}")
+    _ = print(f"无效链接数: {len(broken_links)}")
 
     # 生成报告文件，便于外部工具解析
     try:
         json_report = {
-            'root': str(Path(root_dir).resolve()),
+            _ = 'root': str(Path(root_dir).resolve()),
             'total_links': total_links,
-            'broken_count': len(broken_links),
+            _ = 'broken_count': len(broken_links),
             'broken': [
                 {
-                    'file': str(p),
+                    _ = 'file': str(p),
                     'text': t,
                     'link': l
                 } for (p, t, l) in broken_links
@@ -184,23 +184,23 @@ def main():
         lines = [
             f"Root: {json_report['root']}",
             f"Total: {total_links}",
-            f"Broken: {len(broken_links)}",
+            _ = f"Broken: {len(broken_links)}",
             "",
         ]
         for p, t, l in broken_links[:1000]:
-            lines.append(f"{p}: [{t}]({l})")
+            _ = lines.append(f"{p}: [{t}]({l})")
         Path(args.report_text).write_text("\n".join(lines), encoding='utf-8')
-        print(f"📝 报告已生成: {args.report_json}, {args.report_text}")
+        _ = print(f"📝 报告已生成: {args.report_json}, {args.report_text}")
     except Exception as e:
-        print(f"⚠️ 生成报告失败: {e}")
+        _ = print(f"⚠️ 生成报告失败: {e}")
     
     if broken_links:
-        print(f"\n❌ 发现 {len(broken_links)} 个无效链接")
+        _ = print(f"\n❌ 发现 {len(broken_links)} 个无效链接")
         return 1
     else:
-        print("✅ 所有链接都有效!")
+        _ = print("✅ 所有链接都有效!")
         return 0
 
 
 if __name__ == "__main__":
-    exit(main())
+    _ = exit(main())

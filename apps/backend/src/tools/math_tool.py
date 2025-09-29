@@ -3,7 +3,7 @@ import re
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from core.shared.types.common_types import ToolDispatcherResponse
+from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
 import os
 
 # Import statement for the model is now inside a try-except block in the loading function.
@@ -54,8 +54,8 @@ def extract_arithmetic_problem(text: str) -> str | None:
     Extracts a basic arithmetic problem from a string.
     """
     normalized_text = text.lower().replace("plus", "+").replace("add", "+").replace("minus", "-").replace("subtract", "-")\
-                           .replace("times", "*").replace("multiply by", "*").replace("multiplied by", "*")\
-                           .replace("divided by", "/").replace("divide by", "/")
+                          .replace("times", "*").replace("multiply by", "*").replace("multiplied by", "*")\
+                          .replace("divided by", "/").replace("divide by", "/")
 
     float_num_pattern = r"[-+]?\d+(?:\.\d+)?"
     problem_pattern_grouped = rf"({float_num_pattern})\s*([\+\-\*\/])\s*({float_num_pattern})"

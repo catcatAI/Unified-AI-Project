@@ -12,7 +12,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from dataclasses import dataclass, asdict
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 @dataclass
 class ResourceRequest:
@@ -38,7 +38,7 @@ class ResourceAllocation:
 class SmartResourceAllocator:
     """智能资源分配器"""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = config or {}
         self.pending_requests: List[ResourceRequest] = []
         self.active_allocations: Dict[str, ResourceAllocation] = {}
@@ -49,9 +49,9 @@ class SmartResourceAllocator:
         # 检查是否为集成显卡系统
         self.is_integrated_graphics_system = self._check_integrated_graphics_system()
         
-        logger.info("智能资源分配器初始化完成")
+        _ = logger.info("智能资源分配器初始化完成")
         if self.is_integrated_graphics_system:
-            logger.info("检测到集成显卡系统，将应用特殊资源分配策略")
+            _ = logger.info("检测到集成显卡系统，将应用特殊资源分配策略")
     
     def _check_integrated_graphics_system(self) -> bool:
         """检查是否为集成显卡系统"""
@@ -84,7 +84,7 @@ class SmartResourceAllocator:
                         if any(keyword in name for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics']):
                             return True
         except Exception as e:
-            logger.debug(f"检查集成显卡时出错: {e}")
+            _ = logger.debug(f"检查集成显卡时出错: {e}")
         
         return False
     
@@ -128,7 +128,7 @@ class SmartResourceAllocator:
         # 首先尝试检测NVIDIA GPU
         try:
             import pynvml
-            pynvml.nvmlInit()
+            _ = pynvml.nvmlInit()
             device_count = pynvml.nvmlDeviceGetCount()
             
             for i in range(device_count):
@@ -139,18 +139,18 @@ class SmartResourceAllocator:
                 gpu_info = {
                     'id': i,
                     'name': name.decode('utf-8') if isinstance(name, bytes) else name,
-                    'total_memory': memory_info.total / (1024**3),  # GB
-                    'free_memory': memory_info.free / (1024**3),    # GB
-                    'used_memory': memory_info.used / (1024**3),    # GB
+                    _ = 'total_memory': memory_info.total / (1024**3),  # GB
+                    _ = 'free_memory': memory_info.free / (1024**3),    # GB
+                    _ = 'used_memory': memory_info.used / (1024**3),    # GB
                     'utilization': 0  # 初始化为0
                 }
-                gpus.append(gpu_info)
+                _ = gpus.append(gpu_info)
                 
-            logger.info(f"检测到 {len(gpus)} 个NVIDIA GPU")
+            _ = logger.info(f"检测到 {len(gpus)} 个NVIDIA GPU")
         except ImportError:
-            logger.warning("未安装pynvml库，无法检测NVIDIA GPU")
+            _ = logger.warning("未安装pynvml库，无法检测NVIDIA GPU")
         except Exception as e:
-            logger.warning(f"检测NVIDIA GPU时出错: {e}")
+            _ = logger.warning(f"检测NVIDIA GPU时出错: {e}")
         
         # 如果没有检测到NVIDIA GPU，尝试检测其他GPU（AMD/Intel等）
         if not gpus:
@@ -162,18 +162,18 @@ class SmartResourceAllocator:
                         props = torch.cuda.get_device_properties(i)
                         gpu_info = {
                             'id': i,
-                            'name': torch.cuda.get_device_name(i),
-                            'total_memory': props.total_memory / (1024**3),
-                            'free_memory': props.total_memory / (1024**3),  # 简化处理
+                            _ = 'name': torch.cuda.get_device_name(i),
+                            _ = 'total_memory': props.total_memory / (1024**3),
+                            _ = 'free_memory': props.total_memory / (1024**3),  # 简化处理
                             'used_memory': 0,
                             'utilization': 0
                         }
-                        gpus.append(gpu_info)
-                    logger.info(f"通过PyTorch检测到 {len(gpus)} 个GPU")
+                        _ = gpus.append(gpu_info)
+                    _ = logger.info(f"通过PyTorch检测到 {len(gpus)} 个GPU")
             except ImportError:
-                logger.warning("未安装torch库，无法检测GPU")
+                _ = logger.warning("未安装torch库，无法检测GPU")
             except Exception as e:
-                logger.warning(f"通过PyTorch检测GPU时出错: {e}")
+                _ = logger.warning(f"通过PyTorch检测GPU时出错: {e}")
         
         # 如果仍然没有检测到GPU，尝试使用系统级检测（针对集成显卡）
         if not gpus:
@@ -217,18 +217,18 @@ class SmartResourceAllocator:
                                 'used_memory': 0,
                                 'utilization': 0
                             }
-                            gpus.append(gpu_info)
+                            _ = gpus.append(gpu_info)
                         
-                        logger.info(f"通过WMI检测到 {len(gpus)} 个GPU设备")
+                        _ = logger.info(f"通过WMI检测到 {len(gpus)} 个GPU设备")
                         
             except Exception as e:
-                logger.warning(f"检测集成显卡时出错: {e}")
+                _ = logger.warning(f"检测集成显卡时出错: {e}")
         
         return gpus
     
     def request_resources(self, request: ResourceRequest) -> bool:
         """请求资源"""
-        self.pending_requests.append(request)
+        _ = self.pending_requests.append(request)
         logger.info(f"收到资源请求: 任务 {request.task_id}, CPU={request.cpu_cores}核, 内存={request.memory_gb}GB")
         return True
     
@@ -242,22 +242,22 @@ class SmartResourceAllocator:
         for request in self.pending_requests[:]:  # 创建副本以避免在迭代时修改列表
             allocation = self._allocate_single_request(request)
             if allocation:
-                allocations.append(allocation)
+                _ = allocations.append(allocation)
                 self.active_allocations[request.task_id] = allocation
-                self.pending_requests.remove(request)
+                _ = self.pending_requests.remove(request)
                 
                 # 记录分配历史
                 self.allocation_history.append({
-                    'timestamp': time.time(),
-                    'request': asdict(request),
-                    'allocation': asdict(allocation)
+                    _ = 'timestamp': time.time(),
+                    _ = 'request': asdict(request),
+                    _ = 'allocation': asdict(allocation)
                 })
                 
                 if len(self.allocation_history) > self.max_history_size:
-                    self.allocation_history.pop(0)
+                    _ = self.allocation_history.pop(0)
         
         if allocations:
-            logger.info(f"成功分配 {len(allocations)} 个资源请求")
+            _ = logger.info(f"成功分配 {len(allocations)} 个资源请求")
         
         return allocations
     
@@ -265,7 +265,7 @@ class SmartResourceAllocator:
         """分配单个资源请求"""
         # 检查资源是否足够
         if not self._check_resource_availability(request):
-            logger.warning(f"资源不足，无法分配任务 {request.task_id}")
+            _ = logger.warning(f"资源不足，无法分配任务 {request.task_id}")
             return None
         
         # 根据请求类型分配资源
@@ -316,14 +316,14 @@ class SmartResourceAllocator:
             allocation_time=time.time()
         )
         
-        logger.info(f"为任务 {request.task_id} 分配CPU资源: {allocated_cpu}核CPU, {allocated_memory:.2f}GB内存")
+        _ = logger.info(f"为任务 {request.task_id} 分配CPU资源: {allocated_cpu}核CPU, {allocated_memory:.2f}GB内存")
         return allocation
     
     def _allocate_gpu_resources(self, request: ResourceRequest) -> ResourceAllocation:
         """分配GPU资源"""
         # 为集成显卡系统特殊处理
         if self.is_integrated_graphics_system:
-            logger.info(f"为集成显卡系统分配资源: 任务 {request.task_id}")
+            _ = logger.info(f"为集成显卡系统分配资源: 任务 {request.task_id}")
             # 对于集成显卡，需要更保守的资源分配
             
             # 限制GPU内存分配
@@ -357,7 +357,7 @@ class SmartResourceAllocator:
             allocation_time=time.time()
         )
         
-        logger.info(f"为任务 {request.task_id} 分配GPU资源: {allocated_cpu}核CPU, {allocated_memory:.2f}GB内存, {allocated_gpu_memory:.2f}GB GPU内存")
+        _ = logger.info(f"为任务 {request.task_id} 分配GPU资源: {allocated_cpu}核CPU, {allocated_memory:.2f}GB内存, {allocated_gpu_memory:.2f}GB GPU内存")
         return allocation
     
     def _allocate_mixed_resources(self, request: ResourceRequest) -> ResourceAllocation:
@@ -368,7 +368,7 @@ class SmartResourceAllocator:
     def release_resources(self, task_id: str) -> bool:
         """释放资源"""
         if task_id not in self.active_allocations:
-            logger.warning(f"任务 {task_id} 没有活跃的资源分配")
+            _ = logger.warning(f"任务 {task_id} 没有活跃的资源分配")
             return False
         
         allocation = self.active_allocations[task_id]
@@ -385,7 +385,7 @@ class SmartResourceAllocator:
         # 从活跃分配中移除
         del self.active_allocations[task_id]
         
-        logger.info(f"任务 {task_id} 的资源已释放")
+        _ = logger.info(f"任务 {task_id} 的资源已释放")
         return True
     
     def get_resource_utilization(self) -> Dict[str, Any]:
@@ -402,25 +402,25 @@ class SmartResourceAllocator:
                            self.resource_pools['gpu']['total_memory_gb'])
         
         utilization = {
-            'timestamp': datetime.now().isoformat(),
+            _ = 'timestamp': datetime.now().isoformat(),
             'cpu_utilization': cpu_util,
             'memory_utilization': memory_util,
             'gpu_utilization': gpu_util,
-            'pending_requests': len(self.pending_requests),
-            'active_allocations': len(self.active_allocations)
+            _ = 'pending_requests': len(self.pending_requests),
+            _ = 'active_allocations': len(self.active_allocations)
         }
         
         # 记录到历史
         self.resource_pools['cpu']['utilization_history'].append({
-            'timestamp': time.time(),
+            _ = 'timestamp': time.time(),
             'utilization': cpu_util
         })
         self.resource_pools['memory']['utilization_history'].append({
-            'timestamp': time.time(),
+            _ = 'timestamp': time.time(),
             'utilization': memory_util
         })
         self.resource_pools['gpu']['utilization_history'].append({
-            'timestamp': time.time(),
+            _ = 'timestamp': time.time(),
             'utilization': gpu_util
         })
         
@@ -462,13 +462,13 @@ class SmartResourceAllocator:
         avg_time = sum(record['request']['estimated_time_hours'] for record in relevant_history) / len(relevant_history)
         
         prediction = {
-            'cpu_cores': round(avg_cpu),
-            'memory_gb': round(avg_memory, 1),
-            'gpu_memory_gb': round(avg_gpu_memory, 1),
-            'estimated_time_hours': round(avg_time, 1)
+            _ = 'cpu_cores': round(avg_cpu),
+            _ = 'memory_gb': round(avg_memory, 1),
+            _ = 'gpu_memory_gb': round(avg_gpu_memory, 1),
+            _ = 'estimated_time_hours': round(avg_time, 1)
         }
         
-        logger.info(f"预测 {task_type} 类型任务的资源需求: {prediction}")
+        _ = logger.info(f"预测 {task_type} 类型任务的资源需求: {prediction}")
         return prediction
     
     def optimize_allocation_strategy(self) -> Dict[str, Any]:
@@ -477,8 +477,8 @@ class SmartResourceAllocator:
         utilization_stats = self._calculate_utilization_stats()
         
         recommendations = {
-            'timestamp': datetime.now().isoformat(),
-            'current_utilization': self.get_resource_utilization(),
+            _ = 'timestamp': datetime.now().isoformat(),
+            _ = 'current_utilization': self.get_resource_utilization(),
             'utilization_stats': utilization_stats,
             'recommendations': []
         }
@@ -525,10 +525,10 @@ class SmartResourceAllocator:
         
         # 计算平均利用率
         avg_cpu = sum(entry['utilization'] for entry in self.resource_pools['cpu']['utilization_history']) / \
-                  len(self.resource_pools['cpu']['utilization_history'])
+                  _ = len(self.resource_pools['cpu']['utilization_history'])
         
         avg_memory = sum(entry['utilization'] for entry in self.resource_pools['memory']['utilization_history']) / \
-                     len(self.resource_pools['memory']['utilization_history'])
+                     _ = len(self.resource_pools['memory']['utilization_history'])
         
         avg_gpu = sum(entry['utilization'] for entry in self.resource_pools['gpu']['utilization_history']) / \
                   len(self.resource_pools['gpu']['utilization_history']) if self.resource_pools['gpu']['utilization_history'] else 0
@@ -541,24 +541,24 @@ class SmartResourceAllocator:
     
     async def start_monitoring(self, interval: int = 30):
         """开始监控资源利用率"""
-        logger.info("开始资源利用率监控")
+        _ = logger.info("开始资源利用率监控")
         
         while True:
             try:
                 # 获取资源利用率
                 utilization = self.get_resource_utilization()
-                logger.debug(f"资源利用率: {utilization}")
+                _ = logger.debug(f"资源利用率: {utilization}")
                 
                 # 每小时生成一次优化建议
                 if int(time.time()) % 3600 == 0:  # 每小时
                     recommendations = self.optimize_allocation_strategy()
                     if recommendations['recommendations']:
-                        logger.info(f"资源优化建议: {recommendations['recommendations']}")
+                        _ = logger.info(f"资源优化建议: {recommendations['recommendations']}")
                 
-                await asyncio.sleep(interval)
+                _ = await asyncio.sleep(interval)
             except Exception as e:
-                logger.error(f"资源监控过程中发生错误: {e}")
-                await asyncio.sleep(interval)
+                _ = logger.error(f"资源监控过程中发生错误: {e}")
+                _ = await asyncio.sleep(interval)
 
 if __name__ == "__main__":
     # 测试智能资源分配器
@@ -588,20 +588,20 @@ if __name__ == "__main__":
     )
     
     # 请求资源
-    allocator.request_resources(request1)
-    allocator.request_resources(request2)
+    _ = allocator.request_resources(request1)
+    _ = allocator.request_resources(request2)
     
     # 分配资源
     allocations = allocator.allocate_resources()
-    print(f"资源分配结果: {allocations}")
+    _ = print(f"资源分配结果: {allocations}")
     
     # 获取资源利用率
     utilization = allocator.get_resource_utilization()
-    print(f"资源利用率: {utilization}")
+    _ = print(f"资源利用率: {utilization}")
     
     # 释放资源
-    allocator.release_resources("task1")
+    _ = allocator.release_resources("task1")
     
     # 获取优化建议
     recommendations = allocator.optimize_allocation_strategy()
-    print(f"优化建议: {recommendations}")
+    _ = print(f"优化建议: {recommendations}")

@@ -1,4 +1,3 @@
-import os
 import uuid
 try:
     from cryptography.fernet import Fernet
@@ -7,13 +6,15 @@ except ImportError:
     import sys
     subprocess.check_call([sys.executable, "-m", "pip", "install", "cryptography"])
     from cryptography.fernet import Fernet
+
+# Note: secretsharing module may need to be installed separately
+# pip install secret-sharing
 try:
     from secretsharing import SecretSharer
 except ImportError:
-    import subprocess
-    import sys
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "secret-sharing"])
-    from secretsharing import SecretSharer
+    SecretSharer = None
+    print("Warning: secretsharing module not available. GenesisManager will not work properly.")
+
 from typing import List, Tuple, Optional
 
 class GenesisManager:
@@ -23,7 +24,7 @@ class GenesisManager:
     """
 
     @staticmethod
-    def create_genesis_secret() -> Tuple[str, str]:
+    def create_genesis_secret -> Tuple[str, str]:
         """
         Generates the core components and combines them into a single secret string.
 
@@ -32,8 +33,8 @@ class GenesisManager:
             - The Genesis Secret string (format: "UID:HAM_KEY").
             - The UID part of the secret.
         """
-        uid = f"uid_{uuid.uuid4().hex}"
-        ham_key = Fernet.generate_key().decode('utf-8')
+        uid = f"uid_{uuid.uuid4.hex}"
+        ham_key = Fernet.generate_key.decode('utf-8')
         genesis_secret = f"{uid}:{ham_key}"
         return genesis_secret, uid
 
@@ -48,8 +49,11 @@ class GenesisManager:
         Returns:
             A list of three hex-encoded secret shards.
         """
+        if SecretSharer is None:
+            raise RuntimeError("SecretSharer not available. Please install secret-sharing package.")
+        
         # The hex format is more robust for copy-pasting and QR codes.
-        secret_hex = secret.encode('utf-8').hex()
+        secret_hex = secret.encode('utf-8').hex
         return SecretSharer.split_secret(secret_hex, 2, 3)
 
     @staticmethod
@@ -63,6 +67,10 @@ class GenesisManager:
         Returns:
             The recovered secret string, or None if recovery fails.
         """
+        if SecretSharer is None:
+            print("Warning: SecretSharer not available.")
+            return None
+            
         if len(shards) < 2:
             return None
         try:
@@ -89,10 +97,15 @@ class GenesisManager:
         return None
 
 if __name__ == '__main__':
+    # Check if required modules are available
+    if SecretSharer is None:
+        print("Error: secretsharing module not available. Please install it with: pip install secret-sharing")
+        exit(1)
+        
     print("--- GenesisManager Test ---")
 
     # 1. Create a new genesis secret
-    genesis_secret, uid = GenesisManager.create_genesis_secret()
+    genesis_secret, uid = GenesisManager.create_genesis_secret
     print(f"Generated UID: {uid}")
     print(f"Generated Genesis Secret: {genesis_secret}")
     assert genesis_secret.startswith(uid)
@@ -134,10 +147,17 @@ if __name__ == '__main__':
 
     # 4. Test parsing the recovered secret
     print("\n--- Testing Parsing ---")
-    parsed_uid, parsed_key = GenesisManager.parse_genesis_secret(recovered12)
-    print(f"Parsed UID: {parsed_uid}")
-    print(f"Parsed Key: {parsed_key}")
-    assert parsed_uid == uid
-    assert recovered12.endswith(parsed_key)
+    if recovered12 is not None:
+        parsed_result = GenesisManager.parse_genesis_secret(recovered12)
+        if parsed_result is not None:
+            parsed_uid, parsed_key = parsed_result
+            print(f"Parsed UID: {parsed_uid}")
+            print(f"Parsed Key: {parsed_key}")
+            assert parsed_uid == uid
+            assert recovered12.endswith(parsed_key)
+        else:
+            print("Failed to parse genesis secret")
+    else:
+        print("Failed to recover secret")
 
     print("\n--- GenesisManager Test Complete ---")

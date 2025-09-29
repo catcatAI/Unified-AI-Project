@@ -3,19 +3,41 @@ import requests
 import json
 import sys
 import os
-import sys
-import asyncio
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List
 from pathlib import Path
+from typing import Optional, Dict, Any, Callable
+import asyncio
+import importlib
 
-# Add the project root to the path
-project_root = Path(__file__).parent.parent.parent
+# Add the backend src directory to the Python path
+project_root = Path(__file__).parent.parent.parent.parent
+backend_src = project_root / "apps" / "backend" / "src"
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(backend_src))
 
-from apps.backend.src.hsp.types import HSPFactPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload, HSPTaskResultPayload # Added HSPTaskResultPayload
-from apps.backend.src.core_services import initialize_services, get_services, shutdown_services, DEFAULT_AI_ID, DEFAULT_OPERATIONAL_CONFIGS # Import new service management
+# Core imports - 修复导入路径
+try:
+    # 动态导入模块
+    core_services = importlib.import_module('core_services')
+    hsp_types = importlib.import_module('hsp.types')
+    
+    # 使用getattr获取函数和变量
+    initialize_services = getattr(core_services, 'initialize_services')
+    get_services = getattr(core_services, 'get_services')
+    shutdown_services = getattr(core_services, 'shutdown_services')
+    DEFAULT_OPERATIONAL_CONFIGS = getattr(core_services, 'DEFAULT_OPERATIONAL_CONFIGS')
+    
+    # 使用getattr获取类型
+    HSPFactPayload = getattr(hsp_types, 'HSPFactPayload')
+    HSPMessageEnvelope = getattr(hsp_types, 'HSPMessageEnvelope')
+    HSPCapabilityAdvertisementPayload = getattr(hsp_types, 'HSPCapabilityAdvertisementPayload')
+    HSPTaskResultPayload = getattr(hsp_types, 'HSPTaskResultPayload')
+except ImportError as e:
+    print(f"导入核心服务模块失败: {e}")
+    print("请确保后端服务已正确安装")
+    sys.exit(1)
+
 from .error_handler import error_handler
 
 # --- CLI Specific AI ID ---
@@ -157,25 +179,27 @@ async def handle_publish_fact(args):
         topic = args.topic or (learning_manager_instance.default_hsp_fact_topic if learning_manager_instance else "hsp/knowledge/facts/cli_manual") #type: ignore
 
         # Optional: wait for internal echo on hsp.internal.fact
-        _echo_cb = None
+        _echo_cb: Optional[Callable] = None
         echo_event: Optional[asyncio.Event] = None
         echoed_envelope: Dict[str, Any] = {}
         if getattr(args, 'wait_echo', False):
             echo_event = asyncio.Event()
-            def _echo_cb(envelope: HSPMessageEnvelope):
+            def echo_callback(envelope: HSPMessageEnvelope):
                 try:
                     payload = envelope.get("payload") or {}
                     if isinstance(payload, dict) and payload.get("id") == fact_id:
                         # Capture the envelope and signal
                         echoed_envelope["envelope"] = envelope
-                        echo_event.set()
+                        if echo_event:
+                            echo_event.set()
                 except Exception as e:
                     error_handler.log_error(f"Error in echo callback: {str(e)}")
                     # Non-fatal: just ignore echo parsing issues
                     pass
             # Subscribe before publishing to avoid missing the echo
             try:
-                hsp_connector.internal_bus.subscribe("hsp.internal.fact", _echo_cb)
+                hsp_connector.internal_bus.subscribe("hsp.internal.fact", echo_callback)
+                _echo_cb = echo_callback
             except Exception as e:
                 error_handler.log_error(f"Failed to subscribe to internal bus: {str(e)}")
                 # If internal bus subscription fails, continue without echo waiting
@@ -506,4 +530,7 @@ async def main_cli_logic():
 
 
 if __name__ == '__main__':
+    asyncio.run(main_cli_logic())
+if __name__ == '__main__':
+    asyncio.run(main_cli_logic())if __name__ == '__main__':
     asyncio.run(main_cli_logic())

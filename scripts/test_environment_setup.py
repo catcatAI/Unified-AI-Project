@@ -4,20 +4,15 @@
 用于自动设置和配置测试环境
 """
 
-import os
 import sys
 import subprocess
 import json
 import shutil
 from pathlib import Path
-from typing import Dict, List, Any
-import tempfile
-import venv
-
 class TestEnvironmentSetup:
     """测试环境设置器"""
     
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: str = None) -> None:
         """初始化环境设置器"""
         self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent
         self.backend_dir = self.project_root / "apps" / "backend"
@@ -31,15 +26,15 @@ class TestEnvironmentSetup:
         Returns:
             是否成功
         """
-        print("🔧 设置虚拟环境...")
+        _ = print("🔧 设置虚拟环境...")
         
         try:
             # 创建虚拟环境
             if self.venv_dir.exists():
-                print("🗑️ 清理现有虚拟环境...")
-                shutil.rmtree(self.venv_dir)
+                _ = print("🗑️ 清理现有虚拟环境...")
+                _ = shutil.rmtree(self.venv_dir)
             
-            print("🏗️ 创建新的虚拟环境...")
+            _ = print("🏗️ 创建新的虚拟环境...")
             venv.create(self.venv_dir, with_pip=True)
             
             # 升级pip
@@ -47,14 +42,14 @@ class TestEnvironmentSetup:
             result = subprocess.run(pip_cmd, capture_output=True, text=True)
             
             if result.returncode != 0:
-                print(f"❌ 升级pip失败: {result.stderr}")
+                _ = print(f"❌ 升级pip失败: {result.stderr}")
                 return False
             
-            print("✅ 虚拟环境设置完成")
+            _ = print("✅ 虚拟环境设置完成")
             return True
             
         except Exception as e:
-            print(f"❌ 设置虚拟环境失败: {e}")
+            _ = print(f"❌ 设置虚拟环境失败: {e}")
             return False
     
     def install_dependencies(self) -> bool:
@@ -64,7 +59,7 @@ class TestEnvironmentSetup:
         Returns:
             是否成功
         """
-        print("📦 安装依赖...")
+        _ = print("📦 安装依赖...")
         
         try:
             # 安装项目依赖
@@ -76,21 +71,21 @@ class TestEnvironmentSetup:
             for req_file in requirements_files:
                 if req_file.exists():
                     pip_cmd = [
-                        str(self.venv_dir / "Scripts" / "pip"),
+                        _ = str(self.venv_dir / "Scripts" / "pip"),
                         "install",
                         "-r",
-                        str(req_file)
+                        _ = str(req_file)
                     ]
                     
                     result = subprocess.run(pip_cmd, capture_output=True, text=True)
                     
                     if result.returncode != 0:
-                        print(f"❌ 安装依赖失败 ({req_file}): {result.stderr}")
+                        _ = print(f"❌ 安装依赖失败 ({req_file}): {result.stderr}")
                         return False
                     
-                    print(f"✅ 已安装依赖: {req_file.name}")
+                    _ = print(f"✅ 已安装依赖: {req_file.name}")
                 else:
-                    print(f"⚠️ 依赖文件不存在: {req_file}")
+                    _ = print(f"⚠️ 依赖文件不存在: {req_file}")
             
             # 安装测试工具
             test_tools = [
@@ -102,7 +97,7 @@ class TestEnvironmentSetup:
             
             for tool in test_tools:
                 pip_cmd = [
-                    str(self.venv_dir / "Scripts" / "pip"),
+                    _ = str(self.venv_dir / "Scripts" / "pip"),
                     "install",
                     tool
                 ]
@@ -110,16 +105,16 @@ class TestEnvironmentSetup:
                 result = subprocess.run(pip_cmd, capture_output=True, text=True)
                 
                 if result.returncode != 0:
-                    print(f"❌ 安装测试工具失败 ({tool}): {result.stderr}")
+                    _ = print(f"❌ 安装测试工具失败 ({tool}): {result.stderr}")
                     return False
                 
-                print(f"✅ 已安装测试工具: {tool}")
+                _ = print(f"✅ 已安装测试工具: {tool}")
             
-            print("✅ 依赖安装完成")
+            _ = print("✅ 依赖安装完成")
             return True
             
         except Exception as e:
-            print(f"❌ 安装依赖失败: {e}")
+            _ = print(f"❌ 安装依赖失败: {e}")
             return False
     
     def setup_test_database(self) -> bool:
@@ -129,7 +124,7 @@ class TestEnvironmentSetup:
         Returns:
             是否成功
         """
-        print("🗄️ 设置测试数据库...")
+        _ = print("🗄️ 设置测试数据库...")
         
         try:
             # 创建测试数据目录
@@ -140,12 +135,12 @@ class TestEnvironmentSetup:
             db_config = {
                 "database": {
                     "type": "sqlite",
-                    "path": str(test_db_dir / "test_database.db"),
+                    _ = "path": str(test_db_dir / "test_database.db"),
                     "pool_size": 5
                 },
                 "vector_store": {
                     "type": "chroma",
-                    "path": str(test_db_dir / "vector_store"),
+                    _ = "path": str(test_db_dir / "vector_store"),
                     "collection_name": "test_collection"
                 }
             }
@@ -154,11 +149,11 @@ class TestEnvironmentSetup:
             with open(config_file, 'w', encoding='utf-8') as f:
                 json.dump(db_config, f, ensure_ascii=False, indent=2)
             
-            print("✅ 测试数据库设置完成")
+            _ = print("✅ 测试数据库设置完成")
             return True
             
         except Exception as e:
-            print(f"❌ 设置测试数据库失败: {e}")
+            _ = print(f"❌ 设置测试数据库失败: {e}")
             return False
     
     def setup_test_data(self) -> bool:
@@ -168,7 +163,7 @@ class TestEnvironmentSetup:
         Returns:
             是否成功
         """
-        print("📊 设置测试数据...")
+        _ = print("📊 设置测试数据...")
         
         try:
             # 创建测试数据目录
@@ -205,11 +200,11 @@ class TestEnvironmentSetup:
             with open(sample_file, 'w', encoding='utf-8') as f:
                 json.dump(sample_data, f, ensure_ascii=False, indent=2)
             
-            print("✅ 测试数据设置完成")
+            _ = print("✅ 测试数据设置完成")
             return True
             
         except Exception as e:
-            print(f"❌ 设置测试数据失败: {e}")
+            _ = print(f"❌ 设置测试数据失败: {e}")
             return False
     
     def setup_test_environment_variables(self) -> bool:
@@ -219,7 +214,7 @@ class TestEnvironmentSetup:
         Returns:
             是否成功
         """
-        print("⚙️ 设置测试环境变量...")
+        _ = print("⚙️ 设置测试环境变量...")
         
         try:
             # 创建.env.test文件
@@ -233,16 +228,16 @@ LOG_LEVEL=DEBUG
 DATABASE_URL=sqlite:///testdata/test_db/test_database.db
 VECTOR_STORE_PATH=testdata/test_db/vector_store
 TEST_DATA_PATH=testdata
-            """.strip()
+            _ = """.strip()
             
             with open(env_test_file, 'w', encoding='utf-8') as f:
-                f.write(env_content)
+                _ = f.write(env_content)
             
-            print("✅ 测试环境变量设置完成")
+            _ = print("✅ 测试环境变量设置完成")
             return True
             
         except Exception as e:
-            print(f"❌ 设置测试环境变量失败: {e}")
+            _ = print(f"❌ 设置测试环境变量失败: {e}")
             return False
     
     def validate_setup(self) -> bool:
@@ -252,7 +247,7 @@ TEST_DATA_PATH=testdata
         Returns:
             是否成功
         """
-        print("🔍 验证环境设置...")
+        _ = print("🔍 验证环境设置...")
         
         try:
             # 验证Python环境
@@ -260,17 +255,17 @@ TEST_DATA_PATH=testdata
             result = subprocess.run(python_cmd, capture_output=True, text=True)
             
             if result.returncode != 0:
-                print(f"❌ Python环境验证失败: {result.stderr}")
+                _ = print(f"❌ Python环境验证失败: {result.stderr}")
                 return False
             
-            print(f"✅ Python版本: {result.stdout.strip()}")
+            _ = print(f"✅ Python版本: {result.stdout.strip()}")
             
             # 验证依赖安装
             pip_cmd = [str(self.venv_dir / "Scripts" / "pip"), "list"]
             result = subprocess.run(pip_cmd, capture_output=True, text=True)
             
             if result.returncode != 0:
-                print(f"❌ 依赖验证失败: {result.stderr}")
+                _ = print(f"❌ 依赖验证失败: {result.stderr}")
                 return False
             
             # 检查关键依赖
@@ -279,20 +274,20 @@ TEST_DATA_PATH=testdata
             
             for package in required_packages:
                 if package.lower() not in installed_packages:
-                    print(f"⚠️ 依赖包未安装: {package}")
+                    _ = print(f"⚠️ 依赖包未安装: {package}")
                 else:
-                    print(f"✅ 依赖包已安装: {package}")
+                    _ = print(f"✅ 依赖包已安装: {package}")
             
             # 验证测试数据
             if not self.test_data_dir.exists():
-                print("❌ 测试数据目录不存在")
+                _ = print("❌ 测试数据目录不存在")
                 return False
             
-            print("✅ 环境设置验证完成")
+            _ = print("✅ 环境设置验证完成")
             return True
             
         except Exception as e:
-            print(f"❌ 环境设置验证失败: {e}")
+            _ = print(f"❌ 环境设置验证失败: {e}")
             return False
     
     def setup_complete_environment(self) -> bool:
@@ -302,7 +297,7 @@ TEST_DATA_PATH=testdata
         Returns:
             是否成功
         """
-        print("🚀 开始设置完整的测试环境...")
+        _ = print("🚀 开始设置完整的测试环境...")
         
         # 1. 设置虚拟环境
         if not self.setup_virtual_environment():
@@ -328,40 +323,40 @@ TEST_DATA_PATH=testdata
         if not self.validate_setup():
             return False
         
-        print("🎉 完整测试环境设置完成!")
-        print(f"📁 虚拟环境: {self.venv_dir}")
-        print(f"📁 测试数据: {self.test_data_dir}")
-        print(f"📁 项目根目录: {self.project_root}")
+        _ = print("🎉 完整测试环境设置完成!")
+        _ = print(f"📁 虚拟环境: {self.venv_dir}")
+        _ = print(f"📁 测试数据: {self.test_data_dir}")
+        _ = print(f"📁 项目根目录: {self.project_root}")
         
         return True
     
     def cleanup_environment(self):
         """清理测试环境"""
-        print("🧹 清理测试环境...")
+        _ = print("🧹 清理测试环境...")
         
         try:
             # 清理虚拟环境
             if self.venv_dir.exists():
-                shutil.rmtree(self.venv_dir)
-                print("✅ 虚拟环境已清理")
+                _ = shutil.rmtree(self.venv_dir)
+                _ = print("✅ 虚拟环境已清理")
             
             # 清理测试数据
             if self.test_data_dir.exists():
-                shutil.rmtree(self.test_data_dir)
-                print("✅ 测试数据已清理")
+                _ = shutil.rmtree(self.test_data_dir)
+                _ = print("✅ 测试数据已清理")
             
             # 清理测试环境变量文件
             env_test_file = self.project_root / ".env.test"
             if env_test_file.exists():
-                env_test_file.unlink()
-                print("✅ 测试环境变量文件已清理")
+                _ = env_test_file.unlink()
+                _ = print("✅ 测试环境变量文件已清理")
             
-            print("✅ 测试环境清理完成")
+            _ = print("✅ 测试环境清理完成")
             
         except Exception as e:
-            print(f"❌ 清理测试环境失败: {e}")
+            _ = print(f"❌ 清理测试环境失败: {e}")
 
-def main():
+def main() -> None:
     """主函数"""
     import argparse
     
@@ -379,14 +374,14 @@ def main():
         success = env_setup.setup_complete_environment()
         sys.exit(0 if success else 1)
     elif args.cleanup:
-        env_setup.cleanup_environment()
-        sys.exit(0)
+        _ = env_setup.cleanup_environment()
+        _ = sys.exit(0)
     elif args.validate:
         success = env_setup.validate_setup()
         sys.exit(0 if success else 1)
     else:
-        parser.print_help()
-        sys.exit(1)
+        _ = parser.print_help()
+        _ = sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    _ = main()

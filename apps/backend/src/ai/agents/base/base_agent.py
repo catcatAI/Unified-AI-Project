@@ -1,13 +1,16 @@
 import asyncio
-import uuid
 import logging
-from typing import Dict, Any, Optional, List
+import uuid
+import sys
+import os
+project_root: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-# 延迟导入以避免循环导入
-# from apps.backend.src.core_services import initialize_services, get_services, shutdown_services
+# 使用绝对导入路径
 from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class BaseAgent:
     """
@@ -15,15 +18,15 @@ class BaseAgent:
     Handles the boilerplate of service initialization, HSP connection,
     and listening for tasks.
     """
-    def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]], agent_name: str = "BaseAgent"):
+    def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]], agent_name: str = "BaseAgent") -> None:
         """
         Initializes the BaseAgent.
 
         Args:
             agent_id (str): The unique identifier for this agent instance.
-            capabilities (List[Dict[str, Any]]): A list of capability dictionaries
+            _ = capabilities (List[Dict[str, Any]]): A list of capability dictionaries
                                                   that this agent will advertise.
-            agent_name (str, optional): The name of the agent. Defaults to "BaseAgent".
+            _ = agent_name (str, optional): The name of the agent. Defaults to "BaseAgent".
         """
         self.agent_id = agent_id
         self.capabilities = capabilities
@@ -60,7 +63,7 @@ class BaseAgent:
         
         # 延迟导入以避免循环导入
         from apps.backend.src.core_services import get_services
-        self.services = get_services()
+        self.services = get_services
         self.hsp_connector = self.services.get("hsp_connector")
 
     async def start(self):
@@ -71,7 +74,7 @@ class BaseAgent:
         self.is_running = True
 
         # Perform async initialization
-        await self._ainit()
+        _ = await self._ainit
 
         if not self.hsp_connector:
             logger.error(f"[{self.agent_id}] Error: HSPConnector not available.")
@@ -86,7 +89,7 @@ class BaseAgent:
         # Advertise capabilities
         if self.hsp_connector:
             for cap in self.capabilities:
-                await self.hsp_connector.advertise_capability(cap)
+                _ = await self.hsp_connector.advertise_capability(cap)
 
         logger.info(f"[{self.agent_id}] is running and listening for tasks.")
 
@@ -102,7 +105,7 @@ class BaseAgent:
         
         # 延迟导入以避免循环导入
         from apps.backend.src.core_services import shutdown_services
-        await shutdown_services()
+        _ = await shutdown_services
         logger.info(f"[{self.agent_id}] Stopped.")
 
     def is_healthy(self) -> bool:
@@ -110,7 +113,11 @@ class BaseAgent:
         A basic health check for the agent.
         Subclasses can override this for more specific health checks.
         """
-        return self.is_running and self.hsp_connector and self.hsp_connector.is_connected
+        if not self.is_running:
+            return False
+        if not self.hsp_connector:
+            return False
+        return bool(self.hsp_connector.is_connected)
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         """
@@ -129,10 +136,10 @@ class BaseAgent:
             }
         )
 
-        if self.hsp_connector and task_payload.get("callback_address"):
-            callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic, task_payload.get("request_id"))
-            logger.warning(f"[{self.agent_id}] Sent NOT_IMPLEMENTED failure response to {callback_topic}")
+        callback_address = task_payload.get("callback_address")
+        if self.hsp_connector and callback_address:
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_address, task_payload.get("request_id"))
+            logger.warning(f"[{self.agent_id}] Sent NOT_IMPLEMENTED failure response to {callback_address}")
 
     async def send_task_success(self, request_id: str, sender_ai_id: str, callback_address: str, payload: Any):
         result_payload = HSPTaskResultPayload(
@@ -142,7 +149,7 @@ class BaseAgent:
             payload=payload
         )
         if self.hsp_connector:
-            await self.hsp_connector.send_task_result(result_payload, callback_address, request_id)
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_address, request_id)
 
     async def send_task_failure(self, request_id: str, sender_ai_id: str, callback_address: str, error_message: str):
         result_payload = HSPTaskResultPayload(
@@ -155,12 +162,12 @@ class BaseAgent:
             }
         )
         if self.hsp_connector:
-            await self.hsp_connector.send_task_result(result_payload, callback_address, request_id)
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_address, request_id)
 
 if __name__ == '__main__':
     # Example of how a BaseAgent could be run.
     # In a real scenario, a dedicated script would run a specific agent subclass.
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:base_agent_tester_{uuid.uuid4().hex[:6]}"
 
         # Example capability
@@ -174,9 +181,9 @@ if __name__ == '__main__':
         }
 
         agent = BaseAgent(agent_id=agent_id, capabilities=[test_capability])
-        await agent.start()
+        _ = await agent.start
 
     try:
-        asyncio.run(main())
+        asyncio.run(main)
     except KeyboardInterrupt:
         print("\nBaseAgent test manually stopped.")

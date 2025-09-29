@@ -1,7 +1,8 @@
 import re
 import json
 import os
-from typing import Dict, List, Optional, Union
+import ast
+from typing import Optional, List, Dict, Any
 
 class LightweightLogicModel:
     """
@@ -10,7 +11,7 @@ class LightweightLogicModel:
     Uses rule-based evaluation and pattern matching.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         # Logical operators and their Python equivalents
         self.operators = {
             'AND': 'and',
@@ -33,7 +34,7 @@ class LightweightLogicModel:
         
         # Pattern for logical expressions
         self.logic_pattern = re.compile(
-            r'\b(true|false|True|False|1|0)\b|\b(AND|OR|NOT|and|or|not|&|\||!)\b|[()]',
+            r'\b(true|false|True|False|1|0)\b|\b(AND|OR|NOT|and|or|not|&|\||!)\b|',
             re.IGNORECASE
         )
     
@@ -66,17 +67,17 @@ class LightweightLogicModel:
         """
         try:
             # Remove extra whitespace
-            proposition = ' '.join(proposition.split())
+            proposition = ' '.join(proposition.split)
             
             # Replace logical operators with Python equivalents
             normalized = proposition
             
             # Replace boolean values first
-            for old_val, new_val in self.boolean_values.items():
+            for old_val, new_val in self.boolean_values.items:
                 normalized = re.sub(r'\b' + re.escape(old_val) + r'\b', str(new_val), normalized, flags=re.IGNORECASE)
             
             # Replace logical operators (case insensitive)
-            for old_op, new_op in self.operators.items():
+            for old_op, new_op in self.operators.items:
                 if old_op in ['!', '&', '|']:
                     # Handle special characters
                     normalized = normalized.replace(old_op, f' {new_op} ')
@@ -85,13 +86,13 @@ class LightweightLogicModel:
                     normalized = re.sub(r'\b' + re.escape(old_op) + r'\b', f' {new_op} ', normalized, flags=re.IGNORECASE)
             
             # Clean up extra spaces and preserve parentheses
-            tokens = []
-            for token in normalized.split():
-                if token.strip():
-                    tokens.append(token.strip())
+            tokens = 
+            for token in normalized.split:
+                if token.strip:
+                    tokens.append(token.strip)
             
             # Handle parentheses properly
-            result_tokens = []
+            result_tokens = 
             for token in tokens:
                 if '(' in token or ')' in token:
                     # Split parentheses from other tokens
@@ -114,7 +115,7 @@ class LightweightLogicModel:
                     result_tokens.append(token)
             
             # Filter out empty tokens
-            result_tokens = [t for t in result_tokens if t.strip()]
+            result_tokens = [t for t in result_tokens if t.strip]
             
             # Validate that only allowed tokens remain
             allowed_tokens = {'True', 'False', 'and', 'or', 'not', '(', ')'}
@@ -129,16 +130,42 @@ class LightweightLogicModel:
     
     def _safe_eval_logic(self, expression: str) -> Optional[bool]:
         """
-        Safely evaluate logical expressions using eval with restricted scope.
+        Safely evaluate logical expressions without using eval.
         """
         try:
-            # Only allow logical operations and boolean values
-            allowed_chars = set('TrueFalseandornt() ')
+            # 定义逻辑操作的安全计算函数
+            def safe_eval(node):
+                if isinstance(node, ast.Constant):  # Python 3.8+
+                    return node.value
+                elif isinstance(node, ast.NameConstant):  # Python < 3.8
+                    return node.value
+                elif isinstance(node, ast.Name):
+                    if node.id == 'True':
+                        return True
+                    elif node.id == 'False':
+                        return False
+                    else:
+                        raise ValueError(f"Unknown name: {node.id}")
+                elif isinstance(node, ast.BoolOp):
+                    values = [safe_eval(value) for value in node.values]
+                    if isinstance(node.op, ast.And):
+                        return all(values)
+                    elif isinstance(node.op, ast.Or):
+                        return any(values)
+                elif isinstance(node, ast.UnaryOp):
+                    if isinstance(node.op, ast.Not):
+                        return not safe_eval(node.operand)
+                else:
+                    raise ValueError(f"Unsupported operation: {type(node)}")
+            
+            # 只允许逻辑操作和布尔值
+            allowed_chars = set('TrueFalseandornt ')
             if not all(c in allowed_chars for c in expression):
                 return None
             
-            # Evaluate with restricted globals
-            result = eval(expression, {"__builtins__": {}}, {})
+            # 解析并计算表达式
+            tree = ast.parse(expression, mode='eval')
+            result = safe_eval(tree.body)
             
             if isinstance(result, bool):
                 return result
@@ -187,17 +214,17 @@ class LightweightLogicModel:
         evaluate_pattern = re.compile(r'evaluate[:\s]+(.+)', re.IGNORECASE)
         match = evaluate_pattern.search(problem)
         if match:
-            return match.group(1).strip()
+            return match.group(1).strip
         
         # Look for logical operators in the problem itself
         if any(op in problem.upper() for op in ['AND', 'OR', 'NOT']) or any(val in problem.lower() for val in ['true', 'false']):
-            return problem.strip()
+            return problem.strip
         
         return None
     
-    def train_on_dataset(self, dataset_path: str) -> Dict[str, any]:
+    def train_on_dataset(self, dataset_path: str) -> Dict[str, Any]:
         """
-        'Train' the model on a dataset (actually just validate performance).
+        _ = 'Train' the model on a dataset (actually just validate performance).
         Since this is a rule-based model, no actual training occurs.
         
         Args:
@@ -212,7 +239,7 @@ class LightweightLogicModel:
             
             correct = 0
             total = len(dataset)
-            errors = []
+            errors = 
             
             for item in dataset:
                 proposition = item.get('proposition', '')
@@ -246,7 +273,7 @@ class LightweightLogicModel:
                 'total': 0
             }
     
-    def generate_truth_table(self, variables: List[str], expression: str) -> List[Dict]:
+    def generate_truth_table(self, variables: List[str], expression: str) -> List[Dict[str, Any]]:
         """
         Generate truth table for a logical expression with given variables.
         
@@ -257,11 +284,11 @@ class LightweightLogicModel:
         Returns:
             List of dictionaries representing truth table rows
         """
-        truth_table = []
+        truth_table = 
         
         # Generate all possible combinations of truth values
         for i in range(2 ** len(variables)):
-            row = {}
+            row = 
             
             # Set truth values for each variable
             for j, var in enumerate(variables):
@@ -309,13 +336,13 @@ class LightweightLogicModel:
         Load model from configuration file.
         """
         # For rule-based model, just return a new instance
-        return cls()
+        return cls
 
 
-def main():
+def main -> None:
     """Test the lightweight logic model."""
-    model = LightweightLogicModel()
-    
+    model = LightweightLogicModel
+
     # Test basic operations
     test_propositions = [
         "true AND false",
@@ -347,9 +374,9 @@ def main():
     try:
         script_dir = os.path.dirname(os.path.abspath(__file__))
     except NameError:
-        script_dir = os.getcwd()
-    
-    project_root = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
+        script_dir = os.getcwd
+
+    project_root: str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
     dataset_path = os.path.join(project_root, "data", "raw_datasets", "logic_train.json")
     
     if os.path.exists(dataset_path):
@@ -374,4 +401,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main

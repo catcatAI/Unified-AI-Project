@@ -4,13 +4,8 @@
 专门用于检查和修复项目中的集成问题
 """
 
-import os
 import sys
-import json
-import asyncio
-import traceback
 from pathlib import Path
-from typing import List, Dict, Any, Optional
 import logging
 from datetime import datetime
 
@@ -20,12 +15,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class IntegrationFixer:
     """集成问题检查和修复器"""
     
-    def __init__(self, project_root: Path = None):
+    def __init__(self, project_root: Path = None) -> None:
         self.project_root = project_root or PROJECT_ROOT
         self.backup_dir = self.project_root / "backup" / f"integration_fix_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         self.backup_dir.mkdir(parents=True, exist_ok=True)
@@ -220,7 +215,7 @@ class IntegrationFixer:
                     })
                     
                 # 检查内容分析模块的导入问题
-                if "from apps.backend.src.core_ai.learning" in content:
+                if "from learning" in content:
                     issues.append({
                         "type": "import_error",
                         "file": str(ca_path),
@@ -346,8 +341,8 @@ class IntegrationFixer:
                     if "self.api_token = None" not in content and "api_token" in content:
                         # 查找API令牌初始化位置
                         content = re.sub(
-                            r"def __init__\(self.*?\):",
-                            "def __init__(self, config=None):\n        self.api_token = config.get('api_token') if config else None\n        self.domain = config.get('domain') if config else None",
+                            r"def __init__\(self.*?\) -> None:",
+                            "def __init__(self, config=None) -> None:\n        self.api_token = config.get('api_token') if config else None\n        self.domain = config.get('domain') if config else None",
                             content,
                             flags=re.DOTALL
                         )
@@ -392,7 +387,7 @@ class IntegrationFixer:
                         if "实体计数逻辑可能存在不一致" in issue["description"]:
                             # 添加更准确的实体计数逻辑
                             content = re.sub(
-                                r"nx_graph\.number_of_nodes\(\)",
+                                _ = r"nx_graph\.number_of_nodes\(\)",
                                 "# 获取实体节点数量\nentity_nodes = [n for n, attrs in nx_graph.nodes(data=True) if attrs.get('type') == 'entity']\nlen(entity_nodes)",
                                 content
                             )
@@ -496,7 +491,7 @@ class IntegrationFixer:
             logger.error(f"✗ 验证修复效果时出错: {e}")
             return False
 
-def main():
+def main() -> None:
     """主函数"""
     print("=== 集成问题检查和修复工具 ===")
     

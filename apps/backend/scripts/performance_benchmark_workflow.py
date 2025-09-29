@@ -4,28 +4,26 @@
 整合基准测试、回归检测和报告生成的完整流程
 """
 
-import os
 import sys
 import json
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Any
 from datetime import datetime
 import logging
 
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 
 class PerformanceBenchmarkWorkflow:
     """性能基准测试和回归检测工作流"""
     
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: str = None) -> None:
         """
         初始化性能基准测试工作流
         
@@ -396,7 +394,7 @@ class PerformanceBenchmarkWorkflow:
             background-color: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            _ = box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }}
         .header {{
             text-align: center;
@@ -406,7 +404,7 @@ class PerformanceBenchmarkWorkflow:
         }}
         .summary {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            _ = grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }}
@@ -463,7 +461,7 @@ class PerformanceBenchmarkWorkflow:
     <div class="container">
         <div class="header">
             <h1>Performance Benchmark Report</h1>
-            <p>Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            _ = <p>Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
         
         <div class="summary">
@@ -554,7 +552,7 @@ class PerformanceBenchmarkWorkflow:
                 logger.warning(
                     f"PERFORMANCE REGRESSION ALERT\n"
                     f"Benchmark: {regression['benchmark_name']}\n"
-                    f"Severity: {regression.get('severity', 'unknown')}\n"
+                    _ = f"Severity: {regression.get('severity', 'unknown')}\n"
                     f"Change: {regression['analysis']['performance_change_percentage']}"
                 )
                 alerts_sent += 1
@@ -641,7 +639,7 @@ class PerformanceBenchmarkWorkflow:
             return ""
 
 
-def main():
+def main() -> None:
     """主函数"""
     import argparse
     

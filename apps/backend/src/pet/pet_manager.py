@@ -1,14 +1,14 @@
 import logging
 from typing import Dict, Any
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class PetManager:
     """Manages the state, behavior, and interactions of the desktop pet.
     Designed to allow for dynamic personalities and behaviors that can be updated by the core AI.
     """
 
-    def __init__(self, pet_id: str, config: Dict[str, Any]):
+    def __init__(self, pet_id: str, config: Dict[str, Any]) -> None:
         """Initializes the PetManager for a specific pet."""
         self.pet_id = pet_id
         self.config = config
@@ -71,7 +71,7 @@ class PetManager:
         """Allows the core AI to dynamically update the pet's behavior rules."""
         logger.info(f"Updating behavior for pet '{self.pet_id}' from {self.behavior_rules} to {new_behaviors}")
         # Add validation for new behaviors.
-        for key, value in new_behaviors.items():
+        for key, value in new_behaviors.items:
             if not isinstance(key, str) or not isinstance(value, str): # Basic type check
                 logger.error(f"Invalid behavior rule format: {key}: {value}. Key and value must be strings.")
                 return

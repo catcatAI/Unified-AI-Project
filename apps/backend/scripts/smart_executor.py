@@ -3,11 +3,11 @@
 智能执行器 - 在执行命令时自动检测错误并调用修复工具
 """
 
-import os
 import sys
 import subprocess
 import re
 from pathlib import Path
+from typing import List
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -21,13 +21,13 @@ def setup_environment():
     if str(SRC_DIR) not in sys.path:
         sys.path.insert(0, str(SRC_DIR))
 
-def detect_import_errors(stderr_output):
+def detect_import_errors(stderr_output: str) -> List[str]:
     """检测导入错误"""
     import_error_patterns = [
-        r"ModuleNotFoundError: No module named '(\w+)'",
-        r"ImportError: cannot import name '(\w+)'",
-        r"ImportError: No module named '(\w+)'",
-        r"NameError: name '(\w+)' is not defined",
+        _ = r"ModuleNotFoundError: No module named '(\w+)'",
+        _ = r"ImportError: cannot import name '(\w+)'",
+        _ = r"ImportError: No module named '(\w+)'",
+        _ = r"NameError: name '(\w+)' is not defined",
     ]
     
     for pattern in import_error_patterns:
@@ -36,7 +36,7 @@ def detect_import_errors(stderr_output):
             return matches
     return []
 
-def detect_path_errors(stderr_output):
+def detect_path_errors(stderr_output: str) -> bool:
     """检测路径错误"""
     path_error_patterns = [
         r"No module named 'core_ai",
@@ -56,13 +56,13 @@ def run_auto_fix():
     try:
         # 导入并运行增强版修复工具
         sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-        from advanced_auto_fix import AdvancedImportFixer
+        from apps.backend.scripts.advanced_auto_fix import AdvancedImportFixer
         
         fixer = AdvancedImportFixer()
-        results = fixer.fix_all_imports()
+        results = fixer.fix_all_files()
         
-        if results["fixed"] > 0:
-            print(f"✅ 自动修复完成，修复了 {results['fixed']} 个文件")
+        if results.files_fixed > 0:
+            print(f"✅ 自动修复完成，修复了 {results.files_fixed} 个文件")
             return True
         else:
             print("⚠️ 未发现需要修复的问题")
@@ -128,7 +128,7 @@ def execute_command(command, auto_fix=True):
         print(f"❌ 执行命令时出错: {e}")
         return 1
 
-def main():
+def main() -> None:
     """主函数"""
     setup_environment()
     

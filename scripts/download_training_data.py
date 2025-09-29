@@ -4,34 +4,29 @@
 根據硬碟空間智能選擇和下載適合的訓練數據集
 """
 
-import os
-import sys
 import shutil
 import requests
 import zipfile
 import tarfile
-import hashlib
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
-import json
 import logging
 from datetime import datetime
 
 # 設置日誌
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('data_download.log'),
-        logging.StreamHandler()
+        _ = logging.FileHandler('data_download.log'),
+        _ = logging.StreamHandler()
     ]
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 class DatasetDownloader:
     """智能數據集下載器"""
     
-    def __init__(self, base_dir: str = "d:/Projects/Unified-AI-Project/data"):
+    def __init__(self, base_dir: str = "d:/Projects/Unified-AI-Project/data") -> None:
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
         
@@ -52,7 +47,7 @@ class DatasetDownloader:
                 "size_gb": 27.5,  # 實際下載大小約27.5GB
                 "priority": 2,
                 "license": "CC0",
-                "description": "中文語音識別數據集 (已手動下載)",
+                _ = "description": "中文語音識別數據集 (已手動下載)",
                 "use_case": "AudioService訓練",
                 "manual_download": True,
                 "files": [
@@ -82,7 +77,7 @@ class DatasetDownloader:
         }
     
     def check_disk_space(self) -> float:
-        """檢查可用磁碟空間 (GB)"""
+        _ = """檢查可用磁碟空間 (GB)"""
         total, used, free = shutil.disk_usage(self.base_dir.drive)
         return free / (1024**3)
     
@@ -94,27 +89,27 @@ class DatasetDownloader:
         
         # 按優先級排序
         sorted_datasets = sorted(
-            self.datasets.items(), 
+            _ = self.datasets.items(), 
             key=lambda x: x[1]['priority']
         )
         
         for dataset_id, info in sorted_datasets:
             if used_space + info['size_gb'] + reserve_space <= available_space_gb:
-                selected.append(dataset_id)
+                _ = selected.append(dataset_id)
                 used_space += info['size_gb']
-                logger.info(f"✅ 選擇數據集: {info['name']} ({info['size_gb']}GB)")
+                _ = logger.info(f"✅ 選擇數據集: {info['name']} ({info['size_gb']}GB)")
             else:
-                logger.warning(f"⚠️ 跳過數據集: {info['name']} (空間不足)")
+                _ = logger.warning(f"⚠️ 跳過數據集: {info['name']} (空間不足)")
         
-        logger.info(f"📊 總計選擇: {len(selected)}個數據集, 預計使用: {used_space:.1f}GB")
+        _ = logger.info(f"📊 總計選擇: {len(selected)}個數據集, 預計使用: {used_space:.1f}GB")
         return selected
     
     def download_file(self, url: str, filepath: Path) -> bool:
         """下載文件"""
         try:
-            logger.info(f"📥 開始下載: {url}")
+            _ = logger.info(f"📥 開始下載: {url}")
             response = requests.get(url, stream=True)
-            response.raise_for_status()
+            _ = response.raise_for_status()
             
             total_size = int(response.headers.get('content-length', 0))
             downloaded = 0
@@ -122,20 +117,20 @@ class DatasetDownloader:
             with open(filepath, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
-                        f.write(chunk)
+                        _ = f.write(chunk)
                         downloaded += len(chunk)
                         
                         # 顯示進度
                         if total_size > 0:
                             progress = (downloaded / total_size) * 100
                             if downloaded % (1024*1024*10) == 0:  # 每10MB顯示一次
-                                logger.info(f"📈 下載進度: {progress:.1f}%")
+                                _ = logger.info(f"📈 下載進度: {progress:.1f}%")
             
-            logger.info(f"✅ 下載完成: {filepath.name}")
+            _ = logger.info(f"✅ 下載完成: {filepath.name}")
             return True
             
         except Exception as e:
-            logger.error(f"❌ 下載失敗: {e}")
+            _ = logger.error(f"❌ 下載失敗: {e}")
             return False
     
     def extract_archive(self, filepath: Path) -> bool:
@@ -146,16 +141,16 @@ class DatasetDownloader:
             
             if filepath.suffix == '.zip':
                 with zipfile.ZipFile(filepath, 'r') as zip_ref:
-                    zip_ref.extractall(extract_dir)
+                    _ = zip_ref.extractall(extract_dir)
             elif filepath.suffix in ['.tar', '.gz']:
                 with tarfile.open(filepath, 'r:*') as tar_ref:
-                    tar_ref.extractall(extract_dir)
+                    _ = tar_ref.extractall(extract_dir)
             
-            logger.info(f"📦 解壓縮完成: {extract_dir}")
+            _ = logger.info(f"📦 解壓縮完成: {extract_dir}")
             return True
             
         except Exception as e:
-            logger.error(f"❌ 解壓縮失敗: {e}")
+            _ = logger.error(f"❌ 解壓縮失敗: {e}")
             return False
     
     def check_dataset_integrity(self, dataset_id: str) -> bool:
@@ -177,11 +172,11 @@ class DatasetDownloader:
                 filepath = dataset_dir / filename
                 if filepath.exists():
                     file_size = filepath.stat().st_size / (1024**3)  # GB
-                    files_exist.append((filename, file_size))
+                    _ = files_exist.append((filename, file_size))
             
             if files_exist:
                 total_size = sum(size for _, size in files_exist)
-                logger.info(f"✅ Common Voice 數據集部分存在: {len(files_exist)}/{len(info['files'])} 文件, 總計 {total_size:.1f}GB")
+                _ = logger.info(f"✅ Common Voice 數據集部分存在: {len(files_exist)}/{len(info['files'])} 文件, 總計 {total_size:.1f}GB")
                 
                 # 檢查解壓狀態
                 extract_dirs = ['zh-CN', 'zh-TW', 'singleword']
@@ -192,7 +187,7 @@ class DatasetDownloader:
                         extracted_count += 1
                 
                 if extracted_count > 0:
-                    logger.info(f"✅ Common Voice 已解壓: {extracted_count}/{len(extract_dirs)} 目錄")
+                    _ = logger.info(f"✅ Common Voice 已解壓: {extracted_count}/{len(extract_dirs)} 目錄")
                 
                 return True
             else:
@@ -207,21 +202,21 @@ class DatasetDownloader:
             # 如果是壓縮文件，檢查解壓目錄
             if filename.endswith(('.zip', '.tar', '.gz')):
                 if extract_dir.exists() and list(extract_dir.iterdir()):
-                    logger.info(f"✅ 數據集完整: {info['name']} (已解壓)")
+                    _ = logger.info(f"✅ 數據集完整: {info['name']} (已解壓)")
                     return True
                 elif archive_path.exists():
-                    logger.info(f"📦 數據集存在但未解壓: {info['name']}")
+                    _ = logger.info(f"📦 數據集存在但未解壓: {info['name']}")
                     return self.extract_archive(archive_path)
             
             # 檢查原始文件
             elif archive_path.exists():
                 file_size = archive_path.stat().st_size / (1024**3)  # GB
                 if file_size > 0.1:  # 至少100MB
-                    logger.info(f"✅ 數據集完整: {info['name']} ({file_size:.1f}GB)")
+                    _ = logger.info(f"✅ 數據集完整: {info['name']} ({file_size:.1f}GB)")
                     return True
                     
         except Exception as e:
-            logger.warning(f"⚠️ 檢查數據集完整性失敗: {e}")
+            _ = logger.warning(f"⚠️ 檢查數據集完整性失敗: {e}")
             
         return False
     
@@ -231,7 +226,7 @@ class DatasetDownloader:
         
         for dataset_id in dataset_ids:
             if dataset_id not in self.datasets:
-                logger.error(f"❌ 未知數據集: {dataset_id}")
+                _ = logger.error(f"❌ 未知數據集: {dataset_id}")
                 results[dataset_id] = False
                 continue
             
@@ -241,14 +236,14 @@ class DatasetDownloader:
             
             # 增強的重複檢查
             if self.check_dataset_integrity(dataset_id):
-                logger.info(f"⏭️ 數據集已存在且完整: {info['name']}")
+                _ = logger.info(f"⏭️ 數據集已存在且完整: {info['name']}")
                 results[dataset_id] = True
                 continue
             
             # 檢查是否需要手動下載
             if info.get('manual_download', False):
-                logger.warning(f"⚠️ {info['name']} 需要手動下載，請訪問: {info['url']}")
-                logger.info(f"📝 請將下載的文件放置在: {dataset_dir}")
+                _ = logger.warning(f"⚠️ {info['name']} 需要手動下載，請訪問: {info['url']}")
+                _ = logger.info(f"📝 請將下載的文件放置在: {dataset_dir}")
                 results[dataset_id] = False
                 continue
             
@@ -261,21 +256,21 @@ class DatasetDownloader:
                     file_size = filepath.stat().st_size
                     # 檢查文件是否太小（可能不完整）
                     if file_size < 1024 * 1024:  # 小於1MB
-                        logger.info(f"🔄 刪除不完整的小文件: {info['name']}")
-                        filepath.unlink()
+                        _ = logger.info(f"🔄 刪除不完整的小文件: {info['name']}")
+                        _ = filepath.unlink()
                     else:
-                        logger.info(f"🔄 文件存在但未通過完整性檢查，將重新下載: {info['name']}")
+                        _ = logger.info(f"🔄 文件存在但未通過完整性檢查，將重新下載: {info['name']}")
                         # 先嘗試重命名，如果失敗則跳過
                         try:
                             backup_path = filepath.with_suffix(f"{filepath.suffix}.backup")
-                            filepath.rename(backup_path)
-                            logger.info(f"📁 已備份原文件為: {backup_path.name}")
+                            _ = filepath.rename(backup_path)
+                            _ = logger.info(f"📁 已備份原文件為: {backup_path.name}")
                         except OSError as e:
-                            logger.warning(f"⚠️ 無法移動文件（可能正在使用中），跳過重新下載: {e}")
+                            _ = logger.warning(f"⚠️ 無法移動文件（可能正在使用中），跳過重新下載: {e}")
                             results[dataset_id] = True  # 標記為已存在
                             continue
                 except (OSError, PermissionError) as e:
-                    logger.warning(f"⚠️ 無法處理現有文件（可能正在使用中），跳過: {e}")
+                    _ = logger.warning(f"⚠️ 無法處理現有文件（可能正在使用中），跳過: {e}")
                     results[dataset_id] = True  # 標記為已存在
                     continue
             
@@ -291,7 +286,7 @@ class DatasetDownloader:
                     metadata = {
                         'name': info['name'],
                         'license': info['license'],
-                        'download_date': datetime.now().isoformat(),
+                        _ = 'download_date': datetime.now().isoformat(),
                         'size_gb': info['size_gb'],
                         'use_case': info['use_case'],
                         'url': info['url'],
@@ -307,7 +302,7 @@ class DatasetDownloader:
     
     def clean_incomplete_downloads(self) -> None:
         """清理不完整的下載文件"""
-        logger.info("🧹 檢查不完整的下載文件...")
+        _ = logger.info("🧹 檢查不完整的下載文件...")
         
         for dataset_id in self.datasets:
             dataset_dir = self.base_dir / dataset_id
@@ -322,8 +317,8 @@ class DatasetDownloader:
                 file_size = filepath.stat().st_size
                 # 如果文件小於1MB，可能是不完整的下載
                 if file_size < 1024 * 1024:  # 1MB
-                    logger.warning(f"⚠️ 發現不完整文件，將刪除: {filepath}")
-                    filepath.unlink()
+                    _ = logger.warning(f"⚠️ 發現不完整文件，將刪除: {filepath}")
+                    _ = filepath.unlink()
     
     def get_download_status(self) -> Dict[str, Dict]:
         """獲取所有數據集的下載狀態"""
@@ -367,63 +362,63 @@ class DatasetDownloader:
         
         return status
 
-def main():
+def main() -> None:
     """主函數"""
-    print("🚀 Unified-AI-Project 訓練數據下載器")
+    _ = print("🚀 Unified-AI-Project 訓練數據下載器")
     print("=" * 50)
     
     downloader = DatasetDownloader()
     
     # 清理不完整的下載
-    downloader.clean_incomplete_downloads()
+    _ = downloader.clean_incomplete_downloads()
     
     # 顯示當前狀態
-    print("\n📋 當前數據集狀態:")
+    _ = print("\n📋 當前數據集狀態:")
     status = downloader.get_download_status()
     for dataset_id, info in status.items():
         status_icon = "✅" if info['downloaded'] else "⏳"
         extract_status = "(已解壓)" if info['extracted'] else "(未解壓)" if info['downloaded'] else ""
         size_info = f" [{info['file_size_mb']}MB]" if info['file_size_mb'] > 0 else ""
-        print(f"  {status_icon} {info['name']} ({info['size_gb']}GB){extract_status}{size_info}")
+        _ = print(f"  {status_icon} {info['name']} ({info['size_gb']}GB){extract_status}{size_info}")
     
     # 檢查磁碟空間
     available_space = downloader.check_disk_space()
-    print(f"\n💾 可用空間: {available_space:.1f} GB")
+    _ = print(f"\n💾 可用空間: {available_space:.1f} GB")
     
     # 選擇數據集
     selected_datasets = downloader.select_datasets_by_space(available_space)
     
     if not selected_datasets:
-        print("❌ 沒有足夠空間下載任何數據集")
+        _ = print("❌ 沒有足夠空間下載任何數據集")
         return
     
     # 確認下載 - 自動執行模式
-    print("\n📋 將要下載的數據集:")
+    _ = print("\n📋 將要下載的數據集:")
     for dataset_id in selected_datasets:
         info = downloader.datasets[dataset_id]
         manual_note = " (需手動下載)" if info.get('manual_download', False) else ""
-        print(f"  • {info['name']} ({info['size_gb']}GB) - {info['description']}{manual_note}")
+        _ = print(f"  • {info['name']} ({info['size_gb']}GB) - {info['description']}{manual_note}")
     
-    print("\n🔄 自動開始下載...")
+    _ = print("\n🔄 自動開始下載...")
     
     # 開始下載
-    print("\n🔄 開始下載數據集...")
+    _ = print("\n🔄 開始下載數據集...")
     results = downloader.download_datasets(selected_datasets)
     
     # 顯示結果
-    print("\n📊 下載結果:")
+    _ = print("\n📊 下載結果:")
     success_count = 0
     for dataset_id, success in results.items():
         status = "✅ 成功" if success else "❌ 失敗"
         dataset_name = downloader.datasets[dataset_id]['name']
-        print(f"  • {dataset_name}: {status}")
+        _ = print(f"  • {dataset_name}: {status}")
         if success:
             success_count += 1
     
-    print(f"\n🎉 完成! 成功下載 {success_count}/{len(results)} 個數據集")
+    _ = print(f"\n🎉 完成! 成功下載 {success_count}/{len(results)} 個數據集")
     
     # 顯示最終狀態
-    print("\n📊 最終數據集狀態:")
+    _ = print("\n📊 最終數據集狀態:")
     final_status = downloader.get_download_status()
     total_size = 0
     for dataset_id, info in final_status.items():
@@ -434,12 +429,12 @@ def main():
             status_icon = "❌"
         extract_status = "(已解壓)" if info['extracted'] else "(未解壓)" if info['downloaded'] else ""
         size_info = f" [{info['file_size_mb']}MB]" if info['file_size_mb'] > 0 else ""
-        print(f"  {status_icon} {info['name']}{extract_status}{size_info}")
+        _ = print(f"  {status_icon} {info['name']}{extract_status}{size_info}")
     
-    print(f"\n💾 總計已下載: {total_size:.1f} GB")
+    _ = print(f"\n💾 總計已下載: {total_size:.1f} GB")
     
     # 生成使用說明
-    generate_usage_guide(downloader.base_dir, selected_datasets, downloader.datasets)
+    _ = generate_usage_guide(downloader.base_dir, selected_datasets, downloader.datasets)
 
 def generate_usage_guide(base_dir: Path, downloaded_datasets: List[str], datasets_info: Dict):
     """生成數據使用說明"""
@@ -447,7 +442,7 @@ def generate_usage_guide(base_dir: Path, downloaded_datasets: List[str], dataset
 
 ## 已下載數據集
 
-下載時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+_ = 下載時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 數據位置: {base_dir}
 
 """
@@ -505,9 +500,9 @@ reasoning_engine = CausalReasoningEngine()
     
     guide_path = base_dir / "TRAINING_DATA_GUIDE.md"
     with open(guide_path, 'w', encoding='utf-8') as f:
-        f.write(guide_content)
+        _ = f.write(guide_content)
     
-    print(f"📖 使用指南已生成: {guide_path}")
+    _ = print(f"📖 使用指南已生成: {guide_path}")
 
 if __name__ == "__main__":
-    main()
+    _ = main()

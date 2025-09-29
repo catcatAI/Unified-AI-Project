@@ -4,19 +4,17 @@ Test script for security functionality
 """
 
 import sys
-import json
 from pathlib import Path
 
 # Add the backend src directory to the path
 backend_src = Path(__file__).parent.parent / "apps" / "backend" / "src"
-sys.path.insert(0, str(backend_src))
+_ = sys.path.insert(0, str(backend_src))
 
-def test_permission_control():
+def test_permission_control() -> None:
     """Test permission control system"""
-    print("Testing permission control system...")
+    _ = print("Testing permission control system...")
     
     try:
-        from security.permission_control import PermissionControlSystem, PermissionContext, PermissionType, PermissionLevel
         
         # Create permission control system
         pcs = PermissionControlSystem()
@@ -30,22 +28,21 @@ def test_permission_control():
         )
         
         result = pcs.check_permission(context)
-        print(f"Permission check result: {result}")
+        _ = print(f"Permission check result: {result}")
         
-        print("Permission control test passed!")
+        _ = print("Permission control test passed!")
         return True
     except Exception as e:
-        print(f"Error during permission control test: {e}")
+        _ = print(f"Error during permission control test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def test_audit_logging():
+def test_audit_logging() -> None:
     """Test audit logging system"""
-    print("Testing audit logging system...")
+    _ = print("Testing audit logging system...")
     
     try:
-        from security.audit_logger import AuditLogger, AuditEventType
         
         # Create audit logger
         audit_logger = AuditLogger()
@@ -62,19 +59,19 @@ def test_audit_logging():
         
         # Get recent events
         events = audit_logger.get_recent_events(5)
-        print(f"Recent events count: {len(events)}")
+        _ = print(f"Recent events count: {len(events)}")
         
-        print("Audit logging test passed!")
+        _ = print("Audit logging test passed!")
         return True
     except Exception as e:
-        print(f"Error during audit logging test: {e}")
+        _ = print(f"Error during audit logging test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def test_enhanced_sandbox():
+def test_enhanced_sandbox() -> None:
     """Test enhanced sandbox executor"""
-    print("Testing enhanced sandbox executor...")
+    _ = print("Testing enhanced sandbox executor...")
     
     try:
         from security.enhanced_sandbox import EnhancedSandboxExecutor, SandboxConfig
@@ -86,7 +83,7 @@ def test_enhanced_sandbox():
         # Test code
         test_code = '''
 class DataTransformer:
-    def __init__(self, config=None):
+    def __init__(self, config=None) -> None:
         pass
         
     def transform(self, data):
@@ -109,23 +106,23 @@ class DataTransformer:
         )
         
         if error:
-            print(f"Error: {error}")
+            _ = print(f"Error: {error}")
         else:
-            print(f"Result: {result}")
+            _ = print(f"Result: {result}")
             
-        print("Enhanced sandbox test passed!")
+        _ = print("Enhanced sandbox test passed!")
         return True
     except Exception as e:
-        print(f"Error during enhanced sandbox test: {e}")
+        _ = print(f"Error during enhanced sandbox test: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
-def main():
+def main() -> None:
     """Main test function"""
-    print("Security Functionality Test")
+    _ = print("Security Functionality Test")
     print("=" * 30)
-    print()
+    _ = print()
     
     # Run all tests
     try:
@@ -134,15 +131,15 @@ def main():
         test3 = test_enhanced_sandbox()
         
         if test1 and test2 and test3:
-            print("\nAll security tests completed successfully!")
+            _ = print("\nAll security tests completed successfully!")
             return True
         else:
-            print("\nSome security tests failed!")
+            _ = print("\nSome security tests failed!")
             return False
     except Exception as e:
-        print(f"Error during security testing: {e}")
+        _ = print(f"Error during security testing: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
 if __name__ == "__main__":

@@ -10,7 +10,6 @@ import asyncio
 import logging
 from typing import Optional, Dict, Any
 
-from .core_service_manager import (
     CoreServiceManager, 
     ServiceConfig, 
     ServiceStatus, 
@@ -19,7 +18,7 @@ from .core_service_manager import (
 )
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
@@ -31,9 +30,9 @@ class LLMServiceHealthCheck(HealthCheckFunction):
             # 检查LLM服务是否健康
             if hasattr(service_instance, 'is_healthy'):
                 if asyncio.iscoroutinefunction(service_instance.is_healthy):
-                    is_healthy = await service_instance.is_healthy()
+                    is_healthy = await service_instance.is_healthy
                 else:
-                    is_healthy = service_instance.is_healthy()
+                    is_healthy = service_instance.is_healthy
                 return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY
             else:
                 # 简单检查 - 尝试生成一个简单的响应
@@ -69,9 +68,9 @@ class MemoryManagerHealthCheck(HealthCheckFunction):
             # 检查内存管理器是否正常工作
             if hasattr(service_instance, 'is_healthy'):
                 if asyncio.iscoroutinefunction(service_instance.is_healthy):
-                    is_healthy = await service_instance.is_healthy()
+                    is_healthy = await service_instance.is_healthy
                 else:
-                    is_healthy = service_instance.is_healthy()
+                    is_healthy = service_instance.is_healthy
                 return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY
             return ServiceHealth.HEALTHY
         except Exception as e:
@@ -79,10 +78,10 @@ class MemoryManagerHealthCheck(HealthCheckFunction):
             return ServiceHealth.UNHEALTHY
 
 
-async def setup_core_services() -> CoreServiceManager:
+async def setup_core_services -> CoreServiceManager:
     """设置核心服务"""
     # 创建核心服务管理器
-    manager = CoreServiceManager()
+    manager = CoreServiceManager
     
     # 注册服务配置
     # 1. LLM服务
@@ -90,35 +89,35 @@ async def setup_core_services() -> CoreServiceManager:
         name="llm_service",
         module_path="core_services",
         class_name="MultiLLMService",
-        dependencies=[],
+        dependencies=,
         lazy_load=True,
         auto_restart=True,
         health_check_interval=30.0,
-        config={}
+        config=
     )
     manager.register_service(llm_config)
-    manager.register_health_check("llm_service", LLMServiceHealthCheck())
+    manager.register_health_check("llm_service", LLMServiceHealthCheck)
     
     # 2. HAM内存管理器
     ham_config = ServiceConfig(
         name="ham_manager",
         module_path="core_services",
         class_name="HAMMemoryManager",
-        dependencies=[],
+        dependencies=,
         lazy_load=True,
         auto_restart=True,
         health_check_interval=60.0,
-        config={}
+        config=
     )
     manager.register_service(ham_config)
-    manager.register_health_check("ham_manager", MemoryManagerHealthCheck())
+    manager.register_health_check("ham_manager", MemoryManagerHealthCheck)
     
     # 3. HSP连接器
     hsp_config = ServiceConfig(
         name="hsp_connector",
         module_path="core_services",
         class_name="HSPConnector",
-        dependencies=[],  # 实际中可能依赖其他服务
+        dependencies=,  # 实际中可能依赖其他服务
         lazy_load=True,
         auto_restart=True,
         health_check_interval=15.0,
@@ -129,7 +128,7 @@ async def setup_core_services() -> CoreServiceManager:
         }
     )
     manager.register_service(hsp_config)
-    manager.register_health_check("hsp_connector", HSPConnectorHealthCheck())
+    manager.register_health_check("hsp_connector", HSPConnectorHealthCheck)
     
     # 4. 对话管理器（依赖LLM服务和HSP连接器）
     dialogue_config = ServiceConfig(
@@ -140,7 +139,7 @@ async def setup_core_services() -> CoreServiceManager:
         lazy_load=True,
         auto_restart=True,
         health_check_interval=30.0,
-        config={}
+        config=
     )
     manager.register_service(dialogue_config)
     
@@ -153,7 +152,7 @@ async def setup_core_services() -> CoreServiceManager:
         lazy_load=True,
         auto_restart=True,
         health_check_interval=60.0,
-        config={}
+        config=
     )
     manager.register_service(learning_config)
     
@@ -185,7 +184,7 @@ async def demonstrate_lazy_loading(manager: CoreServiceManager):
     logger.info("=== Demonstrating Lazy Loading ===")
     
     # 初始状态 - 所有服务都应该未加载
-    status = manager.get_all_services_status()
+    status = manager.get_all_services_status
     logger.info(f"Initial service status: {status}")
     
     # 加载单个服务
@@ -218,7 +217,7 @@ async def demonstrate_lazy_loading(manager: CoreServiceManager):
     logger.info(f"Dialogue manager load result: {success}")
     
     # 检查所有服务状态
-    status = manager.get_all_services_status()
+    status = manager.get_all_services_status
     logger.info(f"Final service status: {status}")
 
 
@@ -236,7 +235,7 @@ async def demonstrate_batch_loading(manager: CoreServiceManager):
     logger.info(f"Batch load results: {results}")
     
     # 检查状态
-    status = manager.get_all_services_status()
+    status = manager.get_all_services_status
     logger.info(f"Service status after batch load: {status}")
 
 
@@ -259,26 +258,26 @@ async def demonstrate_service_lifecycle(manager: CoreServiceManager):
     logger.info(f"LLM service instance: {llm_service}")
 
 
-async def main():
+async def main -> None:
     """主函数"""
     logger.info("Starting Core Service Manager demonstration")
     
     # 设置核心服务
-    manager = await setup_core_services()
+    manager = await setup_core_services
     
     # 启动健康监控
     async with manager:
         # 演示懒加载
-        await demonstrate_lazy_loading(manager)
+        _ = await demonstrate_lazy_loading(manager)
         
         # 演示批量加载
-        await demonstrate_batch_loading(manager)
+        _ = await demonstrate_batch_loading(manager)
         
         # 演示服务生命周期
-        await demonstrate_service_lifecycle(manager)
+        _ = await demonstrate_service_lifecycle(manager)
     
     logger.info("Core Service Manager demonstration completed")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main)

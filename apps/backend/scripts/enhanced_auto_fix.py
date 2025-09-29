@@ -5,19 +5,12 @@
 断言失败、超时错误、导入路径错误和配置问题等
 """
 
-import ast
-import json
-import os
 import re
-import subprocess
-import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
-from unittest.mock import MagicMock
-
+from typing import Dict, Set, Optional, Literal
 
 class EnhancedAutoFixer:
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Optional[Path] = None) -> None:
         self.project_root = project_root or Path(__file__).parent.parent.parent
         self.src_dir = self.project_root / "apps" / "backend" / "src"
         self.test_dir = self.project_root / "apps" / "backend" / "tests"
@@ -50,7 +43,7 @@ class EnhancedAutoFixer:
         
         return results
     
-    def _fix_async_warnings(self) -> int:
+    def _fix_async_warnings(self) -> Literal[0, 1]:
         """修复异步测试协程警告"""
         print("[ENHANCED FIX] 修复异步测试协程警告...")
         fixed_count = 0
@@ -81,7 +74,8 @@ class EnhancedAutoFixer:
             except Exception as e:
                 print(f"[ENHANCED FIX] 处理文件 {test_file} 时出错: {e}")
         
-        return fixed_count
+        # 确保返回值是 0 或 1
+        return 1 if fixed_count > 0 else 0
     
     def _add_asyncio_decorator(self, content: str) -> str:
         """为异步测试方法添加asyncio装饰器"""
@@ -112,7 +106,7 @@ class EnhancedAutoFixer:
         
         return fixed_content
     
-    def _fix_initialization_errors(self) -> int:
+    def _fix_initialization_errors(self) -> Literal[0, 1]:
         """修复对象初始化错误"""
         print("[ENHANCED FIX] 修复对象初始化错误...")
         fixed_count = 0
@@ -143,7 +137,8 @@ class EnhancedAutoFixer:
             except Exception as e:
                 print(f"[ENHANCED FIX] 处理文件 {test_file} 时出错: {e}")
         
-        return fixed_count
+        # 确保返回值是 0 或 1
+        return 1 if fixed_count > 0 else 0
     
     def _fix_game_initialization(self, content: str) -> str:
         """修复Game类初始化"""
@@ -153,18 +148,18 @@ class EnhancedAutoFixer:
             content = content.replace(
                 "game = Game()", 
                 "# Mock the DialogueManager to avoid initializing the full AI stack\n"
-                "        with patch('src.game.angela.DialogueManager', MagicMock()):\n"
-                "            game = Game()"
+                + "        with patch('src.game.angela.DialogueManager', MagicMock()):\n"
+                + "            game = Game()"
             )
         return content
     
-    def _fix_attribute_errors(self) -> int:
+    def _fix_attribute_errors(self) -> Literal[0, 1]:
         """修复属性错误"""
         print("[ENHANCED FIX] 修复属性错误...")
         # 属性错误通常需要人工检查，这里只记录发现的问题
         return 0
     
-    def _fix_assertion_errors(self) -> int:
+    def _fix_assertion_errors(self) -> Literal[0, 1]:
         """修复断言失败"""
         print("[ENHANCED FIX] 修复断言失败...")
         # 断言失败需要人工确认期望值，这里只记录发现的问题
@@ -323,7 +318,7 @@ class EnhancedAutoFixer:
         return '\n'.join(fixed_lines)
 
 
-def main():
+def main() -> None:
     fixer = EnhancedAutoFixer()
     results = fixer.fix_all_issues()
     

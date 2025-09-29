@@ -3,7 +3,7 @@ import yaml
 import argparse
 import sys
 import os
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Dict, Any, Tuple, Optional
 
 # Ensure src directory is in path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,7 +13,7 @@ if src_path not in sys.path:
 
 try:
     # Import the dependency_manager instance and its print function
-    from apps.backend.src.ai.dependency_manager import dependency_manager, print_dependency_report
+    from apps.backend.src.core_ai.dependency_manager import dependency_manager, print_dependency_report
     DM_AVAILABLE = True
 except (ImportError, ModuleNotFoundError) as e:
     print(f"\nWarning: Could not import dependency manager: {e}", file=sys.stderr)
@@ -40,15 +40,15 @@ def check_package(package_name: str) -> Tuple[bool, Optional[str]]:
 
 def check_dependencies(config: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """Check all dependencies defined in the config file."""
-    core_deps: Dict[str, Any] = {}
-    optional_deps: Dict[str, Any] = {}
+    core_deps: Dict[str, Any] = 
+    optional_deps: Dict[str, Any] = 
 
-    for dep in config.get('dependencies', {}).get('core', []):
+    for dep in config.get('dependencies', ).get('core', ):
         name = dep['name']
         is_available, error = check_package(name)
         core_deps[name] = {'available': is_available, 'error': error, 'dep': dep}
 
-    for dep in config.get('dependencies', {}).get('optional', []):
+    for dep in config.get('dependencies', ).get('optional', ):
         name = dep['name']
         is_available, error = check_package(name)
         optional_deps[name] = {'available': is_available, 'error': error, 'dep': dep}
@@ -66,11 +66,11 @@ def get_install_command(package_name: str, dep_info: Dict[str, Any]) -> str:
 def print_status_report(core_deps: Dict[str, Any], optional_deps: Dict[str, Any]):
     """Print a human-readable status report."""
     print("--- Static Dependency Check (from dependency_config.yaml) ---")
-    print(f"Python Version: {sys.version.split()[0]}")
+    print(f"Python Version: {sys.version.split[0]}")
 
     print("\n[Core Dependencies]")
     all_core_available = True
-    for name, status in core_deps.items():
+    for name, status in core_deps.items:
         if status['available']:
             print(f"  ✓ {name}")
         else:
@@ -81,7 +81,7 @@ def print_status_report(core_deps: Dict[str, Any], optional_deps: Dict[str, Any]
             print(f"    - To install: {get_install_command(name, status['dep'])}")
 
     print("\n[Optional Dependencies]")
-    for name, status in optional_deps.items():
+    for name, status in optional_deps.items:
         if status['available']:
             print(f"  ✓ {name}")
         else:
@@ -96,12 +96,12 @@ def print_status_report(core_deps: Dict[str, Any], optional_deps: Dict[str, Any]
     else:
         print("✗ Some core dependencies are missing. Please install them.")
 
-def main():
+def main -> None:
     """Main function to run the dependency checker."""
     parser = argparse.ArgumentParser(description="Check project dependencies.")
     parser.add_argument('--detailed', action='store_true', help="Show detailed error messages (now default).")
     parser.add_argument('--json', dest='json_path', type=str, help="Output dependency status to a JSON file.")
-    args = parser.parse_args()
+    args = parser.parse_args
 
     try:
         with open(CONFIG_FILE, 'r') as f:
@@ -117,8 +117,8 @@ def main():
 
     if args.json_path:
         output_data = {
-            'core': {name: {'available': s['available'], 'error': s['error']} for name, s in core_deps.items()},
-            'optional': {name: {'available': s['available'], 'error': s['error']} for name, s in optional_deps.items()}
+            'core': {name: {'available': s['available'], 'error': s['error']} for name, s in core_deps.items},
+            'optional': {name: {'available': s['available'], 'error': s['error']} for name, s in optional_deps.items}
         }
         try:
             with open(args.json_path, 'w') as f:
@@ -135,7 +135,7 @@ def main():
             print("\n\n--- Live Dependency Manager Status ---")
             try:
                 # This function is imported from dependency_manager and prints its own report
-                print_dependency_report()
+                print_dependency_report
             except Exception as e:
                 print(f"Error getting report from DependencyManager: {e}")
         else:
@@ -144,4 +144,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main

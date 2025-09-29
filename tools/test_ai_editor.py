@@ -9,13 +9,13 @@ from pathlib import Path
 
 # Add the backend src directory to the path
 backend_src = Path(__file__).parent.parent / "apps" / "backend" / "src"
-sys.path.insert(0, str(backend_src))
+_ = sys.path.insert(0, str(backend_src))
 
 from apps.backend.src.core.services.ai_editor import AIEditorService
 
-def test_text_processing():
+def test_text_processing() -> None:
     """Test text processing functionality"""
-    print("Testing text processing...")
+    _ = print("Testing text processing...")
     
     # Create the AI editor service
     editor = AIEditorService()
@@ -27,15 +27,15 @@ def test_text_processing():
     result = editor.process_text_content(text)
     
     # Display results
-    print("Text processing result:")
+    _ = print("Text processing result:")
     print(json.dumps(result, indent=2, ensure_ascii=False))
-    print()
+    _ = print()
     
     return result
 
-def test_code_processing():
+def test_code_processing() -> None:
     """Test code processing functionality"""
-    print("Testing code processing...")
+    _ = print("Testing code processing...")
     
     # Create the AI editor service
     editor = AIEditorService()
@@ -58,15 +58,15 @@ class Calculator:
     result = editor.process_code_content(code)
     
     # Display results
-    print("Code processing result:")
+    _ = print("Code processing result:")
     print(json.dumps(result, indent=2, ensure_ascii=False))
-    print()
+    _ = print()
     
     return result
 
-def test_application_data_processing():
+def test_application_data_processing() -> None:
     """Test application data processing functionality"""
-    print("Testing application data processing...")
+    _ = print("Testing application data processing...")
     
     # Create the AI editor service
     editor = AIEditorService()
@@ -87,15 +87,15 @@ def test_application_data_processing():
     result = editor.process_application_data(app_data)
     
     # Display results
-    print("Application data processing result:")
+    _ = print("Application data processing result:")
     print(json.dumps(result, indent=2, ensure_ascii=False))
-    print()
+    _ = print()
     
     return result
 
-def test_structured_data_processing():
+def test_structured_data_processing() -> None:
     """Test structured data processing functionality"""
-    print("Testing structured data processing...")
+    _ = print("Testing structured data processing...")
     
     # Create the AI editor service
     editor = AIEditorService()
@@ -116,17 +116,17 @@ def test_structured_data_processing():
     result = editor.process_structured_data(data)
     
     # Display results
-    print("Structured data processing result:")
+    _ = print("Structured data processing result:")
     print(json.dumps(result, indent=2, ensure_ascii=False))
-    print()
+    _ = print()
     
     return result
 
-def main():
+def main() -> None:
     """Main test function"""
-    print("AI Editor Functionality Test")
+    _ = print("AI Editor Functionality Test")
     print("=" * 30)
-    print()
+    _ = print()
     
     # Run all tests
     try:
@@ -135,12 +135,12 @@ def main():
         app_result = test_application_data_processing()
         structured_result = test_structured_data_processing()
         
-        print("All tests completed successfully!")
+        _ = print("All tests completed successfully!")
         return True
     except Exception as e:
-        print(f"Error during testing: {e}")
+        _ = print(f"Error during testing: {e}")
         import traceback
-        traceback.print_exc()
+        _ = traceback.print_exc()
         return False
 
 if __name__ == "__main__":

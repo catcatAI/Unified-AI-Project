@@ -1,9 +1,7 @@
 import asyncio
 import uuid
-import json
 import logging
 import re
-from typing import Dict, Any, List
 from collections import Counter
 
 from .base.base_agent import BaseAgent
@@ -14,7 +12,7 @@ class NLPProcessingAgent(BaseAgent):
     A specialized agent for natural language processing tasks like text summarization,
     sentiment analysis, entity extraction, and language translation.
     """
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_text_summarization_v1.0",
@@ -23,7 +21,7 @@ class NLPProcessingAgent(BaseAgent):
                 "version": "1.0",
                 "parameters": [
                     {"name": "text", "type": "string", "required": True, "description": "Text content to summarize"},
-                    {"name": "summary_length", "type": "string", "required": False, "description": "Desired summary length (short, medium, long)"}
+                    # {"name": "summary_length", "type": "string", "required": False, "description": "Desired summary length (short, medium, long)"}
                 ],
                 "returns": {"type": "object", "description": "Summarized text and metadata."}
             },
@@ -58,13 +56,13 @@ class NLPProcessingAgent(BaseAgent):
                 "returns": {"type": "object", "description": "Detected language and confidence score."}
             }
         ]
-        super().__init__(agent_id=agent_id, capabilities=capabilities)
+        super.__init__(agent_id=agent_id, capabilities=capabilities)
         logging.info(f"[{self.agent_id}] NLPProcessingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id")
         capability_id = task_payload.get("capability_id_filter", "")
-        params = task_payload.get("parameters", {})
+        params = task_payload.get("parameters", )
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
 
@@ -89,7 +87,7 @@ class NLPProcessingAgent(BaseAgent):
 
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
 
     def _generate_text_summary(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -102,7 +100,7 @@ class NLPProcessingAgent(BaseAgent):
         
         # Simple extractive summarization based on sentence scoring
         sentences = re.split(r'[.!?]+', text)
-        sentences = [s.strip() for s in sentences if s.strip()]
+        sentences = [s.strip for s in sentences if s.strip]
         
         if not sentences:
             return {"summary": "", "original_length": len(text), "summary_length": 0}
@@ -332,10 +330,10 @@ class NLPProcessingAgent(BaseAgent):
 
 
 if __name__ == '__main__':
-    async def main():
+    async def main() -> None:
         agent_id = f"did:hsp:nlp_processing_agent_{uuid.uuid4().hex[:6]}"
         agent = NLPProcessingAgent(agent_id=agent_id)
-        await agent.start()
+        _ = await agent.start()
 
     try:
         asyncio.run(main())

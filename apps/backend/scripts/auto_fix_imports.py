@@ -6,11 +6,9 @@
 
 import os
 import sys
-import re
 import ast
 import subprocess
 from pathlib import Path
-from typing import List, Dict, Set, Tuple, Optional
 import argparse
 
 # 添加项目根目录到路径
@@ -18,7 +16,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 class ImportFixer:
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
         self.src_dir = project_root / "apps" / "backend" / "src"
         self.fixed_files: Set[str] = set()
@@ -274,7 +272,7 @@ class ImportFixer:
                 
             # 启动ChromaDB服务器
             chroma_process = subprocess.Popen(
-                [str(venv_python), "start_chroma_server.py"],
+                _ = [str(venv_python), "start_chroma_server.py"],
                 cwd=self.project_root,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
@@ -286,7 +284,7 @@ class ImportFixer:
             
             # 启动FastAPI服务器
             fastapi_process = subprocess.Popen(
-                [str(venv_python), "-m", "uvicorn", "apps.backend.src.core.services.main_api_server:app", 
+                _ = [str(venv_python), "-m", "uvicorn", "apps.backend.src.core.services.main_api_server:app", 
                  "--reload", "--host", "0.0.0.0", "--port", "8000"],
                 cwd=self.project_root,
                 stdout=subprocess.PIPE,
@@ -310,7 +308,7 @@ class ImportFixer:
             print(f"✗ 启动开发服务器时出错: {e}")
             return False
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="自动修复Python导入路径问题")
     parser.add_argument("--fix", action="store_true", help="修复导入路径问题")
     parser.add_argument("--test", action="store_true", help="修复后运行测试")
@@ -320,7 +318,7 @@ def main():
     args = parser.parse_args()
     
     # 确定项目根目录
-    project_root = Path(__file__).parent.parent.parent
+    project_root: str = Path(__file__).parent.parent.parent
     print(f"项目根目录: {project_root}")
     
     # 创建导入修复器

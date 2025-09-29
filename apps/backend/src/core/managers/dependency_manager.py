@@ -8,12 +8,9 @@ dependencies are not available in the current environment.
 import importlib
 import logging
 import os
-import sys
-import yaml
-from typing import Dict, Any, Optional, Callable, List, Tuple, Union
-from functools import wraps
-import warnings
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+import yaml
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -28,13 +25,14 @@ class DependencyStatus:
         self.error = error
         self.fallback_available = fallback_available
         self.fallback_name = fallback_name
-        self.module = None
-        self.fallback_module = None
+        self.module: Optional[Any] = None
+        self.fallback_module: Optional[Any] = None
+
 
 class DependencyManager:
     """Centralized dependency management system with lazy loading."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None) -> None:
         self._dependencies: Dict[str, DependencyStatus] = {}
         self._config: Dict[str, Any] = {}
         self._environment = os.getenv('UNIFIED_AI_ENV', 'development')
@@ -44,7 +42,7 @@ class DependencyManager:
             current_dir = Path(__file__).parent
             # Adjust path to be relative to the assumed project structure
             project_root = current_dir.parent.parent
-            config_path = project_root / "configs" / "dependency_config.yaml"
+            config_path = os.path.join(project_root, "configs", "dependency_config.yaml")
 
         self._load_config(config_path)
         self._setup_dependency_statuses()
@@ -80,7 +78,7 @@ class DependencyManager:
         }
 
     def _setup_dependency_statuses(self):
-        """Set up dependency status objects without loading them."""
+        '''Set up dependency status objects without loading them.'''
         all_deps = self._config.get('dependencies', {}).get('core', []) + \
                    self._config.get('dependencies', {}).get('optional', [])
 
@@ -191,7 +189,7 @@ class DependencyManager:
         """Get status of all tracked dependencies, checking each one."""
         for name in self._dependencies:
             self.get_dependency(name)
-        return self._dependencies.copy()
+        return self._dependencies.copy
 
     def get_dependency_report(self) -> str:
         """Generate a human-readable dependency status report."""
@@ -199,7 +197,7 @@ class DependencyManager:
         self.get_all_status()
         
         report = ["\n=== Dependency Status Report ==="]
-        available, fallback, unavailable = [], [], []
+        available, fallback, unavailable = [], [], [] 
 
         for name, status in self._dependencies.items():
             if status.is_available:
@@ -228,6 +226,3 @@ dependency_manager = DependencyManager()
 def print_dependency_report():
     """Print the dependency status report."""
     print(dependency_manager.get_dependency_report())
-
-if __name__ == "__main__":
-    print_dependency_report()

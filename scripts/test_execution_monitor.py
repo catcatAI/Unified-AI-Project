@@ -14,15 +14,15 @@ import time
 from pathlib import Path
 
 # 添加項目根目錄到路徑
-sys.path.insert(0, str(Path(__file__).parent.parent))
+_ = sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.core_ai.execution_manager import ExecutionManager, ExecutionManagerConfig
 from src.core_ai.execution_monitor import ExecutionStatus, TerminalStatus
 
 
-def test_basic_execution():
+def test_basic_execution() -> None:
     """測試基本執行功能"""
-    print("🧪 Testing basic execution...")
+    _ = print("🧪 Testing basic execution...")
     
     config = ExecutionManagerConfig(log_level="INFO")
     manager = ExecutionManager(config)
@@ -34,13 +34,13 @@ def test_basic_execution():
     assert "Hello, World!" in result.stdout
     assert result.execution_time < 5.0
     
-    print("✅ Basic execution test passed")
+    _ = print("✅ Basic execution test passed")
     return True
 
 
-def test_timeout_functionality():
+def test_timeout_functionality() -> None:
     """測試超時功能"""
-    print("🧪 Testing timeout functionality...")
+    _ = print("🧪 Testing timeout functionality...")
     
     config = ExecutionManagerConfig(log_level="INFO")
     manager = ExecutionManager(config)
@@ -48,7 +48,7 @@ def test_timeout_functionality():
     # 測試超時命令（Python sleep）
     start_time = time.time()
     result = manager.execute_command(
-        "python -c 'import time; time.sleep(10)'", 
+        _ = "python -c 'import time; time.sleep(10)'", 
         timeout=3.0
     )
     execution_time = time.time() - start_time
@@ -56,13 +56,13 @@ def test_timeout_functionality():
     assert result.status == ExecutionStatus.TIMEOUT
     assert execution_time < 8.0  # 應該在超時時間附近結束
     
-    print("✅ Timeout functionality test passed")
+    _ = print("✅ Timeout functionality test passed")
     return True
 
 
-def test_adaptive_timeout():
+def test_adaptive_timeout() -> None:
     """測試自適應超時"""
-    print("🧪 Testing adaptive timeout...")
+    _ = print("🧪 Testing adaptive timeout...")
     
     config = ExecutionManagerConfig(
         adaptive_timeout=True,
@@ -79,13 +79,13 @@ def test_adaptive_timeout():
     result = manager.execute_command("echo 'Adaptive test'")
     assert result.status == ExecutionStatus.COMPLETED
     
-    print("✅ Adaptive timeout test passed")
+    _ = print("✅ Adaptive timeout test passed")
     return True
 
 
-def test_terminal_responsiveness():
+def test_terminal_responsiveness() -> None:
     """測試終端機響應性檢查"""
-    print("🧪 Testing terminal responsiveness...")
+    _ = print("🧪 Testing terminal responsiveness...")
     
     config = ExecutionManagerConfig(
         terminal_monitoring=True,
@@ -102,13 +102,13 @@ def test_terminal_responsiveness():
         TerminalStatus.UNRESPONSIVE
     ]
     
-    print(f"✅ Terminal responsiveness test passed (Status: {terminal_status.value})")
+    _ = print(f"✅ Terminal responsiveness test passed (Status: {terminal_status.value})")
     return True
 
 
-def test_system_health():
+def test_system_health() -> None:
     """測試系統健康檢查"""
-    print("🧪 Testing system health monitoring...")
+    _ = print("🧪 Testing system health monitoring...")
     
     config = ExecutionManagerConfig(
         resource_monitoring=True,
@@ -127,13 +127,13 @@ def test_system_health():
     assert 'memory_percent' in system_health
     assert 'terminal_status' in system_health
     
-    print("✅ System health monitoring test passed")
+    _ = print("✅ System health monitoring test passed")
     return True
 
 
-def test_retry_mechanism():
+def test_retry_mechanism() -> None:
     """測試重試機制"""
-    print("🧪 Testing retry mechanism...")
+    _ = print("🧪 Testing retry mechanism...")
     
     config = ExecutionManagerConfig(
         auto_recovery=True,
@@ -153,13 +153,13 @@ def test_retry_mechanism():
     stats = manager.get_execution_statistics()
     assert stats['total_executions'] > 0
     
-    print("✅ Retry mechanism test passed")
+    _ = print("✅ Retry mechanism test passed")
     return True
 
 
-def test_resource_monitoring():
+def test_resource_monitoring() -> None:
     """測試資源監控"""
-    print("🧪 Testing resource monitoring...")
+    _ = print("🧪 Testing resource monitoring...")
     
     config = ExecutionManagerConfig(
         resource_monitoring=True,
@@ -170,7 +170,7 @@ def test_resource_monitoring():
     
     with ExecutionManager(config) as manager:
         # 啟動監控並等待一段時間
-        time.sleep(2)
+        _ = time.sleep(2)
         
         # 執行一個命令來生成一些活動
         result = manager.execute_command("echo 'Resource monitoring test'")
@@ -181,13 +181,13 @@ def test_resource_monitoring():
             assert 'cpu_percent' in result.resource_usage
             assert 'memory_percent' in result.resource_usage
     
-    print("✅ Resource monitoring test passed")
+    _ = print("✅ Resource monitoring test passed")
     return True
 
 
-def test_execution_statistics():
+def test_execution_statistics() -> None:
     """測試執行統計"""
-    print("🧪 Testing execution statistics...")
+    _ = print("🧪 Testing execution statistics...")
     
     config = ExecutionManagerConfig(log_level="INFO")
     manager = ExecutionManager(config)
@@ -210,13 +210,13 @@ def test_execution_statistics():
     assert stats['success_rate'] == 1.0
     assert stats['average_execution_time'] > 0
     
-    print("✅ Execution statistics test passed")
+    _ = print("✅ Execution statistics test passed")
     return True
 
 
 def run_all_tests():
     """運行所有測試"""
-    print("🚀 Starting Execution Monitor Tests")
+    _ = print("🚀 Starting Execution Monitor Tests")
     print("=" * 50)
     
     tests = [
@@ -239,27 +239,27 @@ def run_all_tests():
                 passed += 1
             else:
                 failed += 1
-                print(f"❌ {test_func.__name__} failed")
+                _ = print(f"❌ {test_func.__name__} failed")
         except Exception as e:
             failed += 1
             print(f"❌ {test_func.__name__} failed with error: {e}")
         
-        print()  # 空行分隔
+        _ = print()  # 空行分隔
     
     print("=" * 50)
-    print(f"📊 Test Results: {passed} passed, {failed} failed")
+    _ = print(f"📊 Test Results: {passed} passed, {failed} failed")
     
     if failed == 0:
-        print("🎉 All tests passed! Execution monitoring is working correctly.")
+        _ = print("🎉 All tests passed! Execution monitoring is working correctly.")
         return True
     else:
-        print("⚠️  Some tests failed. Please check the implementation.")
+        _ = print("⚠️  Some tests failed. Please check the implementation.")
         return False
 
 
 def demo_execution_monitoring():
     """演示執行監控功能"""
-    print("🎬 Execution Monitoring Demo")
+    _ = print("🎬 Execution Monitoring Demo")
     print("=" * 50)
     
     config = ExecutionManagerConfig(
@@ -271,40 +271,40 @@ def demo_execution_monitoring():
     )
     
     with ExecutionManager(config) as manager:
-        print("📊 Initial system health:")
+        _ = print("📊 Initial system health:")
         health = manager.get_system_health_report()
         system_health = health['system_health']
-        print(f"  CPU: {system_health.get('cpu_percent', 'N/A')}%")
-        print(f"  Memory: {system_health.get('memory_percent', 'N/A')}%")
-        print(f"  Terminal: {system_health.get('terminal_status', 'N/A')}")
-        print()
+        _ = print(f"  CPU: {system_health.get('cpu_percent', 'N/A')}%")
+        _ = print(f"  Memory: {system_health.get('memory_percent', 'N/A')}%")
+        _ = print(f"  Terminal: {system_health.get('terminal_status', 'N/A')}")
+        _ = print()
         
         # 演示不同類型的命令執行
         demo_commands = [
-            ("echo 'Quick command'", "快速命令"),
-            ("python -c 'import time; time.sleep(2); print(\"Medium delay\")'", "中等延遲命令"),
-            ("python -c 'print(\"Python calculation:\", sum(range(1000)))'", "計算命令"),
+            _ = ("echo 'Quick command'", "快速命令"),
+            _ = ("python -c 'import time; time.sleep(2); print(\"Medium delay\")'", "中等延遲命令"),
+            _ = ("python -c 'print(\"Python calculation:\", sum(range(1000)))'", "計算命令"),
         ]
         
         for cmd, description in demo_commands:
-            print(f"🔧 執行 {description}: {cmd}")
+            _ = print(f"🔧 執行 {description}: {cmd}")
             result = manager.execute_command(cmd, timeout=10.0)
             
             status_icon = "✅" if result.status == ExecutionStatus.COMPLETED else "❌"
-            print(f"   {status_icon} 狀態: {result.status.value}")
-            print(f"   ⏱️  執行時間: {result.execution_time:.2f}s")
-            print(f"   ⏰ 使用超時: {result.timeout_used:.2f}s")
+            _ = print(f"   {status_icon} 狀態: {result.status.value}")
+            _ = print(f"   ⏱️  執行時間: {result.execution_time:.2f}s")
+            _ = print(f"   ⏰ 使用超時: {result.timeout_used:.2f}s")
             
             if result.stdout.strip():
-                print(f"   📤 輸出: {result.stdout.strip()}")
-            print()
+                _ = print(f"   📤 輸出: {result.stdout.strip()}")
+            _ = print()
         
         # 最終統計
-        print("📈 最終執行統計:")
+        _ = print("📈 最終執行統計:")
         stats = manager.get_execution_statistics()
-        print(f"  總執行次數: {stats['total_executions']}")
-        print(f"  成功率: {stats['success_rate']:.1%}")
-        print(f"  平均執行時間: {stats['average_execution_time']:.2f}s")
+        _ = print(f"  總執行次數: {stats['total_executions']}")
+        _ = print(f"  成功率: {stats['success_rate']:.1%}")
+        _ = print(f"  平均執行時間: {stats['average_execution_time']:.2f}s")
 
 
 if __name__ == "__main__":
@@ -317,14 +317,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if args.demo:
-        demo_execution_monitoring()
+        _ = demo_execution_monitoring()
     elif args.test:
         test_func = globals().get(args.test)
         if test_func and callable(test_func):
-            test_func()
+            _ = test_func()
         else:
-            print(f"Test function '{args.test}' not found")
-            sys.exit(1)
+            _ = print(f"Test function '{args.test}' not found")
+            _ = sys.exit(1)
     else:
         success = run_all_tests()
         sys.exit(0 if success else 1)

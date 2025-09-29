@@ -8,7 +8,6 @@ import json
 import os
 import subprocess
 import tempfile
-import importlib.util
 import traceback
 import threading
 import time
@@ -21,10 +20,8 @@ import logging
 import hashlib
 import re
 
-from .permission_control import PermissionControlSystem, PermissionContext, PermissionType, PermissionLevel
-from .audit_logger import AuditLogger, AuditEventType
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 @dataclass
 class SandboxConfig:
@@ -58,12 +55,12 @@ class ResourceLimits:
 class ResourceMonitor:
     """Monitor resource usage during sandbox execution"""
     
-    def __init__(self, limits: ResourceLimits):
+    def __init__(self, limits: ResourceLimits) -> None:
         self.limits = limits
         self.monitoring = False
         self.monitor_thread = None
         self.process = None
-        self.violations = []
+        self.violations = 
         
     def start_monitoring(self, process: subprocess.Popen):
         """Start monitoring a process"""
@@ -71,33 +68,33 @@ class ResourceMonitor:
         self.monitoring = True
         self.monitor_thread = threading.Thread(target=self._monitor_loop)
         self.monitor_thread.daemon = True
-        self.monitor_thread.start()
+        self.monitor_thread.start
         
     def stop_monitoring(self):
         """Stop monitoring"""
         self.monitoring = False
         if self.monitor_thread:
-            self.monitor_thread.join()
+            self.monitor_thread.join
             
     def _monitor_loop(self):
         """Monitoring loop"""
         try:
             ps_process = psutil.Process(self.process.pid)
             
-            while self.monitoring and self.process.poll() is None:
+            while self.monitoring and self.process.poll is None:
                 try:
                     # Check CPU usage
-                    cpu_percent = ps_process.cpu_percent()
+                    cpu_percent = ps_process.cpu_percent
                     if cpu_percent > self.limits.cpu_percent:
                         self.violations.append(f"CPU usage exceeded limit: {cpu_percent}% > {self.limits.cpu_percent}%")
-                        self._terminate_process()
+                        self._terminate_process
                         break
                         
                     # Check memory usage
-                    memory_mb = ps_process.memory_info().rss / 1024 / 1024
+                    memory_mb = ps_process.memory_info.rss / 1024 / 1024
                     if memory_mb > self.limits.memory_mb:
                         self.violations.append(f"Memory usage exceeded limit: {memory_mb}MB > {self.limits.memory_mb}MB")
-                        self._terminate_process()
+                        self._terminate_process
                         break
                         
                 except psutil.NoSuchProcess:
@@ -113,10 +110,10 @@ class ResourceMonitor:
     def _terminate_process(self):
         """Terminate the monitored process"""
         try:
-            self.process.terminate()
+            self.process.terminate
             self.process.wait(timeout=5)
         except subprocess.TimeoutExpired:
-            self.process.kill()
+            self.process.kill
         except Exception as e:
             logger.error(f"Error terminating process: {e}")
 
@@ -173,11 +170,11 @@ def run_enhanced_sandboxed_tool():
 
         tool_instance = None
         try:
-            tool_instance = ToolClass(config={{}}
+            tool_instance = ToolClass(config=
 )
         except TypeError:
             try:
-                tool_instance = ToolClass()
+                tool_instance = ToolClass
             except Exception as init_e:
                 raise type(init_e)(f"Failed to initialize '{{class_name_to_run}}': {{init_e}}")
 
@@ -190,7 +187,7 @@ def run_enhanced_sandboxed_tool():
 
     except Exception as e:
         output["error"] = str(e)
-        output["traceback"] = traceback.format_exc()
+        output["traceback"] = traceback.format_exc
 
     try:
         # Ensure result is JSON serializable
@@ -206,12 +203,12 @@ def run_enhanced_sandboxed_tool():
         if original_traceback:
              output["traceback"] = original_traceback
         else:
-            output["traceback"] = traceback.format_exc()
+            output["traceback"] = traceback.format_exc
 
     print(json.dumps(output))
 
 if __name__ == "__main__":
-    run_enhanced_sandboxed_tool()
+    run_enhanced_sandboxed_tool
 '''
 
 class EnhancedSandboxExecutor:
@@ -220,9 +217,9 @@ class EnhancedSandboxExecutor:
     def __init__(self, config: SandboxConfig = None, 
                  permission_system: PermissionControlSystem = None,
                  audit_logger: AuditLogger = None):
-        self.config = config or SandboxConfig()
-        self.permission_system = permission_system or PermissionControlSystem()
-        self.audit_logger = audit_logger or AuditLogger()
+        self.config = config or SandboxConfig
+        self.permission_system = permission_system or PermissionControlSystem
+        self.audit_logger = audit_logger or AuditLogger
         self.resource_limits = ResourceLimits(
             cpu_percent=self.config.max_cpu_percent,
             memory_mb=self.config.max_memory_mb,
@@ -244,10 +241,10 @@ class EnhancedSandboxExecutor:
             method_params: Parameters to pass to the method
             
         Returns:
-            Tuple of (result, error_message)
+            _ = Tuple of (result, error_message)
         """
         # Generate script hash for auditing
-        script_hash = hashlib.sha256(code_string.encode()).hexdigest()[:16]
+        script_hash = hashlib.sha256(code_string.encode).hexdigest[:16]
         
         # Check permissions
         permission_context = PermissionContext(
@@ -328,7 +325,7 @@ class EnhancedSandboxExecutor:
                 error_type="sandbox_execution_error",
                 resource=f"script_{script_hash}",
                 error_message=str(e),
-                details={"traceback": traceback.format_exc()}
+                details={"traceback": traceback.format_exc}
             )
             
             return None, error_msg
@@ -343,11 +340,11 @@ class EnhancedSandboxExecutor:
                     
             # Check for dangerous patterns
             dangerous_patterns = [
-                r'(__import__\s*\()',
-                r'(exec\s*\()',
-                r'(eval\s*\()',
-                r'(open\s*\()',
-                r'(file\s*\()',
+                r'(__import__\s*\',
+                r'(exec\s*\',
+                r'(eval\s*\',
+                r'(open\s*\',
+                r'(file\s*\',
                 r'(subprocess\.)',
                 r'(os\.)',
                 r'(sys\.)',
@@ -363,9 +360,9 @@ class EnhancedSandboxExecutor:
                     
             # Check for file operations
             file_patterns = [
-                r'(\.read\s*\()',
-                r'(\.write\s*\()',
-                r'(\.open\s*\()',
+                r'(\.read\s*\',
+                r'(\.write\s*\',
+                r'(\.open\s*\',
             ]
             
             for pattern in file_patterns:
@@ -381,7 +378,7 @@ class EnhancedSandboxExecutor:
                        method_name: str, method_params: Dict[str, Any]) -> Tuple[Optional[Any], Optional[str]]:
         """Run code in sandbox environment"""
         # Create a temporary directory that will be automatically cleaned up
-        with tempfile.TemporaryDirectory() as temp_dir:
+        with tempfile.TemporaryDirectory as temp_dir:
             tool_module_filename = "_sandboxed_tool.py"
             runner_script_filename = "_enhanced_sandbox_runner.py"
 
@@ -429,13 +426,13 @@ class EnhancedSandboxExecutor:
                         try:
                             os.killpg(os.getpgid(process.pid), signal.SIGTERM)
                         except:
-                            process.kill()
-                        process.wait()
+                            process.kill
+                        process.wait
                         return None, f"Sandbox execution timed out after {self.config.timeout_seconds} seconds"
                         
                 finally:
                     # Stop monitoring
-                    resource_monitor.stop_monitoring()
+                    resource_monitor.stop_monitoring
                     
                 # Check for resource violations
                 if resource_monitor.violations:
@@ -443,23 +440,23 @@ class EnhancedSandboxExecutor:
                     
                 # Process results
                 if stderr:
-                    if stdout and stdout.strip():
+                    if stdout and stdout.strip:
                         try:
-                            output_json = json.loads(stdout.strip())
+                            output_json = json.loads(stdout.strip)
                             if output_json.get("error") or output_json.get("traceback"):
                                 full_error_msg = f"Error during sandboxed tool execution: {output_json.get('error', 'Unknown error')}"
                                 if output_json.get("traceback"):
                                     full_error_msg += f"\nTraceback:\n{output_json['traceback']}"
                                 return None, full_error_msg
-                            return output_json.get("result"), f"Sandbox execution had stderr output: {stderr.strip()}"
+                            return output_json.get("result"), f"Sandbox execution had stderr output: {stderr.strip}"
                         except json.JSONDecodeError:
-                            return None, f"Sandbox execution error: {stderr.strip()}\nSandbox stdout (non-JSON): {stdout.strip()}"
+                            return None, f"Sandbox execution error: {stderr.strip}\nSandbox stdout (non-JSON): {stdout.strip}"
                     else:
-                        return None, f"Sandbox execution error: {stderr.strip()}"
+                        return None, f"Sandbox execution error: {stderr.strip}"
 
-                if stdout and stdout.strip():
+                if stdout and stdout.strip:
                     try:
-                        output_json = json.loads(stdout.strip())
+                        output_json = json.loads(stdout.strip)
                         if output_json.get("error") or output_json.get("traceback"):
                             full_error_msg = f"Error during sandboxed tool execution: {output_json.get('error', 'Unknown error')}"
                             if output_json.get("traceback"):
@@ -467,12 +464,12 @@ class EnhancedSandboxExecutor:
                             return None, full_error_msg
                         return output_json.get("result"), None
                     except json.JSONDecodeError:
-                        return None, f"Sandbox execution produced non-JSON output: {stdout.strip()}"
+                        return None, f"Sandbox execution produced non-JSON output: {stdout.strip}"
 
                 return None, "Sandbox execution completed with no output"
 
             except Exception as e:
-                return None, f"Error in sandbox executor system: {str(e)}\n{traceback.format_exc()}"
+                return None, f"Error in sandbox executor system: {str(e)}\n{traceback.format_exc}"
 
 # Example usage and testing
 if __name__ == "__main__":
@@ -480,22 +477,22 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
     # Create enhanced sandbox executor
-    sandbox = EnhancedSandboxExecutor()
+    sandbox = EnhancedSandboxExecutor
     
     # Test code
     test_code = '''
 class DataTransformer:
-    def __init__(self, config=None):
+    def __init__(self, config=None) -> None:
         pass
         
     def transform(self, data):
         # Simple transformation
         if isinstance(data, dict):
-            return {k: str(v).upper() for k, v in data.items()}
+            return {k: str(v).upper for k, v in data.items}
         elif isinstance(data, list):
-            return [str(item).upper() for item in data]
+            return [str(item).upper for item in data]
         else:
-            return str(data).upper()
+            return str(data).upper
 '''
     
     # Execute test

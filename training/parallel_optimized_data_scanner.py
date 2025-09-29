@@ -11,14 +11,11 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple
 import logging
-import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import queue
-import threading
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 def _calculate_file_hash_worker(file_path: str, max_bytes: int = 10 * 1024 * 1024) -> Tuple[str, str]:
     """工作进程函数：计算文件哈希值"""
@@ -30,7 +27,7 @@ def _calculate_file_hash_worker(file_path: str, max_bytes: int = 10 * 1024 * 102
                 chunk = f.read(4096)
                 if not chunk:
                     break
-                hash_md5.update(chunk)
+                _ = hash_md5.update(chunk)
                 bytes_read += len(chunk)
         return file_path, hash_md5.hexdigest()
     except Exception as e:
@@ -61,7 +58,7 @@ def _get_file_info_worker(file_path: str) -> Tuple[str, Optional[Dict[str, Any]]
             file_type = 'binary'
         
         return file_path, {
-            'path': str(path),
+            _ = 'path': str(path),
             'size': stat.st_size,
             'modified_time': stat.st_mtime,
             'type': file_type
@@ -72,15 +69,15 @@ def _get_file_info_worker(file_path: str) -> Tuple[str, Optional[Dict[str, Any]]
 class ParallelOptimizedDataScanner:
     """并行优化的数据扫描器"""
     
-    def __init__(self, data_dir: str, tracking_file: str = None, config_file: str = None):
+    def __init__(self, data_dir: str, tracking_file: str = None, config_file: str = None) -> None:
         self.data_dir = Path(data_dir)
         self.tracking_file = Path(tracking_file) if tracking_file else Path("data_tracking.json")
         self.config_file = Path(config_file) if config_file else Path("performance_config.json")
         self.processed_files = {}
         self.scan_interval = 300  # 默认扫描间隔（秒）
         self.max_workers = min(32, os.cpu_count() + 4)  # 限制最大工作进程数
-        self._load_performance_config()
-        self._load_tracking_data()
+        _ = self._load_performance_config()
+        _ = self._load_tracking_data()
     
     def _load_performance_config(self):
         """加载性能配置"""
@@ -92,9 +89,9 @@ class ParallelOptimizedDataScanner:
                     self.scan_interval = data_scanning_config.get('scan_interval_seconds', 300)
                     # 获取并行处理相关配置
                     self.max_workers = min(32, data_scanning_config.get('max_workers', os.cpu_count() + 4))
-                logger.info(f"✅ 加载性能配置: {self.config_file}")
+                _ = logger.info(f"✅ 加载性能配置: {self.config_file}")
             except Exception as e:
-                logger.error(f"❌ 加载性能配置失败: {e}")
+                _ = logger.error(f"❌ 加载性能配置失败: {e}")
     
     def _load_tracking_data(self):
         """加载数据跟踪信息"""
@@ -103,21 +100,21 @@ class ParallelOptimizedDataScanner:
                 with open(self.tracking_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     self.processed_files = {k: datetime.fromisoformat(v) for k, v in data.get('processed_files', {}).items()}
-                logger.info(f"✅ 加载数据跟踪信息: {self.tracking_file}")
+                _ = logger.info(f"✅ 加载数据跟踪信息: {self.tracking_file}")
             except Exception as e:
-                logger.error(f"❌ 加载数据跟踪信息失败: {e}")
+                _ = logger.error(f"❌ 加载数据跟踪信息失败: {e}")
     
     def _save_tracking_data(self):
         """保存数据跟踪信息"""
         try:
             data = {
                 'processed_files': {k: v.isoformat() for k, v in self.processed_files.items()},
-                'updated_at': datetime.now().isoformat()
+                _ = 'updated_at': datetime.now().isoformat()
             }
             with open(self.tracking_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            logger.error(f"❌ 保存数据跟踪信息失败: {e}")
+            _ = logger.error(f"❌ 保存数据跟踪信息失败: {e}")
     
     def _calculate_file_hash(self, file_path: Path) -> str:
         """计算文件哈希值"""
@@ -132,12 +129,12 @@ class ParallelOptimizedDataScanner:
                     chunk = f.read(4096)
                     if not chunk:
                         break
-                    hash_md5.update(chunk)
+                    _ = hash_md5.update(chunk)
                     bytes_read += len(chunk)
             
             return hash_md5.hexdigest()
         except Exception as e:
-            logger.error(f"❌ 计算文件哈希失败 {file_path}: {e}")
+            _ = logger.error(f"❌ 计算文件哈希失败 {file_path}: {e}")
             return ""
     
     def _get_file_info(self, file_path: Path) -> Optional[Dict[str, Any]]:
@@ -164,13 +161,13 @@ class ParallelOptimizedDataScanner:
                 file_type = 'binary'
             
             return {
-                'path': str(file_path),
+                _ = 'path': str(file_path),
                 'size': stat.st_size,
                 'modified_time': stat.st_mtime,
                 'type': file_type
             }
         except Exception as e:
-            logger.error(f"❌ 获取文件信息失败 {file_path}: {e}")
+            _ = logger.error(f"❌ 获取文件信息失败 {file_path}: {e}")
             return None
     
     def _parallel_get_file_info(self, file_paths: List[Path]) -> List[Optional[Dict[str, Any]]]:
@@ -181,7 +178,7 @@ class ParallelOptimizedDataScanner:
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             # 提交任务
             future_to_index = {
-                executor.submit(_get_file_info_worker, str(file_path)): i 
+                _ = executor.submit(_get_file_info_worker, str(file_path)): i 
                 for i, file_path in enumerate(file_paths)
             }
             
@@ -192,7 +189,7 @@ class ParallelOptimizedDataScanner:
                     _, file_info = future.result()
                     file_info_list[index] = file_info
                 except Exception as e:
-                    logger.error(f"❌ 获取文件信息时出错: {e}")
+                    _ = logger.error(f"❌ 获取文件信息时出错: {e}")
         
         return file_info_list
     
@@ -204,7 +201,7 @@ class ParallelOptimizedDataScanner:
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             # 提交任务
             future_to_path = {
-                executor.submit(_calculate_file_hash_worker, str(file_path)): str(file_path) 
+                _ = executor.submit(_calculate_file_hash_worker, str(file_path)): str(file_path) 
                 for file_path in file_paths
             }
             
@@ -215,7 +212,7 @@ class ParallelOptimizedDataScanner:
                     _, file_hash = future.result()
                     file_hashes[file_path] = file_hash
                 except Exception as e:
-                    logger.error(f"❌ 计算文件哈希时出错 {file_path}: {e}")
+                    _ = logger.error(f"❌ 计算文件哈希时出错 {file_path}: {e}")
         
         return file_hashes
     
@@ -230,7 +227,7 @@ class ParallelOptimizedDataScanner:
         Returns:
             文件信息列表
         """
-        logger.info(f"🔍 开始并行扫描最近修改的文件，最多 {max_files} 个...")
+        _ = logger.info(f"🔍 开始并行扫描最近修改的文件，最多 {max_files} 个...")
         
         file_paths = []
         file_count = 0
@@ -246,13 +243,13 @@ class ParallelOptimizedDataScanner:
                         break
                     
                     file_path = Path(root) / file
-                    file_paths.append(file_path)
+                    _ = file_paths.append(file_path)
                     file_count += 1
                 
                 if file_count >= max_files:
                     break
             
-            logger.info(f"📋 收集到 {len(file_paths)} 个文件路径，开始并行处理...")
+            _ = logger.info(f"📋 收集到 {len(file_paths)} 个文件路径，开始并行处理...")
             
             # 分批处理文件信息获取
             batch_size = max(100, self.max_workers * 10)  # 每批处理的文件数
@@ -268,7 +265,7 @@ class ParallelOptimizedDataScanner:
                         # 如果指定了文件类型，进行过滤
                         if file_types and file_info['type'] not in file_types:
                             continue
-                        files_info.append(file_info)
+                        _ = files_info.append(file_info)
                 
                 # 如果已达到最大文件数，停止处理
                 if len(files_info) >= max_files:
@@ -279,11 +276,11 @@ class ParallelOptimizedDataScanner:
             files_info.sort(key=lambda x: x['modified_time'], reverse=True)
             files_info = files_info[:max_files]
             
-            logger.info(f"✅ 并行扫描完成，共发现 {len(files_info)} 个文件")
+            _ = logger.info(f"✅ 并行扫描完成，共发现 {len(files_info)} 个文件")
             return files_info
             
         except Exception as e:
-            logger.error(f"❌ 并行扫描文件时出错: {e}")
+            _ = logger.error(f"❌ 并行扫描文件时出错: {e}")
             return []
     
     def find_new_files(self, max_files: int = 5000, file_types: List[str] = None) -> List[Dict[str, Any]]:
@@ -342,15 +339,15 @@ class ParallelOptimizedDataScanner:
             
             # 如果需要处理，则添加到待计算哈希列表
             if needs_processing:
-                files_needing_hash.append(file_path)
+                _ = files_needing_hash.append(file_path)
         
-        logger.info(f"📋 需要计算哈希的文件数量: {len(files_needing_hash)}")
+        _ = logger.info(f"📋 需要计算哈希的文件数量: {len(files_needing_hash)}")
         
         # 并行计算文件哈希
         if files_needing_hash:
             file_hashes = self._parallel_calculate_file_hashes(files_needing_hash)
             hash_calculated_count = len(file_hashes)
-            logger.info(f"✅ 并行计算哈希完成，计算了 {hash_calculated_count} 个文件")
+            _ = logger.info(f"✅ 并行计算哈希完成，计算了 {hash_calculated_count} 个文件")
         else:
             file_hashes = {}
         
@@ -401,9 +398,9 @@ class ParallelOptimizedDataScanner:
                 # 如果仍然需要处理，则添加到新文件列表
                 if needs_processing:
                     new_files.append({
-                        'path': str(file_path),
+                        _ = 'path': str(file_path),
                         'hash': file_hash,
-                        'modified_time': modified_time.isoformat(),
+                        _ = 'modified_time': modified_time.isoformat(),
                         'size': file_info['size'],
                         'type': file_info['type']
                     })
@@ -415,13 +412,13 @@ class ParallelOptimizedDataScanner:
             processed_count += 1
             # 每处理5000个文件输出一次进度
             if processed_count % 5000 == 0:
-                logger.info(f"   已检查 {processed_count} 个文件... (计算哈希: {hash_calculated_count} 个)")
+                _ = logger.info(f"   已检查 {processed_count} 个文件... (计算哈希: {hash_calculated_count} 个)")
         
-        logger.info(f"✅ 并行检查完成，发现 {len(new_files)} 个新增/修改文件 (计算哈希: {hash_calculated_count} 个)")
+        _ = logger.info(f"✅ 并行检查完成，发现 {len(new_files)} 个新增/修改文件 (计算哈希: {hash_calculated_count} 个)")
         return new_files
     
     def mark_as_processed(self, file_hash: str):
         """标记文件为已处理"""
         self.processed_files[file_hash] = datetime.now()
-        self._save_tracking_data()
-        logger.debug(f"✅ 标记文件为已处理: {file_hash}")
+        _ = self._save_tracking_data()
+        _ = logger.debug(f"✅ 标记文件为已处理: {file_hash}")

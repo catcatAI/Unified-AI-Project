@@ -4,7 +4,6 @@
 此脚本会删除apps/backend/backup目录下除了最近5个备份目录之外的所有目录
 """
 
-import os
 import shutil
 from pathlib import Path
 import re
@@ -25,9 +24,9 @@ def get_backup_dirs_sorted(backup_path):
                 try:
                     timestamp_str = match.group(1)
                     timestamp = datetime.strptime(timestamp_str, '%Y%m%d_%H%M%S')
-                    backup_dirs.append((item, timestamp))
+                    _ = backup_dirs.append((item, timestamp))
                 except ValueError:
-                    print(f"无法解析时间戳: {item.name}")
+                    _ = print(f"无法解析时间戳: {item.name}")
     
     # 按时间戳排序，最新的在前
     backup_dirs.sort(key=lambda x: x[1], reverse=True)
@@ -38,25 +37,25 @@ def cleanup_old_backups(backup_path, keep_count=5):
     backup_dirs = get_backup_dirs_sorted(backup_path)
     
     if len(backup_dirs) <= keep_count:
-        print(f"备份目录数量 ({len(backup_dirs)}) 不超过保留数量 ({keep_count})，无需清理")
+        _ = print(f"备份目录数量 ({len(backup_dirs)}) 不超过保留数量 ({keep_count})，无需清理")
         return
     
     # 删除多余的备份目录
     to_remove = backup_dirs[keep_count:]
     removed_count = 0
     
-    print(f"找到 {len(backup_dirs)} 个备份目录，将保留最近的 {keep_count} 个")
-    print(f"需要删除 {len(to_remove)} 个旧备份目录:")
+    _ = print(f"找到 {len(backup_dirs)} 个备份目录，将保留最近的 {keep_count} 个")
+    _ = print(f"需要删除 {len(to_remove)} 个旧备份目录:")
     
     for dir_path, timestamp in to_remove:
         try:
-            print(f"  删除: {dir_path.name} ({timestamp.strftime('%Y-%m-%d %H:%M:%S')})")
-            shutil.rmtree(dir_path)
+            _ = print(f"  删除: {dir_path.name} ({timestamp.strftime('%Y-%m-%d %H:%M:%S')})")
+            _ = shutil.rmtree(dir_path)
             removed_count += 1
         except Exception as e:
-            print(f"  删除失败 {dir_path.name}: {e}")
+            _ = print(f"  删除失败 {dir_path.name}: {e}")
     
-    print(f"成功删除 {removed_count} 个备份目录")
+    _ = print(f"成功删除 {removed_count} 个备份目录")
 
 def cleanup_root_backup_dirs(root_path, keep_count=3):
     """清理根目录下的备份目录"""
@@ -76,54 +75,54 @@ def cleanup_root_backup_dirs(root_path, keep_count=3):
                         try:
                             timestamp_str = match.group(0)
                             timestamp = datetime.strptime(timestamp_str, '%Y%m%d_%H%M%S')
-                            backup_dirs.append((item, timestamp))
+                            _ = backup_dirs.append((item, timestamp))
                         except ValueError:
-                            print(f"无法解析时间戳: {item.name}")
+                            _ = print(f"无法解析时间戳: {item.name}")
     
     # 按时间戳排序，最新的在前
     backup_dirs.sort(key=lambda x: x[1], reverse=True)
     
     if len(backup_dirs) <= keep_count:
-        print(f"根目录备份目录数量 ({len(backup_dirs)}) 不超过保留数量 ({keep_count})，无需清理")
+        _ = print(f"根目录备份目录数量 ({len(backup_dirs)}) 不超过保留数量 ({keep_count})，无需清理")
         return
     
     # 删除多余的备份目录
     to_remove = backup_dirs[keep_count:]
     removed_count = 0
     
-    print(f"根目录找到 {len(backup_dirs)} 个备份目录，将保留最近的 {keep_count} 个")
-    print(f"需要删除 {len(to_remove)} 个旧备份目录:")
+    _ = print(f"根目录找到 {len(backup_dirs)} 个备份目录，将保留最近的 {keep_count} 个")
+    _ = print(f"需要删除 {len(to_remove)} 个旧备份目录:")
     
     for dir_path, timestamp in to_remove:
         try:
-            print(f"  删除: {dir_path.name} ({timestamp.strftime('%Y-%m-%d %H:%M:%S')})")
-            shutil.rmtree(dir_path)
+            _ = print(f"  删除: {dir_path.name} ({timestamp.strftime('%Y-%m-%d %H:%M:%S')})")
+            _ = shutil.rmtree(dir_path)
             removed_count += 1
         except Exception as e:
-            print(f"  删除失败 {dir_path.name}: {e}")
+            _ = print(f"  删除失败 {dir_path.name}: {e}")
     
-    print(f"根目录成功删除 {removed_count} 个备份目录")
+    _ = print(f"根目录成功删除 {removed_count} 个备份目录")
 
-def main():
+def main() -> None:
     """主函数"""
-    project_root = Path(__file__).parent.parent
+    project_root: str = Path(__file__).parent.parent
     backend_backup_path = project_root / 'apps' / 'backend' / 'backup'
     root_backup_path = project_root
     
-    print("开始清理备份目录...")
+    _ = print("开始清理备份目录...")
     
     # 清理apps/backend/backup目录
     if backend_backup_path.exists():
-        print(f"\n清理 {backend_backup_path} 目录:")
+        _ = print(f"\n清理 {backend_backup_path} 目录:")
         cleanup_old_backups(backend_backup_path, keep_count=5)
     else:
-        print(f"\n目录不存在: {backend_backup_path}")
+        _ = print(f"\n目录不存在: {backend_backup_path}")
     
     # 清理根目录下的备份目录
-    print(f"\n清理根目录 {root_backup_path} 下的备份目录:")
+    _ = print(f"\n清理根目录 {root_backup_path} 下的备份目录:")
     cleanup_root_backup_dirs(root_backup_path, keep_count=3)
     
-    print("\n备份目录清理完成!")
+    _ = print("\n备份目录清理完成!")
 
 if __name__ == '__main__':
-    main()
+    _ = main()

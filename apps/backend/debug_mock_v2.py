@@ -1,4 +1,3 @@
-import unittest
 import yaml
 from unittest.mock import patch, mock_open, MagicMock
 import sys
@@ -8,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from .src.core_ai.dependency_manager import DependencyManager
 
-def test_module_level_mock():
+def test_module_level_mock() -> None:
     """測試模組級 open 的 mock 攔截。"""
     test_config = {
         'dependencies': {

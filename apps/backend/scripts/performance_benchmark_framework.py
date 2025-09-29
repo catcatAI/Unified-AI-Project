@@ -4,13 +4,11 @@
 用于建立和管理系统的性能基准测试体系
 """
 
-import os
 import sys
 import json
 import time
 import sqlite3
 from pathlib import Path
-from typing import Dict, List, Any, Callable, Optional
 from datetime import datetime
 import logging
 import asyncio
@@ -20,16 +18,16 @@ import numpy as np
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level: str=logging.INFO,
+    format: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
 
 class PerformanceBenchmarkFramework:
     """性能基准测试框架"""
     
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: str = None) -> None:
         """
         初始化性能基准测试框架
         
@@ -92,7 +90,7 @@ class PerformanceBenchmarkFramework:
                     execution_time REAL NOT NULL,
                     cpu_percent REAL,
                     memory_mb REAL,
-                    FOREIGN KEY (benchmark_id) REFERENCES benchmark_history (id)
+                    _ = FOREIGN KEY (benchmark_id) REFERENCES benchmark_history (id)
                 )
             """)
             
@@ -269,7 +267,7 @@ class PerformanceBenchmarkFramework:
                 (name, timestamp, iterations, min_time, max_time, mean_time, median_time, std_dev,
                  total_time, ops_per_second, cpu_usage, memory_usage, disk_io_read, disk_io_write,
                  commit_hash, environment, tags)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                _ = VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 benchmark_result["name"],
                 benchmark_result["timestamp"],
@@ -281,10 +279,10 @@ class PerformanceBenchmarkFramework:
                 benchmark_result["std_dev"],
                 benchmark_result["total_time"],
                 benchmark_result["ops_per_second"],
-                benchmark_result["resource_usage"].get("cpu_percent", 0),
-                benchmark_result["resource_usage"].get("memory_mb", 0),
-                benchmark_result["resource_usage"].get("disk_io_read", 0),
-                benchmark_result["resource_usage"].get("disk_io_write", 0),
+                _ = benchmark_result["resource_usage"].get("cpu_percent", 0),
+                _ = benchmark_result["resource_usage"].get("memory_mb", 0),
+                _ = benchmark_result["resource_usage"].get("disk_io_read", 0),
+                _ = benchmark_result["resource_usage"].get("disk_io_write", 0),
                 None,  # commit_hash
                 "development",  # environment
                 ",".join(benchmark_result["tags"]) if benchmark_result["tags"] else None
@@ -325,7 +323,7 @@ class PerformanceBenchmarkFramework:
             logger.info(f"Running benchmark {i+1}/{len(benchmarks)}: {benchmark['name']}")
             
             result = self.run_benchmark(benchmark, iterations, tags=tags)
-            suite_results["results"].append(result)
+            _ = suite_results["results"].append(result)
             
             if result["status"] == "completed":
                 suite_results["completed_benchmarks"] += 1
@@ -364,7 +362,7 @@ class PerformanceBenchmarkFramework:
                 WHERE name = ? AND timestamp >= ? AND timestamp <= ?
                 ORDER BY timestamp DESC
                 LIMIT 10
-            """, (benchmark_name, start_date.isoformat(), end_date.isoformat()))
+            _ = """, (benchmark_name, start_date.isoformat(), end_date.isoformat()))
             
             rows = cursor.fetchall()
             conn.close()
@@ -454,7 +452,7 @@ class PerformanceBenchmarkFramework:
 class SystemResourceMonitor:
     """系统资源监控器"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化资源监控器"""
         self.monitoring = False
         self.monitoring_task = None
@@ -490,7 +488,7 @@ class SystemResourceMonitor:
                 self.stats["cpu_percent"].append(cpu_percent)
                 self.stats["memory_mb"].append(memory_mb)
                 
-                await asyncio.sleep(0.5)  # 每0.5秒收集一次
+                _ = await asyncio.sleep(0.5)  # 每0.5秒收集一次
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -534,7 +532,7 @@ def example_benchmark_function():
     return result
 
 
-def main():
+def main() -> None:
     """主函数"""
     import argparse
     

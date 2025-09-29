@@ -74,7 +74,7 @@ class AIEditorConfig:
 
 
 # Default configuration
-DEFAULT_CONFIG = AIEditorConfig()
+DEFAULT_CONFIG = AIEditorConfig
 
 # Configuration presets for different use cases
 CONFIG_PRESETS = {
@@ -145,7 +145,7 @@ def update_config(config: AIEditorConfig, updates: Dict[str, Any]) -> AIEditorCo
     Returns:
         Updated configuration
     """
-    for key, value in updates.items():
+    for key, value in updates.items:
         if hasattr(config, key):
             setattr(config, key, value)
     return config
