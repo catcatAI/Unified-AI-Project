@@ -1,4 +1,6 @@
 name: 测试自动化流程
+permissions:
+  contents: read
 
 on:
   push:
