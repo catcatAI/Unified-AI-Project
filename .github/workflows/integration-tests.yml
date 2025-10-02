@@ -1,5 +1,7 @@
 # GitHub Actions workflow for integration tests
 name: Integration Tests
+permissions:
+  contents: read
 
 on:
   push:
