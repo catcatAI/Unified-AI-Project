@@ -1,0 +1,131 @@
+{
+  "timestamp": "2025-09-30 22:08:45",
+  "operation_mode": "pure_fix",
+  "execution_scope": "project_wide",
+  "specific_target": null,
+  "test_results": {},
+  "fix_results": {
+    "total_fixes": 4,
+    "successful_fixes": 2,
+    "failed_fixes": 2,
+    "fixes_details": [
+      {
+        "type": "import_fix",
+        "target": "default",
+        "status": "failed",
+        "message": "",
+        "duration": 31.54075789451599
+      },
+      {
+        "type": "syntax_fix",
+        "target": "default",
+        "status": "completed",
+        "message": "语法修复部分完成: 586/961 文件验证通过",
+        "duration": 41.30851435661316
+      },
+      {
+        "type": "cleanup_fix",
+        "target": "default",
+        "status": "failed",
+        "message": "",
+        "duration": 0.0
+      },
+      {
+        "type": "dependency_fix",
+        "target": "default",
+        "status": "completed",
+        "message": "环境修复完成: 2 步成功, 1 步失败",
+        "duration": 32.513811111450195
+      }
+    ],
+    "success": false
+  },
+  "environment_results": {
+    "summary": {
+      "total_components": 9,
+      "healthy_components": 5,
+      "warning_components": 2,
+      "error_components": 2,
+      "health_percentage": "55.6%",
+      "overall_status": "error"
+    },
+    "details": {
+      "python": {
+        "status": "healthy",
+        "details": "Python版本 3.12.10 满足要求",
+        "version": "3.12.10",
+        "errors": [],
+        "warnings": []
+      },
+      "venv": {
+        "status": "warning",
+        "details": "虚拟环境存在但未激活: D:\\Projects\\Unified-AI-Project\\venv",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "node": {
+        "status": "healthy",
+        "details": "Node.js版本 22.16.0 已安装",
+        "version": "22.16.0",
+        "errors": [],
+        "warnings": []
+      },
+      "pnpm": {
+        "status": "error",
+        "details": "无法检查pnpm",
+        "version": "",
+        "errors": [
+          "检查pnpm时出错: [WinError 2] 系統找不到指定的檔案。"
+        ],
+        "warnings": []
+      },
+      "dependencies": {
+        "status": "healthy",
+        "details": "依赖包检查通过",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "database": {
+        "status": "warning",
+        "details": "FIREBASE_CREDENTIALS_PATH环境变量未设置",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "api_server": {
+        "status": "error",
+        "details": "无法连接到API服务器: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001B7016361B0>: Failed to establish a new connection: [WinError 10061] 無法連線，因為目標電腦拒絕連線。'))",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "mqtt_broker": {
+        "status": "healthy",
+        "details": "MQTT代理连接正常: 127.0.0.1:1883",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "config_files": {
+        "status": "healthy",
+        "details": "所有配置文件都存在: apps/backend/configs/system_config.yaml, apps/backend/configs/hsp_fallback_config.yaml",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      }
+    },
+    "success": false
+  },
+  "errors": [],
+  "warnings": [],
+  "summary": {
+    "overall_success": false,
+    "operation_mode": "pure_fix",
+    "execution_scope": "project_wide",
+    "specific_target": null,
+    "timestamp": "2025-09-30 22:10:34",
+    "fix_success": false
+  }
+}

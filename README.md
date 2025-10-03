@@ -295,6 +295,12 @@ pnpm clean
 
 项目的完整文档位于 [docs](docs/) 目录中，包含以下主要部分：
 
+### 重构相关文档
+- [PROJECT_REFACTOR_PLAN.md](PROJECT_REFACTOR_PLAN.md) - 项目重构计划
+- [REFACTOR_PROGRESS_REPORT.md](REFACTOR_PROGRESS_REPORT.md) - 重构进度报告
+- [REFACTOR_SUMMARY_REPORT.md](REFACTOR_SUMMARY_REPORT.md) - 重构总结报告
+- [REFATOR_CHECKLIST.md](REFATOR_CHECKLIST.md) - 重构检查清单
+
 ### 文档结构
 - **[概览](docs/00-overview/)**：项目高层次的愿景、目标和路线图
 - **[游戏设计](docs/02-game-design/)**：关于集成游戏组件的详细信息
@@ -308,6 +314,7 @@ pnpm clean
 - [PORT_MANAGEMENT_STRATEGY.md](docs/PORT_MANAGEMENT_STRATEGY.md) - 端口管理策略和实现细节
 - [UNIFIED_DOCUMENTATION_INDEX.md](docs/UNIFIED_DOCUMENTATION_INDEX.md) - 统一文档索引
 - [03-technical-architecture/agents/README.md](docs/03-technical-architecture/agents/README.md) - AI代理系统概述
+- [PROJECT_REFACTOR_PLAN.md](PROJECT_REFACTOR_PLAN.md) - 项目重构计划
 
 ### 主要计划文档
 - [COMPLETE_CONTEXT_SYSTEM_UPGRADE_PLAN.md](COMPLETE_CONTEXT_SYSTEM_UPGRADE_PLAN.md) - 完整上下文系统升级计划
@@ -319,12 +326,14 @@ pnpm clean
 - [EXECUTION_PLAN_TEST_INFRASTRUCTURE.md](EXECUTION_PLAN_TEST_INFRASTRUCTURE.md) - 测试基础设施执行计划
 - [SYSTEM_INTEGRATION_TEST_IMPROVEMENT_PLAN.md](SYSTEM_INTEGRATION_TEST_IMPROVEMENT_PLAN.md) - 系统集成测试改进计划
 - [UNIFIED_AI_IMPROVEMENT_PLAN.md](UNIFIED_AI_IMPROVEMENT_PLAN.md) - 统一AI改进计划
+- [PROJECT_REFACTOR_PLAN.md](PROJECT_REFACTOR_PLAN.md) - 项目重构计划
 
 ### 执行总结报告
 - [AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md](AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md) - AI代理系统执行总结
 - [CONTEXT_SYSTEM_IMPLEMENTATION_SUMMARY.md](CONTEXT_SYSTEM_IMPLEMENTATION_SUMMARY.md) - 上下文系统实现总结
 - [PROJECT_CONTEXT_SYSTEM_COMPLETION_REPORT.md](PROJECT_CONTEXT_SYSTEM_COMPLETION_REPORT.md) - 项目上下文系统完成报告
 - [SYSTEM_INTEGRATION_TEST_ENHANCEMENT_PLAN.md](SYSTEM_INTEGRATION_TEST_ENHANCEMENT_PLAN.md) - 系统集成测试增强计划
+- [REFACTOR_SUMMARY_REPORT.md](REFACTOR_SUMMARY_REPORT.md) - 项目重构总结报告
 
 ### 训练系统报告
 - [collaborative_training_completion_report.md](training/collaborative_training_completion_report.md) - 协作式训练完成报告
@@ -343,6 +352,8 @@ pnpm clean
 ## 项目状态
 
 项目已完成所有计划任务，达到发布标准。系统具备完整的AI代理框架、上下文管理系统、HSP协议实现、核心服务和训练系统。项目文档齐全，测试覆盖率高，具备良好的可维护性和扩展性。
+
+> **注意**: 项目正在进行重构以改善文件结构和代码质量。详细信息请参考[重构计划](PROJECT_REFACTOR_PLAN.md)。
 
 ## 许可证
 

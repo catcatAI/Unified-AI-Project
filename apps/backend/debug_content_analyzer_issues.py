@@ -9,28 +9,28 @@ from .src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
 def debug_content_analyzer_issues():
     # Initialize the analyzer
     analyzer = ContentAnalyzerModule()
-    
+
     print("=== Debugging ContentAnalyzerModule Issues ===")
-    
-    # Test case 1: Microsoft is based in Redmond (test_05_prep_object_relationship)
+
+    # Test case 1 Microsoft is based in Redmond (test_05_prep_object_relationship)
     print("\n1. Testing 'Microsoft is based in Redmond'")
     text1 = "Microsoft is based in Redmond."
     print(f"Text: {text1}")
-    
+
     kg_data1, nx_graph1 = analyzer.analyze_content(text1)
-    
+
     # Print entities
     print(f"Entities found: {len(kg_data1['entities'])}")
     for entity_id, entity in kg_data1["entities"].items():
         print(f"  {entity_id}: '{entity['label']}' (type: {entity['type']})")
-    
+
     # Print relationships
     print(f"Relationships found: {len(kg_data1['relationships'])}")
     for i, rel in enumerate(kg_data1["relationships"]):
         src_label = kg_data1["entities"].get(rel["source_id"], {}).get("label", rel["source_id"])
         tgt_label = kg_data1["entities"].get(rel["target_id"], {}).get("label", rel["target_id"])
         print(f"  {i+1}. {src_label} --{rel['type']}--> {tgt_label} (pattern: {rel['attributes'].get('pattern', 'N/A')})")
-    
+
     # Check for Microsoft and Redmond entities
     ms_node_id = None
     rd_node_id = None
@@ -39,10 +39,10 @@ def debug_content_analyzer_issues():
             ms_node_id = entity_id
         if entity["label"] == "Redmond":
             rd_node_id = entity_id
-    
+
     print(f"Microsoft node ID: {ms_node_id}")
     print(f"Redmond node ID: {rd_node_id}")
-    
+
     # Check for relationship
     found_rel_object = None
     if ms_node_id and rd_node_id:
@@ -54,31 +54,31 @@ def debug_content_analyzer_issues():
                 break
 
     print(f"Found relationship: {found_rel_object}")
-    
+
     if found_rel_object:
         print("SUCCESS: Found expected relationship!")
     else:
         print("FAILURE: Expected relationship not found!")
-        
-    # Test case 2: Steve Jobs was a founder of Apple (test_06_noun_prep_noun_relationship_of)
+
+    # Test case 2 Steve Jobs was a founder of Apple (test_06_noun_prep_noun_relationship_of)
     print("\n\n2. Testing 'Steve Jobs was a founder of Apple'")
     text2 = "Steve Jobs was a founder of Apple."
     print(f"Text: {text2}")
-    
+
     kg_data2, nx_graph2 = analyzer.analyze_content(text2)
-    
+
     # Print entities
     print(f"Entities found: {len(kg_data2['entities'])}")
     for entity_id, entity in kg_data2["entities"].items():
         print(f"  {entity_id}: '{entity['label']}' (type: {entity['type']})")
-    
+
     # Print relationships
     print(f"Relationships found: {len(kg_data2['relationships'])}")
     for i, rel in enumerate(kg_data2["relationships"]):
         src_label = kg_data2["entities"].get(rel["source_id"], {}).get("label", rel["source_id"])
         tgt_label = kg_data2["entities"].get(rel["target_id"], {}).get("label", rel["target_id"])
         print(f"  {i+1}. {src_label} --{rel['type']}--> {tgt_label} (pattern: {rel['attributes'].get('pattern', 'N/A')})")
-    
+
     # Check for Apple and Steve Jobs entities
     apple_node_id = None
     steve_node_id = None
@@ -87,10 +87,10 @@ def debug_content_analyzer_issues():
             apple_node_id = entity_id
         if entity["label"] == "Steve Jobs":
             steve_node_id = entity_id
-    
+
     print(f"Apple node ID: {apple_node_id}")
     print(f"Steve Jobs node ID: {steve_node_id}")
-    
+
     # Check for relationship
     found_rel_object2 = None
     if apple_node_id and steve_node_id:
@@ -105,31 +105,31 @@ def debug_content_analyzer_issues():
                 break
 
     print(f"Found relationship: {found_rel_object2}")
-    
+
     if found_rel_object2:
         print("SUCCESS: Found expected relationship!")
     else:
         print("FAILURE: Expected relationship not found!")
-        
-    # Test case 3: John Doe works for Acme Corp. (test_12_matcher_works_for)
+
+    # Test case 3 John Doe works for Acme Corp. (test_12_matcher_works_for)
     print("\n\n3. Testing 'John Doe works for Acme Corp.'")
     text3 = "John Doe works for Acme Corp."
     print(f"Text: {text3}")
-    
+
     kg_data3, nx_graph3 = analyzer.analyze_content(text3)
-    
+
     # Print entities
     print(f"Entities found: {len(kg_data3['entities'])}")
     for entity_id, entity in kg_data3["entities"].items():
         print(f"  {entity_id}: '{entity['label']}' (type: {entity['type']})")
-    
+
     # Print relationships
     print(f"Relationships found: {len(kg_data3['relationships'])}")
     for i, rel in enumerate(kg_data3["relationships"]):
         src_label = kg_data3["entities"].get(rel["source_id"], {}).get("label", rel["source_id"])
         tgt_label = kg_data3["entities"].get(rel["target_id"], {}).get("label", rel["target_id"])
         print(f"  {i+1}. {src_label} --{rel['type']}--> {tgt_label} (pattern: {rel['attributes'].get('pattern', 'N/A')})")
-    
+
     # Check for John Doe and Acme Corp. entities
     john_node_id = None
     acme_node_id = None
@@ -138,10 +138,10 @@ def debug_content_analyzer_issues():
             john_node_id = entity_id
         if entity["label"] == "Acme Corp.":
             acme_node_id = entity_id
-    
+
     print(f"John Doe node ID: {john_node_id}")
     print(f"Acme Corp. node ID: {acme_node_id}")
-    
+
     # Check for relationship
     found_rel_object3 = None
     if john_node_id and acme_node_id:
@@ -153,7 +153,7 @@ def debug_content_analyzer_issues():
                 break
 
     print(f"Found relationship: {found_rel_object3}")
-    
+
     if found_rel_object3:
         print("SUCCESS: Found expected relationship!")
     else:

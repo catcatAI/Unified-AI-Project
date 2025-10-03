@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-# Core dependencies - essential for basic functionality
+# Core dependencies - essential for basic functionality:
 core_requirements = [
     "Flask",
     "numpy",
@@ -14,7 +14,7 @@ core_requirements = [
     "psutil",
 ]
 
-# Optional dependencies for enhanced features
+# Optional dependencies for enhanced features:
 optional_requirements = {
     "ai": [
         "tensorflow>=2.15.0",

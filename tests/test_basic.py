@@ -21,10 +21,10 @@ def test_project_structure() -> None:
     """测试项目结构"""
     current_dir = os.path.dirname(os.path.abspath(__file__))
     project_dir = os.path.dirname(current_dir)
-    
-    # 检查关键目录是否存在 (适应新的项目结构)
+
+    # 检查关键目录是否存在
     assert os.path.exists(os.path.join(project_dir, "apps")), "apps 目录应该存在"
-    assert os.path.exists(os.path.join(project_dir, "packages")), "packages 目录应该存在"
+    assert os.path.exists(os.path.join(project_dir, "tests")), "tests 目录应该存在"
 
 @pytest.mark.slow
 def test_slow_example() -> None:

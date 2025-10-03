@@ -11,147 +11,141 @@ def fix_syntax_errors_in_file(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
-        
+
         original_content = content
         changes_made = False
-        
-        # Fix _ = "key": value syntax errors (dictionary syntax)
+
+        # Fix _ = "key" value syntax errors (dictionary syntax)
         pattern = r'_ = "([^"]+)":\s*([^,\n}]+)(,?)'
         replacement = r'"\1": \2\3'
         content = re.sub(pattern, replacement, content)
-        
-        # Fix _ = 'key': value syntax errors (dictionary syntax)
+
+        # Fix _ = 'key' value syntax errors (dictionary syntax)
         pattern = r"_ = '([^']+)':\s*([^,\n}]+)(,?)"
         replacement = r"'\1': \2\3"
         content = re.sub(pattern, replacement, content)
-        
+
         # Fix _ = raise Exception syntax errors
         content = re.sub(r'_ = raise\s+', 'raise ', content)
-        
-        # Fix _ = @decorator syntax errors
-        content = re.sub(r'_ = (@\w+)', r'\1', content)
-        
+
+        # Fix _ = import syntax errors
+        content = re.sub(r'_ = import\s+', 'import ', content)
+
+        # Fix _ = from syntax errors
+        content = re.sub(r'_ = from\s+', 'from ', content)
+
+        # Fix _ = def syntax errors
+        content = re.sub(r'_ = def\s+', 'def ', content)
+
+        # Fix _ = class syntax errors
+        content = re.sub(r'_ = class\s+', 'class ', content)
+
+        # Fix _ = if syntax errors
+        content = re.sub(r'_ = if\s+', 'if ', content)
+
+        # Fix _ = for syntax errors
+        content = re.sub(r'_ = for\s+', 'for ', content)
+
+        # Fix _ = while syntax errors
+        content = re.sub(r'_ = while\s+', 'while ', content)
+
+        # Fix _ = try syntax errors
+        content = re.sub(r'_ = try\s+', 'try ', content)
+
+        # Fix _ = with syntax errors
+        content = re.sub(r'_ = with\s+', 'with ', content)
+
         # Fix _ = assert syntax errors
         content = re.sub(r'_ = assert\s+', 'assert ', content)
-        
-        # Fix _ = **kwargs syntax errors
-        content = re.sub(r'_ = \*\*(\w+)', r'**\1', content)
-        
-        # Fix dictionary syntax errors with variables as keys
-        content = re.sub(r'_ = ([\w]+):\s*([^,\n}]+)(,?)', r'\1: \2\3', content)
-        
-        # Fix incomplete imports
-        content = re.sub(r'from\s+[\w\.]+\s+import\s*\n', '', content)
-        
-        # Fix keyword argument repeated errors
-        content = re.sub(r'_ = (\w+\.[\w\(\)\.\'\"_ ,\[\]]+)', r'\1', content)
-        
-        # Fix os.path.exists syntax errors
-        content = re.sub(r'_ = (os\.path\.exists\([^)]+\))\s+and\s+', r'\1 and ', content)
-        
-        # Fix regex pattern syntax errors
-        content = re.sub(r'_ = (r\'[^\']*\')', r'\1', content)
-        
-        # Fix assignment errors
-        content = re.sub(r'_ = (\w+\([^)]*\))', r'\1', content)
-        
-        # Fix tuple syntax errors
-        content = re.sub(r'_ = (\([^)]+\))', r'\1', content)
-        
-        # Fix f-string syntax errors
-        content = re.sub(r'_ = (f"[^"]*")', r'\1', content)
-        content = re.sub(r"_ = (f'[^']*')", r'\1', content)
-        
-        # Fix unmatched parentheses/brackets
-        content = re.sub(r'\(\s*\)', '', content)
-        content = re.sub(r'\[\s*\]', '', content)
-        content = re.sub(r'\{\s*\}', '', content)
-        
-        # Fix level: str=logging.INFO syntax errors
-        content = re.sub(r'level: str=([^,\n\)]+)', r'level=\1', content)
-        
-        # Fix missing function parentheses
-        content = re.sub(r'def ([\w_]+):', r'def \1():', content)
-        
-        # Fix incomplete assignments
-        content = re.sub(r'(\w+)\s*=$', r'\1 = None', content)
-        content = re.sub(r'(\w+)\s*=\s*$', r'\1 = None', content)
-        
-        # Fix JSON dumps syntax errors
-        content = re.sub(r'json\.dumps\([^)]*$', 'json.dumps({})', content)
-        
-        # Fix dictionary syntax errors
-        content = re.sub(r'"([^"]+)":\s*$', r'"\1": None', content)
-        content = re.sub(r"'([^']+)':\s*$", r"'\1': None", content)
-        
-        # If changes were made, write back to file
+
+        # Fix _ = return syntax errors
+        content = re.sub(r'_ = return\s+', 'return ', content)
+
+        # Fix _ = yield syntax errors
+        content = re.sub(r'_ = yield\s+', 'yield ', content)
+
+        # Fix _ = global syntax errors
+        content = re.sub(r'_ = global\s+', 'global ', content)
+
+        # Fix _ = nonlocal syntax errors
+        content = re.sub(r'_ = nonlocal\s+', 'nonlocal ', content)
+
+        # Fix _ = pass syntax errors
+        content = re.sub(r'_ = pass\s+', 'pass ', content)
+
+        # Fix _ = break syntax errors
+        content = re.sub(r'_ = break\s+', 'break ', content)
+
+        # Fix _ = continue syntax errors
+        content = re.sub(r'_ = continue\s+', 'continue ', content)
+
+        # Write the fixed content back to the file if anything was fixed
         if content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"Fixed syntax errors in: {file_path}")
+            print(f"Successfully fixed syntax errors in {file_path}")
             return True
-            
-        return False
+        else:
+            print(f"No syntax errors found in {file_path}")
+            return False
+
     except Exception as e:
-        print(f"Error processing {file_path}: {e}")
+        print(f"Error fixing syntax errors in {file_path}: {e}")
         return False
 
-def get_project_python_files(root_dir):
-    """Get Python files in the main project directories only."""
-    python_files = []
-    for root, dirs, files in os.walk(root_dir):
-        # Skip backup, venv, and other non-project directories
-        dirs[:] = [d for d in dirs if d not in [
-            '__pycache__', 'venv', 'backup', 'node_modules', '.git'
-        ] and not d.startswith('.')]
-        
+def find_python_files_with_syntax_errors(root_path):
+    """Find all Python files with syntax errors."""
+    import ast
+    
+    python_files_with_errors = []
+    exclude_dirs = {
+        'node_modules', '__pycache__', '.git', 'venv', 'dist', 'build',
+        'backup', 'chroma_db', 'context_storage', 'model_cache',
+        'test_reports', 'automation_reports', 'docs', 'scripts/venv',
+        'apps/backend/venv', 'apps/desktop-app', 'graphic-launcher', 'packages'
+    }
+
+    for root, dirs, files in os.walk(root_path):
+        # 排除不需要检查的目录
+        dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith('.')]
+
         for file in files:
-            if file.endswith('.py') and not file.startswith('.'):
-                full_path = os.path.join(root, file)
-                # Only include files in the main project structure
-                if 'apps\\backend\\src' in full_path or 'apps/backend/src' in full_path:
-                    python_files.append(full_path)
-                    
-    return python_files
+            if file.endswith('.py'):
+                file_path = os.path.join(root, file)
+                # 检查文件是否有语法错误
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    ast.parse(content)
+                except SyntaxError:
+                    python_files_with_errors.append(file_path)
+                except Exception:
+                    # 文件可能有其他问题，也加入列表
+                    python_files_with_errors.append(file_path)
+    
+    return python_files_with_errors
 
 def main():
-    """Main function to fix remaining syntax errors in the project."""
-    print("Starting comprehensive syntax error fix for main project source files...")
+    """Main function to fix all syntax errors in the project."""
+    print("Starting comprehensive syntax fix for all Python files...")
     
-    # Get Python files in the main project source directories only
-    python_files = get_project_python_files("apps/backend/src")
+    # 获取项目根目录
+    project_root = os.path.dirname(os.path.abspath(__file__))
     
-    print(f"Found {len(python_files)} Python files to check.")
+    # 查找所有有语法错误的Python文件
+    files_with_errors = find_python_files_with_syntax_errors(project_root)
     
-    fixed_files = 0
+    print(f"Found {len(files_with_errors)} Python files with syntax errors")
     
-    for file_path in python_files:
-        try:
-            # Fix syntax errors
-            if fix_syntax_errors_in_file(file_path):
-                fixed_files += 1
-                    
-        except Exception as e:
-            print(f"Error processing {file_path}: {str(e)}")
+    # 修复每个文件
+    fixed_count = 0
+    for file_path in files_with_errors:
+        print(f"Processing {file_path}...")
+        if fix_syntax_errors_in_file(file_path):
+            fixed_count += 1
     
-    print(f"\nFixed syntax errors in {fixed_files} files.")
-    
-    print("\nRunning syntax check on main project source files...")
-    try:
-        import subprocess
-        # Only check the main project source directory
-        result = subprocess.run(['python', '-m', 'compileall', '-q', 'apps/backend/src'], 
-                              capture_output=True, text=True)
-        if result.returncode == 0:
-            print("All syntax errors in main project source files have been fixed!")
-        else:
-            print("Some syntax errors remain in main project source files:")
-            # Filter out only relevant errors
-            for line in result.stdout.split('\n') + result.stderr.split('\n'):
-                if line and ('apps\\backend' in line or 'apps/backend' in line) and 'backup' not in line:
-                    print(line)
-    except Exception as e:
-        print(f"Error running syntax check: {str(e)}")
+    print(f"Fixed syntax errors in {fixed_count} files")
+    print("Comprehensive syntax fix finished.")
 
 if __name__ == "__main__":
     main()

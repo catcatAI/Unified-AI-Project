@@ -8,23 +8,27 @@ import logging
 from apps.backend.src.ai.memory.types import HAMRecallResult
 from datetime import datetime, timezone
 import warnings
-from typing import List, Any
+from typing import List, Any, Optional
 from cryptography.fernet import Fernet
 
 # 定义占位符类
 class PlaceholderResourceLeakDetector:
     def __init__(self) -> None:
         pass
+    
     def start_monitoring(self):
         pass
+    
     def check_leaks(self) -> List[Any]:
         return []
 
 class PlaceholderAsyncLoopDetector:
     def __init__(self) -> None:
         pass
+    
     def start_monitoring(self):
         pass
+    
     def check_async_leaks(self) -> List[Any]:
         return []
 
@@ -98,7 +102,7 @@ def clean_test_files() -> None:
     # 确保测试目录存在
     test_dir = Path("data/processed_data")
     test_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # 在测试前清理
     test_files = glob.glob("data/processed_data/test_*.json")
     for file in test_files:
@@ -285,7 +289,7 @@ def mock_core_services():
                 return
             mock_behavior._mock_sdm_capabilities_store[capability_id] = (processed_payload, datetime.now(timezone.utc))
         except Exception as e:
-            logging.error(f"Failed to process capability advertisement (sync): {e}")
+            logging.error(f"Failed to process capability advertisement (sync) {e}")
 
     # Assign mocks - 确保这些方法是可调用的mock对象
     mock_service_discovery.process_capability_advertisement = MagicMock(side_effect=_process_capability_advertisement_sync)
@@ -395,12 +399,12 @@ def mock_core_services():
     mock_tool_dispatcher.dispatch = AsyncMock()
     mock_learning_manager = MagicMock(spec='src.ai.learning.learning_manager.LearningManager')
     mock_learning_manager.analyze_for_personality_adjustment = AsyncMock(return_value=None)
-    
+
     # Create a proper mock for HSPConnector with all required methods and attributes
     mock_hsp_connector = MagicMock()
     mock_hsp_connector.ai_id = "mock_ai_id"
     mock_hsp_connector.is_connected = True
-    
+
     # Add all the methods that tests expect
     mock_hsp_connector.publish_message = AsyncMock(return_value=True)
     mock_hsp_connector.publish_fact = AsyncMock(return_value=True)
@@ -425,14 +429,14 @@ def mock_core_services():
     mock_hsp_connector.on_command_received = MagicMock()
     mock_hsp_connector.on_connect_callback = MagicMock()
     mock_hsp_connector.on_disconnect_callback = MagicMock()
-    
+
     # Add properties that tests expect
     mock_hsp_connector.mqtt_client = MagicMock()
     mock_hsp_connector.mqtt_client.publish = AsyncMock(return_value=True)
     mock_hsp_connector.subscribed_topics = set()
     mock_hsp_connector.on_message = MagicMock()
     mock_hsp_connector.default_qos = 1
-    
+
     mock_agent_manager = MagicMock(spec='src.ai.agent_manager.AgentManager')
 
     # Mock the ProjectCoordinator instance
@@ -461,7 +465,7 @@ def mock_core_services():
     # This also allows us to customize behavior per test if needed.
     from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
     from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-    
+
     # 创建一个继承自HAMMemoryManager的Mock类
     class MockHAMMemoryManager(HAMMemoryManager):
         def __init__(self) -> None:
@@ -582,7 +586,7 @@ def mock_core_services():
         agent_manager=mock_agent_manager,
         config={}
     )
-    
+
     # Mock the project_coordinator attribute
     mock_dialogue_manager.project_coordinator = mock_project_coordinator
 
@@ -634,7 +638,7 @@ def client_with_overrides(mock_core_services):
         # Ensure the client is explicitly closed after the test completes
         try:
             client.close()
-        except Exception: 
+        except Exception:
             pass
 
     # Restore original dependencies
@@ -653,8 +657,8 @@ warnings.filterwarnings(
 )
 
 def pytest_configure(config) -> None:
-    config.addinivalue_line("markers", "flaky(reruns, reason=None): mark test as flaky with given reruns")
-    config.addinivalue_line("markers", "timeout(seconds): mark test with a timeout in seconds")
+    config.addinivalue_line("markers", "flaky(reruns, reason=None) mark test as flaky with given reruns")
+    config.addinivalue_line("markers", "timeout(seconds) mark test with a timeout in seconds")
     config.addinivalue_line("markers", "slow: mark tests as slow and optionally skipped via -m not slow")
     config.addinivalue_line("markers", "mcp: mark tests that depend on MCP/external services")
     config.addinivalue_line("markers", "context7: mark tests related to Context7 connector/external env")

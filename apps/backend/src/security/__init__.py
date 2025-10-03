@@ -1,7 +1,7 @@
 # src/security/__init__.py
 """
-Security Module for Unified AI Project
-Provides comprehensive security controls for AI operations
+Security Module for Unified AI Project:
+Provides comprehensive security controls for AI operations:
 """
 
 from .permission_control import (

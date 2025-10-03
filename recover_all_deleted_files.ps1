@@ -20,9 +20,9 @@ $batchFilesToRestore = @(
 
 # 定义需要恢复的脚本目录下的文件
 $scriptFilesToRestore = @(
-    "scripts/dev.bat",
-    "scripts/run_backend_tests.bat",
-    "scripts/setup_env.bat"
+    "tools/scripts/dev.bat",
+    "tools/scripts/run_backend_tests.bat",
+    "tools/scripts/setup_env.bat"
 )
 
 # 定义需要恢复的重要文档

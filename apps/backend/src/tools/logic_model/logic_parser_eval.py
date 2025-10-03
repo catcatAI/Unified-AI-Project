@@ -3,13 +3,13 @@ from typing import List, Tuple, Any, Optional
 
 class LogicParserEval:
     """
-    A simple parser and evaluator for basic logical expressions.
+    A simple parser and evaluator for basic logical expressions.:
     Supports: AND, OR, NOT, true, false, and parentheses.
     """
 
     def __init__(self) -> None:
         # Define token patterns (simple regex for this version)
-        self.token_patterns = [
+    self.token_patterns = [
             (r'\s+', None),  # Whitespace
             (r'\(', 'LPAREN'),
             (r'\)', 'RPAREN'),
@@ -18,148 +18,170 @@ class LogicParserEval:
             (r'\bAND\b', 'AND'),
             (r'\bOR\b', 'OR'),
             (r'\bNOT\b', 'NOT')
-        ]
-        self.token_regex = re.compile('|'.join(f'(?P<{name}>{pattern})' if name else pattern
-                                               for pattern, name in self.token_patterns if name)) # ignore whitespace for regex
-        # Initialize tokens as an empty list to satisfy type checker
-        self.tokens: List[Tuple[str, str]] = []  # Type annotation and initialization
+    ]
+        self.token_regex = re.compile('|'.join(f'(?P<{name}>{pattern})' if name else pattern:
+    for pattern, name in self.token_patterns if name)) # ignore whitespace for regex
+    # Initialize tokens as an empty list to satisfy type checker
+    self.tokens: List[Tuple[str, str]] = []  # Type annotation and initialization
         self.pos: int = 0 # Type annotation for pos
 
     def _tokenize(self, expression_string: str) -> List[Tuple[str, str]]:
-        tokens: List[Tuple[str, str]] = []  # 修复列表初始化
-        position: int = 0  # 修复变量类型
-        while position < len(expression_string):
-            match = None
+    tokens: List[Tuple[str, str]] = []  # 修复列表初始化
+    position: int = 0  # 修复变量类型
+        while position < len(expression_string)
+
+    match = None
             # Try to match whitespace first to skip it
-            if expression_string[position].isspace():  # 修复方法调用，添加括号
+            if expression_string[position].isspace()  # 修复方法调用，添加括号
                 position += 1
                 continue
 
             for pattern, token_type in self.token_patterns:
-                if token_type is None: # Skip whitespace pattern for named matching
-                    continue
+
+
+    if token_type is None: # Skip whitespace pattern for named matching
+
+
+
+    continue
 
                 regex = re.compile(pattern, re.IGNORECASE) # Ignore case for keywords
-                m = regex.match(expression_string, position)
+    m = regex.match(expression_string, position)
                 if m:
-                    value = m.group(0)
+
+    value = m.group(0)
                     tokens.append((token_type, value))
                     position = m.end()  # 修复方法调用，添加括号
                     match = True
                     break
             if not match:
-                raise ValueError(f"Unexpected character or token at position {position}: {expression_string[position:]}")
-        return tokens
+
+    raise ValueError(f"Unexpected character or token at position {position}: {expression_string[position:]}")
+    return tokens
 
     def _parse(self, tokens: List[Tuple[str, str]]) -> Any:
-        """
-        Parses a list of tokens into an abstract syntax tree (AST) or directly evaluates.
-        This version uses a simplified shunting-yard like approach for direct evaluation
-        with correct precedence (NOT > AND > OR) and parentheses.
-        For simplicity, we will implement a recursive descent parser for evaluation.
-        """
-        self.tokens = tokens
-        self.pos = 0
-        expr_val = self._parse_or()  # 修复方法调用，添加括号
-        if self.pos != len(self.tokens):
-            raise ValueError("Extra tokens found after parsing expression.")
-        return expr_val
+    """
+    Parses a list of tokens into an abstract syntax tree (AST) or directly evaluates.
+        This version uses a simplified shunting-yard like approach for direct evaluation:
+    with correct precedence (NOT > AND > OR) and parentheses.:
+    For simplicity, we will implement a recursive descent parser for evaluation.
+    """
+    self.tokens = tokens
+    self.pos = 0
+    expr_val = self._parse_or()  # 修复方法调用，添加括号
+        if self.pos != len(self.tokens)
 
-    def _current_token_type(self):
-        if self.pos < len(self.tokens):
-            return self.tokens[self.pos][0]
-        return None
+    raise ValueError("Extra tokens found after parsing expression.")
+    return expr_val
 
-    def _consume(self, expected_type: Optional[str] = None):
-        if self.pos < len(self.tokens):
-            token_type, token_value = self.tokens[self.pos]
+    def _current_token_type(self)
+    if self.pos < len(self.tokens)
+
+    return self.tokens[self.pos][0]
+    return None
+
+    def _consume(self, expected_type: Optional[str] = None)
+    if self.pos < len(self.tokens)
+
+    token_type, token_value = self.tokens[self.pos]
             if expected_type and token_type != expected_type:
-                raise ValueError(f"Expected token {expected_type} but got {token_type} ('{token_value}')")
+
+    raise ValueError(f"Expected token {expected_type} but got {token_type} ('{token_value}')")
             self.pos += 1
             return token_value
-        raise ValueError("Unexpected end of expression.")
+    raise ValueError("Unexpected end of expression.")
 
-    def _parse_atom(self):
-        token_type = self._current_token_type()  # 修复方法调用，添加括号
+    def _parse_atom(self)
+    token_type = self._current_token_type()  # 修复方法调用，添加括号
         if token_type == 'TRUE':
-            self._consume('TRUE')
+
+    self._consume('TRUE')
             return True
         elif token_type == 'FALSE':
-            self._consume('FALSE')
+
+    self._consume('FALSE')
             return False
         elif token_type == 'LPAREN':
-            self._consume('LPAREN')
+
+    self._consume('LPAREN')
             value = self._parse_or()  # 修复方法调用，添加括号
             self._consume('RPAREN')
             return value
         elif token_type == 'NOT':
-            self._consume('NOT')
+
+    self._consume('NOT')
             # NOT has higher precedence, so it applies to the next factor/atom
             return not self._parse_atom()  # 修复方法调用，添加括号
         else:
-            val = self.tokens[self.pos][1] if self.pos < len(self.tokens) else "EOF"
-            raise ValueError(f"Unexpected token: {token_type} ('{val}')")
 
-    def _parse_and(self):
-        value = self._parse_atom()  # 修复方法调用，添加括号
+            val = self.tokens[self.pos][1] if self.pos < len(self.tokens) else "EOF":
+    raise ValueError(f"Unexpected token: {token_type} ('{val}')")
+
+    def _parse_and(self)
+    value = self._parse_atom()  # 修复方法调用，添加括号
         while self._current_token_type() == 'AND':  # 修复方法调用，添加括号
             self._consume('AND')
             value = value and self._parse_atom()  # 修复方法调用，添加括号
-        return value
+    return value
 
-    def _parse_or(self):
-        # Corrected precedence: AND should be parsed before OR.
-        # So, an OR expression is a sequence of AND expressions.
-        value = self._parse_and_expression  # 修复方法调用，添加括号，使用正确的函数名
+    def _parse_or(self)
+    # Corrected precedence AND should be parsed before OR.
+    # So, an OR expression is a sequence of AND expressions.
+    value = self._parse_and_expression  # 修复方法调用，添加括号，使用正确的函数名
         while self._current_token_type == 'OR':  # 修复方法调用，添加括号
             self._consume('OR')
             value = value or self._parse_and_expression  # 修复方法调用，添加括号
-        return value
+    return value
 
-    def _parse_factor(self): # Handles NOT and atoms (TRUE, FALSE, parenthesized expressions)
-        token_type = self._current_token_type()  # 修复方法调用，添加括号
+    def _parse_factor(self) # Handles NOT and atoms (TRUE, FALSE, parenthesized expressions)
+    token_type = self._current_token_type()  # 修复方法调用，添加括号
         if token_type == 'NOT':
-            self._consume('NOT')
+
+    self._consume('NOT')
             return not self._parse_factor # NOT has highest precedence
         elif token_type == 'TRUE':
-            self._consume('TRUE')
+
+    self._consume('TRUE')
             return True
         elif token_type == 'FALSE':
-            self._consume('FALSE')
+
+    self._consume('FALSE')
             return False
         elif token_type == 'LPAREN':
-            self._consume('LPAREN')
+
+    self._consume('LPAREN')
             value = self._parse_or_expression() # Start from lowest precedence inside parens
             self._consume('RPAREN')
             return value
         else:
-            val = self.tokens[self.pos][1] if self.pos < len(self.tokens) else "EOF"
-            raise ValueError(f"Unexpected token in factor: {token_type} ('{val}')")
 
-    def _parse_and_expression(self): # An AND expression is a sequence of factors
-        value = self._parse_factor()  # 修复方法调用，添加括号
+            val = self.tokens[self.pos][1] if self.pos < len(self.tokens) else "EOF":
+    raise ValueError(f"Unexpected token in factor: {token_type} ('{val}')")
+
+    def _parse_and_expression(self) # An AND expression is a sequence of factors
+    value = self._parse_factor()  # 修复方法调用，添加括号
         while self._current_token_type() == 'AND':  # 修复方法调用，添加括号
             self._consume('AND')
             right_value = self._parse_factor() # Ensure token consumption
             value = value and right_value
-        return value
+    return value
 
-    def _parse_or_expression(self): # An OR expression is a sequence of AND expressions
-        value = self._parse_and_expression()  # 修复方法调用，添加括号
+    def _parse_or_expression(self) # An OR expression is a sequence of AND expressions
+    value = self._parse_and_expression()  # 修复方法调用，添加括号
         while self._current_token_type() == 'OR':  # 修复方法调用，添加括号
             self._consume('OR')
             right_value = self._parse_and_expression() # Ensure token consumption
             value = value or right_value
-        return value
+    return value
 
     def evaluate(self, expression_string: str) -> Optional[bool]:
-        """
-        Tokenizes, parses, and evaluates the logical expression string.
+    """
+    Tokenizes, parses, and evaluates the logical expression string.
         Returns boolean result or None if parsing/evaluation fails.
-        """
+    """
         try:
-            # Normalize input: uppercase for keywords, ensure spaces for NOT
-            normalized_expression = expression_string.upper()  # 修复方法调用，添加括号
+            # Normalize input uppercase for keywords, ensure spaces for NOT
+    normalized_expression = expression_string.upper()  # 修复方法调用，添加括号
             # Add space after NOT if it's followed by a non-space char (e.g. "NOT(true)")
             # This helps tokenizer, but a more robust tokenizer would handle this.
             # For now, let's assume input like "NOT true" or "NOT (true)"
@@ -169,14 +191,17 @@ class LogicParserEval:
                 raise ValueError("Empty expression or only whitespace.")
 
             self.tokens = tokens # Set tokens for parser methods
-            self.pos = 0         # Reset position for parser
+    self.pos = 0         # Reset position for parser
 
-            result = self._parse_or_expression() # Start parsing with lowest precedence (OR)
+    result = self._parse_or_expression() # Start parsing with lowest precedence (OR)
 
-            if self.pos != len(self.tokens): # Check if all tokens were consumed
-                raise ValueError(f"Extra tokens remaining after parsing: {self.tokens[self.pos:]}")
+    if self.pos != len(self.tokens) # Check if all tokens were consumed
+
+
+    raise ValueError(f"Extra tokens remaining after parsing: {self.tokens[self.pos:]}")
             return result
         except ValueError as e:
+
             print(f"Error evaluating expression '{expression_string}': {e}")
             return None
         except Exception as e_gen: # Catch any other unexpected errors
@@ -184,30 +209,33 @@ class LogicParserEval:
             return None
 
 if __name__ == '__main__':
+
+
     evaluator = LogicParserEval()  # 修复实例化，添加括号
     test_expressions = [
-        ("true", True),
-        ("false", False),
-        ("NOT true", False),
-        ("NOT false", True),
-        ("true AND false", False),
-        ("true AND true", True),
-        ("false AND false", False),
-        ("true OR false", True),
-        ("false OR true", True),
-        ("false OR false", False),
-        ("(true)", True),
-        ("NOT (true AND false)", True),
-        ("true AND NOT false", True),
-        ("(true OR false) AND true", True),
-        ("NOT (false OR (true AND false))", True),
-        ("  true   AND   ( false OR true )  ", True), # Test with spaces
+    ("true", True),
+    ("false", False),
+    ("NOT true", False),
+    ("NOT false", True),
+    ("true AND false", False),
+    ("true AND true", True),
+    ("false AND false", False),
+    ("true OR false", True),
+    ("false OR true", True),
+    ("false OR false", False),
+    ("(true)", True),
+    ("NOT (true AND false)", True),
+    ("true AND NOT false", True),
+    ("(true OR false) AND true", True),
+    ("NOT (false OR (true AND false))", True),
+    ("  true   AND   ( false OR true )  ", True), # Test with spaces
     ]
-    
+
     print("Running tests...")
     for expr, expected in test_expressions:
-        result = evaluator.evaluate(expr)
-        status = "✓" if result == expected else "✗"
-        print(f"{status} '{expr}' => {result} (expected {expected})")
-    
+
+    result = evaluator.evaluate(expr)
+        status = "✓" if result == expected else "✗":
+    print(f"{status} '{expr}' => {result} (expected {expected})")
+
     print("Tests completed.")

@@ -759,7 +759,7 @@ echo [%date% %time%] Starting unified auto fix system >> "%LOG_FILE%" 2>nul
 echo.
 
 :: Check if unified auto fix script exists
-set "UNIFIED_FIX_SCRIPT=%~dp0scripts\unified_auto_fix.bat"
+set "UNIFIED_FIX_SCRIPT=%~dp0tools\scripts\unified_auto_fix.bat"
 if exist "%UNIFIED_FIX_SCRIPT%" (
     echo [INFO] Launching unified auto fix system...
     echo.

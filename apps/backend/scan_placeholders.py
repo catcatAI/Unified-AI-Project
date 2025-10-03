@@ -11,22 +11,26 @@ from datetime import datetime
 
 class PlaceholderScanner:
     def __init__(self, root_dir: str = ".") -> None:
-        self.root_dir = Path(root_dir)
-        # Regex to find TODOs like `TODO(type): description`
-        self.placeholder_pattern = re.compile(r'#\s*TODO\((?P<type>\w+)\):\s*(?P<description>.+)', re.IGNORECASE)
-        self.results = []
+    self.root_dir = Path(root_dir)
+    # Regex to find TODOs like `TODO(type) description`
+    self.placeholder_pattern = re.compile(r'#\s*TODO\((?P<type>\w+)\)\s*(?P<description>.+)', re.IGNORECASE)
+    self.results = []
 
     def scan_file(self, file_path: Path) -> List[Dict]:
-        """Scans a single file for placeholder comments."""
-        placeholders = []
+        """Scans a single file for placeholder comments.""":
+    placeholders = []
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
 
-            for line_num, line in enumerate(lines, 1):
-                match = self.placeholder_pattern.search(line)
+            with open(file_path, 'r', encoding='utf-8') as f:
+    lines = f.readlines()
+
+            for line_num, line in enumerate(lines, 1)
+
+
+    match = self.placeholder_pattern.search(line)
                 if match:
-                    placeholders.append({
+
+    placeholders.append({
                         _ = 'file': str(file_path),
                         'line': line_num,
                         _ = 'type': match.group('type').lower(),
@@ -34,31 +38,33 @@ class PlaceholderScanner:
                         _ = 'content': line.strip(),
                     })
         except Exception as e:
+
             print(f"❌ Error scanning file: {file_path} - {e}")
 
-        return placeholders
+    return placeholders
 
     def scan_project(self, scan_path: str) -> List[Dict]:
-        """Scans the entire project for placeholders."""
-        print(f"🔍 Starting to scan for placeholders in {scan_path}...")
+        """Scans the entire project for placeholders.""":
+    print(f"🔍 Starting to scan for placeholders in {scan_path}...")
 
-        scan_dir = Path(scan_path)
-        python_files = list(scan_dir.rglob("*.py"))
+    scan_dir = Path(scan_path)
+    python_files = list(scan_dir.rglob("*.py"))
 
-        excluded_dirs = {'venv', '.git', '__pycache__', '.pytest_cache', 'node_modules'}
-        python_files = [f for f in python_files if not any(excluded in str(f) for excluded in excluded_dirs)]
+    excluded_dirs = {'venv', '.git', '__pycache__', '.pytest_cache', 'node_modules'}
+        python_files = [f for f in python_files if not any(excluded in str(f) for excluded in excluded_dirs)]:
 
-        all_placeholders = []
+    all_placeholders = []
         for file_path in python_files:
-            placeholders = self.scan_file(file_path)
+
+    placeholders = self.scan_file(file_path)
             all_placeholders.extend(placeholders)
 
-        self.results = all_placeholders
-        return all_placeholders
+    self.results = all_placeholders
+    return all_placeholders
 
     def categorize_placeholders(self) -> Dict[str, List[Dict]]:
-        """Categorizes placeholders by their type."""
-        categories = {
+    """Categorizes placeholders by their type."""
+    categories = {
             'config': [],
             'feature': [],
             'bug': [],
@@ -66,37 +72,48 @@ class PlaceholderScanner:
             'test': [],
             'doc': [],
             'unknown': [],
-        }
+    }
 
         for placeholder in self.results:
-            category = placeholder.get('type', 'unknown')
+
+
+    category = placeholder.get('type', 'unknown')
             if category in categories:
-                _ = categories[category].append(placeholder)
+
+    _ = categories[category].append(placeholder)
             else:
+
                 _ = categories['unknown'].append(placeholder)
 
-        return categories
+    return categories
 
     def generate_report(self) -> str:
-        """Generates a markdown report of all found placeholders."""
-        categories = self.categorize_placeholders()
+    """Generates a markdown report of all found placeholders."""
+    categories = self.categorize_placeholders()
 
-        report = "# 📝 Placeholder Report\n\n"
-        report += f"**Scan Timestamp**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-        report += f"**Total Placeholders Found**: {len(self.results)}\n\n"
+    report = "# 📝 Placeholder Report\n\n"
+    report += f"**Scan Timestamp**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    report += f"**Total Placeholders Found**: {len(self.results)}\n\n"
 
-        for category, placeholders in categories.items():
-            if not placeholders:
-                continue
+        for category, placeholders in categories.items()
+
+
+    if not placeholders:
+
+
+
+    continue
 
             report += f"## 📌 {category.capitalize()} ({len(placeholders)} items)\n\n"
 
             for placeholder in placeholders:
-                report += f"### `{Path(placeholder['file']).name}:{placeholder['line']}`\n"
+
+
+    report += f"### `{Path(placeholder['file']).name}{placeholder['line']}`\n"
                 report += f"- **Description**: {placeholder['description']}\n"
                 report += f"```python\n{placeholder['content']}\n```\n"
 
-        return report
+    return report
 
 def main() -> None:
     """Main function to run the scanner."""
@@ -112,16 +129,21 @@ def main() -> None:
     report_content = scanner.generate_report()
     report_file = "PLACEHOLDER_REPORT.md"
     with open(report_file, 'w', encoding='utf-8') as f:
-        f.write(report_content)
+    f.write(report_content)
 
     print(f"📄 Report saved to: {report_file}")
 
     # Display a summary
     categories = scanner.categorize_placeholders()
     print("\n📋 Summary by Category:")
-    for category, items in categories.items():
-        if items:
-            print(f"  - {category.capitalize()}: {len(items)}")
+    for category, items in categories.items()
+
+    if items:
+
+
+    print(f"  - {category.capitalize()}: {len(items)}")
 
 if __name__ == "__main__":
+
+
     main()

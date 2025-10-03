@@ -2,6 +2,7 @@ import asyncio
 import uuid
 import logging
 import ast
+import re
 from typing import Dict, Any, List, cast
 
 from .base.base_agent import BaseAgent
@@ -12,7 +13,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 class CodeUnderstandingAgent(BaseAgent):
     """
     A specialized agent for code understanding tasks like code analysis,
-    documentation generation, and code review.
+    documentation generation, code review, and code fixing.
     """
     def __init__(self, agent_id: str) -> None:
         capabilities = [
@@ -48,15 +49,26 @@ class CodeUnderstandingAgent(BaseAgent):
                     {"name": "review_criteria", "type": "array", "required": False, "description": "Specific criteria for the review"}
                 ],
                 "returns": {"type": "object", "description": "Code review results with suggestions."}
+            },
+            {
+                "capability_id": f"{agent_id}_fix_code_v1.0",
+                "name": "fix_code",
+                "description": "Automatically fixes common code issues like syntax errors, style issues, etc.",
+                "version": "1.0",
+                "parameters": [
+                    {"name": "code", "type": "string", "required": True, "description": "Source code to fix"},
+                    {"name": "fix_types", "type": "array", "required": False, "description": "Types of fixes to apply (e.g., 'syntax', 'style', 'best_practices')"}
+                ],
+                "returns": {"type": "object", "description": "Fixed code and information about applied fixes."}
             }
         ]
-        super.__init__(agent_id=agent_id, capabilities=capabilities)
+        super().__init__(agent_id=agent_id, capabilities=capabilities)
         logger.info(f"[{self.agent_id}] CodeUnderstandingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id", "")
         capability_id = task_payload.get("capability_id_filter", "")
-        params = task_payload.get("parameters", )
+        params = task_payload.get("parameters", {})
 
         logger.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
 
@@ -72,6 +84,9 @@ class CodeUnderstandingAgent(BaseAgent):
                 result_payload = self._create_success_payload(request_id, result)
             elif "code_review" in capability_str:
                 result = self._perform_code_review(params)
+                result_payload = self._create_success_payload(request_id, result)
+            elif "fix_code" in capability_str:
+                result = self._fix_code_issues(params)
                 result_payload = self._create_success_payload(request_id, result)
             else:
                 result_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
@@ -95,7 +110,7 @@ class CodeUnderstandingAgent(BaseAgent):
         
         analysis: Dict[str, Any] = {
             "language": language,
-            "lines_of_code": len(code.splitlines),
+            "lines_of_code": len(code.splitlines()),
             "character_count": len(code),
             "has_comments": '#' in code or '//' in code or '/*' in code
         }
@@ -145,16 +160,16 @@ class CodeUnderstandingAgent(BaseAgent):
         if 'def ' in code:
             doc_lines.append("## Functions")
             for line in lines:
-                if line.strip.startswith('def '):
-                    func_name = line.strip.split('(')[0].replace('def ', '')
+                if line.strip().startswith('def '):
+                    func_name = line.strip().split('(')[0].replace('def ', '')
                     doc_lines.append(f"- `{func_name}`: Function description")
             doc_lines.append("")
         
         if 'class ' in code:
             doc_lines.append("## Classes")
             for line in lines:
-                if line.strip.startswith('class '):
-                    class_name = line.strip.split('(')[0].replace('class ', '')
+                if line.strip().startswith('class '):
+                    class_name = line.strip().split('(')[0].replace('class ', '')
                     doc_lines.append(f"- `{class_name}`: Class description")
             doc_lines.append("")
         
@@ -176,7 +191,7 @@ class CodeUnderstandingAgent(BaseAgent):
     def _perform_code_review(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Performs a code review and suggests improvements."""
         code = params.get('code', '')
-        review_criteria = params.get('review_criteria', )
+        review_criteria = params.get('review_criteria', [])
         
         if not code:
             raise ValueError("No code provided for review")
@@ -188,11 +203,11 @@ class CodeUnderstandingAgent(BaseAgent):
             "score": 100  # Start with perfect score
         }
         
-        lines = code.splitlines
+        lines = code.splitlines()
         
         # Check for common issues
         for i, line in enumerate(lines, 1):
-            line_strip = line.strip
+            line_strip = line.strip()
             
             # Check for lines too long (PEP 8)
             if len(line) > 79:
@@ -224,7 +239,7 @@ class CodeUnderstandingAgent(BaseAgent):
                 review["score"] = int(review["score"]) - 1
             
             # Check for commented out code
-            if line_strip.startswith("#") and any(c.isalnum for c in line_strip[1:]) and "=" in line_strip:
+            if line_strip.startswith("#") and any(c.isalnum() for c in line_strip[1:]) and "=" in line_strip:
                 cast(List[Dict[str, Any]], review["findings"]).append({
                     "line": i,
                     "issue": "Possibly commented out code",
@@ -243,6 +258,120 @@ class CodeUnderstandingAgent(BaseAgent):
             review["score"] = int(review["score"]) - 5
         
         return review
+
+    def _fix_code_issues(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Automatically fixes common code issues."""
+        code = params.get('code', '')
+        fix_types = params.get('fix_types', ['syntax', 'style', 'best_practices'])
+        
+        if not code:
+            raise ValueError("No code provided for fixing")
+        
+        fixed_code = code
+        applied_fixes = []
+        
+        # Apply fixes based on requested types
+        if 'syntax' in fix_types:
+            fixed_code, syntax_fixes = self._fix_syntax_issues(fixed_code)
+            applied_fixes.extend(syntax_fixes)
+            
+        if 'style' in fix_types:
+            fixed_code, style_fixes = self._fix_style_issues(fixed_code)
+            applied_fixes.extend(style_fixes)
+            
+        if 'best_practices' in fix_types:
+            fixed_code, best_practice_fixes = self._fix_best_practice_issues(fixed_code)
+            applied_fixes.extend(best_practice_fixes)
+        
+        return {
+            "original_code": code,
+            "fixed_code": fixed_code,
+            "applied_fixes": applied_fixes,
+            "fix_count": len(applied_fixes)
+        }
+
+    def _fix_syntax_issues(self, code: str) -> tuple[str, List[str]]:
+        """Fix common syntax issues."""
+        fixed_code = code
+        fixes_applied = []
+        
+        # Fix missing colons in control structures
+        patterns = [
+            (r'^(\s*(if|elif|else|for|while|try|except|finally|with|def|class)\s+.+?)(?<!:)$', r'\1:'),
+        ]
+        
+        lines = fixed_code.split('\n')
+        new_lines = []
+        
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped and not stripped.startswith('#'):
+                for pattern, replacement in patterns:
+                    if re.match(pattern, stripped):
+                        # Add colon at the end
+                        if not stripped.endswith(':'):
+                            indent = line[:len(line) - len(stripped)]
+                            new_line = indent + stripped + ':'
+                            new_lines.append(new_line)
+                            fixes_applied.append(f"Added missing colon on line {i+1}")
+                            break
+                else:
+                    new_lines.append(line)
+            else:
+                new_lines.append(line)
+                
+        fixed_code = '\n'.join(new_lines)
+        
+        # Fix missing quotes in strings
+        # This is a simplified fix - in practice, this would be more complex
+        quote_patterns = [
+            (r'print\(([^"\'][^)]*)\)', r'print("\1")'),  # Add quotes to print statements
+        ]
+        
+        for pattern, replacement in quote_patterns:
+            if re.search(pattern, fixed_code):
+                fixed_code = re.sub(pattern, replacement, fixed_code)
+                fixes_applied.append("Fixed missing quotes in print statement")
+        
+        return fixed_code, fixes_applied
+
+    def _fix_style_issues(self, code: str) -> tuple[str, List[str]]:
+        """Fix common style issues."""
+        fixed_code = code
+        fixes_applied = []
+        
+        # Fix line length issues (PEP 8)
+        lines = fixed_code.split('\n')
+        new_lines = []
+        
+        for i, line in enumerate(lines):
+            if len(line) > 79:
+                # Simple line breaking - in practice, this would be more sophisticated
+                if '(' in line and ')' in line:
+                    # Break at commas in function calls
+                    if ',' in line:
+                        parts = line.split(',')
+                        new_line = parts[0] + ',\n    ' + ','.join(parts[1:])
+                        new_lines.append(new_line)
+                        fixes_applied.append(f"Line {i+1} broken to meet PEP 8 line length")
+                        continue
+            new_lines.append(line)
+            
+        fixed_code = '\n'.join(new_lines)
+        
+        return fixed_code, fixes_applied
+
+    def _fix_best_practice_issues(self, code: str) -> tuple[str, List[str]]:
+        """Fix common best practice issues."""
+        fixed_code = code
+        fixes_applied = []
+        
+        # Replace print statements with logging
+        if 'print(' in fixed_code:
+            fixed_code = re.sub(r'print\(([^)]+)\)', r'logger.info(\1)', fixed_code)
+            fixes_applied.append("Replaced print statements with logger.info")
+        
+        return fixed_code, fixes_applied
 
     def _create_success_payload(self, request_id: str, result: Any) -> HSPTaskResultPayload:
         return HSPTaskResultPayload(

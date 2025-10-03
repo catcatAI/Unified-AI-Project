@@ -3,6 +3,7 @@ import uuid
 import logging
 import re
 from collections import Counter
+from typing import Dict, Any
 
 from .base_agent import BaseAgent
 from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
@@ -59,7 +60,7 @@ class NLPProcessingAgent(BaseAgent):
         super().__init__(agent_id=agent_id, capabilities=capabilities)
         logging.info(f"[{self.agent_id}] NLPProcessingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
 
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope) -> None:
         request_id = task_payload.get("request_id")
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", {})
@@ -94,31 +95,31 @@ class NLPProcessingAgent(BaseAgent):
         """Generates a summary of the provided text."""
         text = params.get('text', '')
         summary_length = params.get('summary_length', 'medium')
-        
+
         if not text:
             raise ValueError("No text provided for summarization")
-        
+
         # Simple extractive summarization based on sentence scoring
         sentences = re.split(r'[.!?]+', text)
         sentences = [s.strip() for s in sentences if s.strip()]
-        
+
         if not sentences:
             return {"summary": "", "original_length": len(text), "summary_length": 0}
-        
+
         # Calculate word frequencies
         words = re.findall(r'\b\w+\b', text.lower())
         word_freq = Counter(words)
-        
+
         # Score sentences based on word frequency
         sentence_scores = []
         for sentence in sentences:
             sentence_words = re.findall(r'\b\w+\b', sentence.lower())
             score = sum(word_freq[word] for word in sentence_words)
             sentence_scores.append((sentence, score))
-        
+
         # Sort sentences by score
         sentence_scores.sort(key=lambda x: x[1], reverse=True)
-        
+
         # Determine number of sentences for summary
         if summary_length == 'short':
             num_sentences = max(1, len(sentences) // 4)
@@ -126,13 +127,13 @@ class NLPProcessingAgent(BaseAgent):
             num_sentences = max(1, len(sentences) // 2)
         else:  # medium
             num_sentences = max(1, len(sentences) // 3)
-        
+
         # Select top sentences
         top_sentences = sentence_scores[:num_sentences]
         # Sort by original order
         top_sentences.sort(key=lambda x: sentences.index(x[0]))
         summary = '. '.join([s[0] for s in top_sentences]) + '.'
-        
+
         return {
             "summary": summary,
             "original_length": len(text),
@@ -145,10 +146,10 @@ class NLPProcessingAgent(BaseAgent):
     def _perform_sentiment_analysis(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Performs sentiment analysis on text."""
         text = params.get('text', '')
-        
+
         if not text:
             raise ValueError("No text provided for sentiment analysis")
-        
+
         # Simple sentiment analysis using keyword matching
         # In a real implementation, this would use a proper NLP model
         positive_words = {
@@ -157,7 +158,7 @@ class NLPProcessingAgent(BaseAgent):
             'pleasant', 'enjoyable', 'satisfactory', 'fine', 'nice', 'positive', 'happy', 'pleased',
             'glad', 'cheerful', 'joyful', 'enthusiastic', 'optimistic', 'confident', 'hopeful', 'encouraging'
         }
-        
+
         negative_words = {
             'bad', 'terrible', 'awful', 'horrible', 'dreadful', 'abysmal', 'atrocious', 'appalling',
             'disgusting', 'revolting', 'nauseating', 'sickening', 'vile', 'ghastly', 'grim', 'dismal',
@@ -166,21 +167,21 @@ class NLPProcessingAgent(BaseAgent):
             'negative', 'sad', 'unhappy', 'depressed', 'displeased', 'upset', 'angry', 'furious',
             'outraged', 'livid', 'enraged', 'incensed', 'irate', 'infuriated', 'offended', 'hurt'
         }
-        
+
         neutral_words = {
             'okay', 'alright', 'fine', 'acceptable', 'adequate', 'sufficient', 'moderate', 'average',
             'normal', 'standard', 'regular', 'usual', 'typical', 'common', 'ordinary', 'conventional',
             'expected', 'predictable', 'stable', 'consistent', 'reliable', 'steady', 'unchanged'
         }
-        
+
         # Tokenize and normalize text
         words = re.findall(r'\b\w+\b', text.lower())
-        
+
         # Count sentiment words
         positive_count = sum(1 for word in words if word in positive_words)
         negative_count = sum(1 for word in words if word in negative_words)
         neutral_count = sum(1 for word in words if word in neutral_words)
-        
+
         # Calculate sentiment scores
         total_sentiment_words = positive_count + negative_count + neutral_count
         if total_sentiment_words == 0:
@@ -190,7 +191,7 @@ class NLPProcessingAgent(BaseAgent):
         else:
             polarity = (positive_count - negative_count) / total_sentiment_words
             confidence = total_sentiment_words / len(words)
-        
+
         # Determine overall sentiment
         if polarity > 0.1:
             overall_sentiment = "positive"
@@ -198,7 +199,7 @@ class NLPProcessingAgent(BaseAgent):
             overall_sentiment = "negative"
         else:
             overall_sentiment = "neutral"
-        
+
         return {
             "overall_sentiment": overall_sentiment,
             "polarity_score": round(polarity, 3),
@@ -213,23 +214,23 @@ class NLPProcessingAgent(BaseAgent):
     def _extract_entities(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Extracts named entities from text."""
         text = params.get('text', '')
-        
+
         if not text:
             raise ValueError("No text provided for entity extraction")
-        
+
         # Simple entity extraction using pattern matching
         # In a real implementation, this would use a proper NER model
-        
+
         # Extract potential person names (capitalized words)
         person_pattern = r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b'
         persons = re.findall(person_pattern, text)
         persons = [p for p in persons if len(p) > 1 and p.lower() not in {'The', 'This', 'That', 'These', 'Those'}]
-        
+
         # Extract potential organizations (all caps or capitalized phrases)
         org_pattern = r'\b(?:[A-Z]{2,}|[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\b'
         organizations = re.findall(org_pattern, text)
         organizations = [o for o in organizations if len(o) > 2 and o not in persons]
-        
+
         # Extract potential locations (capitalized words that might be locations)
         location_keywords = {'street', 'avenue', 'road', 'boulevard', 'drive', 'lane', 'place', 'square', 'plaza',
                            'city', 'town', 'village', 'county', 'state', 'province', 'country', 'nation', 'region',
@@ -237,19 +238,19 @@ class NLPProcessingAgent(BaseAgent):
         location_pattern = r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Street|Ave|Road|Rd|Blvd|Dr|Ln|Pl|Sq|Plaza|City|Town|Village|County|State|Province|Country|Region|District|Borough|Municipality|Capital|Metropolis|Suburb|Neighborhood))?\b'
         locations = re.findall(location_pattern, text)
         locations = [l for l in locations if len(l) > 2]
-        
+
         # Extract potential dates
         date_pattern = r'\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}[/-]\d{1,2}[/-]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{2,4})\b'
         dates = re.findall(date_pattern, text)
-        
+
         # Extract potential emails
         email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
         emails = re.findall(email_pattern, text)
-        
+
         # Extract potential phone numbers
         phone_pattern = r'(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}'
         phones = re.findall(phone_pattern, text)
-        
+
         return {
             "persons": list(set(persons)),  # Remove duplicates
             "organizations": list(set(organizations)),
@@ -263,24 +264,24 @@ class NLPProcessingAgent(BaseAgent):
     def _detect_language(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Detects the language of text."""
         text = params.get('text', '')
-        
+
         if not text:
             raise ValueError("No text provided for language detection")
-        
+
         # Simple language detection based on character sets and common words
         # In a real implementation, this would use a proper language detection library
-        
+
         # Character set detection
         latin_chars = len(re.findall(r'[A-Za-z]', text))
         chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', text))
         arabic_chars = len(re.findall(r'[\u0600-\u06ff]', text))
         cyrillic_chars = len(re.findall(r'[\u0400-\u04ff]', text))
-        
+
         total_chars = len(text)
-        
+
         if total_chars == 0:
             return {"language": "unknown", "confidence": 0.0}
-        
+
         # Language detection based on character sets
         char_scores = {
             "English": latin_chars / total_chars if latin_chars > 0 else 0,
@@ -288,20 +289,20 @@ class NLPProcessingAgent(BaseAgent):
             "Arabic": arabic_chars / total_chars if arabic_chars > 0 else 0,
             "Russian": cyrillic_chars / total_chars if cyrillic_chars > 0 else 0
         }
-        
+
         # Find the language with the highest score
         detected_language = max(char_scores, key=char_scores.get)
         confidence = char_scores[detected_language]
-        
+
         # If confidence is low, check for common English words
         if confidence < 0.3:
             common_english_words = {'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at'}
-            words = re.findall(r'\b\w+\b', text.lower)
+            words = re.findall(r'\b\w+\b', text.lower())
             english_word_count = sum(1 for word in words if word in common_english_words)
             if len(words) > 0 and english_word_count / len(words) > 0.2:
                 detected_language = "English"
                 confidence = english_word_count / len(words)
-        
+
         return {
             "language": detected_language,
             "confidence": round(confidence, 3),
@@ -335,7 +336,11 @@ if __name__ == '__main__':
         agent = NLPProcessingAgent(agent_id=agent_id)
         await agent.start()
 
-    try:
-        asyncio.run(main)
-    except KeyboardInterrupt:
-        print("\nNLPProcessingAgent manually stopped.")
+        try:
+            # Run indefinitely until interrupted
+            while True:
+                await asyncio.sleep(1)
+        except KeyboardInterrupt:
+            print("\nNLPProcessingAgent manually stopped.")
+
+    asyncio.run(main())

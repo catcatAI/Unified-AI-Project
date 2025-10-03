@@ -21,167 +21,131 @@ def fix_syntax_errors_in_file(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
-        
+
         original_content = content
         fixed_anything = False
-        
-        # Fix _ = "key": value syntax errors (dictionary syntax)
+
+        # Fix _ = "key" value syntax errors (dictionary syntax)
         pattern = r'_ = "([^"]+)":\s*([^,\n}]+)(,?)'
         replacement = r'"\1": \2\3'
-        new_content = re.sub(pattern, replacement, content)
-        if new_content != content:
-            content = new_content
+        content = re.sub(pattern, replacement, content)
+        if content != original_content:
             fixed_anything = True
-            print(f"  Fixed dictionary syntax in {file_path}")
-        
-        # Fix _ = raise Exception syntax errors
-        pattern = r'_ = raise\s+'
-        replacement = r'raise '
-        new_content = re.sub(pattern, replacement, content)
-        if new_content != content:
-            content = new_content
+            print(f"  Fixed dictionary syntax error in {file_path}")
+
+        # Fix decorator syntax errors
+        # Handle commented out decorators
+        pattern = r'#\s*@(\w+)'
+        replacement = r'@\1'
+        content = re.sub(pattern, replacement, content)
+        if content != original_content:
             fixed_anything = True
-            print(f"  Fixed raise syntax in {file_path}")
-        
-        # Fix _ = @decorator syntax errors
-        pattern = r'_ = (@\w+)'
-        replacement = r'\1'
-        new_content = re.sub(pattern, replacement, content)
-        if new_content != content:
-            content = new_content
+            print(f"  Fixed decorator syntax error in {file_path}")
+
+        # Fix raise syntax errors
+        pattern = r'raise\s+([A-Z]\w*Error)\s*\(\s*([^)]+)\s*\)\s*,'
+        replacement = r'raise \1(\2)'
+        content = re.sub(pattern, replacement, content)
+        if content != original_content:
             fixed_anything = True
-            print(f"  Fixed decorator syntax in {file_path}")
-        
-        # Fix _ = assert syntax errors
-        pattern = r'_ = assert\s+'
-        replacement = r'assert '
-        new_content = re.sub(pattern, replacement, content)
-        if new_content != content:
-            content = new_content
+            print(f"  Fixed raise syntax error in {file_path}")
+
+        # Fix assertion syntax errors
+        pattern = r'assert\s+([^,\n]+)\s*,\s*([^,\n]+)(,?)'
+        replacement = r'assert \1, \2\3'
+        content = re.sub(pattern, replacement, content)
+        if content != original_content:
             fixed_anything = True
-            print(f"  Fixed assert syntax in {file_path}")
-        
-        # Fix _ = **kwargs syntax errors
-        pattern = r'_ = \*\*(\w+)'
-        replacement = r'**\1'
-        new_content = re.sub(pattern, replacement, content)
-        if new_content != content:
-            content = new_content
+            print(f"  Fixed assertion syntax error in {file_path}")
+
+        # Fix import syntax errors
+        pattern = r'import\s+([a-zA-Z_]\w*)\s+as\s+([a-zA-Z_]\w*)\s*,'
+        replacement = r'import \1 as \2'
+        content = re.sub(pattern, replacement, content)
+        if content != original_content:
             fixed_anything = True
-            print(f"  Fixed **kwargs syntax in {file_path}")
-        
-        # Fix incomplete imports
-        pattern = r'from\s+[\w\.]+\s+import\s*\n'
-        replacement = ''
-        new_content = re.sub(pattern, replacement, content)
-        if new_content != content:
-            content = new_content
-            fixed_anything = True
-            print(f"  Fixed incomplete import in {file_path}")
-        
-        # Fix keyword argument repeated errors
-        # This is a more complex pattern to handle cases like _ = input_data.get('enhanced_features', False)
-        pattern = r'_ = (\w+\.\w+\([^)]*\))'
-        replacement = r'\1'
-        new_content = re.sub(pattern, replacement, content)
-        if new_content != content:
-            content = new_content
-            fixed_anything = True
-            print(f"  Fixed keyword argument syntax in {file_path}")
-        
-        # Fix dictionary syntax errors with variables as keys
-        pattern = r'_ = ([\w]+):\s*([^,\n}]+)(,?)'
-        replacement = r'\1: \2\3'
-        new_content = re.sub(pattern, replacement, content)
-        if new_content != content:
-            content = new_content
-            fixed_anything = True
-            print(f"  Fixed variable key dictionary syntax in {file_path}")
-        
-        # Fix indentation errors in __init__.py files
-        if file_path.endswith('__init__.py'):
-            lines = content.split('\n')
-            new_lines = []
-            for line in lines:
-                # Remove leading spaces that cause unexpected indent
-                if line.startswith('    ') and not any(line.lstrip().startswith(keyword) for keyword in ['from', 'import', 'class', 'def', 'if', 'elif', 'else', 'try', 'except', 'finally', 'with', 'for', 'while']):
-                    new_lines.append(line.lstrip())
-                    if line.lstrip():
-                        fixed_anything = True
-                        print(f"  Fixed indentation in {file_path}")
-                else:
-                    new_lines.append(line)
-            content = '\n'.join(new_lines)
-        
-        # Write the fixed content back to the file if changes were made
+            print(f"  Fixed import syntax error in {file_path}")
+
+        # Fix indentation errors
+        # Convert mixed tabs and spaces to consistent 4 spaces
+        lines = content.split('\n')
+        fixed_lines = []
+        for line in lines:
+            # Replace tabs with 4 spaces
+            if '\t' in line:
+                line = line.replace('\t', '    ')
+                fixed_anything = True
+            fixed_lines.append(line)
+        content = '\n'.join(fixed_lines)
+
+        # Write the fixed content back to the file if anything was fixed
         if fixed_anything:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"  Successfully fixed syntax errors in {file_path}")
-            return True
-        elif content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-            print(f"  Successfully fixed syntax errors in {file_path}")
+            print(f"Successfully fixed syntax errors in {file_path}")
             return True
         else:
+            print(f"No syntax errors found in {file_path}")
             return False
-            
+
     except Exception as e:
-        print(f"  Error fixing {file_path}: {str(e)}")
+        print(f"Error fixing syntax errors in {file_path}: {e}")
+        traceback.print_exc()
         return False
 
-def get_all_python_files(root_dir):
-    """Get all Python files in the project."""
-    python_files = []
-    for root, dirs, files in os.walk(root_dir):
-        # Skip __pycache__ directories
-        dirs[:] = [d for d in dirs if d != '__pycache__']
+def find_python_files_with_syntax_errors(root_path):
+    """Find all Python files with syntax errors."""
+    import ast
+    
+    python_files_with_errors = []
+    exclude_dirs = {
+        'node_modules', '__pycache__', '.git', 'venv', 'dist', 'build',
+        'backup', 'chroma_db', 'context_storage', 'model_cache',
+        'test_reports', 'automation_reports', 'docs', 'scripts/venv',
+        'apps/backend/venv', 'apps/desktop-app', 'graphic-launcher', 'packages'
+    }
+
+    for root, dirs, files in os.walk(root_path):
+        # 排除不需要检查的目录
+        dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith('.')]
+
         for file in files:
             if file.endswith('.py'):
-                python_files.append(os.path.join(root, file))
-    return python_files
+                file_path = os.path.join(root, file)
+                # 检查文件是否有语法错误
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    ast.parse(content)
+                except SyntaxError:
+                    python_files_with_errors.append(file_path)
+                except Exception:
+                    # 文件可能有其他问题，也加入列表
+                    python_files_with_errors.append(file_path)
+    
+    return python_files_with_errors
 
 def main():
     """Main function to fix all syntax errors in the project."""
-    print("Starting complete syntax error fix...")
+    print("Starting complete syntax fix for all Python files...")
     
-    # Get all Python files in the project
-    project_root = "."
-    python_files = get_all_python_files(project_root)
+    # 获取项目根目录
+    project_root = Path(__file__).parent
     
-    print(f"Found {len(python_files)} Python files to check.")
+    # 查找所有有语法错误的Python文件
+    files_with_errors = find_python_files_with_syntax_errors(project_root)
     
-    fixed_files = 0
-    error_files = []
+    print(f"Found {len(files_with_errors)} Python files with syntax errors")
     
-    for file_path in python_files:
-        try:
-            if fix_syntax_errors_in_file(file_path):
-                fixed_files += 1
-        except Exception as e:
-            print(f"Error processing {file_path}: {str(e)}")
-            error_files.append(file_path)
+    # 修复每个文件
+    fixed_count = 0
+    for file_path in files_with_errors:
+        print(f"Processing {file_path}...")
+        if fix_syntax_errors_in_file(file_path):
+            fixed_count += 1
     
-    print(f"\nFixed syntax errors in {fixed_files} files.")
-    if error_files:
-        print(f"Errors occurred in {len(error_files)} files:")
-        for file in error_files:
-            print(f"  {file}")
-    
-    print("\nRunning syntax check after fixes...")
-    try:
-        import subprocess
-        result = subprocess.run(['python', '-m', 'compileall', '-q', '.'], 
-                              capture_output=True, text=True)
-        if result.returncode == 0:
-            print("All syntax errors have been fixed!")
-        else:
-            print("Some syntax errors remain:")
-            print(result.stdout)
-            print(result.stderr)
-    except Exception as e:
-        print(f"Error running syntax check: {str(e)}")
+    print(f"Fixed syntax errors in {fixed_count} files")
+    print("Complete syntax fix finished.")
 
 if __name__ == "__main__":
     main()

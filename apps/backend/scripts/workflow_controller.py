@@ -15,9 +15,9 @@ project_root: Path = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # 使用相对导入
-from scripts.test_runner import TestRunner
-from scripts.error_analyzer import ErrorAnalyzer
-from scripts.fix_executor import FixExecutor
+from tools.scripts.test_runner import TestRunner
+from tools.scripts.error_analyzer import ErrorAnalyzer
+from tools.scripts.fix_executor import FixExecutor
 
 
 class WorkflowController:

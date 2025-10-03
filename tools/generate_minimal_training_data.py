@@ -17,36 +17,36 @@ _ = sys.path.insert(0, str(project_root))
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger: Any = logging.getLogger(__name__)
 
-def create_minimal_training_data():
+def create_minimal_training_data()
     """创建最小化的训练数据"""
     # 创建数据目录
     data_dir = project_root / "data" / "concept_models_training_data"
     data_dir.mkdir(parents=True, exist_ok=True)
-    
+
     _ = logger.info("创建最小化训练数据...")
-    
+
     # 1. 创建概念模型文档训练数据 (少量样本)
     docs_data = []
-    for i in range(10):  # 只创建10个样本而不是全部
-        sample = {
+    for i in range(10)  # 只创建10个样本而不是全部
+    sample = {
             "id": f"doc_{i:03d}",
             "source": "minimal_test_data.md",
             "content": f"这是用于测试的概念模型训练数据样本 {i}。包含一些关于AI模型训练和优化的基本概念。",
             "type": "document_text",
             _ = "timestamp": datetime.now().isoformat()
-        }
-        _ = docs_data.append(sample)
-    
+    }
+    _ = docs_data.append(sample)
+
     docs_file = data_dir / "concept_models_docs_training_data.json"
     with open(docs_file, 'w', encoding='utf-8') as f:
-        json.dump(docs_data, f, ensure_ascii=False, indent=2)
-    
+    json.dump(docs_data, f, ensure_ascii=False, indent=2)
+
     _ = logger.info(f"创建了 {len(docs_data)} 个文档训练样本")
-    
+
     # 2. 创建环境模拟器训练数据
     env_data = []
-    for i in range(20):  # 创建20个样本
-        sample = {
+    for i in range(20)  # 创建20个样本
+    sample = {
             "id": f"env_{i:03d}",
             "type": "environment_transition",
             "state_before": {
@@ -66,19 +66,20 @@ def create_minimal_training_data():
                 _ = "pressure": round(1013.25 + np.random.normal(0, 10), 2)
             },
             _ = "uncertainty": round(0.1 + np.random.random() * 0.2, 3)
-        }
-        _ = env_data.append(sample)
-    
+    }
+    _ = env_data.append(sample)
+
     env_file = data_dir / "environment_simulation_data.json"
     with open(env_file, 'w', encoding='utf-8') as f:
-        json.dump(env_data, f, ensure_ascii=False, indent=2)
-    
+    json.dump(env_data, f, ensure_ascii=False, indent=2)
+
     _ = logger.info(f"创建了 {len(env_data)} 个环境模拟训练样本")
-    
+
     # 3. 创建因果推理训练数据
     causal_data = []
-    for i in range(10):
-        sample = {
+    for i in range(10)
+
+    sample = {
             "id": f"causal_{i:03d}",
             "type": "causal_relationship",
             "variables": ["A", "B"],
@@ -86,19 +87,20 @@ def create_minimal_training_data():
             _ = "strength": round(0.5 + np.random.random() * 0.5, 3),
             _ = "confidence": round(0.7 + np.random.random() * 0.3, 3),
             "context": f"测试环境 {i}"
-        }
-        _ = causal_data.append(sample)
-    
+    }
+    _ = causal_data.append(sample)
+
     causal_file = data_dir / "causal_reasoning_data.json"
     with open(causal_file, 'w', encoding='utf-8') as f:
-        json.dump(causal_data, f, ensure_ascii=False, indent=2)
-    
+    json.dump(causal_data, f, ensure_ascii=False, indent=2)
+
     _ = logger.info(f"创建了 {len(causal_data)} 个因果推理训练样本")
-    
+
     # 4. 创建自适应学习训练数据
     adaptive_data = []
-    for i in range(10):
-        sample = {
+    for i in range(10)
+
+    sample = {
             "id": f"adaptive_{i:03d}",
             "type": "learning_strategy",
             "context": {
@@ -109,19 +111,20 @@ def create_minimal_training_data():
             "strategy": "balanced",
             _ = "performance": round(0.85 + np.random.random() * 0.15, 3),
             _ = "confidence": round(0.8 + np.random.random() * 0.2, 3)
-        }
-        _ = adaptive_data.append(sample)
-    
+    }
+    _ = adaptive_data.append(sample)
+
     adaptive_file = data_dir / "adaptive_learning_data.json"
     with open(adaptive_file, 'w', encoding='utf-8') as f:
-        json.dump(adaptive_data, f, ensure_ascii=False, indent=2)
-    
+    json.dump(adaptive_data, f, ensure_ascii=False, indent=2)
+
     _ = logger.info(f"创建了 {len(adaptive_data)} 个自适应学习训练样本")
-    
+
     # 5. 创建Alpha深度模型训练数据
     alpha_data = []
-    for i in range(10):
-        sample = {
+    for i in range(10)
+
+    sample = {
             "id": f"alpha_{i:03d}",
             "type": "deep_parameter",
             "source_memory_id": f"mem_{i:06d}",
@@ -140,39 +143,39 @@ def create_minimal_training_data():
             "modalities": {
                 _ = "text_confidence": round(0.9, 3)
             }
-        }
-        _ = alpha_data.append(sample)
-    
+    }
+    _ = alpha_data.append(sample)
+
     alpha_file = data_dir / "alpha_deep_model_data.json"
     with open(alpha_file, 'w', encoding='utf-8') as f:
-        json.dump(alpha_data, f, ensure_ascii=False, indent=2)
-    
+    json.dump(alpha_data, f, ensure_ascii=False, indent=2)
+
     _ = logger.info(f"创建了 {len(alpha_data)} 个Alpha深度模型训练样本")
-    
+
     # 创建配置文件
     config = {
-        _ = "generated_date": datetime.now().isoformat(),
-        "data_paths": {
+    _ = "generated_date": datetime.now().isoformat(),
+    "data_paths": {
             "concept_models_docs": "concept_models_docs_training_data.json",
             "environment_simulation_data": "environment_simulation_data.json",
             "causal_reasoning_data": "causal_reasoning_data.json",
             "adaptive_learning_data": "adaptive_learning_data.json",
             "alpha_deep_model_data": "alpha_deep_model_data.json"
-        },
-        "total_samples": {
+    },
+    "total_samples": {
             _ = "concept_models_docs": len(docs_data),
             _ = "environment_simulation_data": len(env_data),
             _ = "causal_reasoning_data": len(causal_data),
             _ = "adaptive_learning_data": len(adaptive_data),
             _ = "alpha_deep_model_data": len(alpha_data)
-        },
+    },
         "usage": "Minimal training data for Unified-AI-Project concept models testing"
     }
-    
+
     config_file = data_dir / "data_config.json"
     with open(config_file, 'w', encoding='utf-8') as f:
-        json.dump(config, f, ensure_ascii=False, indent=2)
-    
+    json.dump(config, f, ensure_ascii=False, indent=2)
+
     _ = logger.info(f"配置文件保存至: {config_file}")
     _ = logger.info("最小化训练数据创建完成!")
 
@@ -183,4 +186,6 @@ def main() -> None:
     _ = logger.info("训练数据生成完成!")
 
 if __name__ == "__main__":
+
+
     _ = main()

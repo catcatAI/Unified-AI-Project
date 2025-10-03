@@ -12,7 +12,7 @@ print(f"Analyzing text: {text}")
 doc = nlp(text)
 
 print(f"\nDocument tokens:")
-for i, token in enumerate(doc):
+for i, token in enumerate(doc)
     print(f"  {i}: '{token.text}' (POS: {token.pos_}, LEMMA: {token.lemma_}, ENT_TYPE: {token.ent_type_})")
 
 print(f"\nDocument entities:")
@@ -49,33 +49,35 @@ for match_id, start, end in matches:
     rule_id = nlp.vocab.strings[match_id]
     span = doc[start:end]
     print(f"  Rule: {rule_id}, Span: '{span.text}' (start: {start}, end: {end})")
-    
+
     # Debug the patterns
     if rule_id in ["SIMPLE_PATTERN", "PERSON_IS_TITLE_OF_ORG"]:
-        print(f"    Debugging {rule_id} pattern:")
-        print(f"      Pattern span: '{span.text}'")
-        
-        # Extract person and org
-        person_token = doc[start]
-        org_token = doc[end-1]
-        
-        print(f"      Person token: {person_token.text} (ent_type: {person_token.ent_type_})")
-        print(f"      Org token: {org_token.text} (ent_type: {org_token.ent_type_})")
-        
+
+    print(f"    Debugging {rule_id} pattern:")
+    print(f"      Pattern span: '{span.text}'")
+
+    # Extract person and org
+    person_token = doc[start]
+    org_token = doc[end-1]
+
+    print(f"      Person token: {person_token.text} (ent_type: {person_token.ent_type_})")
+    print(f"      Org token: {org_token.text} (ent_type: {org_token.ent_type_})")
+
         if person_token.ent_type_ == "PERSON" and org_token.ent_type_ == "ORG":
             # Extract title from middle tokens
             title_tokens = []
-            for i in range(start + 1, end - 1):  # Between person and org
+            for i in range(start + 1, end - 1)  # Between person and org
                 if doc[i].lower_ != "of" and doc[i].pos_ in ["NOUN", "ADJ", "DET", "PROPN"]:
-                    if doc[i].pos_ != "DET":  # Skip determiners like "a", "the"
+
+    if doc[i].pos_ != "DET":  # Skip determiners like "a", "the"
                         title_tokens.append(doc[i].lemma_)
-            
-            title = "_".join(title_tokens) if title_tokens else "employee"
-            print(f"      Title tokens: {[doc[i].text for i in range(start + 1, end - 1)]}")
-            print(f"      Filtered title tokens: {title_tokens}")
+
+            title = "_".join(title_tokens) if title_tokens else "employee":
+    print(f"      Title tokens: {[doc[i].text for i in range(start + 1, end - 1)]}"):
+    print(f"      Filtered title tokens: {title_tokens}")
             print(f"      Extracted title: {title}")
-            
-            # Expected relationship: ORG --has_TITLE--> PERSON
+
+            # Expected relationship ORG --has_TITLE--> PERSON
             print(f"      Expected relationship: {org_token.text} --has_{title}--> {person_token.text}")
 
 print("Debug complete.")

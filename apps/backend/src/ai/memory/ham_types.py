@@ -19,7 +19,7 @@ class HAMDataPackage:
         return {
             "id": self.id,
             "content": self.content,
-            "timestamp": self.timestamp.isoformat,
+            "timestamp": self.timestamp.isoformat(),
             "metadata": self.metadata
         }
 
@@ -73,7 +73,7 @@ class HAMRecallResult:
             "memory_id": self.memory_id,
             "content": self.content,
             "score": self.score,
-            "timestamp": self.timestamp.isoformat,
+            "timestamp": self.timestamp.isoformat(),
             "metadata": self.metadata
         }
 
@@ -89,8 +89,8 @@ class HAMRecallResult:
 
 
 class MemoryMetadata:
-    def __init__(self, created_at: str, updated_at: str, importance_score: float, 
-                 tags: List[str], data_type: str):
+    def __init__(self, created_at: str, updated_at: str, importance_score: float,
+                 tags: List[str], data_type: str) -> None:
         self.created_at = created_at
         self.updated_at = updated_at
         self.importance_score = importance_score
@@ -118,7 +118,7 @@ class MemoryMetadata:
 
 
 class MemoryItem:
-    def __init__(self, id: str, content: str, metadata: MemoryMetadata) -> None:
+    def __init__(self, id: str, content: str, metadata: Optional[MemoryMetadata]) -> None:
         self.id = id
         self.content = content
         self.metadata = metadata
@@ -127,7 +127,7 @@ class MemoryItem:
         return {
             "id": self.id,
             "content": self.content,
-            "metadata": self.metadata.to_dict if self.metadata else None
+            "metadata": self.metadata.to_dict() if self.metadata else None
         }
 
     @classmethod
@@ -158,7 +158,7 @@ class DialogueMemoryEntryMetadata:
                  source_module: Optional[str] = None,
                  external_references: Optional[List[str]] = None,
                  user_feedback: Optional[Dict[str, Any]] = None,
-                 **kwargs):
+                 **kwargs) -> None:
         self.timestamp = timestamp
         self.speaker = speaker
         self.dialogue_id = dialogue_id
@@ -179,7 +179,7 @@ class DialogueMemoryEntryMetadata:
 
     def to_dict(self) -> Dict[str, Any]:
         data = {
-            "timestamp": self.timestamp.isoformat if self.timestamp else None,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
             "speaker": self.speaker,
             "dialogue_id": self.dialogue_id,
             "turn_id": self.turn_id,
@@ -201,8 +201,8 @@ class DialogueMemoryEntryMetadata:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
-        timestamp = datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else None
-        kwargs = {k: v for k, v in data.items if k not in [
+        timestamp = datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else datetime.now()
+        kwargs = {k: v for k, v in data.items() if k not in [
             "timestamp", "speaker", "dialogue_id", "turn_id", "language",
             "sentiment", "emotion", "topic", "keywords", "summary",
             "context_history", "action_taken", "is_sensitive", "source_module",
@@ -210,9 +210,9 @@ class DialogueMemoryEntryMetadata:
         ]}
         return cls(
             timestamp=timestamp,
-            speaker=data.get("speaker"),
-            dialogue_id=data.get("dialogue_id"),
-            turn_id=data.get("turn_id"),
+            speaker=data.get("speaker", ""),
+            dialogue_id=data.get("dialogue_id", ""),
+            turn_id=data.get("turn_id", 0),
             language=data.get("language", "en"),
             sentiment=data.get("sentiment"),
             emotion=data.get("emotion"),

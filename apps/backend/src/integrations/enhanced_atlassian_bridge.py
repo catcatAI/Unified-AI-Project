@@ -13,37 +13,37 @@ logger: Any = logging.getLogger(__name__)
 # 定义 DemoLearningManager 类（如果它不存在的话）
 class DemoLearningManager:
     def __init__(self) -> None:
-        self.config = 
-    
-    def detect_demo_credentials(self, credentials):
-        # 简单实现，总是返回 False
-        return False
-    
-    async def activate_demo_mode(self, credentials):
-        pass
-    
-    async def record_user_interaction(self, action, context, result):
-        pass
-    
-    async def record_error_pattern(self, error_type, error_message, context, resolution):
-        pass
+    self.config =
 
-class EnhancedAtlassianBridge(AtlassianBridge):
+    def detect_demo_credentials(self, credentials)
+    # 简单实现，总是返回 False
+    return False
+
+    async def activate_demo_mode(self, credentials)
+    pass
+
+    async def record_user_interaction(self, action, context, result)
+    pass
+
+    async def record_error_pattern(self, error_type, error_message, context, resolution)
+    pass
+
+class EnhancedAtlassianBridge(AtlassianBridge)
     """增強版 Atlassian Bridge，支持演示學習功能"""
-    
+
     def __init__(self, connector: RovoDevConnector, demo_learning_manager: Optional[DemoLearningManager] = None) -> None:
-        """初始化增強版 Atlassian 橋接器
-        
-        Args:
+    """初始化增強版 Atlassian 橋接器
+
+    Args:
             connector: Rovo Dev 連接器實例
             demo_learning_manager: 演示學習管理器實例（可選）
-        """
-        super.__init__(connector)
-        # 如果没有提供 demo_learning_manager，则创建一个默认实例
-        self.demo_manager = demo_learning_manager or DemoLearningManager
-        self.demo_mode_active = False
-        
-        # 檢查是否為演示模式（只在有運行的事件循環時才創建任務）
+    """
+    super().__init__(connector)
+    # 如果没有提供 demo_learning_manager，则创建一个默认实例
+    self.demo_manager = demo_learning_manager or DemoLearningManager
+    self.demo_mode_active = False
+
+    # 檢查是否為演示模式（只在有運行的事件循環時才創建任務）
         try:
             # 檢查是否有運行的事件循環
             asyncio.get_running_loop
@@ -53,9 +53,9 @@ class EnhancedAtlassianBridge(AtlassianBridge):
             # 如果沒有運行的事件循環，則不創建任務
             # 這通常發生在對象初始化時沒有活動的事件循環的情況下
             pass
-    
-    async def _check_demo_mode(self):
-        """檢查並激活演示模式"""
+
+    async def _check_demo_mode(self)
+    """檢查並激活演示模式"""
         try:
             # 獲取認證信息
             credentials = {
@@ -64,66 +64,86 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                 'user_email': self.config.get('user_email', ''),
                 'domain': self.config.get('domain', '')
             }
-            
+
             # 檢測演示金鑰
-            if self.demo_manager.detect_demo_credentials(credentials):
-                logger.info("檢測到演示金鑰，激活演示模式")
+            if self.demo_manager.detect_demo_credentials(credentials)
+
+    logger.info("檢測到演示金鑰，激活演示模式")
                 _ = await self.demo_manager.activate_demo_mode(credentials)
                 self.demo_mode_active = True
-                
+
                 # 初始化演示數據
                 _ = await self._initialize_demo_data
-                
+
         except Exception as e:
+
+
             logger.error(f"檢查演示模式失敗: {e}")
-    
-    async def _initialize_demo_data(self):
-        """初始化演示數據"""
+
+    async def _initialize_demo_data(self)
+    """初始化演示數據"""
         try:
+
             demo_config = self.demo_manager.config.get('demo_credentials', )
             auto_init = demo_config.get('auto_initialization', )
-            
-            if auto_init.get('enabled', False):
-                steps = auto_init.get('steps', )
-                
+
+            if auto_init.get('enabled', False)
+
+
+    steps = auto_init.get('steps', )
+
                 for step in steps:
-                    if step == "create_demo_spaces":
-                        _ = await self._create_demo_spaces
+
+
+    if step == "create_demo_spaces":
+
+
+
+    _ = await self._create_demo_spaces
                     elif step == "setup_test_projects":
-                        _ = await self._setup_test_projects
+
+    _ = await self._setup_test_projects
                     elif step == "initialize_agents":
-                        _ = await self._initialize_agents
+
+    _ = await self._initialize_agents
                     elif step == "configure_fallbacks":
-                        _ = await self._configure_fallbacks
+
+    _ = await self._configure_fallbacks
                     elif step == "setup_monitoring":
-                        _ = await self._setup_monitoring
-                
+
+    _ = await self._setup_monitoring
+
                 logger.info("演示數據初始化完成")
-                
+
         except Exception as e:
+
+
             logger.error(f"初始化演示數據失敗: {e}")
-    
-    async def _create_demo_spaces(self):
-        """創建演示 Confluence 空間"""
+
+    async def _create_demo_spaces(self)
+    """創建演示 Confluence 空間"""
         if not self.demo_mode_active:
-            return
-        
-        try:
+
+    return
+
+    try
             demo_config = self.demo_manager.config.get('demo_credentials', )
-            spaces_config = demo_config.get('auto_initialization', ).get('demo_data', ).get('confluence_spaces', )
-            
+    spaces_config = demo_config.get('auto_initialization', ).get('demo_data', ).get('confluence_spaces', )
+
             for space_config in spaces_config:
                 # 在演示模式下，這裡會創建模擬的空間
                 logger.info(f"創建演示空間: {space_config['name']} ({space_config['key']})")
-                
+
                 # 記錄學習數據
                 await self.demo_manager.record_user_interaction(
                     action="create_demo_space",
                     context=space_config,
                     result="success"
                 )
-                
+
         except Exception as e:
+
+
             logger.error(f"創建演示空間失敗: {e}")
             await self.demo_manager.record_error_pattern(
                 error_type="demo_initialization",
@@ -131,27 +151,32 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                 context={"step": "create_demo_spaces"},
                 resolution="logged_for_analysis"
             )
-    
+
     async def _setup_test_projects(self) -> None:
-        """設置測試 Jira 項目"""
+    """設置測試 Jira 項目"""
         if not self.demo_mode_active:
-            return
-        
-        try:
+
+    return
+
+    try
             demo_config = self.demo_manager.config.get('demo_credentials', )
-            projects_config = demo_config.get('auto_initialization', ).get('demo_data', ).get('jira_projects', )
-            
+    projects_config = demo_config.get('auto_initialization', ).get('demo_data', ).get('jira_projects', )
+
             for project_config in projects_config:
-                logger.info(f"創建演示項目: {project_config['name']} ({project_config['key']})")
-                
+
+
+    logger.info(f"創建演示項目: {project_config['name']} ({project_config['key']})")
+
                 # 記錄學習數據
                 await self.demo_manager.record_user_interaction(
                     action="create_demo_project",
                     context=project_config,
                     result="success"
                 )
-                
+
         except Exception as e:
+
+
             logger.error(f"設置測試項目失敗: {e}")
             await self.demo_manager.record_error_pattern(
                 error_type="demo_initialization",
@@ -159,40 +184,43 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                 context={"step": "setup_test_projects"},
                 resolution="logged_for_analysis"
             )
-    
-    async def _initialize_agents(self):
-        """初始化代理"""
-        logger.info("初始化演示代理")
-        # 這裡可以初始化演示用的代理配置
-    
-    async def _configure_fallbacks(self):
-        """配置備用機制"""
-        logger.info("配置演示備用機制")
-        # 確保備用機制在演示模式下正常工作
-    
-    async def _setup_monitoring(self):
-        """設置監控"""
-        logger.info("設置演示監控")
-        # 設置演示模式下的監控
-    
+
+    async def _initialize_agents(self)
+    """初始化代理"""
+    logger.info("初始化演示代理")
+    # 這裡可以初始化演示用的代理配置
+
+    async def _configure_fallbacks(self)
+    """配置備用機制"""
+    logger.info("配置演示備用機制")
+    # 確保備用機制在演示模式下正常工作
+
+    async def _setup_monitoring(self)
+    """設置監控"""
+    logger.info("設置演示監控")
+    # 設置演示模式下的監控
+
     # 重寫父類方法以添加學習功能
-    
+
     async def create_confluence_page(
-        self, 
-        space_key: str, 
-        title: str, 
-        content: str,
-        parent_id: Optional[str] = None
+    self,
+    space_key: str,
+    title: str,
+    content: str,
+    parent_id: Optional[str] = None
     ) -> Dict[str, Any]:
-        """創建 Confluence 頁面（增強版）"""
-        start_time = asyncio.get_event_loop.time
-        
+    """創建 Confluence 頁面（增強版）"""
+    start_time = asyncio.get_event_loop.time
+
         try:
-            result = await super.create_confluence_page(space_key, title, content, parent_id)
-            
+
+
+            result = await super().create_confluence_page(space_key, title, content, parent_id)
+
             # 記錄成功的用戶交互
             if self.demo_mode_active:
-                await self.demo_manager.record_user_interaction(
+
+    await self.demo_manager.record_user_interaction(
                     action="create_confluence_page",
                     context={
                         "space_key": space_key,
@@ -202,13 +230,14 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                     },
                     result="success"
                 )
-            
+
             return result
-            
+
         except Exception as e:
             # 記錄錯誤
             if self.demo_mode_active:
-                await self.demo_manager.record_error_pattern(
+
+    await self.demo_manager.record_error_pattern(
                     error_type="confluence_operation",
                     error_message=str(e),
                     context={
@@ -218,7 +247,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                     },
                     resolution="fallback_attempted"
                 )
-                
+
                 await self.demo_manager.record_user_interaction(
                     action="create_confluence_page",
                     context={
@@ -228,41 +257,46 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                     },
                     result="error"
                 )
-            
+
             raise
-        
-        finally:
+
+    finally:
             # 記錄性能指標
             end_time = asyncio.get_event_loop.time
             duration = end_time - start_time
-            
-            if self.demo_mode_active and hasattr(self.demo_manager, 'learning_data'):
-                performance_metric = {
+
+            if self.demo_mode_active and hasattr(self.demo_manager, 'learning_data')
+
+
+    performance_metric = {
                     'operation': 'create_confluence_page',
                     'duration': duration,
                     'success': True,
                     'timestamp': asyncio.get_event_loop.time
                 }
                 self.demo_manager.learning_data.setdefault('performance_metrics', ).append(performance_metric)
-    
+
     async def create_jira_issue(
-        self, 
-        project_key: str, 
-        summary: str, 
-        description: str,
-        issue_type: str = "Task",
-        priority: str = "Medium",
-        assignee: Optional[str] = None
+    self,
+    project_key: str,
+    summary: str,
+    description: str,
+    issue_type: str = "Task",
+    priority: str = "Medium",
+    assignee: Optional[str] = None
     ) -> Dict[str, Any]:
-        """創建 Jira 問題（增強版）"""
-        start_time = asyncio.get_event_loop.time
-        
+    """創建 Jira 問題（增強版）"""
+    start_time = asyncio.get_event_loop.time
+
         try:
-            result = await super.create_jira_issue(project_key, summary, description, issue_type, priority, assignee)
-            
+
+
+            result = await super().create_jira_issue(project_key, summary, description, issue_type, priority, assignee)
+
             # 記錄成功的用戶交互
             if self.demo_mode_active:
-                await self.demo_manager.record_user_interaction(
+
+    await self.demo_manager.record_user_interaction(
                     action="create_jira_issue",
                     context={
                         "project_key": project_key,
@@ -273,13 +307,14 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                     },
                     result="success"
                 )
-            
+
             return result
-            
+
         except Exception as e:
             # 記錄錯誤
             if self.demo_mode_active:
-                await self.demo_manager.record_error_pattern(
+
+    await self.demo_manager.record_error_pattern(
                     error_type="jira_operation",
                     error_message=str(e),
                     context={
@@ -289,7 +324,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                     },
                     resolution="fallback_attempted"
                 )
-                
+
                 await self.demo_manager.record_user_interaction(
                     action="create_jira_issue",
                     context={
@@ -298,44 +333,49 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                     },
                     result="error"
                 )
-            
+
             raise
-        
-        finally:
+
+    finally:
             # 記錄性能指標
             end_time = asyncio.get_event_loop.time
             duration = end_time - start_time
-            
-            if self.demo_mode_active and hasattr(self.demo_manager, 'learning_data'):
-                performance_metric = {
+
+            if self.demo_mode_active and hasattr(self.demo_manager, 'learning_data')
+
+
+    performance_metric = {
                     'operation': 'create_jira_issue',
                     'duration': duration,
                     'success': True,
                     'timestamp': asyncio.get_event_loop.time
                 }
                 self.demo_manager.learning_data.setdefault('performance_metrics', ).append(performance_metric)
-    
+
     async def get_learning_insights(self) -> Dict[str, Any]:
-        """獲取學習洞察"""
+    """獲取學習洞察"""
         if not self.demo_mode_active:
-            return {"demo_mode": False, "message": "演示模式未激活"}
-        
-        return await self.demo_manager.get_learning_insights
-    
+
+    return {"demo_mode": False, "message": "演示模式未激活"}
+
+    return await self.demo_manager.get_learning_insights
+
     def get_demo_status(self) -> Dict[str, Any]:
-        """獲取演示狀態"""
-        return {
+    """獲取演示狀態"""
+    return {
             "demo_mode_active": self.demo_mode_active,
             "demo_manager_active": self.demo_manager.demo_mode,
             "storage_path": str(self.demo_manager.storage_path),
             "config_loaded": bool(self.demo_manager.config)
-        }
-    
-    async def shutdown(self):
-        """關閉增強版橋接層"""
+    }
+
+    async def shutdown(self)
+    """關閉增強版橋接層"""
         if self.demo_mode_active:
-            _ = await self.demo_manager.shutdown
-        
-        # 調用父類的關閉方法（如果有的話）
-        if hasattr(super, 'shutdown'):
-            _ = await super.shutdown
+
+    _ = await self.demo_manager.shutdown
+
+    # 調用父類的關閉方法（如果有的話）
+        if hasattr(super, 'shutdown')
+
+    _ = await super().shutdown

@@ -32,7 +32,7 @@ if %errorlevel% neq 0 (
 REM 运行Python设置脚本
 echo 运行自动化设置...
 cd apps\backend
-python ..\..\scripts\setup_project.py
+python ..\..\tools\scripts\setup_project.py
 if %errorlevel% neq 0 (
     echo 错误: 自动化设置失败
     pause
@@ -44,7 +44,7 @@ echo 设置脚本执行完成!
 echo.
 echo 请按以下步骤继续:
 echo 1. 检查并修改 apps\backend\.env 文件中的配置
-echo 2. 运行数据库初始化: cd apps\backend ^&^& python scripts\init_database.py
+echo 2. 运行数据库初始化: cd apps\backend ^&^& python tools\scripts\init_database.py
 echo 3. 启动开发服务器: pnpm dev
 echo 4. 查看详细配置指南: PROJECT_CONFIGURATION_AND_SETUP_GUIDE.md
 echo.

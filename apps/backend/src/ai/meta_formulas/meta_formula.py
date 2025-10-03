@@ -1,6 +1,6 @@
 class MetaFormula:
     """
-    Base class for all MetaFormulas.
+    Base class for all MetaFormulas.:
     """
     def __init__(self, name: str, description: str) -> None:
         self.name = name

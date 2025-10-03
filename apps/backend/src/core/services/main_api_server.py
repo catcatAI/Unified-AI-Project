@@ -1,6 +1,6 @@
 """
 DEPRECATED SHIM MODULE
-This module is kept for backward compatibility only.
+This module is kept for backward compatibility only.:
 It re-exports the FastAPI application and helpers from
 apps.backend.src.services.main_api_server.
 

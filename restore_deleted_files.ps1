@@ -13,12 +13,12 @@ $filesToRestore = @(
     "comprehensive-test.bat",
     "quick-dev.bat",
     "run-script-tests.bat",
-    "scripts/run_backend_tests.bat",
-    "scripts/setup_env.bat",
+    "tools/scripts/run_backend_tests.bat",
+    "tools/scripts/setup_env.bat",
     "syntax-check.bat",
     "test-all-scripts.bat",
     "test-runner.bat",
-    "scripts/dev.bat"
+    "tools/scripts/dev.bat"
 )
 
 # 创建备份目录

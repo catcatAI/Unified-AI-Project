@@ -1,14 +1,13 @@
 """
-System Module for Unified-AI-Project
-
+System Module for Unified-AI-Project:
 This module provides hardware detection, deployment management, and system optimization
-capabilities for the Unified AI Project. It enables adaptive deployment across different
+capabilities for the Unified AI Project. It enables adaptive deployment across different:
 hardware configurations and operating systems.
 
 Key Components:
 - HardwareProbe: Comprehensive hardware detection and profiling
 - DeploymentManager: Intelligent deployment configuration based on hardware
-- Adaptive configuration for different performance tiers
+- Adaptive configuration for different performance tiers:
 """
 
 # Hardware Detection
