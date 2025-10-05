@@ -26,6 +26,9 @@ class FixType(Enum):
     PARAMETER_FIX = "parameter_fix"              # 参数修复
     UNDEFINED_FIX = "undefined_fix"              # 未定义变量修复
     DATA_PROCESSING_FIX = "data_processing_fix"  # 数据处理修复
+    LOGIC_GRAPH_FIX = "logic_graph_fix"          # 逻辑图谱修复
+    INTELLIGENT_ITERATIVE_FIX = "intelligent_iterative_fix"  # 智能迭代修复
+    AI_ASSISTED_FIX = "ai_assisted_fix"          # AI辅助修复
 
 
 class FixStatus(Enum):

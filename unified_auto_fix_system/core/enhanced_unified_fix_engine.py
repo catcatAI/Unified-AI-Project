@@ -33,6 +33,8 @@ from ..modules.parameter_fixer import ParameterFixer
 from ..modules.undefined_fixer import UndefinedFixer
 from ..modules.path_fixer import PathFixer
 from ..modules.data_processing_fixer import DataProcessingFixer
+from ..modules.logic_graph_fixer import LogicGraphFixer
+from ..modules.intelligent_iterative_fixer import IntelligentIterativeFixer
 
 
 @dataclass
@@ -152,7 +154,9 @@ class EnhancedUnifiedFixEngine:
             "CLASS_FIX": ClassFixer(self.project_root),
             "PARAMETER_FIX": ParameterFixer(self.project_root),
             "UNDEFINED_FIX": UndefinedFixer(self.project_root),
-            "DATA_PROCESSING_FIX": DataProcessingFixer(self.project_root)
+            "DATA_PROCESSING_FIX": DataProcessingFixer(self.project_root),
+            "LOGIC_GRAPH_FIX": LogicGraphFixer(self.project_root),
+            "INTELLIGENT_ITERATIVE_FIX": IntelligentIterativeFixer(self.project_root)
         }
         
         self.logger.info(f"已加载 {len(self.enhanced_modules)} 个增强修复模块")

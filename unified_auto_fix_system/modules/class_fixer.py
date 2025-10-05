@@ -39,32 +39,32 @@ class ClassFixer(BaseFixer):
         self.error_patterns = {
             "undefined_base_class": {
                 "pattern": r'.*name\s+\'(.+)\'\s+is\s+not\s+defined.*',
-                "fix": self._fix_undefined_base_class,
+                "fix": self._fix_undefined_base_classes,
                 "description": "基类未定义"
             },
             "inheritance_error": {
                 "pattern": r'.*cannot\s+create\s+.*consistent\s+method\s+resolution.*',
-                "fix": self._fix_inheritance_error,
+                "fix": self._fix_inheritance_issues,
                 "description": "继承错误"
             },
             "abstract_method_error": {
                 "pattern": r'.*abstract\s+method.*',
-                "fix": self._fix_abstract_method_error,
+                "fix": self._fix_inheritance_issues,
                 "description": "抽象方法错误"
             },
             "method_resolution_order": {
                 "pattern": r'.*method\s+resolution\s+order.*',
-                "fix": self._fix_method_resolution_order,
+                "fix": self._fix_inheritance_issues,
                 "description": "方法解析顺序错误"
             },
             "class_redefinition": {
                 "pattern": r'.*class\s+\'(.+)\'\s+already\s+defined.*',
-                "fix": self._fix_class_redefinition,
+                "fix": self._fix_class_redefinitions,
                 "description": "类重复定义"
             },
             "metaclass_conflict": {
                 "pattern": r'.*metaclass\s+conflict.*',
-                "fix": self._fix_metaclass_conflict,
+                "fix": self._fix_inheritance_issues,
                 "description": "元类冲突"
             }
         }
@@ -301,8 +301,8 @@ class ClassFixer(BaseFixer):
             original_content = content
             
             # 应用各种修复
-            content = self._fix_undefined_base_classes(content)
-            content = self._fix_class_redefinitions(content)
+            content = self._fix_undefined_base_classeses(content)
+            content = self._fix_class_redefinitionss(content)
             content = self._fix_inheritance_issues(content)
             
             # 如果内容有变化，写回文件
